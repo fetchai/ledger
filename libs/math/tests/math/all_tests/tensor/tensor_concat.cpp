@@ -25,8 +25,7 @@ class TensorConcatenationTest : public ::testing::Test
 {
 };
 
-using MyTypes =
-    ::testing::Types<std::int32_t, std::int64_t, std::uint32_t, std::uint64_t, float, double>;
+using MyTypes = ::testing::Types<int32_t, int64_t, uint32_t, uint64_t, float, double>;
 TYPED_TEST_CASE(TensorConcatenationTest, MyTypes);
 
 template <typename T>

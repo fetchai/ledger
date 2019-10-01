@@ -56,7 +56,7 @@ public:
   JsonClient(ConnectionMode mode, std::string host);
   JsonClient(ConnectionMode mode, std::string host, uint16_t port);
   JsonClient(JsonClient const &) = delete;
-  JsonClient(JsonClient &&) noexcept;
+  JsonClient(JsonClient && /*client*/) noexcept;
   ~JsonClient();
 
   /// @name Action Methods

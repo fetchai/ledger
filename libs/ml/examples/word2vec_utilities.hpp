@@ -204,7 +204,7 @@ typename TensorType::Type TestWithAnalogies(
   return static_cast<DataType>(success_count) / static_cast<DataType>(success_count + fail_count);
 }
 
-std::string ReadFile(std::string const &path)
+inline std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());

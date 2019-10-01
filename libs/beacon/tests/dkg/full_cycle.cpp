@@ -77,7 +77,7 @@ ProverPtr CreateNewCertificate()
 
 struct DummyManifesttCache : public ManifestCacheInterface
 {
-  bool QueryManifest(Address const &, Manifest &) override
+  bool QueryManifest(Address const & /*address*/, Manifest & /*manifest*/) override
   {
     return false;
   }

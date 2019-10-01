@@ -77,13 +77,13 @@ private:
   std::shared_ptr<SizeType> test_cursor_       = std::make_shared<SizeType>(0);
   std::shared_ptr<SizeType> validation_cursor_ = std::make_shared<SizeType>(0);
 
-  SizeType train_size_;
-  SizeType test_size_;
-  SizeType validation_size_;
+  SizeType train_size_{};
+  SizeType test_size_{};
+  SizeType validation_size_{};
 
-  SizeType total_size_;
-  SizeType test_offset_;
-  SizeType validation_offset_;
+  SizeType total_size_{};
+  SizeType test_offset_{};
+  SizeType validation_offset_{};
 
   float test_to_train_ratio_       = 0.0f;
   float validation_to_train_ratio_ = 0.0f;
@@ -133,11 +133,9 @@ CommodityDataLoader<LabelType, InputType>::GetNext()
     GetAtIndex(this->current_min_ + (static_cast<SizeType>(decltype(rand_)::generator()) % Size()));
     return buffer_;
   }
-  else
-  {
-    GetAtIndex((*this->current_cursor_)++);
-    return buffer_;
-  }
+
+  GetAtIndex((*this->current_cursor_)++);
+  return buffer_;
 }
 
 /**
@@ -252,7 +250,7 @@ void CommodityDataLoader<LabelType, InputType>::UpdateRanges()
   float validation_percentage = test_percentage + test_to_train_ratio_;
 
   // Define where test set starts
-  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(size_));
+  test_offset_ = static_cast<uint32_t>(test_percentage * static_cast<float>(size_));
 
   if (test_offset_ == static_cast<SizeType>(0))
   {
@@ -260,8 +258,7 @@ void CommodityDataLoader<LabelType, InputType>::UpdateRanges()
   }
 
   // Define where validation set starts
-  validation_offset_ =
-      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(size_));
+  validation_offset_ = static_cast<uint32_t>(validation_percentage * static_cast<float>(size_));
 
   if (validation_offset_ <= test_offset_)
   {

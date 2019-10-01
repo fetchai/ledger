@@ -43,7 +43,7 @@ void MakeString(T &str)
 
   for (std::size_t j = 0; j < 256; ++j)
   {
-    entry[j] = uint8_t(lfg() >> 19);
+    entry[j] = uint8_t(lfg() >> 19u);
   }
 
   str = T(entry);
@@ -114,7 +114,7 @@ struct Result
 template <typename S, typename T, typename... Args>
 Result BenchmarkSingle(Args... args)
 {
-  Result      ret;
+  Result      ret{};
   T           data;
   std::size_t size = PopulateData(data, args...);
 
@@ -164,7 +164,7 @@ int main()
   std::cout << std::setw(width) << "Ser. MBs";
   std::cout << std::setw(width) << "Des. MBs" << std::endl;
 
-  Result result;
+  Result result{};
 
   SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint32_t>);
   SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint64_t>);

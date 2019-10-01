@@ -114,7 +114,6 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
           slice_c_j, slice_a_l);
     }
   }
-  return;
 }
 
 template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),

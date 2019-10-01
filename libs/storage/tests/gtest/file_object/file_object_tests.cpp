@@ -243,7 +243,7 @@ TEST_F(FileObjectTests, EraseFiles)
     consistency_check_.push_back(file_object_->id());
 
     // Erase elements half of the time
-    if (i % 2)
+    if ((i % 2) != 0u)
     {
       std::swap(consistency_check_[rng_() % consistency_check_.size()],
                 consistency_check_[consistency_check_.size() - 1]);
@@ -277,7 +277,7 @@ TEST_F(FileObjectTests, DISABLED_SeekAndTellFiles)
       std::string new_chars(length_of_chars, NewChar());
 
       file_object_->Seek(index_to_change);
-      file_object_->Write((uint8_t const *)(new_chars.c_str()), new_chars.size());
+      file_object_->Write(reinterpret_cast<uint8_t const *>(new_chars.c_str()), new_chars.size());
 
       for (std::size_t k = 0; k < length_of_chars; ++k)
       {

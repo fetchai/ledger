@@ -142,8 +142,8 @@ public:
 
 private:
   std::vector<SizeType> data_shape_;
-  SizeType              axis_;
-  DataType              epsilon_;
+  SizeType              axis_{};
+  DataType              epsilon_{};
 };
 
 }  // namespace layers

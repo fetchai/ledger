@@ -46,7 +46,7 @@ protected:
 
   ndarray_type a_, b_;
 };
-BENCHMARK_TEMPLATE_F(ParallelDispatcherKernelBench, kernel_implementation, double)
+BENCHMARK_TEMPLATE_F(ParallelDispatcherKernelBench, kernel_implementation, double)  // NOLINT
 (benchmark::State &st)
 {
   // Standard implementation

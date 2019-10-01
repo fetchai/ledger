@@ -44,7 +44,7 @@ class VMTensor : public fetch::vm::Object
 public:
   using DataType = fetch::vm_modules::math::DataType;
 
-  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<std::uint64_t> const &shape);
+  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<uint64_t> const &shape);
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::math::Tensor<DataType> tensor);
 

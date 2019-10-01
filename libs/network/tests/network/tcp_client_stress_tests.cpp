@@ -394,15 +394,15 @@ TEST(tcp_client_stress_gtest, NM_being_destroyed_before_clients)
       clients.push_back(&client);
     }
     nmanager.Start();
-    if (index % 2)
+    if ((index % 2) != 0u)
     {
       nmanager.Stop();
     }
-    if (index % 3)
+    if ((index % 3) != 0u)
     {
       nmanager.Stop();
     }
-    if (index % 5)
+    if ((index % 5) != 0u)
     {
       nmanager.Stop();
     }
@@ -662,7 +662,7 @@ TEST(tcp_client_stress_gtest, killing_during_transmission)
         }
       }
     }
-    if (i % 2)
+    if ((i % 2) != 0u)
     {
       nmanager.Stop();
     }

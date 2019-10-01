@@ -376,11 +376,9 @@ Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t num_rows, int3
     return Ptr<IMatrix>{new Matrix<float>(vm, type_id, element_type_id, std::size_t(num_rows),
                                           std::size_t(num_columns))};
   }
-  else
-  {
-    return Ptr<IMatrix>{new Matrix<double>(vm, type_id, element_type_id, std::size_t(num_rows),
-                                           std::size_t(num_columns))};
-  }
+
+  return Ptr<IMatrix>{new Matrix<double>(vm, type_id, element_type_id, std::size_t(num_rows),
+                                         std::size_t(num_columns))};
 }
 
 }  // namespace vm

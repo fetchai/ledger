@@ -68,7 +68,7 @@ inline bool DeedFromVariant(Variant const &variant_deed, DeedShrdPtr &deed)
     deed.reset();
     return true;
   }
-  else if (num_of_items_in_deed != 3)
+  if (num_of_items_in_deed != 3)
   {
     // This is INVALID attempt to AMEND the deed. Input deed variant is structurally
     // unsound for amend operation because it does NOT contain exactly 3 expected

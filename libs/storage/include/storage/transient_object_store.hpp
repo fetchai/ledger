@@ -218,11 +218,9 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnPopulating()
         // Nothing more in queue, but buffer not empty - write contents to disk
         return Phase::Writing;
       }
-      else
-      {
-        // Queue is empty and nothing to write - trigger delay and do not change FSM state
-        break;
-      }
+
+      // Queue is empty and nothing to write - trigger delay and do not change FSM state
+      break;
     }
   }
 
@@ -240,27 +238,25 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
   {
     return Phase::Flushing;
   }
+
+  O           obj;
+  auto const &rid = rids[written_count];
+
+  FETCH_LOCK(cache_mutex_);
+
+  // get the element from the cache
+  if (GetFromCache(rid, obj))
+  {
+    // write out the object
+    archive_.Set(rid, obj);
+
+    ++written_count;
+  }
   else
   {
-    O           obj;
-    auto const &rid = rids[written_count];
-
-    FETCH_LOCK(cache_mutex_);
-
-    // get the element from the cache
-    if (GetFromCache(rid, obj))
-    {
-      // write out the object
-      archive_.Set(rid, obj);
-
-      ++written_count;
-    }
-    else
-    {
-      // If this is the case then for some reason the RID that was added
-      // to the queue has been removed from the cache.
-      assert(false);
-    }
+    // If this is the case then for some reason the RID that was added
+    // to the queue has been removed from the cache.
+    assert(false);
   }
 
   return Phase::Writing;
