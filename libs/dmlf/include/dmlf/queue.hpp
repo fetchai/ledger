@@ -22,19 +22,18 @@
 
 #include "core/mutex.hpp"
 
-#include "dmlf/iqueue.hpp"
-#include "dmlf/iupdate.hpp"
+#include "dmlf/queue_interface.hpp"
+#include "dmlf/update_interface.hpp"
 #include "dmlf/update.hpp"
 
 namespace fetch {
 namespace dmlf {
 
 template <typename T>
-class Queue : public IQueue
+class Queue : public QueueInterface
 {
 public:
   using UpdateType = T;
-  using Bytes      = IQueue::Bytes;
   using UpdatePtr  = std::shared_ptr<UpdateType>;
   using QueueUpdates =
       std::priority_queue<UpdatePtr, std::vector<UpdatePtr>, std::greater<UpdatePtr>>;

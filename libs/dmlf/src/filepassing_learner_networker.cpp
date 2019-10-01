@@ -25,7 +25,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "dmlf/iupdate.hpp"
+#include "dmlf/update_interface.hpp"
 #include <stdio.h>  //for remove( ) and rename( )
 
 #include <chrono>
@@ -35,21 +35,20 @@ using namespace std::chrono_literals;
 namespace fetch {
 namespace dmlf {
 
-FilepassingLearnerNetworker::FilepassingLearnerNetworker()
-{}
+FilepassingLearnerNetworker::FilepassingLearnerNetworker() = default;
 
 void FilepassingLearnerNetworker::setName(const std::string &name)
 {
   name_  = name;
   dir_   = processNameToTargetDir(name);
-  auto r = system((std::string("mkdir -vp ") + dir_).c_str());
+  auto r = system((std::string("mkdir -vp ") + dir_).c_str()); // NOLINT
   if (r)
   {
     std::cerr << "mkdir failed" << std::endl;
   }
 
   auto names = getUpdateNames();
-  for (auto name : names)
+  for (const auto &name : names)
   {
     // std::cout << "UNLINK:: "<< name << std::endl;
     ::unlink(name.c_str());
@@ -70,7 +69,7 @@ void FilepassingLearnerNetworker::checkUpdates()
       continue;
     }
 
-    for (auto &filename : pendings)
+    for (const auto &filename : pendings)
     {
       processed_updates_.insert(filename);
       Bytes         b;
@@ -88,14 +87,14 @@ FilepassingLearnerNetworker::~FilepassingLearnerNetworker()
   watcher_->join();
 }
 
-std::string FilepassingLearnerNetworker::processNameToTargetDir(const std::string n)
+std::string FilepassingLearnerNetworker::processNameToTargetDir(const std::string &n)
 {
   return std::string("/tmp/FilepassingLearnerNetworker/") + n + "/";
 }
 
 void FilepassingLearnerNetworker::addPeers(Peers new_peers)
 {
-  for (auto peer : new_peers)
+  for (const auto &peer : new_peers)
   {
     if (peer != name_)
     {
@@ -109,7 +108,7 @@ void FilepassingLearnerNetworker::clearPeers()
   peers_.clear();
 }
 
-void FilepassingLearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
+void FilepassingLearnerNetworker::pushUpdate(std::shared_ptr<UpdateInterface> update)
 {
   auto indexes = alg->getNextOutputs();
   auto data    = update->serialise();
@@ -144,18 +143,22 @@ std::vector<std::string> FilepassingLearnerNetworker::getUpdateNames() const
 
   DIR *          dir;
   struct dirent *ent;
-  if ((dir = ::opendir(dir_.c_str())) != NULL)
+  if ((dir = ::opendir(dir_.c_str())) != nullptr)
   {
     /* print all the files and directories within directory */
-    while ((ent = readdir(dir)) != NULL)
+    while ((ent = readdir(dir)) != nullptr)
     {
 
       std::string f(ent->d_name);
 
       if (f == ".")
+      {
         continue;
+      }
       if (f == "..")
+      {
         continue;
+      }
 
       if (f.substr(0, 4) == "tmp_")
       {

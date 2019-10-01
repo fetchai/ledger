@@ -35,7 +35,7 @@ public:
   FilepassingLearnerNetworker();
   virtual ~FilepassingLearnerNetworker();
 
-  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) override;
+  virtual void        pushUpdate(std::shared_ptr<UpdateInterface> update) override;
   virtual std::size_t getPeerCount() const override
   {
     return peers_.size();
@@ -46,7 +46,7 @@ public:
   void clearPeers();
 
 protected:
-  static std::string       processNameToTargetDir(const std::string name);
+  static std::string       processNameToTargetDir(const std::string &name);
   void                     tx(const std::string &target, const Bytes &data);
   std::vector<std::string> getUpdateNames() const;
   void                     checkUpdates();

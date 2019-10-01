@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "dmlf/filepassing_learner_networker.hpp"
-#include "dmlf/iupdate.hpp"
+#include "dmlf/update_interface.hpp"
 #include "dmlf/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/update.hpp"
@@ -57,7 +57,7 @@ public:
   {
     this->integrations = 0;
     this->number       = number;
-    this->net          = net;
+    this->net          = std::move(net);
     this->produced     = 0;
     this->net->Initialize<UpdateTypeForTesting>();
   }
@@ -154,12 +154,12 @@ public:
       std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interf = local;
       insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
     }
-    for (auto peer : peers)
+    for (const auto &peer : peers)
     {
       peer->addPeers(peers);
     }
 
-    for (auto peer : peers)
+    for (const auto &peer : peers)
     {
       auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->getPeerCount(), 5);
       peer->setShuffleAlgorithm(alg);
@@ -169,7 +169,7 @@ public:
     while (working)
     {
       working = false;
-      for (auto inst : insts)
+      for (const auto &inst : insts)
       {
         if (inst->work())
         {
@@ -190,12 +190,12 @@ public:
       insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
     }
 
-    for (auto peer : peers)
+    for (const auto &peer : peers)
     {
       peer->addPeers(peers);
     }
 
-    for (auto peer : peers)
+    for (const auto &peer : peers)
     {
       auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->getPeerCount(), 5);
       peer->setShuffleAlgorithm(alg);
@@ -207,7 +207,7 @@ public:
 
     Threads threads;
 
-    for (auto inst : insts)
+    for (const auto &inst : insts)
     {
       auto func = [inst]() { inst->mt_work(); };
 
@@ -216,7 +216,7 @@ public:
     }
     sleep(3);
 
-    for (auto inst : insts)
+    for (const auto &inst : insts)
     {
       inst->quit();
     }
@@ -243,12 +243,12 @@ public:
       insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
     }
 
-    for (auto peer : peers)
+    for (const auto &peer : peers)
     {
       peer->addPeers(names);
     }
 
-    for (auto peer : peers)
+    for (const auto &peer : peers)
     {
       auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->getPeerCount(), 5);
       peer->setShuffleAlgorithm(alg);
@@ -260,7 +260,7 @@ public:
 
     Threads threads;
 
-    for (auto inst : insts)
+    for (const auto & inst : insts)
     {
       auto func = [inst]() { inst->mt_work(); };
 
@@ -269,12 +269,12 @@ public:
     }
     sleep(3);
 
-    for (auto inst : insts)
+    for (const auto & inst : insts)
     {
       inst->quit();
     }
 
-    for (auto &t : threads)
+    for (const auto &t : threads)
     {
       t->join();
     }
@@ -286,7 +286,7 @@ TEST_F(LocalLearnerNetworkerTests, singleThreadedVersion)
   DoWork();
 
   std::size_t total_integrations = 0;
-  for (auto inst : insts)
+  for (const auto &inst : insts)
   {
     total_integrations += inst->integrations;
   }
@@ -300,7 +300,7 @@ TEST_F(LocalLearnerNetworkerTests, multiThreadedVersion)
   DoMtWork();
 
   std::size_t total_integrations = 0;
-  for (auto inst : insts)
+  for (const auto &inst : insts)
   {
     total_integrations += inst->integrations;
   }
@@ -314,7 +314,7 @@ TEST_F(LocalLearnerNetworkerTests, multiThreadedFilePassingVersion)
   DoMtFilepassingWork();
 
   std::size_t total_integrations = 0;
-  for (auto inst : insts)
+  for (const auto &inst : insts)
   {
     total_integrations += inst->integrations;
   }
@@ -333,10 +333,10 @@ protected:
 
 TEST_F(UpdateSerialisationTests, basicPass)
 {
-  std::shared_ptr<fetch::dmlf::IUpdate> update_1 =
+  std::shared_ptr<fetch::dmlf::UpdateInterface> update_1 =
       std::make_shared<fetch::dmlf::Update<int>>(std::vector<int>{1, 2, 4});
   std::this_thread::sleep_for(1.54321s);
-  std::shared_ptr<fetch::dmlf::IUpdate> update_2 = std::make_shared<fetch::dmlf::Update<int>>();
+  std::shared_ptr<fetch::dmlf::UpdateInterface> update_2 = std::make_shared<fetch::dmlf::Update<int>>();
 
   EXPECT_NE(update_1->TimeStamp(), update_2->TimeStamp());
   EXPECT_NE(update_1->Fingerprint(), update_2->Fingerprint());

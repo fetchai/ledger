@@ -58,13 +58,13 @@ public:
   using Mutex = fetch::Mutex;
   using Lock  = std::unique_lock<Mutex>;
 
-  Muddle2LearnerNetworker(const std::string cloud_config, std::size_t instance_number,
-                          std::shared_ptr<NetworkManager> netm = std::shared_ptr<NetworkManager>(),
+  Muddle2LearnerNetworker(const std::string &cloud_config, std::size_t instance_number,
+                          const std::shared_ptr<NetworkManager> &netm = std::shared_ptr<NetworkManager>(),
                           MuddleChannel                   channel_tmp = MuddleChannel::DEFAULT);
   virtual ~Muddle2LearnerNetworker();
 
-  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) override;
-  virtual void        pushUpdateType(std::string type, std::shared_ptr<IUpdate> update) override;
+  virtual void        pushUpdate(std::shared_ptr<UpdateInterface> update) override;
+  virtual void        pushUpdateType(std::string type, std::shared_ptr<UpdateInterface> update) override;
   virtual std::size_t getPeerCount() const override;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);

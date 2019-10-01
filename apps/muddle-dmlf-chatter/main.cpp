@@ -33,7 +33,7 @@
 //#include "vm/vm.hpp"
 //#include "vm_modules/vm_factory.hpp"
 #include "dmlf/filepassing_learner_networker.hpp"
-#include "dmlf/iupdate.hpp"
+#include "dmlf/update_interface.hpp"
 #include "dmlf/local_learner_networker.hpp"
 #include "dmlf/muddle2_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"

@@ -18,7 +18,7 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
-#include "dmlf/iupdate.hpp"
+#include "dmlf/update_interface.hpp"
 #include "dmlf/muddle2_learner_networker.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -27,13 +27,11 @@
 namespace fetch {
 namespace dmlf {
 
-using std::this_thread::sleep_for;
 using std::chrono::seconds;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
 using fetch::network::NetworkManager;
-using fetch::muddle::NetworkId;
 using fetch::service::Promise;
 
 using PromiseList = std::vector<Promise>;
@@ -45,9 +43,9 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworkerProtocol::Muddle2LearnerNetworke
   Expose(1, &sample, &Muddle2LearnerNetworker::RecvBytes);
 }
 
-Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string               cloud_config,
+Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string               &cloud_config,
                                                  std::size_t                     instance_number,
-                                                 std::shared_ptr<NetworkManager> netm,
+                                                 const std::shared_ptr<NetworkManager> &netm,
                                                  MuddleChannel                   channel_tmp)
   : channel_tmp_{channel_tmp}
 {
@@ -117,10 +115,9 @@ uint64_t Muddle2LearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
   return 0;
 }
 
-Muddle2LearnerNetworker::~Muddle2LearnerNetworker()
-{}
+Muddle2LearnerNetworker::~Muddle2LearnerNetworker() = default;
 
-void Muddle2LearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
+void Muddle2LearnerNetworker::pushUpdate(std::shared_ptr<UpdateInterface> update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud->GetEndpoint(), 1, 1);
   auto data   = update->serialise();
@@ -141,7 +138,7 @@ void Muddle2LearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
   }
 }
 
-void Muddle2LearnerNetworker::pushUpdateType(std::string type, std::shared_ptr<IUpdate> update)
+void Muddle2LearnerNetworker::pushUpdateType(std::string type, std::shared_ptr<UpdateInterface> update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud->GetEndpoint(), 1, 1);
   auto data   = update->serialise(type);

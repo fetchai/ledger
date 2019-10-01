@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "dmlf/filepassing_learner_networker.hpp"
-#include "dmlf/iupdate.hpp"
+#include "dmlf/update_interface.hpp"
 #include "dmlf/local_learner_networker.hpp"
 #include "dmlf/muddle2_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
@@ -61,7 +61,7 @@ public:
   std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker>  actual;
   std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
 
-  Learner(const std::string cloud_config, std::size_t instance_number)
+  Learner(const std::string &cloud_config, std::size_t instance_number)
   {
     actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(cloud_config, instance_number);
     interface = actual;
@@ -125,7 +125,7 @@ public:
   std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker>  actual;
   std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
 
-  LearnerTypedUpdates(const std::string cloud_config, std::size_t instance_number)
+  LearnerTypedUpdates(const std::string &cloud_config, std::size_t instance_number)
   {
     actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(
         cloud_config, instance_number, std::shared_ptr<fetch::network::NetworkManager>{},

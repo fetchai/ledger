@@ -21,20 +21,18 @@
 
 #include <iostream>
 
-#include "dmlf/iupdate.hpp"
+#include "dmlf/update_interface.hpp"
 
 namespace fetch {
 namespace dmlf {
 
-LocalLearnerNetworker::LocalLearnerNetworker()
-{}
+LocalLearnerNetworker::LocalLearnerNetworker() = default;
 
-LocalLearnerNetworker::~LocalLearnerNetworker()
-{}
+LocalLearnerNetworker::~LocalLearnerNetworker() = default;
 
 void LocalLearnerNetworker::addPeers(std::vector<std::shared_ptr<LocalLearnerNetworker>> new_peers)
 {
-  for (auto peer : new_peers)
+  for (const auto &peer : new_peers)
   {
     if (peer.get() != this)
     {
@@ -48,7 +46,7 @@ void LocalLearnerNetworker::clearPeers()
   peers.clear();
 }
 
-void LocalLearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
+void LocalLearnerNetworker::pushUpdate(std::shared_ptr<UpdateInterface> update)
 {
   std::vector<std::shared_ptr<LocalLearnerNetworker>> targets;
   auto                                                indexes = alg->getNextOutputs();

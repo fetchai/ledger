@@ -21,7 +21,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "dmlf/iupdate.hpp"
+#include "dmlf/update_interface.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -31,7 +31,7 @@ namespace fetch {
 namespace dmlf {
 
 template <typename T>
-class Update : public IUpdate
+class Update : public UpdateInterface
 {
   template <typename TT, typename D>
   friend struct serializers::MapSerializer;
@@ -39,8 +39,8 @@ class Update : public IUpdate
 public:
   using TensorType       = T;
   using VectorTensorType = std::vector<TensorType>;
-  using TimeStampType    = IUpdate::TimeStampType;
-  using FingerprintType  = IUpdate::FingerprintType;
+  using TimeStampType    = UpdateInterface::TimeStampType;
+  using FingerprintType  = UpdateInterface::FingerprintType;
 
   using PayloadType = VectorTensorType;
 

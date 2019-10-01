@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,4 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/ishuffle_algorithm.hpp"
+#include <memory>
+
+#include "core/byte_array/byte_array.hpp"
+
+namespace fetch {
+namespace dmlf {
+
+class QueueInterface
+{
+public:
+  using Bytes = byte_array::ByteArray;
+
+  QueueInterface() = default;
+  virtual ~QueueInterface() = default;
+
+  virtual void        PushNewMessage(Bytes msg) = 0;
+  virtual std::size_t size() const              = 0;
+
+private:
+  QueueInterface(const QueueInterface &other) = delete;
+  QueueInterface &operator=(const QueueInterface &other)  = delete;
+  bool    operator==(const QueueInterface &other) = delete;
+  bool    operator<(const QueueInterface &other)  = delete;
+};
+
+}  // namespace dmlf
+}  // namespace fetch

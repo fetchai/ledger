@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,48 +17,38 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/vm_wrapper_python3.hpp"
-
-//#include <python.h>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace dmlf {
 
-typedef int PyEnvName;
-
-class PyEnvInner
+class ShuffleAlgorithmInterface
 {
 public:
-  static int py_env_counter;
-
-  PyEnvInner()
+  ShuffleAlgorithmInterface(std::size_t count)
   {
-    if (py_env_counter == 0)
-    {
-      //::Py_Initialize();
-    }
-    py_env_counter++;
+    this->count = count;
   }
 
-  virtual ~PyEnvInner()
+  virtual ~ShuffleAlgorithmInterface() = default;
+
+  virtual std::vector<std::size_t> getNextOutputs() = 0;
+
+  std::size_t getCount() const
   {
-    py_env_counter--;
-    if (py_env_counter == 0)
-    {
-      //::Py_FinalizeEx();
-    }
+    return count;
   }
+
+protected:
+private:
+  ShuffleAlgorithmInterface(const ShuffleAlgorithmInterface &other) = delete;
+  ShuffleAlgorithmInterface &operator=(const ShuffleAlgorithmInterface &other)  = delete;
+  bool               operator==(const ShuffleAlgorithmInterface &other) = delete;
+  bool               operator<(const ShuffleAlgorithmInterface &other)  = delete;
+
+  std::size_t count;
 };
 
-int PyEnvInner::py_env_counter = 0;
-
-VmWrapperPython3::VmWrapperPython3()
-{
-  py_ = std::make_shared<PyEnvInner>();
-}
-VmWrapperPython3::~VmWrapperPython3()
-{
-  py_.reset();
-}
 }  // namespace dmlf
 }  // namespace fetch

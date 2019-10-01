@@ -31,7 +31,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "main";
 
-using fetch::dmlf::IUpdate;
+using fetch::dmlf::UpdateInterface;
 using fetch::dmlf::Update;
 
 using namespace std::chrono_literals;
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
   if (argc == 3)
   {
     fetch::network::Peer peer{argv[1], static_cast<uint16_t>(atoi(argv[2]))};
-    uris.push_back(fetch::network::Uri{peer});
+    uris.emplace_back(fetch::network::Uri{peer});
   }
 
   std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> tcp_learner =
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
   tcp_learner->Initialize<Update<std::string>>();
 
   int                      num_upds = 10;
-  std::shared_ptr<IUpdate> upd;
+  std::shared_ptr<UpdateInterface> upd;
   FETCH_LOG_INFO(LOGGING_NAME, "Updates to push:");
   for (int i = 0; i < num_upds; i++)
   {

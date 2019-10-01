@@ -35,7 +35,7 @@ public:
 
   LocalLearnerNetworker();
   virtual ~LocalLearnerNetworker();
-  virtual void pushUpdate(std::shared_ptr<IUpdate> update) override;
+  virtual void pushUpdate(std::shared_ptr<UpdateInterface> update) override;
 
   virtual std::size_t getPeerCount() const override
   {

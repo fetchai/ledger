@@ -22,8 +22,8 @@
 #include "core/mutex.hpp"
 
 #include "core/byte_array/byte_array.hpp"
-#include "dmlf/iqueue.hpp"
-#include "dmlf/ishuffle_algorithm.hpp"
+#include "dmlf/queue_interface.hpp"
+#include "dmlf/shuffle_algorithm_interface.hpp"
 #include "dmlf/queue.hpp"
 #include "dmlf/type_map.hpp"
 
@@ -41,7 +41,7 @@ public:
   {}
 
   // To implement
-  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) = 0;
+  virtual void        pushUpdate(std::shared_ptr<UpdateInterface> update) = 0;
   virtual std::size_t getPeerCount() const                        = 0;
 
   template <typename T>
@@ -73,13 +73,13 @@ public:
     return que->getUpdate();
   }
 
-  virtual void setShuffleAlgorithm(std::shared_ptr<IShuffleAlgorithm> alg)
+  virtual void setShuffleAlgorithm(std::shared_ptr<ShuffleAlgorithmInterface> alg)
   {
     this->alg = alg;
   }
 
   // To implement - TOFIX not pure at moment
-  virtual void pushUpdateType(std::string /*key*/, std::shared_ptr<IUpdate> /*update*/){};
+  virtual void pushUpdateType(std::string /*key*/, std::shared_ptr<UpdateInterface> /*update*/){};
 
   template <typename T>
   void RegisterUpdateType(std::string key)
@@ -119,11 +119,7 @@ public:
   }
 
 protected:
-  /*
-  std::shared_ptr<IShuffleAlgorithm> alg;                          // used by descendents
-  virtual Intermediate               getUpdateIntermediate() = 0;  // implemented by descendents
-  */
-  std::shared_ptr<IShuffleAlgorithm> alg;                          // used by descendents
+  std::shared_ptr<ShuffleAlgorithmInterface> alg;                          // used by descendents
   void                               NewMessage(const Bytes &msg)  // called by descendents
   {
     Lock l{queue_m_};
@@ -155,12 +151,12 @@ protected:
 private:
   using Mutex     = fetch::Mutex;
   using Lock      = std::unique_lock<Mutex>;
-  using IQueuePtr = std::shared_ptr<IQueue>;
-  using IQueueMap = std::unordered_map<std::string, IQueuePtr>;
+  using QueueInterfacePtr = std::shared_ptr<QueueInterface>;
+  using QueueInterfaceMap = std::unordered_map<std::string, QueueInterfacePtr>;
 
-  IQueuePtr     queue_;
+  QueueInterfacePtr     queue_;
   mutable Mutex queue_m_;
-  IQueueMap     queue_map_;
+  QueueInterfaceMap     queue_map_;
   mutable Mutex queue_map_m_;
 
   TypeMap<> update_types_;

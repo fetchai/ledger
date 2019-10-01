@@ -19,17 +19,16 @@
 
 #include <memory>
 
-#include "dmlf/ishuffle_algorithm.hpp"
+#include "dmlf/shuffle_algorithm_interface.hpp"
 
 namespace fetch {
 namespace dmlf {
 
-class SimpleCyclingAlgorithm : public IShuffleAlgorithm
+class SimpleCyclingAlgorithm : public ShuffleAlgorithmInterface
 {
 public:
   SimpleCyclingAlgorithm(std::size_t count, std::size_t number_of_outputs_per_cycle);
-  virtual ~SimpleCyclingAlgorithm()
-  {}
+  virtual ~SimpleCyclingAlgorithm() = default;
 
   std::vector<std::size_t> getNextOutputs();
 
