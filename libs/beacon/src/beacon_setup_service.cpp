@@ -155,7 +155,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
 
 BeaconSetupService::State BeaconSetupService::OnIdle()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::IDLE));
   beacon_dkg_all_connections_gauge_->set(muddle_.GetDirectlyConnectedPeers().size());
   beacon_dkg_aeon_setting_up_->set(0);
@@ -184,7 +184,7 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
  */
 BeaconSetupService::State BeaconSetupService::OnReset()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::RESET));
   beacon_dkg_all_connections_gauge_->set(muddle_.GetDirectlyConnectedPeers().size());
   beacon_dkg_aeon_setting_up_->set(beacon_->aeon.round_start);
@@ -249,7 +249,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
  */
 BeaconSetupService::State BeaconSetupService::OnConnectToAll()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::CONNECT_TO_ALL));
 
   std::unordered_set<MuddleAddress> aeon_members;
@@ -364,7 +364,7 @@ std::set<T> ConvertToSet(std::unordered_set<T> const &from)
  */
 BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_READY_CONNECTIONS));
 
@@ -455,7 +455,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
  */
 BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_SHARES));
 
   auto intersection = (coefficients_received_ & shares_received_);
@@ -480,7 +480,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_COMPLAINTS));
 
   if (!condition_to_proceed_ &&
@@ -511,7 +511,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS));
 
   if (!condition_to_proceed_ &&
@@ -552,7 +552,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_QUAL_SHARES));
 
   auto intersection = (qual_coefficients_received_ & beacon_->manager.qual());
@@ -577,7 +577,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS));
 
   if (!condition_to_proceed_ && qual_complaints_manager_.NumComplaintsReceived(
@@ -623,7 +623,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES));
 
   MuddleAddresses complaints_list = qual_complaints_manager_.Complaints();
@@ -690,7 +690,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
 
 BeaconSetupService::State BeaconSetupService::OnComputePublicSignature()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::COMPUTE_PUBLIC_SIGNATURE));
 
   beacon_->manager.ComputePublicKeys();
@@ -712,7 +712,7 @@ BeaconSetupService::State BeaconSetupService::OnComputePublicSignature()
 // TODO(HUT): rename dry run to create first signature.
 BeaconSetupService::State BeaconSetupService::OnDryRun()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   // TODO(HUT): reset to qual here for the networking (?)
 
@@ -782,7 +782,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
 
 BeaconSetupService::State BeaconSetupService::OnBeaconReady()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::BEACON_READY));
   beacon_dkg_successes_total_->add(1);
 
@@ -949,7 +949,7 @@ void BeaconSetupService::BroadcastReconstructionShares()
 void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
                                       std::shared_ptr<DKGMessage> msg_ptr)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   if (state_machine_->state() == State::IDLE || !BasicMsgCheck(from, msg_ptr))
   {
     return;
@@ -1074,7 +1074,7 @@ void BeaconSetupService::OnNewSharesPacket(muddle::Packet const &packet,
 void BeaconSetupService::OnNewShares(MuddleAddress                                from,
                                      std::pair<MessageShare, MessageShare> const &shares)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   // Check if sender is in cabinet
   bool in_cabinet{false};
   for (auto &member : beacon_->aeon.members)
@@ -1340,7 +1340,7 @@ bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
 
 void BeaconSetupService::QueueSetup(SharedAeonExecutionUnit beacon)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   assert(beacon != nullptr);
 
   aeon_exe_queue_.push_back(beacon);
@@ -1348,13 +1348,13 @@ void BeaconSetupService::QueueSetup(SharedAeonExecutionUnit beacon)
 
 void BeaconSetupService::Abort(uint64_t abort_below)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   abort_below_ = abort_below;
 }
 
 void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   callback_function_ = callback;
 }
 
@@ -1417,7 +1417,6 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
   time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS]     = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 20;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
   time_slot_map[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
   time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;

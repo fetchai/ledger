@@ -107,30 +107,36 @@ public:
   using Type       = beacon::BlockEntropy;
   using DriverType = D;
 
+  static uint8_t const QUALIFIED        = 1;
+  static uint8_t const GROUP_PUBLIC_KEY = 2;
+  static uint8_t const BLOCK_NUMBER     = 3;
+  static uint8_t const CONFIRMATIONS    = 4;
+  static uint8_t const GROUP_SIGNATURE  = 5;
+
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &member)
   {
     auto map = map_constructor(5);
 
-    map.Append(5, member.qualified);
-    map.Append(4, member.group_public_key);
-    map.Append(3, member.block_number);
-    map.Append(2, member.confirmations);
+    map.Append(QUALIFIED, member.qualified);
+    map.Append(GROUP_PUBLIC_KEY, member.group_public_key);
+    map.Append(BLOCK_NUMBER, member.block_number);
+    map.Append(CONFIRMATIONS, member.confirmations);
 
     // std::string set = member.group_signature/*.getStr()*/;
-    map.Append(1, member.group_signature);
+    map.Append(GROUP_SIGNATURE, member.group_signature);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &member)
   {
-    map.ExpectKeyGetValue(5, member.qualified);
-    map.ExpectKeyGetValue(4, member.group_public_key);
-    map.ExpectKeyGetValue(3, member.block_number);
-    map.ExpectKeyGetValue(2, member.confirmations);
+    map.ExpectKeyGetValue(QUALIFIED, member.qualified);
+    map.ExpectKeyGetValue(GROUP_PUBLIC_KEY, member.group_public_key);
+    map.ExpectKeyGetValue(BLOCK_NUMBER, member.block_number);
+    map.ExpectKeyGetValue(CONFIRMATIONS, member.confirmations);
 
     // std::string get;
-    map.ExpectKeyGetValue(1, member.group_signature);
+    map.ExpectKeyGetValue(GROUP_SIGNATURE, member.group_signature);
     // member.group_signature/*.setStr(get)*/;
   }
 };

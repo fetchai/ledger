@@ -66,7 +66,7 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
 
   // Attaching beacon ready callback handler
   cabinet_creator_.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     aeon_exe_queue_.push_back(beacon);
   });
 
@@ -98,7 +98,7 @@ BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, Bloc
   FETCH_LOG_DEBUG(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
   beacon_entropy_last_requested_->set(block_number);
 
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   if (completed_block_entropy_.find(block_number) != completed_block_entropy_.end())
   {
@@ -138,7 +138,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
     threshold = rbc_threshold;
   }
 
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -157,7 +157,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
 
 BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   // Checking whether the next committee is ready
   // to produce random numbers.
@@ -167,10 +167,9 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
     aeon_exe_queue_.pop_front();
 
     // Set the previous block entropy appropriately
-    block_entropy_previous_.reset(new BlockEntropy(
-        active_exe_unit_->aeon.block_entropy_previous));  // Previous saved from aeon
-    block_entropy_being_created_.reset(
-        new BlockEntropy(active_exe_unit_->block_entropy));  // Next partially filled by aeon
+    block_entropy_previous_ =
+        std::make_shared<BlockEntropy>(active_exe_unit_->aeon.block_entropy_previous);
+    block_entropy_being_created_ = std::make_shared<BlockEntropy>(active_exe_unit_->block_entropy);
 
     assert(block_entropy_being_created_->IsAeonBeginning());
 
@@ -183,7 +182,7 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 
 BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   // Set the manager up to generate the signature
   active_exe_unit_->manager.SetMessage(block_entropy_previous_->EntropyAsSHA256());
@@ -196,7 +195,7 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
 
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   uint64_t const index = block_entropy_being_created_->block_number;
   beacon_entropy_current_round_->set(index);
@@ -273,7 +272,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   // Note: don't lock until the promise has resolved (above)! Otherwise the system can deadlock
   // due to everyone trying to lock and resolve each others' signatures
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     uint64_t const index = block_entropy_being_created_->block_number;
 
@@ -334,7 +333,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
  */
 BeaconService::State BeaconService::OnCompleteState()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   uint64_t const index = block_entropy_being_created_->block_number;
   beacon_entropy_last_generated_->set(index);
@@ -416,7 +415,7 @@ std::vector<std::weak_ptr<core::Runnable>> BeaconService::GetWeakRunnables()
  */
 BeaconService::SignatureInformation BeaconService::GetSignatureShares(uint64_t round)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   // If this is too far in the future or the past return empty struct
   if (signatures_being_built_.find(round) == signatures_being_built_.end())
