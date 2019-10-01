@@ -357,12 +357,6 @@ def parse_commandline():
         help='scan and fix only files that changed between Git\'s HEAD and the '
              'given commit or ref. If not set, process all files in the project')
     parser.add_argument(
-        '-q',
-        '--quick-fix',
-        action='store_true',
-        default=False,
-        help='Attempt to determine files to apply style on by looking at recent commits')
-    parser.add_argument(
         '-d',
         '--diff',
         action='store_true',
@@ -379,8 +373,7 @@ def parse_commandline():
 
     return args.commit if args.commit is None else args.commit[0], \
         args.diff, \
-        args.jobs, \
-        args.quick_fix
+        args.jobs
 
 
 TRANSFORMATIONS = [
@@ -443,16 +436,6 @@ def process_in_parallel(files_to_process, jobs):
 
     output('Done.')
 
-def quick_fix_files():
-
-    try:
-        recently_committed_files = subprocess.check_output(
-            ["git", "log", "--name-only", "--pretty=oneline", "--full-index", "HEAD~5..HEAD"]).decode().strip()
-
-        output(recently_committed_files)
-    except:
-        output("Failed to run git commands - is it installed?")
-        sys.exit(1)
 
 def check_tool_versions():
     clang_format_cmd = [CLANG_FORMAT_EXE_NAME, '--version']
@@ -497,13 +480,9 @@ def check_tool_versions():
 def main():
     check_tool_versions()
 
-    commit, fail_if_changes, jobs, quick_fix = parse_commandline()
+    commit, fail_if_changes, jobs = parse_commandline()
 
-    if quick_fix:
-        files_to_process = quick_fix_files()
-    else:
-        files_to_process = files_of_interest(commit)
-
+    files_to_process = files_of_interest(commit)
     check_for_headers_with_non_hpp_extension(files_to_process)
     process_in_parallel(files_to_process, jobs)
 
