@@ -392,3 +392,29 @@ TEST(BitVectorTests, ContractFrom32)
   EXPECT_EQ(smaller.bit(6), 1);
   EXPECT_EQ(smaller.bit(7), 1);
 }
+
+TEST(BitVectorTests, IterateSetBits)
+{
+  BitVector src{256};
+
+  std::vector<std::size_t> expected_indexes{0, 23, 64, 80, 127, 196, 255};
+
+  for (auto const &i : expected_indexes)
+  {
+    src.set(i, 1);
+  }
+  std::cout << src << std::endl;
+
+  auto       expected_index_itr{expected_indexes.begin()};
+  auto       itr{src.begin()};
+  auto const end{src.end()};
+  for (; itr != end && expected_index_itr != expected_indexes.end();
+       /* ++itr,*/ ++expected_index_itr)
+  {
+    EXPECT_EQ(*itr, *expected_index_itr);
+    ++itr;
+  }
+
+  EXPECT_EQ(itr, end);
+  EXPECT_EQ(expected_index_itr, expected_indexes.end());
+}

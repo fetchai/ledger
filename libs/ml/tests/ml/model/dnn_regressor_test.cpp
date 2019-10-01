@@ -53,11 +53,15 @@ ModelType SetupModel(fetch::ml::optimisers::OptimiserType     optimiser_type,
   using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>;
   SizeVector              label_shape = {gt.shape().at(0), 1};
   std::vector<SizeVector> data_shape  = {{data.shape().at(0), 1}};
-  auto data_loader_ptr                = std::make_shared<DataLoaderType>(label_shape, data_shape);
+  auto data_loader_ptr                = std::make_unique<DataLoaderType>(label_shape, data_shape);
   data_loader_ptr->AddData(data, gt);
 
   // run model in training mode
-  return ModelType(data_loader_ptr, optimiser_type, model_config, {3, 100, 100, 1});
+  auto model = ModelType(model_config, {3, 100, 100, 1});
+  model.SetDataloader(std::move(data_loader_ptr));
+  model.Compile(optimiser_type);
+
+  return model;
 }
 
 template <typename TypeParam>

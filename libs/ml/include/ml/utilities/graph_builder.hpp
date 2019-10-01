@@ -249,9 +249,9 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
-  case ops::LeakyReluOp<T>::OpCode():
+  case ops::PReluOp<T>::OpCode():
   {
-    op_ptr = GetOp<ops::LeakyReluOp<T>>(nsp.op_save_params);
+    op_ptr = GetOp<ops::PReluOp<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;
