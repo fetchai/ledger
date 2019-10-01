@@ -101,6 +101,7 @@ public:
   using QualComplaintsManager   = beacon::QualComplaintsManager;
   using DKGEnvelope             = dkg::DKGEnvelope;
   using ComplaintsMessage       = dkg::ComplaintsMessage;
+  using FinalStateMessage       = dkg::FinalStateMessage;
   using CoefficientsMessage     = dkg::CoefficientsMessage;
   using ConnectionsMessage      = dkg::ConnectionsMessage;
   using SharesMessage           = dkg::SharesMessage;
@@ -150,8 +151,9 @@ protected:
   MuddleInterface &       muddle_;
   MuddleEndpoint &        endpoint_;
   SubscriptionPtr         shares_subscription_;
-  SubscriptionPtr         dry_run_subscription_;
-  ReliableChannelPtr      rbc_;
+
+  CertificatePtr     certificate_;
+  ReliableChannelPtr rbc_;
 
   std::shared_ptr<StateMachine> state_machine_;
   std::set<MuddleAddress>       connections_;
@@ -187,7 +189,6 @@ protected:
   telemetry::GaugePtr<uint64_t> beacon_dkg_time_allocated_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_aeon_setting_up_;
   telemetry::CounterPtr         beacon_dkg_failures_total_;
-  telemetry::CounterPtr         beacon_dkg_dry_run_failures_total_;
   telemetry::CounterPtr         beacon_dkg_aborts_total_;
   telemetry::CounterPtr         beacon_dkg_successes_total_;
 
@@ -197,8 +198,8 @@ protected:
   std::deque<SharedAeonExecutionUnit>                        aeon_exe_queue_;
   SharedAeonExecutionUnit                                    beacon_;
   std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
-  std::map<MuddleAddress, GroupPubKeyPlusSigShare>           dry_run_shares_;
-  std::map<std::string, uint16_t>                            dry_run_public_keys_;
+
+  std::map<MuddleAddress, ConstByteArray> final_state_payload_;
 
 private:
   uint64_t abort_below_ = 0;
@@ -220,7 +221,6 @@ private:
   void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
   void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
   void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
-  void OnNewDryRunPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
   void OnNewCoefficients(CoefficientsMessage const &coefficients, MuddleAddress const &from_id);
   void OnComplaints(ComplaintsMessage const &complaint, MuddleAddress const &from_id);
   void OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id);

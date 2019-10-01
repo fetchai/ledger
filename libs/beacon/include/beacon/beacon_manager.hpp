@@ -91,7 +91,9 @@ public:
 
   AddResult     AddSignaturePart(Identity const &from, Signature const &signature);
   bool          Verify();
-  bool          Verify(Signature const &);
+  bool          Verify(Signature const &signature);
+  static bool   Verify(std::string const &group_public_key, MessagePayload const &message,
+                       std::string const &signature);
   Signature     GroupSignature() const;
   void          SetMessage(MessagePayload next_message);
   SignedMessage Sign();

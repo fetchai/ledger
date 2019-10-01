@@ -643,7 +643,23 @@ bool BeaconManager::Verify()
  */
 bool BeaconManager::Verify(Signature const &signature)
 {
+  // TODO(HUT): use the static helper
   return crypto::mcl::VerifySign(public_key_, current_message_, signature, group_g_);
+}
+
+/**
+ * @brief verifies a signed message by the group signature, where all parameters are specified.
+ */
+bool BeaconManager::Verify(std::string const &group_public_key, MessagePayload const &message,
+                           std::string const &signature)
+{
+  PublicKey tmp;
+  tmp.setStr(group_public_key);
+
+  Signature tmp2;
+  tmp2.setStr(signature);
+
+  return crypto::mcl::VerifySign(tmp, message, tmp2, BeaconManager::group_g_);
 }
 
 /**

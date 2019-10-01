@@ -40,8 +40,8 @@ public:
   template <typename T>
   void Dispatch(T const &event)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    std::type_index             index{typeid(T)};
+    FETCH_LOCK(mutex_);
+    std::type_index index{typeid(T)};
 
     auto it = events_.find(index);
     if (it == events_.end())
@@ -56,8 +56,8 @@ public:
   template <typename T>
   bool Poll(T &event)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    std::type_index             index{typeid(T)};
+    FETCH_LOCK(mutex_);
+    std::type_index index{typeid(T)};
 
     auto it = events_.find(index);
     if (it == events_.end())

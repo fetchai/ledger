@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,31 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/entropy_generator_interface.hpp"
+#include "benchmark/benchmark.h"
 
-namespace fetch {
-namespace ledger {
-
-/**
- * Simplistic Test Entropy Generator
- *
- * Entropy is generated from the block hash as a source. It is repeated hashed a number of times
- * in order to generate the entropy source.
- */
-class NaiveEntropyGenerator : public EntropyGeneratorInterface
-{
-public:
-  static constexpr std::size_t ROUNDS = 5;
-
-  // Construction / Destruction
-  NaiveEntropyGenerator()           = default;
-  ~NaiveEntropyGenerator() override = default;
-
-  /// @name Entropy Generator Interface
-  /// @{
-  Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) override;
-  /// @}
-};
-
-}  // namespace ledger
-}  // namespace fetch
+BENCHMARK_MAIN();
