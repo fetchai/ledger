@@ -33,7 +33,7 @@ public:
   using Peers = std::vector<Peer>;
 
   FilepassingLearnerNetworker();
-  over ride ~FilepassingLearnerNetworker();
+  ~FilepassingLearnerNetworker() override;
 
   void        pushUpdate(std::shared_ptr<UpdateInterface> update) override;
   std::size_t getPeerCount() const override
