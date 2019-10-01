@@ -717,7 +717,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     beacon_->block_entropy.block_number     = beacon_->aeon.round_start;
     beacon_->block_entropy.HashSelf();
 
-    assert(beacon_->block_entropy.digest.size() > 0);
+    assert(!beacon_->block_entropy.digest.empty());
 
     // Add own signature to the structure
     auto own_signature = certificate_->Sign(beacon_->block_entropy.digest);

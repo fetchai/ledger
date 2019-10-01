@@ -112,7 +112,7 @@ public:
     }
   }
 
-  static void BroadcastPacket(PacketPtr packet)
+  static void BroadcastPacket(PacketPtr const &packet)
   {
     std::vector<PacketQueueAndConnectionsPtr> locations;
 
@@ -222,7 +222,7 @@ public:
   FakeMuddleEndpoint(NetworkId network_id, Address address, Prover *certificate = nullptr,
                      bool sign_broadcasts = false)
     : network_id_{network_id}
-    , address_{address}
+    , address_{std::move(address)}
     , certificate_{certificate}
     , sign_broadcasts_{sign_broadcasts}
     , registrar_(network_id)
@@ -247,37 +247,38 @@ public:
     });
   }
 
-  ~FakeMuddleEndpoint()
+  ~FakeMuddleEndpoint() override
   {
     running_ = false;
     thread_->join();
   }
 
-  Address const &GetAddress() const
+  Address const &GetAddress() const override
   {
     return address_;
   }
 
-  void Send(Address const &address, uint16_t service, uint16_t channel, Payload const &message)
+  void Send(Address const &address, uint16_t service, uint16_t channel,
+            Payload const &message) override
   {
     return Send(address, service, channel, msg_counter_++, message, MuddleEndpoint::OPTION_DEFAULT);
   }
 
   void Send(Address const &address, uint16_t service, uint16_t channel, Payload const &message,
-            Options options)
+            Options options) override
   {
     return Send(address, service, channel, msg_counter_++, message, options);
   }
 
   void Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
-            Payload const &payload)
+            Payload const &payload) override
   {
     return Send(address, service, channel, message_num, payload, MuddleEndpoint::OPTION_DEFAULT);
   }
 
   PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &network, uint16_t service,
                          uint16_t channel, uint16_t counter, uint8_t ttl,
-                         Packet::Payload const &payload)
+                         Packet::Payload const &payload) override
   {
     auto packet = std::make_shared<Packet>(from, network.value());
     packet->SetService(service);
@@ -291,7 +292,7 @@ public:
 
   FakeMuddleEndpoint::PacketPtr const &Sign(PacketPtr const &p) const
   {
-    if (certificate_ && (sign_broadcasts_ || !p->IsBroadcast()))
+    if (certificate_ && (sign_broadcasts_ || !p->IsBroadcast()))  // NOLINT
     {
       p->Sign(*certificate_);
     }
@@ -299,13 +300,13 @@ public:
   }
 
   void Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
-            Payload const &payload, Options options)
+            Payload const &payload, Options options) override
   {
     // format the packet
     auto packet = FormatPacket(address_, network_id_, service, channel, message_num, 40, payload);
     packet->SetTarget(address);
 
-    if (options & OPTION_EXCHANGE)
+    if (bool(options & OPTION_EXCHANGE))
     {
       packet->SetExchange(true);
     }
@@ -315,7 +316,7 @@ public:
     FakeNetwork::DeployPacket(address, packet);
   }
 
-  void Broadcast(uint16_t service, uint16_t channel, Payload const &payload)
+  void Broadcast(uint16_t service, uint16_t channel, Payload const &payload) override
   {
     auto packet =
         FormatPacket(address_, network_id_, service, channel, msg_counter_++, 40, payload);
@@ -326,13 +327,13 @@ public:
   }
 
   Response Exchange(Address const & /*address*/, uint16_t /*service*/, uint16_t /*channel*/,
-                    Payload const & /*request*/)
+                    Payload const & /*request*/) override
   {
     throw std::runtime_error("Exchange functionality not implemented");
     return {};
   }
 
-  SubscriptionPtr Subscribe(uint16_t service, uint16_t channel)
+  SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override
   {
     return registrar_.Register(service, channel);
   }
@@ -342,12 +343,12 @@ public:
     return registrar_.Register(address, service, channel);
   }
 
-  NetworkId const &network_id() const
+  NetworkId const &network_id() const override
   {
     return network_id_;
   }
 
-  AddressList GetDirectlyConnectedPeers() const
+  AddressList GetDirectlyConnectedPeers() const override
   {
     auto set_peers = GetDirectlyConnectedPeerSet();
 
@@ -361,7 +362,7 @@ public:
     return ret;
   }
 
-  AddressSet GetDirectlyConnectedPeerSet() const
+  AddressSet GetDirectlyConnectedPeerSet() const override
   {
     return FakeNetwork::GetDirectlyConnectedPeers(address_);
   }
@@ -418,7 +419,7 @@ public:
 
   MuddleFake(MuddleFake const &) = delete;
   MuddleFake(MuddleFake &&)      = delete;
-  ~MuddleFake()                  = default;
+  ~MuddleFake() override         = default;
 
   /// @name Muddle Setup
   /// @{
@@ -498,7 +499,6 @@ public:
   void SetPeerSelectionMode(PeerSelectionMode /*mode*/) override
   {
     throw std::runtime_error("SetPeerSelectionMode functionality not implemented");
-    return;
   };
   Addresses GetRequestedPeers() const override
   {
@@ -511,7 +511,6 @@ public:
   void ConnectTo(Addresses const & /*addresses*/) override
   {
     throw std::runtime_error("ConnectTo x functionality not implemented");
-    return;
   };
   void ConnectTo(Address const &address, network::Uri const & /*uri_hint*/) override
   {
@@ -520,7 +519,6 @@ public:
   void ConnectTo(AddressHints const & /*address_hints*/) override
   {
     throw std::runtime_error("ConnectTo y functionality not implemented");
-    return;
   };
   void DisconnectFrom(Address const &address) override
   {
@@ -536,17 +534,14 @@ public:
   void SetConfidence(Address const & /*address*/, Confidence /*confidence*/) override
   {
     throw std::runtime_error("SetConfidence x functionality not implemented");
-    return;
   };
   void SetConfidence(Addresses const & /*addresses*/, Confidence /*confidence*/) override
   {
     throw std::runtime_error("SetConfidence y functionality not implemented");
-    return;
   };
   void SetConfidence(ConfidenceMap const & /*map*/) override
   {
     throw std::runtime_error("SetConfidence z functionality not implemented");
-    return;
   };
   /// @}
 

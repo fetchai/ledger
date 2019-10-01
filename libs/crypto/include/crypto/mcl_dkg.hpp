@@ -53,7 +53,7 @@ struct DkgKeyInformation
                     PrivateKey secret_key_shares1)
     : group_public_key{std::move(group_public_key1)}
     , public_key_shares{std::move(public_key_shares1)}
-    , private_key_share{std::move(secret_key_shares1)}
+    , private_key_share{secret_key_shares1}
   {}
 
   PublicKey              group_public_key;

@@ -92,15 +92,16 @@ public:
       const CertificatePtr &certificate = nullptr, uint16_t channel = CHANNEL_RBC_BROADCAST,
       bool ordered_delivery = true);
 
-  ~RBC();
+  ~RBC() override;
 
   /// RBC Operation
   /// @{
   void Broadcast(SerialisedMessage const &msg);
   bool ResetCabinet(CabinetMembers const &cabinet) override;
   void Enable(bool enable) override;
-  void SetQuestion(ConstByteArray const &, ConstByteArray const &answer) override
+  void SetQuestion(ConstByteArray const &unused, ConstByteArray const &answer) override
   {
+    FETCH_UNUSED(unused);
     Broadcast(answer);
   };
 

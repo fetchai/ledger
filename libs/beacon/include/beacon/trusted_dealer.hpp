@@ -51,10 +51,8 @@ public:
     {
       return DkgOutput(outputs_[cabinet_index_.at(address)], cabinet_);
     }
-    else
-    {
-      return DkgOutput();
-    }
+
+    return DkgOutput();
   }
 
 private:

@@ -59,7 +59,7 @@ class BeaconServiceInsertable : public fetch::beacon::BeaconService
 public:
   BeaconServiceInsertable(MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
                           CertificatePtr certificate, SharedEventManager event_manager)
-    : BeaconService(muddle, manifest_cache, std::move(certificate), std::move(event_manager))
+    : BeaconService(muddle, manifest_cache, certificate, std::move(event_manager))
   {}
 
   void PushNewExecUnit(const SharedAeonExecutionUnit &beacon)

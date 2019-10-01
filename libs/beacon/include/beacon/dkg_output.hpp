@@ -46,7 +46,7 @@ struct DkgOutput
     : qual{std::move(qual_members)}
     , group_public_key{std::move(group_key)}
     , public_key_shares{std::move(key_shares)}
-    , private_key_share{std::move(secret_share)}
+    , private_key_share{secret_share}
   {}
 
   DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members)

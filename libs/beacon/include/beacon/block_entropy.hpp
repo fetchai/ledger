@@ -49,14 +49,7 @@ struct BlockEntropy : public BlockEntropyInterface
   using GroupSignatureStr = std::string;
   using Cabinet           = std::set<MuddleAddress>;
 
-  BlockEntropy()
-  {
-    // bn::initPairing();
-
-    //// Important this is cleared so the hash of it is consistent for the genesis block (?)
-    // group_signature = GroupSignature{};
-    // group_signature.clear();
-  }
+  BlockEntropy() = default;
 
   Cabinet qualified;  // The members who succeeded DKG and are qualified to produce blocks (when new
                       // committee)

@@ -87,9 +87,9 @@ public:
   {
     serialiser >> payload_;
   }
-  FinalStateMessage(Payload const &payload)
+  explicit FinalStateMessage(Payload const &payload)
     : DKGMessage{MessageType::FINAL_STATE}
-    , payload_{payload}
+    , payload_{std::move(payload)}
   {}
   ~FinalStateMessage() override = default;
 
@@ -111,9 +111,9 @@ public:
   {
     serialiser >> connections_;
   }
-  ConnectionsMessage(std::set<MuddleAddress> const &connections)
+  explicit ConnectionsMessage(std::set<MuddleAddress> connections)
     : DKGMessage{MessageType::CONNECTIONS}
-    , connections_{connections}
+    , connections_{std::move(connections)}
   {}
   ~ConnectionsMessage() override = default;
 
@@ -212,7 +212,7 @@ public:
   {
     serialiser >> complaints_;
   }
-  ComplaintsMessage(std::unordered_set<CabinetId> complaints)
+  explicit ComplaintsMessage(std::unordered_set<CabinetId> complaints)
     : DKGMessage{MessageType::COMPLAINT}
     , complaints_{std::move(complaints)}
   {}

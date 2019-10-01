@@ -52,23 +52,19 @@ struct QuestionStruct
     SEEN = 2,  // Signature indicating seen
   };
 
-  QuestionStruct()                          = default;
-  QuestionStruct(QuestionStruct const &rhs) = default;
-  QuestionStruct(QuestionStruct &&rhs)      = default;
-  QuestionStruct &operator=(QuestionStruct const &rhs) = default;
-  QuestionStruct &operator=(QuestionStruct &&rhs) = default;
+  QuestionStruct() = default;
 
-  QuestionStruct(Digest const &question, Answer const &answer, CertificatePtr certificate,
-                 CabinetMembers const &current_cabinet)
-    : certificate_{certificate}
+  QuestionStruct(Digest question, Answer answer, CertificatePtr certificate,
+                 CabinetMembers current_cabinet)
+    : certificate_{std::move(certificate)}
     , self_{certificate_->identity().identifier()}
-    , question_{question}
-    , cabinet_{current_cabinet}
+    , question_{std::move(question)}
+    , cabinet_{std::move(current_cabinet)}
   {
     // Always populate the table with our answer before anything else
     AnswerAndSeen &cabinet_answer = table_[self_];
 
-    std::get<ANSW>(cabinet_answer)        = answer;
+    std::get<ANSW>(cabinet_answer)        = std::move(answer);
     std::get<SIG>(cabinet_answer)         = Digest("nothing");
     std::get<SEEN>(cabinet_answer)[self_] = Digest("have seen!");
 
@@ -159,7 +155,7 @@ struct QuestionStruct
   }
 
   // Considered invalid if there is no cabinet
-  operator bool() const
+  operator bool() const  // NOLINT
   {
     return !cabinet_.empty();
   }

@@ -97,10 +97,10 @@ public:
                              CertificatePtr certificate, uint16_t channel = CHANNEL_RBC_BROADCAST,
                              bool ordered_delivery = true)
     : endpoint_{endpoint}
-    , address_{address}
-    , deliver_msg_callback_{call_back}
+    , address_{std::move(address)}
+    , deliver_msg_callback_{std::move(call_back)}
     , channel_{channel}
-    , certificate_{certificate}
+    , certificate_{std::move(certificate)}
     , rpc_client_{"PunishmentBC", endpoint_, SERVICE_PBC, channel_}
     , state_machine_{std::make_shared<StateMachine>("PBCStateMach", State::INIT)}
   {
@@ -118,11 +118,11 @@ public:
                                     &PunishmentBroadcastChannel::OnResolvePromises);
   }
 
-  ~PunishmentBroadcastChannel()
-  {
-    // TODO(HUT): reinstate this fix.
-    /* rpc_server_->Remove(RPC_BEACON); */
-  }
+  ~PunishmentBroadcastChannel() = default;
+  //{
+  //  // TODO(HUT): reinstate this fix.
+  //  /* rpc_server_->Remove(RPC_BEACON); */
+  //}
 
   // Interface methods
   bool ResetCabinet(CabinetMembers const &cabinet) override
