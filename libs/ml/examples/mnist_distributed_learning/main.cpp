@@ -42,11 +42,9 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
-std::shared_ptr<TrainingClient<TensorType>> MakeClient(std::string const &     id,
-                                                       ClientParams<DataType> &client_params,
-                                                       std::string const &     images,
-                                                       std::string const &     labels,
-                                                       float                   test_set_ratio)
+std::shared_ptr<TrainingClient<TensorType>> MakeClient(
+    std::string const &id, ClientParams<DataType> &client_params, std::string const &images,
+    std::string const &labels, float test_set_ratio, std::shared_ptr<std::mutex> console_mutex_ptr)
 {
   // Initialise model
   std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr =
@@ -62,6 +60,7 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(std::string const &     i
   client_params.label_name = g_ptr->template AddNode<PlaceHolder<TensorType>>("Label", {});
   client_params.error_name =
       g_ptr->template AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
+  g_ptr->Compile();
 
   // Initialise DataLoader
   std::shared_ptr<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>> dataloader_ptr =
@@ -75,7 +74,7 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(std::string const &     i
           client_params.label_name, client_params.error_name, client_params.learning_rate);
 
   return std::make_shared<TrainingClient<TensorType>>(id, g_ptr, dataloader_ptr, optimiser_ptr,
-                                                      client_params);
+                                                      client_params, console_mutex_ptr);
 }
 
 int main(int ac, char **av)
@@ -89,13 +88,14 @@ int main(int ac, char **av)
 
   ClientParams<DataType> client_params;
 
-  SizeType number_of_clients     = 5;
-  SizeType number_of_rounds      = 10;
-  client_params.iterations_count = 20;
-  client_params.batch_size       = 32;
-  client_params.learning_rate    = static_cast<DataType>(.001f);
-  float    test_set_ratio        = 0.03f;
-  SizeType number_of_peers       = 3;
+  SizeType number_of_clients                    = 5;
+  SizeType number_of_rounds                     = 10;
+  client_params.iterations_count                = 20;
+  client_params.batch_size                      = 32;
+  client_params.learning_rate                   = static_cast<DataType>(.001f);
+  float                       test_set_ratio    = 0.03f;
+  SizeType                    number_of_peers   = 3;
+  std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
 
@@ -119,7 +119,8 @@ int main(int ac, char **av)
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = MakeClient(std::to_string(i), client_params, av[1], av[2], test_set_ratio);
+    clients[i] = MakeClient(std::to_string(i), client_params, av[1], av[2], test_set_ratio,
+                            console_mutex_ptr);
     // TODO(1597): Replace ID with something more sensible
   }
 

@@ -72,11 +72,11 @@ void MakeVocabFile(W2VTrainingParams<DataType> const &client_params, std::string
   data_loader.SaveVocab(client_params.vocab_file);
 }
 
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
-  if (ac < 2)
+  if (argc != 3)
   {
-    std::cout << "Usage : " << av[0] << " PATH/TO/text8" << std::endl;
+    std::cout << "Usage : " << argv[0] << " PATH/TO/text8 analogies_test_file" << std::endl;
     return 1;
   }
 
@@ -121,7 +121,8 @@ int main(int ac, char **av)
 
   std::cout << "FETCH Distributed Word2vec Demo -- Asynchronous" << std::endl;
 
-  std::string train_file = av[1];
+  std::string train_file            = argv[1];
+  client_params.analogies_test_file = argv[2];
 
   MakeVocabFile(client_params, train_file);
 

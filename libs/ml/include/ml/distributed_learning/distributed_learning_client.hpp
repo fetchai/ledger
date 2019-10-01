@@ -49,6 +49,7 @@ struct ClientParams
   SizeType batch_size;
   SizeType iterations_count;
   DataType learning_rate;
+  bool     print_loss = false;
 
   std::vector<std::string> inputs_names = {"Input"};
   std::string              label_name   = "Label";
@@ -66,13 +67,14 @@ class TrainingClient
   using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
 
 public:
-  TrainingClient(std::string id, ClientParams<DataType> const &client_params);
+  TrainingClient(std::string id, ClientParams<DataType> const &client_params,
+                 std::shared_ptr<std::mutex> console_mutex_ptr);
 
   TrainingClient(
       std::string id, GraphPtrType graph_ptr,
       std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
       std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
-      ClientParams<DataType> const &                                              client_params);
+      ClientParams<DataType> const &client_params, std::shared_ptr<std::mutex> console_mutex_ptr);
 
   virtual ~TrainingClient() = default;
 
@@ -80,18 +82,15 @@ public:
 
   void Run();
 
-  void Train();
-
-  virtual void Test();
-
   VectorTensorType GetGradients() const;
 
   VectorTensorType GetWeights() const;
 
   void SetWeights(VectorTensorType const &new_weights);
-  void AddGradients(VectorTensorType const &grads);
 
   void SetParams(ClientParams<DataType> const &new_params);
+
+  GraphPtrType GetModel();
 
   std::string GetId() const;
 
@@ -117,6 +116,9 @@ protected:
   std::string              label_name_;
   std::string              error_name_;
 
+  // Console mutex pointer
+  std::shared_ptr<std::mutex> console_mutex_ptr_;
+
   // Learning hyperparameters
   SizeType batch_size_ = 0;
 
@@ -127,11 +129,18 @@ protected:
   // Pointer to client's own iLearnerNetworker
   std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> i_learner_ptr_;
 
-  std::string   GetStrTimestamp();
+  // Print to console flag
+  bool print_loss_;
+
+  void         DoBatch();
+  void         Train();
+  virtual void Test();
+
+  void          GraphAddGradients(GraphPtrType g_ptr, VectorTensorType const &gradients);
   TimestampType GetTimestamp();
 
-  void DoBatch();
-  void ClearLossFile();
+  std::string GetStrTimestamp();
+  void        ClearLossFile();
 };
 
 template <class TensorType>
@@ -139,11 +148,12 @@ TrainingClient<TensorType>::TrainingClient(
     std::string id, GraphPtrType graph_ptr,
     std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
     std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
-    ClientParams<DataType> const &                                              client_params)
+    ClientParams<DataType> const &client_params, std::shared_ptr<std::mutex> console_mutex_ptr)
   : id_(std::move(id))
   , g_ptr_(std::move(graph_ptr))
   , dataloader_ptr_(std::move(loader_ptr))
   , opti_ptr_(std::move(optimiser_ptr))
+  , console_mutex_ptr_(std::move(console_mutex_ptr))
 {
   SetParams(client_params);
   ClearLossFile();
@@ -151,18 +161,13 @@ TrainingClient<TensorType>::TrainingClient(
 
 template <class TensorType>
 TrainingClient<TensorType>::TrainingClient(std::string                   id,
-                                           ClientParams<DataType> const &client_params)
+                                           ClientParams<DataType> const &client_params,
+                                           std::shared_ptr<std::mutex>   console_mutex_ptr)
   : id_(std::move(id))
+  , console_mutex_ptr_(std::move(console_mutex_ptr))
 {
   SetParams(client_params);
   ClearLossFile();
-}
-
-template <class TensorType>
-void TrainingClient<TensorType>::ClearLossFile()
-{
-  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::trunc);
-  lossfile.close();
 }
 
 template <class TensorType>
@@ -174,12 +179,19 @@ void TrainingClient<TensorType>::SetParams(
   error_name_       = new_params.error_name;
   batch_size_       = new_params.batch_size;
   iterations_count_ = new_params.iterations_count;
+  print_loss_       = new_params.print_loss;
 }
 
 template <class TensorType>
 std::string TrainingClient<TensorType>::GetId() const
 {
   return id_;
+}
+
+template <class TensorType>
+std::shared_ptr<fetch::ml::Graph<TensorType>> TrainingClient<TensorType>::GetModel()
+{
+  return g_ptr_;
 }
 
 /**
@@ -231,77 +243,6 @@ void TrainingClient<TensorType>::Run()
 }
 
 /**
- * Train one batch
- * @return training batch loss
- */
-template <class TensorType>
-void TrainingClient<TensorType>::Train()
-{
-  dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
-  dataloader_ptr_->SetRandomMode(true);
-
-  bool is_done_set = false;
-
-  std::pair<TensorType, std::vector<TensorType>> input;
-  input = dataloader_ptr_->PrepareBatch(batch_size_, is_done_set);
-  {
-    FETCH_LOCK(model_mutex_);
-
-    // Set inputs and label
-    auto input_data_it = input.second.begin();
-    auto input_name_it = inputs_names_.begin();
-
-    while (input_name_it != inputs_names_.end())
-    {
-      g_ptr_->SetInput(*input_name_it, *input_data_it);
-      ++input_name_it;
-      ++input_data_it;
-    }
-    g_ptr_->SetInput(label_name_, input.first);
-
-    TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
-    train_loss_            = *(loss_tensor.begin());
-    g_ptr_->BackPropagate(error_name_);
-  }
-}
-
-/**
- * Run model on test set to get test loss
- * @param test_loss
- */
-template <class TensorType>
-void TrainingClient<TensorType>::Test()
-{
-  dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
-
-  // Disable random to run model on whole test set
-  dataloader_ptr_->SetRandomMode(false);
-
-  SizeType test_set_size = dataloader_ptr_->Size();
-
-  dataloader_ptr_->Reset();
-  bool is_done_set;
-  auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
-  {
-    FETCH_LOCK(model_mutex_);
-
-    // Set inputs and label
-    auto input_data_it = test_pair.second.begin();
-    auto input_name_it = inputs_names_.begin();
-
-    while (input_name_it != inputs_names_.end())
-    {
-      g_ptr_->SetInput(*input_name_it, *input_data_it);
-      ++input_name_it;
-      ++input_data_it;
-    }
-    g_ptr_->SetInput(label_name_, test_pair.first);
-
-    test_loss_ = *(g_ptr_->Evaluate(error_name_).begin());
-  }
-}
-
-/**
  * @return vector of gradient update values
  */
 template <class TensorType>
@@ -318,7 +259,7 @@ template <class TensorType>
 std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 {
   FETCH_LOCK(model_mutex_);
-  return g_ptr_->get_weights();
+  return g_ptr_->GetWeightsReferences();
 }
 
 /**
@@ -331,33 +272,35 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
   FETCH_LOCK(model_mutex_);
 
   auto weights_it = new_weights.cbegin();
-  for (auto &trainable_node : g_ptr_->trainable_nodes_)
+  for (auto &trainable_lookup : g_ptr_->trainable_lookup_)
   {
     auto trainable_ptr =
-        std::dynamic_pointer_cast<ops::Trainable<TensorType>>(trainable_node->GetOp());
+        std::dynamic_pointer_cast<ops::Trainable<TensorType>>((trainable_lookup.second)->GetOp());
     trainable_ptr->SetWeights(*weights_it);
     ++weights_it;
   }
 }
 
+///////////////////////
+/// private methods ///
+///////////////////////
+
 /**
  * Adds a vector of Tensors to the gradient accumulation of all the trainable pointers in the graph.
- * Typical use case is injecting external gradients e.g when doing distributed learning.
- * @tparam T
- * @param grads The vector of gradients - needs to have the same length as the number of trainables
+ * @param gradient
  */
 template <class TensorType>
-void TrainingClient<TensorType>::AddGradients(VectorTensorType const &grads)
+void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr,
+                                                   VectorTensorType const &gradients)
 {
-  FETCH_LOCK(model_mutex_);
+  assert(gradients.size() == g_ptr->GetTrainables().size());
 
-  assert(grads.size() == g_ptr_->trainable_nodes_.size());
-  auto gt_it = g_ptr_->trainable_nodes_.begin();
-  for (auto const &grad : grads)
+  auto grad_it = gradients.begin();
+  for (auto &trainable : g_ptr->GetTrainables())
   {
-    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>((*gt_it)->GetOp());
-    weights_ptr->AddToGradient(grad);
-    ++gt_it;
+      auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>(trainable);
+    weights_ptr->AddToGradient(*grad_it);
+    ++grad_it;
   }
 }
 
@@ -414,7 +357,7 @@ void TrainingClient<TensorType>::DoBatch()
   {
     ucnt++;
     new_gradients = i_learner_ptr_->getUpdate<fetch::dmlf::Update<TensorType>>()->GetGradients();
-    AddGradients(new_gradients);
+    GraphAddGradients(g_ptr_, new_gradients);
   }
 
   // Apply sum of all gradients from iLearner along with own gradient
@@ -425,6 +368,93 @@ void TrainingClient<TensorType>::DoBatch()
     opti_ptr_->UpdateLearningRate();
   }
   batch_counter_++;
+}
+
+/**
+ * Train one batch
+ * @return training batch loss
+ */
+template <class TensorType>
+void TrainingClient<TensorType>::Train()
+{
+  dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+  dataloader_ptr_->SetRandomMode(true);
+
+  bool is_done_set = false;
+
+  std::pair<TensorType, std::vector<TensorType>> input;
+  input = dataloader_ptr_->PrepareBatch(batch_size_, is_done_set);
+  {
+    FETCH_LOCK(model_mutex_);
+
+    // Set inputs and label
+    auto input_data_it = input.second.begin();
+    auto input_name_it = inputs_names_.begin();
+
+    while (input_name_it != inputs_names_.end())
+    {
+      g_ptr_->SetInput(*input_name_it, *input_data_it);
+      ++input_name_it;
+      ++input_data_it;
+    }
+    g_ptr_->SetInput(label_name_, input.first);
+
+    TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
+    train_loss_            = *(loss_tensor.begin());
+    g_ptr_->BackPropagate(error_name_);
+  }
+}
+
+/**
+ * Run model on test set to get test loss
+ * @param test_loss
+ */
+template <class TensorType>
+void TrainingClient<TensorType>::Test()
+{
+  // If test set is not available we run test on whole training set
+  if (dataloader_ptr_->IsModeAvailable(fetch::ml::dataloaders::DataLoaderMode::TEST))
+  {
+    dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
+  }
+  else
+  {
+    dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+  }
+
+  // Disable random to run model on whole test set
+  dataloader_ptr_->SetRandomMode(false);
+
+  SizeType test_set_size = dataloader_ptr_->Size();
+
+  dataloader_ptr_->Reset();
+  bool is_done_set;
+  auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
+  {
+    FETCH_LOCK(model_mutex_);
+
+    // Set inputs and label
+    auto input_data_it = test_pair.second.begin();
+    auto input_name_it = inputs_names_.begin();
+
+    while (input_name_it != inputs_names_.end())
+    {
+      g_ptr_->SetInput(*input_name_it, *input_data_it);
+      ++input_name_it;
+      ++input_data_it;
+    }
+    g_ptr_->SetInput(label_name_, test_pair.first);
+
+    test_loss_ = *(g_ptr_->Evaluate(error_name_).begin());
+  }
+  dataloader_ptr_->Reset();
+}
+
+template <class TensorType>
+void TrainingClient<TensorType>::ClearLossFile()
+{
+  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::trunc);
+  lossfile.close();
 }
 
 }  // namespace distributed_learning
