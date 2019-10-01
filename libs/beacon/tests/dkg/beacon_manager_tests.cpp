@@ -29,14 +29,7 @@ using namespace fetch::dkg;
 using Certificate    = Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using MuddleAddress  = byte_array::ConstByteArray;
-
-struct DkgOutput
-{
-  PrivateKey              private_key;
-  PublicKey               group_public_key;
-  std::vector<PublicKey>  public_key_shares;
-  std::set<MuddleAddress> qual;
-};
+using DkgOutput      = beacon::DkgOutput;
 
 TEST(beacon_manager, dkg_and_threshold_signing)
 {
@@ -224,8 +217,8 @@ TEST(beacon_manager, dkg_and_threshold_signing)
     PublicKey               dummy_public;
     std::vector<PublicKey>  dummy_public_shares;
     std::set<MuddleAddress> dummy_qual;
-    manager->SetDkgOutput(dummy_public, computed_secret_key, dummy_public_shares, dummy_qual);
-    EXPECT_EQ(computed_secret_key, secret_key_test);
+    DkgOutput               output{manager->GetDkgOutput()};
+    EXPECT_EQ(output.private_key_share, secret_key_test);
   }
 
   // Add honest qual coefficients
@@ -302,9 +295,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   std::vector<DkgOutput> outputs;
   for (auto &manager : beacon_managers)
   {
-    DkgOutput output;
-    manager->SetDkgOutput(output.group_public_key, output.private_key, output.public_key_shares,
-                          output.qual);
+    DkgOutput output{manager->GetDkgOutput()};
     outputs.push_back(output);
   }
 
