@@ -39,7 +39,7 @@ public:
   virtual ~AbstractLearnerNetworker() = default;
 
   // To implement
-  virtual void        pushUpdate(std::shared_ptr<UpdateInterface> update) = 0;
+  virtual void        pushUpdate(const std::shared_ptr<UpdateInterface> &update) = 0;
   virtual std::size_t getPeerCount() const                        = 0;
 
   template <typename T>
