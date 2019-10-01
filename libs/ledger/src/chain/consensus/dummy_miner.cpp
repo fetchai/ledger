@@ -25,7 +25,9 @@
 #include <limits>
 #include <random>
 
-static uint32_t GetRandom()
+namespace {
+
+uint32_t GetRandom()
 {
   std::random_device                      rd;
   std::mt19937                            gen(rd());
@@ -33,9 +35,9 @@ static uint32_t GetRandom()
   return dis(gen);
 }
 
-static constexpr char const *LOGGING_NAME = "DummyMiner";
+constexpr char const *LOGGING_NAME = "DummyMiner";
 
-using fetch::byte_array::ToHex;  // NOLINT - Used for debugging
+}  // namespace
 
 namespace fetch {
 namespace ledger {

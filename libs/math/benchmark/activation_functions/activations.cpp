@@ -34,7 +34,7 @@ void BM_Elu(benchmark::State &state)
 {
   Tensor<T> input({L, H, W});
   Tensor<T> output({L, H, W});
-  T         a = T(0.2);
+  auto      a = T(0.2);
 
   for (auto _ : state)
   {

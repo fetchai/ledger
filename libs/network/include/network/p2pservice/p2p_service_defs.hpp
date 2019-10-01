@@ -60,7 +60,7 @@ struct ServiceIdentifier
     , instance_number(instance)
   {}
 
-  bool operator<(const ServiceIdentifier &other) const
+  bool operator<(ServiceIdentifier const &other) const
   {
     if (service_type < other.service_type)
     {
@@ -70,11 +70,8 @@ struct ServiceIdentifier
     {
       return false;
     }
-    if (instance_number < other.instance_number)
-    {
-      return true;
-    }
-    return false;
+
+    return instance_number < other.instance_number;
   }
 
   std::string ToString(std::string const &divider = "/") const
@@ -118,7 +115,7 @@ public:
     map.GetNextKeyPair(key, service_type);
     map.GetNextKeyPair(key, x.instance_number);
     x.service_type = static_cast<network::ServiceType>(service_type);
-    // TODO(EJF): This still needs validation
+    // TODO(issue 1672): This still needs validation
   }
 };
 

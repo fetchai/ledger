@@ -32,8 +32,7 @@ class Parser
 public:
   Parser();
   ~Parser() = default;
-  BlockNodePtr Parse(std::string const &filename, std::string const &source,
-                     std::vector<std::string> &errors);
+  BlockNodePtr Parse(SourceFiles const &files, std::vector<std::string> &errors);
 
 private:
   enum class State
@@ -52,8 +51,7 @@ private:
 
   struct OpInfo
   {
-    OpInfo()
-    {}
+    OpInfo() = default;
     OpInfo(int precedence__, Association association__, int arity__)
     {
       precedence  = precedence__;
@@ -78,6 +76,7 @@ private:
   using StringSet = std::unordered_set<std::string>;
 
   StringSet const          template_names_;
+  std::string              filename_;
   std::vector<Token>       tokens_;
   int                      index_;
   Token *                  token_;
@@ -135,7 +134,7 @@ private:
 
   void IncrementGroupMembers()
   {
-    if (groups_.size())
+    if (!groups_.empty())
     {
       Expr &groupop = operators_[groups_.back()];
       ++(groupop.num_members);

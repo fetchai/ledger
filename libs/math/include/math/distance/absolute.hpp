@@ -30,7 +30,7 @@ typename ArrayType::Type AbsoluteDistance(ArrayType const &A, ArrayType const &B
   auto it1   = A.cbegin();
   auto it2   = B.cbegin();
   assert(it1.size() == it2.size());
-  Type ret = Type(0);
+  auto ret = Type(0);
   Type d;
 
   while (it1.is_valid())

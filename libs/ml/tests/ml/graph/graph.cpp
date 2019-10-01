@@ -183,7 +183,9 @@ TYPED_TEST(GraphTest, applying_regularisation_per_trainable)
   g.SetRegularisation(weights, regulariser, regularisation_rate);
   auto node_ptr = g.GetNode(weights);
   auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
-  op_ptr->ApplyRegularisation();
+  TensorType grad = op_ptr->GetGradients();
+  grad.Fill(static_cast<DataType>(0.0));
+  op_ptr->ApplyGradient(grad);
 
   // Evaluate weights
   TensorType prediction(op_ptr->ComputeOutputShape({}));
@@ -218,7 +220,9 @@ TYPED_TEST(GraphTest, applying_regularisation_all_trainables)
   g.SetRegularisation(regulariser, regularisation_rate);
   auto node_ptr = g.GetNode(weights);
   auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
-  op_ptr->ApplyRegularisation();
+  TensorType grad = op_ptr->GetGradients();
+  grad.Fill(static_cast<DataType>(0.0));
+  op_ptr->ApplyGradient(grad);
 
   // Evaluate weights
   TensorType prediction(op_ptr->ComputeOutputShape({}));
@@ -323,14 +327,19 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
 
   // Test gradient
   std::vector<TypeParam> gradients = g.GetGradients();
+
   EXPECT_EQ(gradients.size(), 2);
-  ASSERT_TRUE(gradients[1].AllClose(grad1, fetch::math::function_tolerance<DataType>(),
-                                    fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(gradients[0].AllClose(grad2, fetch::math::function_tolerance<DataType>(),
-                                    fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE((gradients[0].AllClose(grad1, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()) &&
+               gradients[1].AllClose(grad2, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>())) ||
+              (gradients[1].AllClose(grad1, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()) &&
+               gradients[0].AllClose(grad2, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>())));
 
   // Test Weights
-  std::vector<TypeParam> weights = g.get_weights();
+  std::vector<TypeParam> weights = g.GetWeights();
   EXPECT_EQ(weights.size(), 2);
   ASSERT_TRUE(weights[1].AllClose(data2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
@@ -357,7 +366,7 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   g.BackPropagate(output_name, error_signal);
 
   // Test Weights
-  std::vector<TypeParam> weights2 = g.get_weights();
+  std::vector<TypeParam> weights2 = g.GetWeights();
   EXPECT_EQ(weights2.size(), 2);
   ASSERT_TRUE(weights2[1].AllClose(weights1_expected, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

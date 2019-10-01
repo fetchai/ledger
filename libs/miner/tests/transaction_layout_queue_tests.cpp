@@ -33,8 +33,8 @@
 
 namespace {
 
-using fetch::random::LinearCongruentialGenerator;
 using fetch::miner::TransactionLayoutQueue;
+using fetch::random::LinearCongruentialGenerator;
 using TransactionLayoutQueuePtr = std::unique_ptr<TransactionLayoutQueue>;
 using fetch::ledger::Digest;
 

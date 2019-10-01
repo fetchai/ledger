@@ -55,7 +55,7 @@ template <typename DataType, typename ArrayType>
 static void ArangeImplementation(DataType const &from, DataType const &to, DataType const &delta,
                                  ArrayType &ret)
 {
-  SizeType N = SizeType((to - from) / delta);
+  auto N = SizeType((to - from) / delta);
   ret.Resize({N});
   ret.FillArange(static_cast<typename ArrayType::Type>(from),
                  static_cast<typename ArrayType::Type>(to));
@@ -123,13 +123,13 @@ public:
 
   static Tensor FromString(byte_array::ConstByteArray const &c);
   explicit Tensor(SizeType const &n);
-  Tensor(Tensor &&other)      = default;
-  Tensor(Tensor const &other) = default;
-  Tensor(SizeVector const &dims);
+  Tensor(Tensor &&other) noexcept = default;
+  Tensor(Tensor const &other)     = default;
+  explicit Tensor(SizeVector const &dims);
   virtual ~Tensor() = default;
 
   Tensor &operator=(Tensor const &other) = default;
-  Tensor &operator=(Tensor &&other) = default;
+  Tensor &operator=(Tensor &&other) noexcept = default;
 
   IteratorType      begin();
   IteratorType      end();
@@ -173,7 +173,6 @@ public:
   Tensor &operator=(TensorSlice const &slice);
 
   void Fill(Type const &value, memory::Range const &range);
-  void Fill(Type const &value, memory::TrivialRange const &range);
   void Fill(Type const &value);
   void SetAllZero();
   void SetAllOne();
@@ -316,10 +315,10 @@ public:
   static Tensor              Stack(std::vector<TensorType> const &tensors);
   static Tensor              Concat(std::vector<Tensor> const &tensors, SizeType axis);
   static std::vector<Tensor> Split(Tensor const &tensor, SizeVector const &concat_points,
-                                   SizeType const axis);
+                                   SizeType axis);
 
   void Sort();
-  void Sort(memory::TrivialRange const &range);
+  void Sort(memory::Range const &range);
 
   static Tensor Arange(Type const &from, Type const &to, Type const &delta);
 
@@ -504,7 +503,7 @@ private:
   template <typename S>
   fetch::meta::IfIsUnsignedInteger<S, SizeType> ComputeColIndex(std::vector<S> const &indices) const
   {
-    assert(indices.size() > 0);
+    assert(!indices.empty());
     SizeType index  = indices[0];
     SizeType n_dims = indices.size();
     SizeType base   = padded_height_;
@@ -716,7 +715,8 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       else
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
-        elems.push_back(Type(std::atof(cur_elem.c_str())));
+        auto        float_val = std::atof(cur_elem.c_str());
+        elems.push_back(Type(float_val));
       }
       break;
     }
@@ -826,10 +826,12 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType Tensor<T, C>::View()
 {
-  assert(shape_.size() >= 1);
+  assert(!shape_.empty());
 
-  SizeType N     = shape_.size() - 1;
-  SizeType width = shape_[N] * stride_[N] / padded_height_;
+  SizeType N = shape_.size() - 1;
+  // padded_height can be 32 bytes on AVX2, set width to 1 to avoid zero-width tensors
+  SizeType width = std::max(shape_[N] * stride_[N] / padded_height_, static_cast<SizeType>(1));
+  assert(width > 0);
   return TensorView<Type, ContainerType>(data_, height(), width);
 }
 
@@ -842,10 +844,12 @@ typename Tensor<T, C>::ViewType Tensor<T, C>::View()
 template <typename T, typename C>
 typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
 {
-  assert(shape_.size() >= 1);
+  assert(!shape_.empty());
 
-  SizeType N     = shape_.size() - 1;
-  SizeType width = shape_[N] * stride_[N] / padded_height_;
+  SizeType N = shape_.size() - 1;
+  // padded_height can be 32 bytes on AVX2, set width to 1 to avoid zero-width tensors
+  SizeType width = std::max(shape_[N] * stride_[N] / padded_height_, static_cast<SizeType>(1));
+  assert(width > 0);
   return TensorView<Type, ContainerType>(data_, height(), width);
 }
 
@@ -1019,7 +1023,7 @@ void Tensor<T, C>::Assign(Tensor const &other)
   else
   {
     if (!(Broadcast(
-            [](const T &x, const T &y, T &z) {
+            [](T const &x, T const &y, T &z) {
               FETCH_UNUSED(x);
               z = y;
             },
@@ -1073,7 +1077,7 @@ typename Tensor<T, C>::Type Tensor<T, C>::At(Indices... indices) const
 {
   assert(sizeof...(indices) == stride_.size());
   SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...);
-  return this->data()[std::move(N)];
+  return this->data()[N];
 }
 
 /**
@@ -1296,32 +1300,7 @@ void Tensor<T, C>::Set(Args... args)
   uint64_t index = TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
   Type     value = TensorSetter<0, Args...>::ValueOf(std::forward<Args>(args)...);
 
-  data_[std::move(index)] = std::move(value);
-}
-
-/**
- * Fill tensor with specified value over pre-specified range
- * @tparam T Type
- * @tparam C Container
- * @param value value to fill tensor with
- * @param range memory range over which to fill
- */
-template <typename T, typename C>
-void Tensor<T, C>::Fill(Type const &value, memory::Range const &range)
-{
-
-  if (range.is_undefined())
-  {
-    Fill(value);
-  }
-  else if (range.is_trivial())
-  {
-    Fill(value, range.ToTrivialRange(this->size()));
-  }
-  else
-  {
-    TODO_FAIL("Support for general range is not implmenented yet");
-  }
+  data_[index] = std::move(value);
 }
 
 /**
@@ -1330,7 +1309,7 @@ void Tensor<T, C>::Fill(Type const &value, memory::Range const &range)
  * @param range
  */
 template <typename T, typename C>
-void Tensor<T, C>::Fill(Type const &value, memory::TrivialRange const &range)
+void Tensor<T, C>::Fill(Type const &value, memory::Range const &range)
 {
   VectorRegisterType val(value);
 
@@ -1348,11 +1327,9 @@ void Tensor<T, C>::Fill(Type const &value)
   {
     x = value;
   }
-  /*
-  TODO: Implement all relevant vector functions
-  VectorRegisterType val(value);
-  this->data().in_parallel().Apply([val](VectorRegisterType &z) { z = val; });
-  */
+  // TODO(?): Implement all relevant vector functions
+  // VectorRegisterType val(value);
+  // this->data().in_parallel().Apply([val](VectorRegisterType &z) { z = val; });
 }
 
 /**
@@ -1426,7 +1403,7 @@ Tensor<T, C> Tensor<T, C>::FillArange(Type const &from, Type const &to)
   Tensor ret;
 
   SizeType N     = this->size();
-  Type     d     = static_cast<Type>(from);
+  auto     d     = static_cast<Type>(from);
   Type     delta = static_cast<Type>(to - from) / static_cast<Type>(N);
   for (SizeType i = 0; i < N; ++i)
   {
@@ -1567,7 +1544,7 @@ SizeType Tensor<T, C>::ComputeIndex(SizeVector const &indices) const
 template <typename T, typename C>
 typename Tensor<T, C>::SizeType Tensor<T, C>::SizeFromShape(SizeVector const &shape)
 {
-  if (shape.size() == 0)
+  if (shape.empty())
   {
     return SizeType{0};
   }
@@ -1577,7 +1554,7 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::SizeFromShape(SizeVector const &sh
 template <typename T, typename C>
 typename Tensor<T, C>::SizeType Tensor<T, C>::PaddedSizeFromShape(SizeVector const &shape)
 {
-  if (shape.size() == 0)
+  if (shape.empty())
   {
     return SizeType{0};
   }
@@ -1651,9 +1628,26 @@ template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Squeeze()
 {
   auto shape = shape_;
-  shape.erase(shape.end() - 1);
-  Reshape(shape);
 
+  bool     not_found = true;
+  SizeType cur_dim   = shape.size() - 1;
+  while (not_found)
+  {
+    if (shape.at(cur_dim) == static_cast<SizeType>(1))
+    {
+      shape.erase(shape.begin() + static_cast<int32_t>(cur_dim));
+      Reshape(shape);
+      not_found = false;
+    }
+    else
+    {
+      if (cur_dim == 0)
+      {
+        throw std::runtime_error("cannot squeeze tensor, no dimensions of size 1");
+      }
+      --cur_dim;
+    }
+  }
   return *this;
 }
 
@@ -2053,7 +2047,7 @@ template <typename T, typename C>
 void Tensor<T, C>::Fmod(Tensor const &x)
 {
   Resize({x.size()});
-  // TODO: Should use iterators
+  // TODO(?): Should use iterators
   fetch::math::Fmod(data_, x.data(), data_);
 }
 
@@ -2334,9 +2328,15 @@ std::string Tensor<T, C>::ToString() const
     {
       for (SizeType j(0); j < shape_[1]; ++j)
       {
-        ss << At(i, j) << ", ";
+        if (j == (shape_[1] - 1))
+        {
+          ss << At(i, j) << ";";
+        }
+        else
+        {
+          ss << At(i, j) << ", ";
+        }
       }
-      ss << "; ";
     }
   }
   else
@@ -2554,7 +2554,7 @@ void Tensor<T, C>::Sort()
  * @param range
  */
 template <typename T, typename C>
-void Tensor<T, C>::Sort(memory::TrivialRange const &range)
+void Tensor<T, C>::Sort(memory::Range const &range)
 {
   std::sort(data_.pointer() + range.from(), data_.pointer() + range.to());
 }
@@ -2735,7 +2735,7 @@ typename Tensor<T, C>::SliceIteratorType Tensor<T, C>::TensorSlice::begin()
 {
   auto ret = SliceIteratorType(this->tensor_, this->range_);
 
-  if (this->axes_.size() == 0)
+  if (this->axes_.empty())
   {
     if (this->axis_ != 0)
     {
@@ -2775,7 +2775,7 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType ind
   std::vector<SizeType> new_axes(this->axes_);
 
   // If new axes are empty, it means that there was single axis
-  if (new_axes.size() == 0)
+  if (new_axes.empty())
   {
     new_axes.push_back(this->axis_);
   }
@@ -2784,9 +2784,10 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType ind
   assert(axis < this->tensor_.shape().size());
   assert(new_axes.size() < this->tensor_.shape().size());
   assert(index < this->tensor_.shape().at(axis));
-  for (SizeType i = 0; i < new_axes.size(); i++)
+  for (SizeType new_axis : new_axes)
   {
-    assert(new_axes.at(i) != axis);
+    FETCH_UNUSED(new_axis);
+    assert(new_axis != axis);
   }
 
   std::vector<SizeVector> new_range(this->range_);
@@ -2865,7 +2866,7 @@ Tensor<T, C> Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
   {
     shape.emplace_back(this->range_[i][1] - this->range_[i][0] / this->range_[i][2]);
   }
-  ::fetch::math::Tensor<T, C> ret{shape};
+  fetch::math::Tensor<T, C> ret{shape};
   ret.Assign(*this);
   return ret;
 }
@@ -2887,7 +2888,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<ST
   std::vector<SizeType> new_axes(axes_);
 
   // If new axes are empty, it means that there was single axis
-  if (axes_.size() == 0)
+  if (axes_.empty())
   {
     new_axes.push_back(axis_);
   }
@@ -2896,9 +2897,10 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<ST
   assert(axis < tensor_.shape().size());
   assert(new_axes.size() < tensor_.shape().size());
   assert(i < tensor_.shape().at(axis));
-  for (SizeType i = 0; i < new_axes.size(); i++)
+  for (SizeType new_axis : new_axes)
   {
-    assert(new_axes.at(i) != axis);
+    FETCH_UNUSED(new_axis);
+    assert(new_axis != axis);
   }
 
   std::vector<SizeVector> new_range(range_);
@@ -2935,7 +2937,7 @@ Tensor<T, C>::TensorSliceImplementation<STensor>::cbegin() const
   auto ret = ConstSliceIteratorType(tensor_, range_);
 
   // axis_ is used when using only one axis
-  if (this->axes_.size() == 0)
+  if (this->axes_.empty())
   {
     if (this->axis_ != 0)
     {

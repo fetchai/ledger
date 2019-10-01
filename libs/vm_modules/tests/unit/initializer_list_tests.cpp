@@ -34,7 +34,7 @@ public:
 
 TEST_F(InitializerListTests, used_in_var_statements)
 {
-  static const char *testCase = R"(
+  static char const *testCase = R"(
     function main()
       var b: Array<Int32> = {4, 5, 6, 7};
       var d: Array<Int32> = {};
@@ -67,24 +67,31 @@ TEST_F(InitializerListTests, used_in_invoke_expressions)
   ASSERT_EQ(stdout.str(), "[0, 1, 314][]");
 }
 
-TEST_F(InitializerListTests, not_inferred)
+TEST_F(InitializerListTests, empty_init_list_fails_type_inference)
 {
-  for (std::string wrong : {"{}", "{1, 2, 3}"})
-  {
-    ASSERT_FALSE(toolkit.Compile((
-                                     R"(
-      function main()
-        var x = )" + wrong + R"(;
-      endfunction
-    )")
-                                     .c_str()))
-        << "This one managed to break through: " << wrong;
-  }
+  auto const TEXT = R"(
+    function main()
+      var x = {};
+    endfunction
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
+}
+
+TEST_F(InitializerListTests, non_empty_init_list_fails_type_inference)
+{
+  auto const TEXT = R"(
+    function main()
+      var x = {1, 2, 3};
+    endfunction
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
 TEST_F(InitializerListTests, always_homogeneous)
 {
-  static const char *testCase = R"(
+  static char const *testCase = R"(
     function main()
       var b: Array<Int32> = {4, 5.6};
     endfunction

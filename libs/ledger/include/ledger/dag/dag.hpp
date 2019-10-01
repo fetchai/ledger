@@ -30,7 +30,6 @@
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/dag/dag_node.hpp"
 #include "ledger/upow/work.hpp"
-#include "network/p2pservice/p2p_service.hpp"
 #include "storage/object_store.hpp"
 
 #include <cstdint>
@@ -44,6 +43,10 @@
 #include <vector>
 
 namespace fetch {
+namespace crypto {
+class Prover;
+}
+
 namespace ledger {
 
 struct DAGTip
@@ -82,7 +85,7 @@ private:
   using DAGTipPtr       = std::shared_ptr<DAGTip>;
   using DAGNodePtr      = std::shared_ptr<DAGNode>;
   using Mutex           = std::recursive_mutex;
-  using CertificatePtr  = p2p::P2PService::CertificatePtr;
+  using CertificatePtr  = std::shared_ptr<crypto::Prover>;
   using DAGTypes        = DAGInterface::DAGTypes;
 
 public:
@@ -169,26 +172,26 @@ private:
   std::set<NodeHash>   missing_;         // node hashes that we know are missing
 
   // Internal functions don't need locking and can recursively call themselves etc.
-  bool       PushInternal(DAGNodePtr node);
-  bool       AlreadySeenInternal(DAGNodePtr node) const;
+  bool       PushInternal(DAGNodePtr const &node);
+  bool       AlreadySeenInternal(DAGNodePtr const &node) const;
   bool       TooOldInternal(uint64_t) const;
-  bool       IsLooseInternal(DAGNodePtr node) const;
-  void       SetReferencesInternal(DAGNodePtr node);
-  void       AdvanceTipsInternal(DAGNodePtr node);
-  bool       HashInPrevEpochsInternal(ConstByteArray hash) const;
-  void       AddLooseNodeInternal(DAGNodePtr node);
-  void       HealLooseBlocksInternal(ConstByteArray added_hash);
+  bool       IsLooseInternal(DAGNodePtr const &node) const;
+  void       SetReferencesInternal(DAGNodePtr const &node);
+  void       AdvanceTipsInternal(DAGNodePtr const &node);
+  bool       HashInPrevEpochsInternal(ConstByteArray const &hash) const;
+  void       AddLooseNodeInternal(DAGNodePtr const &node);
+  void       HealLooseBlocksInternal(ConstByteArray const &added_hash);
   void       UpdateStaleTipsInternal();
-  bool       NodeInvalidInternal(DAGNodePtr node);
-  DAGNodePtr GetDAGNodeInternal(ConstByteArray hash, bool, bool &);  // const
-  void       TraverseFromTips(std::set<ConstByteArray> const &, std::function<void(NodeHash)>,
-                              std::function<bool(NodeHash)>);
-  bool       GetEpochFromStorage(std::string const &, DAGEpoch &);
-  bool       SetEpochInStorage(std::string const &, DAGEpoch const &, bool);
-  void       Flush();
+  bool       NodeInvalidInternal(DAGNodePtr const &node);
+  DAGNodePtr GetDAGNodeInternal(ConstByteArray const &hash, bool, bool &);  // const
+  void TraverseFromTips(std::set<ConstByteArray> const &, std::function<void(NodeHash)> const &,
+                        std::function<bool(NodeHash)> const &);
+  bool GetEpochFromStorage(std::string const &, DAGEpoch &);
+  bool SetEpochInStorage(std::string const &, DAGEpoch const &, bool);
+  void Flush();
 
   void DeleteTip(DAGTipID tip);
-  void DeleteTip(NodeHash hash);
+  void DeleteTip(NodeHash const &hash);
 
   std::string    db_name_;
   CertificatePtr certificate_;

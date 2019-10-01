@@ -32,23 +32,23 @@ namespace consensus {
 class ProofOfWork : public vectorise::UInt<256>
 {
 public:
-  using UInt256     = vectorise::UInt<256>;
-  using header_type = byte_array::ConstByteArray;
+  using UInt256    = vectorise::UInt<256>;
+  using HeaderType = byte_array::ConstByteArray;
 
   // Construction / Destruction
   ProofOfWork() = default;
-  explicit ProofOfWork(header_type header);
+  explicit ProofOfWork(HeaderType header);
   ~ProofOfWork() = default;
 
   bool operator()();
 
   void SetTarget(std::size_t zeros);
   void SetTarget(UInt256 &&target);
-  void SetHeader(byte_array::ByteArray header);
+  void SetHeader(byte_array::ByteArray const &header);
 
-  header_type const &header() const;
-  UInt256 const &    digest() const;
-  UInt256 const &    target() const;
+  HeaderType const &header() const;
+  UInt256 const &   digest() const;
+  UInt256 const &   target() const;
 
 private:
   UInt256                    digest_;

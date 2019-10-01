@@ -129,6 +129,19 @@ macro (setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_METRICS")
   endif (FETCH_ENABLE_METRICS)
 
+  # add the backtrace flat
+  if (FETCH_ENABLE_BACKTRACE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE")
+
+    find_library(DW_LIB dw)
+
+    if (DW_LIB)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE_WITH_DW")
+
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldw -ldl")
+    endif (DW_LIB)
+  endif (FETCH_ENABLE_BACKTRACE)
+
   # allow disabling of colour log file
   if (FETCH_DISABLE_COLOUR_LOG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_DISABLE_COLOUR_LOG_OUTPUT")
@@ -258,6 +271,10 @@ function (configure_vendor_targets)
   message(STATUS "OpenSSL include ${CMAKE_BINARY_DIR}/vendor/openssl/include")
   target_link_libraries(vendor-openssl2 INTERFACE ssl crypto)
   target_include_directories(vendor-openssl2 INTERFACE ${CMAKE_BINARY_DIR}/vendor/openssl/include)
+
+  # Pybind11
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)
+
 
   # Google Test
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)

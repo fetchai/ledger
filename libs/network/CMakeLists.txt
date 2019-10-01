@@ -20,6 +20,7 @@ target_link_libraries(fetch-network
                              fetch-crypto
                              fetch-math
                              fetch-json
+                             fetch-muddle # TODO: remove
                              vendor-asio
                              fetch-logging
                              pthread)

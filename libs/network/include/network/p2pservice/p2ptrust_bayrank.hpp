@@ -37,8 +37,8 @@
 namespace fetch {
 namespace p2p {
 
-using reference_players_type = std::array<math::statistics::Gaussian<double>, 4>;
-extern const reference_players_type reference_players_;
+using ReferencePlayersType = std::array<math::statistics::Gaussian<double>, 4>;
+extern const ReferencePlayersType reference_players_;
 
 inline math::statistics::Gaussian<double> const &LookupReferencePlayer(TrustQuality quality)
 {
@@ -75,7 +75,7 @@ public:
 
   // Construction / Destruction
   P2PTrustBayRank()                           = default;
-  P2PTrustBayRank(const P2PTrustBayRank &rhs) = delete;
+  P2PTrustBayRank(P2PTrustBayRank const &rhs) = delete;
   P2PTrustBayRank(P2PTrustBayRank &&rhs)      = delete;
   ~P2PTrustBayRank() override                 = default;
 
@@ -246,7 +246,7 @@ public:
     return GetTrustRatingOfPeer(peer_ident) > threshold_;
   }
 
-  virtual void Debug() const override
+  void Debug() const override
   {
     FETCH_LOCK(mutex_);
     for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
@@ -258,7 +258,7 @@ public:
   }
 
   // Operators
-  P2PTrustBayRank operator=(const P2PTrustBayRank &rhs) = delete;
+  P2PTrustBayRank operator=(P2PTrustBayRank const &rhs) = delete;
   P2PTrustBayRank operator=(P2PTrustBayRank &&rhs) = delete;
 
 protected:
@@ -313,7 +313,7 @@ protected:
     dirty_ = false;
 
     std::sort(trust_store_.begin(), trust_store_.end(),
-              [](const PeerTrustRating &a, const PeerTrustRating &b) {
+              [](PeerTrustRating const &a, PeerTrustRating const &b) {
                 if (a.score < b.score)
                 {
                   return true;
@@ -322,6 +322,7 @@ protected:
                 {
                   return false;
                 }
+
                 return a.peer_identity < b.peer_identity;
               });
 

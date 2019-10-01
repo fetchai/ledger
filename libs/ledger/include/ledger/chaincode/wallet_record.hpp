@@ -19,15 +19,16 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "ledger/chaincode/deed.hpp"
+#include "logging/logging.hpp"
 
 #include <cstdint>
 #include <map>
 #include <memory>
 
 // TODO(HUT): doesn't putting this here pollute the namespace?
-using fetch::variant::Variant;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
+using fetch::variant::Variant;
 
 namespace fetch {
 namespace ledger {
@@ -58,7 +59,7 @@ using DeedShrdPtr = std::shared_ptr<Deed>;
  *
  * @return true if deserialisation passed successfully, false otherwise.
  */
-bool DeedFromVariant(Variant const &variant_deed, DeedShrdPtr &deed)
+inline bool DeedFromVariant(Variant const &variant_deed, DeedShrdPtr &deed)
 {
   auto const num_of_items_in_deed = variant_deed.size();
   if (num_of_items_in_deed == 1 && variant_deed.Has(ADDRESS_NAME))
@@ -114,6 +115,8 @@ bool DeedFromVariant(Variant const &variant_deed, DeedShrdPtr &deed)
 /* Implements a record to store wallet contents. */
 struct WalletRecord
 {
+  static constexpr char const *LOGGING_NAME = "WalletRecord";
+
   // Map of block number stake will be released on to amount to release
   using CooldownStake = std::map<uint64_t, uint64_t>;
 
@@ -168,6 +171,7 @@ struct WalletRecord
     // Iterate upwards collecting stake
     while (it != cooldown_stake.end() && it != stop_point)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Entity is collecting cooled down stake of value: ", it->second);
       balance += it->second;
       it = cooldown_stake.erase(it);
     }
@@ -180,6 +184,7 @@ namespace serializers {
 template <typename D>
 struct ArraySerializer<ledger::WalletRecord, D>
 {
+
 public:
   // TODO(issue 1426): Change this serializer to map
   using Type       = ledger::WalletRecord;
@@ -188,19 +193,22 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &array_constructor, Type const &b)
   {
-    auto array = array_constructor(b.deed ? 2 : 1);
+    auto array = array_constructor(b.deed ? 4 : 3);
     array.Append(b.balance);
     if (b.deed)
     {
       array.Append(*b.deed);
     }
+
+    array.Append(b.stake);
+    array.Append(b.cooldown_stake);
   }
 
   template <typename ArrayDeserializer>
   static void Deserialize(ArrayDeserializer &array, Type &b)
   {
     array.GetNextValue(b.balance);
-    if (array.size() == 2)
+    if (array.size() == 4)
     {
       if (!b.deed)
       {
@@ -208,6 +216,9 @@ public:
       }
       array.GetNextValue(*b.deed);
     }
+
+    array.GetNextValue(b.stake);
+    array.GetNextValue(b.cooldown_stake);
   }
 };
 }  // namespace serializers

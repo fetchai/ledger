@@ -31,12 +31,11 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "crypto/identity.hpp"
+#include "crypto/key_generator.hpp"
 #include "crypto/prover.hpp"
-#include "key_generator.hpp"
+#include "ledger/shards/manifest.hpp"
 #include "logging/logging.hpp"
 #include "network/adapters.hpp"
-#include "network/p2pservice/manifest.hpp"
-#include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/peer.hpp"
 #include "network/uri.hpp"
 #include "settings.hpp"
@@ -63,19 +62,32 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "main";
 
-using fetch::Settings;
-using fetch::crypto::Prover;
-using fetch::Constellation;
 using fetch::BootstrapMonitor;
+using fetch::Constellation;
+using fetch::Settings;
 using fetch::core::WeakRunnable;
+using fetch::crypto::Prover;
+using fetch::network::Uri;
 
 using BootstrapPtr = std::unique_ptr<BootstrapMonitor>;
 using ProverPtr    = std::shared_ptr<Prover>;
 using NetworkMode  = fetch::Constellation::NetworkMode;
-using UriList      = fetch::Constellation::UriList;
+using UriSet       = fetch::Constellation::UriSet;
+using Uris         = std::vector<Uri>;
 
 std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
 std::atomic<std::size_t>            gInterruptCount{0};
+
+UriSet ToUriSet(Uris const &uris)
+{
+  UriSet s{};
+  for (auto const &uri : uris)
+  {
+    s.emplace(uri);
+  }
+
+  return s;
+}
 
 /**
  * The main interrupt handler for the application
@@ -138,7 +150,7 @@ bool HasVersionFlag(int argc, char **argv)
  * @param uris The initial set of nodes
  * @return The new bootstrap pointer if one exists
  */
-BootstrapPtr CreateBootstrap(Settings const &settings, ProverPtr const &prover, UriList &uris)
+BootstrapPtr CreateBootstrap(Settings const &settings, ProverPtr const &prover, UriSet &uris)
 {
   BootstrapPtr bootstrap{};
 
@@ -211,10 +223,10 @@ int main(int argc, char **argv)
       FETCH_LOG_INFO(LOGGING_NAME, "Input Configuration:\n", settings);
 
       // create and load the main certificate for the bootstrapper
-      auto p2p_key = fetch::GenerateP2PKey();
+      auto p2p_key = fetch::crypto::GenerateP2PKey();
 
       // create the bootrap monitor (if configued to do so)
-      auto initial_peers = settings.peers.value();
+      auto initial_peers = ToUriSet(settings.peers.value());
       auto bootstrap     = CreateBootstrap(settings, p2p_key, initial_peers);
 
       for (auto const &uri : initial_peers)

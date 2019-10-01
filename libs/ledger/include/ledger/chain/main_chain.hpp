@@ -78,12 +78,14 @@ enum class BlockStatus
  */
 constexpr char const *ToString(BlockStatus status);
 
+struct BlockDbRecord;
+
 class MainChain
 {
 public:
   using BlockPtr             = std::shared_ptr<Block const>;
   using Blocks               = std::vector<BlockPtr>;
-  using BlockHash            = Digest;
+  using BlockHash            = Block::Hash;
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
@@ -158,19 +160,7 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
-  struct DbRecord
-  {
-    Block block;
-    // genesis (hopefully) cannot be next hash so is used as undefined value
-    BlockHash next_hash = GENESIS_DIGEST;
-
-    BlockHash hash() const
-    {
-      return block.body.hash;
-    }
-  };
-
-private:
+  using DbRecord      = BlockDbRecord;
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
   using References    = std::unordered_multimap<BlockHash, BlockHash>;
@@ -254,63 +244,7 @@ private:
   telemetry::CounterPtr             bloom_filter_query_count_;
   telemetry::CounterPtr             bloom_filter_positive_count_;
   telemetry::CounterPtr             bloom_filter_false_positive_count_;
-
-  /**
-   * Serializer for the DbRecord
-   *
-   * @tparam T The serializer type
-   * @param serializer The reference to hte serializer
-   * @param dbRecord The reference to the DbRecord to be serialised
-   */
-  template <typename T>
-  friend void Serialize(T &serializer, DbRecord const &dbRecord)
-  {
-    serializer << dbRecord.block << dbRecord.next_hash;
-  }
-
-  /**
-   * Deserializer for the DbRecord
-   *
-   * @tparam T The serializer type
-   * @param serializer The reference to the serializer
-   * @param dbRecord The reference to the output dbRecord to be populated
-   */
-  template <typename T>
-  friend void Deserialize(T &serializer, DbRecord &dbRecord)
-  {
-    serializer >> dbRecord.block >> dbRecord.next_hash;
-  }
 };
 
 }  // namespace ledger
-
-namespace serializers {
-
-template <typename D>
-struct MapSerializer<ledger::MainChain::DbRecord, D>
-{
-public:
-  using Type       = ledger::MainChain::DbRecord;
-  using DriverType = D;
-
-  static uint8_t const BLOCK     = 1;
-  static uint8_t const NEXT_HASH = 2;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &dbRecord)
-  {
-    auto map = map_constructor(2);
-    map.Append(BLOCK, dbRecord.block);
-    map.Append(NEXT_HASH, dbRecord.next_hash);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &dbRecord)
-  {
-    map.ExpectKeyGetValue(BLOCK, dbRecord.block);
-    map.ExpectKeyGetValue(NEXT_HASH, dbRecord.next_hash);
-  }
-};
-}  // namespace serializers
-
 }  // namespace fetch

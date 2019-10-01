@@ -74,7 +74,8 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
 
   // Helpers
-  static bool Parse(ConstByteArray const &input, Address &output);
+  static bool    Parse(ConstByteArray const &input, Address &output);
+  static Address FromMuddleAddress(ConstByteArray const &muddle);
 
   // Construction / Destruction
   Address() = default;
@@ -134,7 +135,7 @@ public:
     uint8_t                    key;
     byte_array::ConstByteArray data;
     map.GetNextKeyPair(key, data);
-    address = Type{data};
+    address = data.empty() ? Type{} : Type{data};
   }
 };
 }  // namespace serializers

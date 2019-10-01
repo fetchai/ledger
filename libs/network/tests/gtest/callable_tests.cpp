@@ -46,7 +46,7 @@ TEST(callable_gtest, basic_test)
   CallableClassMember<Foo, void(int, int, int), 1> &f =
       *((CallableClassMember<Foo, void(int, int, int), 1> *)ac);
 
-  serializer_type args, ret;
+  SerializerType args, ret;
 
   args << int(2) << int(4) << int(3);
   args.seek(0);

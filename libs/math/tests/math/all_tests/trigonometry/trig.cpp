@@ -31,7 +31,7 @@ TYPED_TEST_CASE(TrigTest, MyTypes);
 
 TYPED_TEST(TrigTest, sin)
 {
-  TypeParam val = TypeParam(0.3);
+  auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::Sin(val);
   EXPECT_FLOAT_EQ(float(ret), float(0.29552022));
 
@@ -76,7 +76,7 @@ TYPED_TEST(TrigTest, sin_22)
 
 TYPED_TEST(TrigTest, cos)
 {
-  TypeParam val = TypeParam(0.3);
+  auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::Cos(val);
   EXPECT_FLOAT_EQ(float(ret), float(0.95533651));
 
@@ -121,7 +121,7 @@ TYPED_TEST(TrigTest, cos_22)
 
 TYPED_TEST(TrigTest, tan)
 {
-  TypeParam val = TypeParam(0.3);
+  auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::Tan(val);
   EXPECT_FLOAT_EQ(float(ret), float(0.30933625));
 
@@ -166,7 +166,7 @@ TYPED_TEST(TrigTest, tan_22)
 
 TYPED_TEST(TrigTest, asin)
 {
-  TypeParam val = TypeParam(0.3);
+  auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::ASin(val);
   EXPECT_FLOAT_EQ(float(ret), float(0.30469266));
 
@@ -211,7 +211,7 @@ TYPED_TEST(TrigTest, asin_22)
 
 TYPED_TEST(TrigTest, acos)
 {
-  TypeParam val = TypeParam(0.3);
+  auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::ACos(val);
   EXPECT_FLOAT_EQ(float(ret), float(1.2661037));
 
@@ -256,7 +256,7 @@ TYPED_TEST(TrigTest, acos_22)
 
 TYPED_TEST(TrigTest, atan)
 {
-  TypeParam val = TypeParam(0.3);
+  auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::ATan(val);
   EXPECT_FLOAT_EQ(float(ret), float(0.29145679));
 
@@ -301,7 +301,7 @@ TYPED_TEST(TrigTest, atan_22)
 
 TYPED_TEST(TrigTest, sinh)
 {
-  TypeParam val = TypeParam(0.3);
+  auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::SinH(val);
   EXPECT_FLOAT_EQ(float(ret), float(0.30452031));
 
@@ -346,7 +346,7 @@ TYPED_TEST(TrigTest, sinh_22)
 
 TYPED_TEST(TrigTest, cosh)
 {
-  TypeParam val = TypeParam(0.3);
+  auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::CosH(val);
   EXPECT_FLOAT_EQ(float(ret), float(1.0453385));
 
@@ -391,7 +391,7 @@ TYPED_TEST(TrigTest, cosh_22)
 
 TYPED_TEST(TrigTest, tanh)
 {
-  TypeParam val = TypeParam(0.3);
+  auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::TanH(val);
   EXPECT_FLOAT_EQ(float(ret), float(0.29131263));
 
@@ -436,7 +436,7 @@ TYPED_TEST(TrigTest, tanh_22)
 
 TYPED_TEST(TrigTest, asinh)
 {
-  TypeParam val = TypeParam(0.3);
+  auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::ASinH(val);
   EXPECT_FLOAT_EQ(float(ret), float(0.29567307));
 
@@ -481,7 +481,7 @@ TYPED_TEST(TrigTest, asinh_22)
 
 TYPED_TEST(TrigTest, acosh)
 {
-  TypeParam val = TypeParam(1.1);
+  auto      val = TypeParam(1.1);
   TypeParam ret = fetch::math::ACosH(val);
   EXPECT_FLOAT_EQ(float(ret), float(0.44356832));
 
@@ -526,7 +526,7 @@ TYPED_TEST(TrigTest, acosh_22)
 
 TYPED_TEST(TrigTest, atanh)
 {
-  TypeParam val = TypeParam(0.3);
+  auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::ATanH(val);
   EXPECT_FLOAT_EQ(float(ret), float(0.30951962));
 

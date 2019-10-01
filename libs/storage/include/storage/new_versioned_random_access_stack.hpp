@@ -76,9 +76,9 @@ template <typename T, typename S = RandomAccessStack<T, NewBookmarkHeader>>
 class NewVersionedRandomAccessStack
 {
 private:
-  using stack_type        = S;
-  using header_extra_type = uint64_t;
-  using header_type       = NewBookmarkHeader;
+  using StackType       = S;
+  using HeaderExtraType = uint64_t;
+  using HeaderType      = NewBookmarkHeader;
 
   static constexpr char const *LOGGING_NAME = "NewVersionedRandomAccessStack";
 
@@ -239,7 +239,7 @@ private:
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistoryHeader(uint64_t d)
+    explicit HistoryHeader(uint64_t d)
     {
       // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
@@ -256,8 +256,8 @@ private:
   };
 
 public:
-  using type               = T;
-  using event_handler_type = std::function<void()>;
+  using type             = T;
+  using EventHandlerType = std::function<void()>;
 
   NewVersionedRandomAccessStack()
   {
@@ -276,12 +276,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -309,7 +309,7 @@ public:
    */
   static constexpr bool DirectWrite()
   {
-    return stack_type::DirectWrite();
+    return StackType::DirectWrite();
   }
 
   void Load(std::string const &filename, std::string const &history,
@@ -383,16 +383,16 @@ public:
     stack_.Swap(i, j);
   }
 
-  void SetExtraHeader(header_extra_type const &b)
+  void SetExtraHeader(HeaderExtraType const &b)
   {
-    header_type h = stack_.header_extra();
+    HeaderType h = stack_.header_extra();
     history_.Push(HistoryHeader{h.header}, HistoryHeader::value);
 
     h.header = b;
     stack_.SetExtraHeader(h);
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return stack_.header_extra().header;
   }
@@ -411,8 +411,8 @@ public:
     hash_history_.Push(history_bookmark);
 
     // Update our header with this information (the bookmark index)
-    header_type h = stack_.header_extra();
-    h.bookmark    = internal_bookmark_index_;
+    HeaderType h = stack_.header_extra();
+    h.bookmark   = internal_bookmark_index_;
     stack_.SetExtraHeader(h);
 
     internal_bookmark_index_++;
@@ -525,10 +525,10 @@ private:
   RandomAccessStack<HistoryBookmark> hash_history_;
   uint64_t                           internal_bookmark_index_{0};
 
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
+  EventHandlerType on_file_loaded_;
+  EventHandlerType on_before_flush_;
 
-  stack_type stack_;
+  StackType stack_;
 
   bool RevertBookmark(DefaultKey const &key_to_compare)
   {
@@ -539,8 +539,8 @@ private:
     internal_bookmark_index_ = book.bookmark;
 
     // Update header
-    header_type h = stack_.header_extra();
-    h.bookmark    = internal_bookmark_index_;
+    HeaderType h = stack_.header_extra();
+    h.bookmark   = internal_bookmark_index_;
     stack_.SetExtraHeader(h);
 
     // If we are reverting to a state, we want this bookmark to stay - this
@@ -598,7 +598,7 @@ private:
     HistoryHeader header;
     history_.Top(header);
 
-    header_type h = stack_.header_extra();
+    HeaderType h = stack_.header_extra();
 
     h.header = header.data;
     stack_.SetExtraHeader(h);

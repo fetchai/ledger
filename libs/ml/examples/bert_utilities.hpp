@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/filesystem/read_file_contents.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -25,10 +28,6 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-
-#include "core/filesystem/read_file_contents.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
@@ -36,6 +35,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <utility>
 
 using DataType      = float;
 using TensorType    = fetch::math::Tensor<DataType>;
@@ -64,10 +64,10 @@ struct BERTInterface
   std::vector<std::string> inputs = {"Segment", "Position", "Tokens", "Mask"};
   std::vector<std::string> outputs;
 
-  BERTInterface(BERTConfig const &config)
+  explicit BERTInterface(BERTConfig const &config)
   {
     outputs.emplace_back("norm_embed");
-    for (SizeType i = static_cast<SizeType>(0); i < config.n_encoder_layers; i++)
+    for (SizeType i = 0; i < config.n_encoder_layers; i++)
     {
       outputs.emplace_back("SelfAttentionEncoder_No_" + std::to_string(i));
     }
@@ -131,8 +131,9 @@ std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
                         encoder_outputs);
 }
 
-void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node,
-                   std::vector<TensorType> input_data, TensorType output_data, bool verbose = true)
+void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes,
+                   std::string const &output_node, std::vector<TensorType> input_data,
+                   TensorType output_data, bool verbose = true)
 {
   // Evaluate the model classification performance on a set of test data.
   std::cout << "Starting forward passing for manual evaluation on: " << output_data.shape(1)
@@ -142,7 +143,7 @@ void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::stri
     std::cout << "correct label | guessed label | sample loss" << std::endl;
   }
   DataType total_val_loss  = 0;
-  DataType correct_counter = static_cast<DataType>(0);
+  auto     correct_counter = static_cast<DataType>(0);
   for (SizeType b = 0; b < static_cast<SizeType>(output_data.shape(1)); b++)
   {
     for (SizeType i = 0; i < static_cast<SizeType>(4); i++)
@@ -179,7 +180,7 @@ void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::stri
             << std::endl;
 }
 
-TensorType LoadTensorFromFile(std::string file_name)
+TensorType LoadTensorFromFile(std::string const &file_name)
 {
   std::ifstream weight_file(file_name);
   assert(weight_file.is_open());
@@ -192,8 +193,8 @@ TensorType LoadTensorFromFile(std::string file_name)
 }
 
 void PutWeightInLayerNorm(StateDictType &state_dict, SizeType model_dims,
-                          std::string gamma_file_name, std::string beta_file_name,
-                          std::string gamma_weight_name, std::string beta_weight_name)
+                          std::string const &gamma_file_name, std::string const &beta_file_name,
+                          std::string const &gamma_weight_name, std::string const &beta_weight_name)
 {
   // load embedding layernorm gamma beta weights
   TensorType layernorm_gamma = LoadTensorFromFile(gamma_file_name);
@@ -209,8 +210,9 @@ void PutWeightInLayerNorm(StateDictType &state_dict, SizeType model_dims,
 }
 
 void PutWeightInFullyConnected(StateDictType &state_dict, SizeType in_size, SizeType out_size,
-                               std::string weights_file_name, std::string bias_file_name,
-                               std::string weights_name, std::string bias_name)
+                               std::string const &weights_file_name,
+                               std::string const &bias_file_name, std::string const &weights_name,
+                               std::string const &bias_name)
 {
   // load embedding layernorm gamma beta weights
   TensorType weights = LoadTensorFromFile(weights_file_name);
@@ -225,16 +227,15 @@ void PutWeightInFullyConnected(StateDictType &state_dict, SizeType in_size, Size
   *(state_dict.dict_[bias_name].weights_)    = bias;
 }
 
-void PutWeightInMultiheadAttention(StateDictType &state_dict, SizeType n_heads, SizeType model_dims,
-                                   std::string query_weights_file_name,
-                                   std::string query_bias_file_name,
-                                   std::string key_weights_file_name,
-                                   std::string key_bias_file_name,
-                                   std::string value_weights_file_name,
-                                   std::string value_bias_file_name, std::string query_weights_name,
-                                   std::string query_bias_name, std::string key_weights_name,
-                                   std::string key_bias_name, std::string value_weights_name,
-                                   std::string value_bias_name, std::string mattn_prefix)
+void PutWeightInMultiheadAttention(
+    StateDictType &state_dict, SizeType n_heads, SizeType model_dims,
+    std::string const &query_weights_file_name, std::string const &query_bias_file_name,
+    std::string const &key_weights_file_name, std::string const &key_bias_file_name,
+    std::string const &value_weights_file_name, std::string const &value_bias_file_name,
+    std::string const &query_weights_name, std::string const &query_bias_name,
+    std::string const &key_weights_name, std::string const &key_bias_name,
+    std::string const &value_weights_name, std::string const &value_bias_name,
+    std::string const &mattn_prefix)
 {
   // get weight arrays from file
   TensorType query_weights = LoadTensorFromFile(query_weights_file_name);
@@ -435,11 +436,11 @@ TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes, std::strin
                                 BERTConfig const &config, GraphType g, SizeType batch_size,
                                 bool verbose)
 {
-  std::string segment      = input_nodes[0];
-  std::string position     = input_nodes[1];
-  std::string tokens       = input_nodes[2];
-  std::string mask         = input_nodes[3];
-  std::string layer_output = output_node;
+  std::string segment      = std::move(input_nodes[0]);
+  std::string position     = std::move(input_nodes[1]);
+  std::string tokens       = std::move(input_nodes[2]);
+  std::string mask         = std::move(input_nodes[3]);
+  std::string layer_output = std::move(output_node);
 
   SizeType max_seq_len = config.max_seq_len;
   SizeType seq_len     = 256u;
@@ -491,7 +492,7 @@ TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes, std::strin
   return output;
 }
 
-void SaveGraphToFile(GraphType &g, std::string const file_name)
+void SaveGraphToFile(GraphType &g, std::string const &file_name)
 {
   // start serializing and writing to file
   fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
@@ -508,7 +509,7 @@ void SaveGraphToFile(GraphType &g, std::string const file_name)
   std::cout << "finish writing to file" << std::endl;
 }
 
-GraphType ReadFileToGraph(std::string const file_name)
+GraphType ReadFileToGraph(std::string const &file_name)
 {
   auto cur_time = std::chrono::high_resolution_clock::now();
   // start reading a file and deserializing
@@ -539,7 +540,7 @@ std::vector<TensorType> PrepareTensorForBert(TensorType const &data, BERTConfig 
   // check that data shape is proper for bert input
   if (data.shape().size() != 2 || data.shape(0) != max_seq_len)
   {
-    std::runtime_error("Incorrect data shape for given bert config");
+    throw std::runtime_error("Incorrect data shape for given bert config");
   }
 
   // build segment, mask and pos data for each sentence in the data

@@ -19,6 +19,8 @@
 #include "core/macros.hpp"
 #include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -64,7 +66,7 @@ static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State sta
 namespace fetch {
 namespace ledger {
 
-TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle,
+TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddleEndpoint &muddle,
                                                          ObjectStorePtr    store,
                                                          TxFinderProtocol *tx_finder_protocol,
                                                          TrimCacheCallback trim_cache_callback)
@@ -73,11 +75,14 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
                                                                State::INITIAL)}
   , tx_finder_protocol_(tx_finder_protocol)
   , cfg_{cfg}
-  , muddle_(std::move(muddle))
-  , client_(std::make_shared<Client>("R:TxSync-L" + std::to_string(cfg_.lane_id),
-                                     muddle_->AsEndpoint(), SERVICE_LANE, CHANNEL_RPC))
+  , muddle_(muddle)
+  , client_(std::make_shared<Client>("R:TxSync-L" + std::to_string(cfg_.lane_id), muddle,
+                                     SERVICE_LANE, CHANNEL_RPC))
   , store_(std::move(store))
   , verifier_(*this, cfg_.verification_threads, "TxV-L" + std::to_string(cfg_.lane_id))
+  , stored_transactions_{telemetry::Registry::Instance().CreateCounter(
+        "transaction_store_sync_service_stored_transactions_total",
+        "Total number of all transactions received & stored by TransactionStoreSyncService")}
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &TransactionStoreSyncService::OnInitial);
   state_machine_->RegisterHandler(State::QUERY_OBJECT_COUNTS, this,
@@ -103,17 +108,13 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
 
 TransactionStoreSyncService::~TransactionStoreSyncService()
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": teardown sync service");
-  muddle_->Shutdown();
   client_ = nullptr;
-  muddle_ = nullptr;
   store_  = nullptr;
-  FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": sync service done!");
 }
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnInitial()
 {
-  if (muddle_->AsEndpoint().GetDirectlyConnectedPeers().empty())
+  if (muddle_.GetDirectlyConnectedPeers().empty())
   {
     return State::INITIAL;
   }
@@ -123,7 +124,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnInitial()
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjectCounts()
 {
-  for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
+  for (auto const &connection : muddle_.GetDirectlyConnectedPeers())
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Query objects from: muddle://", connection.ToBase64());
 
@@ -145,14 +146,17 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   {
     max_object_count_ = std::max(max_object_count_, result.promised);
   }
+
   if (counts.failed > 0)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Failed object count promises ",
-                    counts.failed);
+    FETCH_LOG_ERROR(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
+                    "Failed object count promises: ", counts.failed);
   }
+
   if (counts.pending > 0)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still waiting for object counts...");
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still waiting for ", counts.pending,
+                   " object count promises...");
     if (!promise_wait_timeout_.IsDue())
     {
       state_machine_->Delay(std::chrono::milliseconds{20});
@@ -161,8 +165,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
-                     "Still pending object count promises, but limit approached!");
+      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still pending ", counts.pending,
+                     " object count promises, but timeout approached!");
     }
   }
 
@@ -177,14 +181,14 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   }
   else
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
-                    "Expected tx size: ", max_object_count_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
+                   "Expected tx count to sync: ", max_object_count_);
 
-    root_size_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT / 2)) + 1)) + 1;
-
-    for (uint64_t i = 0, end = (1u << root_size_); i < end; ++i)
+    root_size_ = platform::Log2Ceil((max_object_count_ / PULL_LIMIT) + 1) + 1;
+    uint64_t const end{1ull << root_size_};
+    for (uint64_t i = 0; i < end; ++i)
     {
-      roots_to_sync_.push(static_cast<uint8_t>(i));
+      roots_to_sync_.emplace(i);
     }
   }
 
@@ -201,9 +205,10 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
 {
   assert(!roots_to_sync_.empty());
+  auto const orig_num_of_roots{roots_to_sync_.size()};
 
   // sanity check that this is not the case
-  for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
+  for (auto const &connection : muddle_.GetDirectlyConnectedPeers())
   {
     // if there are no further roots to sync then we need to exit
     if (roots_to_sync_.empty())
@@ -216,9 +221,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
     roots_to_sync_.pop();
 
     byte_array::ByteArray transactions_prefix;
-
     transactions_prefix.Resize(std::size_t{ResourceID::RESOURCE_ID_SIZE_IN_BYTES});
-    transactions_prefix[0] = root;
+    *reinterpret_cast<decltype(root) *>(transactions_prefix.char_pointer()) = root;
 
     auto promise = PromiseOfTxList(client_->CallSpecificAddress(
         connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_SUBTREE,
@@ -228,12 +232,12 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
     pending_subtree_.Add(root, promise);
   }
 
-  if (!roots_to_sync_.empty())
-  {
-    return State::QUERY_SUBTREE;
-  }
-
   promise_wait_timeout_.Set(cfg_.promise_wait_timeout);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "QueryingSubtree: requested ",
+                 orig_num_of_roots - roots_to_sync_.size(),
+                 " root(s). Remaining roots to sync: ", roots_to_sync_.size(), " / ",
+                 uint64_t{1ull << root_size_});
 
   return State::RESOLVING_SUBTREE;
 }
@@ -245,8 +249,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
   std::size_t synced_tx{0};
   for (auto &result : pending_subtree_.Get(MAX_SUBTREE_RESOLUTION_PER_CYCLE))
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Got ", result.promised.size(),
-                    " subtree objects!");
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Got ", result.promised.size(),
+                   " subtree objects!");
 
     for (auto &tx : result.promised)
     {
@@ -259,7 +263,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
 
   if (synced_tx)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Incorporated ", synced_tx, " txs");
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Incorporated ", synced_tx, " TXs");
   }
 
   if (counts.failed > 0)
@@ -295,17 +299,19 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
     }
   }
 
-  promise_id_to_roots_.clear();
+  auto retval{State::QUERY_SUBTREE};
 
-  return roots_to_sync_.empty() ? State::QUERY_OBJECTS : State::QUERY_SUBTREE;
+  if (roots_to_sync_.empty())
+  {
+    promise_id_to_roots_.clear();
+    retval = State::QUERY_OBJECTS;
+  }
+
+  return retval;
 }
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
 {
-  if (!fetch_object_wait_timeout_.IsDue())
-  {
-    return State::QUERY_OBJECTS;
-  }
 
   std::vector<ResourceID> rids;
   rids.reserve(TX_FINDER_PROTO_LIMIT);
@@ -316,25 +322,39 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
     rids.push_back(rid);
   }
 
-  for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
+  auto const objects_pull_due{fetch_object_wait_timeout_.IsDue()};
+  if (rids.empty() && !objects_pull_due)
   {
-    if (!rids.empty())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Request for ", rids.size(), " txs");
+    return State::QUERY_OBJECTS;
+  }
 
-      auto promise = PromiseOfTxList(
-          client_->CallSpecificAddress(connection, RPC_TX_STORE_SYNC,
-                                       TransactionStoreSyncProtocol::PULL_SPECIFIC_OBJECTS, rids));
-      pending_objects_.Add(connection, promise);
+  for (auto const &connection : muddle_.GetDirectlyConnectedPeers())
+  {
+    if (objects_pull_due)
+    {
+      auto p1 = PromiseOfTxList(client_->CallSpecificAddress(
+          connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_OBJECTS));
+      pending_objects_.Add(connection, p1);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": Periodically requesting recent TXs");
     }
 
-    auto promise = PromiseOfTxList(client_->CallSpecificAddress(
-        connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_OBJECTS));
-    pending_objects_.Add(connection, promise);
+    if (!rids.empty())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": Explicitly requesting ", rids.size(),
+                     " TXs");
+
+      auto p2 = PromiseOfTxList(
+          client_->CallSpecificAddress(connection, RPC_TX_STORE_SYNC,
+                                       TransactionStoreSyncProtocol::PULL_SPECIFIC_OBJECTS, rids));
+      pending_objects_.Add(connection, p2);
+    }
   }
 
   promise_wait_timeout_.Set(cfg_.promise_wait_timeout);
-  fetch_object_wait_timeout_.Set(cfg_.fetch_object_wait_duration);
+  if (objects_pull_due)
+  {
+    fetch_object_wait_timeout_.Set(cfg_.fetch_object_wait_duration);
+  }
 
   is_ready_ = true;
 
@@ -350,7 +370,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   {
     if (!result.promised.empty())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Got ", result.promised.size(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": Got ", result.promised.size(),
                       " objects!");
     }
 
@@ -363,7 +383,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
   if (synced_tx)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, " Pulled ", synced_tx, " txs");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, " Synchronised ", synced_tx,
+                    " requested txs");
   }
 
   if (counts.pending > 0)
@@ -373,7 +394,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
       return State::RESOLVING_OBJECTS;
     }
     FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
-                   "Still pending object promises but limit approached!");
+                   "Still pending object promises but timeout approached!");
   }
 
   if (counts.failed)
@@ -404,6 +425,7 @@ void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
                     tx->contract_digest().display(), ')');
 
     store_->Set(rid, *tx, true);
+    stored_transactions_->increment();
   }
 }
 

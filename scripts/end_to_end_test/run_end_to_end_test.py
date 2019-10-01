@@ -22,6 +22,7 @@ import shutil
 import traceback
 import time
 import pickle
+import codecs
 import subprocess
 from threading import Event
 from pathlib import Path
@@ -118,6 +119,9 @@ class TestInstance():
         # To avoid possible collisions, prepend output files with the date
         self._random_identifer = '{0:%Y_%m_%d_%H_%M_%S}'.format(
             datetime.datetime.now())
+
+        self._random_identifer = "default"
+
         self._workspace = os.path.join(
             build_directory, 'end_to_end_test_{}'.format(
                 self._random_identifer))
@@ -159,8 +163,9 @@ class TestInstance():
             clear_path=False
         )
 
-        # Possibly soon to be depreciated functionality - set the block interval
-        instance._block_interval = self._block_interval
+        # Possibly soon to be deprecated functionality - set the block interval
+        instance.block_interval = self._block_interval
+        instance.feature_flags = ['synergetic']
 
         # configure the lanes and slices
         instance.lanes = self._lanes
@@ -228,20 +233,21 @@ class TestInstance():
                 # Copy the keyfile from its location to the node's cwd
                 shutil.copy(key_path, node.root+"/p2p.key")
 
-        stake_gen = os.path.abspath("./scripts/generate-initial-state.py")
+        stake_gen = os.path.abspath("./scripts/generate-genesis-file.py")
         verify_file(stake_gen)
 
         # Create a stake file into the logging directory for all nodes
-        snapshot_location = self._workspace+"/snapshot.json"
-        cmd = [stake_gen, *nodes_mining_identities, "-t",
-               str(len(nodes_mining_identities) - 1), "-o", snapshot_location]
+        # Importantly, set the time to start
+        genesis_file_location = self._workspace+"/genesis_file.json"
+        cmd = [stake_gen, *nodes_mining_identities,
+               "-o", genesis_file_location, "-w", "10"]
 
         # After giving the relevant nodes identities, make a stake file
         exit_code = subprocess.call(cmd)
 
         # Give all nodes this stake file, plus append POS flag for when node starts
         for index in range(self._number_of_nodes):
-            shutil.copy(snapshot_location, self._nodes[index].root)
+            shutil.copy(genesis_file_location, self._nodes[index].root)
             self._nodes[index].append_to_cmd(["-pos", "-private-network", ])
 
     def restart_node(self, index):
@@ -295,17 +301,18 @@ class TestInstance():
                 self._nodes[index].append_to_cmd(["-private-network", ])
             self.start_node(index)
 
-        time.sleep(2)  # TODO(HUT): blocking http call to node for ready state
+        time.sleep(5)  # TODO(HUT): blocking http call to node for ready state
 
         if(self._pos_mode):
             output("POS mode. sleep extra time.")
-            time.sleep(10)
+            time.sleep(5)
 
     def stop(self):
         if self._nodes:
             for n, node in enumerate(self._nodes):
                 print('Stopping Node {}...'.format(n))
-                node.stop()
+                if(node):
+                    node.stop()
                 print('Stopping Node {}...complete'.format(n))
 
         if self._watchdog:
@@ -395,7 +402,7 @@ def setup_test(test_yaml, test_instance):
         output(
             "***** Shutting down test due to failure!. Debug YAML: {} *****\n".format(test_yaml))
         test_instance.stop()
-        test_instance.dump_debug()
+        # test_instance.dump_debug()
         os._exit(1)
 
     watchdog = TimerWatchdog(
@@ -516,17 +523,36 @@ def verify_txs(parameters, test_instance):
         # Verify TXs - will block until they have executed
         for tx, identity, balance in tx_and_identity:
 
+            error_message = ""
+
             # Check TX has executed, unless we expect it should already have been mined
             while True:
                 status = api.tx.status(tx)
 
                 if status == "Executed" or expect_mined:
                     output("found executed TX")
-                    break
+                    error_message = ""
+
+                    # There is an unavoidable race that can cause you to see a balance of 0
+                    # since the TX hasn't changed the state yet
+                    if api.tokens.balance(identity) == 0 and balance is not 0:
+                        output(
+                            f"Note: found a balance of 0 when expecting {balance}. Retrying.")
+                        pass
+                    else:
+                        break
+
+                tx_b64 = codecs.encode(codecs.decode(
+                    tx, 'hex'), 'base64').decode()
+
+                next_error_message = "Waiting for TX to get executed (node {}). Found: {} Tx: {}".format(
+                    node_index, status, tx_b64)
 
                 time.sleep(0.5)
-                output("Waiting for TX to get executed (node {}). Found: {}".format(
-                    node_index, status))
+
+                if next_error_message != error_message:
+                    output(next_error_message)
+                    error_message = next_error_message
 
             seen_balance = api.tokens.balance(identity)
             if balance != seen_balance:
@@ -540,12 +566,58 @@ def verify_txs(parameters, test_instance):
         output("Verified balances for node: {}".format(node_index))
 
 
+def get_nodes_private_key(test_instance, index):
+    # Path to config files (should already be generated)
+    expected_ouptut_dir = os.path.abspath(
+        os.path.dirname(test_instance._yaml_file)+"/input_files")
+
+    key_path = expected_ouptut_dir+"/{}.key".format(index)
+    verify_file(key_path)
+
+    private_key = open(key_path, "rb").read(32)
+
+    return private_key
+
+
+def destake(parameters, test_instance):
+
+    nodes = parameters["nodes"]
+
+    for node_index in nodes:
+        node_host = "localhost"
+        node_port = test_instance._nodes[node_index]._port_start
+
+        # create the API objects we use to interface with the nodes
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+
+        current_stake = api.tokens.stake(entity)
+
+        output(f'Destaking node {node_index}. Current stake: ', current_stake)
+        output(
+            f'Destaking node {node_index}. Current balance: ', api.tokens.balance(entity))
+
+        api.sync(api.tokens.add_stake(entity, 1, 500))
+        api.sync(api.tokens.de_stake(entity, current_stake, 500))
+        api.sync(api.tokens.collect_stake(entity, 500))
+
+        output(f'Destaked node {node_index}. Current stake: ', current_stake)
+        output(
+            f'Destaked node {node_index}. Current balance: ', api.tokens.balance(entity))
+        output(f'Destaked node {node_index}. Current cooldown stake: ',
+               api.tokens.stake_cooldown(entity))
+
+
 def restart_nodes(parameters, test_instance):
 
     nodes = parameters["nodes"]
 
     for node_index in nodes:
         test_instance.restart_node(node_index)
+
+    time.sleep(5)
 
 
 def add_node(parameters, test_instance):
@@ -590,6 +662,8 @@ def run_steps(test_yaml, test_instance):
             run_python_test(parameters, test_instance)
         elif command == 'restart_nodes':
             restart_nodes(parameters, test_instance)
+        elif command == 'destake':
+            destake(parameters, test_instance)
         else:
             output(
                 "Found unknown command when running steps: '{}'".format(
@@ -631,7 +705,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
             print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
             traceback.print_exc()
             test_instance.stop()
-            test_instance.dump_debug()
+            # test_instance.dump_debug()
             sys.exit(1)
 
     output("\nAll end to end tests have passed")

@@ -44,8 +44,8 @@ using fetch::byte_array::FromBase64;
 template <typename T>
 Ptr<Array<T>> CreateNewPrimitiveArray(VM *vm, std::vector<T> &&items)
 {
-  Ptr<Array<T>> array =
-      new Array<T>(vm, vm->GetTypeId<IArray>(), vm->GetTypeId<T>(), int32_t(items.size()));
+  Ptr<Array<T>> array{
+      new Array<T>(vm, vm->GetTypeId<IArray>(), vm->GetTypeId<T>(), int32_t(items.size()))};
   array->elements = std::move(items);
 
   return array;
@@ -92,7 +92,7 @@ void StructuredData::Bind(Module &module)
 
 Ptr<StructuredData> StructuredData::Constructor(VM *vm, TypeId type_id)
 {
-  return new StructuredData(vm, type_id);
+  return Ptr<StructuredData>{new StructuredData(vm, type_id)};
 }
 
 vm::Ptr<StructuredData> StructuredData::ConstructorFromVariant(vm::VM *vm, vm::TypeId type_id,
@@ -231,7 +231,7 @@ Ptr<String> StructuredData::GetString(Ptr<String> const &s)
     vm_->RuntimeError(e.what());
   }
 
-  return new String(vm_, ret);
+  return Ptr<String>{new String(vm_, ret)};
 }
 
 template <typename T>

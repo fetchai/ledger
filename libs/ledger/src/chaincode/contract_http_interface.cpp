@@ -37,18 +37,16 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 
 namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::ledger::FromJsonTransaction;
+using fetch::variant::Variant;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
 ConstByteArray const CONTRACT_NAME_SEPARATOR(".");
@@ -271,7 +269,7 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
  * @return The appropriate HTTPResponse to be returned to the client
  */
 http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const &request,
-                                                        ConstByteArray           expected_contract)
+                                                        ConstByteArray const &   expected_contract)
 {
   Variant json = Variant::Object();
 
@@ -431,7 +429,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitBulkTx(
  */
 void ContractHttpInterface::RecordTransaction(SubmitTxStatus const &   status,
                                               http::HTTPRequest const &request,
-                                              ConstByteArray           expected_contract)
+                                              ConstByteArray const &   expected_contract)
 {
   // form the variant
   Variant entry      = Variant::Object();

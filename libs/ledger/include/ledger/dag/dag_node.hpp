@@ -66,6 +66,7 @@ struct DAGNode
   DigestList       previous;            ///< previous nodes.
   ConstByteArray   contents;            ///< payload to be deserialised.
   Digest           contract_digest;     ///< The contract which this node is associated with.
+  Address          contract_address;    ///< The address of the associated contract
   crypto::Identity identity;            ///< identity of the creator
 
   /// Serialisable entries to verify state
@@ -102,8 +103,8 @@ struct DAGNode
   {
     serializers::MsgPackSerializer buf;
 
-    buf << type << previous << contents << contract_digest << identity << hash << signature
-        << oldest_epoch_referenced << weight;
+    buf << type << previous << contents << contract_digest << contract_address << identity << hash
+        << signature << oldest_epoch_referenced << weight;
 
     HasherType hasher;
     hasher.Reset();
@@ -170,20 +171,22 @@ public:
   static uint8_t const PREVIOUS                = 2;
   static uint8_t const CONTENTS                = 3;
   static uint8_t const CONTRACT_DIGEST         = 4;
-  static uint8_t const IDENTITY                = 5;
-  static uint8_t const HASH                    = 6;
-  static uint8_t const SIGNATURE               = 7;
-  static uint8_t const OLDEST_EPOCH_REFERENCED = 8;
-  static uint8_t const WEIGHT                  = 9;
+  static uint8_t const CONTRACT_ADDRESS        = 5;
+  static uint8_t const IDENTITY                = 6;
+  static uint8_t const HASH                    = 7;
+  static uint8_t const SIGNATURE               = 8;
+  static uint8_t const OLDEST_EPOCH_REFERENCED = 9;
+  static uint8_t const WEIGHT                  = 10;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &node)
   {
-    auto map = map_constructor(9);
+    auto map = map_constructor(10);
     map.Append(TYPE, node.type);
     map.Append(PREVIOUS, node.previous);
     map.Append(CONTENTS, node.contents);
     map.Append(CONTRACT_DIGEST, node.contract_digest);
+    map.Append(CONTRACT_ADDRESS, node.contract_address);
     map.Append(IDENTITY, node.identity);
     map.Append(HASH, node.hash);
     map.Append(SIGNATURE, node.signature);
@@ -198,6 +201,7 @@ public:
     map.ExpectKeyGetValue(PREVIOUS, node.previous);
     map.ExpectKeyGetValue(CONTENTS, node.contents);
     map.ExpectKeyGetValue(CONTRACT_DIGEST, node.contract_digest);
+    map.ExpectKeyGetValue(CONTRACT_ADDRESS, node.contract_address);
     map.ExpectKeyGetValue(IDENTITY, node.identity);
     map.ExpectKeyGetValue(HASH, node.hash);
     map.ExpectKeyGetValue(SIGNATURE, node.signature);

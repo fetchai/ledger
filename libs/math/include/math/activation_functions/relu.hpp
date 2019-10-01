@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/comparison.hpp"
+#include "vectorise/math/max.hpp"
 
 #include <cassert>
 
@@ -40,7 +40,7 @@ void Relu(ArrayType const &t, ArrayType &ret)
   auto rit = ret.begin();
   while (it.is_valid())
   {
-    *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
+    *rit = fetch::vectorise::Max(*it, typename ArrayType::Type(0));
     ++it;
     ++rit;
   }

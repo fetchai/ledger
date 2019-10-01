@@ -306,14 +306,13 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 
     switch (tx.contract_mode())
     {
+    case ContractMode::SYNERGETIC:
     case ContractMode::PRESENT:
       buffer.Append(Encode(tx.contract_digest()), Encode(tx.contract_address()));
       break;
     case ContractMode::CHAIN_CODE:
       buffer.Append(Encode(tx.chain_code()));
       break;
-    case ContractMode::SYNERGETIC:
-      buffer.Append(Encode(tx.contract_digest()));
     case ContractMode::NOT_PRESENT:
       break;
     }
@@ -511,11 +510,11 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     }
     else if (SYNERGETIC_PRESENT == contract_type)
     {
-      tx.contract_mode_    = Transaction::ContractMode::SYNERGETIC;
-      tx.chain_code_       = ConstByteArray{};
-      tx.contract_address_ = Address{};
+      tx.contract_mode_ = Transaction::ContractMode::SYNERGETIC;
+      tx.chain_code_    = ConstByteArray{};
 
       Decode(buffer, tx.contract_digest_);
+      Decode(buffer, tx.contract_address_);
     }
 
     // extract the data and actions

@@ -99,12 +99,12 @@ union Primitive
     f64 = value;
   }
 
-  void Set(fixed_point::fp32_t value) noexcept
+  void Set(fixed_point::fp32_t const &value) noexcept
   {
     i32 = value.Data();
   }
 
-  void Set(fixed_point::fp64_t value) noexcept
+  void Set(fixed_point::fp64_t const &value) noexcept
   {
     i64 = value.Data();
   }

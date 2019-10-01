@@ -157,7 +157,7 @@ public:
 
   bool AddSingle(Variant parameter)
   {
-    // TODO: Probably should make a deep copy
+    // TODO(1669): Probably should make a deep copy
 
     params_.push_back(std::move(parameter));
     return true;
@@ -248,7 +248,6 @@ public:
   template <typename... Ts>
   bool Execute(Executable const &executable, std::string const &name, std::string &error,
                Variant &output, Ts const &... parameters)
-
   {
     ParameterPack parameter_pack{registered_types_};
 
@@ -332,7 +331,7 @@ public:
   template <typename T, typename... Ts>
   Ptr<T> CreateNewObject(Ts &&... args)
   {
-    return new T(this, GetTypeId<T>(), std::forward<Ts>(args)...);
+    return Ptr<T>{new T(this, GetTypeId<T>(), std::forward<Ts>(args)...)};
   }
 
   void SetIOObserver(IoObserverInterface &observer)
@@ -474,7 +473,7 @@ public:
     if (it == deserialization_constructors_.end())
     {
       RuntimeError("object is not default constructible.");
-      return nullptr;
+      return {};
     }
 
     auto &constructor = it->second;
@@ -497,7 +496,7 @@ public:
   };
 
   ChargeAmount GetChargeTotal() const;
-  void         IncreaseChargeTotal(ChargeAmount const amount);
+  void         IncreaseChargeTotal(ChargeAmount amount);
   ChargeAmount GetChargeLimit() const;
   void         SetChargeLimit(ChargeAmount limit);
 
@@ -1212,15 +1211,15 @@ private:
     }
     case TypeIds::Fixed32:
     {
-      fixed_point::fp32_t *lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
-      fixed_point::fp32_t  rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      auto *              lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
       Op::Apply(this, *lhsv_fp32, rhsv_fp32);
       break;
     }
     case TypeIds::Fixed64:
     {
-      fixed_point::fp64_t *lhsv_fp64 = reinterpret_cast<fixed_point::fp64_t *>(&lhsv);
-      fixed_point::fp64_t  rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      auto *              lhsv_fp64 = reinterpret_cast<fixed_point::fp64_t *>(&lhsv);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
       Op::Apply(this, *lhsv_fp64, rhsv_fp64);
       break;
     }
@@ -1340,15 +1339,15 @@ private:
     }
     case TypeIds::Fixed32:
     {
-      fixed_point::fp32_t *lhs_fp32  = reinterpret_cast<fixed_point::fp32_t *>(lhs);
-      fixed_point::fp32_t  rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      auto *              lhs_fp32  = reinterpret_cast<fixed_point::fp32_t *>(lhs);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
       Op::Apply(this, *lhs_fp32, rhsv_fp32);
       break;
     }
     case TypeIds::Fixed64:
     {
-      fixed_point::fp64_t *lhs_fp64  = reinterpret_cast<fixed_point::fp64_t *>(lhs);
-      fixed_point::fp64_t  rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      auto *              lhs_fp64  = reinterpret_cast<fixed_point::fp64_t *>(lhs);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
       Op::Apply(this, *lhs_fp64, rhsv_fp64);
       break;
     }

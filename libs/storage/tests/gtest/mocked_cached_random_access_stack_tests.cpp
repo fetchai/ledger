@@ -40,12 +40,10 @@ class MockStack
 {
 
 public:
-  MockStack()
-  {}
-  MockStack(const MockStack & /*mock_obj*/)
-  {}
-  ~MockStack()
-  {}
+  MockStack()                  = default;
+  MockStack(MockStack const &) = default;
+  ~MockStack()                 = default;
+
   MOCK_CONST_METHOD0_T(is_open, bool());
   MOCK_METHOD0_T(Clear, void());
   MOCK_METHOD1_T(Flush, void(bool));

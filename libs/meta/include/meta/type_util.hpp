@@ -23,110 +23,86 @@
 namespace fetch {
 namespace type_util {
 
-template <class... Ts>
+template <typename... Ts>
 struct Conjunction;
 
-template <class... Ts>
+template <typename... Ts>
 static constexpr auto ConjunctionV = Conjunction<Ts...>::value;
 
-template <class T, class... Ts>
+template <typename T, typename... Ts>
 struct Conjunction<T, Ts...>
 {
-  enum : bool
-  {
-    value = T::value && ConjunctionV<Ts...>
-  };
+  static constexpr bool value = T::value && ConjunctionV<Ts...>;
 };
 
 template <>
 struct Conjunction<>
 {
-  enum : bool
-  {
-    value = true
-  };
+  static constexpr bool value = true;
 };
 
-template <template <class...> class F, class... Ts>
+template <template <typename...> class F, typename... Ts>
 using All = Conjunction<F<Ts>...>;
 
-template <template <class...> class F, class... Ts>
+template <template <typename...> class F, typename... Ts>
 static constexpr auto AllV = All<F, Ts...>::value;
 
-template <class... Ts>
+template <typename... Ts>
 struct Disjunction;
 
-template <class... Ts>
+template <typename... Ts>
 static constexpr auto DisjunctionV = Disjunction<Ts...>::value;
 
-template <class T, class... Ts>
+template <typename T, typename... Ts>
 struct Disjunction<T, Ts...>
 {
-  enum : bool
-  {
-    value = T::value || DisjunctionV<Ts...>
-  };
+  static constexpr bool value = T::value || DisjunctionV<Ts...>;
 };
 
 template <>
 struct Disjunction<>
 {
-  enum : bool
-  {
-    value = false
-  };
+  static constexpr bool value = false;
 };
 
-template <template <class...> class F, class... Ts>
+template <template <typename...> class F, typename... Ts>
 using Any = Disjunction<F<Ts>...>;
 
-template <template <class...> class F, class... Ts>
-static constexpr auto AnyV = Any<F, Ts...>::value;
-
-template <template <class...> class F, class... Prefix>
+template <template <typename...> class F, typename... Prefix>
 struct Bind
 {
-  template <class... Args>
+  template <typename... Args>
   using type = F<Prefix..., Args...>;
 };
 
-template <class T, class... Ts>
+template <typename T, typename... Ts>
 using IsAnyOf = Any<Bind<std::is_same, T>::template type, Ts...>;
 
-template <class T, class... Ts>
+template <typename T, typename... Ts>
 static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
 
-template <class T, template <class...> class Predicate>
-using Satisfies = Predicate<T>;
-
-template <class T, template <class...> class Predicate>
-static constexpr bool SatisfiesV = Satisfies<T, Predicate>::value;
-
-template <class T, template <class...> class... Predicates>
+template <typename T, template <typename...> class... Predicates>
 using SatisfiesAll = Conjunction<Predicates<T>...>;
 
-template <class T, template <class...> class... Predicates>
+template <typename T, template <typename...> class... Predicates>
 static constexpr bool SatisfiesAllV = SatisfiesAll<T, Predicates...>::value;
 
-template <class F, class... Args>
+template <typename F, typename... Args>
 struct IsNothrowInvocable
 {
-  enum : bool
-  {
-    value = noexcept(std::declval<F>()(std::declval<Args>()...))
-  };
+  static constexpr bool value = noexcept(std::declval<F>()(std::declval<Args>()...));
 };
 
-template <class F, class... Args>
+template <typename F, typename... Args>
 static constexpr auto IsNothrowInvocableV = IsNothrowInvocable<F, Args...>::value;
 
-template <class F, class... Args>
+template <typename F, typename... Args>
 struct InvokeResult
 {
   using type = decltype(std::declval<F>()(std::declval<Args>()...));
 };
 
-template <class F, class... Args>
+template <typename F, typename... Args>
 using InvokeResultT = typename InvokeResult<F, Args...>::type;
 
 }  // namespace type_util

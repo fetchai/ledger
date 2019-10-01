@@ -101,8 +101,6 @@ public:
     return inputs.at(0)->shape();
   }
 
-  std::vector<SizeType> axes_;
-
   static constexpr OpType OpCode()
   {
     return OpType::OP_ADD;
@@ -111,6 +109,8 @@ public:
   static constexpr char const *DESCRIPTOR = "Add";
 
 private:
+  std::vector<SizeType> axes_;
+
   void UpdateAxes(VecTensorType const &inputs)
   {
     bool axes_changed = false;
@@ -130,7 +130,7 @@ private:
       }
     }
 
-    if (axes_.size() == 0)
+    if (axes_.empty())
     {
       axes_changed = true;
     }

@@ -45,8 +45,8 @@ public:
 
   TensorIterator(TensorIterator const &other) = default;
   TensorIterator &operator=(TensorIterator const &other) = default;
-  TensorIterator(TensorIterator &&other)                 = default;
-  TensorIterator &operator=(TensorIterator &&other) = default;
+  TensorIterator(TensorIterator &&other) noexcept        = default;
+  TensorIterator &operator=(TensorIterator &&other) noexcept = default;
 
   /**
    * identifies whether the iterator is still valid or has finished iterating
@@ -61,7 +61,7 @@ public:
    * same as is_valid
    * @return
    */
-  operator bool() const
+  explicit operator bool() const
   {
     return is_valid();
   }

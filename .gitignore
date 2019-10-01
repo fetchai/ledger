@@ -1,6 +1,7 @@
 # Build Output
 /*build*/
 *.pyc
+*.egg-info/
 *.key
 info.txt
 *.db

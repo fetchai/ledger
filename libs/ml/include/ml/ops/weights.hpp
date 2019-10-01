@@ -18,10 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
-#include "ml/ops/placeholder.hpp"
-#include "ml/ops/trainable.hpp"
-#include "ml/regularisers/regularisation.hpp"
-#include "ml/regularisers/regulariser.hpp"
+#include "ml/ops/variable.hpp"
 #include "ml/state_dict.hpp"
 
 #include <cassert>
@@ -52,71 +49,34 @@ enum class WeightsInitialisation
 };
 
 template <class T>
-class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
+class Weights : public fetch::ml::ops::Variable<T>
 {
 public:
   using TensorType     = T;
   using SizeType       = typename TensorType::SizeType;
   using DataType       = typename TensorType::Type;
   using ArrayPtrType   = std::shared_ptr<TensorType>;
-  using VecTensorType  = typename PlaceHolder<T>::VecTensorType;
+  using VecTensorType  = typename Variable<T>::VecTensorType;
   using SPType         = OpWeightsSaveableParams<TensorType>;
   using WeightsPtrType = typename std::shared_ptr<Weights<TensorType>>;
-
-protected:
-  ArrayPtrType gradient_accumulation_;
 
 public:
   Weights() = default;
 
   explicit Weights(SPType const &sp)
-    : PlaceHolder<T>(sp)
-  {
-    if (sp.output)
-    {
-      this->output_ = std::make_shared<TensorType>(sp.output->Copy());
-    }
-
-    if (sp.gradient_accumulation)
-    {
-      gradient_accumulation_ = std::make_shared<TensorType>(sp.gradient_accumulation->Copy());
-    }
-
-    this->SetRegularisation(
-        fetch::ml::details::CreateRegulariser<TensorType>(sp.regularisation_type),
-        sp.regularisation_rate);
-  }
+    : Variable<T>(sp)
+  {}
 
   ~Weights() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     auto sp   = std::make_shared<SPType>();
-    auto p_sp = PlaceHolder<T>::GetOpSaveableParams();
+    auto p_sp = Variable<T>::GetOpSaveableParams();
 
-    auto cast_sp = std::static_pointer_cast<OpPlaceholderSaveableParams<TensorType>>(sp);
-    *cast_sp     = *(std::static_pointer_cast<OpPlaceholderSaveableParams<TensorType>>(p_sp));
+    auto cast_sp = std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(sp);
+    *cast_sp     = *(std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(p_sp));
 
-    if (this->output_)
-    {
-      sp->output = std::make_shared<TensorType>(this->output_->Copy());
-    }
-
-    if (gradient_accumulation_)
-    {
-      sp->gradient_accumulation = std::make_shared<TensorType>(gradient_accumulation_->Copy());
-    }
-
-    if (this->regulariser_)
-    {
-      sp->regularisation_type = this->regulariser_->reg_type;
-    }
-    else
-    {
-      sp->regularisation_type = RegularisationType::NONE;
-    }
-
-    sp->regularisation_rate = this->regularisation_rate_;
     return sp;
   }
 
@@ -127,60 +87,6 @@ public:
     return me;
   }
 
-  ArrayPtrType GetShareableWeights()
-  {
-    return this->output_;
-  }
-
-  std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    FETCH_UNUSED(inputs);
-    assert(inputs.empty());
-
-    gradient_accumulation_->InlineAdd(error_signal);
-
-    return {};
-  }
-
-  void AddToGradient(TensorType const &extern_grad)
-  {
-    gradient_accumulation_->InlineAdd(extern_grad);
-  }
-
-  bool SetData(TensorType const &data) override
-  {
-    bool shape_changed = PlaceHolder<T>::SetData(data);
-    if (shape_changed)
-    {
-      gradient_accumulation_ = std::make_shared<TensorType>(this->output_->shape());
-      return true;
-    }
-    return false;
-  }
-
-  void ApplyGradient(TensorType const &grad) override
-  {
-    this->output_->InlineAdd(grad);
-    ResetGradients();
-  }
-
-  /**
-   * Set all gradient values to 0
-   */
-  void ResetGradients() override
-  {
-    gradient_accumulation_->Fill(typename T::Type(0));
-  }
-
-  void ApplyRegularisation() override
-  {
-    if (this->regulariser_)
-    {
-      this->regulariser_->ApplyRegularisation(*this->output_, this->regularisation_rate_);
-    }
-  }
-
   /**
    * constructs a state dictionary used for exporting/saving weights
    * @return
@@ -188,7 +94,7 @@ public:
   struct fetch::ml::StateDict<T> StateDict() const override
   {
     struct fetch::ml::StateDict<T> d;
-    d.weights_ = this->output_;
+    d.weights_ = this->data_;
     return d;
   }
 
@@ -200,7 +106,7 @@ public:
   LoadStateDict(struct fetch::ml::StateDict<T> const &dict) override
   {
     assert(dict.dict_.empty());
-    SetData(*dict.weights_);
+    this->SetData(*dict.weights_);
   }
 
   /**
@@ -290,18 +196,19 @@ public:
       throw;
     }
   }
+
   /**
    * exports the weight values Array
    * @return const reference to internal values Array
    */
-  TensorType const &get_weights() const override
+  TensorType const &GetWeights() const override
   {
-    return *this->output_;
+    return *this->data_;
   }
 
-  void SetWeights(TensorType &new_value) override
+  void SetWeights(TensorType const &new_value) override
   {
-    this->output_->Assign(new_value);
+    this->data_->Assign(new_value);
   }
 
   /**
@@ -339,13 +246,13 @@ private:
   {
     // TODO (665) this is a uniform distribution; in principle we should be using a guassian
     // distribution instead we use a unifrom from -std dev -> + std dev
-    fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
+    fetch::random::LaggedFibonacciGenerator<> lfg(seed);
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg_.AsDouble();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsDouble();  // random value in range 0 <-> 1
       ran_val -= 0.5;
       ran_val *= 2.0;                 // random value in range -1 <-> +1
       ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
@@ -360,13 +267,13 @@ private:
   {
     // TODO (#1562) this is based on uniform random generator, and it should be set to default
     // weight initialization method distribution instead we use a unifrom from -std dev -> + std dev
-    fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
+    fetch::random::LaggedFibonacciGenerator<> lfg(seed);
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg_.AsDouble();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsDouble();  // random value in range 0 <-> 1
       ran_val -= 0.5;
       ran_val *= 2.0;                 // random value in range -1 <-> +1
       ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
@@ -380,13 +287,9 @@ private:
 }  // namespace ops
 
 template <class TensorType>
-struct OpWeightsSaveableParams : public OpPlaceholderSaveableParams<TensorType>
+struct OpWeightsSaveableParams : public OpVariableSaveableParams<TensorType>
 {
-  fetch::ml::OpType           op_type = OpType::OP_WEIGHTS;
-  std::shared_ptr<TensorType> output;
-  std::shared_ptr<TensorType> gradient_accumulation;
-  RegularisationType          regularisation_type;
-  typename TensorType::Type   regularisation_rate;
+  fetch::ml::OpType op_type = OpType::OP_WEIGHTS;
 };
 
 }  // namespace ml

@@ -22,6 +22,7 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
+#include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/training_pair.hpp"
@@ -53,7 +54,7 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id)
   : Object(vm, type_id)
 {}
 
-VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode)
+VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, Ptr<String> const &mode)
   : Object(vm, type_id)
 {
   if (mode->str == "tensor")
@@ -69,7 +70,7 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::Str
   else if (mode->str == "mnist")
   {
     mode_   = DataLoaderMode::MNIST;
-    loader_ = std::make_shared<CommodityLoaderType>();
+    loader_ = std::make_shared<MnistLoaderType>();
   }
   else
   {
@@ -77,18 +78,18 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::Str
   }
 }
 
-fetch::vm::Ptr<VMDataLoader> VMDataLoader::Constructor(
-    fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode)
+Ptr<VMDataLoader> VMDataLoader::Constructor(VM *vm, TypeId type_id, Ptr<String> const &mode)
 {
-  return new VMDataLoader(vm, type_id, mode);
+  return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id, mode)};
 }
 
 void VMDataLoader::Bind(Module &module)
 {
   module.CreateClassType<VMDataLoader>("DataLoader")
       .CreateConstructor(&VMDataLoader::Constructor)
-      .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> { return new VMDataLoader(vm, type_id); })
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
+        return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
+      })
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles)
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByData)
       .CreateMemberFunction("getNext", &VMDataLoader::GetNext)
@@ -152,14 +153,34 @@ void VMDataLoader::AddTensorData(Ptr<VMTensorType> const &data, Ptr<VMTensorType
                                                                labels->GetTensor());
 }
 
+// TODO(issue 1692): Simplify Array<Tensor> construction
 Ptr<VMTrainingPair> VMDataLoader::GetNext()
 {
   std::pair<fetch::math::Tensor<DataType>, std::vector<fetch::math::Tensor<DataType>>> next =
       loader_->GetNext();
 
-  auto first      = this->vm_->CreateNewObject<math::VMTensor>(next.first);
-  auto second     = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(0));
-  auto dataHolder = this->vm_->CreateNewObject<VMTrainingPair>(first, second);
+  auto first  = this->vm_->CreateNewObject<math::VMTensor>(next.first);
+  auto second = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(0));
+
+  auto second_vector =
+      this->vm_->CreateNewObject<fetch::vm::Array<Ptr<fetch::vm_modules::math::VMTensor>>>(
+          second->GetTypeId(), static_cast<int32_t>(next.second.size()));
+
+  TemplateParameter1 first_element(second, second->GetTypeId());
+
+  AnyInteger first_index(0, TypeIds::UInt16);
+  second_vector->SetIndexedValue(first_index, first_element);
+
+  for (fetch::math::SizeType i{1}; i < next.second.size(); i++)
+  {
+    second = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(i));
+    TemplateParameter1 element(second, second->GetTypeId());
+
+    AnyInteger index = AnyInteger(i, TypeIds::UInt16);
+    second_vector->SetIndexedValue(index, element);
+  }
+
+  auto dataHolder = this->vm_->CreateNewObject<VMTrainingPair>(first, second_vector);
 
   return dataHolder;
 }

@@ -111,7 +111,7 @@ public:
     return ret;
   }
 
-  void AddValidator(byte_array::ConstByteArray parameter, validators::Validator validator)
+  void AddValidator(byte_array::ConstByteArray const &parameter, validators::Validator validator)
   {
     validators_[parameter] = std::move(validator);
   }

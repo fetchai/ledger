@@ -29,8 +29,6 @@
 #include <map>
 #include <string>
 
-#include <stdio.h>
-
 namespace fetch {
 namespace yaml {
 
@@ -380,7 +378,7 @@ void YamlDocument::Parse(ConstByteArray const &document)
 
       std::string str = static_cast<std::string>(alias);
 
-      std::map<ConstByteArray, Variant *>::iterator alias_find = alias_mapping.find(alias);
+      auto alias_find = alias_mapping.find(alias);
       if (alias_find == alias_mapping.end())
       {
         throw YamlParseException("Object not found by reference!");
@@ -784,7 +782,7 @@ void YamlDocument::Tokenise(ConstByteArray const &document)
 
   uint16_t element_counter = 0;
 
-  char const *ptr = reinterpret_cast<char const *>(document.pointer());
+  auto const *ptr = reinterpret_cast<char const *>(document.pointer());
 
   while (pos < document.size())
   {
@@ -1187,17 +1185,17 @@ void YamlDocument::Tokenise(ConstByteArray const &document)
       uint lastLine  = 0;
       uint lastIdent = 0;
 
-      if (tokens_.size())
+      if (!tokens_.empty())
       {
         lastType  = (Type)tokens_.back().type;
         lastLine  = tokens_.back().line;
         lastIdent = tokens_.back().ident;
       }
 
-      if (tokens_.size() && (((lastType == NUMBER_INT || lastType == NUMBER_FLOAT ||
-                               lastType == NUMBER_HEX || lastType == NUMBER_OCT) &&
-                              lastLine == line) ||
-                             (lastType == STRING && (lastLine == line || lastIdent == ident))))
+      if (!tokens_.empty() && (((lastType == NUMBER_INT || lastType == NUMBER_FLOAT ||
+                                 lastType == NUMBER_HEX || lastType == NUMBER_OCT) &&
+                                lastLine == line) ||
+                               (lastType == STRING && (lastLine == line || lastIdent == ident))))
       {
         tokens_.back().second = pos;
         tokens_.back().line   = line;

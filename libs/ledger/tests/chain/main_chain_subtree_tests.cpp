@@ -35,7 +35,6 @@ namespace {
 
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
-using fetch::byte_array::ToBase64;  // NOLINT - needed for debug messages
 using fetch::ledger::testing::BlockGenerator;
 
 using MainChainPtr    = std::unique_ptr<MainChain>;
@@ -56,17 +55,12 @@ protected:
     chain_ = std::make_unique<MainChain>(false, MainChain::Mode::IN_MEMORY_DB);
   }
 
-  void TearDown() override
-  {
-    chain_.reset();
-  }
-
   BlockGenerator block_generator_{NUM_LANES, NUM_SLICES};
   MainChainPtr   chain_;
 
 public:
   MainChain::Blocks GetAncestorInLimit(MainChain::BehaviourWhenLimit behaviour,
-                                       MainChain::BlockPtr b1, MainChain::BlockPtr b3)
+                                       MainChain::BlockPtr const &b1, MainChain::BlockPtr const &b3)
   {
     constexpr uint64_t subchain_length_limit = 2;
 
@@ -79,7 +73,7 @@ public:
   }
 };
 
-static Blocks Extract(Blocks const &input, std::initializer_list<std::size_t> const &indexes)
+Blocks Extract(Blocks const &input, std::initializer_list<std::size_t> const &indexes)
 {
   Blocks output;
   output.reserve(indexes.size());
@@ -92,7 +86,7 @@ static Blocks Extract(Blocks const &input, std::initializer_list<std::size_t> co
   return output;
 }
 
-static bool AreEqual(MainChain::Blocks const &actual, Blocks const &expected)
+bool AreEqual(MainChain::Blocks const &actual, Blocks const &expected)
 {
   return std::equal(actual.begin(), actual.end(), expected.begin(), expected.end(),
                     [](auto const &a, auto const &b) { return a->body.hash == b->body.hash; });

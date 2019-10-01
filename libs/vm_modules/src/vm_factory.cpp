@@ -43,7 +43,7 @@ namespace fetch {
 namespace vm_modules {
 
 VMFactory::Errors VMFactory::Compile(std::shared_ptr<Module> const &module,
-                                     std::string const &source, Executable &executable)
+                                     SourceFiles const &files, Executable &executable)
 {
   std::vector<std::string> errors;
 
@@ -52,7 +52,7 @@ VMFactory::Errors VMFactory::Compile(std::shared_ptr<Module> const &module,
   IR   ir;
 
   // compile the source
-  bool const compiled = compiler->Compile(source, "default", ir, errors);
+  bool const compiled = compiler->Compile(files, "default_ir", ir, errors);
 
   if (!compiled)
   {
@@ -61,7 +61,7 @@ VMFactory::Errors VMFactory::Compile(std::shared_ptr<Module> const &module,
   }
 
   VM vm(module.get());  // TODO(tfr): refactor such that IR is first made executable
-  if (!vm.GenerateExecutable(ir, "default_ir", executable, errors))
+  if (!vm.GenerateExecutable(ir, "default_exe", executable, errors))
   {
     return errors;
   }
