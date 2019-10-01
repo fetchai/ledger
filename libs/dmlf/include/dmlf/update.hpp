@@ -53,13 +53,13 @@ public:
     , fingerprint_{ComputeFingerprint()}
   {}
 
-  override byte_array::ByteArray serialise()
+   byte_array::ByteArray serialise() override
   {
     serializers::MsgPackSerializer serializer;
     serializer << *this;
     return serializer.data();
   }
-  override byte_array::ByteArray serialise(std::string type)
+   byte_array::ByteArray serialise(std::string type) override
   {
     serializers::MsgPackSerializer serializer;
     serializers::MsgPackSerializer serializer_;
@@ -68,16 +68,16 @@ public:
     serializer << serializer_.data();
     return serializer.data();
   }
-  override void deserialise(const byte_array::ByteArray &map)
+   void deserialise(const byte_array::ByteArray &map) override
   {
     serializers::MsgPackSerializer serializer{map};
     serializer >> *this;
   }
-  override TimeStampType TimeStamp() const
+   TimeStampType TimeStamp() const override
   {
     return stamp_;
   }
-  override FingerprintType Fingerprint() const
+   FingerprintType Fingerprint() const override
   {
     return fingerprint_;
   }

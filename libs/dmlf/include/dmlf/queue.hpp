@@ -41,7 +41,7 @@ public:
   Queue() = default;
   virtual ~Queue() = default;
 
-  override void PushNewMessage(Bytes msg)
+  void PushNewMessage(Bytes msg) override
   {
     auto update = std::make_shared<UpdateType>();
     update->deserialise(msg);
@@ -52,7 +52,7 @@ public:
     }
   }
 
-  override std::size_t size() const
+  std::size_t size() const override
   {
     Lock l{updates_m_};
     return updates_.size();
