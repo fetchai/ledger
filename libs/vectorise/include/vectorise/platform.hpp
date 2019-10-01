@@ -233,6 +233,11 @@ inline uint64_t CountTrailingZeroes64(uint64_t x)
   return x == 0 ? 64 : static_cast<uint64_t>(__builtin_ctzll(x));
 }
 
+inline uint64_t CountSetBits(uint64_t x)
+{
+  return static_cast<uint64_t>(__builtin_popcountll(x));
+}
+
 /**
  * finds most significant set bit in type
  * @tparam T

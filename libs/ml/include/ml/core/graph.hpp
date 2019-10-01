@@ -821,7 +821,7 @@ std::vector<TensorType> Graph<TensorType>::GetGradientsReferences() const
 {
   std::vector<TensorType> ret;
   GetGradientsReferences(ret);
-  return std::move(ret);
+  return ret;
 }
 
 /**
