@@ -64,7 +64,7 @@ public:
   virtual ~Muddle2LearnerNetworker();
 
   virtual void        pushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
-  virtual void        pushUpdateType(const std::string &type, std::shared_ptr<UpdateInterface> update) override;
+  virtual void        pushUpdateType(const std::string &type, const std::shared_ptr<UpdateInterface> &update) override;
   virtual std::size_t getPeerCount() const override;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);
