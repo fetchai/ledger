@@ -47,7 +47,7 @@ int main(int argc, char **argv)
   if (argc == 3)
   {
     fetch::network::Peer peer{argv[1], static_cast<uint16_t>(atoi(argv[2]))};
-    uris.push_back(fetch::network::Uri{peer});
+    uris.emplace_back(fetch::network::Uri{peer});
   }
 
   std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> tcp_learner =

@@ -35,7 +35,6 @@ namespace {
 
 namespace {
 
-using fetch::vm_modules::VMFactory;
 using namespace fetch::vm;
 
 using Params = fetch::dmlf::VmWrapperInterface::Params;

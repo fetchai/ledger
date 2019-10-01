@@ -39,7 +39,9 @@ uint16_t ephem_port_()
 void TcpLearnerNetworker::start()
 {
   if (nm_mine_)
+  {
     nm_->Start();
+  }
 
   server_->Start();
 

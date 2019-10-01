@@ -46,7 +46,7 @@ public:
   void clearPeers();
 
 protected:
-  static std::string       processNameToTargetDir(const std::string name);
+  static std::string       processNameToTargetDir(const std::string &name);
   void                     tx(const std::string &target, const Bytes &data);
   std::vector<std::string> getUpdateNames() const;
   void                     checkUpdates();
