@@ -28,7 +28,6 @@
 #include "ledger/executor.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
-#include "metrics/metrics.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
@@ -45,10 +44,6 @@ using fetch::byte_array::ConstByteArray;
 using fetch::storage::ResourceAddress;
 using fetch::telemetry::Histogram;
 using fetch::telemetry::Registry;
-
-#ifdef FETCH_ENABLE_METRICS
-using fetch::metrics::Metrics;
-#endif  // FETCH_ENABLE_METRICS
 
 namespace fetch {
 namespace ledger {
@@ -350,15 +345,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     result.return_value = contract_status.return_value;
 
-#ifdef FETCH_ENABLE_METRICS
-    Metrics::Timestamp const completed = Metrics::Clock::now();
-#endif  // FETCH_ENABLE_METRICS
-
     FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(current_tx_->digest()),
                     " (success)");
-
-    FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
-    FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed);
 
     // attempt to generate a fee for this transaction
     if (success)

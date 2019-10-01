@@ -28,25 +28,6 @@ using fetch::byte_array::ConstByteArray;
 // TODO(issue 7): Make cache configurable
 constexpr uint32_t MAX_CACHE_LIFETIME_MS = 30000;
 
-#ifdef FETCH_ENABLE_METRICS
-using fetch::metrics::Metrics;
-using fetch::metrics::MetricHandler;
-
-static void RecordNewElement(ConstByteArray const &identifier)
-{
-  // record the event
-  Metrics::Instance().RecordMetric(identifier, MetricHandler::Instrument::TRANSACTION,
-                                   MetricHandler::Event::SYNCED);
-}
-
-static void RecordNewCacheElement(ConstByteArray const &identifier)
-{
-  // record the event
-  Metrics::Instance().RecordMetric(identifier, MetricHandler::Instrument::TRANSACTION,
-                                   MetricHandler::Event::RECEIVED_FOR_SYNC);
-}
-#endif  // FETCH_ENABLE_METRICS
-
 namespace fetch {
 namespace ledger {
 
@@ -107,10 +88,6 @@ void TransactionStoreSyncProtocol::TrimCache()
 
 void TransactionStoreSyncProtocol::OnNewTx(Transaction const &o)
 {
-#ifdef FETCH_ENABLE_METRICS
-  RecordNewCacheElement(o.digest());
-#endif  // FETCH_ENABLE_METRICS
-
   FETCH_LOCK(cache_mutex_);
   cache_.emplace_back(o);
 }
