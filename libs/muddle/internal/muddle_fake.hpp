@@ -408,7 +408,8 @@ public:
     , sign_packets_{sign_packets}
     , sign_broadcasts_{sign_broadcasts}
     , network_id_{network_id}
-    , fake_muddle_endpoint_{network_id_, node_address_, certificate_.get(), sign_broadcasts_}
+    , fake_muddle_endpoint_{network_id_, node_address_, sign_packets ? certificate_.get() : nullptr,
+                            sign_packets && sign_broadcasts}
   {
     FETCH_UNUSED(certificate_);
     FETCH_UNUSED(sign_broadcasts_);

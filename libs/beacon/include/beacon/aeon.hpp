@@ -18,8 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_manager.hpp"
+#include "beacon/block_entropy.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/prover.hpp"
+#include "ledger/chain/digest.hpp"
 
 #include <atomic>
 #include <memory>
@@ -33,28 +35,32 @@ namespace beacon {
 struct Aeon
 {
   using MuddleAddress = byte_array::ConstByteArray;
+  using Identity      = crypto::Identity;
   using TimeStamp     = std::chrono::time_point<std::chrono::system_clock>;
+  using BlockEntropy  = beacon::BlockEntropy;
 
   std::set<MuddleAddress> members{};
   uint64_t                round_start{0};
   uint64_t                round_end{0};
+  BlockEntropy            block_entropy_previous;
 
   // Timeouts for waiting for other members
   uint64_t start_reference_timepoint{uint64_t(-1)};
 };
 
+// TODO(HUT): merge these into just Aeon
 struct AeonExecutionUnit
 {
   using BeaconManager  = dkg::BeaconManager;
   using ConstByteArray = byte_array::ConstByteArray;
   using SignatureShare = dkg::BeaconManager::SignedMessage;
+  using BlockEntropy   = beacon::BlockEntropy;
 
+  BlockEntropy   block_entropy;
   BeaconManager  manager{};
   SignatureShare member_share;
 
   Aeon aeon;
-
-  bool observe_only{false};
 };
 
 }  // namespace beacon

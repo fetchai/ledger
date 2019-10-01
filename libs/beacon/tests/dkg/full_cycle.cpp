@@ -33,7 +33,7 @@
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
+#include "beacon/block_entropy.hpp"
 #include "beacon/event_manager.hpp"
 #include "ledger/shards/manifest.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
@@ -101,6 +101,7 @@ struct CabinetNode
   DummyManifesttCache              manifest_cache;
   BeaconService                    beacon_service;
   crypto::Identity                 identity;
+  BlockEntropy                     genesis_block_entropy;
 
   CabinetNode(uint16_t port_number, uint16_t index)
     : event_manager{EventManager::New()}
@@ -214,6 +215,8 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
     rounds_finished[member->identity] = 0;
   }
 
+  // TODO(HUT): rewrite this test to check an unbroken stream of
+  // entropy is generated
   // Ready
   i = 0;
   while (i < static_cast<uint64_t>(total_renewals + 1))
@@ -228,7 +231,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
         member->beacon_service.StartNewCabinet(
             cabinet, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
             i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
-            static_cast<uint64_t>(std::time(nullptr)));
+            static_cast<uint64_t>(std::time(nullptr)), member->genesis_block_entropy);
       }
     }
 
