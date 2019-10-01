@@ -244,7 +244,7 @@ public:
   Metadata const metadata;
 
   explicit BlockChainForwardTree(BlockStore &block_store)
-    : tree{read_block_db(block_store)}
+    : tree{ReadBlockDb(block_store)}
     , metadata{GetMetadata(tree)}
   {}
 
@@ -487,7 +487,7 @@ public:
   }
 
 private:
-  static Tree read_block_db(BlockStore &block_store)
+  static Tree ReadBlockDb(BlockStore &block_store)
   {
     std::size_t const expected_number_of_blocks{block_store.size()};
     std::cout << "Reading blockchain from db (expected num. of blocks " << expected_number_of_blocks
@@ -666,7 +666,7 @@ bool BlockChainForwardTree::RecursionContext::RecurseInternal(
   return retval;
 }
 
-std::tuple<TxStores, int, std::string> open_tx_db_stores()
+std::tuple<TxStores, int, std::string> OpenTxDbStores()
 {
   TxStores tx_stores;
 
@@ -867,7 +867,7 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
   if (tx_count_in_blockchain > count_of_all_tx_in_db)
   {
     std::cerr << "INCONSISTENCY: Less transactions present in source db store "
-              << count_of_all_tx_in_db << " than transactions required by blockchain "
+              << count_of_all_tx_in_db << " than transactions required by block-chain "
               << tx_count_in_blockchain << std::endl;
   }
 
@@ -877,8 +877,8 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
     if (count > 0)
     {
       std::cerr << "INCONSISTENCY:"
-                << " Lane " << lane << " is missing " << count
-                << " transactions required by block-chain are missing in tx db store" << std::endl;
+                << " Lane" << lane << " Tx db store is missing " << count
+                << " transactions required by block-chain" << std::endl;
     }
     ++lane;
   }
@@ -962,7 +962,7 @@ int main(int argc, char **argv)
   }
 
   TxStores tx_stores;
-  std::tie(tx_stores, err, err_msg) = open_tx_db_stores();
+  std::tie(tx_stores, err, err_msg) = OpenTxDbStores();
   if (err < 0)
   {
     std::cerr << err_msg << std::endl;
