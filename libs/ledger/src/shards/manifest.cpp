@@ -91,7 +91,7 @@ void Manifest::AddService(ServiceIdentifier const &id, ManifestEntry &&entry)
   service_map_.emplace(id, std::move(entry));
 }
 
-std::string Manifest::FindExternalAddress(ServiceIdentifier::Type type, int32_t index) const
+std::string Manifest::FindExternalAddress(ServiceIdentifier::Type type, uint32_t index) const
 {
   auto it = FindService(ServiceIdentifier{type, index});
   if (it == end())
@@ -136,7 +136,7 @@ bool Manifest::Parse(ConstByteArray const &text)
           {
             // create the lane service id
             ServiceIdentifier const lane_service{ServiceIdentifier::Type::LANE,
-                                                 static_cast<int32_t>(i)};
+                                                 static_cast<uint32_t>(i)};
 
             // attempt to extract the section of the config
             if (!ExtractSection(lanes[i], lane_service))

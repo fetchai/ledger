@@ -36,7 +36,6 @@ using VMTensorType   = fetch::vm_modules::math::VMTensor;
 
 VMStateDict::VMStateDict(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-  , state_dict_()
 {}
 
 VMStateDict::VMStateDict(VM *vm, TypeId type_id, fetch::ml::StateDict<MathTensorType> sd)

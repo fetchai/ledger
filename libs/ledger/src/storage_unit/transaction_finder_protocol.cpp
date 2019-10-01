@@ -22,8 +22,6 @@ namespace fetch {
 namespace ledger {
 
 TxFinderProtocol::TxFinderProtocol()
-  : fetch::service::Protocol()
-  , resource_queue_()
 {
   this->Expose(ISSUE_CALL_FOR_MISSING_TXS, this, &Self::IssueCallForMissingTxs);
 }

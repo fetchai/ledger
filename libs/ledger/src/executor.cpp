@@ -387,7 +387,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
         success       = false;
       }
 
-      if (success && stake_updates_)
+      if (success && (stake_updates_ != nullptr))
       {
         for (auto const &update : token_contract_->stake_updates())
         {
@@ -440,11 +440,9 @@ bool Executor::ProcessTransfers(Result &result)
           success       = false;
           break;
         }
-        else
-        {
-          // the cost in charge units to make a transfer
-          result.charge += TRANSFER_CHARGE;
-        }
+
+        // the cost in charge units to make a transfer
+        result.charge += TRANSFER_CHARGE;
       }
     }
 

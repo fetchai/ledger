@@ -226,7 +226,7 @@ struct SignedIntegerSerializerImplementation
       {
         uint8_t code;
         int8_t  value;
-      } conversion;
+      } conversion{};
       conversion.code = code;
 
       if (conversion.value < -0x20 || conversion.value >= 0x80)
@@ -787,7 +787,7 @@ public:
   }
 };
 
-template <std::uint16_t I, std::uint16_t F, typename D>
+template <uint16_t I, uint16_t F, typename D>
 struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
 {
   using Type       = fixed_point::FixedPoint<I, F>;

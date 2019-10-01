@@ -53,7 +53,7 @@ public:
                     Timestamp const &timestamp = Clock::now())
   {
     auto handler = handler_.load();
-    if (handler)
+    if (handler != nullptr)
     {
       handler->RecordMetric(identifier, instrument, event, timestamp);
     }

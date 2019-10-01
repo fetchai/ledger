@@ -211,22 +211,22 @@ protected:
 //  return stream;
 //}
 
-MATCHER(IsNewBlock, "")
+MATCHER(IsNewBlock, "")  // NOLINT
 {
   return arg.hash.empty();
 }
 
-MATCHER_P(IsBlock, block, "")
+MATCHER_P(IsBlock, block, "")  // NOLINT
 {
   return arg.hash == block->body.hash;
 }
 
-MATCHER_P(IsBlockFollowing, block, "")
+MATCHER_P(IsBlockFollowing, block, "")  // NOLINT
 {
   return arg.body.previous_hash == block->body.hash;
 }
 
-MATCHER_P(IsBlockBodyFollowing, block, "")
+MATCHER_P(IsBlockBodyFollowing, block, "")  // NOLINT
 {
   return arg.previous_hash == block->body.hash;
 }

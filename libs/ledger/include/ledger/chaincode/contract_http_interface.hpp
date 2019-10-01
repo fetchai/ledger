@@ -81,10 +81,10 @@ private:
 
   /// @name Transaction Handlers
   /// @{
-  http::HTTPResponse OnTransaction(http::HTTPRequest const &req,
+  http::HTTPResponse OnTransaction(http::HTTPRequest const &request,
                                    ConstByteArray const &   expected_contract);
-  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, TxHashes &txs);
-  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &req, TxHashes &txs);
+  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &request, TxHashes &txs);
+  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &request, TxHashes &txs);
   /// @}
 
   /// @name Access Log

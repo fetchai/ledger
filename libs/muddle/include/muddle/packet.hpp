@@ -142,8 +142,8 @@ public:
   void SetBroadcast(bool set = true) noexcept;
   void SetExchange(bool set = true) noexcept;
   void SetTTL(uint8_t ttl) noexcept;
-  void SetService(uint16_t service) noexcept;
-  void SetChannel(uint16_t channel) noexcept;
+  void SetService(uint16_t service_num) noexcept;
+  void SetChannel(uint16_t protocol_num) noexcept;
   void SetMessageNum(uint16_t message_num) noexcept;
   void SetNetworkId(uint32_t network_id) noexcept;
   void SetTarget(RawAddress const &address);
@@ -158,9 +158,9 @@ public:
   bool Verify() const;
 
 private:
-  RoutingHeader header_;   ///< The header containing primarily routing information
-  Payload       payload_;  ///< The payload of the message
-  Stamp         stamp_;    ///< Signature when stamped
+  RoutingHeader header_{};  ///< The header containing primarily routing information
+  Payload       payload_;   ///< The payload of the message
+  Stamp         stamp_;     ///< Signature when stamped
 
   ///< Cached versions of the addresses
   mutable Address target_;
@@ -175,7 +175,6 @@ private:
 
 inline Packet::Packet(Address const &source_address, uint32_t network_id)
   : header_()
-  , payload_()
 {
   std::memset(&header_, 0, sizeof(header_));
 
@@ -210,7 +209,7 @@ inline bool Packet::IsExchange() const noexcept
 
 inline bool Packet::IsStamped() const noexcept
 {
-  return header_.stamped;
+  return header_.stamped != 0u;
 }
 
 inline bool Packet::IsEncrypted() const noexcept
@@ -360,7 +359,7 @@ inline void Packet::SetPayload(Payload const &payload)
 
 inline void Packet::SetStamped(bool set) noexcept
 {
-  header_.stamped = set;
+  header_.stamped = static_cast<uint32_t>(set);
 }
 
 inline Packet::BinaryHeader Packet::StaticHeader() const noexcept

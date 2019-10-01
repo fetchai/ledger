@@ -70,7 +70,7 @@ ProverPtr CreateNewCertificate()
 
 struct DummyManifestCache : public ledger::ManifestCacheInterface
 {
-  bool QueryManifest(Address const &, ledger::Manifest &) override
+  bool QueryManifest(Address const & /*address*/, ledger::Manifest & /*manifest*/) override
   {
     return false;
   }

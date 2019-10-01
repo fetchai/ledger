@@ -298,7 +298,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     }
   }
 
-  if (invalid)
+  if (invalid != 0u)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Synced Summary: Invalid: ", invalid, " Added: ", added,
                    " Loose: ", loose, " Duplicate: ", duplicate, " from: muddle://",

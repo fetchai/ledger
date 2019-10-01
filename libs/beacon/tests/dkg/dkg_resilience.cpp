@@ -53,7 +53,7 @@ using MuddleAddress  = ConstByteArray;
 
 struct DummyManifestCache : public ManifestCacheInterface
 {
-  bool QueryManifest(Address const &, Manifest &) override
+  bool QueryManifest(Address const & /*address*/, Manifest & /*manifest*/) override
   {
     return false;
   }
@@ -178,7 +178,7 @@ private:
     std::vector<std::string> coefficients;
     bn::G2                   fake;
     fake.clear();
-    for (size_t k = 0; k <= beacon_->manager.polynomial_degree(); k++)
+    for (std::size_t k = 0; k <= beacon_->manager.polynomial_degree(); k++)
     {
       coefficients.push_back(fake.getStr());
     }
@@ -274,7 +274,7 @@ private:
       std::vector<std::string> coefficients;
       bn::G2                   fake;
       fake.clear();
-      for (size_t k = 0; k <= beacon_->manager.polynomial_degree(); k++)
+      for (std::size_t k = 0; k <= beacon_->manager.polynomial_degree(); k++)
       {
         coefficients.push_back(fake.getStr());
       }
@@ -612,10 +612,8 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
         {
           break;
         }
-        else
-        {
-          ++pp;
-        }
+
+        ++pp;
       }
     }
 

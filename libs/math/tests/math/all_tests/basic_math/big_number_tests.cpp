@@ -61,7 +61,7 @@ TEST(big_number_gtest, incrementer_tests)
     {
       uint64_t value;
       uint8_t  bytes[sizeof(uint64_t)];
-    } c;
+    } c{};
     for (std::size_t i = 0; i < sizeof(uint64_t); ++i)
     {
       c.bytes[i] = n1[i];

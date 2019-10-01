@@ -47,7 +47,7 @@ protected:
   const uint64_t max_ = N;
 };
 
-BENCHMARK_TEMPLATE_F(ParallelDispatcherSSEBench, Standard_implementation, double)
+BENCHMARK_TEMPLATE_F(ParallelDispatcherSSEBench, Standard_implementation, double)  // NOLINT
 (benchmark::State &st)
 {
   // Standard implementation

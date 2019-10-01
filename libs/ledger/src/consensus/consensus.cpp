@@ -45,10 +45,8 @@ std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
   {
     return 0;
   }
-  else
-  {
-    return value - decrement;
-  }
+
+  return value - decrement;
 }
 
 template <typename T>
@@ -99,17 +97,13 @@ Consensus::CommitteePtr Consensus::GetCommittee(Block const &previous)
   {
     return committee_history_.at(last_snapshot);
   }
-  else
-  {
-    CommitteePtr committee_ptr = committee_history_[last_snapshot];
-    assert(!committee_ptr->empty());
 
-    Committee committee_copy = *committee_ptr;
+  CommitteePtr committee_ptr = committee_history_[last_snapshot];
+  assert(!committee_ptr->empty());
 
-    DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
+  DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
 
-    return std::make_shared<Committee>(committee_copy);
-  }
+  return std::make_shared<Committee>(committee_copy);
 }
 
 bool Consensus::ValidMinerForBlock(Block const &previous, Address const &address)

@@ -94,7 +94,6 @@ char const *ToString(MetricHandler::Event event)
  */
 MetricFileHandler::MetricFileHandler(std::string filename)
   : filename_(std::move(filename))
-  , stack_{}
   , active_{true}
   , worker_{&MetricFileHandler::ThreadEntryPoint, this}
 {
@@ -102,9 +101,6 @@ MetricFileHandler::MetricFileHandler(std::string filename)
   stack_.reserve(BUFFER_SIZE);
 }
 
-/**
- * Destructor
- */
 MetricFileHandler::~MetricFileHandler()
 {
   active_ = false;
@@ -154,18 +150,15 @@ void MetricFileHandler::ThreadEntryPoint()
     {
       std::unique_lock<std::mutex> lock(stack_lock_);
 
-      // if the stack is empty
       if (stack_.empty())
       {
         stack_notify_.wait(lock);
         continue;
       }
-      else
-      {
-        // must have more than one entry
-        current = stack_.back();
-        stack_.pop_back();
-      }
+
+      // must have more than one entry
+      current = stack_.back();
+      stack_.pop_back();
     }
     // generate the CSV entry
     output_file << current.timestamp.time_since_epoch().count() << ','

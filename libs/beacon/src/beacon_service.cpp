@@ -323,10 +323,8 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   {
     return State::COMPLETE;
   }
-  else
-  {
-    return State::COLLECT_SIGNATURES;
-  }
+
+  return State::COLLECT_SIGNATURES;
 }
 
 /**
@@ -380,7 +378,7 @@ bool BeaconService::AddSignature(SignatureShare share)
 
     return false;
   }
-  else if (ret == BeaconManager::AddResult::NOT_MEMBER)
+  if (ret == BeaconManager::AddResult::NOT_MEMBER)
   {  // And that it was sent by a member of the cabinet
     FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
 

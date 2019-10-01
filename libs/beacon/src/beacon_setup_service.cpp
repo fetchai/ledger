@@ -180,7 +180,6 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
 /**
  * Reset and initial state for the DKG. It should return to this state in the
  * case of total DKG failure
- *
  */
 BeaconSetupService::State BeaconSetupService::OnReset()
 {
@@ -432,18 +431,15 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
     SetTimeToProceed(State::WAIT_FOR_SHARES);
     return State::WAIT_FOR_SHARES;
   }
-  else
-  {
-    if (!condition_to_proceed_)
-    {
-      FETCH_LOG_INFO(
-          LOGGING_NAME,
-          "Waiting for all peers to be ready before starting DKG. We have: ", can_see.size(),
-          " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());
-    }
 
-    state_machine_->Delay(std::chrono::milliseconds(100));
+  if (!condition_to_proceed_)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to be ready before starting DKG. We have: ",
+                   can_see.size(), " expect: ", require_connections,
+                   " Other ready peers: ", ready_connections_.size());
   }
+
+  state_machine_->Delay(std::chrono::milliseconds(100));
 
   return State::WAIT_FOR_READY_CONNECTIONS;
 }
@@ -537,6 +533,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
       SetTimeToProceed(State::WAIT_FOR_QUAL_SHARES);
       return State::WAIT_FOR_QUAL_SHARES;
     }
+
     else
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
@@ -606,7 +603,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
       beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       return State::RESET;
     }
-    else if (qual_complaints_manager_.FindComplaint(identity_.identifier()))
+    if (qual_complaints_manager_.FindComplaint(identity_.identifier()))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                      " is in qual complaints");
@@ -675,9 +672,6 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
       SetTimeToProceed(State::RESET);
       beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       return State::RESET;
-    }
-    else
-    {
     }
 
     SetTimeToProceed(State::COMPUTE_PUBLIC_SIGNATURE);
@@ -1275,7 +1269,7 @@ bool BeaconSetupService::BuildQual()
                    " build QUAL failed as not in QUAL. Qual size: ", qual.size());
     return false;
   }
-  else if (qual.size() < QualSize())
+  if (qual.size() < QualSize())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                    " build QUAL failed as size ", qual.size(), " less than required ", QualSize());
@@ -1329,7 +1323,7 @@ bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
   {
     return false;
   }
-  else if (!in_cabinet)
+  if (!in_cabinet)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " received message from unknown sender");
@@ -1366,7 +1360,7 @@ std::vector<std::weak_ptr<core::Runnable>> BeaconSetupService::GetWeakRunnables(
 uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
 {
   // Default
-  uint64_t expected_dkg_time_s = 10 * (cabinet_size << 1);
+  uint64_t expected_dkg_time_s = 10 * (cabinet_size << 1u);
 
   // empirical times observed - the base time you expect it to take based on cabinet size
   if (cabinet_size < 200)

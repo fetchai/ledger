@@ -191,7 +191,7 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
   }
   std::vector<bn::Fr> prod{a}, res(m, 0);
   bn::Fr              t1, t2;
-  for (size_t k = 0; k < m; k++)
+  for (std::size_t k = 0; k < m; k++)
   {
     t1 = 1;
     for (long i = static_cast<long>(k - 1); i >= 0; i--)
@@ -211,7 +211,7 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
     bn::Fr::sub(t2, b[k], t2);
     bn::Fr::mul(t1, t1, t2);
 
-    for (size_t i = 0; i < k; i++)
+    for (std::size_t i = 0; i < k; i++)
     {
       bn::Fr::mul(t2, prod[i], t1);
       bn::Fr::add(res[i], res[i], t2);

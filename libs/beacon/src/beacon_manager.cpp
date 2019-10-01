@@ -208,7 +208,10 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
                    " complaint answer failed");
     return false;
   }
-  else
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Node: ", cabinet_index_, " verification for node ", from_index,
+                 " complaint answer succeeded");
+  if (reporter_index == cabinet_index_)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " verification for node ", from_index,
                    " complaint answer succeeded");
@@ -222,6 +225,7 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
     }
     return true;
   }
+  return true;
 }
 
 /**
@@ -243,7 +247,7 @@ void BeaconManager::ComputeSecretShare()
 std::vector<BeaconManager::Coefficient> BeaconManager::GetQualCoefficients()
 {
   std::vector<Coefficient> coefficients;
-  for (size_t k = 0; k <= polynomial_degree_; k++)
+  for (std::size_t k = 0; k <= polynomial_degree_; k++)
   {
     A_ik[cabinet_index_][k] = g__a_i[k];
     coefficients.push_back(A_ik[cabinet_index_][k].getStr());
@@ -329,6 +333,7 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
   PublicKey  rhs;
   PrivateKey s;
   PrivateKey sprime;
+
   bool       s_set{false};
   bool       sprime_set{false};
   s.setStr(&s_set, answer.second.first.data());
@@ -498,7 +503,7 @@ bool BeaconManager::RunReconstruction()
                      " failed with party size ", parties.size());
       return false;
     }
-    else if (in.first == certificate_->identity().identifier())
+    if (in.first == certificate_->identity().identifier())
     {
       // Do not run reconstruction for myself
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " polynomial being reconstructed.");
@@ -516,7 +521,7 @@ bool BeaconManager::RunReconstruction()
       shares_f.push_back(shares[index]);
     }
     a_ik[victim_index] = crypto::mcl::InterpolatePolynom(points, shares_f);
-    for (size_t k = 0; k <= polynomial_degree_; k++)
+    for (std::size_t k = 0; k <= polynomial_degree_; k++)
     {
       bn::G2::mul(A_ik[victim_index][k], group_g_, a_ik[victim_index][k]);
     }

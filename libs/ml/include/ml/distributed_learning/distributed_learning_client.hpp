@@ -46,7 +46,7 @@ struct ClientParams
 {
   using SizeType = fetch::math::SizeType;
 
-  SizeType batch_size;
+  SizeType batch_size{};
   DataType learning_rate;
   bool     print_loss = false;
 

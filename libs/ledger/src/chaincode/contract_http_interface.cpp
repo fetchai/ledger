@@ -248,10 +248,8 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     {
       return http::CreateJsonResponse(response);
     }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Error running query. status = ", static_cast<int>(status));
-    }
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Error running query. status = ", static_cast<int>(status));
   }
   catch (std::exception const &ex)
   {

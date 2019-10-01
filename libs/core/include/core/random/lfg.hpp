@@ -139,7 +139,7 @@ private:
   uint64_t                    index_ = 0;
   LinearCongruentialGenerator lcg_;
 
-  RandomType              buffer_[Q];
+  RandomType              buffer_[Q]{};
   static constexpr double inv_double_max_ =
       1. / static_cast<double>(std::numeric_limits<RandomType>::max());
 };

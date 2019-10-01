@@ -70,8 +70,8 @@ public:
 
   void UpdateLearningRate(SizeType i, SizeType iter, SizeType iterations);
   void Train(SizeType iter, SizeType print_frequency, bool cbow = true);
-  void CBOWTrain(TensorType &context, TensorType &target);
-  void SGNSTrain(TensorType const &context, TensorType const &target);
+  void CBOWTrain(TensorType &target, TensorType &context);
+  void SGNSTrain(TensorType const &target, TensorType const &context);
 
   TensorType Embeddings();
 };

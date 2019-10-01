@@ -51,8 +51,8 @@ TYPED_TEST(FlattenTest, forward_test)
   SizeType width   = 6;
   SizeType batches = 5;
 
-  TypeParam data(std::vector<std::uint64_t>({height, width, batches}));
-  TypeParam gt(std::vector<std::uint64_t>({height * width, batches}));
+  TypeParam data(std::vector<uint64_t>({height, width, batches}));
+  TypeParam gt(std::vector<uint64_t>({height * width, batches}));
 
   for (SizeType i{0}; i < height; i++)
   {
@@ -131,8 +131,8 @@ TYPED_TEST(FlattenTest, saveparams_test)
   SizeType width   = 6;
   SizeType batches = 5;
 
-  TypeParam data(std::vector<std::uint64_t>({height, width, batches}));
-  TypeParam gt(std::vector<std::uint64_t>({height * width, batches}));
+  TypeParam data(std::vector<uint64_t>({height, width, batches}));
+  TypeParam gt(std::vector<uint64_t>({height * width, batches}));
 
   for (SizeType i{0}; i < height; i++)
   {

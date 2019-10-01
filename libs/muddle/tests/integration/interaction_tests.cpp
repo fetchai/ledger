@@ -128,7 +128,7 @@ protected:
     return index;
   }
 
-  void OnMessage(Packet const &packet, MuddleAddress const &)
+  void OnMessage(Packet const &packet, MuddleAddress const & /*address*/)
   {
     counters_.ApplyVoid([this, &packet](Counters &counters) {
       ++(counters[NodeIndex(packet.GetSender())][NodeIndex(packet.GetTarget())]);
@@ -150,7 +150,7 @@ protected:
         }
 
         // exit the outer loop when we have a non-zero port
-        if (port)
+        if (port != 0u)
         {
           break;
         }

@@ -84,10 +84,8 @@ uint64_t CalculateDistance(void const *from, void const *to, std::size_t length)
         distance -= (platform::CountLeadingZeroes64(*raw_from8 ^ *raw_to8) - OFFSET);
         break;
       }
-      else
-      {
-        distance -= BITS_IN_BYTE;
-      }
+
+      distance -= BITS_IN_BYTE;
 
       // advance pointers
       ++raw_from8;

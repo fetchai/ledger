@@ -156,10 +156,10 @@ protected:
 
 private:
   RBCMessageType    type_;
-  uint16_t          channel_;  ///< Channel Id of the broadcast channel
-  uint32_t          id_;       ///< Unique Id of the node
-  uint8_t           counter_;  ///< Counter for messages sent on RBC
-  SerialisedMessage payload_;  ///< Serialised message to be sent using RBC
+  uint16_t          channel_{};  ///< Channel Id of the broadcast channel
+  uint32_t          id_{};       ///< Unique Id of the node
+  uint8_t           counter_{};  ///< Counter for messages sent on RBC
+  SerialisedMessage payload_;    ///< Serialised message to be sent using RBC
 };
 
 class RHash : public RBCMessage

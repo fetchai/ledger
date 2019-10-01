@@ -138,6 +138,7 @@ public:
 
   /// Setup management
   /// @{
+
   void QueueSetup(SharedAeonExecutionUnit beacon);
   void Abort(uint64_t round_start);
   void SetBeaconReadyCallback(CallbackFunction callback);
