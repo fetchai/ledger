@@ -35,7 +35,7 @@ std::vector<std::size_t> SimpleCyclingAlgorithm::getNextOutputs()
 
 SimpleCyclingAlgorithm::SimpleCyclingAlgorithm(std::size_t count,
                                                std::size_t number_of_outputs_per_cycle)
-  : IShuffleAlgorithm(count)
+  : ShuffleAlgorithmInterface(count)
 {
   this->next_output_index           = 0;
   this->number_of_outputs_per_cycle = std::min(number_of_outputs_per_cycle, getCount());

@@ -25,7 +25,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "dmlf/iupdate.hpp"
+#include "dmlf/update_interface.hpp"
 #include <stdio.h>  //for remove( ) and rename( )
 
 #include <chrono>
@@ -108,7 +108,7 @@ void FilepassingLearnerNetworker::clearPeers()
   peers_.clear();
 }
 
-void FilepassingLearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
+void FilepassingLearnerNetworker::pushUpdate(std::shared_ptr<UpdateInterface> update)
 {
   auto indexes = alg->getNextOutputs();
   auto data    = update->serialise();

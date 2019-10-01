@@ -16,4 +16,4 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/ishuffle_algorithm.hpp"
+#include "dmlf/shuffle_algorithm_interface.hpp"

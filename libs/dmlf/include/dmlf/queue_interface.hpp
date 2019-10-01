@@ -24,24 +24,22 @@
 namespace fetch {
 namespace dmlf {
 
-class IQueue
+class QueueInterface
 {
 public:
   using Bytes = byte_array::ByteArray;
 
-  IQueue()
-  {}
-  virtual ~IQueue()
-  {}
+  QueueInterface() = default;
+  virtual ~QueueInterface() = default;
 
   virtual void        PushNewMessage(Bytes msg) = 0;
   virtual std::size_t size() const              = 0;
 
 private:
-  IQueue(const IQueue &other) = delete;
-  IQueue &operator=(const IQueue &other)  = delete;
-  bool    operator==(const IQueue &other) = delete;
-  bool    operator<(const IQueue &other)  = delete;
+  QueueInterface(const QueueInterface &other) = delete;
+  QueueInterface &operator=(const QueueInterface &other)  = delete;
+  bool    operator==(const QueueInterface &other) = delete;
+  bool    operator<(const QueueInterface &other)  = delete;
 };
 
 }  // namespace dmlf

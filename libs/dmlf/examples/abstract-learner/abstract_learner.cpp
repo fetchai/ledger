@@ -31,7 +31,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "main";
 
-using fetch::dmlf::IUpdate;
+using fetch::dmlf::UpdateInterface;
 using fetch::dmlf::Update;
 
 using namespace std::chrono_literals;
@@ -41,7 +41,7 @@ using namespace std::chrono_literals;
 class FakeLearner : public fetch::dmlf::AbstractLearnerNetworker
 {
 public:
-  void pushUpdate(std::shared_ptr<IUpdate> update) override
+  void pushUpdate(std::shared_ptr<UpdateInterface> update) override
   {
     auto msg = update->serialise();
     for (auto &peer : peers)
@@ -91,7 +91,7 @@ int main(int /*argc*/, char ** /*argv*/)
   learner3->Initialize<Update<std::string>>();
 
   int                      num_upds = 10;
-  std::shared_ptr<IUpdate> upd;
+  std::shared_ptr<UpdateInterface> upd;
   FETCH_LOG_INFO(LOGGING_NAME, "Updates to push:");
   for (int i = 0; i < num_upds; i++)
   {

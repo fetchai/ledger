@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "dmlf/filepassing_learner_networker.hpp"
-#include "dmlf/iupdate.hpp"
+#include "dmlf/update_interface.hpp"
 #include "dmlf/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/update.hpp"
@@ -333,10 +333,10 @@ protected:
 
 TEST_F(UpdateSerialisationTests, basicPass)
 {
-  std::shared_ptr<fetch::dmlf::IUpdate> update_1 =
+  std::shared_ptr<fetch::dmlf::UpdateInterface> update_1 =
       std::make_shared<fetch::dmlf::Update<int>>(std::vector<int>{1, 2, 4});
   std::this_thread::sleep_for(1.54321s);
-  std::shared_ptr<fetch::dmlf::IUpdate> update_2 = std::make_shared<fetch::dmlf::Update<int>>();
+  std::shared_ptr<fetch::dmlf::UpdateInterface> update_2 = std::make_shared<fetch::dmlf::Update<int>>();
 
   EXPECT_NE(update_1->TimeStamp(), update_2->TimeStamp());
   EXPECT_NE(update_1->Fingerprint(), update_2->Fingerprint());

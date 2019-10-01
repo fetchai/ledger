@@ -55,7 +55,7 @@ void TcpLearnerNetworker::start()
   }
 }
 
-void TcpLearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
+void TcpLearnerNetworker::pushUpdate(std::shared_ptr<UpdateInterface> update)
 {
   broadcast_update_(update);
 }

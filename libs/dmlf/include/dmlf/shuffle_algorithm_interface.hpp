@@ -23,15 +23,15 @@
 namespace fetch {
 namespace dmlf {
 
-class IShuffleAlgorithm
+class ShuffleAlgorithmInterface
 {
 public:
-  IShuffleAlgorithm(std::size_t count)
+  ShuffleAlgorithmInterface(std::size_t count)
   {
     this->count = count;
   }
-  virtual ~IShuffleAlgorithm()
-  {}
+
+  virtual ~ShuffleAlgorithmInterface() = default;
 
   virtual std::vector<std::size_t> getNextOutputs() = 0;
 
@@ -42,10 +42,10 @@ public:
 
 protected:
 private:
-  IShuffleAlgorithm(const IShuffleAlgorithm &other) = delete;
-  IShuffleAlgorithm &operator=(const IShuffleAlgorithm &other)  = delete;
-  bool               operator==(const IShuffleAlgorithm &other) = delete;
-  bool               operator<(const IShuffleAlgorithm &other)  = delete;
+  ShuffleAlgorithmInterface(const ShuffleAlgorithmInterface &other) = delete;
+  ShuffleAlgorithmInterface &operator=(const ShuffleAlgorithmInterface &other)  = delete;
+  bool               operator==(const ShuffleAlgorithmInterface &other) = delete;
+  bool               operator<(const ShuffleAlgorithmInterface &other)  = delete;
 
   std::size_t count;
 };

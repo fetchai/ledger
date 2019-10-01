@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/abstract_learner_networker.hpp"
-#include "dmlf/iupdate.hpp"
+#include "dmlf/update_interface.hpp"
 #include "dmlf/update.hpp"
 
 #include "core/mutex.hpp"
@@ -59,9 +59,9 @@ class TcpLearnerNetworker : public AbstractLearnerNetworker
   };
 
 public:
-  using IUpdatePtr = std::shared_ptr<IUpdate>;
+  using UpdateInterfacePtr = std::shared_ptr<UpdateInterface>;
   using QueueUpdates =
-      std::priority_queue<IUpdatePtr, std::vector<IUpdatePtr>, std::greater<IUpdatePtr>>;
+      std::priority_queue<UpdateInterfacePtr, std::vector<UpdateInterfacePtr>, std::greater<UpdateInterfacePtr>>;
   using Uri   = fetch::network::Uri;
   using Bytes = AbstractLearnerNetworker::Bytes;
 
@@ -99,11 +99,11 @@ public:
     return -1;
   }
 
-  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) override;
+  virtual void        pushUpdate(std::shared_ptr<UpdateInterface> update) override;
   virtual std::size_t getPeerCount() const override;
 
   // virtual std::size_t getUpdateCount() const override;
-  // virtual std::shared_ptr<IUpdate> getUpdate() override;
+  // virtual std::shared_ptr<UpdateInterface> getUpdate() override;
   // virtual std::size_t getCount() override;
 
 private:
@@ -145,7 +145,7 @@ private:
     AbstractLearnerNetworker::NewMessage(serialized_update);
   }
 
-  void broadcast_update_(std::shared_ptr<IUpdate> update)
+  void broadcast_update_(std::shared_ptr<UpdateInterface> update)
   {
     auto upd_bytes = update->serialise();
     server_->Broadcast(upd_bytes);

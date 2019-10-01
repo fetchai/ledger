@@ -25,14 +25,13 @@
 namespace fetch {
 namespace dmlf {
 
-class IUpdate
+class UpdateInterface
 {
 public:
   using TimeStampType   = std::uint64_t;
   using FingerprintType = byte_array::ByteArray;
 
-  IUpdate()
-  {}
+  UpdateInterface() = default;
 
   // API
   virtual byte_array::ByteArray serialise()                                = 0;
@@ -47,20 +46,20 @@ public:
   }
 
   // Queue ordering
-  bool operator>(const IUpdate &other) const
+  bool operator>(const UpdateInterface &other) const
   {
     return TimeStamp() > other.TimeStamp();
   }
 
-  virtual ~IUpdate()
+  virtual ~UpdateInterface()
   {}
 
 protected:
 private:
-  IUpdate(const IUpdate &other) = delete;
-  IUpdate &operator=(const IUpdate &other)  = delete;
-  bool     operator==(const IUpdate &other) = delete;
-  bool     operator<(const IUpdate &other)  = delete;
+  UpdateInterface(const UpdateInterface &other) = delete;
+  UpdateInterface &operator=(const UpdateInterface &other)  = delete;
+  bool     operator==(const UpdateInterface &other) = delete;
+  bool     operator<(const UpdateInterface &other)  = delete;
 };
 
 }  // namespace dmlf
