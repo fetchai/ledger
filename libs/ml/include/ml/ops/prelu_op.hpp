@@ -31,7 +31,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LeakyReluOp : public fetch::ml::ops::Ops<T>
+class PReluOp : public fetch::ml::ops::Ops<T>
 {
 public:
   using TensorType    = T;
@@ -39,16 +39,16 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = OpLeakyReluOpSaveableParams<T>;
-  using MyType        = LeakyReluOp<TensorType>;
+  using SPType        = OpPReluOpSaveableParams<T>;
+  using MyType        = PReluOp<TensorType>;
 
-  LeakyReluOp() = default;
+  PReluOp() = default;
 
-  explicit LeakyReluOp(SPType const &sp)
+  explicit PReluOp(SPType const &sp)
     : Ops<T>(sp)
   {}
 
-  ~LeakyReluOp() override = default;
+  ~PReluOp() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
@@ -66,7 +66,8 @@ public:
 
     return copyshare;
   }
-  // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
+
+  // PRelu(x,alpha)=max(x,x*alpha)
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 2);
@@ -144,9 +145,9 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::OP_LEAKY_RELU_OP;
+    return OpType::OP_PRELU_OP;
   }
-  static constexpr char const *DESCRIPTOR = "LeakyReluOp";
+  static constexpr char const *DESCRIPTOR = "PReluOp";
 };
 
 }  // namespace ops

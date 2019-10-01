@@ -33,6 +33,12 @@
 #pragma clang diagnostic ignored "-Wsign-compare"
 #endif
 
+#ifdef FETCH_ENABLE_BACKTRACE_WITH_DW
+
+#define BACKWARD_HAS_DW 1
+
+#endif
+
 #include <backward.hpp>
 #include <signal.h>
 
