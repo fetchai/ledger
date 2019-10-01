@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_service.hpp"
 #include "beacon/event_manager.hpp"
 #include "beacon/trusted_dealer.hpp"
+#include "beacon/trusted_dealer_beacon_service.hpp"
 #include "core/reactor.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
@@ -49,68 +49,6 @@ struct DummyManifestCache : public ManifestCacheInterface
   bool QueryManifest(Address const &, Manifest &) override
   {
     return false;
-  }
-};
-
-class TrustedDealerBeaconService : public BeaconService
-{
-public:
-  TrustedDealerBeaconService(MuddleInterface &               muddle,
-                             ledger::ManifestCacheInterface &manifest_cache,
-                             CertificatePtr certificate, SharedEventManager event_manager,
-                             uint64_t blocks_per_round = 1)
-    : BeaconService{muddle, manifest_cache, std::move(certificate), std::move(event_manager),
-                    blocks_per_round} {};
-
-  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time, DkgOutput output)
-  {
-    auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
-    FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
-                   "at time: ", start_time, " (diff): ", diff_time);
-
-    // Check threshold meets the requirements for the RBC
-    uint32_t rbc_threshold{0};
-    if (members.size() % 3 == 0)
-    {
-      rbc_threshold = static_cast<uint32_t>(members.size() / 3 - 1);
-    }
-    else
-    {
-      rbc_threshold = static_cast<uint32_t>(members.size() / 3);
-    }
-    if (threshold < rbc_threshold)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Threshold is below RBC threshold. Reset to rbc threshold");
-      threshold = rbc_threshold;
-    }
-
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
-
-    // Determines if we are observing or actively participating
-    if (output.group_public_key.isZero())
-    {
-      beacon->observe_only = true;
-      FETCH_LOG_INFO(LOGGING_NAME, "Beacon in observe only mode. Members: ", members.size());
-    }
-    else
-    {
-      beacon->manager.SetCertificate(certificate_);
-      beacon->manager.NewCabinet(members, threshold);
-      beacon->manager.SetDkgOutput(output);
-    }
-
-    // Setting the aeon details
-    beacon->aeon.round_start               = round_start;
-    beacon->aeon.round_end                 = round_end;
-    beacon->aeon.members                   = std::move(members);
-    beacon->aeon.start_reference_timepoint = start_time;
-
-    // Even "observe only" details need to pass through the setup phase
-    // to preserve order.
-    aeon_exe_queue_.push_back(beacon);
   }
 };
 
