@@ -33,6 +33,7 @@ public:
   using PeerP = std::shared_ptr<LocalLearnerNetworker>;
   using Peers = std::vector<PeerP>;
 
+  
   LocalLearnerNetworker();
   ~LocalLearnerNetworker() override;
   virtual void pushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
