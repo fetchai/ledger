@@ -34,16 +34,20 @@ public:
   using Peers = std::vector<PeerP>;
 
   LocalLearnerNetworker();
-  virtual ~LocalLearnerNetworker();
-  virtual void pushUpdate(std::shared_ptr<UpdateInterface> update) override;
+  override ~LocalLearnerNetworker();
+  override void pushUpdate(std::shared_ptr<UpdateInterface> update);
 
-  virtual std::size_t getPeerCount() const override
+  override std::size_t getPeerCount() const
   {
     return peers.size();
   }
   void addPeers(Peers new_peers);
   void clearPeers();
 
+  LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete;
+  LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other)  = delete;
+  bool                   operator==(const LocalLearnerNetworker &other) = delete;
+  bool                   operator<(const LocalLearnerNetworker &other)  = delete;
 protected:
 private:
   using Mutex = fetch::Mutex;
@@ -54,11 +58,6 @@ private:
   Peers         peers;
 
   void rx(const Bytes &data);
-
-  LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete;
-  LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other)  = delete;
-  bool                   operator==(const LocalLearnerNetworker &other) = delete;
-  bool                   operator<(const LocalLearnerNetworker &other)  = delete;
 };
 
 }  // namespace dmlf

@@ -33,10 +33,10 @@ public:
   using Peers = std::vector<Peer>;
 
   FilepassingLearnerNetworker();
-  virtual ~FilepassingLearnerNetworker();
+  over ride ~FilepassingLearnerNetworker();
 
-  virtual void        pushUpdate(std::shared_ptr<UpdateInterface> update) override;
-  virtual std::size_t getPeerCount() const override
+  override void        pushUpdate(std::shared_ptr<UpdateInterface> update);
+  override std::size_t getPeerCount() const
   {
     return peers_.size();
   }
@@ -45,6 +45,10 @@ public:
   void addPeers(Peers new_peers);
   void clearPeers();
 
+  FilepassingLearnerNetworker(const FilepassingLearnerNetworker &other) = delete;
+  FilepassingLearnerNetworker &operator=(const FilepassingLearnerNetworker &other)  = delete;
+  bool                         operator==(const FilepassingLearnerNetworker &other) = delete;
+  bool                         operator<(const FilepassingLearnerNetworker &other)  = delete;
 protected:
   static std::string       processNameToTargetDir(const std::string &name);
   void                     tx(const std::string &target, const Bytes &data);
@@ -52,11 +56,6 @@ protected:
   void                     checkUpdates();
 
 private:
-  FilepassingLearnerNetworker(const FilepassingLearnerNetworker &other) = delete;
-  FilepassingLearnerNetworker &operator=(const FilepassingLearnerNetworker &other)  = delete;
-  bool                         operator==(const FilepassingLearnerNetworker &other) = delete;
-  bool                         operator<(const FilepassingLearnerNetworker &other)  = delete;
-
   std::set<std::string>    processed_updates_;
   std::vector<std::string> peers_;
   std::string              name_;

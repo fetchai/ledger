@@ -26,7 +26,7 @@ namespace dmlf {
 class ShuffleAlgorithmInterface
 {
 public:
-  ShuffleAlgorithmInterface(std::size_t count)
+  explicit ShuffleAlgorithmInterface(std::size_t count)
   {
     this->count = count;
   }
@@ -40,12 +40,12 @@ public:
     return count;
   }
 
-protected:
-private:
   ShuffleAlgorithmInterface(const ShuffleAlgorithmInterface &other) = delete;
   ShuffleAlgorithmInterface &operator=(const ShuffleAlgorithmInterface &other)  = delete;
   bool               operator==(const ShuffleAlgorithmInterface &other) = delete;
   bool               operator<(const ShuffleAlgorithmInterface &other)  = delete;
+protected:
+private:
 
   std::size_t count;
 };

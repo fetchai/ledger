@@ -35,11 +35,11 @@ public:
   virtual void        PushNewMessage(Bytes msg) = 0;
   virtual std::size_t size() const              = 0;
 
-private:
   QueueInterface(const QueueInterface &other) = delete;
   QueueInterface &operator=(const QueueInterface &other)  = delete;
   bool    operator==(const QueueInterface &other) = delete;
   bool    operator<(const QueueInterface &other)  = delete;
+private:
 };
 
 }  // namespace dmlf

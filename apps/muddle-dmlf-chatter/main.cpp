@@ -66,7 +66,7 @@ public:
   std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker>  actual;
   std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
 
-  Learner(const std::string cloud_config, std::size_t instance_number)
+  Learner(const std::string &cloud_config, std::size_t instance_number)
   {
     actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(cloud_config, instance_number);
     interface = actual;
@@ -86,7 +86,7 @@ public:
 using Muddle2LearnerNetworker = fetch::dmlf::Muddle2LearnerNetworker;
 
 #pragma clang diagnostic ignored "-Wunused-parameter"
-int                      main(int argc, char **argv)
+int                      main(int /*argc*/, char **argv)
 {
   auto config          = std::string(argv[1]);
   auto instance_number = std::atoi(argv[2]);

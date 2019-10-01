@@ -53,13 +53,13 @@ public:
     , fingerprint_{ComputeFingerprint()}
   {}
 
-  virtual byte_array::ByteArray serialise() override
+  override byte_array::ByteArray serialise()
   {
     serializers::MsgPackSerializer serializer;
     serializer << *this;
     return serializer.data();
   }
-  virtual byte_array::ByteArray serialise(std::string type) override
+  override byte_array::ByteArray serialise(std::string type)
   {
     serializers::MsgPackSerializer serializer;
     serializers::MsgPackSerializer serializer_;
@@ -68,16 +68,16 @@ public:
     serializer << serializer_.data();
     return serializer.data();
   }
-  virtual void deserialise(const byte_array::ByteArray &map) override
+  override void deserialise(const byte_array::ByteArray &map)
   {
     serializers::MsgPackSerializer serializer{map};
     serializer >> *this;
   }
-  virtual TimeStampType TimeStamp() const override
+  override TimeStampType TimeStamp() const
   {
     return stamp_;
   }
-  virtual FingerprintType Fingerprint() const override
+  override FingerprintType Fingerprint() const
   {
     return fingerprint_;
   }
@@ -87,16 +87,15 @@ public:
     return gradients_;
   }
 
-  virtual ~Update()
-  {}
+  override ~Update() = default;
 
-protected:
-private:
   Update(const Update &other) = delete;
   Update &operator=(const Update &other)  = delete;
   bool    operator==(const Update &other) = delete;
   bool    operator<(const Update &other)  = delete;
 
+protected:
+private:
   static TimeStampType CurrentTime()
   {
     return static_cast<TimeStampType>(std::chrono::duration_cast<std::chrono::milliseconds>(

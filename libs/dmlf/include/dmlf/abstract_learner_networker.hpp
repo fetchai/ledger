@@ -35,10 +35,8 @@ class AbstractLearnerNetworker
 public:
   using Bytes = byte_array::ByteArray;
 
-  AbstractLearnerNetworker()
-  {}
-  virtual ~AbstractLearnerNetworker()
-  {}
+  AbstractLearnerNetworker() = default;
+  virtual ~AbstractLearnerNetworker() = default;
 
   // To implement
   virtual void        pushUpdate(std::shared_ptr<UpdateInterface> update) = 0;
@@ -73,13 +71,13 @@ public:
     return que->getUpdate();
   }
 
-  virtual void setShuffleAlgorithm(std::shared_ptr<ShuffleAlgorithmInterface> alg)
+  virtual void setShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg)
   {
     this->alg = alg;
   }
 
   // To implement - TOFIX not pure at moment
-  virtual void pushUpdateType(std::string /*key*/, std::shared_ptr<UpdateInterface> /*update*/){};
+  virtual void pushUpdateType(const std::string &/*key*/, const std::shared_ptr<UpdateInterface> &/*update*/){};
 
   template <typename T>
   void RegisterUpdateType(std::string key)
@@ -97,7 +95,7 @@ public:
     return queue_map_.at(key)->size();
   }
 
-  std::size_t getUpdateTypeCount(std::string key) const
+  std::size_t getUpdateTypeCount(const std::string &key) const
   {
     Lock l{queue_map_m_};
     auto iter = queue_map_.find(key);
@@ -148,6 +146,10 @@ protected:
     throw std::runtime_error{"Received Update with a non registered type"};
   }
 
+  AbstractLearnerNetworker(const AbstractLearnerNetworker &other) = delete;
+  AbstractLearnerNetworker &operator=(const AbstractLearnerNetworker &other)  = delete;
+  bool                      operator==(const AbstractLearnerNetworker &other) = delete;
+  bool                      operator<(const AbstractLearnerNetworker &other)  = delete;
 private:
   using Mutex     = fetch::Mutex;
   using Lock      = std::unique_lock<Mutex>;
@@ -168,11 +170,6 @@ private:
       throw std::runtime_error{"Learner is not initialized"};
     }
   }
-
-  AbstractLearnerNetworker(const AbstractLearnerNetworker &other) = delete;
-  AbstractLearnerNetworker &operator=(const AbstractLearnerNetworker &other)  = delete;
-  bool                      operator==(const AbstractLearnerNetworker &other) = delete;
-  bool                      operator<(const AbstractLearnerNetworker &other)  = delete;
 };
 
 }  // namespace dmlf

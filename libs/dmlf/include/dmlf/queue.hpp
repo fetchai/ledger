@@ -36,14 +36,12 @@ public:
   using UpdateType = T;
   using UpdatePtr  = std::shared_ptr<UpdateType>;
   using QueueUpdates =
-      std::priority_queue<UpdatePtr, std::vector<UpdatePtr>, std::greater<UpdatePtr>>;
+      std::priority_queue<UpdatePtr, std::vector<UpdatePtr>, std::greater<>>;
 
-  Queue()
-  {}
-  virtual ~Queue()
-  {}
+  Queue() = default;
+  virtual ~Queue() = default;
 
-  virtual void PushNewMessage(Bytes msg) override
+  override void PushNewMessage(Bytes msg)
   {
     auto update = std::make_shared<UpdateType>();
     update->deserialise(msg);
@@ -54,7 +52,7 @@ public:
     }
   }
 
-  virtual std::size_t size() const override
+  override std::size_t size() const
   {
     Lock l{updates_m_};
     return updates_.size();
@@ -72,17 +70,16 @@ public:
     throw std::length_error{"Updates queue is empty"};
   }
 
+  Queue(const Queue &other) = delete;
+  Queue &operator=(const Queue &other)  = delete;
+  bool   operator==(const Queue &other) = delete;
+  bool   operator<(const Queue &other)  = delete;
 private:
   using Mutex = fetch::Mutex;
   using Lock  = std::unique_lock<Mutex>;
 
   QueueUpdates  updates_;
   mutable Mutex updates_m_;
-
-  Queue(const Queue &other) = delete;
-  Queue &operator=(const Queue &other)  = delete;
-  bool   operator==(const Queue &other) = delete;
-  bool   operator<(const Queue &other)  = delete;
 };
 
 }  // namespace dmlf

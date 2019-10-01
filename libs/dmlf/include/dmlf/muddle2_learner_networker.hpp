@@ -61,11 +61,11 @@ public:
   Muddle2LearnerNetworker(const std::string &cloud_config, std::size_t instance_number,
                           const std::shared_ptr<NetworkManager> &netm = std::shared_ptr<NetworkManager>(),
                           MuddleChannel                   channel_tmp = MuddleChannel::DEFAULT);
-  virtual ~Muddle2LearnerNetworker();
+  override ~Muddle2LearnerNetworker();
 
-  virtual void        pushUpdate(std::shared_ptr<UpdateInterface> update) override;
-  virtual void        pushUpdateType(std::string type, std::shared_ptr<UpdateInterface> update) override;
-  virtual std::size_t getPeerCount() const override;
+  override void        pushUpdate(std::shared_ptr<UpdateInterface> update);
+  override void        pushUpdateType(std::string type, std::shared_ptr<UpdateInterface> update);
+  override std::size_t getPeerCount() const;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);
 
@@ -73,6 +73,10 @@ public:
   using Peers    = std::vector<Peer>;
   using PeerUris = std::unordered_set<std::string>;
 
+  Muddle2LearnerNetworker(const Muddle2LearnerNetworker &other) = delete;
+  Muddle2LearnerNetworker &operator=(const Muddle2LearnerNetworker &other)  = delete;
+  bool                     operator==(const Muddle2LearnerNetworker &other) = delete;
+  bool                     operator<(const Muddle2LearnerNetworker &other)  = delete;
 protected:
   CertificatePtr CreateIdentity();
   CertificatePtr LoadIdentity(const std::string &privkey);
@@ -82,7 +86,7 @@ protected:
   class Muddle2LearnerNetworkerProtocol : public fetch::service::Protocol
   {
   public:
-    Muddle2LearnerNetworkerProtocol(Muddle2LearnerNetworker &sample);
+    explicit Muddle2LearnerNetworkerProtocol(Muddle2LearnerNetworker &sample);
   };
 
   std::shared_ptr<NetworkManager>                  netm;
@@ -97,10 +101,6 @@ protected:
   MuddleChannel channel_tmp_;
 
 private:
-  Muddle2LearnerNetworker(const Muddle2LearnerNetworker &other) = delete;
-  Muddle2LearnerNetworker &operator=(const Muddle2LearnerNetworker &other)  = delete;
-  bool                     operator==(const Muddle2LearnerNetworker &other) = delete;
-  bool                     operator<(const Muddle2LearnerNetworker &other)  = delete;
 };
 
 }  // namespace dmlf

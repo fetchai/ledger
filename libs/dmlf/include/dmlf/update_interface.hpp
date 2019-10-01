@@ -51,15 +51,14 @@ public:
     return TimeStamp() > other.TimeStamp();
   }
 
-  virtual ~UpdateInterface()
-  {}
+  override ~UpdateInterface() = default;
 
-protected:
-private:
   UpdateInterface(const UpdateInterface &other) = delete;
   UpdateInterface &operator=(const UpdateInterface &other)  = delete;
   bool     operator==(const UpdateInterface &other) = delete;
   bool     operator<(const UpdateInterface &other)  = delete;
+protected:
+private:
 };
 
 }  // namespace dmlf

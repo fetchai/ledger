@@ -28,19 +28,19 @@ class SimpleCyclingAlgorithm : public ShuffleAlgorithmInterface
 {
 public:
   SimpleCyclingAlgorithm(std::size_t count, std::size_t number_of_outputs_per_cycle);
-  virtual ~SimpleCyclingAlgorithm() = default;
+  override ~SimpleCyclingAlgorithm() = default;
 
-  std::vector<std::size_t> getNextOutputs();
-
-protected:
-private:
-  std::size_t next_output_index;
-  std::size_t number_of_outputs_per_cycle;
+  std::vector<std::size_t> getNextOutputs() override;
 
   SimpleCyclingAlgorithm(const SimpleCyclingAlgorithm &other) = delete;
   SimpleCyclingAlgorithm &operator=(const SimpleCyclingAlgorithm &other)  = delete;
   bool                    operator==(const SimpleCyclingAlgorithm &other) = delete;
   bool                    operator<(const SimpleCyclingAlgorithm &other)  = delete;
+protected:
+private:
+  std::size_t next_output_index;
+  std::size_t number_of_outputs_per_cycle;
+
 };
 
 }  // namespace dmlf
