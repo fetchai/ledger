@@ -55,7 +55,6 @@ ProverPtr CreateNewCertificate()
 
 int main()
 {
-
   uint32_t cabinet_size = 3;
 
   struct CabinetMember

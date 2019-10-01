@@ -24,7 +24,9 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace {

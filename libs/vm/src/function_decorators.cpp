@@ -25,9 +25,13 @@ namespace vm {
 
 FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
 {
-  FunctionDecoratorKind kind{FunctionDecoratorKind::NORMAL};
+  if (fn.annotations.empty())
+  {
+    return FunctionDecoratorKind::NONE;
+  }
 
-  // loop through all the function annotations
+  FunctionDecoratorKind kind{FunctionDecoratorKind::NONE};
+
   if (1u == fn.annotations.size())
   {
     // select the first annotation
@@ -35,7 +39,6 @@ FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
 
     if (annotation.name == "@query")
     {
-      // only update the kind if one hasn't already been specified
       kind = FunctionDecoratorKind::QUERY;
     }
     else if (annotation.name == "@action")
@@ -46,11 +49,37 @@ FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
     {
       kind = FunctionDecoratorKind::ON_INIT;
     }
+    else if (annotation.name == "@work")
+    {
+      kind = FunctionDecoratorKind::WORK;
+    }
+    else if (annotation.name == "@objective")
+    {
+      kind = FunctionDecoratorKind::OBJECTIVE;
+    }
+    else if (annotation.name == "@problem")
+    {
+      kind = FunctionDecoratorKind::PROBLEM;
+    }
+    else if (annotation.name == "@clear")
+    {
+      kind = FunctionDecoratorKind::CLEAR;
+    }
     else
     {
       FETCH_LOG_WARN("function_decorators", "Invalid decorator: ", annotation.name);
       kind = FunctionDecoratorKind::INVALID;
     }
+  }
+  else
+  {
+    std::ostringstream oss;
+    for (auto const &annotation : fn.annotations)
+    {
+      oss << " " << annotation.name;
+    }
+    FETCH_LOG_WARN("function_decorators", "Multiple decorators found:", oss.str());
+    kind = FunctionDecoratorKind::INVALID;
   }
 
   return kind;

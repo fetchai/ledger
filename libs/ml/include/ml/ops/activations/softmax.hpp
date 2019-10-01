@@ -18,11 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "math/activation_functions/softmax.hpp"
+#include "math/standard_functions/clamp.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -38,13 +40,14 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpSoftmaxSaveableParams<T>;
+  using MyType        = Softmax<TensorType>;
 
   explicit Softmax(SizeType axis = 0)
     : axis_(axis)
   {}
 
   explicit Softmax(std::vector<SizeType> axes)
-    : axes_(axes)
+    : axes_(std::move(axes))
   {}
 
   explicit Softmax(SPType const &sp)
@@ -64,12 +67,22 @@ public:
     return sp_ptr;
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
 
-    if (axes_.size() == 0)
+    if (axes_.empty())
     {
       fetch::math::Softmax((*inputs.at(0)), output, axis_);
     }
@@ -77,6 +90,9 @@ public:
     {
       fetch::math::Softmax((*inputs.at(0)), output, axes_);
     }
+
+    // Clamping ensures numerical stability
+    math::Clamp(epsilon_, one_minus_epsilon_, output);
   }
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
@@ -100,7 +116,7 @@ public:
     // N-D softmax
     else
     {
-      if (axes_.size() == 0)
+      if (axes_.empty())
       {
         TensorType sum = ReduceSum(return_signal, axis_);
         fetch::math::Multiply(t, sum, t);
@@ -131,6 +147,8 @@ public:
 private:
   SizeType              axis_;
   std::vector<SizeType> axes_;
+  DataType              epsilon_           = fetch::math::numeric_min<DataType>();
+  DataType              one_minus_epsilon_ = static_cast<DataType>(1) - epsilon_;
 };
 
 }  // namespace ops

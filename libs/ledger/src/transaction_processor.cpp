@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading.hpp"
+#include "core/set_thread_name.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_layout.hpp"
@@ -32,6 +32,10 @@
 
 namespace fetch {
 namespace ledger {
+
+namespace {
+constexpr char const *LOGGING_NAME = "TransactionProcessor";
+}
 
 /**
  * Transaction Processor constructor
@@ -134,6 +138,52 @@ void TransactionProcessor::ThreadEntryPoint()
       FETCH_METRIC_TX_QUEUED(summary.transaction_hash);
     }
   }
+}
+
+/**
+ * Start the transaction processor
+ */
+void TransactionProcessor::Start()
+{
+  verifier_.Start();
+  running_ = true;
+  poll_new_tx_thread_ =
+      std::make_unique<std::thread>(&TransactionProcessor::ThreadEntryPoint, this);
+}
+
+/**
+ * Stop the transactions processor
+ */
+void TransactionProcessor::Stop()
+{
+  running_ = false;
+  if (poll_new_tx_thread_)
+  {
+    poll_new_tx_thread_->join();
+    poll_new_tx_thread_.reset();
+  }
+
+  verifier_.Stop();
+}
+
+/**
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
+ */
+void TransactionProcessor::AddTransaction(TransactionPtr const &tx)
+{
+  verifier_.AddTransaction(tx);
+}
+
+/**
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
+ */
+void TransactionProcessor::AddTransaction(TransactionPtr &&tx)
+{
+  verifier_.AddTransaction(std::move(tx));
 }
 
 }  // namespace ledger

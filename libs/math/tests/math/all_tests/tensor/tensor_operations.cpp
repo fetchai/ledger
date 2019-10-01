@@ -26,8 +26,9 @@ class TensorOperationsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int, long, float, double, fetch::fixed_point::FixedPoint<16, 16>,
-                                 fetch::fixed_point::FixedPoint<32, 32>>;
+using MyTypes =
+    ::testing::Types<int32_t, int64_t, float, double, fetch::fixed_point::FixedPoint<16, 16>,
+                     fetch::fixed_point::FixedPoint<32, 32>>;
 TYPED_TEST_CASE(TensorOperationsTest, MyTypes);
 
 TYPED_TEST(TensorOperationsTest, inline_add_test)
@@ -37,10 +38,10 @@ TYPED_TEST(TensorOperationsTest, inline_add_test)
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({2, 4}));
   fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({2, 4}));
 
-  std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -21, -34});
-  std::vector<int> gtInput({0, 0, 6, -9, -3, 7, -14, -42});
-  SizeType         counter{0};
+  std::vector<int32_t> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<int32_t> t2Input({-1, 2, 3, -5, -8, 13, -21, -34});
+  std::vector<int32_t> gtInput({0, 0, 6, -9, -3, 7, -14, -42});
+  SizeType             counter{0};
   for (SizeType i(0); i < 2; ++i)
   {
     for (SizeType j(0); j < 4; ++j)
@@ -265,16 +266,6 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
   EXPECT_EQ(t3.At(2, 2), TypeParam(27));
   EXPECT_EQ(t3.At(3, 2), TypeParam(28));
   EXPECT_EQ(t3.At(4, 2), TypeParam(29));
-}
-
-TYPED_TEST(TensorOperationsTest, range_index_slices_test)
-{
-  using ArrayType = typename fetch::math::Tensor<TypeParam>;
-  using SizeType  = typename ArrayType::SizeType;
-
-  ArrayType t1({3, 5, 2});
-  auto      s1 = t1.Slice(std::make_pair<SizeType, SizeType>(0, 3), 1);
-  assert(s1.Copy().shape() == std::vector<SizeType>({3, 3, 2}));
 }
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_test)

@@ -19,12 +19,14 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "http/validators.hpp"
 #include "http/view_parameters.hpp"
 
+#include <cstddef>
 #include <functional>
 #include <regex>
+#include <unordered_map>
 #include <vector>
 
 namespace fetch {
@@ -44,8 +46,6 @@ public:
 
   bool Match(byte_array::ConstByteArray const &path, ViewParameters &params)
   {
-    LOG_STACK_TRACE_POINT;
-
     std::size_t i = 0;
     params.Clear();
 
@@ -63,8 +63,6 @@ public:
 
   static Route FromString(byte_array::ByteArray path)
   {
-    LOG_STACK_TRACE_POINT;
-
     // TODO(issue 35): No support for continued paths  atm.
     Route ret;
     ret.path_     = "";
@@ -113,7 +111,7 @@ public:
     return ret;
   }
 
-  void AddValidator(byte_array::ConstByteArray parameter, validators::Validator validator)
+  void AddValidator(byte_array::ConstByteArray const &parameter, validators::Validator validator)
   {
     validators_[parameter] = std::move(validator);
   }
@@ -149,8 +147,6 @@ public:
 private:
   void AddMatch(byte_array::ByteArray const &value)
   {
-    LOG_STACK_TRACE_POINT;
-
     match_.push_back([value](std::size_t &i, byte_array::ByteArray const &path, ViewParameters &) {
       bool ret = path.Match(value, i);
       if (ret)
@@ -163,8 +159,6 @@ private:
 
   byte_array::ByteArray AddParameter(byte_array::ByteArray const &value)
   {
-    LOG_STACK_TRACE_POINT;
-
     std::size_t i = 0;
     while ((i < value.size()) && (value[i] != '='))
     {

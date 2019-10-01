@@ -17,10 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "file_loader.hpp"
-
 #include "math/distance/cosine.hpp"
 #include "math/tensor.hpp"
-
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
@@ -241,7 +239,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
     g_ptr->SetInput(node_names.at(1), input.first);
     g_ptr->SetInput(node_names.front(), input.second.at(0));
 
-    auto loss_tensor = g_ptr->ForwardPropagate(node_names.back(), false);
+    auto loss_tensor = g_ptr->Evaluate(node_names.back(), false);
     loss += *(loss_tensor.begin());
     loss_counter++;
   }
@@ -305,9 +303,9 @@ int main(int argc, char **argv)
       {
         // if it is a dense layer there will be weights and bias files
         std::vector<std::string> dir_list =
-            fetch::ml::examples::GetAllTextFiles(weights_dir + "/" + name, "");
+            fetch::ml::examples::GetAllTextFiles(weights_dir.append("/").append(name), "");
         std::vector<std::string> actual_dirs;
-        for (auto dir : dir_list)
+        for (auto const &dir : dir_list)
         {
           if (dir != "." && dir != "..")
           {
@@ -316,7 +314,9 @@ int main(int argc, char **argv)
         }
         assert(actual_dirs.size() == 1);
 
-        std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
+        std::string node_weights_dir =
+            weights_dir.append("/").append(name).append("/").append(actual_dirs[0]);
+
         // the weights array for the node has number of columns = number of features
         TensorType weights = fetch::ml::dataloaders::ReadCSV<TensorType>(
             node_weights_dir + "/kernel:0.csv", 0, 0, true);
@@ -357,7 +357,7 @@ int main(int argc, char **argv)
       auto input = loader.GetNext();
       g_ptr->SetInput("num_input", input.second.at(0));
 
-      auto slice_output = g_ptr->ForwardPropagate(node_names.at(node_names.size() - 2), false);
+      auto slice_output = g_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
       output.Slice(j).Assign(slice_output);
       test_y.Slice(j).Assign(input.first);
       j++;
@@ -468,7 +468,7 @@ int main(int argc, char **argv)
       auto input = loader.GetNext();
       g_ptr->SetInput("num_input", input.second.at(0));
 
-      auto slice_output = g_ptr->ForwardPropagate(node_names.at(node_names.size() - 2), false);
+      auto slice_output = g_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
       // write slice_output to csv
       if (first)
       {

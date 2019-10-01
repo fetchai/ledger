@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "core/threading.hpp"
+#include "core/set_thread_name.hpp"
 
 #include <condition_variable>
 #include <functional>
@@ -73,11 +73,11 @@ public:
   template <typename F, typename... Args>
   std::future<typename std::result_of<F(Args...)>::type> Dispatch(F &&f, Args &&... args)
   {
-    using return_type = typename std::result_of<F(Args...)>::type;
-    using task_type   = std::packaged_task<return_type()>;
+    using ReturnType = typename std::result_of<F(Args...)>::type;
+    using TaskType   = std::packaged_task<ReturnType()>;
 
-    std::shared_ptr<task_type> task =
-        std::make_shared<task_type>(std::bind(f, std::forward<Args>(args)...));
+    std::shared_ptr<TaskType> task =
+        std::make_shared<TaskType>(std::bind(f, std::forward<Args>(args)...));
 
     {
       FETCH_LOCK(mutex_);
@@ -102,7 +102,7 @@ public:
 
   bool Empty()
   {
-    std::unique_lock<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return tasks_.empty();
   }
 

@@ -71,7 +71,6 @@ public:
   BasicMiner &operator=(BasicMiner &&) = delete;
 
 private:
-  using Mutex      = mutex::Mutex;
   using ThreadPool = threading::Pool;
   using Queue      = TransactionLayoutQueue;
 
@@ -93,14 +92,14 @@ private:
 
   /// @name Pending Queue
   /// @{
-  mutable Mutex pending_lock_{__LINE__, __FILE__};  ///< Pending queue lock (priority 1)
-  Queue         pending_;                           ///< The main mining queue for the node
+  mutable Mutex pending_lock_;  ///< Pending queue lock (priority 1)
+  Queue         pending_;       ///< The main mining queue for the node
   /// @}
 
   /// @name Central Mining Pool Queue
   /// @{
-  mutable Mutex mining_pool_lock_{__LINE__, __FILE__};  ///< Mining pool lock (priority 0)
-  Queue         mining_pool_;                           ///< The main mining queue for the node
+  mutable Mutex mining_pool_lock_;  ///< Mining pool lock (priority 0)
+  Queue         mining_pool_;       ///< The main mining queue for the node
   /// @}
 
   /// @name Telemetry

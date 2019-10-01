@@ -48,9 +48,9 @@ public:
   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> Evaluate(
       fetch::vm::Ptr<fetch::vm::String> const &name);
 
-  void BackPropagateError(fetch::vm::Ptr<fetch::vm::String> const &name);
+  void BackPropagate(fetch::vm::Ptr<fetch::vm::String> const &name);
 
-  void Step(DataType lr);
+  void Step(DataType const &lr);
 
   void AddPlaceholder(fetch::vm::Ptr<fetch::vm::String> const &name);
 
@@ -89,6 +89,11 @@ public:
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+
+  fetch::vm::Ptr<fetch::vm::String> SerializeToString();
+
+  fetch::vm::Ptr<VMGraph> DeserializeFromString(
+      fetch::vm::Ptr<fetch::vm::String> const &graph_string);
 
 private:
   GraphType graph_;

@@ -37,7 +37,7 @@ public:
   using WorkItem = std::function<void()>;
 
   WorkStore()                     = default;
-  WorkStore(const WorkStore &rhs) = delete;
+  WorkStore(WorkStore const &rhs) = delete;
   WorkStore(WorkStore &&rhs)      = delete;
 
   ~WorkStore()
@@ -125,16 +125,15 @@ public:
     queue_.emplace_back(std::move(work));
   }
 
-  WorkStore operator=(const WorkStore &rhs) = delete;
+  WorkStore operator=(WorkStore const &rhs) = delete;
   WorkStore operator=(WorkStore &&rhs) = delete;
 
 private:
   using Queue = std::deque<WorkItem>;
-  using Mutex = mutex::Mutex;
 
-  mutable Mutex     mutex_{__LINE__, __FILE__};  ///< Mutex protecting `queue_`
-  Queue             queue_;                      ///< The queue of work items
-  std::atomic<bool> shutdown_{false};            ///< Flag to signal the work queue is shutting down
+  mutable Mutex     mutex_;            ///< Mutex protecting `queue_`
+  Queue             queue_;            ///< The queue of work items
+  std::atomic<bool> shutdown_{false};  ///< Flag to signal the work queue is shutting down
 };
 
 }  // namespace details

@@ -38,8 +38,8 @@ public:
   Identity() = default;
 
   Identity(Identity const &other) = default;
+  Identity(Identity &&other)      = default;
   Identity &operator=(Identity const &other) = default;
-  Identity(Identity &&other)                 = default;
   Identity &operator=(Identity &&other) = default;
 
   // Fully relying on caller that it will behave = will NOT modify value passed
@@ -113,11 +113,6 @@ private:
   byte_array::ConstByteArray identifier_;
 };
 
-static inline Identity InvalidIdentity()
-{
-  return Identity::CreateInvalid();
-}
-
 }  // namespace crypto
 
 namespace serializers {
@@ -152,7 +147,7 @@ public:
     data.SetIdentifier(id);
     if (!data)
     {
-      data = crypto::InvalidIdentity();
+      data = crypto::Identity::CreateInvalid();
     }
   }
 };

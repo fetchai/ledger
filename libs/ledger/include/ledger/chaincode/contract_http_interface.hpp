@@ -38,22 +38,18 @@ class TransactionProcessor;
 
 class ContractHttpInterface : public http::HTTPModule
 {
-
 public:
-  static constexpr char const *LOGGING_NAME = "ContractHttpInterface";
-
   // Construction / Destruction
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor);
   ContractHttpInterface(ContractHttpInterface const &) = delete;
   ContractHttpInterface(ContractHttpInterface &&)      = delete;
-  ~ContractHttpInterface()                             = default;
+  ~ContractHttpInterface() override                    = default;
 
   // Operators
   ContractHttpInterface &operator=(ContractHttpInterface const &) = delete;
   ContractHttpInterface &operator=(ContractHttpInterface &&) = delete;
 
 private:
-  using Mutex          = mutex::Mutex;
   using ConstByteArray = byte_array::ConstByteArray;
   using TxHashes       = std::vector<ConstByteArray>;
 
@@ -85,16 +81,16 @@ private:
 
   /// @name Transaction Handlers
   /// @{
-  http::HTTPResponse OnTransaction(http::HTTPRequest const &req, ConstByteArray expected_contract);
-  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, ConstByteArray expected_contract,
-                                  TxHashes &txs);
-  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &req);
+  http::HTTPResponse OnTransaction(http::HTTPRequest const &req,
+                                   ConstByteArray const &   expected_contract);
+  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, TxHashes &txs);
+  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &req, TxHashes &txs);
   /// @}
 
   /// @name Access Log
   /// @{
   void RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request,
-                         ConstByteArray expected_contract);
+                         ConstByteArray const &expected_contract);
   void RecordQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
                    http::HTTPRequest const &request);
   void WriteToAccessLog(variant::Variant const &entry);
@@ -103,7 +99,7 @@ private:
   StorageInterface &    storage_;
   TransactionProcessor &processor_;
   ChainCodeCache        contract_cache_{};
-  Mutex                 access_log_lock_{__LINE__, __FILE__};
+  Mutex                 access_log_lock_;
   std::ofstream         access_log_;
 };
 

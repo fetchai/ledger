@@ -67,7 +67,7 @@ void BM_EluForward(benchmark::State &state)
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
 
-  T                                           a = T(0.2);
+  auto                                        a = T(0.2);
   fetch::ml::ops::Elu<fetch::math::Tensor<T>> em(a);
 
   for (auto _ : state)
@@ -165,8 +165,8 @@ void BM_RandomisedReluForward(benchmark::State &state)
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
 
-  T                                                      lb = T(0.2);
-  T                                                      ub = T(0.8);
+  auto                                                   lb = T(0.2);
+  auto                                                   ub = T(0.8);
   fetch::ml::ops::RandomisedRelu<fetch::math::Tensor<T>> rrm(lb, ub);
 
   for (auto _ : state)

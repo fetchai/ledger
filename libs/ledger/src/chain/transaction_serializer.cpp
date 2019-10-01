@@ -278,7 +278,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
       {
         // in this case the shard mask is small and therefore can be totally contained in the
         // contract header
-        uint8_t contract_header = static_cast<uint8_t>(shard_mask(0) & 0xFu);
+        auto contract_header = static_cast<uint8_t>(shard_mask(0) & 0xFu);
 
         // signal the bit to signal the the shard mask it 2 or 4 bits
         if (log2_shard_mask_size == 2)
@@ -305,15 +305,14 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 
     switch (tx.contract_mode())
     {
+    case ContractMode::SYNERGETIC:
     case ContractMode::PRESENT:
       buffer.Append(Encode(tx.contract_digest()), Encode(tx.contract_address()));
       break;
     case ContractMode::CHAIN_CODE:
       buffer.Append(Encode(tx.chain_code()));
       break;
-    case ContractMode::SYNERGETIC:
-      buffer.Append(Encode(tx.contract_digest()));
-    default:
+    case ContractMode::NOT_PRESENT:
       break;
     }
 
@@ -510,11 +509,11 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     }
     else if (SYNERGETIC_PRESENT == contract_type)
     {
-      tx.contract_mode_    = Transaction::ContractMode::SYNERGETIC;
-      tx.chain_code_       = ConstByteArray{};
-      tx.contract_address_ = Address{};
+      tx.contract_mode_ = Transaction::ContractMode::SYNERGETIC;
+      tx.chain_code_    = ConstByteArray{};
 
       Decode(buffer, tx.contract_digest_);
+      Decode(buffer, tx.contract_address_);
     }
 
     // extract the data and actions

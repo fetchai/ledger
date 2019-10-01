@@ -19,7 +19,7 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document_store.hpp"
 #include "storage/new_revertible_document_store.hpp"
@@ -36,9 +36,9 @@ namespace storage {
 class RevertibleDocumentStoreProtocol : public fetch::service::Protocol
 {
 public:
-  using connection_handle_type = network::AbstractConnection::connection_handle_type;
-  using lane_type              = uint32_t;  // TODO(issue 12): Fetch from some other palce
-  using CallContext            = service::CallContext;
+  using ConnectionHandleType = network::AbstractConnection::ConnectionHandleType;
+  using LaneType             = uint32_t;  // TODO(issue 12): Fetch from some other palce
+  using CallContext          = service::CallContext;
 
   using Identifier = byte_array::ConstByteArray;
 
@@ -63,7 +63,7 @@ public:
     HAS_LOCK
   };
 
-  explicit RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, lane_type lane)
+  explicit RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, LaneType lane)
     : fetch::service::Protocol()
     , doc_store_(doc_store)
     , get_count_(CreateCounter(lane, "ledger_statedb_get_total", "The total no. get ops"))
@@ -109,8 +109,8 @@ public:
     this->ExposeWithClientContext(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
-  RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, lane_type const &lane,
-                                  lane_type const &maxlanes)
+  RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, LaneType const &lane,
+                                  LaneType const &maxlanes)
     : RevertibleDocumentStoreProtocol(doc_store, lane)
   {
     SetLaneLog2(maxlanes);
@@ -122,11 +122,11 @@ public:
     if (!context.is_valid())
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type(std::string("No context for HasLock.")));
+          0, ByteArrayType(std::string("No context for HasLock.")));
     }
 
     bool has_lock = false;
-    lock_status_.Apply([&context, &has_lock](LockStatus const &status) {
+    lock_status_.ApplyVoid([&context, &has_lock](LockStatus const &status) {
       has_lock = (status.is_locked && (status.client == context.sender_address));
     });
 
@@ -141,12 +141,12 @@ public:
     if (!context.is_valid())
     {
       // TODO(issue 11): set exception number
-      throw serializers::SerializableException(0, byte_array_type{"No context for HasLock."});
+      throw serializers::SerializableException(0, ByteArrayType{"No context for HasLock."});
     }
 
     // attempt to lock this shard
     bool success = false;
-    lock_status_.Apply([&context, &success](LockStatus &status) {
+    lock_status_.ApplyVoid([&context, &success](LockStatus &status) {
       if (!status.is_locked)
       {
         status.is_locked = true;
@@ -172,12 +172,12 @@ public:
     if (!context.is_valid())
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type(std::string("No context for HasLock.")));
+          0, ByteArrayType(std::string("No context for HasLock.")));
     }
 
     // attempt to unlock this shard
     bool success = false;
-    lock_status_.Apply([&context, &success](LockStatus &status) {
+    lock_status_.ApplyVoid([&context, &success](LockStatus &status) {
       if (status.is_locked && (status.client == context.sender_address))
       {
         status.is_locked = false;
@@ -198,14 +198,14 @@ public:
   }
 
 private:
-  static telemetry::CounterPtr CreateCounter(lane_type lane, char const *name,
+  static telemetry::CounterPtr CreateCounter(LaneType lane, char const *name,
                                              char const *description)
   {
     return telemetry::Registry::Instance().CreateCounter(name, description,
                                                          {{"lane", std::to_string(lane)}});
   }
 
-  static telemetry::HistogramPtr CreateHistogram(lane_type lane, char const *name,
+  static telemetry::HistogramPtr CreateHistogram(LaneType lane, char const *name,
                                                  char const *description)
   {
     return telemetry::Registry::Instance().CreateHistogram(
@@ -283,7 +283,7 @@ private:
     reset_count_->increment();
   }
 
-  void SetLaneLog2(lane_type const &count)
+  void SetLaneLog2(LaneType const &count)
   {
     log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
@@ -298,7 +298,7 @@ private:
     Identifier client;            ///< The identifier of the locking client
   };
 
-  SynchronisedState<LockStatus> lock_status_;
+  Protected<LockStatus> lock_status_;
 
   telemetry::CounterPtr   get_count_;
   telemetry::CounterPtr   get_create_count_;

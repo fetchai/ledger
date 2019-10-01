@@ -34,20 +34,20 @@ using namespace fetch::byte_array;
 
 static constexpr char const *LOGGING_NAME = "TcpClientServerStressTests";
 
-std::vector<message_type> globalMessagesFromServer_{};
-std::mutex                messages_;
+std::vector<MessageType> globalMessagesFromServer_{};
+std::mutex               messages_;
 
 // Basic server
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t port, NetworkManager nmanager)
+  Server(uint16_t port, NetworkManager const &nmanager)
     : TCPServer(port, nmanager)
   {}  // note for debug purposes, server does not Start() automatically
 
   ~Server() override = default;
 
-  void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
+  void PushRequest(ConnectionHandleType /*client*/, MessageType const &msg) override
   {
     FETCH_LOCK(messages_);
     globalMessagesFromServer_.push_back(msg);
@@ -104,7 +104,7 @@ void waitUntilConnected(std::string const &host, uint16_t port)
 }
 
 template <std::size_t N = 1>
-void TestCase0(std::string /*host*/, uint16_t port)
+void TestCase0(std::string const & /*host*/, uint16_t port)
 {
   std::cerr << "\nTEST CASE 0. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the server multiple times" << std::endl;
@@ -126,7 +126,7 @@ void TestCase0(std::string /*host*/, uint16_t port)
 }
 
 template <std::size_t N = 1>
-void TestCase1(std::string /*host*/, uint16_t port)
+void TestCase1(std::string const & /*host*/, uint16_t port)
 {
   std::cerr << "\nTEST CASE 1. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the server multiple times" << std::endl;
@@ -149,7 +149,7 @@ void TestCase1(std::string /*host*/, uint16_t port)
 }
 
 template <std::size_t N = 1>
-void TestCase2(std::string host, uint16_t port)
+void TestCase2(std::string const &host, uint16_t port)
 {
   std::cerr << "\nTEST CASE 2. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the server and send data to it" << std::endl;
@@ -281,7 +281,7 @@ void TestCase5(std::string host, uint16_t port)
     waitUntilConnected(host, port);
 
     // Create packets of varying sizes
-    std::vector<message_type> to_send;
+    std::vector<MessageType> to_send;
 
     {
       FETCH_LOCK(messages_);
@@ -290,11 +290,11 @@ void TestCase5(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+      auto to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
 
       std::string send_me(1 << (i + 14), to_fill);
 
-      to_send.push_back(send_me);
+      to_send.emplace_back(send_me);
     }
 
     // This will be over a single connection
@@ -348,7 +348,7 @@ void TestCase5(std::string host, uint16_t port)
 
     if (globalMessagesFromServer_ != to_send)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Recieved: ");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Received: ");
 
       for (auto const &i : globalMessagesFromServer_)
       {
@@ -375,15 +375,15 @@ void TestCase6(std::string host, uint16_t port)
     waitUntilConnected(host, port);
 
     // Create packets of varying sizes
-    std::vector<message_type> to_send;
-    std::vector<message_type> to_recieve;
+    std::vector<MessageType> to_send;
+    std::vector<MessageType> to_receive;
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+      auto to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
 
       std::string send_me(1 << (i + 14), to_fill);
-      to_send.push_back(send_me);
+      to_send.emplace_back(send_me);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "*** Open connection. ***");
@@ -395,11 +395,11 @@ void TestCase6(std::string host, uint16_t port)
       throw 1;
     }
 
-    std::mutex messages_recieve;
+    std::mutex messages_receive;
 
-    auto lam = [&](message_type const &msg) {
-      FETCH_LOCK(messages_recieve);
-      to_recieve.push_back(msg);
+    auto lam = [&](MessageType const &msg) {
+      FETCH_LOCK(messages_receive);
+      to_receive.push_back(msg);
     };
 
     i->OnMessage(lam);
@@ -429,9 +429,9 @@ void TestCase6(std::string host, uint16_t port)
     for (;;)
     {
       {
-        FETCH_LOCK(messages_recieve);
+        FETCH_LOCK(messages_receive);
 
-        if (to_recieve.size() == to_send.size())
+        if (to_receive.size() == to_send.size())
         {
           break;
         }
@@ -441,12 +441,12 @@ void TestCase6(std::string host, uint16_t port)
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    std::sort(to_recieve.begin(), to_recieve.end());
+    std::sort(to_receive.begin(), to_receive.end());
     std::sort(to_send.begin(), to_send.end());
 
-    if (to_recieve != to_send)
+    if (to_receive != to_send)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Recieved: ");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Received: ");
 
       for (auto const &i : globalMessagesFromServer_)
       {
@@ -473,10 +473,10 @@ void TestCase7(std::string host, uint16_t port)
     waitUntilConnected(host, port);
 
     // Create packets of varying sizes
-    std::vector<message_type> to_send_from_server;
-    std::vector<message_type> to_send_from_client;
+    std::vector<MessageType> to_send_from_server;
+    std::vector<MessageType> to_send_from_client;
 
-    std::vector<message_type> recieved_client;
+    std::vector<MessageType> received_client;
 
     {
       FETCH_LOCK(messages_);
@@ -485,18 +485,18 @@ void TestCase7(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+      auto to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
 
       std::string send_me(1 << (i + 14), to_fill);
-      to_send_from_client.push_back(send_me);
+      to_send_from_client.emplace_back(send_me);
     }
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x49 + (i & 0xFF));
+      auto to_fill = char(0x49 + (i & 0xFF));
 
       std::string send_me(1 << (i + 14), to_fill);
-      to_send_from_server.push_back(send_me);
+      to_send_from_server.emplace_back(send_me);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "*** Open connection. ***");
@@ -508,11 +508,11 @@ void TestCase7(std::string host, uint16_t port)
       throw 1;
     }
 
-    std::mutex messages_recieve;
+    std::mutex messages_receive;
 
-    auto lam = [&](message_type const &msg) {
-      FETCH_LOCK(messages_recieve);
-      recieved_client.push_back(msg);
+    auto lam = [&](MessageType const &msg) {
+      FETCH_LOCK(messages_receive);
+      received_client.push_back(msg);
     };
 
     i->OnMessage(lam);
@@ -551,9 +551,9 @@ void TestCase7(std::string host, uint16_t port)
     for (;;)
     {
       {
-        FETCH_LOCK(messages_recieve);
+        FETCH_LOCK(messages_receive);
 
-        if (recieved_client.size() == to_send_from_server.size() &&
+        if (received_client.size() == to_send_from_server.size() &&
             globalMessagesFromServer_.size() == to_send_from_client.size())
         {
           break;
@@ -568,7 +568,7 @@ void TestCase7(std::string host, uint16_t port)
     std::sort(globalMessagesFromServer_.begin(), globalMessagesFromServer_.end());
     std::sort(to_send_from_client.begin(), to_send_from_client.end());
 
-    std::sort(recieved_client.begin(), recieved_client.end());
+    std::sort(received_client.begin(), received_client.end());
     std::sort(to_send_from_server.begin(), to_send_from_server.end());
 
     if (globalMessagesFromServer_ != to_send_from_client)
@@ -577,7 +577,7 @@ void TestCase7(std::string host, uint16_t port)
       throw 1;
     }
 
-    if (recieved_client != to_send_from_server)
+    if (received_client != to_send_from_server)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server->client messages.");
       throw 1;

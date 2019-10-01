@@ -68,7 +68,7 @@ void MomentumOptimiser<T>::Init()
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->momentum_.emplace_back(TensorType(train->get_weights().shape()));
+    this->momentum_.emplace_back(TensorType(train->GetWeights().shape()));
   }
   ResetMomentum();
 }
@@ -111,7 +111,7 @@ void MomentumOptimiser<T>::ApplyGradients(SizeType batch_size)
   {
     // momentum[i] = momentum_update * momentum[i] + learning_rate * (input_grad[i]/batch_size)
     fetch::math::Multiply(*mit, momentum_update_, *mit);
-    fetch::math::Multiply((*trainable_it)->get_gradients(),
+    fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
                           (this->learning_rate_) / (static_cast<DataType>(batch_size)),
                           *gradient_it);
     fetch::math::Add(*mit, *gradient_it, *mit);

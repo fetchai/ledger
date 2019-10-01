@@ -20,6 +20,7 @@
 #include "ledger/chain/digest.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
+#include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/work.hpp"
 #include "vm_modules/math/bignumber.hpp"
@@ -34,8 +35,8 @@ namespace {
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
 using UInt256 = vectorise::UInt<256>;
-using serializers::MsgPackSerializer;
 using byte_array::ConstByteArray;
+using serializers::MsgPackSerializer;
 
 using DagNodes = NaiveSynergeticMiner::DagNodes;
 
@@ -99,7 +100,7 @@ NaiveSynergeticMiner::State NaiveSynergeticMiner::OnMine()
 
 void NaiveSynergeticMiner::Mine()
 {
-  using ProblemSpaces = DigestMap<ProblemData>;
+  using ProblemSpaces = std::unordered_map<ProblemId, ProblemData>;
 
   // iterate through the latest DAG nodes and build a complete set of addresses to mine solutions
   // for
@@ -113,9 +114,8 @@ void NaiveSynergeticMiner::Mine()
     if (DAGNode::DATA == node.type)
     {
       // lookup the problem data
-      auto &problem_data = problem_spaces[node.contract_digest];
+      auto &problem_data = problem_spaces[{node.contract_address, node.contract_digest}];
 
-      // add the problem data to the
       problem_data.emplace_back(node.contents);
     }
   }
@@ -143,7 +143,8 @@ void NaiveSynergeticMiner::Mine()
   for (auto const &problem : problem_spaces)
   {
     // attempt to mine a solution to this problem
-    auto const solution = MineSolution(problem.first, problem.second);
+    auto const solution =
+        MineSolution(problem.first.contract_digest, problem.first.contract_address, problem.second);
 
     // check to see if a solution was generated
     if (solution)
@@ -166,7 +167,7 @@ SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_
 
   // attempt to retrieve the document stored in the database
   auto const resource_document =
-      storage_.Get(SmartContractManager::CreateAddressForSynergeticContract(contract_digest));
+      storage_.Get(SmartContractManager::CreateAddressForContract(contract_digest.ToHex()));
 
   if (!resource_document.failed)
   {
@@ -192,6 +193,7 @@ SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_
 }
 
 WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &     contract_digest,
+                                           Address const &    contract_address,
                                            ProblemData const &problem_data)
 {
   // create the synergetic contract
@@ -200,12 +202,12 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &     contract_digest,
   // if no contract can be loaded then simple return
   if (!contract)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup contract: 0x", contract_digest.ToHex());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up contract: 0x", contract_digest.ToHex());
     return {};
   }
 
   // build up a work instance
-  auto work = std::make_shared<Work>(contract_digest, prover_->identity());
+  auto work = std::make_shared<Work>(contract_digest, contract_address, prover_->identity());
 
   // Preparing to mine
   auto status = contract->DefineProblem(problem_data);

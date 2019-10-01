@@ -26,7 +26,7 @@ IR::IR(IR const &other)
   Clone(other);
 }
 
-IR::IR(IR &&other)
+IR::IR(IR &&other) noexcept
 {
   name_      = std::move(other.name_);
   root_      = std::move(other.root_);
@@ -45,7 +45,7 @@ IR &IR::operator=(IR const &other)
   return *this;
 }
 
-IR &IR::operator=(IR &&other)
+IR &IR::operator=(IR &&other) noexcept
 {
   if (&other != this)
   {
@@ -199,7 +199,7 @@ IRFunctionPtr IR::CloneFunction(IRFunctionPtr const &function)
   return clone_function;
 }
 
-IRTypePtrArray IR::CloneTypes(const IRTypePtrArray &types)
+IRTypePtrArray IR::CloneTypes(IRTypePtrArray const &types)
 {
   IRTypePtrArray array;
   for (auto const &type : types)
@@ -209,7 +209,7 @@ IRTypePtrArray IR::CloneTypes(const IRTypePtrArray &types)
   return array;
 }
 
-IRVariablePtrArray IR::CloneVariables(const IRVariablePtrArray &variables)
+IRVariablePtrArray IR::CloneVariables(IRVariablePtrArray const &variables)
 {
   IRVariablePtrArray array;
   for (auto const &variable : variables)
@@ -217,6 +217,57 @@ IRVariablePtrArray IR::CloneVariables(const IRVariablePtrArray &variables)
     array.push_back(CloneVariable(variable));
   }
   return array;
+}
+
+IRTypePtr CreateIRType(TypeKind type_kind, std::string name, IRTypePtr template_type,
+                       IRTypePtrArray parameter_types)
+{
+  return std::make_shared<IRType>(type_kind, std::move(name), std::move(template_type),
+                                  std::move(parameter_types));
+}
+
+IRVariablePtr CreateIRVariable(VariableKind variable_kind, std::string name, IRTypePtr type,
+                               bool referenced)
+{
+  return std::make_shared<IRVariable>(variable_kind, std::move(name), std::move(type), referenced);
+}
+
+IRFunctionPtr CreateIRFunction(FunctionKind function_kind, std::string name, std::string unique_id,
+                               IRTypePtrArray     parameter_types,
+                               IRVariablePtrArray parameter_variables, IRTypePtr return_type)
+{
+  return std::make_shared<IRFunction>(function_kind, std::move(name), std::move(unique_id),
+                                      std::move(parameter_types), std::move(parameter_variables),
+                                      std::move(return_type));
+}
+
+IRNodePtr CreateIRBasicNode(NodeKind node_kind, std::string text, uint16_t line,
+                            IRNodePtrArray children)
+{
+  return std::make_shared<IRNode>(NodeCategory::Basic, node_kind, std::move(text), line,
+                                  std::move(children));
+}
+
+IRBlockNodePtr CreateIRBlockNode(NodeKind node_kind, std::string text, uint16_t line,
+                                 IRNodePtrArray children)
+{
+  return std::make_shared<IRBlockNode>(node_kind, std::move(text), line, std::move(children));
+}
+
+IRExpressionNodePtr CreateIRExpressionNode(NodeKind node_kind, std::string text, uint16_t line,
+                                           IRNodePtrArray children)
+{
+  return std::make_shared<IRExpressionNode>(node_kind, std::move(text), line, std::move(children));
+}
+
+IRBlockNodePtr ConvertToIRBlockNodePtr(IRNodePtr const &node)
+{
+  return std::static_pointer_cast<IRBlockNode>(node);
+}
+
+IRExpressionNodePtr ConvertToIRExpressionNodePtr(IRNodePtr const &node)
+{
+  return std::static_pointer_cast<IRExpressionNode>(node);
 }
 
 }  // namespace vm

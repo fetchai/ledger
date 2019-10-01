@@ -39,7 +39,6 @@ public:
   using Uri           = network::Uri;
   using Clock         = std::chrono::steady_clock;
   using Timepoint     = Clock::time_point;
-  using Mutex         = mutex::Mutex;
   using AddressSet    = std::unordered_set<Address>;
 
   struct CacheElement
@@ -83,7 +82,7 @@ public:
 private:
   void UpdateInternal(Address const &address, Uri const &uri);
 
-  mutable Mutex lock_{__LINE__, __FILE__};
+  mutable Mutex lock_;
   Cache         cache_;
 };
 

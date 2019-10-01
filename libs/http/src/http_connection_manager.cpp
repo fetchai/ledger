@@ -17,36 +17,34 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
 #include "http/http_connection_manager.hpp"
 #include "http/request.hpp"
+
+#include <utility>
 
 namespace fetch {
 namespace http {
 
 HTTPConnectionManager::HTTPConnectionManager(AbstractHTTPServer &server)
   : server_(server)
-  , clients_mutex_(__LINE__, __FILE__)
+  , clients_mutex_{}
 {}
 
-HTTPConnectionManager::handle_type HTTPConnectionManager::Join(connection_type client)
+HTTPConnectionManager::HandleType HTTPConnectionManager::Join(ConnectionType client)
 {
-  LOG_STACK_TRACE_POINT;
-
-  handle_type handle = server_.next_handle();
+  HandleType handle = server_.next_handle();
   FETCH_LOG_DEBUG(LOGGING_NAME, "Client joining with handle ", handle);
 
   FETCH_LOCK(clients_mutex_);
-  clients_[handle] = client;
+  clients_[handle] = std::move(client);
   return handle;
 }
 
-void HTTPConnectionManager::Leave(handle_type handle)
+void HTTPConnectionManager::Leave(HandleType handle)
 {
-  LOG_STACK_TRACE_POINT;
-
   FETCH_LOCK(clients_mutex_);
 
   if (clients_.find(handle) != clients_.end())
@@ -58,10 +56,8 @@ void HTTPConnectionManager::Leave(handle_type handle)
   FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is leaving");
 }
 
-bool HTTPConnectionManager::Send(handle_type client, HTTPResponse const &res)
+bool HTTPConnectionManager::Send(HandleType client, HTTPResponse const &res)
 {
-  LOG_STACK_TRACE_POINT;
-
   bool ret = true;
   clients_mutex_.lock();
 
@@ -82,17 +78,13 @@ bool HTTPConnectionManager::Send(handle_type client, HTTPResponse const &res)
   return ret;
 }
 
-void HTTPConnectionManager::PushRequest(handle_type client, HTTPRequest const &req)
+void HTTPConnectionManager::PushRequest(HandleType client, HTTPRequest const &req)
 {
-  LOG_STACK_TRACE_POINT;
-
   server_.PushRequest(client, req);
 }
 
-std::string HTTPConnectionManager::GetAddress(handle_type client)
+std::string HTTPConnectionManager::GetAddress(HandleType client)
 {
-  LOG_STACK_TRACE_POINT;
-
   FETCH_LOCK(clients_mutex_);
   if (clients_.find(client) != clients_.end())
   {

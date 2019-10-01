@@ -33,7 +33,6 @@
 
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
-using fetch::muddle::MuddleEndpoint;
 using fetch::service::Promise;
 using fetch::byte_array::ToBase64;
 
@@ -41,7 +40,7 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using AddressList = std::vector<MuddleEndpoint::Address>;
+using AddressList = std::vector<muddle::Address>;
 
 AddressList GenerateAddressList(ShardConfigs const &shards)
 {
@@ -55,6 +54,11 @@ AddressList GenerateAddressList(ShardConfigs const &shards)
 
   return addresses;
 }
+
+constexpr char const *LOGGING_NAME = "StorageUnitClient";
+
+constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
+constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
 
 }  // namespace
 
@@ -190,7 +194,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   {
     assert(!hash.empty());
 
-    FETCH_LOG_INFO(LOGGING_NAME, "reverting tree leaf: ", lane_merkle_hash.ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "reverting tree leaf: ", lane_merkle_hash.ToHex());
 
     // make the call to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
@@ -287,8 +291,8 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
       }
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
-                   " to stack: ", tree.root().ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
+                    " to stack: ", tree.root().ToHex());
 
     permanent_state_merkle_stack_.Push(tree);
     permanent_state_merkle_stack_.Flush(false);
@@ -332,12 +336,7 @@ bool StorageUnitClient::HashInStack(Hash const &hash, uint64_t index)
   assert(result);
   FETCH_UNUSED(result);
 
-  if (tree.root() == hash)
-  {
-    return true;
-  }
-
-  return false;
+  return tree.root() == hash;
 }
 
 StorageUnitClient::Address const &StorageUnitClient::LookupAddress(ShardIndex shard) const
@@ -452,6 +451,7 @@ bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
 
 void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "IssueCallForMissingTxs: ", tx_set.size(), " Tx digests");
   std::map<Address, std::unordered_set<ResourceID>> lanes_of_interest;
   for (auto const &hash : tx_set)
   {
@@ -470,8 +470,6 @@ void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
 
 StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const &key)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "GetOrCreate: ", key.address());
-
   Document doc;
 
   try
@@ -520,8 +518,6 @@ StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
 
 void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Set: ", key.address(), " value: 0x", value.ToHex());
-
   try
   {
     // make the request to the RPC server

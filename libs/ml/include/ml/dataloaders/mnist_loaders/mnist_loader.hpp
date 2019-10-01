@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/macros.hpp"
+#include "core/random.hpp"
 #include "math/base_types.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "ml/dataloaders/dataloader.hpp"
@@ -62,13 +63,13 @@ private:
   static constexpr std::uint32_t LABEL_SIZE    = 10;
 
 public:
-  MNISTLoader(bool random_mode = false)
-    : DataLoader<LabelType, InputType>(random_mode)
+  explicit MNISTLoader(bool random_mode = false)
+    : DataLoader<LabelType, InputType>()
   {
     // Prepare return buffer
+    this->SetRandomMode(random_mode);
     buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
     buffer_.first = LabelType({LABEL_SIZE, 1u});
-
     UpdateRanges();
   }
 
@@ -76,7 +77,6 @@ public:
     : DataLoader<LabelType, InputType>()
   {
     SetupWithDataFiles(images_file, labels_file);
-    UpdateRanges();
   }
 
   SizeType Size() const override
@@ -102,7 +102,8 @@ public:
   {
     if (this->random_mode_)
     {
-      GetAtIndex(this->current_min_ + (static_cast<SizeType>(rand()) % this->current_size_),
+      GetAtIndex(this->current_min_ + (static_cast<SizeType>(fetch::random::Random::generator()) %
+                                       this->current_size_),
                  buffer_);
       return buffer_;
     }
@@ -166,7 +167,8 @@ public:
       if (this->random_mode_)
       {
         *this->current_cursor_ =
-            this->current_min_ + (static_cast<SizeType>(rand()) % this->current_size_);
+            this->current_min_ +
+            (static_cast<SizeType>(fetch::random::Random::generator()) % this->current_size_);
       }
       else
       {
@@ -194,17 +196,19 @@ public:
     buffer_.first = LabelType({LABEL_SIZE, 1u});
     buffer_.second.clear();
     buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
+    UpdateRanges();
   }
 
-  static unsigned char **ReadMnistImages(std::string full_path, std::uint32_t &number_of_images,
-                                         unsigned int &image_size)
+  static uint8_t **ReadMnistImages(std::string const &full_path, std::uint32_t &number_of_images,
+                                   unsigned int &image_size)
   {
     auto reverseInt = [](std::uint32_t i) -> std::uint32_t {
-      unsigned char c1, c2, c3, c4;
-      c1 = (unsigned char)(i & 255);
-      c2 = (unsigned char)((i >> 8) & 255);
-      c3 = (unsigned char)((i >> 16) & 255);
-      c4 = (unsigned char)((i >> 24) & 255);
+      // TODO(issue 1674): Change to use platform tools
+      uint8_t c1, c2, c3, c4;
+      c1 = (uint8_t)(i & 255);
+      c2 = (uint8_t)((i >> 8) & 255);
+      c3 = (uint8_t)((i >> 16) & 255);
+      c4 = (uint8_t)((i >> 24) & 255);
       return (std::uint32_t)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
     };
 
@@ -229,10 +233,10 @@ public:
 
       image_size = n_rows * n_cols;
 
-      uchar **_dataset = new uchar *[number_of_images];
+      auto **_dataset = new UnsignedChar *[number_of_images];
       for (unsigned int i = 0; i < number_of_images; i++)
       {
-        _dataset[i] = new uchar[image_size];
+        _dataset[i] = new UnsignedChar[image_size];
         file.read((char *)_dataset[i], std::streamsize(image_size));
       }
       return _dataset;
@@ -243,14 +247,15 @@ public:
     }
   }
 
-  static unsigned char *ReadMNistLabels(std::string full_path, std::uint32_t &number_of_labels)
+  static uint8_t *ReadMNistLabels(std::string const &full_path, std::uint32_t &number_of_labels)
   {
     auto reverseInt = [](std::uint32_t i) {
-      unsigned char c1, c2, c3, c4;
-      c1 = (unsigned char)(i & 255);
-      c2 = (unsigned char)((i >> 8) & 255);
-      c3 = (unsigned char)((i >> 16) & 255);
-      c4 = (unsigned char)((i >> 24) & 255);
+      // TODO(issue 1674): Change to use platform tools
+      uint8_t c1, c2, c3, c4;
+      c1 = (uint8_t)(i & 255);
+      c2 = (uint8_t)((i >> 8) & 255);
+      c3 = (uint8_t)((i >> 16) & 255);
+      c4 = (uint8_t)((i >> 24) & 255);
       return (std::uint32_t)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
     };
 
@@ -270,7 +275,7 @@ public:
       file.read((char *)&number_of_labels, sizeof(number_of_labels)),
           number_of_labels = reverseInt(number_of_labels);
 
-      uchar *_dataset = new uchar[number_of_labels];
+      auto *_dataset = new UnsignedChar[number_of_labels];
       for (unsigned int i = 0; i < number_of_labels; i++)
       {
         file.read((char *)&_dataset[i], 1);
@@ -284,34 +289,63 @@ public:
   }
 
 private:
-  using uchar = unsigned char;
+  using UnsignedChar = uint8_t;
 
   void UpdateCursor() override
   {
-    if (this->mode_ == DataLoaderMode::TRAIN)
+    switch (this->mode_)
+    {
+    case DataLoaderMode::TRAIN:
     {
       this->current_cursor_ = train_cursor_;
       this->current_min_    = 0;
       this->current_max_    = test_offset_;
       this->current_size_   = train_size_;
+      break;
     }
-    else if (this->mode_ == DataLoaderMode::TEST)
+    case DataLoaderMode::TEST:
     {
       this->current_cursor_ = test_cursor_;
       this->current_min_    = test_offset_;
       this->current_max_    = validation_offset_;
       this->current_size_   = test_size_;
+      break;
     }
-    else if (this->mode_ == DataLoaderMode::VALIDATE)
+    case DataLoaderMode::VALIDATE:
     {
       this->current_cursor_ = validation_cursor_;
       this->current_min_    = validation_offset_;
       this->current_max_    = total_size_;
       this->current_size_   = validation_size_;
+      break;
     }
-    else
+    default:
     {
       throw std::runtime_error("Unsupported dataloader mode.");
+    }
+    }
+  }
+
+  bool IsModeAvailable(DataLoaderMode mode) override
+  {
+    switch (mode)
+    {
+    case DataLoaderMode::TRAIN:
+    {
+      return test_offset_ > 0;
+    }
+    case DataLoaderMode::TEST:
+    {
+      return test_offset_ < validation_offset_;
+    }
+    case DataLoaderMode::VALIDATE:
+    {
+      return validation_offset_ < total_size_;
+    }
+    default:
+    {
+      throw std::runtime_error("Unsupported dataloader mode.");
+    }
     }
   }
 
@@ -378,8 +412,8 @@ private:
 private:
   ReturnType buffer_;
 
-  unsigned char **data_;
-  unsigned char * labels_;
+  uint8_t **data_;
+  uint8_t * labels_;
 };
 }  // namespace dataloaders
 }  // namespace ml

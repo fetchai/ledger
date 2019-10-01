@@ -171,8 +171,13 @@ TEST_F(MLTests, dataloader_serialisation_test)
   auto const initial_training_pair = first_res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
   auto const training_pair         = res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
 
-  auto data1 = initial_training_pair->data()->GetTensor();
-  auto data2 = training_pair->data()->GetTensor();
+  AnyInteger index(0, TypeIds::UInt16);
+
+  auto array1 = initial_training_pair->data()->GetIndexedValue(index);
+  auto array2 = training_pair->data()->GetIndexedValue(index);
+
+  auto data1 = array1.Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()->GetTensor();
+  auto data2 = array2.Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()->GetTensor();
 
   auto label1 = initial_training_pair->label()->GetTensor();
   auto label2 = training_pair->label()->GetTensor();
@@ -220,10 +225,96 @@ TEST_F(MLTests, graph_serialisation_test)
 
   static char const *graph_deserialise_src = R"(
     function main() : Tensor
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
+
       var state = State<Graph>("graph");
       var graph = state.get();
+
+      graph.setInput("Input", data_tensor);
+      graph.setInput("Label", label_tensor);
       var loss = graph.evaluate("Error");
       return loss;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(graph_deserialise_src));
+
+  Variant res;
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(::testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const initial_loss = first_res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const loss         = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+
+  EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
+}
+
+TEST_F(MLTests, graph_string_serialisation_test)
+{
+  static char const *graph_serialise_src = R"(
+    function main() : Tensor
+
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
+
+      var graph = Graph();
+      graph.addPlaceholder("Input");
+      graph.addPlaceholder("Label");
+      graph.addRelu("Output", "Input");
+      graph.addMeanSquareErrorLoss("Error", "Output", "Label");
+
+      graph.setInput("Input", data_tensor);
+      graph.setInput("Label", label_tensor);
+
+      var graph_string = graph.serializeToString();
+
+      var state = State<String>("graph_state");
+      state.set(graph_string);
+
+      return graph.evaluate("Error");
+
+    endfunction
+  )";
+
+  std::string const state_name{"graph_state"};
+  Variant           first_res;
+  ASSERT_TRUE(toolkit.Compile(graph_serialise_src));
+
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+  ASSERT_TRUE(toolkit.Run(&first_res));
+
+  static char const *graph_deserialise_src = R"(
+    function main() : Tensor
+      var state = State<String>("graph_state");
+      var graph_string = state.get();
+
+      var graph = Graph();
+      graph = graph.deserializeFromString(graph_string);
+
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
+
+      graph.setInput("Input", data_tensor);
+      graph.setInput("Label", label_tensor);
+
+      return graph.evaluate("Error");
     endfunction
   )";
 
@@ -264,31 +355,12 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       dataloader.addData(data_tensor, label_tensor);
 
       var batch_size = 8u64;
-      var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+      var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
 
       var state = State<Optimiser>("optimiser");
       state.set(optimiser);
 
-      ////////////
-      // TODO (1533) - this is necessary due to a bug
-      // now make a totally new optimiser, graph and dataloader with identical properties
-      // this is necessary because the optimiser data is not written at state.set time
-      // therefore the internal states of the optimser after calling run will be saved
-      // to the state
-      ////////////
-
-      var graph2 = Graph();
-      graph2.addPlaceholder("Input");
-      graph2.addPlaceholder("Label");
-      graph2.addFullyConnected("FC1", "Input", 2, 2);
-      graph2.addRelu("Output", "FC1");
-      graph2.addMeanSquareErrorLoss("Error", "Output", "Label");
-
-      var dataloader2 = DataLoader("tensor");
-      dataloader2.addData(data_tensor, label_tensor);
-
-      var optimiser2 = Optimiser("sgd", graph2, dataloader2, "Input", "Label", "Error");
-      var loss = optimiser2.run(batch_size);
+      var loss = optimiser.run(batch_size);
       return loss;
 
     endfunction
@@ -350,7 +422,7 @@ TEST_F(MLTests, serialisation_several_components_test)
         dataloader_state.set(dataloader);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
         var optimiser_state = State<Optimiser>("optimiser");
         optimiser_state.set(optimiser);
 
@@ -413,7 +485,7 @@ TEST_F(MLTests, optimiser_set_graph_test)
         dataloader.addData(data_tensor, label_tensor);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
 
         optimiser.setGraph(graph);
         optimiser.setDataloader(dataloader);
@@ -425,4 +497,46 @@ TEST_F(MLTests, optimiser_set_graph_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
+TEST_F(MLTests, graph_step_test)
+{
+  static char const *src = R"(
+    function main() : Tensor
+
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
+
+      var graph = Graph();
+      graph.addPlaceholder("Input");
+      graph.addPlaceholder("Label");
+      graph.addFullyConnected("FC1", "Input", 2, 2);
+      graph.addMeanSquareErrorLoss("Error", "FC1", "Label");
+
+      graph.setInput("Input", data_tensor);
+      graph.setInput("Label", label_tensor);
+
+      var loss = graph.evaluate("Error");
+      graph.backPropagate("Error");
+      graph.step(0.01fp64);
+
+      var loss_after_training = graph.evaluate("Error");
+
+      loss.setAt(0u64, 0u64, loss.at(0u64, 0u64) - loss_after_training.at(0u64, 0u64));
+
+      return loss;
+    endfunction
+  )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(src));
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const loss_reduction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+
+  EXPECT_GT(loss_reduction->GetTensor().At(0, 0), 0);
+}
 }  // namespace

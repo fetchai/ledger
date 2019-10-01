@@ -33,7 +33,7 @@ public:
   explicit TxStatusHttpInterface(TxStatusCachePtr status_cache);
   TxStatusHttpInterface(TxStatusHttpInterface const &) = delete;
   TxStatusHttpInterface(TxStatusHttpInterface &&)      = delete;
-  ~TxStatusHttpInterface()                             = default;
+  ~TxStatusHttpInterface() override                    = default;
 
   // Operators
   TxStatusHttpInterface &operator=(TxStatusHttpInterface const &) = delete;

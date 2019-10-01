@@ -24,11 +24,11 @@
 #include "ledger/dag/dag.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/transaction_verifier.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "muddle/subscription.hpp"
 #include "network/generics/requesting_queue.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/muddle/subscription.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -58,7 +58,6 @@ class DAGSyncService
 public:
   static constexpr char const *LOGGING_NAME = "DAGSyncService";
 
-  using Muddle         = muddle::Muddle;
   using MuddleEndpoint = muddle::MuddleEndpoint;
   using TransactionPtr = std::shared_ptr<Transaction>;
 
@@ -108,7 +107,7 @@ private:
 
   uint64_t BROADCAST_BATCH_SIZE = 5;
 
-  fetch::mutex::Mutex               mutex_{__LINE__, __FILE__};
+  Mutex                             mutex_;
   std::vector<std::vector<DAGNode>> recvd_broadcast_nodes_;
 };
 

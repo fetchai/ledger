@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/serializers/ml_types.hpp"
-
 #include "vectorise/fixed_point/fixed_point.hpp"
-//#include "core/serializers/main_serializer.hpp"
-#include "core/serializers/main_serializer_definition.hpp"
+
 #include "gtest/gtest.h"
 
 #include <memory>
@@ -294,6 +293,7 @@ TYPED_TEST(DropoutTest, saveparams_backward_3d_tensor_test)
   b << *dsp;
 
   // make another prediction with the original op
+  op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), output);
   prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // deserialize
@@ -303,6 +303,9 @@ TYPED_TEST(DropoutTest, saveparams_backward_3d_tensor_test)
 
   // rebuild node
   OpType new_op(*dsp2);
+
+  // must call forward again to populate internal caches before backward can be called
+  new_op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), output);
 
   // check that new predictions match the old
   std::vector<TensorType> new_prediction =

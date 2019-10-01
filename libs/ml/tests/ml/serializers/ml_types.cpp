@@ -23,7 +23,6 @@
 
 #include "ml/utilities/graph_builder.hpp"
 
-#include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ml/serializers/ml_types.hpp"
 
@@ -116,17 +115,15 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   /// make a prediction and do nothing with it
   TensorType tmp_data = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
   g->SetInput("Input", tmp_data.Transpose());
-  TensorType tmp_prediction = g->ForwardPropagate(output);
+  TensorType tmp_prediction = g->Evaluate(output);
 
-  fetch::ml::GraphSaveableParams<TypeParam> gsp1 = g->GetGraphSaveableParams();
-  fetch::serializers::MsgPackSerializer     b;
-  b << gsp1;
-  b.seek(0);
+  fetch::ml::GraphSaveableParams<TypeParam>      gsp1 = g->GetGraphSaveableParams();
+  fetch::serializers::LargeObjectSerializeHelper b;
+  b.Serialize(gsp1);
 
   auto gsp2 = std::make_shared<fetch::ml::GraphSaveableParams<TypeParam>>();
 
-  b >> *gsp2;
-
+  b.Deserialize(*gsp2);
   EXPECT_EQ(gsp1.connections, gsp2->connections);
 
   for (auto const &gsp2_node_pair : gsp2->nodes)
@@ -146,8 +143,8 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g->SetInput("Input", data.Transpose());
   g2->SetInput("Input", data.Transpose());
 
-  TensorType prediction  = g->ForwardPropagate(output);
-  TensorType prediction2 = g2->ForwardPropagate(output);
+  TensorType prediction  = g->Evaluate(output);
+  TensorType prediction2 = g2->Evaluate(output);
 
   // test correct values
   EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
@@ -155,21 +152,31 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
 
   // train g
   g->SetInput(label_name, labels);
-  g->ForwardPropagate(error_output);
-  g->BackPropagateError(error_output);
-  g->Step(DataType{0.1f});
+  g->Evaluate(error_output);
+  g->BackPropagate(error_output);
+  auto grads = g->GetGradients();
+  for (auto &grad : grads)
+  {
+    grad *= static_cast<DataType>(-0.1);
+  }
+  g->ApplyGradients(grads);
 
   // train g2
   g2->SetInput(label_name, labels);
-  g2->ForwardPropagate(error_output);
-  g2->BackPropagateError(error_output);
-  g2->Step(DataType{0.1f});
+  g2->Evaluate(error_output);
+  g2->BackPropagate(error_output);
+  auto grads2 = g2->GetGradients();
+  for (auto &grad : grads2)
+  {
+    grad *= static_cast<DataType>(-0.1);
+  }
+  g2->ApplyGradients(grads2);
 
   g->SetInput("Input", data.Transpose());
-  TensorType prediction3 = g->ForwardPropagate(output);
+  TensorType prediction3 = g->Evaluate(output);
 
   g2->SetInput("Input", data.Transpose());
-  TensorType prediction4 = g2->ForwardPropagate(output);
+  TensorType prediction4 = g2->Evaluate(output);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

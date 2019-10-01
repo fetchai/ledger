@@ -30,7 +30,6 @@
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/dag/dag_node.hpp"
 #include "ledger/upow/work.hpp"
-#include "network/p2pservice/p2p_service.hpp"
 #include "storage/object_store.hpp"
 
 #include <cstdint>
@@ -44,6 +43,10 @@
 #include <vector>
 
 namespace fetch {
+namespace crypto {
+class Prover;
+}
+
 namespace ledger {
 
 struct DAGTip
@@ -82,7 +85,7 @@ private:
   using DAGTipPtr       = std::shared_ptr<DAGTip>;
   using DAGNodePtr      = std::shared_ptr<DAGNode>;
   using Mutex           = std::recursive_mutex;
-  using CertificatePtr  = p2p::P2PService::CertificatePtr;
+  using CertificatePtr  = std::shared_ptr<crypto::Prover>;
   using DAGTypes        = DAGInterface::DAGTypes;
 
 public:
@@ -125,7 +128,7 @@ public:
   // Make sure that the dag has all nodes for a certain epoch
   bool SatisfyEpoch(DAGEpoch const &) override;
 
-  std::vector<DAGNode> GetLatest(bool previous_epoch_only = false) override;
+  std::vector<DAGNode> GetLatest(bool previous_epoch_only) override;
 
   ///////////////////////////////////////
   // Fns used for syncing
@@ -150,8 +153,7 @@ private:
   EpochStackStore      epochs_;  // Past less-relevant epochs as a stack (key = index, value = hash)
   EpochStore all_stored_epochs_;  // All epochs, including from non-winning forks (key = epoch hash,
                                   // val = epoch)
-  DAGNodeStore finalised_dag_nodes_;  // Once an epoch arrives, all dag nodes inbetween go here
-  DAGEpoch     temp_recently_created_epoch_;  // Most recent epoch, not in deque for convenience
+  DAGNodeStore finalised_dag_nodes_;  // Once an epoch arrives, all dag nodes in between go here
 
   // clang-format off
   // volatile state
@@ -162,35 +164,34 @@ private:
   std::unordered_map<NodeHash, std::vector<DAGNodePtr>> loose_nodes_lookup_;  // nodes that are missing one or more references (waiting on NodeHash)
   // clang-format on
 
-  // std::unordered_map<NodeHash, uint64_t>                loose_nodes_ttl_;   // TODO(HUT): loose
-  // nodes management scheme
+  // TODO(1642): loose nodes management scheme
+  // std::unordered_map<NodeHash, uint64_t> loose_nodes_ttl_;
 
   // Used for sync purposes
   std::vector<DAGNode> recently_added_;  // nodes that have been recently added
   std::set<NodeHash>   missing_;         // node hashes that we know are missing
 
   // Internal functions don't need locking and can recursively call themselves etc.
-  bool       PushInternal(DAGNodePtr node);
-  bool       AlreadySeenInternal(DAGNodePtr node);    // const
-  bool       TooOldInternal(uint64_t);                // const
-  bool       IsLooseInternal(DAGNodePtr node);        // const
-  void       SetReferencesInternal(DAGNodePtr node);  // const
-  void       AdvanceTipsInternal(DAGNodePtr node);
-  bool       HashInPrevEpochsInternal(ConstByteArray hash);  // const
-  void       AddLooseNodeInternal(DAGNodePtr node);
-  void       HealLooseBlocksInternal(ConstByteArray added_hash);
+  bool       PushInternal(DAGNodePtr const &node);
+  bool       AlreadySeenInternal(DAGNodePtr const &node) const;
+  bool       TooOldInternal(uint64_t) const;
+  bool       IsLooseInternal(DAGNodePtr const &node) const;
+  void       SetReferencesInternal(DAGNodePtr const &node);
+  void       AdvanceTipsInternal(DAGNodePtr const &node);
+  bool       HashInPrevEpochsInternal(ConstByteArray const &hash) const;
+  void       AddLooseNodeInternal(DAGNodePtr const &node);
+  void       HealLooseBlocksInternal(ConstByteArray const &added_hash);
   void       UpdateStaleTipsInternal();
-  bool       NodeInvalidInternal(DAGNodePtr node);
-  DAGNodePtr GetDAGNodeInternal(ConstByteArray hash, bool, bool &);  // const
-  void       TraverseFromTips(std::set<ConstByteArray> const &, std::function<void(NodeHash)>,
-                              std::function<bool(NodeHash)>);
-  bool       GetEpochFromStorage(std::string const &, DAGEpoch &);
-  bool       SetEpochInStorage(std::string const &, DAGEpoch const &, bool);
-  void       Flush();
-  void       PrintLoose();
+  bool       NodeInvalidInternal(DAGNodePtr const &node);
+  DAGNodePtr GetDAGNodeInternal(ConstByteArray const &hash, bool, bool &);  // const
+  void TraverseFromTips(std::set<ConstByteArray> const &, std::function<void(NodeHash)> const &,
+                        std::function<bool(NodeHash)> const &);
+  bool GetEpochFromStorage(std::string const &, DAGEpoch &);
+  bool SetEpochInStorage(std::string const &, DAGEpoch const &, bool);
+  void Flush();
 
   void DeleteTip(DAGTipID tip);
-  void DeleteTip(NodeHash hash);
+  void DeleteTip(NodeHash const &hash);
 
   std::string    db_name_;
   CertificatePtr certificate_;

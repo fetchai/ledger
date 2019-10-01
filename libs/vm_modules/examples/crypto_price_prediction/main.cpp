@@ -36,15 +36,15 @@
 #include <string>
 #include <vector>
 
-using DataType  = fetch::vm_modules::math::VMTensor::DataType;
-using ArrayType = fetch::math::Tensor<DataType>;
-using System    = fetch::vm_modules::System;
+using DataType   = fetch::vm_modules::math::VMTensor::DataType;
+using TensorType = fetch::math::Tensor<DataType>;
+using System     = fetch::vm_modules::System;
 
 // read the weights and bias csv files
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
     fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose)
 {
-  ArrayType tensor = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
+  TensorType tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(filename->str, 0, 0, transpose);
   tensor.Reshape({1, tensor.shape(0), tensor.shape(1)});
 
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
@@ -113,7 +113,8 @@ int main(int argc, char **argv)
   std::vector<std::string> errors;
 
   // Compiling
-  bool compiled = compiler->Compile(source, "myexecutable", ir, errors);
+  fetch::vm::SourceFiles files    = {{"default.etch", source}};
+  bool                   compiled = compiler->Compile(files, "default_ir", ir, errors);
 
   if (!compiled)
   {
@@ -130,7 +131,7 @@ int main(int argc, char **argv)
   // attach std::cout for printing
   vm.AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
 
-  if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
+  if (!vm.GenerateExecutable(ir, "default_exe", executable, errors))
   {
     std::cout << "Failed to generate executable" << std::endl;
     for (auto &s : errors)

@@ -25,7 +25,10 @@
 #include "http/validators.hpp"
 #include "http/view_parameters.hpp"
 
+#include <functional>
+#include <string>
 #include <vector>
+
 namespace fetch {
 namespace http {
 
@@ -53,6 +56,7 @@ public:
   HTTPModule(HTTPModule &&rhs)      = delete;
   HTTPModule &operator=(HTTPModule const &rhs) = delete;
   HTTPModule &operator=(HTTPModule &&rhs) = delete;
+  virtual ~HTTPModule()                   = default;
 
   using ViewType      = std::function<HTTPResponse(ViewParameters, HTTPRequest)>;
   using Authenticator = std::function<bool(HTTPRequest)>;

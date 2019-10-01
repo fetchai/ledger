@@ -22,6 +22,7 @@
 
 #include <cassert>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -37,14 +38,15 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpMeanSquareErrorSaveableParams<T>;
+  using MyType        = MeanSquareErrorLoss<TensorType>;
 
   explicit MeanSquareErrorLoss(SPType const &sp)
     : Ops<T>(sp)
     , weightings_(sp.weightings)
   {}
 
-  explicit MeanSquareErrorLoss(TensorType const &weightings = TensorType())
-    : weightings_(weightings)
+  explicit MeanSquareErrorLoss(TensorType weightings = TensorType())
+    : weightings_(std::move(weightings))
   {}
 
   ~MeanSquareErrorLoss() override = default;
@@ -55,6 +57,18 @@ public:
 
     ret->weightings = weightings_;
     return ret;
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+    copyshare->weightings_ = weightings_.Copy();
+
+    return copyshare;
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override
@@ -247,7 +261,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::OP_MEAN_SQUARE_ERROR_LOSS;
+    return OpType::LOSS_MEAN_SQUARE_ERROR;
   }
   static constexpr char const *DESCRIPTOR = "MeanSquareErrorLoss";
 

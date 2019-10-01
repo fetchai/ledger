@@ -36,6 +36,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpAddSaveableParams<T>;
+  using MyType        = Add<TensorType>;
 
   Add() = default;
 
@@ -52,6 +53,17 @@ public:
     auto ret  = std::make_shared<SPType>();
     ret->axes = axes_;
     return ret;
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
   }
 
   // for inputs to the add layer, if broadcasting is required, make sure the first input is the one
@@ -89,8 +101,6 @@ public:
     return inputs.at(0)->shape();
   }
 
-  std::vector<SizeType> axes_;
-
   static constexpr OpType OpCode()
   {
     return OpType::OP_ADD;
@@ -99,6 +109,8 @@ public:
   static constexpr char const *DESCRIPTOR = "Add";
 
 private:
+  std::vector<SizeType> axes_;
+
   void UpdateAxes(VecTensorType const &inputs)
   {
     bool axes_changed = false;
@@ -118,7 +130,7 @@ private:
       }
     }
 
-    if (axes_.size() == 0)
+    if (axes_.empty())
     {
       axes_changed = true;
     }

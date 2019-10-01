@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
@@ -62,7 +61,7 @@ public:
 private:
   asio::ip::tcp::tcp::socket socket_;
   std::size_t                lengthPerRead_ = 1024;
-  message_type               message_;
+  MessageType                message_;
 
   void Read() noexcept
   {

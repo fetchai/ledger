@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -47,7 +48,7 @@ VMGraph::VMGraph(VM *vm, TypeId type_id)
 
 Ptr<VMGraph> VMGraph::Constructor(VM *vm, TypeId type_id)
 {
-  return new VMGraph(vm, type_id);
+  return Ptr<VMGraph>{new VMGraph(vm, type_id)};
 }
 
 void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
@@ -57,20 +58,25 @@ void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
 
 Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 {
-  MathTensorType    t   = graph_.ForwardPropagate(name->str);
+  MathTensorType    t   = graph_.Evaluate(name->str, false);
   Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
   (*ret).Copy(t);
   return ret;
 }
 
-void VMGraph::BackPropagateError(VMPtrString const &name)
+void VMGraph::BackPropagate(VMPtrString const &name)
 {
-  graph_.BackPropagateError(name->str);
+  graph_.BackPropagate(name->str);
 }
 
-void VMGraph::Step(DataType lr)
+void VMGraph::Step(DataType const &lr)
 {
-  graph_.Step(lr);
+  auto grads = graph_.GetGradients();
+  for (auto &grad : grads)
+  {
+    grad *= static_cast<DataType>(-lr);
+  }
+  graph_.ApplyGradients(grads);
 }
 
 void VMGraph::AddPlaceholder(VMPtrString const &name)
@@ -140,11 +146,12 @@ void VMGraph::Bind(Module &module)
 {
   module.CreateClassType<VMGraph>("Graph")
       .CreateConstructor(&VMGraph::Constructor)
-      .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) -> Ptr<VMGraph> { return new VMGraph(vm, type_id); })
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMGraph> {
+        return Ptr<VMGraph>{new VMGraph(vm, type_id)};
+      })
       .CreateMemberFunction("setInput", &VMGraph::SetInput)
       .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
-      .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)
+      .CreateMemberFunction("backPropagate", &VMGraph::BackPropagate)
       .CreateMemberFunction("step", &VMGraph::Step)
       .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
       .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
@@ -155,7 +162,9 @@ void VMGraph::Bind(Module &module)
       .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
       .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
       .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
-      .CreateMemberFunction("stateDict", &VMGraph::StateDict);
+      .CreateMemberFunction("stateDict", &VMGraph::StateDict)
+      .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString)
+      .CreateMemberFunction("deserializeFromString", &VMGraph::DeserializeFromString);
 }
 
 VMGraph::GraphType &VMGraph::GetGraph()
@@ -184,6 +193,27 @@ bool VMGraph::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return true;
 }
 
+fetch::vm::Ptr<fetch::vm::String> VMGraph::SerializeToString()
+{
+  serializers::MsgPackSerializer b;
+  SerializeTo(b);
+  auto byte_array_data = b.data().ToBase64();
+  return Ptr<String>{new fetch::vm::String(vm_, static_cast<std::string>(byte_array_data))};
+}
+
+fetch::vm::Ptr<VMGraph> VMGraph::DeserializeFromString(
+    fetch::vm::Ptr<fetch::vm::String> const &graph_string)
+{
+  byte_array::ConstByteArray b(graph_string->str);
+  b = byte_array::FromBase64(b);
+  MsgPackSerializer buffer(b);
+  DeserializeFrom(buffer);
+
+  auto vm_graph        = fetch::vm::Ptr<VMGraph>(new VMGraph(vm_, type_id_));
+  vm_graph->GetGraph() = graph_;
+
+  return vm_graph;
+}
 }  // namespace ml
 }  // namespace vm_modules
 }  // namespace fetch

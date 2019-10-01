@@ -28,17 +28,17 @@
 
 using namespace fetch::math;
 
-using DataType  = std::int64_t;
-using ArrayType = Tensor<DataType>;
-using SizeType  = Tensor<DataType>::SizeType;
+using DataType   = std::int64_t;
+using TensorType = Tensor<DataType>;
+using SizeType   = Tensor<DataType>::SizeType;
 
 using ClusteringType = fetch::math::clustering::ClusteringType;
 
 TEST(clustering_test, kmeans_test_2d_4k)
 {
-  ArrayType A({100, 2});
-  ArrayType ret({100, 1});
-  SizeType  K = 4;
+  TensorType A({100, 2});
+  TensorType ret({100, 1});
+  SizeType   K = 4;
 
   for (SizeType i = 0; i < 25; ++i)
   {
@@ -91,9 +91,9 @@ TEST(clustering_test, kmeans_test_previous_assignment)
   SizeType n_points = 50;
 
   SizeType       K = 2;
-  ArrayType      A({n_points, 2});
+  TensorType     A({n_points, 2});
   ClusteringType prev_k{n_points};
-  ArrayType      ret(std::vector<SizeType>({n_points, 1}));
+  TensorType     ret(std::vector<SizeType>({n_points, 1}));
 
   for (SizeType i = 0; i < 25; ++i)
   {
@@ -142,9 +142,9 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
 {
   SizeType n_points = 50;
 
-  ArrayType      A(std::vector<SizeType>({n_points, 2}));
+  TensorType     A(std::vector<SizeType>({n_points, 2}));
   ClusteringType prev_k{n_points};
-  ArrayType      ret(std::vector<SizeType>({n_points, 1}));
+  TensorType     ret(std::vector<SizeType>({n_points, 1}));
 
   // initialise the data to be first half negative, second half positive
   for (SizeType i = 0; i < 25; ++i)
@@ -180,7 +180,7 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
   fetch::math::clustering::KInferenceMode k_inference_mode =
       fetch::math::clustering::KInferenceMode::NClusters;
   ClusteringType clusters =
-      fetch::math::clustering::KMeans<ArrayType>(A, random_seed, prev_k, k_inference_mode);
+      fetch::math::clustering::KMeans<TensorType>(A, random_seed, prev_k, k_inference_mode);
 
   SizeType group_0 = 0;
   for (SizeType j = 0; j < 25; ++j)
@@ -204,9 +204,9 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
   int group_2  = 156;
   int group_3  = 23;
 
-  ArrayType      A(std::vector<SizeType>({n_points, 2}));
+  TensorType     A(std::vector<SizeType>({n_points, 2}));
   ClusteringType prev_k{n_points};
-  ArrayType      ret(std::vector<SizeType>({n_points, 1}));
+  TensorType     ret(std::vector<SizeType>({n_points, 1}));
 
   // assign data to 4 quadrants
   for (SizeType i = 0; i < 25; ++i)

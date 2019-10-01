@@ -18,7 +18,7 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/string/replace.hpp"
@@ -37,18 +37,16 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 
 namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::ledger::FromJsonTransaction;
+using fetch::variant::Variant;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
 ConstByteArray const CONTRACT_NAME_SEPARATOR(".");
@@ -86,9 +84,42 @@ std::string GenerateTimestamp()
   return {buffer};
 }
 
-}  // namespace
+bool CreateTxFromJson(Variant const &tx_obj, std::vector<ConstByteArray> &txs,
+                      TransactionProcessor &processor)
+{
+  auto tx = std::make_shared<Transaction>();
 
-constexpr char const *ContractHttpInterface::LOGGING_NAME;
+  if (FromJsonTransaction(tx_obj, *tx))
+  {
+    txs.emplace_back(tx->digest());
+    processor.AddTransaction(std::move(tx));
+
+    return true;
+  }
+
+  return false;
+}
+
+bool CreateTxFromBuffer(ConstByteArray const &encoded_tx, std::vector<ConstByteArray> &txs,
+                        TransactionProcessor &processor)
+{
+  auto tx = std::make_shared<Transaction>();
+
+  TransactionSerializer tx_serializer{encoded_tx};
+  if (tx_serializer.Deserialize(*tx))
+  {
+    txs.emplace_back(tx->digest());
+    processor.AddTransaction(std::move(tx));
+
+    return true;
+  }
+
+  return false;
+}
+
+constexpr char const *LOGGING_NAME = "ContractHttpInterface";
+
+}  // namespace
 
 /**
  * Construct an Contract HTTP Interface module
@@ -238,7 +269,7 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
  * @return The appropriate HTTPResponse to be returned to the client
  */
 http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const &request,
-                                                        ConstByteArray           expected_contract)
+                                                        ConstByteArray const &   expected_contract)
 {
   Variant json = Variant::Object();
 
@@ -260,12 +291,12 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
         content_type == "application/vnd.fetch-ai.transaction+json" ||
         content_type == "application/json")
     {
-      submitted      = SubmitJsonTx(request, expected_contract, txs);
+      submitted      = SubmitJsonTx(request, txs);
       unknown_format = false;
     }
     else if (content_type == "application/vnd.fetch-ai.transaction+bulk")
     {
-      submitted      = SubmitBulkTx(request);
+      submitted      = SubmitBulkTx(request, txs);
       unknown_format = false;
     }
 
@@ -321,7 +352,7 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
  * @see SubmitNativeTx
  */
 ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
-    http::HTTPRequest const &request, ConstByteArray expected_contract, TxHashes &txs)
+    http::HTTPRequest const &request, TxHashes &txs)
 {
   std::size_t submitted{0};
   std::size_t expected_count{0};
@@ -332,22 +363,14 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   FETCH_LOG_DEBUG(LOGGING_NAME, "NEW TRANSACTION RECEIVED");
   FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
 
-  FETCH_UNUSED(expected_contract);
-
   if (doc.root().IsArray())
   {
     expected_count = doc.root().size();
     for (std::size_t i = 0, end = doc.root().size(); i < end; ++i)
     {
-      auto const &tx_obj = doc[i];
-
-      // create the transaction
-      auto tx = std::make_shared<Transaction>();
-      if (FromJsonTransaction(tx_obj, *tx))
+      auto const success = CreateTxFromJson(doc[i], txs, processor_);
+      if (success)
       {
-        txs.emplace_back(tx->digest());
-
-        processor_.AddTransaction(std::move(tx));
         ++submitted;
       }
     }
@@ -356,13 +379,9 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   {
     expected_count = 1;
 
-    auto tx = std::make_shared<Transaction>();
-    if (FromJsonTransaction(doc.root(), *tx))
+    auto const success = CreateTxFromJson(doc.root(), txs, processor_);
+    if (success)
     {
-      txs.emplace_back(tx->digest());
-
-      processor_.AddTransaction(std::move(tx));
-
       ++submitted;
     }
   }
@@ -374,7 +393,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
 }
 
 ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitBulkTx(
-    http::HTTPRequest const &request)
+    http::HTTPRequest const &request, TxHashes &txs)
 {
   std::size_t                 submitted{0};
   std::vector<ConstByteArray> encoded_txs{};
@@ -387,14 +406,11 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitBulkTx(
 
     for (auto const &encoded_tx : encoded_txs)
     {
-      auto tx = std::make_shared<Transaction>();
-
-      // extract out the transaction contents
-      TransactionSerializer tx_serializer{encoded_tx};
-      tx_serializer.Deserialize(*tx);
-
-      processor_.AddTransaction(std::move(tx));
-      ++submitted;
+      auto const success = CreateTxFromBuffer(encoded_tx, txs, processor_);
+      if (success)
+      {
+        ++submitted;
+      }
     }
   }
   catch (std::exception const &e)
@@ -413,7 +429,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitBulkTx(
  */
 void ContractHttpInterface::RecordTransaction(SubmitTxStatus const &   status,
                                               http::HTTPRequest const &request,
-                                              ConstByteArray           expected_contract)
+                                              ConstByteArray const &   expected_contract)
 {
   // form the variant
   Variant entry      = Variant::Object();

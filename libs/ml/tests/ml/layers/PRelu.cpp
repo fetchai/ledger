@@ -19,11 +19,11 @@
 #include "math/tensor.hpp"
 #include "ml/layers/PRelu.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
-#include "ml/serializers/ml_types.hpp"
 
 #include <memory>
 #include <vector>
@@ -43,7 +43,7 @@ TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgra
   fetch::ml::layers::PRelu<TypeParam> fc(100u);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("PRelu_Input", input_data);
-  TypeParam output = fc.Evaluate("PRelu_LeakyReluOp", true);
+  TypeParam output = fc.Evaluate("PRelu_PReluOp", true);
 
   ASSERT_EQ(output.shape().size(), 3);
   ASSERT_EQ(output.shape()[0], 10);
@@ -128,7 +128,7 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
   TypeParam prediction = *prelu_node.Evaluate(true);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  auto      bp_err = prelu_node.BackPropagateSignal(error_signal);
+  auto      bp_err = prelu_node.BackPropagate(error_signal);
 
   ASSERT_EQ(bp_err.size(), 1);
   ASSERT_EQ(bp_err[0].second.shape().size(), 3);
@@ -174,7 +174,7 @@ TYPED_TEST(PReluTest, saveparams_test)
   using SPType    = typename LayerType::SPType;
 
   std::string input_name  = "PRelu_Input";
-  std::string output_name = "PRelu_LeakyReluOp";
+  std::string output_name = "PRelu_PReluOp";
 
   TypeParam input({5, 10, 2});
   input.FillUniformRandom();
@@ -195,8 +195,8 @@ TYPED_TEST(PReluTest, saveparams_test)
 
   // set input and evaluate
   layer.SetInput(input_name, input);
-  TypeParam prediction;
-  prediction = layer.Evaluate(output_name, true);
+
+  TypeParam prediction = layer.Evaluate(output_name, true);
 
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();
@@ -228,14 +228,24 @@ TYPED_TEST(PReluTest, saveparams_test)
   // train g
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
-  layer.BackPropagateError(error_output);
-  layer.Step(DataType{0.1f});
+  layer.BackPropagate(error_output);
+  auto grads = layer.GetGradients();
+  for (auto &grad : grads)
+  {
+    grad *= static_cast<DataType>(-0.1);
+  }
+  layer.ApplyGradients(grads);
 
   // train g2
   layer2.SetInput(label_name, labels);
   TypeParam loss2 = layer2.Evaluate(error_output);
-  layer2.BackPropagateError(error_output);
-  layer2.Step(DataType{0.1f});
+  layer2.BackPropagate(error_output);
+  auto grads2 = layer2.GetGradients();
+  for (auto &grad : grads2)
+  {
+    grad *= static_cast<DataType>(-0.1);
+  }
+  layer2.ApplyGradients(grads2);
 
   EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
                             fetch::math::function_tolerance<DataType>()));

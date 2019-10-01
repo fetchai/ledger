@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "http/http_client.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
@@ -40,7 +40,7 @@ HttpClient::HttpClient(std::string host, uint16_t port)
 {}
 
 /**
- * Send a requests and recieve a response from the server
+ * Send a requests and receive a response from the server
  *
  * @param request The request to be sent
  * @param response The response to be populated

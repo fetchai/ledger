@@ -35,10 +35,11 @@ int32_t fetch::vm_modules::System::Argc(fetch::vm::VM *, fetch::vm::TypeId)
 fetch::vm::Ptr<fetch::vm::String> fetch::vm_modules::System::Argv(fetch::vm::VM *vm,
                                                                   fetch::vm::TypeId, int32_t index)
 {
-  return {new fetch::vm::String{vm, params.script().at(static_cast<std::size_t>(index))}};
+  return fetch::vm::Ptr<fetch::vm::String>{
+      new fetch::vm::String{vm, params.script().at(static_cast<std::size_t>(index))}};
 }
 
-void fetch::vm_modules::System::Parse(int argc, const char *const *argv)
+void fetch::vm_modules::System::Parse(int argc, char const *const *argv)
 {
   params.Parse(argc, argv);
 }
@@ -48,7 +49,7 @@ const fetch::vm_modules::Parameters::ParamsParser &fetch::vm_modules::System::Ge
   return params.program();
 }
 
-void fetch::vm_modules::Parameters::Parse(int argc, const char *const argv[])
+void fetch::vm_modules::Parameters::Parse(int argc, char const *const argv[])
 {
   script_args_.clear();
 

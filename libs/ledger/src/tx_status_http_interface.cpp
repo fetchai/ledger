@@ -18,7 +18,7 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "http/json_response.hpp"
 #include "ledger/transaction_status_cache.hpp"
@@ -99,6 +99,7 @@ constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_
 Variant ToVariant(Digest const &digest, TransactionStatusCache::TxStatus const &tx_status)
 {
   auto retval{Variant::Object()};
+
   retval["tx"]        = ToBase64(digest);
   retval["status"]    = ToString(Convert(tx_status.status, tx_status.contract_exec_result.status));
   retval["exit_code"] = tx_status.contract_exec_result.return_value;

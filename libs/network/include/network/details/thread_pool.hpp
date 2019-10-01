@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "network/details/future_work_store.hpp"
 #include "network/details/idle_work_store.hpp"
 #include "network/details/work_store.hpp"
@@ -114,7 +115,6 @@ public:
   ThreadPoolImplementation &operator=(ThreadPoolImplementation &&) = delete;
 
 private:
-  using Mutex      = fetch::mutex::Mutex;
   using ThreadPtr  = std::shared_ptr<std::thread>;
   using ThreadPool = std::vector<ThreadPtr>;
   using Flag       = std::atomic<bool>;
@@ -128,18 +128,17 @@ private:
 
   std::size_t const max_threads_;  ///< Config: Max number of threads
 
-  mutable Mutex threads_mutex_{__LINE__, __FILE__};  ///< Mutex protecting the thread store
-  ThreadPool    threads_;                            ///< Container of threads
+  Protected<ThreadPool> threads_;  ///< Container of threads
 
   WorkStore       work_;         ///< The main work queue
   FutureWorkStore future_work_;  ///< The future work queue
   IdleWorkStore   idle_work_;    ///< The idle work store
 
-  Condition     work_available_;                  ///< Work available condition
-  mutable Mutex idle_mutex_{__LINE__, __FILE__};  ///< Associated mutex for condition
-  Flag          shutdown_{false};                 ///< Flag to signal the pool should stop
-  Counter       counter_{0};                      ///< The number of jobs executed
-  Counter       inactive_threads_{0};             ///< The number of threads waiting for work
+  Condition     work_available_;       ///< Work available condition
+  mutable Mutex idle_mutex_;           ///< Associated mutex for condition
+  Flag          shutdown_{false};      ///< Flag to signal the pool should stop
+  Counter       counter_{0};           ///< The number of jobs executed
+  Counter       inactive_threads_{0};  ///< The number of threads waiting for work
 
   std::string name_{};
 };

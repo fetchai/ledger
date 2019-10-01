@@ -20,7 +20,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/serializers/array_interface.hpp"
 #include "core/serializers/binary_interface.hpp"
@@ -35,6 +35,7 @@
 #include <exception>
 #include <stdexcept>
 #include <type_traits>
+#include <typeinfo>
 
 namespace fetch {
 namespace serializers {
@@ -42,7 +43,7 @@ namespace serializers {
 class SizeCounter
 {
 public:
-  using self_type = SizeCounter;
+  using SelfType = SizeCounter;
 
   void Allocate(std::size_t delta)
   {
@@ -161,13 +162,13 @@ public:
   typename MapSerializer<T, SizeCounter>::DriverType &operator>>(T &val);
 
   template <typename T>
-  self_type &Pack(T const *val)
+  SelfType &Pack(T const *val)
   {
     return this->operator<<(val);
   }
 
   template <typename T>
-  self_type &Pack(T const &val)
+  SelfType &Pack(T const &val)
   {
     return this->operator<<(val);
   }
@@ -198,7 +199,7 @@ public:
   }
 
   template <typename... ARGS>
-  self_type &Append(ARGS const &... args)
+  SelfType &Append(ARGS const &... args)
   {
     AppendInternal(args...);
     return *this;
@@ -534,23 +535,19 @@ template <typename T>
 class SizeCounterGuard
 {
 public:
-  using size_counter_type = T;
+  using SizeCounterType = T;
 
 private:
   friend auto sizeCounterGuardFactory<T>(T &size_counter);
 
   T *size_counter_;
 
-  SizeCounterGuard(T *size_counter)
+  explicit SizeCounterGuard(T *size_counter)
     : size_counter_{size_counter}
   {}
 
-  SizeCounterGuard(SizeCounterGuard const &) = delete;
-  SizeCounterGuard &operator=(SizeCounterGuard const &) = delete;
-  SizeCounterGuard &operator=(SizeCounterGuard &&) = delete;
-
 public:
-  SizeCounterGuard(SizeCounterGuard &&) = default;
+  SizeCounterGuard(SizeCounterGuard &&) noexcept = default;
 
   /**
    * @brief Destructor ensures that size counting instance is reset to zero at the end
@@ -564,9 +561,13 @@ public:
     if (size_counter_)
     {
       // Resetting size counter to zero size by reconstructing it
-      *size_counter_ = size_counter_type{};
+      *size_counter_ = SizeCounterType{};
     }
   }
+
+  SizeCounterGuard(SizeCounterGuard const &) = delete;
+  SizeCounterGuard &operator=(SizeCounterGuard const &) = delete;
+  SizeCounterGuard &operator=(SizeCounterGuard &&) = delete;
 
   /**
    * @brief Indicates whether we are already in size counting process

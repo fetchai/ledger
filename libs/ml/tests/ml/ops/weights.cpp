@@ -24,6 +24,7 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
 #include <memory>
 
 template <typename T>
@@ -71,7 +72,7 @@ TYPED_TEST(WeightsTest, gradient_step_test)
   EXPECT_EQ(prediction, data);
   std::vector<TensorType> error_signal = w.Backward({}, error);
 
-  TensorType grad = w.get_gradients();
+  TensorType grad = w.GetGradientsReferences();
   fetch::math::Multiply(grad, DataType{-1}, grad);
   w.ApplyGradient(grad);
 
@@ -194,7 +195,7 @@ TYPED_TEST(WeightsTest, saveparams_gradient_step_test)
   // make another prediction with the original op
   op.Backward({}, error);
 
-  TensorType grad = op.get_gradients();
+  TensorType grad = op.GetGradientsReferences();
   fetch::math::Multiply(grad, DataType{-1}, grad);
   op.ApplyGradient(grad);
 
@@ -212,7 +213,7 @@ TYPED_TEST(WeightsTest, saveparams_gradient_step_test)
   // check that new predictions match the old
   new_op.Backward({}, error);
 
-  TensorType new_grad = new_op.get_gradients();
+  TensorType new_grad = new_op.GetGradientsReferences();
   fetch::math::Multiply(new_grad, DataType{-1}, new_grad);
   new_op.ApplyGradient(new_grad);
 

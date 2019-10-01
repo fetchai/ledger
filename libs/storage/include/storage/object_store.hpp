@@ -48,9 +48,9 @@ template <typename T, std::size_t S = 2048>
 class ObjectStore
 {
 public:
-  using type            = T;
-  using self_type       = ObjectStore<T, S>;
-  using serializer_type = serializers::MsgPackSerializer;
+  using type           = T;
+  using SelfType       = ObjectStore<T, S>;
+  using SerializerType = serializers::MsgPackSerializer;
 
   class Iterator;
 
@@ -146,8 +146,7 @@ public:
 
   /**
    * Do a get without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -163,7 +162,7 @@ public:
       return false;
     }
 
-    serializer_type ser(doc.document);
+    SerializerType ser(doc.document);
 
     ser >> object;
 
@@ -177,8 +176,7 @@ public:
 
   /**
    * Do a has without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -193,8 +191,7 @@ public:
 
   /**
    * Do a set without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -202,7 +199,7 @@ public:
    */
   void LocklessSet(ResourceID const &rid, type const &object)
   {
-    serializer_type ser;
+    SerializerType ser;
     ser << object;
 
     store_.Set(rid, ser.data());  // temporarily disable disk writes
@@ -267,8 +264,8 @@ public:
     {
       Document doc = *wrapped_iterator_;
 
-      type            ret;
-      serializer_type ser(doc.document);
+      type           ret;
+      SerializerType ser(doc.document);
       ser >> ret;
 
       return ret;
@@ -278,7 +275,7 @@ public:
     typename KeyByteArrayStore<S>::Iterator wrapped_iterator_;
   };
 
-  self_type::Iterator Find(ResourceID const &rid)
+  SelfType::Iterator Find(ResourceID const &rid)
   {
     auto it = store_.Find(rid);
 
@@ -295,25 +292,25 @@ public:
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  SelfType::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
     auto it = store_.GetSubtree(rid, bits);
 
     return Iterator(it);
   }
 
-  self_type::Iterator begin()
+  SelfType::Iterator begin()
   {
     return Iterator(store_.begin());
   }
 
-  self_type::Iterator end()
+  SelfType::Iterator end()
   {
     return Iterator(store_.end());
   }
 
 private:
-  mutable mutex::Mutex mutex_{__LINE__, __FILE__};
+  mutable Mutex        mutex_;
   KeyByteArrayStore<S> store_;
 };
 

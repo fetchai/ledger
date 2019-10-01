@@ -29,44 +29,45 @@ struct FNVConfigInvalid
   static constexpr std::size_t size_in_bytes = 0;
 };
 
-template <typename NUMBER_TYPE, std::size_t SIZE_IN_BYTES = sizeof(NUMBER_TYPE),
+template <typename NumberTypeParam, std::size_t SIZE_IN_BYTES = sizeof(NumberTypeParam),
           typename FROM = FNVConfigInvalid>
 struct FNVConfig
 {
-  static_assert(std::is_integral<NUMBER_TYPE>::value && sizeof(NUMBER_TYPE) >= SIZE_IN_BYTES,
+  static_assert(std::is_integral<NumberTypeParam>::value &&
+                    sizeof(NumberTypeParam) >= SIZE_IN_BYTES,
                 "Provided SIZE_IN_BYTES parameter value must be smaller or equal to `sizeof(...)` "
-                "of provided integral type NUMBER_TYPE type parameter.");
+                "of provided integral type NumberType type parameter.");
 
   static_assert(std::is_same<FNVConfigInvalid, FROM>::value || FROM::size_in_bytes == SIZE_IN_BYTES,
                 "");
 
-  using number_type                          = NUMBER_TYPE;
-  using from_type                            = FROM;
+  using NumberType                           = NumberTypeParam;
+  using FromType                             = FROM;
   static constexpr std::size_t size_in_bytes = SIZE_IN_BYTES;
-  static number_type const     prime;
-  static number_type const     offset;
+  static NumberType const      prime;
+  static NumberType const      offset;
 };
 
-template <typename NUMBER_TYPE, std::size_t SIZE_IN_BYTES, typename FROM>
-constexpr std::size_t FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::size_in_bytes;
+template <typename NumberType, std::size_t SIZE_IN_BYTES, typename FROM>
+constexpr std::size_t FNVConfig<NumberType, SIZE_IN_BYTES, FROM>::size_in_bytes;
 
 template <>
-FNVConfig<uint32_t>::number_type const FNVConfig<uint32_t>::prime;
+FNVConfig<uint32_t>::NumberType const FNVConfig<uint32_t>::prime;
 template <>
-FNVConfig<uint32_t>::number_type const FNVConfig<uint32_t>::offset;
+FNVConfig<uint32_t>::NumberType const FNVConfig<uint32_t>::offset;
 
 template <>
-FNVConfig<uint64_t>::number_type const FNVConfig<uint64_t>::prime;
+FNVConfig<uint64_t>::NumberType const FNVConfig<uint64_t>::prime;
 template <>
-FNVConfig<uint64_t>::number_type const FNVConfig<uint64_t>::offset;
+FNVConfig<uint64_t>::NumberType const FNVConfig<uint64_t>::offset;
 
-template <typename NUMBER_TYPE, std::size_t SIZE_IN_BYTES, typename FROM>
-typename FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::number_type const
-    FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::prime = FROM::prime;
+template <typename NumberType, std::size_t SIZE_IN_BYTES, typename FROM>
+typename FNVConfig<NumberType, SIZE_IN_BYTES, FROM>::NumberType const
+    FNVConfig<NumberType, SIZE_IN_BYTES, FROM>::prime = FROM::prime;
 
-template <typename NUMBER_TYPE, std::size_t SIZE_IN_BYTES, typename FROM>
-typename FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::number_type const
-    FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::offset = FROM::offset;
+template <typename NumberType, std::size_t SIZE_IN_BYTES, typename FROM>
+typename FNVConfig<NumberType, SIZE_IN_BYTES, FROM>::NumberType const
+    FNVConfig<NumberType, SIZE_IN_BYTES, FROM>::offset = FROM::offset;
 
 enum class eFnvAlgorithm : uint8_t
 {
@@ -83,15 +84,15 @@ using FNVConfig_size_t =
 template <typename FNV_CONFIG = FNVConfig_size_t, eFnvAlgorithm ALGORITHM = eFnvAlgorithm::fnv1a>
 struct FNVAlgorithm
 {
-  static void update(typename FNV_CONFIG::number_type &context, uint8_t const *data_to_hash,
+  static void update(typename FNV_CONFIG::NumberType &context, uint8_t const *data_to_hash,
                      std::size_t size);
-  static void reset(typename FNV_CONFIG::number_type &context);
+  static void reset(typename FNV_CONFIG::NumberType &context);
 };
 
 template <typename FNV_CONFIG>
 struct FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv1a>
 {
-  static void update(typename FNV_CONFIG::number_type &context, uint8_t const *data_to_hash,
+  static void update(typename FNV_CONFIG::NumberType &context, uint8_t const *data_to_hash,
                      std::size_t size)
   {
     for (std::size_t i = 0; i < size; ++i)
@@ -101,7 +102,7 @@ struct FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv1a>
     }
   }
 
-  static void reset(typename FNV_CONFIG::number_type &context)
+  static void reset(typename FNV_CONFIG::NumberType &context)
   {
     context = FNV_CONFIG::offset;
   }
@@ -110,7 +111,7 @@ struct FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv1a>
 template <typename FNV_CONFIG>
 struct FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv1>
 {
-  static void update(typename FNV_CONFIG::number_type &context, uint8_t const *data_to_hash,
+  static void update(typename FNV_CONFIG::NumberType &context, uint8_t const *data_to_hash,
                      std::size_t size)
   {
     for (std::size_t i = 0; i < size; ++i)
@@ -120,7 +121,7 @@ struct FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv1>
     }
   }
 
-  static void reset(typename FNV_CONFIG::number_type &context)
+  static void reset(typename FNV_CONFIG::NumberType &context)
   {
     context = FNV_CONFIG::offset;
   }
@@ -129,13 +130,13 @@ struct FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv1>
 template <typename FNV_CONFIG>
 struct FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv0_deprecated>
 {
-  static void update(typename FNV_CONFIG::number_type &context, uint8_t const *data_to_hash,
+  static void update(typename FNV_CONFIG::NumberType &context, uint8_t const *data_to_hash,
                      std::size_t size)
   {
     FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv1>::update(context, data_to_hash, size);
   }
 
-  static void reset(typename FNV_CONFIG::number_type &context)
+  static void reset(typename FNV_CONFIG::NumberType &context)
   {
     context = 0;
   }
@@ -145,12 +146,12 @@ template <typename FNV_CONFIG = FNVConfig_size_t, eFnvAlgorithm ALGORITHM = eFnv
 class FNV : public FNV_CONFIG
 {
 public:
-  using base_type                          = FNV_CONFIG;
-  using number_type                        = typename base_type::number_type;
+  using BaseType                           = FNV_CONFIG;
+  using NumberType                         = typename BaseType::NumberType;
   static constexpr eFnvAlgorithm algorithm = ALGORITHM;
 
 private:
-  number_type context_;
+  NumberType context_;
 
 public:
   FNV()
@@ -160,15 +161,15 @@ public:
 
   void update(uint8_t const *data_to_hash, std::size_t size)
   {
-    FNVAlgorithm<base_type, ALGORITHM>::update(context_, data_to_hash, size);
+    FNVAlgorithm<BaseType, ALGORITHM>::update(context_, data_to_hash, size);
   }
 
   void reset()
   {
-    FNVAlgorithm<base_type, ALGORITHM>::reset(context_);
+    FNVAlgorithm<BaseType, ALGORITHM>::reset(context_);
   }
 
-  number_type const &context() const
+  NumberType const &context() const
   {
     return context_;
   }

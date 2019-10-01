@@ -21,6 +21,7 @@
 #include "math/matrix_operations.hpp"
 #include "math/trigonometry.hpp"
 #include "ml/ops/ops.hpp"
+#include "vectorise/math/max.hpp"
 
 #include <cassert>
 #include <vector>
@@ -38,6 +39,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpTanhSaveableParams<T>;
+  using MyType        = TanH<TensorType>;
 
   TanH() = default;
 
@@ -53,6 +55,16 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
@@ -62,9 +74,9 @@ public:
     for (auto &val : output)
     {
       // Minimum value of tanh is restricted to -1+epsilon
-      fetch::math::Max(val, fetch::math::Add(DataType(-1), epsilon_), val);
+      val = fetch::vectorise::Max(val, fetch::math::Add(DataType(-1), epsilon_));
       // Maximum value of tanh is restricted to 1-epsilon
-      fetch::math::Min(val, fetch::math::Subtract(static_cast<DataType>(1), epsilon_), val);
+      val = fetch::vectorise::Min(val, fetch::math::Subtract(static_cast<DataType>(1), epsilon_));
     }
   }
 

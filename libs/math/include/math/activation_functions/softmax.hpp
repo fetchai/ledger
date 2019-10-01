@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
@@ -25,7 +24,6 @@
 
 #include <cassert>
 #include <cstddef>
-#include <stdexcept>
 
 namespace fetch {
 namespace math {
@@ -33,8 +31,8 @@ namespace math {
 namespace details {
 
 /*
- * Really naive implementation that relies only on ArrayType providing a At(std::size_t) method
- * TODO(private, 520) -- Clean up once we get unified ArrayType + operations
+ * Really naive implementation that relies only on TensorType providing a At(std::size_t) method
+ * TODO(private, 520) -- Clean up once we get unified TensorType + operations
  */
 
 template <typename ArrayType1, typename ArrayType2>
@@ -49,7 +47,7 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
 
   auto it1 = array.begin();
   auto it2 = ret.begin();
-  Type sum = Type(0);
+  auto sum = Type(0);
   while (it1.is_valid())
   {
     *it2 = Exp(*it1 - array_max);

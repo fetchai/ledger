@@ -38,50 +38,47 @@ public:
   using SizeVector    = typename TensorType::SizeVector;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpMatrixMultiplySaveableParams<T>;
+  using MyType        = MatrixMultiply<TensorType>;
 
   MatrixMultiply() = default;
 
   explicit MatrixMultiply(SPType const &sp)
     : Ops<T>(sp)
-  {
-    error_signal_1_       = sp.error_signal_1;
-    error_signal_2_       = sp.error_signal_2;
-    fwd_input_shape_1_    = sp.fwd_input_shape_1;
-    fwd_input_shape_2_    = sp.fwd_input_shape_2;
-    output_view_tensor_   = sp.output_view_tensor;
-    fwd_in1_view_tensor_  = sp.fwd_in1_view_tensor;
-    fwd_in2_view_tensor_  = sp.fwd_in2_view_tensor;
-    back_input_shape_1_   = sp.back_input_shape_1;
-    back_input_shape_2_   = sp.back_input_shape_2;
-    back_in1_view_tensor_ = sp.back_in1_view_tensor;
-    back_in2_view_tensor_ = sp.back_in2_view_tensor;
-    err_sig_view_tensor_  = sp.err_sig_view_tensor;
-    err1_                 = sp.err1;
-    err2_                 = sp.err2;
-  }
+  {}
 
   ~MatrixMultiply() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    auto sp = std::make_shared<SPType>();
+    return std::make_shared<SPType>();
+  }
 
-    sp->error_signal_1       = error_signal_1_;
-    sp->error_signal_2       = error_signal_2_;
-    sp->fwd_input_shape_1    = fwd_input_shape_1_;
-    sp->fwd_input_shape_2    = fwd_input_shape_2_;
-    sp->output_view_tensor   = output_view_tensor_;
-    sp->fwd_in1_view_tensor  = fwd_in1_view_tensor_;
-    sp->fwd_in2_view_tensor  = fwd_in2_view_tensor_;
-    sp->back_input_shape_1   = back_input_shape_1_;
-    sp->back_input_shape_2   = back_input_shape_2_;
-    sp->back_in1_view_tensor = back_in1_view_tensor_;
-    sp->back_in2_view_tensor = back_in2_view_tensor_;
-    sp->err_sig_view_tensor  = err_sig_view_tensor_;
-    sp->err1                 = err1_;
-    sp->err2                 = err2_;
+  /**
+   * This op should not be shared because it uses cacheing, therefore MakeSharedCopy returns a new
+   * op
+   * @param me
+   * @return
+   */
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
 
-    return sp;
+    auto copyshare = std::make_shared<MyType>(*this);
+
+    copyshare->error_signal_1_       = error_signal_1_.Copy();
+    copyshare->error_signal_2_       = error_signal_2_.Copy();
+    copyshare->output_view_tensor_   = output_view_tensor_.Copy();
+    copyshare->fwd_in1_view_tensor_  = fwd_in1_view_tensor_.Copy();
+    copyshare->fwd_in2_view_tensor_  = fwd_in2_view_tensor_.Copy();
+    copyshare->back_in1_view_tensor_ = back_in1_view_tensor_.Copy();
+    copyshare->back_in2_view_tensor_ = back_in2_view_tensor_.Copy();
+    copyshare->err_sig_view_tensor_  = err_sig_view_tensor_.Copy();
+    copyshare->err1_                 = err1_.Copy();
+    copyshare->err2_                 = err2_.Copy();
+
+    return copyshare;
   }
 
   void                    Forward(VecTensorType const &inputs, TensorType &output) override;

@@ -49,7 +49,7 @@ TYPED_TEST(GraphTest, node_placeholder)
   TensorType gt   = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
 
   g.SetInput("Input", data);
-  TensorType prediction = g.ForwardPropagate("Input");
+  TensorType prediction = g.Evaluate("Input");
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -69,7 +69,7 @@ TYPED_TEST(GraphTest, node_relu)
       TensorType::FromString(R"(0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16)");
 
   g.SetInput("Input", data);
-  TensorType prediction = g.ForwardPropagate("Relu");
+  TensorType prediction = g.Evaluate("Relu");
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -100,7 +100,39 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   TensorType data(std::vector<SizeType>({5, 10}));
   g.SetInput("Input", data);
 
-  ASSERT_ANY_THROW(g.ForwardPropagate("FullyConnected"));
+  ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
+}
+
+TYPED_TEST(GraphTest, node_add_wrong_order_test)
+{
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
+
+  fetch::ml::Graph<TensorType> g;
+
+  g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC1", {"Input"}, 3u, 3u);
+  g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC2", {"FC1"}, 3u, 3u);
+  g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC3", {"FC2"}, 3u, 3u);
+
+  TensorType data(std::vector<SizeType>({3, 10}));
+  g.SetInput("Input", data);
+
+  auto result = g.Evaluate("FC3");
+
+  fetch::ml::Graph<TensorType> g2;
+
+  g2.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC3", {"FC2"}, 3u, 3u);
+  g2.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC2", {"FC1"}, 3u, 3u);
+  g2.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC1", {"Input"}, 3u, 3u);
+  g2.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+
+  TensorType data2(std::vector<SizeType>({3, 10}));
+  g2.SetInput("Input", data);
+
+  auto result2 = g2.Evaluate("FC3");
+
+  EXPECT_TRUE(result == result2);
 }
 
 TYPED_TEST(GraphTest, multi_nodes_have_same_name)
@@ -151,7 +183,9 @@ TYPED_TEST(GraphTest, applying_regularisation_per_trainable)
   g.SetRegularisation(weights, regulariser, regularisation_rate);
   auto node_ptr = g.GetNode(weights);
   auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
-  op_ptr->ApplyRegularisation();
+  TensorType grad = op_ptr->GetGradients();
+  grad.Fill(static_cast<DataType>(0.0));
+  op_ptr->ApplyGradient(grad);
 
   // Evaluate weights
   TensorType prediction(op_ptr->ComputeOutputShape({}));
@@ -186,7 +220,9 @@ TYPED_TEST(GraphTest, applying_regularisation_all_trainables)
   g.SetRegularisation(regulariser, regularisation_rate);
   auto node_ptr = g.GetNode(weights);
   auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
-  op_ptr->ApplyRegularisation();
+  TensorType grad = op_ptr->GetGradients();
+  grad.Fill(static_cast<DataType>(0.0));
+  op_ptr->ApplyGradient(grad);
 
   // Evaluate weights
   TensorType prediction(op_ptr->ComputeOutputShape({}));
@@ -230,7 +266,7 @@ TYPED_TEST(GraphTest,
 
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
-  TypeParam output = g.ForwardPropagate("Diamond_Op3");
+  TypeParam output = g.Evaluate("Diamond_Op3");
 
   // Test correct values
   ASSERT_EQ(output.shape(), data1.shape());
@@ -243,7 +279,7 @@ TYPED_TEST(GraphTest,
   g.SetInput(input_name2, data2);
 
   // Recompute graph
-  output = g.ForwardPropagate("Diamond_Op3");
+  output = g.Evaluate("Diamond_Op3");
 
   // Test correct values
   ASSERT_EQ(output.shape(), data1.shape());
@@ -284,21 +320,26 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   // Forward
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
-  TypeParam output = g.ForwardPropagate(output_name);
+  TypeParam output = g.Evaluate(output_name);
 
   // Calculate Gradient
-  g.BackPropagateSignal(output_name, error_signal);
+  g.BackPropagate(output_name, error_signal);
 
   // Test gradient
   std::vector<TypeParam> gradients = g.GetGradients();
+
   EXPECT_EQ(gradients.size(), 2);
-  ASSERT_TRUE(gradients[1].AllClose(grad1, fetch::math::function_tolerance<DataType>(),
-                                    fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(gradients[0].AllClose(grad2, fetch::math::function_tolerance<DataType>(),
-                                    fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE((gradients[0].AllClose(grad1, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()) &&
+               gradients[1].AllClose(grad2, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>())) ||
+              (gradients[1].AllClose(grad1, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()) &&
+               gradients[0].AllClose(grad2, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>())));
 
   // Test Weights
-  std::vector<TypeParam> weights = g.get_weights();
+  std::vector<TypeParam> weights = g.GetWeights();
   EXPECT_EQ(weights.size(), 2);
   ASSERT_TRUE(weights[1].AllClose(data2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
@@ -319,13 +360,13 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   g.ApplyGradients(gradients);
 
   // Recompute graph
-  output = g.ForwardPropagate("Diamond_Op3");
+  output = g.Evaluate("Diamond_Op3");
 
   // Calculate Gradient
-  g.BackPropagateSignal(output_name, error_signal);
+  g.BackPropagate(output_name, error_signal);
 
   // Test Weights
-  std::vector<TypeParam> weights2 = g.get_weights();
+  std::vector<TypeParam> weights2 = g.GetWeights();
   EXPECT_EQ(weights2.size(), 2);
   ASSERT_TRUE(weights2[1].AllClose(weights1_expected, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

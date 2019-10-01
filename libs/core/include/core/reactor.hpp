@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "core/runnable.hpp"
+#include "core/synchronisation/protected.hpp"
 
 #include <atomic>
 #include <map>
@@ -51,10 +51,10 @@ public:
   Reactor &operator=(Reactor &&) = delete;
 
 private:
-  using Mutex       = mutex::Mutex;
-  using RunnableMap = std::map<Runnable const *, WeakRunnable>;
-  using Flag        = std::atomic<bool>;
-  using ThreadPtr   = std::unique_ptr<std::thread>;
+  using RunnableMap     = Protected<std::map<Runnable const *, WeakRunnable>>;
+  using Flag            = std::atomic<bool>;
+  using ProtectedThread = Protected<std::thread>;
+  using ThreadPtr       = std::unique_ptr<ProtectedThread>;
 
   void StartWorker();
   void StopWorker();
@@ -63,11 +63,8 @@ private:
   std::string const name_;
   Flag              running_{false};
 
-  Mutex       work_map_mutex_{__LINE__, __FILE__};
   RunnableMap work_map_{};
-
-  Mutex     worker_mutex_{__LINE__, __FILE__};
-  ThreadPtr worker_{};
+  ThreadPtr   worker_{};
 };
 
 }  // namespace core

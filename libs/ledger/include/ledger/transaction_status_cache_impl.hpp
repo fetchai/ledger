@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/waitable.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/execution_result.hpp"
 #include "ledger/transaction_status_cache.hpp"
@@ -57,8 +57,6 @@ public:
   TransactionStatusCacheImpl &operator=(TransactionStatusCacheImpl &&) = delete;
 
 private:
-  using Mutex = mutex::Mutex;
-
   using Cache = DigestMap<TxStatusEx>;
 
   static constexpr std::chrono::hours   LIFETIME{24};
@@ -67,7 +65,7 @@ private:
   void PruneCache(Timepoint const &until);
   void PruneCacheIfNecessary(Timepoint const &until);
 
-  mutable Mutex mtx_{__LINE__, __FILE__};
+  mutable Mutex mtx_;
   Cache         cache_{};
   Timepoint     last_clean_{Clock::now()};
 };
@@ -140,16 +138,16 @@ void TransactionStatusCacheImpl<CLOCK>::Update(Digest digest, ContractExecutionR
   if (it == cache_.end())
   {
     FETCH_LOG_WARN("TransactionStatusCache",
-                   "Updating contract execution status for transaction"
-                   "which is missing in the tx statuc cache, tx digest = " +
+                   "Updating contract execution status for transaction "
+                   "which is missing in the tx status cache, tx digest = " +
                        digest.ToBase64());
 
-    cache_.emplace(digest, TxStatusEx{TxStatus{tx_workflow_status, std::move(exec_result)}, now});
+    cache_.emplace(digest, TxStatusEx{TxStatus{tx_workflow_status, exec_result}, now});
   }
   else
   {
     it->second.status.status               = tx_workflow_status;
-    it->second.status.contract_exec_result = std::move(exec_result);
+    it->second.status.contract_exec_result = exec_result;
   }
 
   PruneCacheIfNecessary(now);

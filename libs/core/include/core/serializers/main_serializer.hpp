@@ -20,7 +20,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/array_interface.hpp"
 #include "core/serializers/binary_interface.hpp"
 #include "core/serializers/container_constructor_interface.hpp"
@@ -34,9 +34,54 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <typeinfo>
 
 namespace fetch {
 namespace serializers {
+
+/**
+ * When serializing large objects it is useful to use this wrapper class
+ * It ensures the right amount of memory is allocated first
+ */
+class LargeObjectSerializeHelper
+{
+public:
+  LargeObjectSerializeHelper() = default;
+
+  explicit LargeObjectSerializeHelper(fetch::byte_array::ConstByteArray buf)
+    : buffer{std::move(buf)}
+  {}
+
+  template <typename T>
+  void operator<<(T const &large_object)
+  {
+    Serialize(large_object);
+  }
+
+  template <typename T>
+  void operator>>(T &large_object)
+  {
+    Deserialize(large_object);
+  }
+
+  template <typename T>
+  void Serialize(T const &large_object)
+  {
+    counter << large_object;
+    buffer.Reserve(counter.size());
+    buffer << large_object;
+  }
+
+  template <typename T>
+  void Deserialize(T &large_object)
+  {
+    buffer.seek(0);
+    buffer >> large_object;
+  }
+
+  MsgPackSerializer buffer;
+  SizeCounter       counter;
+};
 
 template <typename WriteType, typename InitialType>
 void MsgPackSerializer::WritePrimitive(InitialType const &val)

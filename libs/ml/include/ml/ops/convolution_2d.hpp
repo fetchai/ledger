@@ -38,6 +38,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpConvolution2DSaveableParams<TensorType>;
+  using MyType        = Convolution2D<TensorType>;
 
   explicit Convolution2D(SizeType stride_size = 1)
     : stride_size_(stride_size)
@@ -58,6 +59,17 @@ public:
     return sp;
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
+
   void Forward(VecTensorType const &inputs, TensorType &output) override;
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
@@ -73,31 +85,28 @@ public:
   static constexpr char const *DESCRIPTOR = "Convolution2D";
 
 private:
-  void FillVerticalStride(TensorType &input, TensorType &vertical_stride,
-                          SizeType const output_channels, SizeType const input_channels,
-                          SizeType const kernel_height, SizeType const kernel_width);
+  void FillVerticalStride(TensorType &input, TensorType &vertical_stride, SizeType output_channels,
+                          SizeType input_channels, SizeType kernel_height, SizeType kernel_width);
 
   void ReverseFillVerticalStride(TensorType &input, TensorType &vertical_stride,
-                                 SizeType const output_channels, SizeType const input_channels,
-                                 SizeType const kernel_height, SizeType const kernel_width);
+                                 SizeType output_channels, SizeType input_channels,
+                                 SizeType kernel_height, SizeType kernel_width);
 
   void FillHorizontalStride(TensorType &input, TensorType &horizontal_stride,
-                            SizeType const output_height, SizeType const output_width,
-                            SizeType const input_channels, SizeType const kernel_height,
-                            SizeType const kernel_width, SizeType const batch_size);
+                            SizeType output_height, SizeType output_width, SizeType input_channels,
+                            SizeType kernel_height, SizeType kernel_width, SizeType batch_size);
 
   void ReverseFillHorizontalStride(TensorType &input, TensorType &horizontal_stride,
-                                   SizeType const output_height, SizeType const output_width,
-                                   SizeType const input_channels, SizeType const kernel_height,
-                                   SizeType const kernel_width, SizeType const batch_size);
+                                   SizeType output_height, SizeType output_width,
+                                   SizeType input_channels, SizeType kernel_height,
+                                   SizeType kernel_width, SizeType batch_size);
 
-  void FillOutput(TensorType const &gemm_output, TensorType &output, SizeType const output_channels,
-                  SizeType const output_height, SizeType const output_width,
-                  SizeType const batch_size);
+  void FillOutput(TensorType const &gemm_output, TensorType &output, SizeType output_channels,
+                  SizeType output_height, SizeType output_width, SizeType batch_size);
 
   void ReverseFillOutput(TensorType &gemm_output, TensorType const &output,
-                         SizeType const output_channels, SizeType const output_height,
-                         SizeType const output_width, SizeType const batch_size);
+                         SizeType output_channels, SizeType output_height, SizeType output_width,
+                         SizeType batch_size);
 
   SizeType stride_size_;
 };

@@ -30,30 +30,6 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(SoftmaxTest, MyTypes);
 
-template <typename ArrayType>
-ArrayType RandomArrayNegative(std::size_t n)
-{
-  static fetch::random::LinearCongruentialGenerator gen;
-  ArrayType                                         a1(n);
-  for (std::size_t i = 0; i < n; ++i)
-  {
-    a1.At(i) = typename ArrayType::Type(gen.AsDouble()) - typename ArrayType::Type(1.0);
-  }
-  return a1;
-}
-
-template <typename ArrayType>
-ArrayType RandomArrayPositive(std::size_t n)
-{
-  static fetch::random::LinearCongruentialGenerator gen;
-  ArrayType                                         a1(n);
-  for (std::size_t i = 0; i < n; ++i)
-  {
-    a1.At(i) = typename ArrayType::Type(gen.AsDouble());
-  }
-  return a1;
-}
-
 TYPED_TEST(SoftmaxTest, equal_proportion_test)
 {
 
@@ -65,7 +41,6 @@ TYPED_TEST(SoftmaxTest, equal_proportion_test)
     e = typename TypeParam::Type(1);
   }
 
-  //
   fetch::math::Softmax(test_array, result_array);
 
   // check that all values equal proportion

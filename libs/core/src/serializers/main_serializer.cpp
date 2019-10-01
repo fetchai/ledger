@@ -19,7 +19,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
@@ -31,8 +31,8 @@
 namespace fetch {
 namespace serializers {
 
-MsgPackSerializer::MsgPackSerializer(byte_array::ByteArray const &s)
-  : data_{s.Copy()}
+MsgPackSerializer::MsgPackSerializer(byte_array::ByteArray s)
+  : data_{std::move(s)}
 {}
 
 MsgPackSerializer::MsgPackSerializer(MsgPackSerializer const &from)
@@ -97,24 +97,22 @@ void MsgPackSerializer::ReadByte(uint8_t &val)
 
 void MsgPackSerializer::ReadBytes(uint8_t *arr, uint64_t const &size)
 {
-#ifndef NDEBUG
   if (size + pos_ > data_.size())
   {
     throw std::runtime_error("Attempted read exceeds buffer size.");
   }
-#endif
+
   data_.ReadBytes(arr, size, pos_);
   pos_ += size;
 }
 
 void MsgPackSerializer::ReadByteArray(byte_array::ConstByteArray &b, uint64_t const &size)
 {
-#ifndef NDEBUG
   if (size + pos_ > data_.size())
   {
     throw std::runtime_error("Attempted read exceeds buffer size.");
   }
-#endif
+
   b = data_.SubArray(pos_, size);
   pos_ += size;
 }

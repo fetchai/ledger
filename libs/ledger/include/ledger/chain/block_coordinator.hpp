@@ -21,10 +21,11 @@
 #include "core/mutex.hpp"
 #include "core/periodic_action.hpp"
 #include "core/state_machine.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/consensus/consensus.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
@@ -41,6 +42,7 @@
 #include <vector>
 
 namespace fetch {
+
 namespace core {
 class FeatureFlags;
 }
@@ -60,7 +62,6 @@ class ExecutionManagerInterface;
 class MainChain;
 class StorageUnitInterface;
 class BlockSinkInterface;
-class StakeManagerInterface;
 
 /**
  * The Block Coordinator is in charge of executing all the blocks that come into the system. It will
@@ -147,10 +148,10 @@ class BlockCoordinator
 public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using DAGPtr          = std::shared_ptr<ledger::DAGInterface>;
-  using ProverPtr       = std::shared_ptr<crypto::Prover>;
-  using StakeManagerPtr = std::shared_ptr<StakeManagerInterface>;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using DAGPtr         = std::shared_ptr<ledger::DAGInterface>;
+  using ProverPtr      = std::shared_ptr<crypto::Prover>;
+  using ConsensusPtr   = std::shared_ptr<ledger::Consensus>;
 
   enum class State
   {
@@ -184,11 +185,10 @@ public:
   static char const *ToString(State state);
 
   // Construction / Destruction
-  BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake_mgr,
-                   ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
-                   BlockPackerInterface &packer, BlockSinkInterface &block_sink,
-                   core::FeatureFlags const &features, ProverPtr const &prover,
-                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty);
+  BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
+                   StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
+                   BlockSinkInterface &block_sink, ProverPtr const &prover, std::size_t num_lanes,
+                   std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -225,13 +225,17 @@ public:
 
   ConstByteArray GetLastExecutedBlock() const
   {
-    return last_executed_block_.Get();
+    return last_executed_block_.Apply([](auto const &last_executed_block_hash) -> ConstByteArray {
+      return last_executed_block_hash;
+    });
   }
 
   bool IsSynced() const
   {
-    return (state_machine_->state() == State::SYNCHRONISED) &&
-           (last_executed_block_.Get() == chain_.GetHeaviestBlockHash());
+    return last_executed_block_.Apply([this](auto const &last_executed_block_hash) -> bool {
+      return (state_machine_->state() == State::SYNCHRONISED) &&
+             (last_executed_block_hash == chain_.GetHeaviestBlockHash());
+    });
   }
 
   void Reset();
@@ -249,9 +253,8 @@ private:
     ERROR
   };
 
-  static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 1000;
+  static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 5000;
 
-  using Mutex                = fetch::mutex::Mutex;
   using BlockPtr             = MainChain::BlockPtr;
   using NextBlockPtr         = std::unique_ptr<Block>;
   using PendingBlocks        = std::deque<BlockPtr>;
@@ -263,7 +266,7 @@ private:
   using StateMachinePtr      = std::shared_ptr<StateMachine>;
   using MinerPtr             = std::shared_ptr<consensus::ConsensusMinerInterface>;
   using TxDigestSetPtr       = std::unique_ptr<DigestSet>;
-  using LastExecutedBlock    = SynchronisedState<ConstByteArray>;
+  using LastExecutedBlock    = Protected<ConstByteArray>;
   using FutureTimepoint      = fetch::core::FutureTimepoint;
   using DeadlineTimer        = fetch::moment::DeadlineTimer;
   using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
@@ -303,9 +306,9 @@ private:
 
   /// @name External Components
   /// @{
-  MainChain &                chain_;              ///< Ref to system chain
-  DAGPtr                     dag_;                ///< Ref to DAG
-  StakeManagerPtr            stake_;              ///< Ref to Stake manager
+  MainChain &                chain_;  ///< Ref to system chain
+  DAGPtr                     dag_;    ///< Ref to DAG
+  ConsensusPtr               consensus_;
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
@@ -377,6 +380,7 @@ private:
   telemetry::HistogramPtr       tx_sync_times_;
   telemetry::GaugePtr<uint64_t> current_block_num_;
   telemetry::GaugePtr<uint64_t> next_block_num_;
+  telemetry::GaugePtr<uint64_t> block_hash_;
   /// @}
 };
 

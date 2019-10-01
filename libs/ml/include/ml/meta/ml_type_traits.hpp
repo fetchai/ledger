@@ -23,17 +23,29 @@
 namespace fetch {
 namespace ml {
 
+enum class OpKind : uint8_t
+{
+  INVALID,
+  OP,
+  LOSS,
+  LAYER
+};
+
 enum class OpType : uint16_t
 {
-  NONE,
   GRAPH,
-  SUBGRAPH,
+
+  // OpKind - INVALID
+  NONE,
+
+  // OpKind - Op
   OP_ABS,
   OP_ADD,
   OP_CONCATENATE,
+  OP_CONSTANT,
   OP_CONVOLUTION_1D,
   OP_CONVOLUTION_2D,
-  OP_CROSS_ENTROPY_LOSS,
+  OP_DATAHOLDER,
   OP_DIVIDE,
   OP_DROPOUT,
   OP_ELU,
@@ -43,7 +55,7 @@ enum class OpType : uint16_t
   OP_GELU,
   OP_LAYER_NORM,
   OP_LEAKY_RELU,
-  OP_LEAKY_RELU_OP,
+  OP_PRELU_OP,
   OP_LOG,
   OP_LOGSIGMOID,
   OP_LOGSOFTMAX,
@@ -51,7 +63,6 @@ enum class OpType : uint16_t
   OP_MATRIX_MULTIPLY,
   OP_MAX_POOL_1D,
   OP_MAX_POOL_2D,
-  OP_MEAN_SQUARE_ERROR_LOSS,
   OP_MAXIMUM,
   OP_MULTIPLY,
   OP_PLACEHOLDER,
@@ -61,14 +72,22 @@ enum class OpType : uint16_t
   OP_RESHAPE,
   OP_SIGMOID,
   OP_SOFTMAX,
-  OP_SOFTMAX_CROSS_ENTROPY_LOSS,
   OP_SQRT,
   OP_SUBTRACT,
   OP_SWITCH,
   OP_TANH,
   OP_TRANSPOSE,
+  OP_VARIABLE,
   OP_WEIGHTS,
   OP_SLICE,
+
+  // OpKind - LOSS
+  LOSS_CROSS_ENTROPY,
+  LOSS_SOFTMAX_CROSS_ENTROPY,
+  LOSS_MEAN_SQUARE_ERROR,
+
+  // OpKind - LAYER
+  SUBGRAPH,
   LAYER_CONVOLUTION_1D,
   LAYER_CONVOLUTION_2D,
   LAYER_FULLY_CONNECTED,
@@ -99,6 +118,8 @@ namespace ops {
 template <typename T>
 class Trainable;
 
+template <typename T>
+class Constant;
 }  // namespace ops
 
 namespace meta {
@@ -106,6 +127,13 @@ namespace meta {
 //////////////////////////////////////////////////////////
 ///  GRAPH & TRAINABLE / NOT-TRAINABLE NOT TYPE SFINAE ///
 //////////////////////////////////////////////////////////
+
+template <typename T, typename OperationType>
+constexpr bool IsFullyConneted =
+    std::is_base_of<fetch::ml::layers::FullyConnected<T>, OperationType>::value;
+
+template <typename T, typename OperationType>
+constexpr bool IsConstant = std::is_base_of<fetch::ml::ops::Constant<T>, OperationType>::value;
 
 template <typename T, typename OperationType>
 constexpr bool IsTrainable = std::is_base_of<fetch::ml::ops::Trainable<T>, OperationType>::value;
@@ -117,8 +145,7 @@ template <typename T, typename OperationType>
 constexpr bool IsGraph = std::is_base_of<fetch::ml::Graph<T>, OperationType>::value;
 
 template <typename T, typename OperationType>
-constexpr bool IsShareable =
-    std::is_base_of<fetch::ml::layers::FullyConnected<T>, OperationType>::value;
+constexpr bool IsShareable = IsFullyConneted<T, OperationType> || IsConstant<T, OperationType>;
 
 template <typename T, typename OperationType>
 constexpr bool IsNotShareable = !IsShareable<T, OperationType>;

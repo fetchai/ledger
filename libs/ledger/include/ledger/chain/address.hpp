@@ -74,7 +74,8 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
 
   // Helpers
-  static bool Parse(ConstByteArray const &input, Address &output);
+  static bool    Parse(ConstByteArray const &input, Address &output);
+  static Address FromMuddleAddress(ConstByteArray const &muddle);
 
   // Construction / Destruction
   Address() = default;
@@ -108,78 +109,6 @@ private:
   ConstByteArray display_;  ///< The display representation
 };
 
-/**
- * Get the raw bytes of the address
- *
- * @return The raw address
- */
-inline Address::ConstByteArray const &Address::address() const
-{
-  return address_;
-}
-
-/**
- * Get the raw bytes of the display variant of the address (with checksum)
- *
- * @return The display address
- */
-inline Address::ConstByteArray const &Address::display() const
-{
-  return display_;
-}
-
-/**
- * Determine if the address is empty or not
- *
- * @return true if empty otherwise false
- */
-inline bool Address::empty() const
-{
-  return address_.empty();
-}
-
-/**
- * Equality operator for the address
- *
- * @param other The other address to compare against
- * @return true if equal, otherwise false
- */
-inline bool Address::operator==(Address const &other) const
-{
-  return address_ == other.address_;
-}
-
-/**
- * Inequality operator for the address
- *
- * @param other The other address to compare against
- * @return true if NOT equal, otherwise false
- */
-inline bool Address::operator!=(Address const &other) const
-{
-  return !(*this == other);
-}
-
-inline bool Address::operator<(Address const &other) const
-{
-  return address_ < other.address_;
-}
-
-inline bool Address::operator<=(Address const &other) const
-{
-  return address_ <= other.address_;
-}
-
-inline bool Address::operator>(Address const &other) const
-{
-  return address_ > other.address_;
-}
-
-inline bool Address::operator>=(Address const &other) const
-{
-  return address_ >= other.address_;
-}
-
 }  // namespace ledger
 
 namespace serializers {
@@ -206,7 +135,7 @@ public:
     uint8_t                    key;
     byte_array::ConstByteArray data;
     map.GetNextKeyPair(key, data);
-    address = Type{data};
+    address = data.empty() ? Type{} : Type{data};
   }
 };
 }  // namespace serializers

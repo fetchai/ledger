@@ -21,6 +21,7 @@
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/convolution_2d.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
 
 #include <functional>
@@ -86,6 +87,8 @@ public:
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
+
+    this->Compile();
   }
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override

@@ -36,13 +36,12 @@ namespace rpc {
 class Server : public service::ServiceServerInterface
 {
 public:
-  using ConnectionHandle = service::ServiceServerInterface::connection_handle_type;
-  using ProtocolId       = service::protocol_handler_type;
+  using ConnectionHandle = service::ServiceServerInterface::ConnectionHandleType;
+  using ProtocolId       = service::ProtocolHandlerType;
   using Protocol         = service::Protocol;
   using Address          = MuddleEndpoint::Address;
   using SubscriptionPtr  = MuddleEndpoint::SubscriptionPtr;
   using SubscriptionMap  = std::unordered_map<ProtocolId, SubscriptionPtr>;
-  using Mutex            = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "MuddleRpcServer";
 
@@ -66,8 +65,7 @@ public:
   }
 
 protected:
-  bool DeliverResponse(connection_handle_type       handle_type,
-                       network::message_type const &message_type) override
+  bool DeliverResponse(ConnectionHandleType handle, network::MessageType const &msg_type) override
   {
     Address  target;
     uint16_t service        = 0;
@@ -78,10 +76,10 @@ protected:
     // lookup the metadata
     {
       FETCH_LOCK(metadata_lock_);
-      auto it = metadata_.find(handle_type);
+      auto it = metadata_.find(handle);
       if (it != metadata_.end())
       {
-        std::tie(target, service, channel, counter) = metadata_[handle_type];
+        std::tie(target, service, channel, counter) = metadata_[handle];
         metadata_.erase(it);
         lookup_success = true;
       }
@@ -94,7 +92,7 @@ protected:
                       " on: ", service, ':', channel, ':', counter);
 
       // send the message back to the server
-      endpoint_.Send(target, service, channel, counter, message_type);
+      endpoint_.Send(target, service, channel, counter, msg_type);
     }
     else
     {
@@ -146,7 +144,7 @@ private:
   using Metadata    = std::tuple<Address, uint16_t, uint16_t, uint16_t>;
   using MetadataMap = std::unordered_map<uint64_t, Metadata>;
 
-  Mutex       metadata_lock_{__LINE__, __FILE__};
+  Mutex       metadata_lock_;
   uint64_t    metadata_index_ = 0;
   MetadataMap metadata_;
 };

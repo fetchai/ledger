@@ -27,6 +27,7 @@
 #include "ledger/dag/dag_epoch.hpp"
 
 #include <cstdint>
+#include <ctime>
 #include <memory>
 #include <vector>
 
@@ -48,6 +49,8 @@ public:
 
   Block();
 
+  bool operator==(Block const &rhs) const;
+
   struct Body
   {
     Digest   hash;               ///< The hash of the block
@@ -59,6 +62,7 @@ public:
     Slices   slices;             ///< The slice lists
     DAGEpoch dag_epoch;          ///< DAG epoch containing information on new dag_nodes
     uint64_t timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
+    uint64_t entropy{0u};        ///< Entropy that determines miner priority for the next block
   };
 
   /// @name Block Contents
@@ -79,8 +83,8 @@ public:
   /// @{
   uint64_t total_weight = 1;
   bool     is_loose     = false;
-  uint64_t first_seen_timestamp{
-      0u};  ///< Seconds since the block was first seen or created. Used to manage block interval
+  /// Seconds since the block was first seen or created. Used to manage block interval
+  uint64_t first_seen_timestamp{0u};
   /// @}
 
   // Helper functions
@@ -108,11 +112,12 @@ public:
   static uint8_t const SLICES         = 7;
   static uint8_t const DAG_EPOCH      = 8;
   static uint8_t const TIMESTAMP      = 9;
+  static uint8_t const ENTROPY        = 10;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &body)
   {
-    auto map = map_constructor(9);
+    auto map = map_constructor(10);
     map.Append(HASH, body.hash);
     map.Append(PREVIOUS_HASH, body.previous_hash);
     map.Append(MERKLE_HASH, body.merkle_hash);
@@ -122,6 +127,7 @@ public:
     map.Append(SLICES, body.slices);
     map.Append(DAG_EPOCH, body.dag_epoch);
     map.Append(TIMESTAMP, body.timestamp);
+    map.Append(ENTROPY, body.entropy);
   }
 
   template <typename MapDeserializer>
@@ -136,6 +142,7 @@ public:
     map.ExpectKeyGetValue(SLICES, body.slices);
     map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);
     map.ExpectKeyGetValue(TIMESTAMP, body.timestamp);
+    map.ExpectKeyGetValue(ENTROPY, body.entropy);
   }
 };
 

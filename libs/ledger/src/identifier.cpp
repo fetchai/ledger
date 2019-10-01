@@ -207,7 +207,7 @@ void Identifier::UpdateType()
   type_ = Type::NORMAL;
 
   // once the parse is complete decide if this identifier matches that of a smart contract
-  if ((1u <= tokens_.size()) && (3u >= tokens_.size()))
+  if (!tokens_.empty() && 3u >= tokens_.size())
   {
     bool is_smart_contract = IsDigest(tokens_[0]);
 
@@ -218,7 +218,7 @@ void Identifier::UpdateType()
 
     if (is_smart_contract)
     {
-      type_ = Type::SMART_CONTRACT;
+      type_ = Type::SMART_OR_SYNERGETIC_CONTRACT;
     }
   }
 }
@@ -363,7 +363,7 @@ Identifier::ConstByteArray Identifier::qualifier() const
   case Type::NORMAL:
     identifier = full_name();
     break;
-  case Type::SMART_CONTRACT:
+  case Type::SMART_OR_SYNERGETIC_CONTRACT:
     identifier = tokens_[0];
     break;
   }

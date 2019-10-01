@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "http/abstract_server.hpp"
 #include "http/connection.hpp"
 #include "http/http_connection_manager.hpp"
@@ -48,7 +48,7 @@ namespace http {
 class HTTPServer : public AbstractHTTPServer
 {
 public:
-  using handle_type = uint64_t;
+  using HandleType = uint64_t;
 
   using NetworkManager    = network::NetworkManager;
   using Socket            = asio::ip::tcp::tcp::socket;
@@ -73,14 +73,10 @@ public:
 
   explicit HTTPServer(NetworkManager const &network_manager)
     : networkManager_(network_manager)
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  {}
 
   virtual ~HTTPServer()
   {
-    LOG_STACK_TRACE_POINT;
-
     auto socketWeak = socket_;
     auto accepWeak  = acceptor_;
 
@@ -99,9 +95,6 @@ public:
         acceptor->close(dummy);
       }
     });
-
-    // TODO (issue 1220): This appears to cause a double free due to a race
-    /* manager_.reset(); */
   }
 
   void Start(uint16_t port)
@@ -112,11 +105,11 @@ public:
     NetworkManager &                   threadMan = networkManager_;
 
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
-      FETCH_LOG_INFO(LOGGING_NAME, "Starting HTTPServer on http://127.0.0.1:", port);
-
-      auto soc = threadMan.CreateIO<Socket>();
-
+      auto soc   = threadMan.CreateIO<Socket>();
       auto accep = threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+
+      FETCH_LOG_INFO(LOGGING_NAME,
+                     "Starting HTTPServer on http://127.0.0.1:", accep->local_endpoint().port());
 
       // allow initiating class to post closes to these
       socRef   = soc;
@@ -130,10 +123,8 @@ public:
   void Stop()
   {}
 
-  void PushRequest(handle_type client, HTTPRequest req) override
+  void PushRequest(HandleType client, HTTPRequest req) override
   {
-    LOG_STACK_TRACE_POINT;
-
     // TODO(issue 35): Need to actually add better support for the options here
     if (req.method() == Method::OPTIONS)
     {
@@ -202,18 +193,18 @@ public:
     }
     catch (std::exception const &e)
     {
-      HTTPResponse res("internal error: " + std::string(e.what()),
-                       fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
-                       Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
-      manager_->Send(client, res);
+      HTTPResponse response("internal error: " + std::string(e.what()),
+                            fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+                            Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
+      manager_->Send(client, response);
       return;
     }
     catch (...)
     {
-      HTTPResponse res("unknown internal error",
-                       fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
-                       Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
-      manager_->Send(client, res);
+      HTTPResponse response("unknown internal error",
+                            fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+                            Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
+      manager_->Send(client, response);
       return;
     }
 
@@ -221,14 +212,10 @@ public:
   }
 
   // Accept static void to avoid having to create shared ptr to this class
-  static void Accept(std::shared_ptr<Socket> soc, std::shared_ptr<Acceptor> accep,
-                     std::shared_ptr<ConnectionManager> manager)
+  static void Accept(std::shared_ptr<Socket> const &soc, std::shared_ptr<Acceptor> const &accep,
+                     std::shared_ptr<ConnectionManager> const &manager)
   {
-    LOG_STACK_TRACE_POINT;
-
     auto cb = [soc, accep, manager](std::error_code ec) {
-      // LOG_LAMBDA_STACK_TRACE_POINT; // TODO(issue 28) : sort this
-
       if (!ec)
       {
         std::make_shared<HTTPConnection>(std::move(*soc), *manager)->Start();
@@ -239,9 +226,9 @@ public:
         return;
       }
 
-      std::shared_ptr<Socket>            s = soc;
-      std::shared_ptr<Acceptor>          a = accep;
-      std::shared_ptr<ConnectionManager> m = manager;
+      std::shared_ptr<Socket> const &           s = soc;
+      std::shared_ptr<Acceptor> const &         a = accep;
+      std::shared_ptr<ConnectionManager> const &m = manager;
 
       HTTPServer::Accept(s, a, m);
     };
@@ -273,12 +260,12 @@ public:
       route.AddValidator(param.name, std::move(v));
     }
 
-    views_.push_back({std::move(description), method, std::move(route), view, authenticator});
+    views_.push_back(
+        {std::move(description), method, std::move(route), view, std::move(authenticator)});
   }
 
   void AddModule(HTTPModule const &module)
   {
-    LOG_STACK_TRACE_POINT;
     for (auto const &view : module.views())
     {
       this->AddView(view.description, view.method, view.route, view.parameters, view.view,

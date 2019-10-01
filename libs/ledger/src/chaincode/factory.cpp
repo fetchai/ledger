@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
 #include "ledger/chaincode/factory.hpp"
@@ -76,12 +76,13 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contrac
 {
   ContractPtr contract{};
 
-  // determine based on the identifier is the requested contract a VM based smart contract or is it
-  // referencing a hard coded "chain code"
-  if (Identifier::Type::SMART_CONTRACT == contract_id.type())
+  // determine based on the identifier is the requested contract a VM-based
+  // smart contract or is it referencing a hard coded "chain code"
+  if (Identifier::Type::SMART_OR_SYNERGETIC_CONTRACT == contract_id.type())
   {
+    auto const digest = contract_id.qualifier();
     // create the resource address for the contract
-    auto const resource = SmartContractManager::CreateAddressForContract(contract_id);
+    auto const resource = SmartContractManager::CreateAddressForContract(digest);
 
     // query the contents of the address
     auto const result = storage.Get(resource);

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading.hpp"
+#include "core/set_thread_name.hpp"
 #include "network/generics/resolvable.hpp"
 #include "network/service/promise.hpp"
 
@@ -97,8 +97,7 @@ protected:
   }
 
   using ShutdownFlag = std::atomic<bool>;
-  using Thread       = std::thread;
-  using ThreadPtr    = std::shared_ptr<Thread>;
+  using ThreadPtr    = std::shared_ptr<std::thread>;
 
   Target *                  target_{nullptr};
   ThreadPtr                 thread_;

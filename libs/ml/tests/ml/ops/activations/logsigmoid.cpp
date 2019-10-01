@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer_definition.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/activations/logsigmoid.hpp"
 #include "ml/serializers/ml_types.hpp"
-
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 
 #include <memory>
@@ -88,6 +87,7 @@ TYPED_TEST(LogSigmoidTest, forward_3d_tensor_test)
 
 TYPED_TEST(LogSigmoidTest, backward_test)
 {
+
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
 
@@ -105,6 +105,7 @@ TYPED_TEST(LogSigmoidTest, backward_test)
 
 TYPED_TEST(LogSigmoidTest, backward_3d_tensor_test)
 {
+
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
@@ -139,6 +140,7 @@ TYPED_TEST(LogSigmoidTest, backward_3d_tensor_test)
 
 TYPED_TEST(LogSigmoidTest, saveparams_test)
 {
+
   using DataType      = typename TypeParam::Type;
   using TensorType    = TypeParam;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;

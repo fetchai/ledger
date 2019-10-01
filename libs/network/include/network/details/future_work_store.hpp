@@ -47,7 +47,7 @@ public:
 
   // Construction / Destruction
   FutureWorkStore()                           = default;
-  FutureWorkStore(const FutureWorkStore &rhs) = delete;
+  FutureWorkStore(FutureWorkStore const &rhs) = delete;
   FutureWorkStore(FutureWorkStore &&rhs)      = delete;
   ~FutureWorkStore()
   {
@@ -177,7 +177,7 @@ public:
   }
 
   // Operators
-  FutureWorkStore operator=(const FutureWorkStore &rhs) = delete;
+  FutureWorkStore operator=(FutureWorkStore const &rhs) = delete;
   FutureWorkStore operator=(FutureWorkStore &&rhs) = delete;
 
 private:
@@ -201,11 +201,10 @@ private:
   };
 
   using Queue = std::priority_queue<Element>;
-  using Mutex = fetch::mutex::Mutex;
   using Flag  = std::atomic<bool>;
 
-  mutable Mutex queue_mutex_{__LINE__, __FILE__};  ///< Mutex protecting `queue_`
-  Queue         queue_;                            ///< Ordered queue of work items
+  mutable Mutex queue_mutex_;  ///< Mutex protecting `queue_`
+  Queue         queue_;        ///< Ordered queue of work items
 
   // Shutdown flag this is designed to only ever be set to true. User will have to recreate the
   // whole thread pool with current implementation.

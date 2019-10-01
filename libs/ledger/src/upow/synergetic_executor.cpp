@@ -20,12 +20,13 @@
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 
-#include <limits>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace ledger {
 
-constexpr char const *LOGGING_NAME = "SynExec";
+constexpr char const *LOGGING_NAME = "SynergeticExecutor";
 
 SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
   : storage_{storage}
@@ -33,7 +34,7 @@ SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
 {}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
-                                uint64_t block, std::size_t num_lanes)
+                                std::size_t num_lanes)
 {
   SynergeticContractPtr contract{};
 
@@ -47,13 +48,13 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
     // in the case of the first iteration we need to create the contract and define the problem
     if (!contract)
     {
-      auto const &contract_address = solution->contract_digest();
+      auto const &digest = solution->contract_digest();
 
       // create the contract
-      contract = factory_.Create(contract_address);
+      contract = factory_.Create(digest);
       if (!contract)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to create contract: 0x", contract_address.ToHex());
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to create contract: 0x", digest.ToHex());
         return;
       }
 
@@ -78,7 +79,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
 
       // complete the work and resolve the work queue
       contract->Attach(storage_);
-      status = contract->Complete(block, shard_mask);
+      status = contract->Complete(solution->address(), shard_mask);
       contract->Detach();
 
       if (SynergeticContract::Status::SUCCESS != status)

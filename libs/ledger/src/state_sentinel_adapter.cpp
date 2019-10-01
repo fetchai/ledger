@@ -19,8 +19,14 @@
 #include "ledger/state_sentinel_adapter.hpp"
 #include "storage/resource_mapper.hpp"
 
+#include <string>
+
 namespace fetch {
 namespace ledger {
+
+namespace {
+constexpr char const *LOGGING_NAME = "StateSentinelAdapter";
+}
 
 /**
  * Constructs a state adapter from a storage interface and a scope
@@ -67,7 +73,7 @@ StateSentinelAdapter::~StateSentinelAdapter()
 StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, void *data,
                                                         uint64_t &size)
 {
-  if (!IsAllowedResource(WrapKeyWithScope(key)))
+  if (!IsAllowedResource(key))
   {
     return Status::PERMISSION_DENIED;
   }
@@ -98,9 +104,10 @@ StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, 
 StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key, void const *data,
                                                          uint64_t size)
 {
-  if (!IsAllowedResource(WrapKeyWithScope(key)))
+  if (!IsAllowedResource(key))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to write to resource: ", WrapKeyWithScope(key));
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Unable to write to resource: ", CreateAddress(CurrentScope(), key).address());
     return Status::PERMISSION_DENIED;
   }
 
@@ -127,7 +134,7 @@ StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key,
  */
 StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key)
 {
-  if (!IsAllowedResource(WrapKeyWithScope(key)))
+  if (!IsAllowedResource(key))
   {
     return Status::PERMISSION_DENIED;
   }
@@ -147,7 +154,7 @@ StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key
 bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
 {
   // build the associated resources address
-  ResourceAddress const address{key};
+  auto const address = CreateAddress(CurrentScope(), key);
 
   // determine which shard this resource is mapped to
   auto const mapped_shard = address.lane(shards_.log2_size());
@@ -163,6 +170,21 @@ bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
 #endif
 
   return is_allowed;
+}
+
+uint64_t StateSentinelAdapter::num_lookups() const
+{
+  return lookups_;
+}
+
+uint64_t StateSentinelAdapter::num_bytes_read() const
+{
+  return bytes_read_;
+}
+
+uint64_t StateSentinelAdapter::num_bytes_written() const
+{
+  return bytes_written_;
 }
 
 }  // namespace ledger

@@ -71,7 +71,7 @@ public:
    * Checks to see if the specified key exists in the database
    *
    * @param key The key to be checked
-   * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR is the key does
+   * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR if the key does
    * not exist
    */
   virtual Status Exists(std::string const &key) = 0;

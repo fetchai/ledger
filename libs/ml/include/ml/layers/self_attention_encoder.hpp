@@ -17,19 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "layers.hpp"
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/layers/multihead_attention.hpp"
 #include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/concatenate.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "multihead_attention.hpp"
 
 #include <cmath>
 #include <cstdint>
 #include <memory>
-#include <ml/ops/concatenate.hpp>
 #include <random>
 #include <string>
 
@@ -55,10 +54,11 @@ public:
   SelfAttentionEncoder() = default;
 
   SelfAttentionEncoder(SizeType n_heads, SizeType model_dim, SizeType ff_dim,
-                       DataType residual_dropout    = static_cast<DataType>(0.9),
-                       DataType attention_dropout   = static_cast<DataType>(0.9),
-                       DataType feedforward_dropout = static_cast<DataType>(0.9),
-                       DataType epsilon             = fetch::math::function_tolerance<DataType>())
+                       DataType       residual_dropout    = static_cast<DataType>(0.9),
+                       DataType       attention_dropout   = static_cast<DataType>(0.9),
+                       DataType       feedforward_dropout = static_cast<DataType>(0.9),
+                       DataType       epsilon         = fetch::math::function_tolerance<DataType>(),
+                       ActivationType activation_type = ActivationType::GELU)
     : n_heads_(n_heads)
     , model_dim_(model_dim)
     , ff_dim_(ff_dim)
@@ -66,6 +66,7 @@ public:
     , attention_dropout_(attention_dropout)
     , feedforward_dropout_(feedforward_dropout)
     , epsilon_(epsilon)
+    , activation_type_(activation_type)
   {
     // make sure all heads can be concatenate together to form model_dim
     assert(model_dim_ % n_heads_ == 0);
@@ -98,6 +99,7 @@ public:
     this->AddInputNode(input);
     this->AddInputNode(mask);
     this->SetOutputNode(feedforward_residual);
+    this->Compile();
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
@@ -149,21 +151,22 @@ public:
   static constexpr char const *DESCRIPTOR = "SelfAttentionEncoder";
 
 private:
-  SizeType n_heads_;
-  SizeType model_dim_;
-  SizeType ff_dim_;
-  DataType residual_dropout_;
-  DataType attention_dropout_;
-  DataType feedforward_dropout_;
-  DataType epsilon_;
+  SizeType       n_heads_;
+  SizeType       model_dim_;
+  SizeType       ff_dim_;
+  DataType       residual_dropout_;
+  DataType       attention_dropout_;
+  DataType       feedforward_dropout_;
+  DataType       epsilon_;
+  ActivationType activation_type_;
 
-  std::string positionwise_feedforward(std::string name, std::string const &input)
+  std::string positionwise_feedforward(std::string const &name, std::string const &input)
   {
     // position wise feedforward with gelu acitvation
     std::string ff_first_layer =
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
             name + "_Feedforward_No_1", {input}, static_cast<SizeType>(model_dim_),
-            static_cast<SizeType>(ff_dim_), ActivationType::RELU, RegType::NONE,
+            static_cast<SizeType>(ff_dim_), activation_type_, RegType::NONE,
             static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
 
     // do dropout
@@ -181,7 +184,7 @@ private:
     return ff_second_layer;
   }
 
-  std::string residual_connection(std::string name, std::string const &prev_layer_input,
+  std::string residual_connection(std::string const &name, std::string const &prev_layer_input,
                                   std::string const &prev_layer_output)
   {
     // do a dropout of prev output before doing residual connection

@@ -40,6 +40,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpSoftmaxCrossEntropySaveableParams<T>;
+  using MyType        = SoftmaxCrossEntropyLoss<TensorType>;
 
   SoftmaxCrossEntropyLoss() = default;
 
@@ -53,6 +54,17 @@ public:
   {
     SPType sp{};
     return std::make_shared<SPType>(sp);
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override
@@ -93,7 +105,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::OP_SOFTMAX_CROSS_ENTROPY_LOSS;
+    return OpType::LOSS_SOFTMAX_CROSS_ENTROPY;
   }
   static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropyLoss";
 };

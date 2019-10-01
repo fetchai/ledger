@@ -53,15 +53,16 @@ VMTensor::VMTensor(VM *vm, TypeId type_id)
 
 Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)
 {
-  return new VMTensor(vm, type_id, shape->elements);
+  return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
 }
 
 void VMTensor::Bind(Module &module)
 {
   module.CreateClassType<VMTensor>("Tensor")
       .CreateConstructor(&VMTensor::Constructor)
-      .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) -> Ptr<VMTensor> { return new VMTensor(vm, type_id); })
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
+        return Ptr<VMTensor>{new VMTensor(vm, type_id)};
+      })
       .CreateMemberFunction("at", &VMTensor::AtOne)
       .CreateMemberFunction("at", &VMTensor::AtTwo)
       .CreateMemberFunction("at", &VMTensor::AtThree)
@@ -73,6 +74,7 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("fill", &VMTensor::Fill)
       .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
       .CreateMemberFunction("reshape", &VMTensor::Reshape)
+      .CreateMemberFunction("squeeze", &VMTensor::Squeeze)
       .CreateMemberFunction("size", &VMTensor::size)
       .CreateMemberFunction("fromString", &VMTensor::FromString)
       .CreateMemberFunction("toString", &VMTensor::ToString);
@@ -112,22 +114,23 @@ DataType VMTensor::AtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t 
   return tensor_.At(idx1, idx2, idx3, idx4);
 }
 
-void VMTensor::SetAtOne(uint64_t idx1, DataType value)
+void VMTensor::SetAtOne(uint64_t idx1, DataType const &value)
 {
   tensor_.At(idx1) = value;
 }
 
-void VMTensor::SetAtTwo(uint64_t idx1, uint64_t idx2, DataType value)
+void VMTensor::SetAtTwo(uint64_t idx1, uint64_t idx2, DataType const &value)
 {
   tensor_.At(idx1, idx2) = value;
 }
 
-void VMTensor::SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType value)
+void VMTensor::SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType const &value)
 {
   tensor_.At(idx1, idx2, idx3) = value;
 }
 
-void VMTensor::SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType value)
+void VMTensor::SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4,
+                         DataType const &value)
 {
   tensor_.At(idx1, idx2, idx3, idx4) = value;
 }
@@ -147,6 +150,13 @@ void VMTensor::FillRandom()
   tensor_.FillUniformRandom();
 }
 
+Ptr<VMTensor> VMTensor::Squeeze()
+{
+  auto squeezed_tensor = tensor_.Copy();
+  squeezed_tensor.Squeeze();
+  return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, squeezed_tensor));
+}
+
 bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 {
   return tensor_.Reshape(new_shape->elements);
@@ -158,13 +168,12 @@ bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 
 void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
-  auto tmp = fetch::math::Tensor<DataType>::FromString(string->str);
-  tensor_.Assign(tmp);
+  tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->str));
 }
 
 Ptr<String> VMTensor::ToString() const
 {
-  return new String(vm_, tensor_.ToString());
+  return Ptr<String>{new String(vm_, tensor_.ToString())};
 }
 
 ArrayType &VMTensor::GetTensor()

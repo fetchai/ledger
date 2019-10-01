@@ -23,6 +23,7 @@ namespace fetch {
 
 static constexpr uint16_t HTTP_PORT_OFFSET    = 0;
 static constexpr uint16_t P2P_PORT_OFFSET     = 1;
+static constexpr uint16_t DKG_PORT_OFFSET     = 2;
 static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
 
 }  // namespace fetch

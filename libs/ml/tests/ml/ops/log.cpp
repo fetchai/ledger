@@ -16,48 +16,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/log.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
 #include <cmath>
 #include <cstdint>
 #include <vector>
 
 template <typename T>
-class LogFloatTest : public ::testing::Test
+class LogTest : public ::testing::Test
 {
 };
-
-template <typename T>
-class LogFixedTest : public ::testing::Test
-{
-};
-
-template <typename T>
-class LogBothTest : public ::testing::Test
-{
-};
-
-using FloatingPointTypes =
-    ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
-
-using FixedPointTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                         fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
 using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
                                    fetch::math::Tensor<fetch::fixed_point::fp64_t>,
                                    fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 
-TYPED_TEST_CASE(LogFloatTest, FloatingPointTypes);
-TYPED_TEST_CASE(LogFixedTest, FixedPointTypes);
-TYPED_TEST_CASE(LogBothTest, BothTypes);
+TYPED_TEST_CASE(LogTest, BothTypes);
 
-TYPED_TEST(LogBothTest, forward_all_positive_test)
+TYPED_TEST(LogTest, forward_all_positive_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -76,10 +59,10 @@ TYPED_TEST(LogBothTest, forward_all_positive_test)
                                   fetch::math::function_tolerance<DataType>()));
 }
 
-// TODO(1195): fixed point and floating point tests should be unified.
-TYPED_TEST(LogFloatTest, forward_all_negative_test)
+TYPED_TEST(LogTest, forward_all_negative_test)
 {
   using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
   TensorType data = TensorType::FromString("-1, -2, -4, -10, -100");
 
@@ -89,31 +72,14 @@ TYPED_TEST(LogFloatTest, forward_all_negative_test)
   op.Forward({std::make_shared<const TensorType>(data)}, pred);
 
   // gives NaN because log of a negative number is undefined
-  for (auto p_it : pred)
+  for (auto const &p_it : pred)
   {
-    EXPECT_TRUE(std::isnan(p_it));
+    EXPECT_TRUE(fetch::math::is_nan<DataType>(p_it));
   }
+  fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(LogFixedTest, forward_all_negative_test)
-{
-  using TensorType = TypeParam;
-
-  TensorType data = TensorType::FromString("-1, -2, -4, -10, -100");
-
-  fetch::ml::ops::Log<TypeParam> op;
-
-  TypeParam pred(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  op.Forward({std::make_shared<const TensorType>(data)}, pred);
-
-  // gives NaN because log of a negative number is undefined
-  for (auto p_it : pred)
-  {
-    EXPECT_TRUE(TensorType::Type::IsNaN(p_it));
-  }
-}
-
-TYPED_TEST(LogBothTest, backward_test)
+TYPED_TEST(LogTest, backward_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -130,9 +96,10 @@ TYPED_TEST(LogBothTest, backward_test)
 
   ASSERT_TRUE(prediction.at(0).AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                         fetch::math::function_tolerance<DataType>()));
+  fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(LogBothTest, saveparams_test)
+TYPED_TEST(LogTest, saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -177,11 +144,13 @@ TYPED_TEST(LogBothTest, saveparams_test)
   // test correct values
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(LogBothTest, saveparams_backward_test)
+TYPED_TEST(LogTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
   using OpType     = fetch::ml::ops::Log<TensorType>;
   using SPType     = typename OpType::SPType;
 
@@ -222,4 +191,5 @@ TYPED_TEST(LogBothTest, saveparams_backward_test)
   EXPECT_TRUE(prediction.at(0).AllClose(
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
+  fetch::math::state_clear<DataType>();
 }

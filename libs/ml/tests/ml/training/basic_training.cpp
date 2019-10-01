@@ -19,7 +19,7 @@
 #include "math/activation_functions/softmax.hpp"
 #include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
-#include "ml/layers/layers.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/weights.hpp"
@@ -68,11 +68,11 @@ void PlusOneTest()
   using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
-  DataType alpha       = DataType(0.005);
-  SizeType input_size  = SizeType(1);
-  SizeType output_size = SizeType(1);
-  SizeType n_batches   = SizeType(300);
-  SizeType hidden_size = SizeType(100);
+  auto alpha       = DataType(0.005);
+  auto input_size  = SizeType(1);
+  auto output_size = SizeType(1);
+  auto n_batches   = SizeType(300);
+  auto hidden_size = SizeType(100);
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -109,7 +109,7 @@ void PlusOneTest()
 
   TypeParam cur_gt{{1, 1}};
   TypeParam cur_input{{1, 1}};
-  DataType  loss = static_cast<DataType>(0);
+  auto      loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < 4; ++step)
   {
@@ -118,14 +118,14 @@ void PlusOneTest()
     cur_gt.At(0, 0) = gt.At(step, 0);
     g.SetInput(label_name, cur_gt);
 
-    auto error_tensor = g.ForwardPropagate(error_name);
+    auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
-    g.BackPropagateError(error_name);
+    g.BackPropagate(error_name);
   }
 
   for (auto &w : g.GetTrainables())
   {
-    TypeParam grad = w->get_gradients();
+    TypeParam grad = w->GetGradientsReferences();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
     w->ApplyGradient(grad);
   }
@@ -147,9 +147,9 @@ void PlusOneTest()
       cur_gt.At(0, 0) = gt.At(step, 0);
       g.SetInput(label_name, cur_gt);
 
-      auto error_tensor = g.ForwardPropagate(error_name);
+      auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
-      g.BackPropagateError(error_name);
+      g.BackPropagate(error_name);
     }
 
     // This task is so easy the loss should fall on every training step
@@ -158,7 +158,7 @@ void PlusOneTest()
 
     for (auto &w : g.GetTrainables())
     {
-      TypeParam grad = w->get_gradients();
+      TypeParam grad = w->GetGradientsReferences();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);
       w->ApplyGradient(grad);
     }
@@ -175,11 +175,11 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   TypeParam n_classes{1};
   n_classes.At(0) = DataType(4);
 
-  DataType alpha       = DataType(0.01);
-  SizeType input_size  = SizeType(n_classes.At(0));
-  SizeType output_size = SizeType(n_classes.At(0));
-  SizeType n_batches   = SizeType(300);
-  SizeType hidden_size = SizeType(100);
+  auto alpha       = DataType(0.01);
+  auto input_size  = SizeType(n_classes.At(0));
+  auto output_size = SizeType(n_classes.At(0));
+  auto n_batches   = SizeType(300);
+  auto hidden_size = SizeType(100);
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -220,7 +220,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   /// ONE TRAINING STEP ///
   /////////////////////////
 
-  DataType loss = static_cast<DataType>(0);
+  auto loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < n_data; ++step)
   {
@@ -229,14 +229,14 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     auto cur_gt = gt.View(step).Copy();
     g.SetInput(label_name, cur_gt);
 
-    auto error_tensor = g.ForwardPropagate(error_name);
+    auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
-    g.BackPropagateError(error_name);
+    g.BackPropagate(error_name);
   }
 
   for (auto &w : g.GetTrainables())
   {
-    TypeParam grad = w->get_gradients();
+    TypeParam grad = w->GetGradientsReferences();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
     w->ApplyGradient(grad);
   }
@@ -258,9 +258,9 @@ void CategoricalPlusOneTest(bool add_softmax = false)
       auto cur_gt = gt.View(step).Copy();
       g.SetInput(label_name, cur_gt);
 
-      auto error_tensor = g.ForwardPropagate(error_name);
+      auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
-      g.BackPropagateError(error_name);
+      g.BackPropagate(error_name);
     }
 
     // This task is so easy the loss should fall on every training step
@@ -269,7 +269,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
     for (auto &w : g.GetTrainables())
     {
-      TypeParam grad = w->get_gradients();
+      TypeParam grad = w->GetGradientsReferences();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);
       w->ApplyGradient(grad);
     }
@@ -286,11 +286,11 @@ void CategoricalXorTest(bool add_softmax = false)
   TypeParam n_classes{1};
   n_classes.At(0) = DataType(2);
 
-  DataType alpha       = DataType(0.01);
-  SizeType input_size  = SizeType(n_classes.At(0));
-  SizeType output_size = SizeType(n_classes.At(0));
-  SizeType n_batches   = SizeType(300);
-  SizeType hidden_size = SizeType(100);
+  auto alpha       = DataType(0.01);
+  auto input_size  = SizeType(n_classes.At(0));
+  auto output_size = SizeType(n_classes.At(0));
+  auto n_batches   = SizeType(300);
+  auto hidden_size = SizeType(100);
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -322,7 +322,7 @@ void CategoricalXorTest(bool add_softmax = false)
 
   TypeParam cur_gt{{SizeType(1), SizeType(n_classes.At(0))}};
   TypeParam cur_input{{SizeType(1), SizeType(n_classes.At(0))}};
-  DataType  loss = static_cast<DataType>(0);
+  auto      loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < n_data; ++step)
   {
@@ -331,14 +331,14 @@ void CategoricalXorTest(bool add_softmax = false)
     cur_gt = gt.View(step).Copy();
     g.SetInput(label_name, cur_gt);
 
-    auto error_tensor = g.ForwardPropagate(error_name);
+    auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
-    g.BackPropagateError(error_name);
+    g.BackPropagate(error_name);
   }
 
   for (auto &w : g.GetTrainables())
   {
-    TypeParam grad = w->get_gradients();
+    TypeParam grad = w->GetGradientsReferences();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
     w->ApplyGradient(grad);
   }
@@ -358,9 +358,9 @@ void CategoricalXorTest(bool add_softmax = false)
       cur_input = data.View(step).Copy();
       g.SetInput(input_name, cur_input);
       cur_gt            = gt.View(step).Copy();
-      auto error_tensor = g.ForwardPropagate(error_name);
+      auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
-      g.BackPropagateError(error_name);
+      g.BackPropagate(error_name);
     }
 
     EXPECT_GE(current_loss, loss);
@@ -368,7 +368,7 @@ void CategoricalXorTest(bool add_softmax = false)
 
     for (auto &w : g.GetTrainables())
     {
-      TypeParam grad = w->get_gradients();
+      TypeParam grad = w->GetGradientsReferences();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);
       w->ApplyGradient(grad);
     }

@@ -49,6 +49,7 @@
 
 using fetch::byte_array::ConstByteArray;
 using fetch::vm_modules::VMFactory;
+using fetch::vm::FunctionDecoratorKind;
 
 namespace fetch {
 namespace ledger {
@@ -109,7 +110,8 @@ SmartContract::SmartContract(std::string const &source)
                               [this](vm::VM *) -> BlockIndex { return block_index_; });
 
   // create and compile the executable
-  auto errors = vm_modules::VMFactory::Compile(module_, source_, *executable_);
+  fetch::vm::SourceFiles files  = {{"default.etch", source}};
+  auto                   errors = vm_modules::VMFactory::Compile(module_, files, *executable_);
 
   // if there are any compilation errors
   if (!errors.empty())
@@ -128,9 +130,13 @@ SmartContract::SmartContract(std::string const &source)
 
     switch (kind)
     {
-    case vm::FunctionDecoratorKind::NORMAL:
+    case FunctionDecoratorKind::NONE:
+    case FunctionDecoratorKind::CLEAR:
+    case FunctionDecoratorKind::OBJECTIVE:
+    case FunctionDecoratorKind::PROBLEM:
+    case FunctionDecoratorKind::WORK:
       break;
-    case vm::FunctionDecoratorKind::ON_INIT:
+    case FunctionDecoratorKind::ON_INIT:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering on_init: ", fn.name,
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
@@ -140,7 +146,7 @@ SmartContract::SmartContract(std::string const &source)
       // register the initialiser (on duplicate this will throw)
       OnInitialise(this, &SmartContract::InvokeInit);
       break;
-    case vm::FunctionDecoratorKind::ACTION:
+    case FunctionDecoratorKind::ACTION:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Action: ", fn.name,
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
@@ -149,7 +155,7 @@ SmartContract::SmartContract(std::string const &source)
         return InvokeAction(name, tx, index);
       });
       break;
-    case vm::FunctionDecoratorKind::QUERY:
+    case FunctionDecoratorKind::QUERY:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Query: ", fn.name,
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
@@ -158,8 +164,7 @@ SmartContract::SmartContract(std::string const &source)
         return InvokeQuery(name, request, response);
       });
       break;
-
-    case vm::FunctionDecoratorKind::INVALID:
+    case FunctionDecoratorKind::INVALID:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Invalid function decorator found");
       throw SmartContractException(SmartContractException::Category::COMPILATION,
                                    {"Invalid decorator found in contract"});
@@ -264,7 +269,7 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obje
 
   if (msgpack::type::STR == obj.type)
   {
-    vm::Ptr<vm::String> string = new vm::String(vm, {obj.via.str.ptr, obj.via.str.size});
+    vm::Ptr<vm::String> string{new vm::String(vm, {obj.via.str.ptr, obj.via.str.size})};
     pack.Add(std::move(string));
     valid = true;
   }
@@ -316,7 +321,7 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Vari
   }
 
   // create the instance of the address
-  vm::Ptr<vm::String> vm_string = new vm::String(vm, obj.As<std::string>());
+  vm::Ptr<vm::String> vm_string(new vm::String(vm, obj.As<std::string>()));
   pack.Add(std::move(vm_string));
 }
 
@@ -443,7 +448,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;
   std::vector<msgpack::object> input_params;
-  auto const                   parameter_data = tx.data();
+  decltype(auto)               parameter_data = tx.data();
 
   block_index_ = index;
 
@@ -616,7 +621,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   vm->SetIOObserver(state());
 
   // lookup the executable
-  Executable::Function const *target_function = executable_->FindFunction(name);
+  auto const target_function = executable_->FindFunction(name);
   if (!target_function)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup target function");

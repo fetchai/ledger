@@ -18,7 +18,7 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -391,10 +391,11 @@ bool Executor::ExecuteTransactionContract(Result &result)
       {
         for (auto const &update : token_contract_->stake_updates())
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "Applying stake update from: ", update.from,
-                         " for: ", update.address.display(), " amount: ", update.amount);
+          FETCH_LOG_INFO(LOGGING_NAME, "Applying stake update from block: ", update.from,
+                         " for: ", update.identity.identifier().ToBase64(),
+                         " amount: ", update.amount);
 
-          stake_updates_->AddStakeUpdate(update.from, update.address, update.amount);
+          stake_updates_->AddStakeUpdate(update.from, update.identity, update.amount);
         }
       }
 

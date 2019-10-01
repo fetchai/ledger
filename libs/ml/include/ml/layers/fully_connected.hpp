@@ -23,6 +23,7 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
@@ -58,36 +59,6 @@ public:
   FullyConnected() = default;
 
   /**
-   * This initializer allows weight sharing to another fully connected layer through node interface
-   * pointer.
-   * @param target_node_ptr
-   * @param in
-   * @param out
-   * @param activation_type
-   * @param regulariser
-   * @param regularisation_rate
-   * @param init_mode
-   */
-  FullyConnected(OpPtrType target_node_ptr, SizeType in, SizeType out,
-                 details::ActivationType       activation_type = details::ActivationType::NOTHING,
-                 fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::NONE,
-                 DataType                      regularisation_rate = static_cast<DataType>(0),
-                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, bool time_distributed = false)
-    : in_size_(in)
-    , out_size_(out)
-    , time_distributed_(time_distributed)
-  {
-    // since the weight is shared, we do not need to initialize the weight matrices.
-    FETCH_UNUSED(init_mode);
-
-    // setup overall architecture of the layer
-    SetupArchitecture(activation_type, regulariser, regularisation_rate);
-
-    // share weight with target_node
-    ShareWeights(target_node_ptr);
-  }
-
-  /**
    * Normal fully connected layer constructor
    * @param in
    * @param out
@@ -104,78 +75,6 @@ public:
     : in_size_(in)
     , out_size_(out)
     , time_distributed_(time_distributed)
-  {
-    // setup overall architecture of the model
-    SetupArchitecture(activation_type, regulariser, regularisation_rate);
-
-    // initialize the weights and bias with specified initialization method
-    InitializeWeights(init_mode);
-  }
-
-  void InitializeWeights(WeightsInit init_mode)
-  {
-    // get correct name for the layer
-    std::string name = GetName();
-
-    // initialize weight with specified method
-    TensorType weights_data(std::vector<SizeType>({out_size_, in_size_}));
-    this->Initialise(weights_data, init_mode);
-    this->SetInput(name + "_Weights", weights_data);
-
-    // initialize bias with right shape and set to all zero
-    TensorType bias_data;
-    if (time_distributed_)
-    {
-      bias_data = TensorType(std::vector<SizeType>({out_size_, 1, 1}));
-    }
-    else
-    {
-      bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
-    }
-    this->SetInput(name + "_Bias", bias_data);
-  }
-
-  void ShareWeights(OpPtrType target_op_ptr)
-  {
-    // get correct name for the layer
-    std::string name = GetName();
-
-    // Get ptr to each weights layer
-    GraphPtrType   target_graph_ptr        = std::dynamic_pointer_cast<GraphType>(target_op_ptr);
-    OpPtrType      target_weights_node_ptr = target_graph_ptr->GetNode(name + "_Weights")->GetOp();
-    WeightsPtrType target_weights_ptr =
-        std::dynamic_pointer_cast<WeightsType>(target_weights_node_ptr);
-    OpPtrType      target_bias_node_ptr = target_graph_ptr->GetNode(name + "_Bias")->GetOp();
-    WeightsPtrType target_bias_ptr  = std::dynamic_pointer_cast<WeightsType>(target_bias_node_ptr);
-    OpPtrType      weights_node_ptr = this->GetNode(name + "_Weights")->GetOp();
-    WeightsPtrType weights_ptr      = std::dynamic_pointer_cast<WeightsType>(weights_node_ptr);
-    OpPtrType      bias_node_ptr    = this->GetNode(name + "_Bias")->GetOp();
-    WeightsPtrType bias_ptr         = std::dynamic_pointer_cast<WeightsType>(bias_node_ptr);
-
-    // check if the shared weight is compatible with input shape
-    auto w_s = target_weights_ptr->get_weights().shape();
-    auto b_s = target_bias_ptr->get_weights().shape();
-    ASSERT((w_s[0] == out_size_) && (w_s[1] == in_size_) && (b_s[0] == out_size_));
-    if (time_distributed_)
-    {
-      assert(b_s.size() == 3);
-    }
-    else
-    {
-      assert(b_s.size() == 2);
-    }
-
-    // Share weights and parameter among these weights layers
-    auto shared_weights = *(target_weights_ptr->GetShareableWeights());
-    auto shared_bias    = *(target_bias_ptr->GetShareableWeights());
-    this->SetInput(name + "_Weights", shared_weights);
-    this->SetInput(name + "_Bias", shared_bias);
-  }
-
-  void SetupArchitecture(
-      details::ActivationType       activation_type     = details::ActivationType::NOTHING,
-      fetch::ml::RegularisationType regulariser         = fetch::ml::RegularisationType::NONE,
-      DataType                      regularisation_rate = static_cast<DataType>(0))
   {
     // get correct name for the layer
     std::string name = GetName();
@@ -208,6 +107,40 @@ public:
     this->SetOutputNode(output);
     this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser),
                             regularisation_rate);
+
+    // initialize weight with specified method
+    TensorType weights_data(std::vector<SizeType>({out_size_, in_size_}));
+    this->Initialise(weights_data, init_mode);
+    this->SetInput(name + "_Weights", weights_data);
+
+    // initialize bias with right shape and set to all zero
+    TensorType bias_data;
+    if (time_distributed_)
+    {
+      bias_data = TensorType(std::vector<SizeType>({out_size_, 1, 1}));
+    }
+    else
+    {
+      bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
+    }
+    this->SetInput(name + "_Bias", bias_data);
+    this->Compile();
+  }
+
+  OpPtrType MakeSharedCopy(OpPtrType me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);  // used for compatability
+
+    auto copyshare = std::make_shared<FullyConnected<TensorType>>();
+
+    copyshare->time_distributed_ = time_distributed_;
+    copyshare->in_size_          = in_size_;
+    copyshare->out_size_         = out_size_;
+
+    SubGraph<TensorType>::InsertSharedCopy(copyshare);
+
+    return copyshare;
   }
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override

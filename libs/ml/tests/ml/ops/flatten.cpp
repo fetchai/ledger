@@ -16,15 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
 #include <cstdint>
+#include <memory>
+#include <vector>
+
+namespace {
 
 template <typename T>
 class FlattenTest : public ::testing::Test
@@ -240,3 +245,5 @@ TYPED_TEST(FlattenTest, saveparams_backward_test)
       new_gradients.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace

@@ -40,9 +40,9 @@ struct LearningRateParam
     NONE
   };
   LearningRateDecay mode                   = LearningRateDecay::NONE;
-  DataType          starting_learning_rate = static_cast<DataType>(0.1);
-  DataType          ending_learning_rate   = static_cast<DataType>(0.0001);
-  DataType          linear_decay_rate      = static_cast<DataType>(0.0000000000001);
+  DataType          starting_learning_rate = static_cast<DataType>(0.001);
+  DataType          ending_learning_rate   = static_cast<DataType>(starting_learning_rate / 10000);
+  DataType          linear_decay_rate      = static_cast<DataType>(starting_learning_rate / 10000);
   DataType          exponential_decay_rate = static_cast<DataType>(0.999);
 };
 }  // namespace optimisers

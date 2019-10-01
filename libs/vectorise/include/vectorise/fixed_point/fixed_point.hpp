@@ -201,7 +201,7 @@ public:
   static uint32_t fp_state;
 
   static constexpr void StateClear();
-  static constexpr bool IsState(const uint32_t state);
+  static constexpr bool IsState(uint32_t state);
   static constexpr bool IsStateNaN();
   static constexpr bool IsStateUnderflow();
   static constexpr bool IsStateOverflow();
@@ -224,7 +224,7 @@ public:
   template <typename T>
   constexpr explicit FixedPoint(T n, meta::IfIsFloat<T> * = nullptr);
   constexpr FixedPoint(FixedPoint const &o);
-  constexpr FixedPoint(const Type &integer, const UnsignedType &fraction);
+  constexpr FixedPoint(Type const &integer, UnsignedType const &fraction);
 
   ///////////////////
   /// conversions ///
@@ -341,8 +341,8 @@ public:
   constexpr FixedPoint &operator*=(T const &n) const;
   template <typename T>
   constexpr FixedPoint &operator/=(T const &n) const;
-  constexpr FixedPoint &operator<<=(const int &n);
-  constexpr FixedPoint &operator>>=(const int &n);
+  constexpr FixedPoint &operator<<=(int n);
+  constexpr FixedPoint &operator>>=(int n);
 
   ///////////////////////////
   /// NaN/Infinity checks ///
@@ -352,7 +352,7 @@ public:
   static constexpr bool       IsPosInfinity(FixedPoint const &x);
   static constexpr bool       IsNegInfinity(FixedPoint const &x);
   static constexpr bool       IsInfinity(FixedPoint const &x);
-  static constexpr FixedPoint infinity(bool const isPositive);
+  static constexpr FixedPoint infinity(bool isPositive);
 
   ////////////
   /// swap ///
@@ -364,8 +364,10 @@ public:
   /// Getter/Setter ///
   /////////////////////
 
-  constexpr Type Data() const;
-  constexpr void SetData(Type n) const;
+  constexpr Type        Data() const;
+  constexpr void        SetData(Type n) const;
+  constexpr Type const *pointer() const;
+  constexpr Type *      pointer();
 
   ///////////////////////////////////////////////////////////////////
   /// FixedPoint implementations of common mathematical functions ///
@@ -608,7 +610,7 @@ constexpr void FixedPoint<I, F>::StateClear()
 }
 
 template <std::uint16_t I, std::uint16_t F>
-constexpr bool FixedPoint<I, F>::IsState(const uint32_t state)
+constexpr bool FixedPoint<I, F>::IsState(uint32_t const state)
 {
   return fp_state & state;
 }
@@ -698,8 +700,8 @@ constexpr FixedPoint<I, F>::FixedPoint(FixedPoint<I, F> const &o)
  * @param fraction
  */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F>::FixedPoint(const typename FixedPoint<I, F>::Type &        integer,
-                                       const typename FixedPoint<I, F>::UnsignedType &fraction)
+constexpr FixedPoint<I, F>::FixedPoint(typename FixedPoint<I, F>::Type const &        integer,
+                                       typename FixedPoint<I, F>::UnsignedType const &fraction)
   : data_{(INTEGER_MASK & (Type(integer) << FRACTIONAL_BITS)) | Type(fraction & FRACTIONAL_MASK)}
 {}
 
@@ -1328,6 +1330,16 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator-=(FixedPoint<I, F> const 
       *this = NEGATIVE_INFINITY;
     }
   }
+  else if (IsPosInfinity(n))
+  {
+    fp_state |= STATE_INFINITY;
+    *this = NEGATIVE_INFINITY;
+  }
+  else if (IsNegInfinity(n))
+  {
+    fp_state |= STATE_INFINITY;
+    *this = POSITIVE_INFINITY;
+  }
   else
   {
     if (CheckOverflow(static_cast<NextType>(data_) - static_cast<NextType>(n.Data())))
@@ -1396,7 +1408,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
     {
       fp_state |= STATE_OVERFLOW;
     }
-    Type fp = Type(prod >> FRACTIONAL_BITS);
+    auto fp = Type(prod >> FRACTIONAL_BITS);
     *this   = FromBase(fp);
   }
   return *this;
@@ -1609,7 +1621,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator^(T const &n) const
  * @return the result of the shift right operation
  */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator>>=(const int &n)
+constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator>>=(int n)
 {
   data_ >>= n;
   return *this;
@@ -1622,7 +1634,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator>>=(const int &n)
  * @return the result of the shift left operation
  */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(const int &n)
+constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(int n)
 {
   data_ <<= n;
   return *this;
@@ -1725,6 +1737,26 @@ template <std::uint16_t I, std::uint16_t F>
 constexpr void FixedPoint<I, F>::SetData(typename FixedPoint<I, F>::Type const n) const
 {
   data_ = n;
+}
+
+/**
+ * Return a pointer to the contents of the FixedPoint object
+ * @return a pointer to the contents of the FixedPoint object
+ */
+template <std::uint16_t I, std::uint16_t F>
+constexpr typename FixedPoint<I, F>::Type const *FixedPoint<I, F>::pointer() const
+{
+  return &data_;
+}
+
+/**
+ * Return a pointer to the contents of the FixedPoint object
+ * @return a pointer to the contents of the FixedPoint object
+ */
+template <std::uint16_t I, std::uint16_t F>
+constexpr typename FixedPoint<I, F>::Type *FixedPoint<I, F>::pointer()
+{
+  return &data_;
 }
 
 ///////////////////////////////////////////////////////////////////

@@ -50,7 +50,8 @@ public:
   SkipGram() = default;
 
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
-           std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
+           std::string const &name      = "SkipGram",
+           WeightsInit        init_mode = WeightsInit::XAVIER_FAN_OUT)
     : in_size_(in_size)
     , out_size_(out)
     , vocab_size_(vocab_size)
@@ -90,6 +91,7 @@ public:
     this->AddInputNode(input);
     this->AddInputNode(context);
     this->SetOutputNode(output);
+    this->Compile();
   }
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override

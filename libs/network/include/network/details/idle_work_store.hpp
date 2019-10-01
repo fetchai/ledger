@@ -37,12 +37,10 @@ namespace details {
 class IdleWorkStore
 {
 public:
-  using WorkItem   = std::function<void()>;
-  using mutex_type = fetch::mutex::Mutex;
-  using lock_type  = std::unique_lock<mutex_type>;
+  using WorkItem = std::function<void()>;
 
   IdleWorkStore()                         = default;
-  IdleWorkStore(const IdleWorkStore &rhs) = delete;
+  IdleWorkStore(IdleWorkStore const &rhs) = delete;
   IdleWorkStore(IdleWorkStore &&rhs)      = delete;
 
   ~IdleWorkStore()
@@ -192,17 +190,16 @@ public:
     store_.emplace_back(std::move(item));
   }
 
-  IdleWorkStore operator=(const IdleWorkStore &rhs) = delete;
+  IdleWorkStore operator=(IdleWorkStore const &rhs) = delete;
   IdleWorkStore operator=(IdleWorkStore &&rhs) = delete;
 
 private:
   using Clock     = std::chrono::system_clock;
   using Timestamp = Clock::time_point;
   using Flag      = std::atomic<bool>;
-  using Mutex     = fetch::mutex::Mutex;
   using Store     = std::vector<WorkItem>;
 
-  mutable Mutex             mutex_{__LINE__, __FILE__};
+  mutable Mutex             mutex_;
   Store                     store_;
   Flag                      shutdown_{false};
   std::chrono::milliseconds interval_{0};

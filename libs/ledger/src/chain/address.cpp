@@ -82,6 +82,11 @@ bool Address::Parse(ConstByteArray const &input, Address &output)
   return success;
 }
 
+Address Address::FromMuddleAddress(ConstByteArray const &muddle)
+{
+  return Address{crypto::Hash<crypto::SHA256>(muddle)};
+}
+
 /**
  * Create an address from an identity
  *
@@ -115,6 +120,78 @@ Address::Address(ConstByteArray address)
   {
     throw std::runtime_error("Incorrect address size");
   }
+}
+
+/**
+ * Get the raw bytes of the address
+ *
+ * @return The raw address
+ */
+Address::ConstByteArray const &Address::address() const
+{
+  return address_;
+}
+
+/**
+ * Get the raw bytes of the display variant of the address (with checksum)
+ *
+ * @return The display address
+ */
+Address::ConstByteArray const &Address::display() const
+{
+  return display_;
+}
+
+/**
+ * Determine if the address is empty or not
+ *
+ * @return true if empty otherwise false
+ */
+bool Address::empty() const
+{
+  return address_.empty();
+}
+
+/**
+ * Equality operator for the address
+ *
+ * @param other The other address to compare against
+ * @return true if equal, otherwise false
+ */
+bool Address::operator==(Address const &other) const
+{
+  return address_ == other.address_;
+}
+
+/**
+ * Inequality operator for the address
+ *
+ * @param other The other address to compare against
+ * @return true if NOT equal, otherwise false
+ */
+bool Address::operator!=(Address const &other) const
+{
+  return !operator==(other);
+}
+
+bool Address::operator<(Address const &other) const
+{
+  return address_ < other.address_;
+}
+
+bool Address::operator<=(Address const &other) const
+{
+  return address_ <= other.address_;
+}
+
+bool Address::operator>(Address const &other) const
+{
+  return address_ > other.address_;
+}
+
+bool Address::operator>=(Address const &other) const
+{
+  return address_ >= other.address_;
 }
 
 }  // namespace ledger
