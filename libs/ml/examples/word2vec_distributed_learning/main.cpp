@@ -108,7 +108,7 @@ int main(int argc, char **argv)
   SizeType number_of_rounds     = 1000;
   coord_params.number_of_peers  = 2;
   coord_params.mode             = CoordinatorMode::ASYNCHRONOUS;
-  coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
+  coord_params.iterations_count = 400;  //  Synchronization occurs after this number of batches
   // have been processed in total by the clients
 
   client_params.batch_size    = 10000;
