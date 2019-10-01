@@ -91,9 +91,9 @@ void Manifest::AddService(ServiceIdentifier const &id, ManifestEntry &&entry)
   service_map_.emplace(id, std::move(entry));
 }
 
-std::string Manifest::FindExternalAddress(ServiceIdentifier::Type type, int32_t index) const
+std::string Manifest::FindExternalAddress(ServiceIdentifier::Type type, uint32_t index) const
 {
-  auto it = FindService(ServiceIdentifier{type, static_cast<uint32_t>(index)});
+  auto it = FindService(ServiceIdentifier{type, index});
   if (it == end())
   {
     throw std::runtime_error(std::string{"Unable to lookup external address for "} +
