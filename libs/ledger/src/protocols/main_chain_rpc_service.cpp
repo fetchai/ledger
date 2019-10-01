@@ -555,10 +555,10 @@ MainChainRpcService::State MainChainRpcService::OnFurtherFromTip()
 
   if (!peer.empty())
   {
-    current_peer_address_ = peer;
-    uint64_t gap_width    = right_edge_->body.block_number - left_edge_->body.block_number - 1;
-    constexpr uint64_t max_size         = static_cast<uint64_t>(MAX_CHAIN_REQUEST_SIZE);
-    int64_t            requested_blocks = -static_cast<int64_t>(std::min(gap_width, max_size));
+    current_peer_address_    = peer;
+    uint64_t       gap_width = right_edge_->body.block_number - left_edge_->body.block_number - 1;
+    constexpr auto max_size  = static_cast<uint64_t>(MAX_CHAIN_REQUEST_SIZE);
+    int64_t        requested_blocks = -static_cast<int64_t>(std::min(gap_width, max_size));
 
     assert(right_edge_->body.previous_hash == next_hash_requested_);
 
