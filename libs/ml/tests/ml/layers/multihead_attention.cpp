@@ -101,18 +101,14 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
       prev_shape = shape;
       continue;
     }
-    else
+
+    if (shape != prev_shape)
     {
-      if (shape != prev_shape)
-      {
-        all_same_shape = false;
-        break;
-      }
-      else
-      {
-        prev_shape = shape;
-      }
+      all_same_shape = false;
+      break;
     }
+
+    prev_shape = shape;
   }
   ASSERT_TRUE(all_same_shape);
 

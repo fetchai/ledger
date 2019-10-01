@@ -39,7 +39,7 @@ protected:
   fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 
-BENCHMARK_F(RandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
+BENCHMARK_F(RandomAccessStackBench, WritingIntToStack)(benchmark::State &st)  // NOLINT
 {
   uint64_t random;
   for (auto _ : st)

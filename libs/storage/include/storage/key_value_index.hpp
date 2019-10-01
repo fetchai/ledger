@@ -185,8 +185,6 @@ public:
   using IndexType      = key_value_pair::IndexType;
   using key_type       = typename key_value_pair::KeyType;
 
-  static constexpr char const *LOGGING_NAME = "KeyValueIndex";
-
   KeyValueIndex()
   {
     stack_.OnFileLoaded([this]() { root_ = stack_.header_extra(); });
@@ -268,7 +266,7 @@ public:
       }
     }
 
-    UpdateTask task;
+    UpdateTask task{};
     while (!q.empty())
     {
       task = q.top();
@@ -361,7 +359,7 @@ public:
     {
       kv.key        = key;
       kv.parent     = key_value_pair::TREE_ROOT_VALUE;
-      kv.split      = uint16_t{key.size_in_bits()};
+      kv.split      = uint16_t{decltype(key)::size_in_bits()};
       update_parent = kv.UpdateLeaf(val, data);
 
       index = stack_.Push(kv);
@@ -383,7 +381,7 @@ public:
         pid = right.parent;
 
         left.key   = key;
-        left.split = uint16_t(key.size_in_bits());
+        left.split = uint16_t(decltype(key)::size_in_bits());
 
         left.parent  = stack_.size() + 1;
         right.parent = stack_.size() + 1;
@@ -400,7 +398,7 @@ public:
         pid = left.parent;
 
         right.key   = key;
-        right.split = uint16_t(key.size_in_bits());
+        right.split = uint16_t(decltype(key)::size_in_bits());
 
         right.parent = stack_.size() + 1;
         left.parent  = stack_.size() + 1;
@@ -872,7 +870,7 @@ private:
 
       index = next;
 
-      pos = int(key.size_in_bits());
+      pos = int(key_type::size_in_bits());
 
       stack_.Get(next, kv);
 

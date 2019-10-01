@@ -64,8 +64,7 @@ public:
   };
 
   explicit RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, LaneType lane)
-    : fetch::service::Protocol()
-    , doc_store_(doc_store)
+    : doc_store_(doc_store)
     , get_count_(CreateCounter(lane, "ledger_statedb_get_total", "The total no. get ops"))
     , get_create_count_(
           CreateCounter(lane, "ledger_statedb_get_create_total", "The total no. get/create ops"))
@@ -285,7 +284,7 @@ private:
 
   void SetLaneLog2(LaneType const &count)
   {
-    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
+    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3u) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
   NewRevertibleDocumentStore *doc_store_;

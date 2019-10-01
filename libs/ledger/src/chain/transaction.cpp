@@ -162,7 +162,7 @@ Transaction::Validity Transaction::GetValidity(BlockIndex block_index) const
   {
     validity = Validity::VALID;
 
-    if (valid_from_ && (valid_from_ > block_index))
+    if ((valid_from_ != 0u) && (valid_from_ > block_index))
     {
       validity = Validity::PENDING;
     }

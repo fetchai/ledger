@@ -64,10 +64,8 @@ CounterPtr CounterMap::LookupCounter(Labels const &keys)
 
     return counter;
   }
-  else
-  {
-    return it->second;
-  }
+
+  return it->second;
 }
 
 }  // namespace telemetry

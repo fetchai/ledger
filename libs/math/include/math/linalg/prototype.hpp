@@ -89,7 +89,7 @@ struct Prototype
   }
 
   template <typename O>
-  TwoOpReturnType<O, EQ> constexpr operator=(O const & /*other*/) const
+  TwoOpReturnType<O, EQ> constexpr operator=(O const & /*other*/) const  // NOLINT
   {
     return TwoOpReturnType<O, EQ>();
   }
@@ -111,7 +111,7 @@ constexpr Prototype<4, 11> _p{};      //< Represents integral 3
 // Operatation representing the transposed of a matrix.
 template <uint64_t P, uint64_t S>
 constexpr typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::TRANSPOSE> T(
-    Prototype<P, S> const &)
+    Prototype<P, S> const & /*unused*/)
 {
   return typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::TRANSPOSE>();
 }
@@ -119,7 +119,7 @@ constexpr typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::TR
 // Operatation defining the property "upper triangular" for a matrix
 template <uint64_t P, uint64_t S>
 constexpr typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::UPPER> U(
-    Prototype<P, S> const &)
+    Prototype<P, S> const & /*unused*/)
 {
   return typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::UPPER>();
 }
@@ -127,14 +127,14 @@ constexpr typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::UP
 // Operatation defining the property "lower triangular" for a matrix
 template <uint64_t P, uint64_t S>
 constexpr typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::LOWER> L(
-    Prototype<P, S> const &)
+    Prototype<P, S> const & /*unused*/)
 {
   return typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::LOWER>();
 }
 
 // Wrapper function to prettify the representation inside template constants
 template <typename O>
-constexpr uint64_t Computes(O const &)
+constexpr uint64_t Computes(O const & /*unused*/)
 {
   return O::Stack;
 }
@@ -153,7 +153,7 @@ constexpr uint64_t Computes(A const &a, B const &b, O const &... objs)
 
 // Wrapper function to prettify signature representation.
 template <typename O>
-constexpr uint64_t Signature(O const &)
+constexpr uint64_t Signature(O const & /*unused*/)
 {
   return O::Stack;
 }

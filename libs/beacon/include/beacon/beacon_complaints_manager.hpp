@@ -45,23 +45,25 @@ class ComplaintsManager
 
   uint32_t      threshold_{0};  ///< DKG threshold
   MuddleAddress address_;       ///< Address of node
-  std::unordered_map<MuddleAddress, std::unordered_set<MuddleAddress>>
-                          complaints_counter_;  ///< Counter for number complaints received by a cabinet member
-  std::set<MuddleAddress> complaints_from_;  ///< Set of members who complaints against self
-  std::set<MuddleAddress> complaints_;       ///< Set of members who we are complaining against
-  std::set<MuddleAddress>
-       complaints_received_;  ///< Set of members whom we have received a complaint message from
-  bool finished_{
-      false};  ///< Bool denoting whether we have collected complaint messages from everyone
+  /// Counter for number complaints received by a cabinet member
+  std::unordered_map<MuddleAddress, std::unordered_set<MuddleAddress>> complaints_counter_;
+  /// Set of members who complaints against self
+  std::set<MuddleAddress> complaints_from_;
+  /// Set of members who we are complaining against
+  std::set<MuddleAddress> complaints_;
+  /// Set of members whom we have received a complaint message from
+  std::set<MuddleAddress> complaints_received_;
+  /// Bool denoting whether we have collected complaint messages from everyone
+  bool               finished_{false};
   mutable std::mutex mutex_;
 
 public:
   ComplaintsManager() = default;
 
   void ResetCabinet(MuddleAddress const &address, uint32_t threshold);
-  void AddComplaintAgainst(MuddleAddress const &address);
+  void AddComplaintAgainst(MuddleAddress const &complaint_address);
   void AddComplaintsFrom(ComplaintsMessage const &msg, MuddleAddress const &from_id);
-  void Finish(std::set<Identity> const &committee);
+  void Finish(std::set<Identity> const &cabinet);
 
   uint32_t                NumComplaintsReceived() const;
   std::set<MuddleAddress> ComplaintsAgainstSelf() const;
@@ -93,12 +95,12 @@ public:
 
   void     Init(std::set<MuddleAddress> const &complaints);
   void     ResetCabinet();
-  void     AddComplaintAgainst(MuddleAddress const &miner);
+  void     AddComplaintAgainst(MuddleAddress const &member);
   void     AddComplaintAnswerFrom(MuddleAddress const &from, Answer const &complaint_answer);
   void     Finish(std::set<Identity> const &cabinet, Identity const &node_id);
   uint32_t NumComplaintAnswersReceived() const;
   ComplaintAnswers        ComplaintAnswersReceived() const;
-  std::set<MuddleAddress> BuildQual(std::set<MuddleAddress> const &miners) const;
+  std::set<MuddleAddress> BuildQual(std::set<MuddleAddress> const &cabinet) const;
 };
 
 /**
@@ -116,8 +118,7 @@ class QualComplaintsManager
   bool                    finished_{false};
   std::set<MuddleAddress> complaints_;           ///< Cabinet members we complain against
   QualComplaints          complaints_received_;  ///< Set of cabinet members we have received a qual
-  ///< complaint message from
-  mutable std::mutex mutex_;
+  mutable std::mutex      mutex_;
 
 public:
   QualComplaintsManager() = default;
@@ -131,8 +132,9 @@ public:
   uint32_t       NumComplaintsReceived(std::set<MuddleAddress> const &qual) const;
   QualComplaints ComplaintsReceived(std::set<MuddleAddress> const &qual) const;
   std::size_t    ComplaintsSize() const;
-  bool           FindComplaint(MuddleAddress const &address) const;
+  bool           FindComplaint(MuddleAddress const &id) const;
   std::set<QualComplaintsManager::MuddleAddress> Complaints() const;
 };
+
 }  // namespace beacon
 }  // namespace fetch

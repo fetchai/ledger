@@ -51,10 +51,8 @@ std::string CreateMetricName(std::string const &prefix, std::string const &name)
     {
       return '_';
     }
-    else
-    {
-      return static_cast<char>(std::tolower(c));
-    }
+
+    return static_cast<char>(std::tolower(c));
   });
 
   return metric_name;

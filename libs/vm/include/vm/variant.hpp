@@ -192,7 +192,7 @@ struct Variant
 {
   union
   {
-    Primitive   primitive;
+    Primitive   primitive{};
     Ptr<Object> object;
   };
   TypeId type_id = TypeIds::Unknown;

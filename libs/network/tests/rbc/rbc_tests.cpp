@@ -164,7 +164,7 @@ private:
     {
       return;
     }
-    else if (Failure(Failures::DOUBLE_SEND))
+    if (Failure(Failures::DOUBLE_SEND))
     {
       endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serializer.data());
     }
@@ -332,7 +332,7 @@ public:
   {
     rbc_.ResetCabinet(new_cabinet);
   }
-  void Broadcast(SerialisedMessage const &msg, uint8_t) override
+  void Broadcast(SerialisedMessage const &msg, uint8_t /*num_messages*/) override
   {
     rbc_.Broadcast(msg);
   }
@@ -389,10 +389,8 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
       {
         break;
       }
-      else
-      {
-        ++kk;
-      }
+
+      ++kk;
     }
   }
 

@@ -239,7 +239,7 @@ bool VM::Execute(std::string &error, Variant &output)
     charge_total_ += current_op_->static_charge;
 
     // check for charge limit being reached
-    if (charge_limit_ && (charge_total_ >= charge_limit_))
+    if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
     {
       RuntimeError("Charge limit exceeded");
       break;

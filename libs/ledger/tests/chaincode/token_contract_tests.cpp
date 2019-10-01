@@ -77,7 +77,7 @@ protected:
     Variant v_data{Variant::Object()};
     v_data["address"] = address.display();
 
-    if (balance)
+    if (balance != nullptr)
     {
       v_data["balance"] = *balance;
     }

@@ -77,8 +77,8 @@ private:
 
   /// @name Per Execution State
   /// @{
-  BlockIndex              block_;
-  SliceIndex              slice_;
+  BlockIndex              block_{};
+  SliceIndex              slice_{};
   BitVector               allowed_shards_{};
   LaneIndex               log2_num_lanes_{0};
   TransactionPtr          current_tx_{};

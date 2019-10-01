@@ -46,8 +46,8 @@ public:
    */
   struct Transfer
   {
-    Address     to;      ///< The destination address for fund transfers
-    TokenAmount amount;  ///< The amount of tokens being transferred
+    Address     to;        ///< The destination address for fund transfers
+    TokenAmount amount{};  ///< The amount of tokens being transferred
   };
 
   /**

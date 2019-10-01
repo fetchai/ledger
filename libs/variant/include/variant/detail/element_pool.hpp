@@ -120,11 +120,9 @@ void ElementPool<T>::Release(T *element)
   {
     throw std::runtime_error("Element is not part of this pool");
   }
-  else
-  {
-    in_use_.erase(element);
-    free_.push_back(element);
-  }
+
+  in_use_.erase(element);
+  free_.push_back(element);
 }
 
 /**

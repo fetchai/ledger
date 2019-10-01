@@ -59,7 +59,7 @@ struct DIRDeleter
 {
   void operator()(DIR *ptr)
   {
-    if (ptr)
+    if (ptr != nullptr)
     {
       closedir(ptr);
     }
@@ -518,11 +518,9 @@ private:
                     << std::endl;
           continue;
         }
-        else
-        {
-          node_it->second.db_record    = std::move(new_node.db_record);
-          node_it->second.is_block_set = true;
-        }
+
+        node_it->second.db_record    = std::move(new_node.db_record);
+        node_it->second.is_block_set = true;
       }
       else
       {
@@ -680,7 +678,7 @@ std::tuple<TxStores, int, std::string> OpenTxDbStores()
     LaneIdx lane_idx_max{0};
 
     dirent *entry{nullptr};
-    while ((entry = readdir(dp.get())))
+    while ((entry = readdir(dp.get())) != nullptr)
     {
       std::string const name{entry->d_name};
       if (!std::regex_match(name, match, rex) || match.size() != 2)

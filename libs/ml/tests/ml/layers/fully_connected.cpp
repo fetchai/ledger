@@ -193,7 +193,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   auto g_shared_weights_before     = g_shared->GetWeights();
   auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
-  for (size_t i = 0; i < 4; i++)
+  for (std::size_t i = 0; i < 4; i++)
   {
     EXPECT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
   }
@@ -232,20 +232,20 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   auto g_not_shared_weights_after = g_not_shared->GetWeights();
 
   // check the weights and biases are equal after training for shared weights
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     EXPECT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
   }
 
   // check the weights and biases are different after training for not shared weights
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     EXPECT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
   }
 
   // check the gradient of the shared weight matrices are the sum of individual weight matrix
   // gradients in not_shared_graph
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     TensorType shared_gradient = g_shared_weights_after[i] - g_shared_weights_before[i];
     TensorType not_shared_gradient =
@@ -278,7 +278,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   auto g_shared_weights_before     = g_shared->GetWeights();
   auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
-  for (size_t i = 0; i < 4; i++)
+  for (std::size_t i = 0; i < 4; i++)
   {
     ASSERT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
   }
@@ -328,27 +328,27 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   }
 
   // check the all weights are initialized to be the same
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     EXPECT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
     EXPECT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
   }
 
   // check the weights are equal after training for shared weights
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     EXPECT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
   }
 
   // check the weights are different after training for not shared weights
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     ASSERT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
   }
 
   // check the gradient of the shared weight matrices are the sum of individual weight matrice
   // gradients in not_shared_graph
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     TensorType shared_gradient = g_shared_weights_after[i] - g_shared_weights_before[i];
     TensorType not_shared_gradient =

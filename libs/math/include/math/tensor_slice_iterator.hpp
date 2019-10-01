@@ -315,6 +315,7 @@ public:
   }
 
   template <class IteratorType>
+  // NOLINTNEXTLINE
   friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &, IteratorType &);
 
   /**

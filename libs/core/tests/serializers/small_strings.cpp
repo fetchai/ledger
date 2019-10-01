@@ -32,7 +32,7 @@ namespace fetch {
 
 namespace serializers {
 
-TEST(MsgPacker, short_strings)
+TEST(MsgPacker, short_strings)  // NOLINT
 {
   MsgPackSerializer stream;
   ConstByteArray    value;

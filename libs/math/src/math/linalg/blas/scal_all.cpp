@@ -73,8 +73,6 @@ void Blas<S, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x), V
       dx[i] = da * dx[i];
     }
   }
-
-  return;
 }
 
 template class Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),

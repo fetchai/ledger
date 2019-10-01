@@ -41,6 +41,8 @@ struct BLSInitialiser
 {
   BLSInitialiser()
   {
+    static std::atomic<bool> was_initialised{false};
+
     bool a{true};
     a = was_initialised.exchange(a);
     if (!a)
@@ -49,11 +51,8 @@ struct BLSInitialiser
       bls::init();
     }
   }
-
-  static std::atomic<bool> was_initialised;
 };
 
-std::atomic<bool> BLSInitialiser::was_initialised{false};
 }  // namespace details
 
 class BLSVerifier : public Verifier
@@ -80,7 +79,7 @@ public:
       return false;
     }
 
-    bls::Signature    sign;
+    bls::Signature    sign{};
     std::stringstream ssig{static_cast<std::string>(signature)};
     ssig >> sign;
 
@@ -99,7 +98,7 @@ public:
 
 private:
   Identity       identity_;
-  bls::PublicKey public_key_;
+  bls::PublicKey public_key_{};
 };
 
 class BLSSigner : public Prover
@@ -131,8 +130,8 @@ public:
   ConstByteArray Sign(ConstByteArray const &text) const final
   {
     auto const     m = static_cast<std::string>(text);
-    bls::Signature s;
-    private_key_.sign(s, m.c_str());
+    bls::Signature s{};
+    private_key_.sign(s, m);
     std::stringstream signature;
     signature << s;
     return static_cast<ConstByteArray>(signature.str());
@@ -158,8 +157,8 @@ public:
   }
 
 private:
-  bls::SecretKey private_key_;
-  bls::PublicKey public_key_;
+  bls::SecretKey private_key_{};
+  bls::PublicKey public_key_{};
 };
 
 }  // namespace crypto
