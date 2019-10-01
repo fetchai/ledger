@@ -186,11 +186,11 @@ public:
     }
 
     // Get length of file
-    file_handle_.seekg(0, decltype(file_handle_)::end);
+    file_handle_.seekg(0, std::fstream::end);
     int64_t length = file_handle_.tellg();
 
     // Read the beginning of the file into our header
-    file_handle_.seekg(0, decltype(file_handle_)::beg);
+    file_handle_.seekg(0, std::fstream::beg);
     header_.Read(file_handle_);
 
     int64_t capacity = (length - int64_t(header_.size())) / int64_t(sizeof(type));
@@ -247,7 +247,7 @@ public:
     assert(i < size());
     auto start = int64_t(i * sizeof(type) + header_.size());
 
-    file_handle_.seekg(start, decltype(file_handle_)::beg);
+    file_handle_.seekg(start, std::fstream::beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
   }
 
@@ -285,7 +285,7 @@ public:
 
     auto start = int64_t((i * sizeof(type)) + header_.size());
 
-    file_handle_.seekg(start, decltype(file_handle_)::beg);
+    file_handle_.seekg(start, std::fstream::beg);
     file_handle_.write(reinterpret_cast<char const *>(objects),
                        std::streamsize(sizeof(type)) * std::streamsize(elements));
 
@@ -324,7 +324,7 @@ public:
     // i is valid location, elements are 1 or more at this point
     elements = std::min(elements, std::size_t(header_.objects - i));
 
-    file_handle_.seekg(start, decltype(file_handle_)::beg);
+    file_handle_.seekg(start, std::fstream::beg);
     file_handle_.read(reinterpret_cast<char *>(objects),
                       std::streamsize(sizeof(type)) * std::streamsize(elements));
   }
@@ -380,7 +380,7 @@ public:
 
     auto n = int64_t((header_.objects - 1) * sizeof(type) + header_.size());
 
-    file_handle_.seekg(n, decltype(file_handle_)::beg);
+    file_handle_.seekg(n, std::fstream::beg);
     type object;
     file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
 
@@ -476,7 +476,7 @@ public:
     uint64_t ret = header_.objects;
     auto     n   = int64_t(ret * sizeof(type) + header_.size());
 
-    file_handle_.seekg(n, decltype(file_handle_)::beg);
+    file_handle_.seekg(n, std::fstream::beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
     ++header_.objects;
 

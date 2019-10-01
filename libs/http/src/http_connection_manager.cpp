@@ -34,7 +34,7 @@ HTTPConnectionManager::HTTPConnectionManager(AbstractHTTPServer &server)
 
 HTTPConnectionManager::HandleType HTTPConnectionManager::Join(ConnectionType client)
 {
-  HandleType handle = fetch::http::AbstractHTTPServer::next_handle();
+  HandleType handle = AbstractHTTPServer::next_handle();
   FETCH_LOG_DEBUG(LOGGING_NAME, "Client joining with handle ", handle);
 
   FETCH_LOCK(clients_mutex_);

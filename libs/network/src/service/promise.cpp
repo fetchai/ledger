@@ -51,9 +51,9 @@ Mutex                          PromiseImplementation::counter_lock_;
 
 std::chrono::seconds const PromiseImplementation::DEFAULT_TIMEOUT{30};
 
-PromiseImplementation::PromiseImplementation(uint64_t pro, uint64_t func)
-  : protocol_{pro}
-  , function_{func}
+PromiseImplementation::PromiseImplementation(uint64_t protocol, uint64_t function)
+  : protocol_{protocol}
+  , function_{function}
 {}
 
 ConstByteArray const &PromiseImplementation::value() const

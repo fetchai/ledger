@@ -57,17 +57,17 @@ bool Uri::Parse(ConstByteArray const &uri)
   return Parse(static_cast<std::string>(uri));
 }
 
-bool Uri::Parse(std::string const &data)
+bool Uri::Parse(std::string const &uri)
 {
   bool success = false;
 
-  if (data.empty())
+  if (uri.empty())
   {
     return false;
   }
 
   std::smatch matches;
-  std::regex_match(data, matches, URI_FORMAT);
+  std::regex_match(uri, matches, URI_FORMAT);
   if (matches.size() == 3)
   {
     std::string const &scheme    = matches[1];
@@ -90,7 +90,7 @@ bool Uri::Parse(std::string const &data)
   // only update the URI if value
   if (success)
   {
-    uri_ = data;
+    uri_ = uri;
   }
 
   return success;
