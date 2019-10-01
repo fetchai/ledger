@@ -87,7 +87,7 @@ public:
     return gradients_;
   }
 
-  override ~Update() = default;
+  virtual ~Update() = default;
 
   Update(const Update &other) = delete;
   Update &operator=(const Update &other)  = delete;

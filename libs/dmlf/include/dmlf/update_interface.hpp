@@ -51,7 +51,7 @@ public:
     return TimeStamp() > other.TimeStamp();
   }
 
-  override ~UpdateInterface() = default;
+  virtual ~UpdateInterface() = default;
 
   UpdateInterface(const UpdateInterface &other) = delete;
   UpdateInterface &operator=(const UpdateInterface &other)  = delete;
