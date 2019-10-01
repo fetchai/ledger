@@ -16,14 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/reactor.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
 #include "muddle/muddle_interface.hpp"
-#include "muddle/rpc/client.hpp"
-#include "muddle/rpc/server.hpp"
-#include "muddle/subscription.hpp"
 
 #include "muddle/create_muddle_fake.hpp"
 
@@ -102,11 +98,11 @@ struct BeaconSelfContained
   }
 
   void ResetCabinet(BeaconService::CabinetMemberList const &cabinet, uint32_t round_start,
-                    uint32_t round_end, DkgOutput const &output)
+                    uint32_t round_end, BlockEntropy const &entropy, DkgOutput const &output)
   {
     beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2 + 1),
                                    round_start, round_end,
-                                   static_cast<uint64_t>(std::time(nullptr)), output);
+                                   static_cast<uint64_t>(std::time(nullptr)), entropy, output);
   }
 
   muddle::Address GetMuddleAddress() const
@@ -189,12 +185,15 @@ void EntropyGen(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
+    // Create previous entropy
+    BlockEntropy prev_entropy;
+    prev_entropy.group_signature = "Hello";
     TrustedDealer dealer{cabinet, static_cast<uint32_t>(cabinet.size() / 2 + 1)};
     state.ResumeTiming();
     for (auto const &node : nodes)
     {
       node->ResetCabinet(cabinet, test_attempt * entropy_rounds,
-                         test_attempt * entropy_rounds + entropy_rounds,
+                         test_attempt * entropy_rounds + entropy_rounds, prev_entropy,
                          dealer.GetKeys(node->muddle_certificate->identity().identifier()));
     }
 

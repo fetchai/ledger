@@ -64,18 +64,6 @@ using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
 
-ProverPtr CreateNewCertificate()
-{
-  using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::shared_ptr<Signer>;
-
-  SignerPtr certificate = std::make_shared<Signer>();
-
-  certificate->GenerateKeys();
-
-  return certificate;
-}
-
 struct DummyManifesttCache : public ManifestCacheInterface
 {
   bool QueryManifest(Address const &, Manifest &) override
@@ -125,6 +113,18 @@ struct CabinetNode
   network::Uri GetHint() const
   {
     return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
+  }
+
+  static ProverPtr CreateNewCertificate()
+  {
+    using Signer    = fetch::crypto::ECDSASigner;
+    using SignerPtr = std::shared_ptr<Signer>;
+
+    SignerPtr certificate = std::make_shared<Signer>();
+
+    certificate->GenerateKeys();
+
+    return certificate;
   }
 };
 

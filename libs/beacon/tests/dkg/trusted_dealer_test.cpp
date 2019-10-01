@@ -16,56 +16,44 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/event_manager.hpp"
-#include "beacon/trusted_dealer.hpp"
-#include "beacon/trusted_dealer_beacon_service.hpp"
 #include "core/reactor.hpp"
-#include "core/service_ids.hpp"
-#include "core/state_machine.hpp"
 #include "crypto/ecdsa.hpp"
-#include "crypto/prover.hpp"
-#include "ledger/shards/manifest.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 
+#include "beacon/trusted_dealer.hpp"
+#include "beacon/trusted_dealer_beacon_service.hpp"
+
 #include "gtest/gtest.h"
-#include <deque>
+
 #include <iostream>
 
 using namespace fetch;
+using namespace fetch::muddle;
+using namespace fetch::core;
+using namespace fetch::crypto;
 using namespace fetch::beacon;
-using namespace fetch::ledger;
-using namespace std::chrono_literals;
+
+using fetch::crypto::Prover;
 
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
-
-using Prover        = crypto::Prover;
-using ProverPtr     = std::shared_ptr<Prover>;
 using MuddleAddress = byte_array::ConstByteArray;
 
-struct DummyManifestCache : public ManifestCacheInterface
+class DummyManifestCache : public fetch::ledger::ManifestCacheInterface
 {
-  bool QueryManifest(Address const &, Manifest &) override
+public:
+  DummyManifestCache()           = default;
+  ~DummyManifestCache() override = default;
+
+  bool QueryManifest(Address const &, fetch::ledger::Manifest &) override
   {
-    return false;
+    return true;
   }
 };
 
-struct CabinetNode
+struct TrustedDealerCabinetNode
 {
-  ProverPtr CreateNewCertificate()
-  {
-    using Signer    = fetch::crypto::ECDSASigner;
-    using SignerPtr = std::shared_ptr<Signer>;
-
-    SignerPtr certificate = std::make_shared<Signer>();
-
-    certificate->GenerateKeys();
-
-    return certificate;
-  }
-
   using Certificate    = crypto::Prover;
   using CertificatePtr = std::shared_ptr<Certificate>;
   using Muddle         = muddle::MuddlePtr;
@@ -81,7 +69,7 @@ struct CabinetNode
   TrustedDealerBeaconService       beacon_service;
   crypto::Identity                 identity;
 
-  CabinetNode(uint16_t port_number, uint16_t index)
+  TrustedDealerCabinetNode(uint16_t port_number, uint16_t index)
     : event_manager{EventManager::New()}
     , muddle_port{port_number}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
@@ -104,6 +92,18 @@ struct CabinetNode
   {
     return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
   }
+
+  static ProverPtr CreateNewCertificate()
+  {
+    using Signer    = fetch::crypto::ECDSASigner;
+    using SignerPtr = std::shared_ptr<Signer>;
+
+    SignerPtr certificate = std::make_shared<Signer>();
+
+    certificate->GenerateKeys();
+
+    return certificate;
+  }
 };
 
 void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
@@ -111,13 +111,13 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
 {
   std::cout << "- Setup" << std::endl;
 
-  std::vector<std::unique_ptr<CabinetNode>> cabinet;
+  std::vector<std::unique_ptr<TrustedDealerCabinetNode>> cabinet;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(10000 + ii);
-    cabinet.emplace_back(new CabinetNode{port_number, ii});
+    cabinet.emplace_back(new TrustedDealerCabinetNode{port_number, ii});
   }
-  sleep_for(500ms);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   // Connect muddles together (localhost for this example)
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
@@ -137,7 +137,7 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
 
   while (!pending_nodes.empty())
   {
-    sleep_for(100ms);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
     {
@@ -172,6 +172,10 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
     member->reactor.Start();
   }
 
+  // Create previous entropy
+  BlockEntropy prev_entropy;
+  prev_entropy.group_signature = "Hello";
+
   // Ready
   uint64_t i = 0;
   while (i < total_renewals)
@@ -182,7 +186,8 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
     {
       member->beacon_service.StartNewCabinet(
           cabinet_addresses, threshold, i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
-          static_cast<uint64_t>(std::time(nullptr)), dealer.GetKeys(member->identity.identifier()));
+          static_cast<uint64_t>(std::time(nullptr)), prev_entropy,
+          dealer.GetKeys(member->identity.identifier()));
     }
 
     // Wait for everyone to finish
@@ -193,7 +198,7 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
     }
     while (!pending_nodes.empty())
     {
-      sleep_for(100ms);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
       for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
       {
         fetch::beacon::EventCommitteeCompletedWork event;
@@ -219,8 +224,8 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
   }
 }
 
-TEST(beacon_service, DISABLED_trusted_dealer)
+TEST(beacon_service, trusted_dealer)
 {
   bn::initPairing();
-  RunTrustedDealer(3, 4, 3, 10);
+  RunTrustedDealer(1, 4, 3, 10);
 }

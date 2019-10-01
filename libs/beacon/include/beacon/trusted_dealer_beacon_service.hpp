@@ -27,11 +27,11 @@ class TrustedDealerBeaconService : public BeaconService
 public:
   TrustedDealerBeaconService(MuddleInterface &               muddle,
                              ledger::ManifestCacheInterface &manifest_cache,
-                             CertificatePtr certificate, SharedEventManager event_manager,
-                             uint64_t blocks_per_round = 1);
+                             CertificatePtr certificate, SharedEventManager event_manager);
 
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time, DkgOutput output);
+                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy,
+                       DkgOutput output);
 };
 }  // namespace beacon
 }  // namespace fetch

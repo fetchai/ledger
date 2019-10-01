@@ -23,13 +23,13 @@ namespace beacon {
 
 TrustedDealerBeaconService::TrustedDealerBeaconService(
     MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
-    CertificatePtr certificate, SharedEventManager event_manager, uint64_t blocks_per_round)
-  : BeaconService{muddle, manifest_cache, std::move(certificate), std::move(event_manager),
-                  blocks_per_round} {};
+    CertificatePtr certificate, SharedEventManager event_manager)
+  : BeaconService{muddle, manifest_cache, std::move(certificate), std::move(event_manager)} {};
 
 void TrustedDealerBeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
                                                  uint64_t round_start, uint64_t round_end,
-                                                 uint64_t start_time, DkgOutput output)
+                                                 uint64_t            start_time,
+                                                 BlockEntropy const &prev_entropy, DkgOutput output)
 {
   auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
   FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
@@ -55,27 +55,17 @@ void TrustedDealerBeaconService::StartNewCabinet(CabinetMemberList members, uint
 
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
-  // Determines if we are observing or actively participating
-  if (output.group_public_key.isZero())
-  {
-    beacon->observe_only = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "Beacon in observe only mode. Members: ", members.size());
-  }
-  else
-  {
-    beacon->manager.SetCertificate(certificate_);
-    beacon->manager.NewCabinet(members, threshold);
-    beacon->manager.SetDkgOutput(output);
-  }
+  beacon->manager.SetCertificate(certificate_);
+  beacon->manager.NewCabinet(members, threshold);
+  beacon->manager.SetDkgOutput(output);
 
   // Setting the aeon details
   beacon->aeon.round_start               = round_start;
   beacon->aeon.round_end                 = round_end;
   beacon->aeon.members                   = std::move(members);
   beacon->aeon.start_reference_timepoint = start_time;
+  beacon->aeon.block_entropy_previous    = prev_entropy;
 
-  // Even "observe only" details need to pass through the setup phase
-  // to preserve order.
   aeon_exe_queue_.push_back(beacon);
 }
 }  // namespace beacon
