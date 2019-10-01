@@ -62,7 +62,7 @@ public:
     : BeaconService(muddle, manifest_cache, std::move(certificate), std::move(event_manager))
   {}
 
-  void PushNewExecUnit(const SharedAeonExecutionUnit& beacon)
+  void PushNewExecUnit(const SharedAeonExecutionUnit &beacon)
   {
     // TODO(HUT): consider whether to lock here for the test.
     // jkjkstd::lock_guard<std::mutex> lock(mutex_);

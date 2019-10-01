@@ -38,7 +38,7 @@ char const *ToString(BeaconService::State state);
 
 BeaconService::BeaconService(MuddleInterface &               muddle,
                              ledger::ManifestCacheInterface &manifest_cache,
-                             const CertificatePtr& certificate, SharedEventManager event_manager)
+                             const CertificatePtr &certificate, SharedEventManager event_manager)
   : certificate_{certificate}
   , identity_{certificate->identity()}
   , endpoint_{muddle.GetEndpoint()}
@@ -353,13 +353,11 @@ BeaconService::State BeaconService::OnCompleteState()
 
     return State::PREPARE_ENTROPY_GENERATION;
   }
-  
-  
-    EventCommitteeCompletedWork event;
-    event_manager_->Dispatch(event);
 
-    return State::WAIT_FOR_SETUP_COMPLETION;
-  
+  EventCommitteeCompletedWork event;
+  event_manager_->Dispatch(event);
+
+  return State::WAIT_FOR_SETUP_COMPLETION;
 }
 
 bool BeaconService::AddSignature(SignatureShare share)

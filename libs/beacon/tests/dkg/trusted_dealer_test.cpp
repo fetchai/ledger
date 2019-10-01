@@ -61,7 +61,7 @@ public:
     : BeaconService{muddle, manifest_cache, std::move(certificate), std::move(event_manager)} {};
 
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time, const DkgOutput& output)
+                       uint64_t round_end, uint64_t start_time, const DkgOutput &output)
   {
     auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
     FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,

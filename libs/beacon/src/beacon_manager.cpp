@@ -352,24 +352,20 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
                      from_index, " for node ", victim_index);
       return from;
     }
-    
-    
-      bn::G2::mul(lhs, group_g_, s);  // G^s
-      rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
-      if (lhs != rhs)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                       " received shares failing qual coefficients verification from node ",
-                       from_index, " for node ", victim_index);
-        return answer.first;
-      }
-      
-      
-        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received incorrect complaint from ",
-                       from_index);
-        return from;
-      
-    
+
+    bn::G2::mul(lhs, group_g_, s);  // G^s
+    rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
+    if (lhs != rhs)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                     " received shares failing qual coefficients verification from node ",
+                     from_index, " for node ", victim_index);
+      return answer.first;
+    }
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received incorrect complaint from ",
+                   from_index);
+    return from;
   }
   else
   {

@@ -29,16 +29,16 @@
 namespace fetch {
 namespace {
 
-const uint32_t        DEFAULT_NUM_LANES          = 1;
-const uint32_t        DEFAULT_NUM_SLICES         = 500;
-const uint32_t        DEFAULT_NUM_EXECUTORS      = DEFAULT_NUM_LANES;
-const uint16_t        DEFAULT_PORT               = 8000;
-const uint32_t        DEFAULT_BLOCK_INTERVAL     = 0;  // milliseconds - zero means no mining
-const uint32_t        DEFAULT_COMMITTEE_SIZE     = 10;
+const uint32_t DEFAULT_NUM_LANES          = 1;
+const uint32_t DEFAULT_NUM_SLICES         = 500;
+const uint32_t DEFAULT_NUM_EXECUTORS      = DEFAULT_NUM_LANES;
+const uint16_t DEFAULT_PORT               = 8000;
+const uint32_t DEFAULT_BLOCK_INTERVAL     = 0;  // milliseconds - zero means no mining
+const uint32_t DEFAULT_COMMITTEE_SIZE     = 10;
 const uint32_t DEFAULT_STAKE_DELAY_PERIOD = 5;
 const uint32_t DEFAULT_AEON_PERIOD        = 100;
 const uint32_t DEFAULT_MAX_PEERS          = 3;
-const uint32_t        DEFAULT_TRANSIENT_PEERS    = 1;
+const uint32_t DEFAULT_TRANSIENT_PEERS    = 1;
 const uint32_t NUM_SYSTEM_THREADS = static_cast<uint32_t>(std::thread::hardware_concurrency());
 
 }  // namespace

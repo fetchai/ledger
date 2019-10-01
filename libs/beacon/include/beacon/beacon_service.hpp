@@ -97,7 +97,7 @@ public:
   BeaconService(BeaconService const &) = delete;
 
   BeaconService(MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
-                const CertificatePtr& certificate, SharedEventManager event_manager);
+                const CertificatePtr &certificate, SharedEventManager event_manager);
 
   /// @name Entropy Generator
   /// @{

@@ -139,7 +139,7 @@ public:
   /// Setup management
   /// @{
 
-  void QueueSetup(const SharedAeonExecutionUnit& beacon);
+  void QueueSetup(const SharedAeonExecutionUnit &beacon);
   void Abort(uint64_t abort_below);
   void SetBeaconReadyCallback(CallbackFunction callback);
   /// @}
@@ -219,8 +219,8 @@ private:
 
   /// @name Handlers for messages
   /// @{
-  void OnDkgMessage(MuddleAddress const &from, const std::shared_ptr<DKGMessage>& msg_ptr);
-  void OnNewShares(const MuddleAddress& from, std::pair<MessageShare, MessageShare> const &shares);
+  void OnDkgMessage(MuddleAddress const &from, const std::shared_ptr<DKGMessage> &msg_ptr);
+  void OnNewShares(const MuddleAddress &from, std::pair<MessageShare, MessageShare> const &shares);
   void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
   void OnNewCoefficients(CoefficientsMessage const &msg, MuddleAddress const &from);
   void OnComplaints(ComplaintsMessage const &msg, MuddleAddress const &from);

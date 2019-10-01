@@ -97,17 +97,15 @@ Consensus::CommitteePtr Consensus::GetCommittee(Block const &previous)
   {
     return committee_history_.at(last_snapshot);
   }
-  
-  
-    CommitteePtr committee_ptr = committee_history_[last_snapshot];
-    assert(!committee_ptr->empty());
 
-    Committee committee_copy = *committee_ptr;
+  CommitteePtr committee_ptr = committee_history_[last_snapshot];
+  assert(!committee_ptr->empty());
 
-    DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
+  Committee committee_copy = *committee_ptr;
 
-    return std::make_shared<Committee>(committee_copy);
-  
+  DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
+
+  return std::make_shared<Committee>(committee_copy);
 }
 
 bool Consensus::ValidMinerForBlock(Block const &previous, Address const &address)
@@ -174,7 +172,7 @@ bool Consensus::ShouldGenerateBlock(Block const &previous, Address const &addres
 
   bool found = false;
 
-  for (const auto & i : (*committee))
+  for (const auto &i : (*committee))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Block: ", previous.body.block_number,
                     " Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
@@ -291,7 +289,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                    " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
 
     uint64_t last_block_time = current.body.timestamp;
-    auto current_time    = static_cast<uint64_t>(std::time(nullptr));
+    auto     current_time    = static_cast<uint64_t>(std::time(nullptr));
 
     if (current.body.block_number == 0)
     {
