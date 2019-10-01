@@ -49,7 +49,7 @@ IRNodePtr IRBuilder::BuildNode(NodePtr const &node)
         CreateIRBasicNode(node->node_kind, node->text, node->line, BuildChildren(node->children));
     return ir_node;
   }
-  else if (node->IsBlockNode())
+  if (node->IsBlockNode())
   {
     BlockNodePtr   block_node = ConvertToBlockNodePtr(node);
     IRBlockNodePtr ir_block_node =
@@ -60,18 +60,16 @@ IRNodePtr IRBuilder::BuildNode(NodePtr const &node)
     ir_block_node->block_terminator_line = block_node->block_terminator_line;
     return ir_block_node;
   }
-  else
-  {
-    ExpressionNodePtr   expression_node = ConvertToExpressionNodePtr(node);
-    IRExpressionNodePtr ir_expression_node =
-        CreateIRExpressionNode(expression_node->node_kind, expression_node->text,
-                               expression_node->line, BuildChildren(expression_node->children));
-    ir_expression_node->expression_kind = expression_node->expression_kind;
-    ir_expression_node->type            = BuildType(expression_node->type);
-    ir_expression_node->variable        = BuildVariable(expression_node->variable);
-    ir_expression_node->function        = BuildFunction(expression_node->function);
-    return ir_expression_node;
-  }
+
+  ExpressionNodePtr   expression_node = ConvertToExpressionNodePtr(node);
+  IRExpressionNodePtr ir_expression_node =
+      CreateIRExpressionNode(expression_node->node_kind, expression_node->text,
+                             expression_node->line, BuildChildren(expression_node->children));
+  ir_expression_node->expression_kind = expression_node->expression_kind;
+  ir_expression_node->type            = BuildType(expression_node->type);
+  ir_expression_node->variable        = BuildVariable(expression_node->variable);
+  ir_expression_node->function        = BuildFunction(expression_node->function);
+  return ir_expression_node;
 }
 
 IRNodePtrArray IRBuilder::BuildChildren(NodePtrArray const &children)
@@ -148,7 +146,7 @@ IRFunctionPtr IRBuilder::BuildFunction(FunctionPtr const &function)
   return ir_function;
 }
 
-IRTypePtrArray IRBuilder::BuildTypes(const TypePtrArray &types)
+IRTypePtrArray IRBuilder::BuildTypes(TypePtrArray const &types)
 {
   IRTypePtrArray array;
   array.reserve(types.size());
@@ -159,7 +157,7 @@ IRTypePtrArray IRBuilder::BuildTypes(const TypePtrArray &types)
   return array;
 }
 
-IRVariablePtrArray IRBuilder::BuildVariables(const VariablePtrArray &variables)
+IRVariablePtrArray IRBuilder::BuildVariables(VariablePtrArray const &variables)
 {
   IRVariablePtrArray array;
   array.reserve(variables.size());

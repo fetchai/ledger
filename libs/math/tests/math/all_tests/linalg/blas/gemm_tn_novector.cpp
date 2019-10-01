@@ -32,10 +32,10 @@ TEST(blas_DGEMM, blas_gemm_tn_novector1)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
-  // Compuing _C <= _alpha * T(_A) * _B + _beta * _C
+  // Computing _C <= _alpha * T(_A) * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(1);
-  Type beta  = Type(0);
+  auto alpha = Type(1);
+  auto beta  = Type(0);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3745401188473625 0.9507143064099162 0.7319939418114051;
@@ -70,10 +70,10 @@ TEST(blas_DGEMM, blas_gemm_tn_novector2)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
-  // Compuing _C <= _alpha * T(_A) * _B + _beta * _C
+  // Computing _C <= _alpha * T(_A) * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(0);
-  Type beta  = Type(1);
+  auto alpha = Type(0);
+  auto beta  = Type(1);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.13949386065204183 0.29214464853521815 0.3663618432936917;
@@ -108,10 +108,10 @@ TEST(blas_DGEMM, blas_gemm_tn_novector3)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
-  // Compuing _C <= _alpha * T(_A) * _B + _beta * _C
+  // Computing _C <= _alpha * T(_A) * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(1);
-  Type beta  = Type(1);
+  auto alpha = Type(1);
+  auto beta  = Type(1);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.034388521115218396 0.9093204020787821 0.2587799816000169;
@@ -146,10 +146,10 @@ TEST(blas_DGEMM, blas_gemm_tn_novector4)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
-  // Compuing _C <= _alpha * T(_A) * _B + _beta * _C
+  // Computing _C <= _alpha * T(_A) * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(0.7464972083501665);
-  Type beta  = Type(0.4614148788851603);
+  auto alpha = Type(0.7464972083501665);
+  auto beta  = Type(0.4614148788851603);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3567533266935893 0.28093450968738076 0.5426960831582485;
@@ -184,10 +184,10 @@ TEST(blas_DGEMM, blas_gemm_tn_novector5)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
-  // Compuing _C <= _alpha * T(_A) * _B + _beta * _C
+  // Computing _C <= _alpha * T(_A) * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(0.16361108963750526);
-  Type beta  = Type(0.5500546972065096);
+  auto alpha = Type(0.16361108963750526);
+  auto beta  = Type(0.5500546972065096);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3109823217156622 0.32518332202674705 0.7296061783380641 0.6375574713552131 0.8872127425763265;
@@ -228,10 +228,10 @@ TEST(blas_DGEMM, blas_gemm_tn_novector6)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
-  // Compuing _C <= _alpha * T(_A) * _B + _beta * _C
+  // Computing _C <= _alpha * T(_A) * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(-8.758566561500857);
-  Type beta  = Type(-0.007390040762746963);
+  auto alpha = Type(-8.758566561500857);
+  auto beta  = Type(-0.007390040762746963);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.9717820827209607 0.9624472949421112 0.25178229582536416;
@@ -266,10 +266,10 @@ TEST(blas_DGEMM, blas_gemm_tn_novector7)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tn_novector;
-  // Compuing _C <= _alpha * T(_A) * _B + _beta * _C
+  // Computing _C <= _alpha * T(_A) * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(0.5517487529573164);
-  Type beta  = Type(-4.149789439891342);
+  auto alpha = Type(0.5517487529573164);
+  auto beta  = Type(-4.149789439891342);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3677831327192532 0.6323058305935795 0.6335297107608947 0.5357746840747585 0.0902897700544083 0.835302495589238 0.32078006497173583 0.18651851039985423 0.040775141554763916 0.5908929431882418;

@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "bert_utilities.hpp"
+#include "core/filesystem/read_file_contents.hpp"
+#include "core/serializers/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -23,11 +26,6 @@
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-
-#include "bert_utilities.hpp"
-
-#include "core/filesystem/read_file_contents.hpp"
-#include "core/serializers/base_types.hpp"
 #include "ml/serializers/ml_types.hpp"
 
 #include <iostream>
@@ -70,7 +68,7 @@ int main(int ac, char **av)
   SizeType batch_size = 4;
   SizeType epochs     = 20;
   SizeType layer_no   = 12;
-  DataType lr         = static_cast<DataType>(1e-5);
+  auto     lr         = static_cast<DataType>(1e-5);
   // load data into memory
   std::string file_path = av[1];
   std::string IMDB_path = av[2];

@@ -34,13 +34,13 @@ class FNVTest : public testing::Test
 {
 public:
   template <typename FNV_CONFIG, detail::eFnvAlgorithm ALGORITHM>
-  void testFnvHash(detail::FNV<FNV_CONFIG, ALGORITHM> &    fnv,
-                   byte_array::ConstByteArray const &      data_to_hash_param,
-                   typename FNV_CONFIG::number_type const &expected_hash)
+  void testFnvHash(detail::FNV<FNV_CONFIG, ALGORITHM> &   fnv,
+                   byte_array::ConstByteArray const &     data_to_hash_param,
+                   typename FNV_CONFIG::NumberType const &expected_hash)
   {
     fnv.reset();
     fnv.update(data_to_hash_param.pointer(), data_to_hash_param.size());
-    typename FNV_CONFIG::number_type const resulting_hash = fnv.context();
+    typename FNV_CONFIG::NumberType const resulting_hash = fnv.context();
     EXPECT_EQ(expected_hash, resulting_hash);
   }
 
@@ -51,7 +51,7 @@ TEST_F(FNVTest, test_default_FNV_uses_std_size_t_and_fnv1a)
 {
   using default_fnv = detail::FNV<>;
   EXPECT_EQ(detail::eFnvAlgorithm::fnv1a, default_fnv::algorithm);
-  EXPECT_TRUE((std::is_same<std::size_t, default_fnv::number_type>::value));
+  EXPECT_TRUE((std::is_same<std::size_t, default_fnv::NumberType>::value));
 }
 
 TEST_F(FNVTest, test_FNV0_32bit)

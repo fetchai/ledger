@@ -21,12 +21,13 @@
 #include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "word2vec_training_params.hpp"
+#include "word2vec_utilities.hpp"
 
 namespace fetch {
 namespace ml {
 namespace distributed_learning {
 
-std::string ReadFile(std::string const &path)
+inline std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
   if (t.fail())
@@ -46,7 +47,7 @@ class Word2VecClient : public TrainingClient<TensorType>
 
 public:
   Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
-                 std::shared_ptr<std::mutex> const &console_mutex_ptr);
+                 std::shared_ptr<std::mutex> console_mutex_ptr);
 
   void PrepareModel();
 
@@ -54,18 +55,12 @@ public:
 
   void PrepareOptimiser();
 
-  void Test(DataType &test_loss) override;
+  void Test() override;
 
 private:
   W2VTrainingParams<DataType>                                       tp_;
   std::string                                                       skipgram_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<DataType>> w2v_data_loader_ptr_;
-  std::shared_ptr<std::mutex>                                       console_mutex_ptr_;
-
-  void PrintWordAnalogy(TensorType const &embeddings, std::string const &word1,
-                        std::string const &word2, std::string const &word3, SizeType k);
-
-  void PrintKNN(TensorType const &embeddings, std::string const &word0, SizeType k);
 
   void TestEmbeddings(std::string const &word0, std::string const &word1, std::string const &word2,
                       std::string const &word3, SizeType K);
@@ -74,10 +69,9 @@ private:
 template <class TensorType>
 Word2VecClient<TensorType>::Word2VecClient(std::string const &                id,
                                            W2VTrainingParams<DataType> const &tp,
-                                           std::shared_ptr<std::mutex> const &console_mutex_ptr)
-  : TrainingClient<TensorType>(id, tp)
+                                           std::shared_ptr<std::mutex>        console_mutex_ptr)
+  : TrainingClient<TensorType>(id, tp, console_mutex_ptr)
   , tp_(tp)
-  , console_mutex_ptr_(console_mutex_ptr)
 {
   PrepareDataLoader();
   PrepareModel();
@@ -102,12 +96,13 @@ void Word2VecClient<TensorType>::PrepareModel()
       this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
   std::string context_name =
       this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
-  this->label_name_ = this->g_ptr_->template AddNode<PlaceHolder<TensorType>>("Label", {});
-  skipgram_         = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
+  this->label_name_ =
+      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+  skipgram_ = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
       "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
       w2v_data_loader_ptr_->vocab_size());
 
-  this->error_name_ = this->g_ptr_->template AddNode<CrossEntropyLoss<TensorType>>(
+  this->error_name_ = this->g_ptr_->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
       "Error", {skipgram_, this->label_name_});
 
   this->inputs_names_ = {input_name, context_name};
@@ -116,7 +111,6 @@ void Word2VecClient<TensorType>::PrepareModel()
 template <class TensorType>
 void Word2VecClient<TensorType>::PrepareDataLoader()
 {
-
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
   w2v_data_loader_ptr_->LoadVocab(tp_.vocab_file);
@@ -129,7 +123,7 @@ template <class TensorType>
 void Word2VecClient<TensorType>::PrepareOptimiser()
 {
   // Initialise Optimiser
-  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::SGDOptimiser<TensorType>>(
+  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
       this->g_ptr_, this->inputs_names_, this->label_name_, this->error_name_,
       tp_.learning_rate_param);
 }
@@ -139,81 +133,11 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
  * @param test_loss
  */
 template <class TensorType>
-void Word2VecClient<TensorType>::Test(DataType &test_loss)
+void Word2VecClient<TensorType>::Test()
 {
-  // TODO(issue 1595): Implement loss mechanism
-  test_loss = static_cast<DataType>(0);
-
   if (this->batch_counter_ % tp_.test_frequency == 1)
   {
     TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);
-  }
-}
-
-template <class TensorType>
-void Word2VecClient<TensorType>::PrintWordAnalogy(TensorType const & embeddings,
-                                                  std::string const &word1,
-                                                  std::string const &word2,
-                                                  std::string const &word3, SizeType k)
-{
-
-  if (!w2v_data_loader_ptr_->WordKnown(word1) || !w2v_data_loader_ptr_->WordKnown(word2) ||
-      !w2v_data_loader_ptr_->WordKnown(word3))
-  {
-    throw std::runtime_error("WARNING! not all to-be-tested words are in vocabulary");
-  }
-  else
-  {
-    std::cout << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
-              << std::endl;
-  }
-
-  // get id for words
-  SizeType word1_idx = w2v_data_loader_ptr_->IndexFromWord(word1);
-  SizeType word2_idx = w2v_data_loader_ptr_->IndexFromWord(word2);
-  SizeType word3_idx = w2v_data_loader_ptr_->IndexFromWord(word3);
-
-  // get word vectors for words
-  TensorType word1_vec = embeddings.Slice(word1_idx, 1).Copy();
-  TensorType word2_vec = embeddings.Slice(word2_idx, 1).Copy();
-  TensorType word3_vec = embeddings.Slice(word3_idx, 1).Copy();
-
-  word1_vec /= fetch::math::L2Norm(word1_vec);
-  word2_vec /= fetch::math::L2Norm(word2_vec);
-  word3_vec /= fetch::math::L2Norm(word3_vec);
-
-  TensorType word4_vec = word2_vec - word1_vec + word3_vec;
-
-  std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> output =
-      fetch::math::clustering::KNNCosine(embeddings, word4_vec, k);
-
-  for (std::size_t l = 0; l < output.size(); ++l)
-  {
-    std::cout << "rank: " << l << ", "
-              << "distance, " << output.at(l).second << ": "
-              << w2v_data_loader_ptr_->WordFromIndex(output.at(l).first) << std::endl;
-  }
-}
-
-template <class TensorType>
-void Word2VecClient<TensorType>::PrintKNN(TensorType const &embeddings, std::string const &word0,
-                                          SizeType k)
-{
-  if (w2v_data_loader_ptr_->IndexFromWord(word0) == fetch::math::numeric_max<SizeType>())
-  {
-    throw std::runtime_error("WARNING! could not find [" + word0 + "] in vocabulary");
-  }
-
-  SizeType   idx        = w2v_data_loader_ptr_->IndexFromWord(word0);
-  TensorType one_vector = embeddings.Slice(idx, 1).Copy();
-  std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> output =
-      fetch::math::clustering::KNNCosine(embeddings, one_vector, k);
-
-  for (std::size_t l = 0; l < output.size(); ++l)
-  {
-    std::cout << "rank: " << l << ", "
-              << "distance, " << output.at(l).second << ": "
-              << w2v_data_loader_ptr_->WordFromIndex(output.at(l).first) << std::endl;
   }
 }
 
@@ -223,7 +147,7 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
                                                 SizeType K)
 {
   // Lock model
-  std::lock_guard<std::mutex> l(this->model_mutex_);
+  FETCH_LOCK(this->model_mutex_);
 
   // first get hold of the skipgram layer by searching the return name in the graph
   std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
@@ -236,14 +160,19 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
 
   {
     // Lock console
-    std::lock_guard<std::mutex> l2(*console_mutex_ptr_);
+    FETCH_LOCK(*this->console_mutex_ptr_);
 
     std::cout << std::endl;
     std::cout << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;
-    PrintKNN(embeddings->get_weights(), word0, K);
+    fetch::ml::examples::PrintKNN(*w2v_data_loader_ptr_, embeddings->GetWeights(), word0, K);
     std::cout << std::endl;
-    PrintWordAnalogy(embeddings->get_weights(), word1, word2, word3, K);
+    fetch::ml::examples::PrintWordAnalogy(*w2v_data_loader_ptr_, embeddings->GetWeights(), word1,
+                                          word2, word3, K);
   }
+
+  DataType score = examples::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->GetWeights(),
+                                               tp_.analogies_test_file);
+  std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
 }
 
 }  // namespace distributed_learning

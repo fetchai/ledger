@@ -72,8 +72,8 @@ TEST(cache_line_random_access_stack, basic_functionality)
 
       auto expected = reference[i];
       stack.Get(i, temp);
-      ASSERT_EQ(temp, reference[i])
-          << "Failed to get from stack at: " << i << " " << (expected == expected);
+      ASSERT_EQ(temp, expected) << "Failed to get from stack at: " << i << " "
+                                << (temp == expected);
     }
   }
 
@@ -83,7 +83,7 @@ TEST(cache_line_random_access_stack, basic_functionality)
     uint64_t  random = lfg();
     TestClass temp;
     temp.value1 = random;
-    temp.value2 = random & 0xFF;
+    temp.value2 = random & 0xFFu;
 
     stack.Set(i, temp);
     reference[i] = temp;

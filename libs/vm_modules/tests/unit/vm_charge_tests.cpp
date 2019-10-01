@@ -40,44 +40,48 @@ auto expensive_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
   return static_cast<ChargeAmount>(high_charge_limit + x * y);
 };
 
-auto const handler = [](VM *, uint8_t, uint16_t) -> bool { return true; };
+auto const handler = [](VM * /*vm*/, uint8_t /*unused*/, uint16_t /*unused*/) -> bool {
+  return true;
+};
 
 class CustomType : public Object
 {
 public:
-  CustomType(VM *vm, TypeId type_id, uint8_t, uint16_t)
+  CustomType(VM *vm, TypeId type_id, uint8_t /*unused*/, uint16_t /*unused*/)
     : Object{vm, type_id}
   {}
   ~CustomType() override = default;
 
   static Ptr<CustomType> Constructor(VM *vm, TypeId type_id)
   {
-    return new CustomType{vm, type_id, 0, 0};
+    return Ptr<CustomType>{new CustomType{vm, type_id, 0, 0}};
   }
 
   static Ptr<CustomType> ConstructorTwoArgs(VM *vm, TypeId type_id, uint8_t x, uint16_t y)
   {
-    return new CustomType{vm, type_id, x, y};
+    return Ptr<CustomType>{new CustomType{vm, type_id, x, y}};
   }
 
-  static void AffordableStatic(VM *, TypeId, uint8_t, uint16_t)
+  static void AffordableStatic(VM * /*vm*/, TypeId /*type_id*/, uint8_t /*unused*/,
+                               uint16_t /*unused*/)
   {}
 
-  static void TooExpensiveStatic(VM *, TypeId, uint8_t, uint16_t)
+  static void TooExpensiveStatic(VM * /*vm*/, TypeId /*type_id*/, uint8_t /*unused*/,
+                                 uint16_t /*unused*/)
   {}
 
-  void Affordable(uint8_t, uint16_t)
+  void Affordable(uint8_t /*unused*/, uint16_t /*unused*/)
   {}
 
-  void TooExpensive(uint8_t, uint16_t)
+  void TooExpensive(uint8_t /*unused*/, uint16_t /*unused*/)
   {}
 
-  int16_t GetIndexedValue(AnyInteger const &)
+  int16_t GetIndexedValue(AnyInteger const & /*unused*/)
   {
     return 0;
   }
 
-  void SetIndexedValue(AnyInteger const &, int16_t)
+  void SetIndexedValue(AnyInteger const & /*unused*/, int16_t /*unused*/)
   {}
 };
 

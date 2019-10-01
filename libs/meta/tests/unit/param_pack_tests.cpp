@@ -26,6 +26,8 @@
 #include <tuple>
 #include <type_traits>
 
+using namespace ::testing;
+
 namespace fetch {
 namespace meta {
 

@@ -37,10 +37,7 @@ public:
   using Worker       = std::shared_ptr<WORKER>;
   using PromiseState = fetch::service::PromiseState;
   using WorkLoad     = std::map<PromiseState, std::vector<Worker>>;
-  using Mutex        = std::mutex;
-  using Lock         = std::unique_lock<Mutex>;
   using Results      = std::vector<Worker>;
-  using CondVar      = std::condition_variable;
 
   static constexpr char const *LOGGING_NAME = "BackgroundedWork";
 
@@ -108,14 +105,14 @@ public:
 
   void Wait(int milliseconds)
   {
-    Lock lock(mutex_);
+    std::unique_lock<Mutex> lock(mutex_);
     cv_.wait_for(lock, std::chrono::milliseconds(milliseconds));
   }
 
   template <typename Rep, typename Per>
   void Wait(std::chrono::duration<Rep, Per> const &timeout)
   {
-    Lock lock(mutex_);
+    std::unique_lock<Mutex> lock(mutex_);
     cv_.wait_for(lock, timeout);
   }
 
@@ -147,7 +144,7 @@ public:
     {
       std::copy_n(worklist_for_state.begin(), limit, std::inserter(results, results.begin()));
       auto copy_end = worklist_for_state.begin();
-      advance(copy_end, static_cast<long>(limit));
+      advance(copy_end, static_cast<int64_t>(limit));
       worklist_for_state.erase(worklist_for_state.begin(), copy_end);
     }
     return results;
@@ -241,61 +238,7 @@ public:
   }
 
   template <class KEY>
-  bool InFlight(const KEY &key)  // TODO(kll): Put const back here.
-  {
-    FETCH_LOCK(mutex_);
-
-    for (auto const &current_state : fetch::service::GetAllPromiseStates())
-    {
-      auto &worklist_for_state = workload_[current_state];
-      auto  workitem_iter      = worklist_for_state.begin();
-      while (workitem_iter != worklist_for_state.end())
-      {
-        auto workitem = *workitem_iter;
-        if (!workitem)
-        {
-          workitem_iter = worklist_for_state.erase(workitem_iter);
-          continue;
-        }
-        if (workitem.Equals(key))
-        {
-          return true;
-        }
-        ++workitem_iter;
-      }
-    }
-    return false;
-  }
-
-  template <class KEY>
-  bool InFlightP(const KEY &key)  // TODO(kll): Put const back here.
-  {
-    FETCH_LOCK(mutex_);
-
-    for (auto const &current_state : fetch::service::GetAllPromiseStates())
-    {
-      auto &worklist_for_state = workload_[current_state];
-      auto  workitem_iter      = worklist_for_state.begin();
-      while (workitem_iter != worklist_for_state.end())
-      {
-        auto workitem = *workitem_iter;
-        if (!workitem)
-        {
-          workitem_iter = worklist_for_state.erase(workitem_iter);
-          continue;
-        }
-        if (workitem->Equals(key))
-        {
-          return true;
-        }
-        ++workitem_iter;
-      }
-    }
-    return false;
-  }
-
-  template <class KEY>
-  bool Cancel(const KEY &key)
+  bool Cancel(KEY const &key)
   {
     bool r = false;
 
@@ -325,9 +268,9 @@ public:
   }
 
 private:
-  WorkLoad      workload_;
-  mutable Mutex mutex_;  //{__LINE__, __FILE__};
-  CondVar       cv_;
+  WorkLoad                workload_;
+  mutable Mutex           mutex_;
+  std::condition_variable cv_;
 };
 
 }  // namespace network

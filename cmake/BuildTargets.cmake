@@ -129,6 +129,19 @@ macro (setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_METRICS")
   endif (FETCH_ENABLE_METRICS)
 
+  # add the backtrace flat
+  if (FETCH_ENABLE_BACKTRACE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE")
+
+    find_library(DW_LIB dw)
+
+    if (DW_LIB)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE_WITH_DW")
+
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldw -ldl")
+    endif (DW_LIB)
+  endif (FETCH_ENABLE_BACKTRACE)
+
   # allow disabling of colour log file
   if (FETCH_DISABLE_COLOUR_LOG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_DISABLE_COLOUR_LOG_OUTPUT")
@@ -251,6 +264,9 @@ function (configure_vendor_targets)
   if (APPLE)
     target_compile_definitions(vendor-asio INTERFACE ASIO_HAS_STD_STRING_VIEW)
   endif (APPLE)
+
+  # Pybind11
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)
 
   # Google Test
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)

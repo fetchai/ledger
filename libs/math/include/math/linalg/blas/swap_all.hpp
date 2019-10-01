@@ -57,14 +57,13 @@ namespace math {
 namespace linalg {
 
 template <typename S, uint64_t V>
-class Blas<S, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x), V>
+class Blas<S, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x), V>  // NOLINT
 {
 public:
   using Type               = S;
   using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
 
-  void operator()(int const n, TensorView<Type> dx, int const incx, TensorView<Type> dy,
-                  int const incy) const;
+  void operator()(int n, TensorView<Type> dx, int incx, TensorView<Type> dy, int incy) const;
 };
 
 }  // namespace linalg

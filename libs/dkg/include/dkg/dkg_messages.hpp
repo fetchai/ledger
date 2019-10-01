@@ -21,7 +21,7 @@
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "network/muddle/rpc/client.hpp"
+#include "muddle/rpc/client.hpp"
 
 #include <string>
 
@@ -40,11 +40,11 @@ using DKGSerializer = fetch::serializers::MsgPackSerializer;
 class DKGMessage
 {
 public:
-  using MsgSignature  = byte_array::ConstByteArray;
-  using MuddleAddress = byte_array::ConstByteArray;
-  using Coefficient   = std::string;
-  using Share         = std::string;
-  using CabinetId     = MuddleAddress;
+  using MessageSignature = byte_array::ConstByteArray;
+  using MuddleAddress    = byte_array::ConstByteArray;
+  using Coefficient      = std::string;
+  using Share            = std::string;
+  using CabinetId        = MuddleAddress;
 
   enum class MessageType : uint8_t
   {
@@ -61,7 +61,7 @@ public:
   {
     return type_;
   }
-  MsgSignature signature() const
+  MessageSignature signature() const
   {
     return signature_;
   }
@@ -71,12 +71,12 @@ public:
 
 protected:
   const MessageType type_;       ///< Type of message of the three listed above
-  MsgSignature      signature_;  ///< ECDSA signature of message
+  MessageSignature  signature_;  ///< ECDSA signature of message
 
   explicit DKGMessage(MessageType type)
     : type_{type}
   {}
-  DKGMessage(MessageType type, MsgSignature sig)
+  DKGMessage(MessageType type, MessageSignature sig)
     : type_{type}
     , signature_{std::move(sig)}
   {}
@@ -84,7 +84,7 @@ protected:
 
 class CoefficientsMessage : public DKGMessage
 {
-  uint8_t                  phase_;         ///< Phase of state machine that this message is for
+  uint8_t                  phase_{};       ///< Phase of state machine that this message is for
   std::vector<Coefficient> coefficients_;  ///< Coefficients as strings
 
 public:
@@ -93,7 +93,7 @@ public:
   {
     serialiser >> phase_ >> coefficients_ >> signature_;
   }
-  CoefficientsMessage(uint8_t phase, std::vector<Coefficient> coeff, MsgSignature sig)
+  CoefficientsMessage(uint8_t phase, std::vector<Coefficient> coeff, MessageSignature sig)
     : DKGMessage{MessageType::COEFFICIENT, std::move(sig)}
     , phase_{phase}
     , coefficients_{std::move(coeff)}
@@ -122,7 +122,7 @@ public:
 
 class SharesMessage : public DKGMessage
 {
-  uint8_t phase_;  ///< Phase of state machine that this message is for
+  uint8_t phase_{};  ///< Phase of state machine that this message is for
   std::unordered_map<CabinetId, std::pair<Share, Share>>
       shares_;  ///< Exposed secret shares for a particular committee member
 public:
@@ -132,7 +132,7 @@ public:
     serialiser >> phase_ >> shares_ >> signature_;
   }
   SharesMessage(uint8_t phase, std::unordered_map<CabinetId, std::pair<Share, Share>> shares,
-                MsgSignature sig)
+                MessageSignature sig)
     : DKGMessage{MessageType::SHARE, std::move(sig)}
     , phase_{phase}
     , shares_{std::move(shares)}
@@ -170,7 +170,7 @@ public:
   {
     serialiser >> complaints_ >> signature_;
   }
-  ComplaintsMessage(std::unordered_set<CabinetId> complaints, MsgSignature sig)
+  ComplaintsMessage(std::unordered_set<CabinetId> complaints, MessageSignature sig)
     : DKGMessage{MessageType::COMPLAINT, std::move(sig)}
     , complaints_{std::move(complaints)}
   {}

@@ -38,8 +38,8 @@ public:
   Identity() = default;
 
   Identity(Identity const &other) = default;
+  Identity(Identity &&other)      = default;
   Identity &operator=(Identity const &other) = default;
-  Identity(Identity &&other)                 = default;
   Identity &operator=(Identity &&other) = default;
 
   // Fully relying on caller that it will behave = will NOT modify value passed
@@ -95,7 +95,7 @@ public:
     {
       return true;
     }
-    else if (identifier_ == right.identifier_)
+    if (identifier_ == right.identifier_)
     {
       return identity_parameters_ < right.identity_parameters_;
     }

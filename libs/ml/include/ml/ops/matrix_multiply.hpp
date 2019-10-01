@@ -44,45 +44,13 @@ public:
 
   explicit MatrixMultiply(SPType const &sp)
     : Ops<T>(sp)
-  {
-    error_signal_1_       = sp.error_signal_1;
-    error_signal_2_       = sp.error_signal_2;
-    fwd_input_shape_1_    = sp.fwd_input_shape_1;
-    fwd_input_shape_2_    = sp.fwd_input_shape_2;
-    output_view_tensor_   = sp.output_view_tensor;
-    fwd_in1_view_tensor_  = sp.fwd_in1_view_tensor;
-    fwd_in2_view_tensor_  = sp.fwd_in2_view_tensor;
-    back_input_shape_1_   = sp.back_input_shape_1;
-    back_input_shape_2_   = sp.back_input_shape_2;
-    back_in1_view_tensor_ = sp.back_in1_view_tensor;
-    back_in2_view_tensor_ = sp.back_in2_view_tensor;
-    err_sig_view_tensor_  = sp.err_sig_view_tensor;
-    err1_                 = sp.err1;
-    err2_                 = sp.err2;
-  }
+  {}
 
   ~MatrixMultiply() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    auto sp = std::make_shared<SPType>();
-
-    sp->error_signal_1       = error_signal_1_;
-    sp->error_signal_2       = error_signal_2_;
-    sp->fwd_input_shape_1    = fwd_input_shape_1_;
-    sp->fwd_input_shape_2    = fwd_input_shape_2_;
-    sp->output_view_tensor   = output_view_tensor_;
-    sp->fwd_in1_view_tensor  = fwd_in1_view_tensor_;
-    sp->fwd_in2_view_tensor  = fwd_in2_view_tensor_;
-    sp->back_input_shape_1   = back_input_shape_1_;
-    sp->back_input_shape_2   = back_input_shape_2_;
-    sp->back_in1_view_tensor = back_in1_view_tensor_;
-    sp->back_in2_view_tensor = back_in2_view_tensor_;
-    sp->err_sig_view_tensor  = err_sig_view_tensor_;
-    sp->err1                 = err1_;
-    sp->err2                 = err2_;
-
-    return sp;
+    return std::make_shared<SPType>();
   }
 
   /**
@@ -331,15 +299,13 @@ std::vector<typename T::SizeType> MatrixMultiply<T>::ComputeOutputShape(
     return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)};
   }
   // Batchwise matmul or 3D @ 2D broadcast matmul
-  else if (inputs.at(0)->shape().size() == 3)
+  if (inputs.at(0)->shape().size() == 3)
   {
     return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(0)->shape().at(2)};
   }
   // 2D @ 3D broadcast matmul
-  else
-  {
-    return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
-  }
+
+  return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
 }
 
 /**

@@ -87,7 +87,7 @@ public:
     CODE16     = TypeCodes::MAP_CODE16,
     CODE32     = TypeCodes::MAP_CODE32
   };
-  MapDeserializer(Driver &serializer)
+  explicit MapDeserializer(Driver &serializer)
     : serializer_{serializer}
   {
     uint8_t  opcode;

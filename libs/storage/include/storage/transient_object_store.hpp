@@ -111,7 +111,7 @@ private:
   Phase OnFlushing();
 
   uint32_t const    log2_num_lanes_;
-  const std::size_t batch_size_ = 100;
+  std::size_t const batch_size_ = 100;
 
   std::vector<ResourceID> rids;
   std::size_t             extracted_count = 0;
@@ -218,11 +218,9 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnPopulating()
         // Nothing more in queue, but buffer not empty - write contents to disk
         return Phase::Writing;
       }
-      else
-      {
-        // Queue is empty and nothing to write - trigger delay and do not change FSM state
-        break;
-      }
+
+      // Queue is empty and nothing to write - trigger delay and do not change FSM state
+      break;
     }
   }
 
@@ -240,27 +238,25 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
   {
     return Phase::Flushing;
   }
+
+  O           obj;
+  auto const &rid = rids[written_count];
+
+  FETCH_LOCK(cache_mutex_);
+
+  // get the element from the cache
+  if (GetFromCache(rid, obj))
+  {
+    // write out the object
+    archive_.Set(rid, obj);
+
+    ++written_count;
+  }
   else
   {
-    O           obj;
-    auto const &rid = rids[written_count];
-
-    FETCH_LOCK(cache_mutex_);
-
-    // get the element from the cache
-    if (GetFromCache(rid, obj))
-    {
-      // write out the object
-      archive_.Set(rid, obj);
-
-      ++written_count;
-    }
-    else
-    {
-      // If this is the case then for some reason the RID that was added
-      // to the queue has been removed from the cache.
-      assert(false);
-    }
+    // If this is the case then for some reason the RID that was added
+    // to the queue has been removed from the cache.
+    assert(false);
   }
 
   return Phase::Writing;
@@ -413,7 +409,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
 
   if (newly_seen)
   {
-    std::size_t count{most_recent_seen_.QUEUE_LENGTH};
+    std::size_t count{decltype(most_recent_seen_)::QUEUE_LENGTH};
     bool const inserted = most_recent_seen_.Push(ledger::TransactionLayout{object, log2_num_lanes_},
                                                  count, std::chrono::milliseconds{100});
     if (inserted && recent_queue_last_size_ != count)

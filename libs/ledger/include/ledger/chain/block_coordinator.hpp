@@ -25,6 +25,7 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/consensus/consensus.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
@@ -41,6 +42,7 @@
 #include <vector>
 
 namespace fetch {
+
 namespace core {
 class FeatureFlags;
 }
@@ -60,7 +62,6 @@ class ExecutionManagerInterface;
 class MainChain;
 class StorageUnitInterface;
 class BlockSinkInterface;
-class StakeManagerInterface;
 
 /**
  * The Block Coordinator is in charge of executing all the blocks that come into the system. It will
@@ -147,10 +148,10 @@ class BlockCoordinator
 public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using DAGPtr          = std::shared_ptr<ledger::DAGInterface>;
-  using ProverPtr       = std::shared_ptr<crypto::Prover>;
-  using StakeManagerPtr = std::shared_ptr<StakeManagerInterface>;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using DAGPtr         = std::shared_ptr<ledger::DAGInterface>;
+  using ProverPtr      = std::shared_ptr<crypto::Prover>;
+  using ConsensusPtr   = std::shared_ptr<ledger::Consensus>;
 
   enum class State
   {
@@ -184,11 +185,10 @@ public:
   static char const *ToString(State state);
 
   // Construction / Destruction
-  BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake_mgr,
-                   ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
-                   BlockPackerInterface &packer, BlockSinkInterface &block_sink,
-                   core::FeatureFlags const &features, ProverPtr const &prover,
-                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty);
+  BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
+                   StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
+                   BlockSinkInterface &block_sink, ProverPtr const &prover, std::size_t num_lanes,
+                   std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -306,9 +306,9 @@ private:
 
   /// @name External Components
   /// @{
-  MainChain &                chain_;              ///< Ref to system chain
-  DAGPtr                     dag_;                ///< Ref to DAG
-  StakeManagerPtr            stake_;              ///< Ref to Stake manager
+  MainChain &                chain_;  ///< Ref to system chain
+  DAGPtr                     dag_;    ///< Ref to DAG
+  ConsensusPtr               consensus_;
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
@@ -333,7 +333,7 @@ private:
   std::size_t     num_slices_;              ///< The current number of slices
   Flag            mining_{false};           ///< Flag to signal if this node generating blocks
   Flag            mining_enabled_{false};   ///< Short term signal to toggle on and off
-  BlockPeriod     block_period_;            ///< The desired period before a block is generated
+  BlockPeriod     block_period_{};          ///< The desired period before a block is generated
   Timepoint       next_block_time_;         ///< The next point that a block should be generated
   BlockPtr        current_block_{};         ///< The pointer to the current block (read only)
   NextBlockPtr    next_block_{};            ///< The next block being created (read / write)
@@ -342,11 +342,12 @@ private:
   PeriodicAction  exec_wait_periodic_;      ///< Periodic print for execution
   PeriodicAction  syncing_periodic_;        ///< Periodic print for synchronisation
   Timepoint       start_waiting_for_tx_{};  ///< The time at which we started waiting for txs
-  DeadlineTimer   wait_for_tx_timeout_{"bc:deadline"};  ///< Timeout when waiting for transactions
-  DeadlineTimer   wait_before_asking_for_missing_tx_{
-      "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
-  bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
-                                     ///< current block
+  /// Timeout when waiting for transactions
+  DeadlineTimer wait_for_tx_timeout_{"bc:deadline"};
+  /// Time to wait before asking peers for any missing txs
+  DeadlineTimer wait_before_asking_for_missing_tx_{"bc:deadline"};
+  /// true if a request for missing Txs has been issued for the current block
+  bool have_asked_for_missing_txs_{};
   /// @}
 
   /// @name Synergetic Contracts
@@ -380,6 +381,7 @@ private:
   telemetry::HistogramPtr       tx_sync_times_;
   telemetry::GaugePtr<uint64_t> current_block_num_;
   telemetry::GaugePtr<uint64_t> next_block_num_;
+  telemetry::GaugePtr<uint64_t> block_hash_;
   /// @}
 };
 

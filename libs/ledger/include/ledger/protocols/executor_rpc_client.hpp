@@ -105,7 +105,6 @@ private:
   ServicePtr service_;
 
   using Worker                  = ExecutorConnectorWorker;
-  using WorkerP                 = std::shared_ptr<Worker>;
   using BackgroundedWork        = network::BackgroundedWork<Worker>;
   using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;

@@ -23,10 +23,9 @@
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
 #include "metrics/metrics.hpp"
+#include "muddle/address.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/milli_timer.hpp"
-#include "network/management/connection_register.hpp"
-#include "network/muddle/muddle.hpp"
 #include "network/service/call_context.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
@@ -73,13 +72,14 @@ public:
   TransactionStoreSyncProtocol &operator=(TransactionStoreSyncProtocol &&) = delete;
 
 private:
-  static constexpr uint64_t PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
+  // Limit the amount a single rpc call will provide
+  static constexpr uint64_t PULL_LIMIT_ = 10000u;
 
   struct CachedObject
   {
     using Clock      = std::chrono::system_clock;
     using Timepoint  = Clock::time_point;
-    using AddressSet = std::unordered_set<muddle::Muddle::Address>;
+    using AddressSet = std::unordered_set<muddle::Address>;
 
     explicit CachedObject(Transaction value)
       : data(std::move(value))
@@ -97,7 +97,7 @@ private:
   uint64_t ObjectCount();
   TxArray  PullObjects(service::CallContext const &call_context);
 
-  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
+  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count);
   TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
 
   ObjectStore *store_;  ///< The pointer to the object store

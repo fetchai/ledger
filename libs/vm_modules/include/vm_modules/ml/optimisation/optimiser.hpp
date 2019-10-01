@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/dataloaders/tensor_dataloader.hpp"
+#include "vm/array.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
 
@@ -99,11 +100,11 @@ public:
 
   static fetch::vm::Ptr<VMOptimiser> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode,
-      fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph> const &     graph,
-      fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
-      fetch::vm::Ptr<fetch::vm::String> const &                  input_node_names,
-      fetch::vm::Ptr<fetch::vm::String> const &                  label_node_name,
-      fetch::vm::Ptr<fetch::vm::String> const &                  output_node_names);
+      fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph> const &                     graph,
+      fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &                loader,
+      fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm::String>>> const &input_node_names,
+      fetch::vm::Ptr<fetch::vm::String> const &                                  label_node_name,
+      fetch::vm::Ptr<fetch::vm::String> const &                                  output_node_names);
 
   DataType RunData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
                    fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels,

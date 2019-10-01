@@ -17,49 +17,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/lane_identity.hpp"
-#include "network/muddle/muddle.hpp"
+#include "muddle/address.hpp"
+#include "network/uri.hpp"
 
 #include <unordered_map>
-#include <unordered_set>
-#include <utility>
 
 namespace fetch {
+namespace muddle {
+
+class MuddleInterface;
+
+}  // namespace muddle
 namespace ledger {
 
 class LaneController
 {
 public:
-  using Muddle     = muddle::Muddle;
-  using MuddlePtr  = std::shared_ptr<Muddle>;
-  using Uri        = Muddle::Uri;
-  using UriSet     = std::unordered_set<Uri>;
-  using Address    = Muddle::Address;
-  using AddressSet = std::unordered_set<Address>;
+  using Uri        = network::Uri;
+  using Address    = muddle::Address;
+  using AddressMap = std::unordered_map<Address, Uri>;
 
   static constexpr char const *LOGGING_NAME = "LaneController";
 
   // Construction / Destruction
-  LaneController(std::weak_ptr<LaneIdentity> identity, MuddlePtr muddle);
+  explicit LaneController(muddle::MuddleInterface &muddle);
   LaneController(LaneController const &) = delete;
   LaneController(LaneController &&)      = delete;
   ~LaneController()                      = default;
 
-  /// External controls
-  /// @{
-  void RPCConnectToURIs(const std::vector<Uri> &uris);
-  void Shutdown();
-  void StartSync();
-  void StopSync();
-  /// @}
-
   /// Internal controls
   /// @{
-  void WorkCycle();
-  void UseThesePeers(UriSet uris);
-
-  AddressSet GetPeers();
-  void       GeneratePeerDeltas(UriSet &create, UriSet &remove);
+  void UseThesePeers(AddressMap const &addresses);
   /// @}
 
   // Operators
@@ -67,18 +55,7 @@ public:
   LaneController &operator=(LaneController &&) = delete;
 
 private:
-  std::weak_ptr<LaneIdentity> lane_identity_;
-
-  // Most methods do not need both mutexes. If they do, they should
-  // acquire them in alphabetic order
-
-  Mutex services_mutex_;
-  Mutex desired_connections_mutex_;
-
-  std::unordered_map<Uri, Address> peer_connections_;
-  UriSet                           desired_connections_;
-
-  MuddlePtr muddle_;
+  muddle::MuddleInterface &muddle_;
 };
 
 }  // namespace ledger

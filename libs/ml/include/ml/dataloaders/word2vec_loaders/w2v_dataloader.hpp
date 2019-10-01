@@ -37,9 +37,8 @@ namespace dataloaders {
 template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
-
 public:
-  static_assert(meta::IsFloat<T> || meta::IsFixedPoint<T>,
+  static_assert(meta::IsFloat<T> || math::meta::IsFixedPoint<T>,
                 "The intended T is the typename for the data input to the neural network, which "
                 "should be a float or double or fixed-point type.");
   static constexpr T WindowContextUnused = -1;
@@ -60,7 +59,7 @@ public:
 
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable();
-  void       GetNext(ReturnType &t);
+  void       GetNext(ReturnType &ret);
   ReturnType GetNext() override;
 
   bool AddData(InputType const &input, LabelType const &label) override;
@@ -68,6 +67,7 @@ public:
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
+  bool IsModeAvailable(DataLoaderMode mode) override;
 
   /// accessors and helper functions ///
   SizeType         Size() const override;
@@ -125,9 +125,9 @@ math::SizeType W2VLoader<T>::Size() const
   SizeType size(0);
   for (auto const &s : data_)
   {
-    if ((SizeType)s.size() > (2 * window_size_))
+    if (static_cast<SizeType>(s.size()) > (2 * window_size_))
     {
-      size += (SizeType)s.size() - (2 * window_size_);
+      size += static_cast<SizeType>(s.size()) - (2 * window_size_);
     }
   }
 
@@ -146,7 +146,7 @@ bool W2VLoader<T>::IsDone() const
   {
     return true;
   }
-  else if (current_sentence_ >= data_.size() - 1)  // In the last sentence
+  if (current_sentence_ >= data_.size() - 1)  // In the last sentence
   {
     if (current_word_ >= data_.at(current_sentence_).size() - window_size_)
     {
@@ -424,7 +424,7 @@ std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s)
   result.reserve(s.size());
   for (auto const &c : s)
   {
-    result.push_back(std::isalpha(c) ? (char)std::tolower(c) : ' ');
+    result.push_back(std::isalpha(c) != 0 ? static_cast<char>(std::tolower(c)) : ' ');
   }
 
   std::string              word;
@@ -443,6 +443,12 @@ void W2VLoader<T>::UpdateCursor()
   {
     throw std::runtime_error("Other mode than training not supported.");
   }
+}
+
+template <typename T>
+bool W2VLoader<T>::IsModeAvailable(DataLoaderMode mode)
+{
+  return mode == DataLoaderMode::TRAIN;
 }
 
 }  // namespace dataloaders

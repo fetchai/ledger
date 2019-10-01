@@ -138,16 +138,16 @@ void TransactionStatusCacheImpl<CLOCK>::Update(Digest digest, ContractExecutionR
   if (it == cache_.end())
   {
     FETCH_LOG_WARN("TransactionStatusCache",
-                   "Updating contract execution status for transaction"
-                   "which is missing in the tx statuc cache, tx digest = " +
+                   "Updating contract execution status for transaction "
+                   "which is missing in the tx status cache, tx digest = " +
                        digest.ToBase64());
 
-    cache_.emplace(digest, TxStatusEx{TxStatus{tx_workflow_status, std::move(exec_result)}, now});
+    cache_.emplace(digest, TxStatusEx{TxStatus{tx_workflow_status, exec_result}, now});
   }
   else
   {
     it->second.status.status               = tx_workflow_status;
-    it->second.status.contract_exec_result = std::move(exec_result);
+    it->second.status.contract_exec_result = exec_result;
   }
 
   PruneCacheIfNecessary(now);

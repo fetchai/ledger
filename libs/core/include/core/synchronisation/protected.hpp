@@ -17,13 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
+
 #include <mutex>
 #include <type_traits>
 #include <utility>
 
 namespace fetch {
 
-template <typename T, typename M = std::mutex>
+template <typename T, typename M = Mutex>
 class Protected
 {
 private:
@@ -32,7 +34,7 @@ private:
 
 public:
   template <typename... Args>
-  explicit Protected(Args &&...);
+  explicit Protected(Args &&... args);
   ~Protected()                 = default;
   Protected(Protected const &) = delete;
   Protected(Protected &&)      = delete;
@@ -46,7 +48,7 @@ public:
     static_assert(std::is_void<decltype(handler(payload_))>::value,
                   "Use this method with void handlers only");
 
-    std::lock_guard<M> lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     handler(payload_);
   }
@@ -57,7 +59,7 @@ public:
     static_assert(std::is_void<decltype(handler(payload_))>::value,
                   "Use this method with void handlers only");
 
-    std::lock_guard<M> lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     handler(payload_);
   }
@@ -68,7 +70,7 @@ public:
     static_assert(!std::is_void<decltype(handler(payload_))>::value,
                   "Use this method with non-void handlers only");
 
-    std::lock_guard<M> lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     return handler(payload_);
   }
@@ -79,7 +81,7 @@ public:
     static_assert(!std::is_void<decltype(handler(payload_))>::value,
                   "Use this method with non-void handlers only");
 
-    std::lock_guard<M> lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     return handler(payload_);
   }

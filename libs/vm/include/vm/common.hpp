@@ -240,7 +240,7 @@ struct FunctionInfo
   FunctionKind function_kind;
   std::string  unique_id;
   Handler      handler;
-  ChargeAmount static_charge;
+  ChargeAmount static_charge{};
 };
 using FunctionInfoArray = std::vector<FunctionInfo>;
 
@@ -267,7 +267,7 @@ public:
       return it->second;
     }
 
-    return TypeIndex(typeid(void ***));
+    return {typeid(void ***)};
   }
 
 private:
@@ -284,6 +284,17 @@ private:
 struct InitialiserListPlaceholder
 {
 };
+
+struct SourceFile
+{
+  SourceFile(std::string filename__, std::string source__)
+    : filename{std::move(filename__)}
+    , source{std::move(source__)}
+  {}
+  std::string filename;
+  std::string source;
+};
+using SourceFiles = std::vector<SourceFile>;
 
 }  // namespace vm
 }  // namespace fetch

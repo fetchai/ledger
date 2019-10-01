@@ -23,10 +23,10 @@
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/rpc/client.hpp"
 #include "network/generics/promise_of.hpp"
 #include "network/generics/requesting_queue.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
 #include "storage/resource_mapper.hpp"
 #include "telemetry/telemetry.hpp"
 #include "transaction_finder_protocol.hpp"
@@ -57,15 +57,13 @@ enum class State
   RESOLVING_OBJECTS,
   TRIM_CACHE
 };
-}
+}  // namespace tx_sync
 
 class TransactionStoreSyncService : public TransactionSink
 {
 public:
-  using Muddle                = muddle::Muddle;
-  using MuddlePtr             = std::shared_ptr<Muddle>;
-  using Address               = Muddle::Address;
-  using Uri                   = Muddle::Uri;
+  using Address               = muddle::Address;
+  using Uri                   = network::Uri;
   using Client                = muddle::rpc::Client;
   using ClientPtr             = std::shared_ptr<Client>;
   using ObjectStore           = storage::TransientObjectStore<Transaction>;
@@ -84,6 +82,7 @@ public:
   using ObjectStorePtr        = std::shared_ptr<ObjectStore>;
   using LaneControllerPtr     = std::shared_ptr<LaneController>;
   using TxFinderProtocolPtr   = std::shared_ptr<TxFinderProtocol>;
+  using MuddleEndpoint        = muddle::MuddleEndpoint;
   using TxStoredTxCounterPtr  = telemetry::CounterPtr;
 
   static constexpr char const *LOGGING_NAME = "TransactionStoreSyncService";
@@ -104,7 +103,7 @@ public:
     std::chrono::milliseconds fetch_object_wait_duration{5000};
   };
 
-  TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle, ObjectStorePtr store,
+  TransactionStoreSyncService(Config const &cfg, MuddleEndpoint &muddle, ObjectStorePtr store,
                               TxFinderProtocol *tx_finder_protocol,
                               TrimCacheCallback trim_cache_callback);
   ~TransactionStoreSyncService() override;
@@ -150,7 +149,7 @@ private:
   std::shared_ptr<StateMachine> state_machine_;
   TxFinderProtocol *            tx_finder_protocol_;
   Config const                  cfg_;
-  MuddlePtr                     muddle_;
+  MuddleEndpoint &              muddle_;
   ClientPtr                     client_;
   ObjectStorePtr                store_;  ///< The pointer to the object store
   TransactionVerifier           verifier_;
@@ -159,7 +158,7 @@ private:
   FutureTimepoint fetch_object_wait_timeout_;
 
   RequestingObjectCount pending_object_count_;
-  uint64_t              max_object_count_;
+  uint64_t              max_object_count_{};
   TxStoredTxCounterPtr  stored_transactions_;
 
   RequestingSubTreeList pending_subtree_;

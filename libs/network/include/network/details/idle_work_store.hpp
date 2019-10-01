@@ -40,7 +40,7 @@ public:
   using WorkItem = std::function<void()>;
 
   IdleWorkStore()                         = default;
-  IdleWorkStore(const IdleWorkStore &rhs) = delete;
+  IdleWorkStore(IdleWorkStore const &rhs) = delete;
   IdleWorkStore(IdleWorkStore &&rhs)      = delete;
 
   ~IdleWorkStore()
@@ -129,10 +129,8 @@ public:
     {
       return duration_cast<milliseconds>(next_run - now);
     }
-    else
-    {
-      return std::chrono::milliseconds::zero();
-    }
+
+    return std::chrono::milliseconds::zero();
   }
 
   /**
@@ -190,7 +188,7 @@ public:
     store_.emplace_back(std::move(item));
   }
 
-  IdleWorkStore operator=(const IdleWorkStore &rhs) = delete;
+  IdleWorkStore operator=(IdleWorkStore const &rhs) = delete;
   IdleWorkStore operator=(IdleWorkStore &&rhs) = delete;
 
 private:

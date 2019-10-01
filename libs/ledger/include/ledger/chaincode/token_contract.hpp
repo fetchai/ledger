@@ -34,9 +34,9 @@ class TokenContract : public Contract
 public:
   struct StakeUpdate
   {
-    Address  address;  ///< The address of the staker
-    uint64_t from;     ///< The block index from which the stake becomes active
-    uint64_t amount;   ///< The amount being staked
+    Identity identity;  ///< The identity of the staker
+    uint64_t from;      ///< The block index from which the stake becomes active
+    uint64_t amount;    ///< The amount being staked
   };
 
   using StakeUpdates = std::vector<StakeUpdate>;
@@ -55,12 +55,12 @@ public:
   bool     TransferTokens(Transaction const &tx, Address const &to, uint64_t amount);
 
   // transaction handlers
-  Result CreateWealth(Transaction const &tx, BlockIndex);
-  Result Deed(Transaction const &tx, BlockIndex);
-  Result Transfer(Transaction const &tx, BlockIndex);
-  Result AddStake(Transaction const &tx, BlockIndex);
-  Result DeStake(Transaction const &tx, BlockIndex);
-  Result CollectStake(Transaction const &tx, BlockIndex);
+  Result CreateWealth(Transaction const &tx, BlockIndex /*index*/);
+  Result Deed(Transaction const &tx, BlockIndex /*index*/);
+  Result Transfer(Transaction const &tx, BlockIndex /*index*/);
+  Result AddStake(Transaction const &tx, BlockIndex /*index*/);
+  Result DeStake(Transaction const &tx, BlockIndex /*index*/);
+  Result CollectStake(Transaction const &tx, BlockIndex /*index*/);
 
   // queries
   Status Balance(Query const &query, Query &response);

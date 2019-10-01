@@ -83,14 +83,14 @@ public:
   constexpr UInt(UInt &&other) noexcept = default;
 
   template <typename... T, IfIsWideInitialiserList<T...> * = nullptr>
-  constexpr UInt(T &&... data)
+  constexpr explicit UInt(T &&... data)
     : wide_{{std::forward<T>(data)...}}
   {
     mask_residual_bits();
   }
 
   template <typename... T, IfIsBaseInitialiserList<T...> * = nullptr>
-  constexpr UInt(T &&... data)
+  constexpr explicit UInt(T &&... data)
     : wide_{reinterpret_cast<WideContainerType &&>(
           core::Array<BaseType, ELEMENTS>{{std::forward<T>(data)...}})}
   {
@@ -98,9 +98,9 @@ public:
   }
 
   template <typename T, meta::IfIsAByteArray<T> * = nullptr>
-  UInt(T const &other);
+  explicit UInt(T const &other);
   template <typename T, meta::IfIsUnsignedInteger<T> * = nullptr>
-  constexpr UInt(T number);
+  constexpr explicit UInt(T number);
 
   ////////////////////////////
   /// assignment operators ///
@@ -108,9 +108,9 @@ public:
 
   constexpr UInt &operator=(UInt const &v);
   template <typename ArrayType>
-  meta::IfHasIndex<ArrayType, UInt> &operator=(ArrayType const &v);
+  meta::IfHasIndex<ArrayType, UInt> &operator=(ArrayType const &v);  // NOLINT
   template <typename T>
-  constexpr meta::IfHasNoIndex<T, UInt> &operator=(T const &v);
+  constexpr meta::IfHasNoIndex<T, UInt> &operator=(T const &v);  // NOLINT
 
   /////////////////////////////////////////////
   /// comparison operators for UInt objects ///
@@ -118,27 +118,27 @@ public:
 
   constexpr bool operator==(UInt const &other) const;
   constexpr bool operator!=(UInt const &other) const;
-  constexpr bool operator<(UInt const &o) const;
-  constexpr bool operator>(UInt const &o) const;
-  constexpr bool operator<=(UInt const &o) const;
-  constexpr bool operator>=(UInt const &o) const;
+  constexpr bool operator<(UInt const &other) const;
+  constexpr bool operator>(UInt const &other) const;
+  constexpr bool operator<=(UInt const &other) const;
+  constexpr bool operator>=(UInt const &other) const;
 
   ////////////////////////////////////////////////
   /// comparison operators against other types ///
   ////////////////////////////////////////////////
 
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator==(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator==(T other) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator!=(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator!=(T other) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator<(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator<(T other) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator>(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator>(T other) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator<=(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator<=(T other) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator>=(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator>=(T other) const;
 
   ///////////////////////
   /// unary operators ///
@@ -201,8 +201,8 @@ public:
   template <typename T>
   constexpr meta::IfIsUnsignedInteger<T, UInt> &operator^=(T n);
 
-  constexpr UInt &operator<<=(std::size_t n);
-  constexpr UInt &operator>>=(std::size_t n);
+  constexpr UInt &operator<<=(std::size_t bits);
+  constexpr UInt &operator>>=(std::size_t bits);
 
   constexpr std::size_t msb() const;
   constexpr std::size_t lsb() const;
@@ -254,7 +254,7 @@ private:
   struct MaxValueConstructorEnabler
   {
   };
-  constexpr explicit UInt(MaxValueConstructorEnabler)
+  constexpr explicit UInt(MaxValueConstructorEnabler /*unused*/)
   {
     for (auto &itm : wide_)
     {
@@ -308,7 +308,7 @@ template <typename T, meta::IfIsUnsignedInteger<T> *>
 constexpr UInt<S>::UInt(T number)
 {
   // This will work properly only on LITTLE endian hardware.
-  char *d                   = reinterpret_cast<char *>(wide_.data());
+  auto *d                   = reinterpret_cast<char *>(wide_.data());
   *reinterpret_cast<T *>(d) = number;
 }
 
@@ -323,9 +323,9 @@ constexpr UInt<S> &UInt<S>::operator=(UInt const &v)
   return *this;
 }
 
-template <uint16_t S>
+template <uint16_t S>  // NOLINT
 template <typename ArrayType>
-meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)
+meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)  // NOLINT
 {
   wide_.fill(0);
   std::copy(v.pointer(), v.pointer() + v.capacity(), base());
@@ -333,9 +333,9 @@ meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)
   return *this;
 }
 
-template <uint16_t S>
+template <uint16_t S>  // NOLINT
 template <typename T>
-constexpr meta::IfHasNoIndex<T, UInt<S>> &UInt<S>::operator=(T const &v)
+constexpr meta::IfHasNoIndex<T, UInt<S>> &UInt<S>::operator=(T const &v)  // NOLINT
 {
   wide_.fill(0);
   wide_[0] = static_cast<WideType>(v);
@@ -375,10 +375,8 @@ constexpr bool UInt<S>::operator<(UInt const &other) const
     {
       continue;
     }
-    else
-    {
-      return wide_[WIDE_ELEMENTS - 1 - i] < other.ElementAt(WIDE_ELEMENTS - 1 - i);
-    }
+
+    return wide_[WIDE_ELEMENTS - 1 - i] < other.ElementAt(WIDE_ELEMENTS - 1 - i);
   }
   return false;
 }
@@ -632,8 +630,8 @@ constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
   terms[2] = products[0][2] + products[1][1] + products[2][0] + carry;
   carry    = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
   terms[3] = products[0][3] + products[1][2] + products[2][1] + products[3][0] + carry;
-  carry    = static_cast<WideType>(terms[3] >> WIDE_ELEMENT_SIZE);
-  // TODO: decide what to do with overflow if carry > 0
+  // TODO(?): decide what to do with overflow if carry > 0
+  // carry    = static_cast<WideType>(terms[3] >> WIDE_ELEMENT_SIZE);
 
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -679,7 +677,7 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   std::size_t lsb = std::min(N.lsb(), D.lsb());
   N >>= lsb;
   D >>= lsb;
-  UInt<S> multiple = 1u;
+  UInt<S> multiple(1u);
 
   // Find smallest multiple of divisor (D) that is larger than the dividend (N)
   while (N > D)
@@ -914,7 +912,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
   std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
-  if (full_words)
+  if (full_words != 0u)
   {
     for (std::size_t i = WIDE_ELEMENTS - 1; i >= full_words; i--)
     {
@@ -926,7 +924,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
     }
   }
   // If real_bits == 0, nothing to do
-  if (real_bits)
+  if (real_bits != 0u)
   {
     WideType carry = 0;
     for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
@@ -947,7 +945,7 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
   std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
-  if (full_words)
+  if (full_words != 0u)
   {
     for (std::size_t i = 0; i < WIDE_ELEMENTS - full_words; i++)
     {
@@ -960,7 +958,7 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
   }
 
   // If real_bits == 0, nothing to do
-  if (real_bits)
+  if (real_bits != 0u)
   {
     WideType carry = 0;
     for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
@@ -1081,8 +1079,8 @@ inline double Log(UInt<256> const &x)
 {
   uint64_t last_word = x.ElementAt(x.TrimmedSize() - 1);
 
-  uint64_t tz       = uint64_t(platform::CountTrailingZeroes64(last_word));
-  uint64_t exponent = (last_word << 3) - tz;
+  auto     tz       = uint64_t(platform::CountTrailingZeroes64(last_word));
+  uint64_t exponent = (last_word << 3u) - tz;
 
   return double(exponent) + std::log(double(last_word << tz) * (1. / double(uint32_t(-1))));
 }
@@ -1100,7 +1098,7 @@ inline double ToDouble(UInt<256> const &x)
   {
     double   value;
     uint64_t bits;
-  } conv;
+  } conv{};
 
   conv.bits = 0;
   conv.bits |= uint64_t(uint64_t(exponent & ((1u << 12u) - 1)) << 52u);
@@ -1134,7 +1132,7 @@ public:
   {
     if (array.size() != u.elements())
     {
-      // TODO: Throw
+      // TODO(?): Throw
     }
     for (std::size_t i = 0; i < u.elements(); i++)
     {

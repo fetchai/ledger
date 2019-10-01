@@ -18,6 +18,8 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
+#include "crypto/identity.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
@@ -61,9 +63,7 @@ bool IsOperationValid(WalletRecord const &record, Transaction const &tx,
   return true;
 }
 
-constexpr uint64_t MAX_TOKENS             = 0xFFFFFFFFFFFFFFFFull;
-constexpr uint64_t STAKE_WARM_UP_PERIOD   = 120;
-constexpr uint64_t STAKE_COOL_DOWN_PERIOD = 120;
+constexpr uint64_t MAX_TOKENS = 0xFFFFFFFFFFFFFFFFull;
 
 }  // namespace
 
@@ -158,7 +158,7 @@ bool TokenContract::TransferTokens(Transaction const &tx, Address const &to, uin
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
 }
 
-Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex /*index*/)
 {
   // parse the payload as JSON
   Variant data;
@@ -190,7 +190,7 @@ Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
  *
  * @return Status::OK if deed has been incorporated successfully.
  */
-Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex /*index*/)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
@@ -245,7 +245,7 @@ Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
   return {Status::OK};
 }
 
-Contract::Result TokenContract::Transfer(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::Transfer(Transaction const &tx, BlockIndex /*index*/)
 {
   FETCH_UNUSED(tx);
   return {Status::FAILED};
@@ -253,13 +253,17 @@ Contract::Result TokenContract::Transfer(Transaction const &tx, BlockIndex)
 
 Contract::Result TokenContract::AddStake(Transaction const &tx, BlockIndex block)
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Adding stake!");
+
   // parse the payload as JSON
   Variant data;
   if (ParseAsJson(tx, data))
   {
     // attempt to extract the amount field
-    uint64_t amount{0};
-    if (Extract(data, AMOUNT_NAME, amount))
+    uint64_t       amount{0};
+    ConstByteArray input;
+
+    if (Extract(data, AMOUNT_NAME, amount) && Extract(data, ADDRESS_NAME, input))
     {
       // look up the state record (to see if there is a deed associated with this address)
       WalletRecord record{};
@@ -274,9 +278,11 @@ Contract::Result TokenContract::AddStake(Transaction const &tx, BlockIndex block
             record.balance -= amount;
             record.stake += amount;
 
+            FETCH_LOG_INFO(LOGGING_NAME, "Stake updates are happening");
+
             // record the stake update event
-            stake_updates_.emplace_back(
-                StakeUpdate{tx.from(), block + STAKE_WARM_UP_PERIOD, amount});
+            stake_updates_.emplace_back(StakeUpdate{crypto::Identity(input.FromBase64()),
+                                                    block + STAKE_WARM_UP_PERIOD, amount});
 
             // save the state
             auto const status = SetStateRecord(record, tx.from().display());
@@ -285,6 +291,10 @@ Contract::Result TokenContract::AddStake(Transaction const &tx, BlockIndex block
               return {Status::OK};
             }
           }
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Attempted staking operation was invalid!");
         }
       }
     }
@@ -310,7 +320,7 @@ Contract::Result TokenContract::DeStake(Transaction const &tx, BlockIndex block)
         // ensure the transaction has authority over this deed
         if (IsOperationValid(record, tx, STAKE_NAME))
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Destaking! : ", amount, " of ", record.stake);
+          FETCH_LOG_INFO(LOGGING_NAME, "Destaking! : ", amount, " of ", record.stake);
           // destake the amount
           if (record.stake >= amount)
           {
@@ -430,9 +440,9 @@ Contract::Status TokenContract::CooldownStake(Query const &query, Query &respons
       response  = Variant::Object();
       auto keys = Variant::Object();
 
-      for (auto it = record.cooldown_stake.begin(); it != record.cooldown_stake.end(); ++it)
+      for (auto const &it : record.cooldown_stake)
       {
-        keys[std::to_string(it->first)] = it->second;
+        keys[std::to_string(it.first)] = it.second;
       }
 
       response["cooldownStake"] = keys;

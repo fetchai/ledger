@@ -22,13 +22,14 @@
 #include "gtest/gtest.h"
 
 #include <cstdint>
+#include <utility>
 
 using namespace fetch::ledger::consensus;
 using namespace fetch::byte_array;
 
 ProofOfWork Test1(ByteArray tx, uint64_t diff)
 {
-  ProofOfWork proof(tx);
+  ProofOfWork proof(std::move(tx));
   proof.SetTarget(diff);
   while (!proof())
   {
@@ -37,7 +38,7 @@ ProofOfWork Test1(ByteArray tx, uint64_t diff)
   return proof;
 }
 
-bool TestCompare(ByteArray tx, uint64_t diff1, uint64_t diff2)
+bool TestCompare(ByteArray const &tx, uint64_t diff1, uint64_t diff2)
 {
   ProofOfWork proof1(tx), proof2(tx);
   proof1.SetTarget(diff1);

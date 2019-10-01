@@ -86,10 +86,10 @@ public:
   void SkipBytes(uint64_t const &size);
 
   template <typename T>
-  typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &);
+  typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const & /*unused*/);
 
   template <typename T>
-  typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator>>(T &);
+  typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator>>(T & /*unused*/);
 
   template <typename T>
   typename ForwardSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);

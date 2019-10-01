@@ -56,7 +56,7 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
       --i;
       break;
     }
-    else if (c == details::INVALID)
+    if (c == details::INVALID)
     {
       return ConstByteArray();
     }
@@ -89,7 +89,7 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
 // TODO(issue 1262): Caller can't unambiguously detect whether the conversion failed or not
 ConstByteArray FromHex(ConstByteArray const &str) noexcept
 {
-  char const *data = reinterpret_cast<char const *>(str.pointer());
+  auto const *data = reinterpret_cast<char const *>(str.pointer());
   ByteArray   ret;
   ret.Resize(str.size() >> 1);
 

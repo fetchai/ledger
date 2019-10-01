@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <condition_variable>
-
 #include "core/future_timepoint.hpp"
 #include "core/logging.hpp"
+#include "core/mutex.hpp"
+
+#include <condition_variable>
 
 namespace fetch {
 namespace network {
@@ -64,7 +65,7 @@ public:
     counter.cv.notify_all();
   }
 
-  static bool Wait(const core::FutureTimepoint &until)
+  static bool Wait(core::FutureTimepoint const &until)
   {
     auto &the_counter = GetCounter();
 

@@ -59,8 +59,7 @@ namespace ledger {
  * @param store The object store to be used
  */
 TransactionStoreSyncProtocol::TransactionStoreSyncProtocol(ObjectStore *store, int lane_id)
-  : fetch::service::Protocol()
-  , store_(store)
+  : store_(store)
   , id_(lane_id)
 {
   this->Expose(OBJECT_COUNT, this, &Self::ObjectCount);
@@ -92,7 +91,7 @@ void TransactionStoreSyncProtocol::TrimCache()
   auto const next_cache_size = next_cache.size();
   auto const curr_cache_size = cache_.size();
 
-  if (curr_cache_size && (next_cache_size != curr_cache_size))
+  if ((curr_cache_size != 0u) && (next_cache_size != curr_cache_size))
   {
     FETCH_UNUSED(id_);  // logging only
     FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": New cache size: ", next_cache_size,

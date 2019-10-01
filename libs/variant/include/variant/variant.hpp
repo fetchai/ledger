@@ -22,6 +22,7 @@
 #include "meta/type_traits.hpp"
 #include "variant/detail/element_pool.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/meta/math_type_traits.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -77,20 +78,20 @@ public:
 
   // Construction / Destruction
   Variant() = default;
-  Variant(Variant const &);
+  Variant(Variant const &other);
   Variant(Variant &&) noexcept = default;
   ~Variant()                   = default;
 
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsBoolean<T> * = nullptr);
+  explicit Variant(T const &value, meta::IfIsBoolean<T> * /*unused*/ = nullptr);
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsInteger<T> * = nullptr);
+  explicit Variant(T const &value, meta::IfIsInteger<T> * /*unused*/ = nullptr);
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsFloat<T> * = nullptr);
+  explicit Variant(T const &value, meta::IfIsFloat<T> * /*unused*/ = nullptr);
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsFixedPoint<T> * = nullptr);
+  explicit Variant(T const &value, math::meta::IfIsFixedPoint<T> * /*unused*/ = nullptr);
   template <typename T>
-  explicit Variant(T &&value, meta::IfIsString<T> * = nullptr);
+  explicit Variant(T &&value, meta::IfIsString<T> * /*unused*/ = nullptr);
   explicit Variant(char const *value);
 
   /// @name Basic Type Access
@@ -117,7 +118,7 @@ public:
   template <typename T>
   meta::IfIsFloat<T, bool> Is() const;
   template <typename T>
-  meta::IfIsFixedPoint<T, bool> Is() const;
+  math::meta::IfIsFixedPoint<T, bool> Is() const;
   template <typename T>
   meta::IfIsString<T, bool> Is() const;
   /// @}
@@ -131,7 +132,7 @@ public:
   template <typename T>
   meta::IfIsFloat<T, T> As() const;
   template <typename T>
-  meta::IfIsFixedPoint<T, T> As() const;
+  math::meta::IfIsFixedPoint<T, T> As() const;
   template <typename T>
   meta::IfIsConstByteArray<T, ConstByteArray const &> As() const;
   template <typename T>
@@ -157,17 +158,17 @@ public:
   /// @name Operators
   /// @{
   template <typename T>
-  meta::IfIsBoolean<T, Variant &> operator=(T const &value);
+  meta::IfIsBoolean<T, Variant &> operator=(T const &value);  // NOLINT
   template <typename T>
-  meta::IfIsInteger<T, Variant &> operator=(T const &value);
+  meta::IfIsInteger<T, Variant &> operator=(T const &value);  // NOLINT
   template <typename T>
-  meta::IfIsFloat<T, Variant &> operator=(T const &value);
+  meta::IfIsFloat<T, Variant &> operator=(T const &value);  // NOLINT
   template <typename T>
-  meta::IfIsFixedPoint<T, Variant &> operator=(T const &value);
+  math::meta::IfIsFixedPoint<T, Variant &> operator=(T const &value);  // NOLINT
   template <typename T>
-  meta::IfIsAByteArray<T, Variant &> operator=(T const &value);
+  meta::IfIsAByteArray<T, Variant &> operator=(T const &value);  // NOLINT
   template <typename T>
-  meta::IfIsStdString<T, Variant &> operator=(T const &value);
+  meta::IfIsStdString<T, Variant &> operator=(T const &value);  // NOLINT
   Variant &                         operator=(char const *value);
 
   Variant &operator=(Variant const &value);
@@ -198,7 +199,7 @@ private:
 
   // Data Elements
   Type           type_{Type::UNDEFINED};  ///< The type of the variant
-  PrimitiveData  primitive_;              ///< Union of primitive data values
+  PrimitiveData  primitive_{};            ///< Union of primitive data values
   ConstByteArray string_;                 ///< The string value of the variant
   VariantList    array_;                  ///< The array value of the variant
   VariantObject  object_;                 ///< The object value of the variant
@@ -211,7 +212,7 @@ private:
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsBoolean<T> *)
+Variant::Variant(T const &value, meta::IfIsBoolean<T> * /*unused*/)
   : Variant()
 {
   type_              = Type::BOOLEAN;
@@ -225,7 +226,7 @@ Variant::Variant(T const &value, meta::IfIsBoolean<T> *)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsInteger<T> *)
+Variant::Variant(T const &value, meta::IfIsInteger<T> * /*unused*/)
   : Variant()
 {
   type_              = Type::INTEGER;
@@ -239,7 +240,7 @@ Variant::Variant(T const &value, meta::IfIsInteger<T> *)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsFloat<T> *)
+Variant::Variant(T const &value, meta::IfIsFloat<T> * /*unused*/)
   : Variant()
 {
   type_                  = Type::FLOATING_POINT;
@@ -253,7 +254,7 @@ Variant::Variant(T const &value, meta::IfIsFloat<T> *)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsFixedPoint<T> *)
+Variant::Variant(T const &value, math::meta::IfIsFixedPoint<T> * /*unused*/)
   : Variant()
 {
   type_              = Type::FIXED_POINT;
@@ -267,7 +268,7 @@ Variant::Variant(T const &value, meta::IfIsFixedPoint<T> *)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T &&value, meta::IfIsString<T> *)
+Variant::Variant(T &&value, meta::IfIsString<T> * /*unused*/)
   : Variant()
 {
   type_   = Type::STRING;
@@ -317,7 +318,7 @@ meta::IfIsFloat<T, bool> Variant::Is() const
  * @return true if the value is compatible fixed point, otherwise false
  */
 template <typename T>
-meta::IfIsFixedPoint<T, bool> Variant::Is() const
+math::meta::IfIsFixedPoint<T, bool> Variant::Is() const
 {
   return type() == Type::FIXED_POINT;
 }
@@ -396,7 +397,7 @@ meta::IfIsFloat<T, T> Variant::As() const
  * @throws std::runtime_error in the case where the conversion is not possible
  */
 template <typename T>
-meta::IfIsFixedPoint<T, T> Variant::As() const
+math::meta::IfIsFixedPoint<T, T> Variant::As() const
 {
   if (type() != Type::FIXED_POINT)
   {
@@ -450,7 +451,7 @@ meta::IfIsStdString<T, std::string> Variant::As() const
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsBoolean<T, Variant &> Variant::operator=(T const &value)
+meta::IfIsBoolean<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_              = Type::BOOLEAN;
   primitive_.boolean = value;
@@ -466,7 +467,7 @@ meta::IfIsBoolean<T, Variant &> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsInteger<T, Variant &> Variant::operator=(T const &value)
+meta::IfIsInteger<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_              = Type::INTEGER;
   primitive_.integer = static_cast<int64_t>(value);
@@ -482,7 +483,7 @@ meta::IfIsInteger<T, Variant &> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)
+meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_                  = Type::FLOATING_POINT;
   primitive_.float_point = static_cast<double>(value);
@@ -498,7 +499,7 @@ meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
+math::meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_              = Type::FIXED_POINT;
   primitive_.integer = value.Data();
@@ -514,7 +515,7 @@ meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)
+meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_   = Type::STRING;
   string_ = value;
@@ -530,7 +531,7 @@ meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsStdString<T, Variant &> Variant::operator=(T const &value)
+meta::IfIsStdString<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_   = Type::STRING;
   string_ = ConstByteArray{value};

@@ -48,39 +48,37 @@ bool StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr con
         // no update to be applied
         return;
       }
-      else
+
+      // find the next appropriate update
+      next_update_it = updates.find(block_index);
+
+      // helpful references
+      BlockIndex const &next_update_block_index = next_update_it->first;
+      StakeMap const &  next_update_stake_map   = next_update_it->second;
+
+      // ensure that this is the next block to be updated
+      if (next_update_block_index == block_index)
       {
-        // find the next appropriate update
-        next_update_it = updates.find(block_index);
-
-        // helpful references
-        BlockIndex const &next_update_block_index = next_update_it->first;
-        StakeMap const &  next_update_stake_map   = next_update_it->second;
-
-        // ensure that this is the next block to be updated
-        if (next_update_block_index == block_index)
+        // this should always be the case currently:
+        if (!next_update_stake_map.empty())
         {
-          // this should always be the case currently:
-          if (!next_update_stake_map.empty())
-          {
-            // make a full copy of the stake snapshot
-            next         = std::make_shared<StakeSnapshot>(*reference);
-            new_snapshot = true;
-          }
-
-          // apply all the updates to the specified tracker
-          for (auto const &element : next_update_stake_map)
-          {
-            next->UpdateStake(element.first, element.second);
-          }
-
-          // advance the iterator along so it points to be new next update
-          ++next_update_it;
+          // make a full copy of the stake snapshot
+          next         = std::make_shared<StakeSnapshot>(*reference);
+          new_snapshot = true;
         }
 
-        // remove all the redundant entries
-        updates.erase(updates.begin(), next_update_it);
+        // apply all the updates to the specified tracker
+        for (auto const &element : next_update_stake_map)
+        {
+          next->UpdateStake(element.first, element.second);
+        }
+
+        // advance the iterator along so it points to be new next update
+        ++next_update_it;
       }
+
+      // remove all the redundant entries
+      updates.erase(updates.begin(), next_update_it);
     }
   });
 
@@ -104,10 +102,10 @@ std::size_t StakeUpdateQueue::size() const
  * @param address The address of the stake holder
  * @param stake The amount of tokens to be staked
  */
-void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Address const &address,
+void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Identity const &identity,
                                       StakeAmount stake)
 {
-  updates_.ApplyVoid([&](BlockUpdates &updates) { updates[block_index][address] = stake; });
+  updates_.ApplyVoid([&](BlockUpdates &updates) { updates[block_index][identity] = stake; });
 }
 
 }  // namespace ledger

@@ -226,7 +226,7 @@ struct SignedIntegerSerializerImplementation
       {
         uint8_t code;
         int8_t  value;
-      } conversion;
+      } conversion{};
       conversion.code = code;
 
       if (conversion.value < -0x20 || conversion.value >= 0x80)
@@ -379,8 +379,8 @@ struct FloatSerializer<float, D>
   template <typename Interface>
   static void Serialize(Interface &interface, Type val)
   {
-    val            = platform::ToBigEndian(val);
-    uint8_t opcode = static_cast<uint8_t>(TypeCodes::FLOAT);
+    val         = platform::ToBigEndian(val);
+    auto opcode = static_cast<uint8_t>(TypeCodes::FLOAT);
     interface.Allocate(sizeof(opcode) + sizeof(val));
     interface.WriteBytes(&opcode, sizeof(opcode));
     interface.WriteBytes(reinterpret_cast<uint8_t const *>(&val), sizeof(val));
@@ -410,8 +410,8 @@ struct FloatSerializer<double, D>
   template <typename Interface>
   static void Serialize(Interface &interface, Type val)
   {
-    val            = platform::ToBigEndian(val);
-    uint8_t opcode = static_cast<uint8_t>(TypeCodes::DOUBLE);
+    val         = platform::ToBigEndian(val);
+    auto opcode = static_cast<uint8_t>(TypeCodes::DOUBLE);
     interface.Allocate(sizeof(opcode) + sizeof(val));
     interface.WriteBytes(&opcode, sizeof(opcode));
     interface.WriteBytes(reinterpret_cast<uint8_t const *>(&val), sizeof(val));
@@ -477,8 +477,8 @@ public:
     }
     else if (val.size() < (1 << 8))
     {
-      opcode       = static_cast<uint8_t>(CODE8);
-      uint8_t size = static_cast<uint8_t>(val.size());
+      opcode    = static_cast<uint8_t>(CODE8);
+      auto size = static_cast<uint8_t>(val.size());
 
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
       interface.WriteBytes(&opcode, sizeof(opcode));
@@ -486,9 +486,9 @@ public:
     }
     else if (val.size() < (1 << 16))
     {
-      opcode        = static_cast<uint8_t>(CODE16);
-      uint16_t size = static_cast<uint16_t>(val.size());
-      size          = platform::ToBigEndian(size);
+      opcode    = static_cast<uint8_t>(CODE16);
+      auto size = static_cast<uint16_t>(val.size());
+      size      = platform::ToBigEndian(size);
 
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
       interface.WriteBytes(&opcode, sizeof(opcode));
@@ -496,9 +496,9 @@ public:
     }
     else if (val.size() < (1ull << 32))
     {
-      opcode        = static_cast<uint8_t>(CODE32);
-      uint32_t size = static_cast<uint32_t>(val.size());
-      size          = platform::ToBigEndian(size);
+      opcode    = static_cast<uint8_t>(CODE32);
+      auto size = static_cast<uint32_t>(val.size());
+      size      = platform::ToBigEndian(size);
 
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
 
@@ -787,7 +787,7 @@ public:
   }
 };
 
-template <std::uint16_t I, std::uint16_t F, typename D>
+template <uint16_t I, uint16_t F, typename D>
 struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
 {
   using Type       = fixed_point::FixedPoint<I, F>;

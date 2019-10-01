@@ -39,16 +39,16 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
 {
   using DataType = typename TypeParam::Type;
 
-  std::uint64_t n_classes     = 4;
-  std::uint64_t n_data_points = 8;
+  uint64_t n_classes     = 4;
+  uint64_t n_data_points = 8;
 
-  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data1(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<uint64_t>{n_classes, n_data_points});
 
-  std::vector<std::uint64_t> data = {1, 2, 3, 0, 3, 1, 0, 2};
-  for (std::uint64_t i = 0; i < n_data_points; ++i)
+  std::vector<uint64_t> data = {1, 2, 3, 0, 3, 1, 0, 2};
+  for (uint64_t i = 0; i < n_data_points; ++i)
   {
-    for (std::uint64_t j = 0; j < n_classes; ++j)
+    for (uint64_t j = 0; j < n_classes; ++j)
     {
       if (data[i] == j)
       {
@@ -72,12 +72,12 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
 
 TYPED_TEST(CrossEntropyTest, onehot_forward_test)
 {
-  std::uint64_t n_classes     = 3;
-  std::uint64_t n_data_points = 2;
+  uint64_t n_classes     = 3;
+  uint64_t n_data_points = 2;
 
-  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data1(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam gt(std::vector<uint64_t>{n_classes, n_data_points});
 
   data1 = TypeParam::FromString("0.05, 0.05, 0.9; 0.5, 0.2, 0.3");
   data1 = data1.Transpose();
@@ -94,14 +94,15 @@ TYPED_TEST(CrossEntropyTest, onehot_forward_test)
 
 TYPED_TEST(CrossEntropyTest, onehot_forward_log_zero_test)
 {
-  using Type = typename TypeParam::Type;
+  using Type     = typename TypeParam::Type;
+  using DataType = typename TypeParam::Type;
 
-  std::uint64_t n_classes     = 3;
-  std::uint64_t n_data_points = 2;
+  uint64_t n_classes     = 3;
+  uint64_t n_data_points = 2;
 
-  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data1(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam gt(std::vector<uint64_t>{n_classes, n_data_points});
 
   data1 = TypeParam::FromString("0.1, 0.0, 0.9; 0.5, 0.0, 0.5");
   data1 = data1.Transpose();
@@ -113,18 +114,19 @@ TYPED_TEST(CrossEntropyTest, onehot_forward_log_zero_test)
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   EXPECT_TRUE(result(0, 0) == fetch::math::numeric_inf<Type>());
+  fetch::math::state_clear<DataType>();
 }
 
 TYPED_TEST(CrossEntropyTest, binary_forward_test)
 {
   using SizeType = typename TypeParam::SizeType;
 
-  std::uint64_t n_classes     = 1;
-  std::uint64_t n_data_points = 3;
+  uint64_t n_classes     = 1;
+  uint64_t n_data_points = 3;
 
-  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data1(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam gt(std::vector<uint64_t>{n_classes, n_data_points});
 
   std::vector<double> input_vals{0.05, 0.1, 0.5};
   std::vector<double> targets{1.0, 0.0, 1.0};
@@ -148,12 +150,12 @@ TYPED_TEST(CrossEntropyTest, binary_backward_test)
   using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
-  std::uint64_t n_classes     = 1;
-  std::uint64_t n_data_points = 3;
+  uint64_t n_classes     = 1;
+  uint64_t n_data_points = 3;
 
-  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data1(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam gt(std::vector<uint64_t>{n_classes, n_data_points});
 
   // set gt data
   std::vector<double> gt_data{-20, 1.1111111111111111, -2.0000};
@@ -191,12 +193,12 @@ TYPED_TEST(CrossEntropyTest, onehot_backward_test)
 {
   using DataType = typename TypeParam::Type;
 
-  std::uint64_t n_classes     = 3;
-  std::uint64_t n_data_points = 2;
+  uint64_t n_classes     = 3;
+  uint64_t n_data_points = 2;
 
-  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data1(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam gt(std::vector<uint64_t>{n_classes, n_data_points});
 
   // set gt data
   gt = TypeParam::FromString("0, -20.0000000000,  0; -2.0000000000,   0,   0");
@@ -225,17 +227,17 @@ TYPED_TEST(CrossEntropyTest, saveparams_test)
   using SPType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>::SPType;
   using OpType     = fetch::ml::ops::CrossEntropyLoss<TensorType>;
 
-  std::uint64_t n_classes     = 4;
-  std::uint64_t n_data_points = 8;
+  uint64_t n_classes     = 4;
+  uint64_t n_data_points = 8;
 
-  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data1(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<uint64_t>{n_classes, n_data_points});
 
   // set gt data
-  std::vector<std::uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
-  for (std::uint64_t i = 0; i < n_data_points; ++i)
+  std::vector<uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
+  for (uint64_t i = 0; i < n_data_points; ++i)
   {
-    for (std::uint64_t j = 0; j < n_classes; ++j)
+    for (uint64_t j = 0; j < n_classes; ++j)
     {
       if (gt_data[i] == j)
       {
@@ -253,10 +255,10 @@ TYPED_TEST(CrossEntropyTest, saveparams_test)
                              0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
                              0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
 
-  std::uint64_t counter{0};
-  for (std::uint64_t i{0}; i < n_data_points; ++i)
+  uint64_t counter{0};
+  for (uint64_t i{0}; i < n_data_points; ++i)
   {
-    for (std::uint64_t j{0}; j < n_classes; ++j)
+    for (uint64_t j{0}; j < n_classes; ++j)
     {
       data1.Set(j, i, DataType(logits[counter]));
       ++counter;
@@ -304,12 +306,12 @@ TYPED_TEST(CrossEntropyTest, saveparams_one_dimensional_backward_test)
   using SPType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>::SPType;
   using OpType     = fetch::ml::ops::CrossEntropyLoss<TensorType>;
 
-  std::uint64_t n_classes     = 4;
-  std::uint64_t n_data_points = 8;
+  uint64_t n_classes     = 4;
+  uint64_t n_data_points = 8;
 
-  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data1(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<uint64_t>{n_classes, n_data_points});
+  TypeParam gt(std::vector<uint64_t>{n_classes, n_data_points});
 
   // set gt data
   gt = TypeParam::FromString("0, -20.0000000000,  0; -2.0000000000,   0,   0");

@@ -31,6 +31,7 @@ using SizeType   = typename TensorType::SizeType;
 
 using ModelType      = typename fetch::ml::model::DNNClassifier<TensorType>;
 using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>;
+using OptimiserType  = fetch::ml::optimisers::OptimiserType;
 
 int main(int ac, char **av)
 {
@@ -55,18 +56,17 @@ int main(int ac, char **av)
   model_config.patience       = 30;
   model_config.print_stats    = true;
 
-  // setup dataloader
-  auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
-
-  // Allocate test set of size 20% of MNIST
+  // setup dataloader with 20% test set
+  auto data_loader_ptr = std::make_unique<DataLoaderType>(av[1], av[2]);
   data_loader_ptr->SetTestRatio(0.2f);
 
-  DataType loss;
-
-  // run model in training mode
-  ModelType model(data_loader_ptr, OptimiserType::ADAM, model_config, {784, 100, 20, 10});
+  // setup model and pass dataloader
+  ModelType model(model_config, {784, 100, 20, 10});
+  model.SetDataloader(std::move(data_loader_ptr));
+  model.Compile(OptimiserType::ADAM);
 
   // training loop - early stopping will prevent long training time
+  DataType loss;
   model.Train(1000000, loss);
 
   // Run model on a test set

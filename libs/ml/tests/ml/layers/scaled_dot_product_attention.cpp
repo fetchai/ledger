@@ -20,11 +20,9 @@
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-
+#include "ml/regularisers/regulariser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-
-#include "ml/regularisers/regulariser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -52,9 +50,13 @@ TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the 
       "ScaledDotProductAttention", {query, key, value, mask}, static_cast<SizeType>(4),
       DataType(0.1));
   TypeParam query_data = TypeParam({4, 7, 2});
-  TypeParam key_data   = TypeParam({4, 5, 2});
+  query_data.Fill(static_cast<DataType>(0.1));
+  TypeParam key_data = TypeParam({4, 5, 2});
+  key_data.Fill(static_cast<DataType>(0.2));
   TypeParam value_data = TypeParam({3, 5, 2});
-  TypeParam mask_data  = TypeParam({1, 7, 2});
+  value_data.Fill(static_cast<DataType>(0.3));
+  TypeParam mask_data = TypeParam({1, 7, 2});
+  mask_data.Fill(static_cast<DataType>(1));
   g.SetInput(query, query_data);
   g.SetInput(key, key_data);
   g.SetInput(value, value_data);
@@ -293,7 +295,11 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   TypeParam key_data   = query_data;
   TypeParam value_data = query_data;
   TypeParam mask_data  = TypeParam({25, 25, 4});
+  query_data.Fill(static_cast<DataType>(0.1));
+  key_data.Fill(static_cast<DataType>(0.1));
+  value_data.Fill(static_cast<DataType>(0.1));
   mask_data.Fill(static_cast<DataType>(1));
+
   // create labels
   TypeParam labels({12, 25, 4});
   labels.FillUniformRandom();
@@ -348,7 +354,6 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagate(error_output);
-  layer.ApplyRegularisation();
   auto grads = layer.GetGradients();
   for (auto &grad : grads)
   {
@@ -360,7 +365,6 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   layer2.SetInput(label_name, labels);
   TypeParam loss2 = layer2.Evaluate(error_output);
   layer2.BackPropagate(error_output);
-  layer2.ApplyRegularisation();
   auto grads2 = layer2.GetGradients();
   for (auto &grad : grads2)
   {

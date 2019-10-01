@@ -70,7 +70,7 @@ public:
     CODE32     = TypeCodes::ARRAY_CODE32
 
   };
-  ArrayDeserializer(Driver &serializer)
+  explicit ArrayDeserializer(Driver &serializer)
     : serializer_{serializer}
   {
     uint8_t  opcode;

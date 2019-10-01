@@ -27,17 +27,16 @@ using namespace fetch::math::combinatorics;
 
 using DataType   = double;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = std::uint64_t;
+using SizeType   = uint64_t;
 
 template <typename T>
 class CombinatoricsTest : public ::testing::Test
 {
 };
 
-using MyTypes =
-    ::testing::Types<fetch::math::Tensor<std::int32_t>, fetch::math::Tensor<std::int64_t>,
-                     fetch::math::Tensor<std::uint32_t>, fetch::math::Tensor<std::uint64_t>,
-                     fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+using MyTypes = ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<int64_t>,
+                                 fetch::math::Tensor<uint32_t>, fetch::math::Tensor<uint64_t>,
+                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 TYPED_TEST_CASE(CombinatoricsTest, MyTypes);
 
 // Factorial function - test edge case (0!)
@@ -72,11 +71,11 @@ TYPED_TEST(CombinatoricsTest, test_num_combinations_standard_input)
 
   ASSERT_EQ(fetch_output, 126);
 
-  n                     = (1 << 24) + 1;
-  SizeType matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(1)));
+  n                 = (1 << 24) + 1;
+  auto matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(1)));
   EXPECT_EQ(matrixHeight, n);
 
-  if (sizeof(n) > 7)
+  if (sizeof(n) > 7u)
   {
     n            = (1llu << 63) - 1;
     matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(1)));

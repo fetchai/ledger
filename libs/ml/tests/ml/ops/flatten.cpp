@@ -29,6 +29,8 @@
 #include <memory>
 #include <vector>
 
+namespace {
+
 template <typename T>
 class FlattenTest : public ::testing::Test
 {
@@ -49,8 +51,8 @@ TYPED_TEST(FlattenTest, forward_test)
   SizeType width   = 6;
   SizeType batches = 5;
 
-  TypeParam data(std::vector<std::uint64_t>({height, width, batches}));
-  TypeParam gt(std::vector<std::uint64_t>({height * width, batches}));
+  TypeParam data(std::vector<uint64_t>({height, width, batches}));
+  TypeParam gt(std::vector<uint64_t>({height * width, batches}));
 
   for (SizeType i{0}; i < height; i++)
   {
@@ -129,8 +131,8 @@ TYPED_TEST(FlattenTest, saveparams_test)
   SizeType width   = 6;
   SizeType batches = 5;
 
-  TypeParam data(std::vector<std::uint64_t>({height, width, batches}));
-  TypeParam gt(std::vector<std::uint64_t>({height * width, batches}));
+  TypeParam data(std::vector<uint64_t>({height, width, batches}));
+  TypeParam gt(std::vector<uint64_t>({height * width, batches}));
 
   for (SizeType i{0}; i < height; i++)
   {
@@ -243,3 +245,5 @@ TYPED_TEST(FlattenTest, saveparams_backward_test)
       new_gradients.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace

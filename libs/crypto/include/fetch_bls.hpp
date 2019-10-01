@@ -21,6 +21,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wmacro-redefined"
 #endif
 
 #if defined(__clang__)
@@ -30,7 +31,7 @@
 #pragma clang diagnostic ignored "-Wmacro-redefined"
 #endif
 
-#include <bls/bls.hpp>
+#include "bls/bls.hpp"
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
