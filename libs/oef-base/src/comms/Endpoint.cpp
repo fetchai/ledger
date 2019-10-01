@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/comms/Endpoint.hpp"
 #include "core/macros.hpp"
 #include "logging/logging.hpp"
+#include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/utils/Uri.hpp"
 

@@ -23,5 +23,4 @@ target_link_libraries(fetch-dkg
                              fetch-entropy
                              fetch-logging)
 
-#add_test_target()
-#add_subdirectory(examples/)
+# add_test_target() add_subdirectory(examples/)

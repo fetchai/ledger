@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/shards/shard_management_service.hpp"
 #include "core/containers/set_difference.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/shards/shard_management_interface.hpp"
+#include "ledger/shards/shard_management_service.hpp"
 #include "logging/logging.hpp"
 #include "muddle/muddle_interface.hpp"
 

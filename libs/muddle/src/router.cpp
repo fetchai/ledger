@@ -25,11 +25,11 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/containers/set_intersection.hpp"
-#include "logging/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fnv.hpp"
+#include "logging/logging.hpp"
 #include "muddle/packet.hpp"
 
 #include <algorithm>

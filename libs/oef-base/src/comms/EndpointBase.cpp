@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/comms/EndpointBase.hpp"
 #include "logging/logging.hpp"
+#include "oef-base/comms/EndpointBase.hpp"
 
 // TODO: Replace beast #include "boost/beast/websocket/error.hpp"
 #include "oef-base/monitoring/Gauge.hpp"

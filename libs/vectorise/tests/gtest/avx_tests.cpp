@@ -230,8 +230,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) { return a + b; }, B);
   EXPECT_EQ(ret, sum);
 
-  ret = A.in_parallel().SumReduce(
-      range, [](auto const &a, auto const &b) { return a + b; }, B);
+  ret = A.in_parallel().SumReduce(range, [](auto const &a, auto const &b) { return a + b; }, B);
   EXPECT_EQ(ret, partial_sum);
 
   C.in_parallel().Apply([](auto const &a, auto const &b, auto &c) { c = a + b; }, A, B);
@@ -264,8 +263,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   }
 
   // Assign range (6,15) of A to C
-  C.in_parallel().RangedApplyMultiple(
-      small_range, [](auto const &a, auto &c) { c = a; }, A);
+  C.in_parallel().RangedApplyMultiple(small_range, [](auto const &a, auto &c) { c = a; }, A);
 
   for (std::size_t i = 6; i < 15; ++i)
   {

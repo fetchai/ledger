@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/reactor.hpp"
 #include "core/assert.hpp"
+#include "core/reactor.hpp"
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"
 
