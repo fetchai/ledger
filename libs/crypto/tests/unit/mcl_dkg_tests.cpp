@@ -50,7 +50,7 @@ TEST(MclTests, BaseMcl)
   // Serialization to string
   {
     std::string s = generator.getStr();
-    PublicKey Q2;
+    PublicKey   Q2;
     Q2.setStr(s);
     std::string s2 = Q2.getStr();
     EXPECT_EQ(s2, s);
@@ -60,8 +60,8 @@ TEST(MclTests, BaseMcl)
   // Testing basic operations for types G1, G2 and Fp used in DKG
   {
     PrivateKey power = 2;
-    PublicKey gen_mult;
-    PublicKey gen_add;
+    PublicKey  gen_mult;
+    PublicKey  gen_add;
     gen_mult.clear();
     gen_add.clear();
     mcl::bn::G2::mul(gen_mult, generator, power);
@@ -91,7 +91,7 @@ TEST(MclDkgTests, ComputeLhsRhs)
   mcl::bn::initPairing();
 
   // Construct polynomial of degree 2 (threshold = 1)
-  uint32_t            threshold = 1;
+  uint32_t                threshold = 1;
   std::vector<PrivateKey> vec_a;
   Init(vec_a, threshold + 1);
   std::vector<PrivateKey> vec_b;
@@ -131,9 +131,9 @@ TEST(MclDkgTests, ComputeLhsRhs)
 
   EXPECT_EQ(coefficients, coefficients_test);
 
-  PublicKey   rhs;
-  uint32_t rank = 2;
-  rhs           = ComputeRHS(rank, coefficients);
+  PublicKey rhs;
+  uint32_t  rank = 2;
+  rhs            = ComputeRHS(rank, coefficients);
 
   // Check compute RHS with direct computation (increment rank as not allowed to be 0)
   PublicKey rhs_test;
@@ -155,7 +155,7 @@ TEST(MclDkgTests, Interpolation)
   mcl::bn::initPairing();
 
   // Construct polynomial of degree 2
-  uint32_t            degree = 2;
+  uint32_t                degree = 2;
   std::vector<PrivateKey> vec_a;
   Init(vec_a, degree + 1);
 

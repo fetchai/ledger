@@ -41,7 +41,8 @@ public:
     }
 
     bn::initPairing();
-    outputs_ = crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold);
+    outputs_ =
+        crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold);
   }
 
   DkgOutput GetKeys(MuddleAddress const &address) const
