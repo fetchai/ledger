@@ -162,8 +162,7 @@ private:
 
   /// Beacon and entropy control units
   /// @{
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
-  std::shared_ptr<AeonExecutionUnit>  active_exe_unit_;
+  std::shared_ptr<AeonExecutionUnit> active_exe_unit_;
   /// @}
 
   /// Variables relating to getting threshold signatures of the seed

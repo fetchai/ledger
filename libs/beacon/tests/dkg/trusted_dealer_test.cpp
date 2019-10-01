@@ -57,10 +57,8 @@ class TrustedDealerBeaconService : public BeaconService
 public:
   TrustedDealerBeaconService(MuddleInterface &               muddle,
                              ledger::ManifestCacheInterface &manifest_cache,
-                             CertificatePtr certificate, SharedEventManager event_manager,
-                             uint64_t blocks_per_round = 1)
-    : BeaconService{muddle, manifest_cache, std::move(certificate), std::move(event_manager),
-                    blocks_per_round} {};
+                             CertificatePtr certificate, SharedEventManager event_manager)
+    : BeaconService{muddle, manifest_cache, std::move(certificate), std::move(event_manager)} {};
 
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
                        uint64_t round_end, uint64_t start_time, DkgOutput output)
@@ -89,18 +87,9 @@ public:
 
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
-    // Determines if we are observing or actively participating
-    if (output.group_public_key.isZero())
-    {
-      beacon->observe_only = true;
-      FETCH_LOG_INFO(LOGGING_NAME, "Beacon in observe only mode. Members: ", members.size());
-    }
-    else
-    {
-      beacon->manager.SetCertificate(certificate_);
-      beacon->manager.NewCabinet(members, threshold);
-      beacon->manager.SetDkgOutput(output);
-    }
+    beacon->manager.SetCertificate(certificate_);
+    beacon->manager.NewCabinet(members, threshold);
+    beacon->manager.SetDkgOutput(output);
 
     // Setting the aeon details
     beacon->aeon.round_start               = round_start;
