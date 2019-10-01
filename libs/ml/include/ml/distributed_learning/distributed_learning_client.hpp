@@ -83,7 +83,7 @@ public:
 
   void SetCoordinator(std::shared_ptr<Coordinator<TensorType>> coordinator_ptr);
 
-  void Run();
+  virtual void Run();
 
   void Train();
 
@@ -103,6 +103,19 @@ public:
 
   std::string GetId() const;
 
+
+    void ResetLossCnt()
+    {
+      train_loss_sum_= static_cast<DataType>(0);
+      train_loss_cnt_=0;
+    }
+
+    DataType GetLossAverage()
+    {
+      return train_loss_sum_ / static_cast<DataType>(train_loss_cnt_);
+    }
+
+
 protected:
   // Client id (identification name)
   std::string id_;
@@ -110,6 +123,9 @@ protected:
   // Latest loss
   DataType train_loss_ = fetch::math::numeric_max<DataType>();
   DataType test_loss_  = fetch::math::numeric_max<DataType>();
+
+    DataType train_loss_sum_ = static_cast<DataType>(0);
+    SizeType train_loss_cnt_ = 0;
 
   // Client's own graph and mutex to protect its weights
   GraphPtrType       g_ptr_;
@@ -245,6 +261,7 @@ std::string TrainingClient<TensorType>::GetId() const
 template <class TensorType>
 void TrainingClient<TensorType>::Run()
 {
+  ResetLossCnt();
   if (coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
   {
     // Do one batch and end
@@ -288,8 +305,12 @@ void TrainingClient<TensorType>::Train()
 
     TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
     train_loss_            = *(loss_tensor.begin());
+
+    train_loss_sum_+=train_loss_;
+    train_loss_cnt_++;
+
     g_ptr_->BackPropagate(error_name_);
-    std::cout << id_ << " train loss: " << train_loss_ << std::endl;
+    //std::cout << id_ << " train loss: " << train_loss_ << std::endl;
   }
 }
 

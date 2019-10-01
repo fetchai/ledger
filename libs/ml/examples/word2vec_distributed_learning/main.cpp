@@ -22,6 +22,7 @@
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/distributed_learning/coordinator.hpp"
 #include "word2vec_client.hpp"
+#include <memory>
 
 #include <iostream>
 #include <mutex>
@@ -35,7 +36,8 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::distributed_learning;
 
-using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
+//using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
+using DataType         = float;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;
@@ -71,6 +73,25 @@ void MakeVocabFile(W2VTrainingParams<DataType> const &client_params, std::string
   data_loader.SaveVocab(client_params.vocab_file);
 }
 
+
+std::string GetStrTimestamp()
+{
+  auto now       = std::chrono::system_clock::now();
+  auto in_time_t = std::chrono::system_clock::to_time_t(now);
+
+  auto now_milliseconds =
+          std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+
+  std::stringstream ss;
+  ss << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H:%M:%S");
+
+  // add milliseconds to timestamp string
+  ss << '.' << std::setfill('0') << std::setw(3) << now_milliseconds.count();
+
+  return ss.str();
+}
+
+
 int main(int argc, char **argv)
 {
   if (argc != 3)
@@ -84,9 +105,9 @@ int main(int argc, char **argv)
 
   // Distributed learning parameters:
   SizeType number_of_clients    = 5;
-  SizeType number_of_rounds     = 50;
+  SizeType number_of_rounds     = 1000;
   coord_params.number_of_peers  = 2;
-  coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
+  coord_params.mode             = CoordinatorMode::ASYNCHRONOUS;
   coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
   // have been processed in total by the clients
 
@@ -101,7 +122,7 @@ int main(int argc, char **argv)
   client_params.min_count            = 5;                 // infrequent word removal threshold
   client_params.embedding_size       = 100;               // dimension of embedding vec
   client_params.starting_learning_rate_per_sample =
-      0.0025;  // these are the learning rates we have for each sample
+      0.0025f;  // these are the learning rates we have for each sample
 
   client_params.k     = 20;       // how many nearest neighbours to compare against
   client_params.word0 = "three";  // test word to consider
@@ -129,7 +150,8 @@ int main(int argc, char **argv)
 
   std::vector<std::string> client_data = SplitTrainingData(train_file, number_of_clients);
 
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
+  std::vector<std::shared_ptr<Word2VecClient<TensorType>>> clients(number_of_clients);
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>> raw_clients(number_of_clients);
 
   for (SizeType i(0); i < number_of_clients; ++i)
   {
@@ -138,11 +160,12 @@ int main(int argc, char **argv)
     // Instantiate NUMBER_OF_CLIENTS clients
     clients[i] =
         std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
+    raw_clients[i]=clients[i];
     // TODO(1597): Replace ID with something more sensible
   }
 
   // Give list of clients to coordinator
-  coordinator->SetClientsList(clients);
+  coordinator->SetClientsList(raw_clients);
 
   for (SizeType i(0); i < number_of_clients; ++i)
   {
@@ -153,7 +176,6 @@ int main(int argc, char **argv)
   // Main loop
   for (SizeType it(0); it < number_of_rounds; ++it)
   {
-
     // Start all clients
     coordinator->Reset();
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
@@ -168,6 +190,20 @@ int main(int argc, char **argv)
     {
       t.join();
     }
+
+      std::ofstream lossfile("losses.csv", std::ofstream::out | std::ofstream::app);
+
+      std::cout << "Test losses:";
+    lossfile<<GetStrTimestamp();
+    for (auto &c : clients)
+    {
+      std::cout<<"\t"<<static_cast<double>(c->GetLossAverage())<<"\t"<<static_cast<double>(c->analogy_score_);
+        lossfile<<"\t"<<static_cast<double>(c->GetLossAverage())<<"\t"<<static_cast<double>(c->analogy_score_);
+    }
+    std::cout<<std::endl;
+      lossfile<<std::endl;
+
+      lossfile.close();
 
     if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
     {

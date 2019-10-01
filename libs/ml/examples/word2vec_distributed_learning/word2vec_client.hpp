@@ -57,6 +57,43 @@ public:
 
   void Test() override;
 
+  DataType analogy_score_=static_cast<DataType>(0);
+
+  DataType GetAnalogyScore()
+  {
+    // first get hold of the skipgram layer by searching the return name in the graph
+    std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
+            std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(
+                    (this->g_ptr_->GetNode(skipgram_))->GetOp());
+
+    // next get hold of the embeddings
+    std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =
+            sg_layer->GetEmbeddings(sg_layer);
+
+   return examples::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->GetWeights(),
+                                                 tp_.analogies_test_file);
+  }
+
+    /**
+   * Main loop that runs in thread
+   */
+    void Run() override
+    {
+        this->ResetLossCnt();
+        if (this->coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
+        {
+            // Do one batch and end
+            this->TrainOnce();
+        }
+        else
+        {
+            // Train batches until coordinator will tell clients to stop
+            this->TrainWithCoordinator();
+        }
+        analogy_score_=GetAnalogyScore();
+    }
+
+
 private:
   W2VTrainingParams<DataType>                                       tp_;
   std::string                                                       skipgram_;
@@ -135,6 +172,7 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 template <class TensorType>
 void Word2VecClient<TensorType>::Test()
 {
+  return;
   if (this->batch_counter_ % tp_.test_frequency == 1)
   {
     TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);
