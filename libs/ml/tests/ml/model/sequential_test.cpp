@@ -98,20 +98,20 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type,
   {
     DataType loss{0};
     DataType later_loss{0};
-    EXPECT_TRUE(model.Train(1, loss));
-    EXPECT_TRUE(model.Train(1, later_loss));
+    model.Train(1, loss);
+    model.Train(1, later_loss);
+    EXPECT_LE(later_loss, loss);
     count++;
   }
 
-  EXPECT_TRUE(model.Train(100));
+  model.Train(100);
 
   // test prediction performance
   TypeParam pred({3, 1});
 
   model.Train(100);
-  bool success = model.Predict(test_datum, pred);
+  model.Predict(test_datum, pred);
 
-  EXPECT_TRUE(success);
   EXPECT_TRUE(pred.AllClose(test_label, tolerance, tolerance));
 
   return true;
