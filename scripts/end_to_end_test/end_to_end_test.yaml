@@ -62,7 +62,7 @@ steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
   - verify_txs: { "name": "batch1", "nodes": [0, 1] }
   - add_node: { "index": 2, "node_connections": [[2, 1]] }
-    - sleep : 5
+  - sleep : 5
   - verify_txs: { "name": "batch1", "nodes": [2] }
 ...
 

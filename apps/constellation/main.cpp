@@ -190,8 +190,6 @@ int main(int argc, char **argv)
 {
   int exit_code = EXIT_FAILURE;
 
-  bn::initPairing();
-
   // Special case for the version flag
   if (HasVersionFlag(argc, argv))
   {
