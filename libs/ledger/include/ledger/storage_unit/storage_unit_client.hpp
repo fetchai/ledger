@@ -24,6 +24,7 @@
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
+#include "ledger/storage_unit/object_store_protocol.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/client.hpp"
@@ -32,7 +33,6 @@
 #include "network/generics/has_worker_thread.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_stack.hpp"
-#include "storage/object_store_protocol.hpp"
 
 #include <array>
 #include <cassert>
