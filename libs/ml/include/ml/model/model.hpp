@@ -50,10 +50,10 @@ public:
   void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
   void SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr);
 
-  virtual bool Train(SizeType n_steps);
-  virtual bool Train(SizeType n_steps, DataType &loss);
-  virtual bool Test(DataType &test_loss);
-  virtual bool Predict(TensorType &input, TensorType &output);
+  virtual void Train(SizeType n_steps);
+  virtual void Train(SizeType n_steps, DataType &loss);
+  virtual void Test(DataType &test_loss);
+  virtual void Predict(TensorType &input, TensorType &output);
 
 protected:
   ModelConfig<DataType> model_config_;
@@ -157,14 +157,14 @@ void Model<TensorType>::SetDataloader(std::unique_ptr<DataLoaderType> dataloader
  * @return
  */
 template <typename TensorType>
-bool Model<TensorType>::Train(SizeType n_steps)
+void Model<TensorType>::Train(SizeType n_steps)
 {
   DataType _;
-  return Model<TensorType>::Train(n_steps, _);
+  Model<TensorType>::Train(n_steps, _);
 }
 
 template <typename TensorType>
-bool Model<TensorType>::Train(SizeType n_steps, DataType &loss)
+void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
 {
   if (!compiled_)
   {
@@ -221,11 +221,10 @@ bool Model<TensorType>::Train(SizeType n_steps, DataType &loss)
 
     step++;
   }
-  return true;
 }
 
 template <typename TensorType>
-bool Model<TensorType>::Test(DataType &test_loss)
+void Model<TensorType>::Test(DataType &test_loss)
 {
   if (!compiled_)
   {
@@ -243,12 +242,10 @@ bool Model<TensorType>::Test(DataType &test_loss)
   this->graph_ptr_->SetInput(label_, test_pair.first);
   this->graph_ptr_->SetInput(input_, test_pair.second.at(0));
   test_loss = *(this->graph_ptr_->Evaluate(error_).begin());
-
-  return true;
 }
 
 template <typename TensorType>
-bool Model<TensorType>::Predict(TensorType &input, TensorType &output)
+void Model<TensorType>::Predict(TensorType &input, TensorType &output)
 {
   if (!compiled_)
   {
@@ -257,8 +254,6 @@ bool Model<TensorType>::Predict(TensorType &input, TensorType &output)
 
   this->graph_ptr_->SetInput(input_, input);
   output = this->graph_ptr_->Evaluate(output_);
-
-  return true;
 }
 
 template <typename TensorType>
