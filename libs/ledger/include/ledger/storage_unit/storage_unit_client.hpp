@@ -52,6 +52,8 @@ public:
   using MuddleEndpoint = muddle::MuddleEndpoint;
   using Address        = muddle::Address;
 
+  static constexpr char const *LOGGING_NAME = "StorageUnitClient";
+
   // Construction / Destruction
   StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards, uint32_t log2_num_lanes);
   StorageUnitClient(StorageUnitClient const &) = delete;
@@ -80,7 +82,7 @@ public:
   byte_array::ConstByteArray CurrentHash() override;
   byte_array::ConstByteArray LastCommitHash() override;
   bool                       RevertToHash(Hash const &hash, uint64_t index) override;
-  byte_array::ConstByteArray Commit(uint64_t index) override;
+  byte_array::ConstByteArray Commit(uint64_t commit_index) override;
   bool                       HashExists(Hash const &hash, uint64_t index) override;
   bool                       Lock(ShardIndex index) override;
   bool                       Unlock(ShardIndex index) override;

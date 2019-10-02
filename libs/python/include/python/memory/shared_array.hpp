@@ -26,19 +26,19 @@ namespace memory {
 template <typename T>
 void BuildSharedArray(std::string const &custom_name, pybind11::module &module)
 {
-
   namespace py = pybind11;
   py::class_<SharedArray<T>>(module, custom_name.c_str())
-      .def(py::init<const std::size_t &>())
+      .def(py::init<std::size_t const &>())
       .def(py::init<>())
-      .def(py::init<const SharedArray<T> &>())
+      .def(py::init<SharedArray<T> const &>())
       .def("padded_size", &SharedArray<T>::padded_size)
-      .def("At", (T & (SharedArray<T>::*)(const std::size_t &)) & SharedArray<T>::At)
-      .def("At", (const T &(SharedArray<T>::*)(const std::size_t &)const) & SharedArray<T>::At)
+      .def("At", static_cast<T &(SharedArray<T>::*)(std::size_t const &)>(&SharedArray<T>::At))
+      .def("At",
+           static_cast<T const &(SharedArray<T>::*)(std::size_t const &)const>(&SharedArray<T>::At))
       .def("operator[]",
-           (T & (SharedArray<T>::*)(const std::size_t &)) & SharedArray<T>::operator[])
-      .def("operator[]",
-           (const T &(SharedArray<T>::*)(const std::size_t &)const) & SharedArray<T>::operator[])
+           static_cast<T &(SharedArray<T>::*)(std::size_t const &)>(&SharedArray<T>::operator[]))
+      .def("operator[]", static_cast<T const &(SharedArray<T>::*)(std::size_t const &)const>(
+                             &SharedArray<T>::operator[]))
       .def("Copy", &SharedArray<T>::Copy)
       .def("size", [](SharedArray<T> const &o) { return o.size(); });
 }

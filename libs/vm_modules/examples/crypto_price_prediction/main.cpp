@@ -141,7 +141,7 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  if (!executable.FindFunction("main"))
+  if (executable.FindFunction("main") == nullptr)
   {
     std::cout << "Function 'main' not found" << std::endl;
     return -2;

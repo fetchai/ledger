@@ -449,12 +449,10 @@ void GraphW2VLoader<T>::BufferNextSamples()
           "unigram table timed out looking for a negative sample. check window size for sentence "
           "length and that data loaded correctly.");
     }
-    else
-    {
-      output_words_.At(counter) = T(neg_sample);
-      labels_.At(counter)       = 0;
-      counter++;
-    }
+
+    output_words_.At(counter) = T(neg_sample);
+    labels_.At(counter)       = 0;
+    counter++;
   }
 
   // move the index to the next word
@@ -713,7 +711,7 @@ std::vector<std::string> GraphW2VLoader<T>::PreprocessString(std::string const &
   result.reserve(s.size());
   for (auto const &c : s)
   {
-    result.push_back(std::isalpha(c) ? (char)std::tolower(c) : ' ');
+    result.push_back(std::isalpha(c) != 0 ? static_cast<char>(std::tolower(c)) : ' ');
   }
 
   std::string              word;

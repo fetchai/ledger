@@ -22,7 +22,6 @@
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
-#include "metrics/metrics.hpp"
 #include "muddle/address.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/milli_timer.hpp"
@@ -97,7 +96,7 @@ private:
   uint64_t ObjectCount();
   TxArray  PullObjects(service::CallContext const &call_context);
 
-  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
+  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count);
   TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
 
   ObjectStore *store_;  ///< The pointer to the object store

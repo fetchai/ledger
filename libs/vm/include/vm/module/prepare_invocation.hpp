@@ -42,7 +42,7 @@ private:
   static constexpr auto FIRST_PARAMETER_OFFSET = std::tuple_size<EtchArgumentTuple>::value - 1;
 
   template <std::size_t... Is>
-  static auto ComposeUnpacked(VM *vm, meta::IndexSequence<Is...> &&)
+  static auto ComposeUnpacked(VM *vm, meta::IndexSequence<Is...> && /*unused*/)
   {
     FETCH_UNUSED(vm);
     return std::make_tuple(StackGetter<std::tuple_element_t<Is, EtchArgumentTuple>>::Get(

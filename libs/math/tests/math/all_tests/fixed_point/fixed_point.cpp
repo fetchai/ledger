@@ -2350,7 +2350,7 @@ TEST(FixedPointTest, ATanH_32_32)
   // std::cout << "ATanH: avg error = " << avg_error << std::endl;
 }
 
-TEST(FixedPointTest, NanInfinity_16_16)
+TEST(FixedPointTest, NanInfinity_16_16)  // NOLINT
 {
   fp32_t m_inf{fp32_t::NEGATIVE_INFINITY};
   fp32_t p_inf{fp32_t::POSITIVE_INFINITY};
@@ -2716,7 +2716,7 @@ TEST(FixedPointTest, NanInfinity_16_16)
   EXPECT_TRUE(fp32_t::IsStateNaN());
 }
 
-TEST(FixedPointTest, NanInfinity_32_32)
+TEST(FixedPointTest, NanInfinity_32_32)  // NOLINT
 {
   fp64_t m_inf{fp64_t::NEGATIVE_INFINITY};
   fp64_t p_inf{fp64_t::POSITIVE_INFINITY};

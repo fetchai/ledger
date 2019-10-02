@@ -113,10 +113,8 @@ JsonClient JsonClient::CreateFromUrl(std::string const &url)
 
     return JsonClient{mode, host, static_cast<uint16_t>(port_value)};
   }
-  else
-  {
-    return JsonClient{mode, host};
-  }
+
+  return JsonClient{mode, host};
 }
 
 /**
@@ -177,7 +175,7 @@ bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers 
     http_request.SetMethod(method);
     http_request.SetURI(endpoint);
 
-    if (headers)
+    if (headers != nullptr)
     {
       for (auto const &element : *headers)
       {
@@ -185,7 +183,7 @@ bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers 
       }
     }
 
-    if (request)
+    if (request != nullptr)
     {
       std::ostringstream oss;
       oss << *request;

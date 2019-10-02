@@ -1,18 +1,17 @@
 #
-# F E T C H   M E T R I C S   L I B R A R Y
+# F E T C H   L E D G E R   B E N C H M A R K S
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-project(fetch-metrics)
+project(fetch-beacon)
 
-# CMake Configuration
+# CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 
 # Compiler Configuration
 setup_compiler()
 
 # ------------------------------------------------------------------------------
-# Main Library Target
+# Benchmark Targets
 # ------------------------------------------------------------------------------
 
-setup_library(fetch-metrics)
-target_link_libraries(fetch-metrics PUBLIC fetch-core)
+add_fetch_gbench(beacon-benchmarks fetch-beacon .)

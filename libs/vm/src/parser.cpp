@@ -367,7 +367,7 @@ BlockNodePtr Parser::ParseFunctionDefinition()
       {
         if (token_->kind != Token::Kind::Identifier)
         {
-          if (count)
+          if (count != 0)
           {
             AddError("expected parameter name");
           }
@@ -715,7 +715,7 @@ NodePtr Parser::ParseIfStatement()
       if_statement_node->children.push_back(std::move(if_node));
       continue;
     }
-    else if (token_->kind == Token::Kind::ElseIf)
+    if (token_->kind == Token::Kind::ElseIf)
     {
       BlockNodePtr      elseif_node = CreateBlockNode(NodeKind::ElseIf, token_->text, token_->line);
       ExpressionNodePtr expression_node = ParseConditionalExpression();
@@ -731,7 +731,7 @@ NodePtr Parser::ParseIfStatement()
       if_statement_node->children.push_back(std::move(elseif_node));
       continue;
     }
-    else if (token_->kind == Token::Kind::Else)
+    if (token_->kind == Token::Kind::Else)
     {
       BlockNodePtr else_node = CreateBlockNode(NodeKind::Else, token_->text, token_->line);
       if (!ParseBlock(*else_node))
@@ -826,24 +826,22 @@ NodePtr Parser::ParseUseStatement()
     use_statement_node->children.push_back(alias_name_node);
     return use_statement_node;
   }
-  else
+
+  if (block_kind != NodeKind::FunctionDefinitionStatement)
   {
-    if (block_kind != NodeKind::FunctionDefinitionStatement)
-    {
-      AddError("use-any statement only permitted at function scope");
-      // Move one token on so GoToNextStatement() can work properly
-      Next();
-      return nullptr;
-    }
-    use_statement_node->node_kind = NodeKind::UseAnyStatement;
+    AddError("use-any statement only permitted at function scope");
+    // Move one token on so GoToNextStatement() can work properly
     Next();
-    if (token_->kind != Token::Kind::SemiColon)
-    {
-      AddError("expected ';'");
-      return nullptr;
-    }
-    return use_statement_node;
+    return nullptr;
   }
+  use_statement_node->node_kind = NodeKind::UseAnyStatement;
+  Next();
+  if (token_->kind != Token::Kind::SemiColon)
+  {
+    AddError("expected ';'");
+    return nullptr;
+  }
+  return use_statement_node;
 }
 
 NodePtr Parser::ParseVarStatement()

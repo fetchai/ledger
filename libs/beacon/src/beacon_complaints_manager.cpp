@@ -44,15 +44,16 @@ void ComplaintsManager::AddComplaintAgainst(MuddleAddress const &complaint_addre
   complaints_counter_[complaint_address].insert(address_);
 }
 
-void ComplaintsManager::AddComplaintsFrom(ComplaintsMessage const &msg,
-                                          MuddleAddress const &    from_id)
+void ComplaintsManager::AddComplaintsFrom(MuddleAddress const &                    from,
+                                          std::unordered_set<MuddleAddress> const &complaints,
+                                          std::set<MuddleAddress> const &          committee)
 {
   FETCH_LOCK(mutex_);
   // Check if we have received a complaints message from this node before and if not log that we
   // received a complaint message
-  if (complaints_received_.find(from_id) == complaints_received_.end())
+  if (complaints_received_.find(from) == complaints_received_.end())
   {
-    complaints_received_.insert(from_id);
+    complaints_received_.insert(from);
   }
   else
   {
@@ -60,19 +61,22 @@ void ComplaintsManager::AddComplaintsFrom(ComplaintsMessage const &msg,
     return;
   }
 
-  for (auto const &bad_node : msg.complaints())
+  for (auto const &bad_node : complaints)
   {
-    complaints_counter_[bad_node].insert(from_id);
-    // If a node receives complaint against itself then store in complaints from
-    // for answering later
-    if (bad_node == address_)
+    if (committee.find(bad_node) != committee.end())
     {
-      complaints_from_.insert(from_id);
+      complaints_counter_[bad_node].insert(from);
+      // If a node receives complaint against itself then store in complaints from
+      // for answering later
+      if (bad_node == address_)
+      {
+        complaints_from_.insert(from);
+      }
     }
   }
 }
 
-void ComplaintsManager::Finish(std::set<Identity> const &cabinet)
+void ComplaintsManager::Finish(std::set<MuddleAddress> const &cabinet)
 {
   FETCH_LOCK(mutex_);
   if (!finished_)
@@ -80,10 +84,9 @@ void ComplaintsManager::Finish(std::set<Identity> const &cabinet)
     // Add miners which did not send a complaint to complaints
     for (auto const &cab : cabinet)
     {
-      if (cab.identifier() != address_ &&
-          complaints_received_.find(cab.identifier()) == complaints_received_.end())
+      if (cab != address_ && complaints_received_.find(cab) == complaints_received_.end())
       {
-        complaints_.insert(cab.identifier());
+        complaints_.insert(cab);
       }
     }
     // All miners who have received threshold or more complaints are also disqualified
@@ -175,7 +178,8 @@ void ComplaintAnswersManager::AddComplaintAnswerFrom(MuddleAddress const &from,
   complaint_answers_received_.insert({from, complaint_answer});
 }
 
-void ComplaintAnswersManager::Finish(std::set<Identity> const &cabinet, Identity const &node_id)
+void ComplaintAnswersManager::Finish(std::set<MuddleAddress> const &cabinet,
+                                     MuddleAddress const &          node_id)
 {
   FETCH_LOCK(mutex_);
   if (!finished_)
@@ -187,9 +191,9 @@ void ComplaintAnswersManager::Finish(std::set<Identity> const &cabinet, Identity
       {
         continue;
       }
-      if (complaint_answers_received_.find(cab.identifier()) == complaint_answers_received_.end())
+      if (complaint_answers_received_.find(cab) == complaint_answers_received_.end())
       {
-        complaints_.insert(cab.identifier());
+        complaints_.insert(cab);
       }
     }
     finished_ = true;
@@ -228,10 +232,10 @@ void QualComplaintsManager::Reset()
   complaints_received_.clear();
 }
 
-void QualComplaintsManager::AddComplaintAgainst(MuddleAddress const &id)
+void QualComplaintsManager::AddComplaintAgainst(MuddleAddress const &complainer_address)
 {
   FETCH_LOCK(mutex_);
-  complaints_.insert(id);
+  complaints_.insert(complainer_address);
 }
 
 std::set<QualComplaintsManager::MuddleAddress> QualComplaintsManager::Complaints() const
@@ -242,15 +246,15 @@ std::set<QualComplaintsManager::MuddleAddress> QualComplaintsManager::Complaints
 }
 
 void QualComplaintsManager::AddComplaintsFrom(
-    MuddleAddress const &id, std::unordered_map<MuddleAddress, ExposedShares> const &complaints)
+    MuddleAddress const &from, std::unordered_map<MuddleAddress, ExposedShares> const &complaints)
 {
   FETCH_LOCK(mutex_);
-  if (complaints_received_.find(id) != complaints_received_.end())
+  if (complaints_received_.find(from) != complaints_received_.end())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Duplicate qual complaints received. Discarding.");
     return;
   }
-  complaints_received_.insert({id, complaints});
+  complaints_received_.insert({from, complaints});
 }
 
 void QualComplaintsManager::Finish(std::set<MuddleAddress> const &qual,

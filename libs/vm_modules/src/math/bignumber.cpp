@@ -52,7 +52,7 @@ T UInt256Wrapper::ToPrimitive(VM * /*vm*/, Ptr<UInt256Wrapper> const &a)
   {
     uint8_t bytes[sizeof(T)];
     T       value;
-  } x;
+  } x{};
   for (uint64_t i = 0; i < sizeof(T); ++i)
   {
     x.bytes[i] = a->number_[i];

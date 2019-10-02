@@ -77,7 +77,8 @@ public:
 private:
   using Variant = variant::Variant;
 
-  http::HTTPResponse GetGeneralStatus(http::ViewParameters const &, http::HTTPRequest const &)
+  http::HTTPResponse GetGeneralStatus(http::ViewParameters const & /*params*/,
+                                      http::HTTPRequest const & /*request*/)
   {
     // create the system response
     Variant response    = Variant::Object();
@@ -159,7 +160,7 @@ private:
       block["miner"]        = b->body.miner.display();
       block["blockNumber"]  = b->body.block_number;
       block["timestamp"]    = b->body.timestamp;
-      block["entropy"]      = b->body.entropy;
+      block["entropy"]      = b->body.block_entropy.EntropyAsU64();
       block["weight"]       = b->weight;
 
       if (include_transactions)

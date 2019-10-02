@@ -54,7 +54,7 @@ public:
 
   struct Request
   {
-    ConnectionHandleType handle;
+    ConnectionHandleType handle{};
     MessageType          message;
   };
 

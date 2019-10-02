@@ -37,6 +37,7 @@ namespace rpc {
 class Client : protected service::ServiceClientInterface
 {
 public:
+  using Address       = muddle::Address;
   using ProtocolId    = service::ProtocolHandlerType;
   using FunctionId    = service::FunctionHandlerType;
   using Serializer    = service::SerializerType;

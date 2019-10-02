@@ -42,7 +42,7 @@ StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier
   auto const num_shards = static_cast<uint32_t>(shards_.size());
   for (uint32_t i = 0; i < num_shards; ++i)
   {
-    if (shards_.bit(i))
+    if (shards_.bit(i) != 0u)
     {
       storage_.Lock(i);
     }
@@ -54,7 +54,7 @@ StateSentinelAdapter::~StateSentinelAdapter()
   auto const num_shards = static_cast<uint32_t>(shards_.size());
   for (uint32_t i = 0; i < num_shards; ++i)
   {
-    if (shards_.bit(i))
+    if (shards_.bit(i) != 0u)
     {
       storage_.Unlock(i);
     }

@@ -28,3 +28,4 @@ add_test_target()
 
 # Example targets
 add_subdirectory(examples)
+add_subdirectory(benchmark)

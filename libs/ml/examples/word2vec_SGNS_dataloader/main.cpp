@@ -65,7 +65,7 @@ std::pair<std::string, std::string> Model(fetch::ml::Graph<TensorType> &g, SizeT
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
                     GraphW2VLoader<DataType> const &dl, std::string const &word0,
                     std::string const &word1, std::string const &word2, std::string const &word3,
-                    SizeType K, const std::string &analogies_test_file)
+                    SizeType K, std::string const &analogies_test_file)
 {
   // first get hold of the skipgram layer by searching the return name in the graph
   std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
@@ -103,10 +103,11 @@ struct TrainingParams
   SizeType embedding_size  = 500;    // dimension of embedding vec
   SizeType training_epochs = 1;
   SizeType test_frequency  = 1;
-  DataType starting_learning_rate_per_sample =
-      0.0025f;  // these are the learning rates we have for each sample
-  DataType ending_learning_rate_per_sample = 0.0001f;
-  DataType starting_learning_rate;  // this is the true learning rate set for the graph training
+  // these are the learning rates we have for each sample
+  DataType starting_learning_rate_per_sample = 0.0025f;
+  DataType ending_learning_rate_per_sample   = 0.0001f;
+  // this is the true learning rate set for the graph training
+  DataType starting_learning_rate;
   DataType ending_learning_rate;
 
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{

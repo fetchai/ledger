@@ -134,7 +134,7 @@ TEST(versioned_random_access_stack_gtest, storage_of_large_objects)
   std::vector<Element> reference;
 
   auto newElement = [&stack, &reference, &lfg]() -> Element {
-    Element e;
+    Element e{};
     e.a = int(lfg());
     e.b = uint8_t(lfg());
     e.c = uint64_t(lfg());

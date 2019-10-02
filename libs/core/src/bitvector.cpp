@@ -74,14 +74,12 @@ bool BitVector::RemapTo(BitVector &dst) const
     dst = *this;
     return true;
   }
-  else if (dst.size() > size())
+  if (dst.size() > size())
   {
     return Expand(*this, dst);
   }
-  else
-  {
-    return Contract(*this, dst);
-  }
+
+  return Contract(*this, dst);
 }
 
 bool BitVector::Expand(BitVector const &src, BitVector &dst)
@@ -427,7 +425,7 @@ std::ostream &operator<<(std::ostream &s, BitVector const &b)
 #if 1
   for (std::size_t i = 0; i < b.size(); ++i)
   {
-    if (i && ((i % 10) == 0))
+    if ((i != 0u) && ((i % 10) == 0))
     {
       s << ' ';
     }

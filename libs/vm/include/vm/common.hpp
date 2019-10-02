@@ -240,7 +240,7 @@ struct FunctionInfo
   FunctionKind function_kind;
   std::string  unique_id;
   Handler      handler;
-  ChargeAmount static_charge;
+  ChargeAmount static_charge{};
 };
 using FunctionInfoArray = std::vector<FunctionInfo>;
 
@@ -267,7 +267,7 @@ public:
       return it->second;
     }
 
-    return TypeIndex(typeid(void ***));
+    return {typeid(void ***)};
   }
 
 private:

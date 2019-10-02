@@ -23,7 +23,6 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "metrics/metrics.hpp"
 
 #include <cstddef>
 #include <thread>
@@ -62,8 +61,6 @@ TransactionProcessor::~TransactionProcessor()
 
 void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
 {
-  FETCH_METRIC_TX_SUBMITTED(tx->digest());
-
   FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Input Transaction: 0x", tx->digest().ToHex());
 
   // dispatch the transaction to the storage engine
@@ -77,8 +74,6 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());
     return;
   }
-
-  FETCH_METRIC_TX_STORED(tx->digest());
 
   switch (tx->contract_mode())
   {
@@ -111,8 +106,6 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
 
     break;
   }
-
-  FETCH_METRIC_TX_QUEUED(tx->digest());
 }
 
 void TransactionProcessor::ThreadEntryPoint()
@@ -134,8 +127,6 @@ void TransactionProcessor::ThreadEntryPoint()
     for (auto const &summary : new_txs)
     {
       packer_.EnqueueTransaction(summary);
-
-      FETCH_METRIC_TX_QUEUED(summary.transaction_hash);
     }
   }
 }

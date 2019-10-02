@@ -75,7 +75,7 @@ public:
     {
       double   d;
       uint32_t i[2];
-    } conv;
+    } conv{};
 
     conv.i[E_LITTLE_ENDIAN]     = static_cast<uint32_t>(in);
     conv.i[1 - E_LITTLE_ENDIAN] = 0;
@@ -172,7 +172,7 @@ public:
     {
       double   d;
       uint32_t i[2];
-    } conv;
+    } conv{};
 
     conv.i[E_LITTLE_ENDIAN]     = static_cast<uint32_t>(x * a_ + b_);
     conv.i[1 - E_LITTLE_ENDIAN] = 0;

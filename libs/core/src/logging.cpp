@@ -276,10 +276,8 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
 
     return *logger;
   }
-  else
-  {
-    return *(it->second);
-  }
+
+  return *(it->second);
 }
 
 }  // namespace

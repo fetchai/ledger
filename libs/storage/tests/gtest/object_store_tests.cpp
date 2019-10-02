@@ -36,8 +36,8 @@ using namespace fetch::testing;
  */
 struct TestSerDeser
 {
-  int         first;
-  uint64_t    second;
+  int         first{};
+  uint64_t    second{};
   std::string third;
 
   /**
@@ -329,7 +329,7 @@ TEST(storage_object_store_with_STL_gtest,
       objects.push_back(test);
     }
 
-    for (std::uint8_t root_size_in_bits{1}; root_size_in_bits <= 8; ++root_size_in_bits)
+    for (uint8_t root_size_in_bits{1}; root_size_in_bits <= 8; ++root_size_in_bits)
     {
       std::vector<testType> objectsCopy;
 

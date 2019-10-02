@@ -56,7 +56,7 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
       --i;
       break;
     }
-    else if (c == details::INVALID)
+    if (c == details::INVALID)
     {
       return ConstByteArray();
     }

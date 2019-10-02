@@ -24,7 +24,7 @@
 namespace fetch {
 namespace crypto {
 
-bool Verify(byte_array::ConstByteArray identity, byte_array::ConstByteArray const &data,
+bool Verify(byte_array::ConstByteArray key, byte_array::ConstByteArray const &data,
             byte_array::ConstByteArray const &signature);
 
 class Verifier
