@@ -16,22 +16,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle_fake.hpp"
+#include "beacon/block_entropy.hpp"
 
-namespace fetch {
-namespace muddle {
+using fetch::beacon::BlockEntropy;
 
-MuddlePtr CreateMuddleFake(NetworkId const &network, ProverPtr certificate,
-                           network::NetworkManager const &nm, std::string const &external_address)
+BlockEntropy::BlockEntropy() = default;
+
+BlockEntropy::Digest BlockEntropy::EntropyAsSHA256() const
 {
-  return std::make_shared<MuddleFake>(network, certificate, nm, true, true, external_address);
+  return crypto::Hash<crypto::SHA256>(group_signature /*.getStr()*/);
 }
 
-MuddlePtr CreateMuddleFake(char const network[4], ProverPtr certificate,
-                           network::NetworkManager const &nm, std::string const &external_address)
+// This will always be safe so long as the entropy function is properly sha256-ing
+uint64_t BlockEntropy::EntropyAsU64() const
 {
-  return CreateMuddleFake(NetworkId{network}, std::move(certificate), nm, external_address);
+  const Digest hash = EntropyAsSHA256();
+  return *reinterpret_cast<uint64_t const *>(hash.pointer());
 }
 
-}  // namespace muddle
-}  // namespace fetch
+void BlockEntropy::HashSelf()
+{
+  fetch::serializers::MsgPackSerializer serializer;
+  serializer << qualified;
+  serializer << group_public_key;
+  serializer << block_number;
+  digest = crypto::Hash<crypto::SHA256>(serializer.data());
+}
+
+bool BlockEntropy::IsAeonBeginning() const
+{
+  return !qualified.empty();
+}

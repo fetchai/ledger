@@ -16,22 +16,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle_fake.hpp"
+#include "beacon/dkg_output.hpp"
 
-namespace fetch {
-namespace muddle {
+using fetch::beacon::DkgOutput;
 
-MuddlePtr CreateMuddleFake(NetworkId const &network, ProverPtr certificate,
-                           network::NetworkManager const &nm, std::string const &external_address)
+DkgOutput::DkgOutput()
 {
-  return std::make_shared<MuddleFake>(network, certificate, nm, true, true, external_address);
+  bn::initPairing();
+  group_public_key.clear();
+  private_key_share.clear();
 }
 
-MuddlePtr CreateMuddleFake(char const network[4], ProverPtr certificate,
-                           network::NetworkManager const &nm, std::string const &external_address)
-{
-  return CreateMuddleFake(NetworkId{network}, std::move(certificate), nm, external_address);
-}
+DkgOutput::DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares,
+                     PrivateKey  secret_share,  // NOLINT
+                     CabinetList qual_members)
+  : qual{std::move(qual_members)}
+  , group_public_key{std::move(group_key)}
+  , public_key_shares{std::move(key_shares)}
+  , private_key_share{secret_share}
+{}
 
-}  // namespace muddle
-}  // namespace fetch
+DkgOutput::DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members)
+  : DkgOutput{keys.group_public_key, keys.public_key_shares, keys.private_key_share,
+              std::move(qual_members)}
+{}

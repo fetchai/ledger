@@ -290,7 +290,7 @@ function (configure_vendor_targets)
 
   add_library(vendor-bls INTERFACE)
   target_link_libraries(vendor-bls INTERFACE vendor-bls-internal)
-  target_compile_definitions(vendor-bls INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
+  target_compile_definitions(vendor-bls INTERFACE)
 
   # Google Benchmark Do not build the google benchmark library tests
   if (FETCH_ENABLE_BENCHMARKS)

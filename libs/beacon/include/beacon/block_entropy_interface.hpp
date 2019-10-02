@@ -17,31 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/mcl_dkg.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
 namespace beacon {
 
-struct DkgOutput
+class BlockEntropyInterface
 {
-  using PublicKey         = crypto::mcl::PublicKey;
-  using PrivateKey        = crypto::mcl::PrivateKey;
-  using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using CabinetList       = std::set<MuddleAddress>;
+public:
+  using Digest = byte_array::ConstByteArray;
 
-  DkgOutput();
+  BlockEntropyInterface()          = default;
+  virtual ~BlockEntropyInterface() = default;
 
-  DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares,
-            PrivateKey  secret_share,  // NOLINT
-            CabinetList qual_members);
-
-  DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members);
-
-  CabinetList            qual{};
-  PublicKey              group_public_key;
-  std::vector<PublicKey> public_key_shares{};
-  PrivateKey             private_key_share;
+  virtual Digest   EntropyAsSHA256() const = 0;
+  virtual uint64_t EntropyAsU64() const    = 0;
 };
 
 }  // namespace beacon
