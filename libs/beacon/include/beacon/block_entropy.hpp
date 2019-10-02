@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_manager.hpp"
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
