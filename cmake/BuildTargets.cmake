@@ -124,11 +124,6 @@ macro (setup_compiler)
     endif ()
   endif ()
 
-  # add a metric flag if needed
-  if (FETCH_ENABLE_METRICS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_METRICS")
-  endif (FETCH_ENABLE_METRICS)
-
   # add the backtrace flat
   if (FETCH_ENABLE_BACKTRACE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE")

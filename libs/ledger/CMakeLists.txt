@@ -25,7 +25,6 @@ target_link_libraries(fetch-ledger
                              fetch-miner
                              fetch-vm
                              fetch-vm-modules
-                             fetch-metrics
                              fetch-moment
                              fetch-beacon
                              fetch-bloomfilter

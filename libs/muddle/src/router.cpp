@@ -831,6 +831,12 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       return;
     }
 
+    if (kademlia_routing_)
+    {
+      handle = LookupKademliaClosestHandle(packet->GetTarget());
+      return;
+    }
+
     // if direct routing fails then randomly select a handle. In future a better routing scheme
     // should be implemented.
     handle = LookupRandomHandle(packet->GetTargetRaw());

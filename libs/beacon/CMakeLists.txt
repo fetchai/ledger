@@ -24,3 +24,4 @@ target_link_libraries(fetch-beacon
 
 # Test targets
 add_test_target()
+add_subdirectory(benchmark)

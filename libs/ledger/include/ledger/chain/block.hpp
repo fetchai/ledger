@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "address/address.hpp"
+#include "beacon/block_entropy.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/base_types.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
@@ -42,12 +43,13 @@ namespace ledger {
 class Block
 {
 public:
-  using Proof    = consensus::ProofOfWork;
-  using Slice    = std::vector<TransactionLayout>;
-  using Slices   = std::vector<Slice>;
-  using DAGEpoch = fetch::ledger::DAGEpoch;
-  using Hash     = Digest;
-  using Weight   = uint64_t;
+  using Proof        = consensus::ProofOfWork;
+  using Slice        = std::vector<TransactionLayout>;
+  using Slices       = std::vector<Slice>;
+  using DAGEpoch     = fetch::ledger::DAGEpoch;
+  using Hash         = Digest;
+  using Weight       = uint64_t;
+  using BlockEntropy = beacon::BlockEntropy;
 
   Block();
 
@@ -55,22 +57,25 @@ public:
 
   struct Body
   {
-    Digest   hash;               ///< The hash of the block
-    Digest   previous_hash;      ///< The hash of the previous block
-    Digest   merkle_hash;        ///< The merkle state hash across all shards
-    uint64_t block_number{0};    ///< The height of the block from genesis
-    Address  miner;              ///< The identity of the generated miner
-    uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
-    Slices   slices;             ///< The slice lists
-    DAGEpoch dag_epoch;          ///< DAG epoch containing information on new dag_nodes
-    uint64_t timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
-    uint64_t entropy{0u};        ///< Entropy that determines miner priority for the next block
+    Digest       hash;               ///< The hash of the block
+    Digest       previous_hash;      ///< The hash of the previous block
+    Digest       merkle_hash;        ///< The merkle state hash across all shards
+    uint64_t     block_number{0};    ///< The height of the block from genesis
+    Address      miner;              ///< The identity of the generated miner
+    uint32_t     log2_num_lanes{0};  ///< The log2(number of lanes)
+    Slices       slices;             ///< The slice lists
+    DAGEpoch     dag_epoch;          ///< DAG epoch containing information on new dag_nodes
+    uint64_t     timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
+    BlockEntropy block_entropy;      ///< Entropy that determines miner priority for the next block
   };
 
   /// @name Block Contents
   /// @{
   Body body;  ///< The core fields that make up a block
   /// @}
+
+  // TODO(HUT): Miners in qual must sign the block.
+  /* Digest miner_signature; */
 
   /// @name Proof of Work specifics
   /// @{
@@ -129,7 +134,7 @@ public:
     map.Append(SLICES, body.slices);
     map.Append(DAG_EPOCH, body.dag_epoch);
     map.Append(TIMESTAMP, body.timestamp);
-    map.Append(ENTROPY, body.entropy);
+    map.Append(ENTROPY, body.block_entropy);
   }
 
   template <typename MapDeserializer>
@@ -144,7 +149,7 @@ public:
     map.ExpectKeyGetValue(SLICES, body.slices);
     map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);
     map.ExpectKeyGetValue(TIMESTAMP, body.timestamp);
-    map.ExpectKeyGetValue(ENTROPY, body.entropy);
+    map.ExpectKeyGetValue(ENTROPY, body.block_entropy);
   }
 };
 

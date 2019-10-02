@@ -23,6 +23,7 @@
 #include <cstddef>
 #include <memory>
 #include <thread>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
