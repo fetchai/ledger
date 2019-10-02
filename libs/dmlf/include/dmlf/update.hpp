@@ -47,9 +47,9 @@ public:
   explicit Update()
     : stamp_{CurrentTime()}
   {}
-  explicit Update(const VectorTensorType &gradients)
+  explicit Update(VectorTensorType gradients)
     : stamp_{CurrentTime()}
-    , gradients_{gradients}
+    , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
   {}
 
