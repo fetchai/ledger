@@ -21,6 +21,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
+#include "ledger/storage_unit/transient_object_store.hpp"
 #include "ledger/transaction_verifier.hpp"
 #include "muddle/address.hpp"
 #include "network/details/thread_pool.hpp"
@@ -29,7 +30,6 @@
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/resource_mapper.hpp"
-#include "storage/transient_object_store.hpp"
 #include "vectorise/platform.hpp"
 
 #include <chrono>
