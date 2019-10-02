@@ -50,7 +50,7 @@ std::vector<std::string> VmWrapperEtch::Load(std::string source)
   status_ = VmWrapperInterface::COMPILED;
   return errors;
 }
-  void VmWrapperEtch::Execute(const std::string &entrypoint, const Params & /*params*/ )
+void VmWrapperEtch::Execute(const std::string &entrypoint, const Params & /*params*/)
 {
   status_ = VmWrapperInterface::RUNNING;
   std::string        error;

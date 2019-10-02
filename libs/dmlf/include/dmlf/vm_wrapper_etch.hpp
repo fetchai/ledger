@@ -42,19 +42,17 @@ public:
   using VM         = fetch::vm::VM;
   using Executable = fetch::vm::Executable;
 
-  VmWrapperEtch() = default;
+  VmWrapperEtch()           = default;
   ~VmWrapperEtch() override = default;
 
   std::vector<std::string> Setup(const Flags &flags) override;
   std::vector<std::string> Load(std::string source) override;
   void                     Execute(const std::string &entrypoint, const Params &params) override;
-  void                     SetStdout(OutputHandler) override;
-  void                     SetStdin(InputHandler) override
-  {}
-  void SetStderr(OutputHandler) override
+  void                     SetStdout(OutputHandler /*handler*/) override;
+  void                     SetStderr(OutputHandler /*handler*/) override
   {}
 
-  Status status(void) const override
+  Status status() const override
   {
     return status_;
   }
@@ -63,6 +61,7 @@ public:
   VmWrapperEtch &operator=(const VmWrapperEtch &other)  = delete;
   bool           operator==(const VmWrapperEtch &other) = delete;
   bool           operator<(const VmWrapperEtch &other)  = delete;
+
 protected:
 private:
   void DoOutput();

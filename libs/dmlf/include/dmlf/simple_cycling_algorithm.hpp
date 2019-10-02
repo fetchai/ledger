@@ -36,11 +36,11 @@ public:
   SimpleCyclingAlgorithm &operator=(const SimpleCyclingAlgorithm &other)  = delete;
   bool                    operator==(const SimpleCyclingAlgorithm &other) = delete;
   bool                    operator<(const SimpleCyclingAlgorithm &other)  = delete;
+
 protected:
 private:
   std::size_t next_output_index;
   std::size_t number_of_outputs_per_cycle;
-
 };
 
 }  // namespace dmlf

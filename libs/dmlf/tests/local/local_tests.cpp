@@ -19,10 +19,10 @@
 #include "gtest/gtest.h"
 
 #include "dmlf/filepassing_learner_networker.hpp"
-#include "dmlf/update_interface.hpp"
 #include "dmlf/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/update.hpp"
+#include "dmlf/update_interface.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
@@ -72,7 +72,7 @@ public:
     return r;
   }
 
-  bool work(void)
+  bool work()
   {
     bool result = false;
     while (produced < 10)
@@ -93,13 +93,13 @@ public:
     return result;
   }
 
-  void quit(void)
+  void quit()
   {
     Lock lock(mut);
     quitflag = true;
   }
 
-  void mt_work(void)
+  void mt_work()
   {
     while (true)
     {
@@ -260,7 +260,7 @@ public:
 
     Threads threads;
 
-    for (const auto & inst : insts)
+    for (const auto &inst : insts)
     {
       auto func = [inst]() { inst->mt_work(); };
 
@@ -269,7 +269,7 @@ public:
     }
     sleep(3);
 
-    for (const auto & inst : insts)
+    for (const auto &inst : insts)
     {
       inst->quit();
     }
@@ -336,7 +336,8 @@ TEST_F(UpdateSerialisationTests, basicPass)
   std::shared_ptr<fetch::dmlf::UpdateInterface> update_1 =
       std::make_shared<fetch::dmlf::Update<int>>(std::vector<int>{1, 2, 4});
   std::this_thread::sleep_for(1.54321s);
-  std::shared_ptr<fetch::dmlf::UpdateInterface> update_2 = std::make_shared<fetch::dmlf::Update<int>>();
+  std::shared_ptr<fetch::dmlf::UpdateInterface> update_2 =
+      std::make_shared<fetch::dmlf::Update<int>>();
 
   EXPECT_NE(update_1->TimeStamp(), update_2->TimeStamp());
   EXPECT_NE(update_1->Fingerprint(), update_2->Fingerprint());

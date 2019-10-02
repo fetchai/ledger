@@ -58,13 +58,15 @@ public:
   using Mutex = fetch::Mutex;
   using Lock  = std::unique_lock<Mutex>;
 
-  Muddle2LearnerNetworker(const std::string &cloud_config, std::size_t instance_number,
-                          const std::shared_ptr<NetworkManager> &netm = std::shared_ptr<NetworkManager>(),
-                          MuddleChannel                   channel_tmp = MuddleChannel::DEFAULT);
+  Muddle2LearnerNetworker(
+      const std::string &cloud_config, std::size_t instance_number,
+      const std::shared_ptr<NetworkManager> &netm        = std::shared_ptr<NetworkManager>(),
+      MuddleChannel                          channel_tmp = MuddleChannel::DEFAULT);
   ~Muddle2LearnerNetworker() override;
 
   void        pushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
-  void        pushUpdateType(const std::string &type, const std::shared_ptr<UpdateInterface> &update) override;
+  void        pushUpdateType(const std::string &                     type,
+                             const std::shared_ptr<UpdateInterface> &update) override;
   std::size_t getPeerCount() const override;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);
@@ -77,6 +79,7 @@ public:
   Muddle2LearnerNetworker &operator=(const Muddle2LearnerNetworker &other)  = delete;
   bool                     operator==(const Muddle2LearnerNetworker &other) = delete;
   bool                     operator<(const Muddle2LearnerNetworker &other)  = delete;
+
 protected:
   CertificatePtr CreateIdentity();
   CertificatePtr LoadIdentity(const std::string &privkey);

@@ -55,8 +55,9 @@ public:
 
   UpdateInterface(const UpdateInterface &other) = delete;
   UpdateInterface &operator=(const UpdateInterface &other)  = delete;
-  bool     operator==(const UpdateInterface &other) = delete;
-  bool     operator<(const UpdateInterface &other)  = delete;
+  bool             operator==(const UpdateInterface &other) = delete;
+  bool             operator<(const UpdateInterface &other)  = delete;
+
 protected:
 private:
 };

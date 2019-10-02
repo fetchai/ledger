@@ -22,9 +22,9 @@
 #include "core/mutex.hpp"
 
 #include "core/byte_array/byte_array.hpp"
+#include "dmlf/queue.hpp"
 #include "dmlf/queue_interface.hpp"
 #include "dmlf/shuffle_algorithm_interface.hpp"
-#include "dmlf/queue.hpp"
 #include "dmlf/type_map.hpp"
 
 namespace fetch {
@@ -35,12 +35,12 @@ class AbstractLearnerNetworker
 public:
   using Bytes = byte_array::ByteArray;
 
-  AbstractLearnerNetworker() = default;
+  AbstractLearnerNetworker()          = default;
   virtual ~AbstractLearnerNetworker() = default;
 
   // To implement
   virtual void        pushUpdate(const std::shared_ptr<UpdateInterface> &update) = 0;
-  virtual std::size_t getPeerCount() const                        = 0;
+  virtual std::size_t getPeerCount() const                                       = 0;
 
   template <typename T>
   void Initialize()
@@ -77,7 +77,8 @@ public:
   }
 
   // To implement - TOFIX not pure at moment
-  virtual void pushUpdateType(const std::string &/*key*/, const std::shared_ptr<UpdateInterface> &/*update*/){};
+  virtual void pushUpdateType(const std::string & /*key*/,
+                              const std::shared_ptr<UpdateInterface> & /*update*/){};
 
   template <typename T>
   void RegisterUpdateType(std::string key)
@@ -120,9 +121,10 @@ public:
   AbstractLearnerNetworker &operator=(const AbstractLearnerNetworker &other)  = delete;
   bool                      operator==(const AbstractLearnerNetworker &other) = delete;
   bool                      operator<(const AbstractLearnerNetworker &other)  = delete;
+
 protected:
   std::shared_ptr<ShuffleAlgorithmInterface> alg;                          // used by descendents
-  void                               NewMessage(const Bytes &msg)  // called by descendents
+  void                                       NewMessage(const Bytes &msg)  // called by descendents
   {
     Lock l{queue_m_};
     throw_ifnot_initialized_();
@@ -151,15 +153,15 @@ protected:
   }
 
 private:
-  using Mutex     = fetch::Mutex;
-  using Lock      = std::unique_lock<Mutex>;
+  using Mutex             = fetch::Mutex;
+  using Lock              = std::unique_lock<Mutex>;
   using QueueInterfacePtr = std::shared_ptr<QueueInterface>;
   using QueueInterfaceMap = std::unordered_map<std::string, QueueInterfacePtr>;
 
-  QueueInterfacePtr     queue_;
-  mutable Mutex queue_m_;
-  QueueInterfaceMap     queue_map_;
-  mutable Mutex queue_map_m_;
+  QueueInterfacePtr queue_;
+  mutable Mutex     queue_m_;
+  QueueInterfaceMap queue_map_;
+  mutable Mutex     queue_map_m_;
 
   TypeMap<> update_types_;
 

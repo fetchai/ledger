@@ -42,11 +42,11 @@ public:
 
   ShuffleAlgorithmInterface(const ShuffleAlgorithmInterface &other) = delete;
   ShuffleAlgorithmInterface &operator=(const ShuffleAlgorithmInterface &other)  = delete;
-  bool               operator==(const ShuffleAlgorithmInterface &other) = delete;
-  bool               operator<(const ShuffleAlgorithmInterface &other)  = delete;
+  bool                       operator==(const ShuffleAlgorithmInterface &other) = delete;
+  bool                       operator<(const ShuffleAlgorithmInterface &other)  = delete;
+
 protected:
 private:
-
   std::size_t count;
 };
 

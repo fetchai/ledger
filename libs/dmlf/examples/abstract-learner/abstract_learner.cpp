@@ -90,7 +90,7 @@ int main(int /*argc*/, char ** /*argv*/)
   learner2->Initialize<Update<std::string>>();
   learner3->Initialize<Update<std::string>>();
 
-  int                      num_upds = 10;
+  int                              num_upds = 10;
   std::shared_ptr<UpdateInterface> upd;
   FETCH_LOG_INFO(LOGGING_NAME, "Updates to push:");
   for (int i = 0; i < num_upds; i++)
@@ -102,7 +102,7 @@ int main(int /*argc*/, char ** /*argv*/)
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "[learner2] Updates from FakeLearner:");
-  while (learner2->getUpdateCount())
+  while (learner2->getUpdateCount() > 0)
   {
     upd = learner2->getUpdate<Update<std::string>>();
     FETCH_LOG_INFO(LOGGING_NAME, "Update received ", upd->TimeStamp());
@@ -110,7 +110,7 @@ int main(int /*argc*/, char ** /*argv*/)
 
   FETCH_LOG_INFO(LOGGING_NAME, "[learner3] Updates from FakeLearner:");
 
-  while (learner3->getUpdateCount())
+  while (learner3->getUpdateCount() > 0)
   {
     upd = learner3->getUpdate<Update<std::string>>();
     FETCH_LOG_INFO(LOGGING_NAME, "Update received ", upd->TimeStamp());

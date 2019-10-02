@@ -33,11 +33,11 @@
 //#include "vm/vm.hpp"
 //#include "vm_modules/vm_factory.hpp"
 #include "dmlf/filepassing_learner_networker.hpp"
-#include "dmlf/update_interface.hpp"
 #include "dmlf/local_learner_networker.hpp"
 #include "dmlf/muddle2_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/update.hpp"
+#include "dmlf/update_interface.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
@@ -103,16 +103,17 @@ int                      main(int /*argc*/, char **argv)
 
   sleep(1);
 
+  int r;
   if (std::size_t(instance_number) == learner->actual->getUpdateCount())
   {
     std::cout << "yes" << std::endl;
-    return 0;
+    r = 0;
   }
   else
   {
     std::cout << "no" << std::endl;
-    return 1;
+    r = 1;
   }
 
-  return 0;
+  return r;
 }
