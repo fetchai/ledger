@@ -41,7 +41,7 @@ public:
 
   /// @name Entropy Generator
   /// @{
-  virtual Status GenerateEntropy(uint64_t block_number, BlockEntropy &entropy) = 0;
+  virtual Status GenerateEntropy(uint64_t block_number, beacon::BlockEntropy &entropy) = 0;
   /// @}
 };
 
