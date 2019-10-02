@@ -52,6 +52,8 @@ public:
   using MuddleEndpoint = muddle::MuddleEndpoint;
   using Address        = muddle::Address;
 
+  static constexpr char const *LOGGING_NAME = "StorageUnitClient";
+
   // Construction / Destruction
   StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards, uint32_t log2_num_lanes);
   StorageUnitClient(StorageUnitClient const &) = delete;

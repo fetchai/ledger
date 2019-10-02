@@ -326,9 +326,6 @@ def main():
         'CMAKE_BUILD_TYPE': args.build_type,
     }
 
-    if args.metrics:
-        options['FETCH_ENABLE_METRICS'] = 1
-
     if args.build or args.lint or args.all:
         cmake_configure(project_root, build_root, options)
 
