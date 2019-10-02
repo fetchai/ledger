@@ -22,7 +22,6 @@
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
-#include "metrics/metrics.hpp"
 #include "muddle/address.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/milli_timer.hpp"
