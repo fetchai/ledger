@@ -23,8 +23,9 @@
 #include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-
 #include "ml/dataloaders/tensor_dataloader.hpp"
+#include "ml/optimisation/sgd_optimiser.hpp"
+
 #include <algorithm>
 #include <chrono>
 #include <ctime>
@@ -71,7 +72,7 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(
   dataloader_ptr->SetRandomMode(true);
   // Initialise Optimiser
   std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> optimiser_ptr =
-      std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
+      std::make_shared<fetch::ml::optimisers::SGDOptimiser<TensorType>>(
           std::shared_ptr<fetch::ml::Graph<TensorType>>(g_ptr), client_params.inputs_names,
           client_params.label_name, client_params.error_name, client_params.learning_rate);
 
@@ -124,7 +125,7 @@ std::vector<TensorType> Split(TensorType &data, SizeType number_of_parts)
   return TensorType::Split(data, splitting_points, axis);
 }
 
-void Shuffle(TensorType &data, TensorType &labels)
+void Shuffle(TensorType &data, TensorType &labels, SizeType const &seed = 54)
 {
   TensorType data_out   = data.Copy();
   TensorType labels_out = labels.Copy();
@@ -137,7 +138,7 @@ void Shuffle(TensorType &data, TensorType &labels)
     indices.push_back(i);
   }
 
-  fetch::random::LaggedFibonacciGenerator<> lfg(54);
+  fetch::random::LaggedFibonacciGenerator<> lfg(seed);
   fetch::random::Shuffle(lfg, indices, indices);
 
   for (SizeType i{0}; i < data.shape().at(axis); i++)
@@ -203,23 +204,26 @@ void SynchroniseWeights(std::vector<std::shared_ptr<TrainingClient<TensorType>>>
 
 int main(int ac, char **av)
 {
-  if (ac < 3)
+  if (ac != 5)
   {
     std::cout << "Usage : " << av[0] << " PATH/TO/boston_data.csv PATH/TO/boston_label.csv"
               << std::endl;
     return 1;
   }
 
+  SizeType seed = strtoul(av[3], NULL, 10);
+  DataType learning_rate = static_cast<DataType >(strtof(av[4], NULL));
+
   CoordinatorParams      coord_params;
   ClientParams<DataType> client_params;
 
-  SizeType number_of_clients                    = 5;
-  SizeType number_of_rounds                     = 50;
+  SizeType number_of_clients                    = 6;
+  SizeType number_of_rounds                     = 200;
   coord_params.mode                             = CoordinatorMode::ASYNCHRONOUS;
-  coord_params.iterations_count                 = 20;
+  coord_params.iterations_count                 = 16;  // should be n_data / batch_size
   coord_params.number_of_peers                  = 3;
   client_params.batch_size                      = 32;
-  client_params.learning_rate                   = static_cast<DataType>(.001f);
+  client_params.learning_rate                   = learning_rate;
   float                       test_set_ratio    = 0.00f;
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
@@ -228,7 +232,7 @@ int main(int ac, char **av)
   TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(av[2]).Transpose();
 
   // Shuffle data
-  Shuffle(data_tensor, label_tensor);
+  Shuffle(data_tensor, label_tensor, seed);
 
   // Split data
   std::vector<TensorType> data_tensors  = Split(data_tensor, number_of_clients);
@@ -237,8 +241,6 @@ int main(int ac, char **av)
   // Create coordinator
   std::shared_ptr<Coordinator<TensorType>> coordinator =
       std::make_shared<Coordinator<TensorType>>(coord_params);
-
-  std::cout << "FETCH Distributed BOSTON HOUSING Demo" << std::endl;
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i{0}; i < number_of_clients; ++i)
@@ -258,13 +260,20 @@ int main(int ac, char **av)
     clients[i]->SetCoordinator(coordinator);
   }
 
+  std::string homedir = getenv("HOME");
+  std::ofstream lossfile(homedir + "/Development/pysyft_distributed_w2v/results/fetch_" + std::to_string(number_of_clients) + "_SGD_" + std::to_string(float(learning_rate)) + "_" + std::to_string(seed) + "_FC3.csv", std::ofstream::out);
+
+  if (!lossfile)
+  {
+    throw std::runtime_error("Bad output file");
+  }
+
   // Main loop
   for (SizeType it{0}; it < number_of_rounds; ++it)
   {
     // Start all clients
     coordinator->Reset();
 
-    std::cout << "ROUND : " << it << "\t";
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
@@ -277,12 +286,21 @@ int main(int ac, char **av)
       t.join();
     }
 
-    std::cout << "Test losses:";
+    std::cout << it;
     for (auto &c : clients)
     {
       std::cout << "\t" << static_cast<double>(Test(c->GetModel(), data_tensor, label_tensor));
     }
     std::cout << std::endl;
+
+
+    lossfile << it;
+    for (auto &c : clients)
+    {
+      lossfile << "," << static_cast<double>(Test(c->GetModel(), data_tensor, label_tensor));
+    }
+    lossfile << std::endl;
+
 
     if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
     {
