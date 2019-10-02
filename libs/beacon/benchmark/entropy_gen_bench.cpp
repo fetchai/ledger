@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/create_new_certificate.hpp"
 #include "core/reactor.hpp"
-#include "crypto/ecdsa.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 
@@ -36,20 +36,6 @@ using namespace fetch::muddle;
 using namespace fetch::core;
 using namespace fetch::crypto;
 using namespace fetch::beacon;
-
-using fetch::crypto::Prover;
-
-ProverPtr CreateNewCertificate()
-{
-  using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::shared_ptr<Signer>;
-
-  SignerPtr certificate = std::make_shared<Signer>();
-
-  certificate->GenerateKeys();
-
-  return certificate;
-}
 
 // Dummy manifest cache - does nothing but is required for beacon service constructor
 class ManifestCacheInterfaceDummy : public fetch::ledger::ManifestCacheInterface
@@ -137,7 +123,6 @@ void EntropyGen(benchmark::State &state)
   BeaconService::CabinetMemberList                  cabinet;
   auto nodes_in_test = static_cast<uint64_t>(state.range(0));
 
-  // Setup here - not included in test timing
   {
     nodes.clear();
     nodes.resize(nodes_in_test);
@@ -188,8 +173,11 @@ void EntropyGen(benchmark::State &state)
     // Create previous entropy
     BlockEntropy prev_entropy;
     prev_entropy.group_signature = "Hello";
-    TrustedDealer dealer{cabinet, static_cast<uint32_t>(cabinet.size() / 2 + 1)};
+    TrustedDealer         dealer{cabinet, static_cast<uint32_t>(cabinet.size() / 2 + 1)};
+    std::vector<uint32_t> pending_nodes(static_cast<uint32_t>(cabinet.size()));
+    std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
     state.ResumeTiming();
+
     for (auto const &node : nodes)
     {
       node->ResetCabinet(cabinet, test_attempt * entropy_rounds,
@@ -198,11 +186,6 @@ void EntropyGen(benchmark::State &state)
     }
 
     // Wait for everyone to finish
-    std::unordered_set<uint32_t> pending_nodes;
-    for (uint32_t ii = 0; ii < cabinet.size(); ++ii)
-    {
-      pending_nodes.emplace(ii);
-    }
     while (!pending_nodes.empty())
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));

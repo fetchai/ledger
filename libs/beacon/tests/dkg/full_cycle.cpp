@@ -17,25 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/reactor.hpp"
-#include "core/serializers/counter.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "core/service_ids.hpp"
-#include "core/state_machine.hpp"
-#include "crypto/ecdsa.hpp"
-#include "crypto/prover.hpp"
 
 #include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
-#include "muddle/rpc/client.hpp"
-#include "muddle/rpc/server.hpp"
-#include "muddle/subscription.hpp"
-#include "network/generics/requesting_queue.hpp"
 
 #include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/block_entropy.hpp"
-#include "beacon/event_manager.hpp"
-#include "ledger/shards/manifest.hpp"
+#include "beacon/create_new_certificate.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
 
 #include <cstdint>
@@ -113,18 +100,6 @@ struct CabinetNode
   network::Uri GetHint() const
   {
     return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
-  }
-
-  static ProverPtr CreateNewCertificate()
-  {
-    using Signer    = fetch::crypto::ECDSASigner;
-    using SignerPtr = std::shared_ptr<Signer>;
-
-    SignerPtr certificate = std::make_shared<Signer>();
-
-    certificate->GenerateKeys();
-
-    return certificate;
   }
 };
 

@@ -17,20 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_setup_service.hpp"
+#include "beacon/create_new_certificate.hpp"
 #include "beacon/dkg_output.hpp"
 #include "core/reactor.hpp"
-#include "core/serializers/counter.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "core/service_ids.hpp"
-#include "crypto/ecdsa.hpp"
-#include "crypto/prover.hpp"
-#include "ledger/shards/manifest.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
 #include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rbc.hpp"
-#include "muddle/rpc/client.hpp"
-#include "muddle/rpc/server.hpp"
 
 #include "gtest/gtest.h"
 #include <iostream>
@@ -429,18 +422,6 @@ struct DkgMember
   virtual void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) = 0;
   virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables()          = 0;
   virtual bool                                       DkgFinished()               = 0;
-
-  static ProverPtr CreateNewCertificate()
-  {
-    using Signer    = fetch::crypto::ECDSASigner;
-    using SignerPtr = std::shared_ptr<Signer>;
-
-    SignerPtr certificate = std::make_shared<Signer>();
-
-    certificate->GenerateKeys();
-
-    return certificate;
-  }
 };
 
 struct FaultyDkgMember : DkgMember

@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,25 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_service.hpp"
+#include "beacon/create_new_certificate.hpp"
 
 namespace fetch {
 namespace beacon {
-
-/**
- * Class which allows the beacon service to take in pre-computed DKG public and private keys from a
- * trusted dealer, thereby circumventing the running of the DKG inorder to generate entropy
- */
-class TrustedDealerBeaconService : public BeaconService
+ProverPtr CreateNewCertificate()
 {
-public:
-  TrustedDealerBeaconService(MuddleInterface &               muddle,
-                             ledger::ManifestCacheInterface &manifest_cache,
-                             CertificatePtr certificate, SharedEventManager event_manager);
+  using Signer    = fetch::crypto::ECDSASigner;
+  using SignerPtr = std::shared_ptr<Signer>;
 
-  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy,
-                       DkgOutput output);
-};
+  SignerPtr certificate = std::make_shared<Signer>();
+
+  certificate->GenerateKeys();
+
+  return certificate;
+}
 }  // namespace beacon
 }  // namespace fetch

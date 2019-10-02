@@ -17,25 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_service.hpp"
+#include "crypto/ecdsa.hpp"
 
 namespace fetch {
 namespace beacon {
+using fetch::crypto::Prover;
+using ProverPtr = std::shared_ptr<Prover>;
 
 /**
- * Class which allows the beacon service to take in pre-computed DKG public and private keys from a
- * trusted dealer, thereby circumventing the running of the DKG inorder to generate entropy
+ * Helper function for tests to generate a new pair of
+ * ECDSA public and private keys
+ *
+ * @return Shared pointer to a Prover object
  */
-class TrustedDealerBeaconService : public BeaconService
-{
-public:
-  TrustedDealerBeaconService(MuddleInterface &               muddle,
-                             ledger::ManifestCacheInterface &manifest_cache,
-                             CertificatePtr certificate, SharedEventManager event_manager);
-
-  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy,
-                       DkgOutput output);
-};
+ProverPtr CreateNewCertificate();
 }  // namespace beacon
 }  // namespace fetch

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/create_new_certificate.hpp"
 #include "core/reactor.hpp"
-#include "crypto/ecdsa.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 
@@ -91,18 +91,6 @@ struct TrustedDealerCabinetNode
   network::Uri GetHint() const
   {
     return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
-  }
-
-  static ProverPtr CreateNewCertificate()
-  {
-    using Signer    = fetch::crypto::ECDSASigner;
-    using SignerPtr = std::shared_ptr<Signer>;
-
-    SignerPtr certificate = std::make_shared<Signer>();
-
-    certificate->GenerateKeys();
-
-    return certificate;
   }
 };
 
