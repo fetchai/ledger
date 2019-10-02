@@ -17,6 +17,9 @@ nodes/
 /docker-images/
 docker_ccache/
 
+# Bazel Files
+bazel-*
+
 # Legacy Editors
 \#*#
 .\#*
