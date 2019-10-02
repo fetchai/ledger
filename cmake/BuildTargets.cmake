@@ -133,6 +133,8 @@ macro (setup_compiler)
     if (DW_LIB)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE_WITH_DW")
 
+      fetch_info("Linking to DW")
+
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldw -ldl")
     endif (DW_LIB)
   endif (FETCH_ENABLE_BACKTRACE)
