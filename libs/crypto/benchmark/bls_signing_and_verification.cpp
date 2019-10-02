@@ -52,8 +52,7 @@ ConstByteArray GenerateRandomData(size_t length)
 
 void SignBLSSignature(benchmark::State &state)
 {
-  bn::initPairing();
-  // Generate a random message
+  fetch::crypto::mcl::details::MCLInitialiser();
 
   // Create keys
   auto     committee_size = static_cast<uint32_t>(state.range(0));
@@ -77,7 +76,7 @@ void SignBLSSignature(benchmark::State &state)
 
 void VerifyBLSSignature(benchmark::State &state)
 {
-  bn::initPairing();
+  fetch::crypto::mcl::details::MCLInitialiser();
   bn::G2 generator;
   fetch::crypto::mcl::SetGenerator(generator);
 
@@ -107,7 +106,7 @@ void VerifyBLSSignature(benchmark::State &state)
 
 void ComputeGroupSignature(benchmark::State &state)
 {
-  bn::initPairing();
+  fetch::crypto::mcl::details::MCLInitialiser();
 
   // Create keys
   auto     committee_size = static_cast<uint32_t>(state.range(0));
