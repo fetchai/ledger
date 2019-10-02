@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/block_entropy.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
@@ -40,7 +41,7 @@ public:
 
   /// @name Entropy Generator
   /// @{
-  virtual Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) = 0;
+  virtual Status GenerateEntropy(uint64_t block_number, BlockEntropy &entropy) = 0;
   /// @}
 };
 

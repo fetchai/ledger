@@ -28,6 +28,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 static const std::chrono::milliseconds POLL_INTERVAL{15};
 
@@ -58,6 +59,22 @@ bool Reactor::Attach(WeakRunnable runnable)
   }
 
   return success;
+}
+
+bool Reactor::Attach(std::vector<WeakRunnable> runnables)
+{
+  bool success{false};
+  for (auto const &runnable : runnables)
+  {
+    success = Attach(runnable);
+
+    if (!success)
+    {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 bool Reactor::Detach(Runnable const &runnable)

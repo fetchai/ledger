@@ -67,6 +67,8 @@ public:
   CommitteePtr BuildCommittee(Block const &current);
   /// @}
 
+  uint32_t BlockInterval();
+
   // Accessors for the executor
   StakeUpdateQueue &      update_queue();
   StakeUpdateQueue const &update_queue() const;

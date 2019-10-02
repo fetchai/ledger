@@ -207,10 +207,6 @@ int main(int argc, char **argv)
 
   try
   {
-#ifdef FETCH_ENABLE_METRICS
-    fetch::metrics::Metrics::Instance().ConfigureFileHandler("metrics.csv");
-#endif  // FETCH_ENABLE_METRICS
-
     Settings settings{};
     if (!settings.Update(argc, argv))
     {
