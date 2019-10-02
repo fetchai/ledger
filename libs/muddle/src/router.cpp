@@ -110,20 +110,6 @@ bool operator==(Packet::RawAddress const &lhs, Packet::Address const &rhs)
   return CompareAddress(lhs.data(), rhs.pointer());
 }
 
-/**
- * Convert a raw address into a byte array
- *
- * @param addr The reference to the address to convert
- * @return The converted (output) byte array
- */
-ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
-{
-  ByteArray buffer;
-  buffer.Resize(addr.size());
-  std::memcpy(buffer.pointer(), addr.data(), addr.size());
-  return {std::move(buffer)};
-}
-
 template <typename T>
 ConstByteArray EncodePayload(T const &msg)
 {
@@ -617,7 +603,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
   if (display)
   {
     FETCH_LOG_INFO(logging_name_, "Adding ", ((direct) ? "direct" : "normal"),
-                   " route for: ", ToBase64(ToConstByteArray(address)), " (handle: ", handle, ")");
+                   " route for: ", ConvertAddress(address).ToBase64(), " (handle: ", handle, ")");
   }
 
   return status;
