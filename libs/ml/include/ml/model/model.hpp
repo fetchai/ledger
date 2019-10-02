@@ -23,6 +23,7 @@
 #include "ml/ops/loss_functions/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
+#include "ml/utilities/graph_builder.hpp"
 
 #include <utility>
 
@@ -40,24 +41,27 @@ public:
   using DataLoaderType    = dataloaders::DataLoader<TensorType, TensorType>;
   using OptimiserType     = optimisers::OptimiserType;
   using GraphPtrType      = typename std::shared_ptr<GraphType>;
-  using DataLoaderPtrType = typename std::unique_ptr<DataLoaderType>;
-  using OptimiserPtrType  = typename std::unique_ptr<optimisers::Optimiser<TensorType>>;
+  using DataLoaderPtrType = typename std::shared_ptr<DataLoaderType>;
+  using OptimiserPtrType  = typename std::shared_ptr<optimisers::Optimiser<TensorType>>;
 
   explicit Model(ModelConfig<DataType> model_config = ModelConfig<DataType>())
     : model_config_(std::move(model_config))
   {}
 
   void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
-  void SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr);
+  void SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr);
 
   virtual void Train(SizeType n_steps);
   virtual void Train(SizeType n_steps, DataType &loss);
   virtual void Test(DataType &test_loss);
   virtual void Predict(TensorType &input, TensorType &output);
 
+  template <typename X, typename D>
+  friend struct serializers::MapSerializer;
+
 protected:
   ModelConfig<DataType> model_config_;
-  GraphPtrType          graph_ptr_ = std::make_unique<GraphType>();
+  GraphPtrType          graph_ptr_ = std::make_shared<GraphType>();
   DataLoaderPtrType     dataloader_ptr_;
   OptimiserPtrType      optimiser_ptr_;
 
@@ -145,7 +149,7 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
  * @param dataloader_ptr
  */
 template <typename TensorType>
-void Model<TensorType>::SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr)
+void Model<TensorType>::SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr)
 {
   dataloader_ptr_ = std::move(dataloader_ptr);
 }
@@ -272,4 +276,91 @@ void Model<TensorType>::PrintStats(SizeType epoch, DataType loss, DataType test_
 
 }  // namespace model
 }  // namespace ml
+
+namespace serializers {
+/**
+ * serializer for Model
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::model::Model<TensorType>, D>
+{
+  using Type       = ml::model::Model<TensorType>;
+  using DriverType = D;
+
+  // public member variables
+  static uint8_t const GRAPH            = 1;
+  static uint8_t const DATALOADER       = 2;
+  static uint8_t const OPTIMISER        = 3;
+  static uint8_t const INPUT_NODE_NAME  = 4;
+  static uint8_t const LABEL_NODE_NAME  = 5;
+  static uint8_t const OUTPUT_NODE_NAME = 6;
+  static uint8_t const ERROR_NODE_NAME  = 7;
+
+  static uint8_t const LOSS_SET_FLAG      = 8;
+  static uint8_t const OPTIMISER_SET_FLAG = 9;
+  static uint8_t const COMPILED_FLAG      = 10;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(11);
+
+    // serialize the graph first
+    map.Append(GRAPH, sp.graph_ptr_->GetGraphSaveableParams());
+
+    auto loader_ptr =
+        std::dynamic_pointer_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>(
+            sp.dataloader_ptr_);
+    map.Append(DATALOADER, *loader_ptr);
+
+    auto optimiser_ptr = std::dynamic_pointer_cast<fetch::ml::optimisers::SGDOptimiser<TensorType>>(
+        sp.optimiser_ptr_);
+    map.Append(OPTIMISER, *optimiser_ptr);
+
+    map.Append(INPUT_NODE_NAME, sp.input_);
+    map.Append(LABEL_NODE_NAME, sp.label_);
+    map.Append(OUTPUT_NODE_NAME, sp.output_);
+    map.Append(ERROR_NODE_NAME, sp.error_);
+
+    map.Append(LOSS_SET_FLAG, sp.loss_set_);
+    map.Append(OPTIMISER_SET_FLAG, sp.optimiser_set_);
+    map.Append(COMPILED_FLAG, sp.compiled_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    // deserialize the graph first
+    fetch::ml::GraphSaveableParams<TensorType> gsp;
+    map.ExpectKeyGetValue(GRAPH, gsp);
+    auto new_graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
+    ml::utilities::BuildGraph(gsp, new_graph_ptr);
+    sp.graph_ptr_ = new_graph_ptr;
+
+    auto loader_ptr = std::make_shared<ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
+    map.ExpectKeyGetValue(DATALOADER, *loader_ptr);
+    sp.dataloader_ptr_ = loader_ptr;
+
+    auto optimiser_ptr = std::make_shared<ml::optimisers::SGDOptimiser<TensorType>>();
+    map.ExpectKeyGetValue(OPTIMISER, *optimiser_ptr);
+    optimiser_ptr->SetGraph(sp.graph_ptr_);
+    sp.optimiser_ptr_ = optimiser_ptr;
+
+    map.ExpectKeyGetValue(INPUT_NODE_NAME, sp.input_);
+    map.ExpectKeyGetValue(LABEL_NODE_NAME, sp.label_);
+    map.ExpectKeyGetValue(OUTPUT_NODE_NAME, sp.output_);
+    map.ExpectKeyGetValue(ERROR_NODE_NAME, sp.error_);
+
+    // recover gradients and gradient trainables from graph
+    // recreate temporary variables arrays for optimiser
+    // sp.Init();
+
+    map.ExpectKeyGetValue(LOSS_SET_FLAG, sp.loss_set_);
+    map.ExpectKeyGetValue(OPTIMISER_SET_FLAG, sp.optimiser_set_);
+    map.ExpectKeyGetValue(COMPILED_FLAG, sp.compiled_);
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch

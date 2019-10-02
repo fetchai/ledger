@@ -36,7 +36,14 @@ public:
   using OptimiserType     = fetch::ml::optimisers::OptimiserType;
   using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
+  DNNClassifier()
+    : Model<TensorType>()
+  {}
+
   DNNClassifier(ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
+
+  template <typename X, typename D>
+  friend struct serializers::MapSerializer;
 };
 
 /**
@@ -76,4 +83,36 @@ DNNClassifier<TensorType>::DNNClassifier(ModelConfig<DataType>        model_conf
 
 }  // namespace model
 }  // namespace ml
+
+namespace serializers {
+/**
+ * serializer for DNNClassifier model
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::model::DNNClassifier<TensorType>, D>
+{
+  using Type                      = ml::model::DNNClassifier<TensorType>;
+  using DriverType                = D;
+  static uint8_t const BASE_MODEL = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+
+    // serialize the optimiser parent class
+    auto base_pointer = static_cast<ml::model::Model<TensorType> const *>(&sp);
+    map.Append(BASE_MODEL, *base_pointer);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::model::Model<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(BASE_MODEL, *base_pointer);
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch

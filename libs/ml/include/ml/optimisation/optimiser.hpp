@@ -57,6 +57,11 @@ public:
 
   virtual ~Optimiser() = default;
 
+  void SetGraph(std::shared_ptr<Graph<T>> graph)
+  {
+    graph_ = graph;
+  }
+
   /// DATA RUN INTERFACES ///
   DataType Run(std::vector<TensorType> const &data, TensorType const &labels,
                SizeType batch_size = SIZE_NOT_SET);
