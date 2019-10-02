@@ -102,7 +102,7 @@ int main(int /*argc*/, char ** /*argv*/)
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "[learner2] Updates from FakeLearner:");
-  while (learner2->getUpdateCount())
+  while (learner2->getUpdateCount() > 0)
   {
     upd = learner2->getUpdate<Update<std::string>>();
     FETCH_LOG_INFO(LOGGING_NAME, "Update received ", upd->TimeStamp());
@@ -110,7 +110,7 @@ int main(int /*argc*/, char ** /*argv*/)
 
   FETCH_LOG_INFO(LOGGING_NAME, "[learner3] Updates from FakeLearner:");
 
-  while (learner3->getUpdateCount())
+  while (learner3->getUpdateCount() > 0)
   {
     upd = learner3->getUpdate<Update<std::string>>();
     FETCH_LOG_INFO(LOGGING_NAME, "Update received ", upd->TimeStamp());

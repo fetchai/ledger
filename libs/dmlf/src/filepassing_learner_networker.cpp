@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 #include "dmlf/update_interface.hpp"
-#include <stdio.h>  //for remove( ) and rename( )
+#include <cstdio>  //for remove( ) and rename( )
 
 #include <chrono>
 
@@ -42,7 +42,7 @@ void FilepassingLearnerNetworker::setName(const std::string &name)
   name_  = name;
   dir_   = processNameToTargetDir(name);
   auto r = system((std::string("mkdir -vp ") + dir_).c_str()); // NOLINT
-  if (r)
+  if (r != 0)
   {
     std::cerr << "mkdir failed" << std::endl;
   }
@@ -87,9 +87,9 @@ FilepassingLearnerNetworker::~FilepassingLearnerNetworker()
   watcher_->join();
 }
 
-std::string FilepassingLearnerNetworker::processNameToTargetDir(const std::string &n)
+std::string FilepassingLearnerNetworker::processNameToTargetDir(const std::string &name)
 {
-  return std::string("/tmp/FilepassingLearnerNetworker/") + n + "/";
+  return std::string("/tmp/FilepassingLearnerNetworker/") + name + "/";
 }
 
 void FilepassingLearnerNetworker::addPeers(Peers new_peers)

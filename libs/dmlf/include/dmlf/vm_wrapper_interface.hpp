@@ -52,7 +52,7 @@ public:
   virtual void                     SetStdout(OutputHandler)                              = 0;
   virtual void                     SetStdin(InputHandler)                                = 0;
   virtual void                     SetStderr(OutputHandler)                              = 0;
-  virtual Status                   status(void) const                                    = 0;
+  virtual Status                   status() const                                        = 0;
 
   VmWrapperInterface(const VmWrapperInterface &other) = delete;
   VmWrapperInterface &operator=(const VmWrapperInterface &other)  = delete;

@@ -72,7 +72,7 @@ public:
     return r;
   }
 
-  bool work(void)
+  bool work()
   {
     bool result = false;
     while (produced < 10)
@@ -93,13 +93,13 @@ public:
     return result;
   }
 
-  void quit(void)
+  void quit()
   {
     Lock lock(mut);
     quitflag = true;
   }
 
-  void mt_work(void)
+  void mt_work()
   {
     while (true)
     {
