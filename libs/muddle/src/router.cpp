@@ -833,6 +833,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       return;
     }
 
+    // if kad routing is enabled we should use this to route packets
     if (kademlia_routing_)
     {
       handle = LookupKademliaClosestHandle(packet->GetTarget());
@@ -842,12 +843,6 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
         SendToConnection(handle, packet);
         return;
       }
-    }
-
-    if (kademlia_routing_)
-    {
-      handle = LookupKademliaClosestHandle(packet->GetTarget());
-      return;
     }
 
     // if direct routing fails then randomly select a handle. In future a better routing scheme
