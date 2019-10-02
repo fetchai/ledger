@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
 
 namespace fetch {
@@ -200,7 +199,7 @@ math::SizeType Vocab::IndexFromWord(std::string const &word) const
   return UNKNOWN_WORD;
 }
 
-Vocab::SetVocabHash()
+void Vocab::SetVocabHash()
 {
   crypto::SHA256 hasher{};
   for (auto const &item : reverse_vocab)
