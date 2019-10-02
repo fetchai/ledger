@@ -645,7 +645,8 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
     }
   }
 
-  FETCH_LOG_TRACE(logging_name_, "Routing decision: ", ConvertAddress(address).ToBase64(), " -> ", handle);
+  FETCH_LOG_TRACE(logging_name_, "Routing decision: ", ConvertAddress(address).ToBase64(), " -> ",
+                  handle);
 
   return handle;
 }

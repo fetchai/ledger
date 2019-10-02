@@ -303,7 +303,8 @@ void DirectMessageService::OnRoutingAccepted(Handle handle, PacketPtr const &pac
   FETCH_UNUSED(msg);
   FETCH_LOG_TRACE(logging_name_, "OnRoutingAccepted (conn: ", handle, ")");
 
-  auto const status = router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true, false);
+  auto const status =
+      router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true, false);
 
   switch (status)
   {
