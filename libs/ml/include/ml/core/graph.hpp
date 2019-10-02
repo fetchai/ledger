@@ -131,7 +131,7 @@ public:
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
 
   ////////////////////////////////////
-  /// public setters and accessors ///
+  /// public setters and accessors ///SGDOptimiser
   ////////////////////////////////////
 
   NodePtrType                   GetNode(std::string const &node_name) const;

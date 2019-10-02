@@ -314,6 +314,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
 
     map.Append(DATALOADER_TYPE, static_cast<uint8_t>(sp.dataloader_ptr_->LoaderCode()));
 
+    // serialize dataloader
     switch (sp.dataloader_ptr_->LoaderCode())
     {
     case ml::LoaderType::Tensor:
@@ -324,12 +325,21 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       map.Append(DATALOADER_PTR, *loader_ptr);
       break;
     }
-    case ml::LoaderType::CONTEXT:
+
+    case ml::LoaderType::C2V:
     case ml::LoaderType::MNIST:
     case ml::LoaderType::SGNS:
-      break;
+    {
+      throw std::runtime_error("Serialization for current dataloader type not implemented yet.");
     }
 
+    default:
+    {
+      throw std::runtime_error("Unknown dataloader type.");
+    }
+    }
+
+    // serialize optimiser
     map.Append(OPTIMISER_TYPE, static_cast<uint8_t>(sp.optimiser_ptr_->OptimiserCode()));
 
     switch (sp.optimiser_ptr_->OptimiserCode())
@@ -341,11 +351,19 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       map.Append(OPTIMISER_PTR, *optimiser_ptr);
       break;
     }
+
     case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::ADAM:
     case ml::OptimiserType::MOMENTUM:
     case ml::OptimiserType::RMSPROP:
-      break;
+    {
+      throw std::runtime_error("serialization for current optimiser type not implemented yet.");
+    }
+
+    default:
+    {
+      throw std::runtime_error("Unknown optimiser type.");
+    }
     }
 
     map.Append(INPUT_NODE_NAME, sp.input_);
@@ -368,6 +386,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     ml::utilities::BuildGraph(gsp, new_graph_ptr);
     sp.graph_ptr_ = new_graph_ptr;
 
+    // deserialize dataloader
     uint8_t loader_type;
     map.ExpectKeyGetValue(DATALOADER_TYPE, loader_type);
 
@@ -380,12 +399,20 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       sp.dataloader_ptr_.reset(loader_ptr);
       break;
     }
-    case ml::LoaderType::CONTEXT:
+    case ml::LoaderType::C2V:
     case ml::LoaderType::MNIST:
     case ml::LoaderType::SGNS:
-      break;
+    {
+      throw std::runtime_error("serialization for current dataloader type not implemented yet.");
     }
 
+    default:
+    {
+      throw std::runtime_error("Unknown dataloader type.");
+    }
+    }
+
+    // deserialize optimiser
     uint8_t optimiser_type;
     map.ExpectKeyGetValue(OPTIMISER_TYPE, optimiser_type);
 
@@ -399,21 +426,25 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       sp.optimiser_ptr_.reset(optimiser_ptr);
       break;
     }
+
     case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::ADAM:
     case ml::OptimiserType::MOMENTUM:
     case ml::OptimiserType::RMSPROP:
-      break;
+    {
+      throw std::runtime_error("serialization for current optimiser type not implemented yet.");
+    }
+
+    default:
+    {
+      throw std::runtime_error("Unknown optimiser type.");
+    }
     }
 
     map.ExpectKeyGetValue(INPUT_NODE_NAME, sp.input_);
     map.ExpectKeyGetValue(LABEL_NODE_NAME, sp.label_);
     map.ExpectKeyGetValue(OUTPUT_NODE_NAME, sp.output_);
     map.ExpectKeyGetValue(ERROR_NODE_NAME, sp.error_);
-
-    // recover gradients and gradient trainables from graph
-    // recreate temporary variables arrays for optimiser
-    // sp.Init();
 
     map.ExpectKeyGetValue(LOSS_SET_FLAG, sp.loss_set_);
     map.ExpectKeyGetValue(OPTIMISER_SET_FLAG, sp.optimiser_set_);
