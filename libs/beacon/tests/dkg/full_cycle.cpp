@@ -24,6 +24,7 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 
+#include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -32,7 +33,7 @@
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
+#include "beacon/block_entropy.hpp"
 #include "beacon/event_manager.hpp"
 #include "ledger/shards/manifest.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
@@ -100,6 +101,7 @@ struct CabinetNode
   DummyManifesttCache              manifest_cache;
   BeaconService                    beacon_service;
   crypto::Identity                 identity;
+  BlockEntropy                     genesis_block_entropy;
 
   CabinetNode(uint16_t port_number, uint16_t index)
     : event_manager{EventManager::New()}
@@ -107,7 +109,7 @@ struct CabinetNode
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
-    , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+    , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
     , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
     , identity{muddle_certificate->identity()}
   {
@@ -184,15 +186,20 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   uint64_t i = 0;
   for (auto &member : committee)
   {
-    all_cabinets[i % number_of_cabinets].insert(member->muddle_certificate->identity());
+    all_cabinets[i % number_of_cabinets].insert(
+        member->muddle_certificate->identity().identifier());
     ++i;
   }
 
   // Attaching the cabinet logic
   for (auto &member : committee)
   {
-    member->reactor.Attach(member->beacon_service.GetMainRunnable());
-    member->reactor.Attach(member->beacon_service.GetSetupRunnable());
+    auto runnables = member->beacon_service.GetWeakRunnables();
+
+    for (auto const &i : runnables)
+    {
+      member->reactor.Attach(i);
+    }
   }
 
   // Starting the beacon
@@ -208,6 +215,8 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
     rounds_finished[member->identity] = 0;
   }
 
+  // TODO(HUT): rewrite this test to check an unbroken stream of
+  // entropy is generated
   // Ready
   i = 0;
   while (i < static_cast<uint64_t>(total_renewals + 1))
@@ -222,7 +231,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
         member->beacon_service.StartNewCabinet(
             cabinet, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
             i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
-            static_cast<uint64_t>(std::time(nullptr)));
+            static_cast<uint64_t>(std::time(nullptr)), member->genesis_block_entropy);
       }
     }
 

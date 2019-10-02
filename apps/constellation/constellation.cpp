@@ -24,7 +24,6 @@
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
-#include "ledger/consensus/naive_entropy_generator.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
@@ -45,7 +44,6 @@
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
 
 #include <chrono>
@@ -214,18 +212,16 @@ muddle::MuddlePtr CreateBeaconNetwork(Config const &cfg, CertificatePtr certific
   return network;
 }
 
-BeaconServicePtr CreateBeaconService(Constellation::Config const &   cfg,
-                                     muddle::MuddlePtr const &       muddle,
+BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleInterface &muddle,
                                      ledger::ShardManagementService &manifest_cache,
-                                     CertificatePtr const &          certificate)
+                                     CertificatePtr                  certificate)
 {
   BeaconServicePtr                         beacon{};
   beacon::EventManager::SharedEventManager event_manager = beacon::EventManager::New();
 
   if (cfg.proof_of_stake)
   {
-    assert(muddle);
-    beacon = std::make_unique<fetch::beacon::BeaconService>(*muddle, manifest_cache, certificate,
+    beacon = std::make_unique<fetch::beacon::BeaconService>(muddle, manifest_cache, certificate,
                                                             event_manager);
   }
 
@@ -271,7 +267,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                                                                *muddle_, cfg_.log2_num_lanes))
   , dag_{GenerateDAG("dag_db_", true, certificate)}
   , beacon_network_{CreateBeaconNetwork(cfg_, certificate, network_manager_)}
-  , beacon_{CreateBeaconService(cfg_, beacon_network_, *shard_management_, certificate)}
+  , beacon_{CreateBeaconService(cfg_, *beacon_network_, *shard_management_, certificate)}
   , stake_{CreateStakeManager(cfg_)}
   , consensus_{CreateConsensus(cfg_, stake_, beacon_, chain_, certificate->identity())}
   , execution_manager_{std::make_shared<ExecutionManager>(
@@ -353,8 +349,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   // Attach beacon runnables
   if (beacon_)
   {
-    reactor_.Attach(beacon_->GetMainRunnable());
-    reactor_.Attach(beacon_->GetSetupRunnable());
+    reactor_.Attach(beacon_->GetWeakRunnables());
   }
 
   // attach the services to the reactor
