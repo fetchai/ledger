@@ -20,6 +20,7 @@
 #include "core/random.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -60,6 +61,11 @@ public:
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
+
+  LoaderType LoaderCode()
+  {
+    return LoaderType::Tensor;
+  }
 
 protected:
   std::shared_ptr<SizeType> train_cursor_      = std::make_shared<SizeType>(0);

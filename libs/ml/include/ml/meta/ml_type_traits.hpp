@@ -23,6 +23,14 @@
 namespace fetch {
 namespace ml {
 
+enum class LoaderType : uint8_t
+{
+  Tensor,
+  MNIST,
+  SGNS,
+  CONTEXT
+};
+
 enum class OpKind : uint8_t
 {
   INVALID,

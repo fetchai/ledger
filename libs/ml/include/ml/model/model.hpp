@@ -19,6 +19,7 @@
 
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/model/model_config.hpp"
 #include "ml/ops/loss_functions/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
@@ -289,34 +290,49 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
   using DriverType = D;
 
   // public member variables
-  static uint8_t const GRAPH            = 1;
-  static uint8_t const DATALOADER       = 2;
-  static uint8_t const OPTIMISER        = 3;
-  static uint8_t const INPUT_NODE_NAME  = 4;
-  static uint8_t const LABEL_NODE_NAME  = 5;
-  static uint8_t const OUTPUT_NODE_NAME = 6;
-  static uint8_t const ERROR_NODE_NAME  = 7;
+  static uint8_t const GRAPH           = 1;
+  static uint8_t const DATALOADER_PTR  = 2;
+  static uint8_t const DATALOADER_TYPE = 3;
+  static uint8_t const OPTIMISER_PTR   = 4;
+  static uint8_t const OPTIMISER_TYPE  = 5;
 
-  static uint8_t const LOSS_SET_FLAG      = 8;
-  static uint8_t const OPTIMISER_SET_FLAG = 9;
-  static uint8_t const COMPILED_FLAG      = 10;
+  static uint8_t const INPUT_NODE_NAME  = 6;
+  static uint8_t const LABEL_NODE_NAME  = 7;
+  static uint8_t const OUTPUT_NODE_NAME = 8;
+  static uint8_t const ERROR_NODE_NAME  = 9;
+
+  static uint8_t const LOSS_SET_FLAG      = 10;
+  static uint8_t const OPTIMISER_SET_FLAG = 11;
+  static uint8_t const COMPILED_FLAG      = 12;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(11);
+    auto map = map_constructor(13);
 
     // serialize the graph first
     map.Append(GRAPH, sp.graph_ptr_->GetGraphSaveableParams());
 
-    auto loader_ptr =
-        std::dynamic_pointer_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>(
-            sp.dataloader_ptr_);
-    map.Append(DATALOADER, *loader_ptr);
+    map.Append(DATALOADER_TYPE, static_cast<uint8_t>(sp.dataloader_ptr_->LoaderCode()));
+
+    switch (sp.dataloader_ptr_->LoaderCode())
+    {
+    case ml::LoaderType::Tensor:
+    {
+      auto loader_ptr = std::dynamic_pointer_cast<
+          fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>(sp.dataloader_ptr_);
+      map.Append(DATALOADER_PTR, *loader_ptr);
+      break;
+    }
+    case ml::LoaderType::CONTEXT:
+    case ml::LoaderType::MNIST:
+    case ml::LoaderType::SGNS:
+      break;
+    }
 
     auto optimiser_ptr = std::dynamic_pointer_cast<fetch::ml::optimisers::SGDOptimiser<TensorType>>(
         sp.optimiser_ptr_);
-    map.Append(OPTIMISER, *optimiser_ptr);
+    map.Append(OPTIMISER_PTR, *optimiser_ptr);
 
     map.Append(INPUT_NODE_NAME, sp.input_);
     map.Append(LABEL_NODE_NAME, sp.label_);
@@ -338,12 +354,27 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     ml::utilities::BuildGraph(gsp, new_graph_ptr);
     sp.graph_ptr_ = new_graph_ptr;
 
-    auto loader_ptr = std::make_shared<ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
-    map.ExpectKeyGetValue(DATALOADER, *loader_ptr);
-    sp.dataloader_ptr_ = loader_ptr;
+    uint8_t loader_type;
+    map.ExpectKeyGetValue(DATALOADER_TYPE, loader_type);
+
+    switch (ml::LoaderType(loader_type))
+    {
+    case ml::LoaderType::Tensor:
+    {
+      auto loader_ptr =
+          std::make_shared<ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
+      map.ExpectKeyGetValue(DATALOADER_PTR, *loader_ptr);
+      sp.dataloader_ptr_ = loader_ptr;
+      break;
+    }
+    case ml::LoaderType::CONTEXT:
+    case ml::LoaderType::MNIST:
+    case ml::LoaderType::SGNS:
+      break;
+    }
 
     auto optimiser_ptr = std::make_shared<ml::optimisers::SGDOptimiser<TensorType>>();
-    map.ExpectKeyGetValue(OPTIMISER, *optimiser_ptr);
+    map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
     optimiser_ptr->SetGraph(sp.graph_ptr_);
     sp.optimiser_ptr_ = optimiser_ptr;
 
