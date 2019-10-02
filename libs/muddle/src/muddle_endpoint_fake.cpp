@@ -38,7 +38,7 @@ PacketPtr FormatPacket(Packet::Address from, NetworkId const &network, uint16_t 
   packet->SetChannel(channel);
   packet->SetMessageNum(counter);
   packet->SetTTL(ttl);
-  packet->SetPayload(std::move(payload));
+  packet->SetPayload(payload);
 
   return packet;
 }
