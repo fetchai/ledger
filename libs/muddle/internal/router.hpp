@@ -73,7 +73,7 @@ public:
 
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispatcher &dispatcher,
-         Prover *certificate = nullptr, bool sign_broadcasts = false);
+         Prover *prover = nullptr, bool sign_broadcasts = false);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;

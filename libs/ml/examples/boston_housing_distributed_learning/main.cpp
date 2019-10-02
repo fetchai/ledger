@@ -60,6 +60,7 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(
   client_params.label_name = g_ptr->template AddNode<PlaceHolder<TensorType>>("Label", {});
   client_params.error_name =
       g_ptr->template AddNode<MeanSquareErrorLoss<TensorType>>("Error", {"FC3", "Label"});
+  g_ptr->Compile();
 
   // Initialise DataLoader
   std::shared_ptr<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>> dataloader_ptr =

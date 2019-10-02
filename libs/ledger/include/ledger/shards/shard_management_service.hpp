@@ -90,7 +90,7 @@ private:
   MuddleInterface &         muddle_;
   Manifest                  manifest_;
   uint32_t                  log2_num_shards_;
-  int32_t                   num_shards_;
+  uint32_t                  num_shards_;
   RpcServer                 rpc_server_;
   ShardManagementProtocol   mgmt_proto_;
   RpcClient                 rpc_client_;

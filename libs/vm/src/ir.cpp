@@ -98,7 +98,7 @@ IRNodePtr IR::CloneNode(IRNodePtr const &node)
         CreateIRBasicNode(node->node_kind, node->text, node->line, CloneChildren(node->children));
     return clone_node;
   }
-  else if (node->IsBlockNode())
+  if (node->IsBlockNode())
   {
     IRBlockNodePtr block_node = ConvertToIRBlockNodePtr(node);
     IRBlockNodePtr clone_block_node =
@@ -109,18 +109,16 @@ IRNodePtr IR::CloneNode(IRNodePtr const &node)
     clone_block_node->block_terminator_line = block_node->block_terminator_line;
     return clone_block_node;
   }
-  else
-  {
-    IRExpressionNodePtr expression_node = ConvertToIRExpressionNodePtr(node);
-    IRExpressionNodePtr clone_expression_node =
-        CreateIRExpressionNode(expression_node->node_kind, expression_node->text,
-                               expression_node->line, CloneChildren(expression_node->children));
-    clone_expression_node->expression_kind = expression_node->expression_kind;
-    clone_expression_node->type            = CloneType(expression_node->type);
-    clone_expression_node->variable        = CloneVariable(expression_node->variable);
-    clone_expression_node->function        = CloneFunction(expression_node->function);
-    return clone_expression_node;
-  }
+
+  IRExpressionNodePtr expression_node = ConvertToIRExpressionNodePtr(node);
+  IRExpressionNodePtr clone_expression_node =
+      CreateIRExpressionNode(expression_node->node_kind, expression_node->text,
+                             expression_node->line, CloneChildren(expression_node->children));
+  clone_expression_node->expression_kind = expression_node->expression_kind;
+  clone_expression_node->type            = CloneType(expression_node->type);
+  clone_expression_node->variable        = CloneVariable(expression_node->variable);
+  clone_expression_node->function        = CloneFunction(expression_node->function);
+  return clone_expression_node;
 }
 
 IRNodePtrArray IR::CloneChildren(IRNodePtrArray const &children)

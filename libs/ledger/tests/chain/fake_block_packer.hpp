@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/block_packer_interface.hpp"
+#include "ledger/chain/block.hpp"
 
 class FakeBlockPacker : public fetch::ledger::BlockPackerInterface
 {

@@ -146,7 +146,7 @@ public:
     return transactions_.find(digest) != transactions_.end();
   }
 
-  void IssueCallForMissingTxs(fetch::DigestSet const &) override
+  void IssueCallForMissingTxs(fetch::DigestSet const & /*tx_set*/) override
   {}
 
   Hash CurrentHash() override
@@ -157,21 +157,21 @@ public:
   {
     return "";
   };
-  bool RevertToHash(Hash const &, uint64_t) override
+  bool RevertToHash(Hash const & /*hash*/, uint64_t /*index*/) override
   {
     return true;
   };
-  Hash Commit(uint64_t) override
+  Hash Commit(uint64_t /*index*/) override
   {
     return "";
   };
-  bool HashExists(Hash const &, uint64_t) override
+  bool HashExists(Hash const & /*hash*/, uint64_t /*index*/) override
   {
     return true;
   };
 
   // Does nothing
-  TxLayouts PollRecentTx(uint32_t) override
+  TxLayouts PollRecentTx(uint32_t /*unused*/) override
   {
     return {};
   }
@@ -199,5 +199,4 @@ private:
   TransactionStoreType transactions_;
   StateStoreType       state_;
   LockStoreType        locks_;
-  /* state_archive_type     state_archive_; */
 };

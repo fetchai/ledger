@@ -821,7 +821,7 @@ std::vector<TensorType> Graph<TensorType>::GetGradientsReferences() const
 {
   std::vector<TensorType> ret;
   GetGradientsReferences(ret);
-  return std::move(ret);
+  return ret;
 }
 
 /**
@@ -890,8 +890,8 @@ bool Graph<TensorType>::UpdateVariableName(std::string const &name, std::string 
   // search graph for existing variable names
   if (ret.empty())
   {  // if no name is specified, generate a default name
-    std::uint64_t name_idx = 0;
-    ret                    = op_descriptor + "_" + std::to_string(name_idx);
+    uint64_t name_idx = 0;
+    ret               = op_descriptor + "_" + std::to_string(name_idx);
     while (!(nodes_.find(ret) == nodes_.end()))
     {
       ++name_idx;
@@ -900,9 +900,9 @@ bool Graph<TensorType>::UpdateVariableName(std::string const &name, std::string 
   }
   else if (nodes_.find(ret) != nodes_.end())
   {  // if a duplicated name is specified, shared weight is assumed
-    is_duplicate           = true;
-    std::uint64_t name_idx = 1;
-    ret                    = name + "_Copy_" + std::to_string(name_idx);
+    is_duplicate      = true;
+    uint64_t name_idx = 1;
+    ret               = name + "_Copy_" + std::to_string(name_idx);
     while (!(nodes_.find(ret) == nodes_.end()))
     {
       ++name_idx;

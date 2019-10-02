@@ -53,11 +53,15 @@ ModelType SetupModel(fetch::ml::optimisers::OptimiserType     optimiser_type,
   using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>;
   SizeVector              label_shape = {gt.shape().at(0), 1};
   std::vector<SizeVector> data_shape  = {{data.shape().at(0), 1}};
-  auto data_loader_ptr                = std::make_shared<DataLoaderType>(label_shape, data_shape);
+  auto data_loader_ptr                = std::make_unique<DataLoaderType>(label_shape, data_shape);
   data_loader_ptr->AddData(data, gt);
 
   // run model in training mode
-  return ModelType(data_loader_ptr, optimiser_type, model_config, {3, 100, 100, 3});
+  auto model = ModelType(model_config, {3, 100, 100, 3});
+  model.SetDataloader(std::move(data_loader_ptr));
+  model.Compile(optimiser_type);
+
+  return model;
 }
 
 template <typename TypeParam>
@@ -90,20 +94,20 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type,
   {
     DataType loss{0};
     DataType later_loss{0};
-    EXPECT_TRUE(model.Train(1, loss));
-    EXPECT_TRUE(model.Train(1, later_loss));
+    model.Train(1, loss);
+    model.Train(1, later_loss);
+    EXPECT_LE(later_loss, loss);
     count++;
   }
 
-  EXPECT_TRUE(model.Train(100));
+  model.Train(100);
 
   // test prediction performance
   TypeParam pred({3, 1});
 
   model.Train(100);
-  bool success = model.Predict(test_datum, pred);
+  model.Predict(test_datum, pred);
 
-  EXPECT_TRUE(success);
   EXPECT_TRUE(pred.AllClose(test_label, tolerance, tolerance));
 
   return true;

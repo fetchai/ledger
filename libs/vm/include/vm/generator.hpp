@@ -233,7 +233,7 @@ private:
 
   struct Loop
   {
-    uint16_t              scope_number;
+    uint16_t              scope_number{};
     std::vector<uint16_t> continue_pcs;
     std::vector<uint16_t> break_pcs;
   };

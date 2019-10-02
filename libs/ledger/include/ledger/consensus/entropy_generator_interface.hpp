@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/block_entropy.hpp"
 #include "core/digest.hpp"
 
 namespace fetch {
@@ -25,6 +26,8 @@ namespace ledger {
 class EntropyGeneratorInterface
 {
 public:
+  using BlockEntropy = beacon::BlockEntropy;
+
   // Construction / Destruction
   EntropyGeneratorInterface()          = default;
   virtual ~EntropyGeneratorInterface() = default;
@@ -38,7 +41,7 @@ public:
 
   /// @name Entropy Generator
   /// @{
-  virtual Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) = 0;
+  virtual Status GenerateEntropy(uint64_t block_number, BlockEntropy &entropy) = 0;
   /// @}
 };
 

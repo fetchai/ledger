@@ -143,10 +143,10 @@ private:
                                                     init_mode);
   }
 
-  SizeType kernel_size_;
-  SizeType input_channels_;
-  SizeType output_channels_;
-  SizeType stride_size_;
+  SizeType kernel_size_{};
+  SizeType input_channels_{};
+  SizeType output_channels_{};
+  SizeType stride_size_{};
 };
 
 }  // namespace layers

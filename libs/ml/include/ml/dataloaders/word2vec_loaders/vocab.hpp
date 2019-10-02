@@ -67,7 +67,8 @@ private:
   byte_array::ConstByteArray      vocab_hash;
 };
 
-std::vector<math::SizeType> Vocab::PutSentenceInVocab(std::vector<std::string> const &sentence)
+inline std::vector<math::SizeType> Vocab::PutSentenceInVocab(
+    std::vector<std::string> const &sentence)
 {
   std::vector<SizeType> indices;
   indices.reserve(sentence.size());
@@ -109,7 +110,7 @@ std::vector<math::SizeType> Vocab::PutSentenceInVocab(std::vector<std::string> c
   return indices;
 }
 
-void Vocab::RemoveSentenceFromVocab(std::vector<SizeType> const &sentence)
+inline void Vocab::RemoveSentenceFromVocab(std::vector<SizeType> const &sentence)
 {
   for (SizeType const &word_id : sentence)
   {
@@ -121,7 +122,7 @@ void Vocab::RemoveSentenceFromVocab(std::vector<SizeType> const &sentence)
 /**
  * remove word that have fewer counts then min
  */
-std::map<Vocab::SizeType, Vocab::SizeType> Vocab::RemoveInfrequentWord(Vocab::SizeType min)
+inline std::map<Vocab::SizeType, Vocab::SizeType> Vocab::RemoveInfrequentWord(Vocab::SizeType min)
 {
 
   std::map<SizeType, SizeType> old2new;  // store the old to new relation for futher use
@@ -157,7 +158,7 @@ std::map<Vocab::SizeType, Vocab::SizeType> Vocab::RemoveInfrequentWord(Vocab::Si
  * save vocabulary to a file
  * @return
  */
-void Vocab::Save(std::string const &filename) const
+inline void Vocab::Save(std::string const &filename) const
 {
   std::ofstream outfile(filename, std::ios::binary);
 
@@ -176,7 +177,7 @@ void Vocab::Save(std::string const &filename) const
  * load vocabulary to a file
  * @return
  */
-void Vocab::Load(std::string const &filename)
+inline void Vocab::Load(std::string const &filename)
 {
   vocab.clear();
   total_count = 0;
@@ -218,16 +219,14 @@ void Vocab::Load(std::string const &filename)
  * @param index
  * @return
  */
-std::string Vocab::WordFromIndex(SizeType index) const
+inline std::string Vocab::WordFromIndex(SizeType index) const
 {
   if (reverse_vocab.size() > index)
   {
     return reverse_vocab[index];
   }
-  else
-  {
-    return "";
-  }
+
+  return "";
 }
 
 /**
@@ -236,7 +235,7 @@ std::string Vocab::WordFromIndex(SizeType index) const
  * @param word
  * @return
  */
-math::SizeType Vocab::IndexFromWord(std::string const &word) const
+inline math::SizeType Vocab::IndexFromWord(std::string const &word) const
 {
   auto word_it = vocab.find(word);
   if (word_it != vocab.end())

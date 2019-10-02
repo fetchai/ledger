@@ -105,7 +105,7 @@ void InterruptHandler(int /*signal*/)
     FETCH_LOG_INFO(LOGGING_NAME, "User requests stop of service");
   }
 
-  if (gConstellationInstance)
+  if (gConstellationInstance != nullptr)
   {
     gConstellationInstance.load()->SignalStop();
   }
@@ -180,10 +180,8 @@ WeakRunnable ExtractRunnable(BootstrapPtr const &bootstrap)
   {
     return bootstrap->GetWeakRunnable();
   }
-  else
-  {
-    return {};
-  }
+
+  return {};
 }
 
 }  // namespace
@@ -209,10 +207,6 @@ int main(int argc, char **argv)
 
   try
   {
-#ifdef FETCH_ENABLE_METRICS
-    fetch::metrics::Metrics::Instance().ConfigureFileHandler("metrics.csv");
-#endif  // FETCH_ENABLE_METRICS
-
     Settings settings{};
     if (!settings.Update(argc, argv))
     {

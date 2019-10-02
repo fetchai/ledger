@@ -152,7 +152,7 @@ void StakeSnapshot::UpdateStake(Identity const &identity, uint64_t stake)
       // special case - no change in stake
       return;
     }
-    else if (stake == 0)
+    if (stake == 0)
     {
       // special case - removed from staking pool
 

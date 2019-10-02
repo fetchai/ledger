@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/group_definitions.hpp"
+#include "ledger/storage_unit/object_store_protocol.hpp"
+#include "ledger/storage_unit/transient_object_store.hpp"
 #include "network/service/protocol.hpp"
-#include "storage/object_store_protocol.hpp"
-#include "storage/transient_object_store.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"

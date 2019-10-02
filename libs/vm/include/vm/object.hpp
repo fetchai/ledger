@@ -348,22 +348,22 @@ private:
   friend class Ptr;
 
   template <typename L, typename R>
-  friend bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;
+  friend bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;  // NOLINT
 
   template <typename L>
-  friend bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;
+  friend bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;  // NOLINT
 
   template <typename R>
-  friend bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;
+  friend bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;  // NOLINT
 
   template <typename L, typename R>
-  friend bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;
+  friend bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;  // NOLINT
 
   template <typename L>
-  friend bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;
+  friend bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;  // NOLINT
 
   template <typename R>
-  friend bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;
+  friend bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;  // NOLINT
 };
 
 template <typename L, typename R>

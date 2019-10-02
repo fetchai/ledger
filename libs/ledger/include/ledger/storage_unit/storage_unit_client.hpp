@@ -24,6 +24,7 @@
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
+#include "ledger/storage_unit/object_store_protocol.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/client.hpp"
@@ -32,7 +33,6 @@
 #include "network/generics/has_worker_thread.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_stack.hpp"
-#include "storage/object_store_protocol.hpp"
 
 #include <array>
 #include <cassert>
@@ -51,6 +51,8 @@ class StorageUnitClient final : public StorageUnitInterface
 public:
   using MuddleEndpoint = muddle::MuddleEndpoint;
   using Address        = muddle::Address;
+
+  static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
   // Construction / Destruction
   StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards, uint32_t log2_num_lanes);
@@ -80,7 +82,7 @@ public:
   byte_array::ConstByteArray CurrentHash() override;
   byte_array::ConstByteArray LastCommitHash() override;
   bool                       RevertToHash(Hash const &hash, uint64_t index) override;
-  byte_array::ConstByteArray Commit(uint64_t index) override;
+  byte_array::ConstByteArray Commit(uint64_t commit_index) override;
   bool                       HashExists(Hash const &hash, uint64_t index) override;
   bool                       Lock(ShardIndex index) override;
   bool                       Unlock(ShardIndex index) override;

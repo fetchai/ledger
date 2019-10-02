@@ -410,7 +410,7 @@ DirectMessageService::UpdateStatus DirectMessageService::UpdateReservation(Addre
         if (should_replace)
         {
           // cache the previous handle
-          if (previous_handle)
+          if (previous_handle != nullptr)
           {
             *previous_handle = it->second;
           }

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/bitvector.hpp"
+#include "vectorise/platform.hpp"
 
 namespace fetch {
 
@@ -73,14 +74,12 @@ bool BitVector::RemapTo(BitVector &dst) const
     dst = *this;
     return true;
   }
-  else if (dst.size() > size())
+  if (dst.size() > size())
   {
     return Expand(*this, dst);
   }
-  else
-  {
-    return Contract(*this, dst);
-  }
+
+  return Contract(*this, dst);
 }
 
 bool BitVector::Expand(BitVector const &src, BitVector &dst)
@@ -415,7 +414,7 @@ std::size_t BitVector::PopCount() const
 
   for (std::size_t i = 0; i < blocks_; ++i)
   {
-    ret += static_cast<std::size_t>(__builtin_popcountl(data_[i]));
+    ret += static_cast<std::size_t>(platform::CountSetBits(data_[i]));
   }
 
   return std::min(ret, size_);
@@ -426,7 +425,7 @@ std::ostream &operator<<(std::ostream &s, BitVector const &b)
 #if 1
   for (std::size_t i = 0; i < b.size(); ++i)
   {
-    if (i && ((i % 10) == 0))
+    if ((i != 0u) && ((i % 10) == 0))
     {
       s << ' ';
     }
@@ -444,6 +443,84 @@ std::ostream &operator<<(std::ostream &s, BitVector const &b)
 #endif
 
   return s;
+}
+
+BitVector::Iterator BitVector::begin() const
+{
+  return Iterator{*this, true};
+}
+
+BitVector::Iterator BitVector::end() const
+{
+  return Iterator{*this};
+}
+
+BitVector::Iterator::Iterator(BitVector const &container, bool const is_begin)
+  : container_{container}
+  , end_{container.size()}
+  , index_{end_}
+{
+  if (is_begin)
+  {
+    Next(is_begin);
+  }
+}
+
+bool BitVector::Iterator::operator==(Iterator const &right) const
+{
+  return index_ == right.index_ && &container_ == &right.container_;
+}
+
+bool BitVector::Iterator::operator!=(Iterator const &right) const
+{
+  return !(*this == right);
+}
+
+BitVector::Iterator::value_type BitVector::Iterator::operator*() const
+{
+  return index_;
+}
+
+BitVector::Iterator &BitVector::Iterator::operator++()
+{
+  return Next();
+}
+
+BitVector::Iterator &BitVector::Iterator::Next(bool is_begin)
+{
+  if (!is_begin && index_ >= end_)
+  {
+    return *this;
+  }
+
+  auto const &data{container_.data()};
+  auto const  blocks_count{container_.blocks()};
+
+  BitVector::Block shift_mask{~1ull};
+
+  if (is_begin)
+  {
+    index_     = 0;
+    shift_mask = ~0ull;
+  }
+
+  for (std::size_t blck_idx{index_ >> BitVector::LOG_BITS}; blck_idx < blocks_count; ++blck_idx)
+  {
+    std::size_t            bit_idx{index_ & BitVector::BIT_MASK};
+    BitVector::Block       mask{(shift_mask << bit_idx)};
+    BitVector::Block const x{data[blck_idx] & mask};
+    std::size_t const      trailing_zeroes{platform::CountTrailingZeroes64(x)};
+    index_ += (trailing_zeroes - bit_idx);
+
+    if (BitVector::ELEMENT_BIT_SIZE > trailing_zeroes)
+    {
+      break;
+    }
+
+    shift_mask = ~0ull;
+  }
+
+  return *this;
 }
 
 }  // namespace fetch

@@ -68,7 +68,7 @@ public:
     Address           address;
     bool              outgoing{false};
 
-    explicit Entry(WeakConnectionPtr conn);
+    explicit Entry(WeakConnectionPtr c);
     ~Entry() = default;
   };
 
@@ -108,7 +108,7 @@ protected:
   /// @name Connection Event Handlers
   /// @{
   void Enter(WeakConnectionPtr const &ptr) override;
-  void Leave(ConnectionHandleType id) override;
+  void Leave(ConnectionHandleType handle) override;
   /// @}
 
 private:

@@ -16,36 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "metrics/metric_file_handler.hpp"
-#include "metrics/metrics.hpp"
+#include "benchmark/benchmark.h"
 
-#include <memory>
-#include <string>
-#include <utility>
-
-namespace fetch {
-namespace metrics {
-
-Metrics &Metrics::Instance()
-{
-  static Metrics instance;
-  return instance;
-}
-
-void Metrics::ConfigureFileHandler(std::string filename)
-{
-  std::unique_ptr<MetricHandler> new_handler =
-      std::make_unique<MetricFileHandler>(std::move(filename));
-
-  handler_.store(new_handler.get());
-  handler_object_ = std::move(new_handler);
-}
-
-void Metrics::RemoveMetricHandler()
-{
-  handler_.store(nullptr);
-  handler_object_.reset();
-}
-
-}  // namespace metrics
-}  // namespace fetch
+BENCHMARK_MAIN();

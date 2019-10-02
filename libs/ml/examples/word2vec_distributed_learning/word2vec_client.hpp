@@ -28,7 +28,7 @@ namespace fetch {
 namespace ml {
 namespace distributed_learning {
 
-std::string ReadFile(std::string const &path)
+inline std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
   if (t.fail())

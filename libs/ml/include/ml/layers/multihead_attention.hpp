@@ -173,11 +173,11 @@ public:
   static constexpr char const *DESCRIPTOR = "MultiheadAttention";
 
 private:
-  SizeType key_dim_;
-  SizeType value_dim_;
-  SizeType n_heads_;
-  SizeType model_dim_;
-  DataType dropout_;
+  SizeType key_dim_{};
+  SizeType value_dim_{};
+  SizeType n_heads_{};
+  SizeType model_dim_{};
+  DataType dropout_{};
 };
 
 }  // namespace layers
