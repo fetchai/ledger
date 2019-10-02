@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,33 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/block_entropy.hpp"
-#include "ledger/chain/digest.hpp"
+#include "benchmark/benchmark.h"
 
-namespace fetch {
-namespace ledger {
-
-class EntropyGeneratorInterface
-{
-public:
-  using BlockEntropy = beacon::BlockEntropy;
-
-  // Construction / Destruction
-  EntropyGeneratorInterface()          = default;
-  virtual ~EntropyGeneratorInterface() = default;
-
-  enum class Status
-  {
-    OK,
-    NOT_READY,
-    FAILED
-  };
-
-  /// @name Entropy Generator
-  /// @{
-  virtual Status GenerateEntropy(uint64_t block_number, BlockEntropy &entropy) = 0;
-  /// @}
-};
-
-}  // namespace ledger
-}  // namespace fetch
+BENCHMARK_MAIN();

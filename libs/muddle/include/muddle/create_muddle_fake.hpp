@@ -17,33 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/block_entropy.hpp"
-#include "ledger/chain/digest.hpp"
+#include "muddle/muddle_interface.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace muddle {
 
-class EntropyGeneratorInterface
-{
-public:
-  using BlockEntropy = beacon::BlockEntropy;
+using MuddlePtr = std::shared_ptr<MuddleInterface>;
+using ProverPtr = std::shared_ptr<crypto::Prover>;
 
-  // Construction / Destruction
-  EntropyGeneratorInterface()          = default;
-  virtual ~EntropyGeneratorInterface() = default;
+MuddlePtr CreateMuddleFake(NetworkId const &network, ProverPtr certificate,
+                           network::NetworkManager const &nm, std::string const &external_address);
 
-  enum class Status
-  {
-    OK,
-    NOT_READY,
-    FAILED
-  };
+MuddlePtr CreateMuddleFake(char const network[4], ProverPtr certificate,
+                           network::NetworkManager const &nm, std::string const &external_address);
 
-  /// @name Entropy Generator
-  /// @{
-  virtual Status GenerateEntropy(uint64_t block_number, BlockEntropy &entropy) = 0;
-  /// @}
-};
-
-}  // namespace ledger
+}  // namespace muddle
 }  // namespace fetch
