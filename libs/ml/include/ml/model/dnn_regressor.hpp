@@ -33,7 +33,7 @@ public:
   using SizeType          = fetch::math::SizeType;
   using DataType          = typename TensorType::Type;
   using CostFunctionType  = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
-  using OptimiserType     = fetch::ml::optimisers::OptimiserType;
+  using OptimiserType     = fetch::ml::OptimiserType;
   using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
   DNNRegressor(ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);

@@ -21,6 +21,7 @@
 #include "math/statistics/mean.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
@@ -84,6 +85,7 @@ public:
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
+  virtual OptimiserType OptimiserCode() = 0;
 
 protected:
   std::shared_ptr<Graph<T>> graph_;

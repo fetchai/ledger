@@ -40,7 +40,6 @@ public:
   using SizeType          = fetch::math::SizeType;
   using GraphType         = Graph<TensorType>;
   using DataLoaderType    = dataloaders::DataLoader<TensorType, TensorType>;
-  using OptimiserType     = optimisers::OptimiserType;
   using GraphPtrType      = typename std::shared_ptr<GraphType>;
   using DataLoaderPtrType = typename std::unique_ptr<DataLoaderType>;
   using OptimiserPtrType  = typename std::unique_ptr<optimisers::Optimiser<TensorType>>;
@@ -62,7 +61,7 @@ public:
 
 protected:
   ModelConfig<DataType> model_config_;
-  GraphPtrType          graph_ptr_ = std::make_shared<GraphType>();
+  GraphPtrType          graph_ptr_ = std::make_unique<GraphType>();
   DataLoaderPtrType     dataloader_ptr_;
   OptimiserPtrType      optimiser_ptr_;
 
@@ -323,7 +322,6 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
           static_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> *>(
               sp.dataloader_ptr_.get());
       map.Append(DATALOADER_PTR, *loader_ptr);
-
       break;
     }
     case ml::LoaderType::CONTEXT:
@@ -332,9 +330,23 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       break;
     }
 
-    fetch::ml::optimisers::SGDOptimiser<TensorType> *optimiser_ptr =
-        static_cast<fetch::ml::optimisers::SGDOptimiser<TensorType> *>(sp.optimiser_ptr_.get());
-    map.Append(OPTIMISER_PTR, *optimiser_ptr);
+    map.Append(OPTIMISER_TYPE, static_cast<uint8_t>(sp.optimiser_ptr_->OptimiserCode()));
+
+    switch (sp.optimiser_ptr_->OptimiserCode())
+    {
+    case ml::OptimiserType::SGD:
+    {
+      fetch::ml::optimisers::SGDOptimiser<TensorType> *optimiser_ptr =
+          static_cast<fetch::ml::optimisers::SGDOptimiser<TensorType> *>(sp.optimiser_ptr_.get());
+      map.Append(OPTIMISER_PTR, *optimiser_ptr);
+      break;
+    }
+    case ml::OptimiserType::ADAGRAD:
+    case ml::OptimiserType::ADAM:
+    case ml::OptimiserType::MOMENTUM:
+    case ml::OptimiserType::RMSPROP:
+      break;
+    }
 
     map.Append(INPUT_NODE_NAME, sp.input_);
     map.Append(LABEL_NODE_NAME, sp.label_);
@@ -374,10 +386,25 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       break;
     }
 
-    auto optimiser_ptr = new ml::optimisers::SGDOptimiser<TensorType>();
-    map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
-    optimiser_ptr->SetGraph(sp.graph_ptr_);
-    sp.optimiser_ptr_.reset(optimiser_ptr);
+    uint8_t optimiser_type;
+    map.ExpectKeyGetValue(OPTIMISER_TYPE, optimiser_type);
+
+    switch (static_cast<ml::OptimiserType>(optimiser_type))
+    {
+    case ml::OptimiserType::SGD:
+    {
+      auto optimiser_ptr = new ml::optimisers::SGDOptimiser<TensorType>();
+      map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
+      optimiser_ptr->SetGraph(sp.graph_ptr_);
+      sp.optimiser_ptr_.reset(optimiser_ptr);
+      break;
+    }
+    case ml::OptimiserType::ADAGRAD:
+    case ml::OptimiserType::ADAM:
+    case ml::OptimiserType::MOMENTUM:
+    case ml::OptimiserType::RMSPROP:
+      break;
+    }
 
     map.ExpectKeyGetValue(INPUT_NODE_NAME, sp.input_);
     map.ExpectKeyGetValue(LABEL_NODE_NAME, sp.label_);

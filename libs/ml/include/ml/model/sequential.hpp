@@ -34,7 +34,7 @@ public:
   using SizeType          = fetch::math::SizeType;
   using DataType          = typename TensorType::Type;
   using CostFunctionType  = fetch::ml::ops::CrossEntropyLoss<TensorType>;
-  using OptimiserType     = fetch::ml::optimisers::OptimiserType;
+  using OptimiserType     = fetch::ml::OptimiserType;
   using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
   explicit Sequential(ModelConfig<DataType> model_config);

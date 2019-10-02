@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/model/model.hpp"
 #include "ml/model/model_config.hpp"
 
@@ -33,7 +34,7 @@ public:
   using SizeType          = fetch::math::SizeType;
   using DataType          = typename TensorType::Type;
   using CostFunctionType  = fetch::ml::ops::CrossEntropyLoss<TensorType>;
-  using OptimiserType     = fetch::ml::optimisers::OptimiserType;
+  using OptimiserType     = fetch::ml::OptimiserType;
   using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
   DNNClassifier()
