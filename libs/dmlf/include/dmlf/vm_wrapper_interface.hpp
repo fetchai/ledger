@@ -50,7 +50,6 @@ public:
   virtual std::vector<std::string> Load(std::string source)                              = 0;
   virtual void                     Execute(const std::string &entrypoint, const Params &params) = 0;
   virtual void                     SetStdout(OutputHandler)                              = 0;
-  virtual void                     SetStdin(InputHandler)                                = 0;
   virtual void                     SetStderr(OutputHandler)                              = 0;
   virtual Status                   status() const                                        = 0;
 
