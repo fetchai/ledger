@@ -31,19 +31,18 @@ namespace {
 using RNG = LinearCongruentialGenerator;
 RNG rng;
 
-template <std::size_t LENGTH>
-ConstByteArray GenerateRandomData()
+ConstByteArray GenerateRandomData(size_t length)
 {
-  static constexpr std::size_t RNG_WORD_SIZE = sizeof(RNG::RandomType);
-  static constexpr std::size_t NUM_WORDS     = LENGTH / RNG_WORD_SIZE;
+  std::size_t rng_word_size = sizeof(RNG::RandomType);
+  std::size_t num_words     = length / rng_word_size;
 
-  static_assert((LENGTH % RNG_WORD_SIZE) == 0, "Size must be a multiple of random type");
+  assert((length % rng_word_size) == 0);
 
   ByteArray buffer;
-  buffer.Resize(LENGTH);
+  buffer.Resize(length);
 
   auto *words = reinterpret_cast<RNG::RandomType *>(buffer.pointer());
-  for (std::size_t i = 0; i < NUM_WORDS; ++i)
+  for (std::size_t i = 0; i < num_words; ++i)
   {
     *words++ = rng();
   }
@@ -55,7 +54,6 @@ void SignBLSSignature(benchmark::State &state)
 {
   bn::initPairing();
   // Generate a random message
-  ConstByteArray msg = GenerateRandomData<256>();
 
   // Create keys
   auto     committee_size = static_cast<uint32_t>(state.range(0));
@@ -68,6 +66,10 @@ void SignBLSSignature(benchmark::State &state)
 
   for (auto _ : state)
   {
+    // Generate message
+    state.PauseTiming();
+    ConstByteArray msg = GenerateRandomData(256);
+    state.ResumeTiming();
     // Sign message
     fetch::crypto::mcl::SignShare(msg, outputs[index].private_key_share);
   }
@@ -78,8 +80,6 @@ void VerifyBLSSignature(benchmark::State &state)
   bn::initPairing();
   bn::G2 generator;
   fetch::crypto::mcl::SetGenerator(generator);
-  // Generate a random message
-  ConstByteArray msg = GenerateRandomData<256>();
 
   // Create keys
   auto     committee_size = static_cast<uint32_t>(state.range(0));
@@ -88,51 +88,50 @@ void VerifyBLSSignature(benchmark::State &state)
 
   // Randomly select index to sign
   auto sign_index = static_cast<uint32_t>(rng() % committee_size);
-  auto signature  = fetch::crypto::mcl::SignShare(msg, outputs[sign_index].private_key_share);
-
   // Randomly select another index to verify
   auto verify_index = static_cast<uint32_t>(rng() % committee_size);
-  bool check;
-  FETCH_UNUSED(check);
+
   for (auto _ : state)
   {
+    state.PauseTiming();
+    // Generate a random message
+    ConstByteArray msg = GenerateRandomData(256);
+    auto signature     = fetch::crypto::mcl::SignShare(msg, outputs[sign_index].private_key_share);
+    state.ResumeTiming();
+
     // Verify message
-    check = fetch::crypto::mcl::VerifySign(outputs[verify_index].public_key_shares[sign_index], msg,
-                                           signature, generator);
+    fetch::crypto::mcl::VerifySign(outputs[verify_index].public_key_shares[sign_index], msg,
+                                   signature, generator);
   }
-  assert(check);
 }
 
 void ComputeGroupSignature(benchmark::State &state)
 {
   bn::initPairing();
-  // Generate a random message
-  ConstByteArray msg = GenerateRandomData<256>();
 
   // Create keys
   auto     committee_size = static_cast<uint32_t>(state.range(0));
   uint32_t threshold      = committee_size / 2 + 1;
   auto     outputs = fetch::crypto::mcl::TrustedDealerGenerateKeys(committee_size, threshold);
 
-  // Randomly select indices to sign
-  std::unordered_map<uint32_t, fetch::crypto::mcl::Signature> threshold_signatures;
-  while (threshold_signatures.size() < threshold)
-  {
-    auto sign_index = static_cast<uint32_t>(rng() % committee_size);
-    auto signature  = fetch::crypto::mcl::SignShare(msg, outputs[sign_index].private_key_share);
-    threshold_signatures.insert({sign_index, signature});
-  }
-
-  fetch::crypto::mcl::Signature group_sig;
-  FETCH_UNUSED(group_sig);
   for (auto _ : state)
   {
+    state.PauseTiming();
+    // Generate a random message
+    ConstByteArray msg = GenerateRandomData(256);
+    // Randomly select indices to sign
+    std::unordered_map<uint32_t, fetch::crypto::mcl::Signature> threshold_signatures;
+    while (threshold_signatures.size() < threshold)
+    {
+      auto sign_index = static_cast<uint32_t>(rng() % committee_size);
+      auto signature  = fetch::crypto::mcl::SignShare(msg, outputs[sign_index].private_key_share);
+      threshold_signatures.insert({sign_index, signature});
+    }
+    state.ResumeTiming();
+
     // Compute group signature
-    group_sig = fetch::crypto::mcl::LagrangeInterpolation(threshold_signatures);
+    fetch::crypto::mcl::LagrangeInterpolation(threshold_signatures);
   }
-  auto index = static_cast<uint32_t>(rng() % committee_size);
-  FETCH_UNUSED(index);
-  assert(fetch::crypto::mcl::VerifySign(outputs[index].group_public_key, msg, group_sig));
 }
 }  // namespace
 
