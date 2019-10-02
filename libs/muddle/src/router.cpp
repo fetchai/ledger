@@ -826,7 +826,6 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       handle = LookupKademliaClosestHandle(packet->GetTarget());
       if (handle != 0u)
       {
-        FETCH_LOG_WARN(logging_name_, "kad routing packet");
         SendToConnection(handle, packet);
         return;
       }
