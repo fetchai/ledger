@@ -42,25 +42,27 @@ public:
   using VM         = fetch::vm::VM;
   using Executable = fetch::vm::Executable;
 
-  VmWrapperEtch()
+  VmWrapperEtch() = default;
+  ~VmWrapperEtch() override = default;
+
+  std::vector<std::string> Setup(const Flags &flags) override;
+  std::vector<std::string> Load(std::string source) override;
+  void                     Execute(const std::string &entrypoint, const Params &params) override;
+  void                     SetStdout(OutputHandler) override;
+  void                     SetStdin(InputHandler) override
   {}
-  virtual ~VmWrapperEtch()
+  void SetStderr(OutputHandler) override
   {}
 
-  virtual std::vector<std::string> Setup(const Flags &flags);
-  virtual std::vector<std::string> Load(std::string source);
-  virtual void                     Execute(std::string entrypoint, const Params params);
-  virtual void                     SetStdout(OutputHandler);
-  virtual void                     SetStdin(InputHandler)
-  {}
-  virtual void SetStderr(OutputHandler)
-  {}
-
-  virtual Status status(void) const
+  Status status(void) const override
   {
     return status_;
   }
 
+  VmWrapperEtch(const VmWrapperEtch &other) = delete;
+  VmWrapperEtch &operator=(const VmWrapperEtch &other)  = delete;
+  bool           operator==(const VmWrapperEtch &other) = delete;
+  bool           operator<(const VmWrapperEtch &other)  = delete;
 protected:
 private:
   void DoOutput();
@@ -73,11 +75,6 @@ private:
   std::unique_ptr<Executable>        executable_ = std::make_unique<Executable>();
   std::shared_ptr<fetch::vm::Module> module_     = nullptr;
   std::unique_ptr<VM>                vm_         = nullptr;
-
-  VmWrapperEtch(const VmWrapperEtch &other) = delete;
-  VmWrapperEtch &operator=(const VmWrapperEtch &other)  = delete;
-  bool           operator==(const VmWrapperEtch &other) = delete;
-  bool           operator<(const VmWrapperEtch &other)  = delete;
 };
 
 }  // namespace dmlf

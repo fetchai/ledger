@@ -47,9 +47,9 @@ public:
   explicit Update()
     : stamp_{CurrentTime()}
   {}
-  explicit Update(VectorTensorType gradients)
+  explicit Update(VectorTensorType &gradients)
     : stamp_{CurrentTime()}
-    , gradients_{gradients}
+    , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
   {}
 
@@ -87,7 +87,7 @@ public:
     return gradients_;
   }
 
-  virtual ~Update() = default;
+  ~Update() override = default;
 
   Update(const Update &other) = delete;
   Update &operator=(const Update &other)  = delete;

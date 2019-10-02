@@ -41,7 +41,7 @@ using namespace std::chrono_literals;
 class FakeLearner : public fetch::dmlf::AbstractLearnerNetworker
 {
 public:
-  void pushUpdate(std::shared_ptr<UpdateInterface> update) override
+  void pushUpdate(const std::shared_ptr<UpdateInterface> &update) override
   {
     auto msg = update->serialise();
     for (auto &peer : peers)

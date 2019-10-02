@@ -116,6 +116,10 @@ public:
     return que->getUpdate();
   }
 
+  AbstractLearnerNetworker(const AbstractLearnerNetworker &other) = delete;
+  AbstractLearnerNetworker &operator=(const AbstractLearnerNetworker &other)  = delete;
+  bool                      operator==(const AbstractLearnerNetworker &other) = delete;
+  bool                      operator<(const AbstractLearnerNetworker &other)  = delete;
 protected:
   std::shared_ptr<ShuffleAlgorithmInterface> alg;                          // used by descendents
   void                               NewMessage(const Bytes &msg)  // called by descendents
@@ -146,10 +150,6 @@ protected:
     throw std::runtime_error{"Received Update with a non registered type"};
   }
 
-  AbstractLearnerNetworker(const AbstractLearnerNetworker &other) = delete;
-  AbstractLearnerNetworker &operator=(const AbstractLearnerNetworker &other)  = delete;
-  bool                      operator==(const AbstractLearnerNetworker &other) = delete;
-  bool                      operator<(const AbstractLearnerNetworker &other)  = delete;
 private:
   using Mutex     = fetch::Mutex;
   using Lock      = std::unique_lock<Mutex>;

@@ -39,7 +39,7 @@ public:
       std::priority_queue<UpdatePtr, std::vector<UpdatePtr>, std::greater<>>;
 
   Queue() = default;
-  virtual ~Queue() = default;
+  ~Queue() override = default;
 
   void PushNewMessage(Bytes msg) override
   {

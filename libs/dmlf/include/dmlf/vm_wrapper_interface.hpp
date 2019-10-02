@@ -28,10 +28,8 @@ namespace dmlf {
 class VmWrapperInterface
 {
 public:
-  VmWrapperInterface()
-  {}
-  virtual ~VmWrapperInterface()
-  {}
+  VmWrapperInterface() = default;
+  virtual ~VmWrapperInterface() = default;
 
   using OutputHandler = std::function<void(const std::string &)>;
   using InputHandler  = std::function<std::string(void)>;
@@ -48,20 +46,20 @@ public:
     FAILED_RUN,
   };
 
-  virtual std::vector<std::string> Setup(const Flags &flags)                            = 0;
-  virtual std::vector<std::string> Load(std::string source)                             = 0;
-  virtual void                     Execute(std::string entrypoint, const Params params) = 0;
-  virtual void                     SetStdout(OutputHandler)                             = 0;
-  virtual void                     SetStdin(InputHandler)                               = 0;
-  virtual void                     SetStderr(OutputHandler)                             = 0;
-  virtual Status                   status(void) const                                   = 0;
+  virtual std::vector<std::string> Setup(const Flags &flags)                             = 0;
+  virtual std::vector<std::string> Load(std::string source)                              = 0;
+  virtual void                     Execute(const std::string &entrypoint, const Params &params) = 0;
+  virtual void                     SetStdout(OutputHandler)                              = 0;
+  virtual void                     SetStdin(InputHandler)                                = 0;
+  virtual void                     SetStderr(OutputHandler)                              = 0;
+  virtual Status                   status(void) const                                    = 0;
 
-protected:
-private:
   VmWrapperInterface(const VmWrapperInterface &other) = delete;
   VmWrapperInterface &operator=(const VmWrapperInterface &other)  = delete;
   bool                operator==(const VmWrapperInterface &other) = delete;
   bool                operator<(const VmWrapperInterface &other)  = delete;
+protected:
+private:
 };
 
 }  // namespace dmlf

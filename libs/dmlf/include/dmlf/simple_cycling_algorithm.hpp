@@ -28,7 +28,7 @@ class SimpleCyclingAlgorithm : public ShuffleAlgorithmInterface
 {
 public:
   SimpleCyclingAlgorithm(std::size_t count, std::size_t number_of_outputs_per_cycle);
-  virtual ~SimpleCyclingAlgorithm() = default;
+  ~SimpleCyclingAlgorithm() override = default;
 
   std::vector<std::size_t> getNextOutputs() override;
 
