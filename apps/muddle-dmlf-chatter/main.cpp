@@ -103,16 +103,17 @@ int                      main(int /*argc*/, char **argv)
 
   sleep(1);
 
+  int r;
   if (std::size_t(instance_number) == learner->actual->getUpdateCount())
   {
     std::cout << "yes" << std::endl;
-    return 0;
+    r = 0;
   }
   else
   {
     std::cout << "no" << std::endl;
-    return 1;
+    r = 1;
   }
 
-  return 0;
+   return r;
 }
