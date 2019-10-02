@@ -62,7 +62,7 @@ public:
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
 
-  LoaderType LoaderCode()
+  LoaderType LoaderCode() override
   {
     return LoaderType::Tensor;
   }

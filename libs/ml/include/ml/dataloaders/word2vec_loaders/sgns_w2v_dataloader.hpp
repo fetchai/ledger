@@ -75,6 +75,11 @@ public:
   SizeType         IndexFromWord(std::string const &word) const;
   SizeType         WindowSize();
 
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::SGNS;
+  }
+
 private:
   SizeType                                  current_sentence_;
   SizeType                                  current_word_;

@@ -288,6 +288,11 @@ public:
     }
   }
 
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::MNIST;
+  }
+
 private:
   using UnsignedChar = uint8_t;
 

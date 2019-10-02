@@ -62,6 +62,11 @@ public:
 
   bool AddData(InputType const &data, LabelType const &label) override;
 
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::COMMODITY;
+  }
+
 private:
   bool      random_mode_ = false;
   InputType data_;    // n_data, features
