@@ -357,7 +357,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     uint8_t loader_type;
     map.ExpectKeyGetValue(DATALOADER_TYPE, loader_type);
 
-    switch (ml::LoaderType(loader_type))
+    switch (static_cast<ml::LoaderType>(loader_type))
     {
     case ml::LoaderType::Tensor:
     {
