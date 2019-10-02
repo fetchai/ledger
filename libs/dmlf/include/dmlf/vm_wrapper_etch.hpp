@@ -48,10 +48,10 @@ public:
   std::vector<std::string> Setup(const Flags &flags) override;
   std::vector<std::string> Load(std::string source) override;
   void                     Execute(const std::string &entrypoint, const Params &params) override;
-  void                     SetStdout(OutputHandler oh) override;
-  void                     SetStdin(InputHandler ih) override
+  void                     SetStdout(OutputHandler /*handler*/) override;
+  void                     SetStdin(InputHandler /*handler*/) override
   {}
-  void SetStderr(OutputHandler oh) override
+  void SetStderr(OutputHandler /*handler*/) override
   {}
 
   Status status() const override
