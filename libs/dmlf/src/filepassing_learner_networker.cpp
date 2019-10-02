@@ -41,7 +41,7 @@ void FilepassingLearnerNetworker::setName(const std::string &name)
 {
   name_  = name;
   dir_   = processNameToTargetDir(name);
-  auto r = system((std::string("mkdir -vp ") + dir_).c_str()); // NOLINT
+  auto r = system((std::string("mkdir -vp ") + dir_).c_str());  // NOLINT
   if (r != 0)
   {
     std::cerr << "mkdir failed" << std::endl;

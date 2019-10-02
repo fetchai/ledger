@@ -29,7 +29,7 @@ class QueueInterface
 public:
   using Bytes = byte_array::ByteArray;
 
-  QueueInterface() = default;
+  QueueInterface()          = default;
   virtual ~QueueInterface() = default;
 
   virtual void        PushNewMessage(Bytes msg) = 0;
@@ -37,8 +37,9 @@ public:
 
   QueueInterface(const QueueInterface &other) = delete;
   QueueInterface &operator=(const QueueInterface &other)  = delete;
-  bool    operator==(const QueueInterface &other) = delete;
-  bool    operator<(const QueueInterface &other)  = delete;
+  bool            operator==(const QueueInterface &other) = delete;
+  bool            operator<(const QueueInterface &other)  = delete;
+
 private:
 };
 

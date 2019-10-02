@@ -90,7 +90,7 @@ int main(int /*argc*/, char ** /*argv*/)
   learner2->Initialize<Update<std::string>>();
   learner3->Initialize<Update<std::string>>();
 
-  int                      num_upds = 10;
+  int                              num_upds = 10;
   std::shared_ptr<UpdateInterface> upd;
   FETCH_LOG_INFO(LOGGING_NAME, "Updates to push:");
   for (int i = 0; i < num_upds; i++)

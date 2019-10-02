@@ -18,8 +18,8 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
-#include "dmlf/update_interface.hpp"
 #include "dmlf/muddle2_learner_networker.hpp"
+#include "dmlf/update_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -43,10 +43,10 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworkerProtocol::Muddle2LearnerNetworke
   Expose(1, &sample, &Muddle2LearnerNetworker::RecvBytes);
 }
 
-Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string               &cloud_config,
-                                                 std::size_t                     instance_number,
+Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string &cloud_config,
+                                                 std::size_t        instance_number,
                                                  const std::shared_ptr<NetworkManager> &netm,
-                                                 MuddleChannel                   channel_tmp)
+                                                 MuddleChannel                          channel_tmp)
   : channel_tmp_{channel_tmp}
 {
   json::JSONDocument doc{cloud_config};
@@ -138,7 +138,8 @@ void Muddle2LearnerNetworker::pushUpdate(const std::shared_ptr<UpdateInterface> 
   }
 }
 
-void Muddle2LearnerNetworker::pushUpdateType(const std::string &type, const std::shared_ptr<UpdateInterface> &update)
+void Muddle2LearnerNetworker::pushUpdateType(const std::string &                     type,
+                                             const std::shared_ptr<UpdateInterface> &update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud->GetEndpoint(), 1, 1);
   auto data   = update->serialise(type);

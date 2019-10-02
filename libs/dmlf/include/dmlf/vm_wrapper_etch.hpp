@@ -42,7 +42,7 @@ public:
   using VM         = fetch::vm::VM;
   using Executable = fetch::vm::Executable;
 
-  VmWrapperEtch() = default;
+  VmWrapperEtch()           = default;
   ~VmWrapperEtch() override = default;
 
   std::vector<std::string> Setup(const Flags &flags) override;
@@ -61,6 +61,7 @@ public:
   VmWrapperEtch &operator=(const VmWrapperEtch &other)  = delete;
   bool           operator==(const VmWrapperEtch &other) = delete;
   bool           operator<(const VmWrapperEtch &other)  = delete;
+
 protected:
 private:
   void DoOutput();

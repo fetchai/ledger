@@ -23,8 +23,8 @@
 #include "core/mutex.hpp"
 
 #include "dmlf/queue_interface.hpp"
-#include "dmlf/update_interface.hpp"
 #include "dmlf/update.hpp"
+#include "dmlf/update_interface.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -33,12 +33,11 @@ template <typename T>
 class Queue : public QueueInterface
 {
 public:
-  using UpdateType = T;
-  using UpdatePtr  = std::shared_ptr<UpdateType>;
-  using QueueUpdates =
-      std::priority_queue<UpdatePtr, std::vector<UpdatePtr>, std::greater<>>;
+  using UpdateType   = T;
+  using UpdatePtr    = std::shared_ptr<UpdateType>;
+  using QueueUpdates = std::priority_queue<UpdatePtr, std::vector<UpdatePtr>, std::greater<>>;
 
-  Queue() = default;
+  Queue()           = default;
   ~Queue() override = default;
 
   void PushNewMessage(Bytes msg) override
@@ -74,6 +73,7 @@ public:
   Queue &operator=(const Queue &other)  = delete;
   bool   operator==(const Queue &other) = delete;
   bool   operator<(const Queue &other)  = delete;
+
 private:
   using Mutex = fetch::Mutex;
   using Lock  = std::unique_lock<Mutex>;

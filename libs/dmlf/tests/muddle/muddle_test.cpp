@@ -19,11 +19,11 @@
 #include "gtest/gtest.h"
 
 #include "dmlf/filepassing_learner_networker.hpp"
-#include "dmlf/update_interface.hpp"
 #include "dmlf/local_learner_networker.hpp"
 #include "dmlf/muddle2_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/update.hpp"
+#include "dmlf/update_interface.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 

@@ -49,6 +49,7 @@ public:
   FilepassingLearnerNetworker &operator=(const FilepassingLearnerNetworker &other)  = delete;
   bool                         operator==(const FilepassingLearnerNetworker &other) = delete;
   bool                         operator<(const FilepassingLearnerNetworker &other)  = delete;
+
 protected:
   static std::string       processNameToTargetDir(const std::string &name);
   void                     tx(const std::string &target, const Bytes &data);

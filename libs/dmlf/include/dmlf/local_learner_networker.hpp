@@ -33,7 +33,6 @@ public:
   using PeerP = std::shared_ptr<LocalLearnerNetworker>;
   using Peers = std::vector<PeerP>;
 
-  
   LocalLearnerNetworker();
   ~LocalLearnerNetworker() override;
   void pushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
@@ -49,6 +48,7 @@ public:
   LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other)  = delete;
   bool                   operator==(const LocalLearnerNetworker &other) = delete;
   bool                   operator<(const LocalLearnerNetworker &other)  = delete;
+
 protected:
 private:
   using Mutex = fetch::Mutex;
