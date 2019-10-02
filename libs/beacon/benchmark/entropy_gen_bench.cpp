@@ -176,14 +176,13 @@ void EntropyGen(benchmark::State &state)
     TrustedDealer         dealer{cabinet, static_cast<uint32_t>(cabinet.size() / 2 + 1)};
     std::vector<uint32_t> pending_nodes(static_cast<uint32_t>(cabinet.size()));
     std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
-    state.ResumeTiming();
-
     for (auto const &node : nodes)
     {
       node->ResetCabinet(cabinet, test_attempt * entropy_rounds,
                          test_attempt * entropy_rounds + entropy_rounds, prev_entropy,
                          dealer.GetKeys(node->muddle_certificate->identity().identifier()));
     }
+    state.ResumeTiming();
 
     // Wait for everyone to finish
     while (!pending_nodes.empty())
