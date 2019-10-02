@@ -40,7 +40,7 @@ public:
       ++index;
     }
 
-    bn::initPairing();
+    fetch::crypto::mcl::details::MCLInitialiser();
     outputs_ =
         crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold);
   }
