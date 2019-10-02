@@ -550,7 +550,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
     return status;
   }
 
-  bool display{true};
+  bool display{false};
 
   // never allow the current node address to be added to the routing table
   if (address != address_raw_)
