@@ -42,15 +42,15 @@ public:
   using DataLoaderType    = dataloaders::DataLoader<TensorType, TensorType>;
   using OptimiserType     = optimisers::OptimiserType;
   using GraphPtrType      = typename std::shared_ptr<GraphType>;
-  using DataLoaderPtrType = typename std::shared_ptr<DataLoaderType>;
-  using OptimiserPtrType  = typename std::shared_ptr<optimisers::Optimiser<TensorType>>;
+  using DataLoaderPtrType = typename std::unique_ptr<DataLoaderType>;
+  using OptimiserPtrType  = typename std::unique_ptr<optimisers::Optimiser<TensorType>>;
 
   explicit Model(ModelConfig<DataType> model_config = ModelConfig<DataType>())
     : model_config_(std::move(model_config))
   {}
 
   void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
-  void SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr);
+  void SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr);
 
   virtual void Train(SizeType n_steps);
   virtual void Train(SizeType n_steps, DataType &loss);
@@ -150,7 +150,7 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
  * @param dataloader_ptr
  */
 template <typename TensorType>
-void Model<TensorType>::SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr)
+void Model<TensorType>::SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr)
 {
   dataloader_ptr_ = std::move(dataloader_ptr);
 }
@@ -319,9 +319,11 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     {
     case ml::LoaderType::Tensor:
     {
-      auto loader_ptr = std::dynamic_pointer_cast<
-          fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>(sp.dataloader_ptr_);
+      fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> *loader_ptr =
+          static_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> *>(
+              sp.dataloader_ptr_.get());
       map.Append(DATALOADER_PTR, *loader_ptr);
+
       break;
     }
     case ml::LoaderType::CONTEXT:
@@ -330,8 +332,8 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       break;
     }
 
-    auto optimiser_ptr = std::dynamic_pointer_cast<fetch::ml::optimisers::SGDOptimiser<TensorType>>(
-        sp.optimiser_ptr_);
+    fetch::ml::optimisers::SGDOptimiser<TensorType> *optimiser_ptr =
+        static_cast<fetch::ml::optimisers::SGDOptimiser<TensorType> *>(sp.optimiser_ptr_.get());
     map.Append(OPTIMISER_PTR, *optimiser_ptr);
 
     map.Append(INPUT_NODE_NAME, sp.input_);
@@ -361,10 +363,9 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     {
     case ml::LoaderType::Tensor:
     {
-      auto loader_ptr =
-          std::make_shared<ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
+      auto loader_ptr = new ml::dataloaders::TensorDataLoader<TensorType, TensorType>();
       map.ExpectKeyGetValue(DATALOADER_PTR, *loader_ptr);
-      sp.dataloader_ptr_ = loader_ptr;
+      sp.dataloader_ptr_.reset(loader_ptr);
       break;
     }
     case ml::LoaderType::CONTEXT:
@@ -373,10 +374,10 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       break;
     }
 
-    auto optimiser_ptr = std::make_shared<ml::optimisers::SGDOptimiser<TensorType>>();
+    auto optimiser_ptr = new ml::optimisers::SGDOptimiser<TensorType>();
     map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
     optimiser_ptr->SetGraph(sp.graph_ptr_);
-    sp.optimiser_ptr_ = optimiser_ptr;
+    sp.optimiser_ptr_.reset(optimiser_ptr);
 
     map.ExpectKeyGetValue(INPUT_NODE_NAME, sp.input_);
     map.ExpectKeyGetValue(LABEL_NODE_NAME, sp.label_);
