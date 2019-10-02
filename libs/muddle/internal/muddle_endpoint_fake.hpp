@@ -33,7 +33,6 @@ class FakeMuddleEndpoint : public MuddleEndpoint
 {
 public:
   using Address              = Packet::Address;
-  using Packet               = Packet;
   using PacketPtr            = std::shared_ptr<Packet>;
   using Payload              = Packet::Payload;
   using ConnectionPtr        = std::weak_ptr<network::AbstractConnection>;

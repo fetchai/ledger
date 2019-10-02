@@ -21,7 +21,7 @@
 using fetch::muddle::FakeMuddleEndpoint;
 using fetch::muddle::NetworkId;
 
-using Packet          = FakeMuddleEndpoint::Packet;
+using Packet          = fetch::muddle::Packet;
 using PacketPtr       = FakeMuddleEndpoint::PacketPtr;
 using Address         = FakeMuddleEndpoint::Address;
 using Response        = FakeMuddleEndpoint::Response;
