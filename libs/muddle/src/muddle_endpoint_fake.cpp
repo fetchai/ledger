@@ -30,16 +30,15 @@ using AddressList     = FakeMuddleEndpoint::AddressList;
 using AddressSet      = FakeMuddleEndpoint::AddressSet;
 
 // Convenience function - note shares similarities with real muddle
-PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &network, uint16_t service,
-                       uint16_t channel, uint16_t counter, uint8_t ttl,
-                       Packet::Payload const &payload)
+PacketPtr FormatPacket(Packet::Address from, NetworkId const &network, uint16_t service,
+                       uint16_t channel, uint16_t counter, uint8_t ttl, Packet::Payload payload)
 {
-  auto packet = std::make_shared<Packet>(from, network.value());
+  auto packet = std::make_shared<Packet>(std::move(from), network.value());
   packet->SetService(service);
   packet->SetChannel(channel);
   packet->SetMessageNum(counter);
   packet->SetTTL(ttl);
-  packet->SetPayload(payload);
+  packet->SetPayload(std::move(payload));
 
   return packet;
 }

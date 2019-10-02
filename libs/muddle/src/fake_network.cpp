@@ -27,13 +27,13 @@ FakeNetwork::FakeNetworkImpl FakeNetwork::network_{};
 
 Addresses FakeNetwork::GetConnections(Address const &of)
 {
-  std::lock_guard<std::mutex> lock(network_lock_);
+  FETCH_LOCK(network_lock_);
   return network_[of]->Connections();
 }
 
 void FakeNetwork::Register(Address const &of)
 {
-  std::lock_guard<std::mutex> lock(network_lock_);
+  FETCH_LOCK(network_lock_);
   if (!network_[of])
   {
     network_[of] = std::make_shared<PacketQueueAndConnections>();
@@ -42,20 +42,20 @@ void FakeNetwork::Register(Address const &of)
 
 void FakeNetwork::Deregister(Address const &of)
 {
-  std::lock_guard<std::mutex> lock(network_lock_);
+  FETCH_LOCK(network_lock_);
   network_.erase(of);
 }
 
 void FakeNetwork::Connect(Address const &from, Address const &to)
 {
-  std::lock_guard<std::mutex> lock(network_lock_);
+  FETCH_LOCK(network_lock_);
   network_[from]->Connect(to);
   network_[to]->Connect(from);
 }
 
 void FakeNetwork::Disconnect(Address const &from, Address const &to)
 {
-  std::lock_guard<std::mutex> lock(network_lock_);
+  FETCH_LOCK(network_lock_);
 
   if (network_.find(from) != network_.end())
   {
@@ -70,7 +70,7 @@ void FakeNetwork::Disconnect(Address const &from, Address const &to)
 
 Addresses FakeNetwork::GetDirectlyConnectedPeers(Address const &of)
 {
-  std::lock_guard<std::mutex> lock(network_lock_);
+  FETCH_LOCK(network_lock_);
   return network_[of]->Connections();
 }
 
@@ -79,10 +79,13 @@ void FakeNetwork::DeployPacket(Address const &to, PacketPtr packet)
   PacketQueueAndConnectionsPtr queue;
 
   {
-    std::lock_guard<std::mutex> lock(network_lock_);
-    if (network_.find(to) != network_.end())
+    FETCH_LOCK(network_lock_);
+
+    auto it = network_.find(to);
+
+    if (it != network_.end())
     {
-      queue = network_[to];
+      queue = it->second;
     }
   }
 
@@ -98,7 +101,10 @@ void FakeNetwork::BroadcastPacket(PacketPtr const &packet)
   std::vector<PacketQueueAndConnectionsPtr> locations;
 
   {
-    std::lock_guard<std::mutex> lock(network_lock_);
+    FETCH_LOCK(network_lock_);
+
+    locations.reserve(network_.size());
+
     for (auto const &network_location : network_)
     {
       locations.push_back(network_location.second);
@@ -116,7 +122,7 @@ bool FakeNetwork::GetNextPacket(Address const &to, PacketPtr &packet)
   PacketQueueAndConnectionsPtr queue;
 
   {
-    std::lock_guard<std::mutex> lock(network_lock_);
+    FETCH_LOCK(network_lock_);
     if (network_.find(to) != network_.end())
     {
       queue = network_[to];
@@ -136,13 +142,13 @@ using fetch::muddle::PacketQueueAndConnections;
 
 void PacketQueueAndConnections::Push(PacketPtr packet)
 {
-  std::lock_guard<std::mutex> lock(lock_);
+  FETCH_LOCK(lock_);
   packets_.push_front(std::move(packet));
 }
 
 bool PacketQueueAndConnections::Pop(PacketPtr &ret)
 {
-  std::lock_guard<std::mutex> lock(lock_);
+  FETCH_LOCK(lock_);
 
   if (!packets_.empty())
   {
@@ -154,14 +160,14 @@ bool PacketQueueAndConnections::Pop(PacketPtr &ret)
   return false;
 }
 
-Addresses PacketQueueAndConnections::Connections()
+Addresses PacketQueueAndConnections::Connections() const
 {
-  std::lock_guard<std::mutex> lock(lock_);
+  FETCH_LOCK(lock_);
   return connections_;
 }
 
 void PacketQueueAndConnections::Connect(Address const &address)
 {
-  std::lock_guard<std::mutex> lock(lock_);
+  FETCH_LOCK(lock_);
   connections_.insert(address);
 }

@@ -40,7 +40,7 @@ PunishmentBroadcastChannel::PunishmentBroadcastChannel(Endpoint &endpoint, Muddl
   , state_machine_{std::make_shared<StateMachine>("PBCStateMach", State::INIT)}
 {
   FETCH_UNUSED(ordered_delivery);
-  this->Expose(PULL_INFO_FROM_PEER, this, &PunishmentBroadcastChannel::AllowPeerPull);
+  Expose(PULL_INFO_FROM_PEER, this, &PunishmentBroadcastChannel::AllowPeerPull);
 
   // TODO(HUT): rpc beacon rename.
   // Attaching the protocol
@@ -93,8 +93,7 @@ void PunishmentBroadcastChannel::SetQuestion(ConstByteArray const &question,
   question_          = QuestionStruct(question, answer, certificate_, current_cabinet_);
 }
 
-void PunishmentBroadcastChannel::SetQuestion(std::string const &question,
-                                             std::string const &answer) /* */
+void PunishmentBroadcastChannel::SetQuestion(std::string const &question, std::string const &answer)
 {
   SetQuestion(ConstByteArray(question), ConstByteArray(answer));
 }
@@ -192,8 +191,8 @@ PunishmentBroadcastChannel::State PunishmentBroadcastChannel::OnResolvePromises(
 {
   for (auto it = network_promises_.begin(); it != network_promises_.end();)
   {
-    MuddleAddress &address = (*it).first;
-    auto &         promise = (*it).second;
+    MuddleAddress &address = it->first;
+    auto &         promise = it->second;
 
     if (promise->IsSuccessful())
     {

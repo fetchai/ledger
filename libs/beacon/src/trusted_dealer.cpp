@@ -27,7 +27,7 @@ TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold
   uint32_t index = 0;
   for (auto const &mem : cabinet_)
   {
-    cabinet_index_.insert({mem, index});
+    cabinet_index_.emplace(mem, index);
     ++index;
   }
 
@@ -38,9 +38,12 @@ TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold
 
 DkgOutput TrustedDealer::GetKeys(MuddleAddress const &address) const
 {
-  if (cabinet_index_.find(address) != cabinet_index_.end())
+  auto it = cabinet_index_.find(address);
+
+  if (it != cabinet_index_.end())
   {
-    return DkgOutput(outputs_[cabinet_index_.at(address)], cabinet_);
+    auto &address_as_index = it->second;
+    return DkgOutput(outputs_[address_as_index], cabinet_);
   }
 
   return DkgOutput();

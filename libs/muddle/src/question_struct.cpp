@@ -95,12 +95,7 @@ ConfirmedAnswers QuestionStruct::Update(uint32_t threshold, QuestionStruct &rhs)
     Answer &             answer                  = std::get<ANSW>(answer_and_seen);
     Signature &          signature               = std::get<SIG>(answer_and_seen);
     Seen &               seen                    = std::get<SEEN>(answer_and_seen);
-    bool                 msg_was_below_threshold = false;
-
-    if (seen.size() < threshold)
-    {
-      msg_was_below_threshold = true;
-    }
+    bool                 msg_was_below_threshold = seen.size() < threshold;
 
     // Add info from other table to ours
     AnswerAndSeen &  rhs_answer_and_seen = rhs.table_[address];
@@ -112,7 +107,7 @@ ConfirmedAnswers QuestionStruct::Update(uint32_t threshold, QuestionStruct &rhs)
     {
       answer = rhs_answer;
 
-      seen.insert(std::make_pair(self_, Digest("temp")));
+      seen.emplace(self_, Digest("temp"));
     }
 
     if (!rhs_signature.empty() && signature.empty())
@@ -127,7 +122,7 @@ ConfirmedAnswers QuestionStruct::Update(uint32_t threshold, QuestionStruct &rhs)
 
     if (seen.size() >= threshold && msg_was_below_threshold && address != self_)
     {
-      ret.emplace_back(std::make_pair(address, answer));
+      ret.emplace_back(address, answer);
     }
   }
 

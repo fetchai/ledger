@@ -74,10 +74,11 @@ struct PacketQueueAndConnections
 
   void      Push(PacketPtr packet);
   bool      Pop(PacketPtr &ret);
-  Addresses Connections();
+  Addresses Connections() const;
   void      Connect(Address const &address);
 
-  std::mutex            lock_;
+private:
+  mutable std::mutex    lock_;
   std::deque<PacketPtr> packets_;
   Addresses             connections_;
 };
