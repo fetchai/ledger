@@ -87,7 +87,7 @@ public:
   {
     serialiser >> payload_;
   }
-  explicit FinalStateMessage(Payload const &payload)
+  explicit FinalStateMessage(Payload const &payload)  // NOLINT
     : DKGMessage{MessageType::FINAL_STATE}
     , payload_{payload}
   {}
