@@ -57,12 +57,12 @@ public:
   std::size_t GetUpdateCount() const;
 
   template <typename T>
-  std::shared_ptr<T> getUpdate()
+  std::shared_ptr<T> GetUpdate()
   {
     FETCH_LOCK(queue_m_);
     ThrowIfNotInitialized();
     auto que = std::dynamic_pointer_cast<Queue<T>>(queue_);
-    return que->getUpdate();
+    return que->GetUpdate();
   }
 
   virtual void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg);
@@ -95,7 +95,7 @@ public:
     auto key  = update_types_.template find<T>();
     auto iter = queue_map_.find(key);
     auto que  = std::dynamic_pointer_cast<Queue<T>>(iter->second);
-    return que->getUpdate();
+    return que->GetUpdate();
   }
 
   AbstractLearnerNetworker(const AbstractLearnerNetworker &other) = delete;

@@ -62,7 +62,7 @@ public:
     this->net->Initialize<UpdateTypeForTesting>();
   }
 
-  std::vector<TensorType> generateFakeWorkOutput(std::size_t instance_number,
+  std::vector<TensorType> GenerateFakeWorkOutput(std::size_t instance_number,
                                                  std::size_t sequence_number)
   {
     auto t = TensorType(TensorType::SizeType(instance_number + 2));
@@ -72,13 +72,13 @@ public:
     return r;
   }
 
-  bool work()
+  bool Work()
   {
     bool result = false;
     while (produced < 10)
     {
       produced++;
-      auto output = generateFakeWorkOutput(number, produced);
+      auto output = GenerateFakeWorkOutput(number, produced);
       auto upd    = std::make_shared<UpdateTypeForTesting>(output);
       net->PushUpdate(upd);
       result = true;
@@ -86,7 +86,7 @@ public:
 
     while (net->GetUpdateCount() > 0)
     {
-      net->getUpdate<UpdateTypeForTesting>();
+      net->GetUpdate<UpdateTypeForTesting>();
       integrations++;
       result = true;
     }
@@ -99,7 +99,7 @@ public:
     quitflag = true;
   }
 
-  void mt_work()
+  void MtWork()
   {
     while (true)
     {
@@ -114,7 +114,7 @@ public:
       if (produced < 10)
       {
         produced++;
-        auto output = generateFakeWorkOutput(number, produced);
+        auto output = GenerateFakeWorkOutput(number, produced);
         auto upd    = std::make_shared<UpdateTypeForTesting>(output);
         net->PushUpdate(upd);
         continue;
@@ -122,7 +122,7 @@ public:
 
       if (net->GetUpdateCount() > 0)
       {
-        net->getUpdate<UpdateTypeForTesting>();
+        net->GetUpdate<UpdateTypeForTesting>();
         integrations++;
         continue;
       }
@@ -171,7 +171,7 @@ public:
       working = false;
       for (const auto &inst : insts)
       {
-        if (inst->work())
+        if (inst->Work())
         {
           working = true;
         }
@@ -209,7 +209,7 @@ public:
 
     for (const auto &inst : insts)
     {
-      auto func = [inst]() { inst->mt_work(); };
+      auto func = [inst]() { inst->MtWork(); };
 
       auto t = std::make_shared<std::thread>(func);
       threads.push_back(t);
@@ -262,7 +262,7 @@ public:
 
     for (const auto &inst : insts)
     {
-      auto func = [inst]() { inst->mt_work(); };
+      auto func = [inst]() { inst->MtWork(); };
 
       auto t = std::make_shared<std::thread>(func);
       threads.push_back(t);
@@ -342,8 +342,8 @@ TEST_F(UpdateSerialisationTests, basicPass)
   EXPECT_NE(update_1->TimeStamp(), update_2->TimeStamp());
   EXPECT_NE(update_1->Fingerprint(), update_2->Fingerprint());
 
-  auto update_1_bytes = update_1->serialise();
-  update_2->Deserialise(update_1_bytes);
+  auto update_1_bytes = update_1->Serialise();
+  update_2->DeSerialise(update_1_bytes);
 
   EXPECT_EQ(update_1->TimeStamp(), update_2->TimeStamp());
   EXPECT_EQ(update_1->Fingerprint(), update_2->Fingerprint());

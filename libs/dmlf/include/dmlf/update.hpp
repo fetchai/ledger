@@ -55,13 +55,13 @@ public:
 
   ~Update() override = default;
 
-  byte_array::ByteArray serialise() override
+  byte_array::ByteArray Serialise() override
   {
     serializers::MsgPackSerializer serializer;
     serializer << *this;
     return serializer.data();
   }
-  byte_array::ByteArray serialise(std::string type) override
+  byte_array::ByteArray Serialise(std::string type) override
   {
     serializers::MsgPackSerializer serializer;
     serializers::MsgPackSerializer serializer_;
@@ -70,7 +70,7 @@ public:
     serializer << serializer_.data();
     return serializer.data();
   }
-  void Deserialise(const byte_array::ByteArray &map) override
+  void DeSerialise(const byte_array::ByteArray &map) override
   {
     serializers::MsgPackSerializer serializer{map};
     serializer >> *this;

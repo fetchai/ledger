@@ -51,7 +51,7 @@ void LocalLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &u
   std::vector<std::shared_ptr<LocalLearnerNetworker>> targets;
   
   auto indexes = alg_->GetNextOutputs();
-  auto data    = update->serialise();
+  auto data    = update->Serialise();
 
   for (auto ind : indexes)
   {

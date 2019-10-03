@@ -119,7 +119,7 @@ Muddle2LearnerNetworker::~Muddle2LearnerNetworker() = default;
 void Muddle2LearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), 1, 1);
-  auto data   = update->serialise();
+  auto data   = update->Serialise();
 
   PromiseList promises;
   promises.reserve(20);
@@ -140,7 +140,7 @@ void Muddle2LearnerNetworker::PushUpdateType(const std::string &                
                                              const std::shared_ptr<UpdateInterface> &update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), 1, 1);
-  auto data   = update->serialise(type);
+  auto data   = update->Serialise(type);
 
   PromiseList promises;
   promises.reserve(20);

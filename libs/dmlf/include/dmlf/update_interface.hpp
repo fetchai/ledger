@@ -36,12 +36,12 @@ public:
   virtual ~UpdateInterface() = default;
 
   // API
-  virtual byte_array::ByteArray serialise()                                = 0;
-  virtual byte_array::ByteArray serialise(std::string type)                = 0;
-  virtual void                  Deserialise(const byte_array::ByteArray &) = 0;
+  virtual byte_array::ByteArray Serialise()                                = 0;
+  virtual byte_array::ByteArray Serialise(std::string type)                = 0;
+  virtual void                  DeSerialise(const byte_array::ByteArray &) = 0;
   virtual TimeStampType         TimeStamp() const                          = 0;
   virtual FingerprintType       Fingerprint() const                        = 0;
-  virtual std::string           debug() const
+  virtual std::string           DebugString() const
   {
     return static_cast<std::string>(byte_array::ToBase64(Fingerprint())) + "@" +
            std::to_string(TimeStamp());

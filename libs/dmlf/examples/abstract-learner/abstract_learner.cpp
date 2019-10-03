@@ -43,7 +43,7 @@ class FakeLearner : public fetch::dmlf::AbstractLearnerNetworker
 public:
   void PushUpdate(const std::shared_ptr<UpdateInterface> &update) override
   {
-    auto msg = update->serialise();
+    auto msg = update->Serialise();
     for (auto &peer : peers)
     {
       SendMessage(msg, peer);
@@ -104,7 +104,7 @@ int main(int /*argc*/, char ** /*argv*/)
   FETCH_LOG_INFO(LOGGING_NAME, "[learner2] Updates from FakeLearner:");
   while (learner2->GetUpdateCount() > 0)
   {
-    upd = learner2->getUpdate<Update<std::string>>();
+    upd = learner2->GetUpdate<Update<std::string>>();
     FETCH_LOG_INFO(LOGGING_NAME, "Update received ", upd->TimeStamp());
   }
 
@@ -112,7 +112,7 @@ int main(int /*argc*/, char ** /*argv*/)
 
   while (learner3->GetUpdateCount() > 0)
   {
-    upd = learner3->getUpdate<Update<std::string>>();
+    upd = learner3->GetUpdate<Update<std::string>>();
     FETCH_LOG_INFO(LOGGING_NAME, "Update received ", upd->TimeStamp());
   }
 
