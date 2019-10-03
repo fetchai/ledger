@@ -1,0 +1,126 @@
+ F E ╱     Constellation v0.9.0-alpha3-150-g64a22b96
+   T C     Copyright 2018-2019 (c) Fetch AI Ltd.
+     H     
+
+[I] 2019/10/01 18:57:41 | main                           : Input Configuration:
+lanes................: 1
+slices...............: 16
+block-interval.......: 1000
+standalone...........: Yes
+private-network......: No
+db-prefix............: node_storage
+port.................: 8000
+peers................: 
+external.............: 127.0.0.1
+config...............: 
+max-peers............: 3
+transient-peers......: 1
+peers-update-cycle-ms: 0
+disable-signing......: No
+kademlia-routing.....: Yes
+bootstrap............: No
+discoverable.........: No
+host-name............: 
+network..............: 
+token................: 
+processor-threads....: 8
+verifier-threads.....: 8
+executors............: 1
+load-genesis-file....: No
+genesis-file-location: 
+experimental.........: 
+pos..................: No
+max-committee-size...: 10
+stake-delay-period...: 5
+aeon-period..........: 100
+
+[I] 2019/10/01 18:57:41 | constellation                  : Shard 1
+[I] 2019/10/01 18:57:41 | constellation                  :  - Internal IjWssr4jAm7EBqwCxsuBeT5m+MuAdNu+PAhxjZgKk+IrujWyi71K231UTrleYVJaaSfij0XcTOD3cO8sHmxe6Q== - ISRD - tcp://0.0.0.0:8011
+[I] 2019/10/01 18:57:41 | constellation                  :  - External A0/yw6ANPqii+cTD46LniPzsr64RwVQAQ/XfaghuLvHFdn0i3bYgm+pAXqovKNylh1OU0Hbl4H3nhrk3pOVarw== - L000000 - tcp://0.0.0.0:8010
+[I] 2019/10/01 18:57:41 | StorageUnitClient              : After recovery, size of merkle stack is: 0
+[W] 2019/10/01 18:57:41 | DAG                            : No head found when loading epoch store!
+[I] 2019/10/01 18:57:41 | MainChain                      : No head block found in chain data store! Resetting chain data store.
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          :    Tx API: /api/contract/fetch/dummy/run : fetch.dummy.run
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          :    Tx API: /api/contract/fetch/dummy/wait : fetch.dummy.wait
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          : Query API: /api/contract/fetch/token/stake
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          : Query API: /api/contract/fetch/token/cooldownStake
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          : Query API: /api/contract/fetch/token/balance
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          :    Tx API: /api/contract/fetch/token/collectStake : fetch.token.collectStake
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          :    Tx API: /api/contract/fetch/token/addStake : fetch.token.addStake
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          :    Tx API: /api/contract/fetch/token/transfer : fetch.token.transfer
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          :    Tx API: /api/contract/fetch/token/deStake : fetch.token.deStake
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          :    Tx API: /api/contract/fetch/token/wealth : fetch.token.wealth
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          :    Tx API: /api/contract/fetch/token/deed : fetch.token.deed
+[I] 2019/10/01 18:57:41 | ContractHttpInterface          :    Tx API: /api/contract/fetch/contract/create : fetch.contract.create
+[I] 2019/10/01 18:57:41 | constellation                  : Constellation :: 1x16x1
+[I] 2019/10/01 18:57:41 | constellation                  :               :: AQwD6SbnV6HJdydE6zCEvTgrkfq2TM5UdzWEtJ3LbWUT1DCyL
+[I] 2019/10/01 18:57:41 | constellation                  :               :: 1ptfM9xAndm37HPC8vIaPgpJaa2Mcnzn7x04uCYCqhgPGlTAS9hCGj7CDePAD1Jpk/DIS6SFUdpZeTp3WGQYJw==
+[I] 2019/10/01 18:57:41 | constellation                  : 
+[I] 2019/10/01 18:57:41 | DAGService                     : DAG initialised.
+[I] 2019/10/01 18:57:41 | LaneService                    : Lane 0 Initialised.
+[I] 2019/10/01 18:57:41 | TCPServer                      : Listening for incoming connections on tcp://0.0.0.0:8001
+[I] 2019/10/01 18:57:42 | LaneService                    : Establishing Lane 0 Service on tcp://0.0.0.0:8010 ID: A0/yw6ANPqii+cTD46LniPzsr64RwVQAQ/XfaghuLvHFdn0i3bYgm+pAXqovKNylh1OU0Hbl4H3nhrk3pOVarw==
+[I] 2019/10/01 18:57:42 | LaneService                    : Establishing Lane 0 Service on tcp://127.0.0.1:8011 ID: IjWssr4jAm7EBqwCxsuBeT5m+MuAdNu+PAhxjZgKk+IrujWyi71K231UTrleYVJaaSfij0XcTOD3cO8sHmxe6Q==
+[I] 2019/10/01 18:57:42 | TCPServer                      : Listening for incoming connections on tcp://0.0.0.0:8010
+[I] 2019/10/01 18:57:44 | TCPServer                      : Listening for incoming connections on tcp://0.0.0.0:8011
+[I] 2019/10/01 18:57:45 | constellation                  : Starting shard services...
+[I] 2019/10/01 18:57:45 | constellation                  : Starting shard services...complete
+[I] 2019/10/01 18:57:45 | constellation                  : Inter-shard Identity: 2GBJVwHr3jtWoGkAYta7vwvS7uSVwvT0WVcQCgszZuNhWHaNgSq4UDHRj6jagcVvVTVk/hQPGJBkUj+7Q8FDPA==
+[I] 2019/10/01 18:57:45 | Muddle:ISRD                    : Creating connection to tcp://127.0.0.1:8011 (conn: 1)
+[I] 2019/10/01 18:57:45 | MuddlePeers:ISRD               : Connection to tcp://127.0.0.1:8011 established (conn: 1)
+[I] 2019/10/01 18:57:45 | Router:ISRD                    : Adding direct route for: 2GBJVwHr3jtWoGkAYta7vwvS7uSVwvT0WVcQCgszZuNhWHaNgSq4UDHRj6jagcVvVTVk/hQPGJBkUj+7Q8FDPA==
+[I] 2019/10/01 18:57:45 | Router:ISRD                    : Adding direct route for: IjWssr4jAm7EBqwCxsuBeT5m+MuAdNu+PAhxjZgKk+IrujWyi71K231UTrleYVJaaSfij0XcTOD3cO8sHmxe6Q==
+[I] 2019/10/01 18:57:45 | DirectHandler:ISRD             : New routable connection
+[I] 2019/10/01 18:57:46 | constellation                  : Internal muddle network established between shards
+[I] 2019/10/01 18:57:46 | HTTPServer                     : Starting HTTPServer on http://127.0.0.1:8000
+[I] 2019/10/01 18:57:46 | DAG                            : Committing epoch: 0 Nodes: 0
+[I] 2019/10/01 18:57:46 | BlockCoordinator               : Chain Sync complete on 0x4f9405baef5fc81d85bbeef41e0ee20053f9decaf38aafcaac08df4313326a48 (block: 0 prev: 0xd3efbefbefbefbefbefbefbefbe19e9deb22b3efbefbefbefbefbefbefbefbed)
+[I] 2019/10/01 18:57:47 | constellation                  : Startup complete
+[I] 2019/10/01 18:57:47 | BlockCoordinator               : Minting new block! Number: 1 beacon: 1449310910991872227
+[I] 2019/10/01 18:57:47 | SynExecMgr                     : Preparing work queue for epoch: 1
+[I] 2019/10/01 18:57:47 | SynExecMgr                     : Preparing work queue for epoch: 1 (complete)
+[I] 2019/10/01 18:57:47 | BasicMiner                     : Starting block packing. Pool Size: 0
+[I] 2019/10/01 18:57:47 | BasicMiner                     : Finished block packing (packed: 0 remaining: 0)
+[I] 2019/10/01 18:57:47 | DAG                            : Committing epoch: 1 Nodes: 0
+[I] 2019/10/01 18:57:47 | BlockCoordinator               : Broadcasting new block: 0xc6d086ce0b033ff67a3f256a6a2e3e17014e9898f7ae9f3bf68a80eea55cb3a6 txs: 0 number: 1
+[I] 2019/10/01 18:57:47 | BlockCoordinator               : Chain Sync complete on 0xc6d086ce0b033ff67a3f256a6a2e3e17014e9898f7ae9f3bf68a80eea55cb3a6 (block: 1 prev: 0x4f9405baef5fc81d85bbeef41e0ee20053f9decaf38aafcaac08df4313326a48)
+[I] 2019/10/01 18:57:48 | BlockCoordinator               : Minting new block! Number: 2 beacon: 1449310910991872227
+[I] 2019/10/01 18:57:48 | SynExecMgr                     : Preparing work queue for epoch: 2
+[I] 2019/10/01 18:57:48 | SynExecMgr                     : Preparing work queue for epoch: 2 (complete)
+[I] 2019/10/01 18:57:48 | BasicMiner                     : Starting block packing. Pool Size: 0
+[I] 2019/10/01 18:57:48 | BasicMiner                     : Finished block packing (packed: 0 remaining: 0)
+[I] 2019/10/01 18:57:48 | DAG                            : Committing epoch: 2 Nodes: 0
+[I] 2019/10/01 18:57:48 | BlockCoordinator               : Broadcasting new block: 0x2e32e16155ea1067823d21f0179a5b3fd92d361d2c58b68a60c8c0cc2ee6489a txs: 0 number: 2
+[I] 2019/10/01 18:57:48 | BlockCoordinator               : Chain Sync complete on 0x2e32e16155ea1067823d21f0179a5b3fd92d361d2c58b68a60c8c0cc2ee6489a (block: 2 prev: 0xc6d086ce0b033ff67a3f256a6a2e3e17014e9898f7ae9f3bf68a80eea55cb3a6)
+[I] 2019/10/01 18:57:49 | BlockCoordinator               : Minting new block! Number: 3 beacon: 1449310910991872227
+[I] 2019/10/01 18:57:49 | SynExecMgr                     : Preparing work queue for epoch: 3
+[I] 2019/10/01 18:57:49 | SynExecMgr                     : Preparing work queue for epoch: 3 (complete)
+[I] 2019/10/01 18:57:49 | BasicMiner                     : Starting block packing. Pool Size: 0
+[I] 2019/10/01 18:57:49 | BasicMiner                     : Finished block packing (packed: 0 remaining: 0)
+[I] 2019/10/01 18:57:49 | DAG                            : Committing epoch: 3 Nodes: 0
+[I] 2019/10/01 18:57:49 | BlockCoordinator               : Broadcasting new block: 0x87e1313b64d5d5ae4b68b0cb60bae731c66cb97cd439cecb86085db537ad6578 txs: 0 number: 3
+[I] 2019/10/01 18:57:49 | BlockCoordinator               : Chain Sync complete on 0x87e1313b64d5d5ae4b68b0cb60bae731c66cb97cd439cecb86085db537ad6578 (block: 3 prev: 0x2e32e16155ea1067823d21f0179a5b3fd92d361d2c58b68a60c8c0cc2ee6489a)
+[I] 2019/10/01 18:57:50 | BlockCoordinator               : Minting new block! Number: 4 beacon: 1449310910991872227
+[I] 2019/10/01 18:57:50 | SynExecMgr                     : Preparing work queue for epoch: 4
+[I] 2019/10/01 18:57:50 | SynExecMgr                     : Preparing work queue for epoch: 4 (complete)
+[I] 2019/10/01 18:57:50 | BasicMiner                     : Starting block packing. Pool Size: 0
+[I] 2019/10/01 18:57:50 | BasicMiner                     : Finished block packing (packed: 0 remaining: 0)
+[I] 2019/10/01 18:57:50 | DAG                            : Committing epoch: 4 Nodes: 0
+[I] 2019/10/01 18:57:50 | BlockCoordinator               : Broadcasting new block: 0xdbd9245854530c9766b2d02685fe0afa5d67512a85faad08d469abe0c979cfd1 txs: 0 number: 4
+[I] 2019/10/01 18:57:50 | BlockCoordinator               : Chain Sync complete on 0xdbd9245854530c9766b2d02685fe0afa5d67512a85faad08d469abe0c979cfd1 (block: 4 prev: 0x87e1313b64d5d5ae4b68b0cb60bae731c66cb97cd439cecb86085db537ad6578)
+[I] 2019/10/01 18:57:51 | BlockCoordinator               : Minting new block! Number: 5 beacon: 1449310910991872227
+[I] 2019/10/01 18:57:51 | SynExecMgr                     : Preparing work queue for epoch: 5
+[I] 2019/10/01 18:57:51 | SynExecMgr                     : Preparing work queue for epoch: 5 (complete)
+[I] 2019/10/01 18:57:51 | BasicMiner                     : Starting block packing. Pool Size: 0
+[I] 2019/10/01 18:57:51 | BasicMiner                     : Finished block packing (packed: 0 remaining: 0)
+[I] 2019/10/01 18:57:52 | DAG                            : Committing epoch: 5 Nodes: 0
+[I] 2019/10/01 18:57:52 | BlockCoordinator               : Broadcasting new block: 0x334887bf194533926b448321c304a641a8f70900af757037753a61de450599e4 txs: 0 number: 5
+[I] 2019/10/01 18:57:52 | BlockCoordinator               : Chain Sync complete on 0x334887bf194533926b448321c304a641a8f70900af757037753a61de450599e4 (block: 5 prev: 0xdbd9245854530c9766b2d02685fe0afa5d67512a85faad08d469abe0c979cfd1)
+[I] 2019/10/01 18:57:52 | main                           : User requests stop of service
+[I] 2019/10/01 18:57:52 | constellation                  : Shutting down...
+[I] 2019/10/01 18:57:52 | TCPServer                      : Shutting down server on tcp://0.0.0.0:8010
+[I] 2019/10/01 18:57:52 | TCPServer                      : Shutting down server on tcp://0.0.0.0:8011
+[I] 2019/10/01 18:57:52 | TCPServer                      : Shutting down server on tcp://0.0.0.0:8001
+[I] 2019/10/01 18:57:53 | Router:ISRD                    : Connection 1 dropped
+[I] 2019/10/01 18:57:53 | Router:ISRD                    : Connection 2 dropped
+[I] 2019/10/01 18:57:53 | constellation                  : Shutting down...complete

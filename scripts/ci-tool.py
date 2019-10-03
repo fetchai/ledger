@@ -326,36 +326,36 @@ def main():
     if args.force_build_folder:
         build_root = abspath(args.force_build_folder)
 
-#    options = {
-#        'CMAKE_BUILD_TYPE': args.build_type,
-#    }
-#
-#    if args.build or args.lint or args.all:
-#        cmake_configure(project_root, build_root, options)
-#
-#    if args.build or args.all:
-#        build_project(build_root, concurrency)
-#
-#    if args.test or args.all:
-#        test_project(
-#            build_root,
-#            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
-#
-#    if args.language_tests or args.all:
-#        test_language(build_root)
-#
-#    if args.slow_tests or args.all:
-#        test_project(
-#            build_root,
-#            include_regex=SLOW_TEST_LABEL)
-#
-#    if args.integration_tests or args.all:
-#        test_project(
-#            build_root,
-#            include_regex=INTEGRATION_TEST_LABEL)
-#
-#    if args.end_to_end_tests or args.all:
-#        test_end_to_end(project_root, build_root)
+    options = {
+        'CMAKE_BUILD_TYPE': args.build_type,
+    }
+
+    if args.build or args.lint or args.all:
+        cmake_configure(project_root, build_root, options)
+
+    if args.build or args.all:
+        build_project(build_root, concurrency)
+
+    if args.test or args.all:
+        test_project(
+            build_root,
+            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
+
+    if args.language_tests or args.all:
+        test_language(build_root)
+
+    if args.slow_tests or args.all:
+        test_project(
+            build_root,
+            include_regex=SLOW_TEST_LABEL)
+
+    if args.integration_tests or args.all:
+        test_project(
+            build_root,
+            include_regex=INTEGRATION_TEST_LABEL)
+
+    if args.end_to_end_tests or args.all:
+        test_end_to_end(project_root, build_root)
 
     if args.lint or args.all:
         fetchai_code_quality.static_analysis(
