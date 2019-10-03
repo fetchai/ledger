@@ -365,6 +365,7 @@ public:
   /////////////////////
 
   constexpr Type        Data() const;
+  constexpr Type        &Data();
   constexpr void        SetData(Type n) const;
   constexpr Type const *pointer() const;
   constexpr Type *      pointer();
@@ -397,22 +398,6 @@ public:
   static constexpr FixedPoint ACosH(FixedPoint const &x);
   static constexpr FixedPoint ATanH(FixedPoint const &x);
 
-private:
-  Type data_{0};  // the value to be stored
-
-  static std::function<FixedPoint(FixedPoint const &x)> SinPi2QuadrantFuncs[4];
-  static std::function<FixedPoint(FixedPoint const &x)> CosPi2QuadrantFuncs[4];
-
-  // this makes it simpler to create a fixed point object from
-  // a native type without scaling
-  struct NoScale
-  {
-  };
-
-  constexpr FixedPoint(Type n, const NoScale &)
-    : data_(n)
-  {}
-
   /**
    * helper function that checks there is no overflow
    * @tparam T the input original type
@@ -434,6 +419,22 @@ private:
   {
     return (x < NextType(MIN));
   }
+
+private:
+  Type data_{0};  // the value to be stored
+
+  static std::function<FixedPoint(FixedPoint const &x)> SinPi2QuadrantFuncs[4];
+  static std::function<FixedPoint(FixedPoint const &x)> CosPi2QuadrantFuncs[4];
+
+  // this makes it simpler to create a fixed point object from
+  // a native type without scaling
+  struct NoScale
+  {
+  };
+
+  constexpr FixedPoint(Type n, const NoScale &)
+    : data_(n)
+  {}
 
   /**
    * helper function that checks no rounding error when casting
@@ -1477,7 +1478,8 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
     {
       // Normal number, return +/-∞ depending on the sign of n
       fp_state |= STATE_INFINITY;
-      *this = infinity(n > _0);
+      *this = infinity((IsPosInfinity(*this) && n > _0) ||
+                       (IsNegInfinity(*this) && n < _0));
     }
   }
   else if (IsInfinity(n))
@@ -1492,7 +1494,8 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
     {
       // Normal number, return +/-∞ depending on the sign of *this
       fp_state |= STATE_INFINITY;
-      *this = infinity(*this > _0);
+      *this = infinity((*this > _0 && IsPosInfinity(n)) ||
+                       (*this < _0 && IsNegInfinity(n)));
     }
   }
   else
@@ -1828,6 +1831,16 @@ constexpr void FixedPoint<I, F>::Swap(FixedPoint<I, F> &rhs)
  */
 template <std::uint16_t I, std::uint16_t F>
 constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::Data() const
+{
+  return data_;
+}
+
+/**
+ * Return the contents of the FixedPoint object
+ * @return the contents of the FixedPoint object
+ */
+template <std::uint16_t I, std::uint16_t F>
+constexpr typename FixedPoint<I, F>::Type &FixedPoint<I, F>::Data()
 {
   return data_;
 }
