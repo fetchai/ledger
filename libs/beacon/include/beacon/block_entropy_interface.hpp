@@ -17,30 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/dkg_output.hpp"
-#include "crypto/mcl_dkg.hpp"
-
-#include <map>
-#include <set>
-#include <vector>
+#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
 namespace beacon {
 
-class TrustedDealer
+class BlockEntropyInterface
 {
 public:
-  using DkgOutput         = beacon::DkgOutput;
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
+  using Digest = byte_array::ConstByteArray;
 
-  TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold);
-  DkgOutput GetKeys(MuddleAddress const &address) const;
+  BlockEntropyInterface()          = default;
+  virtual ~BlockEntropyInterface() = default;
 
-private:
-  std::set<MuddleAddress>           cabinet_{};
-  std::map<MuddleAddress, uint32_t> cabinet_index_{};
-  std::vector<DkgKeyInformation>    outputs_{};
+  virtual Digest   EntropyAsSHA256() const = 0;
+  virtual uint64_t EntropyAsU64() const    = 0;
 };
+
 }  // namespace beacon
 }  // namespace fetch

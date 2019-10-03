@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,30 +16,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/dkg_output.hpp"
-#include "crypto/mcl_dkg.hpp"
+#include "beacon/trusted_dealer.hpp"
 
-#include <map>
-#include <set>
-#include <vector>
+using fetch::beacon::TrustedDealer;
+using DkgOutput = TrustedDealer::DkgOutput;
 
-namespace fetch {
-namespace beacon {
-
-class TrustedDealer
+TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold)
+  : cabinet_{std::move(cabinet)}
 {
-public:
-  using DkgOutput         = beacon::DkgOutput;
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
+  uint32_t index = 0;
+  for (auto const &mem : cabinet_)
+  {
+    cabinet_index_.emplace(mem, index);
+    ++index;
+  }
 
-  TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold);
-  DkgOutput GetKeys(MuddleAddress const &address) const;
+  bn::initPairing();
+  outputs_ =
+      crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold);
+}
 
-private:
-  std::set<MuddleAddress>           cabinet_{};
-  std::map<MuddleAddress, uint32_t> cabinet_index_{};
-  std::vector<DkgKeyInformation>    outputs_{};
-};
-}  // namespace beacon
-}  // namespace fetch
+DkgOutput TrustedDealer::GetKeys(MuddleAddress const &address) const
+{
+  auto it = cabinet_index_.find(address);
+
+  if (it != cabinet_index_.end())
+  {
+    auto &address_as_index = it->second;
+    return DkgOutput(outputs_[address_as_index], cabinet_);
+  }
+
+  return DkgOutput();
+}
