@@ -17,8 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_manager.hpp"
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -39,9 +37,6 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  // Initialising the BLS library
-  bls::Init();
-
   // Beacon parameters
   std::unordered_map<Identity, std::shared_ptr<BeaconManager>> nodes;
   auto cabinet_size = static_cast<uint64_t>(std::atoi(argv[1]));
@@ -61,7 +56,7 @@ int main(int argc, char **argv)
   for (auto &m : nodes)
   {
     auto &n = *m.second;
-    participants.push_back({n.identity(), n.id()});
+    participants.emplace_back(n.identity(), n.id());
   }
 
   // Propagating identities

@@ -16,26 +16,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/bls.hpp"
+#include "beacon/block_entropy.hpp"
 
-#include <iostream>
+using fetch::beacon::BlockEntropy;
 
-using namespace fetch::crypto;
+BlockEntropy::BlockEntropy() = default;
 
-int main()
+BlockEntropy::Digest BlockEntropy::EntropyAsSHA256() const
 {
-  bls::init();
-  std::cout << "Running BLS signature" << std::endl;
-  BLSSigner signer;
-  signer.GenerateKeys();
+  return crypto::Hash<crypto::SHA256>(group_signature /*.getStr()*/);
+}
 
-  BLSVerifier verifier{signer.identity()};
-  auto        sig = signer.Sign("Hello world");
+// This will always be safe so long as the entropy function is properly sha256-ing
+uint64_t BlockEntropy::EntropyAsU64() const
+{
+  const Digest hash = EntropyAsSHA256();
+  return *reinterpret_cast<uint64_t const *>(hash.pointer());
+}
 
-  if (verifier.Verify("Hello world", sig))
-  {
-    std::cout << "Signature verified." << std::endl;
-  }
+void BlockEntropy::HashSelf()
+{
+  fetch::serializers::MsgPackSerializer serializer;
+  serializer << qualified;
+  serializer << group_public_key;
+  serializer << block_number;
+  digest = crypto::Hash<crypto::SHA256>(serializer.data());
+}
 
-  return 0;
+bool BlockEntropy::IsAeonBeginning() const
+{
+  return !qualified.empty();
 }

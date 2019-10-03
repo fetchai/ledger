@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/digest.hpp"
 #include "core/random/lcg.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 
 #include <algorithm>

@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,37 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/bls_base.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
-#include <atomic>
-#include <stdexcept>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace fetch {
-namespace crypto {
-namespace bls {
-namespace {
 
-std::atomic<bool> g_initialised{false};
+using Digest = byte_array::ConstByteArray;
 
-}  // namespace
-
-/**
- * Initialise the BLS library
- */
-void Init()
+struct DigestHashAdapter
 {
-  // determine if the library was previously initialised
-  bool const was_previously_initialised = g_initialised.exchange(true);
-
-  if (!was_previously_initialised)
+  std::size_t operator()(Digest const &hash) const noexcept
   {
-    if (blsInit(E_MCLBN_CURVE_FP254BNB, MCLBN_COMPILED_TIME_VAR) != 0)
-    {
-      throw std::runtime_error("unable to initalize BLS.");
-    }
-  }
-}
+    std::size_t value{0};
 
-}  // namespace bls
-}  // namespace crypto
+    if (!hash.empty())
+    {
+      assert(hash.size() >= sizeof(std::size_t));
+      value = *reinterpret_cast<std::size_t const *>(hash.pointer());
+    }
+
+    return value;
+  }
+};
+
+using DigestSet = std::unordered_set<Digest, DigestHashAdapter>;
+
+template <typename Value>
+using DigestMap = std::unordered_map<Digest, Value, DigestHashAdapter>;
+
 }  // namespace fetch

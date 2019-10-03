@@ -63,15 +63,6 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file,
   return client_data;
 }
 
-void MakeVocabFile(W2VTrainingParams<DataType> const &client_params, std::string const &train_file)
-{
-  GraphW2VLoader<DataType> data_loader(client_params.window_size,
-                                       client_params.negative_sample_size,
-                                       client_params.freq_thresh, client_params.max_word_count);
-  data_loader.BuildVocabAndData({ReadFile(train_file)}, client_params.min_count, false);
-  data_loader.SaveVocab(client_params.vocab_file);
-}
-
 int main(int argc, char **argv)
 {
   if (argc != 3)
@@ -83,9 +74,18 @@ int main(int argc, char **argv)
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
+<<<<<<< HEAD
   SizeType number_of_clients = 5;
   SizeType number_of_rounds  = 50;
   SizeType number_of_peers   = 2;
+=======
+  SizeType number_of_clients    = 3;
+  SizeType number_of_rounds     = 50;
+  coord_params.number_of_peers  = 2;
+  coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
+  coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
+  // have been processed in total by the clients
+>>>>>>> bb5c24ef2ef32742f7626039058151b6186770d9
 
   //  Synchronization occurs after this number of batches have been processed in total by the
   //  clients
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
   client_params.min_count            = 5;                 // infrequent word removal threshold
   client_params.embedding_size       = 100;               // dimension of embedding vec
   client_params.starting_learning_rate_per_sample =
-      0.0025;  // these are the learning rates we have for each sample
+      DataType{0.0025f};  // these are the learning rates we have for each sample
 
   client_params.k     = 20;       // how many nearest neighbours to compare against
   client_params.word0 = "three";  // test word to consider
@@ -117,14 +117,19 @@ int main(int argc, char **argv)
   client_params.learning_rate_param.starting_learning_rate = client_params.starting_learning_rate;
   client_params.learning_rate_param.ending_learning_rate   = client_params.ending_learning_rate;
 
+<<<<<<< HEAD
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   std::cout << "FETCH Distributed Word2vec Demo -- Asynchronous" << std::endl;
+=======
+  std::shared_ptr<std::mutex>              console_mutex_ptr = std::make_shared<std::mutex>();
+  std::shared_ptr<Coordinator<TensorType>> coordinator =
+      std::make_shared<Coordinator<TensorType>>(coord_params);
+  std::cout << "FETCH Distributed Word2vec Demo" << std::endl;
+>>>>>>> bb5c24ef2ef32742f7626039058151b6186770d9
 
   std::string train_file            = argv[1];
   client_params.analogies_test_file = argv[2];
-
-  MakeVocabFile(client_params, train_file);
 
   std::vector<std::string> client_data = SplitTrainingData(train_file, number_of_clients);
 
@@ -145,14 +150,28 @@ int main(int argc, char **argv)
         networkers[i]->GetPeerCount(), number_of_peers));
   }
 
+  std::vector<std::pair<std::vector<std::string>, fetch::byte_array::ConstByteArray>> vocabs;
+
+  // Instantiate NUMBER_OF_CLIENTS clients
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     W2VTrainingParams<DataType> cp = client_params;
     cp.data                        = {client_data[i]};
-    // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] =
+    auto client =
         std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
     // TODO(1597): Replace ID with something more sensible
+    clients[i] = client;
+    vocabs.push_back(client->GetVocab());
+  }
+
+  for (const auto &client : clients)
+  {
+    auto cast_client = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(client);
+
+    for (const auto &vocab : vocabs)
+    {
+      cast_client->AddVocab(vocab);
+    }
   }
 
   for (SizeType i(0); i < number_of_clients; ++i)
@@ -178,6 +197,63 @@ int main(int argc, char **argv)
     {
       t.join();
     }
+<<<<<<< HEAD
+=======
+
+    if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
+    {
+      continue;
+    }
+
+    std::cout << std::endl << "Synchronising weights" << std::endl;
+
+    // Synchronize weights by giving all clients average of all client's weights
+    std::vector<VectorTensorType>                  clients_weights{clients.size()};
+    std::vector<fetch::byte_array::ConstByteArray> clients_vocab_hashes{clients.size()};
+
+    for (SizeType i{0}; i < number_of_clients; ++i)
+    {
+      clients_weights[i]      = clients[i]->GetWeights();
+      auto cast_client_i      = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(clients[i]);
+      clients_vocab_hashes[i] = cast_client_i->GetVocab().second;
+    }
+
+    std::vector<VectorTensorType> clients_new_weights{clients.size()};
+
+    for (SizeType i{0}; i < number_of_clients; ++i)
+    {
+      VectorTensorType weights_new;
+
+      auto cast_client_i = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(clients[i]);
+
+      for (SizeType k{0}; k < clients_weights.at(i).size(); ++k)
+      {
+        TensorType weight_sum;
+        TensorType counts_sum;
+        bool       first = true;
+        for (SizeType j{0}; j < number_of_clients; ++j)
+        {
+          auto ret =
+              cast_client_i->TranslateWeights(clients_weights.at(j).at(k), clients_vocab_hashes[j]);
+          if (first)
+          {
+            weight_sum = ret.first;
+            counts_sum = ret.second;
+            first      = false;
+          }
+          else
+          {
+            weight_sum += ret.first;
+            counts_sum += ret.first;
+          }
+        }
+        // divide weights by counts to get average
+        weights_new.push_back(weight_sum / counts_sum);
+      }
+
+      cast_client_i->SetWeights(weights_new);
+    }
+>>>>>>> bb5c24ef2ef32742f7626039058151b6186770d9
   }
 
   return 0;

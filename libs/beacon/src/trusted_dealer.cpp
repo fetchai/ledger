@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,36 +16,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
+#include "beacon/trusted_dealer.hpp"
 
-#include <unordered_map>
-#include <unordered_set>
+using fetch::beacon::TrustedDealer;
+using DkgOutput = TrustedDealer::DkgOutput;
 
-namespace fetch {
-namespace ledger {
-
-using Digest = byte_array::ConstByteArray;
-
-struct DigestHashAdapter
+TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold)
+  : cabinet_{std::move(cabinet)}
 {
-  std::size_t operator()(Digest const &hash) const noexcept
+  uint32_t index = 0;
+  for (auto const &mem : cabinet_)
   {
-    std::size_t value{0};
-
-    if (!hash.empty())
-    {
-      assert(hash.size() >= sizeof(std::size_t));
-      value = *reinterpret_cast<std::size_t const *>(hash.pointer());
-    }
-
-    return value;
+    cabinet_index_.emplace(mem, index);
+    ++index;
   }
-};
 
-using DigestSet = std::unordered_set<Digest, DigestHashAdapter>;
+  bn::initPairing();
+  outputs_ =
+      crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold);
+}
 
-template <typename Value>
-using DigestMap = std::unordered_map<Digest, Value, DigestHashAdapter>;
+DkgOutput TrustedDealer::GetKeys(MuddleAddress const &address) const
+{
+  auto it = cabinet_index_.find(address);
 
-}  // namespace ledger
-}  // namespace fetch
+  if (it != cabinet_index_.end())
+  {
+    auto &address_as_index = it->second;
+    return DkgOutput(outputs_[address_as_index], cabinet_);
+  }
+
+  return DkgOutput();
+}

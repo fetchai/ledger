@@ -69,9 +69,9 @@ using BeaconServicePtr    = std::shared_ptr<fetch::beacon::BeaconService>;
 using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManager>;
 using ConsensusPtr        = std::shared_ptr<fetch::ledger::Consensus>;
 
-Digest GENESIS_DIGEST =
+fetch::Digest GENESIS_DIGEST =
     fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-Digest GENESIS_MERKLE_ROOT =
+fetch::Digest GENESIS_MERKLE_ROOT =
     fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
 constexpr std::size_t NUM_LANES  = 1;
@@ -990,17 +990,6 @@ protected:
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
-
-    // BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
-    //               StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-    //               BlockSinkInterface &block_sink,
-    //               ProverPtr const &prover, std::size_t num_lanes, std::size_t num_slices,
-    //               std::size_t block_difficulty, ConsensusPtr consensus);
-
-    // BlockCoordinator _naaa{*main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_,
-    // *block_sink_,
-    //     signer,
-    //    NUM_LANES, NUM_SLICES, ConsensusPtr{}};
 
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,

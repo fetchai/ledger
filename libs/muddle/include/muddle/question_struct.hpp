@@ -18,9 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "crypto/prover.hpp"
 
 #include <map>
 #include <set>
+#include <vector>
 
 namespace fetch {
 namespace muddle {
@@ -52,45 +54,14 @@ struct QuestionStruct
     SEEN = 2,  // Signature indicating seen
   };
 
-  QuestionStruct() = default;
+  QuestionStruct();
 
   QuestionStruct(Digest question, Answer answer, CertificatePtr certificate,
-                 CabinetMembers current_cabinet)
-    : certificate_{std::move(certificate)}
-    , self_{certificate_->identity().identifier()}
-    , question_{std::move(question)}
-    , cabinet_{std::move(current_cabinet)}
-  {
-    // Always populate the table with our answer before anything else
-    AnswerAndSeen &cabinet_answer = table_[self_];
+                 CabinetMembers current_cabinet);
 
-    std::get<ANSW>(cabinet_answer)        = std::move(answer);
-    std::get<SIG>(cabinet_answer)         = Digest("nothing");
-    std::get<SEEN>(cabinet_answer)[self_] = Digest("have seen!");
-
-    // Always create entries for all desired cabinet members to avoid
-    // indexing errors
-    for (auto const &member : cabinet_)
-    {
-      table_[member];
-    }
-    // TODO(HUT): signing/confirmation
-  }
-
-  static Answer const &GetAnswer(AnswerAndSeen const &ref)
-  {
-    return std::get<ANSW>(ref);
-  }
-
-  static Signature const &GetSignature(AnswerAndSeen const &ref)
-  {
-    return std::get<SIG>(ref);
-  }
-
-  static Seen const &GetSeen(AnswerAndSeen const &ref)
-  {
-    return std::get<SEEN>(ref);
-  }
+  static Answer const &   GetAnswer(AnswerAndSeen const &ref);
+  static Signature const &GetSignature(AnswerAndSeen const &ref);
+  static Seen const &     GetSeen(AnswerAndSeen const &ref);
 
   /**
    * Update entries in our own table with some other table, if
@@ -99,66 +70,10 @@ struct QuestionStruct
    * Return the answers which pass the threshold due to this
    * (one time event)
    */
-  ConfirmedAnswers Update(uint32_t threshold, QuestionStruct &rhs)
-  {
-    ConfirmedAnswers ret;
-
-    if (rhs.question_ != question_)
-    {
-      return ret;
-    }
-
-    for (auto &entry : table_)
-    {
-      MuddleAddress const &address                 = entry.first;
-      AnswerAndSeen &      answer_and_seen         = entry.second;
-      Answer &             answer                  = std::get<ANSW>(answer_and_seen);
-      Signature &          signature               = std::get<SIG>(answer_and_seen);
-      Seen &               seen                    = std::get<SEEN>(answer_and_seen);
-      bool                 msg_was_below_threshold = false;
-
-      if (seen.size() < threshold)
-      {
-        msg_was_below_threshold = true;
-      }
-
-      // Add info from other table to ours
-      AnswerAndSeen &  rhs_answer_and_seen = rhs.table_[address];
-      Answer const &   rhs_answer          = GetAnswer(rhs_answer_and_seen);
-      Signature const &rhs_signature       = GetSignature(rhs_answer_and_seen);
-      Seen const &     rhs_seen            = GetSeen(rhs_answer_and_seen);
-
-      if (!rhs_answer.empty() && answer.empty())
-      {
-        answer = rhs_answer;
-
-        seen.insert(std::make_pair(self_, Digest("temp")));
-      }
-
-      if (!rhs_signature.empty() && signature.empty())
-      {
-        signature = rhs_signature;
-      }
-
-      for (auto const &rhs_seen_pair : rhs_seen)
-      {
-        seen.insert(rhs_seen_pair);
-      }
-
-      if (seen.size() >= threshold && msg_was_below_threshold && address != self_)
-      {
-        ret.emplace_back(std::make_pair(address, answer));
-      }
-    }
-
-    return ret;
-  }
+  ConfirmedAnswers Update(uint32_t threshold, QuestionStruct &rhs);
 
   // Considered invalid if there is no cabinet
-  operator bool() const  // NOLINT
-  {
-    return !cabinet_.empty();
-  }
+  operator bool() const;  // NOLINT
 
   CertificatePtr certificate_;  // Our certificate
   MuddleAddress  self_;         // Our address

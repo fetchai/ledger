@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,21 +16,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/digest.hpp"
+#include "beacon/dkg_output.hpp"
 
-#include <cstdint>
+using fetch::beacon::DkgOutput;
 
-namespace fetch {
-namespace ledger {
+DkgOutput::DkgOutput()
+{
+  bn::initPairing();
+  group_public_key.clear();
+  private_key_share.clear();
+}
 
-constexpr uint64_t FINALITY_PERIOD = 10;
+DkgOutput::DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares,
+                     PrivateKey  secret_share,  // NOLINT
+                     CabinetList qual_members)
+  : qual{std::move(qual_members)}
+  , group_public_key{std::move(group_key)}
+  , public_key_shares{std::move(key_shares)}
+  , private_key_share{secret_share}
+{}
 
-// consensus related
-extern uint64_t STAKE_WARM_UP_PERIOD;
-extern uint64_t STAKE_COOL_DOWN_PERIOD;
-
-extern Digest GENESIS_DIGEST;
-extern Digest GENESIS_MERKLE_ROOT;
-
-}  // namespace ledger
-}  // namespace fetch
+DkgOutput::DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members)
+  : DkgOutput{keys.group_public_key, keys.public_key_shares, keys.private_key_share,
+              std::move(qual_members)}
+{}
