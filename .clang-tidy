@@ -16,6 +16,16 @@ misc-*,\
 modernize-*,\
 performance-*,\
 readability-*,\
+-readability-named-parameter,\
+-misc-unused-parameters,\
+-performance-unnecessary-value-param,\
+-hicpp-use-auto,\
+-modernize-use-auto,\
+-performance-move-const-arg,\
+-readability-container-size-empty,\
+-readability-implicit-bool-conversion,\
+-readability-inconsistent-declaration-parameter-name,\
+-readability-named-parameter,\
 -readability-identifier-naming"
 
 # TODO(WK):

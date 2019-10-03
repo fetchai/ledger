@@ -165,6 +165,10 @@ def parse_commandline():
                         help='Run the etch language tests')
     parser.add_argument('--lint', action='store_true',
                         help='Run clang-tidy')
+    parser.add_argument('--fix-lint', action='store_true',
+                        help='Run clang-tidy and attempt to fix lint errors')
+    parser.add_argument('-C', '--commit', nargs=1, default=None,
+                        help='when linting, including fixing, scan and fix only files that changed between Git\'s HEAD and the ' 'given commit or ref. \nUseful: HEAD will lint staged files')
     parser.add_argument('-A', '--all', action='store_true',
                         help='Run build and all tests')
     parser.add_argument(
@@ -322,40 +326,40 @@ def main():
     if args.force_build_folder:
         build_root = abspath(args.force_build_folder)
 
-    options = {
-        'CMAKE_BUILD_TYPE': args.build_type,
-    }
-
-    if args.build or args.lint or args.all:
-        cmake_configure(project_root, build_root, options)
-
-    if args.build or args.all:
-        build_project(build_root, concurrency)
-
-    if args.test or args.all:
-        test_project(
-            build_root,
-            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
-
-    if args.language_tests or args.all:
-        test_language(build_root)
-
-    if args.slow_tests or args.all:
-        test_project(
-            build_root,
-            include_regex=SLOW_TEST_LABEL)
-
-    if args.integration_tests or args.all:
-        test_project(
-            build_root,
-            include_regex=INTEGRATION_TEST_LABEL)
-
-    if args.end_to_end_tests or args.all:
-        test_end_to_end(project_root, build_root)
+#    options = {
+#        'CMAKE_BUILD_TYPE': args.build_type,
+#    }
+#
+#    if args.build or args.lint or args.all:
+#        cmake_configure(project_root, build_root, options)
+#
+#    if args.build or args.all:
+#        build_project(build_root, concurrency)
+#
+#    if args.test or args.all:
+#        test_project(
+#            build_root,
+#            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
+#
+#    if args.language_tests or args.all:
+#        test_language(build_root)
+#
+#    if args.slow_tests or args.all:
+#        test_project(
+#            build_root,
+#            include_regex=SLOW_TEST_LABEL)
+#
+#    if args.integration_tests or args.all:
+#        test_project(
+#            build_root,
+#            include_regex=INTEGRATION_TEST_LABEL)
+#
+#    if args.end_to_end_tests or args.all:
+#        test_end_to_end(project_root, build_root)
 
     if args.lint or args.all:
         fetchai_code_quality.static_analysis(
-            project_root, build_root, False, concurrency)
+            project_root, build_root, args.fix_lint, concurrency, args.commit, verbose=False)
 
 
 if __name__ == '__main__':

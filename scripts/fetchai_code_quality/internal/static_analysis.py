@@ -4,7 +4,105 @@ import subprocess
 import sys
 import tempfile
 import yaml
+import glob
+import os
+import json
 from os.path import abspath, commonprefix, isabs, isfile, join, relpath
+
+
+def convert_to_dependencies(
+        changed_files_fullpath: set, build_path, verbose=False):
+    """For each changed hpp file, find all cpp files that depend on it (clang-tidy requires cpp files only) and replace it in the set.
+
+    To do this, find cmake generated depend.make files
+    Example depend.make format:
+    libs/metrics/CMakeFiles/fetch-metrics.dir/src/metrics.cpp.o: ../libs/vectorise/include/vectorise/math/exp.hpp
+    """
+
+    targets_to_substitute = set()
+    targets_substituted = set()
+    for filename in changed_files_fullpath:
+        if '.hpp' in filename:
+            targets_to_substitute.add(filename)
+
+    if targets_to_substitute == 0:
+        return changed_files_fullpath
+
+    globbed_files = glob.glob(
+        build_path + '/libs/**/depend.make', recursive=True)
+    globbed_files.extend(
+        glob.glob(build_path + '/apps/**/depend.make', recursive=True))
+
+    # files with no content have this as their first line
+    globbed_files = [
+        x for x in globbed_files
+        if 'Empty dependencies file' not in open(x).readline()]
+
+    if len(globbed_files) == 0:
+        print(
+            "\nWARNING: No non-empty depend.make files found in {} . Did you make sure to build in this directory?".format(build_path))
+
+    for filename in globbed_files:
+        if verbose:
+            print("reading file: {}".format(filename))
+
+        for line in open(filename):
+
+            dependency_file = "{}{}{}".format(
+                build_path, '/', line.split(' ')[-1])
+
+            if '.hpp' not in dependency_file:
+                continue
+
+            dependency_file = os.path.abspath(dependency_file).rstrip()
+
+            target_cpp_file = line.split('.o:')[0]
+            target_cpp_file = re.sub(
+                'CMakeFiles.*\.dir', '**', target_cpp_file.rstrip())
+
+            if os.path.exists(
+                    dependency_file) and '.cpp' in target_cpp_file and dependency_file in changed_files_fullpath:
+
+                if verbose:
+                    print("globbing for:")
+                    print(target_cpp_file)
+
+                target_cpp_file_save = target_cpp_file
+                target_cpp_file = glob.glob(
+                    "**" + target_cpp_file, recursive=True)
+
+                if target_cpp_file is None or len(target_cpp_file) == 0:
+                    print("Failed to find file/dependency: ")
+                    print("File: {}".format(target_cpp_file_save))
+                    print("Dependency: {}".format(dependency_file))
+                    print("Your build directory may be old")
+                    break
+
+                if target_cpp_file is None or len(target_cpp_file) > 1:
+                    print("Too many files found matching {}".format(
+                        target_cpp_file))
+
+                target_cpp_file = os.path.abspath(target_cpp_file[0])
+
+                if verbose:
+                    print("source file: {}".format(dependency_file))
+                    print("target cpp file: {}".format(target_cpp_file))
+
+                changed_files_fullpath.add(target_cpp_file)
+                # changed_files_fullpath.remove(dependency_file)
+
+                targets_substituted.add(dependency_file)
+
+    if targets_to_substitute != targets_substituted:
+        print(
+            "\nWARNING: Failed to find dependencies for the following files:")
+        print(targets_to_substitute.difference(targets_substituted))
+
+    # Remove all hpp files
+    changed_files_fullpath = [
+        x for x in changed_files_fullpath if '.hpp' not in x]
+
+    return changed_files_fullpath
 
 
 def find_nth(text, substr, n):
@@ -127,7 +225,75 @@ def get_disabled_checks_list():
     return sorted(disabled_checks)
 
 
-def static_analysis(project_root, build_root, fix, concurrency):
+def get_changed_paths_from_git(project_root, commit):
+    raw_relative_paths = subprocess.check_output(['git', 'diff', '--name-only', commit]) \
+        .strip() \
+        .decode('utf-8') \
+        .split('\n')
+
+    relative_paths = [rel_path.strip()
+                      for rel_path in raw_relative_paths]
+
+    return [abspath(join(project_root, rel_path)) for rel_path in relative_paths]
+
+
+def filter_non_matching(file_list, words):
+    return [x for x in file_list if any(file_ending in x for file_ending in words)]
+
+
+def alter_compile_commands(file_location, target_files):
+
+    all_compile_commands = json.loads(open(file_location, "r").read())
+    to_go_back_in = []
+
+    for command in all_compile_commands:
+
+        for target_file in target_files:
+            if target_file in command["file"]:
+                to_go_back_in.append(command)
+                break
+
+    with open(file_location, 'w') as output_file:
+        as_string = json.dumps(to_go_back_in, indent=0)
+        output_file.write(as_string)
+
+
+def static_analysis(project_root, build_root, fix, concurrency, commit, verbose):
+
+    # In the case we are linting a subset of all files
+    if commit:
+        files_to_lint = get_changed_paths_from_git(project_root, *commit)
+        files_to_lint = filter_non_matching(files_to_lint, [".hpp", ".cpp"])
+
+        if verbose:
+            print(f"Relevant files that differ: {files_to_lint}")
+
+        files_to_lint = convert_to_dependencies(
+            set(files_to_lint), abspath(build_root), verbose)
+
+        if verbose:
+            print(
+                f"Relevant files that differ (after dependency conversion): {files_to_lint}")
+
+        if len(files_to_lint) == 0:
+            print("There doesn't appear to be any relevant files to lint. Quitting.")
+            return
+
+        # Now that we have cpp files, we can shim a 'shadow' build directory that will only lint certain files
+        shadow_build_root = abspath(join(build_root, 'shadow_build_root'))
+        os.makedirs(shadow_build_root, exist_ok=True)
+
+        # Copy the compile_commands.json needed for the linter into this dir
+        shutil.copy(
+            abspath(join(build_root, 'compile_commands.json')), shadow_build_root)
+
+        # Now alter the compile_commands.json
+        alter_compile_commands(
+            abspath(join(shadow_build_root, 'compile_commands.json')), files_to_lint)
+
+        # Replace the root with the shadow root
+        build_root = shadow_build_root
+
     output_file = abspath(join(build_root, 'clang_tidy_fixes.yaml'))
     runner_script_path = shutil.which('run-clang-tidy-6.0.py')
     assert runner_script_path is not None
