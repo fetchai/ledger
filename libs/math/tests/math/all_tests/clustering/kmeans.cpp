@@ -28,7 +28,7 @@
 
 using namespace fetch::math;
 
-using DataType   = std::int64_t;
+using DataType   = int64_t;
 using TensorType = Tensor<DataType>;
 using SizeType   = Tensor<DataType>::SizeType;
 

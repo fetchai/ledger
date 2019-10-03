@@ -89,7 +89,8 @@ TEST_F(NewKeyTest, test_compare_keys_triang_bit_shift)
     int pos{0};
 
     // TESTED PRODUCTION CODE:
-    auto res = key.Compare(key, pos, static_cast<uint16_t>(key.size_in_bits()));
+    auto res = key.Compare(
+        key, pos, static_cast<uint16_t>(fetch::storage::Key<256, unsigned long>::size_in_bits()));
 
     // EXPECTATIONS:
     // Comparing the the key with itself, expected identity result
@@ -97,12 +98,15 @@ TEST_F(NewKeyTest, test_compare_keys_triang_bit_shift)
     EXPECT_EQ(0, res);
 
     // Comparing *current* key against *previous* key which is BIGGER by value
-    res = key.Compare(last_key, pos, static_cast<uint16_t>(key.size_in_bits()));
+    res =
+        key.Compare(last_key, pos,
+                    static_cast<uint16_t>(fetch::storage::Key<256, unsigned long>::size_in_bits()));
     EXPECT_EQ(key.size_in_bits() - i, pos);
     EXPECT_EQ(-1, res);
 
     // Reciprocally comparing *previous* key to *current* key which is SMALLER by value
-    res = last_key.Compare(key, pos, static_cast<uint16_t>(key.size_in_bits()));
+    res = last_key.Compare(
+        key, pos, static_cast<uint16_t>(fetch::storage::Key<256, unsigned long>::size_in_bits()));
     EXPECT_EQ(key.size_in_bits() - i, pos);
     EXPECT_EQ(1, res);
   }
@@ -142,17 +146,21 @@ TEST_F(NewKeyTest, test_compare_for_keys_with_moving_zero)
 
     int pos{0};
     // Comparing the the key with itself, expected identity result
-    auto res = key.Compare(key, pos, static_cast<uint16_t>(key.size_in_bits()));
+    auto res = key.Compare(
+        key, pos, static_cast<uint16_t>(fetch::storage::Key<256, unsigned long>::size_in_bits()));
     EXPECT_EQ(key.size_in_bits(), pos);
     EXPECT_EQ(0, res);
 
     // Comparing *current* key against *previous* key which is SMALLER by value
-    res = key.Compare(last_key, pos, static_cast<uint16_t>(key.size_in_bits()));
+    res =
+        key.Compare(last_key, pos,
+                    static_cast<uint16_t>(fetch::storage::Key<256, unsigned long>::size_in_bits()));
     EXPECT_EQ(i - 1, pos);
     EXPECT_EQ(1, res);
 
     // Reciprocally comparing *previous* key to *current* key which is BIGGER by value
-    res = last_key.Compare(key, pos, static_cast<uint16_t>(key.size_in_bits()));
+    res = last_key.Compare(
+        key, pos, static_cast<uint16_t>(fetch::storage::Key<256, unsigned long>::size_in_bits()));
     EXPECT_EQ(i - 1, pos);
     EXPECT_EQ(-1, res);
   }
@@ -163,7 +171,7 @@ TEST_F(NewKeyTest, equality_comparison_operator)
   auto const       start_bs_key{~DefaultBitset{0}};
   DefaultKey const start_key{ToByteArray(start_bs_key)};
 
-  for (std::size_t i = 1; i < start_key.size_in_bits(); ++i)
+  for (std::size_t i = 1; i < decltype(start_key)::size_in_bits(); ++i)
   {
     auto const shifted_key_ByteArray{ToByteArray(start_bs_key >> i)};
     //`shifted_key_ByteArray` container will contain (values *DISPLAYED* in *BIG* Endian encoding):

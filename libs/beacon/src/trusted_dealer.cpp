@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,31 +16,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/entropy_generator_interface.hpp"
+#include "beacon/trusted_dealer.hpp"
 
-namespace fetch {
-namespace ledger {
+using fetch::beacon::TrustedDealer;
+using DkgOutput = TrustedDealer::DkgOutput;
 
-/**
- * Simplistic Test Entropy Generator
- *
- * Entropy is generated from the block hash as a source. It is repeated hashed a number of times
- * in order to generate the entropy source.
- */
-class NaiveEntropyGenerator : public EntropyGeneratorInterface
+TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold)
+  : cabinet_{std::move(cabinet)}
 {
-public:
-  static constexpr std::size_t ROUNDS = 5;
+  uint32_t index = 0;
+  for (auto const &mem : cabinet_)
+  {
+    cabinet_index_.emplace(mem, index);
+    ++index;
+  }
 
-  // Construction / Destruction
-  NaiveEntropyGenerator()           = default;
-  ~NaiveEntropyGenerator() override = default;
+  bn::initPairing();
+  outputs_ =
+      crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold);
+}
 
-  /// @name Entropy Generator Interface
-  /// @{
-  Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) override;
-  /// @}
-};
+DkgOutput TrustedDealer::GetKeys(MuddleAddress const &address) const
+{
+  auto it = cabinet_index_.find(address);
 
-}  // namespace ledger
-}  // namespace fetch
+  if (it != cabinet_index_.end())
+  {
+    auto &address_as_index = it->second;
+    return DkgOutput(outputs_[address_as_index], cabinet_);
+  }
+
+  return DkgOutput();
+}

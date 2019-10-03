@@ -56,7 +56,7 @@ public:
   /*
    * Construct a factory with the given set of hash functions.
    */
-  explicit HashSourceFactory(Functions);
+  explicit HashSourceFactory(Functions hash_functions);
   HashSourceFactory()                          = delete;
   HashSourceFactory(HashSourceFactory const &) = delete;
   HashSourceFactory(HashSourceFactory &&)      = delete;
@@ -69,7 +69,7 @@ public:
    * Create a HashSource which, when iterated, will pass the input parameter
    * to the hash functions in sequence.
    */
-  HashSource operator()(fetch::byte_array::ConstByteArray const &input) const;
+  HashSource operator()(fetch::byte_array::ConstByteArray const &element) const;
 
 private:
   Functions const hash_functions_;
@@ -144,7 +144,8 @@ public:
   HashSourceIterator cend() const;
 
 private:
-  HashSource(HashSourceFactory::Functions const &, fetch::byte_array::ConstByteArray const &);
+  HashSource(HashSourceFactory::Functions const &     hash_functions,
+             fetch::byte_array::ConstByteArray const &input);
 
   /*
    * Used by instances of HashSourceIterator to retrieve a hash at the given index.
@@ -170,7 +171,7 @@ public:
   /*
    * Construct a Bloom filter with the given set of hash functions
    */
-  explicit BasicBloomFilter(Functions const &);
+  explicit BasicBloomFilter(Functions const &functions);
   BasicBloomFilter(BasicBloomFilter const &) = delete;
   BasicBloomFilter(BasicBloomFilter &&)      = delete;
   ~BasicBloomFilter()                        = default;
@@ -186,17 +187,17 @@ public:
    * returned. The latter number will increase as the filter's performance
    * degrades.
    */
-  std::pair<bool, std::size_t> Match(fetch::byte_array::ConstByteArray const &);
+  std::pair<bool, std::size_t> Match(fetch::byte_array::ConstByteArray const &element);
   /*
    * Set the bits of the Bloom filter corresponding to the argument
    */
-  void Add(fetch::byte_array::ConstByteArray const &);
+  void Add(fetch::byte_array::ConstByteArray const &element);
   /*
    * Inform the Bloom filter of detected false positives. This is used to
    * track the quality of the filter. Returns true if the quality of the
    * filter has deteriorated below a predefined threshold; false otherwise.
    */
-  bool ReportFalsePositives(std::size_t);
+  bool ReportFalsePositives(std::size_t count);
 
 private:
   BitVector                         bits_;

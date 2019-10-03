@@ -29,8 +29,8 @@
 #pragma clang diagnostic ignored "-Wpedantic"
 #endif
 
-#include <asio.hpp>
-#include <asio/ssl.hpp>
+#include "asio.hpp"
+#include "asio/ssl.hpp"
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

@@ -28,7 +28,6 @@
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
 #include "beacon/events.hpp"
 #include "beacon/public_key_message.hpp"
@@ -79,7 +78,8 @@ public:
   using MuddleInterface         = muddle::MuddleInterface;
   using Client                  = muddle::rpc::Client;
   using ClientPtr               = std::shared_ptr<Client>;
-  using CabinetMemberList       = std::set<Identity>;
+  using MuddleAddress           = byte_array::ConstByteArray;
+  using CabinetMemberList       = std::set<MuddleAddress>;
   using ConstByteArray          = byte_array::ConstByteArray;
   using Server                  = fetch::muddle::rpc::Server;
   using ServerPtr               = std::shared_ptr<Server>;
@@ -91,32 +91,31 @@ public:
   using Digest                  = ledger::Digest;
   using SharedEventManager      = EventManager::SharedEventManager;
   using BeaconSetupService      = beacon::BeaconSetupService;
+  using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
   BeaconService(MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
-                CertificatePtr certificate, SharedEventManager event_manager,
-                uint64_t blocks_per_round = 1);
+                const CertificatePtr &certificate, SharedEventManager event_manager);
 
   /// @name Entropy Generator
   /// @{
-  Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) override;
+  Status GenerateEntropy(uint64_t block_number, BlockEntropy &entropy) override;
   /// @}
 
   /// Maintainance logic
   /// @{
   /// @brief this function is called when the node is in the cabinet
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time);
+                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy);
 
   void AbortCabinet(uint64_t round_start);
   /// @}
 
   /// Beacon runnables
   /// @{
-  std::weak_ptr<core::Runnable> GetMainRunnable();
-  std::weak_ptr<core::Runnable> GetSetupRunnable();
+  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
   /// @}
 
   friend class BeaconServiceProtocol;
@@ -138,9 +137,6 @@ protected:
   State OnCompleteState();
 
   State OnComiteeState();
-
-  State OnWaitForPublicKeys();
-  State OnObserveEntropyGeneration();
   /// @}
 
   /// Protocol endpoints
@@ -148,31 +144,25 @@ protected:
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
+  mutable std::mutex                  mutex_;
+  CertificatePtr                      certificate_;
+  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+
 private:
   bool AddSignature(SignatureShare share);
 
-  mutable std::mutex mutex_;
-  CertificatePtr     certificate_;
-  Identity           identity_;
-  Endpoint &         endpoint_;
-  StateMachinePtr    state_machine_;
+  Identity        identity_;
+  Endpoint &      endpoint_;
+  StateMachinePtr state_machine_;
 
   /// General configuration
   /// @{
-  uint64_t blocks_per_round_;
-  bool     broadcasting_ = false;
+  bool broadcasting_ = false;
   /// @}
 
   /// Beacon and entropy control units
   /// @{
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
-
-  std::deque<Entropy> ready_entropy_queue_;
-  Entropy             latest_entropy_;
-
   std::shared_ptr<AeonExecutionUnit> active_exe_unit_;
-  Entropy                            next_entropy_{};
-  Entropy                            current_entropy_;
   /// @}
 
   /// Variables relating to getting threshold signatures of the seed
@@ -181,14 +171,10 @@ private:
   std::size_t                              random_number_{0};
   Identity                                 qual_promise_identity_;
   service::Promise                         sig_share_promise_;
-  /// @}
 
-  /// Observing beacon
-  /// @{
-  SubscriptionPtr                       group_public_key_subscription_{nullptr};
-  std::priority_queue<PublicKeyMessage> incoming_group_public_keys_{};
-  SubscriptionPtr                       entropy_subscription_{nullptr};
-  std::priority_queue<Entropy>          incoming_entropy_{};
+  BlockEntropyPtr                     block_entropy_previous_;
+  BlockEntropyPtr                     block_entropy_being_created_;
+  std::map<uint64_t, BlockEntropyPtr> completed_block_entropy_;
   /// @}
 
   ServerPtr           rpc_server_{nullptr};
@@ -207,7 +193,10 @@ private:
 
   telemetry::CounterPtr         beacon_entropy_generated_total_;
   telemetry::CounterPtr         beacon_entropy_future_signature_seen_total_;
+  telemetry::CounterPtr         beacon_entropy_forced_to_time_out_total_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
+  telemetry::GaugePtr<uint64_t> beacon_entropy_last_generated_;
+  telemetry::GaugePtr<uint64_t> beacon_entropy_current_round_;
 };
 
 }  // namespace beacon

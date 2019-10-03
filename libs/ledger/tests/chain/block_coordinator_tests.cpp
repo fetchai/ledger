@@ -211,22 +211,22 @@ protected:
 //  return stream;
 //}
 
-MATCHER(IsNewBlock, "")
+MATCHER(IsNewBlock, "")  // NOLINT
 {
   return arg.hash.empty();
 }
 
-MATCHER_P(IsBlock, block, "")
+MATCHER_P(IsBlock, block, "")  // NOLINT
 {
   return arg.hash == block->body.hash;
 }
 
-MATCHER_P(IsBlockFollowing, block, "")
+MATCHER_P(IsBlockFollowing, block, "")  // NOLINT
 {
   return arg.body.previous_hash == block->body.hash;
 }
 
-MATCHER_P(IsBlockBodyFollowing, block, "")
+MATCHER_P(IsBlockBodyFollowing, block, "")  // NOLINT
 {
   return arg.previous_hash == block->body.hash;
 }
@@ -990,6 +990,7 @@ protected:
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
+
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
         NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});

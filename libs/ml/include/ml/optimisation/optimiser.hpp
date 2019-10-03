@@ -98,16 +98,16 @@ protected:
   SizeType                                                            epoch_ = SIZE_NOT_SET;
 
 private:
-  DataType                                       loss_;
-  DataType                                       loss_sum_;
-  SizeType                                       step_;
+  DataType                                       loss_{};
+  DataType                                       loss_sum_{};
+  SizeType                                       step_{};
   SizeType                                       cumulative_step_ = 0;
   std::pair<TensorType, std::vector<TensorType>> input_;
   TensorType                                     cur_label_;
   TensorType                                     pred_label_;
   std::chrono::high_resolution_clock::time_point cur_time_;
   std::chrono::high_resolution_clock::time_point start_time_;
-  std::chrono::duration<double>                  time_span_;
+  std::chrono::duration<double>                  time_span_{};
   std::string                                    stat_string_;
   std::vector<TensorType>                        batch_data_;
   TensorType                                     batch_labels_;

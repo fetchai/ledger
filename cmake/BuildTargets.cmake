@@ -124,11 +124,6 @@ macro (setup_compiler)
     endif ()
   endif ()
 
-  # add a metric flag if needed
-  if (FETCH_ENABLE_METRICS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_METRICS")
-  endif (FETCH_ENABLE_METRICS)
-
   # add the backtrace flat
   if (FETCH_ENABLE_BACKTRACE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE")
@@ -291,14 +286,11 @@ function (configure_vendor_targets)
                                          ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp)
   target_link_libraries(vendor-bls-internal PUBLIC vendor-mcl)
   target_include_directories(vendor-bls-internal PUBLIC ${FETCH_ROOT_VENDOR_DIR}/bls/include)
-  target_compile_definitions(vendor-bls-internal
-                             PUBLIC
-                             -DMCL_USE_VINT
-                             -DMCL_VINT_FIXED_BUFFER)
+  target_compile_definitions(vendor-bls-internal PUBLIC -DMCL_USE_VINT)
 
   add_library(vendor-bls INTERFACE)
   target_link_libraries(vendor-bls INTERFACE vendor-bls-internal)
-  target_compile_definitions(vendor-bls INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
+  target_compile_definitions(vendor-bls INTERFACE)
 
   # Google Benchmark Do not build the google benchmark library tests
   if (FETCH_ENABLE_BENCHMARKS)

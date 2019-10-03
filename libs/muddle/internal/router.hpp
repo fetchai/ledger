@@ -73,7 +73,7 @@ public:
 
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispatcher &dispatcher,
-         Prover *certificate = nullptr, bool sign_broadcasts = false);
+         Prover *prover = nullptr, bool sign_broadcasts = false);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -157,7 +157,7 @@ private:
   static constexpr std::size_t NUMBER_OF_ROUTER_THREADS = 1;
 
   UpdateStatus AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address,
-                                          bool direct);
+                                          bool direct, bool broadcast);
 
   Handle LookupRandomHandle(Packet::RawAddress const &address) const;
   Handle LookupKademliaClosestHandle(Address const &address) const;

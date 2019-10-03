@@ -140,16 +140,14 @@ protected:
         {
           continue;  // same slice
         }
-        else if (current.slice > current_slice)
+        if (current.slice > current_slice)
         {
           current_slice = current.slice;
           continue;  // next slice
         }
-        else
-        {
-          success = false;
-          break;
-        }
+
+        success = false;
+        break;
       }
     }
 

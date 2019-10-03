@@ -53,7 +53,6 @@ HashSource HashSourceFactory::operator()(fetch::byte_array::ConstByteArray const
 
 HashSource::HashSource(HashSourceFactory::Functions const &     hash_functions,
                        fetch::byte_array::ConstByteArray const &input)
-  : data_{}
 {
   // TODO(LDGR-319): lazily evaluate hashes
   for (auto const &fn : hash_functions)
@@ -188,7 +187,7 @@ std::pair<bool, std::size_t> BasicBloomFilter::Match(
   for (std::size_t const hash : source)
   {
     ++bits_checked;
-    if (!bits_.bit(hash % bits_.size()))
+    if (bits_.bit(hash % bits_.size()) == 0u)
     {
       return {false, bits_checked};
     }
@@ -208,7 +207,7 @@ void BasicBloomFilter::Add(fetch::byte_array::ConstByteArray const &element)
   {
     auto const bit_index = hash % bits_.size();
 
-    if (!bits_.bit(bit_index))
+    if (bits_.bit(bit_index) == 0u)
     {
       is_new_entry = true;
     }

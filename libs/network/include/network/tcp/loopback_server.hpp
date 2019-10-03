@@ -36,7 +36,7 @@
 namespace fetch {
 namespace network {
 
-std::atomic<std::size_t> openSessions{0};
+static std::atomic<std::size_t> openSessions{0};
 
 class BasicLoopback : public std::enable_shared_from_this<BasicLoopback>
 {
