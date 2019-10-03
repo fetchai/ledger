@@ -35,7 +35,7 @@ public:
 
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
                        uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy,
-                       const DkgOutput& output);
+                       const DkgOutput &output);
 };
 }  // namespace beacon
 }  // namespace fetch

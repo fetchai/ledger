@@ -210,20 +210,18 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
                    " complaint answer failed");
     return false;
   }
-  
-  
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " verification for node ", from_index,
-                   " complaint answer succeeded");
-    if (reporter_index == cabinet_index_)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " reset shares for ", from_index);
-      s_ij[from_index][cabinet_index_]      = s;
-      sprime_ij[from_index][cabinet_index_] = sprime;
-      g__s_ij[from_index][cabinet_index_].clear();
-      bn::G2::mul(g__s_ij[from_index][cabinet_index_], group_g_, s_ij[from_index][cabinet_index_]);
-    }
-    return true;
-  
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " verification for node ", from_index,
+                 " complaint answer succeeded");
+  if (reporter_index == cabinet_index_)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " reset shares for ", from_index);
+    s_ij[from_index][cabinet_index_]      = s;
+    sprime_ij[from_index][cabinet_index_] = sprime;
+    g__s_ij[from_index][cabinet_index_].clear();
+    bn::G2::mul(g__s_ij[from_index][cabinet_index_], group_g_, s_ij[from_index][cabinet_index_]);
+  }
+  return true;
 }
 
 /**
@@ -347,24 +345,20 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
                      from_index, " for node ", victim_index);
       return from;
     }
-    
-    
-      bn::G2::mul(lhs, group_g_, s);  // G^s
-      rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
-      if (lhs != rhs)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                       " received shares failing qual coefficients verification from node ",
-                       from_index, " for node ", victim_index);
-        return answer.first;
-      }
-      
-      
-        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received incorrect complaint from ",
-                       from_index);
-        return from;
-      
-    
+
+    bn::G2::mul(lhs, group_g_, s);  // G^s
+    rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
+    if (lhs != rhs)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                     " received shares failing qual coefficients verification from node ",
+                     from_index, " for node ", victim_index);
+      return answer.first;
+    }
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received incorrect complaint from ",
+                   from_index);
+    return from;
   }
   else
   {
