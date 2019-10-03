@@ -291,9 +291,9 @@ class VectorNaNInfTest : public ::testing::Test
 {
 };
 TYPED_TEST_CASE(VectorNaNInfTest, MyFPTypes);
-TYPED_TEST(VectorNaNInfTest, nan_tests)
+TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
 {
-  using type       = typename TypeParam::type;
+  using type = typename TypeParam::type;
 
   alignas(32) type PInf[TypeParam::E_BLOCK_COUNT], NInf[TypeParam::E_BLOCK_COUNT], NaN[TypeParam::E_BLOCK_COUNT], A[TypeParam::E_BLOCK_COUNT], B[TypeParam::E_BLOCK_COUNT], C[TypeParam::E_BLOCK_COUNT], D[TypeParam::E_BLOCK_COUNT];
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -340,7 +340,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
   std::cout << "vtest = " << vtest_fp32 << std::endl;
   std::cout << "-inf < vtest = " << (vneg_inf < vtest_fp32) << std::endl;
 
-  std::cout << std::endl;
   // Normal state check
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -361,7 +360,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
     EXPECT_EQ(C[i], D[i]);
   }
 
-  std::cout << std::endl;
   // Overflow state check
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -386,7 +384,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
     EXPECT_EQ(C[i], D[i]);
   }
 
-  std::cout << std::endl;
   // Underflow state check
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -411,7 +408,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
     EXPECT_EQ(C[i], D[i]);
   }
 
-  std::cout << std::endl;
   // Infinity state check, A +inf
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -432,7 +428,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
     EXPECT_EQ(C[i], D[i]);
   }
 
-  std::cout << std::endl;
   // Infinity state check, A + (-inf)
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -453,7 +448,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
     EXPECT_EQ(C[i], D[i]);
   }
 
-  std::cout << std::endl;
   // Infinity state check, +inf + B
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -474,7 +468,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
     EXPECT_EQ(C[i], D[i]);
   }
 
-  std::cout << std::endl;
   // Infinity state check, -inf +B
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -495,7 +488,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
     EXPECT_EQ(C[i], D[i]);
   }
 
-  std::cout << std::endl;
   // Infinity state check, (+inf) + (+inf)
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -516,7 +508,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
     EXPECT_EQ(C[i], D[i]);
   }
 
-  std::cout << std::endl;
   // Infinity state check, (-inf) + (-inf)
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -537,7 +528,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
     EXPECT_EQ(C[i], D[i]);
   }
 
-  std::cout << std::endl;
   // NaN state check, +inf + (-inf)
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -552,7 +542,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
   EXPECT_TRUE(type::IsStateNaN());
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
-  std::cout << "vpos_inf + vneg_inf = " << vsum << std::endl;
   vsum.Store(D);
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
@@ -562,7 +551,6 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
     }
   }
 
-  std::cout << std::endl;
   // Infinity state check, (-inf) + (+inf)
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
@@ -573,12 +561,10 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  vb = TypeParam(B);
   vsum  = vneg_inf + vpos_inf;
   EXPECT_TRUE(type::IsStateNaN());
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
-  std::cout << "vneg_inf + vpos_inf = " << vsum << std::endl;
   vsum.Store(D);
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
@@ -588,34 +574,142 @@ TYPED_TEST(VectorNaNInfTest, nan_tests)
     }
   }
 
+  // Infinity state check, (+inf) + nan
   type::StateClear();
-  vsum = vpos_inf + vnan;
-  std::cout << "StateNaN: " << type::IsStateNaN() << std::endl;
-  std::cout << "StateInfinity: " << type::IsStateInfinity() << std::endl;
-  std::cout << "StateOverflow: " << type::IsStateOverflow() << std::endl;
-  std::cout << "sum = " << vsum << std::endl;
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    C[i] = PInf[i] + NaN[i];
+  }
+  EXPECT_TRUE(type::IsStateNaN());
+  EXPECT_FALSE(type::IsStateInfinity());
+  EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  TypeParam vprod = va * vpos_inf;
-  std::cout << "StateNaN: " << type::IsStateNaN() << std::endl;
-  std::cout << "StateInfinity: " << type::IsStateInfinity() << std::endl;
-  std::cout << "StateOverflow: " << type::IsStateOverflow() << std::endl;
-  std::cout << "vprod = " << vprod << std::endl;
+  vsum  = vneg_inf + vnan;
+  EXPECT_TRUE(type::IsStateNaN());
+  EXPECT_FALSE(type::IsStateInfinity());
+  EXPECT_FALSE(type::IsStateOverflow());
+  vsum.Store(D);
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    if (!type::IsNaN(C[i]) && !type::IsNaN(D[i]))
+    {
+      EXPECT_EQ(C[i], D[i]);
+    }
+  }
+
+  // Infinity state check, (-inf) + nan
+  type::StateClear();
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    C[i] = NInf[i] + NaN[i];
+  }
+  EXPECT_TRUE(type::IsStateNaN());
+  EXPECT_FALSE(type::IsStateInfinity());
+  EXPECT_FALSE(type::IsStateOverflow());
+  type::StateClear();
+  vsum  = vneg_inf + vnan;
+  EXPECT_TRUE(type::IsStateNaN());
+  EXPECT_FALSE(type::IsStateInfinity());
+  EXPECT_FALSE(type::IsStateOverflow());
+  vsum.Store(D);
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    if (!type::IsNaN(C[i]) && !type::IsNaN(D[i]))
+    {
+      EXPECT_EQ(C[i], D[i]);
+    }
+  }
+
+  // Infinity state check, A * B
+  type::StateClear();
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    C[i] = A[i] * B[i];
+  }
+  EXPECT_FALSE(type::IsStateNaN());
+  EXPECT_FALSE(type::IsStateInfinity());
+  EXPECT_TRUE(type::IsStateOverflow());
+  type::StateClear();
+  auto vprod = va * vb;
+  EXPECT_FALSE(type::IsStateNaN());
+  EXPECT_FALSE(type::IsStateInfinity());
+  EXPECT_TRUE(type::IsStateOverflow());
+  vprod.Store(D);
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    if (!type::IsNaN(C[i]) && !type::IsNaN(D[i]))
+    {
+      EXPECT_EQ(C[i], D[i]);
+    }
+  }
+
+  // Infinity state check, A * (+inf)
+  type::StateClear();
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    C[i] = A[i] * PInf[i];
+  }
+  EXPECT_FALSE(type::IsStateNaN());
+  EXPECT_TRUE(type::IsStateInfinity());
+  EXPECT_FALSE(type::IsStateOverflow());
+  type::StateClear();
+  vprod = va * vpos_inf;
+  EXPECT_FALSE(type::IsStateNaN());
+  EXPECT_TRUE(type::IsStateInfinity());
+  EXPECT_FALSE(type::IsStateOverflow());
+  vprod.Store(D);
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    if (!type::IsNaN(C[i]) && !type::IsNaN(D[i]))
+    {
+      EXPECT_EQ(C[i], D[i]);
+    }
+  }
+
+  // Infinity state check, A * (-inf)
+  type::StateClear();
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    C[i] = A[i] * NInf[i];
+    std::cout << "C[" << i << "] = " << C[i] << std::endl;
+  }
+  EXPECT_FALSE(type::IsStateNaN());
+  EXPECT_TRUE(type::IsStateInfinity());
+  EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
   vprod = va * vneg_inf;
-  std::cout << "StateNaN: " << type::IsStateNaN() << std::endl;
-  std::cout << "StateInfinity: " << type::IsStateInfinity() << std::endl;
-  std::cout << "StateOverflow: " << type::IsStateOverflow() << std::endl;
-  std::cout << "vprod = " << vprod << std::endl;
+  EXPECT_FALSE(type::IsStateNaN());
+  EXPECT_TRUE(type::IsStateInfinity());
+  EXPECT_FALSE(type::IsStateOverflow());
+  vprod.Store(D);
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    if (!type::IsNaN(C[i]) && !type::IsNaN(D[i]))
+    {
+      EXPECT_EQ(C[i], D[i]);
+    }
+  }
+
+  // Infinity state check, A * nan
+  type::StateClear();
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    C[i] = A[i] * NaN[i];
+  }
+  EXPECT_TRUE(type::IsStateNaN());
+  EXPECT_FALSE(type::IsStateInfinity());
+  EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
   vprod = va * vnan;
-  std::cout << "StateNaN: " << type::IsStateNaN() << std::endl;
-  std::cout << "StateInfinity: " << type::IsStateInfinity() << std::endl;
-  std::cout << "StateOverflow: " << type::IsStateOverflow() << std::endl;
-  std::cout << "vprod = " << vprod << std::endl;
-  type::StateClear();
-  vprod = va * va;
-  std::cout << "StateNaN: " << type::IsStateNaN() << std::endl;
-  std::cout << "StateInfinity: " << type::IsStateInfinity() << std::endl;
-  std::cout << "StateOverflow: " << type::IsStateOverflow() << std::endl;
-  std::cout << "vprod = " << vprod << std::endl;
+  EXPECT_TRUE(type::IsStateNaN());
+  EXPECT_FALSE(type::IsStateInfinity());
+  EXPECT_FALSE(type::IsStateOverflow());
+  vprod.Store(D);
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    if (!type::IsNaN(C[i]) && !type::IsNaN(D[i]))
+    {
+      EXPECT_EQ(C[i], D[i]);
+    }
+  }
 }
