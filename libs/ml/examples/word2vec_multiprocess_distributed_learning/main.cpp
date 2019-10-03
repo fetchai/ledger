@@ -147,7 +147,7 @@ int main(int ac, char **av)
   networker->Initialize<fetch::dmlf::Update<TensorType>>();
 
   networker->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
-      networker->getPeerCount(), number_of_peers));
+      networker->GetPeerCount(), number_of_peers));
 
   W2VTrainingParams<DataType> cp = client_params;
   cp.data                        = {client_data};

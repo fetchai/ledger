@@ -353,7 +353,7 @@ void TrainingClient<TensorType>::DoBatch()
   SizeType ucnt = 0;
 
   // Sum all gradient from iLearner
-  while (i_learner_ptr_->getUpdateCount() > 0)
+  while (i_learner_ptr_->GetUpdateCount() > 0)
   {
     ucnt++;
     new_gradients = i_learner_ptr_->getUpdate<fetch::dmlf::Update<TensorType>>()->GetGradients();

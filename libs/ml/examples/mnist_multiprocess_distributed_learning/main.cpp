@@ -112,7 +112,7 @@ int main(int ac, char **av)
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 
   networker->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
-      networker->getPeerCount(), number_of_peers));
+      networker->GetPeerCount(), number_of_peers));
 
   std::shared_ptr<TrainingClient<TensorType>> client =
       MakeClient(std::to_string(instance_number), client_params, av[1], av[2], test_set_ratio,

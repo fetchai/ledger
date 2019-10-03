@@ -110,9 +110,9 @@ int main(int ac, char **av)
 
   for (SizeType i(0); i < number_of_clients; ++i)
   {
-    networkers[i]->addPeers(networkers);
+    networkers[i]->AddPeers(networkers);
     networkers[i]->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
-        networkers[i]->getPeerCount(), number_of_peers));
+        networkers[i]->GetPeerCount(), number_of_peers));
   }
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
