@@ -28,7 +28,7 @@ namespace fetch {
 namespace ledger {
 namespace consensus {
 
-ProofOfWork::ProofOfWork(header_type header)
+ProofOfWork::ProofOfWork(HeaderType header)
   : header_{std::move(header)}
 {}
 
@@ -57,10 +57,10 @@ void ProofOfWork::SetTarget(std::size_t zeros)
 
 void ProofOfWork::SetTarget(vectorise::UInt<256> &&target)
 {
-  target_ = std::move(target);
+  target_ = target;
 }
 
-void ProofOfWork::SetHeader(byte_array::ByteArray header)
+void ProofOfWork::SetHeader(byte_array::ByteArray const &header)
 {
   header_ = header;
   assert(header_ == header);

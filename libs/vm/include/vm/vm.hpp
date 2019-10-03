@@ -157,7 +157,7 @@ public:
 
   bool AddSingle(Variant parameter)
   {
-    // TODO: Probably should make a deep copy
+    // TODO(1669): Probably should make a deep copy
 
     params_.push_back(std::move(parameter));
     return true;
@@ -248,7 +248,6 @@ public:
   template <typename... Ts>
   bool Execute(Executable const &executable, std::string const &name, std::string &error,
                Variant &output, Ts const &... parameters)
-
   {
     ParameterPack parameter_pack{registered_types_};
 
@@ -267,7 +266,7 @@ public:
     bool success{false};
 
     Executable::Function const *f = executable.FindFunction(name);
-    if (f)
+    if (f != nullptr)
     {
       auto const num_parameters = static_cast<std::size_t>(f->num_parameters);
 
@@ -332,7 +331,7 @@ public:
   template <typename T, typename... Ts>
   Ptr<T> CreateNewObject(Ts &&... args)
   {
-    return new T(this, GetTypeId<T>(), std::forward<Ts>(args)...);
+    return Ptr<T>{new T(this, GetTypeId<T>(), std::forward<Ts>(args)...)};
   }
 
   void SetIOObserver(IoObserverInterface &observer)
@@ -474,7 +473,7 @@ public:
     if (it == deserialization_constructors_.end())
     {
       RuntimeError("object is not default constructible.");
-      return nullptr;
+      return {};
     }
 
     auto &constructor = it->second;
@@ -493,15 +492,15 @@ public:
 
     std::string  name;
     Handler      handler;
-    ChargeAmount static_charge;
+    ChargeAmount static_charge{};
   };
 
   ChargeAmount GetChargeTotal() const;
-  void         IncreaseChargeTotal(ChargeAmount const amount);
+  void         IncreaseChargeTotal(ChargeAmount amount);
   ChargeAmount GetChargeLimit() const;
   void         SetChargeLimit(ChargeAmount limit);
 
-  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &);
+  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_charges);
 
 private:
   static const int FRAME_STACK_SIZE = 50;
@@ -553,22 +552,22 @@ private:
   OpcodeInfoArray                opcode_info_array_;
   OpcodeMap                      opcode_map_;
   Generator                      generator_;
-  Executable const *             executable_;
-  Executable::Function const *   function_;
+  Executable const *             executable_{};
+  Executable::Function const *   function_{};
   std::vector<Ptr<String>>       strings_;
-  Frame                          frame_stack_[FRAME_STACK_SIZE];
-  int                            frame_sp_;
-  int                            bsp_;
+  Frame                          frame_stack_[FRAME_STACK_SIZE]{};
+  int                            frame_sp_{};
+  int                            bsp_{};
   Variant                        stack_[STACK_SIZE];
-  int                            sp_;
-  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS];
-  int                            range_loop_sp_;
-  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS];
-  int                            live_object_sp_;
-  uint16_t                       pc_;
-  uint16_t                       instruction_pc_;
-  Executable::Instruction const *instruction_;
-  bool                           stop_;
+  int                            sp_{};
+  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS]{};
+  int                            range_loop_sp_{};
+  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};
+  int                            live_object_sp_{};
+  uint16_t                       pc_{};
+  uint16_t                       instruction_pc_{};
+  Executable::Instruction const *instruction_{};
+  bool                           stop_{};
   std::string                    error_;
   std::ostringstream             output_buffer_;
   IoObserverInterface *          io_observer_{nullptr};
@@ -1212,15 +1211,15 @@ private:
     }
     case TypeIds::Fixed32:
     {
-      fixed_point::fp32_t *lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
-      fixed_point::fp32_t  rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      auto *              lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
       Op::Apply(this, *lhsv_fp32, rhsv_fp32);
       break;
     }
     case TypeIds::Fixed64:
     {
-      fixed_point::fp64_t *lhsv_fp64 = reinterpret_cast<fixed_point::fp64_t *>(&lhsv);
-      fixed_point::fp64_t  rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      auto *              lhsv_fp64 = reinterpret_cast<fixed_point::fp64_t *>(&lhsv);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
       Op::Apply(this, *lhsv_fp64, rhsv_fp64);
       break;
     }
@@ -1340,15 +1339,15 @@ private:
     }
     case TypeIds::Fixed32:
     {
-      fixed_point::fp32_t *lhs_fp32  = reinterpret_cast<fixed_point::fp32_t *>(lhs);
-      fixed_point::fp32_t  rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      auto *              lhs_fp32  = reinterpret_cast<fixed_point::fp32_t *>(lhs);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
       Op::Apply(this, *lhs_fp32, rhsv_fp32);
       break;
     }
     case TypeIds::Fixed64:
     {
-      fixed_point::fp64_t *lhs_fp64  = reinterpret_cast<fixed_point::fp64_t *>(lhs);
-      fixed_point::fp64_t  rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      auto *              lhs_fp64  = reinterpret_cast<fixed_point::fp64_t *>(lhs);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
       Op::Apply(this, *lhs_fp64, rhsv_fp64);
       break;
     }

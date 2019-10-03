@@ -45,10 +45,8 @@ std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
   {
     return 0;
   }
-  else
-  {
-    return value - decrement;
-  }
+
+  return value - decrement;
 }
 
 template <typename T>
@@ -99,17 +97,15 @@ Consensus::CommitteePtr Consensus::GetCommittee(Block const &previous)
   {
     return committee_history_.at(last_snapshot);
   }
-  else
-  {
-    CommitteePtr committee_ptr = committee_history_[last_snapshot];
-    assert(!committee_ptr->empty());
 
-    Committee committee_copy = *committee_ptr;
+  CommitteePtr committee_ptr = committee_history_[last_snapshot];
+  assert(!committee_ptr->empty());
 
-    DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
+  Committee committee_copy = *committee_ptr;
 
-    return std::make_shared<Committee>(committee_copy);
-  }
+  DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
+
+  return std::make_shared<Committee>(committee_copy);
 }
 
 bool Consensus::ValidMinerForBlock(Block const &previous, Address const &address)
@@ -176,13 +172,13 @@ bool Consensus::ShouldGenerateBlock(Block const &previous, Address const &addres
 
   bool found = false;
 
-  for (std::size_t i = 0; i < (*committee).size(); ++i)
+  for (const auto &i : (*committee))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Block: ", previous.body.block_number,
                     " Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
                     "we are: ", address.address().ToBase64());
 
-    if (Address((*committee)[i]) == address)
+    if (Address(i) == address)
     {
       in_committee = true;
       found        = true;
@@ -197,12 +193,7 @@ bool Consensus::ShouldGenerateBlock(Block const &previous, Address const &addres
   uint64_t time_now_ms           = static_cast<uint64_t>(std::time(nullptr)) * 1000;
   uint64_t desired_time_for_next = (previous.first_seen_timestamp * 1000) + time_to_wait;
 
-  if (in_committee && desired_time_for_next <= time_now_ms)
-  {
-    return true;
-  }
-
-  return false;
+  return in_committee && desired_time_for_next <= time_now_ms;
 }
 
 /**
@@ -290,7 +281,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       cabinet_member_list.insert(staker.identifier());
     }
 
-    uint32_t threshold = static_cast<uint32_t>(
+    auto threshold = static_cast<uint32_t>(
         std::ceil(static_cast<double>(cabinet_member_list.size()) * threshold_));
 
     FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_.body.block_number,
@@ -298,7 +289,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                    " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
 
     uint64_t last_block_time = current.body.timestamp;
-    uint64_t current_time    = static_cast<uint64_t>(std::time(nullptr));
+    auto     current_time    = static_cast<uint64_t>(std::time(nullptr));
 
     if (current.body.block_number == 0)
     {
@@ -413,7 +404,7 @@ Status Consensus::ValidBlock(Block const &current) const
   //}
 
   // Perform the time checks.
-  uint64_t current_time = static_cast<uint64_t>(std::time(nullptr));
+  auto current_time = static_cast<uint64_t>(std::time(nullptr));
 
   if (current.body.timestamp < block_preceeding.body.timestamp)
   {

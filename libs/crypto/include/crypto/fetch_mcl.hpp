@@ -31,7 +31,7 @@
 #pragma clang diagnostic ignored "-Wmacro-redefined"
 #endif
 
-#include <mcl/bn256.hpp>
+#include "mcl/bn256.hpp"
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

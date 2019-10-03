@@ -48,7 +48,7 @@ public:
     uint8_t opcode = 0;
     if (count < 16)
     {
-      opcode = static_cast<uint8_t>(CODE_FIXED | (count & 0xF));
+      opcode = static_cast<uint8_t>(CODE_FIXED | (count & 0xFu));
       opcode = platform::ToBigEndian(opcode);
       serializer_.Allocate(sizeof(opcode));
       serializer_.WriteBytes(&opcode, sizeof(opcode));

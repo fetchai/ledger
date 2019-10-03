@@ -38,13 +38,13 @@ template <typename T>
 class VectorRegister<T, 256>
 {
 public:
-  using type             = T;
-  using mm_register_type = __m256i;
+  using type           = T;
+  using MMRegisterType = __m256i;
 
   enum
   {
     E_VECTOR_SIZE   = 256,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -55,59 +55,59 @@ public:
   {}
   VectorRegister(type const *d)
   {
-    data_ = _mm256_load_si256((mm_register_type *)d);
+    data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(d));
   }
   VectorRegister(type const &c)
   {
     alignas(16) type constant[E_BLOCK_COUNT];
     details::UnrollSet<type, E_BLOCK_COUNT>::Set(constant, c);
-    data_ = _mm256_load_si256((mm_register_type *)constant);
+    data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(constant));
   }
-  VectorRegister(mm_register_type const &d)
+  VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(mm_register_type &&d)
+  VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
 
-  explicit operator mm_register_type()
+  explicit operator MMRegisterType()
   {
     return data_;
   }
 
   void Store(type *ptr) const
   {
-    _mm256_store_si256((mm_register_type *)ptr, data_);
+    _mm256_store_si256(reinterpret_cast<MMRegisterType const *>(ptr, data_));
   }
   void Stream(type *ptr) const
   {
-    _mm256_stream_si256((mm_register_type *)ptr, data_);
+    _mm256_stream_si256(reinterpret_cast<MMRegisterType const *>(ptr, data_));
   }
 
-  mm_register_type const &data() const
+  MMRegisterType const &data() const
   {
     return data_;
   }
-  mm_register_type &data()
+  MMRegisterType &data()
   {
     return data_;
   }
 
 private:
-  mm_register_type data_;
+  MMRegisterType data_;
 };
 
 template <>
 class VectorRegister<float, 256>
 {
 public:
-  using type             = float;
-  using mm_register_type = __m256;
+  using type           = float;
+  using MMRegisterType = __m256;
 
   enum
   {
     E_VECTOR_SIZE   = 256,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -120,10 +120,10 @@ public:
   {
     data_ = _mm256_load_ps(d);
   }
-  VectorRegister(mm_register_type const &d)
+  VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(mm_register_type &&d)
+  VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
   VectorRegister(type const &c)
@@ -133,7 +133,7 @@ public:
     data_ = _mm256_load_ps(constant);
   }
 
-  explicit operator mm_register_type()
+  explicit operator MMRegisterType()
   {
     return data_;
   }
@@ -147,30 +147,30 @@ public:
     _mm256_stream_ps(ptr, data_);
   }
 
-  mm_register_type const &data() const
+  MMRegisterType const &data() const
   {
     return data_;
   }
-  mm_register_type &data()
+  MMRegisterType &data()
   {
     return data_;
   }
 
 private:
-  mm_register_type data_;
+  MMRegisterType data_;
 };
 
 template <>
 class VectorRegister<double, 256>
 {
 public:
-  using type             = double;
-  using mm_register_type = __m256d;
+  using type           = double;
+  using MMRegisterType = __m256d;
 
   enum
   {
     E_VECTOR_SIZE   = 256,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -183,10 +183,10 @@ public:
   {
     data_ = _mm256_load_pd(d);
   }
-  VectorRegister(mm_register_type const &d)
+  VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(mm_register_type &&d)
+  VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
   VectorRegister(type const &c)
@@ -196,7 +196,7 @@ public:
     data_ = _mm256_load_pd(constant);
   }
 
-  explicit operator mm_register_type()
+  explicit operator MMRegisterType()
   {
     return data_;
   }
@@ -210,24 +210,24 @@ public:
     _mm256_stream_pd(ptr, data_);
   }
 
-  mm_register_type const &data() const
+  MMRegisterType const &data() const
   {
     return data_;
   }
-  mm_register_type &data()
+  MMRegisterType &data()
   {
     return data_;
   }
 
 private:
-  mm_register_type data_;
+  MMRegisterType data_;
 };
 
 #define FETCH_ADD_OPERATOR(op, type, fnc)                                          \
   inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a, \
                                                VectorRegister<type, 256> const &b) \
   {                                                                                \
-    VectorRegister<type, 256>::mm_register_type ret = fnc(a.data(), b.data());     \
+    VectorRegister<type, 256>::MMRegisterType ret = fnc(a.data(), b.data());       \
     return VectorRegister<type, 256>(ret);                                         \
   }
 
@@ -257,8 +257,8 @@ FETCH_ADD_OPERATOR(+, double, _mm256_add_pd);
   inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a,                  \
                                                VectorRegister<type, 256> const &b)                  \
   {                                                                                                 \
-    VectorRegister<type, 256>::mm_register_type imm  = _mm256_cmp_ps(a.data(), b.data(), fnc);      \
-    __m256i                                     ival = _mm256_castps_si256(imm);                    \
+    VectorRegister<type, 256>::MMRegisterType imm  = _mm256_cmp_ps(a.data(), b.data(), fnc);        \
+    __m256i                                   ival = _mm256_castps_si256(imm);                      \
     type                 done[VectorRegister<type, 256>::E_BLOCK_COUNT] = {1.0f, 1.0f, 1.0f, 1.0f,  \
                                                            1.0f, 1.0f, 1.0f, 1.0f}; \
     static const __m256i one = _mm256_castps_si256(_mm256_load_ps(done));                           \
@@ -280,8 +280,8 @@ FETCH_ADD_OPERATOR(<, float, _CMP_LT_OQ)
   inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a,              \
                                                VectorRegister<type, 256> const &b)              \
   {                                                                                             \
-    VectorRegister<type, 256>::mm_register_type imm  = _mm256_cmp_pd(a.data(), b.data(), fnc);  \
-    __m256i                                     ival = _mm256_castpd_si256(imm);                \
+    VectorRegister<type, 256>::MMRegisterType imm  = _mm256_cmp_pd(a.data(), b.data(), fnc);    \
+    __m256i                                   ival = _mm256_castpd_si256(imm);                  \
     type                 done[VectorRegister<type, 256>::E_BLOCK_COUNT] = {1.0, 1.0, 1.0, 1.0}; \
     static const __m256i one = _mm256_castpd_si256(_mm256_load_pd(done));                       \
     __m256i              ret = _mm256_and_si256(ival, one);                                     \

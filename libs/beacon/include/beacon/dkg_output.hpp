@@ -21,6 +21,7 @@
 
 namespace fetch {
 namespace beacon {
+
 struct DkgOutput
 {
   using PublicKey         = crypto::mcl::PublicKey;
@@ -29,30 +30,19 @@ struct DkgOutput
   using MuddleAddress     = byte_array::ConstByteArray;
   using CabinetList       = std::set<MuddleAddress>;
 
+  DkgOutput();
+
+  DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares,
+            PrivateKey  secret_share,  // NOLINT
+            CabinetList qual_members);
+
+  DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members);
+
   CabinetList            qual{};
   PublicKey              group_public_key;
   std::vector<PublicKey> public_key_shares{};
   PrivateKey             private_key_share;
-
-  DkgOutput()
-  {
-    bn::initPairing();
-    group_public_key.clear();
-    private_key_share.clear();
-  }
-
-  DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares, PrivateKey secret_share,
-            CabinetList qual_members)
-    : qual{std::move(qual_members)}
-    , group_public_key{std::move(group_key)}
-    , public_key_shares{std::move(key_shares)}
-    , private_key_share{std::move(secret_share)}
-  {}
-
-  DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members)
-    : DkgOutput{keys.group_public_key, keys.public_key_shares, keys.private_key_share,
-                std::move(qual_members)}
-  {}
 };
+
 }  // namespace beacon
 }  // namespace fetch

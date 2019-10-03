@@ -43,7 +43,7 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
   using SizeType   = math::SizeType;
 
-  explicit CommodityDataLoader()
+  CommodityDataLoader()
     : DataLoader<LabelType, InputType>()
   {
     UpdateRanges();
@@ -55,9 +55,10 @@ public:
   SizeType   Size() const override;
   bool       IsDone() const override;
   void       Reset() override;
+  bool       IsModeAvailable(DataLoaderMode mode) override;
 
-  virtual void SetTestRatio(float new_test_ratio) override;
-  virtual void SetValidationRatio(float new_validation_ratio) override;
+  void SetTestRatio(float new_test_ratio) override;
+  void SetValidationRatio(float new_validation_ratio) override;
 
   bool AddData(InputType const &data, LabelType const &label) override;
 
@@ -76,18 +77,18 @@ private:
   std::shared_ptr<SizeType> test_cursor_       = std::make_shared<SizeType>(0);
   std::shared_ptr<SizeType> validation_cursor_ = std::make_shared<SizeType>(0);
 
-  SizeType train_size_;
-  SizeType test_size_;
-  SizeType validation_size_;
+  SizeType train_size_{};
+  SizeType test_size_{};
+  SizeType validation_size_{};
 
-  SizeType total_size_;
-  SizeType test_offset_;
-  SizeType validation_offset_;
+  SizeType total_size_{};
+  SizeType test_offset_{};
+  SizeType validation_offset_{};
 
   float test_to_train_ratio_       = 0.0f;
   float validation_to_train_ratio_ = 0.0f;
 
-  random::Random rand;
+  random::Random rand_;
 
   void GetAtIndex(SizeType index);
   void UpdateCursor() override;
@@ -129,14 +130,12 @@ CommodityDataLoader<LabelType, InputType>::GetNext()
 {
   if (this->random_mode_)
   {
-    GetAtIndex(this->current_min_ + (static_cast<SizeType>(decltype(rand)::generator()) % Size()));
+    GetAtIndex(this->current_min_ + (static_cast<SizeType>(decltype(rand_)::generator()) % Size()));
     return buffer_;
   }
-  else
-  {
-    GetAtIndex((*this->current_cursor_)++);
-    return buffer_;
-  }
+
+  GetAtIndex((*this->current_cursor_)++);
+  return buffer_;
 }
 
 /**
@@ -221,13 +220,37 @@ void CommodityDataLoader<LabelType, InputType>::UpdateCursor()
 }
 
 template <typename LabelType, typename InputType>
+bool CommodityDataLoader<LabelType, InputType>::IsModeAvailable(DataLoaderMode mode)
+{
+  switch (mode)
+  {
+  case DataLoaderMode::TRAIN:
+  {
+    return test_offset_ > 0;
+  }
+  case DataLoaderMode::TEST:
+  {
+    return test_offset_ < validation_offset_;
+  }
+  case DataLoaderMode::VALIDATE:
+  {
+    return validation_offset_ < total_size_;
+  }
+  default:
+  {
+    throw std::runtime_error("Unsupported dataloader mode.");
+  }
+  }
+}
+
+template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::UpdateRanges()
 {
   float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
   float validation_percentage = test_percentage + test_to_train_ratio_;
 
   // Define where test set starts
-  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(size_));
+  test_offset_ = static_cast<uint32_t>(test_percentage * static_cast<float>(size_));
 
   if (test_offset_ == static_cast<SizeType>(0))
   {
@@ -235,8 +258,7 @@ void CommodityDataLoader<LabelType, InputType>::UpdateRanges()
   }
 
   // Define where validation set starts
-  validation_offset_ =
-      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(size_));
+  validation_offset_ = static_cast<uint32_t>(validation_percentage * static_cast<float>(size_));
 
   if (validation_offset_ <= test_offset_)
   {

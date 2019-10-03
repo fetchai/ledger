@@ -57,41 +57,41 @@ struct Prototype
   };
 
   template <uint64_t OP>
-  using one_op_return_type = Prototype<P + OpSize, uint64_t(S1) | (uint64_t(OP) << (P))>;
+  using OneOpReturnType = Prototype<P + OpSize, uint64_t(S1) | (uint64_t(OP) << (P))>;
 
   template <typename O, uint64_t OP>
-  using two_op_return_type =
+  using TwoOpReturnType =
       Prototype<P + O::StackSize + OpSize,
                 uint64_t(S1) | (uint64_t(O::Stack) << P) | (uint64_t(OP) << (P + O::StackSize))>;
 
   template <typename O>
-  two_op_return_type<O, ADD> constexpr operator+(O const & /*other*/) const
+  TwoOpReturnType<O, ADD> constexpr operator+(O const & /*other*/) const
   {
-    return two_op_return_type<O, ADD>();
+    return TwoOpReturnType<O, ADD>();
   }
 
   template <typename O>
-  two_op_return_type<O, MULT> constexpr operator*(O const & /*other*/) const
+  TwoOpReturnType<O, MULT> constexpr operator*(O const & /*other*/) const
   {
-    return two_op_return_type<O, MULT>();
+    return TwoOpReturnType<O, MULT>();
   }
 
   template <typename O>
-  two_op_return_type<O, RET> constexpr operator<=(O const & /*other*/) const
+  TwoOpReturnType<O, RET> constexpr operator<=(O const & /*other*/) const
   {
-    return two_op_return_type<O, RET>();
+    return TwoOpReturnType<O, RET>();
   }
 
   template <typename O>
-  two_op_return_type<O, CONCAT> constexpr operator,(O const & /*other*/) const
+  TwoOpReturnType<O, CONCAT> constexpr operator,(O const & /*other*/) const
   {
-    return two_op_return_type<O, CONCAT>();
+    return TwoOpReturnType<O, CONCAT>();
   }
 
   template <typename O>
-  two_op_return_type<O, EQ> constexpr operator=(O const & /*other*/) const
+  TwoOpReturnType<O, EQ> constexpr operator=(O const & /*other*/) const  // NOLINT
   {
-    return two_op_return_type<O, EQ>();
+    return TwoOpReturnType<O, EQ>();
   }
 };
 
@@ -110,31 +110,31 @@ constexpr Prototype<4, 11> _p{};      //< Represents integral 3
 
 // Operatation representing the transposed of a matrix.
 template <uint64_t P, uint64_t S>
-constexpr typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::TRANSPOSE> T(
-    Prototype<P, S> const &)
+constexpr typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::TRANSPOSE> T(
+    Prototype<P, S> const & /*unused*/)
 {
-  return typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::TRANSPOSE>();
+  return typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::TRANSPOSE>();
 }
 
 // Operatation defining the property "upper triangular" for a matrix
 template <uint64_t P, uint64_t S>
-constexpr typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::UPPER> U(
-    Prototype<P, S> const &)
+constexpr typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::UPPER> U(
+    Prototype<P, S> const & /*unused*/)
 {
-  return typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::UPPER>();
+  return typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::UPPER>();
 }
 
 // Operatation defining the property "lower triangular" for a matrix
 template <uint64_t P, uint64_t S>
-constexpr typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::LOWER> L(
-    Prototype<P, S> const &)
+constexpr typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::LOWER> L(
+    Prototype<P, S> const & /*unused*/)
 {
-  return typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::LOWER>();
+  return typename Prototype<P, S>::template OneOpReturnType<Prototype<P, S>::LOWER>();
 }
 
 // Wrapper function to prettify the representation inside template constants
 template <typename O>
-constexpr uint64_t Computes(O const &)
+constexpr uint64_t Computes(O const & /*unused*/)
 {
   return O::Stack;
 }
@@ -153,7 +153,7 @@ constexpr uint64_t Computes(A const &a, B const &b, O const &... objs)
 
 // Wrapper function to prettify signature representation.
 template <typename O>
-constexpr uint64_t Signature(O const &)
+constexpr uint64_t Signature(O const & /*unused*/)
 {
   return O::Stack;
 }

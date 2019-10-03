@@ -138,8 +138,9 @@ public:
 
   /// Setup management
   /// @{
-  void QueueSetup(SharedAeonExecutionUnit beacon);
-  void Abort(uint64_t round_start);
+
+  void QueueSetup(const SharedAeonExecutionUnit &beacon);
+  void Abort(uint64_t abort_below);
   void SetBeaconReadyCallback(CallbackFunction callback);
   /// @}
 
@@ -216,17 +217,20 @@ private:
 
   uint16_t failures_{0};
 
+  // Convenience functions
+  ReliableChannelPtr ReliableBroadcastFactory();
+
   /// @name Handlers for messages
   /// @{
-  void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
-  void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
+  void OnDkgMessage(MuddleAddress const &from, const std::shared_ptr<DKGMessage> &msg_ptr);
+  void OnNewShares(const MuddleAddress &from, std::pair<MessageShare, MessageShare> const &shares);
   void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
-  void OnNewCoefficients(CoefficientsMessage const &coefficients, MuddleAddress const &from_id);
-  void OnComplaints(ComplaintsMessage const &complaint, MuddleAddress const &from_id);
+  void OnNewCoefficients(CoefficientsMessage const &msg, MuddleAddress const &from);
+  void OnComplaints(ComplaintsMessage const &msg, MuddleAddress const &from);
   void OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id);
-  void OnComplaintAnswers(SharesMessage const &answer, MuddleAddress const &from_id);
-  void OnQualComplaints(SharesMessage const &shares, MuddleAddress const &from_id);
-  void OnReconstructionShares(SharesMessage const &shares, MuddleAddress const &from_id);
+  void OnComplaintAnswers(SharesMessage const &answer, MuddleAddress const &from);
+  void OnQualComplaints(SharesMessage const &shares_msg, MuddleAddress const &from);
+  void OnReconstructionShares(SharesMessage const &shares_msg, MuddleAddress const &from);
   /// @}
 
   /// @name Helper methods

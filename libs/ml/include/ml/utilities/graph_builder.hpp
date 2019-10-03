@@ -119,14 +119,12 @@ std::shared_ptr<OperationType> BuildLayer(std::shared_ptr<OpsSaveableParams> op_
   return ret;
 }
 
-namespace {
 template <class OperationType>
 std::shared_ptr<OperationType> GetOp(std::shared_ptr<OpsSaveableParams> op_save_params)
 {
   return std::make_shared<OperationType>(
       *(std::dynamic_pointer_cast<typename OperationType::SPType>(op_save_params)));
 }
-}  // namespace
 
 template <typename T>
 void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string const &name,
@@ -251,9 +249,9 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
-  case ops::LeakyReluOp<T>::OpCode():
+  case ops::PReluOp<T>::OpCode():
   {
-    op_ptr = GetOp<ops::LeakyReluOp<T>>(nsp.op_save_params);
+    op_ptr = GetOp<ops::PReluOp<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;

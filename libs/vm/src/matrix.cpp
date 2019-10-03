@@ -41,7 +41,7 @@ template <typename T>
 Ptr<Matrix<T>> Matrix<T>::AcquireMatrix(VM *vm, TypeId type_id, TypeId element_type_id,
                                         std::size_t num_rows, std::size_t num_columns)
 {
-  return new Matrix<T>(vm, type_id, element_type_id, num_rows, num_columns);
+  return Ptr<Matrix<T>>{new Matrix<T>(vm, type_id, element_type_id, num_rows, num_columns)};
 }
 
 template <typename T>
@@ -373,14 +373,12 @@ Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t num_rows, int3
   }
   if (element_type_id == TypeIds::Float32)
   {
-    return new Matrix<float>(vm, type_id, element_type_id, std::size_t(num_rows),
-                             std::size_t(num_columns));
+    return Ptr<IMatrix>{new Matrix<float>(vm, type_id, element_type_id, std::size_t(num_rows),
+                                          std::size_t(num_columns))};
   }
-  else
-  {
-    return new Matrix<double>(vm, type_id, element_type_id, std::size_t(num_rows),
-                              std::size_t(num_columns));
-  }
+
+  return Ptr<IMatrix>{new Matrix<double>(vm, type_id, element_type_id, std::size_t(num_rows),
+                                         std::size_t(num_columns))};
 }
 
 }  // namespace vm

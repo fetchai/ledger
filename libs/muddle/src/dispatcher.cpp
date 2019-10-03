@@ -115,7 +115,7 @@ Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t chan
  * @param packet The input packet
  * @return true if the match was found (and the packet was handled), otherwise false
  */
-bool Dispatcher::Dispatch(PacketPtr packet)
+bool Dispatcher::Dispatch(PacketPtr const &packet)
 {
   bool success = false;
 

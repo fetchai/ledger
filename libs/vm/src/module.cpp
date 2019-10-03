@@ -233,7 +233,7 @@ Module::Module()
 
   GetClassInterface<String>()
       .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId) -> Ptr<String> { return new String(vm, ""); })
+          [](VM *vm, TypeId) -> Ptr<String> { return Ptr<String>{new String(vm, "")}; })
       .CreateMemberFunction("find", &String::Find)
       .CreateMemberFunction("length", &String::Length)
       .CreateMemberFunction("sizeInBytes", &String::SizeInBytes)

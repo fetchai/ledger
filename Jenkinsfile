@@ -43,12 +43,12 @@ enum Configuration
   public final String label
 }
 
-def is_master_or_pull_request_head_branch()
+def run_full_build()
 {
-  return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-head$/ || BRANCH_NAME ==~ /^PR-\d+$/
+  return true
 }
 
-def static_analysis()
+def static_analysis(Configuration config)
 {
   return {
     stage('Static Analysis') {
@@ -59,12 +59,7 @@ def static_analysis()
 
         stage('Run Static Analysis') {
           docker.image(DOCKER_IMAGE_NAME).inside {
-            sh '''\
-              mkdir -p build-analysis
-              cd build-analysis
-              cmake ..
-            '''
-            sh './scripts/run_static_analysis.py build-analysis'
+            sh "./scripts/ci-tool.py --lint ${config.label}"
           }
         }
       }
@@ -111,7 +106,7 @@ def slow_tests_stage(Platform platform, Configuration config)
     }
 
     stage("End-to-End Tests ${stage_name_suffix(platform, config)}") {
-      sh './scripts/ci/install-test-dependencies.sh'
+      sh './scripts/install-test-dependencies.sh'
       sh "./scripts/ci-tool.py -E ${config.label}"
     }
   }
@@ -207,7 +202,7 @@ def run_builds_in_parallel()
     }
 
     // Only run macOS builds on master and head branches
-    if (is_master_or_pull_request_head_branch())
+    if (run_full_build())
     {
       stages["macOS ${Platform.DEFAULT_CLANG.label} ${config.label}"] = create_macos_build(
         Platform.DEFAULT_CLANG,
@@ -215,20 +210,20 @@ def run_builds_in_parallel()
     }
   }
 
-  for (config in (is_master_or_pull_request_head_branch() ? Configuration.values() : [Configuration.RELEASE]))
+  for (config in (run_full_build() ? Configuration.values() : [Configuration.RELEASE]))
   {
     for (platform in LINUX_PLATFORMS_AUX)
     {
       stages["${platform.label} ${config.label}"] = create_docker_build(
         platform,
         config,
-        is_master_or_pull_request_head_branch() ? full_run : fast_run)
+        run_full_build() ? full_run : fast_run)
     }
   }
 
-  if (is_master_or_pull_request_head_branch())
+  if (run_full_build())
   {
-    stages['Static Analysis'] = static_analysis()
+    stages['Static Analysis'] = static_analysis(Configuration.DEBUG)
   }
 
   stage('Build and Test') {

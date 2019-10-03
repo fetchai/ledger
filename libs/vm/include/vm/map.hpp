@@ -145,7 +145,7 @@ struct Map : public IMap
   TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key) override
   {
     TemplateParameter2 *ptr = Get<Key>(key);
-    if (ptr)
+    if (ptr != nullptr)
     {
       return *ptr;
     }

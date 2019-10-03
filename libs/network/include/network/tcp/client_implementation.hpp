@@ -39,17 +39,17 @@ namespace network {
 class TCPClientImplementation final : public AbstractConnection
 {
 public:
-  using network_manager_type = NetworkManager;
-  using self_type            = std::weak_ptr<AbstractConnection>;
-  using shared_self_type     = std::shared_ptr<AbstractConnection>;
-  using socket_type          = asio::ip::tcp::tcp::socket;
-  using strand_type          = asio::io_service::strand;
-  using resolver_type        = asio::ip::tcp::resolver;
-  using mutex_type           = std::mutex;
+  using NetworkManagerType = NetworkManager;
+  using SelfType           = std::weak_ptr<AbstractConnection>;
+  using SharedSelfType     = std::shared_ptr<AbstractConnection>;
+  using SocketType         = asio::ip::tcp::tcp::socket;
+  using StrandType         = asio::io_service::strand;
+  using ResolverType       = asio::ip::tcp::resolver;
+  using MutexType          = std::mutex;
 
   static constexpr char const *LOGGING_NAME = "TCPClientImpl";
 
-  explicit TCPClientImplementation(network_manager_type const &network_manager) noexcept;
+  explicit TCPClientImplementation(NetworkManagerType const &network_manager) noexcept;
   TCPClientImplementation(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation(TCPClientImplementation &&rhs)      = delete;
   ~TCPClientImplementation() override;
@@ -60,7 +60,7 @@ public:
 
   bool is_alive() const override;
 
-  void Send(message_type const &omsg) override;
+  void Send(MessageType const &omsg) override;
 
   uint16_t Type() const override;
 
@@ -74,22 +74,22 @@ public:
 private:
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
 
-  network_manager_type networkManager_;
+  NetworkManagerType networkManager_;
   // IO objects should be guaranteed to have lifetime less than the
   // io_service/networkManager
-  std::weak_ptr<socket_type> socket_;
-  std::weak_ptr<strand_type> strand_;
+  std::weak_ptr<SocketType> socket_;
+  std::weak_ptr<StrandType> strand_;
 
-  message_queue_type write_queue_;
-  mutable mutex_type queue_mutex_;
-  mutable mutex_type io_creation_mutex_;
+  MessageQueueType  write_queue_;
+  mutable MutexType queue_mutex_;
+  mutable MutexType io_creation_mutex_;
 
-  mutable mutex_type can_write_mutex_;
-  bool               can_write_{true};
-  bool               posted_close_ = false;
+  mutable MutexType can_write_mutex_;
+  bool              can_write_{true};
+  bool              posted_close_ = false;
 
-  mutable mutex_type callback_mutex_;
-  std::atomic<bool>  connected_{false};
+  mutable MutexType callback_mutex_;
+  std::atomic<bool> connected_{false};
 
   void ReadHeader() noexcept;
   void ReadBody(byte_array::ByteArray const &header) noexcept;
@@ -97,7 +97,7 @@ private:
   static void SetHeader(byte_array::ByteArray &header, uint64_t bufSize);
 
   // Always executed in a run(), in a strand
-  void WriteNext(shared_self_type selfLock);
+  void WriteNext(SharedSelfType const &selfLock);
 };
 
 }  // namespace network

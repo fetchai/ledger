@@ -34,22 +34,20 @@ namespace commandline {
 class Params
 {
 public:
-  Params(const Params &rhs) = delete;
+  Params(Params const &rhs) = delete;
   Params(Params &&rhs)      = delete;
-  Params operator=(const Params &rhs) = delete;
+  Params operator=(Params const &rhs) = delete;
   Params operator=(Params &&rhs)             = delete;
-  bool   operator==(const Params &rhs) const = delete;
-  bool   operator<(const Params &rhs) const  = delete;
+  bool   operator==(Params const &rhs) const = delete;
+  bool   operator<(Params const &rhs) const  = delete;
 
-  using action_func_type =
-      std::function<void(const std::set<std::string> &, std::list<std::string> &)>;
-  using help_text_type  = std::tuple<std::string, std::string>;
-  using assigners_type  = std::map<std::string, action_func_type>;
-  using help_texts_type = std::list<help_text_type>;
+  using ActionFunctionType =
+      std::function<void(std::set<std::string> const &, std::list<std::string> &)>;
+  using HelpTextType  = std::tuple<std::string, std::string>;
+  using AssignersType = std::map<std::string, ActionFunctionType>;
+  using HelpTextsType = std::list<HelpTextType>;
 
-  Params()
-    : paramsParser_()
-  {}
+  Params() = default;
 
   void Parse(int argc, char **argv)
   {
@@ -61,7 +59,7 @@ public:
     for (int i = 0; i < argc; i++)
     {
       auto s = std::string(argv[i]);
-      if (s.size() > 0 && s[0] == '-')
+      if (!s.empty() && s[0] == '-')
       {
         if (s.size() > 1 && s[1] == '-')
         {
@@ -74,9 +72,9 @@ public:
       }
     }
 
-    for (auto action : assigners_)
+    for (auto const &action : assigners_)
     {
-      action_func_type func = action.second;
+      ActionFunctionType func = action.second;
       func(args, errs);
     }
 
@@ -92,7 +90,7 @@ public:
 
     if (!errs.empty())
     {
-      for (auto err : errs)
+      for (auto const &err : errs)
       {
         std::cerr << err << std::endl;
       }
@@ -100,15 +98,14 @@ public:
     }
   }
 
-  virtual ~Params()
-  {}
+  virtual ~Params() = default;
 
   template <class TYPE>
-  void add(TYPE &assignee, const std::string &name, const std::string &help, TYPE deflt)
+  void add(TYPE &assignee, std::string const &name, std::string const &help, TYPE deflt)
   {
-    std::string name_local(name);
-    TYPE        deflt_local = deflt;
-    assigners_[name]        = [name_local, &assignee, deflt_local, this](
+    std::string const &name_local(name);
+    TYPE const &       deflt_local = deflt;
+    assigners_[name]               = [name_local, &assignee, deflt_local, this](
                            const std::set<std::string> &args,
                            std::list<std::string> &     errs) mutable {
       FETCH_UNUSED(args);
@@ -117,14 +114,14 @@ public:
       assignee = this->paramsParser_.GetParam(name_local, deflt_local);
     };
 
-    helpTexts_.push_back(help_text_type{name, help});
+    helpTexts_.push_back(HelpTextType{name, help});
   }
 
   template <class TYPE>
-  void add(TYPE &assignee, const std::string &name, const std::string &help)
+  void add(TYPE &assignee, std::string const &name, std::string const &help)
   {
-    std::string name_local(name);
-    assigners_[name] = [name_local, &assignee, this](const std::set<std::string> &args,
+    std::string const &name_local(name);
+    assigners_[name] = [name_local, &assignee, this](std::set<std::string> const &args,
                                                      std::list<std::string> &     errs) mutable {
       if (args.find(name_local) == args.end())
       {
@@ -134,10 +131,10 @@ public:
       assignee = this->paramsParser_.GetParam(name_local, TYPE());
     };
 
-    helpTexts_.push_back(help_text_type{name, help});
+    helpTexts_.push_back(HelpTextType{name, help});
   }
 
-  void description(const std::string &desc)
+  void description(std::string const &desc)
   {
     desc_ = desc;
   }
@@ -171,8 +168,8 @@ public:
 private:
   fetch::commandline::ParamsParser paramsParser_;
   std::string                      desc_;
-  help_texts_type                  helpTexts_;
-  assigners_type                   assigners_;
+  HelpTextsType                    helpTexts_;
+  AssignersType                    assigners_;
 };
 
 }  // namespace commandline

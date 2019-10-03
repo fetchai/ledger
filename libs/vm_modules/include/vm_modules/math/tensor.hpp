@@ -44,7 +44,7 @@ class VMTensor : public fetch::vm::Object
 public:
   using DataType = fetch::vm_modules::math::DataType;
 
-  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<std::uint64_t> const &shape);
+  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<uint64_t> const &shape);
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::math::Tensor<DataType> tensor);
 
@@ -72,13 +72,13 @@ public:
 
   DataType AtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4) const;
 
-  void SetAtOne(uint64_t idx1, DataType value);
+  void SetAtOne(uint64_t idx1, DataType const &value);
 
-  void SetAtTwo(uint64_t idx1, uint64_t idx2, DataType value);
+  void SetAtTwo(uint64_t idx1, uint64_t idx2, DataType const &value);
 
-  void SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType value);
+  void SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType const &value);
 
-  void SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType value);
+  void SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType const &value);
 
   void Copy(fetch::math::Tensor<DataType> const &other);
 

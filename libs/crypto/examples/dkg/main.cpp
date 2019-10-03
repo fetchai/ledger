@@ -30,10 +30,10 @@ using namespace fetch::byte_array;
 struct Member
 {
   ConstByteArray      seed;
-  bls::Id             id;
-  bls::PrivateKey     sk;
+  bls::Id             id{};
+  bls::PrivateKey     sk{};
   bls::PrivateKeyList received_shares;
-  bls::PrivateKey     secret_key_share;
+  bls::PrivateKey     secret_key_share{};
 };
 
 int main()

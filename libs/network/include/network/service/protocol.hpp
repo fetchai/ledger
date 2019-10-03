@@ -52,12 +52,12 @@ namespace service {
 class Protocol
 {
 public:
-  using callable_type          = AbstractCallable *;
-  using stored_type            = std::shared_ptr<AbstractCallable>;
-  using byte_array_type        = byte_array::ConstByteArray;
-  using connection_handle_type = typename network::AbstractConnection::connection_handle_type;
-  using middleware_type =
-      std::function<void(connection_handle_type const &, byte_array::ByteArray const &)>;
+  using CallableType         = AbstractCallable *;
+  using StoredType           = std::shared_ptr<AbstractCallable>;
+  using ByteArrayType        = byte_array::ConstByteArray;
+  using ConnectionHandleType = typename network::AbstractConnection::ConnectionHandleType;
+  using MiddlewareType =
+      std::function<void(ConnectionHandleType const &, byte_array::ByteArray const &)>;
 
   static constexpr char const *LOGGING_NAME = "Protocol";
 
@@ -67,7 +67,7 @@ public:
   /* Operator to access the different functions in the protocol.
    * @n is the idnex of callable in the protocol.
    *
-   * The result of this operator is a <callable_type> that can be
+   * The result of this operator is a <CallableType> that can be
    * invoked in accodance with the definition of an
    * <service::AbstractCallable>.
    *
@@ -76,7 +76,7 @@ public:
    *
    * @return a reference to the call.
    */
-  callable_type operator[](function_handler_type const &n)
+  CallableType operator[](FunctionHandlerType const &n)
   {
     auto iter = members_.find(n);
     if (iter == members_.end())
@@ -86,7 +86,7 @@ public:
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lookup function handler: ", n);
 
       throw serializers::SerializableException(
-          error::MEMBER_NOT_FOUND, byte_array_type("Could not find protocol member function"));
+          error::MEMBER_NOT_FOUND, ByteArrayType("Could not find protocol member function"));
     }
     return iter->second.get();
   }
@@ -106,38 +106,37 @@ public:
    * TODO(issue 21):
    */
   template <typename C, typename R, typename... Args>
-  void Expose(function_handler_type const &n, C *instance, R (C::*function)(Args...))
+  void Expose(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
-    stored_type fnc(new service::CallableClassMember<C, R(Args...)>(instance, function));
+    StoredType fnc(new service::CallableClassMember<C, R(Args...)>(instance, function));
 
     auto iter = members_.find(n);
     if (iter != members_.end())
     {
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
     }
 
     members_[n] = fnc;
   }
 
   template <typename C, typename R, typename... Args>
-  void ExposeWithClientContext(function_handler_type const &n, C *instance,
-                               R (C::*function)(Args...))
+  void ExposeWithClientContext(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
-    stored_type fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
-                                                                       instance, function));
+    StoredType fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
+                                                                      instance, function));
 
     auto iter = members_.find(n);
     if (iter != members_.end())
     {
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
     }
 
     members_[n] = fnc;
   }
 
-  virtual void ConnectionDropped(connection_handle_type /*connection_handle*/)
+  virtual void ConnectionDropped(ConnectionHandleType /*connection_handle*/)
   {}
 
   void DumpMemberTable()
@@ -151,7 +150,7 @@ public:
   }
 
 private:
-  std::map<function_handler_type, stored_type> members_;
+  std::map<FunctionHandlerType, StoredType> members_;
 };
 }  // namespace service
 }  // namespace fetch

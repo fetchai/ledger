@@ -440,7 +440,7 @@ TEST(FixedPointTest, Multiplication_32_32)
   // Extreme cases
   FixedPoint<32, 32> almost_one(0, fp64_t::LARGEST_FRACTION);
   FixedPoint<32, 32> infinitesimal(0, fp64_t::SMALLEST_FRACTION);
-  FixedPoint<32, 32> huge(0x40000000, 0);
+  FixedPoint<32, 32> huge(0x40000000, nullptr);
   FixedPoint<32, 32> small(0, 0x40000000);
 
   EXPECT_EQ(almost_one * almost_one, almost_one - infinitesimal);
@@ -498,7 +498,7 @@ TEST(FixedPointTest, Division_32_32)
 
   // Extreme cases
   FixedPoint<32, 32> infinitesimal(0, fp64_t::SMALLEST_FRACTION);
-  FixedPoint<32, 32> huge(0x40000000, 0);
+  FixedPoint<32, 32> huge(0x40000000, nullptr);
   FixedPoint<32, 32> small(0, 0x40000000);
 
   EXPECT_EQ(small / infinitesimal, huge);
@@ -851,7 +851,7 @@ TEST(FixedPointTest, Exponential_32_32)
   fp64_t      x{-10.0};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::Exp(x);
@@ -891,7 +891,7 @@ TEST(FixedPointTest, Pow_16_16_positive_x)
   fp32_t      y{0.001};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 100.0; x += step)
   {
     for (; y < 10.5; y += step)
@@ -918,7 +918,7 @@ TEST(FixedPointTest, Pow_16_16_negative_x)
   fp32_t      y{-4};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 10.0; x += step)
   {
     for (; y < 4; ++y)
@@ -961,7 +961,7 @@ TEST(FixedPointTest, Pow_32_32_positive_x)
   fp64_t      y{0.001};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 100.0; x += step)
   {
     for (; y < 40.5; y += step)
@@ -988,7 +988,7 @@ TEST(FixedPointTest, Pow_32_32_negative_x)
   fp64_t      y{-9};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 10.0; x += step)
   {
     for (; y < 9; ++y)
@@ -1040,7 +1040,7 @@ TEST(FixedPointTest, Logarithm_16_16)
   fp32_t      x{tiny};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp32_t e     = fp32_t::Log(x);
@@ -1389,7 +1389,7 @@ TEST(FixedPointTest, SQRT_32_32)
   fp64_t      x{tiny}, max{huge};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::Sqrt(x);
@@ -1884,7 +1884,7 @@ TEST(FixedPointTest, ASin_16_16)
   fp32_t      x{-0.99};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
     fp32_t e     = fp32_t::ASin(x);
@@ -1907,7 +1907,7 @@ TEST(FixedPointTest, ASin_32_32)
   fp64_t      x{-0.999};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
     fp64_t e     = fp64_t::ASin(x);
@@ -1930,7 +1930,7 @@ TEST(FixedPointTest, ACos_16_16)
   fp32_t      x{-0.99};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
     fp32_t e     = fp32_t::ACos(x);
@@ -1953,7 +1953,7 @@ TEST(FixedPointTest, ACos_32_32)
   fp64_t      x{-1.0};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 1.0; x += step)
   {
     fp64_t e     = fp64_t::ACos(x);
@@ -1976,7 +1976,7 @@ TEST(FixedPointTest, ATan_16_16)
   fp32_t      x{-5.0};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp32_t e     = fp32_t::ATan(x);
@@ -1999,7 +1999,7 @@ TEST(FixedPointTest, ATan_32_32)
   fp64_t      x{-5.0};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::ATan(x);
@@ -2023,7 +2023,7 @@ TEST(FixedPointTest, ATan2_16_16)
   fp32_t      y{-2.0};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 2.0; x += step)
   {
     for (; y < 2.0; y += step)
@@ -2050,7 +2050,7 @@ TEST(FixedPointTest, ATan2_32_32)
   fp64_t      y{-2.0};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 2.0; x += step)
   {
     for (; y < 2.0; y += step)
@@ -2099,7 +2099,7 @@ TEST(FixedPointTest, SinH_32_32)
   fp64_t      x{-5.0};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::SinH(x);
@@ -2145,7 +2145,7 @@ TEST(FixedPointTest, CosH_32_32)
   fp64_t      x{-5.0};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::CosH(x);
@@ -2168,7 +2168,7 @@ TEST(FixedPointTest, TanH_16_16)
   fp32_t      x{-3.0};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp32_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp32_t::TOLERANCE);
   for (; x < 3.0; x += step)
   {
     fp32_t e     = fp32_t::TanH(x);
@@ -2191,7 +2191,7 @@ TEST(FixedPointTest, TanH_32_32)
   fp64_t      x{-5.0};
   double      max_error = 0, avg_error = 0;
   std::size_t iterations = 0;
-  double      tolerance  = static_cast<double>(fp64_t::TOLERANCE);
+  auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
     fp64_t e     = fp64_t::TanH(x);
@@ -2350,7 +2350,7 @@ TEST(FixedPointTest, ATanH_32_32)
   // std::cout << "ATanH: avg error = " << avg_error << std::endl;
 }
 
-TEST(FixedPointTest, NanInfinity_16_16)
+TEST(FixedPointTest, NanInfinity_16_16)  // NOLINT
 {
   fp32_t m_inf{fp32_t::NEGATIVE_INFINITY};
   fp32_t p_inf{fp32_t::POSITIVE_INFINITY};
@@ -2716,7 +2716,7 @@ TEST(FixedPointTest, NanInfinity_16_16)
   EXPECT_TRUE(fp32_t::IsStateNaN());
 }
 
-TEST(FixedPointTest, NanInfinity_32_32)
+TEST(FixedPointTest, NanInfinity_32_32)  // NOLINT
 {
   fp64_t m_inf{fp64_t::NEGATIVE_INFINITY};
   fp64_t p_inf{fp64_t::POSITIVE_INFINITY};

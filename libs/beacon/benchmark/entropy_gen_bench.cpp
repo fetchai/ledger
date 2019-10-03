@@ -32,6 +32,7 @@
 #include "benchmark/benchmark.h"
 
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 using namespace fetch;
@@ -57,11 +58,11 @@ class BeaconServiceInsertable : public fetch::beacon::BeaconService
 {
 public:
   BeaconServiceInsertable(MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
-                          CertificatePtr certificate, SharedEventManager event_manager)
-    : BeaconService(muddle, manifest_cache, certificate, event_manager)
+                          CertificatePtr certificate, SharedEventManager event_manager)  // NOLINT
+    : BeaconService(muddle, manifest_cache, certificate, std::move(event_manager))
   {}
 
-  void PushNewExecUnit(SharedAeonExecutionUnit beacon)
+  void PushNewExecUnit(const SharedAeonExecutionUnit &beacon)
   {
     // TODO(HUT): consider whether to lock here for the test.
     // jkjkstd::lock_guard<std::mutex> lock(mutex_);
@@ -76,7 +77,7 @@ public:
   ManifestCacheInterfaceDummy()           = default;
   ~ManifestCacheInterfaceDummy() override = default;
 
-  bool QueryManifest(Address const &, fetch::ledger::Manifest &) override
+  bool QueryManifest(Address const & /*address*/, fetch::ledger::Manifest & /*manifest*/) override
   {
     return true;
   }
@@ -157,7 +158,7 @@ void EntropyGen(benchmark::State &state)
   {
     BeaconServiceInsertable::CabinetMemberList cabinet;
 
-    uint64_t nodes_in_test = uint64_t(state.range(0));
+    auto nodes_in_test = uint64_t(state.range(0));
 
     FETCH_LOG_INFO(LOGGING_NAME, "===============================");
     FETCH_LOG_INFO(LOGGING_NAME, "Starting test: ", nodes_in_test);

@@ -28,25 +28,6 @@ using fetch::byte_array::ConstByteArray;
 // TODO(issue 7): Make cache configurable
 constexpr uint32_t MAX_CACHE_LIFETIME_MS = 30000;
 
-#ifdef FETCH_ENABLE_METRICS
-using fetch::metrics::Metrics;
-using fetch::metrics::MetricHandler;
-
-static void RecordNewElement(ConstByteArray const &identifier)
-{
-  // record the event
-  Metrics::Instance().RecordMetric(identifier, MetricHandler::Instrument::TRANSACTION,
-                                   MetricHandler::Event::SYNCED);
-}
-
-static void RecordNewCacheElement(ConstByteArray const &identifier)
-{
-  // record the event
-  Metrics::Instance().RecordMetric(identifier, MetricHandler::Instrument::TRANSACTION,
-                                   MetricHandler::Event::RECEIVED_FOR_SYNC);
-}
-#endif  // FETCH_ENABLE_METRICS
-
 namespace fetch {
 namespace ledger {
 
@@ -59,8 +40,7 @@ namespace ledger {
  * @param store The object store to be used
  */
 TransactionStoreSyncProtocol::TransactionStoreSyncProtocol(ObjectStore *store, int lane_id)
-  : fetch::service::Protocol()
-  , store_(store)
+  : store_(store)
   , id_(lane_id)
 {
   this->Expose(OBJECT_COUNT, this, &Self::ObjectCount);
@@ -92,7 +72,7 @@ void TransactionStoreSyncProtocol::TrimCache()
   auto const next_cache_size = next_cache.size();
   auto const curr_cache_size = cache_.size();
 
-  if (curr_cache_size && (next_cache_size != curr_cache_size))
+  if ((curr_cache_size != 0u) && (next_cache_size != curr_cache_size))
   {
     FETCH_UNUSED(id_);  // logging only
     FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": New cache size: ", next_cache_size,
@@ -107,10 +87,6 @@ void TransactionStoreSyncProtocol::TrimCache()
 
 void TransactionStoreSyncProtocol::OnNewTx(Transaction const &o)
 {
-#ifdef FETCH_ENABLE_METRICS
-  RecordNewCacheElement(o.digest());
-#endif  // FETCH_ENABLE_METRICS
-
   FETCH_LOCK(cache_mutex_);
   cache_.emplace_back(o);
 }

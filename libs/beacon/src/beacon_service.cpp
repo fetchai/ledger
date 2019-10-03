@@ -38,7 +38,7 @@ char const *ToString(BeaconService::State state);
 
 BeaconService::BeaconService(MuddleInterface &               muddle,
                              ledger::ManifestCacheInterface &manifest_cache,
-                             CertificatePtr certificate, SharedEventManager event_manager)
+                             const CertificatePtr &certificate, SharedEventManager event_manager)
   : certificate_{certificate}
   , identity_{certificate->identity()}
   , endpoint_{muddle.GetEndpoint()}
@@ -46,7 +46,7 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
                                                   ToString)}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , event_manager_{std::move(event_manager)}
-  , cabinet_creator_{muddle, identity_, manifest_cache, certificate_}  // TODO(tfr): Make shared
+  , cabinet_creator_{muddle, identity_, manifest_cache, certificate_}
   , beacon_protocol_{*this}
   , beacon_entropy_generated_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_entropy_generated_total", "The total number of times entropy has been generated")}
@@ -161,7 +161,7 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 
   // Checking whether the next committee is ready
   // to produce random numbers.
-  if (aeon_exe_queue_.size() > 0)
+  if (!aeon_exe_queue_.empty())
   {
     active_exe_unit_ = aeon_exe_queue_.front();
     aeon_exe_queue_.pop_front();
@@ -323,10 +323,8 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   {
     return State::COMPLETE;
   }
-  else
-  {
-    return State::COLLECT_SIGNATURES;
-  }
+
+  return State::COLLECT_SIGNATURES;
 }
 
 /**
@@ -355,13 +353,11 @@ BeaconService::State BeaconService::OnCompleteState()
 
     return State::PREPARE_ENTROPY_GENERATION;
   }
-  else
-  {
-    EventCommitteeCompletedWork event;
-    event_manager_->Dispatch(event);
 
-    return State::WAIT_FOR_SETUP_COMPLETION;
-  }
+  EventCommitteeCompletedWork event;
+  event_manager_->Dispatch(event);
+
+  return State::WAIT_FOR_SETUP_COMPLETION;
 }
 
 bool BeaconService::AddSignature(SignatureShare share)
@@ -380,7 +376,7 @@ bool BeaconService::AddSignature(SignatureShare share)
 
     return false;
   }
-  else if (ret == BeaconManager::AddResult::NOT_MEMBER)
+  if (ret == BeaconManager::AddResult::NOT_MEMBER)
   {  // And that it was sent by a member of the cabinet
     FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
 

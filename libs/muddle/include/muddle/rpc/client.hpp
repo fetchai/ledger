@@ -37,9 +37,10 @@ namespace rpc {
 class Client : protected service::ServiceClientInterface
 {
 public:
-  using ProtocolId    = service::protocol_handler_type;
-  using FunctionId    = service::function_handler_type;
-  using Serializer    = service::serializer_type;
+  using Address       = muddle::Address;
+  using ProtocolId    = service::ProtocolHandlerType;
+  using FunctionId    = service::FunctionHandlerType;
+  using Serializer    = service::SerializerType;
   using Promise       = service::Promise;
   using Handler       = std::function<void(Promise)>;
   using SharedHandler = std::shared_ptr<Handler>;
@@ -69,7 +70,7 @@ public:
     service::PackCall(counter, protocol, function, args...);
 
     // pack the mesage into a buffer
-    service::serializer_type params;
+    service::SerializerType params;
     params.Reserve(counter.size());
     params << service::SERVICE_FUNCTION_CALL << prom->id();
     service::PackCall(params, protocol, function, std::forward<Args>(args)...);
@@ -97,7 +98,7 @@ public:
   Client &operator=(Client &&) = delete;
 
 protected:
-  bool DeliverRequest(muddle::Address const &address, network::message_type const &data);
+  bool DeliverRequest(muddle::Address const &address, network::MessageType const &data);
 
 private:
   using Flag            = std::atomic<bool>;

@@ -21,6 +21,7 @@
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -38,7 +39,7 @@ public:
   using MyType        = Reshape<TensorType>;
 
   explicit Reshape(std::vector<SizeType> new_shape)
-    : new_shape_(new_shape)
+    : new_shape_(std::move(new_shape))
   {}
 
   explicit Reshape(SPType const &sp)

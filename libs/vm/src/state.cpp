@@ -206,6 +206,7 @@ public:
     {
       // mark the variable as existed if we get a positive result back
       existed_ = eExisted::no;
+
       if (Status::OK == vm_->GetIOObserver().Exists(name_))
       {
         existed_ = eExisted::yes;
@@ -225,7 +226,7 @@ private:
     {
       return {value_, template_param_type_id_};
     }
-    else if (Existed())
+    if (Existed())
     {
       if (ReadHelper(template_param_type_id_, name_, value_, vm_))
       {
@@ -233,7 +234,7 @@ private:
         return {value_, template_param_type_id_};
       }
     }
-    else if (default_value)
+    else if (default_value != nullptr)
     {
       return *default_value;
     }
@@ -289,11 +290,11 @@ private:
 };
 
 template <typename... Args>
-Ptr<IState> Construct(VM *vm, TypeId state_type_id, Args &&... args)
+Ptr<IState> Construct(VM *vm, TypeId StateType_id, Args &&... args)
 {
-  TypeInfo const &state_type_info = vm->GetTypeInfo(state_type_id);
-  TypeId const    value_type_id   = state_type_info.parameter_type_ids[0];
-  return IState::ConstructIntrinsic(vm, state_type_id, value_type_id, std::forward<Args>(args)...);
+  TypeInfo const &StateType_info = vm->GetTypeInfo(StateType_id);
+  TypeId const    value_type_id  = StateType_info.parameter_type_ids[0];
+  return IState::ConstructIntrinsic(vm, StateType_id, value_type_id, std::forward<Args>(args)...);
 }
 
 template <typename T, typename R = void>
@@ -309,7 +310,7 @@ struct StateFactory<T, std::enable_if_t<!IsMetatype<T>>>
   template <typename... Args>
   Ptr<IState> operator()(Args &&... args)
   {
-    return new State<T>{std::forward<Args>(args)...};
+    return Ptr<IState>{new State<T>{std::forward<Args>(args)...}};
   }
 };
 
@@ -317,7 +318,7 @@ template <typename T>
 struct StateFactory<T, std::enable_if_t<IsMetatype<T>>>
 {
   template <typename... Args>
-  Ptr<IState> operator()(Args &&...)
+  Ptr<IState> operator()(Args &&... /*unused*/)
   {
     return {};
   }
@@ -333,7 +334,7 @@ Ptr<IState> IState::ConstructorFromString(VM *vm, TypeId type_id, Ptr<String> co
   }
 
   vm->RuntimeError("Failed to construct State: the `name` is null reference");
-  return nullptr;
+  return {};
 }
 
 Ptr<IState> IState::ConstructorFromAddress(VM *vm, TypeId type_id, Ptr<Address> const &name)
@@ -344,7 +345,7 @@ Ptr<IState> IState::ConstructorFromAddress(VM *vm, TypeId type_id, Ptr<Address> 
   }
 
   vm->RuntimeError("Failed to construct State: the `name` is null reference");
-  return nullptr;
+  return {};
 }
 
 Ptr<IState> IState::ConstructIntrinsic(VM *vm, TypeId type_id, TypeId template_param_type_id,

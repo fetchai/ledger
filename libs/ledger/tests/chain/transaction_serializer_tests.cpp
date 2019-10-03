@@ -32,6 +32,8 @@
 #include <string>
 #include <vector>
 
+namespace {
+
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 using fetch::crypto::ECDSASigner;
@@ -49,7 +51,7 @@ struct Identities
   char const *private_key;
 };
 
-static Identities const IDENTITIES[] = {
+Identities const IDENTITIES[] = {
     {"532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d4",
      "18c2a33af8bd2cba7fa714a840a308a217aa4483880b1ef14b4fdffe08ab956e3f4b921cec33be7c258cfd7025a2b"
      "9a942770e5b17758bcc4961bbdc75a0251c",
@@ -412,24 +414,22 @@ static Identities const IDENTITIES[] = {
      "8b9747a388b9a42d62c855e5aa3ac2b8692426bcfa4967610c16caebf92994b7"},
 };
 
-static constexpr std::size_t CalculateIntegerStreamSize(std::size_t length)
+constexpr std::size_t CalculateIntegerStreamSize(std::size_t length)
 {
   if (length < 0x80)
   {
     return 1u;
   }
-  else if (length < 0x100)
+  if (length < 0x100)
   {
     return 2u;
   }
-  else if (length < 0x10000)
+  if (length < 0x10000)
   {
     return 4u;
   }
-  else
-  {
-    return 8u;
-  }
+
+  return 8u;
 }
 
 class TransactionSerializerTests : public ::testing::Test
@@ -1030,3 +1030,5 @@ TEST_F(TransactionSerializerTests, ContractWithLargeShardMask)
   // ensure the output transaction matches the input one
   EnsureAreSame(output, *tx);
 }
+
+}  // namespace

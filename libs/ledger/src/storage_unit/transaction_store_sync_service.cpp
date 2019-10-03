@@ -163,11 +163,9 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
       return State::RESOLVING_OBJECT_COUNTS;
     }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still pending ", counts.pending,
-                     " object count promises, but timeout approached!");
-    }
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still pending ", counts.pending,
+                   " object count promises, but timeout approached!");
   }
 
   // If there are objects to sync from the network, fetch N roots from each of the peers in
@@ -261,7 +259,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
     }
   }
 
-  if (synced_tx)
+  if (synced_tx != 0u)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Incorporated ", synced_tx, " TXs");
   }
@@ -286,16 +284,14 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
 
       return State::RESOLVING_SUBTREE;
     }
-    else
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Timeout for subtree promises count!",
+                   counts.pending);
+    // get the pending
+    auto pending = pending_subtree_.GetPending();
+    for (auto &req : pending)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
-                     "Timeout for subtree promises count!", counts.pending);
-      // get the pending
-      auto pending = pending_subtree_.GetPending();
-      for (auto &req : pending)
-      {
-        roots_to_sync_.push(promise_id_to_roots_[req.second.id()]);
-      }
+      roots_to_sync_.push(promise_id_to_roots_[req.second.id()]);
     }
   }
 
@@ -381,7 +377,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
     }
   }
 
-  if (synced_tx)
+  if (synced_tx != 0u)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, " Synchronised ", synced_tx,
                     " requested txs");
@@ -397,7 +393,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
                    "Still pending object promises but timeout approached!");
   }
 
-  if (counts.failed)
+  if (counts.failed != 0u)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Failed promises: ", counts.failed);
   }

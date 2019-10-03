@@ -110,14 +110,14 @@ using AnnotationArray = std::vector<Annotation>;
 struct Executable
 {
   Executable() = default;
-  Executable(std::string name__)
+  explicit Executable(std::string name__)
     : name{std::move(name__)}
   {}
   ~Executable() = default;
 
   struct Instruction
   {
-    Instruction(uint16_t opcode__)
+    explicit Instruction(uint16_t opcode__)
       : opcode{opcode__}
     {}
 
@@ -164,7 +164,7 @@ struct Executable
     uint16_t AddInstruction(Instruction instruction)
     {
       auto const pc = static_cast<uint16_t>(instructions.size());
-      instructions.push_back(std::move(instruction));
+      instructions.push_back(instruction);
       return pc;
     }
     uint16_t FindLineNumber(uint16_t pc) const
@@ -233,7 +233,7 @@ private:
 
   struct Loop
   {
-    uint16_t              scope_number;
+    uint16_t              scope_number{};
     std::vector<uint16_t> continue_pcs;
     std::vector<uint16_t> break_pcs;
   };
@@ -241,7 +241,7 @@ private:
   struct Chain
   {
     Chain() = default;
-    Chain(NodeKind kind__)
+    explicit Chain(NodeKind kind__)
       : kind{kind__}
     {}
 

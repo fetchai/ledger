@@ -49,7 +49,7 @@ char const *ToString(ServiceIdentifier::Type type)
   return text;
 }
 
-ServiceIdentifier::ServiceIdentifier(Type type, int32_t instance)
+ServiceIdentifier::ServiceIdentifier(Type type, uint32_t instance)
   : type_{type}
   , instance_{instance}
 {}
@@ -59,7 +59,7 @@ std::string ServiceIdentifier::ToString() const
   std::ostringstream oss;
   oss << ledger::ToString(type_);
 
-  if (instance_ >= 0)
+  if (instance_ != ServiceIdentifier::INVALID_SERVICE_IDENTIFIER)
   {
     oss << '/' << instance_;
   }

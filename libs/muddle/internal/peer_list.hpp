@@ -47,7 +47,7 @@ public:
   using Uri           = network::Uri;
   using PeerList      = std::vector<Uri>;
   using ConnectionPtr = std::shared_ptr<network::AbstractConnection>;
-  using Handle        = network::AbstractConnection::connection_handle_type;
+  using Handle        = network::AbstractConnection::ConnectionHandleType;
   using PeerMap       = std::unordered_map<Uri, ConnectionPtr>;
   using PeerSet       = std::unordered_set<Uri>;
   using Clock         = std::chrono::steady_clock;
@@ -141,7 +141,7 @@ private:
   PeerMap       peer_connections_;
   MetadataMap   peer_metadata_;
 
-  bool ReadyForRetry(const PeerMetadata &metadata) const;
+  bool ReadyForRetry(PeerMetadata const &metadata) const;
 };
 
 }  // namespace muddle

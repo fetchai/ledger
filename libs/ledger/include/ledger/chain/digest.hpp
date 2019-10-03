@@ -29,7 +29,7 @@ using Digest = byte_array::ConstByteArray;
 
 struct DigestHashAdapter
 {
-  std::size_t operator()(Digest const &hash) const
+  std::size_t operator()(Digest const &hash) const noexcept
   {
     std::size_t value{0};
 

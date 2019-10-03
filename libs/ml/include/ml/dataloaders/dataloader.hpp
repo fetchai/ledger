@@ -51,7 +51,7 @@ public:
   virtual ReturnType GetNext() = 0;
 
   virtual bool       AddData(InputType const &data, LabelType const &label) = 0;
-  virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
+  virtual ReturnType PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set);
 
   virtual SizeType Size() const                                   = 0;
   virtual bool     IsDone() const                                 = 0;
@@ -59,6 +59,7 @@ public:
   virtual void     SetTestRatio(float new_test_ratio)             = 0;
   virtual void     SetValidationRatio(float new_validation_ratio) = 0;
   void             SetMode(DataLoaderMode new_mode);
+  virtual bool     IsModeAvailable(DataLoaderMode mode) = 0;
   void             SetRandomMode(bool random_mode_state);
 
   template <typename X, typename D>
@@ -67,9 +68,9 @@ public:
 protected:
   virtual void              UpdateCursor() = 0;
   std::shared_ptr<SizeType> current_cursor_;
-  SizeType                  current_min_;
-  SizeType                  current_max_;
-  SizeType                  current_size_;
+  SizeType                  current_min_{};
+  SizeType                  current_max_{};
+  SizeType                  current_size_{};
 
   bool           random_mode_ = false;
   DataLoaderMode mode_        = DataLoaderMode::TRAIN;

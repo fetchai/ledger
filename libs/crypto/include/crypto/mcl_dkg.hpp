@@ -50,10 +50,10 @@ struct DkgKeyInformation
     private_key_share.clear();
   }
   DkgKeyInformation(PublicKey group_public_key1, std::vector<PublicKey> public_key_shares1,
-                    PrivateKey secret_key_shares1)
+                    PrivateKey secret_key_shares1)  // NOLINT
     : group_public_key{std::move(group_public_key1)}
     , public_key_shares{std::move(public_key_shares1)}
-    , private_key_share{std::move(secret_key_shares1)}
+    , private_key_share{secret_key_shares1}
   {}
 
   PublicKey              group_public_key;
@@ -115,7 +115,7 @@ void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
 bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
 
 void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
-                   std::vector<bn::Fr> const &b_i, uint32_t rank);
+                   std::vector<bn::Fr> const &b_i, uint32_t index);
 
 bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
 

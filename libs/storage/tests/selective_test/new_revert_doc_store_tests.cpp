@@ -47,7 +47,7 @@ using ConstByteArray = fetch::byte_array::ConstByteArray;
 
 char NewChar(LinearCongruentialGenerator &rng)
 {
-  char a = char(rng());
+  auto a = char(rng());
   return a == '\0' ? '0' : a;
 }
 
@@ -62,7 +62,7 @@ std::string GetStringForTesting(LinearCongruentialGenerator &rng)
     ret[i] = NewChar(rng);
   }
 
-  if (!(rng() % 10))
+  if ((rng() % 10) == 0u)
   {
     ret = std::string{};
   }
@@ -106,7 +106,7 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert1)
   }
 
   // *** Commit this ***
-  hashes.push_back(store.Commit());
+  hashes.emplace_back(store.Commit());
 
   // Verify state is the same
   for (std::size_t i = 0; i < 17; ++i)
@@ -224,7 +224,7 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert_with_load)
     }
 
     // *** Commit this ***
-    hashes.push_back(store.Commit());
+    hashes.emplace_back(store.Commit());
 
     // Verify state is the same
     for (std::size_t i = 0; i < 17; ++i)
@@ -301,7 +301,7 @@ TEST(new_revertible_store_test, erase_functionality_works_at_scale)
     auto        rid = storage::ResourceID(hash);
     store.Set(rid, set_me);
 
-    if (i % 2)
+    if ((i % 2) != 0u)
     {
       expected_size++;
       ASSERT_EQ(store.size(), expected_size);
@@ -365,7 +365,7 @@ TEST(new_revertible_store_test, commit_and_erase)
 
     ++expected_size;
 
-    if (i % 2)
+    if ((i % 2) != 0u)
     {
       ASSERT_EQ(store.size(), expected_size);
       ASSERT_EQ(store.Get(rid).failed, false);
@@ -412,9 +412,9 @@ TEST(new_revertible_store_test, DISABLED_hashing_correct_basic)
     reference_tree = crypto::MerkleTree{current_state.size()};
 
     std::size_t counter = 0;
-    for (auto it = current_state.begin(); it != current_state.end(); ++it)
+    for (auto &it : current_state)
     {
-      reference_tree[counter++] = Hash<crypto::SHA256>(it->second);
+      reference_tree[counter++] = Hash<crypto::SHA256>(it.second);
     }
 
     reference_tree.CalculateRoot();

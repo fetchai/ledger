@@ -43,7 +43,7 @@ namespace serializers {
 class SizeCounter
 {
 public:
-  using self_type = SizeCounter;
+  using SelfType = SizeCounter;
 
   void Allocate(std::size_t delta)
   {
@@ -93,12 +93,12 @@ public:
     };
   }
 
-  void WriteByte(uint8_t)
+  void WriteByte(uint8_t /*unused*/)
   {
     ++pos_;
   }
 
-  void WriteBytes(uint8_t const *, std::size_t size)
+  void WriteBytes(uint8_t const * /*unused*/, std::size_t size)
   {
     pos_ += size;
   }
@@ -109,10 +109,10 @@ public:
   }
 
   template <typename T>
-  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator<<(T const &);
+  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator<<(T const & /*unused*/);
 
   template <typename T>
-  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator>>(T &);
+  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator>>(T & /*unused*/);
 
   template <typename T>
   typename ForwardSerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
@@ -162,13 +162,13 @@ public:
   typename MapSerializer<T, SizeCounter>::DriverType &operator>>(T &val);
 
   template <typename T>
-  self_type &Pack(T const *val)
+  SelfType &Pack(T const *val)
   {
     return this->operator<<(val);
   }
 
   template <typename T>
-  self_type &Pack(T const &val)
+  SelfType &Pack(T const &val)
   {
     return this->operator<<(val);
   }
@@ -199,7 +199,7 @@ public:
   }
 
   template <typename... ARGS>
-  self_type &Append(ARGS const &... args)
+  SelfType &Append(ARGS const &... args)
   {
     AppendInternal(args...);
     return *this;
@@ -222,13 +222,14 @@ private:
 };
 
 template <typename T>
-typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &)
+typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(
+    T const & /*unused*/)
 {
   return *this;
 }
 
 template <typename T>
-typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &)
+typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T & /*unused*/)
 {
   return *this;
 }
@@ -535,23 +536,19 @@ template <typename T>
 class SizeCounterGuard
 {
 public:
-  using size_counter_type = T;
+  using SizeCounterType = T;
 
 private:
   friend auto sizeCounterGuardFactory<T>(T &size_counter);
 
   T *size_counter_;
 
-  SizeCounterGuard(T *size_counter)
+  explicit SizeCounterGuard(T *size_counter)
     : size_counter_{size_counter}
   {}
 
-  SizeCounterGuard(SizeCounterGuard const &) = delete;
-  SizeCounterGuard &operator=(SizeCounterGuard const &) = delete;
-  SizeCounterGuard &operator=(SizeCounterGuard &&) = delete;
-
 public:
-  SizeCounterGuard(SizeCounterGuard &&) = default;
+  SizeCounterGuard(SizeCounterGuard &&) noexcept = default;
 
   /**
    * @brief Destructor ensures that size counting instance is reset to zero at the end
@@ -565,9 +562,13 @@ public:
     if (size_counter_)
     {
       // Resetting size counter to zero size by reconstructing it
-      *size_counter_ = size_counter_type{};
+      *size_counter_ = SizeCounterType{};
     }
   }
+
+  SizeCounterGuard(SizeCounterGuard const &) = delete;
+  SizeCounterGuard &operator=(SizeCounterGuard const &) = delete;
+  SizeCounterGuard &operator=(SizeCounterGuard &&) = delete;
 
   /**
    * @brief Indicates whether we are already in size counting process

@@ -18,25 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_manager.hpp"
-#include "ledger/chain/digest.hpp"
-
+#include "beacon/block_entropy_interface.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/digest.hpp"
 
 namespace fetch {
 namespace beacon {
-
-class BlockEntropyInterface
-{
-public:
-  using Digest = byte_array::ConstByteArray;
-
-  BlockEntropyInterface()          = default;
-  virtual ~BlockEntropyInterface() = default;
-
-  virtual Digest   EntropyAsSHA256() const = 0;
-  virtual uint64_t EntropyAsU64() const    = 0;
-};
 
 struct BlockEntropy : public BlockEntropyInterface
 {
@@ -49,14 +37,7 @@ struct BlockEntropy : public BlockEntropyInterface
   using GroupSignatureStr = std::string;
   using Cabinet           = std::set<MuddleAddress>;
 
-  BlockEntropy()
-  {
-    // bn::initPairing();
-
-    //// Important this is cleared so the hash of it is consistent for the genesis block (?)
-    // group_signature = GroupSignature{};
-    // group_signature.clear();
-  }
+  BlockEntropy();
 
   Cabinet qualified;  // The members who succeeded DKG and are qualified to produce blocks (when new
                       // committee)
@@ -69,31 +50,12 @@ struct BlockEntropy : public BlockEntropyInterface
                                 // from qual members
   GroupSignatureStr group_signature;  // Signature of the previous entropy, used as the entropy
 
-  Digest EntropyAsSHA256() const override
-  {
-    return crypto::Hash<crypto::SHA256>(group_signature /*.getStr()*/);
-  }
+  Digest EntropyAsSHA256() const override;
 
   // This will always be safe so long as the entropy function is properly sha256-ing
-  uint64_t EntropyAsU64() const override
-  {
-    const Digest hash = EntropyAsSHA256();
-    return *reinterpret_cast<uint64_t const *>(hash.pointer());
-  }
-
-  void HashSelf()
-  {
-    fetch::serializers::MsgPackSerializer serializer;
-    serializer << qualified;
-    serializer << group_public_key;
-    serializer << block_number;
-    digest = crypto::Hash<crypto::SHA256>(serializer.data());
-  }
-
-  bool IsAeonBeginning() const
-  {
-    return !qualified.empty();
-  }
+  uint64_t EntropyAsU64() const override;
+  void     HashSelf();
+  bool     IsAeonBeginning() const;
 };
 
 }  // namespace beacon

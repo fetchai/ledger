@@ -71,7 +71,7 @@ protected:
   {
   public:
     template <typename... Args>
-    PayloadPacker(Args... args)
+    explicit PayloadPacker(Args... args)
     {
       // initialise the array
       packer_.pack_array(sizeof...(args));
@@ -212,7 +212,7 @@ protected:
   /// @}
 
   fetch::BitVector     shards_{FullShards(1)};
-  Contract::BlockIndex block_number_;
+  Contract::BlockIndex block_number_{};
   CertificatePtr       certificate_;
   AddressPtr           owner_address_;
   MockStorageUnitPtr   storage_;

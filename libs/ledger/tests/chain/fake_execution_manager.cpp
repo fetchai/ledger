@@ -32,7 +32,7 @@ FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
 
 FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body const &block)
 {
-  if (current_hash_.size())
+  if (!current_hash_.empty())
   {
     return ScheduleStatus::ALREADY_RUNNING;
   }
@@ -57,7 +57,7 @@ Digest FakeExecutionManager::LastProcessedBlock()
 FakeExecutionManager::State FakeExecutionManager::GetState()
 {
   bool execution_complete{false};
-  if (current_polls_)
+  if (current_polls_ != 0u)
   {
     --current_polls_;
 
@@ -76,7 +76,7 @@ FakeExecutionManager::State FakeExecutionManager::GetState()
   }
 
   // evaluate the state
-  return (current_polls_ ? State::ACTIVE : State::IDLE);
+  return (current_polls_ != 0u ? State::ACTIVE : State::IDLE);
 }
 
 bool FakeExecutionManager::Abort()

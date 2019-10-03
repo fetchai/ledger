@@ -123,7 +123,7 @@ public:
   using Identity        = crypto::Identity;
   using Address         = Router::Address;
   using ConnectionState = PeerConnectionList::ConnectionState;
-  using Handle          = network::AbstractConnection::connection_handle_type;
+  using Handle          = network::AbstractConnection::ConnectionHandleType;
   using Server          = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList      = std::vector<Server>;
 

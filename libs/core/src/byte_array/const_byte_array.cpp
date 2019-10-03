@@ -35,7 +35,7 @@ ConstByteArray ConstByteArray::ToHex() const
 
 std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
 {
-  char const *arr = reinterpret_cast<char const *>(str.pointer());
+  auto const *arr = reinterpret_cast<char const *>(str.pointer());
   for (std::size_t i = 0; i < str.size(); ++i)
   {
     os << arr[i];

@@ -21,8 +21,8 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
+#include "ledger/storage_unit/transient_object_store.hpp"
 #include "ledger/transaction_verifier.hpp"
-#include "metrics/metrics.hpp"
 #include "muddle/address.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/milli_timer.hpp"
@@ -30,7 +30,6 @@
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/resource_mapper.hpp"
-#include "storage/transient_object_store.hpp"
 #include "vectorise/platform.hpp"
 
 #include <chrono>
@@ -72,7 +71,8 @@ public:
   TransactionStoreSyncProtocol &operator=(TransactionStoreSyncProtocol &&) = delete;
 
 private:
-  static constexpr uint64_t PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
+  // Limit the amount a single rpc call will provide
+  static constexpr uint64_t PULL_LIMIT_ = 10000u;
 
   struct CachedObject
   {
@@ -96,7 +96,7 @@ private:
   uint64_t ObjectCount();
   TxArray  PullObjects(service::CallContext const &call_context);
 
-  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
+  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count);
   TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
 
   ObjectStore *store_;  ///< The pointer to the object store

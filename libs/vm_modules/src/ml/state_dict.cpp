@@ -36,7 +36,6 @@ using VMTensorType   = fetch::vm_modules::math::VMTensor;
 
 VMStateDict::VMStateDict(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-  , state_dict_()
 {}
 
 VMStateDict::VMStateDict(VM *vm, TypeId type_id, fetch::ml::StateDict<MathTensorType> sd)
@@ -47,7 +46,7 @@ VMStateDict::VMStateDict(VM *vm, TypeId type_id, fetch::ml::StateDict<MathTensor
 
 Ptr<VMStateDict> VMStateDict::Constructor(VM *vm, TypeId type_id)
 {
-  return new VMStateDict(vm, type_id);
+  return Ptr<VMStateDict>{new VMStateDict(vm, type_id)};
 }
 
 void VMStateDict::SetWeights(Ptr<String> const &nodename, Ptr<math::VMTensor> const &weights)

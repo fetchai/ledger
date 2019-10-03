@@ -158,7 +158,7 @@ bool TokenContract::TransferTokens(Transaction const &tx, Address const &to, uin
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
 }
 
-Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex /*index*/)
 {
   // parse the payload as JSON
   Variant data;
@@ -190,7 +190,7 @@ Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
  *
  * @return Status::OK if deed has been incorporated successfully.
  */
-Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex /*index*/)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
@@ -245,7 +245,7 @@ Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
   return {Status::OK};
 }
 
-Contract::Result TokenContract::Transfer(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::Transfer(Transaction const &tx, BlockIndex /*index*/)
 {
   FETCH_UNUSED(tx);
   return {Status::FAILED};
@@ -440,9 +440,9 @@ Contract::Status TokenContract::CooldownStake(Query const &query, Query &respons
       response  = Variant::Object();
       auto keys = Variant::Object();
 
-      for (auto it = record.cooldown_stake.begin(); it != record.cooldown_stake.end(); ++it)
+      for (auto const &it : record.cooldown_stake)
       {
-        keys[std::to_string(it->first)] = it->second;
+        keys[std::to_string(it.first)] = it.second;
       }
 
       response["cooldownStake"] = keys;

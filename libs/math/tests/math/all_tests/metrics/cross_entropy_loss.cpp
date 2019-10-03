@@ -39,7 +39,7 @@ TYPED_TEST(CrossEntropyTest, perfect_match_test)
   TypeParam gt_array = TypeParam{{n_data, n_classes}};
 
   // set gt data
-  std::vector<std::uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
+  std::vector<uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
   for (SizeType i = 0; i < n_data; ++i)
   {
     for (SizeType j = 0; j < n_classes; ++j)
@@ -74,7 +74,7 @@ TYPED_TEST(CrossEntropyTest, value_test)
   TypeParam gt_array   = TypeParam{{n_classes, n_data}};
 
   // set gt data
-  std::vector<std::uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
+  std::vector<uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
   for (typename TypeParam::SizeType i = 0; i < n_data; ++i)
   {
     for (typename TypeParam::SizeType j = 0; j < n_classes; ++j)

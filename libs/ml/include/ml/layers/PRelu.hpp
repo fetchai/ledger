@@ -19,7 +19,7 @@
 
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/ops/leaky_relu_op.hpp"
+#include "ml/ops/prelu_op.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <cmath>
@@ -45,7 +45,7 @@ public:
 
   PRelu() = default;
 
-  explicit PRelu(std::uint64_t in, std::string const &name = "PRelu",
+  explicit PRelu(uint64_t in, std::string const &name = "PRelu",
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
   {
     std::string input =
@@ -59,8 +59,8 @@ public:
 
     this->SetInput(alpha, alpha_data);
 
-    std::string output = this->template AddNode<fetch::ml::ops::LeakyReluOp<TensorType>>(
-        name + "_LeakyReluOp", {input, alpha});
+    std::string output = this->template AddNode<fetch::ml::ops::PReluOp<TensorType>>(
+        name + "_PReluOp", {input, alpha});
 
     this->AddInputNode(input);
     this->SetOutputNode(output);

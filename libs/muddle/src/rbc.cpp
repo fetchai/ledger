@@ -34,8 +34,8 @@ constexpr char const *LOGGING_NAME = "RBC";
  * @param threshold Threshold number of Byzantine peers
  * @param dkg
  */
-RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, CertificatePtr,
-         uint16_t channel, bool ordered_delivery)
+RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
+         const CertificatePtr /*unused*/ &, uint16_t channel, bool ordered_delivery)
   : channel_{channel}
   , ordered_delivery_{ordered_delivery}
   , address_{std::move(address)}
@@ -684,7 +684,7 @@ bool RBC::CheckTag(RBCMessage const &msg)
     {
       return true;
     }
-    else if (msg.counter() > msg_counter)
+    if (msg.counter() > msg_counter)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
                      " does not match tag counter ", std::to_string(msg.counter()), " for node ",
@@ -698,10 +698,8 @@ bool RBC::CheckTag(RBCMessage const &msg)
     }
     return false;
   }
-  else
-  {
-    return true;
-  }
+
+  return true;
 }
 
 /**
