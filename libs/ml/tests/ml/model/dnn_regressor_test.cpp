@@ -19,6 +19,8 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/model/dnn_regressor.hpp"
+#include "ml/saveparams/saveable_params.hpp"
+#include "ml/serializers/ml_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -142,4 +144,59 @@ TYPED_TEST(ModelsTest, sgd_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, static_cast<DataType>(1e-1)));
+}
+
+TYPED_TEST(ModelsTest, sgd_dnnregressor_serialisation)
+{
+  using DataType  = typename TypeParam::Type;
+  using ModelType = fetch::ml::model::DNNRegressor<TypeParam>;
+
+  fetch::math::SizeType    n_training_steps = 10;
+  typename TypeParam::Type tolerance        = static_cast<DataType>(1e-1);
+  auto                     learning_rate    = DataType{0.06f};
+  fetch::ml::OptimiserType optimiser_type   = fetch::ml::OptimiserType::SGD;
+
+  fetch::ml::model::ModelConfig<DataType> model_config;
+  model_config.learning_rate_param.mode =
+      fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
+  model_config.learning_rate_param.starting_learning_rate = learning_rate;
+  model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
+
+  // set up data
+  TypeParam train_data, train_labels, test_datum, test_label;
+  PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels, test_datum, test_label);
+
+  // set up model
+  ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
+                                                               train_data, train_labels);
+
+  // test prediction performance
+  TypeParam pred0({3, 1});
+  TypeParam pred1({3, 1});
+  TypeParam pred2({3, 1});
+
+  // Do 2 optimiser steps
+  model.Train(n_training_steps);
+  model.Predict(test_datum, pred0);
+
+  // serialise the model
+  fetch::serializers::MsgPackSerializer b;
+  b << model;
+
+  // deserialise the model
+  b.seek(0);
+  auto model2 = std::make_shared<fetch::ml::model::DNNRegressor<TypeParam>>();
+  b >> *model2;
+
+  model.Train(n_training_steps);
+  model2->Train(n_training_steps);
+
+  // Do 2 optimiser steps
+  model.Predict(test_datum, pred1);
+  model2->Predict(test_datum, pred2);
+
+  // Test loss
+  EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
+  EXPECT_FALSE(pred0.AllClose(pred1, tolerance, tolerance));
+  EXPECT_FALSE(pred0.AllClose(pred2, tolerance, tolerance));
 }

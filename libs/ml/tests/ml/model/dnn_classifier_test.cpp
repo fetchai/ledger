@@ -146,7 +146,7 @@ TYPED_TEST(ModelsTest, sgd_dnnclasifier)
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, static_cast<DataType>(1e-1)));
 }
 
-TYPED_TEST(ModelsTest, adam_dnnclasifier_serialisation)
+TYPED_TEST(ModelsTest, sgd_dnnclasifier_serialisation)
 {
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::DNNClassifier<TypeParam>;
@@ -188,6 +188,17 @@ TYPED_TEST(ModelsTest, adam_dnnclasifier_serialisation)
   auto model2 = std::make_shared<fetch::ml::model::DNNClassifier<TypeParam>>();
   b >> *model2;
 
+  model.Predict(test_datum, pred1);
+  model2->Predict(test_datum, pred2);
+
+  std::cout << pred0.ToString() << std::endl;
+  std::cout << pred1.ToString() << std::endl;
+  std::cout << pred2.ToString() << std::endl;
+
+  // Test if deserialised model returns same results
+  EXPECT_TRUE(pred0.AllClose(pred1, tolerance, tolerance));
+  EXPECT_TRUE(pred0.AllClose(pred2, tolerance, tolerance));
+
   model.Train(n_training_steps);
   model2->Train(n_training_steps);
 
@@ -195,6 +206,12 @@ TYPED_TEST(ModelsTest, adam_dnnclasifier_serialisation)
   model.Predict(test_datum, pred1);
   model2->Predict(test_datum, pred2);
 
-  // Test loss
+  std::cout << pred0.ToString() << std::endl;
+  std::cout << pred1.ToString() << std::endl;
+  std::cout << pred2.ToString() << std::endl;
+
+  // Test if both models returns same results after training
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
+  EXPECT_FALSE(pred0.AllClose(pred1, tolerance, tolerance));
+  EXPECT_FALSE(pred0.AllClose(pred2, tolerance, tolerance));
 }

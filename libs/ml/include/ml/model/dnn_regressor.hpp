@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/model/model.hpp"
 #include "ml/model/model_config.hpp"
 
@@ -36,7 +37,14 @@ public:
   using OptimiserType     = fetch::ml::OptimiserType;
   using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
+  DNNRegressor()
+    : Model<TensorType>()
+  {}
+
   DNNRegressor(ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
+
+  template <typename X, typename D>
+  friend struct serializers::MapSerializer;
 };
 
 /**
@@ -76,4 +84,36 @@ DNNRegressor<TensorType>::DNNRegressor(ModelConfig<DataType>        model_config
 
 }  // namespace model
 }  // namespace ml
+
+namespace serializers {
+/**
+ * serializer for DNNRegressor model
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::model::DNNRegressor<TensorType>, D>
+{
+  using Type                      = ml::model::DNNRegressor<TensorType>;
+  using DriverType                = D;
+  static uint8_t const BASE_MODEL = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+
+    // serialize the optimiser parent class
+    auto base_pointer = static_cast<ml::model::Model<TensorType> const *>(&sp);
+    map.Append(BASE_MODEL, *base_pointer);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::model::Model<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(BASE_MODEL, *base_pointer);
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch
