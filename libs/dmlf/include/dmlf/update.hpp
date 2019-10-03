@@ -44,50 +44,17 @@ public:
 
   using PayloadType = VectorTensorType;
 
-  explicit Update()
-    : stamp_{CurrentTime()}
-  {}
-  explicit Update(VectorTensorType gradients)
-    : stamp_{CurrentTime()}
-    , gradients_{std::move(gradients)}
-    , fingerprint_{ComputeFingerprint()}
-  {}
-
-  byte_array::ByteArray serialise() override
-  {
-    serializers::MsgPackSerializer serializer;
-    serializer << *this;
-    return serializer.data();
-  }
-  byte_array::ByteArray serialise(std::string type) override
-  {
-    serializers::MsgPackSerializer serializer;
-    serializers::MsgPackSerializer serializer_;
-    serializer_ << *this;
-    serializer << type;
-    serializer << serializer_.data();
-    return serializer.data();
-  }
-  void deserialise(const byte_array::ByteArray &map) override
-  {
-    serializers::MsgPackSerializer serializer{map};
-    serializer >> *this;
-  }
-  TimeStampType TimeStamp() const override
-  {
-    return stamp_;
-  }
-  FingerprintType Fingerprint() const override
-  {
-    return fingerprint_;
-  }
-
-  virtual const VectorTensorType &GetGradients() const
-  {
-    return gradients_;
-  }
-
+  explicit Update();
+  explicit Update(VectorTensorType gradients);
   ~Update() override = default;
+
+  byte_array::ByteArray serialise() override;
+  byte_array::ByteArray serialise(std::string type) override;
+  void deserialise(const byte_array::ByteArray &map) override;
+  TimeStampType TimeStamp() const override;
+  FingerprintType Fingerprint() const override;
+
+  virtual const VectorTensorType &GetGradients() const;
 
   Update(const Update &other) = delete;
   Update &operator=(const Update &other)  = delete;
@@ -96,19 +63,9 @@ public:
 
 protected:
 private:
-  static TimeStampType CurrentTime()
-  {
-    return static_cast<TimeStampType>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                          std::chrono::system_clock::now().time_since_epoch())
-                                          .count());
-  }
+  static TimeStampType CurrentTime();
 
-  FingerprintType ComputeFingerprint()
-  {
-    serializers::MsgPackSerializer serializer;
-    serializer << gradients_;
-    return crypto::Hash<crypto::SHA256>(serializer.data());
-  }
+  FingerprintType ComputeFingerprint();
 
   TimeStampType    stamp_;
   VectorTensorType gradients_;
