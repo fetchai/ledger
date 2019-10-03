@@ -50,7 +50,7 @@ struct MCLInitialiser
     a = was_initialised.exchange(a);
     if (!a)
     {
-      fetch::crypto::mcl::details::MCLInitialiser();
+      bn::initPairing();
     }
   }
   static std::atomic<bool> was_initialised;
