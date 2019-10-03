@@ -24,7 +24,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
+#include <ostream>
 #include <emmintrin.h>
 #include <immintrin.h>
 #include <smmintrin.h>
@@ -562,32 +562,21 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator*(
     VectorRegister<fixed_point::fp32_t, 128> const &a,
     VectorRegister<fixed_point::fp32_t, 128> const &b)
 {
-  std::cout << std::endl;
-  std::cout << "a = " << a << std::endl;
-  std::cout << "b = " << b << std::endl;
   // Extend the vectors to 64-bit, compute the products as 64-bit
   __m256i va      = _mm256_cvtepi32_epi64(a.data());
-  std::cout << "va = " << VectorRegister<int64_t, 256>(va) << std::endl;
   __m256i vb      = _mm256_cvtepi32_epi64(b.data());
-  std::cout << "vb = " << VectorRegister<int64_t, 256>(vb) << std::endl;
   __m256i prod256 = _mm256_mul_epi32(va, vb);
-  std::cout << "prod256 = " << VectorRegister<int64_t, 256>(prod256) << std::endl;
 
   // compute mask of elements larger than FP_MAX and smaller than FP_MIN
   __m256i max = _mm256_set1_epi64x(fixed_point::fp32_t::MAX);
-  std::cout << "max = " << VectorRegister<int64_t, 256>(max) << std::endl;
   __m256i min = _mm256_set1_epi64x(fixed_point::fp32_t::MIN);
-  std::cout << "min = " << VectorRegister<int64_t, 256>(min) << std::endl;
   __m256i mask_max = _mm256_cmpgt_epi64(prod256, max);
-  std::cout << "mask_max = " << VectorRegister<int64_t, 256>(mask_max) << std::endl;
   __m256i mask_min = _mm256_cmpgt_epi64(min, prod256);
-  std::cout << "mask_min = " << VectorRegister<int64_t, 256>(mask_min) << std::endl;
 
   // shift the products right by 16-bits, keep only the lower 32-bits
   prod256 = _mm256_srli_epi64(prod256, 16);
   prod256 = _mm256_blendv_epi8(prod256, max, mask_max);
   prod256 = _mm256_blendv_epi8(prod256, min, mask_min);
-  std::cout << "prod256 = " << VectorRegister<int64_t, 256>(prod256) << std::endl;
   
   // Rearrange the 128bit lanes to keep the lower 32-bits in the first
   __m256i posmask = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
@@ -596,13 +585,10 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator*(
   auto prod = VectorRegister<int32_t, 128>(_mm256_extractf128_si256(prod256, 0));
   auto mask_overflow = _mm256_extractf128_si256(_mm256_permutevar8x32_epi32(mask_max, posmask), 0);
   auto mask_underflow = _mm256_extractf128_si256(_mm256_permutevar8x32_epi32(mask_min, posmask), 0);
-  std::cout << "prod = " << VectorRegister<fixed_point::fp32_t, 128>(prod.data()) << std::endl;
 
   // Now find out which of the initial elements are +inf, -inf, NaN to fill in the final result
   auto a_neg = a < VectorRegister<fixed_point::fp32_t, 128>(_mm_setzero_si128());
   auto b_neg = b < VectorRegister<fixed_point::fp32_t, 128>(_mm_setzero_si128());
-  std::cout << "a < 0 = " << a_neg << std::endl;
-  std::cout << "b < 0 = " << b_neg << std::endl;
 
   auto mask_pos_inf_a = (a == VectorRegister<fixed_point::fp32_t, 128>::MaskPosInf());
   auto mask_pos_inf_b = (b == VectorRegister<fixed_point::fp32_t, 128>::MaskPosInf());
@@ -615,58 +601,31 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator*(
   // +inf * anything other than 0, nan, -inf is +/-inf, -inf * -inf = +inf, a * -inf = +inf when a < 0, -inf * b = +inf when b < 0
   auto mask_neg_inf = (mask_neg_inf_a & mask_pos_inf_b) | (mask_pos_inf_a & mask_neg_inf_b) | (mask_neg_inf_a & ~b_neg) | (~a_neg & mask_neg_inf_b) | (mask_pos_inf_a & b_neg) | (a_neg & mask_pos_inf_b);
   auto mask_pos_inf = (mask_pos_inf_a | mask_pos_inf_b) | (mask_neg_inf_a & mask_neg_inf_b) | (a_neg & mask_neg_inf_b) | (mask_neg_inf_a & b_neg);
-
-  std::cout << "mask_pos_inf_a = " << mask_pos_inf_a << std::endl;
-  std::cout << "mask_pos_inf_b = " << mask_pos_inf_b << std::endl;
-  std::cout << "mask_neg_inf_a = " << mask_neg_inf_a << std::endl;
-  std::cout << "mask_neg_inf_b = " << mask_neg_inf_b << std::endl;
-  std::cout << "mask_pos_inf = " << mask_pos_inf << std::endl;
-  std::cout << "mask_neg_inf = " << mask_neg_inf << std::endl;
-  std::cout << std::endl;
-  std::cout << "mask_nan_a = " << mask_nan_a << std::endl;
-  std::cout << "mask_nan_b = " << mask_nan_b << std::endl;
-  std::cout << std::endl;
   auto mask_zero_a = (a == VectorRegister<fixed_point::fp32_t, 128>(_mm_setzero_si128()));
   auto mask_zero_b = (b == VectorRegister<fixed_point::fp32_t, 128>(_mm_setzero_si128()));
-  std::cout << "mask_zero_a = " << mask_zero_a << std::endl;
-  std::cout << "mask_zero_b = " << mask_zero_b << std::endl;
-  std::cout << std::endl;
 
   // +inf * 0 = NaN, -inf * 0 = NaN, 0 * +inf = NaN, 0 * -inf = NaN
   auto mask_nan  = (mask_pos_inf_a & mask_zero_b) | (mask_neg_inf_a & mask_zero_b)
                  | (mask_zero_a & mask_pos_inf_b) | (mask_zero_a & mask_neg_inf_b)
                  | (mask_nan_a | mask_nan_b);
-  std::cout << "mask_nan = " << mask_nan << std::endl;
-  std::cout << std::endl;
   mask_pos_inf.data() = _mm_blendv_epi8(mask_pos_inf.data(), _mm_setzero_si128(), mask_nan.data());
   mask_neg_inf.data() = _mm_blendv_epi8(mask_neg_inf.data(), _mm_setzero_si128(), mask_nan.data());
-  std::cout << "final mask_pos_inf = " << mask_pos_inf << std::endl;
-  std::cout << "final mask_neg_inf = " << mask_neg_inf << std::endl;
 
   mask_overflow = _mm_blendv_epi8(mask_overflow, _mm_setzero_si128(), (mask_nan | mask_pos_inf).data());
   mask_underflow = _mm_blendv_epi8(mask_underflow, _mm_setzero_si128(), (mask_nan | mask_neg_inf).data());
   // Replace +inf in the final product using the mask
   prod.data() = _mm_blendv_epi8(prod.data(), VectorRegister<fixed_point::fp32_t, 128>::MaskPosInf().data(), mask_pos_inf.data());
-  std::cout << "prod = " << VectorRegister<fixed_point::fp32_t, 128>(prod.data()) << std::endl;
   // Replace -inf in the final product using the mask
   prod.data() = _mm_blendv_epi8(prod.data(), VectorRegister<fixed_point::fp32_t, 128>::MaskNegInf().data(), mask_neg_inf.data());
-  std::cout << "prod = " << VectorRegister<fixed_point::fp32_t, 128>(prod.data()) << std::endl;
   // Replace NaN in the final product using the mask
   prod.data() = _mm_blendv_epi8(prod.data(), VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t::NaN).data(), mask_nan.data());
-  std::cout << "prod = " << VectorRegister<fixed_point::fp32_t, 128>(prod.data()) << std::endl;
 
-  std::cout << "inf masks : " << (mask_pos_inf | mask_neg_inf) << std::endl;
-  std::cout << "MaskAllBits: " << VectorRegister<fixed_point::fp32_t, 128>::MaskAllBits() << std::endl;
   bool is_overflow = _mm_movemask_epi8(mask_overflow | mask_underflow) != 0;
   bool is_infinity = any_equal_to(mask_pos_inf | mask_neg_inf, VectorRegister<fixed_point::fp32_t, 128>::MaskAllBits());
   bool is_nan = any_equal_to(mask_nan, VectorRegister<fixed_point::fp32_t, 128>::MaskAllBits());
-  std::cout << "Infinities found:" << is_infinity << std::endl;
   fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY * is_infinity;
-  std::cout << "NaN found: " << is_nan << std::endl;
   fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_NAN * is_nan;
-  std::cout << "Overflow found: " << is_overflow << std::endl;
   fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW * is_overflow;
-  std::cout << "prod = " << VectorRegister<fixed_point::fp32_t, 128>(prod.data()) << std::endl;
 
   return VectorRegister<fixed_point::fp32_t, 128>(prod.data());
 }

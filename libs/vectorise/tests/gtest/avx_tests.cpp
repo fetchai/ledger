@@ -157,9 +157,7 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
 
   TypeParam vtmp1{sum}, vtmp2{diff}, vtmp3{prod}, vtmp4{div};
   EXPECT_TRUE(all_equal_to(vtmp1, vsum));
-  std::cout << "vtmp2 = " << vtmp2 << std::endl;
   EXPECT_TRUE(all_equal_to(vtmp2, vdiff));
-  std::cout << "vdiff = " << vdiff << std::endl;
   EXPECT_TRUE(all_equal_to(vtmp3, vprod));
   EXPECT_TRUE(all_equal_to(vtmp4, vdiv));
 
@@ -673,7 +671,6 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     C[i] = A[i] * NInf[i];
-    std::cout << "C[" << i << "] = " << C[i] << std::endl;
   }
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_TRUE(type::IsStateInfinity());
