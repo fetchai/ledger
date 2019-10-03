@@ -49,8 +49,9 @@ void LocalLearnerNetworker::clearPeers()
 void LocalLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &update)
 {
   std::vector<std::shared_ptr<LocalLearnerNetworker>> targets;
-  auto                                                indexes = alg->GetNextOutputs();
-  auto                                                data    = update->serialise();
+  
+  auto indexes = alg_->GetNextOutputs();
+  auto data    = update->serialise();
 
   for (auto ind : indexes)
   {
