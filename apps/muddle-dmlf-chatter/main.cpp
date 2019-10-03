@@ -71,7 +71,7 @@ public:
     t.Fill(DataType(sequence_number++));
     auto r = std::vector<TensorType>();
     r.push_back(t);
-    interface->pushUpdate(std::make_shared<UpdateTypeForTesting>(r));
+    interface->PushUpdate(std::make_shared<UpdateTypeForTesting>(r));
   }
 };
 using Muddle2LearnerNetworker = fetch::dmlf::Muddle2LearnerNetworker;
@@ -94,7 +94,7 @@ int                      main(int /*argc*/, char **argv)
   sleep(1);
 
   int r;
-  if (std::size_t(instance_number) == learner->actual->getUpdateCount())
+  if (std::size_t(instance_number) == learner->actual->GetUpdateCount())
   {
     std::cout << "yes" << std::endl;
     r = 0;
