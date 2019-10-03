@@ -64,6 +64,29 @@ TEST_F(MathTests, abs_test)
   ASSERT_EQ(result, gt);
 }
 
+TEST_F(MathTests, dot_test)
+{
+  static char const *TEXT = R"(
+    function main()
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 4u64;
+      tensor_shape[1] = 3u64;
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      dot(x, y);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({4, 4});
+
+  EXPECT_TRUE(tensor->GetTensor().shape() == gt.shape());
+}
+
 TEST_F(MathTests, exp_test)
 {
   static char const *TEXT = R"(

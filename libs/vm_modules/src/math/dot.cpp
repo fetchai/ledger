@@ -16,17 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/meta/math_type_traits.hpp"
+#include "math/exceptions/exceptions.hpp"
+#include "math/matrix_operations.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/math/abs.hpp"
 #include "vm_modules/math/dot.hpp"
-#include "vm_modules/math/exp.hpp"
-#include "vm_modules/math/log.hpp"
-#include "vm_modules/math/math.hpp"
-#include "vm_modules/math/pow.hpp"
-#include "vm_modules/math/random.hpp"
-#include "vm_modules/math/sqrt.hpp"
 #include "vm_modules/math/tensor.hpp"
-#include "vm_modules/math/trigonometry.hpp"
 
 using namespace fetch::vm;
 
@@ -34,22 +29,31 @@ namespace fetch {
 namespace vm_modules {
 namespace math {
 
-void BindMath(Module &module)
+namespace {
+
+VMTensor Dot(VM * /*vm*/, VMTensor &a, VMTensor &b)
 {
-  // bind math functions
-  BindAbs(module);
-  BindExp(module);
-  BindLog(module);
-  BindPow(module);
-  BindRand(module);
-  BindSqrt(module);
-  BindTrigonometry(module);
+  typename VMTensor::TensorType x;
+  try
+  {
+    fetch::math::Dot(a.GetTensor(), b.GetTensor(), x);
+  }
+  catch (const fetch::math::exceptions::WrongShape &e)
+  {
+    std::cerr << e.what();
+  }
 
-  // bind math classes
-  VMTensor::Bind(module);
-
-  BindDot(module);
+  return VMTensor(a.vm_, a.type_id_, ret);
 }
+
+}  // namespace
+
+
+void BindDot(Module &module)
+{
+  module.CreateFreeFunction<VMTensor (*)(VM *, VMTensor &, VMTensor &)>("dot", &Dot);
+}
+
 
 }  // namespace math
 }  // namespace vm_modules

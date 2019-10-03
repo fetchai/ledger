@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/exceptions/exceptions.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_nn_novector.hpp"
@@ -1063,7 +1064,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
 
   if (aview.width() != bview.height())
   {
-    throw std::runtime_error("expected A width to equal and B height.");
+    throw fetch::math::exceptions::WrongShape();
+//    throw std::runtime_error("expected A width to equal and B height.");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))

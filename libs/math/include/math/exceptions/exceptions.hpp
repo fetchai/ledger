@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,41 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
-#include "vm_modules/math/abs.hpp"
-#include "vm_modules/math/dot.hpp"
-#include "vm_modules/math/exp.hpp"
-#include "vm_modules/math/log.hpp"
-#include "vm_modules/math/math.hpp"
-#include "vm_modules/math/pow.hpp"
-#include "vm_modules/math/random.hpp"
-#include "vm_modules/math/sqrt.hpp"
-#include "vm_modules/math/tensor.hpp"
-#include "vm_modules/math/trigonometry.hpp"
-
-using namespace fetch::vm;
+#include <stdexcept>
 
 namespace fetch {
-namespace vm_modules {
 namespace math {
+namespace exceptions {
 
-void BindMath(Module &module)
+class WrongShape : public std::runtime_error
 {
-  // bind math functions
-  BindAbs(module);
-  BindExp(module);
-  BindLog(module);
-  BindPow(module);
-  BindRand(module);
-  BindSqrt(module);
-  BindTrigonometry(module);
+public:
+  explicit WrongShape() : std::runtime_error("")
+  {
+  }
 
-  // bind math classes
-  VMTensor::Bind(module);
+  const char* what() const throw() override
+  {
+    return "math operation invoked with wrong shape inputs";
+  }
 
-  BindDot(module);
-}
+};
 
+}  // namespace exceptions
 }  // namespace math
-}  // namespace vm_modules
 }  // namespace fetch
