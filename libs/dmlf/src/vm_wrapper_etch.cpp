@@ -77,5 +77,8 @@ void VmWrapperEtch::SetStdout(OutputHandler handler)
   outputHandler_ = handler;
 }
 
+void VmWrapperEtch::SetStderr(OutputHandler /*handler*/)
+{}
+
 }  // namespace dmlf
 }  // namespace fetch
