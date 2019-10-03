@@ -74,7 +74,11 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
         clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
-  register_->AttachRouter(router_);
+  // handle the left issues
+  register_->OnConnectionLeft([this](Handle handle) {
+    router_.ConnectionDropped(handle);
+    direct_message_service_.SignalConnectionLeft(handle);
+  });
 
   // register the status update
   clients_.SetStatusCallback(
@@ -590,16 +594,14 @@ void Muddle::CreateTcpClient(Uri const &peer)
   // debug handlers
   strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
 
-  strong_conn->OnConnectionFailed([this, peer, conn_handle]() {
+  strong_conn->OnConnectionFailed([this, peer]() {
     FETCH_LOG_INFO(logging_name_, "Connection to ", peer.ToString(), " failed");
     clients_.RemoveConnection(peer);
-    direct_message_service_.SignalConnectionLeft(conn_handle);
   });
 
-  strong_conn->OnLeave([this, peer, conn_handle]() {
+  strong_conn->OnLeave([this, peer]() {
     FETCH_LOG_INFO(logging_name_, "Connection to ", peer.ToString(), " left");
     clients_.RemoveConnection(peer);
-    direct_message_service_.SignalConnectionLeft(conn_handle);
   });
 
   strong_conn->OnMessage([this, peer, conn_handle](network::MessageType const &msg) {
