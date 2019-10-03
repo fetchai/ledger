@@ -39,8 +39,8 @@ public:
   virtual ~AbstractLearnerNetworker() = default;
 
   // To implement
-  virtual void        pushUpdate(const std::shared_ptr<UpdateInterface> &update) = 0;
-  virtual std::size_t getPeerCount() const                                       = 0;
+  virtual void        PushUpdate(const std::shared_ptr<UpdateInterface> &update) = 0;
+  virtual std::size_t GetPeerCount() const                                       = 0;
 
   template <typename T>
   void Initialize()
@@ -54,11 +54,10 @@ public:
     throw std::runtime_error{"Learner already initialized"};
   }
 
-  std::size_t getUpdateCount() const
+  std::size_t GetUpdateCount() const
   {
     Lock l{queue_m_};
-    // throw std::runtime_error{"Hello? I guess?"};
-    throw_ifnot_initialized_();
+    ThrowIfNotInitialized();
     return queue_->size();
   }
 
@@ -71,14 +70,13 @@ public:
     return que->getUpdate();
   }
 
-  virtual void setShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg)
+  virtual void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg)
   {
-    this->alg = alg;
+    alg_ = alg;
   }
 
-  // To implement - TOFIX not pure at moment
-  virtual void pushUpdateType(const std::string & /*key*/,
-                              const std::shared_ptr<UpdateInterface> & /*update*/){};
+  virtual void PushUpdateType(const std::string & /*key*/,
+                              const std::shared_ptr<UpdateInterface> & /*update*/) = 0;
 
   template <typename T>
   void RegisterUpdateType(std::string key)
@@ -89,14 +87,14 @@ public:
   }
 
   template <typename T>
-  std::size_t getUpdateTypeCount() const
+  std::size_t GetUpdateTypeCount() const
   {
     Lock l{queue_map_m_};
     auto key = update_types_.template find<T>();
     return queue_map_.at(key)->size();
   }
 
-  std::size_t getUpdateTypeCount(const std::string &key) const
+  std::size_t GetUpdateTypeCount(const std::string &key) const
   {
     Lock l{queue_map_m_};
     auto iter = queue_map_.find(key);
@@ -108,7 +106,7 @@ public:
   }
 
   template <typename T>
-  std::shared_ptr<T> getUpdateType()
+  std::shared_ptr<T> GetUpdateType()
   {
     Lock l{queue_map_m_};
     auto key  = update_types_.template find<T>();
@@ -123,13 +121,15 @@ public:
   bool                      operator<(const AbstractLearnerNetworker &other)  = delete;
 
 protected:
-  std::shared_ptr<ShuffleAlgorithmInterface> alg;                          // used by descendents
+  std::shared_ptr<ShuffleAlgorithmInterface> alg_;       // used by descendents
+
   void                                       NewMessage(const Bytes &msg)  // called by descendents
   {
     Lock l{queue_m_};
-    throw_ifnot_initialized_();
+    ThrowIfNotInitialized();
     queue_->PushNewMessage(msg);
   }
+
   void NewDmlfMessage(const Bytes &msg)  // called by descendents
   {
     serializers::MsgPackSerializer serializer{msg};
@@ -165,7 +165,7 @@ private:
 
   TypeMap<> update_types_;
 
-  void throw_ifnot_initialized_() const
+  void ThrowIfNotInitialized() const
   {
     if (!queue_)
     {

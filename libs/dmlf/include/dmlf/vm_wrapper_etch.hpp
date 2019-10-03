@@ -47,8 +47,10 @@ public:
 
   std::vector<std::string> Setup(const Flags &flags) override;
   std::vector<std::string> Load(std::string source) override;
+
   void                     Execute(const std::string &entrypoint, const Params &params) override;
   void                     SetStdout(OutputHandler /*handler*/) override;
+
   void                     SetStderr(OutputHandler /*handler*/) override
   {}
 
@@ -66,13 +68,14 @@ protected:
 private:
   void DoOutput();
 
-  Status            status_ = VmWrapperInterface::UNCONFIGURED;
+  std::unique_ptr<Executable>        executable_ = std::make_unique<Executable>();
+  std::shared_ptr<fetch::vm::Module> module_     = nullptr;
+
   std::stringstream outputStream_;
   OutputHandler     outputHandler_ = nullptr;
 
+  Status            status_ = VmWrapperInterface::UNCONFIGURED;
   std::string                        command_    = "";
-  std::unique_ptr<Executable>        executable_ = std::make_unique<Executable>();
-  std::shared_ptr<fetch::vm::Module> module_     = nullptr;
   std::unique_ptr<VM>                vm_         = nullptr;
 };
 

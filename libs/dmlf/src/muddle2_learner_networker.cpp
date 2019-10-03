@@ -117,7 +117,7 @@ uint64_t Muddle2LearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
 
 Muddle2LearnerNetworker::~Muddle2LearnerNetworker() = default;
 
-void Muddle2LearnerNetworker::pushUpdate(const std::shared_ptr<UpdateInterface> &update)
+void Muddle2LearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud->GetEndpoint(), 1, 1);
   auto data   = update->serialise();
@@ -138,7 +138,7 @@ void Muddle2LearnerNetworker::pushUpdate(const std::shared_ptr<UpdateInterface> 
   }
 }
 
-void Muddle2LearnerNetworker::pushUpdateType(const std::string &                     type,
+void Muddle2LearnerNetworker::PushUpdateType(const std::string &                     type,
                                              const std::shared_ptr<UpdateInterface> &update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud->GetEndpoint(), 1, 1);
@@ -159,7 +159,7 @@ void Muddle2LearnerNetworker::pushUpdateType(const std::string &                
     prom->Wait();
   }
 }
-std::size_t Muddle2LearnerNetworker::getPeerCount() const
+std::size_t Muddle2LearnerNetworker::GetPeerCount() const
 {
   return peers.size();
 }

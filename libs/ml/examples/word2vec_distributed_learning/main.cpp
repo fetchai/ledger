@@ -141,7 +141,7 @@ int main(int argc, char **argv)
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     networkers[i]->addPeers(networkers);
-    networkers[i]->setShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
+    networkers[i]->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
         networkers[i]->getPeerCount(), number_of_peers));
   }
 

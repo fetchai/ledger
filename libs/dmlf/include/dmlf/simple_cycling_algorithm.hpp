@@ -30,7 +30,7 @@ public:
   SimpleCyclingAlgorithm(std::size_t count, std::size_t number_of_outputs_per_cycle);
   ~SimpleCyclingAlgorithm() override = default;
 
-  std::vector<std::size_t> getNextOutputs() override;
+  std::vector<std::size_t> GetNextOutputs() override;
 
   SimpleCyclingAlgorithm(const SimpleCyclingAlgorithm &other) = delete;
   SimpleCyclingAlgorithm &operator=(const SimpleCyclingAlgorithm &other)  = delete;

@@ -85,7 +85,6 @@ public:
 };
 using Muddle2LearnerNetworker = fetch::dmlf::Muddle2LearnerNetworker;
 
-#pragma clang diagnostic ignored "-Wunused-parameter"
 int                      main(int /*argc*/, char **argv)
 {
   auto config          = std::string(argv[1]);

@@ -21,14 +21,14 @@
 namespace fetch {
 namespace dmlf {
 
-std::vector<std::size_t> SimpleCyclingAlgorithm::getNextOutputs()
+std::vector<std::size_t> SimpleCyclingAlgorithm::GetNextOutputs()
 {
   std::vector<std::size_t> result(number_of_outputs_per_cycle);
   for (std::size_t i = 0; i < number_of_outputs_per_cycle; i++)
   {
     result[i] = next_output_index;
     next_output_index += 1;
-    next_output_index %= getCount();
+    next_output_index %= GetCount();
   }
   return result;
 }
@@ -38,7 +38,7 @@ SimpleCyclingAlgorithm::SimpleCyclingAlgorithm(std::size_t count,
   : ShuffleAlgorithmInterface(count)
 {
   this->next_output_index           = 0;
-  this->number_of_outputs_per_cycle = std::min(number_of_outputs_per_cycle, getCount());
+  this->number_of_outputs_per_cycle = std::min(number_of_outputs_per_cycle, GetCount());
 }
 
 }  // namespace dmlf

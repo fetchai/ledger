@@ -43,7 +43,6 @@ public:
   }
 
   template <typename KeyType>
-  // void put(ValueType &&value)
   void put(ValueType value)
   {
     auto iter = map.find(getTypeId<KeyType>());
@@ -51,7 +50,6 @@ public:
     {
       throw std::runtime_error{"Type already registered with name '" + iter->second + "'"};
     }
-    // map[getTypeId<KeyType>()] = std::forward<ValueType>(value);
     map[getTypeId<KeyType>()] = value;
   }
 

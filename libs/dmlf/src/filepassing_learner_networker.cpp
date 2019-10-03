@@ -108,9 +108,9 @@ void FilepassingLearnerNetworker::clearPeers()
   peers_.clear();
 }
 
-void FilepassingLearnerNetworker::pushUpdate(const std::shared_ptr<UpdateInterface> &update)
+void FilepassingLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &update)
 {
-  auto indexes = alg->getNextOutputs();
+  auto indexes = alg->GetNextOutputs();
   auto data    = update->serialise();
 
   for (auto ind : indexes)

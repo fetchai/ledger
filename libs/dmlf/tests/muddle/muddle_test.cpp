@@ -75,7 +75,7 @@ public:
     t.Fill(DataType(sequence_number++));
     auto r = std::vector<TensorType>();
     r.push_back(t);
-    interface->pushUpdate(std::make_shared<UpdateTypeForTesting>(r));
+    interface->PushUpdate(std::make_shared<UpdateTypeForTesting>(r));
   }
 };
 
@@ -116,7 +116,7 @@ TEST_F(Muddle2LearnerNetworkerTests, singleThreadedVersion)
   learners[0]->PretendToLearn();
 
   sleep(1);
-  EXPECT_GT(learners[1]->actual->getUpdateCount(), 0);
+  EXPECT_GT(learners[1]->actual->GetUpdateCount(), 0);
 }
 
 class LearnerTypedUpdates
@@ -142,8 +142,8 @@ public:
     t.Fill(DataType(sequence_number++));
     auto r = std::vector<TensorType>();
     r.push_back(t);
-    interface->pushUpdateType("update", std::make_shared<UpdateTypeForTesting>(r));
-    interface->pushUpdateType("vocab", std::make_shared<fetch::dmlf::Update<std::string>>(
+    interface->PushUpdateType("update", std::make_shared<UpdateTypeForTesting>(r));
+    interface->PushUpdateType("vocab", std::make_shared<fetch::dmlf::Update<std::string>>(
                                            std::vector<std::string>{"cat", "dog"}));
   }
 };
@@ -185,15 +185,15 @@ TEST_F(Muddle2TypedUpdatesTests, singleThreadedVersion)
   learners[0]->PretendToLearn();
 
   sleep(1);
-  EXPECT_GT(learners[1]->actual->getUpdateTypeCount("update"), 0);
-  EXPECT_GT(learners[1]->actual->getUpdateTypeCount<UpdateTypeForTesting>(), 0);
-  EXPECT_EQ(learners[1]->actual->getUpdateTypeCount<UpdateTypeForTesting>(),
-            learners[1]->actual->getUpdateTypeCount("update"));
-  EXPECT_GT(learners[1]->actual->getUpdateTypeCount("vocab"), 0);
+  EXPECT_GT(learners[1]->actual->GetUpdateTypeCount("update"), 0);
+  EXPECT_GT(learners[1]->actual->GetUpdateTypeCount<UpdateTypeForTesting>(), 0);
+  EXPECT_EQ(learners[1]->actual->GetUpdateTypeCount<UpdateTypeForTesting>(),
+            learners[1]->actual->GetUpdateTypeCount("update"));
+  EXPECT_GT(learners[1]->actual->GetUpdateTypeCount("vocab"), 0);
 
   try
   {
-    learners[1]->actual->getUpdateTypeCount("weights");
+    learners[1]->actual->GetUpdateTypeCount("weights");
     EXPECT_NE(1, 1);
   }
   catch (std::exception &e)
@@ -203,7 +203,7 @@ TEST_F(Muddle2TypedUpdatesTests, singleThreadedVersion)
 
   try
   {
-    learners[1]->actual->getUpdateTypeCount<fetch::dmlf::Update<double>>();
+    learners[1]->actual->GetUpdateTypeCount<fetch::dmlf::Update<double>>();
     EXPECT_NE(1, 1);
   }
   catch (std::exception &e)

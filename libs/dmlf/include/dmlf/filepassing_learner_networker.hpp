@@ -35,8 +35,8 @@ public:
   FilepassingLearnerNetworker();
   ~FilepassingLearnerNetworker() override;
 
-  void        pushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
-  std::size_t getPeerCount() const override
+  void        PushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
+  std::size_t GetPeerCount() const override
   {
     return peers_.size();
   }
@@ -59,10 +59,10 @@ protected:
 private:
   std::set<std::string>    processed_updates_;
   std::vector<std::string> peers_;
+  std::shared_ptr<std::thread> watcher_;
+
   std::string              name_;
   std::string              dir_;
-
-  std::shared_ptr<std::thread> watcher_;
   bool                         running_;
 };
 
