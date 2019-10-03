@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,30 +16,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/dkg_output.hpp"
-#include "crypto/mcl_dkg.hpp"
+#include "beacon/block_entropy.hpp"
 
-#include <map>
-#include <set>
-#include <vector>
+using fetch::beacon::BlockEntropy;
 
-namespace fetch {
-namespace beacon {
+BlockEntropy::BlockEntropy() = default;
 
-class TrustedDealer
+BlockEntropy::Digest BlockEntropy::EntropyAsSHA256() const
 {
-public:
-  using DkgOutput         = beacon::DkgOutput;
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
+  return crypto::Hash<crypto::SHA256>(group_signature /*.getStr()*/);
+}
 
-  TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold);
-  DkgOutput GetKeys(MuddleAddress const &address) const;
+// This will always be safe so long as the entropy function is properly sha256-ing
+uint64_t BlockEntropy::EntropyAsU64() const
+{
+  const Digest hash = EntropyAsSHA256();
+  return *reinterpret_cast<uint64_t const *>(hash.pointer());
+}
 
-private:
-  std::set<MuddleAddress>           cabinet_{};
-  std::map<MuddleAddress, uint32_t> cabinet_index_{};
-  std::vector<DkgKeyInformation>    outputs_{};
-};
-}  // namespace beacon
-}  // namespace fetch
+void BlockEntropy::HashSelf()
+{
+  fetch::serializers::MsgPackSerializer serializer;
+  serializer << qualified;
+  serializer << group_public_key;
+  serializer << block_number;
+  digest = crypto::Hash<crypto::SHA256>(serializer.data());
+}
+
+bool BlockEntropy::IsAeonBeginning() const
+{
+  return !qualified.empty();
+}
