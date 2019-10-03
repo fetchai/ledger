@@ -54,26 +54,25 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string &cloud_config
   FETCH_LOG_INFO("Muddle2LearnerNetworker", "here 1");
   if (netm)
   {
-    this->netm = netm;
+    netm_ = netm;
   }
   else
   {
-    this->netm = std::make_shared<NetworkManager>("NetMgrA", 4);
+    netm_ = std::make_shared<NetworkManager>("NetMgrA", 4);
   }
-  this->netm->Start();
+  netm_->Start();
 
   auto my_config = doc.root()["peers"][instance_number];
   auto self_uri  = Uri(my_config["uri"].As<std::string>());
   auto port      = self_uri.GetTcpPeer().port();
   auto privkey   = my_config["key"].As<std::string>();
 
-  // ident = CreateIdentity();
-  ident = LoadIdentity(privkey);
+  ident_ = LoadIdentity(privkey);
 
   auto addr = self_uri.GetTcpPeer().address();
 
-  mud = muddle::CreateMuddle("Test", ident, *(this->netm), addr);
-  mud->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
+  mud_= muddle::CreateMuddle("Test", ident_, *(this->netm_), addr);
+  mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
 
   std::unordered_set<std::string> initial_peers;
   if (instance_number > 0)
@@ -81,12 +80,12 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string &cloud_config
     initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
   }
 
-  mud->Start(initial_peers, {port});
+  mud_->Start(initial_peers, {port});
 
-  server = std::make_shared<Server>(mud->GetEndpoint(), 1, 1);
-  proto  = std::make_shared<Muddle2LearnerNetworkerProtocol>(*this);
+  server_ = std::make_shared<Server>(mud_->GetEndpoint(), 1, 1);
+  proto_  = std::make_shared<Muddle2LearnerNetworkerProtocol>(*this);
 
-  server->Add(1, proto.get());
+  server_->Add(1, proto_.get());
 
   auto config_peers = doc.root()["peers"];
 
@@ -94,7 +93,7 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string &cloud_config
   {
     if (peer_number != instance_number)
     {
-      peers.push_back(config_peers[peer_number]["pub"].As<std::string>());
+      peers_.push_back(config_peers[peer_number]["pub"].As<std::string>());
     }
   }
 }
@@ -119,14 +118,14 @@ Muddle2LearnerNetworker::~Muddle2LearnerNetworker() = default;
 
 void Muddle2LearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &update)
 {
-  auto client = std::make_shared<RpcClient>("Client", mud->GetEndpoint(), 1, 1);
+  auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), 1, 1);
   auto data   = update->serialise();
 
   PromiseList promises;
   promises.reserve(20);
 
 #pragma clang diagnostic ignored "-Wunused-variable"
-  for (const auto &target_peer : peers)
+  for (const auto &target_peer : peers_)
   {
     promises.push_back(client->CallSpecificAddress(
         fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), 1, 1, data));
@@ -141,14 +140,14 @@ void Muddle2LearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> 
 void Muddle2LearnerNetworker::PushUpdateType(const std::string &                     type,
                                              const std::shared_ptr<UpdateInterface> &update)
 {
-  auto client = std::make_shared<RpcClient>("Client", mud->GetEndpoint(), 1, 1);
+  auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), 1, 1);
   auto data   = update->serialise(type);
 
   PromiseList promises;
   promises.reserve(20);
 
 #pragma clang diagnostic ignored "-Wunused-variable"
-  for (const auto &target_peer : peers)
+  for (const auto &target_peer : peers_)
   {
     promises.push_back(client->CallSpecificAddress(
         fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), 1, 1, data));
@@ -161,7 +160,7 @@ void Muddle2LearnerNetworker::PushUpdateType(const std::string &                
 }
 std::size_t Muddle2LearnerNetworker::GetPeerCount() const
 {
-  return peers.size();
+  return peers_.size();
 }
 
 Muddle2LearnerNetworker::CertificatePtr Muddle2LearnerNetworker::CreateIdentity()

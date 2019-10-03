@@ -84,7 +84,7 @@ protected:
   CertificatePtr CreateIdentity();
   CertificatePtr LoadIdentity(const std::string &privkey);
 
-  CertificatePtr ident;
+  CertificatePtr ident_;
 
   class Muddle2LearnerNetworkerProtocol : public fetch::service::Protocol
   {
@@ -92,13 +92,13 @@ protected:
     explicit Muddle2LearnerNetworkerProtocol(Muddle2LearnerNetworker &sample);
   };
 
-  std::shared_ptr<NetworkManager>                  netm;
-  MuddlePtr                                        mud;
-  std::shared_ptr<Server>                          server;
-  std::shared_ptr<Muddle2LearnerNetworkerProtocol> proto;
+  std::shared_ptr<NetworkManager>                  netm_;
+  MuddlePtr                                        mud_;
+  std::shared_ptr<Server>                          server_;
+  std::shared_ptr<Muddle2LearnerNetworkerProtocol> proto_;
 
-  mutable Mutex mutex;
-  Peers         peers;
+  mutable Mutex mutex_;
+  Peers         peers_;
 
   // TOFIX
   MuddleChannel channel_tmp_;
