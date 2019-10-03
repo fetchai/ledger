@@ -31,7 +31,7 @@ class TrustedDealerBeaconService : public BeaconService
 public:
   TrustedDealerBeaconService(MuddleInterface &               muddle,
                              ledger::ManifestCacheInterface &manifest_cache,
-                             const CertificatePtr& certificate, SharedEventManager event_manager);
+                             const CertificatePtr &certificate, SharedEventManager event_manager);
 
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
                        uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy,

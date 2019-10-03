@@ -80,11 +80,10 @@ public:
 
   FaultySetupService(MuddleInterface &endpoint, const ProverPtr &prover,
                      ManifestCacheInterface &     manifest_cache,
-                     const std::vector<Failures> & /*failures*/ = {})
+                     const std::vector<Failures> &failures = {})
     : BeaconSetupService{endpoint, prover->identity(), manifest_cache, prover}
   {
-    // TODO(HUT): has this been mangled by a merge?
-    for (auto f : FaultySetupService::Failures) // NOLINT
+    for (auto f : failures)
     {
       failures_flags_.set(static_cast<uint32_t>(f));
     }
@@ -432,7 +431,7 @@ struct FaultyDkgMember : DkgMember
   FaultySetupService dkg;
 
   FaultyDkgMember(uint16_t port_number, uint16_t index,
-                  const std::vector<FaultySetupService::Failures> & /*failures*/ = {})
+                  const std::vector<FaultySetupService::Failures> &failures = {})
     : DkgMember{port_number, index}
     , dkg{*muddle, muddle_certificate, manifest_cache, failures}
   {
@@ -447,7 +446,7 @@ struct FaultyDkgMember : DkgMember
     reactor.Stop();
   }
 
-  void QueueCabinet(std::set<MuddleAddress>  /*cabinet*/, uint32_t threshold) override
+  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -495,7 +494,7 @@ struct HonestDkgMember : DkgMember
     reactor.Stop();
   }
 
-  void QueueCabinet(std::set<MuddleAddress>  /*cabinet*/, uint32_t threshold) override
+  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -524,7 +523,7 @@ struct HonestDkgMember : DkgMember
 
 void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                   uint32_t expected_completion_size,
-                  const std::vector<std::vector<FaultySetupService::Failures>> & /*failures*/    = {},
+                  const std::vector<std::vector<FaultySetupService::Failures>> &failures    = {},
                   uint16_t                                                      setup_delay = 0)
 {
   std::set<MuddleAddress>                                             cabinet;
