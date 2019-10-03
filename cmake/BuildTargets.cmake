@@ -130,11 +130,11 @@ macro (setup_compiler)
 
     find_library(DW_LIB dw)
 
-    if (DW_LIB)
+    if (DW_LIB AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE_WITH_DW")
 
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldw -ldl")
-    endif (DW_LIB)
+    endif ()
   endif (FETCH_ENABLE_BACKTRACE)
 
   # allow disabling of colour log file
