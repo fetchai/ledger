@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
@@ -31,7 +31,7 @@
 class FakeExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
-  using Digest    = fetch::ledger::Digest;
+  using Digest    = fetch::Digest;
   using Address   = fetch::ledger::Address;
   using BitVector = fetch::BitVector;
   using Clock     = std::chrono::high_resolution_clock;

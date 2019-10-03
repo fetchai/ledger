@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/block_entropy.hpp"
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 
 namespace fetch {
 namespace ledger {

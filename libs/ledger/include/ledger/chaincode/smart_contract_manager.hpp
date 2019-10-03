@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {

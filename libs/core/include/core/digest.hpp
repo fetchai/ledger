@@ -17,19 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/ecdsa.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+
+#include <unordered_map>
+#include <unordered_set>
 
 namespace fetch {
-namespace beacon {
-using fetch::crypto::Prover;
-using ProverPtr = std::shared_ptr<Prover>;
 
-/**
- * Helper function for tests to generate a new pair of
- * ECDSA public and private keys
- *
- * @return Shared pointer to a Prover object
- */
-ProverPtr CreateNewCertificate();
-}  // namespace beacon
+using Digest = byte_array::ConstByteArray;
+
+struct DigestHashAdapter
+{
+  std::size_t operator()(Digest const &hash) const noexcept
+  {
+    std::size_t value{0};
+
+    if (!hash.empty())
+    {
+      assert(hash.size() >= sizeof(std::size_t));
+      value = *reinterpret_cast<std::size_t const *>(hash.pointer());
+    }
+
+    return value;
+  }
+};
+
+using DigestSet = std::unordered_set<Digest, DigestHashAdapter>;
+
+template <typename Value>
+using DigestMap = std::unordered_map<Digest, Value, DigestHashAdapter>;
+
 }  // namespace fetch

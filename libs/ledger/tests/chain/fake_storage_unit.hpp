@@ -31,8 +31,8 @@ class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   using Transaction = fetch::ledger::Transaction;
-  using Digest      = fetch::ledger::Digest;
-  using DigestSet   = fetch::ledger::DigestSet;
+  using Digest      = fetch::Digest;
+  using DigestSet   = fetch::DigestSet;
   using ResourceID  = fetch::storage::ResourceID;
 
   /// @name State Interface
