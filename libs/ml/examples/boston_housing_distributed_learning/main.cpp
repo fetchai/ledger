@@ -212,8 +212,8 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  SizeType    seed          = strtoul(argv[3], NULL, 10);
-  DataType    learning_rate = static_cast<DataType>(strtof(argv[4], NULL));
+  SizeType    seed          = strtoul(argv[3], nullptr, 10);
+  DataType    learning_rate = static_cast<DataType>(strtof(argv[4], nullptr));
   std::string results_dir   = argv[5];
 
   CoordinatorParams      coord_params;
@@ -262,10 +262,10 @@ int main(int argc, char **argv)
     clients[i]->SetCoordinator(coordinator);
   }
 
-  std::ofstream lossfile(results_dir + "/fetch_" + std::to_string(number_of_clients) + "_Adam_" +
-                             std::to_string(float(learning_rate)) + "_" + std::to_string(seed) +
-                             "_FC3.csv",
-                         std::ofstream::out);
+  std::string results_filename = results_dir + "/fetch_" + std::to_string(number_of_clients) +
+                                 "_Adam_" + std::to_string(float(learning_rate)) + "_" +
+                                 std::to_string(seed) + "_FC3.csv";
+  std::ofstream lossfile(results_filename, std::ofstream::out);
 
   if (!lossfile)
   {
@@ -312,6 +312,8 @@ int main(int argc, char **argv)
     // Synchronize weights by giving all clients average of all client's weights
     SynchroniseWeights(clients);
   }
+
+  std::cout << "Results saved in " << results_filename << std::endl;
 
   return 0;
 }
