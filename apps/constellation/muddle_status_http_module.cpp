@@ -26,8 +26,16 @@ namespace fetch {
 MuddleStatusModule::MuddleStatusModule()
 {
   Get("/api/status/muddle", "Returns the status of the muddle instances present on the node",
-      [](http::ViewParameters const &, http::HTTPRequest const &) {
-        return http::CreateJsonResponse(muddle::GetStatusSummary());
+      [](http::ViewParameters const &, http::HTTPRequest const &request) {
+        auto const &params = request.query();
+
+        std::string network_name{};
+        if (params.Has("network"))
+        {
+          network_name = static_cast<std::string>(params["network"]);
+        }
+
+        return http::CreateJsonResponse(muddle::GetStatusSummary(network_name));
       });
 }
 
