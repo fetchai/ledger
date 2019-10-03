@@ -15,7 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-ml)
-target_link_libraries(fetch-ml INTERFACE fetch-core fetch-math)
+target_link_libraries(fetch-ml PUBLIC fetch-core fetch-crypto fetch-math)
 
 # ------------------------------------------------------------------------------
 # Example Targets

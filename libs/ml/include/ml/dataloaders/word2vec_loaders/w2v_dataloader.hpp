@@ -196,11 +196,12 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
   for (auto const &sentence : data_)
   {
     std::string s;
+    auto        counts = vocab_.GetCounts();
     for (auto const &word : sentence)
     {
-      if (vocab_.counts[word] >= min)
+      if (counts[word] >= min)
       {
-        s += vocab_.reverse_vocab[word] + " ";
+        s += vocab_.WordFromIndex(word) + " ";
       }
     }
     new_loader.BuildVocab(s);
@@ -217,7 +218,7 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
 template <typename T>
 void W2VLoader<T>::InitUnigramTable()
 {
-  unigram_table_.ResetTable(vocab_.counts, 1e8);
+  unigram_table_.ResetTable(vocab_.GetCounts(), 1e8);
 }
 
 /**
@@ -350,7 +351,7 @@ void W2VLoader<T>::LoadVocab(std::string const &filename)
 template <typename T>
 math::SizeType W2VLoader<T>::vocab_size() const
 {
-  return vocab_.vocab.size();
+  return vocab_.GetVocabCount();
 }
 
 /**
