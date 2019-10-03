@@ -72,7 +72,7 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(
   dataloader_ptr->SetRandomMode(true);
   // Initialise Optimiser
   std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> optimiser_ptr =
-      std::make_shared<fetch::ml::optimisers::SGDOptimiser<TensorType>>(
+      std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
           std::shared_ptr<fetch::ml::Graph<TensorType>>(g_ptr), client_params.inputs_names,
           client_params.label_name, client_params.error_name, client_params.learning_rate);
 
@@ -261,7 +261,7 @@ int main(int ac, char **av)
   }
 
   std::string homedir = getenv("HOME");
-  std::ofstream lossfile(homedir + "/Development/pysyft_distributed_w2v/results/fetch_" + std::to_string(number_of_clients) + "_SGD_" + std::to_string(float(learning_rate)) + "_" + std::to_string(seed) + "_FC3.csv", std::ofstream::out);
+  std::ofstream lossfile(homedir + "/Development/pysyft_distributed_w2v/results/fetch_" + std::to_string(number_of_clients) + "_Adam_" + std::to_string(float(learning_rate)) + "_" + std::to_string(seed) + "_FC3.csv", std::ofstream::out);
 
   if (!lossfile)
   {
