@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 {
   int exit_code = EXIT_FAILURE;
 
-  bn::initPairing();
+  fetch::crypto::mcl::details::MCLInitialiser();
 
   // Special case for the version flag
   if (HasVersionFlag(argc, argv))
