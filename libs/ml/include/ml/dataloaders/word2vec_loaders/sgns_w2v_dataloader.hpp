@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lfg.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
@@ -34,11 +35,12 @@ template <typename T>
 class GraphW2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-  using InputType  = fetch::math::Tensor<T>;
-  using LabelType  = fetch::math::Tensor<T>;
-  using SizeType   = fetch::math::SizeType;
-  using VocabType  = Vocab;
-  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
+  using InputType    = fetch::math::Tensor<T>;
+  using LabelType    = fetch::math::Tensor<T>;
+  using SizeType     = fetch::math::SizeType;
+  using VocabType    = Vocab;
+  using VocabPtrType = std::shared_ptr<VocabType>;
+  using ReturnType   = std::pair<LabelType, std::vector<InputType>>;
 
   const T        BufferPositionUnusedDataType = fetch::math::numeric_max<T>();
   const SizeType BufferPositionUnusedSizeType = fetch::math::numeric_max<SizeType>();
@@ -68,12 +70,14 @@ public:
   bool IsModeAvailable(DataLoaderMode mode) override;
 
   /// accessors and helper functions ///
-  SizeType         Size() const override;
-  SizeType         vocab_size() const;
-  VocabType const &vocab() const;
-  std::string      WordFromIndex(SizeType index) const;
-  SizeType         IndexFromWord(std::string const &word) const;
-  SizeType         WindowSize();
+  SizeType            Size() const override;
+  SizeType            vocab_size() const;
+  VocabPtrType const &GetVocab() const;
+  std::string         WordFromIndex(SizeType index) const;
+  SizeType            IndexFromWord(std::string const &word) const;
+  SizeType            WindowSize();
+
+  byte_array::ConstByteArray GetVocabHash();
 
 private:
   SizeType                                  current_sentence_;
@@ -81,7 +85,7 @@ private:
   SizeType                                  window_size_;
   SizeType                                  negative_samples_;
   T                                         freq_thresh_;
-  VocabType                                 vocab_;
+  VocabPtrType                              vocab_ = std::make_shared<VocabType>();
   std::vector<std::vector<SizeType>>        data_;
   std::vector<SizeType>                     word_id_counts_;
   UnigramTable                              unigram_table_;
@@ -240,7 +244,7 @@ void GraphW2VLoader<T>::SetValidationRatio(float new_validation_ratio)
 template <typename T>
 bool GraphW2VLoader<T>::WordKnown(std::string const &word) const
 {
-  return vocab_.vocab.find(word) != vocab_.vocab.end();
+  return vocab_->IndexFromWord(word) != Vocab::UNKNOWN_WORD;
 }
 
 /**
@@ -252,7 +256,7 @@ template <typename T>
 void GraphW2VLoader<T>::RemoveInfrequent(SizeType min)
 {
   // remove infrequent words from vocab first
-  auto old2new = vocab_.RemoveInfrequentWord(min);
+  auto old2new = vocab_->RemoveInfrequentWord(min);
 
   // create a new data_ for storing text
   std::vector<std::vector<SizeType>> new_data;
@@ -278,7 +282,7 @@ void GraphW2VLoader<T>::RemoveInfrequent(SizeType min)
     // sentence
     if (new_sent_buffer.size() <= 2 * window_size_)
     {
-      vocab_.RemoveSentenceFromVocab(sentence);
+      vocab_->RemoveSentenceFromVocab(sentence);
       // N.B. for practical concerns, we do not further remove infrequent words
     }
     else
@@ -349,7 +353,7 @@ void GraphW2VLoader<T>::InitUnigramTable(SizeType size, bool use_vocab_frequenci
 {
   if (use_vocab_frequencies)
   {
-    unigram_table_.ResetTable(vocab_.counts, size);
+    unigram_table_.ResetTable(vocab_->GetCounts(), size);
   }
   else  // use counts from data
   {
@@ -539,7 +543,7 @@ void GraphW2VLoader<T>::BuildVocabAndData(std::vector<std::string> const &sents,
       continue;
     }
 
-    std::vector<SizeType> indices = vocab_.PutSentenceInVocab(preprocessed_string);
+    std::vector<SizeType> indices = vocab_->PutSentenceInVocab(preprocessed_string);
     if (build_data)
     {
       data_.push_back(indices);
@@ -570,7 +574,7 @@ void GraphW2VLoader<T>::BuildVocabAndData(std::vector<std::string> const &sents,
 template <typename T>
 void GraphW2VLoader<T>::BuildData(std::vector<std::string> const &sents, SizeType min_count)
 {
-  assert(vocab_.total_count >= 0);
+  assert(vocab_->GetWordCount() >= 0);
 
   // build vocab from sentences
   std::cout << "building data " << std::endl;
@@ -595,10 +599,10 @@ void GraphW2VLoader<T>::BuildData(std::vector<std::string> const &sents, SizeTyp
     for (std::string const &word : preprocessed_string)
     {
       // some words will be missing from the vocab because of infrequency
-      auto word_it = vocab_.vocab.find(word);
-      if (word_it != vocab_.vocab.end())
+      SizeType word_ind = vocab_->IndexFromWord(word);
+      if (word_ind != Vocab::UNKNOWN_WORD)
       {
-        indices.push_back(word_it->second);  // update the word in the sentence to index
+        indices.push_back(word_ind);  // update the word in the sentence to index
       }
     }
 
@@ -631,7 +635,7 @@ void GraphW2VLoader<T>::BuildData(std::vector<std::string> const &sents, SizeTyp
 template <typename T>
 void GraphW2VLoader<T>::SaveVocab(std::string const &filename)
 {
-  vocab_.Save(filename);
+  vocab_->Save(filename);
 }
 
 /**
@@ -642,7 +646,7 @@ void GraphW2VLoader<T>::SaveVocab(std::string const &filename)
 template <typename T>
 void GraphW2VLoader<T>::LoadVocab(std::string const &filename)
 {
-  vocab_.Load(filename);
+  vocab_->Load(filename);
 }
 
 /**
@@ -653,7 +657,7 @@ void GraphW2VLoader<T>::LoadVocab(std::string const &filename)
 template <typename T>
 math::SizeType GraphW2VLoader<T>::vocab_size() const
 {
-  return vocab_.vocab.size();
+  return vocab_->GetVocabCount();
 }
 
 /**
@@ -662,7 +666,7 @@ math::SizeType GraphW2VLoader<T>::vocab_size() const
  * @return
  */
 template <typename T>
-typename GraphW2VLoader<T>::VocabType const &GraphW2VLoader<T>::vocab() const
+std::shared_ptr<typename GraphW2VLoader<T>::VocabType> const &GraphW2VLoader<T>::GetVocab() const
 {
   return vocab_;
 }
@@ -676,7 +680,7 @@ typename GraphW2VLoader<T>::VocabType const &GraphW2VLoader<T>::vocab() const
 template <typename T>
 std::string GraphW2VLoader<T>::WordFromIndex(SizeType index) const
 {
-  return vocab_.WordFromIndex(index);
+  return vocab_->WordFromIndex(index);
 }
 
 /**
@@ -688,7 +692,7 @@ std::string GraphW2VLoader<T>::WordFromIndex(SizeType index) const
 template <typename T>
 typename GraphW2VLoader<T>::SizeType GraphW2VLoader<T>::IndexFromWord(std::string const &word) const
 {
-  return vocab_.IndexFromWord(word);
+  return vocab_->IndexFromWord(word);
 }
 
 template <typename T>
@@ -742,6 +746,12 @@ template <typename T>
 bool GraphW2VLoader<T>::IsModeAvailable(DataLoaderMode mode)
 {
   return mode == DataLoaderMode::TRAIN;
+}
+
+template <typename T>
+byte_array::ConstByteArray GraphW2VLoader<T>::GetVocabHash()
+{
+  return vocab_->GetVocabHash();
 }
 
 }  // namespace dataloaders
