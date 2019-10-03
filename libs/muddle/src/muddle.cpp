@@ -590,14 +590,16 @@ void Muddle::CreateTcpClient(Uri const &peer)
   // debug handlers
   strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
 
-  strong_conn->OnConnectionFailed([this, peer]() {
+  strong_conn->OnConnectionFailed([this, peer, conn_handle]() {
     FETCH_LOG_INFO(logging_name_, "Connection to ", peer.ToString(), " failed");
     clients_.RemoveConnection(peer);
+    direct_message_service_.SignalConnectionLeft(conn_handle);
   });
 
-  strong_conn->OnLeave([this, peer]() {
+  strong_conn->OnLeave([this, peer, conn_handle]() {
     FETCH_LOG_INFO(logging_name_, "Connection to ", peer.ToString(), " left");
     clients_.RemoveConnection(peer);
+    direct_message_service_.SignalConnectionLeft(conn_handle);
   });
 
   strong_conn->OnMessage([this, peer, conn_handle](network::MessageType const &msg) {
