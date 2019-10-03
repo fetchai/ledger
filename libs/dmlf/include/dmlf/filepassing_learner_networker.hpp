@@ -43,9 +43,9 @@ public:
     return peers_.size();
   }
 
-  void setName(const std::string &name);
-  void addPeers(Peers new_peers);
-  void clearPeers();
+  void SetName(const std::string &name);
+  void AddPeers(Peers new_peers);
+  void ClearPeers();
 
   FilepassingLearnerNetworker(const FilepassingLearnerNetworker &other) = delete;
   FilepassingLearnerNetworker &operator=(const FilepassingLearnerNetworker &other)  = delete;
@@ -53,10 +53,10 @@ public:
   bool                         operator<(const FilepassingLearnerNetworker &other)  = delete;
 
 protected:
-  static std::string       processNameToTargetDir(const std::string &name);
-  void                     tx(const std::string &target, const Bytes &data);
-  std::vector<std::string> getUpdateNames() const;
-  void                     checkUpdates();
+  static std::string       ProcessNameToTargetDir(const std::string &name);
+  void                     Transmit(const std::string &target, const Bytes &data);
+  std::vector<std::string> GetUpdateNames() const;
+  void                     CheckUpdates();
 
 private:
 

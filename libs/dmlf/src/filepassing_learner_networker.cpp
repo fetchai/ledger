@@ -37,31 +37,31 @@ namespace dmlf {
 
 FilepassingLearnerNetworker::FilepassingLearnerNetworker() = default;
 
-void FilepassingLearnerNetworker::setName(const std::string &name)
+void FilepassingLearnerNetworker::SetName(const std::string &name)
 {
   name_  = name;
-  dir_   = processNameToTargetDir(name);
+  dir_   = ProcessNameToTargetDir(name);
   auto r = system((std::string("mkdir -vp ") + dir_).c_str());  // NOLINT
   if (r != 0)
   {
     std::cerr << "mkdir failed" << std::endl;
   }
 
-  auto names = getUpdateNames();
+  auto names = GetUpdateNames();
   for (const auto &name : names)
   {
     ::unlink(name.c_str());
   }
   running_ = true;
-  watcher_ = std::make_shared<std::thread>(&FilepassingLearnerNetworker::checkUpdates, this);
+  watcher_ = std::make_shared<std::thread>(&FilepassingLearnerNetworker::CheckUpdates, this);
 }
 
-void FilepassingLearnerNetworker::checkUpdates()
+void FilepassingLearnerNetworker::CheckUpdates()
 {
   while (running_)
   {
     std::this_thread::sleep_for(100ms);
-    auto pendings = getUpdateNames();
+    auto pendings = GetUpdateNames();
 
     if (pendings.empty())
     {
@@ -86,12 +86,12 @@ FilepassingLearnerNetworker::~FilepassingLearnerNetworker()
   watcher_->join();
 }
 
-std::string FilepassingLearnerNetworker::processNameToTargetDir(const std::string &name)
+std::string FilepassingLearnerNetworker::ProcessNameToTargetDir(const std::string &name)
 {
   return std::string("/tmp/FilepassingLearnerNetworker/") + name + "/";
 }
 
-void FilepassingLearnerNetworker::addPeers(Peers new_peers)
+void FilepassingLearnerNetworker::AddPeers(Peers new_peers)
 {
   for (const auto &peer : new_peers)
   {
@@ -102,7 +102,7 @@ void FilepassingLearnerNetworker::addPeers(Peers new_peers)
   }
 }
 
-void FilepassingLearnerNetworker::clearPeers()
+void FilepassingLearnerNetworker::ClearPeers()
 {
   peers_.clear();
 }
@@ -115,14 +115,14 @@ void FilepassingLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterfa
   for (auto ind : indexes)
   {
     auto t = peers_[ind];
-    tx(t, data);
+    Transmit(t, data);
   }
 }
 
-void FilepassingLearnerNetworker::tx(const std::string &target, const Bytes &data)
+void FilepassingLearnerNetworker::Transmit(const std::string &target, const Bytes &data)
 {
   static int filecounter = 0;
-  auto       target_dir  = processNameToTargetDir(target);
+  auto       target_dir  = ProcessNameToTargetDir(target);
   auto       filename    = name_ + "-" + std::to_string(filecounter++);
   auto       tmpfilename = std::string("tmp_") + name_ + "-" + std::to_string(filecounter++);
 
@@ -136,7 +136,7 @@ void FilepassingLearnerNetworker::tx(const std::string &target, const Bytes &dat
   ::rename(tmpfilepath.c_str(), filepath.c_str());
 }
 
-std::vector<std::string> FilepassingLearnerNetworker::getUpdateNames() const
+std::vector<std::string> FilepassingLearnerNetworker::GetUpdateNames() const
 {
   std::vector<std::string> r;
 

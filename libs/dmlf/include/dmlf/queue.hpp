@@ -43,7 +43,7 @@ public:
   void PushNewMessage(Bytes msg) override
   {
     auto update = std::make_shared<UpdateType>();
-    update->deserialise(msg);
+    update->Deserialise(msg);
     {
       FETCH_LOCK(updates_m_);
       updates_.push(update);

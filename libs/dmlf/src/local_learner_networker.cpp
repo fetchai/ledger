@@ -30,7 +30,7 @@ LocalLearnerNetworker::LocalLearnerNetworker() = default;
 
 LocalLearnerNetworker::~LocalLearnerNetworker() = default;
 
-void LocalLearnerNetworker::addPeers(std::vector<std::shared_ptr<LocalLearnerNetworker>> new_peers)
+void LocalLearnerNetworker::AddPeers(std::vector<std::shared_ptr<LocalLearnerNetworker>> new_peers)
 {
   for (const auto &peer : new_peers)
   {
@@ -41,7 +41,7 @@ void LocalLearnerNetworker::addPeers(std::vector<std::shared_ptr<LocalLearnerNet
   }
 }
 
-void LocalLearnerNetworker::clearPeers()
+void LocalLearnerNetworker::ClearPeers()
 {
   peers.clear();
 }
@@ -56,11 +56,11 @@ void LocalLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &u
   for (auto ind : indexes)
   {
     auto t = peers[ind];
-    t->rx(data);
+    t->Recieve(data);
   }
 }
 
-void LocalLearnerNetworker::rx(const Bytes &data)
+void LocalLearnerNetworker::Recieve(const Bytes &data)
 {
   AbstractLearnerNetworker::NewMessage(data);
 }

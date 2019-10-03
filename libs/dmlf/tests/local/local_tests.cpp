@@ -156,7 +156,7 @@ public:
     }
     for (const auto &peer : peers)
     {
-      peer->addPeers(peers);
+      peer->AddPeers(peers);
     }
 
     for (const auto &peer : peers)
@@ -192,7 +192,7 @@ public:
 
     for (const auto &peer : peers)
     {
-      peer->addPeers(peers);
+      peer->AddPeers(peers);
     }
 
     for (const auto &peer : peers)
@@ -236,7 +236,7 @@ public:
     {
       std::string name = std::string("foo-") + std::to_string(i);
       auto        peer = std::make_shared<fetch::dmlf::FilepassingLearnerNetworker>();
-      peer->setName(name);
+      peer->SetName(name);
       peers.push_back(peer);
       names.push_back(name);
       std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interf = peer;
@@ -245,7 +245,7 @@ public:
 
     for (const auto &peer : peers)
     {
-      peer->addPeers(names);
+      peer->AddPeers(names);
     }
 
     for (const auto &peer : peers)
@@ -343,7 +343,7 @@ TEST_F(UpdateSerialisationTests, basicPass)
   EXPECT_NE(update_1->Fingerprint(), update_2->Fingerprint());
 
   auto update_1_bytes = update_1->serialise();
-  update_2->deserialise(update_1_bytes);
+  update_2->Deserialise(update_1_bytes);
 
   EXPECT_EQ(update_1->TimeStamp(), update_2->TimeStamp());
   EXPECT_EQ(update_1->Fingerprint(), update_2->Fingerprint());

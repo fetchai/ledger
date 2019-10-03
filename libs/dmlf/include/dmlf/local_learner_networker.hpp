@@ -41,8 +41,8 @@ public:
   {
     return peers.size();
   }
-  void addPeers(Peers new_peers);
-  void clearPeers();
+  void AddPeers(Peers new_peers);
+  void ClearPeers();
 
   LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete;
   LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other)  = delete;
@@ -58,7 +58,7 @@ private:
   mutable Mutex mutex;
   Peers         peers;
 
-  void rx(const Bytes &data);
+  void Recieve(const Bytes &data);
 };
 
 }  // namespace dmlf

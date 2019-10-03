@@ -70,7 +70,7 @@ public:
     serializer << serializer_.data();
     return serializer.data();
   }
-  void deserialise(const byte_array::ByteArray &map) override
+  void Deserialise(const byte_array::ByteArray &map) override
   {
     serializers::MsgPackSerializer serializer{map};
     serializer >> *this;

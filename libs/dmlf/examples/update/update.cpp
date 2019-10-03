@@ -53,7 +53,7 @@ int main(int argc, char **argv)
   std::shared_ptr<UpdateInterface> udt_4 = std::make_shared<Update<int>>();
   FETCH_LOG_INFO(LOGGING_NAME, "Update4 ", udt_4->TimeStamp(), " ", udt_4->debug());
   auto udt_3_bytes = udt_3->serialise();
-  udt_4->deserialise(udt_3_bytes);
+  udt_4->Deserialise(udt_3_bytes);
   FETCH_LOG_INFO(LOGGING_NAME, "Update4 ", udt_4->TimeStamp(), " ", udt_4->debug());
 
   return EXIT_SUCCESS;
