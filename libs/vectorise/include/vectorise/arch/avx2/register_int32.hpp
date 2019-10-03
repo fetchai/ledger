@@ -172,7 +172,7 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<int32_t, 128> co
   n.Store(out);
   s << std::setprecision(std::numeric_limits<int32_t>::digits10);
   s << std::fixed;
-  s << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3];
+  s << std::hex << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3];
 
   return s;
 }
@@ -184,7 +184,7 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<int32_t, 256> co
   n.Store(out);
   s << std::setprecision(std::numeric_limits<int32_t>::digits10);
   s << std::fixed;
-  s << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3] << ", " << out[4] << ", "
+  s << std::hex << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3] << ", " << out[4] << ", "
     << out[5] << ", " << out[6] << ", " << out[7];
 
   return s;
