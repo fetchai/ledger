@@ -60,7 +60,7 @@ public:
   std::shared_ptr<T> getUpdate()
   {
     Lock l{queue_m_};
-    throw_ifnot_initialized_();
+    ThrowIfNotInitialized();
     auto que = std::dynamic_pointer_cast<Queue<T>>(queue_);
     return que->getUpdate();
   }
