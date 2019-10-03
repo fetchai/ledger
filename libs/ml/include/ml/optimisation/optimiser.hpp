@@ -130,6 +130,8 @@ void Optimiser<T>::Init()
   graph_->Compile();
 
   graph_trainables_ = graph_->GetTrainables();
+
+  gradients_.clear();
   for (auto &train : graph_trainables_)
   {
     gradients_.emplace_back(TensorType(train->GetWeights().shape()));

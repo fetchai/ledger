@@ -152,7 +152,7 @@ TYPED_TEST(ModelsTest, sgd_dnnclasifier_serialisation)
   using ModelType = fetch::ml::model::DNNClassifier<TypeParam>;
 
   fetch::math::SizeType    n_training_steps = 10;
-  typename TypeParam::Type tolerance        = static_cast<DataType>(1e-1);
+  typename TypeParam::Type tolerance        = static_cast<DataType>(0);
   auto                     learning_rate    = DataType{0.06f};
   fetch::ml::OptimiserType optimiser_type   = fetch::ml::OptimiserType::SGD;
 
@@ -171,13 +171,8 @@ TYPED_TEST(ModelsTest, sgd_dnnclasifier_serialisation)
                                                                train_data, train_labels);
 
   // test prediction performance
-  TypeParam pred0({3, 1});
-  TypeParam pred1({3, 1});
-  TypeParam pred2({3, 1});
-
-  // Do 2 optimiser steps
-  model.Train(n_training_steps);
-  model.Predict(test_datum, pred0);
+  TypeParam pred1({3, 3});
+  TypeParam pred2({3, 3});
 
   // serialise the model
   fetch::serializers::MsgPackSerializer b;
@@ -190,34 +185,20 @@ TYPED_TEST(ModelsTest, sgd_dnnclasifier_serialisation)
 
   model.Predict(test_datum, pred1);
   model2->Predict(test_datum, pred2);
-  std::cout << pred0.ToString() << std::endl;
-  std::cout << pred1.ToString() << std::endl;
-  std::cout << pred2.ToString() << std::endl;
 
   // Test if deserialised model returns same results
-  EXPECT_TRUE(pred0.AllClose(pred1, tolerance, tolerance));
-  EXPECT_TRUE(pred0.AllClose(pred2, tolerance, tolerance));
+  EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
+
+  // Do one iteration step
+  model2->Train(n_training_steps);
+  model2->Predict(test_datum, pred1);
+
+  // Test if only one model is being trained
+  EXPECT_FALSE(pred1.AllClose(pred2, tolerance, tolerance));
 
   model.Train(n_training_steps);
-
-  model.Predict(test_datum, pred1);
-  model2->Predict(test_datum, pred2);
-  std::cout << pred0.ToString() << std::endl;
-  std::cout << pred1.ToString() << std::endl;
-  std::cout << pred2.ToString() << std::endl;
-
-  model2->Train(n_training_steps);
-
-  // Do 2 optimiser steps
-  model.Predict(test_datum, pred1);
-  model2->Predict(test_datum, pred2);
-
-  std::cout << pred0.ToString() << std::endl;
-  std::cout << pred1.ToString() << std::endl;
-  std::cout << pred2.ToString() << std::endl;
+  model.Predict(test_datum, pred2);
 
   // Test if both models returns same results after training
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
-  EXPECT_FALSE(pred0.AllClose(pred1, tolerance, tolerance));
-  EXPECT_FALSE(pred0.AllClose(pred2, tolerance, tolerance));
 }

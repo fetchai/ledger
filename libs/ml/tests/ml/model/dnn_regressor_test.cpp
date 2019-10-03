@@ -152,7 +152,7 @@ TYPED_TEST(ModelsTest, sgd_dnnregressor_serialisation)
   using ModelType = fetch::ml::model::DNNRegressor<TypeParam>;
 
   fetch::math::SizeType    n_training_steps = 10;
-  typename TypeParam::Type tolerance        = static_cast<DataType>(1e-1);
+  typename TypeParam::Type tolerance        = static_cast<DataType>(0);
   auto                     learning_rate    = DataType{0.06f};
   fetch::ml::OptimiserType optimiser_type   = fetch::ml::OptimiserType::SGD;
 
@@ -171,13 +171,8 @@ TYPED_TEST(ModelsTest, sgd_dnnregressor_serialisation)
                                                                train_data, train_labels);
 
   // test prediction performance
-  TypeParam pred0({3, 1});
   TypeParam pred1({3, 1});
   TypeParam pred2({3, 1});
-
-  // Do 2 optimiser steps
-  model.Train(n_training_steps);
-  model.Predict(test_datum, pred0);
 
   // serialise the model
   fetch::serializers::MsgPackSerializer b;
@@ -188,15 +183,22 @@ TYPED_TEST(ModelsTest, sgd_dnnregressor_serialisation)
   auto model2 = std::make_shared<fetch::ml::model::DNNRegressor<TypeParam>>();
   b >> *model2;
 
-  model.Train(n_training_steps);
-  model2->Train(n_training_steps);
-
-  // Do 2 optimiser steps
   model.Predict(test_datum, pred1);
   model2->Predict(test_datum, pred2);
 
-  // Test loss
+  // Test if deserialised model returns same results
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
-  EXPECT_FALSE(pred0.AllClose(pred1, tolerance, tolerance));
-  EXPECT_FALSE(pred0.AllClose(pred2, tolerance, tolerance));
+
+  // Do one iteration step
+  model2->Train(n_training_steps);
+  model2->Predict(test_datum, pred1);
+
+  // Test if only one model is being trained
+  EXPECT_FALSE(pred1.AllClose(pred2, tolerance, tolerance));
+
+  model.Train(n_training_steps);
+  model.Predict(test_datum, pred2);
+
+  // Test if both models returns same results after training
+  EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
 }

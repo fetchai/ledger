@@ -429,6 +429,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
       sp.optimiser_ptr_.reset(optimiser_ptr);
       sp.optimiser_ptr_->SetGraph(sp.graph_ptr_);
+      sp.optimiser_ptr_->Init();
       break;
     }
 
