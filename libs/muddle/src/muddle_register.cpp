@@ -317,7 +317,7 @@ void MuddleRegister::Leave(ConnectionHandle handle)
 
   // signal the router
   auto const router = router_.load();
-  if (router)
+  if (router != nullptr)
   {
     router->ConnectionDropped(handle);
   }

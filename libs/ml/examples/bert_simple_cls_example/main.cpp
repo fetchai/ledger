@@ -59,7 +59,7 @@ int main()
   SizeType test_size  = 100;
   SizeType batch_size = 16;
   SizeType epochs     = 2;
-  DataType lr         = static_cast<DataType>(1e-3);
+  auto     lr         = static_cast<DataType>(1e-3);
 
   BERTConfig config;
   config.n_encoder_layers  = 2u;
@@ -130,7 +130,7 @@ std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(SizeType    
     tokens_data.Set(0, i, static_cast<DataType>(0));
     if (i % 2 == 0)
     {  // get one constant token in the library other then 0 (the cls token)
-      DataType token = static_cast<DataType>(1 + lfg() % (config.vocab_size - 1));
+      auto token = static_cast<DataType>(1 + lfg() % (config.vocab_size - 1));
       for (SizeType entry = 1; entry < config.max_seq_len; entry++)
       {
         tokens_data.Set(entry, i, token);
@@ -142,7 +142,7 @@ std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(SizeType    
       for (SizeType entry = 1; entry < config.max_seq_len; entry++)
       {
         // get a random different token for each position of the tokens_data
-        DataType token = static_cast<DataType>(1 + lfg() % (config.vocab_size - 1));
+        auto token = static_cast<DataType>(1 + lfg() % (config.vocab_size - 1));
         tokens_data.Set(entry, i, token);
       }
       labels.Set(1u, i, static_cast<DataType>(1));  // label 0 1

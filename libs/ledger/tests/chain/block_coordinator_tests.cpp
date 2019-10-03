@@ -18,9 +18,7 @@
 
 #include "core/bloom_filter.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/feature_flags.hpp"
 #include "crypto/ecdsa.hpp"
-#include "crypto/sha256.hpp"
 #include "fake_block_sink.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -30,7 +28,6 @@
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
-#include "ledger/transaction_status_cache.hpp"
 #include "mock_block_packer.hpp"
 #include "mock_execution_manager.hpp"
 #include "mock_storage_unit.hpp"
@@ -50,7 +47,6 @@ using namespace fetch::ledger;
 
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::core::FeatureFlags;
 
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -78,8 +74,8 @@ Digest GENESIS_DIGEST =
 Digest GENESIS_MERKLE_ROOT =
     fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
-static constexpr std::size_t NUM_LANES  = 1;
-static constexpr std::size_t NUM_SLICES = 1;
+constexpr std::size_t NUM_LANES  = 1;
+constexpr std::size_t NUM_SLICES = 1;
 
 class BlockCoordinatorTests : public ::testing::Test
 {
@@ -98,8 +94,8 @@ protected:
     packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
-        FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
+        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
+        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -215,22 +211,22 @@ protected:
 //  return stream;
 //}
 
-MATCHER(IsNewBlock, "")
+MATCHER(IsNewBlock, "")  // NOLINT
 {
   return arg.hash.empty();
 }
 
-MATCHER_P(IsBlock, block, "")
+MATCHER_P(IsBlock, block, "")  // NOLINT
 {
   return arg.hash == block->body.hash;
 }
 
-MATCHER_P(IsBlockFollowing, block, "")
+MATCHER_P(IsBlockFollowing, block, "")  // NOLINT
 {
   return arg.body.previous_hash == block->body.hash;
 }
 
-MATCHER_P(IsBlockBodyFollowing, block, "")
+MATCHER_P(IsBlockBodyFollowing, block, "")  // NOLINT
 {
   return arg.previous_hash == block->body.hash;
 }
@@ -994,9 +990,10 @@ protected:
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
+
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
-        FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
+        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
+        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);

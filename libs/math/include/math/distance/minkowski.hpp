@@ -18,9 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/comparison.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/pow.hpp"
+#include "vectorise/math/max.hpp"
+#include "vectorise/math/min.hpp"
 
 namespace fetch {
 namespace math {
@@ -38,7 +39,7 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Minkowski(ArrayType con
   auto     b_it = b.begin();
   for (auto &val : a)
   {
-    sum += Pow(Max(val, *b_it) - Min(val, *b_it), n);
+    sum += Pow(fetch::vectorise::Max(val, *b_it) - fetch::vectorise::Min(val, *b_it), n);
     ++b_it;
   }
 

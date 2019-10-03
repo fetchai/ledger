@@ -39,12 +39,12 @@ namespace service {
 class ServiceClient : public ServiceClientInterface, public ServiceServerInterface
 {
 public:
-  using network_manager_type = fetch::network::NetworkManager;
+  using NetworkManagerType = fetch::network::NetworkManager;
 
   static constexpr char const *LOGGING_NAME = "ServiceClient";
 
   ServiceClient(std::shared_ptr<network::AbstractConnection> connection,
-                const network_manager_type &                 network_manager)
+                const NetworkManagerType &                   network_manager)
     : connection_(connection)
     , network_manager_(network_manager)
     , message_mutex_{}
@@ -54,7 +54,7 @@ public:
     {
       ptr->ActivateSelfManage();
 
-      ptr->OnMessage([this](network::message_type const &msg) {
+      ptr->OnMessage([this](network::MessageType const &msg) {
         {
           FETCH_LOCK(message_mutex_);
           messages_.push_back(msg);
@@ -65,14 +65,14 @@ public:
     }
   }
 
-  ServiceClient(network::TCPClient &connection, network_manager_type thread_manager)
+  ServiceClient(network::TCPClient &connection, NetworkManagerType thread_manager)
     : ServiceClient(connection.connection_pointer().lock(), thread_manager)
   {}
 
-  ~ServiceClient()
+  ~ServiceClient() override
   {
-    using std::this_thread::sleep_for;
     using std::chrono::milliseconds;
+    using std::this_thread::sleep_for;
 
     tearing_down_ = true;
 
@@ -105,7 +105,7 @@ public:
     }
   }
 
-  connection_handle_type handle() const
+  ConnectionHandleType handle() const
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -160,7 +160,7 @@ public:
   }
 
 protected:
-  bool DeliverRequest(network::message_type const &msg) override
+  bool DeliverRequest(network::MessageType const &msg) override
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -177,7 +177,7 @@ protected:
     return false;
   }
 
-  bool DeliverResponse(connection_handle_type, network::message_type const &msg) override
+  bool DeliverResponse(ConnectionHandleType, network::MessageType const &msg) override
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -203,8 +203,8 @@ private:
 
     while (!tearing_down_)
     {
-      network::message_type msg;
-      bool                  message_found = false;
+      network::MessageType msg;
+      bool                 message_found = false;
 
       // extract the next message
       {
@@ -230,7 +230,7 @@ private:
         {
           FETCH_LOG_DEBUG(LOGGING_NAME, "Looking for RPC functionality");
 
-          if (!PushProtocolRequest(connection_handle_type(-1), msg))
+          if (!PushProtocolRequest(ConnectionHandleType(-1), msg))
           {
             throw serializers::SerializableException(error::UNKNOWN_MESSAGE,
                                                      byte_array::ConstByteArray("Unknown message"));
@@ -242,9 +242,9 @@ private:
     --active_count_;
   }
 
-  network_manager_type              network_manager_;
-  std::deque<network::message_type> messages_;
-  mutable Mutex                     message_mutex_;
+  NetworkManagerType               network_manager_;
+  std::deque<network::MessageType> messages_;
+  mutable Mutex                    message_mutex_;
 
   std::atomic<bool>        tearing_down_{false};
   std::atomic<std::size_t> active_count_{0};

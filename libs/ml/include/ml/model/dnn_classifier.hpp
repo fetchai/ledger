@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/model/model.hpp"
 #include "ml/model/model_config.hpp"
-#include "ml/model/model_interface.hpp"
 
 #include <vector>
 
@@ -27,17 +27,16 @@ namespace ml {
 namespace model {
 
 template <typename TensorType>
-class DNNClassifier : public ModelInterface<TensorType>
+class DNNClassifier : public Model<TensorType>
 {
 public:
   using SizeType          = fetch::math::SizeType;
   using DataType          = typename TensorType::Type;
   using CostFunctionType  = fetch::ml::ops::CrossEntropyLoss<TensorType>;
   using OptimiserType     = fetch::ml::optimisers::OptimiserType;
-  using DataLoaderPtrType = typename ModelInterface<TensorType>::DataLoaderPtrType;
+  using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
-  DNNClassifier(DataLoaderPtrType data_loader_ptr, OptimiserType optimiser_type,
-                ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
+  DNNClassifier(ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
 };
 
 /**
@@ -49,11 +48,9 @@ public:
  * @param optimiser_type type of optimiser to run
  */
 template <typename TensorType>
-DNNClassifier<TensorType>::DNNClassifier(DataLoaderPtrType            data_loader_ptr,
-                                         OptimiserType                optimiser_type,
-                                         ModelConfig<DataType>        model_config,
+DNNClassifier<TensorType>::DNNClassifier(ModelConfig<DataType>        model_config,
                                          std::vector<SizeType> const &hidden_layers)
-  : ModelInterface<TensorType>(data_loader_ptr, optimiser_type, model_config)
+  : Model<TensorType>(model_config)
 {
 
   assert(!hidden_layers.empty());
@@ -74,6 +71,7 @@ DNNClassifier<TensorType>::DNNClassifier(DataLoaderPtrType            data_loade
   this->label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
   this->error_ =
       this->graph_ptr_->template AddNode<CostFunctionType>("Error", {this->output_, this->label_});
+  this->loss_set_ = true;
 }
 
 }  // namespace model

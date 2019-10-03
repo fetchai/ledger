@@ -53,7 +53,7 @@ using Address        = fetch::muddle::Packet::Address;
 
 struct DummyManifesttCache : public ManifestCacheInterface
 {
-  bool QueryManifest(Address const &, Manifest &) override
+  bool QueryManifest(Address const & /*address*/, Manifest & /*manifest*/) override
   {
     return false;
   }
@@ -108,7 +108,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
                               uint16_t numbers_per_aeon = 10, double threshold = 0.5)
 {
   std::cout << "- Setup" << std::endl;
-  uint16_t number_of_nodes = static_cast<uint16_t>(number_of_cabinets * cabinet_size);
+  auto number_of_nodes = static_cast<uint16_t>(number_of_cabinets * cabinet_size);
 
   std::vector<std::unique_ptr<CabinetNode>> committee;
   for (uint16_t ii = 0; ii < number_of_nodes; ++ii)

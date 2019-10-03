@@ -49,7 +49,7 @@ protected:
 
   char NewChar()
   {
-    char a = char(rng_());
+    auto a = char(rng_());
     return a == '\0' ? '0' : a;
   }
 
@@ -96,9 +96,9 @@ TEST_F(FileObjectTests, CreateAndWriteFilesConfirmUniqueIDs)
   std::vector<std::string>                  strings_to_set;
   std::unordered_map<uint64_t, std::string> file_ids;
 
-  strings_to_set.push_back("whoooo, hoo");
-  strings_to_set.push_back("");
-  strings_to_set.push_back("1");
+  strings_to_set.emplace_back("whoooo, hoo");
+  strings_to_set.emplace_back("");
+  strings_to_set.emplace_back("1");
 
   for (std::size_t i = 0; i < 100; ++i)
   {
@@ -128,9 +128,9 @@ TEST_F(FileObjectTests, CreateAndWriteFilesConfirmRecovery)
   std::vector<std::string>                  strings_to_set;
   std::unordered_map<uint64_t, std::string> file_ids;
 
-  strings_to_set.push_back("whoooo, hoo");
-  strings_to_set.push_back("");
-  strings_to_set.push_back("1");
+  strings_to_set.emplace_back("whoooo, hoo");
+  strings_to_set.emplace_back("");
+  strings_to_set.emplace_back("1");
 
   for (std::size_t i = 0; i < 100; ++i)
   {
@@ -171,9 +171,9 @@ TEST_F(FileObjectTests, ResizeAndWriteFiles)
   std::vector<std::string>                  strings_to_set;
   std::unordered_map<uint64_t, std::string> file_ids;
 
-  strings_to_set.push_back("whoooo, hoo");
-  strings_to_set.push_back("");
-  strings_to_set.push_back("1");
+  strings_to_set.emplace_back("whoooo, hoo");
+  strings_to_set.emplace_back("");
+  strings_to_set.emplace_back("1");
 
   for (std::size_t i = 0; i < 100; ++i)
   {
@@ -243,7 +243,7 @@ TEST_F(FileObjectTests, EraseFiles)
     consistency_check_.push_back(file_object_->id());
 
     // Erase elements half of the time
-    if (i % 2)
+    if ((i % 2) != 0u)
     {
       std::swap(consistency_check_[rng_() % consistency_check_.size()],
                 consistency_check_[consistency_check_.size() - 1]);
@@ -277,7 +277,7 @@ TEST_F(FileObjectTests, DISABLED_SeekAndTellFiles)
       std::string new_chars(length_of_chars, NewChar());
 
       file_object_->Seek(index_to_change);
-      file_object_->Write((const uint8_t *)(new_chars.c_str()), new_chars.size());
+      file_object_->Write(reinterpret_cast<uint8_t const *>(new_chars.c_str()), new_chars.size());
 
       for (std::size_t k = 0; k < length_of_chars; ++k)
       {

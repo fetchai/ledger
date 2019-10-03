@@ -52,7 +52,7 @@ T UInt256Wrapper::ToPrimitive(VM * /*vm*/, Ptr<UInt256Wrapper> const &a)
   {
     uint8_t bytes[sizeof(T)];
     T       value;
-  } x;
+  } x{};
   for (uint64_t i = 0; i < sizeof(T); ++i)
   {
     x.bytes[i] = a->number_[i];
@@ -109,26 +109,26 @@ Ptr<UInt256Wrapper> UInt256Wrapper::ConstructorFromBytes(VM *vm, TypeId type_id,
 {
   try
   {
-    return new UInt256Wrapper(vm, type_id, ba->byte_array());
+    return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, type_id, ba->byte_array())};
   }
   catch (std::runtime_error const &e)
   {
     vm->RuntimeError(e.what());
   }
-  return nullptr;
+  return {};
 }
 
 Ptr<UInt256Wrapper> UInt256Wrapper::Constructor(VM *vm, TypeId type_id, uint64_t val)
 {
   try
   {
-    return new UInt256Wrapper(vm, type_id, val);
+    return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, type_id, val)};
   }
   catch (std::runtime_error const &e)
   {
     vm->RuntimeError(e.what());
   }
-  return nullptr;
+  return {};
 }
 
 double UInt256Wrapper::ToFloat64() const

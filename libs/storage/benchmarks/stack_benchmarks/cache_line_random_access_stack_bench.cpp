@@ -29,24 +29,23 @@ static constexpr std::size_t cache_line_size = 13;
 template <class T>
 struct CachedDataItem
 {
-  uint64_t                            reads      = 0;
-  uint64_t                            writes     = 0;
-  uint32_t                            usage_flag = 0;
-  std::array<T, 1 << cache_line_size> elements;
+  uint64_t                             reads      = 0;
+  uint64_t                             writes     = 0;
+  uint32_t                             usage_flag = 0;
+  std::array<T, 1u << cache_line_size> elements;
 };
 
 template <class N>
 static void CacheLineRandomAccessStackBench_misshit(benchmark::State &st)
 {
+  CacheLineRandomAccessStack<N>             stack;
+  fetch::random::LaggedFibonacciGenerator<> lfg;
+  stack.New("RAS_bench.db");
 
-  CacheLineRandomAccessStack<N>             stack_;
-  fetch::random::LaggedFibonacciGenerator<> lfg_;
-  stack_.New("RAS_bench.db");
+  EXPECT_TRUE(stack.is_open());
+  EXPECT_TRUE(stack.DirectWrite()) << "Expected cache line random access stack to be direct write";
 
-  EXPECT_TRUE(stack_.is_open());
-  EXPECT_TRUE(stack_.DirectWrite()) << "Expected cache line random access stack to be direct write";
-
-  stack_.SetMemoryLimit(std::size_t(1ULL << 22u));
+  stack.SetMemoryLimit(std::size_t(1ULL << 22u));
   N        dummy;
   uint64_t line_count = 0;
 
@@ -56,7 +55,7 @@ static void CacheLineRandomAccessStackBench_misshit(benchmark::State &st)
     // Each cache line contains 8192 elements
     for (int i = 0; i < 8192; i++)
     {
-      stack_.Push(dummy);
+      stack.Push(dummy);
     }
     line_count++;
   }
@@ -67,9 +66,9 @@ static void CacheLineRandomAccessStackBench_misshit(benchmark::State &st)
   for (auto _ : st)
   {
     st.PauseTiming();
-    random = lfg_() % limit;
+    random = lfg() % limit;
     st.ResumeTiming();
-    stack_.Set(random, dummy);
+    stack.Set(random, dummy);
   }
 }
 BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_misshit, uint64_t);
@@ -79,23 +78,22 @@ BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_misshit, int);
 template <class N>
 static void CacheLineRandomAccessStackBench_miss(benchmark::State &st)
 {
+  CacheLineRandomAccessStack<N> stack;
+  stack.New("RAS_bench.db");
 
-  CacheLineRandomAccessStack<N> stack_;
-  stack_.New("RAS_bench.db");
+  EXPECT_TRUE(stack.is_open());
+  EXPECT_TRUE(stack.DirectWrite()) << "Expected cache line random access stack to be direct write";
 
-  EXPECT_TRUE(stack_.is_open());
-  EXPECT_TRUE(stack_.DirectWrite()) << "Expected cache line random access stack to be direct write";
-
-  stack_.SetMemoryLimit(std::size_t(1ULL << 22));
-  N        dummy;
+  stack.SetMemoryLimit(std::size_t(1ULL << 22u));
+  N        dummy{};
   uint64_t line_count = 0;
 
   // Pushing elements till the cache gets full
-  while (line_count * sizeof(CachedDataItem<N>) < std::size_t(1ULL << 22))
+  while (line_count * sizeof(CachedDataItem<N>) < std::size_t(1ULL << 22u))
   {
     for (int i = 0; i < 8192; i++)
     {
-      stack_.Push(dummy);
+      stack.Push(dummy);
     }
     line_count++;
   }
@@ -107,7 +105,7 @@ static void CacheLineRandomAccessStackBench_miss(benchmark::State &st)
     st.PauseTiming();
     element_count = (element_count + 8192) % 10000000;
     st.ResumeTiming();
-    stack_.Set(element_count, dummy);
+    stack.Set(element_count, dummy);
   }
 }
 BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_miss, uint64_t);
@@ -117,25 +115,24 @@ BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_miss, int);
 template <class N>
 static void CacheLineRandomAccessStackBench_hit(benchmark::State &st)
 {
+  CacheLineRandomAccessStack<N>             stack;
+  fetch::random::LaggedFibonacciGenerator<> lfg;
+  stack.New("RAS_bench.db");
 
-  CacheLineRandomAccessStack<N>             stack_;
-  fetch::random::LaggedFibonacciGenerator<> lfg_;
-  stack_.New("RAS_bench.db");
+  EXPECT_TRUE(stack.is_open());
+  EXPECT_TRUE(stack.DirectWrite()) << "Expected cache line random access stack to be direct write";
 
-  EXPECT_TRUE(stack_.is_open());
-  EXPECT_TRUE(stack_.DirectWrite()) << "Expected cache line random access stack to be direct write";
-
-  stack_.SetMemoryLimit(std::size_t(1ULL << 22));
+  stack.SetMemoryLimit(std::size_t(1ULL << 22u));
   N dummy;
 
   uint64_t line_count = 0;
 
   // Pushing elements till the cache gets full
-  while (line_count * sizeof(CachedDataItem<N>) < std::size_t(1ULL << 22))
+  while (line_count * sizeof(CachedDataItem<N>) < std::size_t(1ULL << 22u))
   {
     for (int i = 0; i < 8192; i++)
     {
-      stack_.Push(dummy);
+      stack.Push(dummy);
     }
     line_count++;
   }
@@ -145,9 +142,9 @@ static void CacheLineRandomAccessStackBench_hit(benchmark::State &st)
   for (auto _ : st)
   {
     st.PauseTiming();
-    random = lfg_() % element_count;
+    random = lfg() % element_count;
     st.ResumeTiming();
-    stack_.Set(random, dummy);
+    stack.Set(random, dummy);
   }
 }
 BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_hit, uint64_t);

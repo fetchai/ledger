@@ -18,8 +18,39 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/info.hpp"
+#include "vectorise/meta/math_type_traits.hpp"
 
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <ostream>
+
+namespace fetch {
+
+namespace vectorise {
+
+template <typename T>
+struct VectorRegisterSize
+{
+  enum
+  {
+    value = 64
+  };
+};
+
+#define ADD_REGISTER_SIZE(type, size) \
+  template <>                         \
+  struct VectorRegisterSize<type>     \
+  {                                   \
+    enum                              \
+    {                                 \
+      value = (size)                  \
+    };                                \
+  }
+
+#include <cmath>
+#include <cstddef>
+#include <ostream>
 
 namespace details {
 template <typename T, std::size_t N>
@@ -49,23 +80,20 @@ struct UnrollSet<T, 0>
   FUNCTION(-)                         \
   FUNCTION(&)                         \
   FUNCTION(|)                         \
-  FUNCTION (^)
+  FUNCTION(^)
 // clang-format on
 
-namespace fetch {
-namespace vectorize {
-
-template <typename T, std::size_t N = sizeof(T)>
-class VectorRegister
+template <typename T, std::size_t N = 8 * sizeof(T)>
+class VectorRegister : public BaseVectorRegisterType
 {
 public:
-  using type             = T;
-  using mm_register_type = T;
+  using type           = T;
+  using MMRegisterType = T;
 
   enum
   {
-    E_VECTOR_SIZE   = sizeof(mm_register_type),
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_VECTOR_SIZE   = sizeof(MMRegisterType),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -88,12 +116,21 @@ public:
     return data_;
   }
 
-#define FETCH_ADD_OPERATOR(OP)                            \
-  VectorRegister operator OP(VectorRegister const &other) \
-  {                                                       \
-    return VectorRegister(type(data_ OP other.data_));    \
+  type data() const
+  {
+    return data_;
   }
-  APPLY_OPERATOR_LIST(FETCH_ADD_OPERATOR);
+  type &data()
+  {
+    return data_;
+  }
+
+#define FETCH_ADD_OPERATOR(OP)                                  \
+  VectorRegister operator OP(VectorRegister const &other) const \
+  {                                                             \
+    return VectorRegister(type(data_ OP other.data_));          \
+  }
+  APPLY_OPERATOR_LIST(FETCH_ADD_OPERATOR);  // NOLINT
 #undef FETCH_ADD_OPERATOR
 
   void Store(type *ptr) const
@@ -105,6 +142,79 @@ private:
   type data_;
 };
 
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline std::ostream &operator<<(std::ostream &s, VectorRegister<T, N> const &n)
+{
+  s << n.data();
+  return s;
+}
+
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline VectorRegister<T, N> abs(VectorRegister<T, N> const &x)
+{
+  return VectorRegister<T, N>(std::abs(x.data()));
+}
+
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline VectorRegister<T, N> approx_log(VectorRegister<T, N> const &x)
+{
+  return VectorRegister<T, N>(std::log(x.data()));
+}
+
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline VectorRegister<T, N> approx_exp(VectorRegister<T, N> const &x)
+{
+  return VectorRegister<T, N>(std::exp(x.data()));
+}
+
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline VectorRegister<T, N> shift_elements_right(VectorRegister<T, N> const &x)
+{
+  return VectorRegister<T, N>(x.data());
+}
+
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline VectorRegister<T, N> shift_elements_left(VectorRegister<T, N> const &x)
+{
+  return VectorRegister<T, N>(x.data());
+}
+
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline T first_element(VectorRegister<T, N> const &x)
+{
+  return x.data();
+}
+
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline T reduce(VectorRegister<T, N> const &x)
+{
+  return x.data();
+}
+
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline bool all_less_than(VectorRegister<T, N> const &x, VectorRegister<T, N> const &y)
+{
+  return x.data() < y.data();
+}
+
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline bool any_less_than(VectorRegister<T, N> const &x, VectorRegister<T, N> const &y)
+{
+  return x.data() < y.data();
+}
+
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline bool all_equal_to(VectorRegister<T, N> const &x, VectorRegister<T, N> const &y)
+{
+  return x.data() == y.data();
+}
+
+template <typename T, std::size_t N = 8 * sizeof(T)>
+inline bool any_equal_to(VectorRegister<T, N> const &x, VectorRegister<T, N> const &y)
+{
+  return x.data() == y.data();
+}
+
 #undef APPLY_OPERATOR_LIST
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

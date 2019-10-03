@@ -107,7 +107,7 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t end)
           // convert to lowercase
           for (std::size_t t = 0; t < key.size(); ++t)
           {
-            char &cc = reinterpret_cast<char &>(key[t]);
+            auto &cc = reinterpret_cast<char &>(key[t]);
             if (('A' <= cc) && (cc <= 'Z'))
             {
               cc = char(cc + 'a' - 'A');
@@ -180,7 +180,7 @@ bool HTTPRequest::ToStream(asio::streambuf &buffer, std::string const &host, uin
     stream << element.first << ": " << element.second << NEW_LINE;
   }
 
-  if (body_data_.size() && (!header_.Has("content-length")))
+  if (!body_data_.empty() && (!header_.Has("content-length")))
   {
     stream << "content-length: " << body_data_.size() << NEW_LINE;
   }
@@ -203,7 +203,7 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
       return false;
     }
 
-    char &cc = reinterpret_cast<char &>(line[i]);
+    auto &cc = reinterpret_cast<char &>(line[i]);
     if (('A' <= cc) && (cc <= 'Z'))
     {
       cc = char(cc + 'a' - 'A');
@@ -256,7 +256,7 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     case '&':
       equal = std::min(k, equal);
       key   = line.SubArray(last, equal - last);
-      equal += (equal < k);
+      equal += static_cast<std::size_t>(equal < k);
       value = line.SubArray(equal, k - equal);
 
       query_.Add(key, value);
@@ -269,7 +269,7 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
 
   equal = std::min(k, equal);
   key   = line.SubArray(last, equal - last);
-  equal += (equal < k);
+  equal += static_cast<std::size_t>(equal < k);
   value = line.SubArray(equal, k - equal);
   query_.Add(key, value);
 
@@ -285,7 +285,7 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
   protocol_ = line.SubArray(i, line.size() - i);
   for (std::size_t t = i; t < line.size(); ++t)
   {
-    char &cc = reinterpret_cast<char &>(line[t]);
+    auto &cc = reinterpret_cast<char &>(line[t]);
     if (('A' <= cc) && (cc <= 'Z'))
     {
       cc = char(cc + 'a' - 'A');

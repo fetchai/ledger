@@ -61,7 +61,7 @@ TEST(big_number_gtest, incrementer_tests)
     {
       uint64_t value;
       uint8_t  bytes[sizeof(uint64_t)];
-    } c;
+    } c{};
     for (std::size_t i = 0; i < sizeof(uint64_t); ++i)
     {
       c.bytes[i] = n1[i];
@@ -156,7 +156,7 @@ TEST(big_number_gtest, multiplication_tests)
   n4.ElementAt(1) = 0x00000001264eb563;
   n4.ElementAt(2) = 0;
   n4.ElementAt(3) = 0;
-  UInt<256> n5    = 0xdeadbeefdeadbeef;
+  UInt<256> n5(0xdeadbeefdeadbeef);
   n4 *= n5;
   EXPECT_EQ(n4.ElementAt(0), 0x38fdb7f338fdb7f5);
   EXPECT_EQ(n4.ElementAt(1), 0xfffffffeffffffff);

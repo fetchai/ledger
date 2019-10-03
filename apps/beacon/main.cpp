@@ -21,8 +21,6 @@
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
@@ -46,6 +44,7 @@
 #include <random>
 #include <stdexcept>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 using namespace fetch;
@@ -59,7 +58,7 @@ using Address        = fetch::muddle::Packet::Address;
 
 struct DummyManifestCache : public ledger::ManifestCacheInterface
 {
-  bool QueryManifest(Address const &, ledger::Manifest &) override
+  bool QueryManifest(Address const & /*address*/, ledger::Manifest & /*manifest*/) override
   {
     return false;
   }
@@ -87,7 +86,7 @@ struct CabinetNode
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
+    , beacon_service{*muddle, manifest_cache, muddle_certificate, std::move(event_manager)}
   {
     network_manager.Start();
     muddle->Start({muddle_port});
@@ -109,9 +108,6 @@ int main()
   constexpr uint16_t number_of_nodes    = 16;
   constexpr uint16_t cabinet_size       = 4;
   constexpr uint16_t number_of_cabinets = number_of_nodes / cabinet_size;
-
-  // Initialising the BLS library
-  crypto::bls::Init();
 
   EventManager::SharedEventManager event_manager = EventManager::New();
 

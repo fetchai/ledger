@@ -152,7 +152,7 @@ public:
 
   void AddAuthentication(byte_array::ConstByteArray const &auth_method, uint32_t level)
   {
-    if (auth_method_.size() != 0)
+    if (!auth_method_.empty())
     {
       auth_method_.Append(", ");
     }

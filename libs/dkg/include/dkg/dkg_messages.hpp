@@ -87,7 +87,7 @@ public:
   {
     serialiser >> payload_;
   }
-  FinalStateMessage(Payload const &payload)
+  explicit FinalStateMessage(Payload const &payload)  // NOLINT
     : DKGMessage{MessageType::FINAL_STATE}
     , payload_{payload}
   {}
@@ -111,9 +111,9 @@ public:
   {
     serialiser >> connections_;
   }
-  ConnectionsMessage(std::set<MuddleAddress> const &connections)
+  explicit ConnectionsMessage(std::set<MuddleAddress> connections)
     : DKGMessage{MessageType::CONNECTIONS}
-    , connections_{connections}
+    , connections_{std::move(connections)}
   {}
   ~ConnectionsMessage() override = default;
 
@@ -127,7 +127,7 @@ public:
 
 class CoefficientsMessage : public DKGMessage
 {
-  uint8_t                  phase_;         ///< Phase of state machine that this message is for
+  uint8_t                  phase_{};       ///< Phase of state machine that this message is for
   std::vector<Coefficient> coefficients_;  ///< Coefficients as strings
 
 public:
@@ -165,7 +165,7 @@ public:
 
 class SharesMessage : public DKGMessage
 {
-  uint8_t phase_;  ///< Phase of state machine that this message is for
+  uint8_t phase_{};  ///< Phase of state machine that this message is for
   std::unordered_map<CabinetId, std::pair<Share, Share>>
       shares_;  ///< Exposed secret shares for a particular committee member
 public:
@@ -212,7 +212,7 @@ public:
   {
     serialiser >> complaints_;
   }
-  ComplaintsMessage(std::unordered_set<CabinetId> complaints)
+  explicit ComplaintsMessage(std::unordered_set<CabinetId> complaints)
     : DKGMessage{MessageType::COMPLAINT}
     , complaints_{std::move(complaints)}
   {}

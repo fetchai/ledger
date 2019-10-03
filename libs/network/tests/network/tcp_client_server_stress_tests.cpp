@@ -27,27 +27,27 @@
 #include <iostream>
 #include <memory>
 
-// Test of the client and server.
+namespace {
 
 using namespace fetch::network;
 using namespace fetch::byte_array;
 
-static constexpr char const *LOGGING_NAME = "TcpClientServerStressTests";
+constexpr char const *LOGGING_NAME = "TcpClientServerStressTests";
 
-std::vector<message_type> globalMessagesFromServer_{};
-std::mutex                messages_;
+std::vector<MessageType> globalMessagesFromServer_{};
+std::mutex               messages_;
 
 // Basic server
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t port, NetworkManager nmanager)
+  Server(uint16_t port, NetworkManager const &nmanager)
     : TCPServer(port, nmanager)
-  {}  // note for debug purposes, server does not Start() automatically
+  {}
 
   ~Server() override = default;
 
-  void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
+  void PushRequest(ConnectionHandleType /*client*/, MessageType const &msg) override
   {
     FETCH_LOCK(messages_);
     globalMessagesFromServer_.push_back(msg);
@@ -104,7 +104,7 @@ void waitUntilConnected(std::string const &host, uint16_t port)
 }
 
 template <std::size_t N = 1>
-void TestCase0(std::string /*host*/, uint16_t port)
+void TestCase0(std::string const & /*host*/, uint16_t port)
 {
   std::cerr << "\nTEST CASE 0. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the server multiple times" << std::endl;
@@ -126,7 +126,7 @@ void TestCase0(std::string /*host*/, uint16_t port)
 }
 
 template <std::size_t N = 1>
-void TestCase1(std::string /*host*/, uint16_t port)
+void TestCase1(std::string const & /*host*/, uint16_t port)
 {
   std::cerr << "\nTEST CASE 1. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the server multiple times" << std::endl;
@@ -149,7 +149,7 @@ void TestCase1(std::string /*host*/, uint16_t port)
 }
 
 template <std::size_t N = 1>
-void TestCase2(std::string host, uint16_t port)
+void TestCase2(std::string const &host, uint16_t port)
 {
   std::cerr << "\nTEST CASE 2. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the server and send data to it" << std::endl;
@@ -281,7 +281,7 @@ void TestCase5(std::string host, uint16_t port)
     waitUntilConnected(host, port);
 
     // Create packets of varying sizes
-    std::vector<message_type> to_send;
+    std::vector<MessageType> to_send;
 
     {
       FETCH_LOCK(messages_);
@@ -290,11 +290,11 @@ void TestCase5(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+      auto to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
 
       std::string send_me(1 << (i + 14), to_fill);
 
-      to_send.push_back(send_me);
+      to_send.emplace_back(send_me);
     }
 
     // This will be over a single connection
@@ -302,7 +302,7 @@ void TestCase5(std::string host, uint16_t port)
     if (!(i->WaitForAlive(100)))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     std::atomic<std::size_t> send_atomic{0};
@@ -375,15 +375,15 @@ void TestCase6(std::string host, uint16_t port)
     waitUntilConnected(host, port);
 
     // Create packets of varying sizes
-    std::vector<message_type> to_send;
-    std::vector<message_type> to_receive;
+    std::vector<MessageType> to_send;
+    std::vector<MessageType> to_receive;
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+      auto to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
 
       std::string send_me(1 << (i + 14), to_fill);
-      to_send.push_back(send_me);
+      to_send.emplace_back(send_me);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "*** Open connection. ***");
@@ -392,12 +392,12 @@ void TestCase6(std::string host, uint16_t port)
     if (!(i->WaitForAlive(1000)))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened 1");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     std::mutex messages_receive;
 
-    auto lam = [&](message_type const &msg) {
+    auto lam = [&](MessageType const &msg) {
       FETCH_LOCK(messages_receive);
       to_receive.push_back(msg);
     };
@@ -473,10 +473,10 @@ void TestCase7(std::string host, uint16_t port)
     waitUntilConnected(host, port);
 
     // Create packets of varying sizes
-    std::vector<message_type> to_send_from_server;
-    std::vector<message_type> to_send_from_client;
+    std::vector<MessageType> to_send_from_server;
+    std::vector<MessageType> to_send_from_client;
 
-    std::vector<message_type> received_client;
+    std::vector<MessageType> received_client;
 
     {
       FETCH_LOCK(messages_);
@@ -485,18 +485,18 @@ void TestCase7(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+      auto to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
 
       std::string send_me(1 << (i + 14), to_fill);
-      to_send_from_client.push_back(send_me);
+      to_send_from_client.emplace_back(send_me);
     }
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x49 + (i & 0xFF));
+      auto to_fill = char(0x49 + (i & 0xFF));
 
       std::string send_me(1 << (i + 14), to_fill);
-      to_send_from_server.push_back(send_me);
+      to_send_from_server.emplace_back(send_me);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "*** Open connection. ***");
@@ -505,12 +505,12 @@ void TestCase7(std::string host, uint16_t port)
     if (!(i->WaitForAlive(1000)))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened!");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     std::mutex messages_receive;
 
-    auto lam = [&](message_type const &msg) {
+    auto lam = [&](MessageType const &msg) {
       FETCH_LOCK(messages_receive);
       received_client.push_back(msg);
     };
@@ -574,13 +574,13 @@ void TestCase7(std::string host, uint16_t port)
     if (globalMessagesFromServer_ != to_send_from_client)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match client->server messages.");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     if (received_client != to_send_from_server)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server->client messages.");
-      throw 1;
+      throw std::runtime_error("error");
     }
   }
 }
@@ -627,3 +627,5 @@ INSTANTIATE_TEST_CASE_P(MyGroup, TCPClientServerTest, testing::Values<std::size_
                         testing::PrintToStringParamName());
 // testing::Values<std::size_t>(4): 4 is the number of iterations to run this test under 30 sec.
 // Change the number of iteration to increase/decrease test execution time.
+
+}  // namespace

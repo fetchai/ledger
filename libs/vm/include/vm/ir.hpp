@@ -206,7 +206,7 @@ struct IRBlockNode : public IRNode
 
   IRNodePtrArray block_children;
   std::string    block_terminator_text;
-  uint16_t       block_terminator_line;
+  uint16_t       block_terminator_line{};
 };
 using IRBlockNodePtr      = std::shared_ptr<IRBlockNode>;
 using IRBlockNodePtrArray = std::vector<IRBlockNodePtr>;
@@ -306,20 +306,20 @@ private:
   IRTypePtr          CloneType(IRTypePtr const &type);
   IRVariablePtr      CloneVariable(IRVariablePtr const &variable);
   IRFunctionPtr      CloneFunction(IRFunctionPtr const &function);
-  IRTypePtrArray     CloneTypes(const IRTypePtrArray &types);
-  IRVariablePtrArray CloneVariables(const IRVariablePtrArray &variables);
+  IRTypePtrArray     CloneTypes(IRTypePtrArray const &types);
+  IRVariablePtrArray CloneVariables(IRVariablePtrArray const &variables);
 
-  void AddType(const IRTypePtr &type)
+  void AddType(IRTypePtr const &type)
   {
     types_.push_back(type);
   }
 
-  void AddVariable(const IRVariablePtr &variable)
+  void AddVariable(IRVariablePtr const &variable)
   {
     variables_.push_back(variable);
   }
 
-  void AddFunction(const IRFunctionPtr &function)
+  void AddFunction(IRFunctionPtr const &function)
   {
     functions_.push_back(function);
   }

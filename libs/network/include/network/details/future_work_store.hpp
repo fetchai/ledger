@@ -47,7 +47,7 @@ public:
 
   // Construction / Destruction
   FutureWorkStore()                           = default;
-  FutureWorkStore(const FutureWorkStore &rhs) = delete;
+  FutureWorkStore(FutureWorkStore const &rhs) = delete;
   FutureWorkStore(FutureWorkStore &&rhs)      = delete;
   ~FutureWorkStore()
   {
@@ -166,10 +166,8 @@ public:
         {
           return duration_cast<milliseconds>(element.due - now);
         }
-        else
-        {
-          return milliseconds::zero();
-        }
+
+        return milliseconds::zero();
       }
     }
 
@@ -177,7 +175,7 @@ public:
   }
 
   // Operators
-  FutureWorkStore operator=(const FutureWorkStore &rhs) = delete;
+  FutureWorkStore operator=(FutureWorkStore const &rhs) = delete;
   FutureWorkStore operator=(FutureWorkStore &&rhs) = delete;
 
 private:

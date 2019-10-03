@@ -40,14 +40,16 @@ using MinMaxScalerType = fetch::ml::utilities::MinMaxScaler<MathTensorType>;
 
 VMScaler::VMScaler(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-{}
+{
+  scaler_ = std::make_shared<MinMaxScalerType>();
+}
 
 Ptr<VMScaler> VMScaler::Constructor(VM *vm, TypeId type_id)
 {
-  return new VMScaler(vm, type_id);
+  return Ptr<VMScaler>{new VMScaler(vm, type_id)};
 }
 
-void VMScaler::SetScale(Ptr<VMTensorType> const &reference_tensor, Ptr<String> const &mode)
+void VMScaler::SetScaleByData(Ptr<VMTensorType> const &reference_tensor, Ptr<String> const &mode)
 {
   if (mode->str == "min_max")
   {
@@ -59,6 +61,11 @@ void VMScaler::SetScale(Ptr<VMTensorType> const &reference_tensor, Ptr<String> c
   }
 
   scaler_->SetScale(reference_tensor->GetConstTensor());
+}
+
+void VMScaler::SetScaleByRange(DataType const &min_val, DataType const &max_val)
+{
+  scaler_->SetScale(min_val, max_val);
 }
 
 Ptr<VMTensorType> VMScaler::Normalise(Ptr<VMTensorType> const &input_tensor)
@@ -79,9 +86,24 @@ void VMScaler::Bind(Module &module)
 {
   module.CreateClassType<VMScaler>("Scaler")
       .CreateConstructor(VMScaler::Constructor)
-      .CreateMemberFunction("setScale", &VMScaler::SetScale)
+      .CreateMemberFunction("setScale", &VMScaler::SetScaleByData)
+      .CreateMemberFunction("setScale", &VMScaler::SetScaleByRange)
       .CreateMemberFunction("normalise", &VMScaler::Normalise)
       .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise);
+}
+
+bool VMScaler::SerializeTo(serializers::MsgPackSerializer &buffer)
+{
+  buffer << *this;
+  return true;
+}
+
+bool VMScaler::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+{
+  auto scaler = std::make_shared<VMScaler>(this->vm_, this->type_id_);
+  buffer >> *scaler;
+  *this = *scaler;
+  return true;
 }
 
 }  // namespace utilities

@@ -31,7 +31,7 @@ using vector_type = typename array_type::VectorRegisterType;
 void SlicedOperations(array_type const &A, array_type &C)
 {
   auto aslice = A.slice(8, 6);
-  C.slice(2, 6).in_parallel().Apply([](vector_type const &a, vector_type &c) { c = a; }, aslice);
+  C.slice(4, 6).in_parallel().Apply([](auto const &a, auto &c) { c = a; }, aslice);
 }
 
 int main(int argc, char const **argv)

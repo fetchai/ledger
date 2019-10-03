@@ -106,7 +106,7 @@ void FakeStorageUnit::IssueCallForMissingTxs(DigestSet const &digests)
   FETCH_UNUSED(digests);
 }
 
-FakeStorageUnit::TxLayouts FakeStorageUnit::PollRecentTx(uint32_t)
+FakeStorageUnit::TxLayouts FakeStorageUnit::PollRecentTx(uint32_t /*unused*/)
 {
   return {};
 }
@@ -208,9 +208,9 @@ FakeStorageUnit::Keys FakeStorageUnit::KeyDump() const
 {
   FakeStorageUnit::Keys keys;
 
-  for (auto it = state_->begin(); it != state_->end(); ++it)
+  for (auto const &it : *state_)
   {
-    keys.push_back(ResourceID(it->first));
+    keys.push_back(ResourceID(it.first));
   }
 
   return keys;

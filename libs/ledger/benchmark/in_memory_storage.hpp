@@ -57,7 +57,7 @@ public:
   void IssueCallForMissingTxs(DigestSet const &tx_set) override;
   /// @}
 
-  TxLayouts PollRecentTx(uint32_t) override;
+  TxLayouts PollRecentTx(uint32_t /*unused*/) override;
 
   /// @name Revertible Document Store Interface
   /// @{

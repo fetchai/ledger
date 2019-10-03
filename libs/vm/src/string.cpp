@@ -34,7 +34,7 @@ namespace {
 
 bool is_not_whitespace(int ch)
 {
-  return !std::isspace(ch);
+  return std::isspace(ch) == 0;
 }
 
 void trim_left(std::string &s)
@@ -94,17 +94,17 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
   if (start_index < 0)
   {
     RuntimeError("substring start index must be non-negative");
-    return nullptr;
+    return {};
   }
   if (end_index < start_index)
   {
     RuntimeError("substring start index must not exceed end index");
-    return nullptr;
+    return {};
   }
   if (static_cast<std::size_t>(end_index) > str.size())
   {
     RuntimeError("substring end index exceeds length of string");
-    return nullptr;
+    return {};
   }
 
   auto start{str.begin()};
@@ -115,7 +115,7 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
   // using *unchecked* version to enable index to point at the str.end()
   utf8::unchecked::advance(end, end_index);  // unchecked
 
-  return new String(vm_, std::string{start, end});
+  return Ptr<String>{new String(vm_, std::string{start, end})};
 }
 
 void String::Reverse()
@@ -139,13 +139,15 @@ Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
   if (separator == nullptr)
   {
     vm_->RuntimeError("split: argument must not be null");
-    return new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_, 0);
+    return Ptr<Array<Ptr<String>>>{
+        new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_, 0)};
   }
 
   if (separator->str.empty())
   {
     vm_->RuntimeError("split: argument must not be the empty string");
-    return new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_, 0);
+    return Ptr<Array<Ptr<String>>>{
+        new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_, 0)};
   }
 
   std::vector<std::size_t> segment_boundaries{0};
@@ -159,8 +161,9 @@ Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
   // separator not found
   if (segment_boundaries.size() == 1)
   {
-    auto ret = new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_, 1);
-    ret->elements[0] = new String(vm_, str);
+    auto ret = Ptr<Array<Ptr<String>>>{
+        new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_, 1)};
+    ret->elements[0] = Ptr<String>{new String(vm_, str)};
 
     return ret;
   }
@@ -169,14 +172,15 @@ Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
 
   assert(segment_boundaries.size() > 2u);
 
-  auto ret = new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_,
-                                    static_cast<int32_t>(segment_boundaries.size() - 1));
+  auto ret = Ptr<Array<Ptr<String>>>{
+      new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_,
+                             static_cast<int32_t>(segment_boundaries.size() - 1))};
 
   for (std::size_t i = 0; i + 1 < segment_boundaries.size(); ++i)
   {
     std::size_t begin = segment_boundaries[i];
     std::size_t len   = segment_boundaries[i + 1] - begin - separator->str.length();
-    ret->elements[i]  = new String(vm_, str.substr(begin, len));
+    ret->elements[i]  = Ptr<String>{new String(vm_, str.substr(begin, len))};
   }
 
   return ret;

@@ -47,9 +47,9 @@
 
 static constexpr uint8_t DEFAULT_TTL = 40;
 
-using fetch::byte_array::ToBase64;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::ToBase64;
 
 namespace fetch {
 namespace muddle {
@@ -79,7 +79,7 @@ std::size_t GenerateEchoId(Packet const &packet)
 
   std::size_t out = 0;
 
-  static_assert(sizeof(out) == hash.size_in_bytes,
+  static_assert(sizeof(out) == decltype(hash)::size_in_bytes,
                 "Output type has incorrect size to contain hash");
   hash.Final(reinterpret_cast<uint8_t *>(&out));
 
@@ -249,7 +249,7 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispa
   , registrar_(network_id)
   , network_id_(network_id)
   , prover_(prover)
-  , sign_broadcasts_(prover && sign_broadcasts)
+  , sign_broadcasts_((prover != nullptr) && sign_broadcasts)
   , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
 {}
 
@@ -282,12 +282,12 @@ bool Router::Genuine(PacketPtr const &p) const
     return p->Verify();
   }
   // non-stamped packages are genuine in a trusted network
-  return !prover_;
+  return prover_ == nullptr;
 }
 
 Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
 {
-  if (prover_ && (sign_broadcasts_ || !p->IsBroadcast()))
+  if ((prover_ != nullptr) && (sign_broadcasts_ || !p->IsBroadcast()))
   {
     p->Sign(*prover_);
   }
@@ -300,7 +300,7 @@ Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
  * @param handle The handle of the receiving connection for the packet
  * @param packet The input packet to route
  */
-void Router::Route(Handle handle, PacketPtr packet)
+void Router::Route(Handle handle, PacketPtr const &packet)
 {
   FETCH_LOG_TRACE(logging_name_, "RX: (conn: ", handle, ") ", DescribePacket(*packet));
 
@@ -410,7 +410,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
       FormatPacket(address_, network_id_, service, channel, message_num, DEFAULT_TTL, payload);
   packet->SetTarget(address);
 
-  if (options & OPTION_EXCHANGE)
+  if ((options & OPTION_EXCHANGE) != 0u)
   {
     packet->SetExchange(true);
   }
@@ -577,7 +577,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
     bool const is_downgrade         = (!is_empty) && routing_data.direct && !direct;
     bool const is_different =
         (is_connection_update && !is_duplicate_direct && !is_downgrade) || is_upgrade;
-    bool const is_update = (routing_data.handle && is_different);
+    bool const is_update = ((routing_data.handle != 0u) && is_different);
 
     // update the routing table if required
     if (is_duplicate_direct)
@@ -654,8 +654,8 @@ void Router::SetKademliaRouting(bool enable)
  */
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/) const
 {
-  static std::random_device rd;
-  static std::mt19937       rng(rd());
+  thread_local std::random_device rd;
+  thread_local std::mt19937       rng(rd());
 
   {
     FETCH_LOCK(routing_table_lock_);
@@ -717,7 +717,7 @@ Router::Handle Router::LookupKademliaClosestHandle(Address const &address) const
  * @param handle The handle to the network connection
  * @param packet The packet to be routed
  */
-void Router::SendToConnection(Handle handle, PacketPtr packet)
+void Router::SendToConnection(Handle handle, PacketPtr const &packet)
 {
   // internal method, we expect all inputs be valid at this stage
   assert(static_cast<bool>(packet));
@@ -763,7 +763,7 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
  * @param packet The packet to be routed
  * @param external Flag to signal that this packet originated from the network
  */
-void Router::RoutePacket(PacketPtr packet, bool external)
+void Router::RoutePacket(PacketPtr const &packet, bool external)
 {
 
   // black list support
@@ -818,10 +818,16 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   {
     // attempt to route to one of our direct peers
     Handle handle = LookupHandle(packet->GetTargetRaw());
-    if (handle)
+    if (handle != 0u)
     {
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
+      return;
+    }
+
+    if (kademlia_routing_)
+    {
+      LookupKademliaClosestHandle(packet->GetTarget());
       return;
     }
 
@@ -834,7 +840,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     // if direct routing fails then randomly select a handle. In future a better routing scheme
     // should be implemented.
     handle = LookupRandomHandle(packet->GetTargetRaw());
-    if (handle)
+    if (handle != 0u)
     {
       FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", ToBase64(packet->GetTarget()));
       SendToConnection(handle, packet);
@@ -855,7 +861,7 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
   // dispatch to the direct message handler if needed
   if (direct_message_handler_)
   {
-    direct_message_handler_(handle, packet);
+    direct_message_handler_(handle, std::move(packet));
   }
 }
 
@@ -864,7 +870,7 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
  *
  * @param packet The packet that was received
  */
-void Router::DispatchPacket(PacketPtr packet, Address transmitter)
+void Router::DispatchPacket(PacketPtr const &packet, Address const &transmitter)
 {
   dispatch_thread_pool_->Post([this, packet, transmitter]() {
     bool const isPossibleExchangeResponse = !packet->IsExchange();

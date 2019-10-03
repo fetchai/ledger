@@ -84,8 +84,8 @@ using StakeManagerPtr  = std::shared_ptr<ledger::StakeManager>;
 
 constexpr char const *LOGGING_NAME = "constellation";
 
-static const std::size_t HTTP_THREADS{4};
-static char const *      GENESIS_FILENAME = "genesis_file.json";
+const std::size_t HTTP_THREADS{4};
+char const *      GENESIS_FILENAME = "genesis_file.json";
 
 bool WaitForLaneServersToStart()
 {
@@ -105,7 +105,7 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
 }
 
 uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type service,
-                         int32_t instance = -1)
+                         uint32_t instance = ServiceIdentifier::INVALID_SERVICE_IDENTIFIER)
 {
   ServiceIdentifier const identifier{service, instance};
 
@@ -118,16 +118,10 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type servi
   return it->second.local_port();
 }
 
-std::shared_ptr<ledger::DAGInterface> GenerateDAG(bool generate, std::string const &db_name,
-                                                  bool                          load_on_start,
+std::shared_ptr<ledger::DAGInterface> GenerateDAG(std::string const &db_name, bool load_on_start,
                                                   Constellation::CertificatePtr certificate)
 {
-  if (generate)
-  {
-    return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
-  }
-
-  return nullptr;
+  return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
 }
 
 ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
@@ -137,8 +131,7 @@ ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
   for (uint32_t i = 0; i < cfg.num_lanes(); ++i)
   {
     // lookup the service in the provided manifest
-    auto it = cfg.manifest.FindService(
-        ServiceIdentifier{ServiceIdentifier::Type::LANE, static_cast<int32_t>(i)});
+    auto it = cfg.manifest.FindService(ServiceIdentifier{ServiceIdentifier::Type::LANE, i});
 
     if (it == cfg.manifest.end())
     {
@@ -212,7 +205,7 @@ muddle::MuddlePtr CreateBeaconNetwork(Config const &cfg, CertificatePtr certific
 
   if (cfg.proof_of_stake)
   {
-    network = muddle::CreateMuddle("DKGN", certificate, nm,
+    network = muddle::CreateMuddle("DKGN", std::move(certificate), nm,
                                    cfg.manifest.FindExternalAddress(ServiceIdentifier::Type::DKG));
   }
 
@@ -266,15 +259,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , internal_muddle_{muddle::CreateMuddle(
         "ISRD", internal_identity_, network_manager_,
         cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
-  , trust_{}
   , tx_status_cache_(TxStatusCache::factory())
-  , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(internal_muddle_->GetEndpoint(), shard_cfgs_,
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_->GetEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , shard_management_(std::make_shared<ShardManagementService>(cfg_.manifest, lane_control_,
                                                                *muddle_, cfg_.log2_num_lanes))
-  , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
+  , dag_{GenerateDAG("dag_db_", true, certificate)}
   , beacon_network_{CreateBeaconNetwork(cfg_, certificate, network_manager_)}
   , beacon_{CreateBeaconService(cfg_, *beacon_network_, *shard_management_, certificate)}
   , stake_{CreateStakeManager(cfg_)}
@@ -294,7 +285,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        *storage_,
                        block_packer_,
                        *this,
-                       cfg_.features,
                        certificate,
                        cfg_.num_lanes(),
                        cfg_.num_slices,
@@ -323,7 +313,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         "ledger_uptime_ticks_total",
         "The number of intervals that ledger instance has been alive for")}
 {
-
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
                  cfg_.num_executors);
@@ -342,12 +331,12 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   }
 
   // Enable experimental features
+  assert(dag_);
+  dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
+  reactor_.Attach(dag_service_->GetWeakRunnable());
+
   if (cfg_.features.IsEnabled("synergetic"))
   {
-    assert(dag_);
-    dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
-    reactor_.Attach(dag_service_->GetWeakRunnable());
-
     auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
     if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
     {
@@ -477,11 +466,8 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
         FETCH_LOG_INFO(LOGGING_NAME, "Internal muddle network established between shards");
         break;
       }
-      else
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME,
-                        "Waiting for internal muddle connection to be established...");
-      }
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Waiting for internal muddle connection to be established...");
 
       std::this_thread::sleep_for(std::chrono::milliseconds{500});
     }

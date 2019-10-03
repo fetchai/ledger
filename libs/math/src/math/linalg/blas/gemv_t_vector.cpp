@@ -75,26 +75,23 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     {
       if (beta == static_cast<Type>(0.0))
       {
+        Type zero{0.0};
 
-        VectorRegisterType fetch_vec_zero(static_cast<Type>(0.0));
-
-        auto                 ret_slice = y.data().slice(0, y.padded_size());
-        memory::TrivialRange range(std::size_t(0), std::size_t(leny));
-        ret_slice.in_parallel().Apply(
-            range, [fetch_vec_zero](VectorRegisterType &vw_fv_y) { vw_fv_y = fetch_vec_zero; });
+        auto          ret_slice = y.data().slice(0, y.padded_size());
+        memory::Range range(std::size_t(0), std::size_t(leny));
+        ret_slice.in_parallel().RangedApply(range, [zero](auto &&vw_fv_y) {
+          vw_fv_y = static_cast<std::remove_reference_t<decltype(vw_fv_y)>>(zero);
+        });
       }
       else
       {
-
-        VectorRegisterType fetch_vec_beta(beta);
-
-        auto                 ret_slice  = y.data().slice(0, y.padded_size());
-        auto                 slice_fv_y = y.data().slice(0, y.padded_size());
-        memory::TrivialRange range(std::size_t(0), std::size_t(leny));
-        ret_slice.in_parallel().Apply(
+        auto          ret_slice  = y.data().slice(0, y.padded_size());
+        auto          slice_fv_y = y.data().slice(0, y.padded_size());
+        memory::Range range(std::size_t(0), std::size_t(leny));
+        ret_slice.in_parallel().RangedApplyMultiple(
             range,
-            [fetch_vec_beta](VectorRegisterType const &vr_fv_y, VectorRegisterType &vw_fv_y) {
-              vw_fv_y = fetch_vec_beta * vr_fv_y;
+            [beta](auto const &vr_fv_y, auto &vw_fv_y) {
+              vw_fv_y = static_cast<std::remove_reference_t<decltype(vr_fv_y)>>(beta) * vr_fv_y;
             },
             slice_fv_y);
       }
@@ -136,12 +133,9 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
 
       auto slice_a_j  = a.data().slice(a.padded_height() * std::size_t(j), a.padded_height());
       auto slice_fv_x = x.data().slice(0, x.padded_size());
-      memory::TrivialRange range(std::size_t(0), std::size_t(int(a.height())));
+      memory::Range range(std::size_t(0), std::size_t(int(a.height())));
       temp = slice_a_j.in_parallel().SumReduce(
-          range,
-          [](VectorRegisterType const &vr_a_j, VectorRegisterType const &vr_fv_x) {
-            return vr_a_j * vr_fv_x;
-          },
+          range, [](auto const &vr_a_j, auto const &vr_fv_x) -> auto { return vr_a_j * vr_fv_x; },
           slice_fv_x);
       y[jy] = y[jy] + alpha * temp;
       jy    = jy + incy;
@@ -164,8 +158,6 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
       jy    = jy + incy;
     }
   }
-
-  return;
 }
 
 template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),

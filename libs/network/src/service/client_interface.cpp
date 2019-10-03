@@ -23,8 +23,8 @@
 namespace fetch {
 namespace service {
 
-void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
-                                              service::serializer_type &   params)
+void ServiceClientInterface::ProcessRPCResult(network::MessageType const &msg,
+                                              service::SerializerType &   params)
 {
   // extract the promise counter (or request number)
   PromiseCounter id;
@@ -42,13 +42,13 @@ void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
   }
 }
 
-bool ServiceClientInterface::ProcessServerMessage(network::message_type const &msg)
+bool ServiceClientInterface::ProcessServerMessage(network::MessageType const &msg)
 {
   bool ret = true;
 
-  serializer_type params(msg);
+  SerializerType params(msg);
 
-  service_classification_type type;
+  ServiceClassificationType type;
   params >> type;
 
   FETCH_LOG_TRACE(LOGGING_NAME, "ProcessServerMessage: type: ", type, " msg: ", msg.ToHex());

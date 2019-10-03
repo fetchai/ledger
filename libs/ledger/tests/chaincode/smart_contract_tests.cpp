@@ -35,12 +35,12 @@ using ::testing::_;
 using ::testing::InSequence;
 using ::testing::Return;
 
-using fetch::core::IsIn;
-using fetch::ledger::SmartContract;
 using fetch::byte_array::ConstByteArray;
+using fetch::core::IsIn;
+using fetch::ledger::Address;
+using fetch::ledger::SmartContract;
 using fetch::storage::ResourceAddress;
 using fetch::variant::Variant;
-using fetch::ledger::Address;
 using ContractDigest = ConstByteArray;
 
 template <typename T>
@@ -468,14 +468,13 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
   auto const       expected_resource2 = ResourceAddress{expected_key2};
   auto const       expected_value1    = RawBytes<int32_t>(20);
   auto const       expected_value2    = RawBytes<int32_t>(30);
-  fetch::BitVector mask{1ull << 4};
+  fetch::BitVector mask{1ull << 4u};
   auto const       lane1 = expected_resource1.lane(mask.log2_size());
   auto const       lane2 = expected_resource2.lane(mask.log2_size());
   mask.set(lane1, 1);
   mask.set(lane2, 1);
   shards(mask);
 
-  // expected calls
   EXPECT_CALL(*storage_, Lock(lane1)).WillOnce(Return(true));
   EXPECT_CALL(*storage_, Unlock(lane1)).WillOnce(Return(true));
   if (lane1 != lane2)
@@ -550,7 +549,6 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
   mask.set(lane1, 1);
   shards(mask);
 
-  // expected calls
   EXPECT_CALL(*storage_, Lock(lane1)).WillOnce(Return(true));
   EXPECT_CALL(*storage_, Set(expected_resource1, expected_value1)).WillOnce(Return());
   EXPECT_CALL(*storage_, Unlock(lane1)).WillOnce(Return(true));

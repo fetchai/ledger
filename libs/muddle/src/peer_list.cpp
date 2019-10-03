@@ -58,11 +58,11 @@ void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
 void PeerConnectionList::RemovePersistentPeer(Handle handle)
 {
   FETCH_LOCK(lock_);
-  for (auto it = peer_connections_.begin(); it != peer_connections_.end(); ++it)
+  for (auto &peer_connection : peer_connections_)
   {
-    if (it->second->handle() == handle)
+    if (peer_connection.second->handle() == handle)
     {
-      persistent_peers_.erase(it->first);
+      persistent_peers_.erase(peer_connection.first);
       break;
     }
   }
@@ -156,7 +156,7 @@ void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
   }
 
   // send an identity message
-  if (connection_handle && status_callback_)
+  if ((connection_handle != 0u) && status_callback_)
   {
     status_callback_(peer, connection_handle, ConnectionState::CONNECTED);
   }
@@ -208,7 +208,7 @@ void PeerConnectionList::Disconnect(Uri const &peer)
 {
   FETCH_LOCK(lock_);
 
-  if (peer_metadata_.erase(peer))
+  if (peer_metadata_.erase(peer) != 0u)
   {
     peer_connections_.erase(peer);
   }
@@ -223,11 +223,11 @@ void PeerConnectionList::DisconnectAll()
   persistent_peers_.clear();
 }
 
-bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const
+bool PeerConnectionList::ReadyForRetry(PeerMetadata const &metadata) const
 {
   std::size_t const log2_backoff = std::min(metadata.consecutive_failures, MAX_LOG2_BACKOFF);
   Timepoint const   backoff_deadline =
-      metadata.last_failed_connection + std::chrono::seconds{1 << log2_backoff};
+      metadata.last_failed_connection + std::chrono::seconds{1u << log2_backoff};
   return (Clock::now() >= backoff_deadline);
 }
 

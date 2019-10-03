@@ -70,14 +70,14 @@ protected:
     contract_name_ = std::make_shared<Identifier>(std::string{TokenContract::NAME});
   }
 
-  static ConstByteArray CreateTxDeedData(Address const &address, SigneesPtr const signees,
-                                         ThresholdsPtr const   thresholds,
+  static ConstByteArray CreateTxDeedData(Address const &address, SigneesPtr const &signees,
+                                         ThresholdsPtr const & thresholds,
                                          uint64_t const *const balance = nullptr)
   {
     Variant v_data{Variant::Object()};
     v_data["address"] = address.display();
 
-    if (balance)
+    if (balance != nullptr)
     {
       v_data["balance"] = *balance;
     }

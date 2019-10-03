@@ -49,7 +49,7 @@ public:
       events_[index] = std::deque<void *>();
     }
 
-    void *ptr = reinterpret_cast<void *>(new T(event));
+    auto *ptr = reinterpret_cast<void *>(new T(event));
     events_[index].push_back(ptr);
   }
 
@@ -65,12 +65,12 @@ public:
       return false;
     }
 
-    if (it->second.size() == 0)
+    if (it->second.empty())
     {
       return false;
     }
 
-    T *ptr = reinterpret_cast<T *>(it->second.front());
+    auto *ptr = reinterpret_cast<T *>(it->second.front());
     it->second.pop_front();
 
     event = *ptr;

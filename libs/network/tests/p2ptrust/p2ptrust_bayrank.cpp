@@ -33,12 +33,12 @@ class P2PTrustBayRankExtendedForTest : public P2PTrustBayRank<IDENTITY>
 public:
   // Construction / Destruction
   P2PTrustBayRankExtendedForTest()                                          = default;
-  P2PTrustBayRankExtendedForTest(const P2PTrustBayRankExtendedForTest &rhs) = delete;
+  P2PTrustBayRankExtendedForTest(P2PTrustBayRankExtendedForTest const &rhs) = delete;
   P2PTrustBayRankExtendedForTest(P2PTrustBayRankExtendedForTest &&rhs)      = delete;
   ~P2PTrustBayRankExtendedForTest() override                                = default;
 
   // Operators
-  P2PTrustBayRankExtendedForTest operator=(const P2PTrustBayRankExtendedForTest &rhs) = delete;
+  P2PTrustBayRankExtendedForTest operator=(P2PTrustBayRankExtendedForTest const &rhs) = delete;
   P2PTrustBayRankExtendedForTest operator=(P2PTrustBayRankExtendedForTest &&rhs) = delete;
 
   Gaussian GetGaussianOfPeer(IDENTITY const &peer_ident)

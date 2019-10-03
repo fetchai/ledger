@@ -222,7 +222,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
   // format the main transaction header. Note that the charge_unit_flag is always zero here
   uint8_t header0{0};
   header0 |= static_cast<uint8_t>(VERSION << 5u);
-  header0 |= static_cast<uint8_t>((num_transfers ? 1u : 0) << 2u);
+  header0 |= static_cast<uint8_t>((num_transfers != 0u ? 1u : 0) << 2u);
   header0 |= static_cast<uint8_t>(((num_transfers > 1u) ? 1u : 0) << 1u);
   header0 |= static_cast<uint8_t>(has_valid_from ? 1u : 0);
   buffer.Append(MAGIC, header0);
@@ -305,14 +305,13 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 
     switch (tx.contract_mode())
     {
+    case ContractMode::SYNERGETIC:
     case ContractMode::PRESENT:
       buffer.Append(Encode(tx.contract_digest()), Encode(tx.contract_address()));
       break;
     case ContractMode::CHAIN_CODE:
       buffer.Append(Encode(tx.chain_code()));
       break;
-    case ContractMode::SYNERGETIC:
-      buffer.Append(Encode(tx.contract_digest()));
     case ContractMode::NOT_PRESENT:
       break;
     }
@@ -382,11 +381,11 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
 
   Decode(buffer, tx.from_);
 
-  if (transfer_flag)
+  if (transfer_flag != 0u)
   {
     std::size_t transfer_count = 1;
 
-    if (multiple_transfers_flag)
+    if (multiple_transfers_flag != 0u)
     {
       std::size_t const transfer_count_minus2 = Decode<std::size_t>(buffer);
       transfer_count                          = transfer_count_minus2 + 2u;
@@ -402,7 +401,7 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     }
   }
 
-  if (valid_from_flag)
+  if (valid_from_flag != 0u)
   {
     Decode(buffer, tx.valid_from_);
   }
@@ -410,7 +409,7 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
   Decode(buffer, tx.valid_until_);
 
   Decode(buffer, tx.charge_);
-  if (charge_unit_flag)
+  if (charge_unit_flag != 0u)
   {
     int8_t charge_unit{0};
     Decode(buffer, charge_unit);
@@ -455,7 +454,7 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     uint8_t contract_header{0};
     buffer.ReadBytes(&contract_header, 1);
 
-    bool const wildcard_flag = contract_header & 0x80u;
+    bool const wildcard_flag = (contract_header & 0x80u) != 0u;
 
     if (wildcard_flag)
     {
@@ -463,21 +462,21 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     }
     else
     {
-      bool const extended_shard_mask_flag = contract_header & 0x40u;
+      bool const extended_shard_mask_flag = (contract_header & 0x40u) != 0u;
 
       if (!extended_shard_mask_flag)
       {
-        bool const shard_is_4bits = contract_header & 0x10u;
+        bool const shard_is_4bits = (contract_header & 0x10u) != 0u;
 
         tx.shard_mask_.Resize(shard_is_4bits ? 4u : 2u);
 
-        tx.shard_mask_.set(0, ((contract_header & 0x1u) > 0));
-        tx.shard_mask_.set(1, ((contract_header & 0x2u) > 0));
+        tx.shard_mask_.set(0, static_cast<uint64_t>((contract_header & 0x1u) > 0));
+        tx.shard_mask_.set(1, static_cast<uint64_t>((contract_header & 0x2u) > 0));
 
         if (shard_is_4bits)
         {
-          tx.shard_mask_.set(2, ((contract_header & 0x4u) > 0));
-          tx.shard_mask_.set(3, ((contract_header & 0x8u) > 0));
+          tx.shard_mask_.set(2, static_cast<uint64_t>((contract_header & 0x4u) > 0));
+          tx.shard_mask_.set(3, static_cast<uint64_t>((contract_header & 0x8u) > 0));
         }
       }
       else
@@ -510,11 +509,11 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     }
     else if (SYNERGETIC_PRESENT == contract_type)
     {
-      tx.contract_mode_    = Transaction::ContractMode::SYNERGETIC;
-      tx.chain_code_       = ConstByteArray{};
-      tx.contract_address_ = Address{};
+      tx.contract_mode_ = Transaction::ContractMode::SYNERGETIC;
+      tx.chain_code_    = ConstByteArray{};
 
       Decode(buffer, tx.contract_digest_);
+      Decode(buffer, tx.contract_address_);
     }
 
     // extract the data and actions

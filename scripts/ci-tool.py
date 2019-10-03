@@ -8,19 +8,21 @@ import argparse
 import fnmatch
 import multiprocessing
 import os
-from os.path import abspath, dirname, exists, isdir, isfile, join
 import re
 import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+from os.path import abspath, dirname, exists, isdir, isfile, join
+
+import fetchai_code_quality
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
 MAX_CPUS = 7  # as defined by CI workflow
 AVAILABLE_CPUS = multiprocessing.cpu_count()
 CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
 
-SCRIPT_ROOT = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_ROOT = dirname(abspath(__file__))
 
 SLOW_TEST_LABEL = 'Slow'
 INTEGRATION_TEST_LABEL = 'Integration'
@@ -114,7 +116,7 @@ def create_junit_format(output_path, data):
                     testcase,
                     'failure',
                     type=status,
-                    message='Test {}'.format(status))
+                    message='Test {status}'.format(status=status))
                 stdout = ET.SubElement(testcase, 'system-out').text = output
 
     # update the final aggregations
@@ -130,8 +132,8 @@ def create_junit_format(output_path, data):
 
 def build_type(text):
     if text not in BUILD_TYPES:
-        raise RuntimeError('Invalid build type {}. Choices: {}'.format(
-            text, ','.join(BUILD_TYPES)))
+        raise RuntimeError(
+            'Invalid build type {text}. Choices: {build_types}'.format(text=text, build_types=", ".join(BUILD_TYPES)))
     return text
 
 
@@ -147,20 +149,22 @@ def parse_commandline():
     parser.add_argument('-j', '--jobs', type=int, default=CONCURRENCY,
                         help=('The number of jobs to do in parallel. If \'0\' then number of '
                               'available CPU cores will be used. '
-                              'Defaults to {}'.format(CONCURRENCY)))
+                              'Defaults to {CONCURRENCY}'.format(CONCURRENCY=CONCURRENCY)))
     parser.add_argument('-T', '--test', action='store_true',
-                        help='Run unit tests. Skips tests marked with the following CTest labels: {}'
-                        .format(', '.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS)))
+                        help='Run unit tests. Skips tests marked with the following CTest '
+                             'labels: {labels}'.format(labels=", ".join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS)))
     parser.add_argument('-S', '--slow-tests', action='store_true',
-                        help='Run tests marked with the \'{}\' CTest label'
-                        .format(SLOW_TEST_LABEL))
+                        help='Run tests marked with the \'{SLOW_TEST_LABEL}\' CTest label'.format(
+                            SLOW_TEST_LABEL=SLOW_TEST_LABEL))
     parser.add_argument('-I', '--integration-tests', action='store_true',
-                        help='Run tests marked with the \'{}\' CTest label'
-                        .format(INTEGRATION_TEST_LABEL))
+                        help='Run tests marked with the \'{INTEGRATION_TEST_LABEL}\' CTest label'.format(
+                            INTEGRATION_TEST_LABEL=INTEGRATION_TEST_LABEL))
     parser.add_argument('-E', '--end-to-end-tests', action='store_true',
                         help='Run the end-to-end tests for the project')
     parser.add_argument('-L', '--language-tests', action='store_true',
                         help='Run the etch language tests')
+    parser.add_argument('--lint', action='store_true',
+                        help='Run clang-tidy')
     parser.add_argument('-A', '--all', action='store_true',
                         help='Run build and all tests')
     parser.add_argument(
@@ -172,12 +176,12 @@ def parse_commandline():
     return parser.parse_args()
 
 
-def build_project(project_root, build_root, options, concurrency):
+def cmake_configure(project_root, build_root, options):
     output('Source.:', project_root)
     output('Build..:', build_root)
     output('Options:')
     for key, value in options.items():
-        output(' - {} = {}'.format(key, value))
+        output(' - {key} = {value}'.format(key=key, value=value))
     output('\n')
 
     # determine if this is the first time that we are building the project
@@ -193,7 +197,7 @@ def build_project(project_root, build_root, options, concurrency):
         cmake_cmd += ['-G', 'Ninja']
 
     # add all the configuration options
-    cmake_cmd += ['-D{}={}'.format(k, v) for k, v in options.items()]
+    cmake_cmd += ['-D{k}={v}'.format(k=k, v=v) for k, v in options.items()]
     cmake_cmd += [project_root]
 
     # execute the cmake configurations
@@ -202,12 +206,15 @@ def build_project(project_root, build_root, options, concurrency):
         output('Failed to configure cmake project')
         sys.exit(exit_code)
 
+
+def build_project(build_root, concurrency):
     build_cmd = ['ninja'] if exists(
         join(build_root, 'build.ninja')) else ['make']
-    build_cmd += ['-j{}'.format(concurrency)]
+    build_cmd += ['-j{concurrency}'.format(concurrency=concurrency)]
 
-    output('Building project with command: {} (detected cpus: {})'.format(
-        ' '.join(build_cmd), AVAILABLE_CPUS))
+    output(
+        'Building project with command: {cmd} (detected cpus: {AVAILABLE_CPUS})'.format(cmd=" ".join(build_cmd),
+                                                                                        AVAILABLE_CPUS=AVAILABLE_CPUS))
     exit_code = subprocess.call(build_cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
@@ -219,7 +226,7 @@ def clean_files(build_root):
     for root, _, files in os.walk(build_root):
         for path in fnmatch.filter(files, '*.db'):
             data_path = join(root, path)
-            print('Removing file:', data_path)
+            output('Removing file:', data_path)
             os.remove(data_path)
 
 
@@ -256,7 +263,7 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
     # load the tag
     tag_folder = open(test_tag_path, 'r').read().splitlines()[0]
     tag_folder_path = join(build_root, 'Testing',
-                           tag_folder, '{}.xml'.format(TEST_NAME))
+                           tag_folder, '{TEST_NAME}.xml'.format(TEST_NAME=TEST_NAME))
 
     if not isfile(tag_folder_path):
         output('Unable to locate CTest summary XML:', tag_folder_path)
@@ -295,7 +302,7 @@ def test_end_to_end(project_root, build_root):
 
 
 def test_language(build_root):
-    LANGUAGE_TEST_RUNNER = os.path.join(SCRIPT_ROOT, 'run-language-tests.py')
+    LANGUAGE_TEST_RUNNER = join(SCRIPT_ROOT, 'run-language-tests.py')
     cmd = [LANGUAGE_TEST_RUNNER, build_root]
     subprocess.check_call(cmd)
 
@@ -310,20 +317,20 @@ def main():
 
     # define all the build roots
     project_root = abspath(dirname(dirname(__file__)))
-    build_root = join(project_root, '{}{}'.format(
-        args.build_path_prefix, args.build_type.lower()))
+    build_root = join(
+        project_root, '{prefix}{build_type}'.format(prefix=args.build_path_prefix, build_type=args.build_type.lower()))
     if args.force_build_folder:
         build_root = abspath(args.force_build_folder)
 
     options = {
-        'CMAKE_BUILD_TYPE': args.build_type
+        'CMAKE_BUILD_TYPE': args.build_type,
     }
 
-    if args.metrics:
-        options['FETCH_ENABLE_METRICS'] = 1
+    if args.build or args.lint or args.all:
+        cmake_configure(project_root, build_root, options)
 
     if args.build or args.all:
-        build_project(project_root, build_root, options, concurrency)
+        build_project(build_root, concurrency)
 
     if args.test or args.all:
         test_project(
@@ -345,6 +352,10 @@ def main():
 
     if args.end_to_end_tests or args.all:
         test_end_to_end(project_root, build_root)
+
+    if args.lint or args.all:
+        fetchai_code_quality.static_analysis(
+            project_root, build_root, False, concurrency)
 
 
 if __name__ == '__main__':

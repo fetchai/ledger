@@ -33,7 +33,7 @@ namespace vm {
  * @return false if executing the opcode would exceed the specified charge limit; true otherwise.
  */
 template <typename ArgsTuple, typename... Args>
-bool EstimateCharge(VM *const vm, ChargeEstimator<Args...> &&e, ArgsTuple const &args)
+bool EstimateCharge(VM *vm, ChargeEstimator<Args...> &&e, ArgsTuple const &args)
 {
   if (e)
   {

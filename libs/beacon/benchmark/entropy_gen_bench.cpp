@@ -29,6 +29,7 @@
 #include "benchmark/benchmark.h"
 
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 using namespace fetch;
@@ -44,7 +45,7 @@ public:
   ManifestCacheInterfaceDummy()           = default;
   ~ManifestCacheInterfaceDummy() override = default;
 
-  bool QueryManifest(Address const &, fetch::ledger::Manifest &) override
+  bool QueryManifest(Address const & /*address*/, fetch::ledger::Manifest & /*manifest*/) override
   {
     return true;
   }

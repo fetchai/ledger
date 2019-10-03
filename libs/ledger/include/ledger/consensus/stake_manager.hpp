@@ -56,7 +56,7 @@ public:
   using CommitteePtr = std::shared_ptr<Committee const>;
 
   // Construction / Destruction
-  StakeManager(uint64_t committee_size);
+  explicit StakeManager(uint64_t committee_size);
   StakeManager(StakeManager const &) = delete;
   StakeManager(StakeManager &&)      = delete;
   ~StakeManager() override           = default;
@@ -128,7 +128,6 @@ inline std::shared_ptr<StakeSnapshot const> StakeManager::GetCurrentStakeSnapsho
   return current_;
 }
 
-namespace {
 template <typename T>
 void TrimToSize(T &container, uint64_t max_allowed)
 {
@@ -145,8 +144,6 @@ void TrimToSize(T &container, uint64_t max_allowed)
     }
   }
 }
-
-}  // namespace
 
 }  // namespace ledger
 }  // namespace fetch

@@ -26,13 +26,20 @@ namespace muddle {
 class PromiseTask : public core::Runnable
 {
 public:
-  using Callback = std::function<void(service::Promise const &)>;
+  using Callback  = std::function<void(service::Promise const &)>;
+  using Clock     = service::details::PromiseImplementation::Clock;
+  using Duration  = Clock::duration;
+  using Timepoint = Clock::time_point;
 
   // Construction / Destruction
   template <typename Class>
-  PromiseTask(service::Promise promise, Class *instance,
+  PromiseTask(service::Promise const &promise, Class *instance,
               void (Class::*member_function)(service::Promise const &));
-  PromiseTask(service::Promise promise, Callback callback);
+  template <typename Class>
+  PromiseTask(service::Promise const &promise, Duration const &timeout, Class *instance,
+              void (Class::*member_function)(service::Promise const &));
+  PromiseTask(service::Promise const &promise, Callback callback);
+  PromiseTask(service::Promise const &promise, Duration const &timeout, Callback callback);
   PromiseTask(PromiseTask const &) = delete;
   PromiseTask(PromiseTask &&)      = delete;
   ~PromiseTask() override          = default;
@@ -50,15 +57,26 @@ public:
   PromiseTask &operator=(PromiseTask &&) = delete;
 
 private:
+  PromiseTask(service::Promise promise, Timepoint const &deadline, Callback callback);
+
   service::Promise promise_;
+  Timepoint        deadline_;
   Callback         callback_;
   bool             complete_{false};
 };
 
 template <typename Class>
-PromiseTask::PromiseTask(service::Promise promise, Class *instance,
+PromiseTask::PromiseTask(service::Promise const &promise, Class *instance,
                          void (Class::*member_function)(service::Promise const &))
-  : PromiseTask(std::move(promise), [instance, member_function](service::Promise const &p) {
+  : PromiseTask(promise, [instance, member_function](service::Promise const &p) {
+    (instance->*member_function)(p);
+  })
+{}
+
+template <typename Class>
+PromiseTask::PromiseTask(service::Promise const &promise, Duration const &timeout, Class *instance,
+                         void (Class::*member_function)(service::Promise const &))
+  : PromiseTask(promise, timeout, [instance, member_function](service::Promise const &p) {
     (instance->*member_function)(p);
   })
 {}

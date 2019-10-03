@@ -55,14 +55,13 @@ public:
     this->min   = min;
     this->max   = max;
   }
-  double delta, min, max;
+  double delta, min{}, max{};
 
-  ~TrustModifier2()
-  {}
+  ~TrustModifier2() = default;
 };
 
-using trust_modifiers_type = std::array<std::array<TrustModifier, 4>, 3>;
-extern const trust_modifiers_type trust_modifiers_;
+using TrustModifiersType = std::array<std::array<TrustModifier, 4>, 3>;
+extern const TrustModifiersType trust_modifiers_;
 
 inline TrustModifier const &LookupTrustModifier(TrustSubject subject, TrustQuality quality)
 {
@@ -106,7 +105,7 @@ public:
 
   // Construction / Destruction
   P2PTrust()                    = default;
-  P2PTrust(const P2PTrust &rhs) = delete;
+  P2PTrust(P2PTrust const &rhs) = delete;
   P2PTrust(P2PTrust &&rhs)      = delete;
   ~P2PTrust() override          = default;
 
@@ -234,10 +233,8 @@ public:
     {
       return trust_store_.size() + 1;
     }
-    else
-    {
-      return ranking_it->second;
-    }
+
+    return ranking_it->second;
   }
 
   double GetTrustRatingOfPeer(IDENTITY const &peer_ident) const override
@@ -264,7 +261,7 @@ public:
   }
 
   // Operators
-  P2PTrust operator=(const P2PTrust &rhs) = delete;
+  P2PTrust operator=(P2PTrust const &rhs) = delete;
   P2PTrust operator=(P2PTrust &&rhs) = delete;
 
 protected:
@@ -284,7 +281,7 @@ protected:
     }
 
     std::sort(trust_store_.begin(), trust_store_.end(),
-              [](const PeerTrustRating &a, const PeerTrustRating &b) {
+              [](PeerTrustRating const &a, PeerTrustRating const &b) {
                 if (a.trust < b.trust)
                 {
                   return true;

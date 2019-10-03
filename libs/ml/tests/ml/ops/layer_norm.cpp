@@ -116,8 +116,6 @@ TYPED_TEST(LayerNormTest, backward_test_2d)
 
   auto backward_errors = op.Backward({std::make_shared<TensorType>(data)}, error_signal).at(0);
 
-  std::cout << "backward_errors.ToString(): \n" << backward_errors.ToString() << std::endl;
-
   // test correct values
   ASSERT_TRUE(backward_errors.AllClose(
       gt, fetch::math::function_tolerance<DataType>(),

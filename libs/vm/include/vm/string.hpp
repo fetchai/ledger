@@ -46,7 +46,7 @@ struct String : public Object
   int32_t                 Find(Ptr<String> const &substring) const;
   Ptr<String>             Substring(int32_t start_index, int32_t end_index);
   void                    Reverse();
-  Ptr<Array<Ptr<String>>> Split(Ptr<String> const &) const;
+  Ptr<Array<Ptr<String>>> Split(Ptr<String> const &separator) const;
 
   std::size_t GetHashCode() override;
   bool        IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;

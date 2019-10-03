@@ -37,7 +37,7 @@ namespace fetch {
 namespace math {
 namespace clustering {
 
-using ClusteringType = Tensor<std::int64_t>;
+using ClusteringType = Tensor<int64_t>;
 
 enum class InitMode
 {
@@ -302,7 +302,7 @@ private:
   void InferK(bool &sufficient_previous_assignment)
   {
     assert(k_inference_mode_ != KInferenceMode::Off);
-    assert(k_count_.size() == 0);
+    assert(k_count_.empty());
 
     if (k_inference_mode_ == KInferenceMode::HighestCluster)
     {
@@ -759,7 +759,7 @@ private:
   std::unordered_map<SizeType, SizeType>
       cluster_assignment_map_{};  // <internal label, original label>
 
-  bool reassign_;
+  bool reassign_{};
 
   InitMode       init_mode_        = InitMode::KMeansPP;
   KInferenceMode k_inference_mode_ = KInferenceMode::Off;

@@ -34,7 +34,7 @@ public:
 
 TEST_F(InitializerListTests, used_in_var_statements)
 {
-  static const char *testCase = R"(
+  static char const *testCase = R"(
     function main()
       var b: Array<Int32> = {4, 5, 6, 7};
       var d: Array<Int32> = {};
@@ -91,7 +91,7 @@ TEST_F(InitializerListTests, non_empty_init_list_fails_type_inference)
 
 TEST_F(InitializerListTests, always_homogeneous)
 {
-  static const char *testCase = R"(
+  static char const *testCase = R"(
     function main()
       var b: Array<Int32> = {4, 5.6};
     endfunction

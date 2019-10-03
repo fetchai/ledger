@@ -135,7 +135,7 @@ public:
     uint8_t                    key;
     byte_array::ConstByteArray data;
     map.GetNextKeyPair(key, data);
-    address = Type{data};
+    address = data.empty() ? Type{} : Type{data};
   }
 };
 }  // namespace serializers
@@ -155,10 +155,8 @@ struct hash<fetch::ledger::Address>
     {
       return 0;
     }
-    else
-    {
-      return *reinterpret_cast<std::size_t const *>(raw_address.pointer());
-    }
+
+    return *reinterpret_cast<std::size_t const *>(raw_address.pointer());
   }
 };
 
