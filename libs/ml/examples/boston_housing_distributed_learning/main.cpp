@@ -19,11 +19,11 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/distributed_learning/coordinator.hpp"
 #include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 
 #include <algorithm>
@@ -202,17 +202,19 @@ void SynchroniseWeights(std::vector<std::shared_ptr<TrainingClient<TensorType>>>
   }
 }
 
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
-  if (ac != 5)
+  if (argc != 6)
   {
-    std::cout << "Usage : " << av[0] << " PATH/TO/boston_data.csv PATH/TO/boston_label.csv"
+    std::cout << "Args: boston_data.csv boston_label.csv random_seed(int) learning_rate(float) "
+                 "results_directory"
               << std::endl;
     return 1;
   }
 
-  SizeType seed = strtoul(av[3], NULL, 10);
-  DataType learning_rate = static_cast<DataType >(strtof(av[4], NULL));
+  SizeType    seed          = strtoul(argv[3], NULL, 10);
+  DataType    learning_rate = static_cast<DataType>(strtof(argv[4], NULL));
+  std::string results_dir   = argv[5];
 
   CoordinatorParams      coord_params;
   ClientParams<DataType> client_params;
@@ -228,8 +230,8 @@ int main(int ac, char **av)
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   // Load data
-  TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(av[1]).Transpose();
-  TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(av[2]).Transpose();
+  TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(argv[1]).Transpose();
+  TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(argv[2]).Transpose();
 
   // Shuffle data
   Shuffle(data_tensor, label_tensor, seed);
@@ -260,8 +262,10 @@ int main(int ac, char **av)
     clients[i]->SetCoordinator(coordinator);
   }
 
-  std::string homedir = getenv("HOME");
-  std::ofstream lossfile(homedir + "/Development/pysyft_distributed_w2v/results/fetch_" + std::to_string(number_of_clients) + "_Adam_" + std::to_string(float(learning_rate)) + "_" + std::to_string(seed) + "_FC3.csv", std::ofstream::out);
+  std::ofstream lossfile(results_dir + "/fetch_" + std::to_string(number_of_clients) + "_Adam_" +
+                             std::to_string(float(learning_rate)) + "_" + std::to_string(seed) +
+                             "_FC3.csv",
+                         std::ofstream::out);
 
   if (!lossfile)
   {
@@ -293,14 +297,12 @@ int main(int ac, char **av)
     }
     std::cout << std::endl;
 
-
     lossfile << it;
     for (auto &c : clients)
     {
       lossfile << "," << static_cast<double>(Test(c->GetModel(), data_tensor, label_tensor));
     }
     lossfile << std::endl;
-
 
     if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
     {
