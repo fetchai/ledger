@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,26 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/filesystem/write_to_file.hpp"
-
-#include <fstream>
-
 namespace fetch {
-namespace core {
+namespace beacon {
 
-bool WriteToFile(char const *filename, byte_array::ConstByteArray const &data)
+struct EventCommitteeCompletedWork
 {
-  bool          success{false};
-  std::ofstream stream{filename, std::ios::out | std::ios::binary | std::ios::trunc};
-  if (stream.is_open())
-  {
-    stream.write(data.char_pointer(), static_cast<std::streamsize>(data.size()));
+  Aeon aeon;
+};
 
-    success = (!(stream.bad() || stream.fail()));
-  }
+struct EventInvalidSignature
+{
+};
 
-  return success;
-}
+struct EventSignatureFromNonMember
+{
+};
 
-}  // namespace core
+}  // namespace beacon
 }  // namespace fetch

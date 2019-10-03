@@ -141,11 +141,6 @@ uint16_t TCPServer::GetListeningPort() const
   return port_;
 }
 
-uint16_t TCPServer::GetListeningPort() const
-{
-  return port_;
-}
-
 void TCPServer::PushRequest(ConnectionHandleType client, MessageType const &msg)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Got request from ", client);

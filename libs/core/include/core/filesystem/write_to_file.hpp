@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,26 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/filesystem/write_to_file.hpp"
-
-#include <fstream>
+#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
 namespace core {
 
-bool WriteToFile(char const *filename, byte_array::ConstByteArray const &data)
-{
-  bool          success{false};
-  std::ofstream stream{filename, std::ios::out | std::ios::binary | std::ios::trunc};
-  if (stream.is_open())
-  {
-    stream.write(data.char_pointer(), static_cast<std::streamsize>(data.size()));
-
-    success = (!(stream.bad() || stream.fail()));
-  }
-
-  return success;
-}
+bool WriteToFile(char const *filename, byte_array::ConstByteArray const &data);
 
 }  // namespace core
 }  // namespace fetch
