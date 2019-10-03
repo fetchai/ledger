@@ -202,11 +202,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   state_machine_->RegisterHandler(State::WAIT_FOR_NEW_BLOCK_EXECUTION, this, &BlockCoordinator::OnWaitForNewBlockExecution);
   state_machine_->RegisterHandler(State::PROOF_SEARCH,                 this, &BlockCoordinator::OnProofSearch);
 
-  // If you change your software's internal implementation, your tests should not
-  // break as long as the change is not observable by users.
-  int *killme = nullptr;
-  killme[1] = 1;
-
   state_machine_->RegisterHandler(State::TRANSMIT_BLOCK,               this, &BlockCoordinator::OnTransmitBlock);
   state_machine_->RegisterHandler(State::RESET,                        this, &BlockCoordinator::OnReset);
   // clang-format on
