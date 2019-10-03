@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "beacon/beacon_manager.hpp"
 #include "crypto/ecdsa.hpp"
 
@@ -53,7 +55,7 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
 
 void BeaconManager::SetCertificate(CertificatePtr certificate)
 {
-  certificate_ = certificate;
+  certificate_ = std::move(certificate);
 }
 
 void BeaconManager::GenerateCoefficients()
@@ -208,8 +210,8 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
                    " complaint answer failed");
     return false;
   }
-  else
-  {
+  
+  
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " verification for node ", from_index,
                    " complaint answer succeeded");
     if (reporter_index == cabinet_index_)
@@ -221,7 +223,7 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
       bn::G2::mul(g__s_ij[from_index][cabinet_index_], group_g_, s_ij[from_index][cabinet_index_]);
     }
     return true;
-  }
+  
 }
 
 /**
@@ -345,8 +347,8 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
                      from_index, " for node ", victim_index);
       return from;
     }
-    else
-    {
+    
+    
       bn::G2::mul(lhs, group_g_, s);  // G^s
       rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
       if (lhs != rhs)
@@ -356,13 +358,13 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
                        from_index, " for node ", victim_index);
         return answer.first;
       }
-      else
-      {
+      
+      
         FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received incorrect complaint from ",
                        from_index);
         return from;
-      }
-    }
+      
+    
   }
   else
   {
@@ -498,7 +500,7 @@ bool BeaconManager::RunReconstruction()
                      " failed with party size ", parties.size());
       return false;
     }
-    else if (in.first == certificate_->identity().identifier())
+    if (in.first == certificate_->identity().identifier())
     {
       // Do not run reconstruction for myself
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " polynomial being reconstructed.");
@@ -512,7 +514,7 @@ bool BeaconManager::RunReconstruction()
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", cabinet_index_, " run reconstruction for node ",
                       victim_index, " with shares from node ", index);
-      points.push_back(index + 1);  // adjust index in computation
+      points.emplace_back(index + 1);  // adjust index in computation
       shares_f.push_back(shares[index]);
     }
     a_ik[victim_index] = crypto::mcl::InterpolatePolynom(points, shares_f);
@@ -676,7 +678,7 @@ BeaconManager::Signature BeaconManager::GroupSignature() const
  */
 void BeaconManager::SetMessage(MessagePayload next_message)
 {
-  current_message_ = next_message;
+  current_message_ = std::move(next_message);
   signature_buffer_.clear();
   already_signed_.clear();
   // TODO(jmw): Should group_signature_ be cleared here?

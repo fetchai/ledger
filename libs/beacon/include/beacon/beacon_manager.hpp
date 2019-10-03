@@ -66,8 +66,8 @@ public:
 
   void                     GenerateCoefficients();
   std::vector<Coefficient> GetCoefficients();
-  std::pair<Share, Share>  GetOwnShares(MuddleAddress const &share_receiver);
-  std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &share_owner);
+  std::pair<Share, Share>  GetOwnShares(MuddleAddress const &receiver);
+  std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &owner);
   bool AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
   bool AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
   std::unordered_set<MuddleAddress> ComputeComplaints(
