@@ -14,9 +14,6 @@ setup_compiler()
 # Main Library Target
 # ------------------------------------------------------------------------------
 
-# -I/usr/local/Cellar/python/3.7.3/Frameworks/Python.framework/Versions/3.7/include/python3.7m
-# -I/usr/local/Cellar/python/3.7.3/Frameworks/Python.framework/Versions/3.7/include/python3.7m
-
 setup_library(fetch-dmlf)
 target_link_libraries(fetch-dmlf
                       PUBLIC fetch-core

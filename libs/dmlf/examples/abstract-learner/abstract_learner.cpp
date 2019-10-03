@@ -41,7 +41,7 @@ using namespace std::chrono_literals;
 class FakeLearner : public fetch::dmlf::AbstractLearnerNetworker
 {
 public:
-  void pushUpdate(const std::shared_ptr<UpdateInterface> &update) override
+  void PushUpdate(const std::shared_ptr<UpdateInterface> &update) override
   {
     auto msg = update->serialise();
     for (auto &peer : peers)
@@ -49,7 +49,7 @@ public:
       SendMessage(msg, peer);
     }
   }
-  std::size_t getPeerCount() const override
+  std::size_t GetPeerCount() const override
   {
     return peers.size();
   }
@@ -96,13 +96,13 @@ int main(int /*argc*/, char ** /*argv*/)
   for (int i = 0; i < num_upds; i++)
   {
     auto upd = std::make_shared<Update<std::string>>(std::vector<std::string>{std::to_string(i)});
-    learner1->pushUpdate(upd);
+    learner1->PushUpdate(upd);
     FETCH_LOG_INFO(LOGGING_NAME, "Update pushed ", i, " ", upd->TimeStamp());
     std::this_thread::sleep_for(1.123456789s);
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "[learner2] Updates from FakeLearner:");
-  while (learner2->getUpdateCount() > 0)
+  while (learner2->GetUpdateCount() > 0)
   {
     upd = learner2->getUpdate<Update<std::string>>();
     FETCH_LOG_INFO(LOGGING_NAME, "Update received ", upd->TimeStamp());
@@ -110,7 +110,7 @@ int main(int /*argc*/, char ** /*argv*/)
 
   FETCH_LOG_INFO(LOGGING_NAME, "[learner3] Updates from FakeLearner:");
 
-  while (learner3->getUpdateCount() > 0)
+  while (learner3->GetUpdateCount() > 0)
   {
     upd = learner3->getUpdate<Update<std::string>>();
     FETCH_LOG_INFO(LOGGING_NAME, "Update received ", upd->TimeStamp());

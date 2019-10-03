@@ -80,11 +80,11 @@ public:
       produced++;
       auto output = generateFakeWorkOutput(number, produced);
       auto upd    = std::make_shared<UpdateTypeForTesting>(output);
-      net->pushUpdate(upd);
+      net->PushUpdate(upd);
       result = true;
     }
 
-    while (net->getUpdateCount() > 0)
+    while (net->GetUpdateCount() > 0)
     {
       net->getUpdate<UpdateTypeForTesting>();
       integrations++;
@@ -116,11 +116,11 @@ public:
         produced++;
         auto output = generateFakeWorkOutput(number, produced);
         auto upd    = std::make_shared<UpdateTypeForTesting>(output);
-        net->pushUpdate(upd);
+        net->PushUpdate(upd);
         continue;
       }
 
-      if (net->getUpdateCount() > 0)
+      if (net->GetUpdateCount() > 0)
       {
         net->getUpdate<UpdateTypeForTesting>();
         integrations++;
@@ -161,8 +161,8 @@ public:
 
     for (const auto &peer : peers)
     {
-      auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->getPeerCount(), 5);
-      peer->setShuffleAlgorithm(alg);
+      auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->GetPeerCount(), 5);
+      peer->SetShuffleAlgorithm(alg);
     }
 
     bool working = true;
@@ -197,8 +197,8 @@ public:
 
     for (const auto &peer : peers)
     {
-      auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->getPeerCount(), 5);
-      peer->setShuffleAlgorithm(alg);
+      auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->GetPeerCount(), 5);
+      peer->SetShuffleAlgorithm(alg);
     }
 
     using Thread  = std::thread;
@@ -250,8 +250,8 @@ public:
 
     for (const auto &peer : peers)
     {
-      auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->getPeerCount(), 5);
-      peer->setShuffleAlgorithm(alg);
+      auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->GetPeerCount(), 5);
+      peer->SetShuffleAlgorithm(alg);
     }
 
     using Thread  = std::thread;

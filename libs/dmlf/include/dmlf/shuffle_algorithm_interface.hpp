@@ -27,17 +27,17 @@ class ShuffleAlgorithmInterface
 {
 public:
   explicit ShuffleAlgorithmInterface(std::size_t count)
+    :count_(count)
   {
-    this->count = count;
   }
 
   virtual ~ShuffleAlgorithmInterface() = default;
 
-  virtual std::vector<std::size_t> getNextOutputs() = 0;
+  virtual std::vector<std::size_t> GetNextOutputs() = 0;
 
-  std::size_t getCount() const
+  std::size_t GetCount() const
   {
-    return count;
+    return count_;
   }
 
   ShuffleAlgorithmInterface(const ShuffleAlgorithmInterface &other) = delete;
@@ -47,7 +47,7 @@ public:
 
 protected:
 private:
-  std::size_t count;
+  std::size_t count_;
 };
 
 }  // namespace dmlf
