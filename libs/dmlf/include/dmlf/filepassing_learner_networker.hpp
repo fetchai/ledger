@@ -31,6 +31,8 @@ public:
   using Bytes = AbstractLearnerNetworker::Bytes;
   using Peer  = std::string;
   using Peers = std::vector<Peer>;
+  using ProcessedUpdateNames = std::unordered_set<std::string>;
+  using ThreadP = std::shared_ptr<std::thread>;
 
   FilepassingLearnerNetworker();
   ~FilepassingLearnerNetworker() override;
@@ -57,9 +59,10 @@ protected:
   void                     checkUpdates();
 
 private:
-  std::set<std::string>    processed_updates_;
-  std::vector<std::string> peers_;
-  std::shared_ptr<std::thread> watcher_;
+
+  ProcessedUpdateNames processed_updates_;
+  Peers peers_;
+  ThreadP watcher_;
 
   std::string              name_;
   std::string              dir_;
