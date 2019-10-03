@@ -106,12 +106,7 @@ public:
 protected:
   std::shared_ptr<ShuffleAlgorithmInterface> alg_;       // used by descendents
 
-  void NewMessage(const Bytes &msg)  // called by descendents
-  {
-    Lock l{queue_m_};
-    ThrowIfNotInitialized();
-    queue_->PushNewMessage(msg);
-  }
+  void NewMessage(const Bytes &msg);
 
   void NewDmlfMessage(const Bytes &msg);  // called by descendents
 
