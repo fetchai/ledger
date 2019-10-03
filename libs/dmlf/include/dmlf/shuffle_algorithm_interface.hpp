@@ -26,19 +26,13 @@ namespace dmlf {
 class ShuffleAlgorithmInterface
 {
 public:
-  explicit ShuffleAlgorithmInterface(std::size_t count)
-    :count_(count)
-  {
-  }
+  explicit ShuffleAlgorithmInterface(std::size_t count);
 
   virtual ~ShuffleAlgorithmInterface() = default;
 
   virtual std::vector<std::size_t> GetNextOutputs() = 0;
 
-  std::size_t GetCount() const
-  {
-    return count_;
-  }
+  std::size_t GetCount() const;
 
   ShuffleAlgorithmInterface(const ShuffleAlgorithmInterface &other) = delete;
   ShuffleAlgorithmInterface &operator=(const ShuffleAlgorithmInterface &other)  = delete;

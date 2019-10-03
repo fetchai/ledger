@@ -17,3 +17,20 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/shuffle_algorithm_interface.hpp"
+
+namespace fetch {
+namespace dmlf {
+
+ShuffleAlgorithmInterface::ShuffleAlgorithmInterface(std::size_t count)
+  :count_(count)
+{
+}
+
+std::size_t ShuffleAlgorithmInterface::GetCount() const
+{
+  // this impl is simple, but descendent ones may not be.
+  return count_;
+}
+
+}  // namespace dmlf
+}  // namespace fetch

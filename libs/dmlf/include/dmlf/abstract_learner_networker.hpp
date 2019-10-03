@@ -68,7 +68,7 @@ public:
   virtual void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg);
 
   virtual void PushUpdateType(const std::string & /*key*/,
-                              const std::shared_ptr<UpdateInterface> & /*update*/) = 0;
+                              const std::shared_ptr<UpdateInterface> & /*update*/);
 
   template <typename T>
   void RegisterUpdateType(std::string key)
