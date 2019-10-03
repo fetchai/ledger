@@ -178,22 +178,15 @@ protected:
   TypeInfo const &GetTypeInfo(TypeId type_id);
   bool            GetNonNegativeInteger(Variant const &v, std::size_t &index);
 
-  VM *        vm_;
-  TypeId      type_id_;
-  std::size_t ref_count_;
+  VM *   vm_;
+  TypeId type_id_;
 
 private:
+  std::size_t ref_count_;
+
   constexpr void AddRef() noexcept
   {
     ++ref_count_;
-  }
-
-  constexpr void Release() noexcept
-  {
-    if (--ref_count_ == 0)
-    {
-      delete this;
-    }
   }
 
   template <typename T>
@@ -300,7 +293,7 @@ public:
   {
     if (ptr_)
     {
-      ptr_->Release();
+      Release();
       ptr_ = nullptr;
     }
   }
@@ -340,7 +333,10 @@ private:
   {
     if (ptr_)
     {
-      ptr_->Release();
+      if (--(ptr_->ref_count_) == 0)
+      {
+        delete ptr_;
+      }
     }
   }
 
