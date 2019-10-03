@@ -95,7 +95,7 @@ public:
 
   void quit()
   {
-    Lock lock(mut);
+    FETCH_LOCK(mut);
     quitflag = true;
   }
 
@@ -104,7 +104,7 @@ public:
     while (true)
     {
       {
-        Lock lock(mut);
+        FETCH_LOCK(mut);
         if (quitflag)
         {
           return;

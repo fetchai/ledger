@@ -45,7 +45,7 @@ public:
   template <typename T>
   void Initialize()
   {
-    Lock l{queue_m_};
+    FETCH_LOCK(queue_m_);
     if (!queue_)
     {
       queue_ = std::make_shared<Queue<T>>();
@@ -59,7 +59,7 @@ public:
   template <typename T>
   std::shared_ptr<T> getUpdate()
   {
-    Lock l{queue_m_};
+    FETCH_LOCK(queue_m_);
     ThrowIfNotInitialized();
     auto que = std::dynamic_pointer_cast<Queue<T>>(queue_);
     return que->getUpdate();
@@ -73,7 +73,7 @@ public:
   template <typename T>
   void RegisterUpdateType(std::string key)
   {
-    Lock l{queue_map_m_};
+    FETCH_LOCK(queue_map_m_);
     update_types_.template put<T>(key);
     queue_map_[key] = std::make_shared<Queue<T>>();
   }
@@ -81,7 +81,7 @@ public:
   template <typename T>
   std::size_t GetUpdateTypeCount() const
   {
-    Lock l{queue_map_m_};
+    FETCH_LOCK(queue_map_m_);
     auto key = update_types_.template find<T>();
     return queue_map_.at(key)->size();
   }
@@ -91,7 +91,7 @@ public:
   template <typename T>
   std::shared_ptr<T> GetUpdateType()
   {
-    Lock l{queue_map_m_};
+    FETCH_LOCK(queue_map_m_);
     auto key  = update_types_.template find<T>();
     auto iter = queue_map_.find(key);
     auto que  = std::dynamic_pointer_cast<Queue<T>>(iter->second);

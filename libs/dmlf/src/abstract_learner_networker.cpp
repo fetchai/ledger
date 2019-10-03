@@ -10,7 +10,7 @@ namespace dmlf {
 
   std::size_t AbstractLearnerNetworker::GetUpdateCount() const
   {
-    Lock l{queue_m_};
+    FETCH_LOCK(queue_m_);
     ThrowIfNotInitialized();
     return queue_->size();
   }
@@ -23,7 +23,7 @@ namespace dmlf {
 
   std::size_t AbstractLearnerNetworker::GetUpdateTypeCount(const std::string &key) const
   {
-    Lock l{queue_map_m_};
+    FETCH_LOCK(queue_map_m_);
     auto iter = queue_map_.find(key);
     if (iter != queue_map_.end())
     {
@@ -34,7 +34,7 @@ namespace dmlf {
 
   void AbstractLearnerNetworker::NewMessage(const Bytes &msg)
   {
-    Lock l{queue_m_};
+    FETCH_LOCK(queue_m_);
     ThrowIfNotInitialized();
     queue_->PushNewMessage(msg);
   }
@@ -48,7 +48,7 @@ namespace dmlf {
     serializer >> key;
     serializer >> update;
 
-    Lock l{queue_map_m_};
+    FETCH_LOCK(queue_map_m_);
     auto iter = queue_map_.find(key);
     if (iter != queue_map_.end())
     {

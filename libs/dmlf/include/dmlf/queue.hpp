@@ -46,20 +46,20 @@ public:
     update->deserialise(msg);
     std::cout << "[Queue] Got update: " << update->TimeStamp() << std::endl;
     {
-      Lock l{updates_m_};
+      FETCH_LOCK(updates_m_);
       updates_.push(update);
     }
   }
 
   std::size_t size() const override
   {
-    Lock l{updates_m_};
+    FETCH_LOCK(updates_m_);
     return updates_.size();
   }
 
   std::shared_ptr<UpdateType> getUpdate()
   {
-    Lock l{updates_m_};
+    FETCH_LOCK(updates_m_);
     if (!updates_.empty())
     {
       auto upd = updates_.top();
