@@ -217,6 +217,9 @@ private:
 
   uint16_t failures_{0};
 
+  // Convenience functions
+  ReliableChannelPtr ReliableBroadcastFactory();
+
   /// @name Handlers for messages
   /// @{
   void OnDkgMessage(MuddleAddress const &from, const std::shared_ptr<DKGMessage> &msg_ptr);

@@ -67,7 +67,7 @@ endfunction
 @clear
 function applyWork(problem : Int32, solution : Int32)
   var result = State<Int32>("solution");
-  result.set(solution);
+  result.set(result.get(0) + solution);
 endfunction
 
 @query
