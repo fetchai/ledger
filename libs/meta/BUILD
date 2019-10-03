@@ -1,5 +1,5 @@
 cc_library(
-  name = "fetch-meta",
+  name = "meta",
   visibility = [
       "//visibility:public",
   ],

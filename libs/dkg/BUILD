@@ -1,10 +1,13 @@
 cc_library(
-  name = "fetch-dkg",
+  name = "dkg",
   visibility = [
       "//visibility:public",
   ],
   srcs = glob(["src/*.cpp"]),
   hdrs = glob(["include/*.hpp", "include/**/*.hpp"]),
+  copts = [
+    '-std=c++14',
+  ]
   deps = [
     "//libs/core:fetch-core",
     "//libs/crypto:fetch-crypto",

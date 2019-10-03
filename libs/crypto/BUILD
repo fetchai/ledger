@@ -1,16 +1,16 @@
 cc_library(
-  name = "fetch-crypto",
+  name = "crypto",
   visibility = [
       "//visibility:public",
   ],
   srcs = glob(["src/*.cpp"]),
   hdrs = glob(["include/*.hpp", "include/**/*.hpp"]),
   deps = [
-    "//libs/core:fetch-core",
-    "//libs/meta:fetch-meta",
+    "//libs/core:core",
+    "//libs/meta:meta",
     "//libs/math:fetch-math",
-    "//libs/vectorise:fetch-vectorise",
-    "//libs/logging:fetch-logging"
+    "//libs/vectorise:vectorise",
+    "//libs/logging:logging"
   ],
   copts = [
         "-Ilibs/metrics/include",

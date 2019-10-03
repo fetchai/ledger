@@ -1,15 +1,16 @@
 cc_library(
-  name = "fetch-core",
+  name = "core",
   visibility = [
       "//visibility:public",
   ],
   srcs = glob(["src/*.cpp"]),
   hdrs = glob(["include/*.hpp", "include/**/*.hpp"]),
   deps = [
-    "//libs/vectorise:fetch-vectorise"
+    "//libs/vectorise:vectorise"
   ],
   copts = [
-        "-Ilibs/metrics/include",
+    "-std=c++14",
+    "-Ilibs/metrics/include",
     "-Ilibs/settings/include",
     "-Ilibs/crypto/include",
     "-Ilibs/ledger/include",

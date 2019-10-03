@@ -6,9 +6,9 @@ cc_library(
   srcs = glob(["src/*.cpp"]),
   hdrs = glob(["include/*.hpp", "include/**/*.hpp"]),
   deps = [
-    "//libs/core:fetch-core",
-    "//libs/variant:fetch-variant",
-    "//libs/logging:fetch-logging"
+    "//libs/core:core",
+    "//libs/variant:variant",
+    "//libs/logging:logging"
   ],
   copts = [
         "-Ilibs/metrics/include",

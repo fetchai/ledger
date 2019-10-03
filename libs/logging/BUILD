@@ -1,16 +1,17 @@
 cc_library(
-  name = "fetch-logging",
+  name = "logging",
   visibility = [
       "//visibility:public",
   ],
   srcs = glob(["src/*.cpp"]),
   hdrs = glob(["include/*.hpp", "include/**/*.hpp"]),
   deps = [
-    "//libs/core:fetch-core",
-    "//libs/telemetry:fetch-telemetry"
+    "//libs/core:core",
+    "//libs/telemetry:telemetry",
+    "//vendor:spdlog",
   ],
   copts = [
-        "-Ilibs/metrics/include",
+    "-Ilibs/metrics/include",
     "-Ilibs/settings/include",
     "-Ilibs/crypto/include",
     "-Ilibs/ledger/include",
@@ -41,6 +42,7 @@ cc_library(
     "-Ilibs/logging/include",
     "-Ilibs/vectorise/include",
     "-Ilibs/oef-messages/include",
-    "-Ilibs/miner/include"
+    "-Ilibs/miner/include",
+    "-Ivendor/spdlog/include",
   ],  
 )

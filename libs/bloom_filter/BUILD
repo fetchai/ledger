@@ -1,5 +1,5 @@
 cc_library(
-  name = "fetch-bloomfilter",
+  name = "bloom_filter",
   visibility = [
       "//visibility:public",
   ],

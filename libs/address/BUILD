@@ -1,5 +1,5 @@
 cc_library(
-  name = "fetch-address",
+  name = "address",
   visibility = [
       "//visibility:public",
   ],

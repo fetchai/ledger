@@ -1,15 +1,16 @@
 cc_library(
-  name = "fetch-telemetry",
+  name = "telemetry",
   visibility = [
       "//visibility:public",
   ],
   srcs = glob(["src/*.cpp"]),
   hdrs = glob(["include/*.hpp", "include/**/*.hpp"]),
   deps = [
-    "//libs/core:fetch-core"
+    "//libs/core:core"
   ],
   copts = [
-        "-Ilibs/metrics/include",
+    "-std=c++14",
+    "-Ilibs/metrics/include",
     "-Ilibs/settings/include",
     "-Ilibs/crypto/include",
     "-Ilibs/ledger/include",
