@@ -101,8 +101,8 @@ using MyTypes = ::testing::Types<
 
 using MyFPTypes =
     ::testing::Types</*fetch::vectorise::VectorRegister<float, 256>,*/
-                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>//,
-                     //fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>//,
+                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
+                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>//,
                      // fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
                      // fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>//,
                      /*fetch::vectorise::VectorRegister<double, 256>*/>;
@@ -157,7 +157,9 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
 
   TypeParam vtmp1{sum}, vtmp2{diff}, vtmp3{prod}, vtmp4{div};
   EXPECT_TRUE(all_equal_to(vtmp1, vsum));
+  std::cout << "vtmp2 = " << vtmp2 << std::endl;
   EXPECT_TRUE(all_equal_to(vtmp2, vdiff));
+  std::cout << "vdiff = " << vdiff << std::endl;
   EXPECT_TRUE(all_equal_to(vtmp3, vprod));
   EXPECT_TRUE(all_equal_to(vtmp4, vdiv));
 
@@ -334,8 +336,8 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_TRUE(all_less_than(vneg_inf, TypeParam::_0()));
 
 
-  VectorRegister<int32_t, 128> vtest_int32(-1073709056);
-  VectorRegister<fetch::fixed_point::fp32_t, 128> vtest_fp32(vtest_int32.data());
+  VectorRegister<int32_t, TypeParam::E_VECTOR_SIZE> vtest_int32(-1073709056);
+  VectorRegister<fetch::fixed_point::fp32_t, TypeParam::E_VECTOR_SIZE> vtest_fp32(vtest_int32.data());
   std::cout << "vtest = " << vtest_int32 << std::endl;
   std::cout << "vtest = " << vtest_fp32 << std::endl;
   std::cout << "-inf < vtest = " << (vneg_inf < vtest_fp32) << std::endl;
