@@ -35,32 +35,49 @@ using fetch::vm::IR;
 
 namespace {
 
-char const *DEF_STRING = R"(
-  //DEF_STRING
+char const *EMPTY = R"(
+  function main()
+  endfunction
+)";
+
+char const *BASE_STRING = R"(
+  //BASE_STRING
   function main()
     var x : String = "x";
     x;
   endfunction
 )";
 
+char const *EQUAL_STRING = R"(
+  function main()
+    var x : String = "x";
+    x == x;
+  endfunction
+)";
+
 char const *ADD_STRING = R"(
-  //ADD_STRING
   function main()
     var x : String = "x";
     x + x;
   endfunction
 )";
 
-char const *DEF_UINT32 = R"(
-  //DEF_UINT32
+char const *BASE_UINT32 = R"(
+  //BASE_UINT32
   function main()
     var x : UInt32 = 1u32;
     x;
   endfunction
 )";
 
+char const *EQUAL_UINT32 = R"(
+  function main()
+    var x : UInt32 = 1u32;
+    x + x;
+  endfunction
+)";
+
 char const *ADD_UINT32 = R"(
-  //ADD_UINT32
   function main()
     var x : UInt32 = 1u32;
     x + x;
@@ -68,7 +85,6 @@ char const *ADD_UINT32 = R"(
 )";
 
 char const *SUB_UINT32 = R"(
-  //SUB_UINT32
   function main()
     var x : UInt32 = 1u32;
     x - x;
@@ -76,7 +92,6 @@ char const *SUB_UINT32 = R"(
 )";
 
 char const *MUL_UINT32 = R"(
-  //MUL_UINT32
   function main()
     var x : UInt32 = 1u32;
     x * x;
@@ -84,17 +99,13 @@ char const *MUL_UINT32 = R"(
 )";
 
 char const *DIV_UINT32 = R"(
-  //DIV_UINT32
   function main()
     var x : UInt32 = 1u32;
     x / x;
   endfunction
 )";
 
-char const *DEF_STR = R"(DEF_STRING)";
-char const *DEF_U32 = R"(DEF_UINT32)";
-
-void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
+void OpcodeBenchmark(benchmark::State &state, char const *ETCH_CODE) {
   Module module;
   Compiler compiler(&module);
   IR ir;
@@ -114,18 +125,6 @@ void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
   }
 
   auto function = executable.functions.begin();
-
-  // Add a push operation to the baseline tests to isolate the arithmetic operations in the main opcode tests
-  if (strstr(ETCH_CODE, DEF_STR) != nullptr)
-  {
-    Executable::Instruction instruction(fetch::vm::Opcodes::PushString);
-    function->AddInstruction(instruction);
-  }
-  else if (strstr(ETCH_CODE, DEF_U32) != nullptr)
-  {
-    Executable::Instruction instruction(fetch::vm::Opcodes::PushVariable);
-    function->AddInstruction(instruction);
-  }
 
   // benchmark iterations
   std::string error{};
@@ -148,10 +147,13 @@ void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
 
 } // namespace
 
-BENCHMARK_CAPTURE(AddInstruction,DefString,DEF_STRING);
-BENCHMARK_CAPTURE(AddInstruction,AddString,ADD_STRING);
-BENCHMARK_CAPTURE(AddInstruction,DefUint32,DEF_UINT32);
-BENCHMARK_CAPTURE(AddInstruction,AddUint32,ADD_UINT32);
-BENCHMARK_CAPTURE(AddInstruction,SubUint32,SUB_UINT32);
-BENCHMARK_CAPTURE(AddInstruction,MulUint32,MUL_UINT32);
-BENCHMARK_CAPTURE(AddInstruction,DivUint32,DIV_UINT32);
+BENCHMARK_CAPTURE(OpcodeBenchmark,Empty,EMPTY);
+BENCHMARK_CAPTURE(OpcodeBenchmark,BaseString,BASE_STRING);
+BENCHMARK_CAPTURE(OpcodeBenchmark,EqualString,EQUAL_STRING);
+BENCHMARK_CAPTURE(OpcodeBenchmark,AddString,ADD_STRING);
+BENCHMARK_CAPTURE(OpcodeBenchmark,BaseUint32,BASE_UINT32);
+BENCHMARK_CAPTURE(OpcodeBenchmark,EqualUint32,EQUAL_UINT32);
+BENCHMARK_CAPTURE(OpcodeBenchmark,AddUint32,ADD_UINT32);
+BENCHMARK_CAPTURE(OpcodeBenchmark,SubUint32,SUB_UINT32);
+BENCHMARK_CAPTURE(OpcodeBenchmark,MulUint32,MUL_UINT32);
+BENCHMARK_CAPTURE(OpcodeBenchmark,DivUint32,DIV_UINT32);
