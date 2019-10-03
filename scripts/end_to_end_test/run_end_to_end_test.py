@@ -715,7 +715,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
 
                 test_instance.stop()
         except Exception as e:
-            print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
+            print('Failed to parse yaml or to run test! Error: "{}"'.format(e))
             traceback.print_exc()
             test_instance.stop()
             # test_instance.dump_debug()

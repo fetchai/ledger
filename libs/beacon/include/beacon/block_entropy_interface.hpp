@@ -17,26 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wpedantic"
-#pragma GCC diagnostic ignored "-Wmacro-redefined"
-#endif
+#include "core/byte_array/const_byte_array.hpp"
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#pragma clang diagnostic ignored "-Wpedantic"
-#pragma clang diagnostic ignored "-Wmacro-redefined"
-#endif
+namespace fetch {
+namespace beacon {
 
-#include "bls/bls.hpp"
+class BlockEntropyInterface
+{
+public:
+  using Digest = byte_array::ConstByteArray;
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+  BlockEntropyInterface()          = default;
+  virtual ~BlockEntropyInterface() = default;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+  virtual Digest   EntropyAsSHA256() const = 0;
+  virtual uint64_t EntropyAsU64() const    = 0;
+};
+
+}  // namespace beacon
+}  // namespace fetch
