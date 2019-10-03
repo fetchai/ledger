@@ -36,14 +36,14 @@ void LocalLearnerNetworker::AddPeers(std::vector<std::shared_ptr<LocalLearnerNet
   {
     if (peer.get() != this)
     {
-      peers.push_back(peer);
+      peers_.push_back(peer);
     }
   }
 }
 
 void LocalLearnerNetworker::ClearPeers()
 {
-  peers.clear();
+  peers_.clear();
 }
 
 void LocalLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &update)
@@ -55,7 +55,7 @@ void LocalLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &u
 
   for (auto ind : indexes)
   {
-    auto t = peers[ind];
+    auto t = peers_[ind];
     t->Recieve(data);
   }
 }

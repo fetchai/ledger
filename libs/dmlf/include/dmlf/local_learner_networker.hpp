@@ -39,7 +39,7 @@ public:
 
   std::size_t GetPeerCount() const override
   {
-    return peers.size();
+    return peers_.size();
   }
   void AddPeers(Peers new_peers);
   void ClearPeers();
@@ -55,8 +55,8 @@ private:
   using Lock  = std::unique_lock<Mutex>;
   using Bytes = AbstractLearnerNetworker::Bytes;
 
-  mutable Mutex mutex;
-  Peers         peers;
+  mutable Mutex mutex_;
+  Peers         peers_;
 
   void Recieve(const Bytes &data);
 };

@@ -39,8 +39,8 @@ public:
 
 protected:
 private:
-  std::size_t next_output_index;
-  std::size_t number_of_outputs_per_cycle;
+  std::size_t next_output_index_;
+  std::size_t number_of_outputs_per_cycle_;
 };
 
 }  // namespace dmlf

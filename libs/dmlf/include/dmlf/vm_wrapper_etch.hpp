@@ -75,7 +75,9 @@ private:
   OutputHandler     outputHandler_ = nullptr;
 
   Status            status_ = VmWrapperInterface::UNCONFIGURED;
+
   std::string                        command_    = "";
+
   std::unique_ptr<VM>                vm_         = nullptr;
 };
 

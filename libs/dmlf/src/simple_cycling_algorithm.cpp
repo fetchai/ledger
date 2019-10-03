@@ -23,12 +23,12 @@ namespace dmlf {
 
 std::vector<std::size_t> SimpleCyclingAlgorithm::GetNextOutputs()
 {
-  std::vector<std::size_t> result(number_of_outputs_per_cycle);
-  for (std::size_t i = 0; i < number_of_outputs_per_cycle; i++)
+  std::vector<std::size_t> result(number_of_outputs_per_cycle_);
+  for (std::size_t i = 0; i < number_of_outputs_per_cycle_; i++)
   {
-    result[i] = next_output_index;
-    next_output_index += 1;
-    next_output_index %= GetCount();
+    result[i] = next_output_index_;
+    next_output_index_ += 1;
+    next_output_index_ %= GetCount();
   }
   return result;
 }
@@ -37,8 +37,8 @@ SimpleCyclingAlgorithm::SimpleCyclingAlgorithm(std::size_t count,
                                                std::size_t number_of_outputs_per_cycle)
   : ShuffleAlgorithmInterface(count)
 {
-  this->next_output_index           = 0;
-  this->number_of_outputs_per_cycle = std::min(number_of_outputs_per_cycle, GetCount());
+  next_output_index_           = 0;
+  number_of_outputs_per_cycle_ = std::min(number_of_outputs_per_cycle, GetCount());
 }
 
 }  // namespace dmlf
