@@ -117,7 +117,7 @@ class QualComplaintsManager
   std::set<MuddleAddress> complaints_;           ///< Cabinet members we complain against
   QualComplaints          complaints_received_;  ///< Set of cabinet members we have received a qual
   ///< complaint message from
-  mutable std::mutex      mutex_;
+  mutable std::mutex mutex_;
 
 public:
   QualComplaintsManager() = default;
