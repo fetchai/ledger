@@ -54,12 +54,7 @@ public:
     throw std::runtime_error{"Learner already initialized"};
   }
 
-  std::size_t GetUpdateCount() const
-  {
-    Lock l{queue_m_};
-    ThrowIfNotInitialized();
-    return queue_->size();
-  }
+  std::size_t GetUpdateCount() const;
 
   template <typename T>
   std::shared_ptr<T> getUpdate()
@@ -70,10 +65,7 @@ public:
     return que->getUpdate();
   }
 
-  virtual void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg)
-  {
-    alg_ = alg;
-  }
+  virtual void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg);
 
   virtual void PushUpdateType(const std::string & /*key*/,
                               const std::shared_ptr<UpdateInterface> & /*update*/) = 0;
@@ -94,16 +86,7 @@ public:
     return queue_map_.at(key)->size();
   }
 
-  std::size_t GetUpdateTypeCount(const std::string &key) const
-  {
-    Lock l{queue_map_m_};
-    auto iter = queue_map_.find(key);
-    if (iter != queue_map_.end())
-    {
-      return iter->second->size();
-    }
-    throw std::runtime_error{"Requesting UpdateCount for unregistered type"};
-  }
+  std::size_t GetUpdateTypeCount(const std::string &key) const;
 
   template <typename T>
   std::shared_ptr<T> GetUpdateType()
@@ -123,34 +106,14 @@ public:
 protected:
   std::shared_ptr<ShuffleAlgorithmInterface> alg_;       // used by descendents
 
-  void                                       NewMessage(const Bytes &msg)  // called by descendents
+  void NewMessage(const Bytes &msg)  // called by descendents
   {
     Lock l{queue_m_};
     ThrowIfNotInitialized();
     queue_->PushNewMessage(msg);
   }
 
-  void NewDmlfMessage(const Bytes &msg)  // called by descendents
-  {
-    serializers::MsgPackSerializer serializer{msg};
-    std::string                    key;
-    Bytes                          update;
-
-    std::cout << "[abstract-learner] Got Dmlf message" << std::endl;
-
-    serializer >> key;
-    std::cout << "[abstract-learner] message type " << key << std::endl;
-    serializer >> update;
-
-    Lock l{queue_map_m_};
-    auto iter = queue_map_.find(key);
-    if (iter != queue_map_.end())
-    {
-      iter->second->PushNewMessage(update);
-      return;
-    }
-    throw std::runtime_error{"Received Update with a non registered type"};
-  }
+  void NewDmlfMessage(const Bytes &msg);  // called by descendents
 
 private:
   using Mutex             = fetch::Mutex;
@@ -165,13 +128,7 @@ private:
 
   TypeMap<> update_types_;
 
-  void ThrowIfNotInitialized() const
-  {
-    if (!queue_)
-    {
-      throw std::runtime_error{"Learner is not initialized"};
-    }
-  }
+  void ThrowIfNotInitialized() const;
 };
 
 }  // namespace dmlf
