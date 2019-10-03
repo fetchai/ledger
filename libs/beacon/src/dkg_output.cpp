@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -18,29 +17,26 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/dkg_output.hpp"
-#include "crypto/mcl_dkg.hpp"
 
-#include <map>
-#include <set>
-#include <vector>
+using fetch::beacon::DkgOutput;
 
-namespace fetch {
-namespace beacon {
-
-class TrustedDealer
+DkgOutput::DkgOutput()
 {
-public:
-  using DkgOutput         = beacon::DkgOutput;
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
+  bn::initPairing();
+  group_public_key.clear();
+  private_key_share.clear();
+}
 
-  TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold);
-  DkgOutput GetKeys(MuddleAddress const &address) const;
+DkgOutput::DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares,
+                     PrivateKey  secret_share,  // NOLINT
+                     CabinetList qual_members)
+  : qual{std::move(qual_members)}
+  , group_public_key{std::move(group_key)}
+  , public_key_shares{std::move(key_shares)}
+  , private_key_share{secret_share}
+{}
 
-private:
-  std::set<MuddleAddress>           cabinet_{};
-  std::map<MuddleAddress, uint32_t> cabinet_index_{};
-  std::vector<DkgKeyInformation>    outputs_{};
-};
-}  // namespace beacon
-}  // namespace fetch
+DkgOutput::DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members)
+  : DkgOutput{keys.group_public_key, keys.public_key_shares, keys.private_key_share,
+              std::move(qual_members)}
+{}
