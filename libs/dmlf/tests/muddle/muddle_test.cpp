@@ -45,16 +45,6 @@ using LNP     = std::shared_ptr<LN>;
 using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
 using UpdatePayloadType    = UpdateTypeForTesting::PayloadType;
 
-// static constexpr char const *NETWORK_A_PUBLIC_KEY =
-//    "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==";
-// static constexpr char const *NETWORK_A_PRIVATE_KEY =
-//    "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
-
-// static constexpr char const *NETWORK_B_PUBLIC_KEY =
-//    "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
-// static constexpr char const *NETWORK_B_PRIVATE_KEY =
-//    "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
-
 class Learner
 {
 public:
