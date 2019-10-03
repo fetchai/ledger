@@ -345,7 +345,7 @@ void TrainingClient<TensorType>::DoBatch()
   GradientType current_gradients = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
 
   // Push own gradient to iLearner
-  i_learner_ptr_->pushUpdate(
+  i_learner_ptr_->PushUpdate(
       std::make_shared<fetch::dmlf::Update<TensorType>>(current_gradients.first));
 
   VectorTensorType new_gradients;
@@ -356,7 +356,7 @@ void TrainingClient<TensorType>::DoBatch()
   while (i_learner_ptr_->GetUpdateCount() > 0)
   {
     ucnt++;
-    new_gradients = i_learner_ptr_->getUpdate<fetch::dmlf::Update<TensorType>>()->GetGradients();
+    new_gradients = i_learner_ptr_->GetUpdate<fetch::dmlf::Update<TensorType>>()->GetGradients();
     GraphAddGradients(g_ptr_, new_gradients);
   }
 
