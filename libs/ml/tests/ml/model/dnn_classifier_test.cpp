@@ -190,7 +190,6 @@ TYPED_TEST(ModelsTest, sgd_dnnclasifier_serialisation)
 
   model.Predict(test_datum, pred1);
   model2->Predict(test_datum, pred2);
-
   std::cout << pred0.ToString() << std::endl;
   std::cout << pred1.ToString() << std::endl;
   std::cout << pred2.ToString() << std::endl;
@@ -200,6 +199,13 @@ TYPED_TEST(ModelsTest, sgd_dnnclasifier_serialisation)
   EXPECT_TRUE(pred0.AllClose(pred2, tolerance, tolerance));
 
   model.Train(n_training_steps);
+
+  model.Predict(test_datum, pred1);
+  model2->Predict(test_datum, pred2);
+  std::cout << pred0.ToString() << std::endl;
+  std::cout << pred1.ToString() << std::endl;
+  std::cout << pred2.ToString() << std::endl;
+
   model2->Train(n_training_steps);
 
   // Do 2 optimiser steps

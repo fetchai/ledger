@@ -288,29 +288,32 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
   using Type       = ml::model::Model<TensorType>;
   using DriverType = D;
 
-  // public member variables
+  // protected member variables
   static uint8_t const GRAPH           = 1;
-  static uint8_t const DATALOADER_PTR  = 2;
-  static uint8_t const DATALOADER_TYPE = 3;
-  static uint8_t const OPTIMISER_PTR   = 4;
-  static uint8_t const OPTIMISER_TYPE  = 5;
+  static uint8_t const MODEL_CONFIG    = 2;
+  static uint8_t const DATALOADER_PTR  = 3;
+  static uint8_t const DATALOADER_TYPE = 4;
+  static uint8_t const OPTIMISER_PTR   = 5;
+  static uint8_t const OPTIMISER_TYPE  = 6;
 
-  static uint8_t const INPUT_NODE_NAME  = 6;
-  static uint8_t const LABEL_NODE_NAME  = 7;
-  static uint8_t const OUTPUT_NODE_NAME = 8;
-  static uint8_t const ERROR_NODE_NAME  = 9;
+  static uint8_t const INPUT_NODE_NAME  = 7;
+  static uint8_t const LABEL_NODE_NAME  = 8;
+  static uint8_t const OUTPUT_NODE_NAME = 9;
+  static uint8_t const ERROR_NODE_NAME  = 10;
 
-  static uint8_t const LOSS_SET_FLAG      = 10;
-  static uint8_t const OPTIMISER_SET_FLAG = 11;
-  static uint8_t const COMPILED_FLAG      = 12;
+  static uint8_t const LOSS_SET_FLAG      = 11;
+  static uint8_t const OPTIMISER_SET_FLAG = 12;
+  static uint8_t const COMPILED_FLAG      = 13;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(13);
+    auto map = map_constructor(14);
 
     // serialize the graph first
     map.Append(GRAPH, sp.graph_ptr_->GetGraphSaveableParams());
+
+    map.Append(MODEL_CONFIG, sp.model_config_);
 
     map.Append(DATALOADER_TYPE, static_cast<uint8_t>(sp.dataloader_ptr_->LoaderCode()));
 
@@ -386,6 +389,8 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     ml::utilities::BuildGraph(gsp, new_graph_ptr);
     sp.graph_ptr_ = new_graph_ptr;
 
+    map.ExpectKeyGetValue(MODEL_CONFIG, sp.model_config_);
+
     // deserialize dataloader
     uint8_t loader_type;
     map.ExpectKeyGetValue(DATALOADER_TYPE, loader_type);
@@ -422,8 +427,8 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     {
       auto optimiser_ptr = new ml::optimisers::SGDOptimiser<TensorType>();
       map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
-      optimiser_ptr->SetGraph(sp.graph_ptr_);
       sp.optimiser_ptr_.reset(optimiser_ptr);
+      sp.optimiser_ptr_->SetGraph(sp.graph_ptr_);
       break;
     }
 
