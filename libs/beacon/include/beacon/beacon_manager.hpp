@@ -57,7 +57,7 @@ public:
     Identity  identity;
   };
 
-  explicit BeaconManager(CertificatePtr = nullptr);
+  explicit BeaconManager(CertificatePtr = nullptr); // NOLINT
 
   BeaconManager(BeaconManager const &) = delete;
   BeaconManager &operator=(BeaconManager const &) = delete;
