@@ -44,7 +44,7 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
   static std::once_flag flag;
 
   std::call_once(flag, []() {
-    bn::initPairing();
+    fetch::crypto::mcl::details::MCLInitialiser();
     zeroG2_.clear();
     zeroFr_.clear();
     crypto::mcl::SetGenerators(group_g_, group_h_);
