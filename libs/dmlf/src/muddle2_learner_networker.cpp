@@ -93,7 +93,7 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string &cloud_config
   {
     if (peer_number != instance_number)
     {
-      peers_.push_back(config_peers[peer_number]["pub"].As<std::string>());
+      peers_.emplace_back(config_peers[peer_number]["pub"].As<std::string>());
     }
   }
 }
@@ -124,7 +124,6 @@ void Muddle2LearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> 
   PromiseList promises;
   promises.reserve(20);
 
-#pragma clang diagnostic ignored "-Wunused-variable"
   for (const auto &target_peer : peers_)
   {
     promises.push_back(client->CallSpecificAddress(
@@ -146,7 +145,6 @@ void Muddle2LearnerNetworker::PushUpdateType(const std::string &                
   PromiseList promises;
   promises.reserve(20);
 
-#pragma clang diagnostic ignored "-Wunused-variable"
   for (const auto &target_peer : peers_)
   {
     promises.push_back(client->CallSpecificAddress(

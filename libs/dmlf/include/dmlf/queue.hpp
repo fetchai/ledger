@@ -44,7 +44,6 @@ public:
   {
     auto update = std::make_shared<UpdateType>();
     update->deserialise(msg);
-    std::cout << "[Queue] Got update: " << update->TimeStamp() << std::endl;
     {
       FETCH_LOCK(updates_m_);
       updates_.push(update);

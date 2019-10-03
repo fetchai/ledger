@@ -50,7 +50,6 @@ void FilepassingLearnerNetworker::setName(const std::string &name)
   auto names = getUpdateNames();
   for (const auto &name : names)
   {
-    // std::cout << "UNLINK:: "<< name << std::endl;
     ::unlink(name.c_str());
   }
   running_ = true;

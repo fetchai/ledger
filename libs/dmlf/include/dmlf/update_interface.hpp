@@ -33,6 +33,8 @@ public:
 
   UpdateInterface() = default;
 
+  virtual ~UpdateInterface() = default;
+
   // API
   virtual byte_array::ByteArray serialise()                                = 0;
   virtual byte_array::ByteArray serialise(std::string type)                = 0;
@@ -50,8 +52,6 @@ public:
   {
     return TimeStamp() > other.TimeStamp();
   }
-
-  virtual ~UpdateInterface() = default;
 
   UpdateInterface(const UpdateInterface &other) = delete;
   UpdateInterface &operator=(const UpdateInterface &other)  = delete;
