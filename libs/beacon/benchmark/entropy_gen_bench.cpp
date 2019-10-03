@@ -84,7 +84,7 @@ struct BeaconSelfContained
     muddle->Stop();
   }
 
-  void ResetCabinet(BeaconService::CabinetMemberList const &cabinet, uint32_t round_start,
+  void ResetCabinet(BeaconService::CabinetMemberList  /*unused*/const &cabinet, uint32_t round_start,
                     uint32_t round_end, BlockEntropy const &entropy, DkgOutput const &output)
   {
     beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2 + 1),

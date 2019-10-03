@@ -360,12 +360,12 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
                    from_index);
     return from;
   }
-  else
-  {
+  
+  
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
                    " could not deserialise qual complaint from ", from_index);
     return from;
-  }
+  
 }
 
 /**
