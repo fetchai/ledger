@@ -110,20 +110,6 @@ bool operator==(Packet::RawAddress const &lhs, Packet::Address const &rhs)
   return CompareAddress(lhs.data(), rhs.pointer());
 }
 
-/**
- * Convert a raw address into a byte array
- *
- * @param addr The reference to the address to convert
- * @return The converted (output) byte array
- */
-ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
-{
-  ByteArray buffer;
-  buffer.Resize(addr.size());
-  std::memcpy(buffer.pointer(), addr.data(), addr.size());
-  return {std::move(buffer)};
-}
-
 template <typename T>
 ConstByteArray EncodePayload(T const &msg)
 {
@@ -332,7 +318,7 @@ void Router::Route(Handle handle, PacketPtr const &packet)
   {
     // update the routing table if required
     // TODO(KLL): this may not be the association we're looking for.
-    AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
+    AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false, packet->IsBroadcast());
 
     // if this message does not belong to us we must route it along the path
     RoutePacket(packet);
@@ -548,7 +534,7 @@ Router::AddressSet Router::GetDirectlyConnectedPeerSet() const
  */
 Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                    handle,
                                                         Packet::RawAddress const &address,
-                                                        bool                      direct)
+                                                        bool direct, bool broadcast)
 {
   UpdateStatus status{UpdateStatus::NO_CHANGE};
 
@@ -557,6 +543,12 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
 
   // sanity check
   assert(handle);
+
+  if (broadcast)
+  {
+    FETCH_LOG_TRACE(logging_name_, "Ignoring routing messages from broadcast");
+    return status;
+  }
 
   bool display{false};
 
@@ -611,7 +603,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
   if (display)
   {
     FETCH_LOG_INFO(logging_name_, "Adding ", ((direct) ? "direct" : "normal"),
-                   " route for: ", ToBase64(ToConstByteArray(address)));
+                   " route for: ", ConvertAddress(address).ToBase64(), " (handle: ", handle, ")");
   }
 
   return status;
@@ -638,6 +630,9 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
       handle = routing_data.handle;
     }
   }
+
+  FETCH_LOG_TRACE(logging_name_, "Routing decision: ", ConvertAddress(address).ToBase64(), " -> ",
+                  handle);
 
   return handle;
 }
@@ -825,10 +820,15 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       return;
     }
 
+    // if kad routing is enabled we should use this to route packets
     if (kademlia_routing_)
     {
-      LookupKademliaClosestHandle(packet->GetTarget());
-      return;
+      handle = LookupKademliaClosestHandle(packet->GetTarget());
+      if (handle != 0u)
+      {
+        SendToConnection(handle, packet);
+        return;
+      }
     }
 
     // if direct routing fails then randomly select a handle. In future a better routing scheme

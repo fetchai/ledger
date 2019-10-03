@@ -59,7 +59,7 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
 StakeManager::CommitteePtr StakeManager::BuildCommittee(Block const &current)
 {
   auto snapshot = LookupStakeSnapshot(current.body.block_number);
-  return snapshot->BuildCommittee(current.body.entropy, committee_size_);
+  return snapshot->BuildCommittee(current.body.block_entropy.EntropyAsU64(), committee_size_);
 }
 
 StakeManager::CommitteePtr StakeManager::Reset(StakeSnapshot const &snapshot)

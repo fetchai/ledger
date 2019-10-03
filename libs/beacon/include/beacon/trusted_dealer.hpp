@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,36 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "metrics/metric_file_handler.hpp"
-#include "metrics/metrics.hpp"
+#include "beacon/dkg_output.hpp"
+#include "crypto/mcl_dkg.hpp"
 
-#include <memory>
-#include <string>
-#include <utility>
+#include <map>
+#include <set>
+#include <vector>
 
 namespace fetch {
-namespace metrics {
+namespace beacon {
 
-Metrics &Metrics::Instance()
+class TrustedDealer
 {
-  static Metrics instance;
-  return instance;
-}
+public:
+  using DkgOutput         = beacon::DkgOutput;
+  using MuddleAddress     = byte_array::ConstByteArray;
+  using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
 
-void Metrics::ConfigureFileHandler(std::string filename)
-{
-  std::unique_ptr<MetricHandler> new_handler =
-      std::make_unique<MetricFileHandler>(std::move(filename));
+  TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold);
+  DkgOutput GetKeys(MuddleAddress const &address) const;
 
-  handler_.store(new_handler.get());
-  handler_object_ = std::move(new_handler);
-}
-
-void Metrics::RemoveMetricHandler()
-{
-  handler_.store(nullptr);
-  handler_object_.reset();
-}
-
-}  // namespace metrics
+private:
+  std::set<MuddleAddress>           cabinet_{};
+  std::map<MuddleAddress, uint32_t> cabinet_index_{};
+  std::vector<DkgKeyInformation>    outputs_{};
+};
+}  // namespace beacon
 }  // namespace fetch
