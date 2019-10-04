@@ -30,8 +30,9 @@ void test1(T max)
 {
   fetch::math::ApproxExpImplementation<N, C> fexp;
   double                                     me = 0;
-  for (double x = -300; x < 300; x += 0.1)
+  for (int i = -3000; i < 3000; i++)
   {
+    double x = static_cast<double>(i) / 10;
     T      y0 = fexp(x);
     double y1 = exp(x);
     double r  = (fabs(y0 - y1) / y1 * 100);
