@@ -31,6 +31,8 @@ namespace fetch {
 namespace crypto {
 namespace mcl {
 
+std::atomic<bool> details::MCLInitialiser::was_initialised{false};
+
 void SetGenerator(Generator &group_g)
 {
   group_g.clear();
