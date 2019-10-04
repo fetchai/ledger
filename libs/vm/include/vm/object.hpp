@@ -291,11 +291,8 @@ public:
 
   void Reset()
   {
-    if (ptr_)
-    {
-      Release();
-      ptr_ = nullptr;
-    }
+    Release();
+    ptr_ = nullptr;
   }
 
   explicit operator bool() const noexcept
@@ -329,7 +326,7 @@ private:
     }
   }
 
-  void Release()
+  void Release() noexcept
   {
     if (ptr_)
     {
