@@ -37,8 +37,8 @@ public:
   ValueType find() const
   {
     std::type_index tid{typeid(KeyType)};
-    auto            iter = map.find(tid);
-    if (iter == map.end())
+    auto            iter = map_.find(tid);
+    if (iter == map_.end())
     {
       throw std::runtime_error{"Type not registered"};
     }
@@ -49,16 +49,16 @@ public:
   void put(ValueType value)
   {
     std::type_index tid{typeid(KeyType)};
-    auto            iter = map.find(tid);
-    if (iter != map.end())
+    auto            iter = map_.find(tid);
+    if (iter != map_.end())
     {
       throw std::runtime_error{"Type already registered with name '" + iter->second + "'"};
     }
-    map[tid] = value;
+    map_[tid] = value;
   }
 
 private:
-  IntToValueMap map;
+  IntToValueMap map_;
 };
 
 }  // namespace dmlf
