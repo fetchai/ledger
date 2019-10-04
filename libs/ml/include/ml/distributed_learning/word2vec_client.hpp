@@ -59,7 +59,7 @@ public:
 
   void Test() override;
 
-  GradientType GetGradients() override;
+  GradientType GetGradients();
 
   VectorTensorType TranslateGradients(GradientType &new_gradients) override;
 
@@ -220,7 +220,7 @@ Word2VecClient<TensorType>::GetVocab()
  */
 template <class TensorType>
 void Word2VecClient<TensorType>::AddVocab(
-    std::pair<std::vector<std::string>, byte_array::ConstByteArray> const &vocab_info)
+                                          const std::pair<std::vector<std::string>, byte_array::ConstByteArray> &vocab_info)
 {
   translator_.AddVocab(vocab_info.second, vocab_info.first);
 }

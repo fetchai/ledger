@@ -310,7 +310,9 @@ int main(int argc, char **argv)
 
     // Synchronize weights by giving all clients average of all client's weights
     if (synchronise)
+    {
       lossfile << it;
+    }
     for (auto &c : clients)
     {
       lossfile << "," << static_cast<double>(Test(c->GetModel(), data_tensor, label_tensor));
