@@ -232,10 +232,10 @@ void QualComplaintsManager::Reset()
   complaints_received_.clear();
 }
 
-void QualComplaintsManager::AddComplaintAgainst(MuddleAddress const &complainer_address)
+void QualComplaintsManager::AddComplaintAgainst(MuddleAddress const &id)
 {
   FETCH_LOCK(mutex_);
-  complaints_.insert(complainer_address);
+  complaints_.insert(id);
 }
 
 std::set<QualComplaintsManager::MuddleAddress> QualComplaintsManager::Complaints() const
@@ -246,15 +246,15 @@ std::set<QualComplaintsManager::MuddleAddress> QualComplaintsManager::Complaints
 }
 
 void QualComplaintsManager::AddComplaintsFrom(
-    MuddleAddress const &from, std::unordered_map<MuddleAddress, ExposedShares> const &complaints)
+    MuddleAddress const &id, std::unordered_map<MuddleAddress, ExposedShares> const &complaints)
 {
   FETCH_LOCK(mutex_);
-  if (complaints_received_.find(from) != complaints_received_.end())
+  if (complaints_received_.find(id) != complaints_received_.end())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Duplicate qual complaints received. Discarding.");
     return;
   }
-  complaints_received_.insert({from, complaints});
+  complaints_received_.insert({id, complaints});
 }
 
 void QualComplaintsManager::Finish(std::set<MuddleAddress> const &qual,
