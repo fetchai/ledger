@@ -215,18 +215,18 @@ int main(int argc, char **argv)
 
   ClientParams<DataType> client_params;
 
-  bool     synchronise                          = false;
+  bool        synchronise   = false;
   SizeType    seed          = strtoul(argv[3], nullptr, 10);
   DataType    learning_rate = static_cast<DataType>(strtof(argv[4], nullptr));
   std::string results_dir   = argv[5];
 
-  SizeType number_of_clients                    = 5;
-  SizeType number_of_rounds                     = 50;
-  client_params.iterations_count                = 20;
-  client_params.batch_size                      = 32;
-  client_params.learning_rate                   = static_cast<DataType>(.001f);
-  float                       test_set_ratio    = 0.03f;
-  SizeType                    number_of_peers   = 3;
+  SizeType number_of_clients     = 5;
+  SizeType number_of_rounds      = 50;
+  client_params.iterations_count = 20;
+  client_params.batch_size       = 32;
+  client_params.learning_rate    = static_cast<DataType>(.001f);
+  float    test_set_ratio        = 0.03f;
+  SizeType number_of_peers       = 3;
 
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
@@ -258,7 +258,6 @@ int main(int argc, char **argv)
     networkers[i]->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
         networkers[i]->GetPeerCount(), number_of_peers));
   }
-
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i{0}; i < number_of_clients; ++i)
@@ -309,10 +308,9 @@ int main(int argc, char **argv)
     }
     std::cout << std::endl;
 
-
     // Synchronize weights by giving all clients average of all client's weights
     if (synchronise)
-    lossfile << it;
+      lossfile << it;
     for (auto &c : clients)
     {
       lossfile << "," << static_cast<double>(Test(c->GetModel(), data_tensor, label_tensor));
