@@ -21,11 +21,12 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/optimisation/sgd_optimiser.hpp"
 
-#include "ml/dataloaders/tensor_dataloader.hpp"
 #include <algorithm>
 #include <chrono>
 #include <ctime>
@@ -125,7 +126,7 @@ std::vector<TensorType> Split(TensorType &data, SizeType number_of_parts)
   return TensorType::Split(data, splitting_points, axis);
 }
 
-void Shuffle(TensorType &data, TensorType &labels)
+void Shuffle(TensorType &data, TensorType &labels, SizeType const &seed = 54)
 {
   TensorType data_out   = data.Copy();
   TensorType labels_out = labels.Copy();
@@ -138,7 +139,7 @@ void Shuffle(TensorType &data, TensorType &labels)
     indices.push_back(i);
   }
 
-  fetch::random::LaggedFibonacciGenerator<> lfg(54);
+  fetch::random::LaggedFibonacciGenerator<> lfg(seed);
   fetch::random::Shuffle(lfg, indices, indices);
 
   for (SizeType i{0}; i < data.shape().at(axis); i++)
@@ -202,11 +203,12 @@ void SynchroniseWeights(std::vector<std::shared_ptr<TrainingClient<TensorType>>>
   }
 }
 
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
-  if (ac < 3)
+  if (argc != 6)
   {
-    std::cout << "Usage : " << av[0] << " PATH/TO/boston_data.csv PATH/TO/boston_label.csv"
+    std::cout << "Args: boston_data.csv boston_label.csv random_seed(int) learning_rate(float) "
+                 "results_directory"
               << std::endl;
     return 1;
   }
@@ -214,6 +216,10 @@ int main(int ac, char **av)
   ClientParams<DataType> client_params;
 
   bool     synchronise                          = false;
+  SizeType    seed          = strtoul(argv[3], nullptr, 10);
+  DataType    learning_rate = static_cast<DataType>(strtof(argv[4], nullptr));
+  std::string results_dir   = argv[5];
+
   SizeType number_of_clients                    = 5;
   SizeType number_of_rounds                     = 50;
   client_params.iterations_count                = 20;
@@ -221,14 +227,15 @@ int main(int ac, char **av)
   client_params.learning_rate                   = static_cast<DataType>(.001f);
   float                       test_set_ratio    = 0.03f;
   SizeType                    number_of_peers   = 3;
+
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   // Load data
-  TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(av[1]).Transpose();
-  TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(av[2]).Transpose();
+  TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(argv[1]).Transpose();
+  TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(argv[2]).Transpose();
 
   // Shuffle data
-  Shuffle(data_tensor, label_tensor);
+  Shuffle(data_tensor, label_tensor, seed);
 
   // Split data
   std::vector<TensorType> data_tensors  = Split(data_tensor, number_of_clients);
@@ -252,6 +259,7 @@ int main(int ac, char **av)
         networkers[i]->GetPeerCount(), number_of_peers));
   }
 
+
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
@@ -265,6 +273,16 @@ int main(int ac, char **av)
   {
     // Give each client pointer to coordinator
     clients[i]->SetNetworker(networkers[i]);
+  }
+
+  std::string results_filename = results_dir + "/fetch_" + std::to_string(number_of_clients) +
+                                 "_Adam_" + std::to_string(float(learning_rate)) + "_" +
+                                 std::to_string(seed) + "_FC3.csv";
+  std::ofstream lossfile(results_filename, std::ofstream::out);
+
+  if (!lossfile)
+  {
+    throw std::runtime_error("Bad output file");
   }
 
   // Main loop
@@ -284,19 +302,30 @@ int main(int ac, char **av)
       t.join();
     }
 
-    std::cout << "Test losses:";
+    std::cout << it;
     for (auto &c : clients)
     {
       std::cout << "\t" << static_cast<double>(Test(c->GetModel(), data_tensor, label_tensor));
     }
     std::cout << std::endl;
 
+
     // Synchronize weights by giving all clients average of all client's weights
+    if (synchronise)
+    lossfile << it;
+    for (auto &c : clients)
+    {
+      lossfile << "," << static_cast<double>(Test(c->GetModel(), data_tensor, label_tensor));
+    }
+    lossfile << std::endl;
+
     if (synchronise)
     {
       SynchroniseWeights(clients);
     }
   }
+
+  std::cout << "Results saved in " << results_filename << std::endl;
 
   return 0;
 }

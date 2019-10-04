@@ -1,4 +1,4 @@
-DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.3.0'
+DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.1'
 HIGH_LOAD_NODE_LABEL = 'ledger'
 MACOS_NODE_LABEL = 'mac-mini'
 
