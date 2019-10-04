@@ -17,14 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-<<<<<<< HEAD
 #include "dmlf/abstract_learner_networker.hpp"
 #include "dmlf/update.hpp"
-=======
-#include "coordinator.hpp"
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
->>>>>>> bb5c24ef2ef32742f7626039058151b6186770d9
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
@@ -121,15 +116,7 @@ public:
 
   void Run();
 
-<<<<<<< HEAD
-  VectorTensorType GetGradients() const;
-=======
-  void Train();
-
-  virtual void Test();
-
-  virtual GradientType GetGradients();
->>>>>>> bb5c24ef2ef32742f7626039058151b6186770d9
+  GradientType GetGradients() const;
 
   VectorTensorType GetWeights() const;
 
@@ -185,18 +172,14 @@ protected:
   // Print to console flag
   bool print_loss_;
 
-<<<<<<< HEAD
   void         DoBatch();
   void         Train();
   virtual void Test();
 
   void          GraphAddGradients(GraphPtrType g_ptr, VectorTensorType const &gradients);
-=======
-  std::string   GetStrTimestamp();
->>>>>>> bb5c24ef2ef32742f7626039058151b6186770d9
-  TimestampType GetTimestamp();
 
-  std::string GetStrTimestamp();
+  TimestampType GetTimestamp() const;
+  std::string GetStrTimestamp() const;
   void        ClearLossFile();
 };
 
@@ -303,7 +286,7 @@ void TrainingClient<TensorType>::Run()
  * @return vector of gradient update values
  */
 template <class TensorType>
-typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetGradients()
+    typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetGradients() const
 {
   FETCH_LOCK(model_mutex_);
   return GradientType(g_ptr_->GetGradients(), GetTimestamp(), id_, byte_array::ConstByteArray(),
@@ -348,7 +331,6 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
  * @param gradient
  */
 template <class TensorType>
-<<<<<<< HEAD
 void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr,
                                                    VectorTensorType const &gradients)
 {
@@ -361,19 +343,11 @@ void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr
     weights_ptr->AddToGradient(*grad_it);
     ++grad_it;
   }
-=======
-typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetNewGradients()
-{
-  FETCH_LOCK(queue_mutex_);
-  GradientType new_gradients = gradient_queue_.front();
-  gradient_queue_.pop();
-  return new_gradients;
->>>>>>> bb5c24ef2ef32742f7626039058151b6186770d9
 }
 
 // Timestamp for logging
 template <class TensorType>
-std::string TrainingClient<TensorType>::GetStrTimestamp()
+std::string TrainingClient<TensorType>::GetStrTimestamp() const
 {
   auto now       = std::chrono::system_clock::now();
   auto in_time_t = std::chrono::system_clock::to_time_t(now);
@@ -392,7 +366,7 @@ std::string TrainingClient<TensorType>::GetStrTimestamp()
 
 // Timestamp for gradient queue
 template <class TensorType>
-int64_t TrainingClient<TensorType>::GetTimestamp()
+int64_t TrainingClient<TensorType>::GetTimestamp() const
 {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::system_clock::now().time_since_epoch())
@@ -408,12 +382,11 @@ void TrainingClient<TensorType>::DoBatch()
   // Train one batch to create own gradient
   Train();
 
-  // Load own gradient
-  GradientType current_gradients = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
+    // Load own gradient
+      GradientType current_gradients = GetGradients();
 
-  // Push own gradient to iLearner
-  i_learner_ptr_->PushUpdate(
-      std::make_shared<fetch::dmlf::Update<TensorType>>(current_gradients.first));
+            // Push own gradient to iLearner
+              i_learner_ptr_->PushUpdate(std::make_shared<fetch::dmlf::Update<TensorType>>(current_gradients.data));
 
   VectorTensorType new_gradients;
 
@@ -482,24 +455,7 @@ void TrainingClient<TensorType>::Test()
   // If test set is not available we run test on whole training set
   if (dataloader_ptr_->IsModeAvailable(fetch::ml::dataloaders::DataLoaderMode::TEST))
   {
-<<<<<<< HEAD
     dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
-=======
-    peers_ = coordinator_ptr_->NextPeersList(id_);
-
-    GradientType current_gradient = GetGradients();
-
-    // Add gradient to export queue
-    AddExportGradient(current_gradient);
-
-    // Sum all gradient in queue
-    while (!gradient_queue_.empty())
-    {
-      GradientType     gt            = GetNewGradients();
-      VectorTensorType new_gradients = TranslateGradients(gt);
-      GraphAddGradients(g_ptr_, new_gradients);
-    }
->>>>>>> bb5c24ef2ef32742f7626039058151b6186770d9
   }
   else
   {
