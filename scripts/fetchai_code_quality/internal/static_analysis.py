@@ -8,6 +8,10 @@ import glob
 import os
 import json
 from os.path import abspath, commonprefix, isabs, isfile, join, relpath
+from .toolchains import ClangToolchain
+
+
+CLANG_TOOLCHAIN = ClangToolchain()
 
 
 def convert_to_dependencies(
@@ -58,7 +62,7 @@ def convert_to_dependencies(
 
             target_cpp_file = line.split('.o:')[0]
             target_cpp_file = re.sub(
-                'CMakeFiles.*\.dir', '**', target_cpp_file.rstrip())
+                r'CMakeFiles.*\.dir', '**', target_cpp_file.rstrip())
 
             if os.path.exists(
                     dependency_file) and '.cpp' in target_cpp_file and dependency_file in changed_files_fullpath:
@@ -204,7 +208,7 @@ def parse_checks_list(output):
 
 def get_enabled_checks_list():
     enabled_checks_output = subprocess.check_output(
-        ['clang-tidy-6.0', '-list-checks']).decode()
+        [CLANG_TOOLCHAIN.clang_tidy_path, '-list-checks']).decode()
 
     enabled_checks = parse_checks_list(enabled_checks_output)
 
@@ -213,9 +217,9 @@ def get_enabled_checks_list():
 
 def get_disabled_checks_list():
     all_checks_output = subprocess.check_output(
-        ['clang-tidy-6.0', '-list-checks', '-checks=*']).decode()
+        [CLANG_TOOLCHAIN.clang_tidy_path, '-list-checks', '-checks=*']).decode()
     enabled_checks_output = subprocess.check_output(
-        ['clang-tidy-6.0', '-list-checks']).decode()
+        [CLANG_TOOLCHAIN.clang_tidy_path, '-list-checks']).decode()
 
     all_checks = parse_checks_list(all_checks_output)
     enabled_checks = parse_checks_list(enabled_checks_output)
@@ -266,17 +270,16 @@ def static_analysis(project_root, build_root, fix, concurrency, commit, verbose)
         files_to_lint = filter_non_matching(files_to_lint, [".hpp", ".cpp"])
 
         if verbose:
-            print(f"Relevant files that differ: {files_to_lint}")
+            print("Relevant files that differ: {}".format(files_to_lint))
 
         files_to_lint = convert_to_dependencies(
             set(files_to_lint), abspath(build_root), verbose)
 
         if verbose:
-            print(
-                f"Relevant files that differ (after dependency conversion): {files_to_lint}")
+            print("Relevant files that differ (after dependency conversion): {}".format(clang_apply_replacements_path))
 
         if len(files_to_lint) == 0:
-            print("There doesn't appear to be any relevant files to lint. Quitting.")
+            print("\n\nThere doesn't appear to be any relevant files to lint. 👍.\n\n")
             return
 
         # Now that we have cpp files, we can shim a 'shadow' build directory that will only lint certain files
@@ -295,32 +298,20 @@ def static_analysis(project_root, build_root, fix, concurrency, commit, verbose)
         build_root = shadow_build_root
 
     output_file = abspath(join(build_root, 'clang_tidy_fixes.yaml'))
-    runner_script_path = shutil.which('run-clang-tidy-6.0.py')
-    assert runner_script_path is not None
-    clang_tidy_path = shutil.which('clang-tidy-6.0')
-    clang_apply_replacements_path = shutil.which(
-        'clang-apply-replacements-6.0')
-    if fix:
-        assert clang_apply_replacements_path is not None, \
-            'clang-apply-replacements-6.0 must be installed and ' \
-            'found in the path (install clang-tools-6.0)'
 
     cmd = [
         'python3', '-u',
-        runner_script_path,
+        CLANG_TOOLCHAIN.run_clang_tidy_path,
         '-j{concurrency}'.format(concurrency=concurrency),
         '-p={path}'.format(path=abspath(build_root)),
         '-header-filter=.*(apps|libs).*\\.hpp$',
-        '-quiet',
-        '-clang-tidy-binary={clang_tidy_path}'.format(
-            clang_tidy_path=clang_tidy_path),
+        '-clang-tidy-binary={}'.format(CLANG_TOOLCHAIN.clang_tidy_path),
         # Hacky workaround: we do not need clang-apply-replacements unless applying fixes
         # through run-clang-tidy-6.0.py (which we cannot do, as it would alter vendor
         # libraries). Unfortunately, run-clang-tidy will refuse to function unless it
         # thinks that clang-apply-replacements is installed on the system. We pass
         # a valid path to an arbitrary executable here to placate it.
-        '-clang-apply-replacements-binary={clang_tidy_path}'.format(
-            clang_tidy_path=clang_tidy_path),
+        '-clang-apply-replacements-binary={}'.format(CLANG_TOOLCHAIN.clang_tidy_path),
         '-export-fixes={output_file}'.format(output_file=output_file)]
 
     print('\nPerform static analysis')
@@ -375,8 +366,7 @@ def static_analysis(project_root, build_root, fix, concurrency, commit, verbose)
 
         if fix:
             print('Applying fixes...')
-            subprocess.call(['clang-apply-replacements-6.0',
-                             '-format', '-style=file', '.'], cwd=build_root)
+            subprocess.call([CLANG_TOOLCHAIN.clang_apply_replacements_path, '-format', '-style=file', '.'], cwd=build_root)
             print(
                 'Done. Note that the automated fix feature of clang-tidy is unreliable:')
             print('  * not all checks are supported,')

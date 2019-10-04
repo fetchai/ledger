@@ -31,6 +31,8 @@ LABELS_TO_EXCLUDE_FOR_FAST_TESTS = [
     SLOW_TEST_LABEL,
     INTEGRATION_TEST_LABEL]
 
+NINJA_IS_PRESENT = shutil.which('ninja') is not None
+
 
 def output(*args):
     text = ' '.join(map(str, args))
@@ -167,7 +169,7 @@ def parse_commandline():
                         help='Run clang-tidy')
     parser.add_argument('--fix-lint', action='store_true',
                         help='Run clang-tidy and attempt to fix lint errors')
-    parser.add_argument('-C', '--commit', nargs=1, default=None,
+    parser.add_argument('-c', '--commit', nargs=1, default=None,
                         help='when linting, including fixing, scan and fix only files that changed between Git\'s HEAD and the ' 'given commit or ref. \nUseful: HEAD will lint staged files')
     parser.add_argument('-A', '--all', action='store_true',
                         help='Run build and all tests')
@@ -180,7 +182,7 @@ def parse_commandline():
     return parser.parse_args()
 
 
-def cmake_configure(project_root, build_root, options, generator='Unix Makefiles'):
+def cmake_configure(project_root, build_root, options, generator):
     output('Source.:', project_root)
     output('Build..:', build_root)
     output('Options:')
@@ -200,9 +202,7 @@ def cmake_configure(project_root, build_root, options, generator='Unix Makefiles
 
     # execute the cmake configurations
     exit_code = subprocess.call(cmake_cmd, cwd=build_root)
-    if exit_code != 0:
-        output('Failed to configure cmake project')
-        sys.exit(exit_code)
+    return exit_code == 0
 
 
 def build_project(build_root, concurrency):
@@ -324,13 +324,20 @@ def main():
         'CMAKE_BUILD_TYPE': args.build_type,
     }
 
-    if args.build or args.all:
-        generator = 'Ninja' \
-            if shutil.which('ninja') is not None \
-            else 'Unix Makefiles'
-        cmake_configure(project_root, build_root, options, generator)
+    if args.build or args.lint or args.all:
+        generator = 'Ninja' if NINJA_IS_PRESENT else 'Unix Makefiles'
 
-    if args.build or args.all:
+        # due to the version of the header dependency detection that is used when trying to
+        # determine affected files, when running commit filtered lints must use make
+        if generator == 'Ninja' and args.commit is not None:
+            generator = 'Unix Makefiles'
+
+        # configure the project
+        if not cmake_configure(project_root, build_root, options, generator):
+            output('Failed to configure the cmake project. This is usually because of a mismatch between generators. Try removing the build folder: {} and try again'.format(build_root))
+            sys.exit(1)
+
+    if args.build or args.all or args.commit:
         build_project(build_root, concurrency)
 
     if args.test or args.all:
@@ -355,14 +362,8 @@ def main():
         test_end_to_end(project_root, build_root)
 
     if args.lint or args.all:
-        static_root = abspath(join(project_root, build_root + '-static'))
-        if isdir(static_root):
-            shutil.rmtree(static_root)
-
-        cmake_configure(project_root, static_root, options)
-
         fetchai_code_quality.static_analysis(
-            project_root, static_root, args.fix_lint, concurrency, args.commit, verbose=False)
+            project_root, build_root, args.fix_lint, concurrency, args.commit, verbose=False)
 
 
 if __name__ == '__main__':
