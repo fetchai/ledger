@@ -709,7 +709,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     default:
       if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
       {
-        throw std::runtime_error("invalid character used in string to set tensor");
+        throw exceptions::InvalidNumericCharacter("invalid character used in string to set tensor");
       }
       else
       {
@@ -1028,7 +1028,7 @@ void Tensor<T, C>::Assign(Tensor const &other)
             },
             *this, other, *this)))
     {
-      throw std::runtime_error("arrays not broadcastable for assignment!");
+      throw exceptions::WrongShape("arrays not broadcastable for assignment!");
     }
   }
 }
@@ -1293,7 +1293,7 @@ void Tensor<T, C>::Set(Args... args)
   assert(sizeof...(args) == stride_.size() + 1);  // Plus one as last arg is value
   if (sizeof...(args) != (stride_.size() + 1))
   {
-    throw std::runtime_error("too many or not enough indices given to Tensor::Set");
+    throw exceptions::WrongIndices("too many or not enough indices given to Tensor::Set");
   }
 
   uint64_t index = TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
@@ -1642,7 +1642,7 @@ Tensor<T, C> &Tensor<T, C>::Squeeze()
     {
       if (cur_dim == 0)
       {
-        throw std::runtime_error("cannot squeeze tensor, no dimensions of size 1");
+        throw exceptions::InvalidReshape("cannot squeeze tensor, no dimensions of size 1");
       }
       --cur_dim;
     }
@@ -2340,7 +2340,7 @@ std::string Tensor<T, C>::ToString() const
   }
   else
   {
-    throw std::runtime_error("cannot convert > 2D tensors to string");
+    throw exceptions::WrongShape("cannot convert > 2D tensors to string");
   }
   return ss.str();
 }
