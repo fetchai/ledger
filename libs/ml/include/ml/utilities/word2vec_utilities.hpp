@@ -29,7 +29,7 @@
 
 namespace fetch {
 namespace ml {
-namespace examples {
+namespace utilities {
 
 template <class TensorType>
 std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> GetWordIDAnalogies(

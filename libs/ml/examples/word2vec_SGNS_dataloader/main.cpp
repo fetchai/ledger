@@ -27,7 +27,7 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "model_saver.hpp"
-#include "word2vec_utilities.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 
 #include <iostream>
 #include <string>
