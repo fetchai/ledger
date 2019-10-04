@@ -57,7 +57,7 @@ public:
     Identity  identity;
   };
 
-  explicit BeaconManager(CertificatePtr cert = CertificatePtr{});
+  explicit BeaconManager(CertificatePtr certificate = CertificatePtr{});
 
   BeaconManager(BeaconManager const &) = delete;
   BeaconManager &operator=(BeaconManager const &) = delete;
