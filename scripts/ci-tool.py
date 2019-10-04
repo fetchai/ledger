@@ -180,7 +180,7 @@ def parse_commandline():
     return parser.parse_args()
 
 
-def cmake_configure(project_root, build_root, options):
+def cmake_configure(project_root, build_root, options, generator='Unix Makefiles'):
     output('Source.:', project_root)
     output('Build..:', build_root)
     output('Options:')
@@ -188,17 +188,11 @@ def cmake_configure(project_root, build_root, options):
         output(' - {key} = {value}'.format(key=key, value=value))
     output('\n')
 
-    # determine if this is the first time that we are building the project
-    new_build_folder = not exists(build_root)
-
     # ensure the build directory exists
     os.makedirs(build_root, exist_ok=True)
 
     cmake_cmd = ['cmake']
-
-    # determine if this system has the ninja build system
-    if new_build_folder and shutil.which('ninja') is not None:
-        cmake_cmd += ['-G', 'Ninja']
+    cmake_cmd += ['-G', generator]
 
     # add all the configuration options
     cmake_cmd += ['-D{k}={v}'.format(k=k, v=v) for k, v in options.items()]
@@ -330,8 +324,11 @@ def main():
         'CMAKE_BUILD_TYPE': args.build_type,
     }
 
-    if args.build or args.lint or args.all:
-        cmake_configure(project_root, build_root, options)
+    if args.build or args.all:
+        generator = 'Ninja' \
+            if shutil.which('ninja') is not None \
+            else 'Unix Makefiles'
+        cmake_configure(project_root, build_root, options, generator)
 
     if args.build or args.all:
         build_project(build_root, concurrency)
@@ -358,8 +355,14 @@ def main():
         test_end_to_end(project_root, build_root)
 
     if args.lint or args.all:
+        static_root = abspath(join(project_root, build_root + '-static'))
+        if isdir(static_root):
+            shutil.rmtree(static_root)
+
+        cmake_configure(project_root, static_root, options)
+
         fetchai_code_quality.static_analysis(
-            project_root, build_root, args.fix_lint, concurrency, args.commit, verbose=False)
+            project_root, static_root, args.fix_lint, concurrency, args.commit, verbose=False)
 
 
 if __name__ == '__main__':
