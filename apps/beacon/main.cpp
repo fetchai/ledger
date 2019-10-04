@@ -34,6 +34,7 @@
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/block_entropy.hpp"
+#include "beacon/create_new_certificate.hpp"
 #include "beacon/event_manager.hpp"
 
 #include <cstdint>
@@ -54,18 +55,6 @@ using ProverPtr      = std::shared_ptr<Prover>;
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
-
-ProverPtr CreateNewCertificate()
-{
-  using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::shared_ptr<Signer>;
-
-  SignerPtr certificate = std::make_shared<Signer>();
-
-  certificate->GenerateKeys();
-
-  return certificate;
-}
 
 struct DummyManifestCache : public ledger::ManifestCacheInterface
 {
