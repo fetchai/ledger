@@ -20,7 +20,6 @@
 #include <stdexcept>
 #include <string>
 
-
 namespace fetch {
 namespace math {
 namespace exceptions {
