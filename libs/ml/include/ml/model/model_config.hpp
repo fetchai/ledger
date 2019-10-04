@@ -79,7 +79,7 @@ struct MapSerializer<fetch::ml::model::ModelConfig<DataType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(10);
+    auto map = map_constructor(9);
 
     map.Append(EARLY_STOPPING, sp.early_stopping);
     map.Append(TEST, sp.test);

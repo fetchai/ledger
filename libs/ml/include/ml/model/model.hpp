@@ -314,7 +314,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     {
     case ml::LoaderType::TENSOR:
     {
-      fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> *loader_ptr =
+      auto *loader_ptr =
           static_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> *>(
               sp.dataloader_ptr_.get());
       map.Append(DATALOADER_PTR, *loader_ptr);
@@ -346,7 +346,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     {
     case ml::OptimiserType::SGD:
     {
-      fetch::ml::optimisers::SGDOptimiser<TensorType> *optimiser_ptr =
+      auto *optimiser_ptr =
           static_cast<fetch::ml::optimisers::SGDOptimiser<TensorType> *>(sp.optimiser_ptr_.get());
       map.Append(OPTIMISER_PTR, *optimiser_ptr);
       break;
@@ -434,7 +434,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(14);
+    auto map = map_constructor(13);
 
     // serialize the graph first
     map.Append(GRAPH, sp.graph_ptr_->GetGraphSaveableParams());

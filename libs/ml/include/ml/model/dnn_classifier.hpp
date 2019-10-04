@@ -100,7 +100,7 @@ struct MapSerializer<ml::model::DNNClassifier<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(2);
+    auto map = map_constructor(1);
 
     // serialize the optimiser parent class
     auto base_pointer = static_cast<ml::model::Model<TensorType> const *>(&sp);
