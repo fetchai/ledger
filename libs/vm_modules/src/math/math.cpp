@@ -18,7 +18,6 @@
 
 #include "vm/module.hpp"
 #include "vm_modules/math/abs.hpp"
-#include "vm_modules/math/dot.hpp"
 #include "vm_modules/math/exp.hpp"
 #include "vm_modules/math/log.hpp"
 #include "vm_modules/math/math.hpp"
@@ -47,8 +46,6 @@ void BindMath(Module &module)
 
   // bind math classes
   VMTensor::Bind(module);
-
-  BindDot(module);
 }
 
 }  // namespace math

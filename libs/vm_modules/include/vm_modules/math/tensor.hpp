@@ -42,7 +42,7 @@ namespace math {
 class VMTensor : public fetch::vm::Object
 {
 public:
-  using DataType = fetch::vm_modules::math::DataType;
+  using DataType   = fetch::vm_modules::math::DataType;
   using TensorType = typename fetch::math::Tensor<DataType>;
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<uint64_t> const &shape);
@@ -93,8 +93,7 @@ public:
 
   fetch::vm::Ptr<VMTensor> Squeeze();
 
-  bool Reshape(
-      fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
+  bool Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
 
   //////////////////////////////
   /// PRINTING AND EXPORTING ///
