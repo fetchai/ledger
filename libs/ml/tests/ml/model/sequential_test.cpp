@@ -95,13 +95,13 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
                                                                train_data, train_labels);
 
   DataType loss{0};
+  DataType later_loss{0};
   model.Train(1, loss);
 
   // test loss decreases
   fetch::math::SizeType count{0};
   while (count < n_training_steps)
   {
-    DataType later_loss{0};
     model.Train(1, later_loss);
     EXPECT_LE(later_loss, loss);
     count++;
