@@ -21,8 +21,6 @@
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
@@ -121,9 +119,6 @@ int main()
   constexpr uint16_t number_of_nodes    = 16;
   constexpr uint16_t cabinet_size       = 4;
   constexpr uint16_t number_of_cabinets = number_of_nodes / cabinet_size;
-
-  // Initialising the BLS library
-  crypto::bls::Init();
 
   EventManager::SharedEventManager event_manager = EventManager::New();
 

@@ -69,9 +69,9 @@ using BeaconServicePtr    = std::shared_ptr<fetch::beacon::BeaconService>;
 using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManager>;
 using ConsensusPtr        = std::shared_ptr<fetch::ledger::Consensus>;
 
-Digest GENESIS_DIGEST =
+fetch::Digest GENESIS_DIGEST =
     fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-Digest GENESIS_MERKLE_ROOT =
+fetch::Digest GENESIS_MERKLE_ROOT =
     fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
 constexpr std::size_t NUM_LANES  = 1;

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/digest.hpp"
 #include "core/random/lcg.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 
 class TransactionGenerator
@@ -45,10 +45,9 @@ public:
 private:
   using Rng       = fetch::random::LinearCongruentialGenerator;
   using RngWord   = Rng::RandomType;
-  using Digest    = fetch::ledger::Digest;
   using ByteArray = fetch::byte_array::ByteArray;
 
-  Digest GenerateDigest()
+  fetch::Digest GenerateDigest()
   {
     static constexpr std::size_t DIGEST_SIZE   = 32;
     static constexpr std::size_t RNG_WORD_SIZE = sizeof(RngWord);

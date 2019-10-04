@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/digest.hpp"
 #include "core/random/lcg.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 #include "miner/transaction_layout_queue.hpp"
 #include "tx_generator.hpp"
@@ -36,7 +36,7 @@ namespace {
 using fetch::miner::TransactionLayoutQueue;
 using fetch::random::LinearCongruentialGenerator;
 using TransactionLayoutQueuePtr = std::unique_ptr<TransactionLayoutQueue>;
-using fetch::ledger::Digest;
+using fetch::Digest;
 
 class TransactionLayoutQueueTests : public ::testing::Test
 {
