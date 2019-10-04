@@ -327,7 +327,6 @@ void TrainingClient<TensorType>::Train()
     TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
     train_loss_            = *(loss_tensor.begin());
     g_ptr_->BackPropagate(error_name_);
-    std::cout << id_ << " train loss: " << train_loss_ << std::endl;
   }
 }
 
