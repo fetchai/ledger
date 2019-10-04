@@ -37,9 +37,7 @@ public:
   using OptimiserType     = fetch::ml::OptimiserType;
   using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
-  DNNClassifier()
-    : Model<TensorType>()
-  {}
+  DNNClassifier() = default;
 
   DNNClassifier(ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
 

@@ -37,9 +37,7 @@ public:
   using OptimiserType     = fetch::ml::OptimiserType;
   using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
-  Sequential()
-    : Model<TensorType>()
-  {}
+  Sequential() = default;
 
   explicit Sequential(ModelConfig<DataType> model_config);
 
