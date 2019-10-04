@@ -108,7 +108,8 @@ void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host,
           }
           else
           {
-            FETCH_LOG_ERROR(LOGGING_NAME, "Failed to get endpoint of socket after connection: ", ec2.message());
+            FETCH_LOG_ERROR(LOGGING_NAME,
+                            "Failed to get endpoint of socket after connection: ", ec2.message());
           }
         }
         else
