@@ -42,6 +42,8 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;
 
+// For some reason the checker really thinks number of clients is unused. It's clearly not.
+#pragma clang diagnostic ignored "-Wunused-variable"
 std::vector<std::string> SplitTrainingData(std::string const &train_file,
                                            SizeType           number_of_clients)
 {
