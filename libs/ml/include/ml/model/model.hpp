@@ -320,7 +320,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     // serialize dataloader
     switch (sp.dataloader_ptr_->LoaderCode())
     {
-    case ml::LoaderType::Tensor:
+    case ml::LoaderType::TENSOR:
     {
       fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> *loader_ptr =
           static_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> *>(
@@ -329,9 +329,11 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       break;
     }
 
-    case ml::LoaderType::C2V:
     case ml::LoaderType::MNIST:
     case ml::LoaderType::SGNS:
+    case ml::LoaderType::W2V:
+    case ml::LoaderType::COMMODITY:
+    case ml::LoaderType::C2V:
     {
       throw std::runtime_error("Serialization for current dataloader type not implemented yet.");
     }
@@ -397,16 +399,18 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
 
     switch (static_cast<ml::LoaderType>(loader_type))
     {
-    case ml::LoaderType::Tensor:
+    case ml::LoaderType::TENSOR:
     {
       auto loader_ptr = new ml::dataloaders::TensorDataLoader<TensorType, TensorType>();
       map.ExpectKeyGetValue(DATALOADER_PTR, *loader_ptr);
       sp.dataloader_ptr_.reset(loader_ptr);
       break;
     }
-    case ml::LoaderType::C2V:
     case ml::LoaderType::MNIST:
     case ml::LoaderType::SGNS:
+    case ml::LoaderType::W2V:
+    case ml::LoaderType::COMMODITY:
+    case ml::LoaderType::C2V:
     {
       throw std::runtime_error("serialization for current dataloader type not implemented yet.");
     }

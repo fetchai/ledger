@@ -64,7 +64,7 @@ public:
 
   LoaderType LoaderCode() override
   {
-    return LoaderType::Tensor;
+    return LoaderType::TENSOR;
   }
 
 protected:
