@@ -184,11 +184,6 @@ protected:
 private:
   std::size_t ref_count_;
 
-  constexpr void AddRef() noexcept
-  {
-    ++ref_count_;
-  }
-
   template <typename T>
   friend class Ptr;
 };
@@ -205,8 +200,10 @@ public:
 
   static Ptr PtrFromThis(T *this__)
   {
-    this__->AddRef();
-    return Ptr(this__);
+    auto ptr = Ptr(this__);
+    ptr.AddRef();
+
+    return ptr;
   }
 
   Ptr &operator=(std::nullptr_t /* other */)
@@ -322,7 +319,7 @@ private:
   {
     if (ptr_)
     {
-      ptr_->AddRef();
+      ++(ptr_->ref_count_);
     }
   }
 
