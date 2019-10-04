@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "dmlf/abstract_learner_networker.hpp"
 #include "dmlf/update.hpp"
-#include "core/mutex.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
@@ -176,11 +176,11 @@ protected:
   void         Train();
   virtual void Test();
 
-  void          GraphAddGradients(GraphPtrType g_ptr, VectorTensorType const &gradients);
+  void GraphAddGradients(GraphPtrType g_ptr, VectorTensorType const &gradients);
 
   TimestampType GetTimestamp() const;
-  std::string GetStrTimestamp() const;
-  void        ClearLossFile();
+  std::string   GetStrTimestamp() const;
+  void          ClearLossFile();
 };
 
 template <class TensorType>
@@ -286,7 +286,7 @@ void TrainingClient<TensorType>::Run()
  * @return vector of gradient update values
  */
 template <class TensorType>
-    typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetGradients() const
+typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetGradients() const
 {
   FETCH_LOCK(model_mutex_);
   return GradientType(g_ptr_->GetGradients(), GetTimestamp(), id_, byte_array::ConstByteArray(),
@@ -382,11 +382,12 @@ void TrainingClient<TensorType>::DoBatch()
   // Train one batch to create own gradient
   Train();
 
-    // Load own gradient
-      GradientType current_gradients = GetGradients();
+  // Load own gradient
+  GradientType current_gradients = GetGradients();
 
-            // Push own gradient to iLearner
-              i_learner_ptr_->PushUpdate(std::make_shared<fetch::dmlf::Update<TensorType>>(current_gradients.data));
+  // Push own gradient to iLearner
+  i_learner_ptr_->PushUpdate(
+      std::make_shared<fetch::dmlf::Update<TensorType>>(current_gradients.data));
 
   VectorTensorType new_gradients;
 
