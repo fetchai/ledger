@@ -33,7 +33,7 @@ using DkgOutput      = beacon::DkgOutput;
 
 TEST(beacon_manager, dkg_and_threshold_signing)
 {
-  bn::initPairing();
+  fetch::crypto::mcl::details::MCLInitialiser();
   PublicKey zero;
   zero.clear();
   Generator generator_g, generator_h;

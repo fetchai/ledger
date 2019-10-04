@@ -278,6 +278,8 @@ function (configure_vendor_targets)
                              -DMCL_VINT_FIXED_BUFFER
                              -DMCLBN_FP_UNIT_SIZE=4)
 
+  # TODO(HUT): remove unit size
+
   add_library(vendor-mcl INTERFACE)
   target_link_libraries(vendor-mcl INTERFACE mcl_st)
 

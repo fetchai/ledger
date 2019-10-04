@@ -16,35 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/trusted_dealer.hpp"
+#include "beacon/create_new_certificate.hpp"
 
-using fetch::beacon::TrustedDealer;
-using DkgOutput = TrustedDealer::DkgOutput;
-
-TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold)
-  : cabinet_{std::move(cabinet)}
+namespace fetch {
+namespace beacon {
+ProverPtr CreateNewCertificate()
 {
-  uint32_t index = 0;
-  for (auto const &mem : cabinet_)
-  {
-    cabinet_index_.emplace(mem, index);
-    ++index;
-  }
+  using Signer    = fetch::crypto::ECDSASigner;
+  using SignerPtr = std::shared_ptr<Signer>;
 
-  fetch::crypto::mcl::details::MCLInitialiser();
-  outputs_ =
-      crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold);
+  SignerPtr certificate = std::make_shared<Signer>();
+
+  certificate->GenerateKeys();
+
+  return certificate;
 }
-
-DkgOutput TrustedDealer::GetKeys(MuddleAddress const &address) const
-{
-  auto it = cabinet_index_.find(address);
-
-  if (it != cabinet_index_.end())
-  {
-    auto &address_as_index = it->second;
-    return DkgOutput(outputs_[address_as_index], cabinet_);
-  }
-
-  return DkgOutput();
-}
+}  // namespace beacon
+}  // namespace fetch
