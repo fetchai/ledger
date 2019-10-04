@@ -49,7 +49,7 @@ public:
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 class WrongShape : public std::runtime_error
@@ -77,7 +77,7 @@ public:
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 class NegativeLog : public std::runtime_error
@@ -104,7 +104,7 @@ public:
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 class InvalidReshape : public std::runtime_error
@@ -132,7 +132,7 @@ public:
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 class InvalidNumericCharacter : public std::runtime_error
