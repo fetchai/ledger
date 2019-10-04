@@ -70,7 +70,6 @@ TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_forward_test)
 
   ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), 191.18f / 8.0f);
   // fetch::math::MeanSquareErrorLoss divided sum by number of element (ie 8 in this case)
-  // and then further divide by two (cf issue 343)
 }
 
 TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_backward_test)
