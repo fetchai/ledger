@@ -19,10 +19,10 @@
 
 #include "math/clustering/knn.hpp"
 #include "ml/distributed_learning/distributed_learning_client.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/distributed_learning/translator.hpp"
-#include "word2vec_training_params.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
+#include "word2vec_training_params.hpp"
 
 namespace fetch {
 namespace ml {
@@ -182,11 +182,11 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
     fetch::ml::utilities::PrintKNN(*w2v_data_loader_ptr_, embeddings->GetWeights(), word0, K);
     std::cout << std::endl;
     fetch::ml::utilities::PrintWordAnalogy(*w2v_data_loader_ptr_, embeddings->GetWeights(), word1,
-                                          word2, word3, K);
+                                           word2, word3, K);
   }
 
   DataType score = utilities::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->GetWeights(),
-                                               tp_.analogies_test_file);
+                                                tp_.analogies_test_file);
   std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
 }
 
@@ -220,7 +220,7 @@ Word2VecClient<TensorType>::GetVocab()
  */
 template <class TensorType>
 void Word2VecClient<TensorType>::AddVocab(
-                                          const std::pair<std::vector<std::string>, byte_array::ConstByteArray> &vocab_info)
+    const std::pair<std::vector<std::string>, byte_array::ConstByteArray> &vocab_info)
 {
   translator_.AddVocab(vocab_info.second, vocab_info.first);
 }

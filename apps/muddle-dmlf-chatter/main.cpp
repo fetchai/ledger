@@ -22,7 +22,6 @@
 #include "core/commandline/parameter_parser.hpp"
 #include "core/json/document.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "variant/variant.hpp"
 #include "dmlf/filepassing_learner_networker.hpp"
 #include "dmlf/local_learner_networker.hpp"
 #include "dmlf/muddle2_learner_networker.hpp"
@@ -31,6 +30,7 @@
 #include "dmlf/update_interface.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
+#include "variant/variant.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -76,7 +76,7 @@ public:
 };
 using Muddle2LearnerNetworker = fetch::dmlf::Muddle2LearnerNetworker;
 
-int                      main(int /*argc*/, char **argv)
+int main(int /*argc*/, char **argv)
 {
   auto config          = std::string(argv[1]);
   auto instance_number = std::atoi(argv[2]);

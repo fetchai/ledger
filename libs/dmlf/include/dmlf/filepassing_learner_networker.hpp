@@ -28,11 +28,11 @@ namespace dmlf {
 class FilepassingLearnerNetworker : public AbstractLearnerNetworker
 {
 public:
-  using Bytes = AbstractLearnerNetworker::Bytes;
-  using Peer  = std::string;
-  using Peers = std::vector<Peer>;
+  using Bytes                = AbstractLearnerNetworker::Bytes;
+  using Peer                 = std::string;
+  using Peers                = std::vector<Peer>;
   using ProcessedUpdateNames = std::unordered_set<std::string>;
-  using ThreadP = std::shared_ptr<std::thread>;
+  using ThreadP              = std::shared_ptr<std::thread>;
 
   FilepassingLearnerNetworker();
   ~FilepassingLearnerNetworker() override;
@@ -59,14 +59,13 @@ protected:
   void                     CheckUpdates();
 
 private:
-
   ProcessedUpdateNames processed_updates_;
-  Peers peers_;
-  ThreadP watcher_;
+  Peers                peers_;
+  ThreadP              watcher_;
 
-  std::string              name_;
-  std::string              dir_;
-  bool                         running_;
+  std::string name_;
+  std::string dir_;
+  bool        running_;
 };
 
 }  // namespace dmlf

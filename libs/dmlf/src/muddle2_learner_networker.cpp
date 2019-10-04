@@ -71,7 +71,7 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string &cloud_config
 
   auto addr = self_uri.GetTcpPeer().address();
 
-  mud_= muddle::CreateMuddle("Test", ident_, *(this->netm_), addr);
+  mud_ = muddle::CreateMuddle("Test", ident_, *(this->netm_), addr);
   mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
 
   std::unordered_set<std::string> initial_peers;

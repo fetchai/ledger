@@ -22,9 +22,8 @@ namespace fetch {
 namespace dmlf {
 
 ShuffleAlgorithmInterface::ShuffleAlgorithmInterface(std::size_t count)
-  :count_(count)
-{
-}
+  : count_(count)
+{}
 
 std::size_t ShuffleAlgorithmInterface::GetCount() const
 {

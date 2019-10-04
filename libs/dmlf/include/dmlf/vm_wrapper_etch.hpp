@@ -72,11 +72,11 @@ private:
   std::stringstream outputStream_;
   OutputHandler     outputHandler_ = nullptr;
 
-  Status            status_ = VmWrapperInterface::UNCONFIGURED;
+  Status status_ = VmWrapperInterface::UNCONFIGURED;
 
-  std::string                        command_    = "";
+  std::string command_ = "";
 
-  std::unique_ptr<VM>                vm_         = nullptr;
+  std::unique_ptr<VM> vm_ = nullptr;
 };
 
 }  // namespace dmlf

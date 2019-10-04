@@ -20,9 +20,9 @@
 #include <atomic>
 #include <exception>
 #include <iostream>
-#include <unordered_map>
-#include <typeinfo>
 #include <typeindex>
+#include <typeinfo>
+#include <unordered_map>
 
 namespace fetch {
 namespace dmlf {
@@ -37,7 +37,7 @@ public:
   ValueType find() const
   {
     std::type_index tid{typeid(KeyType)};
-    auto iter = map.find(tid);
+    auto            iter = map.find(tid);
     if (iter == map.end())
     {
       throw std::runtime_error{"Type not registered"};
@@ -49,7 +49,7 @@ public:
   void put(ValueType value)
   {
     std::type_index tid{typeid(KeyType)};
-    auto iter = map.find(tid);
+    auto            iter = map.find(tid);
     if (iter != map.end())
     {
       throw std::runtime_error{"Type already registered with name '" + iter->second + "'"};
@@ -58,7 +58,7 @@ public:
   }
 
 private:
-  IntToValueMap          map;
+  IntToValueMap map;
 };
 
 }  // namespace dmlf

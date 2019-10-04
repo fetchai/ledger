@@ -104,7 +104,7 @@ public:
   bool                      operator<(const AbstractLearnerNetworker &other)  = delete;
 
 protected:
-  std::shared_ptr<ShuffleAlgorithmInterface> alg_;       // used by descendents
+  std::shared_ptr<ShuffleAlgorithmInterface> alg_;  // used by descendents
 
   void NewMessage(const Bytes &msg);
 

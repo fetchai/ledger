@@ -49,7 +49,7 @@ void LocalLearnerNetworker::ClearPeers()
 void LocalLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &update)
 {
   std::vector<std::shared_ptr<LocalLearnerNetworker>> targets;
-  
+
   auto indexes = alg_->GetNextOutputs();
   auto data    = update->Serialise();
 

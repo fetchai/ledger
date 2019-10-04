@@ -53,7 +53,8 @@ def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
             file_path = d['FilePath']
             absolute_path = file_path if isabs(
                 file_path) else abspath(join(build_root, file_path))
-            assert isfile(absolute_path), "Not a file: {}".format(absolute_path)
+            assert isfile(absolute_path), "Not a file: {}".format(
+                absolute_path)
             relative_path = relpath(absolute_path, project_root)
 
             if not excluded_diagnostic(d, absolute_path, project_root, relative_path):
