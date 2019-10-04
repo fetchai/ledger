@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/regularisers/l1_regulariser.hpp"
 #include "ml/regularisers/l2_regulariser.hpp"
 #include "ml/regularisers/reg_types.hpp"
@@ -24,6 +25,7 @@
 
 #include <memory>
 #include <stdexcept>
+#include <ml/exceptions/exceptions.hpp>
 
 namespace fetch {
 namespace ml {
@@ -51,7 +53,7 @@ std::shared_ptr<fetch::ml::regularisers::Regulariser<T>> CreateRegulariser(Regul
     break;
 
   default:
-    throw std::runtime_error("Unknown regulariser type");
+    throw exceptions::InvalidMode("Unknown regulariser type");
   }
   return ret;
 }

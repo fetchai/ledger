@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/exceptions/exceptions.hpp"
 #include "math/metrics/mean_square_error.hpp"
 #include "ml/ops/ops.hpp"
 
@@ -246,7 +247,7 @@ public:
       }
       else
       {
-        throw std::runtime_error("input or weightings_shape invalid");
+        throw math::exceptions::WrongShape("input or weightings_shape invalid");
       }
     }
 
