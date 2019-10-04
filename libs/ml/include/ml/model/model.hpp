@@ -305,19 +305,11 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
   static uint8_t const OPTIMISER_SET_FLAG = 12;
   static uint8_t const COMPILED_FLAG      = 13;
 
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
+  template <typename MapType>
+  static void SerializeDataLoader(MapType map, Type const &sp)
   {
-    auto map = map_constructor(14);
-
-    // serialize the graph first
-    map.Append(GRAPH, sp.graph_ptr_->GetGraphSaveableParams());
-
-    map.Append(MODEL_CONFIG, sp.model_config_);
-
     map.Append(DATALOADER_TYPE, static_cast<uint8_t>(sp.dataloader_ptr_->LoaderCode()));
 
-    // serialize dataloader
     switch (sp.dataloader_ptr_->LoaderCode())
     {
     case ml::LoaderType::TENSOR:
@@ -343,8 +335,11 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       throw std::runtime_error("Unknown dataloader type.");
     }
     }
+  }
 
-    // serialize optimiser
+  template <typename MapType>
+  static void SerializeOptimiser(MapType map, Type const &sp)
+  {
     map.Append(OPTIMISER_TYPE, static_cast<uint8_t>(sp.optimiser_ptr_->OptimiserCode()));
 
     switch (sp.optimiser_ptr_->OptimiserCode())
@@ -370,30 +365,11 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       throw std::runtime_error("Unknown optimiser type.");
     }
     }
-
-    map.Append(INPUT_NODE_NAME, sp.input_);
-    map.Append(LABEL_NODE_NAME, sp.label_);
-    map.Append(OUTPUT_NODE_NAME, sp.output_);
-    map.Append(ERROR_NODE_NAME, sp.error_);
-
-    map.Append(LOSS_SET_FLAG, sp.loss_set_);
-    map.Append(OPTIMISER_SET_FLAG, sp.optimiser_set_);
-    map.Append(COMPILED_FLAG, sp.compiled_);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
+  template <typename MapType>
+  static void DeserializeDataLoader(MapType map, Type &sp)
   {
-    // deserialize the graph first
-    fetch::ml::GraphSaveableParams<TensorType> gsp;
-    map.ExpectKeyGetValue(GRAPH, gsp);
-    auto new_graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
-    ml::utilities::BuildGraph(gsp, new_graph_ptr);
-    sp.graph_ptr_ = new_graph_ptr;
-
-    map.ExpectKeyGetValue(MODEL_CONFIG, sp.model_config_);
-
-    // deserialize dataloader
     uint8_t loader_type;
     map.ExpectKeyGetValue(DATALOADER_TYPE, loader_type);
 
@@ -420,8 +396,11 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       throw std::runtime_error("Unknown dataloader type.");
     }
     }
+  }
 
-    // deserialize optimiser
+  template <typename MapType>
+  static void DeserializeOptimiser(MapType map, Type &sp)
+  {
     uint8_t optimiser_type;
     map.ExpectKeyGetValue(OPTIMISER_TYPE, optimiser_type);
 
@@ -450,6 +429,50 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       throw std::runtime_error("Unknown optimiser type.");
     }
     }
+  }
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(14);
+
+    // serialize the graph first
+    map.Append(GRAPH, sp.graph_ptr_->GetGraphSaveableParams());
+    map.Append(MODEL_CONFIG, sp.model_config_);
+
+    // serialize dataloader
+    SerializeDataLoader(map, sp);
+
+    // serialize optimiser
+    SerializeOptimiser(map, sp);
+
+    map.Append(INPUT_NODE_NAME, sp.input_);
+    map.Append(LABEL_NODE_NAME, sp.label_);
+    map.Append(OUTPUT_NODE_NAME, sp.output_);
+    map.Append(ERROR_NODE_NAME, sp.error_);
+
+    map.Append(LOSS_SET_FLAG, sp.loss_set_);
+    map.Append(OPTIMISER_SET_FLAG, sp.optimiser_set_);
+    map.Append(COMPILED_FLAG, sp.compiled_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    // deserialize the graph first
+    fetch::ml::GraphSaveableParams<TensorType> gsp;
+    map.ExpectKeyGetValue(GRAPH, gsp);
+    auto new_graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
+    ml::utilities::BuildGraph(gsp, new_graph_ptr);
+    sp.graph_ptr_ = new_graph_ptr;
+
+    map.ExpectKeyGetValue(MODEL_CONFIG, sp.model_config_);
+
+    // deserialize dataloader
+    DeserializeDataLoader(map, sp);
+
+    // deserialize optimiser
+    DeserializeOptimiser(map, sp);
 
     map.ExpectKeyGetValue(INPUT_NODE_NAME, sp.input_);
     map.ExpectKeyGetValue(LABEL_NODE_NAME, sp.label_);
@@ -461,6 +484,6 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     map.ExpectKeyGetValue(COMPILED_FLAG, sp.compiled_);
   }
 };
-}  // namespace serializers
 
+}  // namespace serializers
 }  // namespace fetch
