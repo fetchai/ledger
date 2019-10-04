@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/exceptions/exceptions.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_broadcast.hpp"
 
 #include <cassert>
-#include <math/exceptions/exceptions.hpp>
 
 namespace fetch {
 namespace math {
