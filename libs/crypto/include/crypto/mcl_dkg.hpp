@@ -41,11 +41,27 @@ using Generator      = bn::G2;
 using MessagePayload = byte_array::ConstByteArray;
 using CabinetIndex   = uint32_t;
 
+namespace details {
+struct MCLInitialiser
+{
+  MCLInitialiser()
+  {
+    bool a{true};
+    a = was_initialised.exchange(a);
+    if (!a)
+    {
+      bn::initPairing();
+    }
+  }
+  static std::atomic<bool> was_initialised;
+};
+}  // namespace details
+
 struct DkgKeyInformation
 {
   DkgKeyInformation()
   {
-    bn::initPairing();
+    details::MCLInitialiser();
     group_public_key.clear();
     private_key_share.clear();
   }
