@@ -687,7 +687,7 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   smsg.identity  = certificate_->identity();
   smsg.signature = signature;
 
-  if (AddSignaturePart(certificate_->identity(), signature) != AddResult::SUCCESS)
+  if (AddSignaturePart(certificate_->identity(), signature) == AddResult::INVALID_SIGNATURE)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Computed bad signature share");
   }
