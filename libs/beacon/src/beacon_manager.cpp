@@ -46,7 +46,7 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
   static std::once_flag flag;
 
   std::call_once(flag, []() {
-    bn::initPairing();
+    fetch::crypto::mcl::details::MCLInitialiser();
     zeroG2_.clear();
     zeroFr_.clear();
     crypto::mcl::SetGenerators(group_g_, group_h_);
@@ -211,21 +211,15 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
     return false;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Node: ", cabinet_index_, " verification for node ", from_index,
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " verification for node ", from_index,
                  " complaint answer succeeded");
   if (reporter_index == cabinet_index_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " verification for node ", from_index,
-                   " complaint answer succeeded");
-    if (reporter_index == cabinet_index_)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " reset shares for ", from_index);
-      s_ij[from_index][cabinet_index_]      = s;
-      sprime_ij[from_index][cabinet_index_] = sprime;
-      g__s_ij[from_index][cabinet_index_].clear();
-      bn::G2::mul(g__s_ij[from_index][cabinet_index_], group_g_, s_ij[from_index][cabinet_index_]);
-    }
-    return true;
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " reset shares for ", from_index);
+    s_ij[from_index][cabinet_index_]      = s;
+    sprime_ij[from_index][cabinet_index_] = sprime;
+    g__s_ij[from_index][cabinet_index_].clear();
+    bn::G2::mul(g__s_ij[from_index][cabinet_index_], group_g_, s_ij[from_index][cabinet_index_]);
   }
   return true;
 }
@@ -249,7 +243,7 @@ void BeaconManager::ComputeSecretShare()
 std::vector<BeaconManager::Coefficient> BeaconManager::GetQualCoefficients()
 {
   std::vector<Coefficient> coefficients;
-  for (std::size_t k = 0; k <= polynomial_degree_; k++)
+  for (size_t k = 0; k <= polynomial_degree_; k++)
   {
     A_ik[cabinet_index_][k] = g__a_i[k];
     coefficients.push_back(A_ik[cabinet_index_][k].getStr());
@@ -335,9 +329,8 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
   PublicKey  rhs;
   PrivateKey s;
   PrivateKey sprime;
-
-  bool s_set{false};
-  bool sprime_set{false};
+  bool       s_set{false};
+  bool       sprime_set{false};
   s.setStr(&s_set, answer.second.first.data());
   sprime.setStr(&sprime_set, answer.second.second.data());
 
@@ -517,7 +510,7 @@ bool BeaconManager::RunReconstruction()
       shares_f.push_back(shares[index]);
     }
     a_ik[victim_index] = crypto::mcl::InterpolatePolynom(points, shares_f);
-    for (std::size_t k = 0; k <= polynomial_degree_; k++)
+    for (size_t k = 0; k <= polynomial_degree_; k++)
     {
       bn::G2::mul(A_ik[victim_index][k], group_g_, a_ik[victim_index][k]);
     }

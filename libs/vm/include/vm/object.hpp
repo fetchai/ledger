@@ -178,23 +178,11 @@ protected:
   TypeInfo const &GetTypeInfo(TypeId type_id);
   bool            GetNonNegativeInteger(Variant const &v, std::size_t &index);
 
-  VM *        vm_;
-  TypeId      type_id_;
-  std::size_t ref_count_;
+  VM *   vm_;
+  TypeId type_id_;
 
 private:
-  constexpr void AddRef() noexcept
-  {
-    ++ref_count_;
-  }
-
-  constexpr void Release() noexcept
-  {
-    if (--ref_count_ == 0)
-    {
-      delete this;
-    }
-  }
+  std::size_t ref_count_;
 
   template <typename T>
   friend class Ptr;
@@ -212,8 +200,10 @@ public:
 
   static Ptr PtrFromThis(T *this__)
   {
-    this__->AddRef();
-    return Ptr(this__);
+    auto ptr = Ptr(this__);
+    ptr.AddRef();
+
+    return ptr;
   }
 
   Ptr &operator=(std::nullptr_t /* other */)
@@ -298,11 +288,8 @@ public:
 
   void Reset()
   {
-    if (ptr_)
-    {
-      ptr_->Release();
-      ptr_ = nullptr;
-    }
+    Release();
+    ptr_ = nullptr;
   }
 
   explicit operator bool() const noexcept
@@ -332,15 +319,18 @@ private:
   {
     if (ptr_)
     {
-      ptr_->AddRef();
+      ++(ptr_->ref_count_);
     }
   }
 
-  void Release()
+  void Release() noexcept
   {
     if (ptr_)
     {
-      ptr_->Release();
+      if (--(ptr_->ref_count_) == 0)
+      {
+        delete ptr_;
+      }
     }
   }
 
