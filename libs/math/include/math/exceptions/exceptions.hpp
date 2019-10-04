@@ -42,10 +42,7 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "Tensor invoked with wrong number of indices";
-    }
+    return "Tensor invoked with wrong number of indices";
   }
 
 private:
@@ -70,10 +67,7 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "math operation invoked with wrong shape inputs";
-    }
+    return "math operation invoked with wrong shape inputs";
   }
 
 private:
@@ -97,10 +91,7 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "math operation attempted to take log of negative value which is undefined";
-    }
+    return "math operation attempted to take log of negative value which is undefined";
   }
 
 private:
@@ -125,10 +116,7 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "Not possible to perform requested reshape";
-    }
+    return "Not possible to perform requested reshape";
   }
 
 private:
