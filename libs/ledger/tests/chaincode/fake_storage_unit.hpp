@@ -146,7 +146,7 @@ public:
     return transactions_.find(digest) != transactions_.end();
   }
 
-  void IssueCallForMissingTxs(fetch::ledger::DigestSet const & /*tx_set*/) override
+  void IssueCallForMissingTxs(fetch::DigestSet const & /*tx_set*/) override
   {}
 
   Hash CurrentHash() override

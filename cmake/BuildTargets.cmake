@@ -130,11 +130,11 @@ macro (setup_compiler)
 
     find_library(DW_LIB dw)
 
-    if (DW_LIB)
+    if (DW_LIB AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE_WITH_DW")
 
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldw -ldl")
-    endif (DW_LIB)
+    endif ()
   endif (FETCH_ENABLE_BACKTRACE)
 
   # allow disabling of colour log file
@@ -280,17 +280,6 @@ function (configure_vendor_targets)
 
   add_library(vendor-mcl INTERFACE)
   target_link_libraries(vendor-mcl INTERFACE mcl_st)
-
-  # BLS
-  add_library(vendor-bls-internal STATIC ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c256.cpp
-                                         ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp)
-  target_link_libraries(vendor-bls-internal PUBLIC vendor-mcl)
-  target_include_directories(vendor-bls-internal PUBLIC ${FETCH_ROOT_VENDOR_DIR}/bls/include)
-  target_compile_definitions(vendor-bls-internal PUBLIC -DMCL_USE_VINT)
-
-  add_library(vendor-bls INTERFACE)
-  target_link_libraries(vendor-bls INTERFACE vendor-bls-internal)
-  target_compile_definitions(vendor-bls INTERFACE)
 
   # Google Benchmark Do not build the google benchmark library tests
   if (FETCH_ENABLE_BENCHMARKS)

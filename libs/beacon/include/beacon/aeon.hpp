@@ -20,8 +20,8 @@
 #include "beacon/beacon_manager.hpp"
 #include "beacon/block_entropy.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/digest.hpp"
 #include "crypto/prover.hpp"
-#include "ledger/chain/digest.hpp"
 
 #include <atomic>
 #include <memory>
