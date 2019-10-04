@@ -22,11 +22,11 @@
 #include "ml/exceptions/exceptions.hpp"
 
 #include <cstdint>
+#include <ml/exceptions/exceptions.hpp>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <ml/exceptions/exceptions.hpp>
 
 #define EMPTY_CONTEXT_STRING "EMPTY_CONTEXT_STRING"
 
@@ -134,7 +134,8 @@ bool C2VLoader<LabelType, InputType>::AddData(InputType const &data, LabelType c
 {
   FETCH_UNUSED(data);
   FETCH_UNUSED(label);
-  throw exceptions::InvalidMode("AddData not implemented for Code2Vec example. use AddDataAsString");
+  throw exceptions::InvalidMode(
+      "AddData not implemented for Code2Vec example. use AddDataAsString");
 }
 
 /**

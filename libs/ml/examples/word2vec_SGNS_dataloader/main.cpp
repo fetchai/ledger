@@ -134,7 +134,8 @@ int main(int argc, char **argv)
   }
   else
   {
-    throw std::runtime_error("Args: data_file graph_save_file analogies_test_file");
+    throw fetch::ml::exceptions::InvalidInput(
+        "Args: data_file graph_save_file analogies_test_file");
   }
 
   std::cout << "FETCH Word2Vec Demo" << std::endl;

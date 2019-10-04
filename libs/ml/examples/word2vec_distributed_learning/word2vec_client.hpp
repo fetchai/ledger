@@ -33,7 +33,7 @@ inline std::string ReadFile(std::string const &path)
   std::ifstream t(path);
   if (t.fail())
   {
-    throw std::runtime_error("Cannot open file " + path);
+    throw ml::exceptions::InvalidFile("Cannot open file " + path);
   }
 
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());

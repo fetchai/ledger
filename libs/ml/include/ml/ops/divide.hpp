@@ -130,7 +130,8 @@ public:
     else
     {  // array / array different shape
        // TODO (#1380) Write backpropagation for array array division of different shapes
-      throw ml::exceptions::NotImplemented("array array division of different shapes is not yet handled");
+      throw ml::exceptions::NotImplemented(
+          "array array division of different shapes is not yet handled");
     }
     return {return_signal_1, return_signal_2};
   }

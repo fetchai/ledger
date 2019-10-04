@@ -27,10 +27,10 @@
 
 #include <exception>
 #include <map>
+#include <ml/exceptions/exceptions.hpp>
 #include <random>
 #include <string>
 #include <utility>
-#include <ml/exceptions/exceptions.hpp>
 
 namespace fetch {
 namespace ml {

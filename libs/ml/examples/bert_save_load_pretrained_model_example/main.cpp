@@ -93,7 +93,7 @@ int main(int ac, char **av)
   }
   else
   {
-    std::runtime_error("The serialization is not working properly");
+    fetch::ml::exceptions::InvalidMode("The serialization is not working properly");
   }
 
   return 0;

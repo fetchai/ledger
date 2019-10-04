@@ -24,8 +24,8 @@
 #include "ml/regularisers/regulariser.hpp"
 
 #include <memory>
-#include <stdexcept>
 #include <ml/exceptions/exceptions.hpp>
+#include <stdexcept>
 
 namespace fetch {
 namespace ml {
