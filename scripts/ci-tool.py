@@ -334,7 +334,7 @@ def main():
 
         # configure the project
         if not cmake_configure(project_root, build_root, options, generator):
-            output('Failed to configure the cmake project. This is usually because of a mismatch between generators. Try removing the build folder: {} and try again'.format(build_root))
+            output('\n😭 Failed to configure the cmake project. This is usually because of a mismatch between generators.\n\nTry removing the build folder: {} and try again'.format(build_root))
             sys.exit(1)
 
     if args.build or args.all or args.commit:
