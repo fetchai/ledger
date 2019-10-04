@@ -35,7 +35,7 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
 TYPED_TEST_CASE(ModelsTest, MyTypes);
-
+namespace {
 template <typename TypeParam>
 void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label,
                                 TypeParam &test_datum, TypeParam &test_label)
@@ -106,7 +106,6 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   // test prediction performance
   TypeParam pred({3, 1});
 
-  model.Train(100);
   model.Predict(test_datum, pred);
 
   EXPECT_TRUE(pred.AllClose(test_label, tolerance, tolerance));
@@ -202,3 +201,4 @@ TYPED_TEST(ModelsTest, sgd_dnnclasifier_serialisation)
   // Test if both models returns same results after training
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
 }
+}  // namespace

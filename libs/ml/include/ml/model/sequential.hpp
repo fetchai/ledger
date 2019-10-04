@@ -86,6 +86,7 @@ void Sequential<TensorType>::Add(Params... params)
     prev_layer_   = this->output_;
     this->output_ = this->graph_ptr_->template AddNode<LayerType>("", {prev_layer_}, params...);
   }
+  layer_count_++;
 }
 
 }  // namespace model
