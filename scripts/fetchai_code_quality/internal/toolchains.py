@@ -10,6 +10,7 @@ class ClangToolchain:
         self._clang_tidy_path = None
         self._run_clang_tidy_path = None
         self._clang_apply_replacements_path = None
+        self._clang_format_path = None
 
         # trigger platform specific toolchain detection
         platform_name = platform.system()
@@ -22,11 +23,21 @@ class ClangToolchain:
 
         # validate all the paths
         self._clang_tidy_path = self.__validate_path(self._clang_tidy_path)
-        self._run_clang_tidy_path = self.__validate_path(self._run_clang_tidy_path)
-        self._clang_apply_replacements_path = self.__validate_path(self._clang_apply_replacements_path)
+        self._run_clang_tidy_path = self.__validate_path(
+            self._run_clang_tidy_path)
+        self._clang_apply_replacements_path = self.__validate_path(
+            self._clang_apply_replacements_path)
+        self._clang_format_path = self.__validate_path(self._clang_format_path)
 
         # check that the detection has been completed
-        if any([self._clang_tidy_path is None, self._run_clang_tidy_path is None, self._clang_apply_replacements_path is None]):
+        are_none = [
+            self._clang_tidy_path is None,
+            self._run_clang_tidy_path is None,
+            self._clang_apply_replacements_path is None,
+            self._clang_format_path is None,
+        ]
+
+        if any(are_none):
             raise RuntimeError('Unable to detect compatible clang toolchain')
 
         print('Successfully detected clang toolchain: ', self._clang_tidy_path)
@@ -43,6 +54,10 @@ class ClangToolchain:
     def clang_apply_replacements_path(self):
         return self._clang_apply_replacements_path
 
+    @property
+    def clang_format_path(self):
+        return self._clang_format_path
+
     def __detect_macos(self):
         BREW_TOOLCHAIN_PATH = '/usr/local/Cellar/llvm@6'
 
@@ -55,17 +70,25 @@ class ClangToolchain:
         # of more than one (or empty) panic!
         contents = os.listdir(BREW_TOOLCHAIN_PATH)
         if len(contents) == 1:
-            toolchain_base_path = os.path.join(BREW_TOOLCHAIN_PATH, contents[0])
+            toolchain_base_path = os.path.join(
+                BREW_TOOLCHAIN_PATH, contents[0])
 
             # detect and paths
-            self._clang_tidy_path = os.path.join(toolchain_base_path, 'bin', 'clang-tidy')
-            self._run_clang_tidy_path = os.path.join(toolchain_base_path, 'share', 'clang', 'run-clang-tidy.py')
-            self._clang_apply_replacements_path = os.path.join(toolchain_base_path, 'bin', 'clang-apply-replacements')
+            self._clang_tidy_path = os.path.join(
+                toolchain_base_path, 'bin', 'clang-tidy')
+            self._run_clang_tidy_path = os.path.join(
+                toolchain_base_path, 'share', 'clang', 'run-clang-tidy.py')
+            self._clang_apply_replacements_path = os.path.join(
+                toolchain_base_path, 'bin', 'clang-apply-replacements')
+            self._clang_format_path = os.path.join(
+                toolchain_base_path, 'bin', 'clang-format')
 
     def __detect_linux(self):
         self._clang_tidy_path = shutil.which('clang-tidy-6.0')
         self._run_clang_tidy_path = shutil.which('run-clang-tidy-6.0.py')
-        self._clang_apply_replacements_path = shutil.which('clang-apply-replacements-6.0')
+        self._clang_apply_replacements_path = shutil.which(
+            'clang-apply-replacements-6.0')
+        self._clang_format_path = shutil.which('clang-format-6.0')
 
     @staticmethod
     def __validate_path(path):

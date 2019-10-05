@@ -261,7 +261,8 @@ def filter_compile_commands(project_root, input_location, target_files, output_l
 
         for command in commands:
             command_file_path = command['file']
-            relative_file_path = os.path.relpath(command_file_path, project_root)
+            relative_file_path = os.path.relpath(
+                command_file_path, project_root)
 
             if relative_file_path.startswith('vendor'):
                 print('Dropping 2', relative_file_path)
@@ -312,7 +313,8 @@ def static_analysis(project_root, build_root, fix, concurrency, commit, verbose)
         )
 
         if verbose:
-            print("Relevant files that differ (after dependency conversion): {}".format(clang_apply_replacements_path))
+            print("Relevant files that differ (after dependency conversion): {}".format(
+                clang_apply_replacements_path))
 
         # exit if there is nothing that needs to be done
         if len(target_files) == 0:
@@ -356,7 +358,8 @@ def static_analysis(project_root, build_root, fix, concurrency, commit, verbose)
         # libraries). Unfortunately, run-clang-tidy will refuse to function unless it
         # thinks that clang-apply-replacements is installed on the system. We pass
         # a valid path to an arbitrary executable here to placate it.
-        '-clang-apply-replacements-binary={}'.format(CLANG_TOOLCHAIN.clang_tidy_path),
+        '-clang-apply-replacements-binary={}'.format(
+            CLANG_TOOLCHAIN.clang_tidy_path),
         '-export-fixes={}'.format(output_file)
     ]
 
@@ -417,7 +420,8 @@ def static_analysis(project_root, build_root, fix, concurrency, commit, verbose)
 
         if fix:
             print('Applying fixes...')
-            subprocess.call([CLANG_TOOLCHAIN.clang_apply_replacements_path, '-format', '-style=file', '.'], cwd=build_root)
+            subprocess.call([CLANG_TOOLCHAIN.clang_apply_replacements_path,
+                             '-format', '-style=file', '.'], cwd=build_root)
             print(
                 'Done. Note that the automated fix feature of clang-tidy is unreliable:')
             print('  * not all checks are supported,')
