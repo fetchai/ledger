@@ -171,12 +171,13 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Address cons
   return weight;
 }
 
-Consensus::WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabinet, uint64_t entropy)
+Consensus::WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabinet,
+                                              uint64_t                     entropy)
 {
   Consensus::WeightedQual ret;
   ret.reserve(cabinet.size());
 
-  for(auto const &i : cabinet)
+  for (auto const &i : cabinet)
   {
     ret.emplace_back(i);
   }
@@ -185,39 +186,41 @@ Consensus::WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabin
 }
 
 /**
- * Determine whether the miner (self) should generate a block according to consensus. The requirements
- * for this are that the miner is a member of qual, and that it is within its rights according
- * to the time slot protocol and its weighting.
+ * Determine whether the miner (self) should generate a block according to consensus. The
+ * requirements for this are that the miner is a member of qual, and that it is within its rights
+ * according to the time slot protocol and its weighting.
  */
 bool Consensus::ShouldGenerateBlock(Block const &previous, Identity const &identity)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
-  auto beginning_of_aeon                  = GetBeginningOfAeon(previous, chain_);
+  auto                  beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
   BlockEntropy::Cabinet qualified_cabinet = beginning_of_aeon.body.block_entropy.qualified;
-  auto qualified_cabinet_weighted         = QualWeightedByEntropy(qualified_cabinet, previous.body.block_entropy.EntropyAsU64());
+  auto                  qualified_cabinet_weighted =
+      QualWeightedByEntropy(qualified_cabinet, previous.body.block_entropy.EntropyAsU64());
 
-  if(qualified_cabinet.find(identity.identifier()) == qualified_cabinet.end())
+  if (qualified_cabinet.find(identity.identifier()) == qualified_cabinet.end())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Miner attempted to mine but was not part of qual");
     return false;
   }
 
-  // Time slot protocol: within the block period, only the heaviest weighted miner may produce a block,
-  // outside this interval, any miner may produce a block.
+  // Time slot protocol: within the block period, only the heaviest weighted miner may produce a
+  // block, outside this interval, any miner may produce a block.
   uint64_t last_block_timestamp_ms = previous.body.timestamp * 1000;
-  uint64_t time_now_ms             = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) * 1000;
+  uint64_t time_now_ms =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) * 1000;
 
   assert(!qualified_cabinet_weighted.empty());
 
   // First qual member can always produce
-  if(*qualified_cabinet_weighted.begin() == identity)
+  if (*qualified_cabinet_weighted.begin() == identity)
   {
     return true;
   }
 
   // Within the time slot, others can not produce
-  if(last_block_timestamp_ms + block_interval_ms_ < time_now_ms)
+  if (last_block_timestamp_ms + block_interval_ms_ < time_now_ms)
   {
     return true;
   }
@@ -299,7 +302,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                    " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
 
     uint64_t last_block_time = current.body.timestamp;
-    auto     current_time    = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+    auto     current_time =
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
     if (current.body.block_number == 0)
     {

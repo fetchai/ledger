@@ -163,10 +163,11 @@ int main()
       auto cabinet = all_cabinets[block_number % number_of_cabinets];
       for (auto &member : committee)
       {
-        member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2),
-                                               block_number, block_number + aeon_length,
-                                               GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)),
-                                               dummy_block_entropy);
+        member->beacon_service.StartNewCabinet(
+            cabinet, static_cast<uint32_t>(cabinet.size() / 2), block_number,
+            block_number + aeon_length,
+            GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)),
+            dummy_block_entropy);
       }
     }
 

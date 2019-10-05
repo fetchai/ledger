@@ -206,7 +206,8 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
         member->beacon_service.StartNewCabinet(
             cabinet, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
             i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
-            GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)), member->genesis_block_entropy);
+            GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)),
+            member->genesis_block_entropy);
       }
     }
 
