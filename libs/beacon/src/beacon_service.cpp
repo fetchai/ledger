@@ -348,7 +348,7 @@ BeaconService::State BeaconService::OnCompleteState()
   if (block_entropy_being_created_->block_number < active_exe_unit_->aeon.round_end)
   {
     block_entropy_previous_ = std::move(block_entropy_being_created_);
-    block_entropy_being_created_.reset(new BlockEntropy());
+    block_entropy_being_created_ = std::make_shared<BlockEntropy>();
     block_entropy_being_created_->block_number = block_entropy_previous_->block_number + 1;
 
     return State::PREPARE_ENTROPY_GENERATION;
