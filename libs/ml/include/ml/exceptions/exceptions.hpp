@@ -41,10 +41,8 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "feature or operation mode not yet implemented";
-    }
+    return "feature or operation mode not yet implemented";
+
   }
 
 private:
