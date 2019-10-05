@@ -33,7 +33,6 @@ class ClangToolchain:
         are_none = [
             self._clang_tidy_path is None,
             self._run_clang_tidy_path is None,
-            self._clang_apply_replacements_path is None,
             self._clang_format_path is None,
         ]
 
