@@ -70,7 +70,6 @@ public:
       return msg_.c_str();
     }
     return "cannot find file or filetype not valid";
-
   }
 
 private:
