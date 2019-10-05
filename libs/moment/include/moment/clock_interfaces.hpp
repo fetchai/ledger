@@ -29,9 +29,11 @@ namespace moment {
 class ClockInterface
 {
 public:
-  using ChronoClock = std::chrono::steady_clock;
-  using Timestamp   = ChronoClock::time_point;
-  using Duration    = ChronoClock::duration;
+  using ChronoClock   = std::chrono::steady_clock;
+  using SystemClock   = std::chrono::system_clock;
+  using Timestamp     = ChronoClock::time_point;
+  /* using Timepoint     = SystemClock::time_point; */
+  using Duration      = SystemClock::duration;
 
   // Construction / Destruction
   ClockInterface()          = default;
@@ -46,6 +48,20 @@ public:
    * @return The current timestamp
    */
   virtual Timestamp Now() const = 0;
+
+//  /**
+//   * Get the current time of the clock
+//   *
+//   * @return The current timepoint
+//   */
+//  virtual Timepoint GetTimepoint() const = 0;
+
+  /**
+   * Returns a duration representing the amount of time between current time and the clock's epoch.
+   *
+   * @return The current epoch
+   */
+  virtual Duration TimeSinceEpoch() const = 0;
 
   /// @}
 };

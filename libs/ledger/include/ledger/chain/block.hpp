@@ -26,9 +26,9 @@
 #include "ledger/chain/transaction_layout.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/dag/dag_epoch.hpp"
+#include "moment/clocks.hpp"
 
 #include <cstdint>
-#include <ctime>
 #include <memory>
 #include <vector>
 
@@ -50,6 +50,7 @@ public:
   using Hash         = Digest;
   using Weight       = uint64_t;
   using BlockEntropy = beacon::BlockEntropy;
+  using SystemClock  = moment::ClockPtr;
 
   Block();
 
@@ -90,14 +91,13 @@ public:
   /// @{
   Weight total_weight = 1;
   bool   is_loose     = false;
-  /// Seconds since the block was first seen or created. Used to manage block interval
-  uint64_t first_seen_timestamp{0u};
   /// @}
 
   // Helper functions
   std::size_t GetTransactionCount() const;
   void        UpdateDigest();
   void        UpdateTimestamp();
+  SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
 };
 }  // namespace ledger
 

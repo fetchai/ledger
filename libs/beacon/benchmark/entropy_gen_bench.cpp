@@ -90,7 +90,7 @@ struct BeaconSelfContained
   {
     beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2 + 1),
                                    round_start, round_end,
-                                   static_cast<uint64_t>(std::time(nullptr)), entropy, output);
+                                   GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)), entropy, output);
   }
 
   muddle::Address GetMuddleAddress() const

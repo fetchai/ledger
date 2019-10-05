@@ -190,8 +190,8 @@ bool Consensus::ShouldGenerateBlock(Block const &previous, Address const &addres
     }
   }
 
-  uint64_t time_now_ms           = static_cast<uint64_t>(std::time(nullptr)) * 1000;
-  uint64_t desired_time_for_next = (previous.first_seen_timestamp * 1000) + time_to_wait;
+  uint64_t time_now_ms           = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) * 1000;
+  uint64_t desired_time_for_next = (previous.body.timestamp * 1000) + time_to_wait;
 
   return in_committee && desired_time_for_next <= time_now_ms;
 }
@@ -289,7 +289,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                    " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
 
     uint64_t last_block_time = current.body.timestamp;
-    auto     current_time    = static_cast<uint64_t>(std::time(nullptr));
+    auto     current_time    = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
     if (current.body.block_number == 0)
     {
@@ -404,7 +404,7 @@ Status Consensus::ValidBlock(Block const &current) const
   //}
 
   // Perform the time checks.
-  auto current_time = static_cast<uint64_t>(std::time(nullptr));
+  auto current_time = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
   if (current.body.timestamp < block_preceeding.body.timestamp)
   {

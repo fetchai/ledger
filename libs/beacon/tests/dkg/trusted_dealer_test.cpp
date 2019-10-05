@@ -174,7 +174,7 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
     {
       member->beacon_service.StartNewCabinet(
           cabinet_addresses, threshold, i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
-          static_cast<uint64_t>(std::time(nullptr)), prev_entropy,
+          GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)), prev_entropy,
           dealer.GetKeys(member->identity.identifier()));
     }
 

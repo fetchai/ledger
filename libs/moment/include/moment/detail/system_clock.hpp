@@ -20,38 +20,36 @@
 #include "moment/clock_interfaces.hpp"
 
 #include <chrono>
-#include <iostream>
 
 namespace fetch {
 namespace moment {
 namespace detail {
 
-class SteadyClock final : public ClockInterface
+class GlobalClock final : public ClockInterface
 {
 public:
   // Construction / Destruction
-  SteadyClock()                    = default;
-  SteadyClock(SteadyClock const &) = delete;
-  SteadyClock(SteadyClock &&)      = delete;
-  ~SteadyClock() override          = default;
+  GlobalClock()                    = default;
+  GlobalClock(GlobalClock const &) = delete;
+  GlobalClock(GlobalClock &&)      = delete;
+  ~GlobalClock() override          = default;
 
   /// @name Clock Interface
   /// @{
   Timestamp Now() const override
   {
-    return ChronoClock::now();
-  }
-
-  Duration TimeSinceEpoch() const override
-  {
-    // This should never happen TODO(HUT): this.
     return {};
   }
   /// @}
 
+  Duration TimeSinceEpoch() const override
+  {
+    return SystemClock::now().time_since_epoch();
+  }
+
   // Operators
-  SteadyClock &operator=(SteadyClock const &) = delete;
-  SteadyClock &operator=(SteadyClock &&) = delete;
+  GlobalClock &operator=(GlobalClock const &) = delete;
+  GlobalClock &operator=(GlobalClock &&) = delete;
 };
 
 }  // namespace detail

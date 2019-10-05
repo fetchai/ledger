@@ -33,7 +33,7 @@ void TrustedDealerBeaconService::StartNewCabinet(CabinetMemberList members, uint
                                                  BlockEntropy const &prev_entropy,
                                                  const DkgOutput &   output)
 {
-  auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
+  auto diff_time = int64_t(GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))) - int64_t(start_time);
   FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
                  " at time: ", start_time, " (diff): ", diff_time);
 

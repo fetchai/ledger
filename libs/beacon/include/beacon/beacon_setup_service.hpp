@@ -107,12 +107,13 @@ public:
   using SharesMessage           = dkg::SharesMessage;
   using DKGSerializer           = dkg::DKGSerializer;
   using ManifestCacheInterface  = ledger::ManifestCacheInterface;
-  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
-  using DeadlineTimer    = fetch::moment::DeadlineTimer;
-  using SignatureShare   = AeonExecutionUnit::SignatureShare;
-  using BeaconManager    = dkg::BeaconManager;
+  using SharesExposedMap        = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
+  using DeadlineTimer           = fetch::moment::DeadlineTimer;
+  using SignatureShare          = AeonExecutionUnit::SignatureShare;
+  using BeaconManager           = dkg::BeaconManager;
   using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
   using CertificatePtr          = std::shared_ptr<dkg::BeaconManager::Certificate>;
+  using Clock                   = moment::ClockPtr;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
                      ManifestCacheInterface &manifest_cache, CertificatePtr certificate);
@@ -207,7 +208,8 @@ private:
 
   // Timing management
   void             SetTimeToProceed(State state);
-  moment::ClockPtr clock_ = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
+  Clock            system_clock_          = moment::GetClock("beacon:dkg_system", moment::ClockType::SYSTEM);
+  Clock            clock_                 = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
   DeadlineTimer    timer_to_proceed_{"beacon:dkg"};
   uint64_t         reference_timepoint_   = 0;
   uint64_t         state_deadline_        = 0;
