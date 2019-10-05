@@ -325,7 +325,18 @@ def main():
     }
 
     if args.build or args.lint or args.all:
-        generator = 'Ninja' if NINJA_IS_PRESENT else 'Unix Makefiles'
+        # choose the generater initially based on what already exists there
+        if isdir(build_root):
+            if isfile(join(build_root, 'Makefile')):
+                generator = 'Unix Makefiles'
+            elif isfile(join(build_root, 'build.ninja')):
+                generator = 'Ninja'
+            else:
+                raise RuntimeError('Unable to detect existing generator type')
+        else:
+
+            # in the case of a new build prefer Ninja over make (because it is faster)
+            generator = 'Ninja' if NINJA_IS_PRESENT else 'Unix Makefiles'
 
         # due to the version of the header dependency detection that is used when trying to
         # determine affected files, when running commit filtered lints must use make

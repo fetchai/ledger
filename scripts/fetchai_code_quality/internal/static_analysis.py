@@ -153,8 +153,14 @@ def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
         new_diagnostics = []
         for d in document['Diagnostics']:
             file_path = d['FilePath']
+
+            # ignore extries that refer to empty files (usually waning have stopped on a given file)
+            if len(file_path) == 0:
+                continue
+
             absolute_path = file_path if isabs(
                 file_path) else abspath(join(build_root, file_path))
+
             assert isfile(absolute_path)
             relative_path = relpath(absolute_path, project_root)
 
@@ -235,8 +241,7 @@ def get_changed_paths_from_git(project_root, commit):
         .decode('utf-8') \
         .split('\n')
 
-    relative_paths = [rel_path.strip()
-                      for rel_path in raw_relative_paths]
+    relative_paths = [rel_path.strip() for rel_path in raw_relative_paths]
 
     return [abspath(join(project_root, rel_path)) for rel_path in relative_paths]
 
@@ -245,65 +250,105 @@ def filter_non_matching(file_list, words):
     return [x for x in file_list if any(file_ending in x for file_ending in words)]
 
 
-def alter_compile_commands(file_location, target_files):
+def filter_compile_commands(project_root, input_location, target_files, output_location):
+    filtered_commands = []
 
-    all_compile_commands = json.loads(open(file_location, "r").read())
-    to_go_back_in = []
+    print(target_files)
 
-    for command in all_compile_commands:
+    # read the input file and filter the entries
+    with open(input_location, 'r') as input_file:
+        commands = json.load(input_file)
 
-        for target_file in target_files:
-            if target_file in command["file"]:
-                to_go_back_in.append(command)
-                break
+        for command in commands:
+            command_file_path = command['file']
+            relative_file_path = os.path.relpath(command_file_path, project_root)
 
-    with open(file_location, 'w') as output_file:
-        as_string = json.dumps(to_go_back_in, indent=0)
-        output_file.write(as_string)
+            if relative_file_path.startswith('vendor'):
+                print('Dropping 2', relative_file_path)
+                continue
+
+            if relative_file_path == 'libs/vm/src/tokeniser.cpp':
+                continue
+
+            if target_files is not None:
+                match = False
+                for target_file in target_files:
+                    if target_file in command_file_path:
+                        match = True
+                        break
+
+                if not match:
+                    print('Dropping 1', relative_file_path)
+                    continue
+
+            # add the command to the filtered set
+            filtered_commands.append(command)
+
+    # flush the output file
+    with open(output_location, 'w') as output_file:
+        json.dump(filtered_commands, output_file)
 
 
 def static_analysis(project_root, build_root, fix, concurrency, commit, verbose):
 
+    # ensure the static analysis root is correct
+    static_analysis_root = os.path.join(build_root, 'static_analysis')
+    os.makedirs(static_analysis_root, exist_ok=True)
+
+    target_files = None
+
     # In the case we are linting a subset of all files
     if commit:
-        files_to_lint = get_changed_paths_from_git(project_root, *commit)
-        files_to_lint = filter_non_matching(files_to_lint, [".hpp", ".cpp"])
+        target_files = get_changed_paths_from_git(project_root, *commit)
+        target_files = filter_non_matching(target_files, [".hpp", ".cpp"])
 
         if verbose:
-            print("Relevant files that differ: {}".format(files_to_lint))
+            print("Relevant files that differ: {}".format(target_files))
 
-        files_to_lint = convert_to_dependencies(
-            set(files_to_lint), abspath(build_root), verbose)
+        target_files = convert_to_dependencies(
+            set(target_files),
+            abspath(build_root),
+            verbose
+        )
 
         if verbose:
             print("Relevant files that differ (after dependency conversion): {}".format(clang_apply_replacements_path))
 
-        if len(files_to_lint) == 0:
+        # exit if there is nothing that needs to be done
+        if len(target_files) == 0:
             print("\n\nThere doesn't appear to be any relevant files to lint. 👍.\n\n")
             return
 
-        # Now that we have cpp files, we can shim a 'shadow' build directory that will only lint certain files
-        shadow_build_root = abspath(join(build_root, 'shadow_build_root'))
-        os.makedirs(shadow_build_root, exist_ok=True)
+        # # Now that we have cpp files, we can shim a 'shadow' build directory that will only lint certain files
+        # shadow_build_root = abspath(join(build_root, 'shadow_build_root'))
+        # os.makedirs(shadow_build_root, exist_ok=True)
 
-        # Copy the compile_commands.json needed for the linter into this dir
-        shutil.copy(
-            abspath(join(build_root, 'compile_commands.json')), shadow_build_root)
+        # # Copy the compile_commands.json needed for the linter into this dir
+        # shutil.copy(
+        #     abspath(join(build_root, 'compile_commands.json')), shadow_build_root)
 
-        # Now alter the compile_commands.json
-        alter_compile_commands(
-            abspath(join(shadow_build_root, 'compile_commands.json')), files_to_lint)
+        # # Now alter the compile_commands.json
+        # alter_compile_commands(
+        #     abspath(join(shadow_build_root, 'compile_commands.json')), files_to_lint)
 
-        # Replace the root with the shadow root
-        build_root = shadow_build_root
+        # # Replace the root with the shadow root
+        # build_root = shadow_build_root
 
-    output_file = abspath(join(build_root, 'clang_tidy_fixes.yaml'))
+    # filter the compile commands
+    filter_compile_commands(
+        project_root,
+        os.path.join(build_root, 'compile_commands.json'),
+        target_files,
+        os.path.join(static_analysis_root, 'compile_commands.json')
+    )
+
+    output_file = abspath(join(static_analysis_root, 'clang_tidy_fixes.yaml'))
 
     cmd = [
         'python3', '-u',
         CLANG_TOOLCHAIN.run_clang_tidy_path,
-        '-j{concurrency}'.format(concurrency=concurrency),
-        '-p={path}'.format(path=abspath(build_root)),
+        '-j{}'.format(concurrency),
+        '-p={}'.format(static_analysis_root),
         '-header-filter=.*(apps|libs).*\\.hpp$',
         '-clang-tidy-binary={}'.format(CLANG_TOOLCHAIN.clang_tidy_path),
         # Hacky workaround: we do not need clang-apply-replacements unless applying fixes
@@ -312,7 +357,11 @@ def static_analysis(project_root, build_root, fix, concurrency, commit, verbose)
         # thinks that clang-apply-replacements is installed on the system. We pass
         # a valid path to an arbitrary executable here to placate it.
         '-clang-apply-replacements-binary={}'.format(CLANG_TOOLCHAIN.clang_tidy_path),
-        '-export-fixes={output_file}'.format(output_file=output_file)]
+        '-export-fixes={}'.format(output_file)
+    ]
+
+    if fix:
+        cmd += ['-fix']
 
     print('\nPerform static analysis')
 
@@ -329,12 +378,14 @@ def static_analysis(project_root, build_root, fix, concurrency, commit, verbose)
 
     print('Working...')
     with tempfile.SpooledTemporaryFile() as f:
-        exit_code = subprocess.call(cmd, cwd=project_root,
-                                    stdout=f, stderr=f)
+
+        # execute the run-clang-tidy "helper" script
+        exit_code = subprocess.call(cmd, cwd=project_root, stdout=f, stderr=f)
+
         if exit_code != 0:
             print('clang-tidy reported an error')
             f.seek(0)
-            print('\n{text}\n'.format(text=f.read().decode()))
+            print('\n{}\n'.format(f.read().decode()))
             sys.exit(1)
 
     print('Done.')
