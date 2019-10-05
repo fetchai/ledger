@@ -37,9 +37,10 @@ public:
   using OptimiserType     = fetch::ml::OptimiserType;
   using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
-  Sequential() = default;
-
+  Sequential()                        = default;
+  Sequential(Sequential const &other) = default;
   explicit Sequential(ModelConfig<DataType> model_config);
+  ~Sequential() = default;
 
   template <typename LayerType, typename... Params>
   void Add(Params... params);

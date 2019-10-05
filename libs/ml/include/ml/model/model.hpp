@@ -47,6 +47,14 @@ public:
   explicit Model(ModelConfig<DataType> model_config = ModelConfig<DataType>())
     : model_config_(std::move(model_config))
   {}
+  Model(Model const &other)
+  {
+    graph_ptr_.reset(other.graph_ptr_.get());
+    dataloader_ptr_.reset(other.dataloader_ptr_.get());
+    optimiser_ptr_.reset(other.optimiser_ptr_.get());
+  }
+
+  virtual ~Model() = default;
 
   void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
   void SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr);

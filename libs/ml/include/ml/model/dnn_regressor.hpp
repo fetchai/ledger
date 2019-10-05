@@ -37,7 +37,9 @@ public:
   using OptimiserType     = fetch::ml::OptimiserType;
   using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
-  DNNRegressor() = default;
+  DNNRegressor()                          = default;
+  DNNRegressor(DNNRegressor const &other) = default;
+  ~DNNRegressor()                         = default;
 
   DNNRegressor(ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
 
