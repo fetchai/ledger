@@ -42,14 +42,11 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "Tensor invoked with wrong number of indices";
-    }
+    return "Tensor invoked with wrong number of indices";
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 class WrongShape : public std::runtime_error
@@ -70,14 +67,11 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "math operation invoked with wrong shape inputs";
-    }
+    return "math operation invoked with wrong shape inputs";
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 class NegativeLog : public std::runtime_error
@@ -97,14 +91,11 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "math operation attempted to take log of negative value which is undefined";
-    }
+    return "math operation attempted to take log of negative value which is undefined";
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 class InvalidReshape : public std::runtime_error
@@ -125,14 +116,11 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "Not possible to perform requested reshape";
-    }
+    return "Not possible to perform requested reshape";
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 class InvalidNumericCharacter : public std::runtime_error

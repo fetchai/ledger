@@ -69,14 +69,12 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "cannot find file or filetype not valid";
-    }
+    return "cannot find file or filetype not valid";
+
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 class InvalidMode : public std::runtime_error
@@ -97,14 +95,11 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "invalid mode selected";
-    }
+    return "invalid mode selected";
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 class InvalidInput : public std::runtime_error
@@ -125,14 +120,11 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "invalid input";
-    }
+    return "invalid input";
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 class Timeout : public std::runtime_error
@@ -153,14 +145,11 @@ public:
     {
       return msg_.c_str();
     }
-    else
-    {
-      return "error: feature timed out";
-    }
+    return "error: feature timed out";
   }
 
 private:
-  std::string msg_ = "";
+  std::string msg_;
 };
 
 }  // namespace exceptions
