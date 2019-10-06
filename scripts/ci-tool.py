@@ -167,7 +167,7 @@ def parse_commandline():
                         help='Run the etch language tests')
     parser.add_argument('--lint', action='store_true',
                         help='Run clang-tidy')
-    parser.add_argument('--fix-lint', action='store_true',
+    parser.add_argument('--fix', action='store_true',
                         help='Run clang-tidy and attempt to fix lint errors')
     parser.add_argument('-c', '--commit', nargs=1, default=None,
                         help='when linting, including fixing, scan and fix only files that changed between Git\'s HEAD and the ' 'given commit or ref. \nUseful: HEAD will lint staged files')
@@ -374,7 +374,7 @@ def main():
 
     if args.lint or args.all:
         fetchai_code_quality.static_analysis(
-            project_root, build_root, args.fix_lint, concurrency, args.commit, verbose=False)
+            project_root, build_root, args.fix, concurrency, args.commit, verbose=False)
 
 
 if __name__ == '__main__':
