@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,31 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle/address.hpp"
-#include "network/uri.hpp"
-
-#include <cstdint>
-#include <unordered_map>
+#include "shards/shard_management_protocol.hpp"
+#include "shards/shard_management_service.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace shards {
 
-class ShardManagementInterface
+ShardManagementProtocol::ShardManagementProtocol(ShardManagementService &service)
 {
-public:
-  using LaneIndex     = uint32_t;
-  using MuddleAddress = muddle::Address;
-  using AddressMap    = std::unordered_map<MuddleAddress, network::Uri>;
+  Expose(REQUEST_MANIFEST, &service, &ShardManagementService::RequestManifest);
+}
 
-  // Construction / Destruction
-  ShardManagementInterface()          = default;
-  virtual ~ShardManagementInterface() = default;
-
-  /// @name Lane Management
-  /// @{
-  virtual void UseThesePeers(LaneIndex lane, AddressMap const &address_map) = 0;
-  /// @}
-};
-
-}  // namespace ledger
+}  // namespace shards
 }  // namespace fetch

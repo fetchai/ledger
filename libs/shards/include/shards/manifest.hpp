@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "ledger/shards/manifest_entry.hpp"
+#include "shards/manifest_entry.hpp"
 
 #include <cstddef>
 #include <unordered_map>
@@ -27,7 +27,7 @@ namespace fetch {
 namespace variant {
 class Variant;
 }
-namespace ledger {
+namespace shards {
 
 class Manifest
 {
@@ -80,16 +80,16 @@ private:
   friend struct serializers::MapSerializer;
 };
 
-}  // namespace ledger
+}  // namespace shards
 
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<ledger::Manifest, D>
+struct MapSerializer<shards::Manifest, D>
 {
 public:
   using DriverType = D;
-  using Type       = ledger::Manifest;
+  using Type       = shards::Manifest;
 
   static const uint8_t SERVICE_MAP = 1;
 

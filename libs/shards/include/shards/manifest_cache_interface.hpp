@@ -17,15 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
+#include "muddle/address.hpp"
+
 namespace fetch {
-namespace ledger {
+namespace shards {
 
 class Manifest;
 
-}  // namespace ledger
+class ManifestCacheInterface
+{
+public:
+  using Address = muddle::Address;
 
-class Settings;
+  ManifestCacheInterface()          = default;
+  virtual ~ManifestCacheInterface() = default;
 
-bool BuildManifest(Settings const &settings, shards::Manifest &manifest);
+  /// @name Manifest Cache Interface
+  /// @{
+  virtual bool QueryManifest(Address const &address, Manifest &manifest) = 0;
+  /// @}
+};
 
+}  // namespace shards
 }  // namespace fetch

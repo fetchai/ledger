@@ -22,7 +22,7 @@ namespace fetch {
 namespace beacon {
 
 TrustedDealerBeaconService::TrustedDealerBeaconService(
-    MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
+    MuddleInterface &muddle, shards::ManifestCacheInterface &manifest_cache,
     const CertificatePtr &certificate, SharedEventManager event_manager)
   : BeaconService{muddle, manifest_cache, certificate, std::move(event_manager)}
 {}

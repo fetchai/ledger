@@ -1,49 +1,19 @@
-cc_library(
-  name = "fetch-network",
-  visibility = [
-      "//visibility:public",
-  ],
-  srcs = glob(["src/*.cpp"]),
+load("//bazel:fetchai_build_system.bzl", "fetchai_cc_library")
+
+
+fetchai_cc_library(
+  name = "network",
+  srcs = glob(["src/*.cpp", 'src/**/*.cpp']),
   hdrs = glob(["include/*.hpp", "include/**/*.hpp"]),
   deps = [
-    "//libs/core:fetch-core",
-    "//libs/crypto:fetch-crypto",
-    "//libs/math:fetch-math",
-    "//libs/json:fetch-json",
-    "//libs/logging:fetch-logging"
+    "//libs/core:core",
+    "//libs/crypto:crypto",
+    "//libs/math:math",
+    "//libs/json:json",
+    "//libs/logging:logging",
+    "//libs/meta:meta",
+    "//libs/vectorise:vectorise",
+    "//libs/variant:variant", # p2p trust
+    "//vendor:asio",
   ],
-  copts = [
-        "-Ilibs/metrics/include",
-    "-Ilibs/settings/include",
-    "-Ilibs/crypto/include",
-    "-Ilibs/ledger/include",
-    "-Ilibs/vm_modules/include",
-    "-Ilibs/core/include",
-    "-Ilibs/moment/include",
-    "-Ilibs/dkg/include",
-    "-Ilibs/network/include",
-    "-Ilibs/entropy/include",
-    "-Ilibs/meta/include",
-    "-Ilibs/oef-base/include",
-    "-Ilibs/math/include",
-    "-Ilibs/storage/include",
-    "-Ilibs/testing/include",
-    "-Ilibs/vm/include",
-    "-Ilibs/oef-search/include",
-    "-Ilibs/json/include",
-    "-Ilibs/version/include",
-    "-Ilibs/bloom_filter/include",
-    "-Ilibs/ml/include",
-    "-Ilibs/http/include",
-    "-Ilibs/address/include",
-    "-Ilibs/oef-core/include",
-    "-Ilibs/variant/include",
-    "-Ilibs/yaml/include",
-    "-Ilibs/bazel_test/include",
-    "-Ilibs/telemetry/include",
-    "-Ilibs/logging/include",
-    "-Ilibs/vectorise/include",
-    "-Ilibs/oef-messages/include",
-    "-Ilibs/miner/include"
-  ],  
 )

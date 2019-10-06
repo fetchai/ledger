@@ -18,12 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/group_definitions.hpp"
-#include "ledger/shards/service_identifier.hpp"
+#include "shards/service_identifier.hpp"
 #include "muddle/address.hpp"
 #include "network/uri.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace shards {
 
 class ManifestEntry
 {
@@ -71,16 +71,16 @@ inline uint16_t ManifestEntry::local_port() const
   return local_port_;
 }
 
-}  // namespace ledger
+}  // namespace shards
 
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<ledger::ManifestEntry, D>
+struct MapSerializer<shards::ManifestEntry, D>
 {
 public:
   using DriverType = D;
-  using Type       = ledger::ManifestEntry;
+  using Type       = shards::ManifestEntry;
 
   static const uint8_t URI        = 1;
   static const uint8_t LOCAL_PORT = 2;

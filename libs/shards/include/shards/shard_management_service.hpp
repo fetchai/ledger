@@ -19,9 +19,9 @@
 
 #include "core/mutex.hpp"
 #include "core/periodic_runnable.hpp"
-#include "ledger/shards/manifest.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
-#include "ledger/shards/shard_management_protocol.hpp"
+#include "shards/manifest.hpp"
+#include "shards/manifest_cache_interface.hpp"
+#include "shards/shard_management_protocol.hpp"
 #include "muddle/address.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -35,11 +35,11 @@ namespace muddle {
 class MuddleInterface;
 
 }  // namespace muddle
-namespace ledger {
+namespace shards {
 
 class ShardManagementInterface;
 
-class ShardManagementService : public core::PeriodicRunnable, public ledger::ManifestCacheInterface
+class ShardManagementService : public core::PeriodicRunnable, public ManifestCacheInterface
 {
 public:
   using MuddleInterface = muddle::MuddleInterface;
@@ -104,5 +104,5 @@ private:
   /// @}
 };
 
-}  // namespace ledger
+}  // namespace shards
 }  // namespace fetch

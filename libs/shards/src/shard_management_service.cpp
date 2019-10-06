@@ -19,15 +19,15 @@
 #include "core/containers/set_difference.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/shards/shard_management_interface.hpp"
-#include "ledger/shards/shard_management_service.hpp"
+#include "shards/shard_management_interface.hpp"
+#include "shards/shard_management_service.hpp"
 #include "logging/logging.hpp"
 #include "muddle/muddle_interface.hpp"
 
 using namespace std::chrono_literals;
 
 namespace fetch {
-namespace ledger {
+namespace shards {
 namespace {
 
 using AddressHints    = muddle::MuddleInterface::AddressHints;
@@ -248,5 +248,5 @@ void ShardManagementService::RefreshCache()
   RequestUpdates(updates);
 }
 
-}  // namespace ledger
+}  // namespace shards
 }  // namespace fetch

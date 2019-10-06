@@ -24,7 +24,7 @@
 #include <string>
 
 namespace fetch {
-namespace ledger {
+namespace shards {
 
 class ServiceIdentifier
 {
@@ -74,16 +74,16 @@ inline uint32_t ServiceIdentifier::instance() const
 
 char const *ToString(ServiceIdentifier::Type type);
 
-}  // namespace ledger
+}  // namespace shards
 
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<ledger::ServiceIdentifier, D>
+struct MapSerializer<shards::ServiceIdentifier, D>
 {
 public:
   using DriverType = D;
-  using Type       = ledger::ServiceIdentifier;
+  using Type       = shards::ServiceIdentifier;
 
   static const uint8_t TYPE     = 1;
   static const uint8_t INSTANCE = 2;
@@ -114,9 +114,9 @@ public:
 namespace std {
 
 template <>
-struct hash<fetch::ledger::ServiceIdentifier>
+struct hash<fetch::shards::ServiceIdentifier>
 {
-  std::size_t operator()(fetch::ledger::ServiceIdentifier const &id) const
+  std::size_t operator()(fetch::shards::ServiceIdentifier const &id) const
   {
     static_assert(sizeof(std::size_t) == 8, "Assumed size of std::size_t");
 

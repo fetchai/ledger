@@ -17,6 +17,51 @@ cc_library(
 )
 
 cc_library(
+  name = "asio",
+  visibility = [
+      "//visibility:public",
+  ],
+  srcs = [],
+  hdrs = glob([
+      "asio/asio/include/*.hpp",
+      "asio/asio/include/**/*.hpp",
+      "asio/asio/include/**/*.ipp",
+  ]),
+  deps = [],
+  copts = [],
+)
+
+cc_library(
+  name = "utfcpp",
+  visibility = [
+      "//visibility:public",
+  ],
+  srcs = [],
+  hdrs = glob([
+      "utfcpp/source/*.h",
+      "utfcpp/source/utf8/*.h",
+  ]),
+  deps = [],
+  copts = [],
+)
+
+cc_library(
+  name = "msgpack",
+  visibility = [
+      "//visibility:public",
+  ],
+  hdrs = glob([
+      "msgpack/include/*.hpp",
+      "msgpack/include/*.h",
+      "msgpack/include/**/*.hpp",
+      "msgpack/include/**/*.h",
+  ]),
+  srcs = [],
+  deps = [],
+  copts = [],
+)
+
+cc_library(
   name = "backward-cpp",
   visibility = [
       "//visibility:public",
@@ -57,12 +102,38 @@ cc_library(
  #  target_link_libraries(vendor-mcl INTERFACE mcl_st)
 
 cc_library(
+  name = "mcl-asm",
+  visibility = [
+      "//visibility:public",
+  ],
+  srcs = [
+      'mcl/src/asm/x86-64mac.S',
+      'mcl/src/asm/x86-64mac.bmi2.S',
+  ],
+#  srcs = select({
+#      ':darwin': [
+#          'mcl/src/asm/x86-64mac.S',
+#          'mcl/src/asm/x86-64mac.bmi2.S',
+#      ],
+#      '//conditions:default': [
+#          'mcl/src/asm/x86-64.S',
+#          'mcl/src/asm/x86-64.bmi2.S',
+#      ],
+#  }),
+  deps = [],
+  copts = [],
+)
+
+
+cc_library(
   name = "mcl",
   visibility = [
       "//visibility:public",
   ],
   srcs = [
-      "mcl/src/fp.cpp",
+      'mcl/src/fp.cpp',
+      'mcl/src/asm/x86-64mac.S',
+      'mcl/src/asm/x86-64mac.bmi2.S',
   ]
 #  + select({
 #       ':darwin': [

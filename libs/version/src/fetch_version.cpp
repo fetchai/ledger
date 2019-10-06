@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,26 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle/address.hpp"
+#include <cstdint>
 
 namespace fetch {
-namespace ledger {
+namespace version {
 
-class Manifest;
+extern char const *const FULL        = "invalid";
+extern uint32_t const    MAJOR       = 0;
+extern uint32_t const    MINOR       = 0;
+extern uint32_t const    PATCH       = 0;
+extern char const *const COMMIT_HASH = "unknown";
+extern bool const        VALID       = false;
 
-class ManifestCacheInterface
-{
-public:
-  using Address = muddle::Address;
-
-  ManifestCacheInterface()          = default;
-  virtual ~ManifestCacheInterface() = default;
-
-  /// @name Manifest Cache Interface
-  /// @{
-  virtual bool QueryManifest(Address const &address, Manifest &manifest) = 0;
-  /// @}
-};
-
-}  // namespace ledger
+}  // namespace version
 }  // namespace fetch

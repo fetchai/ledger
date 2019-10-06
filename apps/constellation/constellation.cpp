@@ -58,8 +58,8 @@ using fetch::byte_array::ToBase64;
 using fetch::ledger::Address;
 using fetch::ledger::Executor;
 using fetch::ledger::GenesisFileCreator;
-using fetch::ledger::Manifest;
-using fetch::ledger::ServiceIdentifier;
+using fetch::shards::Manifest;
+using fetch::shards::ServiceIdentifier;
 using fetch::muddle::MuddleInterface;
 using fetch::network::AtomicCounterName;
 using fetch::network::AtomicInFlightCounter;
@@ -212,7 +212,7 @@ muddle::MuddlePtr CreateBeaconNetwork(Config const &cfg, CertificatePtr certific
 }
 
 BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleInterface &muddle,
-                                     ledger::ShardManagementService &manifest_cache,
+                                     shards::ShardManagementService &manifest_cache,
                                      CertificatePtr                  certificate)
 {
   BeaconServicePtr                         beacon{};

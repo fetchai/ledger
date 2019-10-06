@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,44 +17,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/shards/manifest_entry.hpp"
-#include "network/peer.hpp"
+#include "muddle/address.hpp"
+#include "network/uri.hpp"
+
+#include <cstdint>
+#include <unordered_map>
 
 namespace fetch {
-namespace ledger {
-namespace {
+namespace shards {
 
-uint16_t ExtractLocalPort(network::Uri const &uri)
+class ShardManagementInterface
 {
-  uint16_t local_port{0};
+public:
+  using LaneIndex     = uint32_t;
+  using MuddleAddress = muddle::Address;
+  using AddressMap    = std::unordered_map<MuddleAddress, network::Uri>;
 
-  if (uri.IsTcpPeer())
-  {
-    local_port = uri.GetTcpPeer().port();
-  }
+  // Construction / Destruction
+  ShardManagementInterface()          = default;
+  virtual ~ShardManagementInterface() = default;
 
-  return local_port;
-}
+  /// @name Lane Management
+  /// @{
+  virtual void UseThesePeers(LaneIndex lane, AddressMap const &address_map) = 0;
+  /// @}
+};
 
-}  // namespace
-
-ManifestEntry::ManifestEntry(network::Peer const &peer)
-  : ManifestEntry(network::Uri{peer})
-{}
-
-ManifestEntry::ManifestEntry(network::Uri const &uri)
-  : ManifestEntry(uri, ExtractLocalPort(uri))
-{}
-
-ManifestEntry::ManifestEntry(network::Uri uri, uint16_t local_port)
-  : uri_{std::move(uri)}
-  , local_port_{local_port}
-{}
-
-void ManifestEntry::UpdateAddress(muddle::Address address)
-{
-  address_ = std::move(address);
-}
-
-}  // namespace ledger
+}  // namespace shards
 }  // namespace fetch

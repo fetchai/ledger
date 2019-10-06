@@ -20,7 +20,7 @@
 #include "network/service/protocol.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace shards {
 
 class ShardManagementService;
 
@@ -36,5 +36,5 @@ public:
   ~ShardManagementProtocol() override = default;
 };
 
-}  // namespace ledger
+}  // namespace shards
 }  // namespace fetch

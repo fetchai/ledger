@@ -16,16 +16,44 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/shards/shard_management_protocol.hpp"
-#include "ledger/shards/shard_management_service.hpp"
+#include "shards/manifest_entry.hpp"
+#include "network/peer.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace shards {
+namespace {
 
-ShardManagementProtocol::ShardManagementProtocol(ShardManagementService &service)
+uint16_t ExtractLocalPort(network::Uri const &uri)
 {
-  Expose(REQUEST_MANIFEST, &service, &ShardManagementService::RequestManifest);
+  uint16_t local_port{0};
+
+  if (uri.IsTcpPeer())
+  {
+    local_port = uri.GetTcpPeer().port();
+  }
+
+  return local_port;
 }
 
-}  // namespace ledger
+}  // namespace
+
+ManifestEntry::ManifestEntry(network::Peer const &peer)
+  : ManifestEntry(network::Uri{peer})
+{}
+
+ManifestEntry::ManifestEntry(network::Uri const &uri)
+  : ManifestEntry(uri, ExtractLocalPort(uri))
+{}
+
+ManifestEntry::ManifestEntry(network::Uri uri, uint16_t local_port)
+  : uri_{std::move(uri)}
+  , local_port_{local_port}
+{}
+
+void ManifestEntry::UpdateAddress(muddle::Address address)
+{
+  address_ = std::move(address);
+}
+
+}  // namespace shards
 }  // namespace fetch

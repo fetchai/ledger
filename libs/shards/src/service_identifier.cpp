@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/shards/service_identifier.hpp"
+#include "shards/service_identifier.hpp"
 
 #include <sstream>
 
 namespace fetch {
-namespace ledger {
+namespace shards {
 
 char const *ToString(ServiceIdentifier::Type type)
 {
@@ -57,7 +57,7 @@ ServiceIdentifier::ServiceIdentifier(Type type, uint32_t instance)
 std::string ServiceIdentifier::ToString() const
 {
   std::ostringstream oss;
-  oss << ledger::ToString(type_);
+  oss << shards::ToString(type_);
 
   if (instance_ != ServiceIdentifier::INVALID_SERVICE_IDENTIFIER)
   {
@@ -72,5 +72,5 @@ bool ServiceIdentifier::operator==(ServiceIdentifier const &other) const
   return (type_ == other.type_) && (instance_ == other.instance_);
 }
 
-}  // namespace ledger
+}  // namespace shards
 }  // namespace fetch

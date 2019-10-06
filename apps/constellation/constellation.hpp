@@ -32,8 +32,8 @@
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/protocols/dag_service.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
-#include "ledger/shards/manifest.hpp"
-#include "ledger/shards/shard_management_service.hpp"
+#include "shards/manifest.hpp"
+#include "shards/shard_management_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
@@ -66,7 +66,7 @@ class Constellation : public ledger::BlockSinkInterface
 public:
   using CertificatePtr = std::shared_ptr<crypto::Prover>;
   using UriSet         = std::unordered_set<network::Uri>;
-  using Manifest       = ledger::Manifest;
+  using Manifest       = shards::Manifest;
   using NetworkMode    = ledger::MainChainRpcService::Mode;
   using FeatureFlags   = core::FeatureFlags;
   using ConstByteArray = byte_array::ConstByteArray;
@@ -147,8 +147,7 @@ private:
   using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
   using BeaconServicePtr       = std::shared_ptr<fetch::beacon::BeaconService>;
   using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
-
-  using ShardManagementService = ledger::ShardManagementService;
+  using ShardManagementService = shards::ShardManagementService;
   using ShardMgmtServicePtr    = std::shared_ptr<ShardManagementService>;
   using ShardConfigs           = ledger::ShardConfigs;
   using TxStatusCache          = ledger::TransactionStatusCache;

@@ -1,0 +1,36 @@
+load("//bazel:fetchai_build_system.bzl", "fetchai_cc_application")
+
+
+fetchai_cc_application(
+  name = "constellation",
+  srcs = glob(["*.cpp", "*.hpp"]),
+  deps = [
+    "//libs/core:core",
+    "//libs/http:http",
+    "//libs/vectorise:vectorise",
+    "//libs/meta:meta",
+    "//libs/shards:shards",
+    "//libs/logging:logging",
+    "//libs/json:json",
+    "//libs/beacon:beacon",
+    "//libs/address:address",
+    "//libs/entropy:entropy",
+    "//libs/settings:settings",
+    "//libs/variant:variant",
+    "//libs/network:network",
+    "//libs/ledger:ledger",
+    "//libs/storage:storage",
+    "//libs/moment:moment",
+    "//libs/vm:vm",
+    "//libs/math:math",
+    "//libs/version:version",
+    "//libs/miner:miner",
+    "//libs/dkg:dkg",
+    "//libs/telemetry:telemetry",
+    "//libs/muddle:muddle",
+    "//libs/bloom-filter:bloom-filter",
+    "//libs/crypto:crypto",
+    "//vendor:asio",
+    "//vendor:mcl",
+  ],
+)

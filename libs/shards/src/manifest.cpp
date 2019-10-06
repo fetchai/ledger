@@ -18,14 +18,14 @@
 
 #include "json/document.hpp"
 #include "json/exceptions.hpp"
-#include "ledger/shards/manifest.hpp"
+#include "shards/manifest.hpp"
 #include "logging/logging.hpp"
 #include "variant/variant_utils.hpp"
 
 #include <stdexcept>
 
 namespace fetch {
-namespace ledger {
+namespace shards {
 namespace {
 
 constexpr char const *LOGGING_NAME = "Manifest";
@@ -221,5 +221,5 @@ bool Manifest::ExtractSection(Variant const &obj, ServiceIdentifier const &servi
   return success;
 }
 
-}  // namespace ledger
+}  // namespace shards
 }  // namespace fetch

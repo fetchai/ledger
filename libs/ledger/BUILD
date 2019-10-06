@@ -1,0 +1,35 @@
+load("//bazel:fetchai_build_system.bzl", "fetchai_cc_library")
+
+
+fetchai_cc_library(
+  name = "ledger",
+  srcs = glob(['src/*.cpp', 'src/**/*.cpp']),
+  hdrs = glob(["include/*.hpp", "include/**/*.hpp"]),
+  deps = [
+    "//libs/core:core",
+    "//libs/logging:logging",
+    "//libs/crypto:crypto",
+    "//libs/vectorise:vectorise",
+    "//libs/address:address",
+    "//libs/json:json",
+    "//libs/beacon:beacon",
+    "//libs/bloom-filter:bloom-filter",
+    "//libs/network:network",
+    "//libs/muddle:muddle",
+    "//libs/entropy:entropy",
+    "//libs/variant:variant",
+    "//libs/storage:storage",
+    "//libs/dkg:dkg",
+    "//libs/math:math",
+    "//libs/vm:vm",
+    "//libs/vm-modules:vm-modules",
+    "//libs/http:http",
+    "//libs/meta:meta",
+    "//libs/telemetry:telemetry",
+    "//libs/moment:moment",
+    "//libs/shards:shards",
+    "//vendor:msgpack",
+    "//vendor:mcl",
+    "//vendor:asio",
+  ],
+)

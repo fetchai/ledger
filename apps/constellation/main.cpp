@@ -33,7 +33,7 @@
 #include "crypto/identity.hpp"
 #include "crypto/key_generator.hpp"
 #include "crypto/prover.hpp"
-#include "ledger/shards/manifest.hpp"
+#include "shards/manifest.hpp"
 #include "logging/logging.hpp"
 #include "network/adapters.hpp"
 #include "network/peer.hpp"

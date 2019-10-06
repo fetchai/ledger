@@ -10,6 +10,7 @@ fetchai_cc_library(
     "//libs/math:math",
     "//libs/vectorise:vectorise",
     "//libs/logging:logging",
+    "//vendor:mcl",
     "@openssl//:ssl",
     "@openssl//:crypto",
   ],
