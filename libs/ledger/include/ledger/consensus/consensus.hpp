@@ -92,7 +92,7 @@ private:
   CommitteePtr GetCommittee(Block const &previous);
   bool         ValidMinerForBlock(Block const &previous, Address const &address);
   uint64_t     GetBlockGenerationWeight(Block const &previous, Address const &address);
-  bool         ShouldGenerateBlock(Block const &previous, Identity const &identity);
+  bool         ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool         ShouldTriggerNewCommittee(Block const &block);
 };
 

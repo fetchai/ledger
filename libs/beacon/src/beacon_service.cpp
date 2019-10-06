@@ -314,8 +314,8 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
       }
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ", all_sigs_map.size(),
-                   " signatures. Round: ", index);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "After adding, we have ", all_sigs_map.size(),
+                    " signatures. Round: ", index);
   }  // Mutex unlocks here since verification can take some time
 
   MilliTimer const timer{"Verify threshold signature", 100};
@@ -391,7 +391,7 @@ bool BeaconService::AddSignature(SignatureShare share)
 
   if (ret == BeaconManager::AddResult::SIGNATURE_ALREADY_ADDED)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Accidental duplicate signature added!");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Accidental duplicate signature added!");
   }
 
   return true;

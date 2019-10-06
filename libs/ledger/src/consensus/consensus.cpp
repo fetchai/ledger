@@ -186,30 +186,66 @@ Consensus::WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabin
 }
 
 /**
- * Determine whether the miner (self) should generate a block according to consensus. The
- * requirements for this are that the miner is a member of qual, and that it is within its rights
- * according to the time slot protocol and its weighting.
+ * Determine whether the proposed block is valid according to consensus timing requirements.
+ * Requirements for this are that the miner is a member of qual, and that it is within its rights
+ * according to the time slot protocol and its weighting. So it tests:
+ *
+ * - block made by member of qual
+ * -
  */
-bool Consensus::ShouldGenerateBlock(Block const &previous, Identity const &identity)
+bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) const
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
-  auto                  beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
+  Identity const &identity = proposed.body.miner_id;
+
+  // Have to use the proposed block for this fn in case the block would be a new
+  // aeon beginning.
+  Block beginning_of_aeon = GetBeginningOfAeon(proposed, chain_);
+
   BlockEntropy::Cabinet qualified_cabinet = beginning_of_aeon.body.block_entropy.qualified;
   auto                  qualified_cabinet_weighted =
       QualWeightedByEntropy(qualified_cabinet, previous.body.block_entropy.EntropyAsU64());
 
   if (qualified_cabinet.find(identity.identifier()) == qualified_cabinet.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Miner attempted to mine but was not part of qual");
+    FETCH_LOG_INFO(LOGGING_NAME, "Miner ", identity.identifier().ToBase64(),
+                   " attempted to mine block ", previous.body.block_number + 1,
+                   " but was not part of qual:");
+
+    for (auto const &member : qualified_cabinet)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, member.ToBase64());
+    }
+
     return false;
   }
 
+  // TODO(HUT): check block has been signed correctly
+
   // Time slot protocol: within the block period, only the heaviest weighted miner may produce a
   // block, outside this interval, any miner may produce a block.
-  uint64_t last_block_timestamp_ms = previous.body.timestamp * 1000;
+  uint64_t last_block_timestamp_ms     = previous.body.timestamp * 1000;
+  uint64_t proposed_block_timestamp_ms = proposed.body.timestamp * 1000;
   uint64_t time_now_ms =
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) * 1000;
+
+  // Blocks must be ahead in time of the previous, and less than or equal to current time or they
+  // will be rejected.
+  if (proposed_block_timestamp_ms > time_now_ms)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Found block that appears to be minted ahead in time. This is invalid.");
+    return false;
+  }
+
+  if (proposed_block_timestamp_ms < last_block_timestamp_ms)
+  {
+    FETCH_LOG_WARN(
+        LOGGING_NAME,
+        "Found block that indicates it was minted before the previous. This is invalid.");
+    return false;
+  }
 
   assert(!qualified_cabinet_weighted.empty());
 
@@ -219,7 +255,7 @@ bool Consensus::ShouldGenerateBlock(Block const &previous, Identity const &ident
     return true;
   }
 
-  // Within the time slot, others can not produce
+  // Until the time slot has elapsed, others can not produce
   if (last_block_timestamp_ms + block_interval_ms_ < time_now_ms)
   {
     return true;
@@ -335,6 +371,16 @@ NextBlockPtr Consensus::GenerateNextBlock()
 
   ret = std::make_unique<Block>();
 
+  // Note, it is important to do this here so the block when passed to ValidBlockTiming
+  // is well formed
+  ret->body.previous_hash = current_block_.body.hash;
+  ret->body.block_number  = block_number;
+  ret->body.miner         = mining_address_;
+  ret->body.miner_id      = mining_identity_;
+  ret->body.timestamp =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+  ret->weight = GetBlockGenerationWeight(current_block_, mining_address_);
+
   // Try to get entropy for the block we are generating - is allowed to fail if we request too
   // early
   if (EntropyGeneratorInterface::Status::OK !=
@@ -344,15 +390,10 @@ NextBlockPtr Consensus::GenerateNextBlock()
   }
 
   // Note here the previous block's entropy determines miner selection
-  if (!ShouldGenerateBlock(current_block_, mining_identity_))
+  if (!ValidBlockTiming(current_block_, *ret))
   {
     return {};
   }
-
-  ret->body.previous_hash = current_block_.body.hash;
-  ret->body.block_number  = block_number;
-  ret->body.miner         = mining_address_;
-  ret->weight             = GetBlockGenerationWeight(current_block_, mining_address_);
 
   return ret;
 }
@@ -384,8 +425,6 @@ Status Consensus::ValidBlock(Block const &current) const
       return Status::NO;
     }
 
-    // Check that the members of qual in the block entropy were valid stakers
-
     // Check that the members of qual have all signed correctly
 
     // Check that the members of qual meet threshold requirements
@@ -400,13 +439,6 @@ Status Consensus::ValidBlock(Block const &current) const
     group_pub_key          = beginning_of_aeon.body.block_entropy.group_public_key;
   }
 
-  //// TODO(HUT): check block itself is signed by a member of qual
-  // if(qualified_cabinet.find(current.body.miner) == qualified_cabinet.end())
-  //{
-  //  FETCH_LOG_WARN(LOGGING_NAME, "Received block from address not qualified to mine!");
-  //  return Status::NO;
-  //}
-
   //// TODO(HUT): check signatures are an unbroken chain.
   //// Determine that the entropy is correct (a signature of the previous signature)
   // if(!dkg::BeaconManager::Verify(group_pub_key,
@@ -417,24 +449,13 @@ Status Consensus::ValidBlock(Block const &current) const
   //  return Status::NO;
   //}
 
-  // Perform the time checks.
-  auto current_time = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-
-  if (current.body.timestamp < block_preceeding.body.timestamp)
+  // Perform the time checks (also qual adherence). Note, this check should be last, as the checking
+  // logic relies on a well formed block.
+  if (!ValidBlockTiming(block_preceeding, current))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Found block with a timestamp before the previous block in time!");
+    FETCH_LOG_WARN(LOGGING_NAME, "Found block with bad timings!");
     return Status::NO;
   }
-
-  if (current.body.timestamp > current_time)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Found block with a timestamp ahead in time! Diff: ",
-                   current.body.timestamp - current_time);
-    return Status::UNKNOWN;
-  }
-
-  // TODO(HUT): perform time checks according to block producing intervals.
-  // DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
 
   return ret;
 }

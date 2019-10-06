@@ -127,7 +127,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &body)
   {
-    auto map = map_constructor(10);
+    auto map = map_constructor(11);
     map.Append(HASH, body.hash);
     map.Append(PREVIOUS_HASH, body.previous_hash);
     map.Append(MERKLE_HASH, body.merkle_hash);
