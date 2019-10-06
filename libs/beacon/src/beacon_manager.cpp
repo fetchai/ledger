@@ -673,7 +673,7 @@ void BeaconManager::SetMessage(MessagePayload next_message)
   current_message_ = std::move(next_message);
   signature_buffer_.clear();
   already_signed_.clear();
-  // TODO(jmw): Should group_signature_ be cleared here?
+  group_signature_.clear();
 }
 
 /**
@@ -686,6 +686,11 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   SignedMessage smsg;
   smsg.identity  = certificate_->identity();
   smsg.signature = signature;
+
+  if (AddSignaturePart(certificate_->identity(), signature) == AddResult::INVALID_SIGNATURE)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Computed bad signature share");
+  }
 
   return smsg;
 }
