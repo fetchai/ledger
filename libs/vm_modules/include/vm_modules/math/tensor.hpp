@@ -42,29 +42,30 @@ namespace math {
 class VMTensor : public fetch::vm::Object
 {
 public:
-  using DataType = fetch::vm_modules::math::DataType;
+  using DataType   = fetch::vm_modules::math::DataType;
+  using TensorType = typename fetch::math::Tensor<DataType>;
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<uint64_t> const &shape);
 
-  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::math::Tensor<DataType> tensor);
+  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, TensorType tensor);
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   static fetch::vm::Ptr<VMTensor> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-      fetch::vm::Ptr<fetch::vm::Array<fetch::math::Tensor<DataType>::SizeType>> const &shape);
+      fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape);
 
   static void Bind(fetch::vm::Module &module);
 
-  fetch::math::Tensor<DataType>::SizeVector shape() const;
+  TensorType::SizeVector shape() const;
 
-  fetch::math::Tensor<DataType>::SizeType size() const;
+  TensorType::SizeType size() const;
 
   ////////////////////////////////////
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
 
-  DataType AtOne(fetch::math::Tensor<DataType>::SizeType idx1) const;
+  DataType AtOne(TensorType::SizeType idx1) const;
 
   DataType AtTwo(uint64_t idx1, uint64_t idx2) const;
 
@@ -80,7 +81,7 @@ public:
 
   void SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType const &value);
 
-  void Copy(fetch::math::Tensor<DataType> const &other);
+  void Copy(TensorType const &other);
 
   void Fill(DataType const &value);
 
@@ -92,8 +93,7 @@ public:
 
   fetch::vm::Ptr<VMTensor> Squeeze();
 
-  bool Reshape(
-      fetch::vm::Ptr<fetch::vm::Array<fetch::math::Tensor<DataType>::SizeType>> const &new_shape);
+  bool Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
 
   //////////////////////////////
   /// PRINTING AND EXPORTING ///
@@ -103,16 +103,16 @@ public:
 
   fetch::vm::Ptr<fetch::vm::String> ToString() const;
 
-  fetch::math::Tensor<DataType> &GetTensor();
+  TensorType &GetTensor();
 
-  fetch::math::Tensor<DataType> const &GetConstTensor();
+  TensorType const &GetConstTensor();
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
 private:
-  fetch::math::Tensor<DataType> tensor_;
+  TensorType tensor_;
 };
 
 }  // namespace math
