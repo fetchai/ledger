@@ -29,7 +29,7 @@ using namespace fetch::byte_array;
 
 TEST(MclTests, BaseMcl)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
+  //fetch::crypto::mcl::details::MCLInitialiser();
   Generator generator;
   SetGenerator(generator);
   Signature P(-1, 1);
@@ -152,7 +152,7 @@ TEST(MclDkgTests, ComputeLhsRhs)
 
 TEST(MclDkgTests, Interpolation)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
+  //fetch::crypto::mcl::details::MCLInitialiser();
 
   // Construct polynomial of degree 2
   uint32_t                degree = 2;
@@ -203,7 +203,7 @@ TEST(MclDkgTests, Interpolation)
 
 TEST(MclDkgTests, Signing)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
+  //fetch::crypto::mcl::details::MCLInitialiser();
 
   uint32_t committee_size = 200;
   uint32_t threshold      = 101;

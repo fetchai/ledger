@@ -52,6 +52,10 @@ struct MCLInitialiser
     {
       bn::initPairing();
     }
+    else
+    {
+      FETCH_LOG_WARN("MCLInitialiser", "Multiple invocations of MCLInitialiser are unneccessary");
+    }
   }
   static std::atomic<bool> was_initialised;
 };
