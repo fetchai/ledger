@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 
 #include <cstddef>
@@ -32,8 +32,6 @@ class TransactionLayoutQueue
 {
 public:
   using TransactionLayout = ledger::TransactionLayout;
-  using Digest            = ledger::Digest;
-  using DigestSet         = ledger::DigestSet;
   using UnderlyingList    = std::list<TransactionLayout>;
   using Iterator          = UnderlyingList::iterator;
   using ConstIterator     = UnderlyingList::const_iterator;

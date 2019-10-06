@@ -20,6 +20,10 @@
 #include "beacon/dkg_output.hpp"
 #include "crypto/mcl_dkg.hpp"
 
+#include <map>
+#include <set>
+#include <vector>
+
 namespace fetch {
 namespace beacon {
 
@@ -30,35 +34,13 @@ public:
   using MuddleAddress     = byte_array::ConstByteArray;
   using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
 
-  TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold)
-    : cabinet_{std::move(cabinet)}
-  {
-    uint32_t index = 0;
-    for (auto const &mem : cabinet_)
-    {
-      cabinet_index_.insert({mem, index});
-      ++index;
-    }
-
-    bn::initPairing();
-    outputs_ =
-        crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold);
-  }
-
-  DkgOutput GetKeys(MuddleAddress const &address) const
-  {
-    if (cabinet_index_.find(address) != cabinet_index_.end())
-    {
-      return DkgOutput(outputs_[cabinet_index_.at(address)], cabinet_);
-    }
-
-    return DkgOutput();
-  }
+  TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold);
+  DkgOutput GetKeys(MuddleAddress const &address) const;
 
 private:
-  std::set<MuddleAddress>                     cabinet_{};
-  std::unordered_map<MuddleAddress, uint32_t> cabinet_index_{};
-  std::vector<DkgKeyInformation>              outputs_{};
+  std::set<MuddleAddress>           cabinet_{};
+  std::map<MuddleAddress, uint32_t> cabinet_index_{};
+  std::vector<DkgKeyInformation>    outputs_{};
 };
 }  // namespace beacon
 }  // namespace fetch

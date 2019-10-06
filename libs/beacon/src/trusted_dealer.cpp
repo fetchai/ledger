@@ -16,26 +16,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/bls.hpp"
+#include "beacon/trusted_dealer.hpp"
 
-#include <iostream>
+using fetch::beacon::TrustedDealer;
+using DkgOutput = TrustedDealer::DkgOutput;
 
-using namespace fetch::crypto;
-
-int main()
+TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold)
+  : cabinet_{std::move(cabinet)}
 {
-  bls::init();
-  std::cout << "Running BLS signature" << std::endl;
-  BLSSigner signer;
-  signer.GenerateKeys();
-
-  BLSVerifier verifier{signer.identity()};
-  auto        sig = signer.Sign("Hello world");
-
-  if (verifier.Verify("Hello world", sig))
+  uint32_t index = 0;
+  for (auto const &mem : cabinet_)
   {
-    std::cout << "Signature verified." << std::endl;
+    cabinet_index_.emplace(mem, index);
+    ++index;
   }
 
-  return 0;
+  fetch::crypto::mcl::details::MCLInitialiser();
+  outputs_ =
+      crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold);
+}
+
+DkgOutput TrustedDealer::GetKeys(MuddleAddress const &address) const
+{
+  auto it = cabinet_index_.find(address);
+
+  if (it != cabinet_index_.end())
+  {
+    auto &address_as_index = it->second;
+    return DkgOutput(outputs_[address_as_index], cabinet_);
+  }
+
+  return DkgOutput();
 }

@@ -38,9 +38,9 @@
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;
 using fetch::BitVector;
-using fetch::ledger::Digest;
-using fetch::ledger::DigestSet;
-using fetch::ledger::DigestMap;
+using fetch::Digest;
+using fetch::DigestSet;
+using fetch::DigestMap;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {

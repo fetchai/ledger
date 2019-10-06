@@ -287,7 +287,7 @@ private:
       break;
     }
     default:
-      throw std::runtime_error("no such initialisation mode for KMeans");
+      throw exceptions::InvalidMode("no such initialisation mode for KMeans");
     }
 
     // reset the kcount

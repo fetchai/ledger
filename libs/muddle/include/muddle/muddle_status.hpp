@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <string>
+
 namespace fetch {
 namespace variant {
 
@@ -25,7 +27,7 @@ class Variant;
 }  // namespace variant
 namespace muddle {
 
-variant::Variant GetStatusSummary();
+variant::Variant GetStatusSummary(std::string const &network);
 
 }  // namespace muddle
 }  // namespace fetch

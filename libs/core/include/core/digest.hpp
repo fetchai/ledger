@@ -17,26 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wpedantic"
-#pragma GCC diagnostic ignored "-Wmacro-redefined"
-#endif
+#include "core/byte_array/const_byte_array.hpp"
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#pragma clang diagnostic ignored "-Wpedantic"
-#pragma clang diagnostic ignored "-Wmacro-redefined"
-#endif
+#include <unordered_map>
+#include <unordered_set>
 
-#include "bls/bls.hpp"
+namespace fetch {
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+using Digest = byte_array::ConstByteArray;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+struct DigestHashAdapter
+{
+  std::size_t operator()(Digest const &hash) const noexcept
+  {
+    std::size_t value{0};
+
+    if (!hash.empty())
+    {
+      assert(hash.size() >= sizeof(std::size_t));
+      value = *reinterpret_cast<std::size_t const *>(hash.pointer());
+    }
+
+    return value;
+  }
+};
+
+using DigestSet = std::unordered_set<Digest, DigestHashAdapter>;
+
+template <typename Value>
+using DigestMap = std::unordered_map<Digest, Value, DigestHashAdapter>;
+
+}  // namespace fetch

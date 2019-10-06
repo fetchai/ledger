@@ -37,62 +37,29 @@ namespace beacon {
 
 using ledger::ServiceIdentifier;
 
-char const *ToString(BeaconSetupService::State state)
-{
-  char const *text = "unknown";
-
-  switch (state)
-  {
-  case BeaconSetupService::State::IDLE:
-    text = "Idle";
-    break;
-  case BeaconSetupService::State::RESET:
-    text = "+++ Reset +++";
-    break;
-  case BeaconSetupService::State::CONNECT_TO_ALL:
-    text = "Connect to the necessary cabinet members";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS:
-    text = "Waiting for ready connections";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_SHARES:
-    text = "Waiting for shares and coefficients";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_COMPLAINTS:
-    text = "Waiting for complaints";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS:
-    text = "Wait for complaint answers";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_QUAL_SHARES:
-    text = "Waiting for qual shares";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS:
-    text = "Waiting for qual complaints";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES:
-    text = "Waiting for reconstruction shares";
-    break;
-  case BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE:
-    text = "Compute the group public signature";
-    break;
-  case BeaconSetupService::State::DRY_RUN_SIGNING:
-    text = "Dry run of signing a seed value";
-    break;
-  case BeaconSetupService::State::BEACON_READY:
-    text = "Beacon ready";
-  }
-
-  return text;
-}
+char const *ToString(BeaconSetupService::State state);
 
 uint64_t GetTime()
 {
   return static_cast<uint64_t>(std::time(nullptr));
 }
 
-//#define CHANNEL_TYPE RBC
-#define CHANNEL_TYPE muddle::RBC
+// Convenience factory to set up the RBC/PBC
+BeaconSetupService::ReliableChannelPtr BeaconSetupService::ReliableBroadcastFactory()
+{
+  using ChannelType = muddle::RBC;
+  // using ChannelType = PunishmentBroadcastChannel; // The other option
+
+  auto call_on_msg = [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
+    DKGEnvelope   env;
+    DKGSerializer serializer{payload};
+    serializer >> env;
+    OnDkgMessage(from, env.Message());
+  };
+
+  return std::make_unique<ChannelType>(endpoint_, identity_.identifier(), call_on_msg, certificate_,
+                                       CHANNEL_RBC_BROADCAST, false);
+}
 
 BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
                                        ManifestCacheInterface &manifest_cache,
@@ -103,14 +70,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   , endpoint_{muddle_.GetEndpoint()}
   , shares_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
   , certificate_{std::move(certificate)}
-  , rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
-                          [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
-                            DKGEnvelope   env;
-                            DKGSerializer serializer{payload};
-                            serializer >> env;
-                            OnDkgMessage(from, env.Message());
-                          },
-                          certificate_, CHANNEL_RBC_BROADCAST, false)}
+  , rbc_{ReliableBroadcastFactory()}
   , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
   , beacon_dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_state_gauge", "State the DKG is in as integer in [0, 10]")}
@@ -1492,6 +1452,55 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
                    state_deadline_ - current_time, " seconds (deadline: ", state_deadline_, ")");
     timer_to_proceed_.Restart(std::chrono::seconds{state_deadline_ - current_time});
   }
+}
+
+char const *ToString(BeaconSetupService::State state)
+{
+  char const *text = "unknown";
+
+  switch (state)
+  {
+  case BeaconSetupService::State::IDLE:
+    text = "Idle";
+    break;
+  case BeaconSetupService::State::RESET:
+    text = "+++ Reset +++";
+    break;
+  case BeaconSetupService::State::CONNECT_TO_ALL:
+    text = "Connect to the necessary cabinet members";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS:
+    text = "Waiting for ready connections";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_SHARES:
+    text = "Waiting for shares and coefficients";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_COMPLAINTS:
+    text = "Waiting for complaints";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS:
+    text = "Wait for complaint answers";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_QUAL_SHARES:
+    text = "Waiting for qual shares";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS:
+    text = "Waiting for qual complaints";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES:
+    text = "Waiting for reconstruction shares";
+    break;
+  case BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE:
+    text = "Compute the group public signature";
+    break;
+  case BeaconSetupService::State::DRY_RUN_SIGNING:
+    text = "Dry run of signing a seed value";
+    break;
+  case BeaconSetupService::State::BEACON_READY:
+    text = "Beacon ready";
+  }
+
+  return text;
 }
 
 }  // namespace beacon

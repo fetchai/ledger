@@ -21,8 +21,6 @@
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
@@ -36,6 +34,7 @@
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/block_entropy.hpp"
+#include "beacon/create_new_certificate.hpp"
 #include "beacon/event_manager.hpp"
 
 #include <cstdint>
@@ -56,18 +55,6 @@ using ProverPtr      = std::shared_ptr<Prover>;
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
-
-ProverPtr CreateNewCertificate()
-{
-  using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::shared_ptr<Signer>;
-
-  SignerPtr certificate = std::make_shared<Signer>();
-
-  certificate->GenerateKeys();
-
-  return certificate;
-}
 
 struct DummyManifestCache : public ledger::ManifestCacheInterface
 {
@@ -121,9 +108,6 @@ int main()
   constexpr uint16_t number_of_nodes    = 16;
   constexpr uint16_t cabinet_size       = 4;
   constexpr uint16_t number_of_cabinets = number_of_nodes / cabinet_size;
-
-  // Initialising the BLS library
-  crypto::bls::Init();
 
   EventManager::SharedEventManager event_manager = EventManager::New();
 

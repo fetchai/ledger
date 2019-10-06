@@ -19,7 +19,6 @@
 
 #include "address/address.hpp"
 #include "core/mutex.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/work.hpp"

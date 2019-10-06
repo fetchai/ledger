@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "address/address.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "vm/analyser.hpp"
 #include "vm/common.hpp"

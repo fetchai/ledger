@@ -16,37 +16,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/bls_base.hpp"
+#include "beacon/block_entropy.hpp"
 
-#include <atomic>
-#include <stdexcept>
+using fetch::beacon::BlockEntropy;
 
-namespace fetch {
-namespace crypto {
-namespace bls {
-namespace {
+BlockEntropy::BlockEntropy() = default;
 
-std::atomic<bool> g_initialised{false};
-
-}  // namespace
-
-/**
- * Initialise the BLS library
- */
-void Init()
+BlockEntropy::Digest BlockEntropy::EntropyAsSHA256() const
 {
-  // determine if the library was previously initialised
-  bool const was_previously_initialised = g_initialised.exchange(true);
-
-  if (!was_previously_initialised)
-  {
-    if (blsInit(E_MCLBN_CURVE_FP254BNB, MCLBN_COMPILED_TIME_VAR) != 0)
-    {
-      throw std::runtime_error("unable to initalize BLS.");
-    }
-  }
+  return crypto::Hash<crypto::SHA256>(group_signature /*.getStr()*/);
 }
 
-}  // namespace bls
-}  // namespace crypto
-}  // namespace fetch
+// This will always be safe so long as the entropy function is properly sha256-ing
+uint64_t BlockEntropy::EntropyAsU64() const
+{
+  const Digest hash = EntropyAsSHA256();
+  return *reinterpret_cast<uint64_t const *>(hash.pointer());
+}
+
+void BlockEntropy::HashSelf()
+{
+  fetch::serializers::MsgPackSerializer serializer;
+  serializer << qualified;
+  serializer << group_public_key;
+  serializer << block_number;
+  digest = crypto::Hash<crypto::SHA256>(serializer.data());
+}
+
+bool BlockEntropy::IsAeonBeginning() const
+{
+  return !qualified.empty();
+}

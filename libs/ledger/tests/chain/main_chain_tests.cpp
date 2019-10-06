@@ -73,7 +73,7 @@ auto Generate(BlockGeneratorPtr &gen, BlockPtr genesis, std::size_t amount)
   return retVal;
 }
 
-std::ostream &Print(std::ostream &s, fetch::ledger::Digest const &hash)
+std::ostream &Print(std::ostream &s, fetch::Digest const &hash)
 {
   s << '#' << std::hex;
   if (hash.empty())

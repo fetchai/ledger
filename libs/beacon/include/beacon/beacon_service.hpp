@@ -31,7 +31,7 @@
 #include "beacon/event_manager.hpp"
 #include "beacon/events.hpp"
 #include "beacon/public_key_message.hpp"
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -89,7 +89,6 @@ public:
   using StateMachinePtr         = std::shared_ptr<StateMachine>;
   using SignatureShare          = AeonExecutionUnit::SignatureShare;
   using Serializer              = serializers::MsgPackSerializer;
-  using Digest                  = ledger::Digest;
   using SharedEventManager      = EventManager::SharedEventManager;
   using BeaconSetupService      = beacon::BeaconSetupService;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
