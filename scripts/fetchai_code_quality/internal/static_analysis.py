@@ -321,21 +321,6 @@ def static_analysis(project_root, build_root, fix, concurrency, commit, verbose)
             print("\n\nThere doesn't appear to be any relevant files to lint. 👍.\n\n")
             return
 
-        # # Now that we have cpp files, we can shim a 'shadow' build directory that will only lint certain files
-        # shadow_build_root = abspath(join(build_root, 'shadow_build_root'))
-        # os.makedirs(shadow_build_root, exist_ok=True)
-
-        # # Copy the compile_commands.json needed for the linter into this dir
-        # shutil.copy(
-        #     abspath(join(build_root, 'compile_commands.json')), shadow_build_root)
-
-        # # Now alter the compile_commands.json
-        # alter_compile_commands(
-        #     abspath(join(shadow_build_root, 'compile_commands.json')), files_to_lint)
-
-        # # Replace the root with the shadow root
-        # build_root = shadow_build_root
-
     # filter the compile commands
     filter_compile_commands(
         project_root,
