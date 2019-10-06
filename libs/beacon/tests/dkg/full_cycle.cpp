@@ -23,7 +23,7 @@
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/create_new_certificate.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
+#include "shards/manifest_cache_interface.hpp"
 
 #include <cstdint>
 #include <ctime>
@@ -46,14 +46,13 @@ using std::chrono::milliseconds;
 #include <iostream>
 
 using Prover         = fetch::crypto::Prover;
-using ProverPtr      = std::shared_ptr<Prover>;
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
 
-struct DummyManifesttCache : public ManifestCacheInterface
+struct DummyManifesttCache : public fetch::shards::ManifestCacheInterface
 {
-  bool QueryManifest(Address const & /*address*/, Manifest & /*manifest*/) override
+  bool QueryManifest(Address const & /*address*/, fetch::shards::Manifest & /*manifest*/) override
   {
     return false;
   }

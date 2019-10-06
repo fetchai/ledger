@@ -20,7 +20,7 @@
 #include "beacon/create_new_certificate.hpp"
 #include "beacon/dkg_output.hpp"
 #include "core/reactor.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
+#include "shards/manifest_cache_interface.hpp"
 #include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rbc.hpp"
@@ -34,13 +34,11 @@ using namespace fetch::crypto;
 using namespace fetch::muddle;
 using namespace fetch::dkg;
 using namespace fetch::beacon;
-using namespace fetch::ledger;
+using namespace fetch::shards;
 
 using Prover         = fetch::crypto::Prover;
-using ProverPtr      = std::shared_ptr<Prover>;
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
-using Address        = fetch::muddle::Packet::Address;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 using MuddleAddress  = ConstByteArray;
 

@@ -18,7 +18,7 @@
 
 #include "beacon/create_new_certificate.hpp"
 #include "core/reactor.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
+#include "shards/manifest_cache_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 
 #include "beacon/trusted_dealer.hpp"
@@ -40,13 +40,13 @@ using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
 using MuddleAddress = byte_array::ConstByteArray;
 
-class DummyManifestCache : public fetch::ledger::ManifestCacheInterface
+class DummyManifestCache : public fetch::shards::ManifestCacheInterface
 {
 public:
   DummyManifestCache()           = default;
   ~DummyManifestCache() override = default;
 
-  bool QueryManifest(Address const & /*address*/, fetch::ledger::Manifest & /*manifest*/) override
+  bool QueryManifest(Address const & /*address*/, fetch::shards::Manifest & /*manifest*/) override
   {
     return true;
   }

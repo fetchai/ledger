@@ -18,7 +18,7 @@
 
 #include "beacon/create_new_certificate.hpp"
 #include "core/reactor.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
+#include "shards/manifest_cache_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 
 #include "muddle/create_muddle_fake.hpp"
@@ -39,13 +39,13 @@ using namespace fetch::crypto;
 using namespace fetch::beacon;
 
 // Dummy manifest cache - does nothing but is required for beacon service constructor
-class ManifestCacheInterfaceDummy : public fetch::ledger::ManifestCacheInterface
+class ManifestCacheInterfaceDummy : public fetch::shards::ManifestCacheInterface
 {
 public:
   ManifestCacheInterfaceDummy()           = default;
   ~ManifestCacheInterfaceDummy() override = default;
 
-  bool QueryManifest(Address const & /*address*/, fetch::ledger::Manifest & /*manifest*/) override
+  bool QueryManifest(Address const & /*address*/, fetch::shards::Manifest & /*manifest*/) override
   {
     return true;
   }
