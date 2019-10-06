@@ -34,4 +34,3 @@ tags
 
 *.DS_Store
 *.ipynb_checkpoints/
-/*bazel*/
