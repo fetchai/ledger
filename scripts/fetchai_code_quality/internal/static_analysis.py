@@ -419,6 +419,9 @@ def static_analysis(project_root, build_root, fix, concurrency, commit, verbose)
                 total_files=len(files_diagnostics)))
 
         if fix:
+            if CLANG_TOOLCHAIN.clang_apply_replacements_path is None:
+                raise RuntimeError('Unable to detect `clang-apply-replacements`. This is required for applying fixes')
+
             print('Applying fixes...')
             subprocess.call([CLANG_TOOLCHAIN.clang_apply_replacements_path,
                              '-format', '-style=file', '.'], cwd=build_root)
