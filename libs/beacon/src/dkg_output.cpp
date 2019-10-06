@@ -28,7 +28,7 @@ DkgOutput::DkgOutput()
 }
 
 DkgOutput::DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares,
-                     const PrivateKey &secret_share, CabinetList qual_members)
+                     PrivateKey const &secret_share, CabinetList qual_members)
   : qual{std::move(qual_members)}
   , group_public_key{std::move(group_key)}
   , public_key_shares{std::move(key_shares)}
