@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     throw std::runtime_error("Args: graph_save_file data_file analogy_file");
   }
 
-  std::shared_ptr<Graph<TensorType>> g_ptr = LoadModel<Graph<TensorType>>(graph_file);
+  std::shared_ptr<Graph<TensorType>> g_ptr = fetch::ml::utilities::LoadGraph<Graph<TensorType>>(graph_file);
 
   std::cout << "Setting up training data...: " << std::endl;
 

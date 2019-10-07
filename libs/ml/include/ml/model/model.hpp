@@ -199,7 +199,7 @@ void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
 
     if (this->model_config_.save_graph)
     {
-      fetch::ml::utilities::SaveModel(*graph_ptr_, model_config_.graph_save_location + std::to_string(step));
+      fetch::ml::utilities::SaveGraph(*graph_ptr_, model_config_.graph_save_location + std::to_string(step));
     }
 
     // run optimiser for one epoch (or subset)

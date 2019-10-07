@@ -210,7 +210,7 @@ int main(int argc, char **argv)
                      analogies_test_file);
     }
 
-    fetch::ml::utilities::SaveModel(*g, save_file + std::to_string(i));
+    fetch::ml::utilities::SaveGraph(*g, save_file + std::to_string(i));
   }
 
   return 0;

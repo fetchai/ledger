@@ -37,7 +37,7 @@ namespace utilities {
  * @param save_location a string specifying save location
  */
 template <typename GraphType>
-void SaveModel(GraphType &g, std::string const &save_location)
+void SaveGraph(GraphType &g, std::string const &save_location)
 {
   using TensorType = typename GraphType::TensorType;
 
@@ -66,7 +66,7 @@ void SaveModel(GraphType &g, std::string const &save_location)
 }
 
 template <typename GraphType>
-std::shared_ptr<GraphType> LoadModel(std::string const &save_location)
+std::shared_ptr<GraphType> LoadGraph(std::string const &save_location)
 {
   using TensorType = typename GraphType::TensorType;
   std::cout << "Loading graph" << std::endl;
