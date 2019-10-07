@@ -324,8 +324,6 @@ TEST(beacon_manager, dkg_and_threshold_signing)
     manager->SetMessage(message);
     BeaconManager::SignedMessage signed_msg = manager->Sign();
     signed_msgs.push_back(signed_msg);
-    EXPECT_EQ(manager->AddSignaturePart(member_ptrs[index]->identity(), signed_msg.signature),
-              BeaconManager::AddResult::SUCCESS);
   }
 
   // Add signature from unknown sender

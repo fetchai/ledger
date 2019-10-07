@@ -78,7 +78,7 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
       sg_layer->GetEmbeddings(sg_layer);
 
   std::cout << std::endl;
-  PrintKNN(dl, embeddings->GetWeights(), word0, K);
+  fetch::ml::utilities::PrintKNN(dl, embeddings->GetWeights(), word0, K);
   std::cout << std::endl;
   fetch::ml::utilities::PrintWordAnalogy(dl, embeddings->GetWeights(), word1, word2, word3, K);
 
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
                                        tp.max_word_count);
   // set up dataloader
   /// DATA LOADING ///
-  data_loader.BuildVocabAndData({ReadFile(train_file)}, tp.min_count);
+  data_loader.BuildVocabAndData({utilities::ReadFile(train_file)}, tp.min_count);
 
   /////////////////////////////////////////
   /// SET UP PROPER TRAINING PARAMETERS ///

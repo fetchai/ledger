@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 
   // set up dataloader
   /// DATA LOADING ///
-  data_loader.BuildVocabAndData({ReadFile(dataloader_file)}, min_count, false);
+  data_loader.BuildVocabAndData({utilities::ReadFile(dataloader_file)}, min_count, false);
   std::string skip_gram_name = "SkipGram";
 
   // first get hold of the skipgram layer by searching the return name in the graph
@@ -82,7 +82,6 @@ int main(int argc, char **argv)
   DataType score = fetch::ml::utilities::TestWithAnalogies<TensorType>(
       data_loader, embeddings->GetWeights(), analogy_file);
   std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
-  PrintKNN(data_loader, embeddings->GetWeights(), "three", 20);
-  fetch::ml::utilities::PrintWordAnalogy(data_loader, embeddings->GetWeights(), "king", "queen",
-                                         "father", 20);
+  fetch::ml::utilities::PrintKNN(data_loader, embeddings->GetWeights(), "three", 20);
+  fetch::ml::utilities::PrintWordAnalogy(data_loader, embeddings->GetWeights(), "king", "queen", "father", 20);
 }
