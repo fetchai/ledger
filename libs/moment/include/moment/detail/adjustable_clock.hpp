@@ -34,6 +34,11 @@ public:
     return clock_.Now() + offset_;
   }
 
+  Duration TimeSinceEpoch() const override
+  {
+    return clock_.TimeSinceEpoch();
+  }
+
   void AddOffset(Duration const &duration) override
   {
     offset_ += duration;

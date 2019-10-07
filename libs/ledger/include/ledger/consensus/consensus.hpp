@@ -42,6 +42,7 @@ public:
   using BeaconServicePtr  = std::shared_ptr<fetch::beacon::BeaconService>;
   using CabinetMemberList = beacon::BeaconService::CabinetMemberList;
   using Identity          = crypto::Identity;
+  using WeightedQual      = std::vector<Identity>;
   using MainChain         = ledger::MainChain;
 
   Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
@@ -91,7 +92,7 @@ private:
   CommitteePtr GetCommittee(Block const &previous);
   bool         ValidMinerForBlock(Block const &previous, Address const &address);
   uint64_t     GetBlockGenerationWeight(Block const &previous, Address const &address);
-  bool         ShouldGenerateBlock(Block const &previous, Address const &address);
+  bool         ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool         ShouldTriggerNewCommittee(Block const &block);
 };
 
