@@ -1,28 +1,11 @@
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
-
+#include "oef-core/oef-functions/InitialSslHandshakeTaskFactory.hpp"
+#include "oef-base/proto_comms/TSendProtoTask.hpp"
 #include "oef-core/agents/Agent.hpp"
 #include "oef-core/comms/EndpointSSL.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
-#include "oef-core/oef-functions/InitialSslHandshakeTaskFactory.hpp"
 #include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 #include "oef-core/oef-functions/OefHeartbeatTask.hpp"
-#include "oef-core/tasks-base/TSendProtoTask.hpp"
+
 #include "oef-messages/agent.hpp"
 
 #include <fstream>
@@ -57,7 +40,8 @@ void InitialSslHandshakeTaskFactory::processMessage(ConstCharArrayBuffer &data)
     FETCH_LOG_INFO(LOGGING_NAME, "Agent ", public_key_,
                    " ssl authenticated and white listed ( or white list disabled = ",
                    white_list_enabled_, "), moving to OefFunctions...");
-    auto senderTask = std::make_shared<TSendProtoTask<fetch::oef::pb::Server_Connected>>(
+    auto senderTask = std::make_shared<
+        TSendProtoTask<OefAgentEndpoint, std::shared_ptr<fetch::oef::pb::Server_Connected>>>(
         connected_pb, getEndpoint());
     senderTask->submit();
 
@@ -88,7 +72,8 @@ void InitialSslHandshakeTaskFactory::processMessage(ConstCharArrayBuffer &data)
     auto connected_pb = std::make_shared<fetch::oef::pb::Server_Connected>();
     connected_pb->set_status(false);
 
-    auto senderTask = std::make_shared<TSendProtoTask<fetch::oef::pb::Server_Connected>>(
+    auto senderTask = std::make_shared<
+        TSendProtoTask<OefAgentEndpoint, std::shared_ptr<fetch::oef::pb::Server_Connected>>>(
         connected_pb, getEndpoint());
     senderTask->submit();
   }

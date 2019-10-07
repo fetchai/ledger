@@ -1,28 +1,11 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
 #include "logging/logging.hpp"
+#include "oef-base/utils/OefUri.hpp"
 #include "oef-core/agents/Agent.hpp"
 #include "oef-core/agents/Agents.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-core/tasks-base/IMtCoreTask.hpp"
-#include "oef-core/tasks/utils.hpp"
 
 class OefEndpoint;
 
@@ -67,8 +50,8 @@ public:
 
   void create_message(int32_t message_id, OEFURI::URI uri, const std::string &public_key)
   {
-    message_pb_ = std::make_shared<Message>();
-    int32_t did = pb_->dialogue_id();
+    message_pb_  = std::make_shared<Message>();
+    uint32_t did = pb_->dialogue_id();
     message_pb_->set_answer_id(message_id);
     message_pb_->set_source_uri(pb_->source_uri());
     message_pb_->set_target_uri(pb_->target_uri());
@@ -77,7 +60,7 @@ public:
       message_pb_->set_target_uri(uri.toString());
     }
     auto content = message_pb_->mutable_content();
-    content->set_dialogue_id(static_cast<int32_t>(did));
+    content->set_dialogue_id(did);
     content->set_origin(public_key);
     if (pb_->has_content())
     {

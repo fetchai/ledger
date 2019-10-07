@@ -1,33 +1,18 @@
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
-
+#include "oef-core/conversations/SearchQueryTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
+#include "oef-base/utils/OefUri.hpp"
+#include "oef-base/utils/Uri.hpp"
 #include "oef-core/conversations/SearchQueryTask.hpp"
-#include "oef-core/tasks/utils.hpp"
-#include "oef-messages/search_response.hpp"
+#include "oef-messages/dap_interface.hpp"
 
 static Counter tasks_created("mt-core.search.query.tasks_created");
 static Counter tasks_resolved("mt-core.search.query.tasks_resolved");
 static Counter tasks_replied("mt-core.search.query.tasks_replied");
 static Counter tasks_unreplied("mt-core.search.query.tasks_unreplied");
 static Counter tasks_succeeded("mt-core.search.query.tasks_succeeded");
+static Counter tasks_errored("mt-core.search.query.tasks_errored");
 
 SearchQueryTask::EntryPoint searchQueryTaskEntryPoints[] = {
     &SearchQueryTask::createConv,
@@ -73,65 +58,81 @@ SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
     return SearchQueryTask::StateResult(0, DEFER);
   }
 
-  auto response =
-      std::static_pointer_cast<fetch::oef::pb::SearchResponse>(conversation->getReply(0));
+  auto response = std::static_pointer_cast<IdentifierSequence>(conversation->getReply(0));
 
   auto answer = std::make_shared<OUT_PROTO>();
-  answer->set_answer_id(static_cast<int32_t>(msg_id_));
+  answer->set_answer_id(msg_id_);
 
-  if (ttl_ == 1)
+  if (!response->status().success())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Got search response: ", response->DebugString(),
-                   ", size: ", response->result_size());
-    auto answer_agents = answer->mutable_agents();
-    if (response->result_size() < 1)
+    tasks_errored++;
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Error response from search, code: ", response->status().errorcode(),
+                   ", narrative:");
+    for (const auto &n : response->status().narrative())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Got empty search result! Sending: ", answer->DebugString(),
-                     " to agent ", agent_uri_);
+      FETCH_LOG_WARN(LOGGING_NAME, "  ", n);
     }
-    else
+  }
+  else
+  {
+    std::unordered_map<std::string, std::vector<Identifier *>> results{};
+    for (int i = 0; i < response->identifiers_size(); ++i)
     {
-      for (auto &item : response->result())
+      auto *id = response->mutable_identifiers(i);
+      results[id->core()].push_back(id);
+    }
+
+    if (ttl_ == 1)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Got search response: ", response->DebugString(),
+                     ", size: ", response->identifiers_size());
+
+      auto answer_agents = answer->mutable_agents();
+
+      for (auto &item : results)
       {
-        auto agts = item.agents();
-        for (auto &a : agts)
+        for (auto &a : item.second)
         {
           OEFURI::URI uri;
-          uri.parseAgent(a.key());
+          uri.parseAgent(a->agent());
           answer_agents->add_agents(uri.agentPartAsString());
         }
       }
       FETCH_LOG_INFO(LOGGING_NAME, "Sending ", answer_agents->agents().size(), "agents to ",
                      agent_uri_);
     }
-  }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Got wide search response: ", response->DebugString());
-    auto agents_wide = answer->mutable_agents_wide();
-    if (response->result_size() < 1)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Got empty search result! Sending: ", answer->DebugString(),
-                     " to agent ", agent_uri_);
-    }
     else
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Got wide search response: ", response->DebugString());
+      auto agents_wide = answer->mutable_agents_wide();
+
       int agents_nbr = 0;
-      for (auto &item : response->result())
+      for (auto &item : results)
       {
         auto *aw_item = agents_wide->add_result();
-        aw_item->set_key(item.key());
-        aw_item->set_ip(item.ip());
-        aw_item->set_port(item.port());
-        aw_item->set_info(item.info());
-        aw_item->set_distance(item.distance());
-        auto agts = item.agents();
-        agents_nbr += item.agents().size();
-        for (auto &a : agts)
+
+        if (!item.second.empty())
+        {
+          auto *pt = item.second[0];
+
+          aw_item->set_key(pt->core());
+
+          if (!pt->uri().empty())
+          {
+            Uri uri(pt->uri());
+            aw_item->set_ip(uri.host);
+            aw_item->set_port(uri.port);
+          }
+          aw_item->set_distance(pt->distance());
+        }
+
+        agents_nbr += item.second.size();
+        for (auto &a : item.second)
         {
           auto *aw = aw_item->add_agents();
-          aw->set_key(a.key());
-          aw->set_score(a.score());
+          aw->set_key(a->agent());
+          aw->set_score(a->score());
         }
       }
       tasks_succeeded++;

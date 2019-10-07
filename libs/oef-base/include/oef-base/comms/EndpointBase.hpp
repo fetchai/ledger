@@ -1,32 +1,15 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
-#include "oef-base/comms/Core.hpp"
-#include "oef-base/comms/IMessageReader.hpp"
-#include "oef-base/comms/IMessageWriter.hpp"
 #include "oef-base/comms/ISocketOwner.hpp"
 #include "oef-base/comms/RingBuffer.hpp"
 #include "oef-base/threading/Notification.hpp"
 #include "oef-base/threading/Waitable.hpp"
 
+#include "logging/logging.hpp"
+#include "oef-base/comms/Core.hpp"
+#include "oef-base/comms/IMessageReader.hpp"
+#include "oef-base/comms/IMessageWriter.hpp"
 #include <iostream>
 #include <list>
 
@@ -46,7 +29,7 @@ public:
   using ErrorNotification      = std::function<void(std::error_code const &ec)>;
   using EofNotification        = std::function<void()>;
   using StartNotification      = std::function<void()>;
-  using ProtoErrorNotification = std::function<void(std::string const &message)>;
+  using ProtoErrorNotification = std::function<void(const std::string &message)>;
 
   using StateType  = std::atomic<int>;
   using StateTypeP = std::shared_ptr<StateType>;
@@ -61,10 +44,10 @@ public:
   static constexpr std::size_t BUFFER_SIZE_LIMIT = 50;
   static constexpr char const *LOGGING_NAME      = "EndpointBase";
 
-  EndpointBase(EndpointBase const &other) = delete;
-  EndpointBase &operator=(EndpointBase const &other)  = delete;
-  bool          operator==(EndpointBase const &other) = delete;
-  bool          operator<(EndpointBase const &other)  = delete;
+  EndpointBase(const EndpointBase &other) = delete;
+  EndpointBase &operator=(const EndpointBase &other)  = delete;
+  bool          operator==(const EndpointBase &other) = delete;
+  bool          operator<(const EndpointBase &other)  = delete;
 
   EndpointBase(std::size_t sendBufferSize, std::size_t readBufferSize, ConfigMap configMap);
   virtual ~EndpointBase();
@@ -108,13 +91,43 @@ public:
     return *state == RUNNING_ENDPOINT;
   }
 
-  std::size_t getIdent() const
+  std::size_t getIdent(void) const
   {
     return ident;
   }
 
+  typedef enum
+  {
+    ON_ERROR      = 1,
+    ON_EOF        = 2,
+    ON_PROTOERROR = 4,
+  } CallbackSet;
+
+  void doCallbacks(CallbackSet callbacks, std::string msg = "",
+                   std::error_code ec = std::error_code())
+  {
+    if ((callbacks & ON_ERROR) && onError)
+    {
+      auto foo = onError;
+      onError  = 0;
+      foo(ec);
+    }
+    if ((callbacks & ON_ERROR) && onProtoError)
+    {
+      auto foo     = onProtoError;
+      onProtoError = 0;
+      foo(msg);
+    }
+    if ((callbacks & ON_EOF) && onEof)
+    {
+      auto foo = onEof;
+      onEof    = 0;
+      foo();
+    }
+  }
+
 protected:
-  virtual void async_read(std::size_t const &bytes_needed) = 0;
+  virtual void async_read(const std::size_t &bytes_needed) = 0;
   virtual void async_write()                               = 0;
 
   virtual bool is_eof(std::error_code const &ec) const = 0;
@@ -141,11 +154,9 @@ protected:
   virtual void proto_error(const std::string &msg);
   virtual void eof();
 
-  virtual void complete_sending(StateTypeP state, std::error_code const &ec,
-                                const std::size_t &bytes);
+  virtual void complete_sending(StateTypeP state, std::error_code const &ec, const size_t &bytes);
   virtual void create_messages();
-  virtual void complete_reading(StateTypeP state, std::error_code const &ec,
-                                const std::size_t &bytes);
+  virtual void complete_reading(StateTypeP state, std::error_code const &ec, const size_t &bytes);
 
 private:
   std::vector<Notification::Notification> waiting;

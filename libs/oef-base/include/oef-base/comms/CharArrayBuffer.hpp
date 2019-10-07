@@ -1,21 +1,4 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
 #include "network/fetch_asio.hpp"
 
@@ -31,7 +14,7 @@ public:
   int                                      current;
   int                                      size;
 
-  CharArrayBuffer(std::vector<asio::mutable_buffer> const &thebuffers)
+  CharArrayBuffer(const std::vector<asio::mutable_buffer> &thebuffers)
     : buffers(thebuffers)
   {
     current = 0;
@@ -42,7 +25,7 @@ public:
     }
   }
 
-  CharArrayBuffer &write(uint32_t const &i)
+  CharArrayBuffer &write(const uint32_t &i)
   {
     union
     {
@@ -60,7 +43,7 @@ public:
     return *this;
   }
 
-  CharArrayBuffer &write_little_endian(uint32_t const &i)
+  CharArrayBuffer &write_little_endian(const uint32_t &i)
   {
     union
     {
@@ -96,7 +79,7 @@ public:
     return *this;
   }
 
-  CharArrayBuffer &write(int32_t const &i)
+  CharArrayBuffer &write(const int32_t &i)
   {
     union
     {
@@ -132,7 +115,7 @@ public:
     return *this;
   }
 
-  CharArrayBuffer &write(std::string const &s)
+  CharArrayBuffer &write(const std::string &s)
   {
     for (uint32_t i = 0; i < s.size(); i++)  // Using a "<=" ensures we also write a zero terminator
     {
@@ -360,8 +343,8 @@ public:
   }
 
 private:
-  // TODO: copy ctor and assignment not implemented;
-  // TODO: copying not allowed - should be marked delete
-  CharArrayBuffer(CharArrayBuffer const &);
-  CharArrayBuffer &operator=(CharArrayBuffer const &);
+  // copy ctor and assignment not implemented;
+  // copying not allowed
+  CharArrayBuffer(const CharArrayBuffer &);
+  CharArrayBuffer &operator=(const CharArrayBuffer &);
 };

@@ -1,26 +1,10 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
 #include "logging/logging.hpp"
 #include "oef-base/threading/Notification.hpp"
 #include "oef-base/threading/Task.hpp"
 #include "oef-base/threading/Waitable.hpp"
+#include "oef-base/threading/WorkloadState.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -45,18 +29,8 @@ public:
   using Mutex = std::mutex;
   using Lock  = std::lock_guard<Mutex>;
 
-  using WorkloadProcessed = enum {
-    COMPLETE,
-    NOT_COMPLETE,
-    NOT_STARTED,
-  };
-
-  using WorkloadState = enum { START, RESUME };
-
-  TNonBlockingWorkerTask()
-  {}
-  virtual ~TNonBlockingWorkerTask()
-  {}
+  TNonBlockingWorkerTask()          = default;
+  virtual ~TNonBlockingWorkerTask() = default;
 
   Notification::NotificationBuilder post(WorkloadP workload)
   {
@@ -107,26 +81,28 @@ public:
       while (it != current.end())
       {
         FETCH_LOG_INFO(LOGGING_NAME, "working...");
-        state       = not_started.find(*it) != not_started.end() ? START : RESUME;
+        state = not_started.find(*it) != not_started.end() ? WorkloadState::START
+                                                           : WorkloadState::RESUME;
         auto result = process(it->first, state);
-        FETCH_LOG_INFO(LOGGING_NAME, "Reply was ", exitStateNames[result]);
+        FETCH_LOG_INFO(LOGGING_NAME, "Reply was ",
+                       workloadProcessedNames[static_cast<int>(result)]);
 
         switch (result)
         {
-        case COMPLETE:
+        case WorkloadProcessed::COMPLETE:
         {
           it->second->wake();
           not_started.erase(*it);
           it = current.erase(it);
           break;
         }
-        case NOT_COMPLETE:
+        case WorkloadProcessed::NOT_COMPLETE:
         {
           not_started.erase(*it);
           ++it;
           break;
         }
-        case NOT_STARTED:
+        case WorkloadProcessed::NOT_STARTED:
         {
           ++it;
           break;
@@ -134,7 +110,8 @@ public:
         }
       }
 
-      if (queue.empty() || current.size() >= N)
+      // if there is no more work or we have more then N work on flight and we started all the work
+      if ((queue.empty() || current.size() >= N) && not_started.empty())
       {
         return DEFER;
       }

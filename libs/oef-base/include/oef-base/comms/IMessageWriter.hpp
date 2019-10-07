@@ -1,21 +1,4 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
 #include "network/fetch_asio.hpp"
 #include <list>
@@ -36,24 +19,24 @@ public:
   using consumed_needed_pair = std::pair<std::size_t, std::size_t>;
   using TXQ                  = std::list<TXType>;
 
-  /// @{
-  IMessageWriter()                            = default;
-  IMessageWriter(IMessageWriter const &other) = delete;
-  virtual ~IMessageWriter()                   = default;
-  /// @}
-
-  /// @{
-  IMessageWriter &operator=(IMessageWriter const &other)  = delete;
-  bool            operator==(IMessageWriter const &other) = delete;
-  bool            operator<(IMessageWriter const &other)  = delete;
-  /// @}
+  IMessageWriter()
+  {}
+  virtual ~IMessageWriter()
+  {}
 
   virtual consumed_needed_pair initial()
   {
     return consumed_needed_pair(0, 0);
   }
 
-  virtual consumed_needed_pair checkForSpace(mutable_buffers const &space, TXQ &txq) = 0;
+  virtual consumed_needed_pair checkForSpace(const mutable_buffers &space, TXQ &txq) = 0;
+
+protected:
+private:
+  IMessageWriter(const IMessageWriter &other) = delete;
+  IMessageWriter &operator=(const IMessageWriter &other)  = delete;
+  bool            operator==(const IMessageWriter &other) = delete;
+  bool            operator<(const IMessageWriter &other)  = delete;
 };
 
 // namespace std { template<> void swap(IMessageWriter& lhs, IMessageWriter& rhs) { lhs.swap(rhs); }

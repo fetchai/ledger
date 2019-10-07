@@ -1,24 +1,7 @@
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
-
 #include "oef-search/comms/OefSearchEndpoint.hpp"
 
 #include "oef-base/comms/Endianness.hpp"
+#include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/proto_comms/ProtoMessageReader.hpp"
@@ -26,7 +9,6 @@
 #include "oef-base/threading/Task.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/utils/Uri.hpp"
-#include "oef-search/comms/SearchTaskFactory.hpp"
 
 static Gauge count("mt-search.network.OefSearchEndpoint");
 
@@ -69,17 +51,18 @@ void OefSearchEndpoint::setup()
 
   auto myGroupId = getIdent();
 
-  endpoint->setOnCompleteHandler([myGroupId, myself_wp](bool /*success*/, unsigned long /*id*/,
-                                                        Uri uri, ConstCharArrayBuffer buffers) {
+  endpoint->setOnCompleteHandler([myGroupId, myself_wp](bool success, unsigned long id, Uri uri,
+                                                        ConstCharArrayBuffer buffers) {
     if (auto myself_sp = myself_wp.lock())
     {
       Task::setThreadGroupId(myGroupId);
-      myself_sp->factory->current_uri_ = uri;
-      myself_sp->factory->processMessage(buffers);
+      FETCH_LOG_INFO(LOGGING_NAME, "GOT DATA with path: ", uri.path, ", id: ", id);
+      uri.port = id;
+      myself_sp->factory->processMessageWithUri(uri, buffers);
     }
   });
 
-  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const & /*ec*/) {
+  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const &ec) {
     if (auto myself_sp = myself_wp.lock())
     {
       // myself_sp -> factory -> endpointClosed();
@@ -97,7 +80,7 @@ void OefSearchEndpoint::setup()
     }
   });
 
-  endpoint->setOnProtoErrorHandler([myGroupId, myself_wp](const std::string & /*message*/) {
+  endpoint->setOnProtoErrorHandler([myGroupId, myself_wp](const std::string &message) {
     if (auto myself_sp = myself_wp.lock())
     {
       // myself_sp -> factory -> endpointClosed();
@@ -107,7 +90,7 @@ void OefSearchEndpoint::setup()
   });
 }
 
-void OefSearchEndpoint::setFactory(std::shared_ptr<SearchTaskFactory> new_factory)
+void OefSearchEndpoint::setFactory(std::shared_ptr<IOefTaskFactory<OefSearchEndpoint>> new_factory)
 {
   if (factory)
   {

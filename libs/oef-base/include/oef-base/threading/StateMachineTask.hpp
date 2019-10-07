@@ -1,28 +1,12 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
+#include "ExitState.hpp"
 #include "logging/logging.hpp"
 #include "oef-base/threading/ExitState.hpp"
 #include "oef-base/threading/Task.hpp"
 
 template <class SUBCLASS>
-class StateMachineTask : public Task
+class StateMachineTask : virtual public Task
 {
 public:
   using Result     = std::pair<int, ExitState>;
@@ -31,11 +15,20 @@ public:
   StateMachineTask(SUBCLASS *ptr, const EntryPoint *const entrypoints)
     : Task()
     , entrypoints(entrypoints)
+    , runnable{true}
   {
-    this->ptr   = ptr;
-    this->state = entrypoints[0];
-    runnable    = true;
+    this->ptr = ptr;
+    if (entrypoints != nullptr)
+    {
+      this->state = entrypoints[0];
+    }
   }
+  StateMachineTask()
+    : entrypoints{nullptr}
+    , runnable{false}
+    , ptr{nullptr}
+  {}
+
   virtual ~StateMachineTask()
   {}
 
@@ -47,39 +40,58 @@ public:
     return runnable;
   }
 
+  void SetSubClass(SUBCLASS *ptr)
+  {
+    this->ptr = ptr;
+    runnable  = true;
+  }
+
   virtual ExitState run(void)
   {
-    while (true)
+    try
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Call state function");
-      Result result = (ptr->*state)();
 
-      if (result.first)
+      while (true)
       {
-        state = entrypoints[result.first];
-      }
-      else
-      {
-        state = 0;
-      }
-      FETCH_LOG_INFO(LOGGING_NAME, "Reply was ", result.first, ":", exitStateNames[result.second]);
-      switch (result.second)
-      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Call state function");
+        Result result = (ptr->*state)();
 
-      case COMPLETE:
-        if (0 == state)
+        if (result.first)
         {
-          return COMPLETE;
+          state = entrypoints[result.first];
         }
-        break;
+        else
+        {
+          state = 0;
+        }
+        FETCH_LOG_INFO(LOGGING_NAME, "Reply was ", result.first, ":",
+                       exitStateNames[result.second]);
 
-      case DEFER:
-        return DEFER;
+        switch (result.second)
+        {
 
-      case CANCELLED:
-      case ERRORED:
-        return result.second;
+        case COMPLETE:
+          if (0 == state)
+          {
+            return COMPLETE;
+          }
+          break;
+        case RERUN:
+          return RERUN;
+
+        case DEFER:
+          return DEFER;
+
+        case CANCELLED:
+        case ERRORED:
+          return result.second;
+        }
       }
+    }
+    catch (std::exception &e)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Exception in calling state function: ", e.what());
+      return ERRORED;
     }
   }
 

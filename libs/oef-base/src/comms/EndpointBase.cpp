@@ -1,25 +1,6 @@
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
-
-#include "logging/logging.hpp"
 #include "oef-base/comms/EndpointBase.hpp"
-
-// TODO: Replace beast #include "boost/beast/websocket/error.hpp"
+#include "boost/beast/websocket/error.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/utils/Uri.hpp"
 #include <cstdlib>
@@ -35,13 +16,15 @@ bool EndpointBase<TXType>::connect(const Uri &uri, Core &core)
   auto                           results = resolver.resolve(query);
   std::error_code                ec;
 
+  FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " outbound connection to ", uri.host, ":", uri.port);
+
   for (auto &endpoint : results)
   {
     socket().connect(endpoint);
     if (ec)
     {
-      // An error occurred.
-      std::cout << ec.value() << std::endl;
+      FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " outbound connection to ", uri.host, ":",
+                     uri.port, " FAILED ", ec.value());
     }
     else
     {
@@ -49,7 +32,6 @@ bool EndpointBase<TXType>::connect(const Uri &uri, Core &core)
       return true;
     }
   }
-  ident = endpoint_ident++;
   return false;
 }
 
@@ -80,12 +62,13 @@ void EndpointBase<TXType>::run_sending()
     Lock lock(mutex);
     if (asio_sending || *state != RUNNING_ENDPOINT)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "early exit 1 sending=", asio_sending, " state=", *state);
+      FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " early exit 1 sending=", asio_sending,
+                     " state=", *state);
       return;
     }
     if (sendBuffer.getDataAvailable() == 0)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "create messages");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "id=", ident, " create messages");
       create_messages();
     }
     if (sendBuffer.getDataAvailable() == 0)
@@ -94,7 +77,7 @@ void EndpointBase<TXType>::run_sending()
     }
     asio_sending = true;
   }
-  FETCH_LOG_DEBUG(LOGGING_NAME, "ok data available");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "id=", ident, " ok data available");
 
   async_write();
 }
@@ -122,7 +105,7 @@ void EndpointBase<TXType>::run_reading()
     read_needed_local = read_needed;
     if (read_needed_local > readBuffer.getFreeSpace())
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "********** READ BUFFER FULL!");
+      FETCH_LOG_ERROR(LOGGING_NAME, "id=", ident, " ********** READ BUFFER FULL!");
       read_needed_local = readBuffer.getFreeSpace();
     }
     read_needed  = 0;
@@ -140,11 +123,36 @@ void EndpointBase<TXType>::run_reading()
 template <typename TXType>
 void EndpointBase<TXType>::close()
 {
-  Lock lock(mutex);
-  *state |= CLOSED_ENDPOINT;
-  socket().close();
-}
+  if (*state & CLOSED_ENDPOINT)
+  {
+    return;
+  }
+  EofNotification local_handler_copy;
+  {
+    Lock lock(mutex);
+    *state |= EOF_ENDPOINT;
+    *state |= CLOSED_ENDPOINT;
+    FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " MARKED CLOSED AT close() ");
+    socket().close();
 
+    local_handler_copy = onEof;
+    onEof              = 0;
+    onError            = 0;
+    onProtoError       = 0;
+  }
+
+  if (local_handler_copy)
+  {
+    try
+    {
+      Lock lock(mutex);
+      local_handler_copy();
+    }
+    catch (...)
+    {
+    }  // Ignore exceptions.
+  }
+}
 template <typename TXType>
 void EndpointBase<TXType>::eof()
 {
@@ -159,6 +167,7 @@ void EndpointBase<TXType>::eof()
     *state |= EOF_ENDPOINT;
     *state |= CLOSED_ENDPOINT;
     socket().close();
+    FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " MARKED EOF AT eof() ");
 
     local_handler_copy = onEof;
     onEof              = 0;
@@ -168,8 +177,10 @@ void EndpointBase<TXType>::eof()
 
   if (local_handler_copy)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " doing onEof AT oef() ");
     try
     {
+      Lock lock(mutex);
       local_handler_copy();
     }
     catch (...)
@@ -191,6 +202,7 @@ void EndpointBase<TXType>::error(std::error_code const &ec)
   {
     Lock lock(mutex);
     *state |= ERRORED_ENDPOINT;
+    FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " MARKED ERROR AT error(ec) ", ec.message());
     *state |= CLOSED_ENDPOINT;
     socket().close();
 
@@ -202,8 +214,10 @@ void EndpointBase<TXType>::error(std::error_code const &ec)
 
   if (local_handler_copy)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " doing onError AT error(ec) ", ec.message());
     try
     {
+      Lock lock(mutex);
       local_handler_copy(ec);
     }
     catch (...)
@@ -215,8 +229,6 @@ void EndpointBase<TXType>::error(std::error_code const &ec)
 template <typename TXType>
 void EndpointBase<TXType>::proto_error(const std::string &msg)
 {
-  // std::cout << "proto error: " << msg << std::endl;
-
   if (*state & ERRORED_ENDPOINT)
   {
     return;
@@ -228,6 +240,7 @@ void EndpointBase<TXType>::proto_error(const std::string &msg)
     Lock lock(mutex);
     *state |= ERRORED_ENDPOINT;
     *state |= CLOSED_ENDPOINT;
+    FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " MARKED ERROR AT proto_error($) ", msg);
     socket().close();
 
     local_handler_copy = onProtoError;
@@ -238,8 +251,10 @@ void EndpointBase<TXType>::proto_error(const std::string &msg)
 
   if (local_handler_copy)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " doing onProtoError AT proto_error($) ", msg);
     try
     {
+      Lock lock(mutex);
       local_handler_copy(msg);
     }
     catch (...)
@@ -252,7 +267,7 @@ template <typename TXType>
 void EndpointBase<TXType>::go()
 {
   remote_id = socket().remote_endpoint().address().to_string();
-  FETCH_LOG_INFO(LOGGING_NAME, "remote_id detected as: ", remote_id);
+  FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " remote_id detected as: ", remote_id);
   asio::socket_base::linger option(false, 0);
   socket().set_option(option);
 
@@ -263,17 +278,17 @@ void EndpointBase<TXType>::go()
     try
     {
       myStart();
+      *state |= RUNNING_ENDPOINT;
     }
     catch (...)
     {
       Lock lock(mutex);
       *state |= ERRORED_ENDPOINT;
+      FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " MARKED ERROR AT go()");
       *state |= CLOSED_ENDPOINT;
       socket().close();
     }
   }
-
-  *state |= RUNNING_ENDPOINT;
 
   {
     Lock lock(mutex);
@@ -285,19 +300,21 @@ void EndpointBase<TXType>::go()
 
 template <typename TXType>
 void EndpointBase<TXType>::complete_sending(StateTypeP state, std::error_code const &ec,
-                                            const std::size_t &bytes)
+                                            const size_t &bytes)
 {
   try
   {
-    if (*state > RUNNING_ENDPOINT)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "complete_sending on already dead socket", ec);
-      return;
+      if (*state > RUNNING_ENDPOINT)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " complete_sending on already dead socket", ec);
+        return;
+      }
     }
 
     if (is_eof(ec) || ec == asio::error::operation_aborted)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "complete_sending EOF:  ", ec);
+      FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " MARKED EOF AT complete_sending ", ec.message());
       *state |= CLOSED_ENDPOINT;
       eof();
       return;  // We are done with this thing!
@@ -305,19 +322,17 @@ void EndpointBase<TXType>::complete_sending(StateTypeP state, std::error_code co
 
     if (ec)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "complete_sending ERR:  ", ec);
+      FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " complete_sending ERR:  ", ec);
       error(ec);
       return;  // We are done with this thing!
     }
 
-    // std::cout << "complete_sending OK:  " << bytes << std::endl;
     sendBuffer.markDataUsed(bytes);
     create_messages();
     {
       Lock lock(mutex);
       asio_sending = false;
     }
-    // std::cout << "complete_sending: kick" << std::endl;
     run_sending();
   }
 
@@ -338,64 +353,60 @@ void EndpointBase<TXType>::create_messages()
 
 template <typename TXType>
 void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code const &ec,
-                                            const std::size_t &bytes)
+                                            const size_t &bytes)
 {
   try
   {
-    if (*state > RUNNING_ENDPOINT)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "complete_reading on already dead socket", ec);
-      return;
+      Lock lock(mutex);
+      if (*state > RUNNING_ENDPOINT)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " complete_reading on already dead socket", ec);
+        return;
+      }
     }
-
-    // std::cout << reader.get() << ":  complete_reading:  " << ec << ", "<< bytes << std::endl;
 
     if (is_eof(ec) || ec == asio::error::operation_aborted)
     {
-      // std::cout << "complete_reading: eof" << std::endl;
-      *state |= CLOSED_ENDPOINT;
+      FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " MARKED EOF AT complete_reading ", ec.message());
       eof();
       return;  // We are done with this thing!
     }
 
     if (ec)
     {
-      // std::cout << "complete_reading: error: " << ec.message() << " "<< ec.value() << std::endl;
-      *state |= ERRORED_ENDPOINT;
+      FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " MARKED ERROR AT complete_reading() ",
+                     ec.message());
       error(ec);
       close();
       return;  // We are done with this thing!
     }
 
-    // std::cout << reader.get() << ":complete_reading: 1 " << std::endl;
     readBuffer.markSpaceUsed(bytes);
 
-    // std::cout << reader.get() << ":complete_reading: 2" << std::endl;
     IMessageReader::consumed_needed_pair consumed_needed;
 
-    // std::cout << reader.get() << ":complete_reading: 3" << std::endl;
     try
     {
-      // std::cout << reader.get() << ":complete_reading: 4" << std::endl;
-      // std::cout << reader.get() << ": @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ " <<
-      // reader.get() << std::endl;
+      if (*state > RUNNING_ENDPOINT)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " complete_reading on already dead socket", ec);
+        return;
+      }
+      Lock lock(mutex);
       consumed_needed = reader->checkForMessage(readBuffer.getDataBuffers());
-      // std::cout << "     DONE." << std::endl;
     }
     catch (std::exception &ex)
     {
-      // std::cout << "complete_reading: 5" << std::endl;
       proto_error(ex.what());
       return;
     }
     catch (...)
     {
-      // std::cout << "complete_reading: 6" << std::endl;
       proto_error("unknown protocol error");
       return;
     }
 
-    // std::cout << "complete_reading: 7" << std::endl;
     auto consumed = consumed_needed.first;
     auto needed   = consumed_needed.second;
 

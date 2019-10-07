@@ -1,21 +1,4 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
 #include <memory>
 #include <utility>
@@ -23,11 +6,11 @@
 #include "logging/logging.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
+#include "oef-base/proto_comms/TSendProtoTask.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 #include "oef-base/utils/Uri.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-core/conversations/SearchConversationTypes.hpp"
-#include "oef-core/tasks-base/TSendProtoTask.hpp"
 #include "oef-messages/agent.hpp"
 
 template <typename IN_PROTO, typename OUT_PROTO, typename REQUEST_PROTO, typename IMPL_CLASS>
@@ -68,7 +51,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Start");
     FETCH_LOG_INFO(LOGGING_NAME, "***PATH: ", path_);
     conversation =
-        outbounds->startConversation(Uri("outbound://search/" + path_), make_request_proto());
+        outbounds->startConversation(Uri("outbound://search:0/" + path_), make_request_proto());
 
     if (conversation->makeNotification()
             .Then([this_wp]() {
@@ -100,8 +83,9 @@ public:
     sendReply = [logging_name, log_message](std::shared_ptr<OUT_PROTO>        response,
                                             std::shared_ptr<OefAgentEndpoint> endpoint) {
       FETCH_LOG_INFO(logging_name, log_message, response->DebugString());
-      auto reply_sender =
-          std::make_shared<TSendProtoTask<fetch::oef::pb::Server_AgentMessage>>(response, endpoint);
+      auto reply_sender = std::make_shared<
+          TSendProtoTask<OefAgentEndpoint, std::shared_ptr<fetch::oef::pb::Server_AgentMessage>>>(
+          response, endpoint);
       reply_sender->submit();
     };
   }

@@ -1,22 +1,6 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
+#include "logging/logging.hpp"
 #include <atomic>
 #include <condition_variable>
 #include <functional>
@@ -95,8 +79,9 @@ class NotificationBuilder
 public:
   using Callback = NotificationImplementation::Callback;
 
-  explicit NotificationBuilder(Notification notification)
+  explicit NotificationBuilder(Notification notification, bool execute_now = false)
     : notification_(notification)
+    , execute_now_{execute_now}
   {}
 
   explicit NotificationBuilder()
@@ -104,18 +89,29 @@ public:
 
   ~NotificationBuilder()
   {
-    if (notification_)
+    try
     {
-      notification_->SetSuccessCallback(callback_success_);
-      notification_->SetFailureCallback(callback_failure_);
-      notification_->SetCompletionCallback(callback_complete_);
-
-      // in the rare (probably failure case) when the notification has been resolved during before
-      // the responses have been set
-      if (!notification_->IsWaiting())
+      if (notification_)
       {
-        notification_->DispatchCallbacks();
+        notification_->SetSuccessCallback(callback_success_);
+        notification_->SetFailureCallback(callback_failure_);
+        notification_->SetCompletionCallback(callback_complete_);
+
+        // in the rare (probably failure case) when the notification has been resolved during
+        // before the responses have been set
+        if (execute_now_)
+        {
+          notification_->Notify();
+        }
+
+        if (!notification_->IsWaiting())
+        {
+          notification_->DispatchCallbacks();
+        }
       }
+    }
+    catch (...)
+    {
     }
   }
 
@@ -157,6 +153,7 @@ public:
 
 private:
   Notification notification_;
+  bool         execute_now_;
 
   Callback callback_success_;
   Callback callback_failure_;

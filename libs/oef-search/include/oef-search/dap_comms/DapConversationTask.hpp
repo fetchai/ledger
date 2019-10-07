@@ -1,21 +1,4 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
 #include <memory>
 #include <utility>
@@ -24,37 +7,42 @@
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
+#include "oef-base/threading/ExitState.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 #include "oef-base/utils/Uri.hpp"
-#include "oef-search/comms/OefSearchEndpoint.hpp"
 
 template <typename IN_PROTO, typename OUT_PROTO>
-class DapConversationTask : public StateMachineTask<DapConversationTask<IN_PROTO, OUT_PROTO>>,
-                            std::enable_shared_from_this<DapConversationTask<IN_PROTO, OUT_PROTO>>,
-                            Waitable
+class DapConversationTask
+  : virtual public StateMachineTask<DapConversationTask<IN_PROTO, OUT_PROTO>>,
+    virtual public Waitable
 {
 public:
   using StateResult    = typename StateMachineTask<DapConversationTask>::Result;
   using EntryPoint     = typename StateMachineTask<DapConversationTask>::EntryPoint;
   using MessageHandler = std::function<void(std::shared_ptr<OUT_PROTO>)>;
-  using ErrorHandler   = std::function<void(const std::string &, const std::string &)>;
+  using ErrorHandler =
+      std::function<void(const std::string &, const std::string &, const std::string &)>;
+  using SelfType = DapConversationTask<IN_PROTO, OUT_PROTO>;
 
   static constexpr char const *LOGGING_NAME = "DapConversationTask";
 
   DapConversationTask(std::string dap_name, std::string path, uint32_t msg_id,
                       std::shared_ptr<IN_PROTO>              initiator,
                       std::shared_ptr<OutboundConversations> outbounds,
-                      std::shared_ptr<OefSearchEndpoint>     endpoint)
-    : StateMachineTask<DapConversationTask>(
-          this, {&DapConversationTask::createConv, &DapConversationTask::handleResponse})
+                      std::string                            protocol = "dap")
+    : StateMachineTask<SelfType>(this, nullptr)
     , initiator(std::move(initiator))
     , outbounds(std::move(outbounds))
-    , endpoint(std::move(endpoint))
     , dap_name_{std::move(dap_name)}
     , path_{std::move(path)}
     , msg_id_(msg_id)
+    , protocol_{std::move(protocol)}
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Task created.");
+    entryPoint.push_back(&SelfType::createConv);
+    entryPoint.push_back(&SelfType::handleResponse);
+    this->entrypoints = entryPoint.data();
+    this->state       = this->entrypoints[0];
+    FETCH_LOG_INFO(LOGGING_NAME, "DAP Conv task created: ", dap_name_);
     task_created =
         std::make_shared<Counter>("mt-search.dap." + dap_name_ + "." + path_ + ".created");
     task_errored =
@@ -63,6 +51,16 @@ public:
         std::make_shared<Counter>("mt-search.dap." + dap_name_ + "." + path_ + ".succeeded");
 
     (*task_created)++;
+
+    errorHandler = [](const std::string &dap_name, const std::string &path,
+                      const std::string &msg) {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to call ", path, " @ dap ", dap_name, ": ", msg);
+    };
+
+    if (!protocol_.empty())
+    {
+      protocol_ += "://";
+    }
   }
 
   virtual ~DapConversationTask()
@@ -72,28 +70,47 @@ public:
 
   StateResult createConv(void)
   {
-    auto                this_sp = this->shared_from_this();
-    std::weak_ptr<Task> this_wp = this_sp;
-    FETCH_LOG_INFO(LOGGING_NAME, "Start: DapName: ", dap_name_);
-    FETCH_LOG_INFO(LOGGING_NAME, "***PATH: ", path_);
-    conversation =
-        outbounds->startConversation(Uri("outbound://" + dap_name_ + "/" + path_), initiator);
-
-    if (conversation->makeNotification()
-            .Then([this_wp]() {
-              auto sp = this_wp.lock();
-              if (sp)
-              {
-                sp->makeRunnable();
-              }
-            })
-            .Waiting())
+    try
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Sleeping");
-      return DapConversationTask::StateResult(1, DEFER);
+      FETCH_LOG_INFO(LOGGING_NAME, "Start: ", protocol_, dap_name_, "/", path_);
+      Uri uri(protocol_ + dap_name_ + "/" + path_);
+      uri.path     = uri.path.substr(1);
+      conversation = outbounds->startConversation(uri, initiator);
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Conversation created");
+
+      auto                this_sp = this->template shared_from_base<DapConversationTask>();
+      std::weak_ptr<Task> this_wp = this_sp;
+
+      if (conversation->makeNotification()
+              .Then([this_wp]() {
+                auto sp = this_wp.lock();
+                if (sp)
+                {
+                  sp->makeRunnable();
+                }
+              })
+              .Waiting())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Sleeping");
+        return DapConversationTask::StateResult(1, DEFER);
+      }
+      FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping");
+      return DapConversationTask::StateResult(1, COMPLETE);
     }
-    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping");
-    return DapConversationTask::StateResult(1, COMPLETE);
+    catch (std::exception &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to create conversation with: ", dap_name_,
+                     ", message: ", e.what());
+      (*task_errored)++;
+      if (errorHandler)
+      {
+        errorHandler(dap_name_, path_,
+                     std::string{"Exception in creating conversation: "} + e.what());
+      }
+      wake();
+      return DapConversationTask::StateResult(0, ERRORED);
+    }
   }
 
   virtual StateResult handleResponse(void)
@@ -106,7 +123,7 @@ public:
       (*task_errored)++;
       if (errorHandler)
       {
-        errorHandler(dap_name_, path_);
+        errorHandler(dap_name_, path_, "No response");
       }
       wake();
       return DapConversationTask::StateResult(0, ERRORED);
@@ -119,7 +136,7 @@ public:
       (*task_errored)++;
       if (errorHandler)
       {
-        errorHandler(dap_name_, path_);
+        errorHandler(dap_name_, path_, "nullptr as reply");
       }
       wake();
       return DapConversationTask::StateResult(0, ERRORED);
@@ -136,7 +153,7 @@ public:
       (*task_errored)++;
       if (errorHandler)
       {
-        errorHandler(dap_name_, path_);
+        errorHandler(dap_name_, path_, "no messageHandler");
       }
       wake();
       return DapConversationTask::StateResult(0, ERRORED);
@@ -147,6 +164,16 @@ public:
     return DapConversationTask::StateResult(0, COMPLETE);
   }
 
+  virtual void SetMessageHandler(MessageHandler mH)
+  {
+    messageHandler = std::move(mH);
+  }
+
+  virtual void SetErrorHandler(ErrorHandler eH)
+  {
+    errorHandler = std::move(eH);
+  }
+
   MessageHandler messageHandler;
   ErrorHandler   errorHandler;
 
@@ -154,14 +181,16 @@ protected:
   std::shared_ptr<IN_PROTO>              initiator;
   std::shared_ptr<OutboundConversations> outbounds;
   std::shared_ptr<OutboundConversation>  conversation;
-  std::shared_ptr<OefSearchEndpoint>     endpoint;
   std::string                            dap_name_;
   std::string                            path_;
   uint32_t                               msg_id_;
+  std::string                            protocol_;
 
   std::shared_ptr<Counter> task_created;
   std::shared_ptr<Counter> task_errored;
   std::shared_ptr<Counter> task_succeeded;
+
+  std::vector<EntryPoint> entryPoint;
 
 private:
   DapConversationTask(const DapConversationTask &other) = delete;  // { copy(other); }

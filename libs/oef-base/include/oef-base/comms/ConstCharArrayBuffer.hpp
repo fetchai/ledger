@@ -1,21 +1,4 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
 #include "network/fetch_asio.hpp"
 
@@ -31,7 +14,7 @@ public:
   int                                    current;
   int                                    size;
 
-  ConstCharArrayBuffer(std::vector<asio::const_buffer> const &thebuffers)
+  ConstCharArrayBuffer(const std::vector<asio::const_buffer> &thebuffers)
     : buffers(thebuffers)
   {
     current = 0;
@@ -68,7 +51,6 @@ public:
       uint8_t  c[4];
     } buffer;
 
-    // TODO: Use platform ToLittleEndian
     buffer.c[3] = (uint8_t)uflow();
     buffer.c[2] = (uint8_t)uflow();
     buffer.c[1] = (uint8_t)uflow();
@@ -250,25 +232,26 @@ public:
     return traits_type::to_int_type(get_char_at(current));
   }
 
-  ConstCharArrayBuffer(ConstCharArrayBuffer const &other)
+  ConstCharArrayBuffer(const ConstCharArrayBuffer &other)
     : buffers(other.buffers)
     , current(other.current)
     , size(other.size)
   {}
 
-  ConstCharArrayBuffer(ConstCharArrayBuffer const &other, std::size_t sizelimit)
+  ConstCharArrayBuffer(const ConstCharArrayBuffer &other, std::size_t sizelimit)
     : buffers(other.buffers)
     , current(other.current)
-    , size(static_cast<int>(sizelimit))
+    , size(sizelimit)
   {}
 
   std::size_t tell() const
   {
-    return static_cast<std::size_t>(current);
+    return current;
   }
 
   std::string copyOut()
   {
+    std::cout << "copyOut" << current << "," << size << std::endl;
     std::string r = "";
     while (current < size)
     {

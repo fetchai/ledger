@@ -1,23 +1,5 @@
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
-
-#include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/proto_comms/ProtoMessageReader.hpp"
+#include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 
 ProtoMessageReader::consumed_needed_pair ProtoMessageReader::initial()
 {
@@ -47,8 +29,7 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(con
 
     if (chars.remainingData() < head_size)
     {
-      needed =
-          static_cast<std::size_t>(head_size) - static_cast<std::size_t>(chars.remainingData());
+      needed = head_size - chars.remainingData();
       break;
     }
 
@@ -94,10 +75,9 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(con
       break;
     }
 
-    if (static_cast<std::size_t>(chars.remainingData()) < static_cast<std::size_t>(body_size))
+    if (chars.remainingData() < body_size)
     {
-      needed =
-          static_cast<std::size_t>(body_size) - static_cast<std::size_t>(chars.remainingData());
+      needed = body_size - chars.remainingData();
       break;
     }
 
@@ -107,14 +87,13 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(con
     if (onComplete)
     {
       // std::cout << "MESSAGE = " << head_size << "+" << body_size << " bytes" << std::endl;
-      onComplete(ConstCharArrayBuffer(
-          chars, static_cast<std::size_t>(chars.current) + static_cast<std::size_t>(body_size)));
+      onComplete(ConstCharArrayBuffer(chars, chars.current + body_size));
     }
     else
     {
       FETCH_LOG_WARN(LOGGING_NAME, "No onComplete handler set.");
     }
-    chars.advance(static_cast<int32_t>(body_size));
+    chars.advance(body_size);
   }
   return consumed_needed_pair(consumed, needed);
 }

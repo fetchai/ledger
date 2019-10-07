@@ -21,15 +21,15 @@
 #include <string>
 #include <vector>
 
-#include "logging/logging.hpp"
+#i #include "logging/logging.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/threading/Threadpool.hpp"
 
-#include "mt-search/comms/src/cpp/SearchTaskFactory.hpp"
 #include "oef-messages/search_config.hpp"
+#include "oef-search/comms/SearchTaskFactory.hpp"
 
 class Core;
 class OefSearchEndpoint;

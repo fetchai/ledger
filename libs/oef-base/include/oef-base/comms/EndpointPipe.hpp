@@ -1,21 +1,4 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
 #include "oef-base/comms/ISocketOwner.hpp"
 #include "oef-base/threading/Notification.hpp"
@@ -32,19 +15,15 @@ public:
     : endpoint(std::move(endpoint))
   {}
 
-  EndpointPipe(EndpointPipe const &other) = delete;
-  EndpointPipe &operator=(EndpointPipe const &other)  = delete;
-  bool          operator==(EndpointPipe const &other) = delete;
-  bool          operator<(EndpointPipe const &other)  = delete;
-
-  virtual ~EndpointPipe() = default;
+  virtual ~EndpointPipe()
+  {}
 
   virtual Notification::NotificationBuilder send(SendType s)
   {
     return endpoint->send(s);
   }
 
-  virtual bool connect(Uri const &uri, Core &core)
+  virtual bool connect(const Uri &uri, Core &core)
   {
     return endpoint->connect(uri, core);
   }
@@ -79,12 +58,12 @@ public:
     endpoint->wake();
   }
 
-  std::size_t getIdent() const
+  std::size_t getIdent(void) const
   {
     return endpoint->getIdent();
   }
 
-  virtual const std::string &getRemoteId() const
+  virtual const std::string &getRemoteId(void) const
   {
     return endpoint->getRemoteId();
   }
@@ -96,4 +75,10 @@ public:
 
 protected:
   std::shared_ptr<EndpointType> endpoint;
+
+private:
+  EndpointPipe(const EndpointPipe &other) = delete;
+  EndpointPipe &operator=(const EndpointPipe &other)  = delete;
+  bool          operator==(const EndpointPipe &other) = delete;
+  bool          operator<(const EndpointPipe &other)  = delete;
 };

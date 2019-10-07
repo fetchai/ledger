@@ -6,8 +6,8 @@ import "dap_interface.proto";
 import "query.proto";
 
 message Remove {
-    bytes key = 1;
-    bytes agent_key = 2;
+    string key = 1;
+    string agent_key = 2;
     bool all = 3;
     fetch.oef.pb.Query.DataModel model = 4;
     repeated fetch.oef.pb.Query.KeyValue values = 5;

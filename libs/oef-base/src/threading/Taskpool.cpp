@@ -1,26 +1,8 @@
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
-
-#include "logging/logging.hpp"
 #include "oef-base/threading/Taskpool.hpp"
-
+#include "logging/logging.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
+#include "oef-base/threading/Task.hpp"
 
 static std::weak_ptr<Taskpool> gDefaultTaskPool;
 
@@ -111,6 +93,7 @@ void Taskpool::run(std::size_t thread_idx)
 
     {
       Lock lock(mutex);
+      mytask->SetTaskState(Task::TaskState::NOT_PENDING);
       running_tasks[thread_idx] = mytask;
     }
 
@@ -152,17 +135,38 @@ void Taskpool::run(std::size_t thread_idx)
     }
     break;
     case ERRORED:
+    {
       Counter("mt-core.tasks.run.errored")++;
+      Lock lock(mutex);
+      mytask->SetTaskState(Task::TaskState::DONE);
       mytask.reset();
       break;
+    }
     case CANCELLED:
+    {
       Counter("mt-core.tasks.run.cancelled")++;
+      Lock lock(mutex);
+      mytask->SetTaskState(Task::TaskState::DONE);
       mytask.reset();
       break;
+    }
     case COMPLETE:
+    {
       Counter("mt-core.tasks.run.completed")++;
+      Lock lock(mutex);
+      mytask->SetTaskState(Task::TaskState::DONE);
       mytask.reset();
       break;
+    }
+    case RERUN:
+    {
+      Lock lock(mutex);
+      Counter("mt-core.tasks.run.rerun")++;
+      mytask->SetTaskState(Task::TaskState::PENDING);
+      pending_tasks.push_back(mytask);
+      work_available.notify_one();
+      break;
+    }
     }
   }
 }
@@ -170,6 +174,7 @@ void Taskpool::run(std::size_t thread_idx)
 void Taskpool::remove(TaskP task)
 {
   Lock lock(mutex);
+  task->SetTaskState(Task::TaskState::DONE);
   bool did = false;
   {
     auto iter = pending_tasks.begin();
@@ -211,6 +216,7 @@ void Taskpool::makeRunnable(TaskP task)
   {
     Counter("mt-core.tasks.made-runnable")++;
     auto task = *iter;
+    task->SetTaskState(Task::TaskState::PENDING);
     suspended_tasks.erase(iter);
     pending_tasks.push_front(task);
     work_available.notify_one();
@@ -233,6 +239,7 @@ void Taskpool::stop(void)
 
   for (auto const &t : pending_tasks)
   {
+    t->SetTaskState(Task::TaskState::DONE);
     t->cancel();
   }
   pending_tasks.clear();
@@ -254,6 +261,13 @@ void Taskpool::stop(void)
 void Taskpool::suspend(TaskP task)
 {
   Counter("mt-core.tasks.suspended")++;
+  Lock lock(mutex);
+  if (task->GetTaskState() == Task::TaskState::PENDING)
+  {
+    // somebody else moved task to pending list while we were waiting for the mutex
+    return;
+  }
+  task->SetTaskState(Task::TaskState::SUSPENDED);
   task->pool = shared_from_this();
   suspended_tasks.insert(task);
 }
@@ -264,6 +278,7 @@ void Taskpool::submit(TaskP task)
   {
     Lock lock(mutex);
     Counter("mt-core.tasks.moved-to-runnable")++;
+    task->SetTaskState(Task::TaskState::PENDING);
     pending_tasks.push_back(task);
     work_available.notify_one();
   }
@@ -281,6 +296,7 @@ void Taskpool::after(TaskP task, const Milliseconds &delay)
   ft.task = task;
   ft.due  = Clock::now() + delay;
 
+  task->SetTaskState(Task::TaskState::NOT_PENDING);
   future_tasks.push(ft);
   Counter("mt-core.tasks.futured")++;
 }
@@ -331,6 +347,7 @@ void Taskpool::cancelTaskGroup(std::size_t group_id)
       {
         if ((*iter)->group_id == group_id)
         {
+          (*iter)->SetTaskState(Task::TaskState::DONE);
           tasks.push_back(*iter);
           iter = pending_tasks.erase(iter);
         }
@@ -347,6 +364,7 @@ void Taskpool::cancelTaskGroup(std::size_t group_id)
       {
         if ((*iter)->group_id == group_id)
         {
+          (*iter)->SetTaskState(Task::TaskState::DONE);
           tasks.push_back(*iter);
           iter = suspended_tasks.erase(iter);
         }

@@ -1,24 +1,6 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
 #include "network/fetch_asio.hpp"
-
 #include <iostream>
 #include <vector>
 
@@ -29,20 +11,22 @@ public:
   using Lock           = std::lock_guard<Mutex>;
   using buffer         = asio::const_buffer;
   using mutable_buffer = asio::mutable_buffer;
-  using byte           = std::uint8_t;
-  using SignalReady    = std::function<void()>;
+
+  using byte = std::uint8_t;
+
+  using SignalReady = std::function<void()>;
 
 protected:
   void ignored()
   {}
 
 public:
-  RingBuffer(RingBuffer const &other) = delete;
-  RingBuffer &operator=(RingBuffer const &other)  = delete;
-  bool        operator==(RingBuffer const &other) = delete;
-  bool        operator<(RingBuffer const &other)  = delete;
+  RingBuffer(const RingBuffer &other) = delete;
+  RingBuffer &operator=(const RingBuffer &other)  = delete;
+  bool        operator==(const RingBuffer &other) = delete;
+  bool        operator<(const RingBuffer &other)  = delete;
 
-  RingBuffer(std::size_t size)
+  RingBuffer(size_t size)
   {
     this->size = size;
     store      = (byte *)malloc(size);
@@ -90,8 +74,8 @@ public:
     std::vector<mutable_buffer> r;
     if (lockless_getFreeSpace() > 0)
     {
-      std::size_t buffer1size = std::min(writep + lockless_getFreeSpace(), size) - writep;
-      std::size_t buffer2size = lockless_getFreeSpace() - buffer1size;
+      size_t buffer1size = std::min(writep + lockless_getFreeSpace(), size) - writep;
+      size_t buffer2size = lockless_getFreeSpace() - buffer1size;
       r.push_back(mutable_buffer(addressOf(writep), buffer1size));
       if (buffer2size)
       {
@@ -107,8 +91,8 @@ public:
     std::vector<buffer> r;
     if (lockless_getDataAvailable() < size)
     {
-      std::size_t buffer1size = std::min(readp + lockless_getDataAvailable(), size) - readp;
-      std::size_t buffer2size = lockless_getDataAvailable() - buffer1size;
+      size_t buffer1size = std::min(readp + lockless_getDataAvailable(), size) - readp;
+      size_t buffer2size = lockless_getDataAvailable() - buffer1size;
       r.push_back(buffer(addressOf(readp), buffer1size));
       if (buffer2size)
       {
@@ -118,7 +102,7 @@ public:
     return r;
   }
 
-  void markSpaceUsed(std::size_t amount)
+  void markSpaceUsed(size_t amount)
   {
     std::size_t prevAvail = 0;
     {
@@ -134,7 +118,7 @@ public:
     }
   }
 
-  void markDataUsed(std::size_t amount)
+  void markDataUsed(size_t amount)
   {
     std::size_t prevSpace = 0;
     {
@@ -150,21 +134,21 @@ public:
     }
   }
 
-  const void *addressOf(std::size_t index) const
+  const void *addressOf(size_t index) const
   {
     return (byte *)store + index;
   }
-  void *addressOf(std::size_t index)
+  void *addressOf(size_t index)
   {
     return (byte *)store + index;
   }
 
-  std::size_t getFreeSpace() const
+  size_t getFreeSpace() const
   {
     Lock lock(mut);
     return lockless_getFreeSpace();
   }
-  std::size_t getDataAvailable() const
+  size_t getDataAvailable() const
   {
     Lock lock(mut);
     return lockless_getDataAvailable();
@@ -182,20 +166,20 @@ public:
   }
 
 protected:
-  std::size_t   size;
-  std::size_t   freeSpace;
-  std::size_t   readp, writep;
+  size_t        size;
+  size_t        freeSpace;
+  size_t        readp, writep;
   byte *        store;
   mutable Mutex mut;
 
   SignalReady signalSpaceReady = []() {};
   SignalReady signalDataReady  = []() {};
 
-  std::size_t lockless_getFreeSpace() const
+  size_t lockless_getFreeSpace() const
   {
     return freeSpace;
   }
-  std::size_t lockless_getDataAvailable() const
+  size_t lockless_getDataAvailable() const
   {
     return size - freeSpace;
   }

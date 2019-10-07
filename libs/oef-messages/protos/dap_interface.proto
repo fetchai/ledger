@@ -5,8 +5,30 @@ syntax = "proto3";
 message NoInputParameter {
 }
 
-message DescribeResponse
+message DapDescription
 {
+        message DapFieldDescription {
+                string name = 1;
+                string type = 2;
+                repeated string options = 3;
+        };
+        // Field Options:
+        //   plane -- this field represents a plane who can generate a proximity metric for use in targetting query broadcasts.
+
+        message DapTableDescription {
+                string name = 1;
+                repeated DapFieldDescription field = 3;
+        };
+
+        string name = 1;
+        repeated DapTableDescription table = 2;
+        repeated string options = 3;
+        // Dap Options:
+        //   early -- try and run this dap before others. Increases chances it will be an originator.
+        //   late -- try and run this dap before others. Increases chances it will be a filterer/decorator.
+        //   all-branches -- this dap should be asked about ALL branch nodes, even if it doesn't 'own' it.
+        //   all-nodes -- this dap should be asked about ALL branch and leafs, even if it doesn't 'own' it.
+        //   all-leaf -- this dap should be asked about ALL leafs, even if it doesn't 'own' it.
 }
 
 
@@ -105,6 +127,7 @@ message Identifier
         bytes agent = 2;
         float score = 3;
         string uri = 4;
+        double distance = 5;
 }
 
 message DapExecute {

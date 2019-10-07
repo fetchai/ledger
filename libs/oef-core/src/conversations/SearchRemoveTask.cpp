@@ -1,27 +1,10 @@
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
-
+#include "oef-core/conversations/SearchRemoveTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
+#include "oef-base/utils/OefUri.hpp"
 #include "oef-core/conversations/SearchRemoveTask.hpp"
-#include "oef-core/tasks/utils.hpp"
-#include "oef-messages/search_response.hpp"
+#include "oef-messages/dap_interface.hpp"
 
 static Counter remove_task_created("mt-core.search.remove.tasks_created");
 static Counter remove_task_errored("mt-core.search.remove.tasks_errored");
@@ -61,15 +44,20 @@ SearchRemoveTask::StateResult SearchRemoveTask::handleResponse(void)
     return SearchRemoveTask::StateResult(0, ERRORED);
   }
 
-  auto response =
-      std::static_pointer_cast<fetch::oef::pb::RemoveResponse>(conversation->getReply(0));
+  auto response = std::static_pointer_cast<Successfulness>(conversation->getReply(0));
 
   // TODO should add a status answer, even in the case of no error
 
-  if (response->status() != fetch::oef::pb::RemoveResponse_ResponseType_SUCCESS)
+  if (!response->success())
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Error response from search, code: ", response->errorcode(),
+                   ", narrative:");
+    for (const auto &n : response->narrative())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "  ", n);
+    }
     std::shared_ptr<OUT_PROTO> answer = std::make_shared<OUT_PROTO>();
-    answer->set_answer_id(static_cast<int32_t>(msg_id_));
+    answer->set_answer_id(msg_id_);
     auto error = answer->mutable_oef_error();
     error->set_operation(fetch::oef::pb::Server_AgentMessage_OEFError::UNREGISTER_SERVICE);
     FETCH_LOG_WARN(LOGGING_NAME, "Sending error ", error, " to ", agent_uri_);

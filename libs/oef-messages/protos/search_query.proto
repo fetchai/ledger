@@ -9,13 +9,13 @@ message SearchQuery {
 
     message DirectedSearch {
         message PlaneDistance {
-            float geo = 1;
+            float geo = 1; // distance in meters
             float topic = 2;
         }
 
         message PlaneTarget {
-            fetch.oef.pb.Query.Location geo = 1;
-            repeated float topic = 2;
+            Location geo = 1;
+            ValueMessage topic = 2;
         }
         PlaneDistance distance = 1;
         PlaneTarget target = 2;
@@ -23,6 +23,9 @@ message SearchQuery {
 
     bytes source_key = 1;
     fetch.oef.pb.Query.Model model = 2;
+    //TTL = 0 query will be handled by the current node, but query won't be broadcasted
+    //TTL > 0 query will be broadcasted
+    //TTL > 1024 query will be ignored
     uint32 ttl = 3;
     DirectedSearch directed_search = 4;
     ConstructQueryObjectRequest query_v2 = 5;

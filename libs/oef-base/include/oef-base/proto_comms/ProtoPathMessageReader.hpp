@@ -1,21 +1,4 @@
 #pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 
 #include "logging/logging.hpp"
 #include "oef-base/comms/ConstCharArrayBuffer.hpp"
@@ -47,23 +30,15 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ProtoPathMessageReader";
 
-  /// @{
   ProtoPathMessageReader(std::weak_ptr<EndpointType> endpoint)
   {
     this->endpoint = endpoint;
   }
-  ProtoPathMessageReader(const ProtoPathMessageReader &other) = delete;
-  virtual ~ProtoPathMessageReader()                           = default;
-  /// @}
+  virtual ~ProtoPathMessageReader()
+  {}
 
-  /// @{
-  ProtoPathMessageReader &operator=(const ProtoPathMessageReader &other)  = delete;
-  bool                    operator==(const ProtoPathMessageReader &other) = delete;
-  bool                    operator<(const ProtoPathMessageReader &other)  = delete;
-  /// @}
-
-  void setEndianness(Endianness /*newstate*/)
-  {}  // TODO: Useless function
+  void setEndianness(Endianness newstate)
+  {}
 
   consumed_needed_pair initial();
   consumed_needed_pair checkForMessage(const buffers &data);
@@ -74,4 +49,9 @@ public:
 protected:
 private:
   std::weak_ptr<EndpointType> endpoint;
+
+  ProtoPathMessageReader(const ProtoPathMessageReader &other) = delete;
+  ProtoPathMessageReader &operator=(const ProtoPathMessageReader &other)  = delete;
+  bool                    operator==(const ProtoPathMessageReader &other) = delete;
+  bool                    operator<(const ProtoPathMessageReader &other)  = delete;
 };

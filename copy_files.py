@@ -35,7 +35,8 @@ for f in glob.glob("../oef-mt-core/mt-search/*/src/cpp/*"):
     assert(proposed_location == dest)    
 
   assert(dest.startswith(proposed_dir))
-  #os.system("cp %s %s" % (f, dest))
+  print("cp %s %s" % (f, dest))  
+  os.system("cp %s %s" % (f, dest))
 print(n, "/", m)
 
 print("")
@@ -75,7 +76,8 @@ for f in glob.glob("../oef-mt-core/mt-core/*/src/cpp/*"):
     assert(proposed_location == dest)    
 
   assert(dest.startswith(proposed_dir))
-#  os.system("cp %s %s" % (f, dest))
+  print("cp %s %s" % (f, dest))  
+  os.system("cp %s %s" % (f, dest))
 
 print(n, "/", m)
 print("")
@@ -115,6 +117,7 @@ for f in glob.glob("../oef-mt-core/base/src/cpp/*/*"):
     assert(proposed_location == dest)
 
   assert(dest.startswith(proposed_dir))
-#  os.system("cp %s %s" % (f, dest))
+  print("cp %s %s" % (f, dest))
+  os.system("cp %s %s" % (f, dest))
 
 print(n, "/", m)

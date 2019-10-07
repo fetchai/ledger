@@ -1,38 +1,13 @@
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
+#include "oef-base/threading/MonitoringTask.hpp"
+
+#include <fstream>
+#include <ios>
+#include <iostream>
+#include <string>
+#include <unistd.h>
 
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
-
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-//#pragma GCC diagnostic ignored "-Werror"
-#pragma GCC diagnostic ignored "-W#warnings"
-#pragma GCC diagnostic ignored "-Wfloat-conversion"
-#endif
-
-#if defined(__clang__)
-#pragma clang diagnostic push
-//#pragma clang diagnostic ignored "-Werror"
-#pragma clang diagnostic ignored "-W#warnings"
-#pragma clang diagnostic ignored "-Wfloat-conversion"
-#endif
-#include "oef-base/threading/MonitoringTask.hpp"
 
 struct mem_usage_result
 {
@@ -41,14 +16,7 @@ struct mem_usage_result
   bool   ok    = false;
 };
 
-#include <fstream>
-#include <ios>
-#include <iostream>
-#include <string>
-#include <unistd.h>
-
 #ifdef __APPLE__
-// TODO: Linux / Windows implementation?
 
 #include <mach/mach_host.h>
 #include <mach/mach_init.h>
@@ -107,7 +75,7 @@ mem_usage_result run_get_dynamic_proc_info(pid_t pid)
 }
 #endif
 
-mem_usage_result process_mem_usage(const std::string /*filename*/)
+mem_usage_result process_mem_usage(const std::string filename)
 {
   using std::ifstream;
   using std::ios_base;
@@ -185,11 +153,3 @@ ExitState MonitoringTask::run(void)
   submit(std::chrono::milliseconds(10000));
   return COMPLETE;
 }
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
-
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
