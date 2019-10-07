@@ -19,6 +19,7 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
 #include "model_saver.hpp"
@@ -55,7 +56,7 @@ int main(int argc, char **argv)
   }
   else
   {
-    throw std::runtime_error("Args: graph_save_file data_file analogy_file");
+    throw exceptions::InvalidFile("Args: graph_save_file data_file analogy_file");
   }
 
   std::shared_ptr<Graph<TensorType>> g_ptr = LoadModel<Graph<TensorType>>(graph_file);

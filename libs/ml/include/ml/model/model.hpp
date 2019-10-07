@@ -117,11 +117,12 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
     }
     case (ops::LossType::NONE):
     {
-      throw std::runtime_error("must set loss function on model compile for this model type");
+      throw ml::exceptions::InvalidMode(
+          "must set loss function on model compile for this model type");
     }
     default:
     {
-      throw std::runtime_error("unrecognised loss type in model compilation");
+      throw ml::exceptions::InvalidMode("unrecognised loss type in model compilation");
     }
     }
   }
@@ -129,7 +130,7 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
   {
     if (loss_type != ops::LossType::NONE)
     {
-      throw std::runtime_error(
+      throw ml::exceptions::InvalidMode(
           "attempted to set loss function on compile but loss function already previously set! "
           "maybe using wrong type of model?");
     }
@@ -142,7 +143,7 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
             optimiser_type, optimiser_ptr_, graph_ptr_, std::vector<std::string>{input_}, label_,
             error_, model_config_.learning_rate_param)))
     {
-      throw std::runtime_error("DNNClassifier initialised with unrecognised optimiser");
+      throw ml::exceptions::InvalidMode("DNNClassifier initialised with unrecognised optimiser");
     }
     optimiser_set_ = true;
   }
@@ -180,7 +181,7 @@ void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
 {
   if (!compiled_)
   {
-    throw std::runtime_error("must compile model before training");
+    throw ml::exceptions::InvalidMode("must compile model before training");
   }
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
@@ -240,7 +241,7 @@ void Model<TensorType>::Test(DataType &test_loss)
 {
   if (!compiled_)
   {
-    throw std::runtime_error("must compile model before testing");
+    throw ml::exceptions::InvalidMode("must compile model before testing");
   }
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TEST);
@@ -261,7 +262,7 @@ void Model<TensorType>::Predict(TensorType &input, TensorType &output)
 {
   if (!compiled_)
   {
-    throw std::runtime_error("must compile model before predicting");
+    throw ml::exceptions::InvalidMode("must compile model before predicting");
   }
 
   this->graph_ptr_->SetInput(input_, input);
@@ -335,12 +336,13 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     case ml::LoaderType::COMMODITY:
     case ml::LoaderType::C2V:
     {
-      throw std::runtime_error("Serialization for current dataloader type not implemented yet.");
+      throw ml::exceptions::NotImplemented(
+          "Serialization for current dataloader type not implemented yet.");
     }
 
     default:
     {
-      throw std::runtime_error("Unknown dataloader type.");
+      throw ml::exceptions::InvalidType("Unknown dataloader type.");
     }
     }
   }
@@ -365,12 +367,13 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     case ml::OptimiserType::MOMENTUM:
     case ml::OptimiserType::RMSPROP:
     {
-      throw std::runtime_error("serialization for current optimiser type not implemented yet.");
+      throw ml::exceptions::NotImplemented(
+          "serialization for current optimiser type not implemented yet.");
     }
 
     default:
     {
-      throw std::runtime_error("Unknown optimiser type.");
+      throw ml::exceptions::InvalidType("Unknown optimiser type.");
     }
     }
   }
@@ -396,12 +399,13 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     case ml::LoaderType::COMMODITY:
     case ml::LoaderType::C2V:
     {
-      throw std::runtime_error("serialization for current dataloader type not implemented yet.");
+      throw ml::exceptions::NotImplemented(
+          "serialization for current dataloader type not implemented yet.");
     }
 
     default:
     {
-      throw std::runtime_error("Unknown dataloader type.");
+      throw ml::exceptions::InvalidType("Unknown dataloader type.");
     }
     }
   }
@@ -429,12 +433,13 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     case ml::OptimiserType::MOMENTUM:
     case ml::OptimiserType::RMSPROP:
     {
-      throw std::runtime_error("serialization for current optimiser type not implemented yet.");
+      throw ml::exceptions::NotImplemented(
+          "serialization for current optimiser type not implemented yet.");
     }
 
     default:
     {
-      throw std::runtime_error("Unknown optimiser type.");
+      throw ml::exceptions::InvalidType("Unknown optimiser type.");
     }
     }
   }
