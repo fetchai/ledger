@@ -18,10 +18,9 @@
 
 #include "core/serializers/base_types.hpp"
 #include "dmlf/local_learner_networker.hpp"
+#include "dmlf/update_interface.hpp"
 
 #include <iostream>
-
-#include "dmlf/update_interface.hpp"
 
 namespace fetch {
 namespace dmlf {
