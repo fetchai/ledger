@@ -32,7 +32,7 @@ public:
   ExecutionResult(Variant output, Error error, std::string console)
     : output_(output)
     , error_(error)
-    , console_(console)
+    , console_(std::move(console))
   {}
 
   Variant output() const
