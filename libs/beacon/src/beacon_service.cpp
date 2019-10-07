@@ -340,6 +340,15 @@ BeaconService::State BeaconService::OnCompleteState()
   beacon_entropy_last_generated_->set(index);
   beacon_entropy_generated_total_->add(1);
 
+  // Optional: check that the block entropy signing has gone correctly
+  if(index == 1)
+  {
+    std::cerr << "due dillig. check. " <<  block_entropy_previous_->EntropyAsSHA256() << std::endl; // DELETEME_NH
+    bool signed_correctly = dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key, block_entropy_previous_->EntropyAsSHA256(), active_exe_unit_->manager.GroupSignature().getStr());
+
+    std::cerr << "signed: " << signed_correctly << std::endl; // DELETEME_NH
+  }
+
   // Populate the block entropy structure appropriately TODO(HUT): this.
   // block_entropy_being_created_->group_signature = active_exe_unit_->manager.GroupSignature();
 

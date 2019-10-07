@@ -39,16 +39,24 @@ struct BlockEntropy : public BlockEntropyInterface
 
   BlockEntropy();
 
-  Cabinet qualified;  // The members who succeeded DKG and are qualified to produce blocks (when new
-                      // committee)
-  GroupPublicKey group_public_key;  // The group public key (when new committee)
-  uint64_t       block_number = 0;  // The block this is relevant to
-  Digest digest;  // The hash of the above (when new committee) note, this could be implicit. Is not
-                  // serialized.
+  // The members who succeeded DKG and are qualified to produce blocks (when new committee)
+  Cabinet qualified;
 
-  Confirmations confirmations;  // In the case of a new cabinet, personal signatures of the hash
-                                // from qual members
-  GroupSignatureStr group_signature;  // Signature of the previous entropy, used as the entropy
+  // The group public key (when new committee)
+  GroupPublicKey group_public_key;
+
+  // The block this is relevant to
+  uint64_t       block_number = 0;
+  // The hash of the above (when new committee) note, this could be implicit. Is not
+  // serialized.
+  Digest digest;
+
+  // In the case of a new cabinet, personal signatures of the hash
+  // from qual members
+  Confirmations confirmations;
+
+  // Signature of the previous entropy, used as the entropy
+  GroupSignatureStr group_signature;
 
   Digest EntropyAsSHA256() const override;
 
