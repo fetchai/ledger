@@ -42,7 +42,6 @@ public:
       return msg_.c_str();
     }
     return "feature or operation mode not yet implemented";
-
   }
 
 private:
