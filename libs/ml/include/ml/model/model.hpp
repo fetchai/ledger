@@ -23,6 +23,7 @@
 #include "ml/ops/loss_functions/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
+#include "ml/utilities/model_saver.hpp"
 
 #include <utility>
 
@@ -179,11 +180,11 @@ void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
   SizeType patience_count{0};
   bool     stop_early = false;
 
-  // run for one epoch
+  // run for one subset - if this is not set it defaults to epoch
   loss = optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
   min_loss = loss;
 
-  // run for remaining epochs with early stopping
+  // run for remaining epochs (or subsets) with early stopping
   SizeType step{1};
   while ((!stop_early) && (step < n_steps))
   {
@@ -196,7 +197,12 @@ void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
       PrintStats(step, loss, test_loss);
     }
 
-    // run optimiser for one epoch
+    if (this->model_config_.save_graph)
+    {
+      fetch::ml::examples::SaveModel(*graph_ptr_, model_config_.graph_save_location + std::to_string(step));
+    }
+
+    // run optimiser for one epoch (or subset)
     loss =
         optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
 

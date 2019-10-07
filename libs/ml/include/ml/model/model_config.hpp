@@ -39,6 +39,8 @@ struct ModelConfig
   SizeType subset_size = fetch::ml::optimisers::SIZE_NOT_SET;
 
   bool print_stats = false;
+  bool save_graph = false;
+  std::string graph_save_location = "/tmp/graph";
 
   ModelConfig()
   {
