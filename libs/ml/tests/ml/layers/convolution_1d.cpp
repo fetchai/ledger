@@ -306,10 +306,11 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
 
   // test correct values
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].second.shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].second.shape()[0], input_channels);
-  ASSERT_EQ(backprop_error[0].second.shape()[1], input_height);
-  ASSERT_EQ(backprop_error[0].second.shape()[2], 1);
+  auto bp_error_it = backprop_error.begin();
+  ASSERT_EQ(bp_error_it.second.shape().size(), 3);
+  ASSERT_EQ(bp_error_it.second.shape()[0], input_channels);
+  ASSERT_EQ(bp_error_it.second.shape()[1], input_height);
+  ASSERT_EQ(bp_error_it.second.shape()[2], 1);
 
   EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 0, 0)),
                   -4.3077492713928222656);
