@@ -33,7 +33,8 @@ class ClangToolchain:
 
     @property
     def clang_apply_replacements_path(self):
-        self.__validate_path(self._clang_apply_replacements_path, 'clang-apply-replacements')
+        self.__validate_path(
+            self._clang_apply_replacements_path, 'clang-apply-replacements')
         return self._clang_apply_replacements_path
 
     @property
@@ -78,4 +79,5 @@ class ClangToolchain:
         if path is not None and os.path.isfile(path):
             return
 
-        raise RuntimeError('Unable to find the required tool {} on your system'.format(name))
+        raise RuntimeError(
+            'Unable to find the required tool {} on your system'.format(name))
