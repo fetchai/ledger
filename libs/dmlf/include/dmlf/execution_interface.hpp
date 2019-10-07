@@ -42,24 +42,27 @@ public:
   using Artifact    = fetch::vm::Variant;
   using Result      = ExecutionResult;
   using Returned    = fetch::network::PromiseOf<ExecutionResult>;
-  //using Params      = std::vector<Artifact>;
+  // using Params      = std::vector<Artifact>;
 
-  virtual Returned CreateExecutable(Target const &target, Name const &execName, SourceFiles const &sources) = 0;
+  virtual Returned CreateExecutable(Target const &target, Name const &execName,
+                                    SourceFiles const &sources)                 = 0;
   virtual Returned DeleteExecutable(Target const &target, Name const &execName) = 0;
-  
-  virtual Returned CreateState(Target const &target, Name const &stateName) = 0;
+
+  virtual Returned CreateState(Target const &target, Name const &stateName)                  = 0;
   virtual Returned CopyState(Target const &target, Name const &srcName, Name const &newName) = 0;
-  virtual Returned DeleteState(Target const &target, Name const &stateName) = 0;
-  
-  virtual Returned Run(Target const &target, Name const &execName, Name const &stateName, std::string const &entrypoint) = 0;
+  virtual Returned DeleteState(Target const &target, Name const &stateName)                  = 0;
+
+  virtual Returned Run(Target const &target, Name const &execName, Name const &stateName,
+                       std::string const &entrypoint) = 0;
 
   ExecutionInterface(ExecutionInterface const &other) = delete;
-  ExecutionInterface &operator=(ExecutionInterface const &other) = delete;
-  bool operator==(ExecutionInterface const &other) = delete;
-  bool operator<(ExecutionInterface const &other) = delete;
+  ExecutionInterface &operator=(ExecutionInterface const &other)  = delete;
+  bool                operator==(ExecutionInterface const &other) = delete;
+  bool                operator<(ExecutionInterface const &other)  = delete;
+
 protected:
 private:
 };
 
-} // namespace dmlf
-} // namespace fetch
+}  // namespace dmlf
+}  // namespace fetch

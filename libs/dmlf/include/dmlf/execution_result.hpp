@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/variant.hpp"
 #include "dmlf/execution_error_message.hpp"
+#include "vm/variant.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -27,12 +27,13 @@ class ExecutionResult
 {
 public:
   using Variant = fetch::vm::Variant;
-  using Error = ExecutionErrorMessage;
+  using Error   = ExecutionErrorMessage;
 
   ExecutionResult(Variant output, Error error, std::string console)
-  :output_(output), error_(error), console_(console)
-  {
-  }
+    : output_(output)
+    , error_(error)
+    , console_(console)
+  {}
 
   Variant output() const
   {
@@ -42,14 +43,14 @@ public:
   {
     return error_;
   }
-  std::string console()  const
+  std::string console() const
   {
     return console_;
   }
 
 private:
-  Variant output_;
-  Error error_;
+  Variant     output_;
+  Error       error_;
   std::string console_;
 };
 

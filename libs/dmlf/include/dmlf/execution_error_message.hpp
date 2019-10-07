@@ -41,15 +41,16 @@ public:
     BAD_EXECUTABLE,
     BAD_STATE,
     BAD_DESTINATION,
-    
+
     COMPILATION_ERROR,
     RUNTIME_ERROR
   };
 
-  explicit ExecutionErrorMessage(Stage stage, Code code, std::string const &message )
-  :stage_(stage), code_(code), message_(message)
-  {
-  }
+  explicit ExecutionErrorMessage(Stage stage, Code code, std::string const &message)
+    : stage_(stage)
+    , code_(code)
+    , message_(message)
+  {}
 
   Stage stage() const
   {
@@ -59,14 +60,14 @@ public:
   {
     return code_;
   }
-  std::string message()  const
+  std::string message() const
   {
     return message_;
   }
 
 private:
-  Stage stage_;
-  Code code_;
+  Stage       stage_;
+  Code        code_;
   std::string message_;
 };
 
