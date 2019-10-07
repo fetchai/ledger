@@ -23,7 +23,7 @@
 #include "ml/ops/loss_functions/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
-#include "ml/utilities/model_saver.hpp"
+#include "ml/utilities/graph_saver.hpp"
 
 #include <utility>
 
