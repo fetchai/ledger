@@ -108,7 +108,8 @@ void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host,
           }
           else
           {
-            FETCH_LOG_ERROR(LOGGING_NAME, "Failed to get endpoint of socket after connection");
+            FETCH_LOG_ERROR(LOGGING_NAME,
+                            "Failed to get endpoint of socket after connection: ", ec2.message());
           }
         }
         else
@@ -121,10 +122,20 @@ void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host,
 
       if (socket && res)
       {
-        ResolverType::iterator it(res->resolve({std::string(host), std::string(port)}));
+        std::error_code resolve_ec{};
 
-        assert(strand->running_in_this_thread());
-        asio::async_connect(*socket, it, strand->wrap(cb));
+        ResolverType::iterator it(res->resolve({std::string(host), std::string(port)}, resolve_ec));
+
+        if (!resolve_ec)
+        {
+          assert(strand->running_in_this_thread());
+          asio::async_connect(*socket, it, strand->wrap(cb));
+        }
+        else
+        {
+          FETCH_LOG_ERROR(LOGGING_NAME, "Resolution failure: ", resolve_ec.message());
+          SignalLeave();
+        }
       }
       else
       {
