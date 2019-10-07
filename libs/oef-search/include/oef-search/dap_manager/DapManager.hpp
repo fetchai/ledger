@@ -92,11 +92,11 @@ public:
     }
     convTask->submit();
 
-    convTask->makeNotification().Then([future, convTask, path]() {
+    convTask->MakeNotification().Then([future, convTask, path]() {
       auto status = std::make_shared<Successfulness>();
       status->set_success(true);
       FETCH_LOG_INFO(LOGGING_NAME, "convTask done");
-      for (const auto &res : convTask->getOutputs())
+      for (const auto &res : convTask->GetOutputs())
       {
         if (!res->success())
         {
@@ -231,7 +231,7 @@ public:
 
     std::shared_ptr<DapManager> this_sp = shared_from_this();
 
-    visit_res->makeNotification().Then([result, root, identifier_sequence, this_sp]() mutable {
+    visit_res->MakeNotification().Then([result, root, identifier_sequence, this_sp]() mutable {
       FETCH_LOG_INFO(LOGGING_NAME, "--------------------- AFTER VISIT");
       root->Print();
       FETCH_LOG_INFO(LOGGING_NAME, "---------------------");
@@ -267,7 +267,7 @@ public:
                      "No location set in header, looking for location constraint in the query...");
       auto v = std::make_shared<FindGeoLocationVisitor>(dap_store_);
       v->SubmitVisitTask(root);
-      v->makeNotification().Then([v, query, result, this_wp]() mutable {
+      v->MakeNotification().Then([v, query, result, this_wp]() mutable {
         auto loc_res = v->GetLocationRoot();
         if (loc_res)
         {
@@ -325,13 +325,13 @@ public:
 
     auto v = std::make_shared<PopulateFieldInformationVisitor>(dap_store_);
     v->SubmitVisitTask(root);
-    v->makeNotification().Then([root, sp, result]() {
+    v->MakeNotification().Then([root, sp, result]() {
       auto v = std::make_shared<CollectDapsVisitor>();
       v->SubmitVisitTask(root);
-      v->makeNotification().Then([root, sp, result]() {
+      v->MakeNotification().Then([root, sp, result]() {
         auto v = std::make_shared<AddMoreDapsBasedOnOptionsVisitor>(sp->dap_store_);
         v->SubmitVisitTask(root);
-        v->makeNotification().Then([result]() { result->set(true); });
+        v->MakeNotification().Then([result]() { result->set(true); });
       });
     });
 
@@ -346,7 +346,7 @@ protected:
 
     auto v = std::make_shared<PopulateActionsVisitorDescentPass>(sp, dap_store_);
     v->SubmitVisitTask(root);
-    v->makeNotification().Then([result]() { result->set(true); });
+    v->MakeNotification().Then([result]() { result->set(true); });
 
     return result;
   }
@@ -479,11 +479,11 @@ protected:
     });
     FETCH_LOG_INFO(LOGGING_NAME, "Submit broadcast tasks..");
     convTask->submit();
-    convTask->makeNotification().Then([future, convTask]() {
+    convTask->MakeNotification().Then([future, convTask]() {
       auto idseq = std::make_shared<IdentifierSequence>();
       FETCH_LOG_INFO(LOGGING_NAME, "Broadcast done");
       std::size_t idx = 0;
-      for (const auto &res : convTask->getOutputs())
+      for (const auto &res : convTask->GetOutputs())
       {
         if (res->status().success())
         {

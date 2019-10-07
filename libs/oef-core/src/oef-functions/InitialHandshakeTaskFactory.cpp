@@ -8,7 +8,7 @@
 #include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 #include "oef-messages/agent.hpp"
 
-void InitialHandshakeTaskFactory::processMessage(ConstCharArrayBuffer &data)
+void InitialHandshakeTaskFactory::ProcessMessage(ConstCharArrayBuffer &data)
 {
   fetch::oef::pb::Agent_Server_ID     id_pb;
   fetch::oef::pb::Agent_Server_Answer answer_pb;
@@ -32,7 +32,7 @@ void InitialHandshakeTaskFactory::processMessage(ConstCharArrayBuffer &data)
 
       auto senderTask = std::make_shared<
           TSendProtoTask<OefAgentEndpoint, std::shared_ptr<fetch::oef::pb::Server_Phrase>>>(
-          phrase, getEndpoint());
+          phrase, GetEndpoint());
       senderTask->submit();
       state = WAITING_FOR_Agent_Server_Answer;
       Counter("mt-core.network.OefAgentEndpoint.challenged")++;
@@ -44,30 +44,30 @@ void InitialHandshakeTaskFactory::processMessage(ConstCharArrayBuffer &data)
       auto connected_pb = std::make_shared<fetch::oef::pb::Server_Connected>();
       connected_pb->set_status(true);
 
-      getEndpoint()->capabilities.will_heartbeat = answer_pb.capability_bits().will_heartbeat();
+      GetEndpoint()->capabilities.will_heartbeat = answer_pb.capability_bits().will_heartbeat();
 
       FETCH_LOG_INFO(LOGGING_NAME, "Agent ", public_key_, " verified, moving to OefFunctions...");
 
       auto senderTask = std::make_shared<
           TSendProtoTask<OefAgentEndpoint, std::shared_ptr<fetch::oef::pb::Server_Connected>>>(
-          connected_pb, getEndpoint());
+          connected_pb, GetEndpoint());
       senderTask->submit();
       state = WAITING_FOR_Agent_Server_Answer;
 
-      agents_->add(public_key_, getEndpoint());
+      agents_->add(public_key_, GetEndpoint());
 
-      getEndpoint()->karma.upgrade("", public_key_);
-      getEndpoint()->karma.perform("login");
+      GetEndpoint()->karma.upgrade("", public_key_);
+      GetEndpoint()->karma.perform("login");
 
-      if (getEndpoint()->capabilities.will_heartbeat)
+      if (GetEndpoint()->capabilities.will_heartbeat)
       {
-        auto myGroupId = getEndpoint()->getIdent();
-        auto heartbeat = std::make_shared<OefHeartbeatTask>(getEndpoint());
+        auto myGroupId = GetEndpoint()->GetIdentifier();
+        auto heartbeat = std::make_shared<OefHeartbeatTask>(GetEndpoint());
         heartbeat->submit();
-        heartbeat->setGroupId(myGroupId);
+        heartbeat->SetGroupId(myGroupId);
       }
 
-      getEndpoint()->setState("loggedin", true);
+      GetEndpoint()->SetState("loggedin", true);
       Counter("mt-core.network.OefAgentEndpoint.loggedin")++;
 
       successor(
@@ -78,12 +78,12 @@ void InitialHandshakeTaskFactory::processMessage(ConstCharArrayBuffer &data)
   }
   catch (std::exception &ex)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "processMessage  -- ", ex.what());
+    FETCH_LOG_ERROR(LOGGING_NAME, "ProcessMessage  -- ", ex.what());
     throw ex;
   }
   catch (...)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "processMessage exception");
+    FETCH_LOG_ERROR(LOGGING_NAME, "ProcessMessage exception");
     throw;
     // ignore the error.
   }

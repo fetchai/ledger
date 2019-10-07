@@ -80,7 +80,7 @@ OutboundSearchConversationCreator::OutboundSearchConversationCreator(
   worker = std::make_shared<OutboundSearchConversationWorkerTask>(
       core, core_key, core_uri, search_uri, outbounds, ident2conversation);
 
-  worker->setThreadGroupId(0);
+  worker->SetThreadGroupId(0);
 
   worker->submit();
 }

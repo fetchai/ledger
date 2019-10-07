@@ -1,6 +1,6 @@
 #include "oef-base/threading/Waitable.hpp"
 
-Notification::NotificationBuilder Waitable::makeNotification(void)
+Notification::NotificationBuilder Waitable::MakeNotification(void)
 {
   Lock lock(mutex);
   auto n = Notification::create();

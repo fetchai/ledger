@@ -66,12 +66,12 @@ void EndpointBase<TXType>::run_sending()
                      " state=", *state);
       return;
     }
-    if (sendBuffer.getDataAvailable() == 0)
+    if (sendBuffer.GetDataAvailable() == 0)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "id=", ident, " create messages");
       create_messages();
     }
-    if (sendBuffer.getDataAvailable() == 0)
+    if (sendBuffer.GetDataAvailable() == 0)
     {
       return;
     }
@@ -103,10 +103,10 @@ void EndpointBase<TXType>::run_reading()
       return;
     }
     read_needed_local = read_needed;
-    if (read_needed_local > readBuffer.getFreeSpace())
+    if (read_needed_local > readBuffer.GetFreeSpace())
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "id=", ident, " ********** READ BUFFER FULL!");
-      read_needed_local = readBuffer.getFreeSpace();
+      read_needed_local = readBuffer.GetFreeSpace();
     }
     read_needed  = 0;
     asio_reading = true;
@@ -327,7 +327,7 @@ void EndpointBase<TXType>::complete_sending(StateTypeP state, std::error_code co
       return;  // We are done with this thing!
     }
 
-    sendBuffer.markDataUsed(bytes);
+    sendBuffer.MarkDataUsed(bytes);
     create_messages();
     {
       Lock lock(mutex);
@@ -346,9 +346,9 @@ void EndpointBase<TXType>::complete_sending(StateTypeP state, std::error_code co
 template <typename TXType>
 void EndpointBase<TXType>::create_messages()
 {
-  auto consumed_needed = writer->checkForSpace(sendBuffer.getSpaceBuffers(), txq);
+  auto consumed_needed = writer->CheckForSpace(sendBuffer.GetSpaceBuffers(), txq);
   auto consumed        = consumed_needed.first;
-  sendBuffer.markSpaceUsed(consumed);
+  sendBuffer.MarkSpaceUsed(consumed);
 }
 
 template <typename TXType>
@@ -382,7 +382,7 @@ void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code co
       return;  // We are done with this thing!
     }
 
-    readBuffer.markSpaceUsed(bytes);
+    readBuffer.MarkSpaceUsed(bytes);
 
     IMessageReader::consumed_needed_pair consumed_needed;
 
@@ -394,7 +394,7 @@ void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code co
         return;
       }
       Lock lock(mutex);
-      consumed_needed = reader->checkForMessage(readBuffer.getDataBuffers());
+      consumed_needed = reader->CheckForMessage(readBuffer.GetDataBuffers());
     }
     catch (std::exception &ex)
     {
@@ -410,7 +410,7 @@ void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code co
     auto consumed = consumed_needed.first;
     auto needed   = consumed_needed.second;
 
-    readBuffer.markDataUsed(consumed);
+    readBuffer.MarkDataUsed(consumed);
 
     {
       Lock lock(mutex);
@@ -441,7 +441,7 @@ Notification::NotificationBuilder EndpointBase<TXType>::send(TXType s)
   }
   else
   {
-    return makeNotification();
+    return MakeNotification();
   }
 }
 

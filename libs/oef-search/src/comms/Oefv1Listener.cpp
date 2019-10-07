@@ -29,7 +29,7 @@ Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> core, int port,
 
     auto ep2     = std::make_shared<OefSearchEndpoint>(std::move(ep1));
     auto factory = this->factoryCreator(ep2);
-    ep2->setFactory(factory);
+    ep2->SetFactory(factory);
     ep2->setup();
     return ep2;
   };

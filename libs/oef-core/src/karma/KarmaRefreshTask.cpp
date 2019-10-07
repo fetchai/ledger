@@ -15,7 +15,7 @@ ExitState KarmaRefreshTask::run(void)
   last_execute = std::chrono::high_resolution_clock::now();
 
   // FETCH_LOG_INFO(LOGGING_NAME, "LOGGED KarmaRefreshTask RUN ms=" + std::to_string(d.count()));
-  policy->refreshCycle(d);
+  policy->RefreshCycle(d);
 
   submit(std::chrono::milliseconds(interval));
   return COMPLETE;

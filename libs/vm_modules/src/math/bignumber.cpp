@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm_modules/math/bignumber.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "vectorise/uint/uint.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
-#include "vm_modules/math/bignumber.hpp"
 
 #include <cstdint>
 #include <stdexcept>
@@ -82,7 +82,7 @@ void UInt256Wrapper::Bind(Module &module)
       .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
       .CreateMemberFunction("size", &UInt256Wrapper::size);
 
-  module.CreateFreeFunction("toString", &UInt256Wrapper::ToString);
+  module.CreateFreeFunction("ToString", &UInt256Wrapper::ToString);
   module.CreateFreeFunction("toUInt64", &UInt256Wrapper::ToPrimitive<uint64_t>);
   module.CreateFreeFunction("toInt64", &UInt256Wrapper::ToPrimitive<int64_t>);
   module.CreateFreeFunction("toUInt32", &UInt256Wrapper::ToPrimitive<uint32_t>);

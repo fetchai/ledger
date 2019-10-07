@@ -44,10 +44,10 @@ public:
   virtual ~ProtoPathMessageSender()
   {}
 
-  void setEndianness(Endianness newstate)
+  void SetEndianness(Endianness newstate)
   {}
 
-  virtual consumed_needed_pair checkForSpace(const mutable_buffers &data, IMessageWriter::TXQ &txq);
+  virtual consumed_needed_pair CheckForSpace(const mutable_buffers &data, IMessageWriter::TXQ &txq);
 
 protected:
 private:

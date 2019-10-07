@@ -69,7 +69,7 @@ public:
   virtual void close();
   virtual bool connect(const Uri &uri, Core &core);
 
-  virtual const std::string &getRemoteId() const
+  virtual const std::string &GetRemoteId() const
   {
     return remote_id;
   }
@@ -91,7 +91,7 @@ public:
     return *state == RUNNING_ENDPOINT;
   }
 
-  std::size_t getIdent(void) const
+  std::size_t GetIdentifier(void) const
   {
     return ident;
   }
@@ -103,7 +103,7 @@ public:
     ON_PROTOERROR = 4,
   } CallbackSet;
 
-  void doCallbacks(CallbackSet callbacks, std::string msg = "",
+  void DoCallbacks(CallbackSet callbacks, std::string msg = "",
                    std::error_code ec = std::error_code())
   {
     if ((callbacks & ON_ERROR) && onError)

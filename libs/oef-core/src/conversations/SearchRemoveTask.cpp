@@ -11,8 +11,8 @@ static Counter remove_task_errored("mt-core.search.remove.tasks_errored");
 static Counter remove_task_succeeded("mt-core.search.remove.tasks_succeeded");
 
 SearchRemoveTask::EntryPoint searchRemoveTaskEntryPoints[] = {
-    &SearchRemoveTask::createConv,
-    &SearchRemoveTask::handleResponse,
+    &SearchRemoveTask::CreateConversation,
+    &SearchRemoveTask::HandleResponse,
 };
 
 SearchRemoveTask::SearchRemoveTask(std::shared_ptr<SearchRemoveTask::IN_PROTO> initiator,
@@ -33,18 +33,18 @@ SearchRemoveTask::~SearchRemoveTask()
   FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
 }
 
-SearchRemoveTask::StateResult SearchRemoveTask::handleResponse(void)
+SearchRemoveTask::StateResult SearchRemoveTask::HandleResponse(void)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->getAvailableReplyCount());
+  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());
 
-  if (conversation->getAvailableReplyCount() == 0)
+  if (conversation->GetAvailableReplyCount() == 0)
   {
     remove_task_errored++;
     return SearchRemoveTask::StateResult(0, ERRORED);
   }
 
-  auto response = std::static_pointer_cast<Successfulness>(conversation->getReply(0));
+  auto response = std::static_pointer_cast<Successfulness>(conversation->GetReply(0));
 
   // TODO should add a status answer, even in the case of no error
 
@@ -97,10 +97,10 @@ std::shared_ptr<SearchRemoveTask::REQUEST_PROTO> SearchRemoveTask::make_request_
     remove->mutable_model()->CopyFrom(initiator->description().model());
     remove->mutable_values()->CopyFrom(initiator->description().values());
     OEFURI::URI uri;
-    uri.coreKey = core_key_;
-    uri.parseAgent(agent_uri_);
+    uri.CoreKey = core_key_;
+    uri.ParseAgent(agent_uri_);
     uri.empty           = false;
-    std::string row_key = uri.toString();
+    std::string row_key = uri.ToString();
     remove->mutable_service_description()->CopyFrom(initiator->description_v2());
     for (auto &cqo : *(remove->mutable_service_description()->mutable_actions()))
     {

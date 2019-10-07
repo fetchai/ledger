@@ -29,7 +29,7 @@ public:
     return consumed_needed_pair(0, 0);
   }
 
-  virtual consumed_needed_pair checkForSpace(const mutable_buffers &space, TXQ &txq) = 0;
+  virtual consumed_needed_pair CheckForSpace(const mutable_buffers &space, TXQ &txq) = 0;
 
 protected:
 private:

@@ -37,7 +37,7 @@ public:
 
     FETCH_LOG_INFO(LOGGING_NAME, "Added future: idx=", future_idx);
 
-    future->makeNotification().Then([this_wp, future_idx]() {
+    future->MakeNotification().Then([this_wp, future_idx]() {
       FETCH_LOG_INFO(LOGGING_NAME, "Got future! idx = ", future_idx);
       auto sp = this_wp.lock();
       if (sp)

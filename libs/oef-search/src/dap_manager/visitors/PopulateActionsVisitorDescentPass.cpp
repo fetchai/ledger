@@ -49,12 +49,12 @@ PopulateActionsVisitorDescentPass::VisitNodeExitStates PopulateActionsVisitorDes
         dap_manager_->SingleDapCall<ConstructQueryObjectRequest, ConstructQueryMementoResponse>(
             dap_name, "prepare", node.ToProto(dap_name));
 
-    if (future_->makeNotification()
+    if (future_->MakeNotification()
             .Then([this_wp]() {
               auto sp = this_wp.lock();
               if (sp)
               {
-                sp->makeRunnable();
+                sp->MakeRunnable();
               }
             })
             .Waiting())
@@ -107,12 +107,12 @@ PopulateActionsVisitorDescentPass::VisitNodeExitStates PopulateActionsVisitorDes
             ->SingleDapCall<ConstructQueryConstraintObjectRequest, ConstructQueryMementoResponse>(
                 dap_name, "prepareConstraint", leaf.ToProto(dap_name));
 
-    if (future_->makeNotification()
+    if (future_->MakeNotification()
             .Then([this_wp]() {
               auto sp = this_wp.lock();
               if (sp)
               {
-                sp->makeRunnable();
+                sp->MakeRunnable();
               }
             })
             .Waiting())

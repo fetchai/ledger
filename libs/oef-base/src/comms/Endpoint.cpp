@@ -24,7 +24,7 @@ Endpoint<TXType>::~Endpoint()
 template <typename TXType>
 void Endpoint<TXType>::async_write()
 {
-  auto data = sendBuffer.getDataBuffers();
+  auto data = sendBuffer.GetDataBuffers();
 
   int i = 0;
   for (auto &d : data)
@@ -45,7 +45,7 @@ void Endpoint<TXType>::async_write()
 template <typename TXType>
 void Endpoint<TXType>::async_read(const std::size_t &bytes_needed)
 {
-  auto space    = readBuffer.getSpaceBuffers();
+  auto space    = readBuffer.GetSpaceBuffers();
   auto my_state = state;
 
   asio::async_read(sock, space, asio::transfer_at_least(bytes_needed),

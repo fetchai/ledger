@@ -25,10 +25,10 @@ void ProtoMessageEndpoint<TXType, Reader, Sender>::setup(
 }
 
 template <typename TXType, typename Reader, typename Sender>
-void ProtoMessageEndpoint<TXType, Reader, Sender>::setEndianness(Endianness newstate)
+void ProtoMessageEndpoint<TXType, Reader, Sender>::SetEndianness(Endianness newstate)
 {
-  protoMessageReader->setEndianness(newstate);
-  protoMessageSender->setEndianness(newstate);
+  protoMessageReader->SetEndianness(newstate);
+  protoMessageSender->SetEndianness(newstate);
 }
 
 template class ProtoMessageEndpoint<std::shared_ptr<google::protobuf::Message>>;

@@ -53,7 +53,7 @@ if (testing)
         var input_data = loader.getNext();
         graph.setInput("num_input", input_data.data());
         var pred = graph.evaluate("softmax_3");
-        pred_string = pred.toString();
+        pred_string = pred.ToString();
     endwhile
     print(pred_string);
     printLn("Finished successfully");

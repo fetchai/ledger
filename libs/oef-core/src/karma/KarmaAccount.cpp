@@ -23,7 +23,7 @@ bool KarmaAccount::perform(const std::string &action, bool force)
   return r;
 }
 
-bool KarmaAccount::couldPerform(const std::string &action)
+bool KarmaAccount::CouldPerform(const std::string &action)
 {
   if (!policy)
   {
@@ -31,7 +31,7 @@ bool KarmaAccount::couldPerform(const std::string &action)
                    "' would be denied because account is VOID");
     return false;
   }
-  auto r = policy->couldPerform(*this, action);
+  auto r = policy->CouldPerform(*this, action);
   if (!r)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Karma for '", action,
@@ -45,7 +45,7 @@ void KarmaAccount::upgrade(const std::string &pubkey, const std::string &ip)
   this->policy->upgrade(*this, pubkey, ip);
 }
 
-std::string KarmaAccount::getBalance()
+std::string KarmaAccount::GetBalance()
 {
-  return policy->getBalance(*this);
+  return policy->GetBalance(*this);
 }

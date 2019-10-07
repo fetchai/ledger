@@ -148,12 +148,12 @@ public:
 
     pipe_.pop();
 
-    if (task->makeNotification()
+    if (task->MakeNotification()
             .Then([this_wp]() {
               auto sp = this_wp.lock();
               if (sp)
               {
-                sp->makeRunnable();
+                sp->MakeRunnable();
               }
             })
             .Waiting())

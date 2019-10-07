@@ -35,7 +35,7 @@ public:
     return shared_from_this();
   }
 
-  StateResult                    handleResponse(void) override;
+  StateResult                    HandleResponse(void) override;
   std::shared_ptr<REQUEST_PROTO> make_request_proto() override;
 
 private:

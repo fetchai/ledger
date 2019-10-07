@@ -6,9 +6,9 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::initial()
   return consumed_needed_pair(0, 1);
 }
 
-ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(const buffers &data)
+ProtoMessageReader::consumed_needed_pair ProtoMessageReader::CheckForMessage(const buffers &data)
 {
-  // std::cout << "ProtoMessageReader::checkForMessage" << std::endl;
+  // std::cout << "ProtoMessageReader::CheckForMessage" << std::endl;
 
   std::string s;
 
@@ -20,16 +20,16 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(con
 
   while (true)
   {
-    // std::cout << "checkForMessage in " << chars.remainingData() << " bytes." << std::endl;
+    // std::cout << "CheckForMessage in " << chars.RemainingData() << " bytes." << std::endl;
     // chars.diagnostic();
 
     uint32_t    body_size_u32;
     std::size_t body_size;
     uint32_t    head_size = sizeof(uint32_t);
 
-    if (chars.remainingData() < head_size)
+    if (chars.RemainingData() < head_size)
     {
-      needed = head_size - chars.remainingData();
+      needed = head_size - chars.RemainingData();
       break;
     }
 
@@ -75,9 +75,9 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(con
       break;
     }
 
-    if (chars.remainingData() < body_size)
+    if (chars.RemainingData() < body_size)
     {
-      needed = body_size - chars.remainingData();
+      needed = body_size - chars.RemainingData();
       break;
     }
 
@@ -102,11 +102,11 @@ void ProtoMessageReader::setDetectedEndianness(Endianness newstate)
 {
   if (auto endpoint_sp = endpoint.lock())
   {
-    endpoint_sp->setEndianness(newstate);
+    endpoint_sp->SetEndianness(newstate);
   }
 }
 
-void ProtoMessageReader::setEndianness(Endianness newstate)
+void ProtoMessageReader::SetEndianness(Endianness newstate)
 {
   endianness = newstate;
 }

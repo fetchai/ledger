@@ -15,17 +15,17 @@ public:
   KarmaPolicyBasic(const google::protobuf::Map<std::string, std::string> &config);
   virtual ~KarmaPolicyBasic();
 
-  virtual KarmaAccount getAccount(const std::string &pubkey = "",
+  virtual KarmaAccount GetAccount(const std::string &pubkey = "",
                                   const std::string &ip     = "") override;
   void                 upgrade(KarmaAccount &account, const std::string &pubkey = "",
                                const std::string &ip = "") override;
 
   virtual bool perform(const KarmaAccount &identifier, const std::string &action,
                        bool force = false) override;
-  virtual bool couldPerform(const KarmaAccount &identifier, const std::string &action) override;
-  virtual std::string getBalance(const KarmaAccount &identifier) override;
+  virtual bool CouldPerform(const KarmaAccount &identifier, const std::string &action) override;
+  virtual std::string GetBalance(const KarmaAccount &identifier) override;
 
-  virtual void refreshCycle(const std::chrono::milliseconds delta) override;
+  virtual void RefreshCycle(const std::chrono::milliseconds delta) override;
 
 protected:
 private:
@@ -41,7 +41,7 @@ private:
 
     Account();
 
-    void bringUpToDate();
+    void BringUpToDate();
   };
 
   using AccountName   = std::string;
@@ -52,7 +52,7 @@ private:
   Accounts accounts;
   Config   config;
 
-  AccountNumber getAccountNumber(const AccountName &s);
+  AccountNumber GetAccountNumber(const AccountName &s);
 
   Account &      access(const KarmaAccount &identifier);
   const Account &access(const KarmaAccount &identifier) const;

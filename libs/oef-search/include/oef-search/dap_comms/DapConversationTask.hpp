@@ -38,8 +38,8 @@ public:
     , msg_id_(msg_id)
     , protocol_{std::move(protocol)}
   {
-    entryPoint.push_back(&SelfType::createConv);
-    entryPoint.push_back(&SelfType::handleResponse);
+    entryPoint.push_back(&SelfType::CreateConversation);
+    entryPoint.push_back(&SelfType::HandleResponse);
     this->entrypoints = entryPoint.data();
     this->state       = this->entrypoints[0];
     FETCH_LOG_INFO(LOGGING_NAME, "DAP Conv task created: ", dap_name_);
@@ -68,7 +68,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
   }
 
-  StateResult createConv(void)
+  StateResult CreateConversation(void)
   {
     try
     {
@@ -82,12 +82,12 @@ public:
       auto                this_sp = this->template shared_from_base<DapConversationTask>();
       std::weak_ptr<Task> this_wp = this_sp;
 
-      if (conversation->makeNotification()
+      if (conversation->MakeNotification()
               .Then([this_wp]() {
                 auto sp = this_wp.lock();
                 if (sp)
                 {
-                  sp->makeRunnable();
+                  sp->MakeRunnable();
                 }
               })
               .Waiting())
@@ -113,12 +113,12 @@ public:
     }
   }
 
-  virtual StateResult handleResponse(void)
+  virtual StateResult HandleResponse(void)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-    FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->getAvailableReplyCount());
+    FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());
 
-    if (conversation->getAvailableReplyCount() == 0)
+    if (conversation->GetAvailableReplyCount() == 0)
     {
       (*task_errored)++;
       if (errorHandler)
@@ -129,7 +129,7 @@ public:
       return DapConversationTask::StateResult(0, ERRORED);
     }
 
-    auto resp = conversation->getReply(0);
+    auto resp = conversation->GetReply(0);
     if (!resp)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Got nullptr as reply");

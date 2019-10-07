@@ -47,24 +47,24 @@ class URI
 public:
   std::string              protocol;
   std::string              coreURI;
-  std::string              coreKey;
+  std::string              CoreKey;
   std::vector<std::string> namespaces;
-  std::string              agentKey;
-  std::string              agentAlias;
+  std::string              AgentKey;
+  std::string              AgentAlias;
   bool                     empty;
 
   URI()
     : protocol{"tcp"}
     , coreURI{""}
-    , coreKey{""}
-    , agentKey{""}
-    , agentAlias{""}
+    , CoreKey{""}
+    , AgentKey{""}
+    , AgentAlias{""}
     , empty{true}
   {}
 
   virtual ~URI() = default;
 
-  std::string toString()
+  std::string ToString()
   {
     std::string nspaces = "";
     if (!namespaces.empty())
@@ -76,14 +76,14 @@ public:
       nspaces = nspaces.substr(0, nspaces.size() - 1);
     }
     std::string uri{""};
-    uri += protocol + "://" += coreURI + "/" += coreKey + "/" += nspaces + "/" += agentKey + "/" +=
-        agentAlias;
+    uri += protocol + "://" += coreURI + "/" += CoreKey + "/" += nspaces + "/" += AgentKey + "/" +=
+        AgentAlias;
     return uri;
   }
 
-  std::string agentPartAsString()
+  std::string AgentPartAsString()
   {
-    return agentKey + (agentAlias.size() > 0 ? ("/" + agentAlias) : "");
+    return AgentKey + (AgentAlias.size() > 0 ? ("/" + AgentAlias) : "");
   }
 
   void parse(const std::string &uri)
@@ -103,20 +103,20 @@ public:
     empty      = false;
     protocol   = vec[0].substr(0, vec[0].size() - 1);
     coreURI    = vec[2];
-    coreKey    = vec[3];
-    agentAlias = vec[vec.size() - 1];
-    agentKey   = vec[vec.size() - 2];
+    CoreKey    = vec[3];
+    AgentAlias = vec[vec.size() - 1];
+    AgentKey   = vec[vec.size() - 2];
     for (std::size_t i = 4, limit = vec.size() - 2; i < limit; ++i)
     {
       namespaces.push_back(vec[i]);
     }
   }
 
-  void parseAgent(const std::string &src)
+  void ParseAgent(const std::string &src)
   {
     if (src.find('/') == std::string::npos)
     {
-      agentKey = src;
+      AgentKey = src;
       return;
     }
     std::vector<std::string> vec;
@@ -128,17 +128,17 @@ public:
       return;
     }
     empty      = false;
-    agentKey   = vec[0];
-    agentAlias = vec[1];
+    AgentKey   = vec[0];
+    AgentAlias = vec[1];
   }
 
   void print()
   {
     std::cout << "protocol: " << protocol << std::endl
               << "coreURI: " << coreURI << std::endl
-              << "coreKey: " << coreKey << std::endl
-              << "agentKey: " << agentKey << std::endl
-              << "agentAlias: " << agentAlias << std::endl
+              << "CoreKey: " << CoreKey << std::endl
+              << "AgentKey: " << AgentKey << std::endl
+              << "AgentAlias: " << AgentAlias << std::endl
               << "empty: " << empty << std::endl
               << "namespaces: " << std::endl;
     for (const auto &n : namespaces)
@@ -170,34 +170,34 @@ public:
     return this;
   }
 
-  Builder *coreAddress(std::string host, int port)
+  Builder *CoreAddress(std::string host, int port)
   {
     uri_.coreURI = std::move(host);
     uri_.coreURI += std::to_string(port);
     return this;
   }
 
-  Builder *coreKey(std::string key)
+  Builder *CoreKey(std::string key)
   {
-    uri_.coreKey = std::move(key);
+    uri_.CoreKey = std::move(key);
     return this;
   }
 
-  Builder *agentKey(std::string key)
+  Builder *AgentKey(std::string key)
   {
-    uri_.agentKey = std::move(key);
+    uri_.AgentKey = std::move(key);
     return this;
   }
 
-  Builder *addNamespace(std::string nspace)
+  Builder *AddNamespace(std::string nspace)
   {
     uri_.namespaces.push_back(std::move(nspace));
     return this;
   }
 
-  Builder *agentAlias(std::string alias)
+  Builder *AgentAlias(std::string alias)
   {
-    uri_.agentAlias = std::move(alias);
+    uri_.AgentAlias = std::move(alias);
     return this;
   }
 

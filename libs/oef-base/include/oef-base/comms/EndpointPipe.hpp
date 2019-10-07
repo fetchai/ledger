@@ -58,17 +58,17 @@ public:
     endpoint->wake();
   }
 
-  std::size_t getIdent(void) const
+  std::size_t GetIdentifier(void) const
   {
-    return endpoint->getIdent();
+    return endpoint->GetIdentifier();
   }
 
-  virtual const std::string &getRemoteId(void) const
+  virtual const std::string &GetRemoteId(void) const
   {
-    return endpoint->getRemoteId();
+    return endpoint->GetRemoteId();
   }
 
-  std::shared_ptr<EndpointType> getEndpoint()
+  std::shared_ptr<EndpointType> GetEndpoint()
   {
     return endpoint;
   }

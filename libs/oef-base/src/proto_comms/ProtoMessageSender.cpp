@@ -2,7 +2,7 @@
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include <google/protobuf/message.h>
 
-ProtoMessageSender::consumed_needed_pair ProtoMessageSender::checkForSpace(
+ProtoMessageSender::consumed_needed_pair ProtoMessageSender::CheckForSpace(
     const mutable_buffers &data, IMessageWriter<TXType>::TXQ &txq)
 {
   CharArrayBuffer chars(data);
@@ -31,7 +31,7 @@ ProtoMessageSender::consumed_needed_pair ProtoMessageSender::checkForSpace(
       uint32_t body_size = txq.front()->ByteSize();
       uint32_t head_size = sizeof(uint32_t);
       uint32_t mesg_size = body_size + head_size;
-      if (chars.remainingSpace() < mesg_size)
+      if (chars.RemainingSpace() < mesg_size)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "out of space on write buffer.");
         break;

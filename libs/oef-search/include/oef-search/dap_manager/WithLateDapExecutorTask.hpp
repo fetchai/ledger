@@ -102,12 +102,12 @@ public:
     auto this_sp = this->template shared_from_base<WithLateDapExecutorTask>();
     std::weak_ptr<WithLateDapExecutorTask> this_wp = this_sp;
 
-    if (main_task_->makeNotification()
+    if (main_task_->MakeNotification()
             .Then([this_wp]() {
               auto sp = this_wp.lock();
               if (sp)
               {
-                sp->makeRunnable();
+                sp->MakeRunnable();
               }
             })
             .Waiting())
@@ -140,12 +140,12 @@ public:
     auto this_sp = this->template shared_from_base<WithLateDapExecutorTask>();
     std::weak_ptr<WithLateDapExecutorTask> this_wp = this_sp;
 
-    if (task->makeNotification()
+    if (task->MakeNotification()
             .Then([this_wp]() {
               auto sp = this_wp.lock();
               if (sp)
               {
-                sp->makeRunnable();
+                sp->MakeRunnable();
               }
             })
             .Waiting())

@@ -108,6 +108,6 @@ var pred = graph.evaluate("Output");
 pred = remove_leading_dimension(pred);
 pred = scaler.deNormalise(pred);
 
-printLn(pred.toString());
+printLn(pred.ToString());
 
 endfunction

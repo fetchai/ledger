@@ -34,21 +34,21 @@ public:
   virtual ~ProtoMessageEndpoint()
   {}
 
-  void setEndianness(Endianness newstate);
+  void SetEndianness(Endianness newstate);
 
   void setup(std::shared_ptr<ProtoMessageEndpoint> &myself);
 
-  void setOnStartHandler(typename EndpointType::StartNotification handler)
+  void SetOnStartHandler(typename EndpointType::StartNotification handler)
   {
     endpoint->onStart = std::move(handler);
   }
 
-  void setOnCompleteHandler(typename Reader::CompleteNotification handler)
+  void SetOnCompleteHandler(typename Reader::CompleteNotification handler)
   {
     protoMessageReader->onComplete = std::move(handler);
   }
 
-  void setOnPeerErrorHandler(typename Reader::ErrorNotification handler)
+  void SetOnPeerErrorHandler(typename Reader::ErrorNotification handler)
   {
     protoMessageReader->onError = std::move(handler);
   }
@@ -58,12 +58,12 @@ public:
     endpoint->onError = std::move(handler);
   }
 
-  void setOnEofHandler(typename EndpointType::EofNotification handler)
+  void SetOnEofHandler(typename EndpointType::EofNotification handler)
   {
     endpoint->onEof = std::move(handler);
   }
 
-  void setOnProtoErrorHandler(typename EndpointType::ProtoErrorNotification handler)
+  void SetOnProtoErrorHandler(typename EndpointType::ProtoErrorNotification handler)
   {
     endpoint->onProtoError = std::move(handler);
   }

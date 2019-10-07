@@ -34,12 +34,12 @@ void OefAgentEndpoint::close(const std::string &reason)
   socket().close();
 }
 
-void OefAgentEndpoint::setState(const std::string &stateName, bool value)
+void OefAgentEndpoint::SetState(const std::string &stateName, bool value)
 {
   states[stateName] = value;
 }
 
-bool OefAgentEndpoint::getState(const std::string &stateName) const
+bool OefAgentEndpoint::GetState(const std::string &stateName) const
 {
   auto entry = states.find(stateName);
   if (entry == states.end())
@@ -56,30 +56,30 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
 
   Counter("mt-core.network.OefAgentEndpoint.setup")++;
 
-  endpoint->setOnStartHandler([myself_wp, karmaPolicy]() {
+  endpoint->SetOnStartHandler([myself_wp, karmaPolicy]() {
     if (auto myself_sp = myself_wp.lock())
     {
       Lock lock(myself_sp->mutex);
       Counter("mt-core.network.OefAgentEndpoint.OnStartHandler")++;
-      auto k = karmaPolicy->getAccount(myself_sp->endpoint->getRemoteId(), "");
+      auto k = karmaPolicy->GetAccount(myself_sp->endpoint->GetRemoteId(), "");
       std::swap(k, myself_sp->karma);
       myself_sp->karma.perform("login");
-      FETCH_LOG_INFO(LOGGING_NAME, "id=", myself_sp->getIdent(),
-                     " KARMA: account=", myself_sp->endpoint->getRemoteId(),
-                     "  balance=", myself_sp->karma.getBalance());
+      FETCH_LOG_INFO(LOGGING_NAME, "id=", myself_sp->GetIdentifier(),
+                     " KARMA: account=", myself_sp->endpoint->GetRemoteId(),
+                     "  balance=", myself_sp->karma.GetBalance());
     }
   });
 
-  auto myGroupId = getIdent();
+  auto myGroupId = GetIdentifier();
 
-  endpoint->setOnCompleteHandler([myGroupId, myself_wp](ConstCharArrayBuffer buffers) {
+  endpoint->SetOnCompleteHandler([myGroupId, myself_wp](ConstCharArrayBuffer buffers) {
     if (auto myself_sp = myself_wp.lock())
     {
       Lock lock(myself_sp->mutex);
       Counter("mt-core.network.OefAgentEndpoint.OnCompleteHandler")++;
       myself_sp->karma.perform("message");
-      Task::setThreadGroupId(myGroupId);
-      myself_sp->factory->processMessage(buffers);
+      Task::SetThreadGroupId(myGroupId);
+      myself_sp->factory->ProcessMessage(buffers);
     }
   });
 
@@ -89,41 +89,41 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
       Lock lock(myself_sp->mutex);
       Counter("mt-core.network.OefAgentEndpoint.OnErrorHandler")++;
       myself_sp->karma.perform("error.comms");
-      myself_sp->factory->endpointClosed();
+      myself_sp->factory->EndpointClosed();
       myself_sp->factory.reset();
-      Taskpool::getDefaultTaskpool().lock()->cancelTaskGroup(myGroupId);
-      FETCH_LOG_INFO(LOGGING_NAME, "OnErrorHandler.cancelTaskGroup group=", myGroupId);
+      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
+      FETCH_LOG_INFO(LOGGING_NAME, "OnErrorHandler.CancelTaskGroup group=", myGroupId);
     }
   });
 
-  endpoint->setOnEofHandler([myGroupId, myself_wp]() {
+  endpoint->SetOnEofHandler([myGroupId, myself_wp]() {
     if (auto myself_sp = myself_wp.lock())
     {
       Lock lock(myself_sp->mutex);
       Counter("mt-core.network.OefAgentEndpoint.OnEofHandler")++;
       myself_sp->karma.perform("eof");
-      myself_sp->factory->endpointClosed();
+      myself_sp->factory->EndpointClosed();
       myself_sp->factory.reset();
-      Taskpool::getDefaultTaskpool().lock()->cancelTaskGroup(myGroupId);
-      FETCH_LOG_INFO(LOGGING_NAME, "OnEofHandler.cancelTaskGroup group=", myGroupId);
+      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
+      FETCH_LOG_INFO(LOGGING_NAME, "OnEofHandler.CancelTaskGroup group=", myGroupId);
     }
   });
 
-  endpoint->setOnProtoErrorHandler([myGroupId, myself_wp](const std::string &message) {
+  endpoint->SetOnProtoErrorHandler([myGroupId, myself_wp](const std::string &message) {
     if (auto myself_sp = myself_wp.lock())
     {
       Lock lock(myself_sp->mutex);
       Counter("mt-core.network.OefAgentEndpoint.OnProtoErrorHandler")++;
       myself_sp->karma.perform("error.proto");
-      myself_sp->factory->endpointClosed();
+      myself_sp->factory->EndpointClosed();
       myself_sp->factory.reset();
-      Taskpool::getDefaultTaskpool().lock()->cancelTaskGroup(myGroupId);
-      FETCH_LOG_INFO(LOGGING_NAME, "OnProtoErrorHandler.cancelTaskGroup group=", myGroupId);
+      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
+      FETCH_LOG_INFO(LOGGING_NAME, "OnProtoErrorHandler.CancelTaskGroup group=", myGroupId);
     }
   });
 }
 
-void OefAgentEndpoint::setFactory(std::shared_ptr<IOefTaskFactory<OefAgentEndpoint>> new_factory)
+void OefAgentEndpoint::SetFactory(std::shared_ptr<IOefTaskFactory<OefAgentEndpoint>> new_factory)
 {
   if (factory)
   {
@@ -134,28 +134,28 @@ void OefAgentEndpoint::setFactory(std::shared_ptr<IOefTaskFactory<OefAgentEndpoi
 
 OefAgentEndpoint::~OefAgentEndpoint()
 {
-  endpoint->setOnCompleteHandler(nullptr);
+  endpoint->SetOnCompleteHandler(nullptr);
   endpoint->setOnErrorHandler(nullptr);
-  endpoint->setOnEofHandler(nullptr);
-  endpoint->setOnProtoErrorHandler(nullptr);
-  FETCH_LOG_INFO(LOGGING_NAME, "id=", getIdent(), " ~OefAgentEndpoint");
+  endpoint->SetOnEofHandler(nullptr);
+  endpoint->SetOnProtoErrorHandler(nullptr);
+  FETCH_LOG_INFO(LOGGING_NAME, "id=", GetIdentifier(), " ~OefAgentEndpoint");
   count--;
 }
 
 void OefAgentEndpoint::heartbeat()
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "id=", getIdent(), " HB:", getIdent());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "id=", GetIdentifier(), " HB:", GetIdentifier());
   try
   {
     if (outstanding_heartbeats > 0)
     {
       hb_max_os.max(outstanding_heartbeats);
-      FETCH_LOG_DEBUG(LOGGING_NAME, "id=", getIdent(), " HB:", getIdent(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "id=", GetIdentifier(), " HB:", GetIdentifier(),
                       " outstanding=", outstanding_heartbeats);
       karma.perform("comms.outstanding_heartbeats." + std::to_string(outstanding_heartbeats));
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "id=", getIdent(), " HB:", getIdent(), " PING");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "id=", GetIdentifier(), " HB:", GetIdentifier(), " PING");
     auto ping_message = std::make_shared<fetch::oef::pb::Server_AgentMessage>();
     ping_message->mutable_ping()->set_dummy(1);
     ping_message->set_answer_id(0);
@@ -176,7 +176,7 @@ void OefAgentEndpoint::heartbeat()
 void OefAgentEndpoint::heartbeat_recvd(void)
 {
   hb_recvd++;
-  FETCH_LOG_DEBUG(LOGGING_NAME, "id=", getIdent(), " HB:", getIdent(),
+  FETCH_LOG_DEBUG(LOGGING_NAME, "id=", GetIdentifier(), " HB:", GetIdentifier(),
                   " PONG  outstanding=", outstanding_heartbeats, " -> 0");
   outstanding_heartbeats = 0;
 }

@@ -131,7 +131,7 @@ int MtCore::run()
       std::make_shared<OefListenerSet<IOefTaskFactory<OefAgentEndpoint>, OefAgentEndpoint>>();
   core       = std::make_shared<Core>();
   auto tasks = std::make_shared<Taskpool>();
-  tasks->setDefault();
+  tasks->SetDefault();
   outbounds = std::make_shared<OutboundConversations>();
 
   std::function<void(void)>                      run_comms = std::bind(&Core::run, core.get());
@@ -143,7 +143,7 @@ int MtCore::run()
 
   Uri core_uri(config_.core_uri());
   Uri search_uri(config_.search_uri());
-  outbounds->addConversationCreator(
+  outbounds->AddConversationCreator(
       "search", std::make_shared<OutboundSearchConversationCreator>(config_.core_key(), core_uri,
                                                                     search_uri, *core, outbounds));
   agents_ = std::make_shared<Agents>();
@@ -200,7 +200,7 @@ int MtCore::run()
 
   while (1)
   {
-    tasks->updateStatus();
+    tasks->UpdateStatus();
 
     unsigned int snooze = 3;
 
@@ -272,7 +272,7 @@ void MtCore::startListeners(IKarmaPolicy *karmaPolicy)
 
   IOefListener<IOefTaskFactory<OefAgentEndpoint>, OefAgentEndpoint>::FactoryCreator
       initialFactoryCreator = [this, login_timeout](std::shared_ptr<OefAgentEndpoint> endpoint) {
-        endpoint->addGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self) {
+        endpoint->AddGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self) {
           auto timeout = std::make_shared<OefLoginTimeoutTask>(self);
           timeout->submit(login_timeout);
         });
@@ -298,7 +298,7 @@ void MtCore::startListeners(IKarmaPolicy *karmaPolicy)
   if (!config_.ssl_uri().empty())
   {
     initialFactoryCreator = [this, login_timeout](std::shared_ptr<OefAgentEndpoint> endpoint) {
-      endpoint->addGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self) {
+      endpoint->AddGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self) {
         auto timeout = std::make_shared<OefLoginTimeoutTask>(self);
         timeout->submit(login_timeout);
       });
@@ -329,7 +329,7 @@ void MtCore::startListeners(IKarmaPolicy *karmaPolicy)
   if (!config_.secure_uri().empty())
   {
     initialFactoryCreator = [this, login_timeout](std::shared_ptr<OefAgentEndpoint> endpoint) {
-      endpoint->addGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self) {
+      endpoint->AddGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self) {
         auto timeout = std::make_shared<OefLoginTimeoutTask>(self);
         timeout->submit(login_timeout);
       });

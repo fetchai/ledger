@@ -69,7 +69,7 @@ public:
       {
         if (messageHandler && outputMerger)
         {
-          messageHandler(outputMerger(getOutputs()));
+          messageHandler(outputMerger(GetOutputs()));
         }
         wake();
         if (errored_tasks_ == 0)
@@ -140,12 +140,12 @@ public:
 
       tasks_.pop();
 
-      if (task->makeNotification()
+      if (task->MakeNotification()
               .Then([this_wp]() {
                 auto sp = this_wp.lock();
                 if (sp)
                 {
-                  sp->makeRunnable();
+                  sp->MakeRunnable();
                 }
               })
               .Waiting())
@@ -163,7 +163,7 @@ public:
     }
   }
 
-  std::vector<std::shared_ptr<OUT_PROTO>> &getOutputs()
+  std::vector<std::shared_ptr<OUT_PROTO>> &GetOutputs()
   {
     return results_;
   }

@@ -23,7 +23,7 @@ OutboundSearchConversationCreator::OutboundSearchConversationCreator(size_t     
                  search_uri.ToString());
   worker = std::make_shared<OutboundConversationWorkerTask>(core, search_uri, ident2conversation);
 
-  worker->setThreadGroupId(thread_group_id);
+  worker->SetThreadGroupId(thread_group_id);
 
   worker->submit();
 }

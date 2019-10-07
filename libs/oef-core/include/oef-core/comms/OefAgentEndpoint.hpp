@@ -28,7 +28,7 @@ public:
   OefAgentEndpoint(std::shared_ptr<ProtoMessageEndpoint<TXType>> endpoint);
   virtual ~OefAgentEndpoint();
 
-  void setFactory(std::shared_ptr<IOefTaskFactory<OefAgentEndpoint>> new_factory);
+  void SetFactory(std::shared_ptr<IOefTaskFactory<OefAgentEndpoint>> new_factory);
   void setup(IKarmaPolicy *karmaPolicy);
 
   virtual void go(void) override
@@ -55,10 +55,10 @@ public:
   void heartbeat_recvd(void);
 
   void close(const std::string &reason);
-  void setState(const std::string &stateName, bool value);
-  bool getState(const std::string &stateName) const;
+  void SetState(const std::string &stateName, bool value);
+  bool GetState(const std::string &stateName) const;
 
-  void addGoFunction(std::function<void(SELF_P)> func)
+  void AddGoFunction(std::function<void(SELF_P)> func)
   {
     go_functions.push_back(func);
   }

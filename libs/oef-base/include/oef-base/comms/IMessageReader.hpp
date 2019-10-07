@@ -20,7 +20,7 @@ public:
     return consumed_needed_pair(0, 4);
   }
 
-  virtual consumed_needed_pair checkForMessage(const buffers &data) = 0;
+  virtual consumed_needed_pair CheckForMessage(const buffers &data) = 0;
 
 protected:
 private:

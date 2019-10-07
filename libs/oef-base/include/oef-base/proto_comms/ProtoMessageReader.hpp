@@ -30,12 +30,12 @@ public:
   {}
 
   consumed_needed_pair initial();
-  consumed_needed_pair checkForMessage(const buffers &data);
+  consumed_needed_pair CheckForMessage(const buffers &data);
 
   CompleteNotification onComplete;
   ErrorNotification    onError;
 
-  void setEndianness(Endianness newstate);
+  void SetEndianness(Endianness newstate);
 
 protected:
 private:

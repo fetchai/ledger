@@ -76,7 +76,7 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("squeeze", &VMTensor::Squeeze)
       .CreateMemberFunction("size", &VMTensor::size)
       .CreateMemberFunction("fromString", &VMTensor::FromString)
-      .CreateMemberFunction("toString", &VMTensor::ToString);
+      .CreateMemberFunction("ToString", &VMTensor::ToString);
 }
 
 SizeVector VMTensor::shape() const

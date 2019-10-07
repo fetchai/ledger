@@ -19,7 +19,7 @@ OutboundDapConversationCreator::OutboundDapConversationCreator(size_t     thread
                  dap_uri.ToString());
   worker = std::make_shared<OutboundConversationWorkerTask>(core, dap_uri, ident2conversation);
 
-  worker->setThreadGroupId(thread_group_id);
+  worker->SetThreadGroupId(thread_group_id);
 
   worker->submit();
 }

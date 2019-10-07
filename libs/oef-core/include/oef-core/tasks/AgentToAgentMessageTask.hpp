@@ -26,8 +26,8 @@ public:
     : pb_{std::move(pb)}
   {
     OEFURI::URI uri;
-    uri.parseAgent(pb_->destination());
-    agent_ = agents->find(uri.agentKey);
+    uri.ParseAgent(pb_->destination());
+    agent_ = agents->find(uri.AgentKey);
 
     if (agent_ == nullptr)
     {
@@ -57,7 +57,7 @@ public:
     message_pb_->set_target_uri(pb_->target_uri());
     if (message_pb_->target_uri().size() == 0)
     {
-      message_pb_->set_target_uri(uri.toString());
+      message_pb_->set_target_uri(uri.ToString());
     }
     auto content = message_pb_->mutable_content();
     content->set_dialogue_id(did);
@@ -81,7 +81,7 @@ public:
     error->set_origin(pb_->destination());
   }
 
-  virtual bool isRunnable(void) const
+  virtual bool IsRunnable(void) const
   {
     return true;
   }
@@ -89,7 +89,7 @@ public:
   virtual ExitState run(void)
   {
     // TODO(kll): it's possible there's a race hazard here. Need to think about this.
-    if (agent_->send(message_pb_).Then([this]() { this->makeRunnable(); }).Waiting())
+    if (agent_->send(message_pb_).Then([this]() { this->MakeRunnable(); }).Waiting())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Defer message send...");
       return ExitState::DEFER;

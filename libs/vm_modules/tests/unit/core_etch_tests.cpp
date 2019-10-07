@@ -459,7 +459,7 @@ TEST_F(CoreEtchTests, range_with_equal_bounds_is_empty)
   static char const *TEXT = R"(
     function main()
       for (i in 1:1)
-        print("Not printed " + toString(i));
+        print("Not printed " + ToString(i));
       endfor
     endfunction
   )";

@@ -2,9 +2,9 @@
 #include "oef-base/threading/Future.hpp"
 #include "oef-base/threading/FutureCombiner.hpp"
 
-void SearchTaskFactory::processMessageWithUri(const Uri &current_uri, ConstCharArrayBuffer &data)
+void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharArrayBuffer &data)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Called processMessage with path=", current_uri.path);
+  FETCH_LOG_INFO(LOGGING_NAME, "Called ProcessMessage with path=", current_uri.path);
 
   auto                             this_sp = shared_from_this();
   std::weak_ptr<SearchTaskFactory> this_wp = this_sp;
@@ -18,7 +18,7 @@ void SearchTaskFactory::processMessageWithUri(const Uri &current_uri, ConstCharA
       FETCH_LOG_INFO(LOGGING_NAME, "Got search: ", query.DebugString());
 
       auto handle_query_result = dap_manager_->ShouldQueryBeHandled(query);
-      handle_query_result->makeNotification().Then([this_wp, handle_query_result, current_uri,
+      handle_query_result->MakeNotification().Then([this_wp, handle_query_result, current_uri,
                                                     query]() mutable {
         auto sp = this_wp.lock();
         if (sp)
@@ -61,7 +61,7 @@ void SearchTaskFactory::processMessageWithUri(const Uri &current_uri, ConstCharA
       {
         auto result_future =
             dap_manager_->parallelCall("update", *(dmi.mutable_service_description()));
-        result_future->makeNotification().Then([result_future, this_wp, current_uri]() {
+        result_future->MakeNotification().Then([result_future, this_wp, current_uri]() {
           auto status = result_future->get();
           FETCH_LOG_INFO(LOGGING_NAME, "Update status: ", status->ShortDebugString());
           auto sp = this_wp.lock();
@@ -95,16 +95,16 @@ void SearchTaskFactory::processMessageWithUri(const Uri &current_uri, ConstCharA
       {
         auto        ra = remove.mutable_service_description()->add_actions();
         OEFURI::URI uri;
-        uri.coreKey = remove.key();
-        uri.parseAgent(remove.agent_key());
+        uri.CoreKey = remove.key();
+        uri.ParseAgent(remove.agent_key());
         uri.empty = false;
-        ra->set_row_key(uri.toString());
+        ra->set_row_key(uri.ToString());
         ra->set_target_field_name("*");
         target = "removeRow";
       }
       auto result_future =
           dap_manager_->parallelCall(target, *remove.mutable_service_description());
-      result_future->makeNotification().Then([result_future, this_wp, current_uri]() {
+      result_future->MakeNotification().Then([result_future, this_wp, current_uri]() {
         auto status = result_future->get();
         FETCH_LOG_INFO(LOGGING_NAME, "Remove status: ", status->ShortDebugString());
         auto sp = this_wp.lock();
@@ -145,7 +145,7 @@ void SearchTaskFactory::HandleQuery(const fetch::oef::pb::SearchQuery &query,
 
   auto visit_future = dap_manager_->VisitQueryTreeLocal(root);
 
-  visit_future->makeNotification().Then([root, this_wp, current_uri, query]() {
+  visit_future->MakeNotification().Then([root, this_wp, current_uri, query]() {
     FETCH_LOG_INFO(LOGGING_NAME, "--------------------- QUERY TREE");
     root->Print();
     FETCH_LOG_INFO(LOGGING_NAME, "---------------------");
@@ -168,7 +168,7 @@ void SearchTaskFactory::HandleQuery(const fetch::oef::pb::SearchQuery &query,
       result_future->AddFuture(sp->dap_manager_->execute(root));
       result_future->AddFuture(sp->dap_manager_->broadcast(root, query));
 
-      result_future->makeNotification().Then([result_future, this_wp, current_uri]() mutable {
+      result_future->MakeNotification().Then([result_future, this_wp, current_uri]() mutable {
         auto result = result_future->Get();
         if (result->identifiers_size() > 0)
         {

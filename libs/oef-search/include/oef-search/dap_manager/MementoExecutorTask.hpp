@@ -37,7 +37,7 @@ public:
   bool operator==(const MementoExecutorTask &other) = delete;
   bool operator<(const MementoExecutorTask &other)  = delete;
 
-  virtual bool isRunnable() const override
+  virtual bool IsRunnable() const override
   {
     return true;
   }
@@ -108,12 +108,12 @@ public:
 
       conv_task_->submit();
 
-      if (conv_task_->makeNotification()
+      if (conv_task_->MakeNotification()
               .Then([this_wp]() {
                 auto sp = this_wp.lock();
                 if (sp)
                 {
-                  sp->makeRunnable();
+                  sp->MakeRunnable();
                 }
               })
               .Waiting())

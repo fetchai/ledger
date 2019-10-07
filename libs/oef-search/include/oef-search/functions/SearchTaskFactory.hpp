@@ -58,11 +58,11 @@ public:
     SendReply<Successfulness>("Exception@" + where, uri, std::move(status));
   }
 
-  virtual void processMessageWithUri(const Uri &current_uri, ConstCharArrayBuffer &data);
+  virtual void ProcessMessageWithUri(const Uri &current_uri, ConstCharArrayBuffer &data);
   // Process the message, throw exceptions if they're bad.
 
 protected:
-  virtual void endpointClosed(void)
+  virtual void EndpointClosed(void)
   {}
 
   void HandleQuery(const fetch::oef::pb::SearchQuery &query, const Uri &current_uri);

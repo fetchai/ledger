@@ -23,7 +23,7 @@ Taskpool::Taskpool()
   Counter("mt-core.tasks.run.completed");
 }
 
-void Taskpool::setDefault()
+void Taskpool::SetDefault()
 {
   gDefaultTaskPool = shared_from_this();
 }
@@ -31,7 +31,7 @@ void Taskpool::setDefault()
 Taskpool::~Taskpool()
 {}
 
-std::weak_ptr<Taskpool> Taskpool::getDefaultTaskpool()
+std::weak_ptr<Taskpool> Taskpool::GetDefaultTaskpool()
 {
   return gDefaultTaskPool;
 }
@@ -99,13 +99,13 @@ void Taskpool::run(std::size_t thread_idx)
 
     try
     {
-      if (mytask->isCancelled())
+      if (mytask->IsCancelled())
       {
         status = CANCELLED;
       }
       else
       {
-        status = mytask->runThunk();
+        status = mytask->RunThunk();
       }
     }
     catch (std::exception &ex)
@@ -207,7 +207,7 @@ void Taskpool::remove(TaskP task)
   }
 }
 
-void Taskpool::makeRunnable(TaskP task)
+void Taskpool::MakeRunnable(TaskP task)
 {
   Lock lock(mutex);
 
@@ -223,7 +223,7 @@ void Taskpool::makeRunnable(TaskP task)
   }
 }
 
-void Taskpool::updateStatus() const
+void Taskpool::UpdateStatus() const
 {
   Lock lock(mutex);
   gauge_pending   = pending_tasks.size();
@@ -274,7 +274,7 @@ void Taskpool::suspend(TaskP task)
 
 void Taskpool::submit(TaskP task)
 {
-  if (task->isRunnable())
+  if (task->IsRunnable())
   {
     Lock lock(mutex);
     Counter("mt-core.tasks.moved-to-runnable")++;
@@ -320,7 +320,7 @@ Taskpool::TaskP Taskpool::lockless_getNextFutureWork(const Timestamp &current_ti
     auto r = future_tasks.top().task;
     future_tasks.pop();
 
-    if (!(r->isCancelled()))
+    if (!(r->IsCancelled()))
     {
       result       = r;
       result->pool = 0;
@@ -332,10 +332,10 @@ Taskpool::TaskP Taskpool::lockless_getNextFutureWork(const Timestamp &current_ti
   return result;
 }
 
-void Taskpool::cancelTaskGroup(std::size_t group_id)
+void Taskpool::CancelTaskGroup(std::size_t group_id)
 {
 
-  FETCH_LOG_INFO(LOGGING_NAME, "cancelTaskGroup ", group_id);
+  FETCH_LOG_INFO(LOGGING_NAME, "CancelTaskGroup ", group_id);
 
   std::list<TaskP> tasks;
 
@@ -378,7 +378,7 @@ void Taskpool::cancelTaskGroup(std::size_t group_id)
 
   for (auto t : tasks)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "cancelTaskGroup ", group_id, " (P) task ", t->task_id);
+    FETCH_LOG_INFO(LOGGING_NAME, "CancelTaskGroup ", group_id, " (P) task ", t->task_id);
     t->cancel();
   }
 }

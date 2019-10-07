@@ -15,10 +15,10 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::initial()
   return consumed_needed_pair(0, 1);
 }
 
-ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMessage(
+ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::CheckForMessage(
     const buffers &data)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "checkForMessage");
+  FETCH_LOG_INFO(LOGGING_NAME, "CheckForMessage");
 
   std::string s;
 
@@ -30,7 +30,7 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMes
 
   while (true)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "checkForMessage in ", chars.remainingData(),
+    FETCH_LOG_INFO(LOGGING_NAME, "CheckForMessage in ", chars.RemainingData(),
                    " bytes. Current: ", chars.current, ", size:", chars.size);
     // chars.diagnostic();
 
@@ -39,9 +39,9 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMes
 
     uint32_t head_size = leader_head_size + payload_head_size;
 
-    if (chars.remainingData() < head_size)
+    if (chars.RemainingData() < head_size)
     {
-      needed = head_size - chars.remainingData();
+      needed = head_size - chars.RemainingData();
       break;
     }
 
@@ -63,9 +63,9 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMes
       break;
     }
 
-    if (chars.remainingData() < body_size)
+    if (chars.RemainingData() < body_size)
     {
-      needed = body_size - chars.remainingData();
+      needed = body_size - chars.RemainingData();
       break;
     }
 

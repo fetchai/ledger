@@ -44,7 +44,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
   }
 
-  StateResult createConv(void)
+  StateResult CreateConversation(void)
   {
     auto                this_sp = get_shared();
     std::weak_ptr<Task> this_wp = this_sp;
@@ -53,12 +53,12 @@ public:
     conversation =
         outbounds->startConversation(Uri("outbound://search:0/" + path_), make_request_proto());
 
-    if (conversation->makeNotification()
+    if (conversation->MakeNotification()
             .Then([this_wp]() {
               auto sp = this_wp.lock();
               if (sp)
               {
-                sp->makeRunnable();
+                sp->MakeRunnable();
               }
             })
             .Waiting())
@@ -70,7 +70,7 @@ public:
     return SearchConversationTask::StateResult(1, COMPLETE);
   }
 
-  virtual StateResult                    handleResponse(void) = 0;
+  virtual StateResult                    HandleResponse(void) = 0;
   virtual std::shared_ptr<Task>          get_shared()         = 0;
   virtual std::shared_ptr<REQUEST_PROTO> make_request_proto() = 0;
 
@@ -78,7 +78,7 @@ public:
       std::function<void(std::shared_ptr<OUT_PROTO>, std::shared_ptr<OefAgentEndpoint> endpoint)>;
   SendFunc sendReply;
 
-  void setDefaultSendReplyFunc(const char *logging_name, const char *log_message)
+  void SetDefaultSendReplyFunc(const char *logging_name, const char *log_message)
   {
     sendReply = [logging_name, log_message](std::shared_ptr<OUT_PROTO>        response,
                                             std::shared_ptr<OefAgentEndpoint> endpoint) {

@@ -59,7 +59,7 @@ template <typename TXType>
 void EndpointWebSocket<TXType>::async_write()
 {
   /*
-    auto data = sendBuffer.getDataBuffers();
+    auto data = sendBuffer.GetDataBuffers();
 
     int i = 0;
     for (auto &d : data)
@@ -83,7 +83,7 @@ template <typename TXType>
 void EndpointWebSocket<TXType>::async_read(const std::size_t & /*bytes_needed*/)
 {
   /*
-    auto space    = readBuffer.getSpaceBuffers();
+    auto space    = readBuffer.GetSpaceBuffers();
     auto my_state = state;
     async_read_at_least(bytes_needed, 0, space, my_state);
   */
@@ -137,13 +137,13 @@ void EndpointWebSocket<TXType>::on_accept(std::error_code const & /*ec*/)
     // Read a message into our buffer
     //web_socket_.read(buffer);
 
-    auto space = readBuffer.getSpaceBuffers();
+    auto space = readBuffer.GetSpaceBuffers();
     std::error_code errorCode;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Reading...");
     auto bytes = web_socket_.read_some(space, errorCode);
-    readBuffer.markSpaceUsed(bytes);
-    FETCH_LOG_WARN(LOGGING_NAME, "Got data: ", bytes, " , ", readBuffer.getDataAvailable());
+    readBuffer.MarkSpaceUsed(bytes);
+    FETCH_LOG_WARN(LOGGING_NAME, "Got data: ", bytes, " , ", readBuffer.GetDataAvailable());
 
     if (errorCode) {
       FETCH_LOG_WARN(LOGGING_NAME, "Error reading web socket: ", ec.message());
@@ -152,7 +152,7 @@ void EndpointWebSocket<TXType>::on_accept(std::error_code const & /*ec*/)
 
 
     FETCH_LOG_INFO(LOGGING_NAME, "Getting data");
-    auto data = readBuffer.getDataBuffers();
+    auto data = readBuffer.GetDataBuffers();
 
     FETCH_LOG_INFO(LOGGING_NAME, "Write data: ", data.size(), ". data[0].size=", data[0].size());
     auto written = web_socket_.write(data, errorCode);

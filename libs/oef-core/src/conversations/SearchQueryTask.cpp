@@ -15,8 +15,8 @@ static Counter tasks_succeeded("mt-core.search.query.tasks_succeeded");
 static Counter tasks_errored("mt-core.search.query.tasks_errored");
 
 SearchQueryTask::EntryPoint searchQueryTaskEntryPoints[] = {
-    &SearchQueryTask::createConv,
-    &SearchQueryTask::handleResponse,
+    &SearchQueryTask::CreateConversation,
+    &SearchQueryTask::HandleResponse,
 };
 
 SearchQueryTask::SearchQueryTask(std::shared_ptr<SearchQueryTask::IN_PROTO> initiator,
@@ -36,12 +36,12 @@ SearchQueryTask::~SearchQueryTask()
   tasks_resolved++;
 }
 
-SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
+SearchQueryTask::StateResult SearchQueryTask::HandleResponse(void)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->getAvailableReplyCount());
+  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());
 
-  if (conversation->getAvailableReplyCount() == 0)
+  if (conversation->GetAvailableReplyCount() == 0)
   {
     return SearchQueryTask::StateResult(0, ERRORED);
   }
@@ -52,13 +52,13 @@ SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
     return SearchQueryTask::StateResult(0, ERRORED);
   }
 
-  if (conversation->getAvailableReplyCount() == 0)
+  if (conversation->GetAvailableReplyCount() == 0)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "No available reply for search query, waiting more...");
     return SearchQueryTask::StateResult(0, DEFER);
   }
 
-  auto response = std::static_pointer_cast<IdentifierSequence>(conversation->getReply(0));
+  auto response = std::static_pointer_cast<IdentifierSequence>(conversation->GetReply(0));
 
   auto answer = std::make_shared<OUT_PROTO>();
   answer->set_answer_id(msg_id_);
@@ -95,8 +95,8 @@ SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
         for (auto &a : item.second)
         {
           OEFURI::URI uri;
-          uri.parseAgent(a->agent());
-          answer_agents->add_agents(uri.agentPartAsString());
+          uri.ParseAgent(a->agent());
+          answer_agents->add_agents(uri.AgentPartAsString());
         }
       }
       FETCH_LOG_INFO(LOGGING_NAME, "Sending ", answer_agents->agents().size(), "agents to ",

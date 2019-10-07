@@ -47,7 +47,7 @@ public:
   virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t depth) = 0;
   virtual VisitNodeExitStates VisitLeaf(Leaf &leaf, uint32_t depth)   = 0;
 
-  virtual bool isRunnable(void) const override
+  virtual bool IsRunnable(void) const override
   {
     return runnable_.load();
   }

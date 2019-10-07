@@ -10,12 +10,12 @@ OutboundConversations::OutboundConversations()
 OutboundConversations::~OutboundConversations()
 {}
 
-void OutboundConversations::delConversationCreator(const Uri &target)
+void OutboundConversations::DeleteConversationCreator(const Uri &target)
 {
   creators.erase(target.GetSocketAddress());
 }
 
-void OutboundConversations::addConversationCreator(
+void OutboundConversations::AddConversationCreator(
     const Uri &target, std::shared_ptr<IOutboundConversationCreator> creator)
 {
   creators[target.GetSocketAddress()] = creator;

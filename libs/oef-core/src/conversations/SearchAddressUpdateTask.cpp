@@ -5,8 +5,8 @@
 #include "oef-core/conversations/SearchAddressUpdateTask.hpp"
 
 SearchAddressUpdateTask::EntryPoint searchAddressUpdateTaskEntryPoints[] = {
-    &SearchAddressUpdateTask::createConv,
-    &SearchAddressUpdateTask::handleResponse,
+    &SearchAddressUpdateTask::CreateConversation,
+    &SearchAddressUpdateTask::HandleResponse,
 };
 
 SearchAddressUpdateTask::SearchAddressUpdateTask(
@@ -23,17 +23,17 @@ SearchAddressUpdateTask::~SearchAddressUpdateTask()
   FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
 }
 
-SearchAddressUpdateTask::StateResult SearchAddressUpdateTask::handleResponse(void)
+SearchAddressUpdateTask::StateResult SearchAddressUpdateTask::HandleResponse(void)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->getAvailableReplyCount());
+  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());
 
-  if (conversation->getAvailableReplyCount() == 0)
+  if (conversation->GetAvailableReplyCount() == 0)
   {
     return SearchAddressUpdateTask::StateResult(0, ERRORED);
   }
 
-  auto resp = conversation->getReply(0);
+  auto resp = conversation->GetReply(0);
   if (!resp)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Got nullptr as reply");
@@ -63,9 +63,9 @@ SearchAddressUpdateTask::make_request_proto()
   update->set_key(initiator->key());
 
   OEFURI::URI uri;
-  uri.coreKey         = initiator->key();
+  uri.CoreKey         = initiator->key();
   uri.empty           = false;
-  std::string row_key = uri.toString();
+  std::string row_key = uri.ToString();
 
   fetch::oef::pb::Update_DataModelInstance *dm = update->add_data_models();
   auto action                                  = dm->mutable_service_description()->add_actions();

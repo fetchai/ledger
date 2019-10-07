@@ -32,9 +32,9 @@ public:
   virtual ~ProtoMessageSender()
   {}
 
-  virtual consumed_needed_pair checkForSpace(const mutable_buffers &      data,
+  virtual consumed_needed_pair CheckForSpace(const mutable_buffers &      data,
                                              IMessageWriter<TXType>::TXQ &txq);
-  void                         setEndianness(Endianness newstate)
+  void                         SetEndianness(Endianness newstate)
   {
     endianness = newstate;
   }
