@@ -73,7 +73,7 @@ struct QuestionStruct
   ConfirmedAnswers Update(uint32_t threshold, QuestionStruct &rhs);
 
   // Considered invalid if there is no cabinet
-  operator bool() const;  // NOLINT
+  explicit operator bool() const;
 
   CertificatePtr certificate_;  // Our certificate
   MuddleAddress  self_;         // Our address
