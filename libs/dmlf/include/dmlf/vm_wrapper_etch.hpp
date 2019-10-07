@@ -69,7 +69,7 @@ private:
   std::unique_ptr<Executable>        executable_ = std::make_unique<Executable>();
   std::shared_ptr<fetch::vm::Module> module_     = nullptr;
 
-  std::ostringstream outputStream_;
+  std::stringstream outputStream_;
   OutputHandler     outputHandler_ = nullptr;
 
   Status status_ = VmWrapperInterface::UNCONFIGURED;
