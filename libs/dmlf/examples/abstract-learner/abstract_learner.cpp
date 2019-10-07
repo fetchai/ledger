@@ -62,7 +62,7 @@ public:
 
 private:
   using Bytes = AbstractLearnerNetworker::Bytes;
-  using Peer = std::shared_ptr<FakeLearner>;
+  using Peer  = std::shared_ptr<FakeLearner>;
   using Peers = std::vector<Peer>;
 
   Peers peers;
