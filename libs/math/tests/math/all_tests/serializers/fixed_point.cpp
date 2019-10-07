@@ -43,8 +43,8 @@ TEST(FixedPointSerialisationTest, IntegerSerialisation)
 
 TEST(FixedPointSerialisationTest, DecimalSerialisation)
 {
-  std::random_device random_device;
-  std::mt19937 generator(random_device());
+  std::random_device               random_device;
+  std::mt19937                     generator(random_device());
   std::uniform_real_distribution<> distribution(-100.0, 100.0);
 
   for (int i(0); i < 100; ++i)

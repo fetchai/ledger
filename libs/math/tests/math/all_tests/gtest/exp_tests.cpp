@@ -32,7 +32,7 @@ void test1(T max)
   double                                     me = 0;
   for (int i = -3000; i < 3000; i++)
   {
-    double x = static_cast<double>(i) / 10;
+    double x  = static_cast<double>(i) / 10;
     T      y0 = fexp(x);
     double y1 = exp(x);
     double r  = (fabs(y0 - y1) / y1 * 100);

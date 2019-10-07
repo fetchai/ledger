@@ -49,12 +49,12 @@ void test1(F &f, double from, double to, double max)
   fetch::math::spline::Spline<> spline;
   spline.SetFunction(f, from, to, N);
   double me = 0;
-  
+
   auto from_int = static_cast<uint32_t>(from * 10000);
-  auto to_int = static_cast<uint32_t>(to * 10000);
+  auto to_int   = static_cast<uint32_t>(to * 10000);
   for (; from_int < to_int; from_int++)
   {
-    double x = static_cast<double>(from_int) / 10000;
+    double x  = static_cast<double>(from_int) / 10000;
     double y0 = spline(x);
     double y1 = f(x);
     double r  = fabs(y0 - y1) / y1 * 100;

@@ -119,7 +119,7 @@ private:
     }
     for (std::size_t i = 0; i < 50000000; i++)
     {  // FIXME: set limit
-      double l = static_cast<double>(i) / 1e7;
+      double l  = static_cast<double>(i) / 1e7;
       double r1 = exp(l);
       double r2 = fexp(l);
 
