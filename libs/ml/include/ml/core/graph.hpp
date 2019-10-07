@@ -545,6 +545,7 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
     auto grad_it = grad.begin();
     ApplyGradients(grad_it);
 
+//    ResetGraphCache(false);
     for (auto const &t : nodes_)
     {
       // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
