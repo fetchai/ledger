@@ -21,40 +21,24 @@ class ClangToolchain:
         else:
             raise RuntimeError('Unsupported system: {}'.format(platform_name))
 
-        # validate all the paths
-        self._clang_tidy_path = self.__validate_path(self._clang_tidy_path)
-        self._run_clang_tidy_path = self.__validate_path(
-            self._run_clang_tidy_path)
-        self._clang_apply_replacements_path = self.__validate_path(
-            self._clang_apply_replacements_path)
-        self._clang_format_path = self.__validate_path(self._clang_format_path)
-
-        # check that the detection has been completed
-        are_none = [
-            self._clang_tidy_path is None,
-            self._run_clang_tidy_path is None,
-            self._clang_format_path is None,
-        ]
-
-        if any(are_none):
-            raise RuntimeError('Unable to detect compatible clang toolchain')
-
-        print('Successfully detected clang toolchain: ', self._clang_tidy_path)
-
     @property
     def clang_tidy_path(self):
+        self.__validate_path(self._clang_tidy_path, 'clang-tidy')
         return self._clang_tidy_path
 
     @property
     def run_clang_tidy_path(self):
+        self.__validate_path(self._run_clang_tidy_path, 'run-clang-tidy')
         return self._run_clang_tidy_path
 
     @property
     def clang_apply_replacements_path(self):
+        self.__validate_path(self._clang_apply_replacements_path, 'clang-apply-replacements')
         return self._clang_apply_replacements_path
 
     @property
     def clang_format_path(self):
+        self.__validate_path(self._clang_format_path, 'clang-format')
         return self._clang_format_path
 
     def __detect_macos(self):
@@ -90,6 +74,8 @@ class ClangToolchain:
         self._clang_format_path = shutil.which('clang-format-6.0')
 
     @staticmethod
-    def __validate_path(path):
+    def __validate_path(path, name):
         if path is not None and os.path.isfile(path):
-            return path
+            return
+
+        raise RuntimeError('Unable to find the required tool {} on your system'.format(name))
