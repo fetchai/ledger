@@ -46,7 +46,7 @@ public:
     RUNTIME_ERROR
   };
 
-  explicit ExecutionErrorMessage(Stage stage, Code code, std::string const &message)
+  explicit ExecutionErrorMessage(Stage stage, Code code, std::string message)
     : stage_(stage)
     , code_(code)
     , message_(message)
