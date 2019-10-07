@@ -154,7 +154,9 @@ def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
         for d in document['Diagnostics']:
             file_path = d['FilePath']
 
-            # ignore extries that refer to empty files (usually waning have stopped on a given file)
+            # ignore extries that refer to empty file paths (this is usually a waning that clang
+            # have stopped processing a file because too many warnings have been generated from that
+            # file
             if len(file_path) == 0:
                 continue
 
@@ -253,8 +255,6 @@ def filter_non_matching(file_list, words):
 def filter_compile_commands(project_root, input_location, target_files, output_location):
     filtered_commands = []
 
-    print(target_files)
-
     # read the input file and filter the entries
     with open(input_location, 'r') as input_file:
         commands = json.load(input_file)
@@ -265,7 +265,6 @@ def filter_compile_commands(project_root, input_location, target_files, output_l
                 command_file_path, project_root)
 
             if relative_file_path.startswith('vendor'):
-                print('Dropping 2', relative_file_path)
                 continue
 
             if relative_file_path == 'libs/vm/src/tokeniser.cpp':
@@ -279,7 +278,6 @@ def filter_compile_commands(project_root, input_location, target_files, output_l
                         break
 
                 if not match:
-                    print('Dropping 1', relative_file_path)
                     continue
 
             # add the command to the filtered set
