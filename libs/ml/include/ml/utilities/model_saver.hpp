@@ -29,7 +29,7 @@
 
 namespace fetch {
 namespace ml {
-namespace examples {
+namespace utilities {
 
 /**
  * Saves the saveparams of a graph to a file location specified by user
