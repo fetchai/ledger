@@ -39,7 +39,7 @@ public:
 
   DNNRegressor()                          = default;
   DNNRegressor(DNNRegressor const &other) = default;
-  ~DNNRegressor()                         = default;
+  ~DNNRegressor() override                = default;
 
   DNNRegressor(ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
 

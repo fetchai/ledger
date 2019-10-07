@@ -40,7 +40,7 @@ public:
   Sequential()                        = default;
   Sequential(Sequential const &other) = default;
   explicit Sequential(ModelConfig<DataType> model_config);
-  ~Sequential() = default;
+  ~Sequential() override = default;
 
   template <typename LayerType, typename... Params>
   void Add(Params... params);

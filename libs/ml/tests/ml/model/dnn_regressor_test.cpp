@@ -154,7 +154,7 @@ TYPED_TEST(ModelsTest, sgd_dnnregressor_serialisation)
   using ModelType = fetch::ml::model::DNNRegressor<TypeParam>;
 
   fetch::math::SizeType    n_training_steps = 10;
-  typename TypeParam::Type tolerance        = static_cast<DataType>(0);
+  auto                     tolerance        = static_cast<DataType>(0);
   auto                     learning_rate    = DataType{0.06f};
   fetch::ml::OptimiserType optimiser_type   = fetch::ml::OptimiserType::SGD;
 

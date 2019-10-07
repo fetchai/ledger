@@ -160,8 +160,8 @@ TYPED_TEST(ModelsTest, sgd_sequential_serialisation)
 
   using DataType                          = typename TypeParam::Type;
   fetch::ml::OptimiserType optimiser_type = fetch::ml::OptimiserType::SGD;
-  typename TypeParam::Type tolerance      = static_cast<DataType>(0);
-  typename TypeParam::Type lr             = static_cast<typename TypeParam::Type>(0.5);
+  auto                     tolerance      = static_cast<DataType>(0);
+  auto                     lr             = static_cast<typename TypeParam::Type>(0.5);
 
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::Sequential<TypeParam>;
