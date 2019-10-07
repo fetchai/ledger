@@ -83,5 +83,6 @@ int main(int argc, char **argv)
       data_loader, embeddings->GetWeights(), analogy_file);
   std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
   fetch::ml::utilities::PrintKNN(data_loader, embeddings->GetWeights(), "three", 20);
-  fetch::ml::utilities::PrintWordAnalogy(data_loader, embeddings->GetWeights(), "king", "queen", "father", 20);
+  fetch::ml::utilities::PrintWordAnalogy(data_loader, embeddings->GetWeights(), "king", "queen",
+                                         "father", 20);
 }
