@@ -226,7 +226,7 @@ private:
     {
       return {value_, template_param_type_id_};
     }
-    else if (Existed())
+    if (Existed())
     {
       if (ReadHelper(template_param_type_id_, name_, value_, vm_))
       {
@@ -234,7 +234,7 @@ private:
         return {value_, template_param_type_id_};
       }
     }
-    else if (default_value)
+    else if (default_value != nullptr)
     {
       return *default_value;
     }
@@ -318,7 +318,7 @@ template <typename T>
 struct StateFactory<T, std::enable_if_t<IsMetatype<T>>>
 {
   template <typename... Args>
-  Ptr<IState> operator()(Args &&...)
+  Ptr<IState> operator()(Args &&... /*unused*/)
   {
     return {};
   }

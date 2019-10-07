@@ -34,7 +34,7 @@ namespace {
 
 bool is_not_whitespace(int ch)
 {
-  return !std::isspace(ch);
+  return std::isspace(ch) == 0;
 }
 
 void trim_left(std::string &s)

@@ -286,7 +286,7 @@ void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &pack
     response.type = RoutingMessage::Type::ROUTING_ACCEPTED;
 
     // update the router to send messages to this route
-    router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
+    router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true, false);
   }
   else
   {
@@ -303,7 +303,8 @@ void DirectMessageService::OnRoutingAccepted(Handle handle, PacketPtr const &pac
   FETCH_UNUSED(msg);
   FETCH_LOG_TRACE(logging_name_, "OnRoutingAccepted (conn: ", handle, ")");
 
-  auto const status = router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
+  auto const status =
+      router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true, false);
 
   switch (status)
   {
@@ -410,7 +411,7 @@ DirectMessageService::UpdateStatus DirectMessageService::UpdateReservation(Addre
         if (should_replace)
         {
           // cache the previous handle
-          if (previous_handle)
+          if (previous_handle != nullptr)
           {
             *previous_handle = it->second;
           }

@@ -28,7 +28,7 @@ struct TestBlock
 {
   using ResourceIdMap = std::vector<std::string>;
   using BlockBody     = fetch::ledger::Block::Body;
-  using Digest        = fetch::ledger::Digest;
+  using Digest        = fetch::Digest;
 
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;
@@ -86,9 +86,8 @@ struct TestBlock
         std::size_t remaining_lanes = num_lanes;
         std::size_t lane_offset     = 0;
 
-        while (remaining_lanes)
+        while (remaining_lanes != 0u)
         {
-
           // decide how many lanes will be consumed this round
           std::size_t const consumed_lanes =
               std::min(std::max<std::size_t>(rng() % remaining_lanes, 1u), remaining_lanes);

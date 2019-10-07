@@ -26,8 +26,8 @@
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 #include "model_saver.hpp"
-#include "word2vec_utilities.hpp"
 
 #include <iostream>
 #include <string>
@@ -65,7 +65,7 @@ std::pair<std::string, std::string> Model(fetch::ml::Graph<TensorType> &g, SizeT
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
                     GraphW2VLoader<DataType> const &dl, std::string const &word0,
                     std::string const &word1, std::string const &word2, std::string const &word3,
-                    SizeType K, const std::string &analogies_test_file)
+                    SizeType K, std::string const &analogies_test_file)
 {
   // first get hold of the skipgram layer by searching the return name in the graph
   std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
@@ -77,11 +77,11 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
       sg_layer->GetEmbeddings(sg_layer);
 
   std::cout << std::endl;
-  PrintKNN(dl, embeddings->GetWeights(), word0, K);
+  utilities::PrintKNN(dl, embeddings->GetWeights(), word0, K);
   std::cout << std::endl;
-  PrintWordAnalogy(dl, embeddings->GetWeights(), word1, word2, word3, K);
+  utilities::PrintWordAnalogy(dl, embeddings->GetWeights(), word1, word2, word3, K);
 
-  TestWithAnalogies(dl, embeddings->GetWeights(), analogies_test_file);
+  utilities::TestWithAnalogies(dl, embeddings->GetWeights(), analogies_test_file);
 }
 
 ////////////////////////////////
@@ -103,10 +103,11 @@ struct TrainingParams
   SizeType embedding_size  = 500;    // dimension of embedding vec
   SizeType training_epochs = 1;
   SizeType test_frequency  = 1;
-  DataType starting_learning_rate_per_sample =
-      0.0025f;  // these are the learning rates we have for each sample
-  DataType ending_learning_rate_per_sample = 0.0001f;
-  DataType starting_learning_rate;  // this is the true learning rate set for the graph training
+  // these are the learning rates we have for each sample
+  DataType starting_learning_rate_per_sample = 0.0025f;
+  DataType ending_learning_rate_per_sample   = 0.0001f;
+  // this is the true learning rate set for the graph training
+  DataType starting_learning_rate;
   DataType ending_learning_rate;
 
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{
@@ -150,7 +151,7 @@ int main(int argc, char **argv)
                                        tp.max_word_count);
   // set up dataloader
   /// DATA LOADING ///
-  data_loader.BuildVocabAndData({ReadFile(train_file)}, tp.min_count);
+  data_loader.BuildVocabAndData({utilities::ReadFile(train_file)}, tp.min_count);
 
   /////////////////////////////////////////
   /// SET UP PROPER TRAINING PARAMETERS ///

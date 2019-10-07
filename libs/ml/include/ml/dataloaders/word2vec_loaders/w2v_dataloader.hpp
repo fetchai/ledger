@@ -59,7 +59,7 @@ public:
 
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable();
-  void       GetNext(ReturnType &t);
+  void       GetNext(ReturnType &ret);
   ReturnType GetNext() override;
 
   bool AddData(InputType const &input, LabelType const &label) override;
@@ -125,9 +125,9 @@ math::SizeType W2VLoader<T>::Size() const
   SizeType size(0);
   for (auto const &s : data_)
   {
-    if ((SizeType)s.size() > (2 * window_size_))
+    if (static_cast<SizeType>(s.size()) > (2 * window_size_))
     {
-      size += (SizeType)s.size() - (2 * window_size_);
+      size += static_cast<SizeType>(s.size()) - (2 * window_size_);
     }
   }
 
@@ -146,7 +146,7 @@ bool W2VLoader<T>::IsDone() const
   {
     return true;
   }
-  else if (current_sentence_ >= data_.size() - 1)  // In the last sentence
+  if (current_sentence_ >= data_.size() - 1)  // In the last sentence
   {
     if (current_word_ >= data_.at(current_sentence_).size() - window_size_)
     {
@@ -196,11 +196,12 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
   for (auto const &sentence : data_)
   {
     std::string s;
+    auto        counts = vocab_.GetCounts();
     for (auto const &word : sentence)
     {
-      if (vocab_.counts[word] >= min)
+      if (counts[word] >= min)
       {
-        s += vocab_.reverse_vocab[word] + " ";
+        s += vocab_.WordFromIndex(word) + " ";
       }
     }
     new_loader.BuildVocab(s);
@@ -217,7 +218,7 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
 template <typename T>
 void W2VLoader<T>::InitUnigramTable()
 {
-  unigram_table_.ResetTable(vocab_.counts, 1e8);
+  unigram_table_.ResetTable(vocab_.GetCounts(), 1e8);
 }
 
 /**
@@ -350,7 +351,7 @@ void W2VLoader<T>::LoadVocab(std::string const &filename)
 template <typename T>
 math::SizeType W2VLoader<T>::vocab_size() const
 {
-  return vocab_.vocab.size();
+  return vocab_.GetVocabCount();
 }
 
 /**
@@ -424,7 +425,7 @@ std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s)
   result.reserve(s.size());
   for (auto const &c : s)
   {
-    result.push_back(std::isalpha(c) ? (char)std::tolower(c) : ' ');
+    result.push_back(std::isalpha(c) != 0 ? static_cast<char>(std::tolower(c)) : ' ');
   }
 
   std::string              word;

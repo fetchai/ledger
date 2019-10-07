@@ -72,7 +72,7 @@ public:
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> NextPeersList(std::string &client_id);
 
   void AddClient(ClientPtrType const &new_client);
-  void SetClientsList(std::vector<ClientPtrType> const &new_client);
+  void SetClientsList(std::vector<ClientPtrType> const &new_clients);
 
 private:
   CoordinatorMode                                          mode_;

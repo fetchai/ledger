@@ -44,7 +44,6 @@ public:
 
   explicit ClientManager(AbstractNetworkServer &server)
     : server_(server)
-    , clients_mutex_{}
   {}
 
   ConnectionHandleType Join(ConnectionType const &client)

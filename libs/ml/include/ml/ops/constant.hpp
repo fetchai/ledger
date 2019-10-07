@@ -95,10 +95,8 @@ public:
       data_set_once_ = true;
       return DataHolder<TensorType>::SetData(data);
     }
-    else
-    {
-      throw std::runtime_error("cannot set data in constant more than once");
-    }
+
+    throw std::runtime_error("cannot set data in constant more than once");
   }
 
   static constexpr OpType OpCode()

@@ -59,7 +59,7 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
 StakeManager::CommitteePtr StakeManager::BuildCommittee(Block const &current)
 {
   auto snapshot = LookupStakeSnapshot(current.body.block_number);
-  return snapshot->BuildCommittee(current.body.entropy, committee_size_);
+  return snapshot->BuildCommittee(current.body.block_entropy.EntropyAsU64(), committee_size_);
 }
 
 StakeManager::CommitteePtr StakeManager::Reset(StakeSnapshot const &snapshot)
@@ -94,23 +94,19 @@ StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex bloc
   {
     return current_;
   }
-  else
-  {
-    // on catchup, or in the case of multiple forks historical entries will be used
-    auto upper_bound = stake_history_.upper_bound(block);
 
-    if (upper_bound == stake_history_.begin())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Update to lookup stake snapshot for block ", block);
-      return {};
-    }
-    else
-    {
-      // we are not interested in the upper bound, but the preceding historical element i.e.
-      // the previous block change
-      return (--upper_bound)->second;
-    }
+  // on catchup, or in the case of multiple forks historical entries will be used
+  auto upper_bound = stake_history_.upper_bound(block);
+
+  if (upper_bound == stake_history_.begin())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Update to lookup stake snapshot for block ", block);
+    return {};
   }
+
+  // we are not interested in the upper bound, but the preceding historical element i.e.
+  // the previous block change
+  return (--upper_bound)->second;
 }
 
 }  // namespace ledger

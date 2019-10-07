@@ -78,7 +78,8 @@ public:
         std::size_t j     = i + 1;
         while ((j < path.size()) && (count != 0))
         {
-          count += (path[j] == '(') - (path[j] == ')');
+          count +=
+              static_cast<std::size_t>(path[j] == '(') - static_cast<std::size_t>(path[j] == ')');
           ++j;
         }
 

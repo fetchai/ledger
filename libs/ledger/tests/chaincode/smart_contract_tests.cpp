@@ -468,7 +468,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
   auto const       expected_resource2 = ResourceAddress{expected_key2};
   auto const       expected_value1    = RawBytes<int32_t>(20);
   auto const       expected_value2    = RawBytes<int32_t>(30);
-  fetch::BitVector mask{1ull << 4};
+  fetch::BitVector mask{1ull << 4u};
   auto const       lane1 = expected_resource1.lane(mask.log2_size());
   auto const       lane2 = expected_resource2.lane(mask.log2_size());
   mask.set(lane1, 1);

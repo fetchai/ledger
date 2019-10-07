@@ -24,11 +24,13 @@
 #include "moment/clocks.hpp"
 #include "moment/deadline_timer.hpp"
 #include "muddle/muddle_endpoint.hpp"
-#include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/subscription.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/telemetry.hpp"
+
+#include "muddle/punishment_broadcast_channel.hpp"
+#include "muddle/rbc.hpp"
 
 #include "beacon/aeon.hpp"
 
@@ -71,6 +73,7 @@ public:
     WAIT_FOR_QUAL_SHARES,
     WAIT_FOR_QUAL_COMPLAINTS,
     WAIT_FOR_RECONSTRUCTION_SHARES,
+    COMPUTE_PUBLIC_SIGNATURE,
     DRY_RUN_SIGNING,
     BEACON_READY
   };
@@ -85,6 +88,8 @@ public:
   using MuddleEndpoint          = muddle::MuddleEndpoint;
   using MuddleInterface         = muddle::MuddleInterface;
   using RBC                     = muddle::RBC;
+  using ReliableChannel         = muddle::BroadcastChannelInterface;
+  using ReliableChannelPtr      = std::unique_ptr<ReliableChannel>;
   using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
   using MessageCoefficient      = std::string;
   using MessageShare            = std::string;
@@ -96,7 +101,9 @@ public:
   using QualComplaintsManager   = beacon::QualComplaintsManager;
   using DKGEnvelope             = dkg::DKGEnvelope;
   using ComplaintsMessage       = dkg::ComplaintsMessage;
+  using FinalStateMessage       = dkg::FinalStateMessage;
   using CoefficientsMessage     = dkg::CoefficientsMessage;
+  using ConnectionsMessage      = dkg::ConnectionsMessage;
   using SharesMessage           = dkg::SharesMessage;
   using DKGSerializer           = dkg::DKGSerializer;
   using ManifestCacheInterface  = ledger::ManifestCacheInterface;
@@ -105,9 +112,10 @@ public:
   using SignatureShare   = AeonExecutionUnit::SignatureShare;
   using BeaconManager    = dkg::BeaconManager;
   using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
+  using CertificatePtr          = std::shared_ptr<dkg::BeaconManager::Certificate>;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
-                     ManifestCacheInterface &manifest_cache);
+                     ManifestCacheInterface &manifest_cache, CertificatePtr certificate);
   BeaconSetupService(BeaconSetupService const &) = delete;
   BeaconSetupService(BeaconSetupService &&)      = delete;
 
@@ -123,24 +131,20 @@ public:
   State OnWaitForQualShares();
   State OnWaitForQualComplaints();
   State OnWaitForReconstructionShares();
+  State OnComputePublicSignature();
   State OnDryRun();
   State OnBeaconReady();
   /// @}
 
   /// Setup management
   /// @{
-  void QueueSetup(SharedAeonExecutionUnit const &beacon);
-  void Abort(uint64_t round_start);
+
+  void QueueSetup(const SharedAeonExecutionUnit &beacon);
+  void Abort(uint64_t abort_below);
   void SetBeaconReadyCallback(CallbackFunction callback);
   /// @}
 
-  std::weak_ptr<core::Runnable> GetWeakRunnable();
-
-  void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
-  void OnNewShares(MuddleAddress const &                        from_id,
-                   std::pair<MessageShare, MessageShare> const &shares);
-  void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
-  void OnNewDryRunPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
+  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
 
 protected:
   Identity                identity_;
@@ -148,9 +152,9 @@ protected:
   MuddleInterface &       muddle_;
   MuddleEndpoint &        endpoint_;
   SubscriptionPtr         shares_subscription_;
-  SubscriptionPtr         dry_run_subscription_;
-  RBC                     pre_dkg_rbc_;
-  RBC                     rbc_;
+
+  CertificatePtr     certificate_;
+  ReliableChannelPtr rbc_;
 
   std::shared_ptr<StateMachine> state_machine_;
   std::set<MuddleAddress>       connections_;
@@ -177,35 +181,17 @@ protected:
   virtual void BroadcastReconstructionShares();
   /// @}
 
-  /// @name Handlers for messages
-  /// @{
-  void OnNewCoefficients(CoefficientsMessage const &coefficients, MuddleAddress const &from_id);
-  void OnComplaints(ComplaintsMessage const &complaint, MuddleAddress const &from_id);
-  void OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id);
-  void OnComplaintAnswers(SharesMessage const &answer, MuddleAddress const &from_id);
-  void OnQualComplaints(SharesMessage const &shares, MuddleAddress const &from_id);
-  void OnReconstructionShares(SharesMessage const &shares, MuddleAddress const &from_id);
-  /// @}
-
-  /// @name Helper methods
-  /// @{
-  bool BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
-  void CheckComplaintAnswers();
-  bool BuildQual();
-  void CheckQualComplaints();
-  /// @}
-
-  // Helper functions
-  uint64_t PreDKGThreshold();
-  uint32_t QualSize();
-
   // Telemetry
   telemetry::GaugePtr<uint64_t> beacon_dkg_state_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_connections_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_all_connections_gauge_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_failures_required_to_complete_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_state_failed_on_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_time_allocated_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_aeon_setting_up_;
   telemetry::CounterPtr         beacon_dkg_failures_total_;
-  telemetry::CounterPtr         beacon_dkg_dry_run_failures_total_;
   telemetry::CounterPtr         beacon_dkg_aborts_total_;
+  telemetry::CounterPtr         beacon_dkg_successes_total_;
 
   // Members below protected by mutex
   std::mutex                                                 mutex_;
@@ -213,8 +199,8 @@ protected:
   std::deque<SharedAeonExecutionUnit>                        aeon_exe_queue_;
   SharedAeonExecutionUnit                                    beacon_;
   std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
-  std::map<MuddleAddress, GroupPubKeyPlusSigShare>           dry_run_shares_;
-  std::map<std::string, uint16_t>                            dry_run_public_keys_;
+
+  std::map<MuddleAddress, ConstByteArray> final_state_payload_;
 
 private:
   uint64_t abort_below_ = 0;
@@ -228,6 +214,34 @@ private:
   uint64_t         seconds_for_state_     = 0;
   uint64_t         expected_dkg_timespan_ = 0;
   bool             condition_to_proceed_  = false;
+
+  uint16_t failures_{0};
+
+  // Convenience functions
+  ReliableChannelPtr ReliableBroadcastFactory();
+
+  /// @name Handlers for messages
+  /// @{
+  void OnDkgMessage(MuddleAddress const &from, const std::shared_ptr<DKGMessage> &msg_ptr);
+  void OnNewShares(const MuddleAddress &from, std::pair<MessageShare, MessageShare> const &shares);
+  void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
+  void OnNewCoefficients(CoefficientsMessage const &msg, MuddleAddress const &from);
+  void OnComplaints(ComplaintsMessage const &msg, MuddleAddress const &from);
+  void OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id);
+  void OnComplaintAnswers(SharesMessage const &answer, MuddleAddress const &from);
+  void OnQualComplaints(SharesMessage const &shares_msg, MuddleAddress const &from);
+  void OnReconstructionShares(SharesMessage const &shares_msg, MuddleAddress const &from);
+  /// @}
+
+  /// @name Helper methods
+  /// @{
+  bool     BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
+  void     CheckComplaintAnswers();
+  bool     BuildQual();
+  void     CheckQualComplaints();
+  uint64_t PreDKGThreshold();
+  uint32_t QualSize();
+  /// @}
 };
 }  // namespace beacon
 

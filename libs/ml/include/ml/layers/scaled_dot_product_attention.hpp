@@ -151,8 +151,8 @@ public:
   static constexpr char const *DESCRIPTOR = "ScaledDotProductAttention";
 
 private:
-  SizeType key_dim_;
-  DataType dropout_;
+  SizeType key_dim_{};
+  DataType dropout_{};
 };
 
 }  // namespace layers

@@ -37,36 +37,45 @@ namespace mcl {
 using PrivateKey     = bn::Fr;
 using PublicKey      = bn::G2;
 using Signature      = bn::G1;
-using Group          = bn::G2;
+using Generator      = bn::G2;
 using MessagePayload = byte_array::ConstByteArray;
 using CabinetIndex   = uint32_t;
 
-/**
- * Helper functions for computations used in the DKG
- */
-bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
-                  bn::Fr const &share2);
+namespace details {
+struct MCLInitialiser
+{
+  MCLInitialiser()
+  {
+    bool a{true};
+    a = was_initialised.exchange(a);
+    if (!a)
+    {
+      bn::initPairing();
+    }
+  }
+  static std::atomic<bool> was_initialised;
+};
+}  // namespace details
 
-bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2);
+struct DkgKeyInformation
+{
+  DkgKeyInformation()
+  {
+    details::MCLInitialiser();
+    group_public_key.clear();
+    private_key_share.clear();
+  }
+  DkgKeyInformation(PublicKey group_public_key1, std::vector<PublicKey> public_key_shares1,
+                    PrivateKey secret_key_shares1)  // NOLINT
+    : group_public_key{std::move(group_public_key1)}
+    , public_key_shares{std::move(public_key_shares1)}
+    , private_key_share{secret_key_shares1}
+  {}
 
-void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
-
-bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
-
-void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
-                   std::vector<bn::Fr> const &b_i, uint32_t rank);
-
-bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
-
-std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b);
-
-// For signatures
-Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
-
-bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
-                Group const &G);
-
-Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
+  PublicKey              group_public_key;
+  std::vector<PublicKey> public_key_shares{};
+  PrivateKey             private_key_share;
+};
 
 /**
  * Vector initialisation for mcl data structures
@@ -106,6 +115,40 @@ void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j)
     }
   }
 }
+
+/**
+ * Helper functions for computations used in the DKG
+ */
+void   SetGenerator(Generator &group_g);
+void   SetGenerators(Generator &group_g, Generator &group_h);
+bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
+                  bn::Fr const &share2);
+
+bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2);
+
+void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
+
+bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
+
+void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
+                   std::vector<bn::Fr> const &b_i, uint32_t index);
+
+bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
+
+std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b);
+
+// For signatures
+Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
+
+bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
+                Generator const &G);
+
+bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign);
+
+Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
+
+std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size,
+                                                         uint32_t threshold);
 
 }  // namespace mcl
 }  // namespace crypto

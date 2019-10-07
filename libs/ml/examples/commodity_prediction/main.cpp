@@ -121,7 +121,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
     throw std::runtime_error("ReadArchitecture cannot open file " + filename);
   }
 
-  while (line_num--)  // continue reading until we get to the desired line
+  while ((line_num--) != 0u)  // continue reading until we get to the desired line
   {
     std::getline(file, buf, '\n');
   }
@@ -204,12 +204,12 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   return std::make_pair(dataname, node_names);
 }
 
-int ArgPos(char *str, int argc, char **argv)
+int ArgPos(char const *str, int argc, char **argv)
 {
   int a;
   for (a = 1; a < argc; a++)
   {
-    if (!strcmp(str, argv[a]))
+    if (strcmp(str, argv[a]) == 0)
     {
       if (a == argc - 1)
       {
@@ -261,15 +261,15 @@ int main(int argc, char **argv)
   bool        testing             = false;
 
   /// READ ARGUMENTS
-  if ((i = ArgPos((char *)"-model_num", argc, argv)) > 0)
+  if ((i = ArgPos("-model_num", argc, argv)) > 0)
   {
     model_num = static_cast<SizeType>(std::stoul(argv[i + 1]));
   }
-  if ((i = ArgPos((char *)"-input_dir", argc, argv)) > 0)
+  if ((i = ArgPos("-input_dir", argc, argv)) > 0)
   {
     input_dir = argv[i + 1];
   }
-  if ((i = ArgPos((char *)"-testing", argc, argv)) > 0)
+  if ((i = ArgPos("-testing", argc, argv)) > 0)
   {
     testing = static_cast<bool>(std::stoi(argv[i + 1]));
   }
@@ -458,8 +458,8 @@ int main(int argc, char **argv)
     DataType    distance         = 0;
     DataType    distance_counter = 0;
     std::string our_y_output = filename_root + "y_pred_test_fetch_" + std::to_string(EPOCHS) + "_" +
-                               std::to_string(use_random) + "_" + std::to_string(LEARNING_RATE) +
-                               ".csv";
+                               std::to_string(static_cast<int>(use_random)) + "_" +
+                               std::to_string(LEARNING_RATE) + ".csv";
 
     bool          first = true;
     std::ofstream file(our_y_output);

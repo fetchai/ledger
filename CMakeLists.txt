@@ -19,7 +19,6 @@ option(FETCH_ENABLE_DEADLOCK_DETECTION  "Enable deadlock detection on mutexes"  
 option(FETCH_VERBOSE_CMAKE              "Enable verbose cmake output"           OFF)
 option(FETCH_ENABLE_CLANG_TIDY          "Enable clang tidy checking"            OFF)
 option(FETCH_ENABLE_COVERAGE            "Enable coverage generation"            OFF)
-option(FETCH_ENABLE_METRICS             "Enable the collection of metrics"      OFF)
 option(FETCH_DISABLE_COLOUR_LOG         "Disable the colour logging"            OFF)
 option(FETCH_STATIC_LINK                "Enable static linking"                 OFF)
 option(FETCH_ENABLE_LTO                 "Enable link-time optimisation"         ON)

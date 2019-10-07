@@ -31,6 +31,33 @@ namespace fetch {
 namespace crypto {
 namespace mcl {
 
+std::atomic<bool> details::MCLInitialiser::was_initialised{false};
+
+void SetGenerator(Generator &group_g)
+{
+  group_g.clear();
+
+  const bn::Fp2 g("1380305877306098957770911920312855400078250832364663138573638818396353623780",
+                  "14633108267626422569982187812838828838622813723380760182609272619611213638781");
+
+  bn::mapToG2(group_g, g);
+}
+
+void SetGenerators(Generator &group_g, Generator &group_h)
+{
+  group_g.clear();
+  group_h.clear();
+
+  // Values taken from TMCG main.cpp
+  const bn::Fp2 g("1380305877306098957770911920312855400078250832364663138573638818396353623780",
+                  "14633108267626422569982187812838828838622813723380760182609272619611213638781");
+  const bn::Fp2 h("6798148801244076840612542066317482178930767218436703568023723199603978874964",
+                  "12726557692714943631796519264243881146330337674186001442981874079441363994424");
+
+  bn::mapToG2(group_g, g);
+  bn::mapToG2(group_h, h);
+}
+
 /**
  * LHS and RHS functions are used for checking consistency between publicly broadcasted coefficients
  * and secret shares distributed privately
@@ -159,34 +186,34 @@ bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &s
  */
 std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b)
 {
-  auto const m = a.size();
+  size_t m = a.size();
   if ((b.size() != m) || (m == 0))
   {
     throw std::invalid_argument("mcl_interpolate_polynom: bad m");
   }
   std::vector<bn::Fr> prod{a}, res(m, 0);
   bn::Fr              t1, t2;
-  for (size_t k = 0; k < m; k++)
+  for (std::size_t k = 0; k < m; k++)
   {
     t1 = 1;
-    for (auto i = static_cast<int64_t>(k - 1); i >= 0; i--)
+    for (auto i = static_cast<long>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t1, t1, a[k]);
-      bn::Fr::add(t1, t1, prod[static_cast<std::size_t>(i)]);
+      bn::Fr::add(t1, t1, prod[static_cast<size_t>(i)]);
     }
 
     t2 = 0;
-    for (auto i = static_cast<int64_t>(k - 1); i >= 0; i--)
+    for (auto i = static_cast<long>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t2, t2, a[k]);
-      bn::Fr::add(t2, t2, res[static_cast<std::size_t>(i)]);
+      bn::Fr::add(t2, t2, res[static_cast<size_t>(i)]);
     }
     bn::Fr::inv(t1, t1);
 
     bn::Fr::sub(t2, b[k], t2);
     bn::Fr::mul(t1, t1, t2);
 
-    for (size_t i = 0; i < k; i++)
+    for (std::size_t i = 0; i < k; i++)
     {
       bn::Fr::mul(t2, prod[i], t1);
       bn::Fr::add(res[i], res[i], t2);
@@ -202,10 +229,10 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
       {
         bn::Fr::neg(t1, a[k]);
         bn::Fr::add(prod[k], t1, prod[k - 1]);
-        for (auto i = static_cast<int64_t>(k - 1); i >= 1; i--)
+        for (auto i = static_cast<long>(k - 1); i >= 1; i--)
         {
-          bn::Fr::mul(t2, prod[static_cast<std::size_t>(i)], t1);
-          bn::Fr::add(prod[static_cast<std::size_t>(i)], t2, prod[static_cast<std::size_t>(i - 1)]);
+          bn::Fr::mul(t2, prod[static_cast<size_t>(i)], t1);
+          bn::Fr::add(prod[static_cast<size_t>(i)], t2, prod[static_cast<size_t>(i - 1)]);
         }
         bn::Fr::mul(prod[0], prod[0], t1);
       }
@@ -239,11 +266,11 @@ Signature SignShare(MessagePayload const &message, PrivateKey const &x_i)
  * @param y The public key (can be the group public key, or public key share)
  * @param message Message that was signed
  * @param sign Signature to be verified
- * @param G Group used in DKG
+ * @param G Generator used in DKG
  * @return
  */
 bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
-                Group const &G)
+                Generator const &G)
 {
   bn::Fp12 e1, e2;
   bn::Fp   Hm;
@@ -255,6 +282,13 @@ bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature con
   bn::pairing(e2, PH, y);
 
   return e1 == e2;
+}
+
+bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign)
+{
+  bn::G2 generator;
+  SetGenerator(generator);
+  return VerifySign(y, message, sign, generator);
 }
 
 /**
@@ -295,6 +329,71 @@ Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> cons
     res += t;
   }
   return res;
+}
+
+/**
+ * Generates the group public key, public key shares and private key share for a number of
+ * parties and a given signature threshold. Nodes must be allocated the outputs according
+ * to their index in the committee.
+ *
+ * @param committee_size Number of parties for which private key shares are generated
+ * @param threshold Number of parties required to generate a group signature
+ * @return Vector of DkgOutputs containing the data to be given to each party
+ */
+std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size,
+                                                         uint32_t threshold)
+{
+  std::vector<DkgKeyInformation> output;
+  Generator                      generator;
+  SetGenerator(generator);
+
+  // Construct polynomial of degree threshold - 1
+  std::vector<PrivateKey> vec_a;
+  Init(vec_a, threshold);
+  for (uint32_t ii = 0; ii < threshold; ++ii)
+  {
+    vec_a[ii].setRand();
+  }
+
+  std::vector<PublicKey>  public_key_shares;
+  std::vector<PrivateKey> private_key_shares;
+  Init(public_key_shares, committee_size);
+  Init(private_key_shares, committee_size);
+
+  // Group secret key is polynomial evaluated at 0
+  PublicKey group_public_key;
+  group_public_key.clear();
+  PrivateKey group_private_key = vec_a[0];
+  bn::G2::mul(group_public_key, generator, group_private_key);
+
+  // Generate committee public keys from their private key contributions
+  for (uint32_t i = 0; i < committee_size; ++i)
+  {
+    PrivateKey pow;
+    PrivateKey tmpF;
+    PrivateKey private_key;
+    private_key.clear();
+    // Private key is polynomial evaluated at index i
+    private_key = vec_a[0];
+    for (uint32_t k = 1; k < vec_a.size(); k++)
+    {
+      bn::Fr::pow(pow, i + 1, k);        // adjust index in computation
+      bn::Fr::mul(tmpF, pow, vec_a[k]);  // j^k * a_i[k]
+      bn::Fr::add(private_key, private_key, tmpF);
+    }
+    // Public key from private
+    PublicKey public_key;
+    bn::G2::mul(public_key, generator, private_key);
+    public_key_shares[i]  = public_key;
+    private_key_shares[i] = private_key;
+  }
+
+  // Compute outputs for each member
+  for (uint32_t i = 0; i < committee_size; ++i)
+  {
+    output.emplace_back(group_public_key, public_key_shares, private_key_shares[i]);
+  }
+  return output;
 }
 
 }  // namespace mcl

@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/digest.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/common_types.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/work.hpp"
 #include "vectorise/uint/uint.hpp"
