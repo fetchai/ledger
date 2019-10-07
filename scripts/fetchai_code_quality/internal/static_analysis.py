@@ -4,7 +4,109 @@ import subprocess
 import sys
 import tempfile
 import yaml
+import glob
+import os
+import json
 from os.path import abspath, commonprefix, isabs, isfile, join, relpath
+from .toolchains import ClangToolchain
+
+
+CLANG_TOOLCHAIN = ClangToolchain()
+
+
+def convert_to_dependencies(
+        changed_files_fullpath: set, build_path, verbose=False):
+    """For each changed hpp file, find all cpp files that depend on it (clang-tidy requires cpp files only) and replace it in the set.
+
+    To do this, find cmake generated depend.make files
+    Example depend.make format:
+    libs/metrics/CMakeFiles/fetch-metrics.dir/src/metrics.cpp.o: ../libs/vectorise/include/vectorise/math/exp.hpp
+    """
+
+    targets_to_substitute = set()
+    targets_substituted = set()
+    for filename in changed_files_fullpath:
+        if '.hpp' in filename:
+            targets_to_substitute.add(filename)
+
+    if targets_to_substitute == 0:
+        return changed_files_fullpath
+
+    globbed_files = glob.glob(
+        build_path + '/libs/**/depend.make', recursive=True)
+    globbed_files.extend(
+        glob.glob(build_path + '/apps/**/depend.make', recursive=True))
+
+    # files with no content have this as their first line
+    globbed_files = [
+        x for x in globbed_files
+        if 'Empty dependencies file' not in open(x).readline()]
+
+    if len(globbed_files) == 0:
+        print(
+            "\nWARNING: No non-empty depend.make files found in {} . Did you make sure to build in this directory?".format(build_path))
+
+    for filename in globbed_files:
+        if verbose:
+            print("reading file: {}".format(filename))
+
+        for line in open(filename):
+
+            dependency_file = "{}{}{}".format(
+                build_path, '/', line.split(' ')[-1])
+
+            if '.hpp' not in dependency_file:
+                continue
+
+            dependency_file = os.path.abspath(dependency_file).rstrip()
+
+            target_cpp_file = line.split('.o:')[0]
+            target_cpp_file = re.sub(
+                r'CMakeFiles.*\.dir', '**', target_cpp_file.rstrip())
+
+            if os.path.exists(
+                    dependency_file) and '.cpp' in target_cpp_file and dependency_file in changed_files_fullpath:
+
+                if verbose:
+                    print("globbing for:")
+                    print(target_cpp_file)
+
+                target_cpp_file_save = target_cpp_file
+                target_cpp_file = glob.glob(
+                    "**" + target_cpp_file, recursive=True)
+
+                if target_cpp_file is None or len(target_cpp_file) == 0:
+                    print("Failed to find file/dependency: ")
+                    print("File: {}".format(target_cpp_file_save))
+                    print("Dependency: {}".format(dependency_file))
+                    print("Your build directory may be old")
+                    break
+
+                if target_cpp_file is None or len(target_cpp_file) > 1:
+                    print("Too many files found matching {}".format(
+                        target_cpp_file))
+
+                target_cpp_file = os.path.abspath(target_cpp_file[0])
+
+                if verbose:
+                    print("source file: {}".format(dependency_file))
+                    print("target cpp file: {}".format(target_cpp_file))
+
+                changed_files_fullpath.add(target_cpp_file)
+                # changed_files_fullpath.remove(dependency_file)
+
+                targets_substituted.add(dependency_file)
+
+    if targets_to_substitute != targets_substituted:
+        print(
+            "\nWARNING: Failed to find dependencies for the following files:")
+        print(targets_to_substitute.difference(targets_substituted))
+
+    # Remove all hpp files
+    changed_files_fullpath = [
+        x for x in changed_files_fullpath if '.hpp' not in x]
+
+    return changed_files_fullpath
 
 
 def find_nth(text, substr, n):
@@ -51,6 +153,13 @@ def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
         new_diagnostics = []
         for d in document['Diagnostics']:
             file_path = d['FilePath']
+
+            # ignore extries that refer to empty file paths (this is usually a waning that clang
+            # have stopped processing a file because too many warnings have been generated from that
+            # file
+            if len(file_path) == 0:
+                continue
+
             absolute_path = file_path if isabs(
                 file_path) else abspath(join(build_root, file_path))
             assert isfile(absolute_path), "Not a file: {}".format(
@@ -107,7 +216,7 @@ def parse_checks_list(output):
 
 def get_enabled_checks_list():
     enabled_checks_output = subprocess.check_output(
-        ['clang-tidy-6.0', '-list-checks']).decode()
+        [CLANG_TOOLCHAIN.clang_tidy_path, '-list-checks']).decode()
 
     enabled_checks = parse_checks_list(enabled_checks_output)
 
@@ -116,9 +225,9 @@ def get_enabled_checks_list():
 
 def get_disabled_checks_list():
     all_checks_output = subprocess.check_output(
-        ['clang-tidy-6.0', '-list-checks', '-checks=*']).decode()
+        [CLANG_TOOLCHAIN.clang_tidy_path, '-list-checks', '-checks=*']).decode()
     enabled_checks_output = subprocess.check_output(
-        ['clang-tidy-6.0', '-list-checks']).decode()
+        [CLANG_TOOLCHAIN.clang_tidy_path, '-list-checks']).decode()
 
     all_checks = parse_checks_list(all_checks_output)
     enabled_checks = parse_checks_list(enabled_checks_output)
@@ -128,35 +237,117 @@ def get_disabled_checks_list():
     return sorted(disabled_checks)
 
 
-def static_analysis(project_root, build_root, fix, concurrency):
-    output_file = abspath(join(build_root, 'clang_tidy_fixes.yaml'))
-    runner_script_path = shutil.which('run-clang-tidy-6.0.py')
-    assert runner_script_path is not None
-    clang_tidy_path = shutil.which('clang-tidy-6.0')
-    clang_apply_replacements_path = shutil.which(
-        'clang-apply-replacements-6.0')
-    if fix:
-        assert clang_apply_replacements_path is not None, \
-            'clang-apply-replacements-6.0 must be installed and ' \
-            'found in the path (install clang-tools-6.0)'
+def get_changed_paths_from_git(project_root, commit):
+    raw_relative_paths = subprocess.check_output(['git', 'diff', '--name-only', commit]) \
+        .strip() \
+        .decode('utf-8') \
+        .split('\n')
+
+    relative_paths = [rel_path.strip() for rel_path in raw_relative_paths]
+
+    return [abspath(join(project_root, rel_path)) for rel_path in relative_paths]
+
+
+def filter_non_matching(file_list, words):
+    return [x for x in file_list if any(file_ending in x for file_ending in words)]
+
+
+def filter_compile_commands(project_root, input_location, target_files, output_location):
+    filtered_commands = []
+
+    # read the input file and filter the entries
+    with open(input_location, 'r') as input_file:
+        commands = json.load(input_file)
+
+        for command in commands:
+            command_file_path = command['file']
+            relative_file_path = os.path.relpath(
+                command_file_path, project_root)
+
+            if relative_file_path.startswith('vendor'):
+                continue
+
+            if relative_file_path == 'libs/vm/src/tokeniser.cpp':
+                continue
+
+            if target_files is not None:
+                match = False
+                for target_file in target_files:
+                    if target_file in command_file_path:
+                        match = True
+                        break
+
+                if not match:
+                    continue
+
+            # add the command to the filtered set
+            filtered_commands.append(command)
+
+    # flush the output file
+    with open(output_location, 'w') as output_file:
+        json.dump(filtered_commands, output_file)
+
+
+def static_analysis(project_root, build_root, fix, concurrency, commit, verbose):
+
+    # ensure the static analysis root is correct
+    static_analysis_root = os.path.join(build_root, 'static_analysis')
+    os.makedirs(static_analysis_root, exist_ok=True)
+
+    target_files = None
+
+    # In the case we are linting a subset of all files
+    if commit:
+        target_files = get_changed_paths_from_git(project_root, *commit)
+        target_files = filter_non_matching(target_files, [".hpp", ".cpp"])
+
+        if verbose:
+            print("Relevant files that differ: {}".format(target_files))
+
+        target_files = convert_to_dependencies(
+            set(target_files),
+            abspath(build_root),
+            verbose
+        )
+
+        if verbose:
+            print("Relevant files that differ (after dependency conversion): {}".format(
+                clang_apply_replacements_path))
+
+        # exit if there is nothing that needs to be done
+        if len(target_files) == 0:
+            print("\n\nThere doesn't appear to be any relevant files to lint. 👍.\n\n")
+            return
+
+    # filter the compile commands
+    filter_compile_commands(
+        project_root,
+        os.path.join(build_root, 'compile_commands.json'),
+        target_files,
+        os.path.join(static_analysis_root, 'compile_commands.json')
+    )
+
+    output_file = abspath(join(static_analysis_root, 'clang_tidy_fixes.yaml'))
 
     cmd = [
         'python3', '-u',
-        runner_script_path,
-        '-j{concurrency}'.format(concurrency=concurrency),
-        '-p={path}'.format(path=abspath(build_root)),
+        CLANG_TOOLCHAIN.run_clang_tidy_path,
+        '-j{}'.format(concurrency),
+        '-p={}'.format(static_analysis_root),
         '-header-filter=.*(apps|libs).*\\.hpp$',
-        '-quiet',
-        '-clang-tidy-binary={clang_tidy_path}'.format(
-            clang_tidy_path=clang_tidy_path),
+        '-clang-tidy-binary={}'.format(CLANG_TOOLCHAIN.clang_tidy_path),
         # Hacky workaround: we do not need clang-apply-replacements unless applying fixes
         # through run-clang-tidy-6.0.py (which we cannot do, as it would alter vendor
         # libraries). Unfortunately, run-clang-tidy will refuse to function unless it
         # thinks that clang-apply-replacements is installed on the system. We pass
         # a valid path to an arbitrary executable here to placate it.
-        '-clang-apply-replacements-binary={clang_tidy_path}'.format(
-            clang_tidy_path=clang_tidy_path),
-        '-export-fixes={output_file}'.format(output_file=output_file)]
+        '-clang-apply-replacements-binary={}'.format(
+            CLANG_TOOLCHAIN.clang_tidy_path),
+        '-export-fixes={}'.format(output_file)
+    ]
+
+    if fix:
+        cmd += ['-fix']
 
     print('\nPerform static analysis')
 
@@ -173,12 +364,14 @@ def static_analysis(project_root, build_root, fix, concurrency):
 
     print('Working...')
     with tempfile.SpooledTemporaryFile() as f:
-        exit_code = subprocess.call(cmd, cwd=project_root,
-                                    stdout=f, stderr=f)
+
+        # execute the run-clang-tidy "helper" script
+        exit_code = subprocess.call(cmd, cwd=project_root, stdout=f, stderr=f)
+
         if exit_code != 0:
             print('clang-tidy reported an error')
             f.seek(0)
-            print('\n{text}\n'.format(text=f.read().decode()))
+            print('\n{}\n'.format(f.read().decode()))
             sys.exit(1)
 
     print('Done.')
@@ -209,8 +402,12 @@ def static_analysis(project_root, build_root, fix, concurrency):
                 total_files=len(files_diagnostics)))
 
         if fix:
+            if CLANG_TOOLCHAIN.clang_apply_replacements_path is None:
+                raise RuntimeError(
+                    'Unable to detect `clang-apply-replacements`. This is required for applying fixes')
+
             print('Applying fixes...')
-            subprocess.call(['clang-apply-replacements-6.0',
+            subprocess.call([CLANG_TOOLCHAIN.clang_apply_replacements_path,
                              '-format', '-style=file', '.'], cwd=build_root)
             print(
                 'Done. Note that the automated fix feature of clang-tidy is unreliable:')

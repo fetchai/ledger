@@ -13,6 +13,7 @@ hicpp-exception-baseclass,\
 hicpp-explicit-conversions,\
 hicpp-use-*,\
 misc-*,\
+-misc-misplaced-widening-cast,\
 modernize-*,\
 performance-*,\
 readability-*,\
