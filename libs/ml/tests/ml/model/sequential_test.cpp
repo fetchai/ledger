@@ -20,6 +20,7 @@
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/model/sequential.hpp"
+#include "ml/ops/activation.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
 
@@ -43,8 +44,8 @@ void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label,
 {
   train_data  = TypeParam::FromString("0, 1, 0; 1, 0, 0; 0, 0, 1");
   train_label = TypeParam::FromString("0, 1, 2");
-  test_datum  = TypeParam::FromString("0; 0; 1");
-  test_label  = TypeParam::FromString("2");
+  test_datum  = TypeParam::FromString("1; 0; 0");
+  test_label  = TypeParam::FromString("1");
 }
 
 template <typename TypeParam, typename DataType, typename ModelType>
@@ -59,11 +60,14 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
   auto data_loader_ptr                = std::make_unique<DataLoaderType>(label_shape, data_shape);
   data_loader_ptr->AddData(data, gt);
 
-  // run model in training mode
+  // run model in training modeConfig
   auto model = ModelType(model_config);
-  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(3, 100);
-  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(100, 100);
-  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(100, 1);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
+      3, 100, fetch::ml::details::ActivationType::RELU);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
+      100, 100, fetch::ml::details::ActivationType::RELU);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
+      100, 1, fetch::ml::details::ActivationType::RELU);
   model.SetDataloader(std::move(data_loader_ptr));
   model.Compile(optimiser_type, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
 
@@ -130,7 +134,7 @@ TYPED_TEST(ModelsTest, adagrad_sequential)
 TYPED_TEST(ModelsTest, adam_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, static_cast<DataType>(1e-3),
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, static_cast<DataType>(1e-5),
                                  static_cast<DataType>(1e-2), 10));
 }
 

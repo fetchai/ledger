@@ -107,7 +107,6 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
 
   // test prediction performance
   TypeParam pred({3, 1});
-
   model.Predict(test_datum, pred);
 
   EXPECT_TRUE(pred.AllClose(test_label, tolerance, tolerance));
@@ -126,7 +125,7 @@ TYPED_TEST(ModelsTest, adagrad_dnnregressor)
 TYPED_TEST(ModelsTest, adam_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, static_cast<DataType>(1e-4),
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, static_cast<DataType>(1e-5),
                                  static_cast<DataType>(1e-2), 10));
 }
 TYPED_TEST(ModelsTest, momentum_dnnregressor)
