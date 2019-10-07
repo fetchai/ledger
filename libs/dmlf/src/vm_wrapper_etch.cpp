@@ -55,7 +55,7 @@ void VmWrapperEtch::Execute(const std::string &entrypoint, const Params & /*para
   status_ = VmWrapperInterface::RUNNING;
   std::string        error;
   fetch::vm::Variant output;
-  outputStream_ = std::stringstream();  // Clear the output stream
+  outputStream_ = std::ostringstream();  // Clear the output stream
   /*auto result = */ vm_->Execute(*executable_, entrypoint, error, output);
 
   DoOutput();

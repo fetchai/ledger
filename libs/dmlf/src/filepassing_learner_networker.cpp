@@ -97,7 +97,7 @@ void FilepassingLearnerNetworker::AddPeers(Peers new_peers)
   {
     if (peer != name_)
     {
-      peers_.push_back(peer);
+      peers_.emplace_back(peer);
     }
   }
 }
@@ -168,7 +168,7 @@ std::vector<std::string> FilepassingLearnerNetworker::GetUpdateNames() const
       {
         continue;
       }
-      r.push_back(fp);
+      r.emplace_back(fp);
     }
     closedir(dir);
   }

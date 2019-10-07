@@ -54,16 +54,18 @@ public:
     return peers.size();
   }
 
-  void AddPeer(const std::shared_ptr<FakeLearner> &peer)
+  void AddPeer(std::shared_ptr<FakeLearner> peer)
   {
     peers.push_back(peer);
-    peer->peers.push_back(std::shared_ptr<FakeLearner>{this});
+    peer->peers.emplace_back(std::shared_ptr<FakeLearner>{this});
   }
 
 private:
   using Bytes = AbstractLearnerNetworker::Bytes;
+  using Peer = std::shared_ptr<FakeLearner>;
+  using Peers = std::vector<Peer>;
 
-  std::vector<std::shared_ptr<FakeLearner>> peers;
+  Peers peers;
 
   void SendMessage(const Bytes &msg, const std::shared_ptr<FakeLearner> &peer)
   {

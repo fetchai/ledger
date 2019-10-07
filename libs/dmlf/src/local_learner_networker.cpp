@@ -36,7 +36,7 @@ void LocalLearnerNetworker::AddPeers(std::vector<std::shared_ptr<LocalLearnerNet
   {
     if (peer.get() != this)
     {
-      peers_.push_back(peer);
+      peers_.emplace_back(peer);
     }
   }
 }
