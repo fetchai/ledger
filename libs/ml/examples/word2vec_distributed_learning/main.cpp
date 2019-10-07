@@ -102,11 +102,11 @@ int main(int argc, char **argv)
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients    = 5;
-  SizeType number_of_rounds     = 1000;
-  coord_params.number_of_peers  = 2;
-  coord_params.mode             = CoordinatorMode::ASYNCHRONOUS;
-  coord_params.iterations_count = 400;  //  Synchronization occurs after this number of batches
+  SizeType number_of_clients   = 5;
+  SizeType number_of_rounds    = 1000;
+  coord_params.number_of_peers = 2;
+  coord_params.mode            = CoordinatorMode::ASYNCHRONOUS;
+  SizeType iterations_count    = 400;  //  Synchronization occurs after this number of batches
   // have been processed in total by the clients
 
   client_params.batch_size    = 10000;
@@ -158,6 +158,7 @@ int main(int argc, char **argv)
     cp.data                        = {client_data[i]};
     auto client =
         std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
+    client.SetMaxUpdates(iterations_count);
     // TODO(1597): Replace ID with something more sensible
     clients[i]     = client;
     raw_clients[i] = clients[i];

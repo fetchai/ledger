@@ -133,6 +133,11 @@ public:
 
   void SetParams(ClientParams<DataType> const &new_params);
 
+  void SetMaxUpdates(SizeType max_updates)
+  {
+    max_updates_ = max_updates;
+  }
+
   GraphPtrType GetModel();
 
   std::string GetId() const;
@@ -199,7 +204,9 @@ protected:
   DataType learning_rate_ = static_cast<DataType>(0);
 
   // Count for number of batches
-  SizeType batch_counter_ = 0;
+  SizeType batch_counter_  = 0;
+  SizeType update_counter_ = 0;
+  SizeType max_updates_    = 0;
 
   GradientType GetNewGradients();
 
@@ -347,6 +354,7 @@ void TrainingClient<TensorType>::Train()
 
     g_ptr_->BackPropagate(error_name_);
   }
+  update_counter_++;
 }
 
 /**
@@ -542,7 +550,8 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
 {
   std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
 
-  while (coordinator_ptr_->GetState() == CoordinatorState::RUN)
+  update_counter_ = 0;
+  while (update_counter_ < max_updates_)
   {
     DoBatch();
     coordinator_ptr_->IncrementIterationsCounter();
@@ -612,6 +621,7 @@ void TrainingClient<TensorType>::DoBatch()
       GradientType     gt            = GetNewGradients();
       VectorTensorType new_gradients = TranslateGradients(gt);
       GraphAddGradients(g_ptr_, new_gradients);
+      update_counter_++;
     }
   }
 
