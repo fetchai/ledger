@@ -49,14 +49,15 @@ TEST(FixedPointSerialisationTest, DecimalSerialisation)
 
   for (int i(0); i < 100; ++i)
   {
-    fetch::fixed_point::FixedPoint<32, 32> a(distribution(generator));
+    double                                 value = distribution(generator);
+    fetch::fixed_point::FixedPoint<32, 32> a(value);
     fetch::serializers::MsgPackSerializer  b;
     b << a;
     b.seek(0);
     fetch::fixed_point::FixedPoint<32, 32> c;
     b >> c;
     EXPECT_EQ(a, c);
-    EXPECT_FLOAT_EQ(float(a), i);
+    EXPECT_NEAR(double(a), value, 1e-6);
   }
 }
 

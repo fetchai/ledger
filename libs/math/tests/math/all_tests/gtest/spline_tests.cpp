@@ -49,16 +49,18 @@ void test1(F &f, double from, double to, double max)
   fetch::math::spline::Spline<> spline;
   spline.SetFunction(f, from, to, N);
   double me = 0;
+  double x  = from;
 
-  auto from_int = static_cast<uint32_t>(from * 10000);
-  auto to_int   = static_cast<uint32_t>(to * 10000);
-  for (; from_int < to_int; from_int++)
+  auto from_int = static_cast<int>(from * 10000);
+  auto to_int   = static_cast<int>(to * 10000);
+
+  for (auto curr_int = from_int; curr_int < to_int; curr_int++)
   {
-    double x  = static_cast<double>(from_int) / 10000;
     double y0 = spline(x);
     double y1 = f(x);
     double r  = fabs(y0 - y1) / y1 * 100;
     me        = std::max(r, me);
+    x += 0.0001;
   }
   std::cout << "Peak error: " << me << std::endl;
   ASSERT_LE(me, max) << "expected: " << max;
