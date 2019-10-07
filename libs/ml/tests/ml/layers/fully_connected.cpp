@@ -410,10 +410,10 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   auto      backprop_error = fc.BackPropagate(error_signal);
 
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].second.shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].second.shape()[0], 5);
-  ASSERT_EQ(backprop_error[0].second.shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].second.shape()[2], 2);
+  ASSERT_EQ(backprop_error.at(0).at(0).shape().size(), 3);
+  ASSERT_EQ(backprop_error.at(0).at(0).shape()[0], 5);
+  ASSERT_EQ(backprop_error.at(0).at(0).shape()[1], 10);
+  ASSERT_EQ(backprop_error.at(0).at(0).shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
