@@ -17,31 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/mcl_dkg.hpp"
+#include "beacon/beacon_service.hpp"
 
 namespace fetch {
 namespace beacon {
 
-struct DkgOutput
+/**
+ * Class which allows the beacon service to take in pre-computed DKG public and private keys from a
+ * trusted dealer, thereby circumventing the running of the DKG inorder to generate entropy
+ */
+class TrustedDealerBeaconService : public BeaconService
 {
-  using PublicKey         = crypto::mcl::PublicKey;
-  using PrivateKey        = crypto::mcl::PrivateKey;
-  using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using CabinetList       = std::set<MuddleAddress>;
+public:
+  TrustedDealerBeaconService(MuddleInterface &               muddle,
+                             ledger::ManifestCacheInterface &manifest_cache,
+                             const CertificatePtr &certificate, SharedEventManager event_manager);
 
-  DkgOutput();
-
-  DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares, PrivateKey const &secret_share,
-            CabinetList qual_members);
-
-  DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members);
-
-  CabinetList            qual{};
-  PublicKey              group_public_key;
-  std::vector<PublicKey> public_key_shares{};
-  PrivateKey             private_key_share;
+  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
+                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy,
+                       const DkgOutput &output);
 };
-
 }  // namespace beacon
 }  // namespace fetch

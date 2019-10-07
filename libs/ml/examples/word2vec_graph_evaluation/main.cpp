@@ -19,15 +19,15 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/layers/skip_gram.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 #include "ml/utilities/graph_saver.hpp"
-#include "word2vec_utilities.hpp"
 
 #include <stdexcept>
 #include <string>
 
 using namespace fetch::ml;
-using namespace fetch::ml::examples;
 using namespace fetch::ml::dataloaders;
 
 using DataType   = float;
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
   }
   else
   {
-    throw std::runtime_error("Args: graph_save_file data_file analogy_file");
+    throw exceptions::InvalidFile("Args: graph_save_file data_file analogy_file");
   }
 
   std::shared_ptr<Graph<TensorType>> g_ptr = fetch::ml::utilities::LoadGraph<Graph<TensorType>>(graph_file);
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 
   // set up dataloader
   /// DATA LOADING ///
-  data_loader.BuildVocabAndData({ReadFile(dataloader_file)}, min_count, false);
+  data_loader.BuildVocabAndData({utilities::ReadFile(dataloader_file)}, min_count, false);
   std::string skip_gram_name = "SkipGram";
 
   // first get hold of the skipgram layer by searching the return name in the graph
@@ -79,8 +79,8 @@ int main(int argc, char **argv)
       sg_layer->GetEmbeddings(sg_layer);
 
   DataType score =
-      TestWithAnalogies<TensorType>(data_loader, embeddings->GetWeights(), analogy_file);
+      utilities::TestWithAnalogies<TensorType>(data_loader, embeddings->GetWeights(), analogy_file);
   std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
-  PrintKNN(data_loader, embeddings->GetWeights(), "three", 20);
-  PrintWordAnalogy(data_loader, embeddings->GetWeights(), "king", "queen", "father", 20);
+  utilities::PrintKNN(data_loader, embeddings->GetWeights(), "three", 20);
+  utilities::PrintWordAnalogy(data_loader, embeddings->GetWeights(), "king", "queen", "father", 20);
 }

@@ -543,7 +543,7 @@ inline std::vector<TensorType> PrepareTensorForBert(TensorType const &data,
   // check that data shape is proper for bert input
   if (data.shape().size() != 2 || data.shape(0) != max_seq_len)
   {
-    throw std::runtime_error("Incorrect data shape for given bert config");
+    throw fetch::ml::exceptions::InvalidMode("Incorrect data shape for given bert config");
   }
 
   // build segment, mask and pos data for each sentence in the data

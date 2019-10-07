@@ -57,7 +57,7 @@ public:
     Identity  identity;
   };
 
-  explicit BeaconManager(CertificatePtr certificate = nullptr);
+  explicit BeaconManager(CertificatePtr certificate = CertificatePtr{});
 
   BeaconManager(BeaconManager const &) = delete;
   BeaconManager &operator=(BeaconManager const &) = delete;
@@ -66,12 +66,10 @@ public:
 
   void                     GenerateCoefficients();
   std::vector<Coefficient> GetCoefficients();
-
-  std::pair<Share, Share> GetOwnShares(MuddleAddress const &receiver);
-  std::pair<Share, Share> GetReceivedShares(MuddleAddress const &owner);
+  std::pair<Share, Share>  GetOwnShares(MuddleAddress const &receiver);
+  std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &owner);
   bool AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
   bool AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
-
   std::unordered_set<MuddleAddress> ComputeComplaints(
       std::set<MuddleAddress> const &coeff_received);
   bool VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer);
@@ -91,10 +89,9 @@ public:
   void             NewCabinet(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
   void             Reset();
 
-  AddResult AddSignaturePart(Identity const &from, Signature const &signature);
-  bool      Verify();
-  bool      Verify(Signature const &signature);
-
+  AddResult     AddSignaturePart(Identity const &from, Signature const &signature);
+  bool          Verify();
+  bool          Verify(Signature const &signature);
   static bool   Verify(std::string const &group_public_key, MessagePayload const &message,
                        std::string const &signature);
   Signature     GroupSignature() const;
@@ -118,9 +115,9 @@ private:
   static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
 
   CertificatePtr certificate_;
-  uint32_t       cabinet_size_{};       ///< Size of committee
-  uint32_t       polynomial_degree_{};  ///< Degree of polynomial in DKG
-  CabinetIndex   cabinet_index_{};      ///< Index of our address in cabinet_
+  uint32_t       cabinet_size_;       ///< Size of committee
+  uint32_t       polynomial_degree_;  ///< Degree of polynomial in DKG
+  CabinetIndex   cabinet_index_;      ///< Index of our address in cabinet_
 
   /// Member details
   /// @{

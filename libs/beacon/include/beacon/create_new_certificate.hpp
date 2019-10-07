@@ -17,31 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/mcl_dkg.hpp"
+#include "crypto/ecdsa.hpp"
 
 namespace fetch {
 namespace beacon {
+using fetch::crypto::Prover;
+using ProverPtr = std::shared_ptr<Prover>;
 
-struct DkgOutput
-{
-  using PublicKey         = crypto::mcl::PublicKey;
-  using PrivateKey        = crypto::mcl::PrivateKey;
-  using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using CabinetList       = std::set<MuddleAddress>;
-
-  DkgOutput();
-
-  DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares, PrivateKey const &secret_share,
-            CabinetList qual_members);
-
-  DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members);
-
-  CabinetList            qual{};
-  PublicKey              group_public_key;
-  std::vector<PublicKey> public_key_shares{};
-  PrivateKey             private_key_share;
-};
-
+/**
+ * Helper function for tests to generate a new pair of
+ * ECDSA public and private keys
+ *
+ * @return Shared pointer to a Prover object
+ */
+ProverPtr CreateNewCertificate();
 }  // namespace beacon
 }  // namespace fetch
