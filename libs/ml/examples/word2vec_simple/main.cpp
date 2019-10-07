@@ -18,6 +18,7 @@
 
 #include "math/approx_exp.hpp"
 #include "math/clustering/knn.hpp"
+#include "math/exceptions/exceptions.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/w2v_dataloader.hpp"
 #include "polyfill.hpp"
@@ -41,7 +42,7 @@ std::string ReadFile(std::string const &path)
   std::ifstream t(path);
   if (t.fail())
   {
-    throw std::runtime_error("Cannot open file " + path);
+    throw fetch::ml::exceptions::InvalidFile("Cannot open file " + path);
   }
 
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
@@ -73,7 +74,7 @@ TensorType LoadEmbeddings(std::string const &filename)
   std::ifstream input(filename, std::ios::binary);
   if (input.fail())
   {
-    throw std::runtime_error("embeddings file does not exist");
+    throw exceptions::InvalidFile("embeddings file does not exist");
   }
 
   std::string line;
