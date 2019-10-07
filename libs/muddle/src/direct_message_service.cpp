@@ -130,6 +130,23 @@ void DirectMessageService::RequestDisconnect(Handle handle)
   SendMessageToConnection(handle, response);
 }
 
+void DirectMessageService::SignalConnectionLeft(Handle handle)
+{
+  FETCH_LOCK(lock_);
+
+  for (auto it = reservations_.begin(); it != reservations_.end();)
+  {
+    if (it->second == handle)
+    {
+      it = reservations_.erase(it);
+    }
+    else
+    {
+      ++it;
+    }
+  }
+}
+
 template <typename T>
 void DirectMessageService::SendMessageToConnection(Handle handle, T const &msg, bool exchange)
 {
