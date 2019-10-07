@@ -54,7 +54,7 @@ public:
     return peers.size();
   }
 
-  void AddPeer(std::shared_ptr<FakeLearner> peer)
+  void AddPeer(const std::shared_ptr<FakeLearner> &peer)
   {
     peers.push_back(peer);
     peer->peers.emplace_back(std::shared_ptr<FakeLearner>{this});
