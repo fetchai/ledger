@@ -158,9 +158,9 @@ int main(int argc, char **argv)
     cp.data                        = {client_data[i]};
     auto client =
         std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
-    raw_clients[i] = clients[i];
     // TODO(1597): Replace ID with something more sensible
-    clients[i] = client;
+    clients[i]     = client;
+    raw_clients[i] = clients[i];
     vocabs.push_back(client->GetVocab());
   }
 
