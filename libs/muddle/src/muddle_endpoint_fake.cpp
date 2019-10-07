@@ -46,7 +46,7 @@ PacketPtr FormatPacket(Packet::Address from, NetworkId const &network, uint16_t 
 
 PacketPtr const &FakeMuddleEndpoint::Sign(PacketPtr const &p) const
 {
-  if (certificate_ && (sign_broadcasts_ || !p->IsBroadcast()))  // NOLINT
+  if ((certificate_ != nullptr) && (sign_broadcasts_ || !p->IsBroadcast()))
   {
     p->Sign(*certificate_);
   }
