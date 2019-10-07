@@ -40,9 +40,6 @@ struct ModelConfig
 
   bool print_stats = false;
 
-  template <typename X, typename D>
-  friend struct serializers::MapSerializer;
-
   ModelConfig()
   {
     learning_rate_param.mode =

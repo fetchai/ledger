@@ -42,9 +42,6 @@ public:
   ~DNNClassifier() override                 = default;
 
   DNNClassifier(ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
-
-  template <typename X, typename D>
-  friend struct serializers::MapSerializer;
 };
 
 /**
