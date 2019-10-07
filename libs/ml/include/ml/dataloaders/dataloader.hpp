@@ -19,6 +19,7 @@
 
 #include "core/serializers/group_definitions.hpp"
 #include "math/base_types.hpp"
+#include "ml/exceptions/exceptions.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -190,7 +191,7 @@ void DataLoader<LabelType, DataType>::SetMode(DataLoaderMode new_mode)
 
   if (this->current_min_ == this->current_max_)
   {
-    throw std::runtime_error("Dataloader has no set for selected mode.");
+    throw exceptions::Timeout("Dataloader has no set for selected mode.");
   }
 }
 

@@ -52,7 +52,7 @@ protected:
   {
     BlockConfig const &config = GetParam();
 
-    mock_storage_.reset(new MockStorageUnit);
+    mock_storage_ = std::make_shared<MockStorageUnit>();
     executors_.clear();
 
     // create the manager
