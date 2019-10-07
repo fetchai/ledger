@@ -438,7 +438,7 @@ void Optimiser<T>::UpdateLearningRate()
   }
   default:
   {
-    throw std::runtime_error("Please specify learning rate schedule method");
+    throw exceptions::InvalidMode("Please specify learning rate schedule method");
   }
   }
 }
