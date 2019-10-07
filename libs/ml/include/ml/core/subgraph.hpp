@@ -69,7 +69,7 @@ protected:
   {
     if (output_ptr.get() == this)
     {
-      throw std::runtime_error("This needs to be called with a separate ptr.");
+      throw ml::exceptions::InvalidMode("This needs to be called with a separate ptr.");
     }
     auto copyshare = std::dynamic_pointer_cast<SubGraph<TensorType>>(output_ptr);
     assert(copyshare);
@@ -92,7 +92,7 @@ public:
   {
     FETCH_UNUSED(me);
 
-    throw std::runtime_error(
+    throw ml::exceptions::InvalidMode(
         "SubGraph cannot make a shared copy of itself because it is pure virtual.");
   }
 

@@ -136,7 +136,7 @@ public:
   {
     FETCH_UNUSED(data);
     FETCH_UNUSED(label);
-    throw std::runtime_error(
+    throw exceptions::InvalidMode(
         "AddData not implemented for MNist example - please use Constructor or SetupWithDataFiles "
         "methods");
   }
@@ -223,7 +223,7 @@ public:
 
       if (magic_number != 2051)
       {
-        throw std::runtime_error("Invalid MNIST image file!");
+        throw exceptions::InvalidFile("Invalid MNIST image file!");
       }
 
       file.read(reinterpret_cast<char *>(&number_of_images), sizeof(number_of_images)),
@@ -242,7 +242,7 @@ public:
       return _dataset;
     }
 
-    throw std::runtime_error("Cannot open file `" + full_path + "`!");
+    throw exceptions::InvalidFile("Cannot open file `" + full_path + "`!");
   }
 
   static uint8_t *ReadMNistLabels(std::string const &full_path, uint32_t &number_of_labels)
@@ -269,7 +269,7 @@ public:
 
       if (magic_number != 2049)
       {
-        throw std::runtime_error("Invalid MNIST label file!");
+        throw exceptions::InvalidFile("Invalid MNIST label file!");
       }
 
       file.read(reinterpret_cast<char *>(&number_of_labels), sizeof(number_of_labels)),
@@ -283,7 +283,7 @@ public:
       return _dataset;
     }
 
-    throw std::runtime_error("Unable to open file `" + full_path + "`!");
+    throw exceptions::InvalidFile("Unable to open file `" + full_path + "`!");
   }
 
 private:
@@ -319,7 +319,7 @@ private:
     }
     default:
     {
-      throw std::runtime_error("Unsupported dataloader mode.");
+      throw exceptions::InvalidMode("Unsupported dataloader mode.");
     }
     }
   }
@@ -342,7 +342,7 @@ private:
     }
     default:
     {
-      throw std::runtime_error("Unsupported dataloader mode.");
+      throw exceptions::InvalidMode("Unsupported dataloader mode.");
     }
     }
   }

@@ -20,6 +20,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/filesystem/read_file_contents.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
@@ -74,7 +75,7 @@ std::shared_ptr<GraphType> LoadModel(std::string const &save_location)
   fetch::byte_array::ConstByteArray buffer = fetch::core::ReadContentsOfFile(save_location.c_str());
   if (buffer.empty())
   {
-    throw std::runtime_error("File does not exist");
+    throw exceptions::InvalidFile("File does not exist");
   }
 
   fetch::serializers::LargeObjectSerializeHelper serializer(buffer);

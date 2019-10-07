@@ -225,14 +225,14 @@ template <typename T>
 void GraphW2VLoader<T>::SetTestRatio(float new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
-  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename T>
 void GraphW2VLoader<T>::SetValidationRatio(float new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
-  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");
 }
 
 /**
@@ -449,7 +449,7 @@ void GraphW2VLoader<T>::BufferNextSamples()
   {
     if (!unigram_table_.SampleNegative(output_words_buffer_, neg_sample))
     {
-      throw std::runtime_error(
+      throw exceptions::Timeout(
           "unigram table timed out looking for a negative sample. check window size for sentence "
           "length and that data loaded correctly.");
     }
@@ -509,7 +509,7 @@ bool GraphW2VLoader<T>::AddData(InputType const &input, LabelType const &label)
 {
   FETCH_UNUSED(input);
   FETCH_UNUSED(label);
-  throw std::runtime_error("AddData not implemented for word 2 vec dataloader");
+  throw exceptions::InvalidMode("AddData not implemented for word 2 vec dataloader");
 }
 
 /**
@@ -738,7 +738,7 @@ void GraphW2VLoader<T>::UpdateCursor()
 {
   if (this->mode_ != DataLoaderMode::TRAIN)
   {
-    throw std::runtime_error("Other mode than training not supported.");
+    throw exceptions::InvalidMode("Other mode than training not supported.");
   }
 }
 
