@@ -46,7 +46,6 @@ int main(int argc, char **argv)
   std::string graph_file;
   std::string dataloader_file;
   std::string analogy_file;
-  ~DNNRegressor() = default;
 
   if (argc == 4)
   {
