@@ -42,7 +42,7 @@ public:
   using Artifact    = fetch::vm::Variant;
   using Result      = ExecutionResult;
   using Returned    = fetch::network::PromiseOf<ExecutionResult>;
-  // using Params      = std::vector<Artifact>;
+  using Params      = std::vector<Artifact>;
 
   virtual Returned CreateExecutable(Target const &target, Name const &execName,
                                     SourceFiles const &sources)                 = 0;
@@ -59,9 +59,6 @@ public:
   ExecutionInterface &operator=(ExecutionInterface const &other)  = delete;
   bool                operator==(ExecutionInterface const &other) = delete;
   bool                operator<(ExecutionInterface const &other)  = delete;
-
-protected:
-private:
 };
 
 }  // namespace dmlf
