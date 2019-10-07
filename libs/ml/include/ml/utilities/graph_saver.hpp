@@ -91,6 +91,6 @@ std::shared_ptr<GraphType> LoadGraph(std::string const &save_location)
   return graph_ptr;
 }
 
-}  // namespace examples
+}  // namespace utilities
 }  // namespace ml
 }  // namespace fetch

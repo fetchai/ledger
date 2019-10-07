@@ -21,8 +21,8 @@
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/layers/skip_gram.hpp"
-#include "ml/utilities/word2vec_utilities.hpp"
 #include "ml/utilities/graph_saver.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -58,7 +58,8 @@ int main(int argc, char **argv)
     throw exceptions::InvalidFile("Args: graph_save_file data_file analogy_file");
   }
 
-  std::shared_ptr<Graph<TensorType>> g_ptr = fetch::ml::utilities::LoadGraph<Graph<TensorType>>(graph_file);
+  std::shared_ptr<Graph<TensorType>> g_ptr =
+      fetch::ml::utilities::LoadGraph<Graph<TensorType>>(graph_file);
 
   std::cout << "Setting up training data...: " << std::endl;
 

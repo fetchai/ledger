@@ -51,11 +51,11 @@ int main(int ac, char **av)
   model_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.001);
   model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
   model_config.batch_size                                 = 64;  // minibatch training size
-  model_config.subset_size    = 1000;  // train on 1000 samples then run tests/save graph
-  model_config.early_stopping = true;  // stop early if no improvement
-  model_config.patience       = 30;
-  model_config.print_stats    = true;
-  model_config.save_graph = true;
+  model_config.subset_size         = 1000;  // train on 1000 samples then run tests/save graph
+  model_config.early_stopping      = true;  // stop early if no improvement
+  model_config.patience            = 30;
+  model_config.print_stats         = true;
+  model_config.save_graph          = true;
   model_config.graph_save_location = "/tmp/mnist_model";
 
   // setup dataloader with 20% test set
