@@ -95,6 +95,11 @@ public:
   umap_str_int path_counter();
   umap_str_int word_counter();
 
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::C2V;
+  }
+
 private:
   std::vector<std::pair<SizeType, std::tuple<SizeType, SizeType, SizeType>>> data_;
 

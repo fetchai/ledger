@@ -113,6 +113,7 @@ public:
   using BeaconManager    = dkg::BeaconManager;
   using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
   using CertificatePtr          = std::shared_ptr<dkg::BeaconManager::Certificate>;
+  using Clock                   = moment::ClockPtr;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
                      ManifestCacheInterface &manifest_cache, CertificatePtr certificate);
@@ -206,14 +207,15 @@ private:
   uint64_t abort_below_ = 0;
 
   // Timing management
-  void             SetTimeToProceed(State state);
-  moment::ClockPtr clock_ = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
-  DeadlineTimer    timer_to_proceed_{"beacon:dkg"};
-  uint64_t         reference_timepoint_   = 0;
-  uint64_t         state_deadline_        = 0;
-  uint64_t         seconds_for_state_     = 0;
-  uint64_t         expected_dkg_timespan_ = 0;
-  bool             condition_to_proceed_  = false;
+  void          SetTimeToProceed(State state);
+  Clock         system_clock_ = moment::GetClock("beacon:dkg_system", moment::ClockType::SYSTEM);
+  Clock         clock_        = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
+  DeadlineTimer timer_to_proceed_{"beacon:dkg"};
+  uint64_t      reference_timepoint_   = 0;
+  uint64_t      state_deadline_        = 0;
+  uint64_t      seconds_for_state_     = 0;
+  uint64_t      expected_dkg_timespan_ = 0;
+  bool          condition_to_proceed_  = false;
 
   uint16_t failures_{0};
 
