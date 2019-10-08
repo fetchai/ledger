@@ -4,27 +4,30 @@ MACOS_NODE_LABEL = 'mac-mini'
 
 enum Platform
 {
-  DEFAULT_CLANG('Clang',      'clang',     'clang++'    ),
-  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0'),
-  CLANG7       ('Clang 7',    'clang-7',   'clang++-7'  ),
-  GCC7         ('GCC 7',      'gcc-7',     'g++-7'      ),
-  GCC8         ('GCC 8',      'gcc-8',     'g++-8'      )
+  DEFAULT_CLANG('Clang',      'clang',     'clang++',    ''),
+  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:d643eb6'),
+  CLANG7       ('Clang 7',    'clang-7',   'clang++-7', ''),
+  GCC7         ('GCC 7',      'gcc-7',     'g++-7', ''      ),
+  GCC8         ('GCC 8',      'gcc-8',     'g++-8',  ''      )
 
-  public Platform(label, cc, cxx)
+  public Platform(label, cc, cxx, image)
   {
     this.label = label
     this.env_cc = cc
     this.env_cxx = cxx
+    this.docker_image = image
   }
 
   public final String label
   public final String env_cc
   public final String env_cxx
+  public final String docker_image
 }
 
 LINUX_PLATFORMS_CORE = [
-  Platform.CLANG6,
-  Platform.GCC7]
+  Platform.CLANG6
+//   ,  Platform.GCC7
+  ]
 
 LINUX_PLATFORMS_AUX = [
   Platform.CLANG7,
@@ -32,8 +35,8 @@ LINUX_PLATFORMS_AUX = [
 
 enum Configuration
 {
-  DEBUG  ('Debug'),
-  RELEASE('Release')
+  DEBUG  ('Debug')
+//   RELEASE('Release')
 
   public Configuration(label)
   {
@@ -146,15 +149,15 @@ def _create_build(
 fast_run = { platform_, config_ ->
   return {
     build_stage(platform_, config_)()
-    fast_tests_stage(platform_, config_)()
+//     fast_tests_stage(platform_, config_)()
   }
 }
 
 full_run = { platform_, config_ ->
   return {
     build_stage(platform_, config_)()
-    fast_tests_stage(platform_, config_)()
-    slow_tests_stage(platform_, config_)()
+//     fast_tests_stage(platform_, config_)()
+//     slow_tests_stage(platform_, config_)()
   }
 }
 
@@ -162,7 +165,7 @@ full_run = { platform_, config_ ->
 def create_docker_build(Platform platform, Configuration config, stages)
 {
   def build = { build_stages ->
-    docker.image(DOCKER_IMAGE_NAME).inside {
+    docker.image(platform.docker_image).inside {
       build_stages()
     }
   }
@@ -201,30 +204,30 @@ def run_builds_in_parallel()
         full_run)
     }
 
-    // Only run macOS builds on master and head branches
-    if (run_full_build())
-    {
-      stages["macOS ${Platform.DEFAULT_CLANG.label} ${config.label}"] = create_macos_build(
-        Platform.DEFAULT_CLANG,
-        config)
-    }
+//     // Only run macOS builds on master and head branches
+//     if (run_full_build())
+//     {
+//       stages["macOS ${Platform.DEFAULT_CLANG.label} ${config.label}"] = create_macos_build(
+//         Platform.DEFAULT_CLANG,
+//         config)
+//     }
   }
 
-  for (config in (run_full_build() ? Configuration.values() : [Configuration.RELEASE]))
-  {
-    for (platform in LINUX_PLATFORMS_AUX)
-    {
-      stages["${platform.label} ${config.label}"] = create_docker_build(
-        platform,
-        config,
-        run_full_build() ? full_run : fast_run)
-    }
-  }
+//   for (config in (run_full_build() ? Configuration.values() : [Configuration.RELEASE]))
+//   {
+//     for (platform in LINUX_PLATFORMS_AUX)
+//     {
+//       stages["${platform.label} ${config.label}"] = create_docker_build(
+//         platform,
+//         config,
+//         run_full_build() ? full_run : fast_run)
+//     }
+//   }
 
-  if (run_full_build())
-  {
-    stages['Static Analysis'] = static_analysis(Configuration.DEBUG)
-  }
+//   if (run_full_build())
+//   {
+//     stages['Static Analysis'] = static_analysis(Configuration.DEBUG)
+//   }
 
   stage('Build and Test') {
     // Execute stages
@@ -252,7 +255,7 @@ def run_basic_checks()
 def main()
 {
   timeout(180) {
-    run_basic_checks()
+//     run_basic_checks()
     run_builds_in_parallel()
   }
 }
