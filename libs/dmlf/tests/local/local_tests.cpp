@@ -340,13 +340,13 @@ TEST_F(UpdateSerialisationTests, basicPass)
       std::make_shared<fetch::dmlf::Update<int>>();
 
   EXPECT_NE(update_1->TimeStamp(), update_2->TimeStamp());
-  EXPECT_NE(update_1->Fingerprint(), update_2->Fingerprint());
+  EXPECT_NE(update_1->GetFingerprint(), update_2->GetFingerprint());
 
   auto update_1_bytes = update_1->Serialise();
   update_2->DeSerialise(update_1_bytes);
 
   EXPECT_EQ(update_1->TimeStamp(), update_2->TimeStamp());
-  EXPECT_EQ(update_1->Fingerprint(), update_2->Fingerprint());
+  EXPECT_EQ(update_1->GetFingerprint(), update_2->GetFingerprint());
 }
 
 }  // namespace
