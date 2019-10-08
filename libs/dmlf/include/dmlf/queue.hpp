@@ -68,10 +68,10 @@ public:
     throw std::length_error{"Updates queue is empty"};
   }
 
-  Queue(const Queue &other) = delete;
-  Queue &operator=(const Queue &other)  = delete;
-  bool   operator==(const Queue &other) = delete;
-  bool   operator<(const Queue &other)  = delete;
+  Queue(Queue const &other) = delete;
+  Queue &operator=(Queue const &other)  = delete;
+  bool   operator==(Queue const &other) = delete;
+  bool   operator<(Queue const &other)  = delete;
 
 private:
   using Mutex = fetch::Mutex;
