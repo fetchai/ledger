@@ -76,9 +76,14 @@ endif (FETCH_DEBUG_SANITIZER)
 
 # Enable CCACHE - compiler caching to reduce build times
 if (FETCH_ENABLE_CCACHE)
+  find_program(SCCACGE_FOUND sccache)
   find_program(CCACHE_FOUND ccache)
 
-  if (CCACHE_FOUND)
+  if (SCCACGE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE sccache)
+#    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK sccache)
+    fetch_info("Found sccache on system - including")
+  elseif (CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
     fetch_info("Found ccache on system - including")
@@ -86,7 +91,7 @@ if (FETCH_ENABLE_CCACHE)
     fetch_warning(
       "ccache is enabled but wasn't found on your system - strongly advise installing ccache for reduced build times"
       )
-  endif (CCACHE_FOUND)
+  endif ()
 endif (FETCH_ENABLE_CCACHE)
 
 conditionally_enable_lto()
