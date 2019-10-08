@@ -40,6 +40,7 @@ struct OpVariableSaveableParams : public OpDataHolderSaveableParams<TensorType>
   std::shared_ptr<TensorType> gradient_accumulation;
   RegularisationType          regularisation_type = RegularisationType::NONE;
   DataType                    regularisation_rate = fetch::math::numeric_max<DataType>();
+  bool                        value_frozen;
 };
 
 namespace ops {
@@ -83,6 +84,8 @@ public:
     this->SetRegularisation(
         fetch::ml::details::CreateRegulariser<TensorType>(sp.regularisation_type),
         sp.regularisation_rate);
+
+    this->value_frozen_ = sp.value_frozen;
   }
 
   ~Variable() override = default;
@@ -110,6 +113,7 @@ public:
     }
 
     sp->regularisation_rate = this->regularisation_rate_;
+    sp->value_frozen        = this->value_frozen_;
 
     return sp;
   }
