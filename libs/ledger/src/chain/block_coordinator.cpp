@@ -99,7 +99,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , periodic_print_{STATE_NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
-  , mining_address_{prover->identity()}
+  , certificate_{prover}
+  , mining_address_{certificate_->identity()}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
                                                   [](State state) { return ToString(state); })}
   , block_difficulty_{block_difficulty}
@@ -1074,6 +1075,11 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
   try
   {
+    // Before the block leaves, it must be signed.
+    next_block_->UpdateDigest();
+    next_block_->body.miner_id   = certificate_->identity();
+    next_block_->miner_signature = certificate_->Sign(next_block_->body.hash);
+
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
     {
@@ -1106,10 +1112,12 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   if (next_block_)
   {
+    std::cerr << "wasn " << next_block_->body.block_number << std::endl; // DELETEME_NH
     block = next_block_.get();
   }
   else if (current_block_)
   {
+    std::cerr << "wasc" << std::endl; // DELETEME_NH
     block = current_block_.get();
   }
   else
@@ -1117,9 +1125,12 @@ BlockCoordinator::State BlockCoordinator::OnReset()
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block!");
   }
 
+  // TODO(HUT): figure out where/when to do this
+  // block->UpdateDigest();
+
   reset_state_count_->increment();
 
-  if (block != nullptr)
+  if (block != nullptr && !block->body.hash.empty())
   {
     block_hash_->set(*reinterpret_cast<uint64_t const *>(block->body.hash.pointer()));
   }

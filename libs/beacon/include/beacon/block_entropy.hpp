@@ -29,15 +29,15 @@ namespace beacon {
 struct BlockEntropy : public BlockEntropyInterface
 {
   using MuddleAddress     = byte_array::ConstByteArray;
-  using GroupPublicKey    = std::string;
+  using GroupPublicKey    = byte_array::ConstByteArray;
   using MemberPublicKey   = byte_array::ConstByteArray;
   using MemberSignature   = byte_array::ConstByteArray;
   using Confirmations     = std::map<MemberPublicKey, MemberSignature>;
-  using GroupSignature    = dkg::BeaconManager::Signature;
-  using GroupSignatureStr = std::string;
+  using GroupSignature    = byte_array::ConstByteArray;
   using Cabinet           = std::set<MuddleAddress>;
 
   BlockEntropy();
+  BlockEntropy(BlockEntropy const &rhs);
 
   // The members who succeeded DKG and are qualified to produce blocks (when new committee)
   Cabinet qualified;
@@ -56,7 +56,7 @@ struct BlockEntropy : public BlockEntropyInterface
   Confirmations confirmations;
 
   // Signature of the previous entropy, used as the entropy
-  GroupSignatureStr group_signature;
+  GroupSignature group_signature = GroupSignature{};
 
   Digest EntropyAsSHA256() const override;
 
@@ -92,8 +92,6 @@ public:
     map.Append(GROUP_PUBLIC_KEY, member.group_public_key);
     map.Append(BLOCK_NUMBER, member.block_number);
     map.Append(CONFIRMATIONS, member.confirmations);
-
-    // std::string set = member.group_signature/*.getStr()*/;
     map.Append(GROUP_SIGNATURE, member.group_signature);
   }
 
@@ -104,10 +102,7 @@ public:
     map.ExpectKeyGetValue(GROUP_PUBLIC_KEY, member.group_public_key);
     map.ExpectKeyGetValue(BLOCK_NUMBER, member.block_number);
     map.ExpectKeyGetValue(CONFIRMATIONS, member.confirmations);
-
-    // std::string get;
     map.ExpectKeyGetValue(GROUP_SIGNATURE, member.group_signature);
-    // member.group_signature/*.setStr(get)*/;
   }
 };
 }  // namespace serializers
