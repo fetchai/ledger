@@ -286,6 +286,11 @@ public:
     throw exceptions::InvalidFile("Unable to open file `" + full_path + "`!");
   }
 
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::MNIST;
+  }
+
 private:
   using UnsignedChar = uint8_t;
 

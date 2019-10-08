@@ -85,6 +85,8 @@ void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &p
   }
 }
 
+constexpr char const *LOGGING_NAME = "SmartContract";
+
 }  // namespace
 
 /**
@@ -251,7 +253,7 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
 
   if (!valid)
   {
-    throw std::runtime_error("Invalid address formart");
+    throw std::runtime_error("Invalid address format");
   }
 }
 
