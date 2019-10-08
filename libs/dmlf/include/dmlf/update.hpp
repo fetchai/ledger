@@ -124,7 +124,7 @@ struct MapSerializer<fetch::dmlf::Update<T>, D>
 {
 public:
   using Type       = fetch::dmlf::Update<T>;
-  using Driver = D;
+  using DriverType = D;
 
   static uint8_t const TIME_STAMP  = 1;
   static uint8_t const GRADIENTS   = 2;
