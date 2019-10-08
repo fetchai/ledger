@@ -37,13 +37,13 @@ using fetch::service::Promise;
 using PromiseList = std::vector<Promise>;
 using SignerPtr   = std::shared_ptr<crypto::ECDSASigner>;
 
-Muddle2LearnerNetworker::Muddle2LearnerNetworkerProtocol::Muddle2LearnerNetworkerProtocol(
-    Muddle2LearnerNetworker &sample)
+MuddleLearnerNetworker::MuddleLearnerNetworkerProtocol::MuddleLearnerNetworkerProtocol(
+    MuddleLearnerNetworker &sample)
 {
-  Expose(1, &sample, &Muddle2LearnerNetworker::RecvBytes);
+  Expose(1, &sample, &MuddleLearnerNetworker::RecvBytes);
 }
 
-Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string &cloud_config,
+MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
                                                  std::size_t        instance_number,
                                                  const std::shared_ptr<NetworkManager> &netm,
                                                  MuddleChannel                          channel_tmp)
@@ -51,7 +51,7 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string &cloud_config
 {
   json::JSONDocument doc{cloud_config};
 
-  FETCH_LOG_INFO("Muddle2LearnerNetworker", "here 1");
+  FETCH_LOG_INFO("MuddleLearnerNetworker", "here 1");
   if (netm)
   {
     netm_ = netm;
@@ -83,7 +83,7 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string &cloud_config
   mud_->Start(initial_peers, {port});
 
   server_ = std::make_shared<Server>(mud_->GetEndpoint(), 1, 1);
-  proto_  = std::make_shared<Muddle2LearnerNetworkerProtocol>(*this);
+  proto_  = std::make_shared<MuddleLearnerNetworkerProtocol>(*this);
 
   server_->Add(1, proto_.get());
 
@@ -99,7 +99,7 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string &cloud_config
 }
 
 // TOFIX remove return value
-uint64_t Muddle2LearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
+uint64_t MuddleLearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
 {
   switch (channel_tmp_)
   {
@@ -114,9 +114,9 @@ uint64_t Muddle2LearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
   return 0;
 }
 
-Muddle2LearnerNetworker::~Muddle2LearnerNetworker() = default;
+MuddleLearnerNetworker::~MuddleLearnerNetworker() = default;
 
-void Muddle2LearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &update)
+void MuddleLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), 1, 1);
   auto data   = update->Serialise();
@@ -136,7 +136,7 @@ void Muddle2LearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> 
   }
 }
 
-void Muddle2LearnerNetworker::PushUpdateType(const std::string &                     type,
+void MuddleLearnerNetworker::PushUpdateType(const std::string &                     type,
                                              const std::shared_ptr<UpdateInterface> &update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), 1, 1);
@@ -156,19 +156,19 @@ void Muddle2LearnerNetworker::PushUpdateType(const std::string &                
     prom->Wait();
   }
 }
-std::size_t Muddle2LearnerNetworker::GetPeerCount() const
+std::size_t MuddleLearnerNetworker::GetPeerCount() const
 {
   return peers_.size();
 }
 
-Muddle2LearnerNetworker::CertificatePtr Muddle2LearnerNetworker::CreateIdentity()
+MuddleLearnerNetworker::CertificatePtr MuddleLearnerNetworker::CreateIdentity()
 {
   SignerPtr certificate = std::make_shared<crypto::ECDSASigner>();
   certificate->GenerateKeys();
   return certificate;
 }
 
-Muddle2LearnerNetworker::CertificatePtr Muddle2LearnerNetworker::LoadIdentity(
+MuddleLearnerNetworker::CertificatePtr MuddleLearnerNetworker::LoadIdentity(
     const std::string &privkey)
 {
   using Signer = fetch::crypto::ECDSASigner;

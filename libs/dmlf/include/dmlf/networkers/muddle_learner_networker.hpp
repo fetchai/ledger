@@ -38,7 +38,7 @@ enum class MuddleChannel : uint16_t
   MULTIPLEX = 2
 };
 
-class Muddle2LearnerNetworker : public AbstractLearnerNetworker
+class MuddleLearnerNetworker : public AbstractLearnerNetworker
 {
 public:
   using NetworkManager    = fetch::network::NetworkManager;
@@ -58,11 +58,11 @@ public:
   using Mutex = fetch::Mutex;
   using Lock  = std::unique_lock<Mutex>;
 
-  Muddle2LearnerNetworker(
+  MuddleLearnerNetworker(
       const std::string &cloud_config, std::size_t instance_number,
       const std::shared_ptr<NetworkManager> &netm        = std::shared_ptr<NetworkManager>(),
       MuddleChannel                          channel_tmp = MuddleChannel::DEFAULT);
-  ~Muddle2LearnerNetworker() override;
+  ~MuddleLearnerNetworker() override;
 
   void        PushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
   void        PushUpdateType(const std::string &                     type,
@@ -75,10 +75,10 @@ public:
   using Peers    = std::vector<Peer>;
   using PeerUris = std::unordered_set<std::string>;
 
-  Muddle2LearnerNetworker(const Muddle2LearnerNetworker &other) = delete;
-  Muddle2LearnerNetworker &operator=(const Muddle2LearnerNetworker &other)  = delete;
-  bool                     operator==(const Muddle2LearnerNetworker &other) = delete;
-  bool                     operator<(const Muddle2LearnerNetworker &other)  = delete;
+  MuddleLearnerNetworker(const MuddleLearnerNetworker &other) = delete;
+  MuddleLearnerNetworker &operator=(const MuddleLearnerNetworker &other)  = delete;
+  bool                     operator==(const MuddleLearnerNetworker &other) = delete;
+  bool                     operator<(const MuddleLearnerNetworker &other)  = delete;
 
 protected:
   CertificatePtr CreateIdentity();
@@ -86,16 +86,16 @@ protected:
 
   CertificatePtr ident_;
 
-  class Muddle2LearnerNetworkerProtocol : public fetch::service::Protocol
+  class MuddleLearnerNetworkerProtocol : public fetch::service::Protocol
   {
   public:
-    explicit Muddle2LearnerNetworkerProtocol(Muddle2LearnerNetworker &sample);
+    explicit MuddleLearnerNetworkerProtocol(MuddleLearnerNetworker &sample);
   };
 
   std::shared_ptr<NetworkManager>                  netm_;
   MuddlePtr                                        mud_;
   std::shared_ptr<Server>                          server_;
-  std::shared_ptr<Muddle2LearnerNetworkerProtocol> proto_;
+  std::shared_ptr<MuddleLearnerNetworkerProtocol> proto_;
 
   mutable Mutex mutex_;
   Peers         peers_;

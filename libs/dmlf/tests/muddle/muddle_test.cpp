@@ -38,7 +38,7 @@ using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 
 using LNBase  = fetch::dmlf::AbstractLearnerNetworker;
-using LN      = fetch::dmlf::Muddle2LearnerNetworker;
+using LN      = fetch::dmlf::MuddleLearnerNetworker;
 using LNBaseP = std::shared_ptr<LNBase>;
 using LNP     = std::shared_ptr<LN>;
 
@@ -48,12 +48,12 @@ using UpdatePayload    = UpdateTypeForTesting::Payload;
 class Learner
 {
 public:
-  std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker>  actual;
+  std::shared_ptr<fetch::dmlf::MuddleLearnerNetworker>  actual;
   std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
 
   Learner(const std::string &cloud_config, std::size_t instance_number)
   {
-    actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(cloud_config, instance_number);
+    actual = std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(cloud_config, instance_number);
     interface = actual;
     interface->Initialize<UpdateTypeForTesting>();
   }
@@ -69,12 +69,12 @@ public:
   }
 };
 
-class Muddle2LearnerNetworkerTests : public ::testing::Test
+class MuddleLearnerNetworkerTests : public ::testing::Test
 {
 public:
   using Inst                    = LNP;
   using Insts                   = std::vector<Inst>;
-  using Muddle2LearnerNetworker = fetch::dmlf::Muddle2LearnerNetworker;
+  using MuddleLearnerNetworker = fetch::dmlf::MuddleLearnerNetworker;
 
   Insts insts;
 
@@ -100,7 +100,7 @@ public:
   }
 };
 
-TEST_F(Muddle2LearnerNetworkerTests, singleThreadedVersion)
+TEST_F(MuddleLearnerNetworkerTests, singleThreadedVersion)
 {
   sleep(1);
   learners[0]->PretendToLearn();
@@ -112,12 +112,12 @@ TEST_F(Muddle2LearnerNetworkerTests, singleThreadedVersion)
 class LearnerTypedUpdates
 {
 public:
-  std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker>  actual;
+  std::shared_ptr<fetch::dmlf::MuddleLearnerNetworker>  actual;
   std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
 
   LearnerTypedUpdates(const std::string &cloud_config, std::size_t instance_number)
   {
-    actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(
+    actual = std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(
         cloud_config, instance_number, std::shared_ptr<fetch::network::NetworkManager>{},
         fetch::dmlf::MuddleChannel::MULTIPLEX);
     interface = actual;
@@ -138,12 +138,12 @@ public:
   }
 };
 
-class Muddle2TypedUpdatesTests : public ::testing::Test
+class MuddleTypedUpdatesTests : public ::testing::Test
 {
 public:
   using Inst                    = LNP;
   using Insts                   = std::vector<Inst>;
-  using Muddle2LearnerNetworker = fetch::dmlf::Muddle2LearnerNetworker;
+  using MuddleLearnerNetworker = fetch::dmlf::MuddleLearnerNetworker;
 
   Insts insts;
 
@@ -169,7 +169,7 @@ public:
   }
 };
 
-TEST_F(Muddle2TypedUpdatesTests, singleThreadedVersion)
+TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
 {
   sleep(1);
   learners[0]->PretendToLearn();
