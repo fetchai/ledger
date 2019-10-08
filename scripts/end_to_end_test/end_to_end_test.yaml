@@ -56,7 +56,7 @@ setup_conditions:
   number_of_nodes: 2
   node_connections: [[0, 1]]
   mining_nodes: [0]
-  max_test_time: 60
+  max_test_time: 180
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }

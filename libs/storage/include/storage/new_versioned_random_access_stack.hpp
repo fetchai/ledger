@@ -92,13 +92,13 @@ private:
     HistoryBookmark()
     {
       // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
+      memset(static_cast<void *>(this), 0, sizeof(*this));
     }
 
     HistoryBookmark(uint64_t val, DefaultKey const &key_in)
     {
       // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
+      memset(static_cast<void *>(this), 0, sizeof(*this));
       bookmark = val;
       key      = key_in;
     }
@@ -122,13 +122,13 @@ private:
     HistorySwap()
     {
       // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
+      memset(static_cast<void *>(this), 0, sizeof(*this));
     }
 
     HistorySwap(uint64_t i_, uint64_t j_)
     {
       // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
+      memset(static_cast<void *>(this), 0, sizeof(*this));
 
       i = i_;
       j = j_;
@@ -153,13 +153,13 @@ private:
     HistoryPop()
     {
       // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
+      memset(static_cast<void *>(this), 0, sizeof(*this));
     }
 
     explicit HistoryPop(T const &d)
     {
       // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
+      memset(static_cast<void *>(this), 0, sizeof(*this));
 
       data = d;
     }
@@ -183,7 +183,7 @@ private:
     HistoryPush()
     {
       // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
+      memset(static_cast<void *>(this), 0, sizeof(*this));
     }
 
     enum
@@ -206,13 +206,13 @@ private:
     HistorySet()
     {
       // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
+      memset(static_cast<void *>(this), 0, sizeof(*this));
     }
 
     HistorySet(uint64_t i_, T const &d)
     {
       // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
+      memset(static_cast<void *>(this), 0, sizeof(*this));
 
       i    = i_;
       data = d;
@@ -236,13 +236,13 @@ private:
     HistoryHeader()
     {
       // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
+      memset(static_cast<void *>(this), 0, sizeof(*this));
     }
 
     explicit HistoryHeader(uint64_t d)
     {
       // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
+      memset(static_cast<void *>(this), 0, sizeof(*this));
 
       data = d;
     }

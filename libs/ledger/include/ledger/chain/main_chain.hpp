@@ -90,6 +90,7 @@ constexpr char const *ToString(BlockStatus status) noexcept
   case BlockStatus::INVALID:
     return "Invalid";
   }
+  return "Unknown";
 }
 
 class MainChain

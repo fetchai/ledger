@@ -361,7 +361,7 @@ public:
     {
       kv.key        = key;
       kv.parent     = key_value_pair::TREE_ROOT_VALUE;
-      kv.split      = uint16_t{key.size_in_bits()};
+      kv.split      = static_cast<uint16_t>(key.size_in_bits());
       update_parent = kv.UpdateLeaf(val, data);
 
       index = stack_.Push(kv);

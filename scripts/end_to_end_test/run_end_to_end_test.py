@@ -493,18 +493,13 @@ def verify_txs(parameters, test_instance):
 
     name = parameters["name"]
     nodes = parameters["nodes"]
-    expect_mined = False
+    expect_mined = parameters.get("expect_mined")
 
-    try:
-        expect_mined = parameters["expect_mined"]
-    except:
-        pass
-
-    # Currently assume there only one set of TXs
+    # Currently assume there's only one set of TXs
     tx_and_identity = test_instance._metadata
 
     # Load these from file if specified
-    if "load_from_file" in parameters and parameters["load_from_file"] == True:
+    if parameters.get("load_from_file"):
 
         filename = "{}/identities_pickled/{}_meta.pickle".format(
             test_instance._test_files_dir, name)
@@ -527,7 +522,9 @@ def verify_txs(parameters, test_instance):
 
             # Check TX has executed, unless we expect it should already have been mined
             while True:
+                output('Getting status of', tx, ', identity', identity, 'balance of', balance, 'from node', node_index)
                 status = api.tx.status(tx)
+                output('Status:', status)
 
                 if status == "Executed" or expect_mined:
                     output("found executed TX")
@@ -550,6 +547,7 @@ def verify_txs(parameters, test_instance):
 
                 time.sleep(0.5)
 
+                output("Next error:", next_error_message)
                 if next_error_message != error_message:
                     output(next_error_message)
                     error_message = next_error_message
@@ -640,30 +638,20 @@ def run_steps(test_yaml, test_instance):
         parameters = ""
 
         if isinstance(step, dict):
-            command = list(step.keys())[0]
-            parameters = step[command]
+            for command, parameters in step.items():
+                break
         elif isinstance(step, str):
             command = step
         else:
             raise RuntimeError(
                 "Failed to parse command from step: {}".format(step))
 
-        if command == 'send_txs':
-            send_txs(parameters, test_instance)
-        elif command == 'verify_txs':
-            verify_txs(parameters, test_instance)
-        elif command == 'add_node':
-            add_node(parameters, test_instance)
+        if command in ('send_txs', 'verify_txs', 'add_node', 'run_python_test', 'restart_nodes', 'destake'):
+            globals()[command](parameters, test_instance)
         elif command == 'sleep':
             time.sleep(parameters)
         elif command == 'print_time_elapsed':
             test_instance.print_time_elapsed()
-        elif command == 'run_python_test':
-            run_python_test(parameters, test_instance)
-        elif command == 'restart_nodes':
-            restart_nodes(parameters, test_instance)
-        elif command == 'destake':
-            destake(parameters, test_instance)
         else:
             output(
                 "Found unknown command when running steps: '{}'".format(

@@ -254,9 +254,11 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 
   for (auto &block : block_list)
   {
+	  FETCH_LOG_WARN(LOGGING_NAME, "Adding a block ", block.body.hash.ToHex(), "  <--  ", block.body.previous_hash.ToHex(), "  (", block.body.block_number);
     // skip the genesis block
     if (block.body.previous_hash == GENESIS_DIGEST)
     {
+	    FETCH_LOG_WARN(LOGGING_NAME, "Looks like genesis block");
       if (block.body.hash != chain_.GetGenesisBlockHash())
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Genesis hash mismatch: actual 0x", block.body.hash.ToHex(),
@@ -264,6 +266,7 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
                        ", skipping the whole alien chain");
         return false;
       }
+      continue;
     }
 
     // recompute the digest
@@ -272,26 +275,35 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     // add the block
     if (block.proof())
     {
+	    FETCH_LOG_WARN(LOGGING_NAME, "Block is proof");
       auto const status = chain_.AddBlock(block);
 
       switch (status)
       {
       case BlockStatus::ADDED:
+        FETCH_LOG_WARN(LOGGING_NAME, "Synced new block: 0x", block.body.hash.ToHex(),
+                        " from: muddle://", ToBase64(address));
         FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", block.body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++added;
         break;
       case BlockStatus::LOOSE:
+        FETCH_LOG_WARN(LOGGING_NAME, "Synced loose block: 0x", block.body.hash.ToHex(),
+                        " from: muddle://", ToBase64(address));
         FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", block.body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++loose;
         break;
       case BlockStatus::DUPLICATE:
+        FETCH_LOG_WARN(LOGGING_NAME, "Synced duplicate block: 0x", block.body.hash.ToHex(),
+                        " from: muddle://", ToBase64(address));
         FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", block.body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++duplicate;
         break;
       case BlockStatus::INVALID:
+        FETCH_LOG_WARN(LOGGING_NAME, "Synced invalid block: 0x", block.body.hash.ToHex(),
+                        " from: muddle://", ToBase64(address));
         FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", block.body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++invalid;
@@ -300,6 +312,8 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     }
     else
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Synced bad proof block: 0x", block.body.hash.ToHex(),
+                      " from: muddle://", ToBase64(address));
       FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", block.body.hash.ToHex(),
                       " from: muddle://", ToBase64(address));
       ++invalid;
@@ -350,12 +364,14 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
 
 MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 {
+	FETCH_LOG_WARN(LOGGING_NAME, "Waiting for heaviest chain");
   state_wait_heaviest_->increment();
 
   State next_state{State::WAIT_FOR_HEAVIEST_CHAIN};
 
   if (!current_request_)
   {
+	  FETCH_LOG_WARN(LOGGING_NAME, "Missing current request");
     // something went wrong we should attempt to request the chain again
     next_state = State::REQUEST_HEAVIEST_CHAIN;
   }
@@ -366,18 +382,27 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 
     if (PromiseState::WAITING != status)
     {
+	    FETCH_LOG_WARN(LOGGING_NAME, "Status of no wait (we need more permanent solution)");
       if (PromiseState::SUCCESS == status)
       {
+	      FETCH_LOG_WARN(LOGGING_NAME, "Status of success (success gives you a status)");
         // The request was successful, simply hand off the blocks to be added to the chain.
         // Quite likely, we'll need more main chain blocks so preset the state.
         next_state = State::REQUEST_HEAVIEST_CHAIN;
 
         auto peer_response = current_request_->As<TimeTravelogue>();
+	      FETCH_LOG_WARN(LOGGING_NAME, "Received ", peer_response.blocks.size(), " blocks, next hash of ", peer_response.next_hash.ToHex());
+	      for (auto const &b: peer_response.blocks)
+	      {
+		      FETCH_LOG_WARN(LOGGING_NAME, "Received a block ", b.body.hash.ToHex(), "  <--  ", b.body.previous_hash.ToHex(), "  (", b.body.block_number);
+	      }
         if (HandleChainResponse(current_peer_address_, std::move(peer_response.blocks)))
         {
+	      FETCH_LOG_WARN(LOGGING_NAME, "Now what");
           auto &next_hash = peer_response.next_hash;
           if (next_hash.empty())
           {
+	      FETCH_LOG_WARN(LOGGING_NAME, "Next hash empty");
             // The remote chain could not resolve forward reference unambiguously.
             next_state           = State::REQUEST_FROM_TIP;
             next_hash_requested_ = GENESIS_DIGEST;
@@ -386,9 +411,11 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
           }
           else
           {
+	      FETCH_LOG_WARN(LOGGING_NAME, "Next hash full");
             next_hash_requested_ = std::move(next_hash);
             if (next_hash_requested_ == GENESIS_DIGEST)
             {
+	      FETCH_LOG_WARN(LOGGING_NAME, "Next hash of genesis");
               // Genesis as next tip to retrieve indicates the whole chain has been received
               // and we can start synchronising.
               next_state = State::SYNCHRONISING;
@@ -410,6 +437,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
     }
   }
 
+	      FETCH_LOG_WARN(LOGGING_NAME, "And I go back to ", ToString(next_state));
   return next_state;
 }
 

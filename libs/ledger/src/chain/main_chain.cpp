@@ -124,6 +124,8 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   block->total_weight = 1;
 
   auto const status = InsertBlock(block);
+  FETCH_LOG_WARN(LOGGING_NAME, "New Block: 0x", block->body.hash.ToHex(), " -> ", ToString(status),
+                  " (weight: ", block->weight, " total: ", block->total_weight, ")");
   FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", block->body.hash.ToHex(), " -> ", ToString(status),
                   " (weight: ", block->weight, " total: ", block->total_weight, ")");
 
@@ -447,20 +449,20 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  * @return A pair made of an array of blocks, and the next hash in the chain in this direction
  * @throws std::runtime_error if a block lookup occurs
  */
-std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHash start,
+std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHash current_hash,
                                                                          int64_t   limit) const
 {
   if (limit <= 0)
   {
-    auto ret_blocks{GetChainPreceding(start, static_cast<uint64_t>(-limit))};
+    auto ret_blocks{GetChainPreceding(current_hash, static_cast<uint64_t>(-limit))};
     if (ret_blocks.empty())
     {
-      return {Blocks{}, std::move(start)};
+      return {Blocks{}, std::move(current_hash)};
     }
     auto next_hash{ret_blocks.back()->body.previous_hash};  // when next is previous
     return {std::move(ret_blocks), std::move(next_hash)};
   }
-  FETCH_LOG_DEBUG(LOGGING_NAME, "TimeTravel request, start hash = 0x", current_hash.ToHex(),
+  FETCH_LOG_WARN(LOGGING_NAME, "TimeTravel request, start hash = 0x", current_hash.ToHex(),
                   ", limit = ", limit);
 
   auto const lim =
@@ -470,17 +472,18 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
   Blocks result;
 
   Block     block;
-  BlockHash next_hash, current_hash{start};
+  BlockHash next_hash;
 
   FETCH_LOCK(lock_);
   if (current_hash == GENESIS_DIGEST)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Lookup for digest block");
     // The very beginning of the chain is requested, we need to start with the genesis block.
     current_hash = GetGenesisBlockHash();
     assert(current_hash != GENESIS_DIGEST);
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TimeTravel, start hash = 0x", current_hash.ToHex());
+  FETCH_LOG_WARN(LOGGING_NAME, "Starting TimeTravel, start hash = 0x", current_hash.ToHex());
   while (
       // stop once we have gathered enough blocks
       result.size() < lim
@@ -488,7 +491,7 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
       && current_hash != GENESIS_DIGEST)
   {
     // lookup the block in storage
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Block 0x", current_hash.ToHex(), ", result size of ",
+    FETCH_LOG_WARN(LOGGING_NAME, "Block 0x", current_hash.ToHex(), ", result size of ",
                     result.size());
     auto block{GetBlock(current_hash, &next_hash)};
     if (!block)
@@ -504,13 +507,19 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to lookup block");
     }
-    FETCH_LOG_DEBUG("Next hash is 0x", next_hash.ToHex());
+    FETCH_LOG_WARN(LOGGING_NAME, "Next hash is 0x", next_hash.ToHex());
     // update the results
     result.push_back(std::move(block));
     // walk the stack
     current_hash = std::move(next_hash);
   }
 
+  FETCH_LOG_WARN(LOGGING_NAME, "Returning chain of length ", result.size(), ", next hash ", current_hash.ToHex());
+  FETCH_LOG_WARN(LOGGING_NAME, "Genesis hash: ", GENESIS_DIGEST);
+  for (auto const &b: result)
+  {
+	  FETCH_LOG_WARN(LOGGING_NAME, "Block ", b->body.hash.ToHex(), "  <--  ", b->body.previous_hash.ToHex(), "  (", b->body.block_number);
+  }
   return {std::move(result), std::move(current_hash)};
 }
 
@@ -1163,6 +1172,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     // First check if block already exists (not checking in object store)
     if (IsBlockInCache(block->body.hash))
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempting to add already seen block");
       FETCH_LOG_DEBUG(LOGGING_NAME, "Attempting to add already seen block");
       return BlockStatus::DUPLICATE;
     }
@@ -1184,6 +1194,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
         // since we are connecting to loose block, by definition this block is also loose
         block->is_loose = true;
 
+        FETCH_LOG_WARN(LOGGING_NAME, "Block connects to loose block");
         FETCH_LOG_DEBUG(LOGGING_NAME, "Block connects to loose block");
       }
     }
@@ -1192,6 +1203,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
       // This is the normal case where we do not have a previous hash
       block->is_loose = true;
 
+      FETCH_LOG_WARN(LOGGING_NAME, "Previous block not found: ",
+                      byte_array::ToBase64(block->body.previous_hash));
       FETCH_LOG_DEBUG(LOGGING_NAME, "Previous block not found: ",
                       byte_array::ToBase64(block->body.previous_hash));
     }
@@ -1211,6 +1224,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 
   if (block->is_loose)
   {
+      FETCH_LOG_WARN(LOGGING_NAME, "Is loose");
     // record the block as loose
     RecordLooseBlock(block);
     return BlockStatus::LOOSE;

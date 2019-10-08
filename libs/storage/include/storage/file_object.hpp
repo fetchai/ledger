@@ -58,7 +58,7 @@ struct FileBlockType
   FileBlockType()
   {
     // Ensures that padded bytes are not uninitialised.
-    memset(this, 0, sizeof(decltype(*this)));
+    memset(static_cast<void *>(this), 0, sizeof(*this));
     previous         = UNDEFINED;
     next             = UNDEFINED;
     file_object_size = UNDEFINED;

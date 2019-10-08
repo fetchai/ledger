@@ -47,7 +47,7 @@ public:
   {
     HEAVIEST_CHAIN   = 1,
     TIME_TRAVEL      = 2,
-    COMMON_SUB_CHAIN = 3,
+    COMMON_SUB_CHAIN = 3
   };
 
   explicit MainChainProtocol(MainChain &chain)
