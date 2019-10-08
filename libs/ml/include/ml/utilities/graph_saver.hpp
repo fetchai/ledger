@@ -30,7 +30,7 @@
 
 namespace fetch {
 namespace ml {
-namespace examples {
+namespace utilities {
 
 /**
  * Saves the saveparams of a graph to a file location specified by user
@@ -38,7 +38,7 @@ namespace examples {
  * @param save_location a string specifying save location
  */
 template <typename GraphType>
-void SaveModel(GraphType &g, std::string const &save_location)
+void SaveGraph(GraphType &g, std::string const &save_location)
 {
   using TensorType = typename GraphType::TensorType;
 
@@ -67,7 +67,7 @@ void SaveModel(GraphType &g, std::string const &save_location)
 }
 
 template <typename GraphType>
-std::shared_ptr<GraphType> LoadModel(std::string const &save_location)
+std::shared_ptr<GraphType> LoadGraph(std::string const &save_location)
 {
   using TensorType = typename GraphType::TensorType;
   std::cout << "Loading graph" << std::endl;
@@ -91,6 +91,6 @@ std::shared_ptr<GraphType> LoadModel(std::string const &save_location)
   return graph_ptr;
 }
 
-}  // namespace examples
+}  // namespace utilities
 }  // namespace ml
 }  // namespace fetch
