@@ -66,6 +66,7 @@ void FilepassingLearnerNetworker::CheckUpdates()
       continue;
     }
 
+    // read the files dropped into our dir by other processes.
     for (auto const &filename : pendings)
     {
       processed_updates_.insert(filename);
@@ -73,7 +74,8 @@ void FilepassingLearnerNetworker::CheckUpdates()
       std::ifstream inp(filename.c_str());
       std::string   str((std::istreambuf_iterator<char>(inp)), std::istreambuf_iterator<char>());
       inp.close();
-      AbstractLearnerNetworker::NewMessage(Bytes{str});
+      // Got the message, deliver it to the queue internally.
+      NewMessage(Bytes{str});
     }
   }
 }

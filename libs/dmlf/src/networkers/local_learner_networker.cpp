@@ -57,7 +57,9 @@ void LocalLearnerNetworker::PushUpdate(const UpdateInterfacePtr &update)
 
 void LocalLearnerNetworker::Recieve(Bytes const &data)
 {
-  AbstractLearnerNetworker::NewMessage(data);
+  // since we're in the same process, there's no processing to do to
+  // the message, we can simply deliver it.
+  NewMessage(data);
 }
 
 }  // namespace dmlf

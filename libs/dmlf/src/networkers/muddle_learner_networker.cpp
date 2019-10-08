@@ -104,10 +104,10 @@ uint64_t MuddleLearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
   switch (channel_tmp_)
   {
   case MuddleChannel::DEFAULT:
-    AbstractLearnerNetworker::NewMessage(b);
+    NewMessage(b);
     break;
   case MuddleChannel::MULTIPLEX:
-    AbstractLearnerNetworker::NewDmlfMessage(b);
+    NewDmlfMessage(b);
     break;
   default:;
   }
