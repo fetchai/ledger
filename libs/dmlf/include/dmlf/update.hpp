@@ -37,10 +37,10 @@ class Update : public UpdateInterface
   friend struct serializers::MapSerializer;
 
 public:
-  using TensorType       = T;
-  using VectorTensor = std::vector<TensorType>;
-  using TimeStampType    = UpdateInterface::TimeStampType;
-  using Fingerprint  = UpdateInterface::Fingerprint;
+  using TensorType    = T;
+  using VectorTensor  = std::vector<TensorType>;
+  using TimeStampType = UpdateInterface::TimeStampType;
+  using Fingerprint   = UpdateInterface::Fingerprint;
 
   using Payload = VectorTensor;
 
@@ -110,9 +110,9 @@ private:
     return crypto::Hash<crypto::SHA256>(serializer.data());
   }
 
-  TimeStampType    stamp_;
-  VectorTensor gradients_;
-  Fingerprint  fingerprint_;
+  TimeStampType stamp_;
+  VectorTensor  gradients_;
+  Fingerprint   fingerprint_;
 };
 
 }  // namespace dmlf

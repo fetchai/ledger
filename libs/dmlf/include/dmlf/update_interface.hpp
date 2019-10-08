@@ -28,8 +28,8 @@ namespace dmlf {
 class UpdateInterface
 {
 public:
-  using TimeStampType   = std::uint64_t;
-  using Fingerprint = byte_array::ByteArray;
+  using TimeStampType = std::uint64_t;
+  using Fingerprint   = byte_array::ByteArray;
 
   UpdateInterface() = default;
 
@@ -40,7 +40,7 @@ public:
   virtual byte_array::ByteArray Serialise(std::string type)                = 0;
   virtual void                  DeSerialise(const byte_array::ByteArray &) = 0;
   virtual TimeStampType         TimeStamp() const                          = 0;
-  virtual Fingerprint           GetFingerprint() const                        = 0;
+  virtual Fingerprint           GetFingerprint() const                     = 0;
   virtual std::string           DebugString() const
   {
     return static_cast<std::string>(byte_array::ToBase64(Fingerprint())) + "@" +

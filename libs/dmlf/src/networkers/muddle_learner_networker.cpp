@@ -44,9 +44,9 @@ MuddleLearnerNetworker::MuddleLearnerNetworkerProtocol::MuddleLearnerNetworkerPr
 }
 
 MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
-                                                 std::size_t        instance_number,
-                                                 const std::shared_ptr<NetworkManager> &netm,
-                                                 MuddleChannel                          channel_tmp)
+                                               std::size_t        instance_number,
+                                               const std::shared_ptr<NetworkManager> &netm,
+                                               MuddleChannel                          channel_tmp)
   : channel_tmp_{channel_tmp}
 {
   json::JSONDocument doc{cloud_config};
@@ -134,8 +134,8 @@ void MuddleLearnerNetworker::PushUpdate(const UpdateInterfacePtr &update)
   }
 }
 
-void MuddleLearnerNetworker::PushUpdateType(const std::string &                     type,
-                                             const UpdateInterfacePtr &update)
+void MuddleLearnerNetworker::PushUpdateType(const std::string &       type,
+                                            const UpdateInterfacePtr &update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), 1, 1);
   auto data   = update->Serialise(type);

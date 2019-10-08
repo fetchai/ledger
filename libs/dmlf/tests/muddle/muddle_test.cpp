@@ -43,12 +43,12 @@ using LNBaseP = std::shared_ptr<LNBase>;
 using LNP     = std::shared_ptr<LN>;
 
 using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
-using UpdatePayload    = UpdateTypeForTesting::Payload;
+using UpdatePayload        = UpdateTypeForTesting::Payload;
 
 class Learner
 {
 public:
-  std::shared_ptr<fetch::dmlf::MuddleLearnerNetworker>  actual;
+  std::shared_ptr<fetch::dmlf::MuddleLearnerNetworker>   actual;
   std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
 
   Learner(const std::string &cloud_config, std::size_t instance_number)
@@ -72,8 +72,8 @@ public:
 class MuddleLearnerNetworkerTests : public ::testing::Test
 {
 public:
-  using Inst                    = LNP;
-  using Insts                   = std::vector<Inst>;
+  using Inst                   = LNP;
+  using Insts                  = std::vector<Inst>;
   using MuddleLearnerNetworker = fetch::dmlf::MuddleLearnerNetworker;
 
   Insts insts;
@@ -112,7 +112,7 @@ TEST_F(MuddleLearnerNetworkerTests, singleThreadedVersion)
 class LearnerTypedUpdates
 {
 public:
-  std::shared_ptr<fetch::dmlf::MuddleLearnerNetworker>  actual;
+  std::shared_ptr<fetch::dmlf::MuddleLearnerNetworker>   actual;
   std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
 
   LearnerTypedUpdates(const std::string &cloud_config, std::size_t instance_number)
@@ -141,8 +141,8 @@ public:
 class MuddleTypedUpdatesTests : public ::testing::Test
 {
 public:
-  using Inst                    = LNP;
-  using Insts                   = std::vector<Inst>;
+  using Inst                   = LNP;
+  using Insts                  = std::vector<Inst>;
   using MuddleLearnerNetworker = fetch::dmlf::MuddleLearnerNetworker;
 
   Insts insts;

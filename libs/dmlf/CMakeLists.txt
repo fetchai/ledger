@@ -22,8 +22,7 @@ target_link_libraries(fetch-dmlf
                              fetch-crypto
                              fetch-math
                              fetch-vm
-                             fetch-vm-modules
-                             )
+                             fetch-vm-modules)
 
 # Test targets
 add_test_target()

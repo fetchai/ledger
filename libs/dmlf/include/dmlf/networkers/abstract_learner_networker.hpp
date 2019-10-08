@@ -40,7 +40,7 @@ public:
 
   // To implement
   virtual void        PushUpdate(const UpdateInterfacePtr &update) = 0;
-  virtual std::size_t GetPeerCount() const                                       = 0;
+  virtual std::size_t GetPeerCount() const                         = 0;
 
   template <typename T>
   void Initialize()
@@ -67,8 +67,7 @@ public:
 
   virtual void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg);
 
-  virtual void PushUpdateType(const std::string & /*key*/,
-                              const UpdateInterfacePtr & /*update*/);
+  virtual void PushUpdateType(const std::string & /*key*/, const UpdateInterfacePtr & /*update*/);
 
   template <typename T>
   void RegisterUpdateType(std::string key)

@@ -65,8 +65,7 @@ public:
   ~MuddleLearnerNetworker() override = default;
 
   void        PushUpdate(const UpdateInterfacePtr &update) override;
-  void        PushUpdateType(const std::string &                     type,
-                             const UpdateInterfacePtr &update) override;
+  void        PushUpdateType(const std::string &type, const UpdateInterfacePtr &update) override;
   std::size_t GetPeerCount() const override;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);
@@ -77,8 +76,8 @@ public:
 
   MuddleLearnerNetworker(const MuddleLearnerNetworker &other) = delete;
   MuddleLearnerNetworker &operator=(const MuddleLearnerNetworker &other)  = delete;
-  bool                     operator==(const MuddleLearnerNetworker &other) = delete;
-  bool                     operator<(const MuddleLearnerNetworker &other)  = delete;
+  bool                    operator==(const MuddleLearnerNetworker &other) = delete;
+  bool                    operator<(const MuddleLearnerNetworker &other)  = delete;
 
 protected:
   CertificatePtr CreateIdentity();
@@ -92,9 +91,9 @@ protected:
     explicit MuddleLearnerNetworkerProtocol(MuddleLearnerNetworker &sample);
   };
 
-  std::shared_ptr<NetworkManager>                  netm_;
-  MuddlePtr                                        mud_;
-  std::shared_ptr<Server>                          server_;
+  std::shared_ptr<NetworkManager>                 netm_;
+  MuddlePtr                                       mud_;
+  std::shared_ptr<Server>                         server_;
   std::shared_ptr<MuddleLearnerNetworkerProtocol> proto_;
 
   mutable Mutex mutex_;
