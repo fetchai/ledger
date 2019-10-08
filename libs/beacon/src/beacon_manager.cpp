@@ -46,7 +46,6 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
   static std::once_flag flag;
 
   std::call_once(flag, []() {
-    fetch::crypto::mcl::details::MCLInitialiser();
     zeroG2_.clear();
     zeroFr_.clear();
     crypto::mcl::SetGenerators(group_g_, group_h_);
@@ -671,8 +670,6 @@ BeaconManager::Signature BeaconManager::GroupSignature() const
  */
 void BeaconManager::SetMessage(MessagePayload next_message)
 {
-  std::cerr << "signing current message: " << next_message.ToBase64() << std::endl;  // DELETEME_NH
-
   current_message_ = std::move(next_message);
   signature_buffer_.clear();
   already_signed_.clear();

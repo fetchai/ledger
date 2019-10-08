@@ -22,7 +22,6 @@ using fetch::beacon::DkgOutput;
 
 DkgOutput::DkgOutput()
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
   group_public_key.clear();
   private_key_share.clear();
 }

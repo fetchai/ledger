@@ -29,7 +29,6 @@ using namespace fetch::byte_array;
 
 TEST(MclTests, BaseMcl)
 {
-  // fetch::crypto::mcl::details::MCLInitialiser();
   Generator generator;
   SetGenerator(generator);
   Signature P(-1, 1);
@@ -88,8 +87,6 @@ TEST(MclTests, BaseMcl)
 
 TEST(MclDkgTests, ComputeLhsRhs)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
-
   // Construct polynomial of degree 2 (threshold = 1)
   uint32_t                threshold = 1;
   std::vector<PrivateKey> vec_a;
@@ -152,8 +149,6 @@ TEST(MclDkgTests, ComputeLhsRhs)
 
 TEST(MclDkgTests, Interpolation)
 {
-  // fetch::crypto::mcl::details::MCLInitialiser();
-
   // Construct polynomial of degree 2
   uint32_t                degree = 2;
   std::vector<PrivateKey> vec_a;
@@ -203,8 +198,6 @@ TEST(MclDkgTests, Interpolation)
 
 TEST(MclDkgTests, Signing)
 {
-  // fetch::crypto::mcl::details::MCLInitialiser();
-
   uint32_t committee_size = 200;
   uint32_t threshold      = 101;
 

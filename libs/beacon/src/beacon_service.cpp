@@ -344,17 +344,6 @@ BeaconService::State BeaconService::OnCompleteState()
   block_entropy_being_created_->group_signature =
       active_exe_unit_->manager.GroupSignature().getStr();
 
-  std::cerr << "pre-verify 0" << std::endl;  // DELETEME_NH
-
-  std::cerr << "due dillig. check 0. " << block_entropy_being_created_->block_number
-            << std::endl;  // DELETEME_NH
-  std::cerr << "due dillig. check A. " << block_entropy_being_created_->group_public_key.ToBase64()
-            << std::endl;  // DELETEME_NH
-  std::cerr << "due dillig. check B. " << block_entropy_previous_->EntropyAsSHA256().ToBase64()
-            << std::endl;  // DELETEME_NH
-  std::cerr << "due dillig. check C. " << block_entropy_being_created_->group_signature.ToBase64()
-            << std::endl;  // DELETEME_NH
-
   // Check when in debug mode that the block entropy signing has gone correctly
   if (!dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
                                   block_entropy_previous_->EntropyAsSHA256(),

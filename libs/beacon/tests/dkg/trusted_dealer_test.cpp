@@ -214,6 +214,5 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
 
 TEST(beacon_service, trusted_dealer)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
   RunTrustedDealer(1, 4, 3, 10);
 }

@@ -121,9 +121,6 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type servi
 std::shared_ptr<ledger::DAGInterface> GenerateDAG(std::string const &db_name, bool load_on_start,
                                                   Constellation::CertificatePtr certificate)
 {
-  FETCH_UNUSED(db_name);
-  FETCH_UNUSED(load_on_start);
-  FETCH_UNUSED(certificate);
   return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
 }
 
