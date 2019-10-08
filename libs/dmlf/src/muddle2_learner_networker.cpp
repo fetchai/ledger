@@ -124,7 +124,7 @@ void Muddle2LearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> 
   PromiseList promises;
   promises.reserve(20);
 
-  for (const auto &target_peer : peers_)
+  for (auto const &target_peer : peers_)
   {
     promises.push_back(client->CallSpecificAddress(
         fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), 1, 1, data));
@@ -145,7 +145,7 @@ void Muddle2LearnerNetworker::PushUpdateType(const std::string &                
   PromiseList promises;
   promises.reserve(20);
 
-  for (const auto &target_peer : peers_)
+  for (auto const &target_peer : peers_)
   {
     promises.push_back(client->CallSpecificAddress(
         fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), 1, 1, data));

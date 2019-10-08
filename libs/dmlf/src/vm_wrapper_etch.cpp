@@ -25,7 +25,7 @@
 namespace fetch {
 namespace dmlf {
 
-std::vector<std::string> VmWrapperEtch::Setup(const Flags & /*flags*/)
+std::vector<std::string> VmWrapperEtch::Setup(Flags const & /*flags*/)
 {
   module_ = VmFactory::GetModule(VmFactory::USE_SMART_CONTRACTS);  // Set according to flags
   status_ = VmWrapperInterface::WAITING;
@@ -50,7 +50,7 @@ std::vector<std::string> VmWrapperEtch::Load(std::string source)
   status_ = VmWrapperInterface::COMPILED;
   return errors;
 }
-void VmWrapperEtch::Execute(const std::string &entrypoint, const Params & /*params*/)
+void VmWrapperEtch::Execute(const std::string &entrypoint, Params const & /*params*/)
 {
   status_ = VmWrapperInterface::RUNNING;
   std::string        error;

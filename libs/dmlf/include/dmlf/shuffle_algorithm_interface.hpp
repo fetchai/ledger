@@ -34,10 +34,10 @@ public:
 
   std::size_t GetCount() const;
 
-  ShuffleAlgorithmInterface(const ShuffleAlgorithmInterface &other) = delete;
-  ShuffleAlgorithmInterface &operator=(const ShuffleAlgorithmInterface &other)  = delete;
-  bool                       operator==(const ShuffleAlgorithmInterface &other) = delete;
-  bool                       operator<(const ShuffleAlgorithmInterface &other)  = delete;
+  ShuffleAlgorithmInterface(ShuffleAlgorithmInterface const &other) = delete;
+  ShuffleAlgorithmInterface &operator=(ShuffleAlgorithmInterface const &other)  = delete;
+  bool                       operator==(ShuffleAlgorithmInterface const &other) = delete;
+  bool                       operator<(ShuffleAlgorithmInterface const &other)  = delete;
 
 protected:
 private:

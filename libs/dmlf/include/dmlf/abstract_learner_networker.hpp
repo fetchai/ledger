@@ -98,17 +98,17 @@ public:
     return que->GetUpdate();
   }
 
-  AbstractLearnerNetworker(const AbstractLearnerNetworker &other) = delete;
-  AbstractLearnerNetworker &operator=(const AbstractLearnerNetworker &other)  = delete;
-  bool                      operator==(const AbstractLearnerNetworker &other) = delete;
-  bool                      operator<(const AbstractLearnerNetworker &other)  = delete;
+  AbstractLearnerNetworker(AbstractLearnerNetworker const &other) = delete;
+  AbstractLearnerNetworker &operator=(AbstractLearnerNetworker const &other)  = delete;
+  bool                      operator==(AbstractLearnerNetworker const &other) = delete;
+  bool                      operator<(AbstractLearnerNetworker const &other)  = delete;
 
 protected:
   std::shared_ptr<ShuffleAlgorithmInterface> alg_;  // used by descendents
 
-  void NewMessage(const Bytes &msg);
+  void NewMessage(Bytes const &msg);
 
-  void NewDmlfMessage(const Bytes &msg);  // called by descendents
+  void NewDmlfMessage(Bytes const &msg);  // called by descendents
 
 private:
   using Mutex             = fetch::Mutex;

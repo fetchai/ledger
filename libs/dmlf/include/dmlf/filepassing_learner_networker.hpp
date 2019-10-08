@@ -47,14 +47,14 @@ public:
   void AddPeers(Peers new_peers);
   void ClearPeers();
 
-  FilepassingLearnerNetworker(const FilepassingLearnerNetworker &other) = delete;
-  FilepassingLearnerNetworker &operator=(const FilepassingLearnerNetworker &other)  = delete;
-  bool                         operator==(const FilepassingLearnerNetworker &other) = delete;
-  bool                         operator<(const FilepassingLearnerNetworker &other)  = delete;
+  FilepassingLearnerNetworker(FilepassingLearnerNetworker const &other) = delete;
+  FilepassingLearnerNetworker &operator=(FilepassingLearnerNetworker const &other)  = delete;
+  bool                         operator==(FilepassingLearnerNetworker const &other) = delete;
+  bool                         operator<(FilepassingLearnerNetworker const &other)  = delete;
 
 protected:
   static std::string       ProcessNameToTargetDir(const std::string &name);
-  void                     Transmit(const std::string &target, const Bytes &data);
+  void                     Transmit(const std::string &target, Bytes const &data);
   std::vector<std::string> GetUpdateNames() const;
   void                     CheckUpdates();
 

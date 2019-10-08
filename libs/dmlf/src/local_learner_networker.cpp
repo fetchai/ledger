@@ -31,7 +31,7 @@ LocalLearnerNetworker::~LocalLearnerNetworker() = default;
 
 void LocalLearnerNetworker::AddPeers(std::vector<std::shared_ptr<LocalLearnerNetworker>> new_peers)
 {
-  for (const auto &peer : new_peers)
+  for (auto const &peer : new_peers)
   {
     if (peer.get() != this)
     {
@@ -59,7 +59,7 @@ void LocalLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &u
   }
 }
 
-void LocalLearnerNetworker::Recieve(const Bytes &data)
+void LocalLearnerNetworker::Recieve(Bytes const &data)
 {
   AbstractLearnerNetworker::NewMessage(data);
 }

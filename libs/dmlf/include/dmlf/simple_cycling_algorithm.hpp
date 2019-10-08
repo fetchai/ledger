@@ -32,10 +32,10 @@ public:
 
   std::vector<std::size_t> GetNextOutputs() override;
 
-  SimpleCyclingAlgorithm(const SimpleCyclingAlgorithm &other) = delete;
-  SimpleCyclingAlgorithm &operator=(const SimpleCyclingAlgorithm &other)  = delete;
-  bool                    operator==(const SimpleCyclingAlgorithm &other) = delete;
-  bool                    operator<(const SimpleCyclingAlgorithm &other)  = delete;
+  SimpleCyclingAlgorithm(SimpleCyclingAlgorithm const &other) = delete;
+  SimpleCyclingAlgorithm &operator=(SimpleCyclingAlgorithm const &other)  = delete;
+  bool                    operator==(SimpleCyclingAlgorithm const &other) = delete;
+  bool                    operator<(SimpleCyclingAlgorithm const &other)  = delete;
 
 protected:
 private:

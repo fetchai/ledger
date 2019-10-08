@@ -48,7 +48,7 @@ void FilepassingLearnerNetworker::SetName(const std::string &name)
   }
 
   auto names = GetUpdateNames();
-  for (const auto &name : names)
+  for (auto const &name : names)
   {
     ::unlink(name.c_str());
   }
@@ -68,7 +68,7 @@ void FilepassingLearnerNetworker::CheckUpdates()
       continue;
     }
 
-    for (const auto &filename : pendings)
+    for (auto const &filename : pendings)
     {
       processed_updates_.insert(filename);
       Bytes         b;
@@ -93,7 +93,7 @@ std::string FilepassingLearnerNetworker::ProcessNameToTargetDir(const std::strin
 
 void FilepassingLearnerNetworker::AddPeers(Peers new_peers)
 {
-  for (const auto &peer : new_peers)
+  for (auto const &peer : new_peers)
   {
     if (peer != name_)
     {
@@ -119,7 +119,7 @@ void FilepassingLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterfa
   }
 }
 
-void FilepassingLearnerNetworker::Transmit(const std::string &target, const Bytes &data)
+void FilepassingLearnerNetworker::Transmit(const std::string &target, Bytes const &data)
 {
   static int filecounter = 0;
   auto       target_dir  = ProcessNameToTargetDir(target);

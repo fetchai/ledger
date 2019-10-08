@@ -84,15 +84,15 @@ public:
     return fingerprint_;
   }
 
-  virtual const VectorTensorType &GetGradients() const
+  virtual VectorTensorType const &GetGradients() const
   {
     return gradients_;
   }
 
-  Update(const Update &other) = delete;
-  Update &operator=(const Update &other)  = delete;
-  bool    operator==(const Update &other) = delete;
-  bool    operator<(const Update &other)  = delete;
+  Update(Update const &other) = delete;
+  Update &operator=(Update const &other)  = delete;
+  bool    operator==(Update const &other) = delete;
+  bool    operator<(Update const &other)  = delete;
 
 protected:
 private:

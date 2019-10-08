@@ -45,10 +45,10 @@ public:
   VmWrapperEtch()           = default;
   ~VmWrapperEtch() override = default;
 
-  std::vector<std::string> Setup(const Flags &flags) override;
+  std::vector<std::string> Setup(Flags const &flags) override;
   std::vector<std::string> Load(std::string source) override;
 
-  void Execute(const std::string &entrypoint, const Params &params) override;
+  void Execute(const std::string &entrypoint, Params const &params) override;
   void SetStdout(OutputHandler /*handler*/) override;
   void SetStderr(OutputHandler /*handler*/) override;
 
@@ -57,10 +57,10 @@ public:
     return status_;
   }
 
-  VmWrapperEtch(const VmWrapperEtch &other) = delete;
-  VmWrapperEtch &operator=(const VmWrapperEtch &other)  = delete;
-  bool           operator==(const VmWrapperEtch &other) = delete;
-  bool           operator<(const VmWrapperEtch &other)  = delete;
+  VmWrapperEtch(VmWrapperEtch const &other) = delete;
+  VmWrapperEtch &operator=(VmWrapperEtch const &other)  = delete;
+  bool           operator==(VmWrapperEtch const &other) = delete;
+  bool           operator<(VmWrapperEtch const &other)  = delete;
 
 protected:
 private:

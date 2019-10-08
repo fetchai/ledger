@@ -50,14 +50,14 @@ std::size_t AbstractLearnerNetworker::GetUpdateTypeCount(const std::string &key)
   throw std::runtime_error{"Requesting UpdateCount for unregistered type"};
 }
 
-void AbstractLearnerNetworker::NewMessage(const Bytes &msg)
+void AbstractLearnerNetworker::NewMessage(Bytes const &msg)
 {
   FETCH_LOCK(queue_m_);
   ThrowIfNotInitialized();
   queue_->PushNewMessage(msg);
 }
 
-void AbstractLearnerNetworker::NewDmlfMessage(const Bytes &msg)
+void AbstractLearnerNetworker::NewDmlfMessage(Bytes const &msg)
 {
   serializers::MsgPackSerializer serializer{msg};
   std::string                    key;

@@ -44,10 +44,10 @@ public:
   void AddPeers(Peers new_peers);
   void ClearPeers();
 
-  LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete;
-  LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other)  = delete;
-  bool                   operator==(const LocalLearnerNetworker &other) = delete;
-  bool                   operator<(const LocalLearnerNetworker &other)  = delete;
+  LocalLearnerNetworker(LocalLearnerNetworker const &other) = delete;
+  LocalLearnerNetworker &operator=(LocalLearnerNetworker const &other)  = delete;
+  bool                   operator==(LocalLearnerNetworker const &other) = delete;
+  bool                   operator<(LocalLearnerNetworker const &other)  = delete;
 
 protected:
 private:
@@ -58,7 +58,7 @@ private:
   mutable Mutex mutex_;
   Peers         peers_;
 
-  void Recieve(const Bytes &data);
+  void Recieve(Bytes const &data);
 };
 
 }  // namespace dmlf

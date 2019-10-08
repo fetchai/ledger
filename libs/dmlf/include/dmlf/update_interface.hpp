@@ -48,15 +48,15 @@ public:
   }
 
   // Queue ordering
-  bool operator>(const UpdateInterface &other) const
+  bool operator>(UpdateInterface const &other) const
   {
     return TimeStamp() > other.TimeStamp();
   }
 
-  UpdateInterface(const UpdateInterface &other) = delete;
-  UpdateInterface &operator=(const UpdateInterface &other)  = delete;
-  bool             operator==(const UpdateInterface &other) = delete;
-  bool             operator<(const UpdateInterface &other)  = delete;
+  UpdateInterface(UpdateInterface const &other) = delete;
+  UpdateInterface &operator=(UpdateInterface const &other)  = delete;
+  bool             operator==(UpdateInterface const &other) = delete;
+  bool             operator<(UpdateInterface const &other)  = delete;
 
 protected:
 private:

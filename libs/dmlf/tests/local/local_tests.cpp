@@ -154,12 +154,12 @@ public:
       std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interf = local;
       insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
     }
-    for (const auto &peer : peers)
+    for (auto const &peer : peers)
     {
       peer->AddPeers(peers);
     }
 
-    for (const auto &peer : peers)
+    for (auto const &peer : peers)
     {
       auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->GetPeerCount(), 5);
       peer->SetShuffleAlgorithm(alg);
@@ -169,7 +169,7 @@ public:
     while (working)
     {
       working = false;
-      for (const auto &inst : insts)
+      for (auto const &inst : insts)
       {
         if (inst->Work())
         {
@@ -190,12 +190,12 @@ public:
       insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
     }
 
-    for (const auto &peer : peers)
+    for (auto const &peer : peers)
     {
       peer->AddPeers(peers);
     }
 
-    for (const auto &peer : peers)
+    for (auto const &peer : peers)
     {
       auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->GetPeerCount(), 5);
       peer->SetShuffleAlgorithm(alg);
@@ -207,7 +207,7 @@ public:
 
     Threads threads;
 
-    for (const auto &inst : insts)
+    for (auto const &inst : insts)
     {
       auto func = [inst]() { inst->MtWork(); };
 
@@ -216,7 +216,7 @@ public:
     }
     sleep(3);
 
-    for (const auto &inst : insts)
+    for (auto const &inst : insts)
     {
       inst->quit();
     }
@@ -243,12 +243,12 @@ public:
       insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
     }
 
-    for (const auto &peer : peers)
+    for (auto const &peer : peers)
     {
       peer->AddPeers(names);
     }
 
-    for (const auto &peer : peers)
+    for (auto const &peer : peers)
     {
       auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->GetPeerCount(), 5);
       peer->SetShuffleAlgorithm(alg);
@@ -260,7 +260,7 @@ public:
 
     Threads threads;
 
-    for (const auto &inst : insts)
+    for (auto const &inst : insts)
     {
       auto func = [inst]() { inst->MtWork(); };
 
@@ -269,12 +269,12 @@ public:
     }
     sleep(3);
 
-    for (const auto &inst : insts)
+    for (auto const &inst : insts)
     {
       inst->quit();
     }
 
-    for (const auto &t : threads)
+    for (auto const &t : threads)
     {
       t->join();
     }
@@ -286,7 +286,7 @@ TEST_F(LocalLearnerNetworkerTests, singleThreadedVersion)
   DoWork();
 
   std::size_t total_integrations = 0;
-  for (const auto &inst : insts)
+  for (auto const &inst : insts)
   {
     total_integrations += inst->integrations;
   }
@@ -300,7 +300,7 @@ TEST_F(LocalLearnerNetworkerTests, multiThreadedVersion)
   DoMtWork();
 
   std::size_t total_integrations = 0;
-  for (const auto &inst : insts)
+  for (auto const &inst : insts)
   {
     total_integrations += inst->integrations;
   }
@@ -314,7 +314,7 @@ TEST_F(LocalLearnerNetworkerTests, multiThreadedFilePassingVersion)
   DoMtFilepassingWork();
 
   std::size_t total_integrations = 0;
-  for (const auto &inst : insts)
+  for (auto const &inst : insts)
   {
     total_integrations += inst->integrations;
   }

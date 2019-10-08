@@ -35,10 +35,10 @@ public:
   virtual void        PushNewMessage(Bytes msg) = 0;
   virtual std::size_t size() const              = 0;
 
-  QueueInterface(const QueueInterface &other) = delete;
-  QueueInterface &operator=(const QueueInterface &other)  = delete;
-  bool            operator==(const QueueInterface &other) = delete;
-  bool            operator<(const QueueInterface &other)  = delete;
+  QueueInterface(QueueInterface const &other) = delete;
+  QueueInterface &operator=(QueueInterface const &other)  = delete;
+  bool            operator==(QueueInterface const &other) = delete;
+  bool            operator<(QueueInterface const &other)  = delete;
 
 private:
 };
