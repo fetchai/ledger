@@ -105,8 +105,8 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
     math::BindMath(*module);
   }
 
-  // synergetic modules
-  if ((MOD_SYN & enabled) != 0u)
+  // bitwise operation modules
+  if ((MOD_BITWISE & enabled) != 0u)
   {
     BindBitShift(*module);
     BindBitwiseOps(*module);
