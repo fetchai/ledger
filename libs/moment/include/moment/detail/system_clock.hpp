@@ -17,44 +17,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include "moment/clocks.hpp"
+#include "moment/clock_interfaces.hpp"
 
-#include <cstdint>
+#include <chrono>
 
 namespace fetch {
 namespace moment {
+namespace detail {
 
-class DeadlineTimer
+class GlobalClock final : public ClockInterface
 {
 public:
   // Construction / Destruction
-  explicit DeadlineTimer(char const *clock);
-  DeadlineTimer(DeadlineTimer const &) = default;
-  DeadlineTimer(DeadlineTimer &&)      = default;
-  ~DeadlineTimer()                     = default;
+  GlobalClock()                    = default;
+  GlobalClock(GlobalClock const &) = delete;
+  GlobalClock(GlobalClock &&)      = delete;
+  ~GlobalClock() override          = default;
 
-  template <typename R, typename P>
-  void Restart(std::chrono::duration<R, P> const &period);
-  void Restart(uint64_t period_ms);
+  /// @name Clock Interface
+  /// @{
+  TimestampChrono NowChrono() const override
+  {
+    return {};
+  }
 
-  bool HasExpired() const;
+  TimestampSystem NowSystem() const override
+  {
+    return SystemClock::now();
+  }
+  /// @}
 
   // Operators
-  DeadlineTimer &operator=(DeadlineTimer const &) = default;
-  DeadlineTimer &operator=(DeadlineTimer &&) = default;
-
-private:
-  using Timestamp = ClockInterface::TimestampChrono;
-
-  ClockPtr  clock_;
-  Timestamp deadline_{};
+  GlobalClock &operator=(GlobalClock const &) = delete;
+  GlobalClock &operator=(GlobalClock &&) = delete;
 };
 
-template <typename R, typename P>
-void DeadlineTimer::Restart(std::chrono::duration<R, P> const &period)
-{
-  deadline_ = clock_->NowChrono() + period;
-}
-
+}  // namespace detail
 }  // namespace moment
 }  // namespace fetch
