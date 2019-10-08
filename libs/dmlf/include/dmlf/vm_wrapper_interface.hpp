@@ -35,7 +35,8 @@ public:
   using InputHandler  = std::function<std::string(void)>;
   using Params        = std::vector<std::string>;
   using Flags         = std::vector<std::string>;
-  using Status        = enum {
+
+  enum Status {
     UNCONFIGURED,
     WAITING,
     COMPILING,
