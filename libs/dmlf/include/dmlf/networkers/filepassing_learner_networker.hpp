@@ -36,6 +36,10 @@ public:
 
   FilepassingLearnerNetworker() = default;
   ~FilepassingLearnerNetworker() override;
+  FilepassingLearnerNetworker(FilepassingLearnerNetworker const &other) = delete;
+  FilepassingLearnerNetworker &operator=(FilepassingLearnerNetworker const &other)  = delete;
+  bool                         operator==(FilepassingLearnerNetworker const &other) = delete;
+  bool                         operator<(FilepassingLearnerNetworker const &other)  = delete;
 
   void        PushUpdate(const UpdateInterfacePtr &update) override;
   std::size_t GetPeerCount() const override
@@ -46,11 +50,6 @@ public:
   void SetName(const std::string &name);
   void AddPeers(Peers new_peers);
   void ClearPeers();
-
-  FilepassingLearnerNetworker(FilepassingLearnerNetworker const &other) = delete;
-  FilepassingLearnerNetworker &operator=(FilepassingLearnerNetworker const &other)  = delete;
-  bool                         operator==(FilepassingLearnerNetworker const &other) = delete;
-  bool                         operator<(FilepassingLearnerNetworker const &other)  = delete;
 
 protected:
   static std::string       ProcessNameToTargetDir(const std::string &name);

@@ -63,6 +63,10 @@ public:
       const std::shared_ptr<NetworkManager> &netm        = std::shared_ptr<NetworkManager>(),
       MuddleChannel                          channel_tmp = MuddleChannel::DEFAULT);
   ~MuddleLearnerNetworker() override = default;
+  MuddleLearnerNetworker(const MuddleLearnerNetworker &other) = delete;
+  MuddleLearnerNetworker &operator=(const MuddleLearnerNetworker &other)  = delete;
+  bool                    operator==(const MuddleLearnerNetworker &other) = delete;
+  bool                    operator<(const MuddleLearnerNetworker &other)  = delete;
 
   void        PushUpdate(const UpdateInterfacePtr &update) override;
   void        PushUpdateType(const std::string &type, const UpdateInterfacePtr &update) override;
@@ -73,11 +77,6 @@ public:
   using Peer     = std::string;
   using Peers    = std::vector<Peer>;
   using PeerUris = std::unordered_set<std::string>;
-
-  MuddleLearnerNetworker(const MuddleLearnerNetworker &other) = delete;
-  MuddleLearnerNetworker &operator=(const MuddleLearnerNetworker &other)  = delete;
-  bool                    operator==(const MuddleLearnerNetworker &other) = delete;
-  bool                    operator<(const MuddleLearnerNetworker &other)  = delete;
 
 protected:
   CertificatePtr CreateIdentity();

@@ -37,6 +37,10 @@ public:
 
   AbstractLearnerNetworker()          = default;
   virtual ~AbstractLearnerNetworker() = default;
+  AbstractLearnerNetworker(AbstractLearnerNetworker const &other) = delete;
+  AbstractLearnerNetworker &operator=(AbstractLearnerNetworker const &other)  = delete;
+  bool                      operator==(AbstractLearnerNetworker const &other) = delete;
+  bool                      operator<(AbstractLearnerNetworker const &other)  = delete;
 
   // To implement
   virtual void        PushUpdate(const UpdateInterfacePtr &update) = 0;
@@ -96,11 +100,6 @@ public:
     auto que  = std::dynamic_pointer_cast<Queue<T>>(iter->second);
     return que->GetUpdate();
   }
-
-  AbstractLearnerNetworker(AbstractLearnerNetworker const &other) = delete;
-  AbstractLearnerNetworker &operator=(AbstractLearnerNetworker const &other)  = delete;
-  bool                      operator==(AbstractLearnerNetworker const &other) = delete;
-  bool                      operator<(AbstractLearnerNetworker const &other)  = delete;
 
 protected:
   std::shared_ptr<ShuffleAlgorithmInterface> alg_;  // used by descendents

@@ -35,6 +35,11 @@ public:
 
   LocalLearnerNetworker()           = default;
   ~LocalLearnerNetworker() override = default;
+  LocalLearnerNetworker(LocalLearnerNetworker const &other) = delete;
+  LocalLearnerNetworker &operator=(LocalLearnerNetworker const &other)  = delete;
+  bool                   operator==(LocalLearnerNetworker const &other) = delete;
+  bool                   operator<(LocalLearnerNetworker const &other)  = delete;
+
   void PushUpdate(const UpdateInterfacePtr &update) override;
 
   std::size_t GetPeerCount() const override
@@ -43,12 +48,6 @@ public:
   }
   void AddPeers(Peers new_peers);
   void ClearPeers();
-
-  LocalLearnerNetworker(LocalLearnerNetworker const &other) = delete;
-  LocalLearnerNetworker &operator=(LocalLearnerNetworker const &other)  = delete;
-  bool                   operator==(LocalLearnerNetworker const &other) = delete;
-  bool                   operator<(LocalLearnerNetworker const &other)  = delete;
-
 protected:
 private:
   using Mutex = fetch::Mutex;
