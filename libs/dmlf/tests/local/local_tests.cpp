@@ -37,7 +37,7 @@ using TensorType = fetch::math::Tensor<DataType>;
 using NetP       = std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker>;
 
 using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
-using UpdatePayloadType    = UpdateTypeForTesting::PayloadType;
+using UpdatePayload    = UpdateTypeForTesting::Payload;
 
 class LocalLearnerInstance
 {

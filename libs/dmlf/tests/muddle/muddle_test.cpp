@@ -43,7 +43,7 @@ using LNBaseP = std::shared_ptr<LNBase>;
 using LNP     = std::shared_ptr<LN>;
 
 using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
-using UpdatePayloadType    = UpdateTypeForTesting::PayloadType;
+using UpdatePayload    = UpdateTypeForTesting::Payload;
 
 class Learner
 {

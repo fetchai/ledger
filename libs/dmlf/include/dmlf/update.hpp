@@ -38,16 +38,16 @@ class Update : public UpdateInterface
 
 public:
   using TensorType       = T;
-  using VectorTensorType = std::vector<TensorType>;
+  using VectorTensor = std::vector<TensorType>;
   using TimeStampType    = UpdateInterface::TimeStampType;
-  using FingerprintType  = UpdateInterface::FingerprintType;
+  using Fingerprint  = UpdateInterface::Fingerprint;
 
-  using PayloadType = VectorTensorType;
+  using Payload = VectorTensor;
 
   explicit Update()
     : stamp_{CurrentTime()}
   {}
-  explicit Update(VectorTensorType gradients)
+  explicit Update(VectorTensor gradients)
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
@@ -79,12 +79,12 @@ public:
   {
     return stamp_;
   }
-  FingerprintType Fingerprint() const override
+  Fingerprint Fingerprint() const override
   {
     return fingerprint_;
   }
 
-  virtual VectorTensorType const &GetGradients() const
+  virtual VectorTensor const &GetGradients() const
   {
     return gradients_;
   }
@@ -103,7 +103,7 @@ private:
                                           .count());
   }
 
-  FingerprintType ComputeFingerprint()
+  Fingerprint ComputeFingerprint()
   {
     serializers::MsgPackSerializer serializer;
     serializer << gradients_;
@@ -111,8 +111,8 @@ private:
   }
 
   TimeStampType    stamp_;
-  VectorTensorType gradients_;
-  FingerprintType  fingerprint_;
+  VectorTensor gradients_;
+  Fingerprint  fingerprint_;
 };
 
 }  // namespace dmlf
@@ -124,7 +124,7 @@ struct MapSerializer<fetch::dmlf::Update<T>, D>
 {
 public:
   using Type       = fetch::dmlf::Update<T>;
-  using DriverType = D;
+  using Driver = D;
 
   static uint8_t const TIME_STAMP  = 1;
   static uint8_t const GRADIENTS   = 2;
