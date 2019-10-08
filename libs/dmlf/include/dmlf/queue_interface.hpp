@@ -17,36 +17,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
+#include <memory>
 
-#include <atomic>
+#include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace dmlf {
 
-class DummyContract : public Contract
+class QueueInterface
 {
 public:
-  static constexpr char const *NAME = "fetch.dummy";
+  using Bytes = byte_array::ByteArray;
 
-  DummyContract();
-  ~DummyContract() override = default;
+  QueueInterface()          = default;
+  virtual ~QueueInterface() = default;
 
-  static constexpr char const *LOGGING_NAME = "DummyContract";
+  virtual void        PushNewMessage(Bytes msg) = 0;
+  virtual std::size_t size() const              = 0;
 
-  std::size_t counter() const
-  {
-    return counter_;
-  }
+  QueueInterface(QueueInterface const &other) = delete;
+  QueueInterface &operator=(QueueInterface const &other)  = delete;
+  bool            operator==(QueueInterface const &other) = delete;
+  bool            operator<(QueueInterface const &other)  = delete;
 
 private:
-  using Counter = std::atomic<std::size_t>;
-
-  Result Wait(Transaction const &tx, BlockIndex /*index*/);
-  Result Run(Transaction const &tx, BlockIndex /*index*/);
-
-  Counter counter_{0};
 };
 
-}  // namespace ledger
+}  // namespace dmlf
 }  // namespace fetch
