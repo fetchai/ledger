@@ -74,7 +74,11 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
         clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
-  register_->AttachRouter(router_);
+  // handle the left issues
+  register_->OnConnectionLeft([this](Handle handle) {
+    router_.ConnectionDropped(handle);
+    direct_message_service_.SignalConnectionLeft(handle);
+  });
 
   // register the status update
   clients_.SetStatusCallback(

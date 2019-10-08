@@ -32,8 +32,7 @@ struct DkgOutput
 
   DkgOutput();
 
-  DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares,
-            PrivateKey  secret_share,  // NOLINT
+  DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares, PrivateKey const &secret_share,
             CabinetList qual_members);
 
   DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members);

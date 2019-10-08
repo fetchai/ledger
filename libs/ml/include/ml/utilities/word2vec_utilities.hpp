@@ -29,7 +29,7 @@
 
 namespace fetch {
 namespace ml {
-namespace examples {
+namespace utilities {
 
 template <class TensorType>
 std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> GetWordIDAnalogies(
@@ -135,7 +135,7 @@ typename TensorType::Type TestWithAnalogies(
   std::ifstream fp(analogy_file);
   if (fp.fail())
   {
-    throw std::runtime_error("Cannot open file " + analogy_file);
+    throw ml::exceptions::InvalidFile("Cannot open file " + analogy_file);
   }
 
   std::string word1;
@@ -210,6 +210,6 @@ inline std::string ReadFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
-}  // namespace examples
+}  // namespace utilities
 }  // namespace ml
 }  // namespace fetch

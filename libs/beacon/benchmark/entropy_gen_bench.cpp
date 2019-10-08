@@ -116,6 +116,7 @@ struct BeaconSelfContained
 void EntropyGen(benchmark::State &state)
 {
   SetGlobalLogLevel(LogLevel::ERROR);
+  fetch::crypto::mcl::details::MCLInitialiser();
 
   uint16_t unique_port    = 8000;
   uint16_t test_attempt   = 0;
@@ -124,6 +125,7 @@ void EntropyGen(benchmark::State &state)
   std::vector<std::unique_ptr<BeaconSelfContained>> nodes;
   BeaconService::CabinetMemberList                  cabinet;
   auto nodes_in_test = static_cast<uint64_t>(state.range(0));
+  auto nodes_online  = static_cast<uint64_t>(state.range(1));
 
   {
     nodes.clear();
@@ -175,14 +177,15 @@ void EntropyGen(benchmark::State &state)
     // Create previous entropy
     BlockEntropy prev_entropy;
     prev_entropy.group_signature = "Hello";
+
     TrustedDealer         dealer{cabinet, static_cast<uint32_t>(cabinet.size() / 2 + 1)};
-    std::vector<uint32_t> pending_nodes(static_cast<uint32_t>(cabinet.size()));
+    std::vector<uint32_t> pending_nodes(static_cast<uint32_t>(nodes_online));
     std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
-    for (auto const &node : nodes)
+    for (uint32_t m = 0; m < nodes_online; ++m)
     {
-      node->ResetCabinet(cabinet, test_attempt * entropy_rounds,
-                         test_attempt * entropy_rounds + entropy_rounds, prev_entropy,
-                         dealer.GetKeys(node->muddle_certificate->identity().identifier()));
+      nodes[m]->ResetCabinet(cabinet, test_attempt * entropy_rounds,
+                             test_attempt * entropy_rounds + entropy_rounds, prev_entropy,
+                             dealer.GetKeys(nodes[m]->muddle_certificate->identity().identifier()));
     }
     state.ResumeTiming();
 
@@ -207,5 +210,32 @@ void EntropyGen(benchmark::State &state)
   }
 }
 
-// Threshold is 1/2 cabinet_size + 1
-BENCHMARK(EntropyGen)->Range(4, 64)->Unit(benchmark::kMillisecond);
+void CreateRanges(benchmark::internal::Benchmark *b)
+{
+  uint32_t max_cabinet_size = 20;
+  b->ArgNames({"Cabinet size", "Members online"});
+  for (uint32_t cabinet_size = 20; cabinet_size <= max_cabinet_size;
+       cabinet_size          = cabinet_size * 2)
+  {
+    auto threshold = cabinet_size / 2 + 1;
+
+    auto i = cabinet_size;
+    while (i >= threshold)
+    {
+      b->Args({cabinet_size, i});
+      if (cabinet_size <= 10)
+      {
+        i -= cabinet_size / 4;
+      }
+      else
+      {
+        i -= (cabinet_size - threshold) / 3;
+      }
+    }
+  }
+}
+
+// Benchmarks the time taken for 10 rounds of entropy generation with varying numbers of
+// committee members online ranging from threshold number and the whole cabinet being
+// online
+BENCHMARK(EntropyGen)->Apply(CreateRanges)->Unit(benchmark::kMillisecond);
