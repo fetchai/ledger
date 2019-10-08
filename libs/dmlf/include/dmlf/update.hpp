@@ -79,7 +79,7 @@ public:
   {
     return stamp_;
   }
-  Fingerprint Fingerprint() const override
+  Fingerprint GetFingerprint() const override
   {
     return fingerprint_;
   }
