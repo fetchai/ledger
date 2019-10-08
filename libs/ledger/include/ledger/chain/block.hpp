@@ -112,17 +112,17 @@ public:
   using Type       = ledger::Block::Body;
   using DriverType = D;
 
-  static uint8_t const HASH            = 1;
-  static uint8_t const PREVIOUS_HASH   = 2;
-  static uint8_t const MERKLE_HASH     = 3;
-  static uint8_t const BLOCK_NUMBER    = 4;
-  static uint8_t const MINER           = 5;
-  static uint8_t const MINER_ID        = 6;
-  static uint8_t const LOG2_NUM_LANES  = 7;
-  static uint8_t const SLICES          = 8;
-  static uint8_t const DAG_EPOCH       = 9;
-  static uint8_t const TIMESTAMP       = 10;
-  static uint8_t const ENTROPY         = 11;
+  static uint8_t const HASH           = 1;
+  static uint8_t const PREVIOUS_HASH  = 2;
+  static uint8_t const MERKLE_HASH    = 3;
+  static uint8_t const BLOCK_NUMBER   = 4;
+  static uint8_t const MINER          = 5;
+  static uint8_t const MINER_ID       = 6;
+  static uint8_t const LOG2_NUM_LANES = 7;
+  static uint8_t const SLICES         = 8;
+  static uint8_t const DAG_EPOCH      = 9;
+  static uint8_t const TIMESTAMP      = 10;
+  static uint8_t const ENTROPY        = 11;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &body)

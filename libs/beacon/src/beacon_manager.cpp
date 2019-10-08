@@ -644,7 +644,8 @@ bool BeaconManager::Verify(Signature const &signature)
 /**
  * @brief verifies a signed message by the group signature, where all parameters are specified.
  */
-bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key, MessagePayload const &message,
+bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
+                           MessagePayload const &            message,
                            byte_array::ConstByteArray const &signature)
 {
   PublicKey tmp;
@@ -670,7 +671,7 @@ BeaconManager::Signature BeaconManager::GroupSignature() const
  */
 void BeaconManager::SetMessage(MessagePayload next_message)
 {
-  std::cerr << "signing current message: " << next_message.ToBase64() << std::endl; // DELETEME_NH
+  std::cerr << "signing current message: " << next_message.ToBase64() << std::endl;  // DELETEME_NH
 
   current_message_ = std::move(next_message);
   signature_buffer_.clear();

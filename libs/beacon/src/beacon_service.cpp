@@ -341,17 +341,24 @@ BeaconService::State BeaconService::OnCompleteState()
   beacon_entropy_generated_total_->add(1);
 
   // Populate the block entropy structure appropriately
-  block_entropy_being_created_->group_signature = active_exe_unit_->manager.GroupSignature().getStr();
+  block_entropy_being_created_->group_signature =
+      active_exe_unit_->manager.GroupSignature().getStr();
 
-  std::cerr << "pre-verify 0" << std::endl; // DELETEME_NH
+  std::cerr << "pre-verify 0" << std::endl;  // DELETEME_NH
 
-  std::cerr << "due dillig. check 0. " <<  block_entropy_being_created_->block_number << std::endl; // DELETEME_NH
-  std::cerr << "due dillig. check A. " <<  block_entropy_being_created_->group_public_key.ToBase64() << std::endl; // DELETEME_NH
-  std::cerr << "due dillig. check B. " <<  block_entropy_previous_->EntropyAsSHA256().ToBase64() << std::endl; // DELETEME_NH
-  std::cerr << "due dillig. check C. " <<  block_entropy_being_created_->group_signature.ToBase64() << std::endl; // DELETEME_NH
+  std::cerr << "due dillig. check 0. " << block_entropy_being_created_->block_number
+            << std::endl;  // DELETEME_NH
+  std::cerr << "due dillig. check A. " << block_entropy_being_created_->group_public_key.ToBase64()
+            << std::endl;  // DELETEME_NH
+  std::cerr << "due dillig. check B. " << block_entropy_previous_->EntropyAsSHA256().ToBase64()
+            << std::endl;  // DELETEME_NH
+  std::cerr << "due dillig. check C. " << block_entropy_being_created_->group_signature.ToBase64()
+            << std::endl;  // DELETEME_NH
 
   // Check when in debug mode that the block entropy signing has gone correctly
-  if(!dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key, block_entropy_previous_->EntropyAsSHA256(), block_entropy_being_created_->group_signature))
+  if (!dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
+                                  block_entropy_previous_->EntropyAsSHA256(),
+                                  block_entropy_being_created_->group_signature))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify freshly signed entropy!");
   }
@@ -362,10 +369,10 @@ BeaconService::State BeaconService::OnCompleteState()
   // If there is still entropy left to generate, set up and go around the loop
   if (block_entropy_being_created_->block_number < active_exe_unit_->aeon.round_end)
   {
-    block_entropy_previous_                        = std::move(block_entropy_being_created_);
-    block_entropy_being_created_                   = std::make_shared<BlockEntropy>();
-    *block_entropy_being_created_ = *block_entropy_previous_;
-    block_entropy_being_created_->block_number     = block_entropy_previous_->block_number + 1;
+    block_entropy_previous_                    = std::move(block_entropy_being_created_);
+    block_entropy_being_created_               = std::make_shared<BlockEntropy>();
+    *block_entropy_being_created_              = *block_entropy_previous_;
+    block_entropy_being_created_->block_number = block_entropy_previous_->block_number + 1;
 
     return State::PREPARE_ENTROPY_GENERATION;
   }

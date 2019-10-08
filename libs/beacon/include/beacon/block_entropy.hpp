@@ -28,13 +28,13 @@ namespace beacon {
 
 struct BlockEntropy : public BlockEntropyInterface
 {
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using GroupPublicKey    = byte_array::ConstByteArray;
-  using MemberPublicKey   = byte_array::ConstByteArray;
-  using MemberSignature   = byte_array::ConstByteArray;
-  using Confirmations     = std::map<MemberPublicKey, MemberSignature>;
-  using GroupSignature    = byte_array::ConstByteArray;
-  using Cabinet           = std::set<MuddleAddress>;
+  using MuddleAddress   = byte_array::ConstByteArray;
+  using GroupPublicKey  = byte_array::ConstByteArray;
+  using MemberPublicKey = byte_array::ConstByteArray;
+  using MemberSignature = byte_array::ConstByteArray;
+  using Confirmations   = std::map<MemberPublicKey, MemberSignature>;
+  using GroupSignature  = byte_array::ConstByteArray;
+  using Cabinet         = std::set<MuddleAddress>;
 
   BlockEntropy();
   BlockEntropy(BlockEntropy const &rhs);
@@ -46,7 +46,7 @@ struct BlockEntropy : public BlockEntropyInterface
   GroupPublicKey group_public_key;
 
   // The block this is relevant to
-  uint64_t       block_number = 0;
+  uint64_t block_number = 0;
   // The hash of the above (when new committee) note, this could be implicit. Is not
   // serialized.
   Digest digest;

@@ -86,7 +86,7 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(DAGPtr dag, StorageUnitInterface &
 BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                                   BlockSinkInterface &block_sink, ProverPtr const &prover,
+                                   BlockSinkInterface &block_sink, ProverPtr prover,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty, ConsensusPtr consensus)
   : chain_{chain}
@@ -99,7 +99,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , periodic_print_{STATE_NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
-  , certificate_{prover}
+  , certificate_{std::move(prover)}
   , mining_address_{certificate_->identity()}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
                                                   [](State state) { return ToString(state); })}
@@ -1112,12 +1112,12 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   if (next_block_)
   {
-    std::cerr << "wasn " << next_block_->body.block_number << std::endl; // DELETEME_NH
+    std::cerr << "wasn " << next_block_->body.block_number << std::endl;  // DELETEME_NH
     block = next_block_.get();
   }
   else if (current_block_)
   {
-    std::cerr << "wasc" << std::endl; // DELETEME_NH
+    std::cerr << "wasc" << std::endl;  // DELETEME_NH
     block = current_block_.get();
   }
   else

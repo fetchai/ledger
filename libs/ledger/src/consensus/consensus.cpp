@@ -436,12 +436,14 @@ bool BlockSignedByQualMember(fetch::ledger::Block const &block)
   assert(!block.body.hash.empty());
 
   // Is in qual check
-  if(block.body.block_entropy.qualified.find(block.body.miner_id.identifier()) == block.body.block_entropy.qualified.end())
+  if (block.body.block_entropy.qualified.find(block.body.miner_id.identifier()) ==
+      block.body.block_entropy.qualified.end())
   {
     return false;
   }
 
-  return fetch::crypto::Verifier::Verify(block.body.miner_id, block.body.hash, block.miner_signature);
+  return fetch::crypto::Verifier::Verify(block.body.miner_id, block.body.hash,
+                                         block.miner_signature);
 }
 
 /**
@@ -469,9 +471,10 @@ Status Consensus::ValidBlock(Block const &current) const
     return Status::YES;
   }
 
-  if(!BlockSignedByQualMember(current))
+  if (!BlockSignedByQualMember(current))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Saw block not signed by a member of qual! Block: ", current.body.block_number);
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Saw block not signed by a member of qual! Block: ", current.body.block_number);
     return Status::NO;
   }
 
@@ -493,7 +496,7 @@ Status Consensus::ValidBlock(Block const &current) const
     }
 
     // Check that the members of qual have all signed correctly
-    if(!EnoughQualSigned(block_entropy))
+    if (!EnoughQualSigned(block_entropy))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Received a block with a bad aeon starting point!");
     }
@@ -510,8 +513,10 @@ Status Consensus::ValidBlock(Block const &current) const
     group_pub_key          = beginning_of_aeon.body.block_entropy.group_public_key;
   }
 
-  std::cerr << "pre-verify 1" << std::endl; // DELETEME_NH
-  if(!dkg::BeaconManager::Verify(group_pub_key, block_preceeding.body.block_entropy.EntropyAsSHA256(), current.body.block_entropy.group_signature))
+  std::cerr << "pre-verify 1" << std::endl;  // DELETEME_NH
+  if (!dkg::BeaconManager::Verify(group_pub_key,
+                                  block_preceeding.body.block_entropy.EntropyAsSHA256(),
+                                  current.body.block_entropy.group_signature))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
     return Status::NO;

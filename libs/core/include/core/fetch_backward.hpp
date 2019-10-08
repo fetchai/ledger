@@ -51,17 +51,17 @@
 #pragma GCC diagnostic pop
 #endif
 
-#define ERROR_BACKTRACE                                         \
-  {                                                             \
-    std::ostringstream trace;                                   \
-                                                                \
-    backward::StackTrace st; st.load_here(32); \
-    backward::Printer p; \
-    p.object = true; \
-    p.color_mode = backward::ColorMode::always; \
-    p.address = true; \
-    p.print(st, trace); \
-    \
-    FETCH_LOG_INFO(LOGGING_NAME, "Trace: \n", trace.str());     \
+#define ERROR_BACKTRACE                                     \
+  {                                                         \
+    std::ostringstream trace;                               \
+                                                            \
+    backward::StackTrace st;                                \
+    st.load_here(32);                                       \
+    backward::Printer p;                                    \
+    p.object     = true;                                    \
+    p.color_mode = backward::ColorMode::always;             \
+    p.address    = true;                                    \
+    p.print(st, trace);                                     \
+                                                            \
+    FETCH_LOG_INFO(LOGGING_NAME, "Trace: \n", trace.str()); \
   }
-
