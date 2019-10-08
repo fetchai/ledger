@@ -30,18 +30,18 @@
 #include <unordered_map>
 #include <utility>
 
-static constexpr char const *LOGGING_NAME = "ChainCodeFactory";
-
-using fetch::byte_array::ConstByteArray;
-
 namespace fetch {
 namespace ledger {
 namespace {
+
+using fetch::byte_array::ConstByteArray;
 
 using ContractPtr     = ChainCodeFactory::ContractPtr;
 using ContractNameSet = ChainCodeFactory::ContractNameSet;
 using FactoryCallable = std::function<ContractPtr()>;
 using FactoryRegistry = std::unordered_map<ConstByteArray, FactoryCallable>;
+
+constexpr char const *LOGGING_NAME = "ChainCodeFactory";
 
 FactoryRegistry CreateRegistry()
 {
@@ -110,7 +110,7 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contrac
     }
   }
 
-  // finally throw an exception if the contract in question can not be found
+  // finally throw an exception if the contract in question cannot be found
   if (!contract)
   {
     FETCH_LOG_ERROR(LOGGING_NAME,
