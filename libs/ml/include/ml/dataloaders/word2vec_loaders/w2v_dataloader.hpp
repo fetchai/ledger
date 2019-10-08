@@ -23,6 +23,7 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
+#include "ml/exceptions/exceptions.hpp"
 
 #include <exception>
 #include <map>
@@ -173,14 +174,14 @@ template <typename T>
 void W2VLoader<T>::SetTestRatio(float new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
-  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename T>
 void W2VLoader<T>::SetValidationRatio(float new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
-  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");
 }
 
 /**
@@ -267,7 +268,7 @@ void W2VLoader<T>::GetNext(ReturnType &ret)
     }
     else
     {
-      throw std::runtime_error(
+      throw ml::exceptions::Timeout(
           "unigram table timed out looking for a negative sample. check window size for sentence "
           "length and that data loaded correctly.");
     }
@@ -298,7 +299,7 @@ bool W2VLoader<T>::AddData(InputType const &input, LabelType const &label)
 {
   FETCH_UNUSED(input);
   FETCH_UNUSED(label);
-  throw std::runtime_error("Add Data not used for W2V loader");
+  throw exceptions::InvalidMode("Add Data not used for W2V loader");
 }
 
 /**
@@ -442,7 +443,7 @@ void W2VLoader<T>::UpdateCursor()
 {
   if (this->mode_ != DataLoaderMode::TRAIN)
   {
-    throw std::runtime_error("Other mode than training not supported.");
+    throw exceptions::InvalidMode("mode not supported.");
   }
 }
 

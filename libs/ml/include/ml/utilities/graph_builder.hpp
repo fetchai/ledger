@@ -88,7 +88,7 @@ void BuildGraph(GraphSaveableParams<T> const &sp, std::shared_ptr<Graph<T>> ret)
     if (node_name.size() >= suffix.size() &&
         node_name.compare(node_name.size() - suffix.size(), suffix.size(), suffix) == 0)
     {
-      throw std::runtime_error("Cannot currently deserialize shared-weights graph");
+      throw ml::exceptions::NotImplemented("Cannot currently deserialize shared-weights graph");
     }
 
     BuildNodeAndInsertTrainables(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(node.second)),
@@ -488,12 +488,12 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     break;
   }
   default:
-    throw std::runtime_error("unknown node type");
+    throw ml::exceptions::NotImplemented("unknown node type");
   }
 
   if (!(g->InsertNode(name, node)))
   {
-    throw std::runtime_error("BuildGraph unable to insert node");
+    throw ml::exceptions::InvalidMode("BuildGraph unable to insert node");
   }
 }
 
