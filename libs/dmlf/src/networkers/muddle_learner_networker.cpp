@@ -23,6 +23,7 @@
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
+#include "core/service_ids.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -40,7 +41,7 @@ using SignerPtr   = std::shared_ptr<crypto::ECDSASigner>;
 MuddleLearnerNetworker::MuddleLearnerNetworkerProtocol::MuddleLearnerNetworkerProtocol(
     MuddleLearnerNetworker &sample)
 {
-  Expose(1, &sample, &MuddleLearnerNetworker::RecvBytes);
+  Expose(MuddleLearnerNetworkerProtocol::RECV_BYTES, &sample, &MuddleLearnerNetworker::RecvBytes);
 }
 
 MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
@@ -82,10 +83,10 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
 
   mud_->Start(initial_peers, {port});
 
-  server_ = std::make_shared<Server>(mud_->GetEndpoint(), 1, 1);
+  server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   proto_  = std::make_shared<MuddleLearnerNetworkerProtocol>(*this);
 
-  server_->Add(1, proto_.get());
+  server_->Add(RPC_DMLF, proto_.get());
 
   auto config_peers = doc.root()["peers"];
 
@@ -116,7 +117,7 @@ uint64_t MuddleLearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
 
 void MuddleLearnerNetworker::PushUpdate(const UpdateInterfacePtr &update)
 {
-  auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), 1, 1);
+  auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   auto data   = update->Serialise();
 
   PromiseList promises;
@@ -125,7 +126,8 @@ void MuddleLearnerNetworker::PushUpdate(const UpdateInterfacePtr &update)
   for (auto const &target_peer : peers_)
   {
     promises.push_back(client->CallSpecificAddress(
-        fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), 1, 1, data));
+        fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), RPC_DMLF,
+        MuddleLearnerNetworkerProtocol::RECV_BYTES, data));
   }
 
   for (auto &prom : promises)
@@ -137,7 +139,7 @@ void MuddleLearnerNetworker::PushUpdate(const UpdateInterfacePtr &update)
 void MuddleLearnerNetworker::PushUpdateType(const std::string &       type,
                                             const UpdateInterfacePtr &update)
 {
-  auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), 1, 1);
+  auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   auto data   = update->Serialise(type);
 
   PromiseList promises;
@@ -146,7 +148,8 @@ void MuddleLearnerNetworker::PushUpdateType(const std::string &       type,
   for (auto const &target_peer : peers_)
   {
     promises.push_back(client->CallSpecificAddress(
-        fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), 1, 1, data));
+        fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), RPC_DMLF,
+        MuddleLearnerNetworkerProtocol::RECV_BYTES, data));
   }
 
   for (auto &prom : promises)

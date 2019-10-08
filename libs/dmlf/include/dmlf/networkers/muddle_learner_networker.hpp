@@ -87,6 +87,9 @@ protected:
   class MuddleLearnerNetworkerProtocol : public fetch::service::Protocol
   {
   public:
+    enum {
+      RECV_BYTES,
+    };
     explicit MuddleLearnerNetworkerProtocol(MuddleLearnerNetworker &sample);
   };
 
