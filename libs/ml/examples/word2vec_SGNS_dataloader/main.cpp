@@ -26,8 +26,8 @@
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
+#include "ml/utilities/graph_saver.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
-#include "model_saver.hpp"
 
 #include <iostream>
 #include <string>
@@ -208,7 +208,7 @@ int main(int argc, char **argv)
                      analogies_test_file);
     }
 
-    SaveModel(*g, save_file + std::to_string(i));
+    fetch::ml::utilities::SaveGraph(*g, save_file + std::to_string(i));
   }
 
   return 0;
