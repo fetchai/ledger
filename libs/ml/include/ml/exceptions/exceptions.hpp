@@ -123,31 +123,6 @@ private:
   std::string msg_;
 };
 
-class InvalidType : public std::runtime_error
-{
-public:
-  explicit InvalidType()
-    : std::runtime_error("")
-  {}
-
-  explicit InvalidType(std::string const &msg)
-    : std::runtime_error(msg)
-    , msg_(msg)
-  {}
-
-  const char *what() const noexcept override
-  {
-    if (!(msg_.empty()))
-    {
-      return msg_.c_str();
-    }
-    return "invalid type";
-  }
-
-private:
-  std::string msg_;
-};
-
 class Timeout : public std::runtime_error
 {
 public:

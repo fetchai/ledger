@@ -342,7 +342,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
 
     default:
     {
-      throw ml::exceptions::InvalidType("Unknown dataloader type.");
+      throw ml::exceptions::InvalidMode("Unknown dataloader type.");
     }
     }
   }
@@ -373,7 +373,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
 
     default:
     {
-      throw ml::exceptions::InvalidType("Unknown optimiser type.");
+      throw ml::exceptions::InvalidMode("Unknown optimiser type.");
     }
     }
   }
@@ -405,7 +405,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
 
     default:
     {
-      throw ml::exceptions::InvalidType("Unknown dataloader type.");
+      throw ml::exceptions::InvalidMode("Unknown dataloader type.");
     }
     }
   }
@@ -439,7 +439,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
 
     default:
     {
-      throw ml::exceptions::InvalidType("Unknown optimiser type.");
+      throw ml::exceptions::InvalidMode("Unknown optimiser type.");
     }
     }
   }
