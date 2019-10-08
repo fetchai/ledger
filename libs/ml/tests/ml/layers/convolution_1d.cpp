@@ -306,29 +306,21 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
 
   // test correct values
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].second.shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].second.shape()[0], input_channels);
-  ASSERT_EQ(backprop_error[0].second.shape()[1], input_height);
-  ASSERT_EQ(backprop_error[0].second.shape()[2], 1);
+  auto err_signal = (*(backprop_error.begin())).second.at(0);
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], input_channels);
+  ASSERT_EQ(err_signal.shape()[1], input_height);
+  ASSERT_EQ(err_signal.shape()[2], 1);
 
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 0, 0)),
-                  -4.3077492713928222656);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 0, 0)),
-                  9.162715911865234375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 0, 0)),
-                  0.80360949039459228516);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 1, 0)),
-                  1.2491617202758789062);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 1, 0)),
-                  2.8053097724914550781);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 1, 0)),
-                  -4.166011810302734375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 2, 0)),
-                  2.4086174964904785156);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 2, 0)),
-                  -0.86411559581756591797);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 2, 0)),
-                  -3.5623354911804199219);
+  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 0, 0)), -4.3077492713928222656);
+  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 0, 0)), 9.162715911865234375);
+  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 0, 0)), 0.80360949039459228516);
+  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 1, 0)), 1.2491617202758789062);
+  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 1, 0)), 2.8053097724914550781);
+  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 1, 0)), -4.166011810302734375);
+  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 2, 0)), 2.4086174964904785156);
+  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 2, 0)), -0.86411559581756591797);
+  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 2, 0)), -3.5623354911804199219);
 }
 
 TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
