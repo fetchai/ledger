@@ -26,8 +26,8 @@
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 #include "model_saver.hpp"
-#include "word2vec_utilities.hpp"
 
 #include <iostream>
 #include <string>
@@ -77,11 +77,11 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
       sg_layer->GetEmbeddings(sg_layer);
 
   std::cout << std::endl;
-  PrintKNN(dl, embeddings->GetWeights(), word0, K);
+  utilities::PrintKNN(dl, embeddings->GetWeights(), word0, K);
   std::cout << std::endl;
-  PrintWordAnalogy(dl, embeddings->GetWeights(), word1, word2, word3, K);
+  utilities::PrintWordAnalogy(dl, embeddings->GetWeights(), word1, word2, word3, K);
 
-  TestWithAnalogies(dl, embeddings->GetWeights(), analogies_test_file);
+  utilities::TestWithAnalogies(dl, embeddings->GetWeights(), analogies_test_file);
 }
 
 ////////////////////////////////
@@ -134,7 +134,8 @@ int main(int argc, char **argv)
   }
   else
   {
-    throw std::runtime_error("Args: data_file graph_save_file analogies_test_file");
+    throw fetch::ml::exceptions::InvalidInput(
+        "Args: data_file graph_save_file analogies_test_file");
   }
 
   std::cout << "FETCH Word2Vec Demo" << std::endl;
@@ -151,7 +152,7 @@ int main(int argc, char **argv)
                                        tp.max_word_count);
   // set up dataloader
   /// DATA LOADING ///
-  data_loader.BuildVocabAndData({ReadFile(train_file)}, tp.min_count);
+  data_loader.BuildVocabAndData({utilities::ReadFile(train_file)}, tp.min_count);
 
   /////////////////////////////////////////
   /// SET UP PROPER TRAINING PARAMETERS ///

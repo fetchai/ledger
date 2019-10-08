@@ -214,6 +214,7 @@ bool BootstrapMonitor::RunDiscovery(UriSet &peers)
   request["signature"]      = attestation.signature.ToBase64();
   request["host"]           = external_address_;
   request["port"]           = port_;
+  request["component"]      = "ledger";
   request["client_name"]    = "constellation";
   request["client_version"] = fetch::version::FULL;
 

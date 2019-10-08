@@ -211,7 +211,7 @@ public:
     {
       if (!b.deed)
       {
-        b.deed.reset(new ledger::Deed{});
+        b.deed = std::make_shared<ledger::Deed>();
       }
       array.GetNextValue(*b.deed);
     }
