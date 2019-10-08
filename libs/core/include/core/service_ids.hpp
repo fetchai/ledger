@@ -32,6 +32,7 @@ static constexpr uint16_t SERVICE_DAG        = 4005;
 static constexpr uint16_t SERVICE_RBC        = 5001;
 static constexpr uint16_t SERVICE_DKG        = 6001;
 static constexpr uint16_t SERVICE_PBC        = 7001;
+static constexpr uint16_t SERVICE_DMLF       = 8001;
 
 // Common Service Channels
 static constexpr uint16_t CHANNEL_RPC = 1;  // for convenience we essentially
@@ -80,5 +81,6 @@ static constexpr uint64_t RPC_DKG_BEACON        = 212;
 
 static constexpr uint64_t RPC_BEACON_SETUP = 250;
 static constexpr uint64_t RPC_BEACON       = 251;
+static constexpr uint64_t RPC_DMLF         = 252;
 
 }  // namespace fetch

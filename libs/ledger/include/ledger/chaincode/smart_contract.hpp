@@ -35,9 +35,7 @@ namespace ledger {
 class Address;
 
 /**
- * Smart Contract instance.
- *
- * Contains an instance of the virtual machine
+ * Smart Contract instance
  */
 class SmartContract : public Contract
 {
@@ -45,8 +43,6 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using Executable     = fetch::vm::Executable;
   using ExecutablePtr  = std::shared_ptr<Executable>;
-
-  static constexpr char const *LOGGING_NAME = "SmartContract";
 
   // Construction / Destruction
   explicit SmartContract(std::string const &source);
