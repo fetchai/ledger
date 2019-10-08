@@ -61,6 +61,10 @@ public:
     regularisation_rate_ = regularisation_rate;
   }
 
+  /**
+   * Enable or disable trainable gradient update freezing
+   * @param new_frozen_state
+   */
   void SetFrozenState(bool new_frozen_state)
   {
     value_frozen_ = new_frozen_state;
