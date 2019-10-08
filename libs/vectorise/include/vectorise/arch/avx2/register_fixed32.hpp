@@ -586,10 +586,11 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator*(
   auto mask_overflow = _mm256_extractf128_si256(_mm256_permutevar8x32_epi32(mask_max, posmask), 0);
   auto mask_underflow = _mm256_extractf128_si256(_mm256_permutevar8x32_epi32(mask_min, posmask), 0);
 
-  // Now find out which of the initial elements are +inf, -inf, NaN to fill in the final result
+  // Find the negative elements of a, b, used to change the sign in infinities
   auto a_neg = a < VectorRegister<fixed_point::fp32_t, 128>(_mm_setzero_si128());
   auto b_neg = b < VectorRegister<fixed_point::fp32_t, 128>(_mm_setzero_si128());
 
+  // Now find out which of the initial elements are +inf, -inf, NaN to fill in the final result
   auto mask_pos_inf_a = (a == VectorRegister<fixed_point::fp32_t, 128>::MaskPosInf());
   auto mask_pos_inf_b = (b == VectorRegister<fixed_point::fp32_t, 128>::MaskPosInf());
   auto mask_neg_inf_a = (a == VectorRegister<fixed_point::fp32_t, 128>::MaskNegInf());
