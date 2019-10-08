@@ -56,7 +56,7 @@ struct BlockEntropy : public BlockEntropyInterface
   Confirmations confirmations;
 
   // Signature of the previous entropy, used as the entropy
-  GroupSignature group_signature = GroupSignature{};
+  GroupSignature group_signature{};
 
   Digest EntropyAsSHA256() const override;
 
