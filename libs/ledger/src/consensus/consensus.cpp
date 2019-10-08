@@ -513,7 +513,6 @@ Status Consensus::ValidBlock(Block const &current) const
     group_pub_key          = beginning_of_aeon.body.block_entropy.group_public_key;
   }
 
-  std::cerr << "pre-verify 1" << std::endl;  // DELETEME_NH
   if (!dkg::BeaconManager::Verify(group_pub_key,
                                   block_preceeding.body.block_entropy.EntropyAsSHA256(),
                                   current.body.block_entropy.group_signature))

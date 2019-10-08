@@ -1112,21 +1112,16 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   if (next_block_)
   {
-    std::cerr << "wasn " << next_block_->body.block_number << std::endl;  // DELETEME_NH
     block = next_block_.get();
   }
   else if (current_block_)
   {
-    std::cerr << "wasc" << std::endl;  // DELETEME_NH
     block = current_block_.get();
   }
   else
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block!");
   }
-
-  // TODO(HUT): figure out where/when to do this
-  // block->UpdateDigest();
 
   reset_state_count_->increment();
 
