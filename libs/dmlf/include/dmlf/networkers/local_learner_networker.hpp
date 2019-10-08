@@ -33,8 +33,8 @@ public:
   using PeerP = std::shared_ptr<LocalLearnerNetworker>;
   using Peers = std::vector<PeerP>;
 
-  LocalLearnerNetworker();
-  ~LocalLearnerNetworker() override;
+  LocalLearnerNetworker() = default;
+  ~LocalLearnerNetworker() override = default;
   void PushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
 
   std::size_t GetPeerCount() const override

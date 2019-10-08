@@ -25,10 +25,6 @@
 namespace fetch {
 namespace dmlf {
 
-LocalLearnerNetworker::LocalLearnerNetworker() = default;
-
-LocalLearnerNetworker::~LocalLearnerNetworker() = default;
-
 void LocalLearnerNetworker::AddPeers(std::vector<std::shared_ptr<LocalLearnerNetworker>> new_peers)
 {
   for (auto const &peer : new_peers)

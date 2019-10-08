@@ -35,8 +35,6 @@ using namespace std::chrono_literals;
 namespace fetch {
 namespace dmlf {
 
-FilepassingLearnerNetworker::FilepassingLearnerNetworker() = default;
-
 void FilepassingLearnerNetworker::SetName(const std::string &name)
 {
   name_  = name;

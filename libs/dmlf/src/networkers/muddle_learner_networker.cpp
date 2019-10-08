@@ -114,8 +114,6 @@ uint64_t MuddleLearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
   return 0;
 }
 
-MuddleLearnerNetworker::~MuddleLearnerNetworker() = default;
-
 void MuddleLearnerNetworker::PushUpdate(const std::shared_ptr<UpdateInterface> &update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), 1, 1);

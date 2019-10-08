@@ -34,7 +34,7 @@ public:
   using ProcessedUpdateNames = std::unordered_set<std::string>;
   using ThreadP              = std::shared_ptr<std::thread>;
 
-  FilepassingLearnerNetworker();
+  FilepassingLearnerNetworker() = default;
   ~FilepassingLearnerNetworker() override;
 
   void        PushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
