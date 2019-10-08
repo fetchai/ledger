@@ -61,8 +61,8 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
 
   std::string training_data = "This is a test sentence of total length ten words.";
 
-  GraphW2VLoader<DataType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                  tp.max_word_count);
+  GraphW2VLoader<TensorType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                    tp.max_word_count);
   loader.BuildVocabAndData({training_data});
 
   std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(
@@ -124,14 +124,14 @@ TYPED_TEST(SkipGramDataloaderTest, test_save_load_vocab)
   std::string training_data = "This is a test sentence of total length ten words.";
   std::string extra_vocab = "This is an extra sentence so that vocab is bigger than training data.";
 
-  GraphW2VLoader<DataType> initial_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                          tp.max_word_count);
+  GraphW2VLoader<TensorType> initial_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                            tp.max_word_count);
 
   initial_loader.BuildVocabAndData({training_data, extra_vocab});
   initial_loader.SaveVocab(vocab_file);
 
-  GraphW2VLoader<DataType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                  tp.max_word_count);
+  GraphW2VLoader<TensorType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                    tp.max_word_count);
   loader.LoadVocab(vocab_file);
   loader.BuildData({training_data});
 
