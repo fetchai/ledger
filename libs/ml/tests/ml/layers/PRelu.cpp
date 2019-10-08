@@ -131,10 +131,11 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
   auto      bp_err = prelu_node.BackPropagate(error_signal);
 
   ASSERT_EQ(bp_err.size(), 1);
-  ASSERT_EQ(bp_err[0].second.shape().size(), 3);
-  ASSERT_EQ(bp_err[0].second.shape()[0], 5);
-  ASSERT_EQ(bp_err[0].second.shape()[1], 10);
-  ASSERT_EQ(bp_err[0].second.shape()[2], 2);
+  auto err_signal = (*(bp_err.begin())).second.at(0);
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], 5);
+  ASSERT_EQ(err_signal.shape()[1], 10);
+  ASSERT_EQ(err_signal.shape()[2], 2);
 }
 
 TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node

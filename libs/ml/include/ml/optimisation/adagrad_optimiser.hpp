@@ -57,6 +57,11 @@ public:
 
   ~AdaGradOptimiser() override = default;
 
+  OptimiserType OptimiserCode() override
+  {
+    return OptimiserType::ADAGRAD;
+  }
+
 private:
   std::vector<TensorType> cache_;
   DataType                epsilon_;

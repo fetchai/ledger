@@ -23,6 +23,25 @@
 namespace fetch {
 namespace ml {
 
+enum class OptimiserType : uint8_t
+{
+  ADAGRAD,
+  ADAM,
+  MOMENTUM,
+  RMSPROP,
+  SGD
+};
+
+enum class LoaderType : uint8_t
+{
+  TENSOR,
+  MNIST,
+  SGNS,
+  W2V,
+  COMMODITY,
+  C2V
+};
+
 enum class OpKind : uint8_t
 {
   INVALID,
