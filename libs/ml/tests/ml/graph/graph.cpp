@@ -250,7 +250,6 @@ TYPED_TEST(GraphTest, variable_freezing_per_trainable)
 
   // Freeze variable
   g.SetFrozenState(weights, true);
-  g.SetFrozenState(weights, true);
   auto node_ptr = g.GetNode(weights);
   auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
 

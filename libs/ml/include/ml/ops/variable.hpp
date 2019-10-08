@@ -162,8 +162,8 @@ public:
     {
       ApplyRegularisation();
       this->data_->InlineAdd(grad);
+      ResetGradients();
     }
-    ResetGradients();
   }
 
   /**

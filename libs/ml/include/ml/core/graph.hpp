@@ -534,15 +534,14 @@ bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regu
 template <typename TensorType>
 void Graph<TensorType>::SetFrozenState(bool frozen_state)
 {
-  for (auto &t : trainable_lookup_)
+  for (auto &curent_trainable : GetTrainables())
   {
-    auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
-    tmp->SetFrozenState(frozen_state);
+    curent_trainable->SetFrozenState(frozen_state);
   }
 }
 
 /**
- * Set variable freezing for specified trainable by it's name
+ * Set variable freezing for specified trainable by its name
  * @tparam TensorType
  * @param node_name name of specific trainable
  * @param frozen_state true=freeze variables, false=unfreeze variables
