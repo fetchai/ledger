@@ -335,7 +335,8 @@ def main():
                 # in the case of a failed build it might be necessary to interrogate the cache file
                 with open(join(build_root, 'CMakeCache.txt'), 'r') as cache_file:
                     for line in cache_file:
-                        match = re.match(r'^CMAKE_GENERATOR:INTERNAL=(.*)', line.strip())
+                        match = re.match(
+                            r'^CMAKE_GENERATOR:INTERNAL=(.*)', line.strip())
                         if match is not None:
                             generator = match.group(1)
                             break
