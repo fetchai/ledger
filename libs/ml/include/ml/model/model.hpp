@@ -23,6 +23,7 @@
 #include "ml/ops/loss_functions/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
+#include "ml/utilities/graph_saver.hpp"
 
 #include <utility>
 
@@ -105,11 +106,12 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
     }
     case (ops::LossType::NONE):
     {
-      throw std::runtime_error("must set loss function on model compile for this model type");
+      throw ml::exceptions::InvalidMode(
+          "must set loss function on model compile for this model type");
     }
     default:
     {
-      throw std::runtime_error("unrecognised loss type in model compilation");
+      throw ml::exceptions::InvalidMode("unrecognised loss type in model compilation");
     }
     }
   }
@@ -117,7 +119,7 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
   {
     if (loss_type != ops::LossType::NONE)
     {
-      throw std::runtime_error(
+      throw ml::exceptions::InvalidMode(
           "attempted to set loss function on compile but loss function already previously set! "
           "maybe using wrong type of model?");
     }
@@ -130,7 +132,7 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
             optimiser_type, optimiser_ptr_, graph_ptr_, std::vector<std::string>{input_}, label_,
             error_, model_config_.learning_rate_param)))
     {
-      throw std::runtime_error("DNNClassifier initialised with unrecognised optimiser");
+      throw ml::exceptions::InvalidMode("DNNClassifier initialised with unrecognised optimiser");
     }
     optimiser_set_ = true;
   }
@@ -168,7 +170,7 @@ void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
 {
   if (!compiled_)
   {
-    throw std::runtime_error("must compile model before training");
+    throw ml::exceptions::InvalidMode("must compile model before training");
   }
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
@@ -179,11 +181,11 @@ void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
   SizeType patience_count{0};
   bool     stop_early = false;
 
-  // run for one epoch
+  // run for one subset - if this is not set it defaults to epoch
   loss = optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
   min_loss = loss;
 
-  // run for remaining epochs with early stopping
+  // run for remaining epochs (or subsets) with early stopping
   SizeType step{1};
   while ((!stop_early) && (step < n_steps))
   {
@@ -196,7 +198,13 @@ void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
       PrintStats(step, loss, test_loss);
     }
 
-    // run optimiser for one epoch
+    if (this->model_config_.save_graph)
+    {
+      fetch::ml::utilities::SaveGraph(*graph_ptr_,
+                                      model_config_.graph_save_location + std::to_string(step));
+    }
+
+    // run optimiser for one epoch (or subset)
     loss =
         optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
 
@@ -228,7 +236,7 @@ void Model<TensorType>::Test(DataType &test_loss)
 {
   if (!compiled_)
   {
-    throw std::runtime_error("must compile model before testing");
+    throw ml::exceptions::InvalidMode("must compile model before testing");
   }
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TEST);
@@ -249,7 +257,7 @@ void Model<TensorType>::Predict(TensorType &input, TensorType &output)
 {
   if (!compiled_)
   {
-    throw std::runtime_error("must compile model before predicting");
+    throw ml::exceptions::InvalidMode("must compile model before predicting");
   }
 
   this->graph_ptr_->SetInput(input_, input);

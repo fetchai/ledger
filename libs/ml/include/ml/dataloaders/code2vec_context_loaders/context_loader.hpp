@@ -19,6 +19,7 @@
 
 #include "math/base_types.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/exceptions/exceptions.hpp"
 
 #include <cstdint>
 #include <sstream>
@@ -132,7 +133,8 @@ bool C2VLoader<LabelType, InputType>::AddData(InputType const &data, LabelType c
 {
   FETCH_UNUSED(data);
   FETCH_UNUSED(label);
-  throw std::runtime_error("AddData not implemented for Code2Vec example. use AddDataAsString");
+  throw exceptions::InvalidMode(
+      "AddData not implemented for Code2Vec example. use AddDataAsString");
 }
 
 /**
@@ -212,7 +214,7 @@ C2VLoader<LabelType, InputType>::GetNext()
 {
   if (this->random_mode_)
   {
-    throw std::runtime_error("Random sampling not implemented for C2VLoader");
+    throw exceptions::InvalidMode("Random sampling not implemented for C2VLoader");
   }
 
   std::vector<SizeType> context_positions;
@@ -324,14 +326,14 @@ template <typename LabelType, typename DataType>
 void C2VLoader<LabelType, DataType>::SetTestRatio(float new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
-  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename LabelType, typename DataType>
 void C2VLoader<LabelType, DataType>::SetValidationRatio(float new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
-  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");
 }
 
 /**
@@ -502,7 +504,7 @@ void C2VLoader<LabelType, DataType>::UpdateCursor()
 {
   if (this->mode_ != DataLoaderMode::TRAIN)
   {
-    throw std::runtime_error("Other mode than training not supported yet.");
+    throw exceptions::InvalidMode("Other mode than training not supported yet.");
   }
 }
 
