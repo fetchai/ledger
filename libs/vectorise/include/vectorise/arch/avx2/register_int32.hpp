@@ -390,8 +390,9 @@ inline bool all_less_than(VectorRegister<int32_t, 128> const &x,
 inline bool all_less_than(VectorRegister<int32_t, 256> const &x,
                           VectorRegister<int32_t, 256> const &y)
 {
-  __m256i r = (x < y).data();
-  return _mm256_movemask_epi8(r) == 0xFFFF;
+  __m256i r    = (x < y).data();
+  auto    mask = static_cast<uint32_t>(_mm256_movemask_epi8(r));
+  return mask == 0xFFFFFFFFUL;
 }
 
 inline bool any_less_than(VectorRegister<int32_t, 128> const &x,
