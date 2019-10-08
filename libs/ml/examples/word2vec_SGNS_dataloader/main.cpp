@@ -67,21 +67,18 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
                     std::string const &word1, std::string const &word2, std::string const &word3,
                     SizeType K, std::string const &analogies_test_file)
 {
-  // first get hold of the skipgram layer by searching the return name in the graph
-  std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
-      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(
-          (g.GetNode(skip_gram_name))->GetOp());
+  TensorType const &weights = utilities::GetEmbeddings(g, skip_gram_name);
 
-  // next get hold of the embeddings
-  std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =
-      sg_layer->GetEmbeddings(sg_layer);
+  std::string knn_results = utilities::KNNTest(dl, weights, word0, K);
+  std::cout << std::endl << knn_results << std::endl;
 
-  std::cout << std::endl;
-  utilities::PrintKNN(dl, embeddings->GetWeights(), word0, K);
-  std::cout << std::endl;
-  utilities::PrintWordAnalogy(dl, embeddings->GetWeights(), word1, word2, word3, K);
+  std::string word_analogy_results =
+      utilities::WordAnalogyTest(dl, weights, word1, word2, word3, K);
+  std::cout << std::endl << word_analogy_results << std::endl;
 
-  utilities::TestWithAnalogies(dl, embeddings->GetWeights(), analogies_test_file);
+  std::string analogies_file_results =
+      utilities::AnalogiesFileTest(dl, weights, analogies_test_file);
+  std::cout << std::endl << analogies_file_results << std::endl;
 }
 
 ////////////////////////////////

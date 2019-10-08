@@ -164,30 +164,24 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
   // Lock model
   FETCH_LOCK(this->model_mutex_);
 
-  // first get hold of the skipgram layer by searching the return name in the graph
-  std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
-      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(
-          (this->g_ptr_->GetNode(skipgram_))->GetOp());
+  TensorType const &weights = utilities::GetEmbeddings(*this->g_ptr_, skipgram_);
 
-  // next get hold of the embeddings
-  std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =
-      sg_layer->GetEmbeddings(sg_layer);
+  std::string knn_results = utilities::KNNTest(*w2v_data_loader_ptr_, weights, word0, K);
+  std::string word_analogy_results =
+      utilities::WordAnalogyTest(*w2v_data_loader_ptr_, weights, word1, word2, word3, K);
+  std::string analogies_file_results =
+      utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights, tp_.analogies_test_file);
 
   {
     // Lock console
     FETCH_LOCK(*this->console_mutex_ptr_);
 
-    std::cout << std::endl;
-    std::cout << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;
-    fetch::ml::utilities::PrintKNN(*w2v_data_loader_ptr_, embeddings->GetWeights(), word0, K);
-    std::cout << std::endl;
-    fetch::ml::utilities::PrintWordAnalogy(*w2v_data_loader_ptr_, embeddings->GetWeights(), word1,
-                                           word2, word3, K);
+    std::cout << std::endl
+              << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;
+    std::cout << std::endl << knn_results << std::endl;
+    std::cout << std::endl << word_analogy_results << std::endl;
+    std::cout << std::endl << analogies_file_results << std::endl;
   }
-
-  DataType score = utilities::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->GetWeights(),
-                                                tp_.analogies_test_file);
-  std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
 }
 
 /**

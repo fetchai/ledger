@@ -32,6 +32,20 @@ namespace ml {
 namespace utilities {
 
 template <class TensorType>
+TensorType const &GetEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name)
+{
+  // first get hold of the skipgram layer by searching the return name in the graph
+  std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
+      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(
+          (g.GetNode(skip_gram_name))->GetOp());
+
+  // next get hold of the embeddings
+  std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =
+      sg_layer->GetEmbeddings(sg_layer);
+  return embeddings->GetWeights();
+}
+
+template <class TensorType>
 std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> GetWordIDAnalogies(
     TensorType const &embeddings, typename TensorType::SizeType const &word1,
     typename TensorType::SizeType const &word2, typename TensorType::SizeType const &word3,
@@ -57,20 +71,22 @@ std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>>
 }
 
 template <class TensorType>
-void PrintWordAnalogy(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
-                      TensorType const &embeddings, std::string const &word1,
-                      std::string const &word2, std::string const &word3,
-                      typename TensorType::SizeType k)
+std::string WordAnalogyTest(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
+                            TensorType const &embeddings, std::string const &word1,
+                            std::string const &word2, std::string const &word3,
+                            typename TensorType::SizeType k)
 {
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
 
-  std::cout << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
+  std::stringstream outstream;
+
+  outstream << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
             << std::endl;
 
   if (!dl.WordKnown(word1) || !dl.WordKnown(word2) || !dl.WordKnown(word3))
   {
-    std::cout << "Error: Not all to-be-tested words are in vocabulary." << std::endl;
+    outstream << "Error: Not all to-be-tested words are in vocabulary." << std::endl;
   }
   else
   {
@@ -84,26 +100,29 @@ void PrintWordAnalogy(dataloaders::GraphW2VLoader<typename TensorType::Type> con
 
     for (SizeType l = 0; l < output.size(); ++l)
     {
-      std::cout << "rank: " << l << ", "
+      outstream << "rank: " << l << ", "
                 << "distance, " << output.at(l).second << ": "
                 << dl.WordFromIndex(output.at(l).first) << std::endl;
     }
   }
+  return outstream.str();
 }
 
 template <class TensorType>
-void PrintKNN(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
-              TensorType const &embeddings, std::string const &word0,
-              typename TensorType::SizeType k)
+std::string KNNTest(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
+                    TensorType const &embeddings, std::string const &word0,
+                    typename TensorType::SizeType k)
 {
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
 
-  std::cout << "Find words that are closest to \"" << word0 << "\" by cosine distance" << std::endl;
+  std::stringstream outstream;
+
+  outstream << "Find words that are closest to \"" << word0 << "\" by cosine distance" << std::endl;
 
   if (!dl.WordKnown(word0))
   {
-    std::cout << "Error: could not find \"" + word0 + "\" in vocabulary" << std::endl;
+    outstream << "Error: could not find \"" + word0 + "\" in vocabulary" << std::endl;
   }
   else
   {
@@ -114,22 +133,25 @@ void PrintKNN(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
 
     for (std::size_t l = 0; l < output.size(); ++l)
     {
-      std::cout << "rank: " << l << ", "
+      outstream << "rank: " << l << ", "
                 << "distance, " << output.at(l).second << ": "
                 << dl.WordFromIndex(output.at(l).first) << std::endl;
     }
   }
+  return outstream.str();
 }
 
 template <class TensorType>
-typename TensorType::Type TestWithAnalogies(
-    dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl, TensorType const &embeddings,
-    std::string const &analogy_file, bool verbose = false)
+std::string AnalogiesFileTest(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
+                              TensorType const &embeddings, std::string const &analogy_file,
+                              bool verbose = false)
 {
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
 
-  std::cout << "Testing with analogies" << std::endl;
+  std::stringstream outstream;
+
+  outstream << "Testing with analogies" << std::endl;
 
   // read analogy file
   std::ifstream fp(analogy_file);
@@ -164,7 +186,7 @@ typename TensorType::Type TestWithAnalogies(
 
       if (verbose)
       {
-        std::cout << word1 << " " << word2 << " " << word3 << " " << word4 << std::endl;
+        outstream << word1 << " " << word2 << " " << word3 << " " << word4 << std::endl;
       }
 
       // get id for words
@@ -183,7 +205,7 @@ typename TensorType::Type TestWithAnalogies(
         {
           if (verbose)
           {
-            std::cout << "Result: " << dl.WordFromIndex(result.first) << std::endl;
+            outstream << "Result: " << dl.WordFromIndex(result.first) << std::endl;
           }
           if (idx == word4_idx)
           {
@@ -198,10 +220,15 @@ typename TensorType::Type TestWithAnalogies(
       }
     }
   }
-  std::cout << "Unknown, success, fail: " << unknown_count << ' ' << success_count << ' '
+  outstream << "Unknown, success, fail: " << unknown_count << ' ' << success_count << ' '
             << fail_count << std::endl;
 
-  return static_cast<DataType>(success_count) / static_cast<DataType>(success_count + fail_count);
+  outstream << "Success percentage: "
+            << static_cast<float>(success_count) * 100.0f /
+                   static_cast<float>(success_count + fail_count)
+            << "%" << std::endl;
+
+  return outstream.str();
 }
 
 inline std::string ReadFile(std::string const &path)
