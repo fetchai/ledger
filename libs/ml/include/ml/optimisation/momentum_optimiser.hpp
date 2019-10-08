@@ -52,6 +52,11 @@ public:
 
   ~MomentumOptimiser() override = default;
 
+  OptimiserType OptimiserCode() override
+  {
+    return OptimiserType::MOMENTUM;
+  }
+
 private:
   std::vector<TensorType> momentum_;
   DataType                momentum_update_;

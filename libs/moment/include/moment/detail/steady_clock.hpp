@@ -37,14 +37,13 @@ public:
 
   /// @name Clock Interface
   /// @{
-  Timestamp Now() const override
+  TimestampChrono NowChrono() const override
   {
     return ChronoClock::now();
   }
 
-  Duration TimeSinceEpoch() const override
+  TimestampSystem NowSystem() const override
   {
-    // This should never happen TODO(HUT): this.
     return {};
   }
   /// @}

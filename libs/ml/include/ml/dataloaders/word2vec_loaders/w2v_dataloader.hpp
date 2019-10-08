@@ -39,7 +39,7 @@ template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-  static_assert(meta::IsFloat<T> || math::meta::IsFixedPoint<T>,
+  static_assert(fetch::meta::IsFloat<T> || math::meta::IsFixedPoint<T>,
                 "The intended T is the typename for the data input to the neural network, which "
                 "should be a float or double or fixed-point type.");
   static constexpr T WindowContextUnused = -1;
@@ -77,6 +77,11 @@ public:
   std::string      WordFromIndex(SizeType index) const;
   SizeType         IndexFromWord(std::string const &word) const;
   SizeType         window_size();
+
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::W2V;
+  }
 
 private:
   SizeType                                   current_sentence_;

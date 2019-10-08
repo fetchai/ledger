@@ -36,16 +36,16 @@ public:
 
   /// @name Clock Interface
   /// @{
-  Timestamp Now() const override
+  TimestampChrono NowChrono() const override
   {
     return {};
   }
-  /// @}
 
-  Duration TimeSinceEpoch() const override
+  TimestampSystem NowSystem() const override
   {
-    return SystemClock::now().time_since_epoch();
+    return SystemClock::now();
   }
+  /// @}
 
   // Operators
   GlobalClock &operator=(GlobalClock const &) = delete;

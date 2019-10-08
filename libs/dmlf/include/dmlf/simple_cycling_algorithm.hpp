@@ -17,36 +17,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
+#include <memory>
 
-#include <atomic>
+#include "dmlf/shuffle_algorithm_interface.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace dmlf {
 
-class DummyContract : public Contract
+class SimpleCyclingAlgorithm : public ShuffleAlgorithmInterface
 {
 public:
-  static constexpr char const *NAME = "fetch.dummy";
+  SimpleCyclingAlgorithm(std::size_t count, std::size_t number_of_outputs_per_cycle);
+  ~SimpleCyclingAlgorithm() override = default;
 
-  DummyContract();
-  ~DummyContract() override = default;
+  std::vector<std::size_t> GetNextOutputs() override;
 
-  static constexpr char const *LOGGING_NAME = "DummyContract";
+  SimpleCyclingAlgorithm(SimpleCyclingAlgorithm const &other) = delete;
+  SimpleCyclingAlgorithm &operator=(SimpleCyclingAlgorithm const &other)  = delete;
+  bool                    operator==(SimpleCyclingAlgorithm const &other) = delete;
+  bool                    operator<(SimpleCyclingAlgorithm const &other)  = delete;
 
-  std::size_t counter() const
-  {
-    return counter_;
-  }
-
+protected:
 private:
-  using Counter = std::atomic<std::size_t>;
-
-  Result Wait(Transaction const &tx, BlockIndex /*index*/);
-  Result Run(Transaction const &tx, BlockIndex /*index*/);
-
-  Counter counter_{0};
+  std::size_t next_output_index_;
+  std::size_t number_of_outputs_per_cycle_;
 };
 
-}  // namespace ledger
+}  // namespace dmlf
 }  // namespace fetch

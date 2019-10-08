@@ -145,7 +145,8 @@ AdjustableClockPtr CreateAdjustableClock(char const *name, ClockType type)
 uint64_t GetTime(moment::ClockPtr const &clock)
 {
   return static_cast<uint64_t>(
-      std::chrono::duration_cast<std::chrono::seconds>(clock->TimeSinceEpoch()).count());
+      std::chrono::duration_cast<std::chrono::seconds>(clock->NowSystem().time_since_epoch())
+          .count());
 }
 
 }  // namespace moment
