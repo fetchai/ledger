@@ -22,6 +22,7 @@
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
@@ -81,7 +82,7 @@ LayerType GetLayerType(std::string const &layer_name)
 
   if (match_counter != 1)
   {
-    throw std::runtime_error("Node name does not uniquely specify the node type.");
+    throw fetch::ml::exceptions::InvalidInput("Node name does not uniquely specify the node type.");
   }
   return layer_type;
 }
@@ -118,7 +119,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
 
   if (file.fail())
   {
-    throw std::runtime_error("ReadArchitecture cannot open file " + filename);
+    throw fetch::ml::exceptions::InvalidFile("ReadArchitecture cannot open file " + filename);
   }
 
   while ((line_num--) != 0u)  // continue reading until we get to the desired line
@@ -175,7 +176,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
     }
     default:
     {
-      throw std::runtime_error("Unknown node type");
+      throw fetch::ml::exceptions::InvalidInput("Unknown node type");
     }
     }
 
@@ -193,7 +194,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   }
   else
   {
-    throw std::runtime_error("Unexpected node type");
+    throw fetch::ml::exceptions::InvalidInput("Unexpected node type");
   }
 
   // Add loss function
@@ -276,7 +277,7 @@ int main(int argc, char **argv)
 
   if (input_dir.empty())
   {
-    throw std::runtime_error("Please specify an input directory");
+    throw fetch::ml::exceptions::InvalidInput("Please specify an input directory");
   }
 
   std::string architecture_file = input_dir + "/architecture.csv";

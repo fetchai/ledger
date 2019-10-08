@@ -21,6 +21,7 @@
 #include "math/statistics/mean.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
@@ -57,6 +58,11 @@ public:
 
   virtual ~Optimiser() = default;
 
+  void SetGraph(std::shared_ptr<Graph<T>> graph)
+  {
+    graph_ = graph;
+  }
+
   /// DATA RUN INTERFACES ///
   DataType Run(std::vector<TensorType> const &data, TensorType const &labels,
                SizeType batch_size = SIZE_NOT_SET);
@@ -79,6 +85,7 @@ public:
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
+  virtual OptimiserType OptimiserCode() = 0;
 
 protected:
   std::shared_ptr<Graph<T>> graph_;
@@ -123,6 +130,8 @@ void Optimiser<T>::Init()
   graph_->Compile();
 
   graph_trainables_ = graph_->GetTrainables();
+
+  gradients_.clear();
   for (auto &train : graph_trainables_)
   {
     gradients_.emplace_back(TensorType(train->GetWeights().shape()));
@@ -398,6 +407,7 @@ void Optimiser<T>::PrintStats(SizeType batch_size, SizeType subset_size)
         std::to_string(static_cast<double>(step_) / static_cast<double>(time_span_.count())) +
         " samples / sec ";
   }
+
   // print it in log
   FETCH_LOG_INFO("ML_LIB", "Training speed: ", stat_string_);
   // NOLINTNEXTLINE
@@ -438,7 +448,7 @@ void Optimiser<T>::UpdateLearningRate()
   }
   default:
   {
-    throw std::runtime_error("Please specify learning rate schedule method");
+    throw exceptions::InvalidMode("Please specify learning rate schedule method");
   }
   }
 }

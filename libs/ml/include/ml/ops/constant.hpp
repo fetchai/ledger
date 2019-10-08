@@ -96,7 +96,7 @@ public:
       return DataHolder<TensorType>::SetData(data);
     }
 
-    throw std::runtime_error("cannot set data in constant more than once");
+    throw ml::exceptions::InvalidMode("cannot set data in constant more than once");
   }
 
   static constexpr OpType OpCode()

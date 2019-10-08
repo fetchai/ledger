@@ -16,26 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/dkg_output.hpp"
+#include "benchmark/benchmark.h"
 
-using fetch::beacon::DkgOutput;
-
-DkgOutput::DkgOutput()
-{
-  fetch::crypto::mcl::details::MCLInitialiser();
-  group_public_key.clear();
-  private_key_share.clear();
-}
-
-DkgOutput::DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares,
-                     PrivateKey const &secret_share, CabinetList qual_members)
-  : qual{std::move(qual_members)}
-  , group_public_key{std::move(group_key)}
-  , public_key_shares{std::move(key_shares)}
-  , private_key_share{secret_share}
-{}
-
-DkgOutput::DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members)
-  : DkgOutput{keys.group_public_key, keys.public_key_shares, keys.private_key_share,
-              std::move(qual_members)}
-{}
+BENCHMARK_MAIN();
