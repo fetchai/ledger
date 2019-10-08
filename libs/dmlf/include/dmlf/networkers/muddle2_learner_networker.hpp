@@ -20,7 +20,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
-#include "dmlf/abstract_learner_networker.hpp"
+#include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"

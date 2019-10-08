@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/base_types.hpp"
-#include "dmlf/filepassing_learner_networker.hpp"
+#include "dmlf/networkers/filepassing_learner_networker.hpp"
 
 #include <dirent.h>
 #include <fstream>

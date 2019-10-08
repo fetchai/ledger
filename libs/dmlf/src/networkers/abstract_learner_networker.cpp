@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/abstract_learner_networker.hpp"
+#include "dmlf/networkers/abstract_learner_networker.hpp"
 
 namespace fetch {
 namespace dmlf {

@@ -19,7 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "core/serializers/base_types.hpp"
-#include "dmlf/abstract_learner_networker.hpp"
+#include "dmlf/networkers/abstract_learner_networker.hpp"
 #include <list>
 #include <map>
 #include <memory>

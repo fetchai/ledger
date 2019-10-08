@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/base_types.hpp"
-#include "dmlf/local_learner_networker.hpp"
+#include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/update_interface.hpp"
 
 #include <iostream>

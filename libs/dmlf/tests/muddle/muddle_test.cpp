@@ -18,9 +18,9 @@
 
 #include "gtest/gtest.h"
 
-#include "dmlf/filepassing_learner_networker.hpp"
-#include "dmlf/local_learner_networker.hpp"
-#include "dmlf/muddle2_learner_networker.hpp"
+#include "dmlf/networkers/filepassing_learner_networker.hpp"
+#include "dmlf/networkers/local_learner_networker.hpp"
+#include "dmlf/networkers/muddle2_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/update.hpp"
 #include "dmlf/update_interface.hpp"

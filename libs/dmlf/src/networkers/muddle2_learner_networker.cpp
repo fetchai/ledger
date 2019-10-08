@@ -18,7 +18,7 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
-#include "dmlf/muddle2_learner_networker.hpp"
+#include "dmlf/networkers/muddle2_learner_networker.hpp"
 #include "dmlf/update_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
