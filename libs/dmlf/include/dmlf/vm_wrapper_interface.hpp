@@ -36,7 +36,8 @@ public:
   using Params        = std::vector<std::string>;
   using Flags         = std::vector<std::string>;
 
-  enum Status {
+  enum Status
+  {
     UNCONFIGURED,
     WAITING,
     COMPILING,

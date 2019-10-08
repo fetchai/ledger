@@ -62,7 +62,7 @@ public:
       const std::string &cloud_config, std::size_t instance_number,
       const std::shared_ptr<NetworkManager> &netm        = std::shared_ptr<NetworkManager>(),
       MuddleChannel                          channel_tmp = MuddleChannel::DEFAULT);
-  ~MuddleLearnerNetworker() override = default;
+  ~MuddleLearnerNetworker() override                          = default;
   MuddleLearnerNetworker(const MuddleLearnerNetworker &other) = delete;
   MuddleLearnerNetworker &operator=(const MuddleLearnerNetworker &other)  = delete;
   bool                    operator==(const MuddleLearnerNetworker &other) = delete;
@@ -87,7 +87,8 @@ protected:
   class MuddleLearnerNetworkerProtocol : public fetch::service::Protocol
   {
   public:
-    enum {
+    enum
+    {
       RECV_BYTES,
     };
     explicit MuddleLearnerNetworkerProtocol(MuddleLearnerNetworker &sample);

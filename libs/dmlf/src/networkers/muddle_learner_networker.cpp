@@ -18,12 +18,12 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
+#include "core/service_ids.hpp"
 #include "dmlf/networkers/muddle_learner_networker.hpp"
 #include "dmlf/update_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
-#include "core/service_ids.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -117,8 +117,9 @@ uint64_t MuddleLearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
 
 void MuddleLearnerNetworker::PushUpdate(const UpdateInterfacePtr &update)
 {
-  auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
-  auto data   = update->Serialise();
+  auto client =
+      std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+  auto data = update->Serialise();
 
   PromiseList promises;
   promises.reserve(20);
@@ -139,8 +140,9 @@ void MuddleLearnerNetworker::PushUpdate(const UpdateInterfacePtr &update)
 void MuddleLearnerNetworker::PushUpdateType(const std::string &       type,
                                             const UpdateInterfacePtr &update)
 {
-  auto client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
-  auto data   = update->Serialise(type);
+  auto client =
+      std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+  auto data = update->Serialise(type);
 
   PromiseList promises;
   promises.reserve(20);

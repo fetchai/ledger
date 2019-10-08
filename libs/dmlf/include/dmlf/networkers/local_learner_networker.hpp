@@ -33,8 +33,8 @@ public:
   using PeerP = std::shared_ptr<LocalLearnerNetworker>;
   using Peers = std::vector<PeerP>;
 
-  LocalLearnerNetworker()           = default;
-  ~LocalLearnerNetworker() override = default;
+  LocalLearnerNetworker()                                   = default;
+  ~LocalLearnerNetworker() override                         = default;
   LocalLearnerNetworker(LocalLearnerNetworker const &other) = delete;
   LocalLearnerNetworker &operator=(LocalLearnerNetworker const &other)  = delete;
   bool                   operator==(LocalLearnerNetworker const &other) = delete;
@@ -48,6 +48,7 @@ public:
   }
   void AddPeers(Peers new_peers);
   void ClearPeers();
+
 protected:
 private:
   using Mutex = fetch::Mutex;

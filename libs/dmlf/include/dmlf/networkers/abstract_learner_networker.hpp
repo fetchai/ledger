@@ -35,8 +35,8 @@ class AbstractLearnerNetworker
 public:
   using Bytes = byte_array::ByteArray;
 
-  AbstractLearnerNetworker()          = default;
-  virtual ~AbstractLearnerNetworker() = default;
+  AbstractLearnerNetworker()                                      = default;
+  virtual ~AbstractLearnerNetworker()                             = default;
   AbstractLearnerNetworker(AbstractLearnerNetworker const &other) = delete;
   AbstractLearnerNetworker &operator=(AbstractLearnerNetworker const &other)  = delete;
   bool                      operator==(AbstractLearnerNetworker const &other) = delete;
