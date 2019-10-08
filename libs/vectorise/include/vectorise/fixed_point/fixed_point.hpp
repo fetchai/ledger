@@ -76,7 +76,8 @@ struct TypeFromSize<64>
   using NextSize                           = TypeFromSize<128>;
   static constexpr std::uint16_t decimals  = 9;
   static constexpr ValueType     tolerance = 0x200;                 // 0.00000012
-  static constexpr ValueType     max_exp   = 0x000000157cd0e714LL;  // 21.48756260
+  static constexpr ValueType     max_exp   = 0x000000157cd0e6e8LL;  // 21.48756259
+
 };
 
 // 32 bit implementation
@@ -91,7 +92,7 @@ struct TypeFromSize<32>
   using NextSize                           = TypeFromSize<64>;
   static constexpr std::uint16_t decimals  = 4;
   static constexpr ValueType     tolerance = 0x15;         // 0.0003
-  static constexpr ValueType     max_exp   = 0x000a65b9L;  // 10.3974
+  static constexpr ValueType     max_exp   = 0x000a65adL;  // 10.3971
 };
 
 // 16 bit implementation
