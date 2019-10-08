@@ -61,9 +61,15 @@ public:
     regularisation_rate_ = regularisation_rate;
   }
 
+  void SetFrozenState(bool new_frozen_state)
+  {
+    value_frozen_ = new_frozen_state;
+  }
+
 protected:
   RegPtrType regulariser_;
   DataType   regularisation_rate_ = static_cast<DataType>(0);
+  bool       value_frozen_        = false;
 };
 
 }  // namespace ops

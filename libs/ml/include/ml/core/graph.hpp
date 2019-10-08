@@ -110,6 +110,9 @@ public:
   bool SetRegularisation(std::string node_name, RegPtrType regulariser,
                          DataType regularisation_rate = DataType{0.0});
 
+  void SetFrozenState(bool frozen_state);
+  bool SetFrozenState(std::string node_name, bool frozen_state);
+
   ///////////////////////////////////
   /// public train/test functions ///
   ///////////////////////////////////
@@ -519,6 +522,37 @@ bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regu
   NodePtrType t             = trainable_lookup_.at(node_name);
   auto        trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
   trainable_ptr->SetRegularisation(regulariser, regularisation_rate);
+
+  return true;
+}
+
+/**
+ * Set variable freezing for all trainables in graph
+ * @tparam TensorType
+ * @param frozen_state true=freeze variables, false=unfreeze variables
+ */
+template <typename TensorType>
+void Graph<TensorType>::SetFrozenState(bool frozen_state)
+{
+  for (auto &t : trainable_lookup_)
+  {
+    auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
+    tmp->SetFrozenState(frozen_state);
+  }
+}
+
+/**
+ * Set variable freezing for specified trainable by it's name
+ * @tparam TensorType
+ * @param node_name name of specific trainable
+ * @param frozen_state true=freeze variables, false=unfreeze variables
+ */
+template <typename TensorType>
+bool Graph<TensorType>::SetFrozenState(std::string node_name, bool frozen_state)
+{
+  NodePtrType t             = trainable_lookup_.at(node_name);
+  auto        trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+  trainable_ptr->SetFrozenState(frozen_state);
 
   return true;
 }

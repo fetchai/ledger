@@ -233,6 +233,97 @@ TYPED_TEST(GraphTest, applying_regularisation_all_trainables)
                                   fetch::math::function_tolerance<DataType>()));
 }
 
+TYPED_TEST(GraphTest, variable_freezing_per_trainable)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+
+  TensorType data_1 = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType data_2 = TensorType::FromString("3, 0, 5, -2, 7, -4, 9, -6");
+
+  // Create a graph with a single weights node
+  fetch::ml::Graph<TensorType> g;
+
+  std::string weights = g.template AddNode<fetch::ml::ops::Weights<TensorType>>("Weights", {});
+
+  g.SetInput(weights, data_1);
+
+  // Freeze variable
+  g.SetFrozenState(weights, true);
+  g.SetFrozenState(weights, true);
+  auto node_ptr = g.GetNode(weights);
+  auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+
+  // Apply gradient
+  TensorType grad = op_ptr->GetGradients();
+  grad.Fill(static_cast<DataType>(2.0));
+  op_ptr->ApplyGradient(grad);
+
+  // Evaluate weights
+  TensorType prediction_1(op_ptr->ComputeOutputShape({}));
+  op_ptr->Forward({}, prediction_1);
+
+  // Test if weights didn't change
+  ASSERT_TRUE(prediction_1.AllClose(data_1, fetch::math::function_tolerance<DataType>(),
+                                    fetch::math::function_tolerance<DataType>()));
+
+  // Un-freeze variable
+  g.SetFrozenState(false);
+  op_ptr->ApplyGradient(grad);
+
+  // Evaluate weights
+  TensorType prediction_2(op_ptr->ComputeOutputShape({}));
+  op_ptr->Forward({}, prediction_2);
+
+  // Test actual values
+  ASSERT_TRUE(prediction_2.AllClose(data_2, fetch::math::function_tolerance<DataType>(),
+                                    fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(GraphTest, variable_freezing_all_trainables)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+
+  TensorType data_1 = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType data_2 = TensorType::FromString("3, 0, 5, -2, 7, -4, 9, -6");
+
+  // Create a graph with a single weights node
+  fetch::ml::Graph<TensorType> g;
+
+  std::string weights = g.template AddNode<fetch::ml::ops::Weights<TensorType>>("Weights", {});
+
+  g.SetInput(weights, data_1);
+
+  // Freeze variable
+  g.SetFrozenState(true);
+  auto node_ptr = g.GetNode(weights);
+  auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  TensorType grad = op_ptr->GetGradients();
+  grad.Fill(static_cast<DataType>(2.0));
+  op_ptr->ApplyGradient(grad);
+
+  // Evaluate weights
+  TensorType prediction_1(op_ptr->ComputeOutputShape({}));
+  op_ptr->Forward({}, prediction_1);
+
+  // Test actual values
+  ASSERT_TRUE(prediction_1.AllClose(data_1, fetch::math::function_tolerance<DataType>(),
+                                    fetch::math::function_tolerance<DataType>()));
+
+  // Un-freeze variable
+  g.SetFrozenState(false);
+  op_ptr->ApplyGradient(grad);
+
+  // Evaluate weights
+  TensorType prediction_2(op_ptr->ComputeOutputShape({}));
+  op_ptr->Forward({}, prediction_2);
+
+  // Test actual values
+  ASSERT_TRUE(prediction_2.AllClose(data_2, fetch::math::function_tolerance<DataType>(),
+                                    fetch::math::function_tolerance<DataType>()));
+}
+
 TYPED_TEST(GraphTest,
            diamond_graph_forward)  // Evaluate graph output=(input1*input2)-(input1^2)
 {

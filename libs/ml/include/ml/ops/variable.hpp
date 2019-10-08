@@ -119,13 +119,20 @@ public:
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
-    gradient_accumulation_->InlineAdd(error_signal);
+
+    if (!this->value_frozen_)
+    {
+      gradient_accumulation_->InlineAdd(error_signal);
+    }
     return {error_signal};
   }
 
   void AddToGradient(TensorType const &extern_grad)
   {
-    gradient_accumulation_->InlineAdd(extern_grad);
+    if (!this->value_frozen_)
+    {
+      gradient_accumulation_->InlineAdd(extern_grad);
+    }
   }
 
   /**
@@ -147,8 +154,11 @@ public:
 
   void ApplyGradient(TensorType const &grad) override
   {
-    ApplyRegularisation();
-    this->data_->InlineAdd(grad);
+    if (!this->value_frozen_)
+    {
+      ApplyRegularisation();
+      this->data_->InlineAdd(grad);
+    }
     ResetGradients();
   }
 
