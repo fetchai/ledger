@@ -62,5 +62,7 @@ protected:
 private:
 };
 
+using UpdateInterfacePtr = std::shared_ptr<UpdateInterface>;
+
 }  // namespace dmlf
 }  // namespace fetch

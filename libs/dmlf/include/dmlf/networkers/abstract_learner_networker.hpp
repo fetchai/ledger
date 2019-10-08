@@ -39,7 +39,7 @@ public:
   virtual ~AbstractLearnerNetworker() = default;
 
   // To implement
-  virtual void        PushUpdate(const std::shared_ptr<UpdateInterface> &update) = 0;
+  virtual void        PushUpdate(const UpdateInterfacePtr &update) = 0;
   virtual std::size_t GetPeerCount() const                                       = 0;
 
   template <typename T>
@@ -68,7 +68,7 @@ public:
   virtual void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg);
 
   virtual void PushUpdateType(const std::string & /*key*/,
-                              const std::shared_ptr<UpdateInterface> & /*update*/);
+                              const UpdateInterfacePtr & /*update*/);
 
   template <typename T>
   void RegisterUpdateType(std::string key)

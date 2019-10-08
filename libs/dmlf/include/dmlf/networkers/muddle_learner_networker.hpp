@@ -64,9 +64,9 @@ public:
       MuddleChannel                          channel_tmp = MuddleChannel::DEFAULT);
   ~MuddleLearnerNetworker() override = default;
 
-  void        PushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
+  void        PushUpdate(const UpdateInterfacePtr &update) override;
   void        PushUpdateType(const std::string &                     type,
-                             const std::shared_ptr<UpdateInterface> &update) override;
+                             const UpdateInterfacePtr &update) override;
   std::size_t GetPeerCount() const override;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);

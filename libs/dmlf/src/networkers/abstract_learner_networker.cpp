@@ -21,7 +21,7 @@
 namespace fetch {
 namespace dmlf {
 void AbstractLearnerNetworker::PushUpdateType(const std::string & /*key*/,
-                                              const std::shared_ptr<UpdateInterface> & /*update*/)
+                                              const UpdateInterfacePtr & /*update*/)
 {
   // do nothing in the base case.
 }

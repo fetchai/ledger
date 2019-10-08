@@ -37,7 +37,7 @@ public:
   FilepassingLearnerNetworker() = default;
   ~FilepassingLearnerNetworker() override;
 
-  void        PushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
+  void        PushUpdate(const UpdateInterfacePtr &update) override;
   std::size_t GetPeerCount() const override
   {
     return peers_.size();
