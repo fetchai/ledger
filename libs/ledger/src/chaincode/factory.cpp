@@ -18,7 +18,6 @@
 
 #include "core/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "ledger/chaincode/dummy_contract.hpp"
 #include "ledger/chaincode/factory.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
@@ -47,7 +46,6 @@ FactoryRegistry CreateRegistry()
 {
   FactoryRegistry registry;
 
-  registry[DummyContract::NAME]        = []() { return std::make_shared<DummyContract>(); };
   registry[TokenContract::NAME]        = []() { return std::make_shared<TokenContract>(); };
   registry[SmartContractManager::NAME] = []() { return std::make_shared<SmartContractManager>(); };
 
