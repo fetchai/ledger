@@ -141,11 +141,11 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   std::vector<TypeParam> backprop_error =
       fc.Backward({std::make_shared<TypeParam>(input_data)}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].shape()[0], 5);
-  ASSERT_EQ(backprop_error[0].shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].shape()[2], 2);
-  // No way to test actual values for now as weights are randomly initialised.
+  auto err_signal = (*(backprop_error.begin()));
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], 5);
+  ASSERT_EQ(err_signal.shape()[1], 10);
+  ASSERT_EQ(err_signal.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the class as an Ops
@@ -169,11 +169,11 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the c
   std::vector<TypeParam> backprop_error =
       fc.Backward({std::make_shared<TypeParam>(input_data)}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].shape()[0], 50);
-  ASSERT_EQ(backprop_error[0].shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].shape()[2], 2);
-  // No way to test actual values for now as weights are randomly initialised.
+  auto err_signal = (*(backprop_error.begin()));
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], 50);
+  ASSERT_EQ(err_signal.shape()[1], 10);
+  ASSERT_EQ(err_signal.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
@@ -410,10 +410,11 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   auto      backprop_error = fc.BackPropagate(error_signal);
 
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].second.shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].second.shape()[0], 5);
-  ASSERT_EQ(backprop_error[0].second.shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].second.shape()[2], 2);
+  auto err_sig = (*(backprop_error.begin())).second.at(0);
+  ASSERT_EQ(err_sig.shape().size(), 3);
+  ASSERT_EQ(err_sig.shape()[0], 5);
+  ASSERT_EQ(err_sig.shape()[1], 10);
+  ASSERT_EQ(err_sig.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
