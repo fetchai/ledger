@@ -21,6 +21,7 @@
 #include "core/serializers/group_definitions.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -61,6 +62,11 @@ public:
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
+
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::TENSOR;
+  }
 
 protected:
   std::shared_ptr<SizeType> train_cursor_      = std::make_shared<SizeType>(0);
@@ -403,6 +409,7 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
 
     map.ExpectKeyGetValue(BATCH_LABEL_DIM, sp.batch_label_dim_);
     map.ExpectKeyGetValue(BATCH_DATA_DIM, sp.batch_data_dim_);
+    sp.UpdateRanges();
     sp.UpdateCursor();
   }
 };

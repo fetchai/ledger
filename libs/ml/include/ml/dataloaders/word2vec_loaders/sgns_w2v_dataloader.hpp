@@ -80,6 +80,11 @@ public:
 
   byte_array::ConstByteArray GetVocabHash();
 
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::SGNS;
+  }
+
 private:
   SizeType                                  current_sentence_;
   SizeType                                  current_word_;
