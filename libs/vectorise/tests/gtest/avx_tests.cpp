@@ -102,9 +102,9 @@ using MyTypes = ::testing::Types<
 using MyFPTypes =
     ::testing::Types</*fetch::vectorise::VectorRegister<float, 256>,*/
                      fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
-                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>//,
-                     // fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
-                     // fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>//,
+                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
+                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
+                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>//,
                      /*fetch::vectorise::VectorRegister<double, 256>*/>;
 #else
 using MyTypes = ::testing::Types<fetch::vectorise::VectorRegister<float, 32>,
@@ -334,11 +334,11 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_TRUE(all_less_than(vneg_inf, TypeParam::_0()));
 
 
-  VectorRegister<int32_t, TypeParam::E_VECTOR_SIZE> vtest_int32(-1073709056);
-  VectorRegister<fetch::fixed_point::fp32_t, TypeParam::E_VECTOR_SIZE> vtest_fp32(vtest_int32.data());
-  std::cout << "vtest = " << vtest_int32 << std::endl;
-  std::cout << "vtest = " << vtest_fp32 << std::endl;
-  std::cout << "-inf < vtest = " << (vneg_inf < vtest_fp32) << std::endl;
+  VectorRegister<int32_t, TypeParam::E_VECTOR_SIZE> vtest_int(-1073709056);
+  VectorRegister<type, TypeParam::E_VECTOR_SIZE> vtest_fp(vtest_int.data());
+  std::cout << "vtest = " << vtest_int << std::endl;
+  std::cout << "vtest = " << vtest_fp << std::endl;
+  std::cout << "-inf < vtest = " << (vneg_inf < vtest_fp) << std::endl;
 
   // Normal state check
   type::StateClear();
