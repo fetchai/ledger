@@ -81,7 +81,7 @@ if (FETCH_ENABLE_CCACHE)
 
   if (SCCACGE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE sccache)
-#    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK sccache)
+    # set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK sccache)
     fetch_info("Found sccache on system - including")
   elseif (CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
