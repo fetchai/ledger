@@ -19,6 +19,8 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/model/dnn_regressor.hpp"
+#include "ml/saveparams/saveable_params.hpp"
+#include "ml/serializers/ml_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -33,19 +35,19 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
 TYPED_TEST_CASE(ModelsTest, MyTypes);
-
+namespace {
 template <typename TypeParam>
 void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label,
                                 TypeParam &test_datum, TypeParam &test_label)
 {
-  train_data  = TypeParam::FromString("1.1, 2.1, 3.1; 4.1, 5.1, 6.1; 7.1, 8.1, 9.1");
-  train_label = TypeParam::FromString("0.1; 1.1; 2.1");
-  test_datum  = TypeParam::FromString("10.1; 11.1; 12.1");
-  test_label  = TypeParam::FromString("3.1");
+  train_data  = TypeParam::FromString("0, 1, 0; 1, 0, 0; 0, 0, 1");
+  train_label = TypeParam::FromString("0, 1, 2");
+  test_datum  = TypeParam::FromString("1; 0; 0");
+  test_label  = TypeParam::FromString("1");
 }
 
 template <typename TypeParam, typename DataType, typename ModelType>
-ModelType SetupModel(fetch::ml::optimisers::OptimiserType     optimiser_type,
+ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
                      fetch::ml::model::ModelConfig<DataType> &model_config, TypeParam &data,
                      TypeParam &gt)
 {
@@ -65,9 +67,9 @@ ModelType SetupModel(fetch::ml::optimisers::OptimiserType     optimiser_type,
 }
 
 template <typename TypeParam>
-bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type,
-             typename TypeParam::Type             tolerance,
-             typename TypeParam::Type             lr = static_cast<typename TypeParam::Type>(0.5))
+bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type tolerance,
+             typename TypeParam::Type lr             = static_cast<typename TypeParam::Type>(0.5),
+             fetch::math::SizeType    training_steps = 100)
 {
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::DNNRegressor<TypeParam>;
@@ -88,24 +90,23 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type,
   ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
                                                                train_data, train_labels);
 
+  DataType loss{0};
+  DataType later_loss{0};
+  model.Train(1, loss);
+
   // test loss decreases
   fetch::math::SizeType count{0};
   while (count < n_training_steps)
   {
-    DataType loss{0};
-    DataType later_loss{0};
-    model.Train(1, loss);
     model.Train(1, later_loss);
     EXPECT_LE(later_loss, loss);
     count++;
   }
 
-  model.Train(100);
+  model.Train(training_steps);
 
   // test prediction performance
   TypeParam pred({3, 1});
-
-  model.Train(100);
   model.Predict(test_datum, pred);
 
   EXPECT_TRUE(pred.AllClose(test_label, tolerance, tolerance));
@@ -118,32 +119,88 @@ TYPED_TEST(ModelsTest, adagrad_dnnregressor)
 
   // TODO (1556) - ADAGRAD not currently working
   //  using DataType  = typename TypeParam::Type;
-  //  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::ADAGRAD,
+  //  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD,
   //  static_cast<DataType>(1e-1)));
 }
 TYPED_TEST(ModelsTest, adam_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::ADAM,
-                                 static_cast<DataType>(1e-5),
-                                 static_cast<typename TypeParam::Type>(0.1)));
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, static_cast<DataType>(1e-5),
+                                 static_cast<DataType>(1e-2), 10));
 }
 TYPED_TEST(ModelsTest, momentum_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::MOMENTUM,
-                                 static_cast<DataType>(1e-5)));
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, static_cast<DataType>(1e-4),
+                                 static_cast<DataType>(0.5), 200));
 }
 TYPED_TEST(ModelsTest, rmsprop_dnnregressor)
 {
   // TODO(1557) - RMSPROP diverges for fixed point
   //  using DataType = typename TypeParam::Type;
-  //  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::RMSPROP,
+  //  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
   //                                 static_cast<DataType>(1e-5)));
 }
 TYPED_TEST(ModelsTest, sgd_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::SGD, static_cast<DataType>(1e-1)));
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, static_cast<DataType>(1e-1)));
 }
+
+TYPED_TEST(ModelsTest, sgd_dnnregressor_serialisation)
+{
+  using DataType  = typename TypeParam::Type;
+  using ModelType = fetch::ml::model::DNNRegressor<TypeParam>;
+
+  fetch::math::SizeType    n_training_steps = 10;
+  auto                     tolerance        = static_cast<DataType>(0);
+  auto                     learning_rate    = DataType{0.06f};
+  fetch::ml::OptimiserType optimiser_type   = fetch::ml::OptimiserType::SGD;
+
+  fetch::ml::model::ModelConfig<DataType> model_config;
+  model_config.learning_rate_param.mode =
+      fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
+  model_config.learning_rate_param.starting_learning_rate = learning_rate;
+  model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
+
+  // set up data
+  TypeParam train_data, train_labels, test_datum, test_label;
+  PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels, test_datum, test_label);
+
+  // set up model
+  ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
+                                                               train_data, train_labels);
+
+  // test prediction performance
+  TypeParam pred1({3, 3});
+  TypeParam pred2({3, 3});
+
+  // serialise the model
+  fetch::serializers::MsgPackSerializer b;
+  b << model;
+
+  // deserialise the model
+  b.seek(0);
+  auto model2 = std::make_shared<fetch::ml::model::DNNRegressor<TypeParam>>();
+  b >> *model2;
+
+  model.Predict(test_datum, pred1);
+  model2->Predict(test_datum, pred2);
+
+  // Test if deserialised model returns same results
+  EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
+
+  // Do one iteration step
+  model2->Train(n_training_steps);
+  model2->Predict(test_datum, pred1);
+
+  // Test if only one model is being trained
+  EXPECT_FALSE(pred1.AllClose(pred2, tolerance, tolerance));
+
+  model.Train(n_training_steps);
+  model.Predict(test_datum, pred2);
+
+  // Test if both models returns same results after training
+  EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
+}
+}  // namespace

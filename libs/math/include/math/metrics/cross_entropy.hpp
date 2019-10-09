@@ -70,7 +70,7 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
         tmp = one - *x_it;
         if (tmp <= 0)
         {
-          throw std::runtime_error("cannot take log of negative values");
+          throw exceptions::NegativeLog("cannot take log of negative values");
         }
         ret -= Log(tmp);
       }

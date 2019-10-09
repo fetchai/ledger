@@ -46,9 +46,10 @@ MuddleRegister::MuddleRegister(NetworkId const &network)
   : name_{GenerateLoggingName(BASE_NAME, network)}
 {}
 
-void MuddleRegister::AttachRouter(Router &router)
+void MuddleRegister::OnConnectionLeft(ConnectionLeftCallback cb)
 {
-  router_ = &router;
+  FETCH_LOCK(lock_);
+  left_callback_ = std::move(cb);
 }
 
 /**
@@ -316,10 +317,9 @@ void MuddleRegister::Leave(ConnectionHandle handle)
   }
 
   // signal the router
-  auto const router = router_.load();
-  if (router != nullptr)
+  if (left_callback_)
   {
-    router->ConnectionDropped(handle);
+    left_callback_(handle);
   }
 }
 

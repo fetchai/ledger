@@ -141,11 +141,10 @@ struct TestBlock
     std::size_t index = 0;
     while (!set.empty())
     {
-
       // create a value
       std::ostringstream oss;
       oss << "Resource: " << index++;
-      std::string const prefix = "fetch.dummy.state.";
+      std::string const prefix = "fetch.token.state.";
       std::string const value  = oss.str();
 
       // create the resource

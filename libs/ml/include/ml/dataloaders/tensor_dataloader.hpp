@@ -20,6 +20,8 @@
 #include "core/random.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/exceptions/exceptions.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -60,6 +62,11 @@ public:
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
+
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::TENSOR;
+  }
 
 protected:
   std::shared_ptr<SizeType> train_cursor_      = std::make_shared<SizeType>(0);
@@ -246,7 +253,7 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
   {
     if (test_to_train_ratio_ == 0)
     {
-      throw std::runtime_error("Dataloader has no test set.");
+      throw exceptions::InvalidMode("Dataloader has no test set.");
     }
     this->current_cursor_ = test_cursor_;
     this->current_min_    = test_offset_;
@@ -258,7 +265,7 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
   {
     if (validation_to_train_ratio_ == 0)
     {
-      throw std::runtime_error("Dataloader has no validation set.");
+      throw exceptions::InvalidMode("Dataloader has no validation set.");
     }
     this->current_cursor_ = validation_cursor_;
     this->current_min_    = validation_offset_;
@@ -268,7 +275,7 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
   }
   default:
   {
-    throw std::runtime_error("Unsupported dataloader mode.");
+    throw exceptions::InvalidMode("Unsupported dataloader mode.");
   }
   }
 }
@@ -292,7 +299,7 @@ bool TensorDataLoader<LabelType, InputType>::IsModeAvailable(DataLoaderMode mode
   }
   default:
   {
-    throw std::runtime_error("Unsupported dataloader mode.");
+    throw exceptions::InvalidMode("Unsupported dataloader mode.");
   }
   }
 }
@@ -402,6 +409,7 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
 
     map.ExpectKeyGetValue(BATCH_LABEL_DIM, sp.batch_label_dim_);
     map.ExpectKeyGetValue(BATCH_DATA_DIM, sp.batch_data_dim_);
+    sp.UpdateRanges();
     sp.UpdateCursor();
   }
 };

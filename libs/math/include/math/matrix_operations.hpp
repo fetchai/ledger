@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/exceptions/exceptions.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_nn_novector.hpp"
@@ -1063,7 +1064,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
 
   if (aview.width() != bview.height())
   {
-    throw std::runtime_error("expected A width to equal and B height.");
+    throw fetch::math::exceptions::WrongShape("expected A width to equal B height.");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
@@ -1113,7 +1114,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
 
   if (aview.width() != bview.width())
   {
-    throw std::runtime_error("expected A and B to have same width.");
+    throw exceptions::WrongShape("expected A and B to have same width.");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
@@ -1164,7 +1165,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
 
   if (aview.height() != bview.height())
   {
-    throw std::runtime_error("expected A and B to have same height.");
+    throw exceptions::WrongShape("expected A and B to have same height.");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))

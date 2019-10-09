@@ -26,8 +26,8 @@
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-#include "model_saver.hpp"
-#include "word2vec_utilities.hpp"
+#include "ml/utilities/graph_saver.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 
 #include <iostream>
 #include <string>
@@ -63,7 +63,7 @@ std::pair<std::string, std::string> Model(fetch::ml::Graph<TensorType> &g, SizeT
 }
 
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
-                    GraphW2VLoader<DataType> const &dl, std::string const &word0,
+                    GraphW2VLoader<TensorType> const &dl, std::string const &word0,
                     std::string const &word1, std::string const &word2, std::string const &word3,
                     SizeType K, std::string const &analogies_test_file)
 {
@@ -77,11 +77,11 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
       sg_layer->GetEmbeddings(sg_layer);
 
   std::cout << std::endl;
-  PrintKNN(dl, embeddings->GetWeights(), word0, K);
+  utilities::PrintKNN(dl, embeddings->GetWeights(), word0, K);
   std::cout << std::endl;
-  PrintWordAnalogy(dl, embeddings->GetWeights(), word1, word2, word3, K);
+  utilities::PrintWordAnalogy(dl, embeddings->GetWeights(), word1, word2, word3, K);
 
-  TestWithAnalogies(dl, embeddings->GetWeights(), analogies_test_file);
+  utilities::TestWithAnalogies(dl, embeddings->GetWeights(), analogies_test_file);
 }
 
 ////////////////////////////////
@@ -136,7 +136,8 @@ int main(int argc, char **argv)
   }
   else
   {
-    throw std::runtime_error("Args: data_file graph_save_file analogies_test_file");
+    throw fetch::ml::exceptions::InvalidInput(
+        "Args: data_file graph_save_file analogies_test_file");
   }
 
   std::cout << "FETCH Word2Vec Demo" << std::endl;
@@ -149,11 +150,11 @@ int main(int argc, char **argv)
 
   std::cout << "Setting up training data...: " << std::endl;
 
-  GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                       tp.max_word_count);
+  GraphW2VLoader<TensorType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                         tp.max_word_count);
   // set up dataloader
   /// DATA LOADING ///
-  data_loader.BuildVocabAndData({ReadFile(train_file)}, tp.min_count);
+  data_loader.BuildVocabAndData({utilities::ReadFile(train_file)}, tp.min_count);
 
   /////////////////////////////////////////
   /// SET UP PROPER TRAINING PARAMETERS ///
@@ -219,7 +220,7 @@ int main(int argc, char **argv)
                      analogies_test_file);
     }
 
-    SaveModel(*g, save_file + std::to_string(i));
+    fetch::ml::utilities::SaveGraph(*g, save_file + std::to_string(i));
   }
 
   return 0;

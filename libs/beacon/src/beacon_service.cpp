@@ -118,7 +118,9 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
                                     uint64_t round_start, uint64_t round_end, uint64_t start_time,
                                     BlockEntropy const &prev_entropy)
 {
-  auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
+  auto diff_time =
+      int64_t(GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))) -
+      int64_t(start_time);
   FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
                  "at time: ", start_time, " (diff): ", diff_time);
 
@@ -312,8 +314,8 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
       }
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ", all_sigs_map.size(),
-                   " signatures. Round: ", index);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "After adding, we have ", all_sigs_map.size(),
+                    " signatures. Round: ", index);
   }  // Mutex unlocks here since verification can take some time
 
   MilliTimer const timer{"Verify threshold signature", 100};
@@ -347,8 +349,8 @@ BeaconService::State BeaconService::OnCompleteState()
   // If there is still entropy left to generate, set up and go around the loop
   if (block_entropy_being_created_->block_number < active_exe_unit_->aeon.round_end)
   {
-    block_entropy_previous_ = std::move(block_entropy_being_created_);
-    block_entropy_being_created_.reset(new BlockEntropy());
+    block_entropy_previous_                    = std::move(block_entropy_being_created_);
+    block_entropy_being_created_               = std::make_shared<BlockEntropy>();
     block_entropy_being_created_->block_number = block_entropy_previous_->block_number + 1;
 
     return State::PREPARE_ENTROPY_GENERATION;
@@ -389,7 +391,7 @@ bool BeaconService::AddSignature(SignatureShare share)
 
   if (ret == BeaconManager::AddResult::SIGNATURE_ALREADY_ADDED)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Accidental duplicate signature added!");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Accidental duplicate signature added!");
   }
 
   return true;
