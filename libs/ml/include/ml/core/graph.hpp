@@ -555,12 +555,10 @@ bool Graph<TensorType>::SetFrozenState(std::string node_name, bool frozen_state)
 
   if (trainable_ptr)
   {
-    // it's definitely a trainable
     trainable_ptr->SetFrozenState(frozen_state);
   }
   else if (graph_ptr)
   {
-    // it's definitely a graph
     graph_ptr->SetFrozenState(frozen_state);
   }
   else
