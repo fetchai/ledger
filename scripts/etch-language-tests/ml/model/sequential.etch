@@ -1,0 +1,11 @@
+function main()
+
+    var model = Model("sequential");
+    model.add("Dense", 10);
+    model.add("Dense", 10);
+    model.add("Dense", 10);
+    model.compile("MSE", "ADAM");
+    model.setData(data, labels)
+    var prediction = model.evaluate();
+
+endfunction

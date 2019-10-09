@@ -1,0 +1,13 @@
+function main()
+
+    var hidden_layers = Array<UInt64>(2);
+    hidden_layers[0] = 10u64;
+    hidden_layers[1] = 10u64;
+    hidden_layers[2] = 10u64;
+
+    var model = Model("classifier", hidden_layers);
+
+    model.setData(data, labels)
+    var prediction = model.evaluate();
+
+endfunction
