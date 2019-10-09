@@ -77,8 +77,8 @@ public:
   Body body;  ///< The core fields that make up a block
   /// @}
 
-  // TODO(HUT): Miners in qual must sign the block.
-  /* Digest miner_signature; */
+  // Miners in qual must sign the block.
+  Digest miner_signature;
 
   /// @name Proof of Work specifics
   /// @{
@@ -165,21 +165,23 @@ public:
   using Type       = ledger::Block;
   using DriverType = D;
 
-  static uint8_t const BODY         = 1;
-  static uint8_t const NONCE        = 2;
-  static uint8_t const PROOF        = 3;
-  static uint8_t const WEIGHT       = 4;
-  static uint8_t const TOTAL_WEIGHT = 5;
+  static uint8_t const BODY            = 1;
+  static uint8_t const NONCE           = 2;
+  static uint8_t const PROOF           = 3;
+  static uint8_t const WEIGHT          = 4;
+  static uint8_t const TOTAL_WEIGHT    = 5;
+  static uint8_t const MINER_SIGNATURE = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &block)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(6);
     map.Append(BODY, block.body);
     map.Append(NONCE, block.nonce);
     map.Append(PROOF, block.proof);
     map.Append(WEIGHT, block.weight);
     map.Append(TOTAL_WEIGHT, block.total_weight);
+    map.Append(MINER_SIGNATURE, block.miner_signature);
   }
 
   template <typename MapDeserializer>
@@ -190,6 +192,7 @@ public:
     map.ExpectKeyGetValue(PROOF, block.proof);
     map.ExpectKeyGetValue(WEIGHT, block.weight);
     map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
+    map.ExpectKeyGetValue(MINER_SIGNATURE, block.miner_signature);
   }
 };
 
