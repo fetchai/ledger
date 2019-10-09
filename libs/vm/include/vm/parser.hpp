@@ -65,12 +65,12 @@ private:
 
   struct Expr
   {
-    bool              is_operator;
+    bool              is_operator{};
     ExpressionNodePtr node;
-    OpInfo            op_info;
+    OpInfo            op_info{};
     Token::Kind       closer_token_kind;
     std::string       closer_token_text;
-    int               num_members;
+    int               num_members{};
   };
 
   using StringSet = std::unordered_set<std::string>;
@@ -78,12 +78,12 @@ private:
   StringSet const          template_names_;
   std::string              filename_;
   std::vector<Token>       tokens_;
-  int                      index_;
-  Token *                  token_;
+  int                      index_{};
+  Token *                  token_{};
   std::vector<std::string> errors_;
   std::vector<NodeKind>    blocks_;
   State                    state_;
-  bool                     found_expression_terminator_;
+  bool                     found_expression_terminator_{};
   std::vector<std::size_t> groups_;
   std::vector<Expr>        operators_;
   std::vector<Expr>        rpn_;

@@ -19,6 +19,7 @@
 #include "bert_utilities.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
@@ -93,7 +94,7 @@ int main(int ac, char **av)
   }
   else
   {
-    std::runtime_error("The serialization is not working properly");
+    fetch::ml::exceptions::InvalidMode("The serialization is not working properly");
   }
 
   return 0;

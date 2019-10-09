@@ -20,12 +20,13 @@
 #include "moment/clock_interfaces.hpp"
 
 #include <chrono>
+#include <iostream>
 
 namespace fetch {
 namespace moment {
 namespace detail {
 
-class SteadyClock : public ClockInterface
+class SteadyClock final : public ClockInterface
 {
 public:
   // Construction / Destruction
@@ -36,9 +37,14 @@ public:
 
   /// @name Clock Interface
   /// @{
-  Timestamp Now() const override
+  TimestampChrono NowChrono() const override
   {
     return ChronoClock::now();
+  }
+
+  TimestampSystem NowSystem() const override
+  {
+    return {};
   }
   /// @}
 

@@ -82,7 +82,7 @@ std::size_t DigestSize(OpenSslDigestType const type)
 class OpenSslHasherImpl
 {
 public:
-  explicit OpenSslHasherImpl(OpenSslDigestType);
+  explicit OpenSslHasherImpl(OpenSslDigestType type);
   ~OpenSslHasherImpl();
 
   std::size_t const   digest_size_bytes;

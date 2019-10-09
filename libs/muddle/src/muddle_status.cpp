@@ -29,6 +29,12 @@ namespace fetch {
 namespace muddle {
 namespace {
 
+/**
+ * For a given set of peer selector address, build the JSON representation
+ *
+ * @param address_set The input address set to convert
+ * @param output The output variant structure
+ */
 void BuildPeerSet(PeerSelector::Addresses const &address_set, variant::Variant &output)
 {
   output = variant::Variant::Array(address_set.size());
@@ -40,6 +46,12 @@ void BuildPeerSet(PeerSelector::Addresses const &address_set, variant::Variant &
   }
 }
 
+/**
+ * Build the JSON representation of the PeerSelectors Peer Cache
+ *
+ * @param peer_selector The input peer selector
+ * @param output The output variant object
+ */
 void BuildPeerInfo(PeerSelector const &peer_selector, variant::Variant &output)
 {
   auto const peer_info = peer_selector.GetPeerCache();
@@ -72,6 +84,12 @@ void BuildPeerInfo(PeerSelector const &peer_selector, variant::Variant &output)
   }
 }
 
+/**
+ * Build the JSON representation of a PeerSelectors internal status
+ *
+ * @param peer_selector The input peer selector
+ * @param output The output variant object
+ */
 void BuildPeerSelection(PeerSelector const &peer_selector, variant::Variant &output)
 {
   output = variant::Variant::Object();
@@ -81,6 +99,12 @@ void BuildPeerSelection(PeerSelector const &peer_selector, variant::Variant &out
   BuildPeerInfo(peer_selector, output["peerInfo"]);
 }
 
+/**
+ * Build the JSON representation of the PeerConnectionList
+ *
+ * @param peer_list The input peer connection list
+ * @param output The output variant object
+ */
 void BuildPeerLists(PeerConnectionList const &peer_list, variant::Variant &output)
 {
   auto const peers = peer_list.GetPersistentPeers();
@@ -94,6 +118,12 @@ void BuildPeerLists(PeerConnectionList const &peer_list, variant::Variant &outpu
   }
 }
 
+/**
+ * Build the JSON representation of the Muddle Registers connection list
+ *
+ * @param reg The input register
+ * @param output The output variant object
+ */
 void BuildConnectionList(MuddleRegister const &reg, variant::Variant &output)
 {
   auto const connections = reg.GetHandleIndex();
@@ -114,6 +144,12 @@ void BuildConnectionList(MuddleRegister const &reg, variant::Variant &output)
   }
 }
 
+/**
+ * Build the JSON representation for the status of a given muddle
+ *
+ * @param muddle The muddle to evaluate
+ * @param output The output variant object
+ */
 void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output)
 {
   output            = variant::Variant::Object();
@@ -125,11 +161,60 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output)
   BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
 }
 
+/**
+ * Filter a given muddle registry map for networks matching a specified
+ *
+ * @param map The map of muddle instances that need to be filtered
+ * @param target_network The target network to be extracted
+ * @return THe filtered map of muddle instances
+ */
+MuddleRegistry::MuddleMap FilterInstances(MuddleRegistry::MuddleMap const &map,
+                                          std::string const &              target_network)
+{
+  MuddleRegistry::MuddleMap filtered_map{};
+
+  for (auto const &instance : map)
+  {
+    auto const network = instance.second.lock();
+    if (network)
+    {
+      auto const network_name = network->GetNetwork().ToString();
+
+      if (target_network.empty() || (network_name == target_network))
+      {
+        filtered_map.emplace(instance.first, instance.second);
+      }
+    }
+  }
+
+  return filtered_map;
+}
+
+/**
+ * Get the filtered set of muddle instances based on the specified filter
+ *
+ * @param target_network The target network to filter for (blank means no filtering)
+ * @return The filtered set of muddle instances
+ */
+MuddleRegistry::MuddleMap GetFilterInstances(std::string const &target_network)
+{
+  // get the complete set of instance
+  auto instances = MuddleRegistry::Instance().GetMap();
+
+  return FilterInstances(instances, target_network);
+}
+
 }  // namespace
 
-variant::Variant GetStatusSummary()
+/**
+ * Generate the JSON status summary for the muddle instances on the system
+ *
+ * @param network The network name to filter from
+ * @return The generated JSON response
+ */
+variant::Variant GetStatusSummary(std::string const &network)
 {
-  auto instances = MuddleRegistry::Instance().GetMap();
+  auto instances = GetFilterInstances(network);
 
   // create the output array
   auto output = variant::Variant::Array(instances.size());

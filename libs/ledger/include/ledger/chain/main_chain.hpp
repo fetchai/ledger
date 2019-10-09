@@ -20,12 +20,12 @@
 #include "core/bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/digest.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
@@ -93,12 +93,14 @@ constexpr char const *ToString(BlockStatus status) noexcept
   return "Unknown";
 }
 
+struct BlockDbRecord;
+
 class MainChain
 {
 public:
   using BlockPtr             = std::shared_ptr<Block const>;
   using Blocks               = std::vector<BlockPtr>;
-  using BlockHash            = Digest;
+  using BlockHash            = Block::Hash;
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
@@ -143,8 +145,8 @@ public:
   BlockHash                    GetHeaviestBlockHash() const;
   BlockHash                    GetGenesisBlockHash() const;
   Blocks                       GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
-  Blocks                       GetChainPreceding(BlockHash at, uint64_t limit = UPPER_BOUND) const;
-  std::pair<Blocks, BlockHash> TimeTravel(BlockHash starting_point,
+  Blocks                       GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
+  std::pair<Blocks, BlockHash> TimeTravel(BlockHash start,
                                           int64_t limit = static_cast<int64_t>(UPPER_BOUND)) const;
   bool                         GetPathToCommonAncestor(
                               Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
@@ -174,19 +176,7 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
-  struct DbRecord
-  {
-    Block block;
-    // genesis (hopefully) cannot be next hash so is used as undefined value
-    BlockHash next_hash = GENESIS_DIGEST;
-
-    BlockHash hash() const
-    {
-      return block.body.hash;
-    }
-  };
-
-private:
+  using DbRecord      = BlockDbRecord;
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
   using References    = std::unordered_multimap<BlockHash, BlockHash>;
@@ -204,7 +194,7 @@ private:
     uint64_t  weight{0};
     BlockHash hash{GENESIS_DIGEST};
 
-    bool Update(Block const &);
+    bool Update(Block const &block);
   };
 
   /// @name Persistence Management
@@ -229,7 +219,7 @@ private:
   bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
                               BlockHash *next_hash = nullptr) const;
   bool IsBlockInCache(BlockHash const &hash) const;
-  void AddBlockToCache(IntBlockPtr const &) const;
+  void AddBlockToCache(IntBlockPtr const &block) const;
   void AddBlockToBloomFilter(Block const &block) const;
   /// @}
 
@@ -253,7 +243,7 @@ private:
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
 
-  bool RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks);
+  bool RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks);
 
   BlockStorePtr block_store_;  /// < Long term storage and backup
   std::fstream  head_store_;

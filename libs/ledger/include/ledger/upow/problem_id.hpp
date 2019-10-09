@@ -38,10 +38,8 @@ struct ProblemId
     {
       return contract_address.address() < other.contract_address.address();
     }
-    else
-    {
-      return contract_digest < other.contract_digest;
-    }
+
+    return contract_digest < other.contract_digest;
   }
   bool operator==(ProblemId const &other) const
   {

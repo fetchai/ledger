@@ -141,11 +141,11 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   std::vector<TypeParam> backprop_error =
       fc.Backward({std::make_shared<TypeParam>(input_data)}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].shape()[0], 5);
-  ASSERT_EQ(backprop_error[0].shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].shape()[2], 2);
-  // No way to test actual values for now as weights are randomly initialised.
+  auto err_signal = (*(backprop_error.begin()));
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], 5);
+  ASSERT_EQ(err_signal.shape()[1], 10);
+  ASSERT_EQ(err_signal.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the class as an Ops
@@ -169,11 +169,11 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the c
   std::vector<TypeParam> backprop_error =
       fc.Backward({std::make_shared<TypeParam>(input_data)}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].shape()[0], 50);
-  ASSERT_EQ(backprop_error[0].shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].shape()[2], 2);
-  // No way to test actual values for now as weights are randomly initialised.
+  auto err_signal = (*(backprop_error.begin()));
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], 50);
+  ASSERT_EQ(err_signal.shape()[1], 10);
+  ASSERT_EQ(err_signal.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
@@ -193,7 +193,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   auto g_shared_weights_before     = g_shared->GetWeights();
   auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
-  for (size_t i = 0; i < 4; i++)
+  for (std::size_t i = 0; i < 4; i++)
   {
     EXPECT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
   }
@@ -232,20 +232,20 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   auto g_not_shared_weights_after = g_not_shared->GetWeights();
 
   // check the weights and biases are equal after training for shared weights
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     EXPECT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
   }
 
   // check the weights and biases are different after training for not shared weights
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     EXPECT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
   }
 
   // check the gradient of the shared weight matrices are the sum of individual weight matrix
   // gradients in not_shared_graph
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     TensorType shared_gradient = g_shared_weights_after[i] - g_shared_weights_before[i];
     TensorType not_shared_gradient =
@@ -278,7 +278,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   auto g_shared_weights_before     = g_shared->GetWeights();
   auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
-  for (size_t i = 0; i < 4; i++)
+  for (std::size_t i = 0; i < 4; i++)
   {
     ASSERT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
   }
@@ -328,27 +328,27 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   }
 
   // check the all weights are initialized to be the same
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     EXPECT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
     EXPECT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
   }
 
   // check the weights are equal after training for shared weights
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     EXPECT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
   }
 
   // check the weights are different after training for not shared weights
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     ASSERT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
   }
 
   // check the gradient of the shared weight matrices are the sum of individual weight matrice
   // gradients in not_shared_graph
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     TensorType shared_gradient = g_shared_weights_after[i] - g_shared_weights_before[i];
     TensorType not_shared_gradient =
@@ -410,10 +410,11 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   auto      backprop_error = fc.BackPropagate(error_signal);
 
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].second.shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].second.shape()[0], 5);
-  ASSERT_EQ(backprop_error[0].second.shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].second.shape()[2], 2);
+  auto err_sig = (*(backprop_error.begin())).second.at(0);
+  ASSERT_EQ(err_sig.shape().size(), 3);
+  ASSERT_EQ(err_sig.shape()[0], 5);
+  ASSERT_EQ(err_sig.shape()[1], 10);
+  ASSERT_EQ(err_sig.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node

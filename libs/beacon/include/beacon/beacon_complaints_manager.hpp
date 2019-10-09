@@ -40,7 +40,6 @@ namespace beacon {
 class ComplaintsManager
 {
   using MuddleAddress     = byte_array::ConstByteArray;
-  using Identity          = crypto::Identity;
   using ComplaintsMessage = dkg::ComplaintsMessage;
 
   uint32_t      threshold_{0};  ///< DKG threshold
@@ -59,9 +58,11 @@ public:
   ComplaintsManager() = default;
 
   void ResetCabinet(MuddleAddress const &address, uint32_t threshold);
-  void AddComplaintAgainst(MuddleAddress const &address);
-  void AddComplaintsFrom(ComplaintsMessage const &msg, MuddleAddress const &from_id);
-  void Finish(std::set<Identity> const &committee);
+  void AddComplaintAgainst(MuddleAddress const &complaint_address);
+  void AddComplaintsFrom(MuddleAddress const &                    from,
+                         std::unordered_set<MuddleAddress> const &complaints,
+                         std::set<MuddleAddress> const &          committee);
+  void Finish(std::set<MuddleAddress> const &cabinet);
 
   uint32_t                NumComplaintsReceived() const;
   std::set<MuddleAddress> ComplaintsAgainstSelf() const;
@@ -77,7 +78,6 @@ public:
 class ComplaintAnswersManager
 {
   using MuddleAddress    = byte_array::ConstByteArray;
-  using Identity         = crypto::Identity;
   using Share            = std::string;
   using ExposedShares    = std::pair<Share, Share>;
   using Answer           = std::unordered_map<MuddleAddress, ExposedShares>;
@@ -93,12 +93,12 @@ public:
 
   void     Init(std::set<MuddleAddress> const &complaints);
   void     ResetCabinet();
-  void     AddComplaintAgainst(MuddleAddress const &miner);
+  void     AddComplaintAgainst(MuddleAddress const &member);
   void     AddComplaintAnswerFrom(MuddleAddress const &from, Answer const &complaint_answer);
-  void     Finish(std::set<Identity> const &cabinet, Identity const &node_id);
+  void     Finish(std::set<MuddleAddress> const &cabinet, MuddleAddress const &node_id);
   uint32_t NumComplaintAnswersReceived() const;
   ComplaintAnswers        ComplaintAnswersReceived() const;
-  std::set<MuddleAddress> BuildQual(std::set<MuddleAddress> const &miners) const;
+  std::set<MuddleAddress> BuildQual(std::set<MuddleAddress> const &cabinet) const;
 };
 
 /**
@@ -123,15 +123,15 @@ public:
   QualComplaintsManager() = default;
 
   void Reset();
-  void AddComplaintAgainst(MuddleAddress const &complainer_address);
-  void AddComplaintsFrom(MuddleAddress const &                                   from,
+  void AddComplaintAgainst(MuddleAddress const &id);
+  void AddComplaintsFrom(MuddleAddress const &                                   id,
                          std::unordered_map<MuddleAddress, ExposedShares> const &complaints);
   void Finish(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
 
   uint32_t       NumComplaintsReceived(std::set<MuddleAddress> const &qual) const;
   QualComplaints ComplaintsReceived(std::set<MuddleAddress> const &qual) const;
   std::size_t    ComplaintsSize() const;
-  bool           FindComplaint(MuddleAddress const &address) const;
+  bool           FindComplaint(MuddleAddress const &id) const;
   std::set<QualComplaintsManager::MuddleAddress> Complaints() const;
 };
 }  // namespace beacon

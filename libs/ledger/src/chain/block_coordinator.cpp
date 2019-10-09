@@ -331,19 +331,17 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
       // once we have got back to genesis then we need to start executing from the beginning
       return State::PRE_EXEC_BLOCK_VALIDATION;
     }
-    else
-    {
-      // look up the previous block
-      auto previous_block = chain_.GetBlock(previous_hash);
-      if (!previous_block)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
-        return State::RESET;
-      }
 
-      // update the current block
-      current_block_ = previous_block;
+    // look up the previous block
+    auto previous_block = chain_.GetBlock(previous_hash);
+    if (!previous_block)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
+      return State::RESET;
     }
+
+    // update the current block
+    current_block_ = previous_block;
   }
   else if (current_hash == last_processed_block)
   {
@@ -486,7 +484,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   {
     return State::RESET;
   }
-  else if (mining_ && mining_enabled_ && ((Clock::now() >= next_block_time_) || consensus_))
+  if (mining_ && mining_enabled_ && ((Clock::now() >= next_block_time_) || consensus_))
   {
     if (consensus_)
     {
@@ -511,7 +509,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     next_block_->body.miner         = mining_address_;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->body.block_number,
-                   " beacon: ", next_block_->body.entropy);
+                   " beacon: ", next_block_->body.block_entropy.EntropyAsU64());
 
     // Attach current DAG state
     if (dag_)
@@ -528,11 +526,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     // trigger packing state
     return State::NEW_SYNERGETIC_EXECUTION;
   }
-  else
-  {
-    // delay the invocation of this state machine
-    state_machine_->Delay(std::chrono::milliseconds{100});
-  }
+
+  // delay the invocation of this state machine
+  state_machine_->Delay(std::chrono::milliseconds{100});
 
   return State::SYNCHRONISED;
 }
@@ -565,7 +561,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     if (consensus_)
     {
       consensus_->UpdateCurrentBlock(*previous);  // Only update with valid blocks
-      auto result = consensus_->ValidBlock(*previous, *current_block_);
+      auto result = consensus_->ValidBlock(*current_block_);
 
       if (!(result == ConsensusInterface::Status::YES ||
             result == ConsensusInterface::Status::UNKNOWN))
@@ -767,22 +763,20 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
 
     return State::SYNERGETIC_EXECUTION;
   }
-  else
+
+  // status debug
+  if (tx_wait_periodic_.Poll())
   {
-    // status debug
-    if (tx_wait_periodic_.Poll())
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for ", pending_txs_->size(), " transactions to sync");
-    }
-
-    if (!dag_is_ready)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for DAG to sync");
-    }
-
-    // signal the the next execution of the state machine should be much later in the future
-    state_machine_->Delay(std::chrono::milliseconds{200});
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for ", pending_txs_->size(), " transactions to sync");
   }
+
+  if (!dag_is_ready)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for DAG to sync");
+  }
+
+  // signal the the next execution of the state machine should be much later in the future
+  state_machine_->Delay(std::chrono::milliseconds{200});
 
   return State::WAIT_FOR_TRANSACTIONS;
 }
@@ -1125,7 +1119,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   reset_state_count_->increment();
 
-  if (block)
+  if (block != nullptr)
   {
     block_hash_->set(*reinterpret_cast<uint64_t const *>(block->body.hash.pointer()));
   }

@@ -29,9 +29,14 @@ class AdjustableClock : public AdjustableClockInterface
 public:
   /// @name Adjustable Clock Interface
   /// @{
-  Timestamp Now() const override
+  TimestampChrono NowChrono() const override
   {
-    return clock_.Now() + offset_;
+    return clock_.NowChrono() + offset_;
+  }
+
+  TimestampSystem NowSystem() const override
+  {
+    return {};
   }
 
   void AddOffset(Duration const &duration) override
@@ -42,7 +47,7 @@ public:
 
 private:
   ClockType clock_;
-  Duration  offset_;
+  Duration  offset_{};
 };
 
 }  // namespace detail

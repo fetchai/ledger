@@ -100,7 +100,7 @@ public:
     std::string error{};
 
     Variant dummy_output{};
-    if (!output)
+    if (output == nullptr)
     {
       output = &dummy_output;
     }

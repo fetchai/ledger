@@ -39,7 +39,7 @@ TEST(MsgPacker, long_strings)
   ByteArray         value2;
   ByteArray         text_buffer;
 
-  text_buffer.Resize((1ull << 16) + 20);
+  text_buffer.Resize((1ull << 16u) + 20);
   for (std::size_t j = 0; j < text_buffer.size(); ++j)
   {
     text_buffer[j] = static_cast<uint8_t>(static_cast<char>('a') + static_cast<char>(j % 26));

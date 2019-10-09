@@ -59,6 +59,7 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(
   client_params.label_name = g_ptr->template AddNode<PlaceHolder<TensorType>>("Label", {});
   client_params.error_name =
       g_ptr->template AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
+  g_ptr->Compile();
 
   // Initialise DataLoader
   std::shared_ptr<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>> dataloader_ptr =
@@ -84,7 +85,7 @@ int main(int ac, char **av)
     return 1;
   }
 
-  CoordinatorParams      coord_params;
+  CoordinatorParams      coord_params{};
   ClientParams<DataType> client_params;
 
   SizeType number_of_clients                    = 10;

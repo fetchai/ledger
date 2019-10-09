@@ -45,8 +45,8 @@ class OpenSslHasherImpl;
 class OpenSslHasher
 {
 public:
-  explicit OpenSslHasher(OpenSslDigestType);
-  ~OpenSslHasher();
+  explicit OpenSslHasher(OpenSslDigestType type);
+  ~OpenSslHasher()                     = default;
   OpenSslHasher(OpenSslHasher const &) = delete;
   OpenSslHasher(OpenSslHasher &&)      = delete;
 
@@ -55,7 +55,7 @@ public:
 
   bool        Reset();
   bool        Update(uint8_t const *data_to_hash, std::size_t size);
-  bool        Final(uint8_t *data_to_hash);
+  bool        Final(uint8_t *hash);
   std::size_t HashSize() const;
 
 private:

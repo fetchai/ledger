@@ -34,7 +34,8 @@ namespace value_util {
 
 // The zero case: the pack is empty past a0.
 template <typename F, typename RV>
-constexpr auto Accumulate(F &&, RV &&rv)
+constexpr auto Accumulate(F && /*never_called*/,
+                          RV &&rv) noexcept(internal::IsNothrowAccumulatableV<F, RV>)
 {
   return std::forward<RV>(rv);
 }

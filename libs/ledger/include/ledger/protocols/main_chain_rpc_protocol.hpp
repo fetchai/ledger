@@ -82,6 +82,7 @@ private:
   {
     MainChain::Blocks blocks;
 
+    // TODO(issue 1725): this can cause issue if it doesn't exist (?)
     if (!chain_.GetPathToCommonAncestor(blocks, std::move(start), std::move(last_seen), limit))
     {
       return Blocks{};

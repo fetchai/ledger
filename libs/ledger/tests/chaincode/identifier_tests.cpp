@@ -36,7 +36,7 @@ ConstByteArray GenerateSequence(std::size_t size)
 
   for (std::size_t i = 0; i < size; ++i)
   {
-    buffer[i] = i & 0xff;
+    buffer[i] = i & 0xffu;
   }
 
   return {buffer};

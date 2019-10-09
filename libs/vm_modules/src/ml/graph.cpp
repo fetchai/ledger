@@ -43,7 +43,6 @@ using VMPtrString    = Ptr<String>;
 
 VMGraph::VMGraph(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-  , graph_()
 {}
 
 Ptr<VMGraph> VMGraph::Constructor(VM *vm, TypeId type_id)

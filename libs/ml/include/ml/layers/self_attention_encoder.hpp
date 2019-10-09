@@ -151,13 +151,13 @@ public:
   static constexpr char const *DESCRIPTOR = "SelfAttentionEncoder";
 
 private:
-  SizeType       n_heads_;
-  SizeType       model_dim_;
-  SizeType       ff_dim_;
-  DataType       residual_dropout_;
-  DataType       attention_dropout_;
-  DataType       feedforward_dropout_;
-  DataType       epsilon_;
+  SizeType       n_heads_{};
+  SizeType       model_dim_{};
+  SizeType       ff_dim_{};
+  DataType       residual_dropout_{};
+  DataType       attention_dropout_{};
+  DataType       feedforward_dropout_{};
+  DataType       epsilon_{};
   ActivationType activation_type_;
 
   std::string positionwise_feedforward(std::string const &name, std::string const &input)

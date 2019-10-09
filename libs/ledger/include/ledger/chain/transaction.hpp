@@ -19,9 +19,9 @@
 
 #include "core/bitvector.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/digest.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/address.hpp"
-#include "ledger/chain/digest.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -46,8 +46,8 @@ public:
    */
   struct Transfer
   {
-    Address     to;      ///< The destination address for fund transfers
-    TokenAmount amount;  ///< The amount of tokens being transferred
+    Address     to;        ///< The destination address for fund transfers
+    TokenAmount amount{};  ///< The amount of tokens being transferred
   };
 
   /**

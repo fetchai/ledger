@@ -48,6 +48,8 @@ namespace {
 ConstByteArray const CONTRACT_SOURCE{"text"};
 ConstByteArray const CONTRACT_HASH{"digest"};
 
+constexpr char const *LOGGING_NAME = "SmartContractManager";
+
 }  // namespace
 
 SmartContractManager::SmartContractManager()
@@ -55,7 +57,7 @@ SmartContractManager::SmartContractManager()
   OnTransaction("create", this, &SmartContractManager::OnCreate);
 }
 
-Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockIndex)
+Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockIndex /*index*/)
 {
   // attempt to parse the transaction
   variant::Variant data;

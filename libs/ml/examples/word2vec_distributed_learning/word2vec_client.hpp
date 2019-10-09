@@ -19,20 +19,21 @@
 
 #include "math/clustering/knn.hpp"
 #include "ml/distributed_learning/distributed_learning_client.hpp"
+#include "ml/distributed_learning/translator.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 #include "word2vec_training_params.hpp"
-#include "word2vec_utilities.hpp"
 
 namespace fetch {
 namespace ml {
 namespace distributed_learning {
 
-std::string ReadFile(std::string const &path)
+inline std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
   if (t.fail())
   {
-    throw std::runtime_error("Cannot open file " + path);
+    throw ml::exceptions::InvalidFile("Cannot open file " + path);
   }
 
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
@@ -44,6 +45,7 @@ class Word2VecClient : public TrainingClient<TensorType>
   using DataType         = typename TensorType::Type;
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
+  using GradientType     = Update<TensorType>;
 
 public:
   Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
@@ -57,10 +59,22 @@ public:
 
   void Test() override;
 
+  GradientType GetGradients() override;
+
+  VectorTensorType TranslateGradients(GradientType &new_gradients) override;
+
+  std::pair<std::vector<std::string>, byte_array::ConstByteArray> GetVocab();
+  void AddVocab(const std::pair<std::vector<std::string>, byte_array::ConstByteArray> &vocab_info);
+
+  std::pair<TensorType, TensorType> TranslateWeights(TensorType &                      new_weights,
+                                                     const byte_array::ConstByteArray &vocab_hash);
+
 private:
   W2VTrainingParams<DataType>                                       tp_;
   std::string                                                       skipgram_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<DataType>> w2v_data_loader_ptr_;
+
+  Translator translator_;
 
   void TestEmbeddings(std::string const &word0, std::string const &word1, std::string const &word2,
                       std::string const &word3, SizeType K);
@@ -85,6 +99,8 @@ Word2VecClient<TensorType>::Word2VecClient(std::string const &                id
             << std::endl;
 
   PrepareOptimiser();
+
+  translator_.SetMyVocab(w2v_data_loader_ptr_->GetVocab());
 }
 
 template <class TensorType>
@@ -113,8 +129,7 @@ void Word2VecClient<TensorType>::PrepareDataLoader()
 {
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
-  w2v_data_loader_ptr_->LoadVocab(tp_.vocab_file);
-  w2v_data_loader_ptr_->BuildData({tp_.data}, tp_.min_count);
+  w2v_data_loader_ptr_->BuildVocabAndData({tp_.data}, tp_.min_count);
 
   this->dataloader_ptr_ = w2v_data_loader_ptr_;
 }
@@ -164,15 +179,72 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
 
     std::cout << std::endl;
     std::cout << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;
-    fetch::ml::examples::PrintKNN(*w2v_data_loader_ptr_, embeddings->GetWeights(), word0, K);
+    fetch::ml::utilities::PrintKNN(*w2v_data_loader_ptr_, embeddings->GetWeights(), word0, K);
     std::cout << std::endl;
-    fetch::ml::examples::PrintWordAnalogy(*w2v_data_loader_ptr_, embeddings->GetWeights(), word1,
-                                          word2, word3, K);
+    fetch::ml::utilities::PrintWordAnalogy(*w2v_data_loader_ptr_, embeddings->GetWeights(), word1,
+                                           word2, word3, K);
   }
 
-  DataType score = examples::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->GetWeights(),
-                                               tp_.analogies_test_file);
+  DataType score = utilities::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->GetWeights(),
+                                                tp_.analogies_test_file);
   std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
+}
+
+/**
+ * @return vector of gradient update values
+ */
+template <class TensorType>
+typename Word2VecClient<TensorType>::GradientType Word2VecClient<TensorType>::GetGradients()
+{
+  FETCH_LOCK(this->model_mutex_);
+  return GradientType(this->g_ptr_->GetGradients(), this->GetTimestamp(), this->id_,
+                      w2v_data_loader_ptr_->GetVocabHash());
+}
+
+/**
+ * @return pair of vocab strings and vocab hash
+ */
+template <class TensorType>
+std::pair<std::vector<std::string>, byte_array::ConstByteArray>
+Word2VecClient<TensorType>::GetVocab()
+{
+  auto vocab      = w2v_data_loader_ptr_->GetVocab();
+  auto vocab_hash = w2v_data_loader_ptr_->GetVocabHash();
+  // "ReverseVocab" is a vector of strings, and is the most compact way of sending the vocab
+  return std::make_pair(vocab->GetReverseVocab(), vocab->GetVocabHash());
+}
+
+/**
+ * Add a vocab to the translator_
+ * @param vocab_info pair of vocab strings and vocab hash
+ */
+template <class TensorType>
+void Word2VecClient<TensorType>::AddVocab(
+    std::pair<std::vector<std::string>, byte_array::ConstByteArray> const &vocab_info)
+{
+  translator_.AddVocab(vocab_info.second, vocab_info.first);
+}
+
+template <class TensorType>
+typename Word2VecClient<TensorType>::VectorTensorType
+Word2VecClient<TensorType>::TranslateGradients(Word2VecClient::GradientType &new_gradients)
+{
+  assert(new_gradients.data.size() == 2);  // Translation unit is only defined for word2vec
+
+  VectorTensorType ret;
+  ret.push_back(translator_.Translate<TensorType>(new_gradients.data[0], new_gradients.hash).first);
+  ret.push_back(translator_.Translate<TensorType>(new_gradients.data[1], new_gradients.hash).first);
+  return ret;
+}
+
+template <class TensorType>
+std::pair<TensorType, TensorType> Word2VecClient<TensorType>::TranslateWeights(
+    TensorType &new_weights, const byte_array::ConstByteArray &vocab_hash)
+{
+  std::pair<TensorType, TensorType> ret =
+      translator_.Translate<TensorType>(new_weights, vocab_hash);
+
+  return ret;
 }
 
 }  // namespace distributed_learning

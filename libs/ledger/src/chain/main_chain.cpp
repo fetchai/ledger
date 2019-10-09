@@ -22,6 +22,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/block_db_record.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "meta/value_util.hpp"
@@ -230,7 +231,7 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
   {
     block = std::move(record.block);
     AddBlockToBloomFilter(block);
-    if (next_hash)
+    if (next_hash != nullptr)
     {
       *next_hash = record.next_hash;
     }
@@ -316,7 +317,7 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
       references_.erase(children.first, children.second);
 
       // next, remove the block record from the cache, if found
-      if (block_chain_.erase(hash))
+      if (block_chain_.erase(hash) != 0u)
       {
         retVal = true;
       }
@@ -769,7 +770,7 @@ void MainChain::RecoverFromFile(Mode mode)
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
     return;
   }
-  else if (Mode::LOAD_PERSISTENT_DB == mode)
+  if (Mode::LOAD_PERSISTENT_DB == mode)
   {
     block_store_->Load("chain.db", "chain.index.db");
     head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out);

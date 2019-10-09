@@ -19,6 +19,7 @@
 
 #include "math/base_types.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/exceptions/exceptions.hpp"
 
 #include <cstdint>
 #include <sstream>
@@ -79,7 +80,7 @@ public:
   void     SetValidationRatio(float new_validation_ratio) override;
   bool     IsModeAvailable(DataLoaderMode mode) override;
 
-  void AddDataAsString(std::string const &text);
+  void AddDataAsString(std::string const &c2v_input);
   void createIdxUMaps();
 
   umap_int_str umap_idx_to_functionname();
@@ -93,6 +94,11 @@ public:
   umap_str_int function_name_counter();
   umap_str_int path_counter();
   umap_str_int word_counter();
+
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::C2V;
+  }
 
 private:
   std::vector<std::pair<SizeType, std::tuple<SizeType, SizeType, SizeType>>> data_;
@@ -132,7 +138,8 @@ bool C2VLoader<LabelType, InputType>::AddData(InputType const &data, LabelType c
 {
   FETCH_UNUSED(data);
   FETCH_UNUSED(label);
-  throw std::runtime_error("AddData not implemented for Code2Vec example. use AddDataAsString");
+  throw exceptions::InvalidMode(
+      "AddData not implemented for Code2Vec example. use AddDataAsString");
 }
 
 /**
@@ -212,87 +219,85 @@ C2VLoader<LabelType, InputType>::GetNext()
 {
   if (this->random_mode_)
   {
-    throw std::runtime_error("Random sampling not implemented for C2VLoader");
+    throw exceptions::InvalidMode("Random sampling not implemented for C2VLoader");
   }
-  else
-  {
-    std::vector<SizeType> context_positions;
-    SizeType              old_function_index{0};
-    bool                  iteration_start = true;
 
-    while (true)
+  std::vector<SizeType> context_positions;
+  SizeType              old_function_index{0};
+  bool                  iteration_start = true;
+
+  while (true)
+  {
+    auto             current_context_position = this->iterator_position_get_next_context_;
+    ContextLabelPair input                    = this->GetNextContext();
+    if ((iteration_start || (input.first == old_function_index)) && !this->IsDone())
     {
-      auto             current_context_position = this->iterator_position_get_next_context_;
-      ContextLabelPair input                    = this->GetNextContext();
-      if ((iteration_start || (input.first == old_function_index)) && !this->IsDone())
+      old_function_index = input.first;
+      context_positions.push_back(current_context_position);
+    }
+    else
+    {
+      if (!this->IsDone())
       {
-        old_function_index = input.first;
-        context_positions.push_back(current_context_position);
+        this->iterator_position_get_next_context_--;
       }
       else
       {
-        if (!this->IsDone())
-        {
-          this->iterator_position_get_next_context_--;
-        }
-        else
-        {
-          context_positions.push_back(current_context_position);
-        }
-
-        TensorType source_word_tensor({this->max_contexts_, 1});
-        TensorType path_tensor({this->max_contexts_, 1});
-        TensorType target_word_tensor({this->max_contexts_, 1});
-
-        if (context_positions.size() <= this->max_contexts_)
-        {
-          for (SizeType i{0}; i < context_positions.size(); i++)
-          {
-
-            source_word_tensor(i, 0) =
-                static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
-            path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
-            target_word_tensor(i, 0) =
-                static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
-          }
-          for (SizeType i{context_positions.size()}; i < this->max_contexts_; i++)
-          {
-            source_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
-            path_tensor(i, 0)        = static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]);
-            target_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
-          }
-        }
-        else
-        {
-          for (SizeType i{0}; i < this->max_contexts_; i++)
-          {
-            source_word_tensor(i, 0) =
-                static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
-            path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
-            target_word_tensor(i, 0) =
-                static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
-          }
-        }
-        ContextVector context_tensor_tuple = {source_word_tensor, path_tensor, target_word_tensor};
-
-        TensorType y_true_vec({function_name_counter().size() + 1, 1});
-        y_true_vec.Fill(Type{0});
-        // Preparing the y_true vector (one-hot-encoded)
-        y_true_vec.Set(old_function_index, Type{0}, Type{1});
-
-        ContextTensorsLabelPair return_pair{y_true_vec, context_tensor_tuple};
-
-        return return_pair;
+        context_positions.push_back(current_context_position);
       }
-      iteration_start = false;
+
+      TensorType source_word_tensor({this->max_contexts_, 1});
+      TensorType path_tensor({this->max_contexts_, 1});
+      TensorType target_word_tensor({this->max_contexts_, 1});
+
+      if (context_positions.size() <= this->max_contexts_)
+      {
+        for (SizeType i{0}; i < context_positions.size(); i++)
+        {
+
+          source_word_tensor(i, 0) =
+              static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
+          path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
+          target_word_tensor(i, 0) =
+              static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
+        }
+        for (SizeType i{context_positions.size()}; i < this->max_contexts_; i++)
+        {
+          source_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
+          path_tensor(i, 0)        = static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]);
+          target_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
+        }
+      }
+      else
+      {
+        for (SizeType i{0}; i < this->max_contexts_; i++)
+        {
+          source_word_tensor(i, 0) =
+              static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
+          path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
+          target_word_tensor(i, 0) =
+              static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
+        }
+      }
+      ContextVector context_tensor_tuple = {source_word_tensor, path_tensor, target_word_tensor};
+
+      TensorType y_true_vec({function_name_counter().size() + 1, 1});
+      y_true_vec.Fill(Type{0});
+      // Preparing the y_true vector (one-hot-encoded)
+      y_true_vec.Set(old_function_index, Type{0}, Type{1});
+
+      ContextTensorsLabelPair return_pair{y_true_vec, context_tensor_tuple};
+
+      return return_pair;
     }
+    iteration_start = false;
   }
 }
 
 /**
  * @brief Gets the number of feature/target pairs
  *
- * @return std::uint64_t
+ * @return uint64_t
  */
 template <typename LabelType, typename InputType>
 typename InputType::SizeType C2VLoader<LabelType, InputType>::Size() const
@@ -326,14 +331,14 @@ template <typename LabelType, typename DataType>
 void C2VLoader<LabelType, DataType>::SetTestRatio(float new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
-  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename LabelType, typename DataType>
 void C2VLoader<LabelType, DataType>::SetValidationRatio(float new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
-  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");
 }
 
 /**
@@ -360,21 +365,21 @@ void C2VLoader<LabelType, InputType>::addValueToCounter(
 /**
  * @brief method splitting a string(stream) by a separator character
  *
- * @param input the stringstream which should be splitted
- * @param sep the seprator character
+ * @param input the stringstream which should be split
+ * @param sep the separator character
  * @return std::vector<std::string> A vector of substrings
  */
 template <typename LabelType, typename InputType>
 std::vector<std::string> C2VLoader<LabelType, InputType>::splitStringByChar(std::stringstream input,
                                                                             char const *      sep)
 {
-  std::vector<std::string> splitted_string;
+  std::vector<std::string> split_string;
   std::string              segment;
   while (std::getline(input, segment, *sep))
   {
-    splitted_string.push_back(segment);
+    split_string.push_back(segment);
   }
-  return splitted_string;
+  return split_string;
 }
 
 /**
@@ -398,15 +403,13 @@ typename C2VLoader<LabelType, InputType>::SizeType C2VLoader<LabelType, InputTyp
     idx_to_name[index_of_new_word] = input;
     return index_of_new_word;
   }
-  else
-  {
-    return name_to_idx[input];
-  }
+
+  return name_to_idx[input];
 }
 
 /**
  * @brief Creates an unordered map for hashing strings from a counter (unordered map counting the
- * occurences of words in the input)
+ * occurrences of words in the input)
  *
  * @param counter unordered map with counts of words
  * @param name_to_idx unordered map for storing the mapping string->numeric
@@ -506,7 +509,7 @@ void C2VLoader<LabelType, DataType>::UpdateCursor()
 {
   if (this->mode_ != DataLoaderMode::TRAIN)
   {
-    throw std::runtime_error("Other mode than training not supported yet.");
+    throw exceptions::InvalidMode("Other mode than training not supported yet.");
   }
 }
 

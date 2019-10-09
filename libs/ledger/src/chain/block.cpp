@@ -21,18 +21,16 @@
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/constants.hpp"
+#include "moment/clocks.hpp"
 
 #include <cstddef>
 #include <cstdint>
-#include <ctime>
 #include <numeric>
 
 namespace fetch {
 namespace ledger {
 
-Block::Block()
-  : first_seen_timestamp{static_cast<uint64_t>(std::time(nullptr))}
-{}
+Block::Block() = default;
 
 bool Block::operator==(Block const &rhs) const
 {
@@ -47,7 +45,7 @@ bool Block::operator==(Block const &rhs) const
  */
 std::size_t Block::GetTransactionCount() const
 {
-  return std::accumulate(body.slices.begin(), body.slices.end(), std::size_t{0},
+  return std::accumulate(body.slices.begin(), body.slices.end(), std::size_t{},
                          [](auto sum, auto &&slice) { return sum + slice.size(); });
 }
 
@@ -88,7 +86,7 @@ void Block::UpdateTimestamp()
 {
   if (body.previous_hash != GENESIS_DIGEST)
   {
-    body.timestamp = static_cast<uint64_t>(std::time(nullptr));
+    body.timestamp = GetTime(clock_);
   }
 }
 

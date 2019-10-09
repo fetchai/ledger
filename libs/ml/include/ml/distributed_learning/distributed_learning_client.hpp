@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "coordinator.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
@@ -46,13 +47,46 @@ struct ClientParams
 {
   using SizeType = fetch::math::SizeType;
 
-  SizeType batch_size;
+  SizeType batch_size{};
   DataType learning_rate;
   bool     print_loss = false;
 
   std::vector<std::string> inputs_names = {"Input"};
   std::string              label_name   = "Label";
   std::string              error_name   = "Error";
+};
+
+enum class UpdateType : uint16_t
+{
+  GRADIENTS,
+  WEIGHTS,
+};
+
+/** Struct to store updates and information about the update
+ *
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct Update
+{
+  using VectorTensorType = std::vector<TensorType>;
+  using TimestampType    = int64_t;
+  VectorTensorType           data;
+  UpdateType                 update_type = UpdateType::GRADIENTS;
+  TimestampType              timestamp{};
+  std::string                client_id;
+  byte_array::ConstByteArray hash;
+
+  Update(VectorTensorType grad, TimestampType second, std::string client_id,
+         byte_array::ConstByteArray hash, UpdateType uptype = UpdateType::GRADIENTS)
+    : data{std::move(grad)}
+    , update_type{uptype}
+    , timestamp{second}
+    , client_id{std::move(client_id)}
+    , hash{std::move(hash)}
+  {}
+
+  Update() = default;
 };
 
 template <class TensorType>
@@ -62,7 +96,7 @@ class TrainingClient
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
-  using GradientType     = std::pair<VectorTensorType, TimestampType>;
+  using GradientType     = Update<TensorType>;
   using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
 
 public:
@@ -89,7 +123,7 @@ public:
 
   virtual void Test();
 
-  VectorTensorType GetGradients() const;
+  virtual GradientType GetGradients();
 
   VectorTensorType GetWeights() const;
 
@@ -153,10 +187,14 @@ protected:
   // Count for number of batches
   SizeType batch_counter_ = 0;
 
+  GradientType GetNewGradients();
+
+  virtual VectorTensorType TranslateGradients(GradientType &new_gradients)
+  {
+    return new_gradients.data;
+  }
   // Print to console flag
   bool print_loss_;
-
-  void GetNewGradients(VectorTensorType &new_gradients);
 
   std::string   GetStrTimestamp();
   TimestampType GetTimestamp();
@@ -289,7 +327,6 @@ void TrainingClient<TensorType>::Train()
     TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
     train_loss_            = *(loss_tensor.begin());
     g_ptr_->BackPropagate(error_name_);
-    std::cout << id_ << " train loss: " << train_loss_ << std::endl;
   }
 }
 
@@ -342,10 +379,11 @@ void TrainingClient<TensorType>::Test()
  * @return vector of gradient update values
  */
 template <class TensorType>
-std::vector<TensorType> TrainingClient<TensorType>::GetGradients() const
+typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(model_mutex_);
-  return g_ptr_->GetGradients();
+  return GradientType(g_ptr_->GetGradients(), GetTimestamp(), id_, byte_array::ConstByteArray(),
+                      UpdateType::GRADIENTS);
 }
 
 /**
@@ -393,11 +431,12 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
 }
 
 template <class TensorType>
-void TrainingClient<TensorType>::GetNewGradients(VectorTensorType &new_gradients)
+typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetNewGradients()
 {
   FETCH_LOCK(queue_mutex_);
-  new_gradients = gradient_queue_.front().first;
+  GradientType new_gradients = gradient_queue_.front();
   gradient_queue_.pop();
+  return new_gradients;
 }
 
 // Timestamp for logging
@@ -543,19 +582,16 @@ void TrainingClient<TensorType>::DoBatch()
   {
     peers_ = coordinator_ptr_->NextPeersList(id_);
 
-    // Load own gradient
-    GradientType current_gradient = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
+    GradientType current_gradient = GetGradients();
 
     // Add gradient to export queue
     AddExportGradient(current_gradient);
 
-    // Load own gradient
-    VectorTensorType new_gradients;
-
     // Sum all gradient in queue
     while (!gradient_queue_.empty())
     {
-      GetNewGradients(new_gradients);
+      GradientType     gt            = GetNewGradients();
+      VectorTensorType new_gradients = TranslateGradients(gt);
       GraphAddGradients(g_ptr_, new_gradients);
     }
   }
@@ -631,12 +667,11 @@ template <class TensorType>
 void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr,
                                                    VectorTensorType const &gradients)
 {
-  assert(gradients.size() == g_ptr->trainable_lookup_.size());
+  assert(gradients.size() == g_ptr->GetTrainables().size());
   auto grad_it = gradients.begin();
-  for (auto &trainable : g_ptr->trainable_lookup_)
+  for (auto &trainable : g_ptr->GetTrainables())
   {
-    auto weights_ptr =
-        std::dynamic_pointer_cast<ops::Weights<TensorType>>((trainable.second)->GetOp());
+    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>(trainable);
     weights_ptr->AddToGradient(*grad_it);
     ++grad_it;
   }

@@ -43,11 +43,9 @@ fetch::math::meta::IfIsNonFixedPointArithmetic<T, Ptr<String>> ToString(VM *vm, 
     Ptr<String> ret(new String(vm, static_cast<bool>(a) ? "true" : "false"));
     return ret;
   }
-  else
-  {
-    Ptr<String> ret(new String(vm, std::to_string(a)));
-    return ret;
-  }
+
+  Ptr<String> ret(new String(vm, std::to_string(a)));
+  return ret;
 }
 
 template <typename T>
