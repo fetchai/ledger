@@ -528,6 +528,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                   const std::vector<std::vector<FaultySetupService::Failures>> &failures    = {},
                   uint16_t                                                      setup_delay = 0)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
   std::set<MuddleAddress>                                             cabinet;
   std::vector<std::unique_ptr<DkgMember>>                             committee;
   std::set<RBC::MuddleAddress>                                        expected_qual;
