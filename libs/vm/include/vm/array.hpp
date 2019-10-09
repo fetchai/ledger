@@ -278,17 +278,17 @@ private:
   {
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
     {
-      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetTypeName(element_type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }
 
-    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    buffer << GetTypeName() << static_cast<uint64_t>(elements.size());
     for (Ptr<Object> const &v : data)
     {
       if (!v)
       {
-        RuntimeError("Cannot serialise null reference element in " + GetUniqueId());
+        RuntimeError("Cannot serialise null reference element in " + GetTypeName());
         return false;
       }
 
@@ -305,7 +305,7 @@ private:
   std::enable_if_t<IsPrimitive<G>::value, bool> ApplySerialize(MsgPackSerializer &   buffer,
                                                                std::vector<G> const &data)
   {
-    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    buffer << GetTypeName() << static_cast<uint64_t>(elements.size());
     for (G const &v : data)
     {
       buffer << v;
@@ -316,13 +316,13 @@ private:
   bool ApplyDeserialize(MsgPackSerializer &buffer, std::vector<Ptr<Object>> &data)
   {
     uint64_t    size;
-    std::string uid;
-    buffer >> uid >> size;
+    std::string type_name;
+    buffer >> type_name >> size;
 
-    if (uid != GetUniqueId())
+    if (type_name != GetTypeName())
     {
-      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
-                        GetUniqueId());
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + type_name + " but expected " +
+                        GetTypeName());
       return false;
     }
 
@@ -330,7 +330,7 @@ private:
 
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
     {
-      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetTypeName(element_type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }
@@ -352,12 +352,12 @@ private:
                                                                  std::vector<G> &   data)
   {
     uint64_t    size;
-    std::string uid;
-    buffer >> uid >> size;
-    if (uid != GetUniqueId())
+    std::string type_name;
+    buffer >> type_name >> size;
+    if (type_name != GetTypeName())
     {
-      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
-                        GetUniqueId());
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + type_name + " but expected " +
+                        GetTypeName());
       return false;
     }
 
