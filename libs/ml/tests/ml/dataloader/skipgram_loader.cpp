@@ -54,7 +54,6 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
 {
   using TensorType = TypeParam;
   using SizeType   = typename TensorType::SizeType;
-  using DataType   = typename TensorType::Type;
 
   TrainingParams<TensorType> tp;
   tp.max_word_count = 9;
@@ -115,7 +114,6 @@ TYPED_TEST(SkipGramDataloaderTest, test_save_load_vocab)
 {
   using TensorType = TypeParam;
   using SizeType   = typename TensorType::SizeType;
-  using DataType   = typename TensorType::Type;
 
   TrainingParams<TensorType> tp;
   tp.max_word_count      = 100;
