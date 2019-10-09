@@ -204,8 +204,8 @@ struct Map : public IMap
     buffer >> type_name >> size;
     if (type_name != GetTypeName())
     {
-      vm_->RuntimeError("Type mismatch during deserialization. Got " + type_name + " but expected " +
-                        GetTypeName());
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + type_name +
+                        " but expected " + GetTypeName());
       return false;
     }
 
@@ -255,7 +255,8 @@ private:
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPtr<U>::value, bool> DeserializeElement(TypeId type_id, MsgPackSerializer &buffer,
+  std::enable_if_t<IsPtr<U>::value, bool> DeserializeElement(TypeId                 type_id,
+                                                             MsgPackSerializer &    buffer,
                                                              TemplateParameterType &v)
   {
     if (!vm_->IsDefaultSerializeConstructable(type_id))

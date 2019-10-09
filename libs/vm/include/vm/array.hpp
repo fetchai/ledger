@@ -321,8 +321,8 @@ private:
 
     if (type_name != GetTypeName())
     {
-      vm_->RuntimeError("Type mismatch during deserialization. Got " + type_name + " but expected " +
-                        GetTypeName());
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + type_name +
+                        " but expected " + GetTypeName());
       return false;
     }
 
@@ -356,8 +356,8 @@ private:
     buffer >> type_name >> size;
     if (type_name != GetTypeName())
     {
-      vm_->RuntimeError("Type mismatch during deserialization. Got " + type_name + " but expected " +
-                        GetTypeName());
+      vm_->RuntimeError("Type mismatch during deserialization. Got " + type_name +
+                        " but expected " + GetTypeName());
       return false;
     }
 
