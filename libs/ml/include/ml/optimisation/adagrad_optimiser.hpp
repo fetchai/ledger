@@ -57,6 +57,11 @@ public:
 
   ~AdaGradOptimiser() override = default;
 
+  OptimiserType OptimiserCode() override
+  {
+    return OptimiserType::ADAGRAD;
+  }
+
 private:
   std::vector<TensorType> cache_;
   DataType                epsilon_;
@@ -130,7 +135,6 @@ void AdaGradOptimiser<T>::ApplyGradients(SizeType batch_size)
 
   // calling apply gradients on the graph ensures that the node caches are reset properly
   this->graph_->ApplyGradients(this->gradients_);
-
 }
 
 template <class T>

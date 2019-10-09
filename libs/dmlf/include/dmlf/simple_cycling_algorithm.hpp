@@ -17,40 +17,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
+#include <memory>
 
-#include "ledger/chain/mutable_transaction.hpp"
+#include "dmlf/shuffle_algorithm_interface.hpp"
 
 namespace fetch {
-namespace miner {
+namespace dmlf {
 
-class TransactionItem
+class SimpleCyclingAlgorithm : public ShuffleAlgorithmInterface
 {
 public:
-  // Construction / Destruction
-  TransactionItem(ledger::TransactionSummary tx, std::size_t id)
-    : summary_(std::move(tx))
-    , id_(id)
-  {}
-  ~TransactionItem() = default;
+  SimpleCyclingAlgorithm(std::size_t count, std::size_t number_of_outputs_per_cycle);
+  ~SimpleCyclingAlgorithm() override = default;
 
-  ledger::TransactionSummary const &summary() const
-  {
-    return summary_;
-  }
+  std::vector<std::size_t> GetNextOutputs() override;
 
-  std::size_t id() const
-  {
-    return id_;
-  }
+  SimpleCyclingAlgorithm(SimpleCyclingAlgorithm const &other) = delete;
+  SimpleCyclingAlgorithm &operator=(SimpleCyclingAlgorithm const &other)  = delete;
+  bool                    operator==(SimpleCyclingAlgorithm const &other) = delete;
+  bool                    operator<(SimpleCyclingAlgorithm const &other)  = delete;
 
-  // debug only
-  std::unordered_set<std::size_t> lanes;
-
+protected:
 private:
-  ledger::TransactionSummary summary_;
-  std::size_t                id_;
+  std::size_t next_output_index_;
+  std::size_t number_of_outputs_per_cycle_;
 };
 
-}  // namespace miner
+}  // namespace dmlf
 }  // namespace fetch

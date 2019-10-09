@@ -36,7 +36,7 @@ void DeadlineTimer::Restart(uint64_t period_ms)
 
 bool DeadlineTimer::HasExpired() const
 {
-  return deadline_ <= clock_->Now();
+  return deadline_ <= clock_->NowChrono();
 }
 
 }  // namespace moment

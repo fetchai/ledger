@@ -61,6 +61,11 @@ public:
 
   void ApplyGradients(SizeType batch_size) override;
 
+  OptimiserType OptimiserCode() override
+  {
+    return OptimiserType::ADAM;
+  }
+
 private:
   std::vector<TensorType> cache_;
   std::vector<TensorType> momentum_;

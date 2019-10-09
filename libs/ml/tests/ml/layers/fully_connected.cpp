@@ -141,11 +141,11 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   std::vector<TypeParam> backprop_error =
       fc.Backward({std::make_shared<TypeParam>(input_data)}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].shape()[0], 5);
-  ASSERT_EQ(backprop_error[0].shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].shape()[2], 2);
-  // No way to test actual values for now as weights are randomly initialised.
+  auto err_signal = (*(backprop_error.begin()));
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], 5);
+  ASSERT_EQ(err_signal.shape()[1], 10);
+  ASSERT_EQ(err_signal.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the class as an Ops
@@ -169,11 +169,11 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the c
   std::vector<TypeParam> backprop_error =
       fc.Backward({std::make_shared<TypeParam>(input_data)}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].shape()[0], 50);
-  ASSERT_EQ(backprop_error[0].shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].shape()[2], 2);
-  // No way to test actual values for now as weights are randomly initialised.
+  auto err_signal = (*(backprop_error.begin()));
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], 50);
+  ASSERT_EQ(err_signal.shape()[1], 10);
+  ASSERT_EQ(err_signal.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
@@ -252,17 +252,23 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
         (g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2]) -
         (g_not_shared_weights_before[i] + g_not_shared_weights_before[i + 2]);
 
-    std::cout << "g_shared_weights_before[i].ToString(): " << g_shared_weights_before[i].ToString() << std::endl;
-    std::cout << "g_shared_weights_after[i].ToString(): " << g_shared_weights_after[i].ToString() << std::endl;
-    
-    std::cout << "g_not_shared_weights_after[i]: " << g_not_shared_weights_after[i].ToString() << std::endl;
-    std::cout << "g_not_shared_weights_after[i + 2]: " << g_not_shared_weights_after[i + 2].ToString() << std::endl;
-    std::cout << "g_not_shared_weights_before[i]: " << g_not_shared_weights_before[i].ToString() << std::endl;
-    std::cout << "g_not_shared_weights_before[i + 2]: " << g_not_shared_weights_before[i + 2].ToString() << std::endl;
-    
+    std::cout << "g_shared_weights_before[i].ToString(): " << g_shared_weights_before[i].ToString()
+              << std::endl;
+    std::cout << "g_shared_weights_after[i].ToString(): " << g_shared_weights_after[i].ToString()
+              << std::endl;
+
+    std::cout << "g_not_shared_weights_after[i]: " << g_not_shared_weights_after[i].ToString()
+              << std::endl;
+    std::cout << "g_not_shared_weights_after[i + 2]: "
+              << g_not_shared_weights_after[i + 2].ToString() << std::endl;
+    std::cout << "g_not_shared_weights_before[i]: " << g_not_shared_weights_before[i].ToString()
+              << std::endl;
+    std::cout << "g_not_shared_weights_before[i + 2]: "
+              << g_not_shared_weights_before[i + 2].ToString() << std::endl;
+
     std::cout << "shared_gradient.ToString(): " << shared_gradient.ToString() << std::endl;
     std::cout << "not_shared_gradient.ToString(): " << not_shared_gradient.ToString() << std::endl;
-    
+
     EXPECT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,
         static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
@@ -382,8 +388,8 @@ TYPED_TEST(FullyConnectedTest, share_weight_cache_clearining_check)
   using PlaceHolderType = fetch::ml::ops::PlaceHolder<TensorType>;
   using MSEType         = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
 
-  // graph with two shared fully connected layers. We only backprop through one and check the other updates
-  // Input -> FC_1        -> LossOp
+  // graph with two shared fully connected layers. We only backprop through one and check the other
+  // updates Input -> FC_1        -> LossOp
   //       -> FC_1_Shared
 
   auto        g          = std::make_shared<GraphType>();
@@ -428,8 +434,10 @@ TYPED_TEST(FullyConnectedTest, share_weight_cache_clearining_check)
   auto g_shared_weights_after = g->GetWeights();
 
   // check weights and biases are the same
-  EXPECT_TRUE(g_shared_weights_after.at(0).AllClose(g_shared_weights_after.at(2), static_cast<DataType>(0), static_cast<DataType>(0)));
-  EXPECT_TRUE(g_shared_weights_after.at(1).AllClose(g_shared_weights_after.at(3), static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(g_shared_weights_after.at(0).AllClose(
+      g_shared_weights_after.at(2), static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(g_shared_weights_after.at(1).AllClose(
+      g_shared_weights_after.at(3), static_cast<DataType>(0), static_cast<DataType>(0)));
 
   // check layer predictions are the same
   EXPECT_FALSE(
@@ -491,10 +499,11 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   auto      backprop_error = fc.BackPropagate(error_signal);
 
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].second.shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].second.shape()[0], 5);
-  ASSERT_EQ(backprop_error[0].second.shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].second.shape()[2], 2);
+  auto err_sig = (*(backprop_error.begin())).second.at(0);
+  ASSERT_EQ(err_sig.shape().size(), 3);
+  ASSERT_EQ(err_sig.shape()[0], 5);
+  ASSERT_EQ(err_sig.shape()[1], 10);
+  ASSERT_EQ(err_sig.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node

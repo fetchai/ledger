@@ -55,6 +55,11 @@ public:
 
   ~RMSPropOptimiser() override = default;
 
+  OptimiserType OptimiserCode() override
+  {
+    return OptimiserType::RMSPROP;
+  }
+
 private:
   std::vector<TensorType> cache_;
   DataType                decay_rate_;
