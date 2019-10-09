@@ -38,7 +38,6 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -91,7 +90,6 @@ private:
   using ExecutionItemList = std::vector<ExecutionItemPtr>;
   using ExecutionPlan     = std::vector<ExecutionItemList>;
   using ThreadPool        = fetch::network::ThreadPool;
-  using Mutex             = std::mutex;
   using Counter           = std::atomic<std::size_t>;
   using Flag              = std::atomic<bool>;
   using StateHash         = StorageUnitInterface::Hash;
