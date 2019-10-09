@@ -648,6 +648,11 @@ bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
                            MessagePayload const &            message,
                            byte_array::ConstByteArray const &signature)
 {
+  if (group_public_key.empty() || message.empty() || signature.empty())
+  {
+    return false;
+  }
+
   PublicKey tmp;
   tmp.setStr(std::string(group_public_key));
 
