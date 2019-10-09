@@ -28,27 +28,35 @@ namespace beacon {
 
 struct BlockEntropy : public BlockEntropyInterface
 {
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using GroupPublicKey    = std::string;
-  using MemberPublicKey   = byte_array::ConstByteArray;
-  using MemberSignature   = byte_array::ConstByteArray;
-  using Confirmations     = std::map<MemberPublicKey, MemberSignature>;
-  using GroupSignature    = dkg::BeaconManager::Signature;
-  using GroupSignatureStr = std::string;
-  using Cabinet           = std::set<MuddleAddress>;
+  using MuddleAddress   = byte_array::ConstByteArray;
+  using GroupPublicKey  = byte_array::ConstByteArray;
+  using MemberPublicKey = byte_array::ConstByteArray;
+  using MemberSignature = byte_array::ConstByteArray;
+  using Confirmations   = std::map<MemberPublicKey, MemberSignature>;
+  using GroupSignature  = byte_array::ConstByteArray;
+  using Cabinet         = std::set<MuddleAddress>;
 
   BlockEntropy();
+  BlockEntropy(BlockEntropy const &rhs);
 
-  Cabinet qualified;  // The members who succeeded DKG and are qualified to produce blocks (when new
-                      // committee)
-  GroupPublicKey group_public_key;  // The group public key (when new committee)
-  uint64_t       block_number = 0;  // The block this is relevant to
-  Digest digest;  // The hash of the above (when new committee) note, this could be implicit. Is not
-                  // serialized.
+  // The members who succeeded DKG and are qualified to produce blocks (when new committee)
+  Cabinet qualified;
 
-  Confirmations confirmations;  // In the case of a new cabinet, personal signatures of the hash
-                                // from qual members
-  GroupSignatureStr group_signature;  // Signature of the previous entropy, used as the entropy
+  // The group public key (when new committee)
+  GroupPublicKey group_public_key;
+
+  // The block this is relevant to
+  uint64_t block_number = 0;
+  // The hash of the above (when new committee) note, this could be implicit. Is not
+  // serialized.
+  Digest digest;
+
+  // In the case of a new cabinet, personal signatures of the hash
+  // from qual members
+  Confirmations confirmations;
+
+  // Signature of the previous entropy, used as the entropy
+  GroupSignature group_signature{};
 
   Digest EntropyAsSHA256() const override;
 
@@ -84,8 +92,6 @@ public:
     map.Append(GROUP_PUBLIC_KEY, member.group_public_key);
     map.Append(BLOCK_NUMBER, member.block_number);
     map.Append(CONFIRMATIONS, member.confirmations);
-
-    // std::string set = member.group_signature/*.getStr()*/;
     map.Append(GROUP_SIGNATURE, member.group_signature);
   }
 
@@ -96,10 +102,7 @@ public:
     map.ExpectKeyGetValue(GROUP_PUBLIC_KEY, member.group_public_key);
     map.ExpectKeyGetValue(BLOCK_NUMBER, member.block_number);
     map.ExpectKeyGetValue(CONFIRMATIONS, member.confirmations);
-
-    // std::string get;
     map.ExpectKeyGetValue(GROUP_SIGNATURE, member.group_signature);
-    // member.group_signature/*.setStr(get)*/;
   }
 };
 }  // namespace serializers
