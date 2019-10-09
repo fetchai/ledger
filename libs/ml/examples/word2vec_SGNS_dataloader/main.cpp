@@ -207,7 +207,7 @@ int main(int argc, char **argv)
     for (SizeType j{0}; j < tp.graph_saves_per_epoch - 1; j++)
     {
       optimiser.Run(data_loader, tp.batch_size, samples_per_graph_save);
-      SaveModel(*g, save_file + std::to_string(i) + "_" + std::to_string(j));
+      fetch::ml::utilities::SaveGraph(*g, save_file + std::to_string(i) + "_" + std::to_string(j));
     }
 
     // final run with remainder of samples
