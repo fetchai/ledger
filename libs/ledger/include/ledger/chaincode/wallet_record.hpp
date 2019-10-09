@@ -183,7 +183,6 @@ namespace serializers {
 template <typename D>
 struct ArraySerializer<ledger::WalletRecord, D>
 {
-
 public:
   // TODO(issue 1426): Change this serializer to map
   using Type       = ledger::WalletRecord;

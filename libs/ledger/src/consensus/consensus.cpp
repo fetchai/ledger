@@ -16,14 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/block_entropy.hpp"
 #include "core/random/lcg.hpp"
+#include "ledger/consensus/consensus.hpp"
 
 #include <ctime>
 #include <random>
 #include <utility>
 
-#include "beacon/block_entropy.hpp"
-#include "ledger/consensus/consensus.hpp"
+namespace {
 
 /**
  * Consensus enforcement class.
@@ -68,7 +69,6 @@ using fetch::ledger::MainChain;
 using fetch::ledger::Block;
 using fetch::beacon::BlockEntropy;
 
-namespace {
 using DRNG = fetch::random::LinearCongruentialGenerator;
 
 std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
@@ -88,6 +88,7 @@ T DeterministicShuffle(T &container, uint64_t entropy)
   std::shuffle(container.begin(), container.end(), rng);
   return container;
 }
+
 }  // namespace
 
 Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
