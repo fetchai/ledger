@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/model/sequential_model.hpp"
+#include "ml/model/model.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
 

@@ -16,18 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/decoders.hpp"
-#include "ml/core/graph.hpp"
-#include "ml/layers/convolution_1d.hpp"
+//#include "core/byte_array/decoders.hpp"
+//#include "ml/core/graph.hpp"
+//#include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activation.hpp"
+//#include "ml/ops/activation.hpp"
+#include "ml/ops/loss_functions/types.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "ml/saveparams/saveable_params.hpp"
-#include "ml/utilities/graph_builder.hpp"
+//#include "ml/saveparams/saveable_params.hpp"
+//#include "ml/utilities/graph_builder.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/math/tensor.hpp"
-#include "vm_modules/ml/graph.hpp"
+//#include "vm_modules/math/tensor.hpp"
+//#include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 
 using namespace fetch::vm;
@@ -43,102 +44,72 @@ using VMPtrString    = Ptr<String>;
 
 VMSequentialModel::VMSequentialModel(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-{}
+{
+  fetch::ml::model::ModelConfig config{};
+  model_ = fetch::ml::model::Model(config);
+}
 
 Ptr<VMSequentialModel> VMSequentialModel::Constructor(VM *vm, TypeId type_id)
 {
   return Ptr<VMSequentialModel>{new VMSequentialModel(vm, type_id)};
 }
 
-void VMSequentialModel::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
+void Add(fetch::vm::Ptr<fetch::vm::String> const &layer, fetch::vm::Ptr<fetch::vm::String> const &hidden_nodes)
 {
-  graph_.SetInput(name->str, (*input).GetTensor());
-}
-
-Ptr<VMTensorType> VMSequentialModel::Evaluate(VMPtrString const &name)
-{
-  MathTensorType    t   = graph_.Evaluate(name->str, false);
-  Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
-  (*ret).Copy(t);
-  return ret;
-}
-
-void VMSequentialModel::BackPropagate(VMPtrString const &name)
-{
-  graph_.BackPropagate(name->str);
-}
-
-void VMSequentialModel::Step(DataType const &lr)
-{
-  auto grads = graph_.GetGradients();
-  for (auto &grad : grads)
+  // dense / fully connected layer
+  if (layer == "Dense")
   {
-    grad *= static_cast<DataType>(-lr);
+    model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(hidden_nodes, fetch::ml::details::ActivationType::RELU);
   }
-  graph_.ApplyGradients(grads);
+  else
+  {
+    throw runtime_error("attempted to add unknown layer type to sequential model");
+  }
 }
 
-void VMSequentialModel::AddPlaceholder(VMPtrString const &name)
+void Compile(fetch::vm::Ptr<fetch::vm::String> const &loss, fetch::vm::Ptr<fetch::vm::String> const &optimiser)
 {
-  graph_.AddNode<fetch::ml::ops::PlaceHolder<MathTensorType>>(name->str, {});
+  fetch::ml::ops::LossType loss_type;
+  fetch::ml::OptimiserType optimiser_type;
+
+  if (loss == "MSE")
+  {
+    loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
+  }
+  else
+  {
+    throw runtime_error("invalid loss function");
+  }
+
+  // dense / fully connected layer
+  if (optimiser == "ADAM")
+  {
+    optimiser_type = fetch::ml::OptimiserType::ADAM;
+  }
+  else
+  {
+    throw runtime_error("invalid loss function");
+  }
+
+  model_.compile(optimiser_type, loss_type);
 }
 
-void VMSequentialModel::AddFullyConnected(VMPtrString const &name, VMPtrString const &input_name, int in,
-                                int out)
+void Fit(fetch::vm::Ptr<VMTensor> const &data, fetch::vm::Ptr<VMTensor> const &labels, fetch::math::SizeType batch_size)
 {
-  graph_.AddNode<fetch::ml::layers::FullyConnected<MathTensorType>>(
-      name->str, {input_name->str}, std::size_t(in), std::size_t(out));
+  // prepare dataloader
+  dl_ = TensorDataLoader(data.GetTensor(), labels.GetTensor());
+  model_.SetDataLoader(dl);
+
+  // set batch size
+  model_config_.batch_size = batch_size;
+
+  // train for one epoch
+  model_.Train();
 }
 
-void VMSequentialModel::AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int filters,
-                        int in_channels, int kernel_size, int stride_size)
+void Evaluate()
 {
-  graph_.AddNode<fetch::ml::layers::Convolution1D<MathTensorType>>(
-      name->str, {input_name->str}, static_cast<SizeType>(filters),
-      static_cast<SizeType>(in_channels), static_cast<SizeType>(kernel_size),
-      static_cast<SizeType>(stride_size));
-}
-
-void VMSequentialModel::AddRelu(VMPtrString const &name, VMPtrString const &input_name)
-{
-  graph_.AddNode<fetch::ml::ops::Relu<MathTensorType>>(name->str, {input_name->str});
-}
-
-void VMSequentialModel::AddSoftmax(VMPtrString const &name, VMPtrString const &input_name)
-{
-  graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<DataType>>>(name->str,
-                                                                         {input_name->str});
-}
-
-void VMSequentialModel::AddCrossEntropyLoss(VMPtrString const &name, VMPtrString const &input_name,
-                                  VMPtrString const &label_name)
-{
-  graph_.AddNode<fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<DataType>>>(
-      name->str, {input_name->str, label_name->str});
-}
-
-void VMSequentialModel::AddMeanSquareErrorLoss(VMPtrString const &name, VMPtrString const &input_name,
-                                     VMPtrString const &label_name)
-{
-  graph_.AddNode<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<DataType>>>(
-      name->str, {input_name->str, label_name->str});
-}
-
-void VMSequentialModel::AddDropout(VMPtrString const &name, VMPtrString const &input_name,
-                         DataType const &prob)
-{
-  graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
-}
-
-void VMSequentialModel::LoadStateDict(Ptr<VMStateDict> const &sd)
-{
-  graph_.LoadStateDict(sd->state_dict_);
-}
-
-Ptr<VMStateDict> VMSequentialModel::StateDict()
-{
-  Ptr<VMStateDict> ret = this->vm_->CreateNewObject<VMStateDict>(graph_.StateDict());
-  return ret;
+  model_.Evaluate();
 }
 
 void VMSequentialModel::Bind(Module &module)
@@ -148,71 +119,12 @@ void VMSequentialModel::Bind(Module &module)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMSequentialModel> {
         return Ptr<VMSequentialModel>{new VMSequentialModel(vm, type_id)};
       })
-      .CreateMemberFunction("setInput", &VMSequentialModel::SetInput)
-      .CreateMemberFunction("evaluate", &VMSequentialModel::Evaluate)
-      .CreateMemberFunction("backPropagate", &VMSequentialModel::BackPropagate)
-      .CreateMemberFunction("step", &VMSequentialModel::Step)
-      .CreateMemberFunction("addPlaceholder", &VMSequentialModel::AddPlaceholder)
-      .CreateMemberFunction("addFullyConnected", &VMSequentialModel::AddFullyConnected)
-      .CreateMemberFunction("addConv1D", &VMSequentialModel::AddConv1D)
-      .CreateMemberFunction("addRelu", &VMSequentialModel::AddRelu)
-      .CreateMemberFunction("addSoftmax", &VMSequentialModel::AddSoftmax)
-      .CreateMemberFunction("addDropout", &VMSequentialModel::AddDropout)
-      .CreateMemberFunction("addCrossEntropyLoss", &VMSequentialModel::AddCrossEntropyLoss)
-      .CreateMemberFunction("addMeanSquareErrorLoss", &VMSequentialModel::AddMeanSquareErrorLoss)
-      .CreateMemberFunction("loadStateDict", &VMSequentialModel::LoadStateDict)
-      .CreateMemberFunction("stateDict", &VMSequentialModel::StateDict)
-      .CreateMemberFunction("serializeToString", &VMSequentialModel::SerializeToString)
-      .CreateMemberFunction("deserializeFromString", &VMSequentialModel::DeserializeFromString);
+      .CreateMemberFunction("add", &VMSequentialModel::Add)
+      .CreateMemberFunction("compile", &VMSequentialModel::Compile)
+      .CreateMemberFunction("fit", &VMSequentialModel::Fit)
+      .CreateMemberFunction("evaluate", &VMSequentialModel::Evaluate);
 }
 
-VMSequentialModel::GraphType &VMSequentialModel::GetGraph()
-{
-  return graph_;
-}
-
-bool VMSequentialModel::SerializeTo(serializers::MsgPackSerializer &buffer)
-{
-  buffer << graph_.GetGraphSaveableParams();
-  return true;
-}
-
-bool VMSequentialModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
-{
-  fetch::ml::GraphSaveableParams<fetch::math::Tensor<fetch::vm_modules::math::DataType>> gsp;
-  buffer >> gsp;
-
-  auto vm_graph  = std::make_shared<fetch::vm_modules::ml::VMSequentialModel>(this->vm_, this->type_id_);
-  auto graph_ptr = std::make_shared<fetch::ml::Graph<MathTensorType>>(vm_graph->GetGraph());
-  fetch::ml::utilities::BuildGraph<MathTensorType>(gsp, graph_ptr);
-
-  vm_graph->GetGraph() = *graph_ptr;
-  *this                = *vm_graph;
-
-  return true;
-}
-
-fetch::vm::Ptr<fetch::vm::String> VMSequentialModel::SerializeToString()
-{
-  serializers::MsgPackSerializer b;
-  SerializeTo(b);
-  auto byte_array_data = b.data().ToBase64();
-  return Ptr<String>{new fetch::vm::String(vm_, static_cast<std::string>(byte_array_data))};
-}
-
-fetch::vm::Ptr<VMSequentialModel> VMSequentialModel::DeserializeFromString(
-    fetch::vm::Ptr<fetch::vm::String> const &graph_string)
-{
-  byte_array::ConstByteArray b(graph_string->str);
-  b = byte_array::FromBase64(b);
-  MsgPackSerializer buffer(b);
-  DeserializeFrom(buffer);
-
-  auto vm_graph        = fetch::vm::Ptr<VMSequentialModel>(new VMSequentialModel(vm_, type_id_));
-  vm_graph->GetGraph() = graph_;
-
-  return vm_graph;
-}
 }  // namespace ml
 }  // namespace vm_modules
 }  // namespace fetch
