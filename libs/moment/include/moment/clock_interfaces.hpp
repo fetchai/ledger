@@ -30,8 +30,12 @@ class ClockInterface
 {
 public:
   using ChronoClock = std::chrono::steady_clock;
-  using Timestamp   = ChronoClock::time_point;
-  using Duration    = ChronoClock::duration;
+  using SystemClock = std::chrono::system_clock;
+
+  using TimestampChrono = ChronoClock::time_point;
+  using TimestampSystem = SystemClock::time_point;
+
+  using Duration = ChronoClock::duration;
 
   // Construction / Destruction
   ClockInterface()          = default;
@@ -45,8 +49,8 @@ public:
    *
    * @return The current timestamp
    */
-  virtual Timestamp Now() const = 0;
-
+  virtual TimestampChrono NowChrono() const = 0;
+  virtual TimestampSystem NowSystem() const = 0;
   /// @}
 };
 

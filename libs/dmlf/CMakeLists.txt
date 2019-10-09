@@ -16,16 +16,13 @@ setup_compiler()
 
 setup_library(fetch-dmlf)
 target_link_libraries(fetch-dmlf
-                      INTERFACE fetch-core
-                                fetch-ml
-                                fetch-network
-                                fetch-muddle
-                                fetch-crypto
-                                fetch-math
-                                fetch-vm
-                                fetch-vm-modules
-                                pthread)
+                      PUBLIC fetch-core
+                             fetch-network
+                             fetch-muddle
+                             fetch-crypto
+                             fetch-math
+                             fetch-vm
+                             fetch-vm-modules)
 
-# Test targets add_test_target()
-
-# Example targets add_subdirectory(examples)
+# Test targets
+add_test_target()
