@@ -29,13 +29,9 @@ namespace moment {
 class ClockInterface
 {
 public:
-  using ChronoClock = std::chrono::steady_clock;
   using SystemClock = std::chrono::system_clock;
-
-  using TimestampChrono = ChronoClock::time_point;
-  using TimestampSystem = SystemClock::time_point;
-
-  using Duration = ChronoClock::duration;
+  using Timestamp   = SystemClock::time_point;
+  using Duration    = SystemClock::duration;
 
   // Construction / Destruction
   ClockInterface()          = default;
@@ -49,8 +45,8 @@ public:
    *
    * @return The current timestamp
    */
-  virtual TimestampChrono NowChrono() const = 0;
-  virtual TimestampSystem NowSystem() const = 0;
+  virtual Timestamp Now() const = 0;
+
   /// @}
 };
 
