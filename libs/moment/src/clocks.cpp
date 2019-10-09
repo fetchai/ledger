@@ -47,7 +47,7 @@ ClockPtr CreateNormal(ClockType type)
 
   switch (type)
   {
-  case ClockType::STEADY:
+  case ClockType::SYSTEM:
     clock = std::make_shared<detail::SteadyClock>();
     break;
   }
@@ -67,7 +67,7 @@ AdjustableClockPtr CreateAdjustable(ClockType type)
 
   switch (type)
   {
-  case ClockType::STEADY:
+  case ClockType::SYSTEM:
     clock = std::make_shared<detail::AdjustableClock<detail::SteadyClock>>();
     break;
   }
@@ -136,8 +136,7 @@ AdjustableClockPtr CreateAdjustableClock(char const *name, ClockType type)
 uint64_t GetTime(moment::ClockPtr const &clock)
 {
   return static_cast<uint64_t>(
-      std::chrono::duration_cast<std::chrono::seconds>(clock->NowSystem().time_since_epoch())
-          .count());
+      std::chrono::duration_cast<std::chrono::seconds>(clock->Now().time_since_epoch()).count());
 }
 
 }  // namespace moment
