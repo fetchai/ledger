@@ -4,11 +4,11 @@ MACOS_NODE_LABEL = 'mac-mini'
 
 enum Platform
 {
-  DEFAULT_CLANG('Clang',      'clang',     'clang++',    ''),
+  DEFAULT_CLANG('Clang',      'clang',     'clang++',     ''),
   CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:d643eb6'),
-  CLANG7       ('Clang 7',    'clang-7',   'clang++-7', ''),
-  GCC7         ('GCC 7',      'gcc-7',     'g++-7', ''      ),
-  GCC8         ('GCC 8',      'gcc-8',     'g++-8',  ''      )
+  CLANG7       ('Clang 7',    'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:561927b'),
+  GCC7         ('GCC 7',      'gcc-7',     'g++-7',       ''),
+  GCC8         ('GCC 8',      'gcc-8',     'g++-8',       '')
 
   public Platform(label, cc, cxx, image)
   {
@@ -26,12 +26,14 @@ enum Platform
 
 LINUX_PLATFORMS_CORE = [
   Platform.CLANG6
-//   ,  Platform.GCC7
+   //,  Platform.GCC7
   ]
 
 LINUX_PLATFORMS_AUX = [
-  Platform.CLANG7,
-  Platform.GCC8]
+  Platform.CLANG7
+  //,
+  //Platform.GCC8
+  ]
 
 enum Configuration
 {
@@ -213,16 +215,16 @@ def run_builds_in_parallel()
 //     }
   }
 
-//   for (config in (run_full_build() ? Configuration.values() : [Configuration.RELEASE]))
-//   {
-//     for (platform in LINUX_PLATFORMS_AUX)
-//     {
-//       stages["${platform.label} ${config.label}"] = create_docker_build(
-//         platform,
-//         config,
-//         run_full_build() ? full_run : fast_run)
-//     }
-//   }
+  for (config in (run_full_build() ? Configuration.values() : [Configuration.RELEASE]))
+  {
+    for (platform in LINUX_PLATFORMS_AUX)
+    {
+      stages["${platform.label} ${config.label}"] = create_docker_build(
+        platform,
+        config,
+        run_full_build() ? full_run : fast_run)
+    }
+  }
 
 //   if (run_full_build())
 //   {
