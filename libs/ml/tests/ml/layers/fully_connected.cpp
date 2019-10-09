@@ -252,26 +252,9 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
         (g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2]) -
         (g_not_shared_weights_before[i] + g_not_shared_weights_before[i + 2]);
 
-    std::cout << "g_shared_weights_before[i].ToString(): " << g_shared_weights_before[i].ToString()
-              << std::endl;
-    std::cout << "g_shared_weights_after[i].ToString(): " << g_shared_weights_after[i].ToString()
-              << std::endl;
-
-    std::cout << "g_not_shared_weights_after[i]: " << g_not_shared_weights_after[i].ToString()
-              << std::endl;
-    std::cout << "g_not_shared_weights_after[i + 2]: "
-              << g_not_shared_weights_after[i + 2].ToString() << std::endl;
-    std::cout << "g_not_shared_weights_before[i]: " << g_not_shared_weights_before[i].ToString()
-              << std::endl;
-    std::cout << "g_not_shared_weights_before[i + 2]: "
-              << g_not_shared_weights_before[i + 2].ToString() << std::endl;
-
-    std::cout << "shared_gradient.ToString(): " << shared_gradient.ToString() << std::endl;
-    std::cout << "not_shared_gradient.ToString(): " << not_shared_gradient.ToString() << std::endl;
-
     EXPECT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,
-        static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
+        static_cast<DataType>(10) * fetch::math::function_tolerance<DataType>()));
   }
 }
 
@@ -374,7 +357,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
 
     EXPECT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,
-        static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
+        static_cast<DataType>(10) * fetch::math::function_tolerance<DataType>()));
   }
 }
 
