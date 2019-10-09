@@ -541,7 +541,7 @@ void Graph<TensorType>::SetFrozenState(bool frozen_state)
 }
 
 /**
- * Set variable freezing for specified trainable by its name
+ * Set variable freezing for specified trainable or graph by its name
  * @tparam TensorType
  * @param node_name name of specific trainable
  * @param frozen_state true=freeze variables, false=unfreeze variables
@@ -549,9 +549,24 @@ void Graph<TensorType>::SetFrozenState(bool frozen_state)
 template <typename TensorType>
 bool Graph<TensorType>::SetFrozenState(std::string node_name, bool frozen_state)
 {
-  NodePtrType t             = trainable_lookup_.at(node_name);
-  auto        trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
-  trainable_ptr->SetFrozenState(frozen_state);
+  OpPtrType target_node_op = GetNode(node_name)->GetOp();
+  auto *trainable_ptr = dynamic_cast<fetch::ml::ops::Trainable<TensorType> *>(target_node_op.get());
+  auto *graph_ptr     = dynamic_cast<fetch::ml::Graph<TensorType> *>(target_node_op.get());
+
+  if (trainable_ptr)
+  {
+    // it's definitely a trainable
+    trainable_ptr->SetFrozenState(frozen_state);
+  }
+  else if (graph_ptr)
+  {
+    // it's definitely a graph
+    graph_ptr->SetFrozenState(frozen_state);
+  }
+  else
+  {
+    throw exceptions::InvalidMode("Node is not graph or trainable");
+  }
 
   return true;
 }
