@@ -104,7 +104,7 @@ int main(int argc, char **argv)
   // Distributed learning parameters:
   SizeType number_of_clients   = 5;
   SizeType number_of_rounds    = 1000;
-  coord_params.number_of_peers = 2;
+  coord_params.number_of_peers = 0;
   coord_params.mode            = CoordinatorMode::ASYNCHRONOUS;
   SizeType iterations_count    = 100;  //  Synchronization occurs after this number of batches
   // have been processed in total by the clients
