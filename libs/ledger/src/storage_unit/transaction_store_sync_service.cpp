@@ -26,6 +26,8 @@
 #include <chrono>
 #include <memory>
 
+using namespace std::chrono_literals;
+
 static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State state)
 {
   using State = fetch::ledger::tx_sync::State;
@@ -283,11 +285,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
   {
     if (!promise_wait_timeout_.IsDue())
     {
-      if (!roots_to_sync_.empty())
-      {
-        return State::QUERY_SUBTREE;
-      }
-
+      state_machine_->Delay(10ms);
       return State::RESOLVING_SUBTREE;
     }
     else
@@ -395,6 +393,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   {
     if (!promise_wait_timeout_.IsDue())
     {
+      state_machine_->Delay(10ms);
       return State::RESOLVING_OBJECTS;
     }
     FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
