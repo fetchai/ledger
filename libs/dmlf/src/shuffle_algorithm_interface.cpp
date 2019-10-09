@@ -16,23 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "moment/clocks.hpp"
+#include "dmlf/shuffle_algorithm_interface.hpp"
 
-#include "gtest/gtest.h"
+namespace fetch {
+namespace dmlf {
 
-#include <chrono>
-#include <memory>
+ShuffleAlgorithmInterface::ShuffleAlgorithmInterface(std::size_t count)
+  : count_(count)
+{}
 
-TEST(ClockTests, BasicChecks)
+std::size_t ShuffleAlgorithmInterface::GetCount() const
 {
-  auto test_clock = fetch::moment::CreateAdjustableClock("default");
-  auto prod_clock = fetch::moment::GetClock("default");
-
-  EXPECT_EQ(prod_clock.get(), test_clock.get());
-
-  auto const start = prod_clock->NowChrono();
-  test_clock->Advance(std::chrono::hours{1});
-  auto const delta = prod_clock->NowChrono() - start;
-
-  EXPECT_GE(delta, std::chrono::hours{1});
+  // this impl is simple, but descendent ones may not be.
+  return count_;
 }
+
+}  // namespace dmlf
+}  // namespace fetch

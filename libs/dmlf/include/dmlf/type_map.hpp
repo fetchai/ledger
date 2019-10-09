@@ -17,42 +17,49 @@
 //
 //------------------------------------------------------------------------------
 
-#include "moment/clock_interfaces.hpp"
-
-#include <chrono>
+#include <atomic>
+#include <exception>
 #include <iostream>
+#include <typeindex>
+#include <typeinfo>
+#include <unordered_map>
 
 namespace fetch {
-namespace moment {
-namespace detail {
+namespace dmlf {
 
-class SteadyClock final : public ClockInterface
+template <typename ValueType = std::string>
+class TypeMap
 {
 public:
-  // Construction / Destruction
-  SteadyClock()                    = default;
-  SteadyClock(SteadyClock const &) = delete;
-  SteadyClock(SteadyClock &&)      = delete;
-  ~SteadyClock() override          = default;
+  using IntToValueMap = std::unordered_map<std::type_index, ValueType>;
 
-  /// @name Clock Interface
-  /// @{
-  TimestampChrono NowChrono() const override
+  template <typename KeyType>
+  ValueType find() const
   {
-    return ChronoClock::now();
+    std::type_index tid{typeid(KeyType)};
+    auto            iter = map_.find(tid);
+    if (iter == map_.end())
+    {
+      throw std::runtime_error{"Type not registered"};
+    }
+    return iter->second;
   }
 
-  TimestampSystem NowSystem() const override
+  template <typename KeyType>
+  void put(ValueType value)
   {
-    return {};
+    std::type_index tid{typeid(KeyType)};
+    auto            iter = map_.find(tid);
+    if (iter != map_.end())
+    {
+      throw std::runtime_error{"Type already registered with name '" + iter->second + "'"};
+    }
+    map_[tid] = value;
   }
-  /// @}
 
-  // Operators
-  SteadyClock &operator=(SteadyClock const &) = delete;
-  SteadyClock &operator=(SteadyClock &&) = delete;
+private:
+  IntToValueMap map_;
 };
 
-}  // namespace detail
-}  // namespace moment
+}  // namespace dmlf
 }  // namespace fetch

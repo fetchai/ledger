@@ -26,9 +26,9 @@
 #include "ledger/chain/transaction_layout.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/dag/dag_epoch.hpp"
+#include "moment/clocks.hpp"
 
 #include <cstdint>
-#include <ctime>
 #include <memory>
 #include <vector>
 
@@ -50,6 +50,8 @@ public:
   using Hash         = Digest;
   using Weight       = uint64_t;
   using BlockEntropy = beacon::BlockEntropy;
+  using Identity     = crypto::Identity;
+  using SystemClock  = moment::ClockPtr;
 
   Block();
 
@@ -62,6 +64,7 @@ public:
     Digest       merkle_hash;        ///< The merkle state hash across all shards
     uint64_t     block_number{0};    ///< The height of the block from genesis
     Address      miner;              ///< The identity of the generated miner
+    Identity     miner_id;           ///< The identity of the generated miner
     uint32_t     log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices       slices;             ///< The slice lists
     DAGEpoch     dag_epoch;          ///< DAG epoch containing information on new dag_nodes
@@ -90,14 +93,13 @@ public:
   /// @{
   Weight total_weight = 1;
   bool   is_loose     = false;
-  /// Seconds since the block was first seen or created. Used to manage block interval
-  uint64_t first_seen_timestamp{0u};
   /// @}
 
   // Helper functions
   std::size_t GetTransactionCount() const;
   void        UpdateDigest();
   void        UpdateTimestamp();
+  SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
 };
 }  // namespace ledger
 
@@ -115,21 +117,23 @@ public:
   static uint8_t const MERKLE_HASH    = 3;
   static uint8_t const BLOCK_NUMBER   = 4;
   static uint8_t const MINER          = 5;
-  static uint8_t const LOG2_NUM_LANES = 6;
-  static uint8_t const SLICES         = 7;
-  static uint8_t const DAG_EPOCH      = 8;
-  static uint8_t const TIMESTAMP      = 9;
-  static uint8_t const ENTROPY        = 10;
+  static uint8_t const MINER_ID       = 6;
+  static uint8_t const LOG2_NUM_LANES = 7;
+  static uint8_t const SLICES         = 8;
+  static uint8_t const DAG_EPOCH      = 9;
+  static uint8_t const TIMESTAMP      = 10;
+  static uint8_t const ENTROPY        = 11;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &body)
   {
-    auto map = map_constructor(10);
+    auto map = map_constructor(11);
     map.Append(HASH, body.hash);
     map.Append(PREVIOUS_HASH, body.previous_hash);
     map.Append(MERKLE_HASH, body.merkle_hash);
     map.Append(BLOCK_NUMBER, body.block_number);
     map.Append(MINER, body.miner);
+    map.Append(MINER_ID, body.miner_id);
     map.Append(LOG2_NUM_LANES, body.log2_num_lanes);
     map.Append(SLICES, body.slices);
     map.Append(DAG_EPOCH, body.dag_epoch);
@@ -145,6 +149,7 @@ public:
     map.ExpectKeyGetValue(MERKLE_HASH, body.merkle_hash);
     map.ExpectKeyGetValue(BLOCK_NUMBER, body.block_number);
     map.ExpectKeyGetValue(MINER, body.miner);
+    map.ExpectKeyGetValue(MINER_ID, body.miner_id);
     map.ExpectKeyGetValue(LOG2_NUM_LANES, body.log2_num_lanes);
     map.ExpectKeyGetValue(SLICES, body.slices);
     map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);

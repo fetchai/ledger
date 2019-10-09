@@ -458,7 +458,8 @@ struct FaultyDkgMember : DkgMember
     beacon->aeon.round_end   = 10;
     beacon->aeon.members     = std::move(cabinet);
     // Plus 5 so tests pass on first DKG attempt
-    beacon->aeon.start_reference_timepoint = static_cast<uint64_t>(std::time(nullptr)) + 5;
+    beacon->aeon.start_reference_timepoint =
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
 
     dkg.QueueSetup(beacon);
   }
@@ -506,7 +507,8 @@ struct HonestDkgMember : DkgMember
     beacon->aeon.round_end   = 10;
     beacon->aeon.members     = std::move(cabinet);
     // Plus 5 so tests pass on first DKG attempt
-    beacon->aeon.start_reference_timepoint = static_cast<uint64_t>(std::time(nullptr)) + 5;
+    beacon->aeon.start_reference_timepoint =
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
 
     dkg.QueueSetup(beacon);
   }

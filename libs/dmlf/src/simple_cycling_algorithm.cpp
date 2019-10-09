@@ -16,23 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "moment/clocks.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 
-#include "gtest/gtest.h"
+namespace fetch {
+namespace dmlf {
 
-#include <chrono>
-#include <memory>
-
-TEST(ClockTests, BasicChecks)
+std::vector<std::size_t> SimpleCyclingAlgorithm::GetNextOutputs()
 {
-  auto test_clock = fetch::moment::CreateAdjustableClock("default");
-  auto prod_clock = fetch::moment::GetClock("default");
-
-  EXPECT_EQ(prod_clock.get(), test_clock.get());
-
-  auto const start = prod_clock->NowChrono();
-  test_clock->Advance(std::chrono::hours{1});
-  auto const delta = prod_clock->NowChrono() - start;
-
-  EXPECT_GE(delta, std::chrono::hours{1});
+  std::vector<std::size_t> result(number_of_outputs_per_cycle_);
+  for (std::size_t i = 0; i < number_of_outputs_per_cycle_; i++)
+  {
+    result[i] = next_output_index_;
+    next_output_index_ += 1;
+    next_output_index_ %= GetCount();
+  }
+  return result;
 }
+
+SimpleCyclingAlgorithm::SimpleCyclingAlgorithm(std::size_t count,
+                                               std::size_t number_of_outputs_per_cycle)
+  : ShuffleAlgorithmInterface(count)
+{
+  next_output_index_           = 0;
+  number_of_outputs_per_cycle_ = std::min(number_of_outputs_per_cycle, GetCount());
+}
+
+}  // namespace dmlf
+}  // namespace fetch

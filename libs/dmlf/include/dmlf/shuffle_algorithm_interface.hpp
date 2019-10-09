@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,23 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "moment/clocks.hpp"
-
-#include "gtest/gtest.h"
-
-#include <chrono>
 #include <memory>
+#include <vector>
 
-TEST(ClockTests, BasicChecks)
+namespace fetch {
+namespace dmlf {
+
+class ShuffleAlgorithmInterface
 {
-  auto test_clock = fetch::moment::CreateAdjustableClock("default");
-  auto prod_clock = fetch::moment::GetClock("default");
+public:
+  explicit ShuffleAlgorithmInterface(std::size_t count);
 
-  EXPECT_EQ(prod_clock.get(), test_clock.get());
+  virtual ~ShuffleAlgorithmInterface() = default;
 
-  auto const start = prod_clock->NowChrono();
-  test_clock->Advance(std::chrono::hours{1});
-  auto const delta = prod_clock->NowChrono() - start;
+  virtual std::vector<std::size_t> GetNextOutputs() = 0;
 
-  EXPECT_GE(delta, std::chrono::hours{1});
-}
+  std::size_t GetCount() const;
+
+  ShuffleAlgorithmInterface(ShuffleAlgorithmInterface const &other) = delete;
+  ShuffleAlgorithmInterface &operator=(ShuffleAlgorithmInterface const &other)  = delete;
+  bool                       operator==(ShuffleAlgorithmInterface const &other) = delete;
+  bool                       operator<(ShuffleAlgorithmInterface const &other)  = delete;
+
+protected:
+private:
+  std::size_t count_;
+};
+
+}  // namespace dmlf
+}  // namespace fetch

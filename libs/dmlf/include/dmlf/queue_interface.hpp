@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,23 +17,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "moment/clocks.hpp"
-
-#include "gtest/gtest.h"
-
-#include <chrono>
 #include <memory>
 
-TEST(ClockTests, BasicChecks)
+#include "core/byte_array/byte_array.hpp"
+
+namespace fetch {
+namespace dmlf {
+
+class QueueInterface
 {
-  auto test_clock = fetch::moment::CreateAdjustableClock("default");
-  auto prod_clock = fetch::moment::GetClock("default");
+public:
+  using Bytes = byte_array::ByteArray;
 
-  EXPECT_EQ(prod_clock.get(), test_clock.get());
+  QueueInterface()          = default;
+  virtual ~QueueInterface() = default;
 
-  auto const start = prod_clock->NowChrono();
-  test_clock->Advance(std::chrono::hours{1});
-  auto const delta = prod_clock->NowChrono() - start;
+  virtual void        PushNewMessage(Bytes msg) = 0;
+  virtual std::size_t size() const              = 0;
 
-  EXPECT_GE(delta, std::chrono::hours{1});
-}
+  QueueInterface(QueueInterface const &other) = delete;
+  QueueInterface &operator=(QueueInterface const &other)  = delete;
+  bool            operator==(QueueInterface const &other) = delete;
+  bool            operator<(QueueInterface const &other)  = delete;
+
+private:
+};
+
+}  // namespace dmlf
+}  // namespace fetch
