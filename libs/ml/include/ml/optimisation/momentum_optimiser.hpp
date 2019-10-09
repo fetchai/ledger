@@ -124,6 +124,10 @@ void MomentumOptimiser<T>::ApplyGradients(SizeType batch_size)
     // output_grad[i]=-momentum[i]
     fetch::math::Multiply(*mit, negative_one_, *gradient_it);
 
+    // we need to explicitly reset the gradients for this shared op to avoid double counting
+    // in the case of shared ops
+    (*trainable_it)->ResetGradients();
+
     ++trainable_it;
     ++gradient_it;
     ++mit;

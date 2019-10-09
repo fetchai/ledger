@@ -102,6 +102,10 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
     fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
                           neg_learning_rate_div_batch_size, *gradient_it);
 
+    // we need to explicitly reset the gradients for this shared op to avoid double counting
+    // in the case of shared ops
+    (*trainable_it)->ResetGradients();
+
     ++trainable_it;
     ++gradient_it;
   }

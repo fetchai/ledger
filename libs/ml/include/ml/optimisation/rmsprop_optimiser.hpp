@@ -138,6 +138,10 @@ void RMSPropOptimiser<T>::ApplyGradients(SizeType batch_size)
     fetch::math::Multiply(
         *gradient_it, (-this->learning_rate_) / (static_cast<DataType>(batch_size)), *gradient_it);
 
+    // we need to explicitly reset the gradients for this shared op to avoid double counting
+    // in the case of shared ops
+    (*trainable_it)->ResetGradients();
+
     ++cached_weight_it;
     ++gradient_it;
     ++trainable_it;
