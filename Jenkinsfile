@@ -35,8 +35,8 @@ LINUX_PLATFORMS_AUX = [
 
 enum Configuration
 {
-  DEBUG  ('Debug')
-//   RELEASE('Release')
+  DEBUG  ('Debug'),
+  RELEASE('Release')
 
   public Configuration(label)
   {
