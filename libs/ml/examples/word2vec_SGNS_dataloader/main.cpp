@@ -99,10 +99,12 @@ struct TrainingParams
   DataType freq_thresh          = 1e-3f;  // frequency threshold for subsampling
   SizeType min_count            = 100;    // infrequent word removal threshold
 
-  SizeType batch_size      = 10000;  // training data batch size
-  SizeType embedding_size  = 500;    // dimension of embedding vec
-  SizeType training_epochs = 1;
-  SizeType test_frequency  = 1;
+  SizeType batch_size            = 10000;  // training data batch size
+  SizeType embedding_size        = 500;    // dimension of embedding vec
+  SizeType training_epochs       = 1;
+  SizeType test_frequency        = 1;
+  SizeType graph_saves_per_epoch = 10;
+
   // these are the learning rates we have for each sample
   DataType starting_learning_rate_per_sample = 0.0025f;
   DataType ending_learning_rate_per_sample   = 0.0001f;
@@ -167,13 +169,10 @@ int main(int argc, char **argv)
   tp.learning_rate_param.ending_learning_rate   = tp.ending_learning_rate;
 
   // calc the compatiable linear lr decay
-  tp.learning_rate_param.linear_decay_rate =
-      static_cast<DataType>(1) /
-      data_loader
-          .EstimatedSampleNumber();  // this decay rate gurantee the lr is reduced to zero by the
-                                     // end of an epoch (despite capping by ending learning rate)
-  std::cout << "data_loader.EstimatedSampleNumber(): " << data_loader.EstimatedSampleNumber()
-            << std::endl;
+  DataType est_total_samples               = data_loader.EstimatedSampleNumber();
+  tp.learning_rate_param.linear_decay_rate = static_cast<DataType>(1) / est_total_samples;
+  // this decay rate gurantees that the lr is reduced to zero by the
+  // end of an epoch (despite capping by ending learning rate)
 
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
@@ -197,12 +196,22 @@ int main(int argc, char **argv)
   fetch::ml::optimisers::AdamOptimiser<TensorType> optimiser(g, {"Input", "Context"}, "Label",
                                                              error, tp.learning_rate_param);
 
-  DataType est_samples = data_loader.EstimatedSampleNumber();
+  SizeType n_batches              = static_cast<SizeType>(est_total_samples) / tp.batch_size;
+  SizeType samples_per_graph_save = n_batches / tp.graph_saves_per_epoch * tp.batch_size;
+
   // Training loop
   for (SizeType i{0}; i < tp.training_epochs; i++)
   {
     std::cout << "Start training for epoch no.: " << i << std::endl;
-    optimiser.Run(data_loader, tp.batch_size, static_cast<SizeType>(est_samples));
+
+    for (SizeType j{0}; j < tp.graph_saves_per_epoch - 1; j++)
+    {
+      optimiser.Run(data_loader, tp.batch_size, samples_per_graph_save);
+      fetch::ml::utilities::SaveGraph(*g, save_file + std::to_string(i) + "_" + std::to_string(j));
+    }
+
+    // final run with remainder of samples
+    optimiser.Run(data_loader, tp.batch_size);
 
     // Test trained embeddings
     if (i % tp.test_frequency == 0)
