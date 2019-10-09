@@ -127,7 +127,6 @@ public:
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
   virtual struct fetch::ml::StateDict<TensorType> StateDict();
-
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
 
   ////////////////////////////////////
@@ -547,7 +546,10 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
     auto grad_it = grad.begin();
     ApplyGradients(grad_it);
 
-//    ResetGraphCache(false);
+    //    for (auto const &t : trainable_lookup_)
+    //    {
+    //      ResetGraphCache(false, t.second);
+    //    }
     for (auto const &t : nodes_)
     {
       // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes

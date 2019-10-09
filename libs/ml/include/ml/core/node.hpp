@@ -213,6 +213,7 @@ std::shared_ptr<TensorType> Node<TensorType>::Evaluate(bool is_training)
         cached_output_.Reshape(output_shape);
       }
     }
+
     op_ptr_->Forward(inputs, cached_output_);
     cached_output_status_ = CachedOutputState::VALID_CACHE;
 

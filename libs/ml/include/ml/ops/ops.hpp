@@ -75,6 +75,7 @@ public:
 
 protected:
   bool is_training_ = true;
+
 };
 
 }  // namespace ops

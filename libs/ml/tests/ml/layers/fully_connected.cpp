@@ -252,6 +252,17 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
         (g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2]) -
         (g_not_shared_weights_before[i] + g_not_shared_weights_before[i + 2]);
 
+    std::cout << "g_shared_weights_before[i].ToString(): " << g_shared_weights_before[i].ToString() << std::endl;
+    std::cout << "g_shared_weights_after[i].ToString(): " << g_shared_weights_after[i].ToString() << std::endl;
+    
+    std::cout << "g_not_shared_weights_after[i]: " << g_not_shared_weights_after[i].ToString() << std::endl;
+    std::cout << "g_not_shared_weights_after[i + 2]: " << g_not_shared_weights_after[i + 2].ToString() << std::endl;
+    std::cout << "g_not_shared_weights_before[i]: " << g_not_shared_weights_before[i].ToString() << std::endl;
+    std::cout << "g_not_shared_weights_before[i + 2]: " << g_not_shared_weights_before[i + 2].ToString() << std::endl;
+    
+    std::cout << "shared_gradient.ToString(): " << shared_gradient.ToString() << std::endl;
+    std::cout << "not_shared_gradient.ToString(): " << not_shared_gradient.ToString() << std::endl;
+    
     EXPECT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,
         static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
@@ -359,6 +370,76 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
         not_shared_gradient,
         static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
   }
+}
+
+TYPED_TEST(FullyConnectedTest, share_weight_cache_clearining_check)
+{
+  using TensorType      = TypeParam;
+  using DataType        = typename TensorType::Type;
+  using SizeType        = typename TensorType::SizeType;
+  using GraphType       = fetch::ml::Graph<TensorType>;
+  using FCType          = fetch::ml::layers::FullyConnected<TensorType>;
+  using PlaceHolderType = fetch::ml::ops::PlaceHolder<TensorType>;
+  using MSEType         = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
+
+  // graph with two shared fully connected layers. We only backprop through one and check the other updates
+  // Input -> FC_1        -> LossOp
+  //       -> FC_1_Shared
+
+  auto        g          = std::make_shared<GraphType>();
+  std::string input      = g->template AddNode<PlaceHolderType>("Input", {});
+  std::string fc1        = g->template AddNode<FCType>("FC1", {input}, 10u, 10u);
+  std::string fc1_shared = g->template AddNode<FCType>("FC1", {input}, 10u, 10u);
+  std::string label      = g->template AddNode<PlaceHolderType>("Label", {});
+  std::string error      = g->template AddNode<MSEType>("Error", {fc1, label});
+  g->Compile();
+
+  // check that all weights are equal and create compare list
+  auto g_shared_weights_before = g->GetWeights();
+
+  // check that weight initialisation is shared for biases and weights
+  EXPECT_TRUE(g_shared_weights_before.size() == 4);
+  EXPECT_TRUE(g_shared_weights_before.at(0) == g_shared_weights_before.at(2));
+  EXPECT_TRUE(g_shared_weights_before.at(1) == g_shared_weights_before.at(3));
+
+  // start training
+  // set data
+  TensorType data;
+  data.Resize({10, 1});
+  for (SizeType i = 0; i < 10; i++)
+  {
+    data.Set(i, 0, static_cast<DataType>(i));
+  }
+
+  g->SetInput("Input", data.Copy());
+  TensorType fc1_pred        = g->Evaluate(fc1);
+  TensorType fc1_pred_shared = g->Evaluate(fc1_shared);
+
+  EXPECT_TRUE(
+      fc1_pred.AllClose(fc1_pred_shared, static_cast<DataType>(0), static_cast<DataType>(0)));
+
+  auto                                            lr = static_cast<DataType>(1);
+  fetch::ml::optimisers::SGDOptimiser<TensorType> opt(g, {"Input"}, "Label", "Error", lr);
+  opt.Run({data}, data, 1);
+
+  TensorType fc1_pred_after        = g->Evaluate(fc1);
+  TensorType fc1_pred_shared_after = g->Evaluate(fc1_shared);
+
+  auto g_shared_weights_after = g->GetWeights();
+
+  // check weights and biases are the same
+  EXPECT_TRUE(g_shared_weights_after.at(0).AllClose(g_shared_weights_after.at(2), static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(g_shared_weights_after.at(1).AllClose(g_shared_weights_after.at(3), static_cast<DataType>(0), static_cast<DataType>(0)));
+
+  // check layer predictions are the same
+  EXPECT_FALSE(
+      fc1_pred.AllClose(fc1_pred_after, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_FALSE(fc1_pred_shared.AllClose(fc1_pred_shared_after, static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+
+  // check both shared layers still give the same prediction
+  EXPECT_TRUE(fc1_pred_after.AllClose(fc1_pred_shared_after, static_cast<DataType>(0),
+                                      static_cast<DataType>(0)));
 }
 
 TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
