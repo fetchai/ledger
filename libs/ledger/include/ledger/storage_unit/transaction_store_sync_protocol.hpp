@@ -33,6 +33,7 @@
 #include "storage/resource_mapper.hpp"
 #include "storage/transient_object_store.hpp"
 #include "vectorise/platform.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -94,11 +95,14 @@ private:
   using Cache   = std::vector<CachedObject>;
   using TxArray = std::vector<Transaction>;
 
+
   uint64_t ObjectCount();
   TxArray  PullObjects(service::CallContext const *call_context);
 
   TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
   TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
+
+  static telemetry::HistogramPtr CreateHistogram(char const *name, char const *description, int lane);
 
   ObjectStore *store_;  ///< The pointer to the object store
 
@@ -106,6 +110,10 @@ private:
   Cache        cache_;
 
   int id_;
+
+  telemetry::HistogramPtr pull_objects_histogram_;
+  telemetry::HistogramPtr pull_subtree_histogram_;
+  telemetry::HistogramPtr pull_specific_histogram_;
 };
 
 }  // namespace ledger

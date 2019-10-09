@@ -18,6 +18,9 @@
 
 #include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
+#include "telemetry/utils/timer.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -62,6 +65,12 @@ TransactionStoreSyncProtocol::TransactionStoreSyncProtocol(ObjectStore *store, i
   : fetch::service::Protocol()
   , store_(store)
   , id_(lane_id)
+  , pull_objects_histogram_(CreateHistogram("ledger_tx_sync_pull_objects",
+                                            "The histogram of pull object request times", id_))
+  , pull_subtree_histogram_(CreateHistogram("ledger_tx_sync_pull_subtree",
+                                            "The histogram of pull subtree request times", id_))
+  , pull_specific_histogram_(CreateHistogram("ledger_tx_sync_pull_specific",
+                                             "The histogram of pull specific request times", id_))
 {
   this->Expose(OBJECT_COUNT, this, &Self::ObjectCount);
   this->ExposeWithClientContext(PULL_OBJECTS, this, &Self::PullObjects);
@@ -132,6 +141,8 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
 TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSubtree(
     byte_array::ConstByteArray const &rid, uint64_t bit_count)
 {
+  telemetry::FunctionTimer telemetry_timer{*pull_subtree_histogram_};
+  generics::MilliTimer timer("ObjectSync:PullSubtree", 500);
   return store_->PullSubtree(rid, bit_count, PULL_LIMIT_);
 }
 
@@ -142,6 +153,7 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(
   TxArray ret{};
 
   {
+    telemetry::FunctionTimer telemetry_timer{*pull_objects_histogram_};
     generics::MilliTimer timer("ObjectSync:PullObjects", 500);
     FETCH_LOCK(cache_mutex_);
 
@@ -166,6 +178,9 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(
 TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSpecificObjects(
     std::vector<storage::ResourceID> const &rids)
 {
+  telemetry::FunctionTimer telemetry_timer{*pull_specific_histogram_};
+  generics::MilliTimer timer("ObjectSync:PullSpecificObjects", 500);
+
   TxArray     ret;
   Transaction tx;
 
@@ -178,6 +193,18 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSpecific
   }
 
   return ret;
+}
+
+telemetry::HistogramPtr TransactionStoreSyncProtocol::CreateHistogram(char const *name,
+                                                                      char const *description,
+                                                                      int         lane)
+{
+  return telemetry::Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      name, description, {{"lane", std::to_string(lane)}});
 }
 
 }  // namespace ledger
