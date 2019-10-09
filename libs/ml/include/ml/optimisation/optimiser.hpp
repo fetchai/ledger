@@ -407,7 +407,6 @@ void Optimiser<T>::PrintStats(SizeType batch_size, SizeType subset_size)
         std::to_string(static_cast<double>(step_) / static_cast<double>(time_span_.count())) +
         " samples / sec ";
   }
-
   // print it in log
   FETCH_LOG_INFO("ML_LIB", "Training speed: ", stat_string_);
   // NOLINTNEXTLINE
