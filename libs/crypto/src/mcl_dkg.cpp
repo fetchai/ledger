@@ -33,8 +33,6 @@ namespace mcl {
 
 std::atomic<bool> details::MCLInitialiser::was_initialised{false};
 
-details::MCLInitialiser execute_me_before_runtime;
-
 void SetGenerator(Generator &group_g)
 {
   group_g.clear();
