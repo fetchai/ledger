@@ -187,7 +187,7 @@ bool UInt256Wrapper::ToJSON(JSONVariant &variant)
     value[i] = number_[i];
   }
 
-  variant["type"]  = GetUniqueId();
+  variant["type"]  = GetTypeName();
   variant["value"] = ToHex(value);
   return true;
 }
@@ -196,25 +196,25 @@ bool UInt256Wrapper::FromJSON(JSONVariant const &variant)
 {
   if (!variant.IsObject())
   {
-    vm_->RuntimeError("JSON deserialisation of " + GetUniqueId() + " must be an object.");
+    vm_->RuntimeError("JSON deserialisation of " + GetTypeName() + " must be an object.");
     return false;
   }
 
   if (!variant.Has("type"))
   {
-    vm_->RuntimeError("JSON deserialisation of " + GetUniqueId() + " must have field 'type'.");
+    vm_->RuntimeError("JSON deserialisation of " + GetTypeName() + " must have field 'type'.");
     return false;
   }
 
   if (!variant.Has("value"))
   {
-    vm_->RuntimeError("JSON deserialisation of " + GetUniqueId() + " must have field 'value'.");
+    vm_->RuntimeError("JSON deserialisation of " + GetTypeName() + " must have field 'value'.");
     return false;
   }
 
-  if (variant["type"].As<std::string>() != GetUniqueId())
+  if (variant["type"].As<std::string>() != GetTypeName())
   {
-    vm_->RuntimeError("Field 'type' must be '" + GetUniqueId() + "'.");
+    vm_->RuntimeError("Field 'type' must be '" + GetTypeName() + "'.");
     return false;
   }
 

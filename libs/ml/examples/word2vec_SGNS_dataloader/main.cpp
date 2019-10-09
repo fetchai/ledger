@@ -63,7 +63,7 @@ std::pair<std::string, std::string> Model(fetch::ml::Graph<TensorType> &g, SizeT
 }
 
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
-                    GraphW2VLoader<DataType> const &dl, std::string const &word0,
+                    GraphW2VLoader<TensorType> const &dl, std::string const &word0,
                     std::string const &word1, std::string const &word2, std::string const &word3,
                     SizeType K, std::string const &analogies_test_file)
 {
@@ -148,8 +148,8 @@ int main(int argc, char **argv)
 
   std::cout << "Setting up training data...: " << std::endl;
 
-  GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                       tp.max_word_count);
+  GraphW2VLoader<TensorType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                         tp.max_word_count);
   // set up dataloader
   /// DATA LOADING ///
   data_loader.BuildVocabAndData({utilities::ReadFile(train_file)}, tp.min_count);
