@@ -546,15 +546,13 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
     auto grad_it = grad.begin();
     ApplyGradients(grad_it);
 
-    //    for (auto const &t : trainable_lookup_)
-    //    {
-    //      ResetGraphCache(false, t.second);
-    //    }
+    // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
+    // reset cache on all nodes
     for (auto const &t : nodes_)
     {
-      // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
       ResetGraphCache(false, t.second);
     }
+
     return;
   }
   case GraphState::UPDATED:

@@ -120,12 +120,14 @@ public:
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
     gradient_accumulation_->InlineAdd(error_signal);
+    gradients_reset_ = false;
     return {error_signal};
   }
 
   void AddToGradient(TensorType const &extern_grad)
   {
     gradient_accumulation_->InlineAdd(extern_grad);
+    gradients_reset_ = false;
   }
 
   /**
@@ -140,6 +142,7 @@ public:
     if (shape_changed)
     {
       gradient_accumulation_ = std::make_shared<TensorType>(this->data_->shape());
+      gradients_reset_       = true;
       return true;
     }
     return false;
@@ -157,7 +160,10 @@ public:
    */
   void ResetGradients() override
   {
-    gradient_accumulation_->Fill(typename T::Type(0));
+    if (!gradients_reset_)
+    {
+      gradient_accumulation_->Fill(typename T::Type(0));
+    }
   }
 
   /**
@@ -179,6 +185,7 @@ public:
   static constexpr char const *DESCRIPTOR = "Variable";
 
 protected:
+  bool               gradients_reset_ = true;
   TensorPtrType      gradient_accumulation_;
   RegularisationType regularisation_type = RegularisationType::NONE;
   DataType           regularisation_rate = fetch::math::numeric_max<DataType>();
