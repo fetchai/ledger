@@ -281,8 +281,8 @@ public:
           if (parameter.type_id != f->variables[i].type_id)
           {
             error = "mismatched parameters: expected argument " + std::to_string(i);
-            error += "to be of type " + GetUniqueId(f->variables[i].type_id) + " but got ";
-            error += GetUniqueId(parameter.type_id);
+            error += "to be of type " + GetTypeName(f->variables[i].type_id) + " but got ";
+            error += GetTypeName(parameter.type_id);
             // clean up
             for (std::size_t j = 0; j < num_parameters; ++j)
             {
@@ -316,7 +316,7 @@ public:
     return success;
   }
 
-  std::string GetUniqueId(TypeId type_id) const
+  std::string GetTypeName(TypeId type_id) const
   {
     auto info = GetTypeInfo(type_id);
     return info.name;
