@@ -359,13 +359,9 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t num, Action a
       std::min(BlockType::CAPACITY - byte_index_, bytes_left_to_write);
   BlockType block_being_written;
   uint64_t  block_index_being_written = block_index_;
-  // uint64_t  byte_index                = byte_index_;
   uint64_t bytes_offset = 0;
 
   assert(bytes_to_write_in_block <= BlockType::CAPACITY);
-
-  auto aa = BlockType::CAPACITY;
-  FETCH_UNUSED(aa);
 
   while (bytes_left_to_write > 0)
   {
