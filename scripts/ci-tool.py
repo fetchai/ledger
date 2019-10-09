@@ -326,9 +326,8 @@ def main():
         'CMAKE_BUILD_TYPE': args.build_type,
     }
 
+    # attempt to detect the sccache path on the system
     sccache_path = shutil.which('sccache')
-    if sccache_path:
-        subprocess.check_call([sccache_path, '-s'])
 
     if args.build or args.lint or args.all:
         # choose the generater initially based on what already exists there
