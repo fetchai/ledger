@@ -626,13 +626,8 @@ TEST(FixedPointTest, Comparison_16_16)
   EXPECT_EQ(fp32_t::MIN_INT, 0x80020000);
   EXPECT_EQ(fp32_t::MAX, 0x7ffeffff);
   EXPECT_EQ(fp32_t::MIN, 0x80010001);
-<<<<<<< HEAD
   EXPECT_EQ(fp32_t::MAX_EXP.Data(), 0x000a65adL);  
   EXPECT_EQ(static_cast<int32_t>(fp32_t::MIN_EXP.Data()), static_cast<int32_t>(0xfff59a53L));
-=======
-  EXPECT_EQ(fp32_t::MAX_EXP.Data(), 0x000a65adL);
-  EXPECT_EQ(fp32_t::MIN_EXP.Data(), 0xfff59a53L);
->>>>>>> 187b31a9bd785067a86cb8c9c8d646174fa84cb2
 }
 
 TEST(FixedPointTest, Comparison_32_32)
