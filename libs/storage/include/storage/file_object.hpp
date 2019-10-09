@@ -359,7 +359,7 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t num, Action a
       std::min(BlockType::CAPACITY - byte_index_, bytes_left_to_write);
   BlockType block_being_written;
   uint64_t  block_index_being_written = block_index_;
-  uint64_t bytes_offset = 0;
+  uint64_t  bytes_offset              = 0;
 
   assert(bytes_to_write_in_block <= BlockType::CAPACITY);
 
@@ -548,20 +548,23 @@ uint64_t FileObject<S>::FreeBlocks()
 }
 
 /**
- * Initialise the stack by clearing it completely and setting a fresh free block
+ * Initialise by looking for the block that's the beginning of our free blocks linked list. If
+ * the stack is empty this means we set our own. Note: this is only immediately after file loading.
  */
 template <typename S>
 void FileObject<S>::Initalise()
 {
-  stack_.Clear();
-
   BlockType free_block;
   free_block.free_blocks = 0;
   free_block.next        = 0;
   free_block.previous    = 0;
   block_index_           = 0;
   id_                    = 0;
-  stack_.Push(free_block);
+
+  if (stack_.size() == 0)
+  {
+    stack_.Push(free_block);
+  }
 }
 
 /**
