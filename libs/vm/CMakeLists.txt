@@ -20,3 +20,5 @@ target_link_libraries(fetch-vm
                              fetch-math
                              fetch-core
                              fetch-ledger)
+
+add_test_target()
