@@ -1,5 +1,5 @@
 #
-# F E T C H   D I S T R I B U T E D   M L  F R A M E W O R K   L I B R A R Y
+# F E T C H   D I S T R I B U T E D   M L   F R A M E W O R K   L I B R A R Y
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-dmlf)

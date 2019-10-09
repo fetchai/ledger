@@ -17,40 +17,42 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
-#include "ledger/chain/mutable_transaction.hpp"
+#include "dmlf/execution_error_message.hpp"
+#include "vm/variant.hpp"
 
 namespace fetch {
-namespace miner {
+namespace dmlf {
 
-class TransactionItem
+class ExecutionResult
 {
 public:
-  // Construction / Destruction
-  TransactionItem(ledger::TransactionSummary tx, std::size_t id)
-    : summary_(std::move(tx))
-    , id_(id)
+  using Variant = fetch::vm::Variant;
+  using Error   = ExecutionErrorMessage;
+
+  ExecutionResult(Variant output, Error error, std::string console)
+    : output_(output)
+    , error_(error)
+    , console_(std::move(console))
   {}
-  ~TransactionItem() = default;
 
-  ledger::TransactionSummary const &summary() const
+  Variant output() const
   {
-    return summary_;
+    return output_;
   }
-
-  std::size_t id() const
+  Error error() const
   {
-    return id_;
+    return error_;
   }
-
-  // debug only
-  std::unordered_set<std::size_t> lanes;
+  std::string console() const
+  {
+    return console_;
+  }
 
 private:
-  ledger::TransactionSummary summary_;
-  std::size_t                id_;
+  Variant     output_;
+  Error       error_;
+  std::string console_;
 };
 
-}  // namespace miner
+}  // namespace dmlf
 }  // namespace fetch
