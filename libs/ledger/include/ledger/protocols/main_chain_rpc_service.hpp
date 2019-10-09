@@ -130,9 +130,8 @@ private:
   /// @{
   static constexpr char const *ToString(State state) noexcept;
   Address                      GetRandomTrustedPeer() const;
-  void                         HandleChainResponse(Address const &address, BlockList block_list);
+  bool                         HandleChainResponse(Address const &address, BlockList block_list);
   bool                         IsBlockValid(Block &block) const;
-  bool                         NoKnownChain() const;
   /// @}
 
   /// @name State Machine Handlers

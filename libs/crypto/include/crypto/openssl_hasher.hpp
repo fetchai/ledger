@@ -46,7 +46,7 @@ class OpenSslHasher
 {
 public:
   explicit OpenSslHasher(OpenSslDigestType type);
-  ~OpenSslHasher()                     = default;
+  ~OpenSslHasher();
   OpenSslHasher(OpenSslHasher const &) = delete;
   OpenSslHasher(OpenSslHasher &&)      = delete;
 
