@@ -21,6 +21,10 @@ target_link_libraries(fetch-vm-modules
                              fetch-math
                              fetch-ml)
 
+if (_is_clang_compiler)
+  target_compile_options(fetch-vm-modules PRIVATE -Wshadow)
+endif ()
+
 add_test_target()
 
 add_subdirectory(examples)
