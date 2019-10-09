@@ -83,8 +83,23 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
   , store_(std::move(store))
   , verifier_(*this, cfg_.verification_threads, "TxV-L" + std::to_string(cfg_.lane_id))
   , stored_transactions_{telemetry::Registry::Instance().CreateCounter(
-        "transaction_store_sync_service_stored_transactions_total",
+        "ledger_tx_store_sync_service_stored_transactions_total",
         "Total number of all transactions received & stored by TransactionStoreSyncService")}
+  , resolve_count_failures_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_tx_store_sync_service_resolve_count_failures_total",
+        "Total number of failures to query the object count from a remote host")}
+  , subtree_requests_total_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_tx_store_sync_service_subtree_request_total",
+        "Total subtree requests made by the service")}
+  , subtree_response_total_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_tx_store_sync_service_subtree_response_total",
+        "Total number of subtree successful responses from a remote host")}
+  , subtree_failure_total_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_tx_store_sync_service_subtree_failure_total",
+        "The total number of subtree request failures observed")}
+  , subtree_timeout_total_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_tx_store_sync_service_subtree_timeouts_total",
+        "The total number of times that a request has been thought of as timed out")}
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &TransactionStoreSyncService::OnInitial);
   state_machine_->RegisterHandler(State::QUERY_OBJECT_COUNTS, this,
@@ -157,6 +172,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
                     "Failed object count promises: ", counts.failed);
+
+    resolve_count_failures_->add(static_cast<uint64_t>(counts.failed));
   }
 
   if (counts.pending > 0)
@@ -236,6 +253,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
 
     promise_id_to_roots_[promise.id()] = root;
     pending_subtree_.Add(root, promise);
+
+    subtree_requests_total_->increment();
   }
 
   promise_wait_timeout_.Set(cfg_.promise_wait_timeout);
@@ -265,6 +284,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
 
       ++synced_tx;
     }
+
+    subtree_response_total_->increment();
   }
 
   if (synced_tx)
@@ -280,6 +301,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
     {
       roots_to_sync_.push(promise_id_to_roots_[fail.promise.id()]);
     }
+
+    subtree_failure_total_->add(static_cast<uint64_t>(counts.failed));
   }
   if (counts.pending > 0)
   {
@@ -298,6 +321,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
       {
         roots_to_sync_.push(promise_id_to_roots_[req.second.id()]);
       }
+
+      subtree_timeout_total_->add(static_cast<uint64_t>(counts.pending));
     }
   }
 
