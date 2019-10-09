@@ -623,13 +623,25 @@ BeaconManager::AddResult BeaconManager::AddSignaturePart(Identity const & from,
   return AddResult::SUCCESS;
 }
 
+BeaconManager::Signature BeaconManager::ComputeGroupSignature(
+    std::unordered_map<MuddleAddress, Signature> sig_shares)
+{
+  std::unordered_map<uint32_t, Signature> points;
+  for (auto const &address_sig_pair : sig_shares)
+  {
+    uint32_t index = identity_to_index_[address_sig_pair.first];
+    points.insert({index, address_sig_pair.second});
+  }
+  return crypto::mcl::LagrangeInterpolation(points);
+}
+
 /**
  * @brief verifies the group signature.
  */
 bool BeaconManager::Verify()
 {
   group_signature_ = crypto::mcl::LagrangeInterpolation(signature_buffer_);
-  return Verify(group_signature_);
+  return VerifyGroupSignature(current_message_, group_signature_);
 }
 
 /**
@@ -638,22 +650,27 @@ bool BeaconManager::Verify()
 bool BeaconManager::Verify(Signature const &signature)
 {
   // TODO(HUT): use the static helper
-  return crypto::mcl::VerifySign(public_key_, current_message_, signature, group_g_);
+  return VerifyGroupSignature(current_message_, signature);
 }
 
 /**
- * @brief verifies a signed message by the group signature, where all parameters are specified.
+ * @brief verifies a signed message by a cabinet member, where all parameters are specified.
  */
-bool BeaconManager::Verify(std::string const &group_public_key, MessagePayload const &message,
-                           std::string const &signature)
+bool BeaconManager::VerifySignatureShare(MessagePayload const &message, Signature const &signature,
+                                         MuddleAddress const &signer)
 {
-  PublicKey tmp;
-  tmp.setStr(group_public_key);
+  auto index = identity_to_index_[signer];
 
-  Signature tmp2;
-  tmp2.setStr(signature);
+  return crypto::mcl::VerifySign(public_key_shares_[index], message, signature,
+                                 BeaconManager::group_g_);
+}
 
-  return crypto::mcl::VerifySign(tmp, message, tmp2, BeaconManager::group_g_);
+/**
+ * @brief verifies a signed message by the group, where all parameters are specified.
+ */
+bool BeaconManager::VerifyGroupSignature(MessagePayload const &message, Signature const &signature)
+{
+  return crypto::mcl::VerifySign(public_key_, message, signature, BeaconManager::group_g_);
 }
 
 /**
@@ -691,6 +708,20 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Computed bad signature share");
   }
+
+  return smsg;
+}
+
+/**
+ * @brief signs the any message.
+ */
+BeaconManager::SignedMessage BeaconManager::Sign(ConstByteArray const &message)
+{
+  Signature signature = crypto::mcl::SignShare(message, secret_share_);
+
+  SignedMessage smsg;
+  smsg.identity  = certificate_->identity();
+  smsg.signature = signature;
 
   return smsg;
 }

@@ -27,7 +27,8 @@ namespace dkg {
 class BeaconManager
 {
 public:
-  using MuddleAddress    = byte_array::ConstByteArray;
+  using ConstByteArray   = byte_array::ConstByteArray;
+  using MuddleAddress    = ConstByteArray;
   using DkgOutput        = beacon::DkgOutput;
   using Certificate      = crypto::Prover;
   using CertificatePtr   = std::shared_ptr<Certificate>;
@@ -90,13 +91,16 @@ public:
   void             Reset();
 
   AddResult     AddSignaturePart(Identity const &from, Signature const &signature);
+  Signature     ComputeGroupSignature(std::unordered_map<MuddleAddress, Signature> sig_shares);
   bool          Verify();
   bool          Verify(Signature const &signature);
-  static bool   Verify(std::string const &group_public_key, MessagePayload const &message,
-                       std::string const &signature);
+  bool          VerifySignatureShare(MessagePayload const &message, Signature const &signature,
+                                     MuddleAddress const &signer);
+  bool          VerifyGroupSignature(MessagePayload const &message, Signature const &signature);
   Signature     GroupSignature() const;
   void          SetMessage(MessagePayload next_message);
   SignedMessage Sign();
+  SignedMessage Sign(ConstByteArray const &message);
 
   /// Property methods
   /// @{

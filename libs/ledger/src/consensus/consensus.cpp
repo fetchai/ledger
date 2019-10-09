@@ -34,7 +34,6 @@ using StakeManagerPtr = Consensus::StakeManagerPtr;
 
 using fetch::ledger::MainChain;
 using fetch::ledger::Block;
-using fetch::beacon::BlockEntropy;
 
 namespace {
 using DRNG = fetch::random::LinearCongruentialGenerator;
@@ -171,8 +170,8 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Address cons
   return weight;
 }
 
-Consensus::WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabinet,
-                                              uint64_t                     entropy)
+Consensus::WeightedQual Consensus::QualWeightedByEntropy(BlockEntropy::Cabinet const &cabinet,
+                                                         uint64_t                     entropy)
 {
   Consensus::WeightedQual ret;
   ret.reserve(cabinet.size());

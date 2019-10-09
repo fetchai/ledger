@@ -88,10 +88,12 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &block_sink, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty, ConsensusPtr consensus)
+                                   std::size_t block_difficulty, ConsensusPtr consensus,
+                                   NotarisationPtr notarisation)
   : chain_{chain}
   , dag_{std::move(dag)}
   , consensus_{std::move(consensus)}
+  , notarisation_{std::move(notarisation)}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}
@@ -913,6 +915,13 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
       dag_->CommitEpoch(current_block_->body.dag_epoch);
     }
 
+    // Notify notarisation of new valid block
+    // TODO(JMW): Check block is within notarisation window and previous block is notarised?
+    if (notarisation_)
+    {
+      notarisation_->NotariseBlock(current_block_->body);
+    }
+
     // signal the last block that has been executed
     last_executed_block_.ApplyVoid([this](auto &digest) { digest = current_block_->body.hash; });
 
@@ -1054,6 +1063,13 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
   {
     // update the digest
     next_block_->UpdateDigest();
+
+    // Notify notarisation of new block
+    // TODO(JMW): Check block is within notarisation window and previous block is notarised?
+    if (notarisation_)
+    {
+      notarisation_->NotariseBlock(current_block_->body);
+    }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "New Block Hash: 0x", next_block_->body.hash.ToHex());
 

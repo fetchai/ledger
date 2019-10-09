@@ -27,6 +27,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/dag/dag_interface.hpp"
+#include "ledger/protocols/notarisation_service.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/synergetic_miner_interface.hpp"
@@ -148,10 +149,11 @@ class BlockCoordinator
 public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
-  using ConstByteArray = byte_array::ConstByteArray;
-  using DAGPtr         = std::shared_ptr<ledger::DAGInterface>;
-  using ProverPtr      = std::shared_ptr<crypto::Prover>;
-  using ConsensusPtr   = std::shared_ptr<ledger::Consensus>;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using DAGPtr          = std::shared_ptr<ledger::DAGInterface>;
+  using ProverPtr       = std::shared_ptr<crypto::Prover>;
+  using ConsensusPtr    = std::shared_ptr<ledger::Consensus>;
+  using NotarisationPtr = std::shared_ptr<ledger::NotarisationService>;
 
   enum class State
   {
@@ -188,7 +190,8 @@ public:
   BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, ProverPtr const &prover, std::size_t num_lanes,
-                   std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus);
+                   std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus,
+                   NotarisationPtr notarisation);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -309,6 +312,7 @@ private:
   MainChain &                chain_;  ///< Ref to system chain
   DAGPtr                     dag_;    ///< Ref to DAG
   ConsensusPtr               consensus_;
+  NotarisationPtr            notarisation_;
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer

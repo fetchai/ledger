@@ -44,6 +44,7 @@ public:
   using Identity          = crypto::Identity;
   using WeightedQual      = std::vector<Identity>;
   using MainChain         = ledger::MainChain;
+  using BlockEntropy      = beacon::BlockEntropy;
 
   Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
             Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size,
@@ -59,6 +60,8 @@ public:
   void            SetThreshold(double threshold);
   void            SetCommitteeSize(uint64_t size);
   void            SetDefaultStartTime(uint64_t default_start_time);
+
+  static WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabinet, uint64_t entropy);
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
