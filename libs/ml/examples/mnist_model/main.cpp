@@ -31,7 +31,7 @@ using SizeType   = typename TensorType::SizeType;
 
 using ModelType      = typename fetch::ml::model::DNNClassifier<TensorType>;
 using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>;
-using OptimiserType  = fetch::ml::optimisers::OptimiserType;
+using OptimiserType  = fetch::ml::OptimiserType;
 
 int main(int ac, char **av)
 {

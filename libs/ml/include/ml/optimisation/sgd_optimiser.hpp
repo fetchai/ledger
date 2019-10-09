@@ -51,6 +51,11 @@ public:
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
+  OptimiserType OptimiserCode() override
+  {
+    return OptimiserType::SGD;
+  }
+
 private:
   void ApplyGradients(SizeType batch_size) override;
 };

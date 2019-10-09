@@ -117,8 +117,9 @@ private:
     {
       a = 0;
     }
-    for (double l = 0.; l < 5; l += 0.0000001)
+    for (std::size_t i = 0; i < 50000000; i++)
     {  // FIXME: set limit
+      double l  = static_cast<double>(i) / 1e7;
       double r1 = exp(l);
       double r2 = fexp(l);
 
