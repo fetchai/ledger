@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/value_util.hpp"
+
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -25,25 +27,6 @@
 
 namespace fetch {
 namespace detail {
-
-template <typename T, typename... Args>
-struct Unroll
-{
-  static void Apply(std::ostream &stream, T &&v, Args &&... args)
-  {
-    stream << std::forward<T>(v);
-    Unroll<Args...>::Apply(stream, std::forward<Args>(args)...);
-  }
-};
-
-template <typename T>
-struct Unroll<T>
-{
-  static void Apply(std::ostream &stream, T &&v)
-  {
-    stream << std::forward<T>(v);
-  }
-};
 
 /**
  * String formatter
@@ -56,7 +39,8 @@ std::string Format(Args &&... args)
 {
   // unroll all the arguments and generate the formatted output
   std::ostringstream oss;
-  Unroll<Args...>::Apply(oss, std::forward<Args>(args)...);
+  value_util::ForEach([&oss](auto &&arg) { oss << std::forward<decltype(arg)>(arg); },
+		      std::forward<Args>(args)...);
   return oss.str();
 }
 

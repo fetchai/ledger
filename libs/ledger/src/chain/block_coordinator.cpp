@@ -241,6 +241,15 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
   {
     current_block_ = chain_.GetHeaviestBlock();
   }
+    if (current_block_) {
+	    if(current_block_->body.previous_hash == GENESIS_DIGEST) {
+		    FETCH_LOG_WARN(LOGGING_NAME, "Set current_block to genesis ", current_block_->body.hash.ToHex());
+	    }
+	    else {
+		    FETCH_LOG_WARN(LOGGING_NAME, "Set current_block to non-genesis ", current_block_->body.hash.ToHex());
+	    }
+    }
+    else FETCH_LOG_WARN(LOGGING_NAME, "No current_block at all");
 
   // if we have reached genesis then this is either because we have no state to reload in the case
   // of a fresh node, or a long series of errors prevents us from reloading previous state. In

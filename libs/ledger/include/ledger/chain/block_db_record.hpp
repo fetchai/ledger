@@ -29,8 +29,8 @@ namespace ledger {
 struct BlockDbRecord
 {
   Block block;
-  // genesis (hopefully) cannot be next hash so is used as undefined value
-  Block::Hash next_hash = GENESIS_DIGEST;
+  // an empty hash designates end of the chain
+  Block::Hash next_hash;
 
   Block::Hash hash() const
   {
