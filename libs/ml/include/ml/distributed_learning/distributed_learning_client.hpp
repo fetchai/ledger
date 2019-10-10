@@ -535,7 +535,6 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
   while (update_counter_ < max_updates_)
   {
     DoBatch();
-    coordinator_ptr_->IncrementIterationsCounter();
 
     // Validate loss for logging purpose
     Test();
