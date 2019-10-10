@@ -33,12 +33,12 @@
 #include "crypto/identity.hpp"
 #include "crypto/key_generator.hpp"
 #include "crypto/prover.hpp"
-#include "shards/manifest.hpp"
 #include "logging/logging.hpp"
 #include "network/adapters.hpp"
 #include "network/peer.hpp"
 #include "network/uri.hpp"
 #include "settings.hpp"
+#include "shards/manifest.hpp"
 #include "version/cli_header.hpp"
 #include "version/fetch_version.hpp"
 

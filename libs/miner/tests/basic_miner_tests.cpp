@@ -20,9 +20,9 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_layout.hpp"
+#include "ledger/resource_mapper.hpp"
 #include "meta/log2.hpp"
 #include "miner/basic_miner.hpp"
-#include "ledger/resource_mapper.hpp"
 #include "tx_generator.hpp"
 #include "vectorise/platform.hpp"
 

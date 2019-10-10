@@ -20,10 +20,10 @@
 #include "beacon/create_new_certificate.hpp"
 #include "beacon/dkg_output.hpp"
 #include "core/reactor.hpp"
-#include "shards/manifest_cache_interface.hpp"
 #include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rbc.hpp"
+#include "shards/manifest_cache_interface.hpp"
 
 #include "gtest/gtest.h"
 #include <iostream>

@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/group_definitions.hpp"
-#include "shards/service_identifier.hpp"
 #include "muddle/address.hpp"
 #include "network/uri.hpp"
+#include "shards/service_identifier.hpp"
 
 namespace fetch {
 namespace shards {

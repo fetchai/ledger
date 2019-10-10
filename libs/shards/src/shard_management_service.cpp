@@ -19,10 +19,10 @@
 #include "core/containers/set_difference.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/identity.hpp"
-#include "shards/shard_management_interface.hpp"
-#include "shards/shard_management_service.hpp"
 #include "logging/logging.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "shards/shard_management_interface.hpp"
+#include "shards/shard_management_service.hpp"
 
 using namespace std::chrono_literals;
 

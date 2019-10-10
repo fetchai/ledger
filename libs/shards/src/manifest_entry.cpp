@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "shards/manifest_entry.hpp"
 #include "network/peer.hpp"
+#include "shards/manifest_entry.hpp"
 
 namespace fetch {
 namespace shards {

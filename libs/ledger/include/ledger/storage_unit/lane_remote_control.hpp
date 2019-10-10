@@ -19,8 +19,8 @@
 
 #include "core/mutex.hpp"
 #include "ledger/shard_config.hpp"
-#include "shards/shard_management_interface.hpp"
 #include "muddle/rpc/client.hpp"
+#include "shards/shard_management_interface.hpp"
 
 #include <cstdint>
 #include <unordered_set>

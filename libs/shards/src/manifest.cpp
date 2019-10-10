@@ -18,8 +18,8 @@
 
 #include "json/document.hpp"
 #include "json/exceptions.hpp"
-#include "shards/manifest.hpp"
 #include "logging/logging.hpp"
+#include "shards/manifest.hpp"
 #include "variant/variant_utils.hpp"
 
 #include <stdexcept>

@@ -19,13 +19,13 @@
 
 #include "core/mutex.hpp"
 #include "core/periodic_runnable.hpp"
-#include "shards/manifest.hpp"
-#include "shards/manifest_cache_interface.hpp"
-#include "shards/shard_management_protocol.hpp"
 #include "muddle/address.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
+#include "shards/manifest.hpp"
+#include "shards/manifest_cache_interface.hpp"
+#include "shards/shard_management_protocol.hpp"
 
 #include <chrono>
 
