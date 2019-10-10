@@ -359,6 +359,8 @@ typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(u
   TxLayouts                 layouts{};
   ledger::TransactionLayout summary;
 
+  std::cerr << " LAYOUTS ENTER\n\n" << std::endl; // DELETEME_NH
+
   for (std::size_t i = 0; i < max_to_poll; ++i)
   {
     if (most_recent_seen_.Pop(summary, MAX_WAIT))
@@ -370,6 +372,8 @@ typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(u
       break;
     }
   }
+
+  std::cerr << " LAYOUTS EXIT\n\n" << std::endl; // DELETEME_NH
 
   return layouts;
 }
