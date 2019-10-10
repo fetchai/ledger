@@ -30,9 +30,9 @@ TEST(ClockTests, BasicChecks)
 
   EXPECT_EQ(prod_clock.get(), test_clock.get());
 
-  auto const start = prod_clock->NowChrono();
+  auto const start = prod_clock->Now();
   test_clock->Advance(std::chrono::hours{1});
-  auto const delta = prod_clock->NowChrono() - start;
+  auto const delta = prod_clock->Now() - start;
 
   EXPECT_GE(delta, std::chrono::hours{1});
 }
