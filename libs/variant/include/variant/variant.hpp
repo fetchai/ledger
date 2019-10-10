@@ -401,7 +401,7 @@ math::meta::IfIsFixedPoint<T, T> Variant::As() const
 {
   if (type() != Type::FIXED_POINT)
   {
-    throw std::runtime_error("Variant type mismatch, unable to extract floating point value");
+    throw std::runtime_error("Variant type mismatch, unable to extract fixed point value");
   }
 
   return static_cast<T>(fixed_point::fp64_t::FromBase(primitive_.integer));
