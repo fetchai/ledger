@@ -32,6 +32,9 @@
 #include "crypto/fnv.hpp"
 #include "muddle/packet.hpp"
 
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -836,7 +839,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     handle = LookupRandomHandle(packet->GetTargetRaw());
     if (handle != 0u)
     {
-      FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", ToBase64(packet->GetTarget()));
+      FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", ToBase64(packet->GetTarget()), " payload: ", ToBase64(crypto::Hash<crypto::SHA256>(packet->GetPayload())));
       SendToConnection(handle, packet);
     }
   }
