@@ -29,9 +29,9 @@ namespace moment {
 class ClockInterface
 {
 public:
-  using SystemClock = std::chrono::system_clock;
-  using Timestamp   = SystemClock::time_point;
-  using Duration    = SystemClock::duration;
+  using AccurateSystemClock = std::chrono::system_clock;
+  using Timestamp           = AccurateSystemClock::time_point;
+  using Duration            = AccurateSystemClock::duration;
 
   // Construction / Destruction
   ClockInterface()          = default;

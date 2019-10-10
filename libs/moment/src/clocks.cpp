@@ -48,7 +48,7 @@ ClockPtr CreateNormal(ClockType type)
   switch (type)
   {
   case ClockType::SYSTEM:
-    clock = std::make_shared<detail::SteadyClock>();
+    clock = std::make_shared<detail::SystemClock>();
     break;
   }
 
@@ -68,7 +68,7 @@ AdjustableClockPtr CreateAdjustable(ClockType type)
   switch (type)
   {
   case ClockType::SYSTEM:
-    clock = std::make_shared<detail::AdjustableClock<detail::SteadyClock>>();
+    clock = std::make_shared<detail::AdjustableClock<detail::SystemClock>>();
     break;
   }
 
