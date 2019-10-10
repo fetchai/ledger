@@ -24,6 +24,10 @@ target_link_libraries(fetch-crypto
                              vendor-mcl
                              fetch-logging)
 
+if (_is_clang_compiler)
+  target_compile_options(fetch-crypto PRIVATE -Wshadow)
+endif ()
+
 add_test_target()
 
 add_subdirectory(examples)

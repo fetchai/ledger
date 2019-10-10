@@ -22,6 +22,7 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/exceptions/exceptions.hpp"
 
 #include <cassert>
 #include <fstream>
@@ -61,6 +62,11 @@ public:
   void SetValidationRatio(float new_validation_ratio) override;
 
   bool AddData(InputType const &data, LabelType const &label) override;
+
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::COMMODITY;
+  }
 
 private:
   bool      random_mode_ = false;
@@ -168,14 +174,14 @@ template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::SetTestRatio(float new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
-  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::SetValidationRatio(float new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
-  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");
 }
 
 /**
@@ -215,7 +221,7 @@ void CommodityDataLoader<LabelType, InputType>::UpdateCursor()
   }
   else
   {
-    throw std::runtime_error("Unsupported dataloader mode.");
+    throw exceptions::InvalidMode("Unsupported dataloader mode.");
   }
 }
 
@@ -238,7 +244,7 @@ bool CommodityDataLoader<LabelType, InputType>::IsModeAvailable(DataLoaderMode m
   }
   default:
   {
-    throw std::runtime_error("Unsupported dataloader mode.");
+    throw exceptions::InvalidMode("Unsupported dataloader mode.");
   }
   }
 }

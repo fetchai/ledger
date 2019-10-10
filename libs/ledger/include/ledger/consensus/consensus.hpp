@@ -42,7 +42,9 @@ public:
   using BeaconServicePtr  = std::shared_ptr<fetch::beacon::BeaconService>;
   using CabinetMemberList = beacon::BeaconService::CabinetMemberList;
   using Identity          = crypto::Identity;
+  using WeightedQual      = std::vector<Identity>;
   using MainChain         = ledger::MainChain;
+  using BlockEntropy      = ledger::Block::BlockEntropy;
 
   Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
             Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size,
@@ -91,8 +93,9 @@ private:
   CommitteePtr GetCommittee(Block const &previous);
   bool         ValidMinerForBlock(Block const &previous, Address const &address);
   uint64_t     GetBlockGenerationWeight(Block const &previous, Address const &address);
-  bool         ShouldGenerateBlock(Block const &previous, Address const &address);
+  bool         ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool         ShouldTriggerNewCommittee(Block const &block);
+  bool         EnoughQualSigned(BlockEntropy const &block_entropy) const;
 };
 
 }  // namespace ledger

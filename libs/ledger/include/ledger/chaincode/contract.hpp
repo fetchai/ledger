@@ -75,8 +75,6 @@ public:
   using CounterMap            = std::unordered_map<ContractName, Counter>;
   using StorageInterface      = ledger::StorageInterface;
 
-  static constexpr char const *LOGGING_NAME = "Contract";
-
   // Construction / Destruction
   Contract()                 = default;
   Contract(Contract const &) = delete;

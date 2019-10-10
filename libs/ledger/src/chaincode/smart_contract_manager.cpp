@@ -49,6 +49,8 @@ namespace {
 ConstByteArray const CONTRACT_SOURCE{"text"};
 ConstByteArray const CONTRACT_HASH{"digest"};
 
+constexpr char const *LOGGING_NAME = "SmartContractManager";
+
 }  // namespace
 
 SmartContractManager::SmartContractManager()

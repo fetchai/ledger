@@ -50,10 +50,10 @@ public:
   }
 
   // Construction / Destruction
-  Address(VM *vm, TypeId id, Ptr<String> const &address = Ptr<String>{}, bool signed_tx = false)
-    : Object(vm, id)
+  Address(VM *vm, TypeId type_id, Ptr<String> const &address = Ptr<String>{},
+          bool signed_tx = false)
+    : Object(vm, type_id)
     , signed_tx_{signed_tx}
-    , vm_{vm}
   {
     if (address && !ledger::Address::Parse(address->str.c_str(), address_))
     {
@@ -181,7 +181,7 @@ public:
   {
     if (!ledger::Address::Parse(obj.template As<byte_array::ConstByteArray>(), address_))
     {
-      vm_->RuntimeError("Unable to parse address during JSON deserialization of " + GetUniqueId() +
+      vm_->RuntimeError("Unable to parse address during JSON deserialization of " + GetTypeName() +
                         ".");
     }
     return true;
@@ -190,7 +190,6 @@ public:
 private:
   ledger::Address address_;
   bool            signed_tx_{false};
-  VM *            vm_;
 };
 
 }  // namespace vm

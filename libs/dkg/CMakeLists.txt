@@ -23,4 +23,6 @@ target_link_libraries(fetch-dkg
                              fetch-entropy
                              fetch-logging)
 
-# add_test_target() add_subdirectory(examples/)
+if (_is_clang_compiler)
+  target_compile_options(fetch-dkg PRIVATE -Wshadow)
+endif ()

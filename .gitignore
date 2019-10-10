@@ -25,6 +25,7 @@ bazel-*
 .\#*
 *~
 *.swp
+*.swo
 .idea/
 *.osm
 tags

@@ -150,7 +150,7 @@ private:
                                 ///< to take the maximum allowed value satisfying
                                 ///< threshold_ < current_cabinet_.size()
 
-  moment::ClockPtr      clock_ = moment::GetClock("muddle:pbc", moment::ClockType::STEADY);
+  moment::ClockPtr      clock_ = moment::GetClock("muddle:pbc", moment::ClockType::SYSTEM);
   moment::DeadlineTimer time_to_wait_{"muddle:pbc"};
 
   const uint8_t                                           concurrent_promises_allowed = 2;

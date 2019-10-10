@@ -122,7 +122,7 @@ VmStructuredDataArray CreateProblemData(vm::VM *vm, ProblemData const &problem_d
 
 SynergeticContract::SynergeticContract(ConstByteArray const &source)
   : digest_{Hash<SHA256>(source)}
-  , module_{VMFactory::GetModule(VMFactory::USE_SYNERGETIC)}
+  , module_{VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
 {
   // ensure the source has size
   if (source.empty())

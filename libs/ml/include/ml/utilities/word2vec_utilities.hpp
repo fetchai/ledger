@@ -57,7 +57,7 @@ std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>>
 }
 
 template <class TensorType>
-void PrintWordAnalogy(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
+void PrintWordAnalogy(dataloaders::GraphW2VLoader<TensorType> const &dl,
                       TensorType const &embeddings, std::string const &word1,
                       std::string const &word2, std::string const &word3,
                       typename TensorType::SizeType k)
@@ -92,9 +92,8 @@ void PrintWordAnalogy(dataloaders::GraphW2VLoader<typename TensorType::Type> con
 }
 
 template <class TensorType>
-void PrintKNN(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
-              TensorType const &embeddings, std::string const &word0,
-              typename TensorType::SizeType k)
+void PrintKNN(dataloaders::GraphW2VLoader<TensorType> const &dl, TensorType const &embeddings,
+              std::string const &word0, typename TensorType::SizeType k)
 {
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
@@ -122,9 +121,9 @@ void PrintKNN(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
 }
 
 template <class TensorType>
-typename TensorType::Type TestWithAnalogies(
-    dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl, TensorType const &embeddings,
-    std::string const &analogy_file, bool verbose = false)
+typename TensorType::Type TestWithAnalogies(dataloaders::GraphW2VLoader<TensorType> const &dl,
+                                            TensorType const & embeddings,
+                                            std::string const &analogy_file, bool verbose = false)
 {
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
@@ -135,7 +134,7 @@ typename TensorType::Type TestWithAnalogies(
   std::ifstream fp(analogy_file);
   if (fp.fail())
   {
-    throw std::runtime_error("Cannot open file " + analogy_file);
+    throw ml::exceptions::InvalidFile("Cannot open file " + analogy_file);
   }
 
   std::string word1;

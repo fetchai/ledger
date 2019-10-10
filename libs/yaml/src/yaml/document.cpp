@@ -1095,13 +1095,13 @@ void YamlDocument::Tokenise(ConstByteArray const &document)
       while (pos < document.size())  // detecting initial identation  && ((*(ptr + pos)==0x10) ||
                                      // (*(ptr + pos)==0x13) || (*(ptr + pos)==0x20))
       {
-        char const &c = *(ptr + pos);
+        char const &cc = *(ptr + pos);
 
-        if (c == 0x0a || c == 0x0d)
+        if (cc == 0x0a || cc == 0x0d)
         {
           ident = 0;
         }
-        else if (c == 0x20)
+        else if (cc == 0x20)
         {
           ++ident;
         }
@@ -1120,7 +1120,7 @@ void YamlDocument::Tokenise(ConstByteArray const &document)
       prevLine = line;
       while (pos < document.size())
       {
-        char const &c     = *(ptr + pos);
+        char const &cc    = *(ptr + pos);
         char const &prevC = *(ptr + pos - 1);
         words16           = reinterpret_cast<uint16_t const *>(ptr + pos);
 
@@ -1135,7 +1135,7 @@ void YamlDocument::Tokenise(ConstByteArray const &document)
           ++line;
           pos += 2;
         }
-        else if (c == 0x0a || c == 0x0d)
+        else if (cc == 0x0a || cc == 0x0d)
         {
           ident = 0;
 
@@ -1147,7 +1147,7 @@ void YamlDocument::Tokenise(ConstByteArray const &document)
           ++line;
           ++pos;
         }
-        else if (c == 0x20)
+        else if (cc == 0x20)
         {
           ++ident;
           ++pos;

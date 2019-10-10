@@ -47,12 +47,13 @@ class NetworkId;
 class MuddleRegister : public network::AbstractConnectionRegister
 {
 public:
-  using ConnectionHandle      = ConnectionHandleType;
-  using WeakConnectionPtr     = std::weak_ptr<network::AbstractConnection>;
-  using ConnectionMap         = std::unordered_map<ConnectionHandle, WeakConnectionPtr>;
-  using ConnectionMapCallback = std::function<void(ConnectionMap const &)>;
-  using ConstByteArray        = byte_array::ConstByteArray;
-  using Handle                = ConnectionHandleType;
+  using ConnectionHandle       = ConnectionHandleType;
+  using WeakConnectionPtr      = std::weak_ptr<network::AbstractConnection>;
+  using ConnectionMap          = std::unordered_map<ConnectionHandle, WeakConnectionPtr>;
+  using ConnectionMapCallback  = std::function<void(ConnectionMap const &)>;
+  using ConstByteArray         = byte_array::ConstByteArray;
+  using Handle                 = ConnectionHandleType;
+  using ConnectionLeftCallback = std::function<void(Handle)>;
 
   enum class UpdateStatus
   {
@@ -86,7 +87,7 @@ public:
   MuddleRegister &operator=(MuddleRegister const &) = delete;
   MuddleRegister &operator=(MuddleRegister &&) = delete;
 
-  void              AttachRouter(Router &router);
+  void              OnConnectionLeft(ConnectionLeftCallback cb);
   void              Broadcast(ConstByteArray const &data) const;
   WeakConnectionPtr LookupConnection(ConnectionHandle handle) const;
   WeakConnectionPtr LookupConnection(Address const &address) const;
@@ -115,11 +116,10 @@ private:
   std::string const name_;
   char const *const logging_name_{name_.c_str()};
 
-  std::atomic<Router *> router_{nullptr};
-
-  mutable Mutex lock_;
-  HandleIndex   handle_index_;
-  AddressIndex  address_index_;
+  mutable Mutex          lock_;
+  ConnectionLeftCallback left_callback_;
+  HandleIndex            handle_index_;
+  AddressIndex           address_index_;
 };
 
 }  // namespace muddle

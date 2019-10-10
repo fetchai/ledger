@@ -22,6 +22,10 @@ target_link_libraries(fetch-beacon
                              fetch-dkg
                              fetch-ledger)
 
+if (_is_clang_compiler)
+  target_compile_options(fetch-beacon PRIVATE -Wshadow)
+endif ()
+
 # Test targets
 add_test_target()
 add_subdirectory(benchmark)

@@ -217,11 +217,11 @@ TYPED_TEST(EmbeddingsTest, saveparams_backward)
 
   fetch::ml::ops::Embeddings<TypeParam> op(6, 10);
   TypeParam                             weights(std::vector<uint64_t>({6, 10}));
-  for (DataType i{0}; i < 10; ++i)
+  for (uint32_t i{0}; i < 10; ++i)
   {
-    for (DataType j{0}; j < 6; ++j)
+    for (uint32_t j{0}; j < 6; ++j)
     {
-      weights(j, i) = DataType{i * 10 + j};
+      weights(j, i) = static_cast<DataType>(i * 10 + j);
     }
   }
 
@@ -235,11 +235,11 @@ TYPED_TEST(EmbeddingsTest, saveparams_backward)
   op.Forward({std::make_shared<TypeParam>(input)}, output);
 
   TensorType error_signal(std::vector<uint64_t>({6, 2, 1}));
-  for (DataType j{0}; j < 2; ++j)
+  for (uint32_t j{0}; j < 2; ++j)
   {
-    for (DataType k{0}; k < 6; ++k)
+    for (uint32_t k{0}; k < 6; ++k)
     {
-      error_signal(k, j, 0) = DataType{j * 6 + k};
+      error_signal(k, j, 0) = static_cast<DataType>(j * 6 + k);
     }
   }
 

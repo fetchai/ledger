@@ -88,9 +88,10 @@ struct BeaconSelfContained
                     uint32_t round_start, uint32_t round_end, BlockEntropy const &entropy,
                     DkgOutput const &output)
   {
-    beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2 + 1),
-                                   round_start, round_end,
-                                   static_cast<uint64_t>(std::time(nullptr)), entropy, output);
+    beacon_service.StartNewCabinet(
+        cabinet, static_cast<uint32_t>(cabinet.size() / 2 + 1), round_start, round_end,
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)), entropy,
+        output);
   }
 
   muddle::Address GetMuddleAddress() const

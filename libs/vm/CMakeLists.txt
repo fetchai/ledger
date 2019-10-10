@@ -22,3 +22,8 @@ target_link_libraries(fetch-vm
                              fetch-variant
                              fetch-address
                              fetch-logging)
+if (_is_clang_compiler)
+  target_compile_options(fetch-vm PRIVATE -Wshadow)
+endif ()
+
+add_test_target()

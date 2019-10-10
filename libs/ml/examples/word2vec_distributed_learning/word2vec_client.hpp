@@ -33,7 +33,7 @@ inline std::string ReadFile(std::string const &path)
   std::ifstream t(path);
   if (t.fail())
   {
-    throw std::runtime_error("Cannot open file " + path);
+    throw ml::exceptions::InvalidFile("Cannot open file " + path);
   }
 
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
@@ -70,9 +70,9 @@ public:
                                                      const byte_array::ConstByteArray &vocab_hash);
 
 private:
-  W2VTrainingParams<DataType>                                       tp_;
-  std::string                                                       skipgram_;
-  std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<DataType>> w2v_data_loader_ptr_;
+  W2VTrainingParams<DataType>                                         tp_;
+  std::string                                                         skipgram_;
+  std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<TensorType>> w2v_data_loader_ptr_;
 
   Translator translator_;
 
@@ -127,7 +127,7 @@ void Word2VecClient<TensorType>::PrepareModel()
 template <class TensorType>
 void Word2VecClient<TensorType>::PrepareDataLoader()
 {
-  w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
+  w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<TensorType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
   w2v_data_loader_ptr_->BuildVocabAndData({tp_.data}, tp_.min_count);
 

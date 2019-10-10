@@ -39,11 +39,6 @@ using shards::ServiceIdentifier;
 
 char const *ToString(BeaconSetupService::State state);
 
-uint64_t GetTime()
-{
-  return static_cast<uint64_t>(std::time(nullptr));
-}
-
 // Convenience factory to set up the RBC/PBC
 BeaconSetupService::ReliableChannelPtr BeaconSetupService::ReliableBroadcastFactory()
 {
@@ -371,7 +366,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
                    seconds_for_state_);
   }
 
@@ -419,7 +414,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
                    seconds_for_state_);
   }
 
@@ -444,7 +439,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
                    seconds_for_state_);
   }
 
@@ -475,7 +470,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
                    seconds_for_state_);
   }
 
@@ -514,7 +509,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
                    seconds_for_state_);
   }
 
@@ -539,7 +534,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
                    seconds_for_state_);
   }
 
@@ -599,7 +594,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
   if (timer_to_proceed_.HasExpired() || received_count == remaining_honest.size() - 1)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
                    seconds_for_state_);
 
     // Process reconstruction shares. Reconstruction shares from non-qual members
@@ -1387,7 +1382,8 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
  */
 void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 {
-  uint64_t current_time = GetTime();
+  uint64_t current_time = GetTime(system_clock_);
+
   FETCH_LOG_INFO(LOGGING_NAME, "Determining time allowed to move on from state: \"",
                  ToString(state), "\" at ", current_time);
   condition_to_proceed_ = false;
