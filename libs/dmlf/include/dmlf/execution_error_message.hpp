@@ -27,9 +27,6 @@ namespace dmlf {
 
 class ExecutionErrorMessage
 {
-  template <typename T, typename D>
-  friend struct serializers::MapSerializer;
-
 public:
   enum class Stage : uint32_t
   {
@@ -73,11 +70,13 @@ public:
     return message_;
   }
 
-protected:
 private:
   Stage       stage_;
   Code        code_;
   std::string message_;
+
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 };
 
 }  // namespace dmlf

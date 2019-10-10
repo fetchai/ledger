@@ -27,9 +27,6 @@ namespace dmlf {
 
 class ExecutionResult
 {
-  template <typename T, typename D>
-  friend struct serializers::MapSerializer;
-
 public:
   using Variant = fetch::vm::Variant;
   using Error   = ExecutionErrorMessage;
@@ -55,11 +52,13 @@ public:
     return console_;
   }
 
-protected:
 private:
   Variant     output_;
   Error       error_;
   std::string console_;
+
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 };
 
 }  // namespace dmlf
