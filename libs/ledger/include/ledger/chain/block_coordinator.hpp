@@ -191,7 +191,7 @@ public:
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, ProverPtr const &prover, std::size_t num_lanes,
                    std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus,
-                   NotarisationPtr notarisation);
+                   NotarisationPtr notarisation = nullptr);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;

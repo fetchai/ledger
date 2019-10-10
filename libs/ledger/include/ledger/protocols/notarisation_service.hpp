@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/aeon.hpp"
 #include "core/state_machine.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/consensus/consensus.hpp"
 #include "ledger/protocols/notarisation_protocol.hpp"
-
-#include "beacon/aeon.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "muddle/rpc/server.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -45,22 +45,26 @@ public:
     COMPLETE
   };
 
-  using BeaconManager = dkg::BeaconManager;
-  // using BeaconServicePtr = std::shared_ptr<beacon::BeaconService>;
-  using Block                   = ledger::Block;
-  using BlockHash               = Block::Hash;
-  using StateMachine            = core::StateMachine<State>;
-  using Identity                = Block::Identity;
-  using BlockBody               = Block::Body;
-  using BlockHeight             = uint64_t;
-  using MuddleInterface         = muddle::MuddleInterface;
-  using Endpoint                = muddle::MuddleEndpoint;
-  using Server                  = fetch::muddle::rpc::Server;
-  using ServerPtr               = std::shared_ptr<Server>;
-  using AeonExecutionUnit       = beacon::AeonExecutionUnit;
-  using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
-  using Signature               = crypto::mcl::Signature;
-  using NotarisationInformation = std::unordered_map<BeaconManager::MuddleAddress, Signature>;
+  using BeaconManager                 = dkg::BeaconManager;
+  using Block                         = ledger::Block;
+  using BlockHash                     = Block::Hash;
+  using StateMachine                  = core::StateMachine<State>;
+  using Identity                      = Block::Identity;
+  using BlockBody                     = Block::Body;
+  using BlockHeight                   = uint64_t;
+  using MuddleInterface               = muddle::MuddleInterface;
+  using Endpoint                      = muddle::MuddleEndpoint;
+  using Server                        = fetch::muddle::rpc::Server;
+  using ServerPtr                     = std::shared_ptr<Server>;
+  using AeonExecutionUnit             = beacon::AeonExecutionUnit;
+  using SharedAeonExecutionUnit       = std::shared_ptr<AeonExecutionUnit>;
+  using Signature                     = crypto::mcl::Signature;
+  using NotarisationInformation       = std::unordered_map<BeaconManager::MuddleAddress, Signature>;
+  using CallbackFunction              = std::function<void(BlockHash)>;
+  using BlockNotarisationShares       = std::unordered_map<BlockHash, NotarisationInformation>;
+  using BlockHeightNotarisationShares = std::map<BlockHeight, BlockNotarisationShares>;
+  using BlockHeightGroupNotarisations =
+      std::map<BlockHeight, std::unordered_map<BlockHash, Signature>>;
 
   NotarisationService()                            = delete;
   NotarisationService(NotarisationService const &) = delete;
@@ -78,39 +82,54 @@ public:
 
   /// Protocol endpoints
   /// @{
-  std::unordered_map<BlockHash, NotarisationInformation> GetNotarisations(
-      BlockHeight const &height);
+  BlockNotarisationShares GetNotarisations(BlockHeight const &height);
   /// @}
 
-  void                                       NotariseBlock(BlockBody const &block);
+  /// Setup management
+  /// @{
+  void NewAeonExeUnit(SharedAeonExecutionUnit const &keys);
+  void SetNotarisedBlockCallback(CallbackFunction callback);
+  /// @}
+
+  /// Call to notarise block
+  /// @{
+  void NotariseBlock(BlockBody const &block);
+  /// @}
+
+  /// Helper function
+  /// @{
+  uint64_t NextBlockHeight();
+  /// @}
+
   std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
 
 private:
-  Endpoint &endpoint_;
-
-  ServerPtr           rpc_server_{nullptr};
-  muddle::rpc::Client rpc_client_;
-
+  /// Networking
+  Endpoint &                  endpoint_;
+  ServerPtr                   rpc_server_{nullptr};
+  muddle::rpc::Client         rpc_client_;
   NotarisationServiceProtocol notarisation_protocol_;
+  service::Promise            notarisation_promise_;
 
-  std::mutex                          mutex_;
+  std::mutex                    mutex_;
+  std::shared_ptr<StateMachine> state_machine_;
+
+  /// Management of active DKG keys
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
   SharedAeonExecutionUnit             active_exe_unit_;
 
-  std::map<BlockHeight, std::unordered_map<BlockHash, NotarisationInformation>>
-                                                                  notarisations_being_built_;
-  std::map<BlockHeight, std::unordered_map<BlockHash, Signature>> notarisations_built_;
-  service::Promise                                                notarisation_promise_;
+  /// Notarisations
+  BlockHeightNotarisationShares
+      notarisations_being_built_;  ///< Signature shares for blocks at a particular height
+  BlockHeightGroupNotarisations
+      notarisations_built_;  ///< Group signatures for blocks at a particular height
+  std::unordered_map<BlockHeight, uint32_t>
+           previous_notarisation_rank_;  ///< Heighest rank notarised at a particular block height
+  uint64_t highest_notarised_block_height_{UINT64_MAX};  ///< Current highest notarised block height
+  static const uint32_t cutoff = 2;                      ///< Number of blocks behind
 
-  std::unordered_map<BlockHeight, uint32_t> previous_notarisation_rank_;
-  uint64_t                                  highest_notarised_block_height_{0};
-  static const uint32_t                     cutoff = 2;  // Number of blocks behind
-
-  std::shared_ptr<StateMachine> state_machine_;
+  CallbackFunction callback_;  ///< Callback for new block notarisation
 };
-}  // namespace ledger
 
-namespace serializers {
-// TODO(JMW): Serialisers for the notarisations
-}
+}  // namespace ledger
 }  // namespace fetch
