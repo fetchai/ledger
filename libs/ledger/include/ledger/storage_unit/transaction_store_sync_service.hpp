@@ -177,7 +177,6 @@ private:
   telemetry::CounterPtr subtree_requests_total_;
   telemetry::CounterPtr subtree_response_total_;
   telemetry::CounterPtr subtree_failure_total_;
-  telemetry::CounterPtr subtree_timeout_total_;
 };
 
 }  // namespace ledger
