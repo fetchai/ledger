@@ -557,9 +557,9 @@ TEST_F(MLTests, sequential_model_test)
 
 //      // set up a model
 //      var model = Model("sequential");
-//      model.add("dense", 10, "relu");
-//      model.add("dense", 10, "relu");
-//      model.add("dense", 1);
+//      model.add("dense", 10, 10, "relu");
+//      model.add("dense", 10, 10, "relu");
+//      model.add("dense", 10, 1);
 //      model.compile("mse", "adam");
 //
 //      // train the model

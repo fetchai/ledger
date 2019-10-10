@@ -17,12 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
 namespace vm_modules {
 namespace math {
 
+using SizeType = fetch::math::SizeType;
+using SizeVector = fetch::math::SizeVector;
 using DataType = fetch::fixed_point::fp64_t;
 
 }  // namespace math

@@ -52,13 +52,13 @@ public:
                                                        fetch::vm::TypeId type_id);
 
   void LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                fetch::vm::Ptr<fetch::vm::String> const &inputs,
-                fetch::vm::Ptr<fetch::vm::String> const &hidden_nodes);
+                math::SizeType const &inputs,
+                math::SizeType const &hidden_nodes);
 
   void Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
                fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
-  void Fit(fetch::vm::Ptr<VMTensor> const &data, fetch::vm::Ptr<VMTensor> const &labels,
+  void Fit(vm::Ptr<vm::Array<vm::Array<TensorType>>> const &data, fetch::vm::Ptr<vm::Array<TensorType>> const &labels,
            fetch::math::SizeType batch_size);
 
   void Evaluate();

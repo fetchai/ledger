@@ -66,11 +66,11 @@ public:
   void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
   void SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr);
 
-  void Train();
-  void Train(SizeType n_rounds);
-  void Train(SizeType n_rounds, DataType &loss);
-  void Test(DataType &test_loss);
-  void Predict(TensorType &input, TensorType &output);
+  void     Train();
+  void     Train(SizeType n_rounds);
+  void     Train(SizeType n_rounds, DataType &loss);
+  void     Test(DataType &test_loss);
+  void     Predict(TensorType &input, TensorType &output);
   DataType Evaluate(std::vector<MetricType> const &metrics = std::vector<MetricType>());
 
   void UpdateConfig(ModelConfig<DataType> &model_config);
@@ -185,7 +185,7 @@ void Model<TensorType>::SetDataloader(std::unique_ptr<DataLoaderType> dataloader
 template <typename TensorType>
 void Model<TensorType>::Train()
 {
-  model_config_.subset_size == fetch::ml::optimisers::SIZE_NOT_SET;
+  model_config_.subset_size = fetch::ml::optimisers::SIZE_NOT_SET;
   DataType _;
   Model<TensorType>::TrainImplementation(_);
 }
@@ -243,12 +243,12 @@ void Model<TensorType>::Predict(TensorType &input, TensorType &output)
 }
 
 template <typename TensorType>
-typename Model<TensorType>::DataType Model<TensorType>::Evaluate(std::vector<MetricType> const &metrics)
+typename Model<TensorType>::DataType Model<TensorType>::Evaluate(
+    std::vector<MetricType> const &metrics)
 {
   FETCH_UNUSED(metrics);
   return loss_;
 }
-
 
 template <typename TensorType>
 void Model<TensorType>::UpdateConfig(ModelConfig<DataType> &model_config)
@@ -280,14 +280,15 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
 
-  loss_               = DataType{0};
+  loss_              = DataType{0};
   DataType min_loss  = fetch::math::numeric_max<DataType>();
   DataType test_loss = fetch::math::numeric_max<DataType>();
   SizeType patience_count{0};
   bool     stop_early = false;
 
   // run for one subset - if this is not set it defaults to epoch
-  loss_ = optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
+  loss_ =
+      optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
   min_loss = loss_;
 
   // run for remaining epochs (or subsets) with early stopping
