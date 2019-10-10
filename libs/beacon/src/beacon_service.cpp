@@ -340,8 +340,17 @@ BeaconService::State BeaconService::OnCompleteState()
   beacon_entropy_last_generated_->set(index);
   beacon_entropy_generated_total_->add(1);
 
-  // Populate the block entropy structure appropriately TODO(HUT): this.
-  // block_entropy_being_created_->group_signature = active_exe_unit_->manager.GroupSignature();
+  // Populate the block entropy structure appropriately
+  block_entropy_being_created_->group_signature =
+      active_exe_unit_->manager.GroupSignature().getStr();
+
+  // Check when in debug mode that the block entropy signing has gone correctly
+  if (!dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
+                                  block_entropy_previous_->EntropyAsSHA256(),
+                                  block_entropy_being_created_->group_signature))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify freshly signed entropy!");
+  }
 
   // Save it for querying
   completed_block_entropy_[index] = block_entropy_being_created_;
@@ -351,6 +360,7 @@ BeaconService::State BeaconService::OnCompleteState()
   {
     block_entropy_previous_                    = std::move(block_entropy_being_created_);
     block_entropy_being_created_               = std::make_shared<BlockEntropy>();
+    *block_entropy_being_created_              = *block_entropy_previous_;
     block_entropy_being_created_->block_number = block_entropy_previous_->block_number + 1;
 
     return State::PREPARE_ENTROPY_GENERATION;
