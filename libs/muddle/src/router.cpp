@@ -843,7 +843,8 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
 
       auto const packet_hash = crypto::Hash<crypto::SHA256>(packet->GetPayload());
 
-      if (recently_routed_.find(packet_hash) != recently_routed_.end())
+      if (std::find(recently_routed_.begin(), recently_routed_.end(), packet_hash) !=
+          recently_routed_.end())
       {
         FETCH_LOG_WARN(logging_name_,
                        "Dropping duplicate packet! To: ", ToBase64(packet->GetTarget()),
