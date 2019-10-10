@@ -70,6 +70,11 @@ public:
     value_frozen_ = new_frozen_state;
   }
 
+  bool GetFrozenState() const
+  {
+    return value_frozen_;
+  }
+
 protected:
   RegPtrType regulariser_;
   DataType   regularisation_rate_ = static_cast<DataType>(0);

@@ -60,7 +60,7 @@ class Variable : public DataHolder<T>, public Trainable<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeTypve;
+  using SizeType      = typename TensorType::SizeType;
   using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpVariableSaveableParams<TensorType>;
