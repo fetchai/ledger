@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
+#include "json/document.hpp"
 #include "core/service_ids.hpp"
 #include "dmlf/networkers/muddle_learner_networker.hpp"
 #include "dmlf/update_interface.hpp"
