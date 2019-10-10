@@ -187,7 +187,7 @@ public:
   // Construction / Destruction
   BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                   BlockSinkInterface &block_sink, ProverPtr const &prover, std::size_t num_lanes,
+                   BlockSinkInterface &block_sink, ProverPtr prover, std::size_t num_lanes,
                    std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
@@ -326,6 +326,7 @@ private:
 
   /// @name State Machine State
   /// @{
+  ProverPtr       certificate_;             ///< The miners identity
   Address         mining_address_;          ///< The miners address
   StateMachinePtr state_machine_;           ///< The main state machine for this service
   std::size_t     block_difficulty_;        ///< The number of leading zeros needed in the proof

@@ -138,13 +138,17 @@ void RMSPropOptimiser<T>::ApplyGradients(SizeType batch_size)
     fetch::math::Multiply(
         *gradient_it, (-this->learning_rate_) / (static_cast<DataType>(batch_size)), *gradient_it);
 
-    // Apply gradient weights[i]+=output_grad[i]
-    (*trainable_it)->ApplyGradient(*gradient_it);
+    // we need to explicitly reset the gradients for this shared op to avoid double counting
+    // in the case of shared ops
+    (*trainable_it)->ResetGradients();
 
     ++cached_weight_it;
     ++gradient_it;
     ++trainable_it;
   }
+
+  // calling apply gradients on the graph ensures that the node caches are reset properly
+  this->graph_->ApplyGradients(this->gradients_);
 }
 
 template <class T>
