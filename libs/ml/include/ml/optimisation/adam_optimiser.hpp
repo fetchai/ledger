@@ -176,8 +176,9 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
     fetch::math::Divide(*mt_it, *gradient_it, *gradient_it);
     fetch::math::Multiply(*gradient_it, -this->learning_rate_, *gradient_it);
 
-    // Apply gradient weights[i]+=output_gradients[i]
-    (*trainable_it)->ApplyGradient(*gradient_it);
+    // we need to explicitly reset the gradients for this shared op to avoid double counting
+    // in the case of shared ops
+    (*trainable_it)->ResetGradients();
 
     ++cached_weight_it;
     ++momentum_it;
@@ -187,6 +188,9 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
     ++gradient_it;
     ++trainable_it;
   }
+
+  // calling apply gradients on the graph ensures that the node caches are reset properly
+  this->graph_->ApplyGradients(this->gradients_);
 }
 
 template <class T>

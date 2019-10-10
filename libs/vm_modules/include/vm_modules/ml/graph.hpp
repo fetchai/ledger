@@ -78,6 +78,9 @@ public:
   void AddDropout(fetch::vm::Ptr<fetch::vm::String> const &name,
                   fetch::vm::Ptr<fetch::vm::String> const &input_name, DataType const &prob);
 
+  void AddTranspose(fetch::vm::Ptr<fetch::vm::String> const &name,
+                    fetch::vm::Ptr<fetch::vm::String> const &input_name);
+
   void LoadStateDict(fetch::vm::Ptr<VMStateDict> const &sd);
 
   fetch::vm::Ptr<VMStateDict> StateDict();
