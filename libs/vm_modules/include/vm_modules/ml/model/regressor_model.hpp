@@ -41,60 +41,61 @@ public:
 
   VMSequentialModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
-  static fetch::vm::Ptr<VMSequentialModel> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
+  static fetch::vm::Ptr<VMSequentialModel> Constructor(fetch::vm::VM *   vm,
+                                                       fetch::vm::TypeId type_id);
 
-//  void SetInput(fetch::vm::Ptr<fetch::vm::String> const &                name,
-//                fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &input);
-//
-//  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> Evaluate(
-//      fetch::vm::Ptr<fetch::vm::String> const &name);
-//
-//  void BackPropagate(fetch::vm::Ptr<fetch::vm::String> const &name);
-//
-//  void Step(DataType const &lr);
-//
-//  void AddPlaceholder(fetch::vm::Ptr<fetch::vm::String> const &name);
-//
-//  void AddFullyConnected(fetch::vm::Ptr<fetch::vm::String> const &name,
-//                         fetch::vm::Ptr<fetch::vm::String> const &input_name, int in, int out);
-//
-//  void AddConv1D(fetch::vm::Ptr<fetch::vm::String> const &name,
-//                 fetch::vm::Ptr<fetch::vm::String> const &input_name, int filters, int in_channels,
-//                 int kernel_size, int stride_size);
-//
-//  void AddRelu(fetch::vm::Ptr<fetch::vm::String> const &name,
-//               fetch::vm::Ptr<fetch::vm::String> const &input_name);
-//
-//  void AddSoftmax(fetch::vm::Ptr<fetch::vm::String> const &name,
-//                  fetch::vm::Ptr<fetch::vm::String> const &input_name);
-//
-//  void AddCrossEntropyLoss(fetch::vm::Ptr<fetch::vm::String> const &name,
-//                           fetch::vm::Ptr<fetch::vm::String> const &input_name,
-//                           fetch::vm::Ptr<fetch::vm::String> const &label_name);
-//
-//  void AddMeanSquareErrorLoss(fetch::vm::Ptr<fetch::vm::String> const &name,
-//                              fetch::vm::Ptr<fetch::vm::String> const &input_name,
-//                              fetch::vm::Ptr<fetch::vm::String> const &label_name);
-//
-//  void AddDropout(fetch::vm::Ptr<fetch::vm::String> const &name,
-//                  fetch::vm::Ptr<fetch::vm::String> const &input_name, DataType const &prob);
-//
-//  void LoadStateDict(fetch::vm::Ptr<VMStateDict> const &sd);
-//
-//  fetch::vm::Ptr<VMStateDict> StateDict();
-//
-//  static void Bind(fetch::vm::Module &module);
-//
-//  GraphType &GetGraph();
-//
-//  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
-//
-//  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
-//
-//  fetch::vm::Ptr<fetch::vm::String> SerializeToString();
-//
-//  fetch::vm::Ptr<VMSequentialModel> DeserializeFromString(
-//      fetch::vm::Ptr<fetch::vm::String> const &graph_string);
+  //  void SetInput(fetch::vm::Ptr<fetch::vm::String> const &                name,
+  //                fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &input);
+  //
+  //  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> Evaluate(
+  //      fetch::vm::Ptr<fetch::vm::String> const &name);
+  //
+  //  void BackPropagate(fetch::vm::Ptr<fetch::vm::String> const &name);
+  //
+  //  void Step(DataType const &lr);
+  //
+  //  void AddPlaceholder(fetch::vm::Ptr<fetch::vm::String> const &name);
+  //
+  //  void AddFullyConnected(fetch::vm::Ptr<fetch::vm::String> const &name,
+  //                         fetch::vm::Ptr<fetch::vm::String> const &input_name, int in, int out);
+  //
+  //  void AddConv1D(fetch::vm::Ptr<fetch::vm::String> const &name,
+  //                 fetch::vm::Ptr<fetch::vm::String> const &input_name, int filters, int
+  //                 in_channels, int kernel_size, int stride_size);
+  //
+  //  void AddRelu(fetch::vm::Ptr<fetch::vm::String> const &name,
+  //               fetch::vm::Ptr<fetch::vm::String> const &input_name);
+  //
+  //  void AddSoftmax(fetch::vm::Ptr<fetch::vm::String> const &name,
+  //                  fetch::vm::Ptr<fetch::vm::String> const &input_name);
+  //
+  //  void AddCrossEntropyLoss(fetch::vm::Ptr<fetch::vm::String> const &name,
+  //                           fetch::vm::Ptr<fetch::vm::String> const &input_name,
+  //                           fetch::vm::Ptr<fetch::vm::String> const &label_name);
+  //
+  //  void AddMeanSquareErrorLoss(fetch::vm::Ptr<fetch::vm::String> const &name,
+  //                              fetch::vm::Ptr<fetch::vm::String> const &input_name,
+  //                              fetch::vm::Ptr<fetch::vm::String> const &label_name);
+  //
+  //  void AddDropout(fetch::vm::Ptr<fetch::vm::String> const &name,
+  //                  fetch::vm::Ptr<fetch::vm::String> const &input_name, DataType const &prob);
+  //
+  //  void LoadStateDict(fetch::vm::Ptr<VMStateDict> const &sd);
+  //
+  //  fetch::vm::Ptr<VMStateDict> StateDict();
+  //
+  //  static void Bind(fetch::vm::Module &module);
+  //
+  //  GraphType &GetGraph();
+  //
+  //  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+  //
+  //  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+  //
+  //  fetch::vm::Ptr<fetch::vm::String> SerializeToString();
+  //
+  //  fetch::vm::Ptr<VMSequentialModel> DeserializeFromString(
+  //      fetch::vm::Ptr<fetch::vm::String> const &graph_string);
 
 private:
   ModelType model;

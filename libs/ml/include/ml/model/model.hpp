@@ -60,10 +60,13 @@ public:
   void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
   void SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr);
 
-  virtual void Train(SizeType n_steps);
-  virtual void Train(SizeType n_steps, DataType &loss);
-  virtual void Test(DataType &test_loss);
-  virtual void Predict(TensorType &input, TensorType &output);
+  void Train();
+  void Train(SizeType n_rounds);
+  void Train(SizeType n_rounds, DataType &loss);
+  void Test(DataType &test_loss);
+  void Predict(TensorType &input, TensorType &output);
+
+  void UpdateConfig(ModelConfig<DataType> &model_config);
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
@@ -87,7 +90,10 @@ protected:
                           DataType test_loss = fetch::math::numeric_max<DataType>());
 
 private:
+
   bool SetOptimiser();
+  void TrainImplementation(DataType &loss, SizeType n_rounds = 1);
+
 };
 
 template <typename TensorType>
@@ -164,21 +170,94 @@ void Model<TensorType>::SetDataloader(std::unique_ptr<DataLoaderType> dataloader
   dataloader_ptr_ = std::move(dataloader_ptr);
 }
 
+
 /**
- * An interface to train that doesn't report loss
+ * An interface to train that trains for one epoch
  * @tparam TensorType
- * @param n_steps
  * @return
  */
 template <typename TensorType>
-void Model<TensorType>::Train(SizeType n_steps)
+void Model<TensorType>::Train()
+{
+  model_config_.subset_size == fetch::ml::optimisers::SIZE_NOT_SET;
+  DataType _;
+  Model<TensorType>::TrainImplementation(_);
+}
+
+/**
+ * An interface to train that doesn't report loss
+ * @tparam TensorType
+ * @param n_rounds
+ * @return
+ */
+template <typename TensorType>
+void Model<TensorType>::Train(SizeType n_rounds)
 {
   DataType _;
-  Model<TensorType>::Train(n_steps, _);
+  Model<TensorType>::Train(n_rounds, _);
 }
 
 template <typename TensorType>
-void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
+void Model<TensorType>::Train(SizeType n_rounds, DataType &loss)
+{
+  TrainImplementation(loss, n_rounds);
+}
+
+template <typename TensorType>
+void Model<TensorType>::Test(DataType &test_loss)
+{
+  if (!compiled_)
+  {
+    throw ml::exceptions::InvalidMode("must compile model before testing");
+  }
+
+  dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TEST);
+
+  SizeType test_set_size = dataloader_ptr_->Size();
+
+  dataloader_ptr_->Reset();
+  bool is_done_set;
+  auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
+
+  this->graph_ptr_->SetInput(label_, test_pair.first);
+  this->graph_ptr_->SetInput(input_, test_pair.second.at(0));
+  test_loss = *(this->graph_ptr_->Evaluate(error_).begin());
+}
+
+template <typename TensorType>
+void Model<TensorType>::Predict(TensorType &input, TensorType &output)
+{
+  if (!compiled_)
+  {
+    throw ml::exceptions::InvalidMode("must compile model before predicting");
+  }
+
+  this->graph_ptr_->SetInput(input_, input);
+  output = this->graph_ptr_->Evaluate(output_);
+}
+
+template <typename TensorType>
+void Model<TensorType>::UpdateConfig(ModelConfig<DataType> &model_config)
+{
+  model_config_ = model_config;
+}
+
+template <typename TensorType>
+void Model<TensorType>::PrintStats(SizeType epoch, DataType loss, DataType test_loss)
+{
+  if (this->model_config_.test)
+  {
+    std::cout << "epoch: " << epoch << ", loss: " << loss << ", test loss: " << test_loss
+              << std::endl;
+  }
+  else
+  {
+    std::cout << "epoch: " << epoch << ", loss: " << loss << std::endl;
+  }
+}
+
+template <typename TensorType>
+void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
 {
   if (!compiled_)
   {
@@ -199,7 +278,8 @@ void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
 
   // run for remaining epochs (or subsets) with early stopping
   SizeType step{1};
-  while ((!stop_early) && (step < n_steps))
+
+  while ((!stop_early) && (step < n_rounds))
   {
     if (this->model_config_.print_stats)
     {
@@ -241,53 +321,7 @@ void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
 
     step++;
   }
-}
 
-template <typename TensorType>
-void Model<TensorType>::Test(DataType &test_loss)
-{
-  if (!compiled_)
-  {
-    throw ml::exceptions::InvalidMode("must compile model before testing");
-  }
-
-  dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TEST);
-
-  SizeType test_set_size = dataloader_ptr_->Size();
-
-  dataloader_ptr_->Reset();
-  bool is_done_set;
-  auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
-
-  this->graph_ptr_->SetInput(label_, test_pair.first);
-  this->graph_ptr_->SetInput(input_, test_pair.second.at(0));
-  test_loss = *(this->graph_ptr_->Evaluate(error_).begin());
-}
-
-template <typename TensorType>
-void Model<TensorType>::Predict(TensorType &input, TensorType &output)
-{
-  if (!compiled_)
-  {
-    throw ml::exceptions::InvalidMode("must compile model before predicting");
-  }
-
-  this->graph_ptr_->SetInput(input_, input);
-  output = this->graph_ptr_->Evaluate(output_);
-}
-
-template <typename TensorType>
-void Model<TensorType>::PrintStats(SizeType epoch, DataType loss, DataType test_loss)
-{
-  if (this->model_config_.test)
-  {
-    std::cout << "epoch: " << epoch << ", loss: " << loss << ", test loss: " << test_loss
-              << std::endl;
-  }
-  else
-  {
-    std::cout << "epoch: " << epoch << ", loss: " << loss << std::endl;
-  }
 }
 
 }  // namespace model

@@ -539,4 +539,40 @@ TEST_F(MLTests, graph_step_test)
 
   EXPECT_GT(loss_reduction->GetTensor().At(0, 0), 0);
 }
+
+
+TEST_F(MLTests, sequential_model_test)
+{
+  static char const *sequential_model_src = R"(
+    function main()
+
+      // set up data and labels
+      var data_shape = Array<UInt64>(2);
+      data_shape[0] = 10u64;
+      data_shape[1] = 1000u64;
+      var label_shape = Array<UInt64>(2);
+      label_shape[0] = 1u64;
+      label_shape[1] = 1000u64;
+      var data = Tensor(data_shape);
+      var label = Tensor(label_shape);
+
+//      // set up a model
+//      var model = Model("sequential");
+//      model.add("dense", 10, "relu");
+//      model.add("dense", 10, "relu");
+//      model.add("dense", 1);
+//      model.compile("mse", "adam");
+//
+//      // train the model
+//      model.fit(data, labels, 32);
+//
+//      // make a prediction
+//      var prediction = model.evaluate();
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(sequential_model_src));
+  ASSERT_TRUE(toolkit.Run());
+}
 }  // namespace

@@ -14,7 +14,7 @@ function main()
     var model = Model("sequential");
     model.add("dense", 10, "relu");
     model.add("dense", 10, "relu");
-    model.add("dense", 1, "relu");
+    model.add("dense", 1);
     model.compile("mse", "adam");
 
     // train the model
