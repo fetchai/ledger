@@ -29,14 +29,9 @@ class AdjustableClock : public AdjustableClockInterface
 public:
   /// @name Adjustable Clock Interface
   /// @{
-  TimestampChrono NowChrono() const override
+  Timestamp Now() const override
   {
-    return clock_.NowChrono() + offset_;
-  }
-
-  TimestampSystem NowSystem() const override
-  {
-    return {};
+    return clock_.Now() + offset_;
   }
 
   void AddOffset(Duration const &duration) override
