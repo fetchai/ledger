@@ -186,8 +186,7 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 template <class TensorType>
 void Word2VecClient<TensorType>::Test()
 {
-  return;
-  if (this->batch_counter_ % tp_.test_frequency == 1)
+  if (this->batch_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
   {
     TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);
   }

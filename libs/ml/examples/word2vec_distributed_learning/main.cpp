@@ -94,6 +94,7 @@ int main(int argc, char **argv)
   client_params.embedding_size       = 100;               // dimension of embedding vec
   client_params.starting_learning_rate_per_sample =
       DataType{0.0025f};  // these are the learning rates we have for each sample
+  client_params.test_frequency = 1000;
 
   client_params.k     = 20;       // how many nearest neighbours to compare against
   client_params.word0 = "three";  // test word to consider
@@ -158,6 +159,7 @@ int main(int argc, char **argv)
   // Main loop
   for (SizeType it(0); it < number_of_rounds; ++it)
   {
+
     // Start all clients
     coordinator->Reset();
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
