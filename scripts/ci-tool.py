@@ -307,6 +307,32 @@ def test_language(build_root):
     subprocess.check_call(cmd)
 
 
+def run_sccache_server(sccache_path):
+    cmd = [
+        sccache_path,
+    ]
+    env = {
+        'SCCACHE_START_SERVER': '1',
+        'SCCACHE_NO_DAEMON': '1',
+        'RUST_LOG': 'info',
+    }
+
+    # pull in local sccache configuration
+    for key, value in os.environ.items():
+        if key.startswith('SCCACHE'):
+            env[key] = value
+
+    print('sccache Server Config:', env)
+
+    with open('sccache.log', 'w') as sccache_log:
+        subprocess.check_call(cmd, env=env, stdout=sccache_log, stderr=subprocess.STDOUT)
+
+
+def stop_sscache_server(sccache_path):
+    cmd = [sccache_path, '--stop-server']
+    subprocess.call(cmd)
+
+
 def main():
     # parse the options from the command line
     args = parse_commandline()
@@ -328,6 +354,17 @@ def main():
 
     # attempt to detect the sccache path on the system
     sccache_path = shutil.which('sccache')
+    print('SCCACHE_PATH', sccache_path)
+
+    if sccache_path:
+        t = threading.Thread(target=run_sccache_server, args=(sccache_path,))
+        t.daemon = True
+        t.start()
+
+        time.sleep(5)
+
+        # print out the stats
+        subprocess.check_call([sccache_path, '-s'])
 
     if args.build or args.lint or args.all:
         # choose the generater initially based on what already exists there
@@ -393,6 +430,17 @@ def main():
 
     if sccache_path:
         subprocess.check_call([sccache_path, '-s'])
+
+        # stop the server
+        stop_sscache_server(sccache_path)
+
+        # wait for the process to send
+        t.join()
+
+        print('SCCACHE_LOG:')
+        with open('sccache.log', 'r') as sccache_log:
+            for line in sccache_log:
+                print(line.strip())
 
 
 if __name__ == '__main__':
