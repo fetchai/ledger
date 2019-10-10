@@ -142,7 +142,7 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSubtree(
     byte_array::ConstByteArray const &rid, uint64_t bit_count)
 {
   telemetry::FunctionTimer telemetry_timer{*pull_subtree_histogram_};
-  generics::MilliTimer timer("ObjectSync:PullSubtree", 500);
+  generics::MilliTimer     timer("ObjectSync:PullSubtree", 500);
   return store_->PullSubtree(rid, bit_count, PULL_LIMIT_);
 }
 
@@ -154,7 +154,7 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(
 
   {
     telemetry::FunctionTimer telemetry_timer{*pull_objects_histogram_};
-    generics::MilliTimer timer("ObjectSync:PullObjects", 500);
+    generics::MilliTimer     timer("ObjectSync:PullObjects", 500);
     FETCH_LOCK(cache_mutex_);
 
     if (!cache_.empty())
@@ -179,7 +179,7 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSpecific
     std::vector<storage::ResourceID> const &rids)
 {
   telemetry::FunctionTimer telemetry_timer{*pull_specific_histogram_};
-  generics::MilliTimer timer("ObjectSync:PullSpecificObjects", 500);
+  generics::MilliTimer     timer("ObjectSync:PullSpecificObjects", 500);
 
   TxArray     ret;
   Transaction tx;

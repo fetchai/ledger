@@ -85,12 +85,12 @@ public:
   Counters Resolve();
   Counters Resolve(Timepoint const &time_point);
 
-  bool     HasCompletedPromises() const;
-  bool     HasFailedPromises() const;
-  void     DiscardFailures();
-  void     DiscardCompleted();
-  bool     Empty() const;
-  uint64_t Size() const;
+  bool        HasCompletedPromises() const;
+  bool        HasFailedPromises() const;
+  void        DiscardFailures();
+  void        DiscardCompleted();
+  bool        Empty() const;
+  uint64_t    Size() const;
   std::size_t GetNumPending() const;
 
   // Operators

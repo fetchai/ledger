@@ -86,7 +86,6 @@ public:
   using LaneControllerPtr     = std::shared_ptr<LaneController>;
   using TxFinderProtocolPtr   = std::shared_ptr<TxFinderProtocol>;
 
-
   static constexpr char const *LOGGING_NAME = "TransactionStoreSyncService";
   static constexpr std::size_t MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE = 128;
   static constexpr std::size_t MAX_SUBTREE_RESOLUTION_PER_CYCLE      = 128;
@@ -172,7 +171,7 @@ private:
   std::atomic_bool is_ready_{false};
 
   // telemetry
-  telemetry::CounterPtr  stored_transactions_;
+  telemetry::CounterPtr stored_transactions_;
   telemetry::CounterPtr resolve_count_failures_;
   telemetry::CounterPtr subtree_requests_total_;
   telemetry::CounterPtr subtree_response_total_;

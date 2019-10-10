@@ -172,10 +172,10 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
 
   // update the last block hash
   summary_.Apply([&block](Summary &summary) {
-    summary.last_block_hash = block.hash;
+    summary.last_block_hash  = block.hash;
     summary.last_block_miner = block.miner;
   });
-  num_slices_       = block.slices.size();
+  num_slices_ = block.slices.size();
 
   // update the state otherwise there is a race between when the executor thread wakes up
   state_.Set(State::ACTIVE);
@@ -341,17 +341,13 @@ void ExecutionManager::Stop()
 
 void ExecutionManager::SetLastProcessedBlock(Digest hash)
 {
-  summary_.Apply([&hash](Summary &summary) {
-    summary.last_block_hash = std::move(hash);
-  });
+  summary_.Apply([&hash](Summary &summary) { summary.last_block_hash = std::move(hash); });
 }
 
 Digest ExecutionManager::LastProcessedBlock()
 {
   Digest last_processed_block{};
-  summary_.Apply([&](Summary const &summary) {
-    last_processed_block = summary.last_block_hash;
-  });
+  summary_.Apply([&](Summary const &summary) { last_processed_block = summary.last_block_hash; });
   return last_processed_block;
 }
 
@@ -431,9 +427,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
       }
 
       state_.Set(State::ACTIVE);
-      summary_.Apply([&current_block](Summary const &summary) {
-        current_block = summary.last_block_hash;
-      });
+      summary_.Apply(
+          [&current_block](Summary const &summary) { current_block = summary.last_block_hash; });
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Active");
 
