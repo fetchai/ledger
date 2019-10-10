@@ -17,5 +17,9 @@ setup_compiler()
 setup_library(fetch-muddle)
 target_link_libraries(fetch-muddle PUBLIC fetch-network fetch-moment)
 
+if (_is_clang_compiler)
+  target_compile_options(fetch-muddle PRIVATE -Wshadow)
+endif ()
+
 # Unit tests
 add_subdirectory(tests)

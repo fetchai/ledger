@@ -17,27 +17,42 @@
 //
 //------------------------------------------------------------------------------
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wpedantic"
-#pragma GCC diagnostic ignored "-Wmacro-redefined"
-#endif
+#include "dmlf/execution_error_message.hpp"
+#include "vm/variant.hpp"
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#pragma clang diagnostic ignored "-Wpedantic"
-#pragma clang diagnostic ignored "-Wmacro-redefined"
-#pragma clang diagnostic ignored "-Wshadow"
-#endif
+namespace fetch {
+namespace dmlf {
 
-#include "mcl/bn256.hpp"
+class ExecutionResult
+{
+public:
+  using Variant = fetch::vm::Variant;
+  using Error   = ExecutionErrorMessage;
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+  ExecutionResult(Variant output, Error error, std::string console)
+    : output_(output)
+    , error_(error)
+    , console_(std::move(console))
+  {}
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+  Variant output() const
+  {
+    return output_;
+  }
+  Error error() const
+  {
+    return error_;
+  }
+  std::string console() const
+  {
+    return console_;
+  }
+
+private:
+  Variant     output_;
+  Error       error_;
+  std::string console_;
+};
+
+}  // namespace dmlf
+}  // namespace fetch

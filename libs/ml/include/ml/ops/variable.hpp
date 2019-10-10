@@ -60,7 +60,7 @@ class Variable : public DataHolder<T>, public Trainable<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = typename TensorType::SizeTypve;
   using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpVariableSaveableParams<TensorType>;
@@ -127,6 +127,7 @@ public:
     if (!this->value_frozen_)
     {
       gradient_accumulation_->InlineAdd(error_signal);
+      reset_gradients_ = true;
     }
     return {error_signal};
   }
@@ -136,6 +137,7 @@ public:
     if (!this->value_frozen_)
     {
       gradient_accumulation_->InlineAdd(extern_grad);
+      reset_gradients_ = true;
     }
   }
 
@@ -151,6 +153,7 @@ public:
     if (shape_changed)
     {
       gradient_accumulation_ = std::make_shared<TensorType>(this->data_->shape());
+      reset_gradients_       = true;
       return true;
     }
     return false;
@@ -171,7 +174,11 @@ public:
    */
   void ResetGradients() override
   {
-    gradient_accumulation_->Fill(typename T::Type(0));
+    if (reset_gradients_)
+    {
+      gradient_accumulation_->Fill(typename T::Type(0));
+      reset_gradients_ = false;
+    }
   }
 
   /**
@@ -193,6 +200,7 @@ public:
   static constexpr char const *DESCRIPTOR = "Variable";
 
 protected:
+  bool               reset_gradients_ = true;
   TensorPtrType      gradient_accumulation_;
   RegularisationType regularisation_type = RegularisationType::NONE;
   DataType           regularisation_rate = fetch::math::numeric_max<DataType>();

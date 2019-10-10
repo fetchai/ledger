@@ -17,27 +17,59 @@
 //
 //------------------------------------------------------------------------------
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wpedantic"
-#pragma GCC diagnostic ignored "-Wmacro-redefined"
-#endif
+#include <string>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#pragma clang diagnostic ignored "-Wpedantic"
-#pragma clang diagnostic ignored "-Wmacro-redefined"
-#pragma clang diagnostic ignored "-Wshadow"
-#endif
+namespace fetch {
+namespace dmlf {
 
-#include "mcl/bn256.hpp"
+class ExecutionErrorMessage
+{
+public:
+  enum class Stage
+  {
+    ENGINE = 10,
+    COMPILE,
+    RUNNING,
+    NETWORK,
+  };
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+  enum class Code
+  {
+    SUCCESS = 0,
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+    BAD_TARGET = 100,
+    BAD_EXECUTABLE,
+    BAD_STATE,
+    BAD_DESTINATION,
+
+    COMPILATION_ERROR,
+    RUNTIME_ERROR
+  };
+
+  explicit ExecutionErrorMessage(Stage stage, Code code, std::string message)
+    : stage_(stage)
+    , code_(code)
+    , message_(message)
+  {}
+
+  Stage stage() const
+  {
+    return stage_;
+  }
+  Code code() const
+  {
+    return code_;
+  }
+  std::string message() const
+  {
+    return message_;
+  }
+
+private:
+  Stage       stage_;
+  Code        code_;
+  std::string message_;
+};
+
+}  // namespace dmlf
+}  // namespace fetch
