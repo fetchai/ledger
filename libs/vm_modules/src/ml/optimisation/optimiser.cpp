@@ -116,15 +116,13 @@ Ptr<VMOptimiser> VMOptimiser::Constructor(
     Ptr<fetch::vm::Array<Ptr<fetch::vm::String>>> const &input_node_names,
     Ptr<String> const &label_node_name, Ptr<String> const &output_node_names)
 {
-  std::vector<std::string> input_names;
+  auto n_elements = input_node_names->elements.size();
+  std::vector<std::string> input_names(n_elements);
 
-  auto len = static_cast<fetch::math::SizeType>(input_node_names->Count());
-
-  for (fetch::math::SizeType i{0}; i < len; i++)
+  for (fetch::math::SizeType i{0}; i < n_elements; i++)
   {
-    AnyInteger         index(i, TypeIds::UInt16);
-    TemplateParameter1 element = input_node_names->GetIndexedValue(index);
-    input_names.push_back(element.Get<fetch::vm::Ptr<fetch::vm::String>>()->str);
+    Ptr<fetch::vm::String> ptr_string = input_node_names->elements.at(i);
+    input_names.at(i) = (ptr_string)->str;
   }
 
   return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id, mode->str, graph->GetGraph(), loader,
