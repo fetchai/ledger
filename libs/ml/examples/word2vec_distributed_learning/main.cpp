@@ -36,8 +36,7 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::distributed_learning;
 
-// using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
-using DataType         = float;
+using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;
@@ -62,32 +61,6 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file,
     client_data.push_back(input_data.substr(old_pos, pos - old_pos));
   }
   return client_data;
-}
-
-void MakeVocabFile(W2VTrainingParams<DataType> const &client_params, std::string const &train_file)
-{
-  GraphW2VLoader<DataType> data_loader(client_params.window_size,
-                                       client_params.negative_sample_size,
-                                       client_params.freq_thresh, client_params.max_word_count);
-  data_loader.BuildVocabAndData({ReadFile(train_file)}, client_params.min_count, false);
-  data_loader.SaveVocab(client_params.vocab_file);
-}
-
-std::string GetStrTimestamp()
-{
-  auto now       = std::chrono::system_clock::now();
-  auto in_time_t = std::chrono::system_clock::to_time_t(now);
-
-  auto now_milliseconds =
-      std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-
-  std::stringstream ss;
-  ss << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H:%M:%S");
-
-  // add milliseconds to timestamp string
-  ss << '.' << std::setfill('0') << std::setw(3) << now_milliseconds.count();
-
-  return ss.str();
 }
 
 int main(int argc, char **argv)
@@ -146,8 +119,7 @@ int main(int argc, char **argv)
 
   std::vector<std::string> client_data = SplitTrainingData(train_file, number_of_clients);
 
-  std::vector<std::shared_ptr<Word2VecClient<TensorType>>> clients(number_of_clients);
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> raw_clients(number_of_clients);
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
 
   std::vector<std::pair<std::vector<std::string>, fetch::byte_array::ConstByteArray>> vocabs;
 
@@ -160,8 +132,7 @@ int main(int argc, char **argv)
         std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
     client->SetMaxUpdates(iterations_count);
     // TODO(1597): Replace ID with something more sensible
-    clients[i]     = client;
-    raw_clients[i] = clients[i];
+    clients[i] = client;
     vocabs.push_back(client->GetVocab());
   }
 
@@ -176,7 +147,7 @@ int main(int argc, char **argv)
   }
 
   // Give list of clients to coordinator
-  coordinator->SetClientsList(raw_clients);
+  coordinator->SetClientsList(clients);
 
   for (SizeType i(0); i < number_of_clients; ++i)
   {
@@ -205,13 +176,15 @@ int main(int argc, char **argv)
     std::ofstream lossfile("losses.csv", std::ofstream::out | std::ofstream::app);
 
     std::cout << "Test losses:";
-    lossfile << GetStrTimestamp();
+    lossfile << utilities::GetStrTimestamp();
     for (auto &c : clients)
     {
+      auto *w2v_client = dynamic_cast<Word2VecClient<TensorType> *>(c.get());
+
       std::cout << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
-                << static_cast<double>(c->analogy_score_);
+                << static_cast<double>(w2v_client->analogy_score_);
       lossfile << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
-               << static_cast<double>(c->analogy_score_);
+               << static_cast<double>(w2v_client->analogy_score_);
     }
     std::cout << std::endl;
     lossfile << std::endl;

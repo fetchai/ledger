@@ -28,6 +28,7 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/optimiser.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 
 #include <condition_variable>
 #include <fstream>
@@ -217,7 +218,6 @@ protected:
   // Print to console flag
   bool print_loss_;
 
-  std::string   GetStrTimestamp();
   TimestampType GetTimestamp();
 
   void TrainOnce();
@@ -466,25 +466,6 @@ typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::Ge
   return new_gradients;
 }
 
-// Timestamp for logging
-template <class TensorType>
-std::string TrainingClient<TensorType>::GetStrTimestamp()
-{
-  auto now       = std::chrono::system_clock::now();
-  auto in_time_t = std::chrono::system_clock::to_time_t(now);
-
-  auto now_milliseconds =
-      std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-
-  std::stringstream ss;
-  ss << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H:%M:%S");
-
-  // add milliseconds to timestamp string
-  ss << '.' << std::setfill('0') << std::setw(3) << now_milliseconds.count();
-
-  return ss.str();
-}
-
 // Timestamp for gradient queue
 template <class TensorType>
 int64_t TrainingClient<TensorType>::GetTimestamp()
@@ -511,7 +492,7 @@ void TrainingClient<TensorType>::TrainOnce()
   // Upload to https://plot.ly/create/#/ for visualisation
   if (lossfile)
   {
-    lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
+    lossfile << utilities::GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
              << static_cast<double>(test_loss_) << "\n";
   }
 
@@ -528,7 +509,7 @@ void TrainingClient<TensorType>::TrainOnce()
 
   if (lossfile)
   {
-    lossfile << GetStrTimestamp() << ", "
+    lossfile << utilities::GetStrTimestamp() << ", "
              << "STOPPED"
              << "\n";
     lossfile.close();
@@ -564,7 +545,7 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
 
     if (lossfile)
     {
-      lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
+      lossfile << utilities::GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
                << static_cast<double>(test_loss_) << "\n";
     }
 
@@ -582,7 +563,7 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
 
   if (lossfile)
   {
-    lossfile << GetStrTimestamp() << ", "
+    lossfile << utilities::GetStrTimestamp() << ", "
              << "STOPPED"
              << "\n";
     lossfile.close();
