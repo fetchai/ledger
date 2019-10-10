@@ -118,7 +118,7 @@ public:
 
   void SetCoordinator(std::shared_ptr<Coordinator<TensorType>> coordinator_ptr);
 
-  virtual void Run();
+  void Run();
 
   void Train();
 

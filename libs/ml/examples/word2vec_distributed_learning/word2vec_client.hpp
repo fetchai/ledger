@@ -76,25 +76,6 @@ public:
                                         tp_.analogies_test_file);
   }
 
-  /**
-   * Main loop that runs in thread
-   */
-  void Run() override
-  {
-    this->ResetLossCnt();
-    if (this->coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
-    {
-      // Do one batch and end
-      this->TrainOnce();
-    }
-    else
-    {
-      // Train batches until coordinator will tell clients to stop
-      this->TrainWithCoordinator();
-    }
-    analogy_score_ = GetAnalogyScore();
-  }
-
   GradientType GetGradients() override;
 
   VectorTensorType TranslateGradients(GradientType &new_gradients) override;
@@ -186,6 +167,8 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 template <class TensorType>
 void Word2VecClient<TensorType>::Test()
 {
+  analogy_score_ = GetAnalogyScore();
+
   if (this->batch_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
   {
     TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);
