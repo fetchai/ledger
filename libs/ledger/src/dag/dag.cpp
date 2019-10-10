@@ -306,18 +306,18 @@ void DAG::SetReferencesInternal(DAGNodePtr const &node)
 
     while (prevs.size() < PARAMETER_REFERENCES_TO_BE_TIP && !node_pool_copy.empty())
     {
-      auto &node = (node_pool_copy.begin())->second;
+      auto &node_ref = (node_pool_copy.begin())->second;
 
-      prevs.push_back(node->hash);
+      prevs.push_back(node_ref->hash);
 
-      if (wei <= node->weight)
+      if (wei <= node_ref->weight)
       {
-        wei = node->weight + 1;
+        wei = node_ref->weight + 1;
       }
 
-      if (oldest_epoch > node->oldest_epoch_referenced)
+      if (oldest_epoch > node_ref->oldest_epoch_referenced)
       {
-        oldest_epoch = node->oldest_epoch_referenced;
+        oldest_epoch = node_ref->oldest_epoch_referenced;
       }
 
       node_pool_copy.erase(node_pool_copy.begin());
@@ -1065,10 +1065,9 @@ bool DAG::SatisfyEpoch(DAGEpoch const &epoch)
     return false;
   };
 
-  DAGNodePtr dag_node_to_add;
-  bool       success       = true;
-  uint64_t   missing_count = 0;
-  uint64_t   loose_count   = 0;
+  bool     success       = true;
+  uint64_t missing_count = 0;
+  uint64_t loose_count   = 0;
 
   for (auto const &node_hash : epoch.all_nodes)
   {

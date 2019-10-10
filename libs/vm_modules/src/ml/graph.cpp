@@ -130,6 +130,11 @@ void VMGraph::AddDropout(VMPtrString const &name, VMPtrString const &input_name,
   graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
 }
 
+void VMGraph::AddTranspose(VMPtrString const &name, VMPtrString const &input_name)
+{
+  graph_.AddNode<fetch::ml::ops::Transpose<MathTensorType>>(name->str, {input_name->str});
+}
+
 void VMGraph::LoadStateDict(Ptr<VMStateDict> const &sd)
 {
   graph_.LoadStateDict(sd->state_dict_);
@@ -160,6 +165,7 @@ void VMGraph::Bind(Module &module)
       .CreateMemberFunction("addDropout", &VMGraph::AddDropout)
       .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
       .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
+      .CreateMemberFunction("addTranspose", &VMGraph::AddTranspose)
       .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
       .CreateMemberFunction("stateDict", &VMGraph::StateDict)
       .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString)

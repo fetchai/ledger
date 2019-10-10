@@ -102,12 +102,16 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
     fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
                           neg_learning_rate_div_batch_size, *gradient_it);
 
-    // Apply gradient weights[i]+=output_grad[i]
-    (*trainable_it)->ApplyGradient(*gradient_it);
+    // we need to explicitly reset the gradients for this shared op to avoid double counting
+    // in the case of shared ops
+    (*trainable_it)->ResetGradients();
 
     ++trainable_it;
     ++gradient_it;
   }
+
+  // calling apply gradients on the graph ensures that the node caches are reset properly
+  this->graph_->ApplyGradients(this->gradients_);
 }
 
 }  // namespace optimisers
