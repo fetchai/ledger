@@ -22,7 +22,6 @@
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/distributed_learning/coordinator.hpp"
 #include "word2vec_client.hpp"
-#include <memory>
 
 #include <iostream>
 #include <mutex>
@@ -36,8 +35,7 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::distributed_learning;
 
-// using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
-using DataType         = float;
+using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;
