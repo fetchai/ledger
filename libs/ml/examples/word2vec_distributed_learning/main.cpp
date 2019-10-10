@@ -64,9 +64,10 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file,
 
 int main(int argc, char **argv)
 {
-  if (argc != 3)
+  if (argc != 4)
   {
-    std::cout << "Usage : " << argv[0] << " PATH/TO/text8 analogies_test_file" << std::endl;
+    std::cout << "Usage : " << argv[0] << " PATH/TO/text8 analogies_test_file output_csv_file"
+              << std::endl;
     return 1;
   }
 
@@ -131,7 +132,7 @@ int main(int argc, char **argv)
     auto client =
         std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
     client->SetMaxUpdates(iterations_count);
-    // TODO(1597): Replace ID with something more sensible
+
     clients[i] = client;
     vocabs.push_back(client->GetVocab());
   }
@@ -174,7 +175,7 @@ int main(int argc, char **argv)
       t.join();
     }
 
-    std::ofstream lossfile("losses.csv", std::ofstream::out | std::ofstream::app);
+    std::ofstream lossfile(std::string(argv[3]), std::ofstream::out | std::ofstream::app);
 
     std::cout << "Test losses:";
     lossfile << utilities::GetStrTimestamp();
