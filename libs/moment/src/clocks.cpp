@@ -20,14 +20,11 @@
 #include "moment/clocks.hpp"
 #include "moment/detail/adjustable_clock.hpp"
 #include "moment/detail/steady_clock.hpp"
-#include "moment/detail/system_clock.hpp"
 
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
-
-#include <iostream>
 
 namespace fetch {
 namespace moment {
@@ -50,11 +47,8 @@ ClockPtr CreateNormal(ClockType type)
 
   switch (type)
   {
-  case ClockType::STEADY:
-    clock = std::make_shared<detail::SteadyClock>();
-    break;
   case ClockType::SYSTEM:
-    clock = std::make_shared<detail::GlobalClock>();
+    clock = std::make_shared<detail::SystemClock>();
     break;
   }
 
@@ -73,11 +67,8 @@ AdjustableClockPtr CreateAdjustable(ClockType type)
 
   switch (type)
   {
-  case ClockType::STEADY:
-    clock = std::make_shared<detail::AdjustableClock<detail::SteadyClock>>();
-    break;
   case ClockType::SYSTEM:
-    clock = std::make_shared<detail::AdjustableClock<detail::GlobalClock>>();
+    clock = std::make_shared<detail::AdjustableClock<detail::SystemClock>>();
     break;
   }
 
@@ -145,8 +136,7 @@ AdjustableClockPtr CreateAdjustableClock(char const *name, ClockType type)
 uint64_t GetTime(moment::ClockPtr const &clock)
 {
   return static_cast<uint64_t>(
-      std::chrono::duration_cast<std::chrono::seconds>(clock->NowSystem().time_since_epoch())
-          .count());
+      std::chrono::duration_cast<std::chrono::seconds>(clock->Now().time_since_epoch()).count());
 }
 
 }  // namespace moment

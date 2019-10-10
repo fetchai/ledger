@@ -26,7 +26,7 @@ namespace fetch {
 namespace moment {
 
 DeadlineTimer::DeadlineTimer(char const *clock)
-  : clock_{GetClock(clock, ClockType::STEADY)}
+  : clock_{GetClock(clock, ClockType::SYSTEM)}
 {}
 
 void DeadlineTimer::Restart(uint64_t period_ms)
@@ -36,7 +36,7 @@ void DeadlineTimer::Restart(uint64_t period_ms)
 
 bool DeadlineTimer::HasExpired() const
 {
-  return deadline_ <= clock_->NowChrono();
+  return deadline_ <= clock_->Now();
 }
 
 }  // namespace moment
