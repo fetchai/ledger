@@ -30,9 +30,10 @@ namespace dmlf {
 class VmPersistent : public vm::IoObserverInterface
 {
 public:
-  VmPersistent() {}
-  VmPersistent(VmPersistent&& other) = default;
-  VmPersistent& operator=(VmPersistent&& other) = default; 
+  VmPersistent()
+  {}
+  VmPersistent(VmPersistent &&other) = default;
+  VmPersistent &operator=(VmPersistent &&other) = default;
 
   virtual Status Read(const std::string &key, void *data, uint64_t &size) override;
   virtual Status Write(const std::string &key, void const *data, uint64_t size) override;
@@ -43,15 +44,15 @@ public:
 protected:
 private:
   using Buffer = fetch::byte_array::ConstByteArray;
-  using Store =  std::map<std::string, Buffer>;
+  using Store  = std::map<std::string, Buffer>;
 
   Store store_;
 
   VmPersistent(const VmPersistent &other) = delete;
-  VmPersistent &operator=(const VmPersistent &other) = delete;
-  bool operator==(const VmPersistent &other) = delete;
-  bool operator<(const VmPersistent &other) = delete;
+  VmPersistent &operator=(const VmPersistent &other)  = delete;
+  bool          operator==(const VmPersistent &other) = delete;
+  bool          operator<(const VmPersistent &other)  = delete;
 };
 
-} // namespace dmlf
-} // namespace fetch
+}  // namespace dmlf
+}  // namespace fetch
