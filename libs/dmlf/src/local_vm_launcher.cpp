@@ -29,30 +29,30 @@ namespace fetch {
 namespace dmlf {
 
 namespace {
-  using ProgramErrorHandler = LocalVmLauncher::ProgramErrorHandler;
-  using VmOutputHandler = LocalVmLauncher::VmOutputHandler;
-  using Params = LocalVmLauncher::Params;
-  using ExecuteErrorHandler = LocalVmLauncher::ExecuteErrorHandler;
+using ProgramErrorHandler = LocalVmLauncher::ProgramErrorHandler;
+using VmOutputHandler     = LocalVmLauncher::VmOutputHandler;
+using Params              = LocalVmLauncher::Params;
+using ExecuteErrorHandler = LocalVmLauncher::ExecuteErrorHandler;
 
-  using Program = LocalVmLauncher::Program;
-  using VM = LocalVmLauncher::VM;
-  using State = LocalVmLauncher::State;
+using Program = LocalVmLauncher::Program;
+using VM      = LocalVmLauncher::VM;
+using State   = LocalVmLauncher::State;
 
-  using VmFactory = fetch::vm_modules::VMFactory;
-}
+using VmFactory = fetch::vm_modules::VMFactory;
+}  // namespace
 
-bool LocalVmLauncher::CreateProgram(std::string name, std::string const& source)
+bool LocalVmLauncher::CreateProgram(std::string name, std::string const &source)
 {
-  if (HasProgram(name) ) 
+  if (HasProgram(name))
   {
     return false;
   }
 
-  fetch::vm::SourceFiles files = {{name+".etch", source}};
-  auto newProgram = std::make_shared<Program>(); 
+  fetch::vm::SourceFiles files      = {{name + ".etch", source}};
+  auto                   newProgram = std::make_shared<Program>();
   auto errors = fetch::vm_modules::VMFactory::Compile(module_, files, *newProgram);
 
-  if (!errors.empty() && programErrorHandler_ != nullptr) 
+  if (!errors.empty() && programErrorHandler_ != nullptr)
   {
     programErrorHandler_(name, errors);
     return false;
@@ -60,9 +60,9 @@ bool LocalVmLauncher::CreateProgram(std::string name, std::string const& source)
 
   programs_.emplace(std::move(name), std::move(newProgram));
 
-  return true; 
+  return true;
 }
-bool LocalVmLauncher::HasProgram(std::string const& name) const
+bool LocalVmLauncher::HasProgram(std::string const &name) const
 {
   return programs_.find(name) != programs_.end();
 }
@@ -71,23 +71,24 @@ void LocalVmLauncher::AttachProgramErrorHandler(ProgramErrorHandler newHandler)
   programErrorHandler_ = newHandler;
 }
 
-bool LocalVmLauncher::CreateVM(std::string name) 
+bool LocalVmLauncher::CreateVM(std::string name)
 {
-  if (HasVM(name)) 
+  if (HasVM(name))
   {
     return false;
   }
   vms_.emplace(std::move(name), std::make_shared<VM>(module_.get()));
   return true;
 }
-bool LocalVmLauncher::HasVM(std::string const& name) const
+bool LocalVmLauncher::HasVM(std::string const &name) const
 {
   return vms_.find(name) != vms_.end();
 }
-bool LocalVmLauncher::SetVmStdout(std::string const& vmName, VmOutputHandler& newHandler)
+bool LocalVmLauncher::SetVmStdout(std::string const &vmName, VmOutputHandler &newHandler)
 {
   auto it = vms_.find(vmName);
-  if (it == vms_.end()) {
+  if (it == vms_.end())
+  {
     return false;
   }
 
@@ -99,19 +100,21 @@ bool LocalVmLauncher::SetVmStdout(std::string const& vmName, VmOutputHandler& ne
 
 bool LocalVmLauncher::CreateState(std::string name)
 {
-  if (HasState(name)) {
+  if (HasState(name))
+  {
     return false;
   }
   states_.emplace(std::move(name), std::make_shared<State>());
   return true;
 }
-bool LocalVmLauncher::HasState(std::string const& name) const
+bool LocalVmLauncher::HasState(std::string const &name) const
 {
   return states_.find(name) != states_.end();
 }
-bool LocalVmLauncher::CopyState(std::string const& srcName, std::string newName)
+bool LocalVmLauncher::CopyState(std::string const &srcName, std::string newName)
 {
-  if (!HasState(srcName) || HasState(newName)) {
+  if (!HasState(srcName) || HasState(newName))
+  {
     return false;
   }
 
@@ -120,24 +123,27 @@ bool LocalVmLauncher::CopyState(std::string const& srcName, std::string newName)
   return true;
 }
 
-bool LocalVmLauncher::Execute(std::string const& programName, std::string const& vmName, std::string const& stateName,
-      std::string const& entrypoint, const Params /*params*/)
+bool LocalVmLauncher::Execute(std::string const &programName, std::string const &vmName,
+                              std::string const &stateName, std::string const &entrypoint,
+                              const Params /*params*/)
 {
-  if (!HasProgram(programName) || !HasVM(vmName) || !HasState(stateName)) {
+  if (!HasProgram(programName) || !HasVM(vmName) || !HasState(stateName))
+  {
     return false;
   }
 
   auto &program = programs_[programName];
-  auto &vm = vms_[vmName];
-  auto &state = states_[stateName];
+  auto &vm      = vms_[vmName];
+  auto &state   = states_[stateName];
 
   vm->SetIOObserver(*state);
 
-  std::string runTimeError;
+  std::string        runTimeError;
   fetch::vm::Variant output;
-  auto thereWasAnError = vm->Execute(*program, entrypoint, runTimeError, output);
+  auto               thereWasAnError = vm->Execute(*program, entrypoint, runTimeError, output);
 
-  if (!runTimeError.empty() && executeErrorhandler_ != nullptr) {
+  if (!runTimeError.empty() && executeErrorhandler_ != nullptr)
+  {
     executeErrorhandler_(programName, vmName, stateName, runTimeError);
     return false;
   }
@@ -149,5 +155,5 @@ void LocalVmLauncher::AttachExecuteErrorHandler(ExecuteErrorHandler newHandler)
   executeErrorhandler_ = newHandler;
 }
 
-} // namespace dmlf
-} // namespace fetch
+}  // namespace dmlf
+}  // namespace fetch

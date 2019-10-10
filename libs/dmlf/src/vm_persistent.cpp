@@ -21,34 +21,34 @@
 namespace fetch {
 namespace dmlf {
 
-namespace{
-  using Status = vm::IoObserverInterface::Status;
+namespace {
+using Status = vm::IoObserverInterface::Status;
 }
 
-Status VmPersistent::Read(const std::string &key, void *data, uint64_t &size) 
+Status VmPersistent::Read(const std::string &key, void *data, uint64_t &size)
 {
   auto it = store_.find(key);
 
-  if (it == store_.end()) 
+  if (it == store_.end())
   {
     return Status::PERMISSION_DENIED;
   }
 
   const auto &buf = it->second;
-  if (size < buf.size()) 
+  if (size < buf.size())
   {
     return Status::BUFFER_TOO_SMALL;
   }
 
-  buf.ReadBytes(reinterpret_cast<Buffer::ValueType*>(data), buf.size());
-  size = buf.size(); // How much was copied
-  
+  buf.ReadBytes(reinterpret_cast<Buffer::ValueType *>(data), buf.size());
+  size = buf.size();  // How much was copied
+
   return Status::OK;
 }
 
 Status VmPersistent::Write(const std::string &key, const void *data, uint64_t size)
 {
-  store_[key] = Buffer(reinterpret_cast<Buffer::ValueType const*>(data), size);
+  store_[key] = Buffer(reinterpret_cast<Buffer::ValueType const *>(data), size);
   return Status::OK;
 }
 

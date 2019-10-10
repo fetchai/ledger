@@ -29,44 +29,41 @@ class VmLauncherInterface
 {
 public:
   VmLauncherInterface()
-  {
-  }
+  {}
   virtual ~VmLauncherInterface()
-  {
-  }
+  {}
 
-  // Flags?
   using VmOutputHandler = std::ostream;
-  using Params = std::vector<std::string>;
+  using Params          = std::vector<std::string>;
   // Program name, Error
-  using ProgramErrorHandler = std::function<void (std::string const&, std::vector<std::string>)>;
+  using ProgramErrorHandler = std::function<void(std::string const &, std::vector<std::string>)>;
   // Program name, VM name, State name, Error
-  using ExecuteErrorHandler = std::function<void (std::string const&, std::string const&, std::string const&, std::string const&)>;
+  using ExecuteErrorHandler = std::function<void(std::string const &, std::string const &,
+                                                 std::string const &, std::string const &)>;
 
-  virtual bool CreateProgram(std::string name, std::string const& source) = 0;
-  virtual bool HasProgram(std::string const& name) const = 0;
-  virtual void AttachProgramErrorHandler(ProgramErrorHandler) = 0;
+  virtual bool CreateProgram(std::string name, std::string const &source) = 0;
+  virtual bool HasProgram(std::string const &name) const                  = 0;
+  virtual void AttachProgramErrorHandler(ProgramErrorHandler)             = 0;
 
-  virtual bool CreateVM(std::string name) = 0;
-  virtual bool HasVM(std::string const& name) const = 0;
-  virtual bool SetVmStdout(std::string const& vmName, VmOutputHandler&) = 0;
+  virtual bool CreateVM(std::string name)                                = 0;
+  virtual bool HasVM(std::string const &name) const                      = 0;
+  virtual bool SetVmStdout(std::string const &vmName, VmOutputHandler &) = 0;
 
-  virtual bool CreateState(std::string name) = 0;
-  virtual bool HasState(std::string const& name) const = 0;
-  virtual bool CopyState(std::string const& srcName, std::string newName) = 0;
+  virtual bool CreateState(std::string name)                              = 0;
+  virtual bool HasState(std::string const &name) const                    = 0;
+  virtual bool CopyState(std::string const &srcName, std::string newName) = 0;
 
-  virtual bool Execute(std::string const& program, std::string const& vm, std::string const& state,
-      std::string const& entrypoint, const Params /*params*/) = 0;
-  virtual void AttachExecuteErrorHandler(ExecuteErrorHandler) = 0;
+  virtual bool Execute(std::string const &program, std::string const &vm, std::string const &state,
+                       std::string const &entrypoint, const Params /*params*/) = 0;
+  virtual void AttachExecuteErrorHandler(ExecuteErrorHandler)                  = 0;
 
 protected:
 private:
-
   VmLauncherInterface(const VmLauncherInterface &other) = delete;
-  VmLauncherInterface &operator=(const VmLauncherInterface &other) = delete;
-  bool operator==(const VmLauncherInterface &other) = delete;
-  bool operator<(const VmLauncherInterface &other) = delete;
+  VmLauncherInterface &operator=(const VmLauncherInterface &other)  = delete;
+  bool                 operator==(const VmLauncherInterface &other) = delete;
+  bool                 operator<(const VmLauncherInterface &other)  = delete;
 };
 
-} // namespace dmlf
-} // namespace fetch
+}  // namespace dmlf
+}  // namespace fetch

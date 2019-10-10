@@ -27,9 +27,9 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
-#include <sstream>
 #include <vector>
 
 namespace {
@@ -41,7 +41,7 @@ using namespace fetch::vm;
 using namespace fetch::dmlf;
 
 using Params = fetch::dmlf::LocalVmLauncher::Params;
-//using Status = fetch::dmlf::VmWrapperInterface::Status;
+// using Status = fetch::dmlf::VmWrapperInterface::Status;
 
 auto const helloWorld = R"(
 function main()
@@ -121,15 +121,14 @@ function tock()
 endfunction
 )";
 
-auto programOut = [] (std::string name, std::vector<std::string> const& out) 
-{
+auto programOut = [](std::string name, std::vector<std::string> const &out) {
   std::cout << "Error making program " << name << '\n';
-  for (auto const& l : out)
+  for (auto const &l : out)
     std::cout << l << '\n';
 };
 
-auto executeOut = [] ( std::string const& program , std::string const& vm, std::string const& state, std::string const& error)
-{
+auto executeOut = [](std::string const &program, std::string const &vm, std::string const &state,
+                     std::string const &error) {
   std::cout << "Error running " << program << " on " << vm << " from state " << state << '\n';
   std::cout << '\t' << error << '\n';
 };
@@ -138,7 +137,9 @@ auto executeOut = [] ( std::string const& program , std::string const& vm, std::
 
 TEST(VmLauncherDmlfTests, local_HelloWorld)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
   EXPECT_FALSE(launcher.HasProgram("helloWorld"));
   EXPECT_FALSE(launcher.HasVM("vm"));
   EXPECT_FALSE(launcher.HasVM("state"));
@@ -162,7 +163,9 @@ TEST(VmLauncherDmlfTests, local_HelloWorld)
 
 TEST(VmLauncherDmlfTests, local_DoubleHelloWorld)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
   EXPECT_FALSE(launcher.HasProgram("helloWorld"));
   EXPECT_FALSE(launcher.HasVM("vm"));
   EXPECT_FALSE(launcher.HasVM("state"));
@@ -189,7 +192,9 @@ TEST(VmLauncherDmlfTests, local_DoubleHelloWorld)
 
 TEST(VmLauncherDmlfTests, repeated_HelloWorld)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
   EXPECT_FALSE(launcher.HasProgram("helloWorld"));
   EXPECT_FALSE(launcher.HasVM("vm"));
   EXPECT_FALSE(launcher.HasVM("state"));
@@ -209,8 +214,8 @@ TEST(VmLauncherDmlfTests, repeated_HelloWorld)
   EXPECT_TRUE(createdState);
 
   createdProgram = launcher.CreateProgram("helloWorld", helloWorld);
-  createdVM = launcher.CreateVM("vm");
-  createdState = launcher.CreateState("state");
+  createdVM      = launcher.CreateVM("vm");
+  createdState   = launcher.CreateState("state");
 
   EXPECT_FALSE(createdProgram);
   EXPECT_FALSE(createdVM);
@@ -224,7 +229,9 @@ TEST(VmLauncherDmlfTests, repeated_HelloWorld)
 
 TEST(VmLauncherDmlfTests, local_Tick_VM_2States)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("tick", tick);
   EXPECT_TRUE(createdProgram);
@@ -258,9 +265,10 @@ TEST(VmLauncherDmlfTests, local_Tick_VM_2States)
 // Repeated things
 
 // Breaks VM
-//TEST(VmLauncherDmlfTests, break_vm)
+// TEST(VmLauncherDmlfTests, break_vm)
 //{
-//  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+//  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut);
+//  launcher.AttachExecuteErrorHandler(executeOut);
 //
 //  bool createdVM = launcher.CreateVM("vm");
 //  EXPECT_TRUE(createdVM);
@@ -286,7 +294,9 @@ TEST(VmLauncherDmlfTests, local_Tick_VM_2States)
 
 TEST(VmLauncherDmlfTests, bad_stdOut)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("helloWorld", helloWorld);
   EXPECT_TRUE(createdProgram);
@@ -296,10 +306,10 @@ TEST(VmLauncherDmlfTests, bad_stdOut)
   EXPECT_TRUE(createdVM);
   EXPECT_TRUE(launcher.HasVM("vm"));
   std::stringstream output;
-  bool setStdOut = launcher.SetVmStdout("vm", output);
+  bool              setStdOut = launcher.SetVmStdout("vm", output);
   EXPECT_TRUE(setStdOut);
   std::stringstream badOutput;
-  bool badStdOut = launcher.SetVmStdout("badVm", badOutput);
+  bool              badStdOut = launcher.SetVmStdout("badVm", badOutput);
   EXPECT_FALSE(badStdOut);
 
   bool createdState = launcher.CreateState("state");
@@ -314,7 +324,9 @@ TEST(VmLauncherDmlfTests, bad_stdOut)
 
 TEST(VmLauncherDmlfTests, local_Tick_Tick2_VM_State)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("tick", tick);
   EXPECT_TRUE(createdProgram);
@@ -324,7 +336,7 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick2_VM_State)
   EXPECT_TRUE(createdVM);
   EXPECT_TRUE(launcher.HasVM("vm"));
   std::stringstream output;
-  bool setStdOut = launcher.SetVmStdout("vm", output);
+  bool              setStdOut = launcher.SetVmStdout("vm", output);
   EXPECT_TRUE(setStdOut);
 
   createdProgram = launcher.CreateProgram("tick2", tick2);
@@ -360,7 +372,9 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick2_VM_State)
 
 TEST(VmLauncherDmlfTests, test_Tick_Tock_VM_State)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("tick", tick);
   EXPECT_TRUE(createdProgram);
@@ -370,7 +384,7 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_VM_State)
   EXPECT_TRUE(createdVM);
   EXPECT_TRUE(launcher.HasVM("vm"));
   std::stringstream output;
-  bool setStdOut = launcher.SetVmStdout("vm", output);
+  bool              setStdOut = launcher.SetVmStdout("vm", output);
   EXPECT_TRUE(setStdOut);
 
   createdProgram = launcher.CreateProgram("tock", tock);
@@ -406,7 +420,9 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_VM_State)
 
 TEST(VmLauncherDmlfTests, test_Tick_TickTock_VM_State)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("tick", tick);
   EXPECT_TRUE(createdProgram);
@@ -416,7 +432,7 @@ TEST(VmLauncherDmlfTests, test_Tick_TickTock_VM_State)
   EXPECT_TRUE(createdVM);
   EXPECT_TRUE(launcher.HasVM("vm"));
   std::stringstream output;
-  bool setStdOut = launcher.SetVmStdout("vm", output);
+  bool              setStdOut = launcher.SetVmStdout("vm", output);
   EXPECT_TRUE(setStdOut);
 
   createdProgram = launcher.CreateProgram("tickTock", tickTock);
@@ -433,7 +449,6 @@ TEST(VmLauncherDmlfTests, test_Tick_TickTock_VM_State)
   EXPECT_TRUE(executedSuccesfully);
   executedSuccesfully = launcher.Execute("tickTock", "vm", "state", "tock", Params());
   EXPECT_TRUE(executedSuccesfully);
-
 
   executedSuccesfully = launcher.Execute("tick", "vm", "state", "main", Params());
   EXPECT_TRUE(executedSuccesfully);
@@ -454,7 +469,9 @@ TEST(VmLauncherDmlfTests, test_Tick_TickTock_VM_State)
 
 TEST(VmLauncherDmlfTests, test_TickState_TockState2_VM)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("tick", tick);
   EXPECT_TRUE(createdProgram);
@@ -464,7 +481,7 @@ TEST(VmLauncherDmlfTests, test_TickState_TockState2_VM)
   EXPECT_TRUE(createdVM);
   EXPECT_TRUE(launcher.HasVM("vm"));
   std::stringstream output;
-  bool setStdOut = launcher.SetVmStdout("vm", output);
+  bool              setStdOut = launcher.SetVmStdout("vm", output);
   EXPECT_TRUE(setStdOut);
 
   createdProgram = launcher.CreateProgram("tick2", tick2);
@@ -503,7 +520,9 @@ TEST(VmLauncherDmlfTests, test_TickState_TockState2_VM)
 
 TEST(VmLauncherDmlfTests, test_Tick_Tock_TickTock_VM_State)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("tick", tick);
   EXPECT_TRUE(createdProgram);
@@ -513,7 +532,7 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_TickTock_VM_State)
   EXPECT_TRUE(createdVM);
   EXPECT_TRUE(launcher.HasVM("vm"));
   std::stringstream output;
-  bool setStdOut = launcher.SetVmStdout("vm", output);
+  bool              setStdOut = launcher.SetVmStdout("vm", output);
   EXPECT_TRUE(setStdOut);
 
   createdProgram = launcher.CreateProgram("tickTock", tickTock);
@@ -537,7 +556,6 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_TickTock_VM_State)
   executedSuccesfully = launcher.Execute("tickTock", "vm", "state", "tock", Params());
   EXPECT_TRUE(executedSuccesfully);
 
-
   executedSuccesfully = launcher.Execute("tick", "vm", "state", "main", Params());
   EXPECT_TRUE(executedSuccesfully);
   executedSuccesfully = launcher.Execute("tock", "vm", "state", "tock", Params());
@@ -552,7 +570,9 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_TickTock_VM_State)
 
 TEST(VmLauncherDmlfTests, test_HelloWorld_2VM)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("helloWorld", helloWorld);
   EXPECT_TRUE(createdProgram);
@@ -563,7 +583,7 @@ TEST(VmLauncherDmlfTests, test_HelloWorld_2VM)
   launcher.SetVmStdout("vm", output);
   createdVM = launcher.CreateVM("vm2");
   EXPECT_TRUE(createdVM);
-  launcher.SetVmStdout("vm2", output); // Same stream
+  launcher.SetVmStdout("vm2", output);  // Same stream
 
   bool createdState = launcher.CreateState("state");
   EXPECT_TRUE(createdState);
@@ -578,7 +598,9 @@ TEST(VmLauncherDmlfTests, test_HelloWorld_2VM)
 
 TEST(VmLauncherDmlfTests, test_Tick_2VM_State)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("tick", tick);
   EXPECT_TRUE(createdProgram);
@@ -589,7 +611,7 @@ TEST(VmLauncherDmlfTests, test_Tick_2VM_State)
   launcher.SetVmStdout("vm", output);
   createdVM = launcher.CreateVM("vm2");
   EXPECT_TRUE(createdVM);
-  launcher.SetVmStdout("vm2", output); // Same stream
+  launcher.SetVmStdout("vm2", output);  // Same stream
 
   bool createdState = launcher.CreateState("state");
   EXPECT_TRUE(createdState);
@@ -609,7 +631,9 @@ TEST(VmLauncherDmlfTests, test_Tick_2VM_State)
 
 TEST(VmLauncherDmlfTests, test_Tick_Tock_2VM_State)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("tick", tick);
   EXPECT_TRUE(createdProgram);
@@ -622,8 +646,7 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_2VM_State)
   launcher.SetVmStdout("vm", output);
   createdVM = launcher.CreateVM("vm2");
   EXPECT_TRUE(createdVM);
-  launcher.SetVmStdout("vm2", output); // Same stream
-
+  launcher.SetVmStdout("vm2", output);  // Same stream
 
   bool createdState = launcher.CreateState("state");
   EXPECT_TRUE(createdState);
@@ -643,7 +666,9 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_2VM_State)
 
 TEST(VmLauncherDmlfTests, local_Tick_Tick_VM_State)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("tick", tick);
   EXPECT_TRUE(createdProgram);
@@ -653,7 +678,7 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick_VM_State)
   EXPECT_TRUE(createdVM);
   EXPECT_TRUE(launcher.HasVM("vm"));
   std::stringstream output;
-  bool setStdOut = launcher.SetVmStdout("vm", output);
+  bool              setStdOut = launcher.SetVmStdout("vm", output);
   EXPECT_TRUE(setStdOut);
 
   createdProgram = launcher.CreateProgram("tick2", tick);
@@ -703,7 +728,9 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick_VM_State)
 
 TEST(VmLauncherDmlfTests, local_Tick_Tick_VM_CopyState)
 {
-  LocalVmLauncher launcher; launcher.AttachProgramErrorHandler(programOut); launcher.AttachExecuteErrorHandler(executeOut);
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
 
   bool createdProgram = launcher.CreateProgram("tick", tick);
   EXPECT_TRUE(createdProgram);
@@ -713,7 +740,7 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick_VM_CopyState)
   EXPECT_TRUE(createdVM);
   EXPECT_TRUE(launcher.HasVM("vm"));
   std::stringstream output;
-  bool setStdOut = launcher.SetVmStdout("vm", output);
+  bool              setStdOut = launcher.SetVmStdout("vm", output);
   EXPECT_TRUE(setStdOut);
 
   bool createdState = launcher.CreateState("state");
