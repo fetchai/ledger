@@ -127,7 +127,6 @@ public:
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
   virtual struct fetch::ml::StateDict<TensorType> StateDict();
-
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
 
   ////////////////////////////////////
@@ -322,7 +321,7 @@ void Graph<TensorType>::Compile()
   }
   default:
   {
-    throw std::runtime_error("cannot evaluate graph - unrecognised graph state");
+    throw ml::exceptions::InvalidMode("cannot evaluate graph - unrecognised graph state");
   }
   }
 }
@@ -404,7 +403,7 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
     case GraphState::INVALID:
     case GraphState::NOT_COMPILED:
     {
-      throw std::runtime_error("cannot compile and evaluate graph");
+      throw ml::exceptions::InvalidMode("cannot compile and evaluate graph");
     }
     case GraphState::COMPILED:
     case GraphState::EVALUATED:
@@ -421,13 +420,13 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
     }
     default:
     {
-      throw std::runtime_error("cannot evaluate graph - unrecognised graph state");
+      throw ml::exceptions::InvalidMode("cannot evaluate graph - unrecognised graph state");
     }
     }
   }
   else
   {
-    throw std::runtime_error("Cannot evaluate: node [" + node_name + "] not in graph");
+    throw ml::exceptions::InvalidMode("Cannot evaluate: node [" + node_name + "] not in graph");
   }
 }
 
@@ -451,11 +450,12 @@ void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType c
     case GraphState::INVALID:
     case GraphState::NOT_COMPILED:
     {
-      throw std::runtime_error("Cannot backpropagate: graph not compiled or invalid");
+      throw ml::exceptions::InvalidMode("Cannot backpropagate: graph not compiled or invalid");
     }
     case GraphState::COMPILED:
     {
-      throw std::runtime_error("Cannot backpropagate: forward pass not completed on graph");
+      throw ml::exceptions::InvalidMode(
+          "Cannot backpropagate: forward pass not completed on graph");
     }
     case GraphState::EVALUATED:
     case GraphState::BACKWARD:
@@ -467,13 +467,14 @@ void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType c
     }
     default:
     {
-      throw std::runtime_error("cannot backpropagate: unrecognised graph state");
+      throw ml::exceptions::InvalidMode("cannot backpropagate: unrecognised graph state");
     }
     }
   }
   else
   {
-    throw std::runtime_error("Cannot backpropagate: node [" + node_name + "] not in graph");
+    throw ml::exceptions::InvalidMode("Cannot backpropagate: node [" + node_name +
+                                      "] not in graph");
   }
 }
 
@@ -537,7 +538,7 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
   case GraphState::COMPILED:
   case GraphState::EVALUATED:
   {
-    throw std::runtime_error(
+    throw ml::exceptions::InvalidMode(
         "cannot apply gradients: backpropagate not previously called on graph");
   }
   case GraphState::BACKWARD:
@@ -545,11 +546,13 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
     auto grad_it = grad.begin();
     ApplyGradients(grad_it);
 
+    // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
+    // reset cache on all nodes
     for (auto const &t : nodes_)
     {
-      // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
       ResetGraphCache(false, t.second);
     }
+
     return;
   }
   case GraphState::UPDATED:
@@ -559,7 +562,7 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
   }
   default:
   {
-    throw std::runtime_error("cannot apply gradients: unrecognised graph state");
+    throw ml::exceptions::InvalidMode("cannot apply gradients: unrecognised graph state");
   }
   }
 }
@@ -639,7 +642,7 @@ void Graph<TensorType>::SetGraphSaveableParams(GraphSaveableParams<TensorType> c
   }
   default:
   {
-    throw std::runtime_error("cannot setGraphSaveableParams: graph state not recognised");
+    throw ml::exceptions::InvalidMode("cannot setGraphSaveableParams: graph state not recognised");
   }
   }
 }
@@ -657,7 +660,7 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
   NodePtrType ret = nodes_.at(node_name);
   if (!ret)
   {
-    throw std::runtime_error("couldn't find node [" + node_name + "] in graph!");
+    throw ml::exceptions::InvalidMode("couldn't find node [" + node_name + "] in graph!");
   }
   return ret;
 }
@@ -681,7 +684,8 @@ void Graph<TensorType>::SetInputReference(std::string const &node_name, TensorTy
   }
   else
   {
-    throw std::runtime_error("No placeholder node with name [" + node_name + "] found in graph!");
+    throw ml::exceptions::InvalidMode("No placeholder node with name [" + node_name +
+                                      "] found in graph!");
   }
 }
 
@@ -936,7 +940,7 @@ void Graph<T>::InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr)
 {
   if (output_ptr.get() == this)
   {
-    throw std::runtime_error("This needs to be called with a separate ptr.");
+    throw ml::exceptions::InvalidMode("This needs to be called with a separate ptr.");
   }
 
   std::shared_ptr<Graph<TensorType>> const &copyshare = output_ptr;
@@ -987,8 +991,8 @@ template <class OperationType, typename... Params>
 meta::IfIsNotShareable<TensorType, OperationType, typename Graph<TensorType>::NodePtrType>
 Graph<TensorType>::DuplicateNode(std::string const &node_name, std::string & /* updated_name */)
 {
-  throw std::runtime_error("OperationType is not shareable. Cannot make duplicate of node named: " +
-                           node_name);
+  throw ml::exceptions::InvalidMode(
+      "OperationType is not shareable. Cannot make duplicate of node named: " + node_name);
 }
 
 template <typename TensorType>

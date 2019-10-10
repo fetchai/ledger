@@ -17,36 +17,42 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
-
-#include <atomic>
+#include "dmlf/execution_error_message.hpp"
+#include "vm/variant.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace dmlf {
 
-class DummyContract : public Contract
+class ExecutionResult
 {
 public:
-  static constexpr char const *NAME = "fetch.dummy";
+  using Variant = fetch::vm::Variant;
+  using Error   = ExecutionErrorMessage;
 
-  DummyContract();
-  ~DummyContract() override = default;
+  ExecutionResult(Variant output, Error error, std::string console)
+    : output_(output)
+    , error_(error)
+    , console_(std::move(console))
+  {}
 
-  static constexpr char const *LOGGING_NAME = "DummyContract";
-
-  std::size_t counter() const
+  Variant output() const
   {
-    return counter_;
+    return output_;
+  }
+  Error error() const
+  {
+    return error_;
+  }
+  std::string console() const
+  {
+    return console_;
   }
 
 private:
-  using Counter = std::atomic<std::size_t>;
-
-  Result Wait(Transaction const &tx, BlockIndex /*index*/);
-  Result Run(Transaction const &tx, BlockIndex /*index*/);
-
-  Counter counter_{0};
+  Variant     output_;
+  Error       error_;
+  std::string console_;
 };
 
-}  // namespace ledger
+}  // namespace dmlf
 }  // namespace fetch

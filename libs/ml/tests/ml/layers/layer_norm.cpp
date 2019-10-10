@@ -125,10 +125,11 @@ TYPED_TEST(LayerNormTest, node_backward_test)  // Use the class as a Node
   auto      backprop_error = ln.BackPropagate(error_signal);
 
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].second.shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].second.shape()[0], 5);
-  ASSERT_EQ(backprop_error[0].second.shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].second.shape()[2], 2);
+  auto err_signal = (*(backprop_error.begin())).second.at(0);
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], 5);
+  ASSERT_EQ(err_signal.shape()[1], 10);
+  ASSERT_EQ(err_signal.shape()[2], 2);
 }
 
 TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class as a Node

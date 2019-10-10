@@ -48,7 +48,7 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
   std::ifstream file(filename);
   if (file.fail())
   {
-    throw std::runtime_error("ReadCSV cannot open file " + filename);
+    throw ml::exceptions::InvalidFile("ReadCSV cannot open file " + filename);
   }
 
   std::string           buf;

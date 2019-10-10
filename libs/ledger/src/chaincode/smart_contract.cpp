@@ -85,6 +85,8 @@ void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &p
   }
 }
 
+constexpr char const *LOGGING_NAME = "SmartContract";
+
 }  // namespace
 
 /**
@@ -251,7 +253,7 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
 
   if (!valid)
   {
-    throw std::runtime_error("Invalid address formart");
+    throw std::runtime_error("Invalid address format");
   }
 }
 
@@ -332,21 +334,21 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Vari
  * @param pack The reference to the parameter pack to be populated
  * @param obj structured data object represented by generic fetch::variant::Variant type
  */
-void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type_id,
                                             vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  if (!vm->IsDefaultSerializeConstructable(expected_type))
+  if (!vm->IsDefaultSerializeConstructable(expected_type_id))
   {
-    throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
+    throw std::runtime_error("Type is not constructable: " + vm->GetTypeName(expected_type_id));
   }
 
   // Creating a new object and deserialise
-  vm::Ptr<vm::Object> object = vm->DefaultSerializeConstruct(expected_type);
+  vm::Ptr<vm::Object> object = vm->DefaultSerializeConstruct(expected_type_id);
   object->FromJSON(obj);
 
   if (!pack.Add(object))
   {
-    throw std::runtime_error("Could not add parameter " + vm->GetUniqueId(expected_type));
+    throw std::runtime_error("Could not add parameter " + vm->GetTypeName(expected_type_id));
   }
 }
 
@@ -357,17 +359,17 @@ void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type
  * @param pack The reference to the parameter pack to be populated
  * @param obj structured data object represented by generic MsgPack type
  */
-void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type_id,
                                             vm::ParameterPack & /*pack*/,
                                             msgpack::object const & /*obj*/)
 {
-  if (!vm->IsDefaultSerializeConstructable(expected_type))
+  if (!vm->IsDefaultSerializeConstructable(expected_type_id))
   {
-    throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
+    throw std::runtime_error("Type is not constructable: " + vm->GetTypeName(expected_type_id));
   }
 
   // TODO(issue 1256): Review design and implement equivalent for msgpack
-  throw std::runtime_error("No msgpack support for type " + vm->GetUniqueId(expected_type));
+  throw std::runtime_error("No msgpack support for type " + vm->GetTypeName(expected_type_id));
 }
 
 /**
@@ -380,10 +382,10 @@ void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type
  * @param variant The input variant from which the value is extracted
  */
 template <typename T>
-void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type,
+void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type_id,
                         T const &variant)
 {
-  switch (expected_type)
+  switch (expected_type_id)
   {
   case vm::TypeIds::Bool:
     AddToParameterPack<bool>(params, variant);
@@ -431,7 +433,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
     break;
 
   default:
-    AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
+    AddStructuredDataObjectToParameterPack(vm, expected_type_id, params, variant);
   }
 }
 
@@ -754,7 +756,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
           response["status"] = "failed";
           response["result"] = "Failed to serialise object to JSON variant";
           FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
-                                           output.object->GetUniqueId());
+                                           output.object->GetTypeName());
           return Status::FAILED;
         }
       }

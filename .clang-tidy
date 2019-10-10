@@ -4,6 +4,8 @@ cert-dcl*,\
 cert-env*,\
 cert-err52-cpp,\
 cert-err60-cpp,\
+cert-flp30-c,\
+clang-analyzer-security.FloatLoopCounter,\
 google-build-explicit-make-pair,\
 google-build-namespaces,\
 google-explicit-constructor,\
@@ -13,6 +15,7 @@ hicpp-exception-baseclass,\
 hicpp-explicit-conversions,\
 hicpp-use-*,\
 misc-*,\
+-misc-misplaced-widening-cast,\
 modernize-*,\
 performance-*,\
 readability-*,\
