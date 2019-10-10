@@ -47,7 +47,7 @@ VMSequentialModel::VMSequentialModel(VM *vm, TypeId type_id)
   : Object(vm, type_id)
 {
   model_config_ = std::make_shared<ModelConfigType>();
-  model_ = std::make_shared<fetch::ml::model::Sequential<TensorType>>(model_config_);
+  model_ = std::make_shared<fetch::ml::model::Sequential<TensorType>>(*model_config_);
 }
 
 Ptr<VMSequentialModel> VMSequentialModel::Constructor(VM *vm, TypeId type_id)
@@ -55,15 +55,13 @@ Ptr<VMSequentialModel> VMSequentialModel::Constructor(VM *vm, TypeId type_id)
   return Ptr<VMSequentialModel>{new VMSequentialModel(vm, type_id)};
 }
 
-void VMSequentialModel::LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer,
-         fetch::vm::Ptr<fetch::vm::String> const &hidden_nodes)
+void VMSequentialModel::LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer, fetch::vm::Ptr<DataType> const &inputs, fetch::vm::Ptr<DataType> const &hidden_nodes)
 {
 
   // dense / fully connected layer
   if (layer->str == "dense")
   {
-    model_->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-        hidden_nodes, fetch::ml::details::ActivationType::RELU);
+    model_->template Add<fetch::ml::layers::FullyConnected<TensorType>>(inputs, hidden_nodes, fetch::ml::details::ActivationType::RELU);
   }
   else
   {
@@ -114,7 +112,7 @@ void VMSequentialModel::Fit(fetch::vm::Ptr<VMTensor> const &data, fetch::vm::Ptr
   model_->Train();
 }
 
-void Evaluate()
+void VMSequentialModel::Evaluate()
 {
   model_->Evaluate();
 }

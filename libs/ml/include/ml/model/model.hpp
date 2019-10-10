@@ -33,6 +33,12 @@ namespace fetch {
 namespace ml {
 namespace model {
 
+enum class MetricType
+{
+  LOSS,
+  ACCURACY
+};
+
 template <typename TensorType>
 class Model
 {
@@ -65,6 +71,7 @@ public:
   void Train(SizeType n_rounds, DataType &loss);
   void Test(DataType &test_loss);
   void Predict(TensorType &input, TensorType &output);
+  DataType Evaluate(std::vector<MetricType> const &metrics = std::vector<MetricType>());
 
   void UpdateConfig(ModelConfig<DataType> &model_config);
 
@@ -86,14 +93,14 @@ protected:
   bool optimiser_set_ = false;
   bool compiled_      = false;
 
+  DataType loss_;
+
   virtual void PrintStats(SizeType epoch, DataType loss,
                           DataType test_loss = fetch::math::numeric_max<DataType>());
 
 private:
-
   bool SetOptimiser();
   void TrainImplementation(DataType &loss, SizeType n_rounds = 1);
-
 };
 
 template <typename TensorType>
@@ -170,7 +177,6 @@ void Model<TensorType>::SetDataloader(std::unique_ptr<DataLoaderType> dataloader
   dataloader_ptr_ = std::move(dataloader_ptr);
 }
 
-
 /**
  * An interface to train that trains for one epoch
  * @tparam TensorType
@@ -237,6 +243,14 @@ void Model<TensorType>::Predict(TensorType &input, TensorType &output)
 }
 
 template <typename TensorType>
+typename Model<TensorType>::DataType Model<TensorType>::Evaluate(std::vector<MetricType> const &metrics)
+{
+  FETCH_UNUSED(metrics);
+  return loss_;
+}
+
+
+template <typename TensorType>
 void Model<TensorType>::UpdateConfig(ModelConfig<DataType> &model_config)
 {
   model_config_ = model_config;
@@ -266,15 +280,15 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
 
-  loss               = DataType{0};
+  loss_               = DataType{0};
   DataType min_loss  = fetch::math::numeric_max<DataType>();
   DataType test_loss = fetch::math::numeric_max<DataType>();
   SizeType patience_count{0};
   bool     stop_early = false;
 
   // run for one subset - if this is not set it defaults to epoch
-  loss = optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
-  min_loss = loss;
+  loss_ = optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
+  min_loss = loss_;
 
   // run for remaining epochs (or subsets) with early stopping
   SizeType step{1};
@@ -297,15 +311,15 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
     }
 
     // run optimiser for one epoch (or subset)
-    loss =
+    loss_ =
         optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
 
     // update early stopping
     if (this->model_config_.early_stopping)
     {
-      if (loss < (min_loss - this->model_config_.min_delta))
+      if (loss_ < (min_loss - this->model_config_.min_delta))
       {
-        min_loss       = loss;
+        min_loss       = loss_;
         patience_count = 0;
       }
       else
@@ -322,6 +336,7 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
     step++;
   }
 
+  loss = loss_;
 }
 
 }  // namespace model

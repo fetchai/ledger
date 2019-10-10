@@ -36,22 +36,24 @@ class VMStateDict;
 class VMSequentialModel : public fetch::vm::Object
 {
 public:
-  using DataType  = fetch::vm_modules::math::DataType;
-  using TensorType = fetch::math::Tensor<DataType>;
-  using ModelPtrType = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
-  using ModelConfigType = fetch::ml::model::ModelConfig<DataType>;
-  using ModelConfigPtrType = std::shared_ptr<fetch::ml::model::ModelConfig<DataType>>;
-  using GraphType = fetch::ml::Graph<TensorType>;
-  using TensorDataloader = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+  using DataType            = fetch::vm_modules::math::DataType;
+  using TensorType          = fetch::math::Tensor<DataType>;
+  using ModelPtrType        = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
+  using ModelConfigType     = fetch::ml::model::ModelConfig<DataType>;
+  using ModelConfigPtrType  = std::shared_ptr<fetch::ml::model::ModelConfig<DataType>>;
+  using GraphType           = fetch::ml::Graph<TensorType>;
+  using TensorDataloader    = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
   using TensorDataloaderPtr = std::unique_ptr<TensorDataloader>;
-  using VMTensor  = fetch::vm_modules::math::VMTensor;
+  using VMTensor            = fetch::vm_modules::math::VMTensor;
 
   VMSequentialModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   static fetch::vm::Ptr<VMSequentialModel> Constructor(fetch::vm::VM *   vm,
                                                        fetch::vm::TypeId type_id);
 
-  void LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer, fetch::vm::Ptr<fetch::vm::String> const &hidden_nodes);
+  void LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                fetch::vm::Ptr<fetch::vm::String> const &inputs,
+                fetch::vm::Ptr<fetch::vm::String> const &hidden_nodes);
 
   void Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
                fetch::vm::Ptr<fetch::vm::String> const &optimiser);

@@ -540,7 +540,6 @@ TEST_F(MLTests, graph_step_test)
   EXPECT_GT(loss_reduction->GetTensor().At(0, 0), 0);
 }
 
-
 TEST_F(MLTests, sequential_model_test)
 {
   static char const *sequential_model_src = R"(
