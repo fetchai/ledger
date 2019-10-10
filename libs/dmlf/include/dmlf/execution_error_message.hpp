@@ -73,6 +73,7 @@ public:
     return message_;
   }
 
+protected:
 private:
   Stage       stage_;
   Code        code_;
@@ -97,9 +98,8 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &exec_err_msg)
   {
-    uint32_t stage, code;
-    stage = static_cast<uint32_t>(exec_err_msg.stage_);
-    code  = static_cast<uint32_t>(exec_err_msg.code_);
+    uint32_t const stage = static_cast<uint32_t>(exec_err_msg.stage_);
+    uint32_t const code  = static_cast<uint32_t>(exec_err_msg.code_);
 
     auto map = map_constructor(3);
     map.Append(STAGE, stage);

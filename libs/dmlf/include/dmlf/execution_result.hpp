@@ -55,6 +55,7 @@ public:
     return console_;
   }
 
+protected:
 private:
   Variant     output_;
   Error       error_;
