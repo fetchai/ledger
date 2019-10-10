@@ -117,8 +117,6 @@ public:
     T result{};
     if (!As<T>(result))
     {
-      std::cerr << "TRACE" << std::endl; // DELETEME_NH
-      ERROR_BACKTRACE;
       throw std::runtime_error("Timeout or connection lost");
     }
 
