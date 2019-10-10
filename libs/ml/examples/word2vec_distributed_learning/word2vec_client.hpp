@@ -57,6 +57,8 @@ public:
 
   void PrepareOptimiser();
 
+  void Run() override;
+
   void Test() override;
 
   DataType analogy_score_ = static_cast<DataType>(0);
@@ -161,14 +163,32 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 }
 
 /**
+ * Main loop that runs in thread
+ */
+template <class TensorType>
+void Word2VecClient<TensorType>::Run()
+{
+  this->ResetLossCnt();
+  if (this->coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
+  {
+    // Do one batch and end
+    this->TrainOnce();
+  }
+  else
+  {
+    // Train batches until coordinator will tell clients to stop
+    this->TrainWithCoordinator();
+  }
+  analogy_score_ = GetAnalogyScore();
+}
+
+/**
  * Run model on test set to get test loss
  * @param test_loss
  */
 template <class TensorType>
 void Word2VecClient<TensorType>::Test()
 {
-  analogy_score_ = GetAnalogyScore();
-
   if (this->batch_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
   {
     TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);
