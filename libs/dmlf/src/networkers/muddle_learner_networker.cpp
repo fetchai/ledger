@@ -52,14 +52,13 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
 {
   json::JSONDocument doc{cloud_config};
 
-  FETCH_LOG_INFO("MuddleLearnerNetworker", "here 1");
   if (netm)
   {
     netm_ = netm;
   }
   else
   {
-    netm_ = std::make_shared<NetworkManager>("NetMgrA", 4);
+    netm_ = std::make_shared<NetworkManager>("LrnrNet", 4);
   }
   netm_->Start();
 
