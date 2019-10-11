@@ -19,7 +19,8 @@
 
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "dmlf/execution_error_message.hpp"
+#include "dmlf/execution/execution_error_message.hpp"
+#include "network/generics/promise_of.hpp"
 #include "vm/variant.hpp"
 
 namespace fetch {
@@ -28,8 +29,11 @@ namespace dmlf {
 class ExecutionResult
 {
 public:
-  using Variant = fetch::vm::Variant;
-  using Error   = ExecutionErrorMessage;
+  using Variant         = fetch::vm::Variant;
+  using Error           = ExecutionErrorMessage;
+  using ErrorCode       = ExecutionErrorMessage::Code;
+  using ErrorStage      = ExecutionErrorMessage::Stage;
+  using PromiseOfResult = fetch::network::PromiseOf<ExecutionResult>;
 
   ExecutionResult() = default;
 
@@ -51,6 +55,18 @@ public:
   {
     return console_;
   }
+
+  operator bool() const
+  {
+    return error_.code() == ErrorCode::SUCCESS;
+  }
+
+  static PromiseOfResult MakePromise();
+  static void            FulfillPromise(PromiseOfResult promise, ExecutionResult fulfiller);
+  static PromiseOfResult MakeFulfilledPromise(Error error);
+  static PromiseOfResult MakeFulfilledPromise(ExecutionResult fulfiller);
+  static PromiseOfResult MakeFulfilledPromiseSuccess();
+  static PromiseOfResult MakeFulfilledPromiseError(ErrorCode error_code, std::string error_message);
 
 private:
   Variant     output_;
