@@ -476,8 +476,6 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limi
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   Blocks result;
-
-  Block     block;
   BlockHash next_hash;
 
   if (current_hash.empty())
