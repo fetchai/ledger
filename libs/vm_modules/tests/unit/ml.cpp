@@ -555,7 +555,7 @@ TEST_F(MLTests, sequential_model_test)
       var label = Tensor(label_shape);
 
       // set up a model
-      var model = SequentialModel();
+      var model = Model("sequential");
       model.add("dense", 10u64, 10u64, "relu");
       model.add("dense", 10u64, 10u64, "relu");
       model.add("dense", 10u64, 1u64);
@@ -566,11 +566,82 @@ TEST_F(MLTests, sequential_model_test)
 
       // make a prediction
       var loss = model.evaluate();
-
     endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(sequential_model_src));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, classifier_model_test)
+{
+  static char const *classifier_model_src = R"(
+    function main()
+
+      // set up data and labels
+      var data_shape = Array<UInt64>(2);
+      data_shape[0] = 10u64;
+      data_shape[1] = 1000u64;
+      var label_shape = Array<UInt64>(2);
+      label_shape[0] = 10u64;
+      label_shape[1] = 1000u64;
+      var data = Tensor(data_shape);
+      var label = Tensor(label_shape);
+
+      // set up a model
+      var hidden_layers = Array<UInt64>(3);
+      hidden_layers[0] = 10u64;
+      hidden_layers[1] = 10u64;
+      hidden_layers[2] = 10u64;
+      var model = Model("classifier");
+      model.compile("adam", hidden_layers);
+
+      // train the model
+      model.fit(data, label, 32u64);
+
+      // make a prediction
+      var loss = model.evaluate();
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(classifier_model_src));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, regressor_model_test)
+{
+  static char const *regressor_model_src = R"(
+    function main()
+
+      // set up data and labels
+      var data_shape = Array<UInt64>(2);
+      data_shape[0] = 10u64;
+      data_shape[1] = 1000u64;
+      var label_shape = Array<UInt64>(2);
+      label_shape[0] = 1u64;
+      label_shape[1] = 1000u64;
+      var data = Tensor(data_shape);
+      var label = Tensor(label_shape);
+
+      // set up a model
+      var hidden_layers = Array<UInt64>(3);
+      hidden_layers[0] = 10u64;
+      hidden_layers[1] = 10u64;
+      hidden_layers[2] = 1u64;
+      var model = Model("regressor");
+      model.compile("adam", hidden_layers);
+
+      // train the model
+      model.fit(data, label, 32u64);
+
+      // make a prediction
+      var loss = model.evaluate();
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(regressor_model_src));
   ASSERT_TRUE(toolkit.Run());
 }
 }  // namespace

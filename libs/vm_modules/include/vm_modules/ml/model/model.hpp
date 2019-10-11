@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/model/sequential.hpp"
+#include "ml/model/model.hpp"
 #include "vm/array.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/tensor.hpp"
@@ -31,15 +31,22 @@ class Module;
 
 namespace vm_modules {
 namespace ml {
+namespace model {
 
-class VMStateDict;
+enum class ModelType
+{
+  NONE,
+  SEQUENTIAL,
+  REGRESSOR,
+  CLASSIFIER
+};
 
-class VMSequentialModel : public fetch::vm::Object
+class VMModel : public fetch::vm::Object
 {
 public:
   using DataType            = fetch::vm_modules::math::DataType;
   using TensorType          = fetch::math::Tensor<DataType>;
-  using ModelPtrType        = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
+  using ModelPtrType        = std::shared_ptr<fetch::ml::model::Model<TensorType>>;
   using ModelConfigType     = fetch::ml::model::ModelConfig<DataType>;
   using ModelConfigPtrType  = std::shared_ptr<fetch::ml::model::ModelConfig<DataType>>;
   using GraphType           = fetch::ml::Graph<TensorType>;
@@ -47,10 +54,11 @@ public:
   using TensorDataloaderPtr = std::unique_ptr<TensorDataloader>;
   using VMTensor            = fetch::vm_modules::math::VMTensor;
 
-  VMSequentialModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
+  VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+          fetch::vm::Ptr<fetch::vm::String> const &model_type);
 
-  static fetch::vm::Ptr<VMSequentialModel> Constructor(fetch::vm::VM *   vm,
-                                                       fetch::vm::TypeId type_id);
+  static fetch::vm::Ptr<VMModel> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                             fetch::vm::Ptr<fetch::vm::String> const &model_type);
 
   void LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
                 math::SizeType const &hidden_nodes);
@@ -62,8 +70,11 @@ public:
                               fetch::ml::details::ActivationType const &activation =
                                   fetch::ml::details::ActivationType::NOTHING);
 
-  void Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
-               fetch::vm::Ptr<fetch::vm::String> const &optimiser);
+  void CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
+                         fetch::vm::Ptr<fetch::vm::String> const &optimiser);
+
+  void CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
+                     fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers);
 
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
            fetch::math::SizeType const &batch_size);
@@ -76,8 +87,10 @@ private:
   TensorDataloaderPtr dl_;
   ModelPtrType        model_;
   ModelConfigPtrType  model_config_;
+  ModelType           model_type_ = ModelType::NONE;
 };
 
+}  // namespace model
 }  // namespace ml
 }  // namespace vm_modules
 }  // namespace fetch
