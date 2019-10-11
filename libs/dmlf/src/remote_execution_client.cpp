@@ -16,92 +16,114 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/service_ids.hpp"
 #include "dmlf/remote_execution_client.hpp"
 #include "dmlf/remote_execution_protocol.hpp"
+#include "core/byte_array/decoders.hpp"
 
 namespace fetch {
 namespace dmlf {
+
+  using fetch::byte_array::FromBase64;
 
 RemoteExecutionClient::RemoteExecutionClient(RemoteExecutionClient::MuddlePtr    mud,
                                              std::shared_ptr<ExecutionInterface> local)
   : local_(local)
   , mud_(mud)
 {
-  auto client_ =
-      std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+  client_ = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
 }
 
-RemoteExecutionClient::Returned RemoteExecutionClient::CreateExecutable(Target const &     target,
-                                                                        Name const &       execName,
-                                                                        SourceFiles const &sources)
+RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::CreateExecutable(
+    Target const &target, Name const &execName, SourceFiles const &sources)
 {
-  if (target == "" || target == "local:///")
+  if (target.empty() || target == "local:///")
   {
     return local_->CreateExecutable(target, execName, sources);
   }
-  return Returned(client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
-                                               RemoteExecutionProtocol::RPC_DMLF_CREATE_EXE,
-                                               execName, sources));
+  std::cout << "TARGET:" << target << std::endl;
+  return Returned([this, target, execName, sources](OpIdent const &op_id) {
+      client_->CallSpecificAddress(FromBase64(target), RPC_DMLF,
+                                 RemoteExecutionProtocol::RPC_DMLF_CREATE_EXE, op_id, execName,
+                                 sources);
+    return true;
+  });
 }
 
-RemoteExecutionClient::Returned RemoteExecutionClient::DeleteExecutable(Target const &target,
-                                                                        Name const &  execName)
+RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::DeleteExecutable(Target const &target,
+                                                                               Name const &execName)
 {
-  if (target == "" || target == "local:///")
+  if (target.empty() || target == "local:///")
   {
     return local_->DeleteExecutable(target, execName);
   }
-  return Returned(client_->CallSpecificAddress(
-      TargetUriToKey(target), RPC_DMLF, RemoteExecutionProtocol::RPC_DMLF_DEL_EXE, execName));
+  return Returned([this, target, execName](OpIdent const &op_id) {
+    client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
+
+                                 RemoteExecutionProtocol::RPC_DMLF_DEL_EXE, op_id, execName);
+    return true;
+  });
 }
 
-RemoteExecutionClient::Returned RemoteExecutionClient::CreateState(Target const &target,
-                                                                   Name const &  stateName)
+RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::CreateState(Target const &target,
+                                                                          Name const &  stateName)
 {
-  if (target == "" || target == "local:///")
+  if (target.empty() || target == "local:///")
   {
     return local_->CreateState(target, stateName);
   }
-  return Returned(client_->CallSpecificAddress(
-      TargetUriToKey(target), RPC_DMLF, RemoteExecutionProtocol::RPC_DMLF_CREATE_STATE, stateName));
+  return Returned([this, target, stateName](OpIdent const &op_id) {
+    client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
+                                 RemoteExecutionProtocol::RPC_DMLF_CREATE_STATE, op_id, stateName);
+    return true;
+  });
 }
 
-RemoteExecutionClient::Returned RemoteExecutionClient::CopyState(Target const &target,
-                                                                 Name const &  srcName,
-                                                                 Name const &  newName)
+RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::CopyState(Target const &target,
+                                                                        Name const &  srcName,
+                                                                        Name const &  newName)
 {
-  if (target == "" || target == "local:///")
+  if (target.empty() || target == "local:///")
   {
     return local_->CopyState(target, srcName, newName);
   }
-  return Returned(client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
-                                               RemoteExecutionProtocol::RPC_DMLF_COPY_STATE,
-                                               srcName, newName));
+  return Returned([this, target, srcName, newName](OpIdent const &op_id) {
+    client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
+                                 RemoteExecutionProtocol::RPC_DMLF_COPY_STATE, op_id, srcName,
+                                 newName);
+    return true;
+  });
 }
 
-RemoteExecutionClient::Returned RemoteExecutionClient::DeleteState(Target const &target,
-                                                                   Name const &  stateName)
+RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::DeleteState(Target const &target,
+                                                                          Name const &  stateName)
 {
-  if (target == "" || target == "local:///")
+  if (target.empty() || target == "local:///")
   {
     return local_->DeleteState(target, stateName);
   }
-  return Returned(client_->CallSpecificAddress(
-      TargetUriToKey(target), RPC_DMLF, RemoteExecutionProtocol::RPC_DMLF_DEL_STATE, stateName));
+  return Returned([this, target, stateName](OpIdent const &op_id) {
+    client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
+                                 RemoteExecutionProtocol::RPC_DMLF_DEL_STATE, op_id, stateName);
+    return true;
+  });
 }
 
-RemoteExecutionClient::Returned RemoteExecutionClient::Run(Target const &     target,
-                                                           Name const &       execName,
-                                                           Name const &       stateName,
-                                                           std::string const &entrypoint)
+RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::Run(Target const &     target,
+                                                                  Name const &       execName,
+                                                                  Name const &       stateName,
+                                                                  std::string const &entrypoint)
 {
-  if (target == "" || target == "local:///")
+  if (target.empty() || target == "local:///")
   {
     return local_->Run(target, execName, stateName, entrypoint);
   }
-  return Returned(client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
-                                               RemoteExecutionProtocol::RPC_DMLF_RUN, execName,
-                                               stateName, entrypoint));
+  return Returned([this, target, execName, stateName, entrypoint](OpIdent const &op_id) {
+    client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
+                                 RemoteExecutionProtocol::RPC_DMLF_RUN, op_id, execName, stateName,
+                                 entrypoint);
+    return true;
+  });
 }
 
 byte_array::ConstByteArray RemoteExecutionClient::TargetUriToKey(std::string const &target)
@@ -109,6 +131,32 @@ byte_array::ConstByteArray RemoteExecutionClient::TargetUriToKey(std::string con
   Uri uri;
   uri.Parse(target);
   return fetch::byte_array::FromBase64(uri.GetMuddleAddress());
+}
+
+bool RemoteExecutionClient::ReturnResults(OpIdent const &op_id, ExecutionResult const & /*r*/)
+{
+  auto iter = pending_results_.find(op_id);
+  if (iter == pending_results_.end())
+  {
+    // TODO(kll) report some sort of error here.
+  }
+  else
+  {
+    byte_array::ConstByteArray bytes;
+    iter->second.GetInnerPromise()->Fulfill(bytes);
+  }
+  return true;
+}
+
+RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::Returned(
+    std::function<bool(OpIdent const &op_id)> func)
+{
+  auto op_id = std::to_string(counter);
+  func(op_id);
+  auto prom               = service::MakePromise();
+  auto prom_of            = fetch::network::PromiseOf<ExecutionResult>(prom);
+  pending_results_[op_id] = prom_of;
+  return prom_of;
 }
 
 }  // namespace dmlf

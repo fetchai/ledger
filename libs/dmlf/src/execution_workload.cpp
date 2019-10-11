@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,30 +16,4 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/protocol.hpp"
-
-namespace fetch {
-namespace dmlf {
-
-class RemoteExecutionHost;
-class RemoteExecutionClient;
-
-class RemoteExecutionProtocol : public fetch::service::Protocol
-{
-public:
-  enum
-  {
-    RPC_DMLF_RESULTS,
-    RPC_DMLF_CREATE_EXE,
-    RPC_DMLF_DEL_EXE,
-    RPC_DMLF_CREATE_STATE,
-    RPC_DMLF_COPY_STATE,
-    RPC_DMLF_DEL_STATE,
-    RPC_DMLF_RUN,
-  };
-  explicit RemoteExecutionProtocol(RemoteExecutionHost &exec);
-  explicit RemoteExecutionProtocol(RemoteExecutionClient &exec);
-};
-
-}  // namespace dmlf
-}  // namespace fetch
+#include "dmlf/execution_workload.hpp"

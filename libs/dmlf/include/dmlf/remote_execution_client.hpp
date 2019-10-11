@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
 #include "dmlf/execution_interface.hpp"
+#include "dmlf/execution_workload.hpp"
 #include "dmlf/vm_wrapper_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -30,9 +30,12 @@ namespace dmlf {
 class RemoteExecutionClient : public ExecutionInterface
 {
 public:
-  using MuddlePtr = muddle::MuddlePtr;
-  using Uri       = network::Uri;
-  using RpcClient = fetch::muddle::rpc::Client;
+  using MuddlePtr       = muddle::MuddlePtr;
+  using Uri             = network::Uri;
+  using RpcClient       = fetch::muddle::rpc::Client;
+  using PromiseOfResult = fetch::network::PromiseOf<ExecutionResult>;
+  using OpIdent         = ExecutionWorkload::OpIdent;
+  using PendingResults  = std::map<OpIdent, PromiseOfResult>;
 
   RemoteExecutionClient(MuddlePtr mud_, std::shared_ptr<ExecutionInterface> local =
                                             std::shared_ptr<ExecutionInterface>());
@@ -46,24 +49,32 @@ public:
   bool                   operator==(RemoteExecutionClient const &other) = delete;
   bool                   operator<(RemoteExecutionClient const &other)  = delete;
 
-  Returned CreateExecutable(Target const &target, Name const &execName,
-                            SourceFiles const &sources) override;
-  Returned DeleteExecutable(Target const &target, Name const &execName) override;
+  PromiseOfResult CreateExecutable(Target const &target, Name const &execName,
+                                   SourceFiles const &sources) override;
+  PromiseOfResult DeleteExecutable(Target const &target, Name const &execName) override;
 
-  Returned CreateState(Target const &target, Name const &stateName) override;
-  Returned CopyState(Target const &target, Name const &srcName, Name const &newName) override;
-  Returned DeleteState(Target const &target, Name const &stateName) override;
+  PromiseOfResult CreateState(Target const &target, Name const &stateName) override;
+  PromiseOfResult CopyState(Target const &target, Name const &srcName,
+                            Name const &newName) override;
+  PromiseOfResult DeleteState(Target const &target, Name const &stateName) override;
 
-  Returned Run(Target const &target, Name const &execName, Name const &stateName,
-               std::string const &entrypoint) override;
+  PromiseOfResult Run(Target const &target, Name const &execName, Name const &stateName,
+                      std::string const &entrypoint) override;
+
+  // This is the exported interface which is called with results from the remote host.
+
+  bool ReturnResults(OpIdent const &op_id, ExecutionResult const &result);
 
 protected:
 private:
-  using CertificatePtr = muddle::ProverPtr;
-
   std::shared_ptr<ExecutionInterface> local_;
   MuddlePtr                           mud_;
   std::shared_ptr<RpcClient>          client_;
+
+  PendingResults pending_results_;
+  std::size_t    counter = 0;
+
+  PromiseOfResult Returned(std::function<bool(OpIdent const &op_id)>);
 
   byte_array::ConstByteArray TargetUriToKey(std::string const &target);
 };

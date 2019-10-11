@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/remote_execution_client.hpp"
 #include "dmlf/remote_execution_host.hpp"
 #include "dmlf/remote_execution_protocol.hpp"
 
@@ -24,12 +25,17 @@ namespace dmlf {
 
 RemoteExecutionProtocol::RemoteExecutionProtocol(RemoteExecutionHost &exec)
 {
-  Expose(RPC_DMLF_CREATE_EXE, &exec, &RemoteExecutionHost::CreateExecutable);
-  Expose(RPC_DMLF_DEL_EXE, &exec, &RemoteExecutionHost::DeleteExecutable);
-  Expose(RPC_DMLF_CREATE_STATE, &exec, &RemoteExecutionHost::CreateState);
-  Expose(RPC_DMLF_COPY_STATE, &exec, &RemoteExecutionHost::CopyState);
-  Expose(RPC_DMLF_DEL_STATE, &exec, &RemoteExecutionHost::DeleteState);
-  Expose(RPC_DMLF_RUN, &exec, &RemoteExecutionHost::Run);
+  ExposeWithClientContext(RPC_DMLF_CREATE_EXE, &exec, &RemoteExecutionHost::CreateExecutable);
+  ExposeWithClientContext(RPC_DMLF_DEL_EXE, &exec, &RemoteExecutionHost::DeleteExecutable);
+  ExposeWithClientContext(RPC_DMLF_CREATE_STATE, &exec, &RemoteExecutionHost::CreateState);
+  ExposeWithClientContext(RPC_DMLF_COPY_STATE, &exec, &RemoteExecutionHost::CopyState);
+  ExposeWithClientContext(RPC_DMLF_DEL_STATE, &exec, &RemoteExecutionHost::DeleteState);
+  ExposeWithClientContext(RPC_DMLF_RUN, &exec, &RemoteExecutionHost::Run);
+}
+
+RemoteExecutionProtocol::RemoteExecutionProtocol(RemoteExecutionClient &exec)
+{
+  Expose(RPC_DMLF_RESULTS, &exec, &RemoteExecutionClient::ReturnResults);
 }
 
 }  // namespace dmlf

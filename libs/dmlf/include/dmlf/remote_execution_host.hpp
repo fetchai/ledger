@@ -18,6 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/execution_interface.hpp"
+#include "dmlf/execution_result.hpp"
+#include "dmlf/execution_workload.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "network/service/call_context.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -25,12 +31,19 @@ namespace dmlf {
 class RemoteExecutionHost
 {
 public:
-  using Result      = ExecutionInterface::Result;
-  using Name        = ExecutionInterface::Name;
-  using SourceFiles = ExecutionInterface::SourceFiles;
+  using Name                  = ExecutionInterface::Name;
+  using SourceFiles           = ExecutionInterface::SourceFiles;
+  using ExecutionInterfacePtr = std::shared_ptr<ExecutionInterface>;
 
-  RemoteExecutionHost()
-  {}
+  using MuddlePtr = muddle::MuddlePtr;
+  using Uri       = network::Uri;
+  using RpcClient = fetch::muddle::rpc::Client;
+  using OpIdent   = ExecutionWorkload::OpIdent;
+
+  using PendingWorkloads = std::list<ExecutionWorkload>;
+
+  RemoteExecutionHost(MuddlePtr mud_, ExecutionInterfacePtr executor_);
+
   virtual ~RemoteExecutionHost()
   {}
 
@@ -39,17 +52,30 @@ public:
   bool                 operator==(RemoteExecutionHost const &other) = delete;
   bool                 operator<(RemoteExecutionHost const &other)  = delete;
 
-  virtual Result CreateExecutable(Name const &execName, SourceFiles const &sources);
-  virtual Result DeleteExecutable(Name const &execName);
+  virtual bool CreateExecutable(service::CallContext const &call_context, OpIdent const &op_id,
+                                Name const &execName, SourceFiles const &sources);
+  virtual bool DeleteExecutable(service::CallContext const &call_context, OpIdent const &op_id,
+                                Name const &execName);
 
-  virtual Result CreateState(Name const &stateName);
-  virtual Result CopyState(Name const &srcName, Name const &newName);
-  virtual Result DeleteState(Name const &stateName);
+  virtual bool CreateState(service::CallContext const &call_context, OpIdent const &op_id,
+                           Name const &stateName);
+  virtual bool CopyState(service::CallContext const &call_context, OpIdent const &op_id,
+                         Name const &srcName, Name const &newName);
+  virtual bool DeleteState(service::CallContext const &call_context, OpIdent const &op_id,
+                           Name const &stateName);
 
-  virtual Result Run(Name const &execName, Name const &stateName, std::string const &entrypoint);
+  virtual bool Run(service::CallContext const &call_context, OpIdent const &op_id,
+                   Name const &execName, Name const &stateName, std::string const &entrypoint);
+
+  bool ExecuteOneWorkload(void);
 
 protected:
 private:
+  MuddlePtr                  mud_;
+  std::shared_ptr<RpcClient> client_;
+
+  PendingWorkloads      pending_workloads_;
+  ExecutionInterfacePtr executor_;
 };
 
 }  // namespace dmlf

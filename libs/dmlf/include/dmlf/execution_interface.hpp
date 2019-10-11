@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-//#include "dmlf/execution_result.hpp"
+#include "dmlf/execution_result.hpp"
 #include "network/generics/promise_of.hpp"
 #include "vm/common.hpp"
 #include "vm/variant.hpp"
@@ -37,11 +37,13 @@ public:
   ExecutionInterface()          = default;
   virtual ~ExecutionInterface() = default;
 
-  using Name            = std::string;
-  using SourceFiles     = fetch::vm::SourceFiles;
+  using Name        = std::string;
+  using SourceFiles = std::string;
+  // using SourceFiles     = fetch::vm::SourceFiles;
   using Target          = std::string;
   using Variant         = fetch::vm::Variant;
   using PromiseOfResult = fetch::network::PromiseOf<ExecutionResult>;
+  using Result          = PromiseOfResult;
   using Params          = std::vector<Variant>;
 
   virtual PromiseOfResult CreateExecutable(Target const &host, Name const &execName,
