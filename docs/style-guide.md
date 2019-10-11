@@ -7,7 +7,9 @@ We use C++14, but currently consider C++17 too immature for usage.
 
 * Header files: `.hpp`
 * Source files: `.cpp`
+* Use `#pragma once` in headers.
 * Split class definition across a header and source file by default.
+* Include header definitions in the same file.
 
 * Order of includes
 	1. Related header.
@@ -45,7 +47,16 @@ We use C++14, but currently consider C++17 too immature for usage.
 * Enums use `UPPER_CASE`.
 * Macros use `UPPER_CASE`.
 * Align attributes by group in classes, and initialisers.
+* Variables should be initialised with `=` if primitive, or braced initialisation with parentheses if required.
+* Initialiser lists should be initialised with braces by default.
 * Use SQL style initialiser for lists and inheritance lists.
+
+```c++
+Foo::Foo()
+  : attribute1_{value1}
+  , attribute2_{value2}
+{}
+```
 
 
 ## Typing
@@ -55,6 +66,13 @@ We use C++14, but currently consider C++17 too immature for usage.
 * Use `static_cast`, `reinterpret_cast`, `dynamic_cast`, etc., rather than C-style casts.
 * Avoid `auto` except when the return type is clear.
 * Avoid use of RTTI.
+
+* `using` is preferable to `typedef` for type alias definition.
+* Make `using` private unless you intend to expose it.
+* `namespace {.<template T>` only allowed if `typedef`/`using` indicates the type.
+
+* If a value is `const`, declare it so.
+* Use `int const &i` over `const int &i`.
 
 
 ## Comments and documentation
@@ -124,36 +142,6 @@ for (const User& user: users)
 * Do not assume, do assert
 
 
-## Other
-
-* If a value is `const`, declare it so.
-* Always prefer passing by `const` reference or reference where possible.
-* Don't use `#define`. If you ignore this guidance, choose a `FETCH_STARTING_REALLY_LONG_NAME_THAT_CANNOT_POSSIBLY_CLASH_WITH_ANYTHING_ELSE` and undefine it as soon as you are done with it.
-* Structs are for POD. Classes are for everything else. 
-* Include header definitions in the same file.
-* Use `#pragma` once in headers.
-* Do not do `using namespace foo` or `namespace baz = ::foo::bar::baz` in `.hpp` files.
-* Stick to RAII principle and automatic memory management - destructors are ideally empty.
-* Use the following keywords when appropriate: 
-	1. `explicit`.
-	2. `override`.
-	3. `virtual`.
-	4. `final`.
-	5. `noexcept`.
-* Declare all constructors and assignment operators concretely or with default or delete (prefer delete).
-* Pre increment: `++i` as it is more performant for non primitive types.
-* Use `int const &i` over `const int &i`.
-* Lambda captures must be explicit ref or copy.
-* `using` is preferable to `typedef`.
-* Make `using` private unless you intend to expose it.
-* TODOs should refer to the author in the style `TODO(`HUT`) :`.
-* Avoid leaving `TODOs` in code.
-* `namespace {.<template T>` only allowed if `typedef`/`using` indicates the type.
-* Use templates judiciously and defined to library code where only a small number of devs need understand them.
-* Variables should be initialised with `=` if primitive, or braced initialisation with parentheses if required.
-* initialiser lists should be initialised with parentheses by default, otherwise braced initialisation.
-
-
 ## Naming
 
 * Use meaningful names.
@@ -163,29 +151,10 @@ for (const User& user: users)
 * For templates, use all uppercase with underscores to separate words. Long and explicit names are preferred to short and obscure names, e.g. `template <typename ARRAY_TYPE>` is preferable to `template <typename A>);`. Short names are acceptable where the type is obvious and reused many times in complex equations.
 
 
-### Namespaces 
+## Namespaces 
 
-Don't do the following:
-
-``` c++
-namespace fetch 
-{
-    using namespace std; // Pollutes all of the fetch namespace and causes problems for everyone.
-
-class MyFetchClass 
-{
-    public:
-        void Greet() 
-        {
-          cout << "Hello" << endl;
-        }
-        // ...
-    };
-
-};
-```
-
-Instead, do the following:
+* Do not do `using namespace foo` or `namespace baz = ::foo::bar::baz` in `.hpp` files.
+* Do not do `using namespace foo` in the top `fetch` namespace, as it pollutes all of it. Instead, do the following:
 
 ``` c++
 namespace fetch 
@@ -220,7 +189,7 @@ namespace fetch
 
 ## Structs
 
-* Use structs for passive data and, in some cases, template meta-programming. Use `classes` for everything else.
+Use structs for Plain Old Data (POD) and, in some cases, template meta-programming. Use `classes` for everything else.
 
 ``` c++
 struct Person 
@@ -239,7 +208,8 @@ struct Person
 	2. Constructor initialiser list.
 	3. Constructor body.
 
-* Mark all constructors and assignment operators explicitly; even those which are implicit. For example:
+* Mark all constructors and assignment operators explicitly, even those which are implicit, to ensure there is no confusion about the intended behaviour of the class.
+* Mark unneeded default implementations as deleted. C++ infers whether to create implicit constructors based on whether there are user defined ones. This means that when someone declares a constructor, C++ may remove the default constructor.
 
 ``` c++
 class Transaction 
@@ -256,11 +226,7 @@ class Transaction
 }
 ```
 
-This ensures there is no confusion about the intended behaviour of the class. 
-
-Likewise, mark unneeded default implementations as deleted. C++ infers whether to create implicit constructors based on whether there are user defined ones. This means that when someone declares a constructor, C++ may remove the default constructor.
-
-Mark a class `final` if it is not meant to be subclassed. The same counts for final implementations of virtual functions. For example:
+* Mark a class `final` if it is not meant to be subclassed. The same counts for final implementations of virtual functions.
 
 ``` c++
 class Foo 
@@ -326,13 +292,20 @@ class MyClass
 Here, inline initialisation ensures that the default constructor does not produce uninitialised memory. In the second constructor, we manually initialise the `pointer_` but `size_` can be set using the initialisation list.
 
 
-## Memory management and pointers
+## Memory handling
 
-* Prefer `shared_ptr` and `unique_ptr` over raw pointers. 
-* Use references where the value cannot be null. Use pointers where it can. 
+* Use references where the value cannot be null. Use pointers where it can.
+* Make sure no uninitialised memory is accessed.
+* Always prefer passing by reference or `const` reference where possible.
+* Prefer `shared_ptr` and `unique_ptr` over raw pointers.
 * Use `make_shared` and `make_unique` for shared pointers.
-* Uninitialised memory can cause serious bugs.
+* Stick to RAII principle and automatic memory management - destructors are ideally empty.
 
+### nullptr
+
+Use the `nullptr` keyword which designates an `rvalue` constant serving as a universal null pointer literal. This replaces the buggy and weakly-typed literal `0` and the infamous `NULL` macro.
+
+`nullptr` is also type safe.
 
 ### Handling dynamically allocated memory resources
 
@@ -349,16 +322,6 @@ Below are some types which guarantee to manage **array** object types (continuou
 * `std::string<...>` guarantees to manage a continuous block of memory (array) by definition.
 * `SharedArray<...>` and `Array<...>` classes (from `fetch::memory` namespace) that guarantee to manage a continuous block of memory (array) by definition.
 * Classes from `fetch::byte_array` namespace, such as `BasicByteArray` 
-
-
-### nullptr
-
-Use the new C++11 `nullptr` keyword which designates an `rvalue` constant serving as a universal null pointer literal.
-
-This replaces the buggy and weakly-typed literal `0` and the infamous `NULL` macro. 
-
-`nullptr` is also type safe.
-
 
 ### Transfer between ownership models
 
@@ -458,7 +421,6 @@ The most important aspect of this strong bond is that the destructor is *automat
 
 Below are a few examples of how resources should be managed in the code:
 
-
 ### Exception enabled environment and its impact on resource handling
 
 The *most important rule* is that the destructor will **NEVER** throw an exception in any circumstance. 
@@ -466,8 +428,6 @@ The *most important rule* is that the destructor will **NEVER** throw an excepti
 The reason for this is that a destructor for a *directly* initialised object (the lifecycle of which is controlled by a scope) is called automatically when any exception is thrown within that scope. This means that if the destructor throws yet another exception, it forces the C++ runtime to call `std::terminate` of the process (as per the C++ standard definition), since the C++ runtime is already in the <a href="http://en.cppreference.com/w/cpp/language/throw" target=_blank>stack unwinding</a> process caused by the first exception.
 
 See more about this scenario at <a href="http://en.cppreference.com/w/cpp/language/destructor#Exception" target=_blank>cppreference.com</a> and at <a href="http://www.codingstandard.com/rule/15-2-1-do-not-throw-an-exception-from-a-destructor/" target=_blank>codingstandard.com</a>.
-
-
 
 ### Handling `THREAD` synchronisation resources
 
@@ -480,7 +440,6 @@ The Fetch Ledger codebase offers a couple implementations of mutex in the `fetch
 
 * `fetch::mutex::DebugMutex`
 * `fetch::mutex::ProductionMutex`
-
 
 ### The `std::unique_lock<...>`
 
@@ -571,7 +530,6 @@ int main(int argc, char* argv[])
 }
 ```
 
-
 ### The `std::lock_guard<...>`
 
 The `std::lock_guard<T>` offers the most trivial API possible - constructor and destructor.
@@ -593,3 +551,19 @@ std::mutex(mtx);
     //* will implicitly unlock the mutex.
 }
 ```
+
+
+## Other
+
+* Don't use `#define`. If you ignore this guidance, choose a `FETCH_STARTING_REALLY_LONG_NAME_THAT_CANNOT_POSSIBLY_CLASH_WITH_ANYTHING_ELSE` and undefine it as soon as you are done with it.
+* Use the following keywords when appropriate:
+	1. `explicit`.
+	2. `override`.
+	3. `virtual`.
+	4. `final`.
+	5. `noexcept`.
+* Pre increment: `++i` as it is more performant for non primitive types.
+* Lambda captures must be explicit reference or copy.
+* TODOs should refer to the author in the style `TODO(`HUT`) :`.
+* Avoid leaving `TODOs` in code.
+* Use templates judiciously and defined to library code where only a small number of developers need to understand them.
