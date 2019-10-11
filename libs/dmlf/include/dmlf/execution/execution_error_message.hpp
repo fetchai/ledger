@@ -54,7 +54,7 @@ public:
   explicit ExecutionErrorMessage(Stage stage, Code code, std::string message)
     : stage_(stage)
     , code_(code)
-    , message_(message)
+    , message_(std::move(message))
   {}
 
   Stage stage() const
@@ -68,6 +68,11 @@ public:
   std::string message() const
   {
     return message_;
+  }
+
+  operator bool() const
+  {
+    return code_ == Code::SUCCESS;
   }
 
 private:
@@ -97,8 +102,8 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &exec_err_msg)
   {
-    uint32_t const stage = static_cast<uint32_t>(exec_err_msg.stage_);
-    uint32_t const code  = static_cast<uint32_t>(exec_err_msg.code_);
+    auto const stage = static_cast<uint32_t>(exec_err_msg.stage_);
+    auto const code  = static_cast<uint32_t>(exec_err_msg.code_);
 
     auto map = map_constructor(3);
     map.Append(STAGE, stage);

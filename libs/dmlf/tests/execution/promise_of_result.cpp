@@ -32,9 +32,10 @@ using fetch::dmlf::ExecutionErrorMessage;
 class PromiseOfResultTests : public ::testing::Test
 {
 public:
-  PromiseOfResult promise;
-  ExecutionResult result;
-  ExecutionResult fulfillment;
+  PromiseOfResult       promise;
+  ExecutionResult       result;
+  ExecutionResult       fulfillment;
+  ExecutionErrorMessage status;
 
   bool isInitializedAndNotFulfilled()
   {
@@ -66,7 +67,7 @@ TEST_F(PromiseOfResultTests, make_fulfilled_with_result)
 
 TEST_F(PromiseOfResultTests, make_fulfilled_with_status)
 {
-  promise = ExecutionResult::MakeFulfilledPromise(ExecutionErrorMessage{});
+  promise = ExecutionResult::MakeFulfilledPromise(status);
   ASSERT_TRUE(isFulfilled());
 }
 

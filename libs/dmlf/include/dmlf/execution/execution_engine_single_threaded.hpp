@@ -22,9 +22,9 @@
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
 
-#include <map>
 #include <memory>
 #include <sstream>
+#include <unordered_map>
 
 namespace fetch {
 namespace dmlf {
@@ -69,8 +69,8 @@ private:
   using State            = VmPersistent;
   using PromiseFulfiller = std::shared_ptr<service::details::PromiseImplementation>;
 
-  std::map<std::string, std::shared_ptr<Executable>> executables_;
-  std::map<std::string, std::shared_ptr<State>>      states_;
+  std::unordered_map<std::string, std::shared_ptr<Executable>> executables_;
+  std::unordered_map<std::string, std::shared_ptr<State>>      states_;
 
   std::shared_ptr<fetch::vm::Module> module_ = VmFactory::GetModule(VmFactory::USE_SMART_CONTRACTS);
 };

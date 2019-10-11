@@ -35,16 +35,15 @@ public:
   using PromiseOfResult = ExecutionInterface::PromiseOfResult;
   using Params          = ExecutionInterface::Params;
 
-  virtual PromiseOfResult CreateExecutable(Name const &       execName,
-                                           SourceFiles const &sources) override;
-  virtual PromiseOfResult DeleteExecutable(Name const &execName) override;
+  virtual PromiseOfResult CreateExecutable(Name const &execName, SourceFiles const &sources) = 0;
+  virtual PromiseOfResult DeleteExecutable(Name const &execName)                             = 0;
 
-  virtual PromiseOfResult CreateState(Name const &stateName) override;
-  virtual PromiseOfResult CopyState(Name const &srcName, Name const &newName) override;
-  virtual PromiseOfResult DeleteState(Name const &stateName) override;
+  virtual PromiseOfResult CreateState(Name const &stateName)                  = 0;
+  virtual PromiseOfResult CopyState(Name const &srcName, Name const &newName) = 0;
+  virtual PromiseOfResult DeleteState(Name const &stateName)                  = 0;
 
   virtual PromiseOfResult Run(Name const &execName, Name const &stateName,
-                              std::string const &entrypoint) override;
+                              std::string const &entrypoint) = 0;
 
   ExecutionEngineInterface(ExecutionEngineInterface const &other) = delete;
   ExecutionEngineInterface &operator=(ExecutionEngineInterface const &other)  = delete;

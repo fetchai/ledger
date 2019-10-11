@@ -27,14 +27,14 @@ ExecutionResult::PromiseOfResult ExecutionResult::MakePromise()
   return promise;
 }
 
-void ExecutionResult::FulfillPromise(PromiseOfResult promise, ExecutionResult fulfiller)
+void ExecutionResult::FulfillPromise(PromiseOfResult &promise, ExecutionResult const &fulfiller)
 {
   serializers::MsgPackSerializer serializer;
   serializer << fulfiller;
   promise.GetInnerPromise()->Fulfill(serializer.data());
 }
 
-ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromise(Error error)
+ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromise(Error &error)
 {
   auto promise = ExecutionResult::MakePromise();
   auto result  = ExecutionResult{Variant{}, error, std::string{}};
@@ -44,7 +44,8 @@ ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromise(Error err
   return promise;
 }
 
-ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromise(ExecutionResult fulfiller)
+ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromise(
+    ExecutionResult const &fulfiller)
 {
   auto promise = ExecutionResult::MakePromise();
   ExecutionResult::FulfillPromise(promise, fulfiller);
@@ -58,7 +59,7 @@ ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromiseSuccess()
 }
 
 ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromiseError(
-    ErrorCode error_code, std::string error_message)
+    ErrorCode error_code, std::string const &error_message)
 {
   auto error = Error{ErrorStage::ENGINE, error_code, error_message};
   return ExecutionResult::MakeFulfilledPromise(error);

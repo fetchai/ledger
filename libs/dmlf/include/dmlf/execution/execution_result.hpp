@@ -38,8 +38,8 @@ public:
   ExecutionResult() = default;
 
   ExecutionResult(Variant output, Error error, std::string console)
-    : output_(output)
-    , error_(error)
+    : output_(std::move(output))
+    , error_(std::move(error))
     , console_(std::move(console))
   {}
 
@@ -58,15 +58,16 @@ public:
 
   operator bool() const
   {
-    return error_.code() == ErrorCode::SUCCESS;
+    return error_;
   }
 
   static PromiseOfResult MakePromise();
-  static void            FulfillPromise(PromiseOfResult promise, ExecutionResult fulfiller);
-  static PromiseOfResult MakeFulfilledPromise(ExecutionResult fulfiller);
-  static PromiseOfResult MakeFulfilledPromise(Error error);
+  static void            FulfillPromise(PromiseOfResult &promise, ExecutionResult const &fulfiller);
+  static PromiseOfResult MakeFulfilledPromise(ExecutionResult const &fulfiller);
+  static PromiseOfResult MakeFulfilledPromise(Error &error);
   static PromiseOfResult MakeFulfilledPromiseSuccess();
-  static PromiseOfResult MakeFulfilledPromiseError(ErrorCode error_code, std::string error_message);
+  static PromiseOfResult MakeFulfilledPromiseError(ErrorCode          error_code,
+                                                   std::string const &error_message);
 
 private:
   Variant     output_;
