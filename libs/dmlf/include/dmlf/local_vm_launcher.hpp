@@ -64,7 +64,8 @@ public:
                std::string const &entrypoint, Params const &params) override;
   void AttachExecuteErrorHandler(ExecuteErrorHandler) override;
 
-  std::unordered_map<std::string, std::shared_ptr<VM>>      vms_;
+  std::unordered_map<std::string, std::shared_ptr<VM>> vms_;
+
 private:
   std::unordered_map<std::string, std::shared_ptr<Program>> programs_;
   std::unordered_map<std::string, std::shared_ptr<State>>   states_;

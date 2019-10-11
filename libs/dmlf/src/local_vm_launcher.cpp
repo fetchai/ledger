@@ -139,11 +139,12 @@ bool LocalVmLauncher::Execute(std::string const &programName, std::string const 
   vm->SetIOObserver(*state);
 
   fetch::vm::ParameterPack parameterPack(vm->registered_types());
-  std::for_each(params.cbegin(), params.cend(), [&parameterPack] (auto const &v) { parameterPack.AddSingle(v); });
+  std::for_each(params.cbegin(), params.cend(),
+                [&parameterPack](auto const &v) { parameterPack.AddSingle(v); });
 
   std::string        runTimeError;
   fetch::vm::Variant output;
-  auto               thereWasAnError = vm->Execute(*program, entrypoint, runTimeError, output, parameterPack);
+  auto thereWasAnError = vm->Execute(*program, entrypoint, runTimeError, output, parameterPack);
 
   if (!runTimeError.empty() && executeErrorhandler_ != nullptr)
   {

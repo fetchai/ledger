@@ -57,7 +57,7 @@ public:
 
   virtual bool Execute(std::string const &program, std::string const &vm, std::string const &state,
                        std::string const &entrypoint, Params const &params) = 0;
-  virtual void AttachExecuteErrorHandler(ExecuteErrorHandler)                  = 0;
+  virtual void AttachExecuteErrorHandler(ExecuteErrorHandler)               = 0;
 
 protected:
 private:
