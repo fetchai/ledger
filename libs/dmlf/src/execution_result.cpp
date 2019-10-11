@@ -29,9 +29,9 @@ ExecutionResult::PromiseOfResult ExecutionResult::MakePromise()
 
 void ExecutionResult::FulfillPromise(PromiseOfResult &promise, ExecutionResult const &fulfiller)
 {
-  serializers::MsgPackSerializer serializer;
+  serializers::LargeObjectSerializeHelper serializer;
   serializer << fulfiller;
-  promise.GetInnerPromise()->Fulfill(serializer.data());
+  promise.GetInnerPromise()->Fulfill(serializer.buffer.data());
 }
 
 ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromise(Error &error)
