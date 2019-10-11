@@ -81,4 +81,48 @@ TEST_F(OpsTests, tranpose_test)
   EXPECT_EQ(result.shape().at(1), 2);
   ASSERT_TRUE(result.AllClose(gt));
 }
+
+TEST_F(OpsTests, exp_test)
+{
+  using TypeParam = fetch::math::Tensor<DataType>;
+
+  TypeParam gt = TypeParam::FromString(
+      "2.71828182845904, 0.135335283236613, 20.0855369231877, 0.018315638888734, 148.413159102577, "
+      "0.002478752176666");
+
+  static char const *src = R"(
+    function main() : Tensor
+
+      var tensor_shape = Array<UInt64>(1);
+      tensor_shape[0] = 6u64;
+
+      var data_tensor = Tensor(tensor_shape);
+
+      var string_vals = "1, -2, 3, -4, 5, -6";
+      data_tensor.fromString(string_vals);
+
+      var graph = Graph();
+      graph.addPlaceholder("Input");
+      graph.addExp("Exp", "Input");
+
+      graph.setInput("Input", data_tensor);
+
+      var result = graph.evaluate("Exp");
+
+      return result;
+    endfunction
+  )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(src));
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  TypeParam result = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>()->GetTensor();
+
+  EXPECT_EQ(result.shape().size(), 1);
+  EXPECT_EQ(result.shape().at(0), 6);
+
+  ASSERT_TRUE(result.AllClose(gt));
+}
+
 }  // namespace
