@@ -61,12 +61,12 @@ public:
   bool CopyState(std::string const &srcName, std::string newName) override;
 
   bool Execute(std::string const &program, std::string const &vm, std::string const &state,
-               std::string const &entrypoint, const Params /*params*/) override;
+               std::string const &entrypoint, Params const &params) override;
   void AttachExecuteErrorHandler(ExecuteErrorHandler) override;
 
+  std::unordered_map<std::string, std::shared_ptr<VM>>      vms_;
 private:
   std::unordered_map<std::string, std::shared_ptr<Program>> programs_;
-  std::unordered_map<std::string, std::shared_ptr<VM>>      vms_;
   std::unordered_map<std::string, std::shared_ptr<State>>   states_;
 
   ProgramErrorHandler programErrorHandler_ = nullptr;

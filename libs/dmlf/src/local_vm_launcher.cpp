@@ -125,7 +125,7 @@ bool LocalVmLauncher::CopyState(std::string const &srcName, std::string newName)
 
 bool LocalVmLauncher::Execute(std::string const &programName, std::string const &vmName,
                               std::string const &stateName, std::string const &entrypoint,
-                              const Params /*params*/)
+                              Params const &params)
 {
   if (!HasProgram(programName) || !HasVM(vmName) || !HasState(stateName))
   {
@@ -138,9 +138,12 @@ bool LocalVmLauncher::Execute(std::string const &programName, std::string const 
 
   vm->SetIOObserver(*state);
 
+  fetch::vm::ParameterPack parameterPack(vm->registered_types());
+  std::for_each(params.cbegin(), params.cend(), [&parameterPack] (auto const &v) { parameterPack.AddSingle(v); });
+
   std::string        runTimeError;
   fetch::vm::Variant output;
-  auto               thereWasAnError = vm->Execute(*program, entrypoint, runTimeError, output);
+  auto               thereWasAnError = vm->Execute(*program, entrypoint, runTimeError, output, parameterPack);
 
   if (!runTimeError.empty() && executeErrorhandler_ != nullptr)
   {

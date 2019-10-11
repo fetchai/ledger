@@ -43,6 +43,7 @@ using namespace fetch::dmlf;
 using Params = fetch::dmlf::LocalVmLauncher::Params;
 // using Status = fetch::dmlf::VmWrapperInterface::Status;
 
+
 auto const helloWorld = R"(
 function main()
 
@@ -119,6 +120,14 @@ function tock()
   tock.set(tock.get(0) + 2);
 
 endfunction
+)";
+
+auto const add = R"(
+
+function add(a : Int32, b : Int32)
+  printLn("Add " + toString(a) + " plus " + toString(b) + " equals " + toString(a+b));
+endfunction
+
 )";
 
 auto programOut = [](std::string name, std::vector<std::string> const &out) {
@@ -770,6 +779,155 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick_VM_CopyState)
   EXPECT_TRUE(executedSuccesfully);
 
   EXPECT_EQ(output.str(), "0\n1\n2\n2\n3\n3\n4\n4\n");
+}
+
+TEST(VmLauncherDmlfTests, local_params)
+{
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
+
+  bool createdProgram = launcher.CreateProgram("add", add);
+  EXPECT_TRUE(createdProgram);
+
+  bool createdVM = launcher.CreateVM("vm");
+  EXPECT_TRUE(createdVM);
+  std::stringstream output;
+  launcher.SetVmStdout("vm", output);
+
+  bool createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState);
+
+  Params params{Variant(5, TypeIds::Int32), Variant(6, TypeIds::Int32)};
+  bool executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
+
+  EXPECT_TRUE(executedSuccesfully);
+
+  EXPECT_EQ(output.str(), "Add 5 plus 6 equals 11\n");
+}
+
+TEST(VmLauncherDmlfTests, local_less_params)
+{
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
+
+  bool createdProgram = launcher.CreateProgram("add", add);
+  EXPECT_TRUE(createdProgram);
+
+  bool createdVM = launcher.CreateVM("vm");
+  EXPECT_TRUE(createdVM);
+  std::stringstream output;
+  launcher.SetVmStdout("vm", output);
+
+  bool createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState);
+
+  std::string errorMessage;
+  launcher.AttachExecuteErrorHandler([&errorMessage] (std::string const &, 
+        std::string const &, std::string const &, std::string const &error)
+  {
+    errorMessage = error;
+  });
+
+  Params params{Variant(5, TypeIds::Int32)};
+  bool executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
+
+  EXPECT_FALSE(executedSuccesfully);
+  EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 1");
+}
+
+TEST(VmLauncherDmlfTests, local_more_params)
+{
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
+
+  bool createdProgram = launcher.CreateProgram("add", add);
+  EXPECT_TRUE(createdProgram);
+
+  bool createdVM = launcher.CreateVM("vm");
+  EXPECT_TRUE(createdVM);
+  std::stringstream output;
+  launcher.SetVmStdout("vm", output);
+
+  bool createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState);
+
+  std::string errorMessage;
+  launcher.AttachExecuteErrorHandler([&errorMessage] (std::string const &, 
+        std::string const &, std::string const &, std::string const &error)
+  {
+    errorMessage = error;
+  });
+
+  Params params{Variant(5, TypeIds::Int32),Variant(5, TypeIds::Int32),Variant(5, TypeIds::Int32)};
+  bool executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
+
+  EXPECT_FALSE(executedSuccesfully);
+  EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 3");
+}
+
+TEST(VmLauncherDmlfTests, local_none_params)
+{
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
+
+  bool createdProgram = launcher.CreateProgram("add", add);
+  EXPECT_TRUE(createdProgram);
+
+  bool createdVM = launcher.CreateVM("vm");
+  EXPECT_TRUE(createdVM);
+  std::stringstream output;
+  launcher.SetVmStdout("vm", output);
+
+  bool createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState);
+
+  std::string errorMessage;
+  launcher.AttachExecuteErrorHandler([&errorMessage] (std::string const &, 
+        std::string const &, std::string const &, std::string const &error)
+  {
+    errorMessage = error;
+  });
+
+  Params params{};
+  bool executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
+
+  EXPECT_FALSE(executedSuccesfully);
+  EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 0");
+}
+
+TEST(VmLauncherDmlfTests, local_wrong_type_params)
+{
+  LocalVmLauncher launcher;
+  launcher.AttachProgramErrorHandler(programOut);
+  launcher.AttachExecuteErrorHandler(executeOut);
+
+  bool createdProgram = launcher.CreateProgram("add", add);
+  EXPECT_TRUE(createdProgram);
+
+  bool createdVM = launcher.CreateVM("vm");
+  EXPECT_TRUE(createdVM);
+  std::stringstream output;
+  launcher.SetVmStdout("vm", output);
+
+  bool createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState);
+
+  std::string errorMessage;
+  launcher.AttachExecuteErrorHandler([&errorMessage] (std::string const &, 
+        std::string const &, std::string const &, std::string const &error)
+  {
+    errorMessage = error;
+  });
+
+  Params params{Variant(5, TypeIds::Float32),Variant(5, TypeIds::Int32)};
+  bool executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
+
+  EXPECT_FALSE(executedSuccesfully);
+  EXPECT_EQ(errorMessage, "mismatched parameters: expected argument 0to be of type Int32 but got Float32");
 }
 
 }  // namespace
