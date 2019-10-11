@@ -65,9 +65,7 @@ public:
     Handle handle = 0;
   };
 
-  using RoutingTable   = std::unordered_map<Packet::RawAddress, RoutingData>;
-  using RecentlyRouted = std::deque<byte_array::ConstByteArray>;
-  static constexpr std::size_t RECENTLY_ROUTED_CACHE_MAX_SIZE = 100;
+  using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
 
   // Helper functions
   static Packet::RawAddress ConvertAddress(Packet::Address const &address);
@@ -190,9 +188,8 @@ private:
   bool                  sign_broadcasts_ = false;
   std::atomic<bool>     kademlia_routing_{false};
 
-  mutable Mutex  routing_table_lock_;
-  RoutingTable   routing_table_;  ///< The map routing table from address to handle (Protected by
-  RecentlyRouted recently_routed_;
+  mutable Mutex routing_table_lock_;
+  RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by
 
   mutable Mutex echo_cache_lock_;
   EchoCache     echo_cache_;

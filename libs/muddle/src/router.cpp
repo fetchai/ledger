@@ -32,9 +32,6 @@
 #include "crypto/fnv.hpp"
 #include "muddle/packet.hpp"
 
-#include "crypto/hash.hpp"
-#include "crypto/sha256.hpp"
-
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -839,31 +836,8 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     handle = LookupRandomHandle(packet->GetTargetRaw());
     if (handle != 0u)
     {
-      FETCH_LOCK(routing_table_lock_);
-
-      auto const packet_hash = crypto::Hash<crypto::SHA256>(packet->GetPayload());
-
-      if (std::find(recently_routed_.begin(), recently_routed_.end(), packet_hash) !=
-          recently_routed_.end())
-      {
-        FETCH_LOG_WARN(logging_name_,
-                       "Dropping duplicate packet! To: ", ToBase64(packet->GetTarget()),
-                       " payload: ", ToBase64(packet_hash));
-      }
-      else
-      {
-        FETCH_LOG_WARN(logging_name_,
-                       "Speculative routing to peer: ", ToBase64(packet->GetTarget()),
-                       " payload: ", ToBase64(packet_hash));
-        SendToConnection(handle, packet);
-
-        recently_routed_.push_back(packet_hash);
-
-        while (recently_routed_.size() > RECENTLY_ROUTED_CACHE_MAX_SIZE)
-        {
-          recently_routed_.pop_front();
-        }
-      }
+      FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", ToBase64(packet->GetTarget()));
+      SendToConnection(handle, packet);
     }
   }
 }
