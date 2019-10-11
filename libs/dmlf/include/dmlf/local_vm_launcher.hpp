@@ -34,7 +34,7 @@ class LocalVmLauncher : public VmLauncherInterface
 {
 public:
   LocalVmLauncher()  = default;
-  ~LocalVmLauncher() = default;
+  ~LocalVmLauncher() override = default;
 
   LocalVmLauncher(const LocalVmLauncher &other) = delete;
   LocalVmLauncher &operator=(const LocalVmLauncher &other)  = delete;
