@@ -1,133 +1,56 @@
+# C++ code style guidelines
 
+We use C++14, but currently consider C++17 too immature for usage.
 
-## Summary
+## File structure
 
-* Use STL types wherever possible. 
-* Always check error codes and return codes. 
-* Do not rely on exceptions to avoid taking responsibility.
-* Do not assume, do assert. 
-* Write tests and run them. 
-* If a value is `const`, declare it so.
-* Comment the non-obvious, not the obvious. 
-* Provide API documentation with your code.
-* Prefer `shared_ptr` and `unique_ptr` over raw pointers. 
-* Use references where the value cannot be null. Use pointers where it can. 
-* Always prefer passing by `const` reference or reference where possible.
-* Use `make_shared` and `make_unique` for shared pointers.
-* Don't use `#define`. If you ignore this guidance, choose a `FETCH_STARTING_REALLY_LONG_NAME_THAT_CANNOT_POSSIBLY_CLASH_WITH_ANYTHING_ELSE` and undefine it as soon as you are done with it.
-* Use `static_cast`, `reinterpret_cast`, `dynamic_cast`, etc., rather than C-style casts.
-* Lines should be no longer than 100 characters. 
-* Use spaces, not tabs.
-* Curly brackets `{...}` should be on their own line.
-* There should be a space after conditionals, i.e. `if (test)`
-* Use meaningful names.
-* Use C++14 features, not C++17.
-* Structs are for POD. Classes are for everything else.
-* initialise class members in the following order of preference:
-	1. Inline initialisation.
-	2. Constructor initialiser list.
-	3. Constructor body. 
-* Uninitialised memory can cause serious bugs.
-* Use `nullptr`, not `0` or `NULL`.
-* Include header definitions in the same file.
-* Use `#pragma` once in headers.
-* Order of includes: 
+* Header files: `.hpp`
+* Source files: `.cpp`
+* Split class definition across a header and source file by default.
+
+* Order of includes
 	1. Related header.
-	2. `C` library. 
+	2. `C` library.
 	3. `C++` library.
-	4. Other libraries. 
+	4. Other libraries.
 	5. Fetch library.
-* Do not do `using namespace foo` or `namespace baz = ::foo::bar::baz` in `.hpp` files.
-* Stick to RAII principle and automatic memory management - destructors are ideally empty.
-* Do not throw exceptions in destructors as this can crash the program.
-* Use exceptions *only* for exceptional circumstances. 
-* Handle normal errors gracefully.
-* Use the following keywords when appropriate: 
-	1. `explicit`.
-	2. `override`.
-	3. `virtual`.
-	4. `final`.
-	5. `noexcept`.
-* Declare all constructors and assignment operators concretely or with default or delete (prefer delete).
-* Avoid `auto` except when the return type is clear.
-* Avoid use of RTTI.
-* Pre increment: `++i` as it is more performant for non primitive types.
-* Prefer `(u)int(16/32/64)_t` and `std::size_t`.
-* Use `int const &i` over `const int &i`.
-* Lambda captures must be explicit ref or copy.
-* `using` is preferable to `typedef`.
-* Make `using` private unless you intend to expose it.
-* Classes in this order:
+
+* Classes in this order
 	1. `public`.
 	2. `protected`.
 	3. `private`.
-* Use SQL style initialiser for lists and inheritance lists.
-* `snake_case_` variables with trailing underscore, except in structs where it is `snake_case` without underscore.
-* Enums use `UPPER_CASE`.
-* Macros use `UPPER_CASE`.
-* Include a comment summary at the top of all files.
-* Split class definition across a header and source file by default.
-* Header files: `.hpp`.
-* Source files: `.cpp`.
-* TODOs should refer to the author in the style `TODO(`HUT`) :`.
-* Avoid leaving `TODOs` in code.
-* No spaces inside `(parenthesis)` or `<template>` unless it improves readability.
-* No spaces around arrow: `this->fnc();`.
-* No trailing whitespace.
-* Align attributes by group in classes, and initialisers.
-* `namespace {.<template T>` only allowed if `typedef`/`using` indicates the type.
-* Use templates judiciously and defined to library code where only a small number of devs need understand them.
-* Variables should be initialised with `=` if primitive, or braced initialisation with parentheses if required.
-* initialiser lists should be initialised with parentheses by default, otherwise braced initialisation.
+
+
+## Error handling
+
+* Always check error codes and return codes.
+* Use exceptions *only* for exceptional circumstances.
+* Handle normal errors gracefully.
+
+* Do not rely on exceptions to avoid taking responsibility.
+* Do not throw exceptions in destructors as this can crash the program.
 
 
 ## Formatting
 
-Use spaces, not tabs. 
-
-Indent.
-
-Make use of the `apply_style` script provided for formatting.
-
-
-## Naming
-
-Use meaningful names.
-
-For structs, use all lowercase with underscore to separate words, or camel case, i.e. `first_name` and `firstName` are both valid.
-
-For classes, private member variables end with an`_`.
-
-For templates, use all uppercase with underscores to separate words. Long and explicit names are preferred to short and obscure names, e.g. `template <typename ARRAY_TYPE>` is preferable to `template <typename A>);`. Short names are acceptable where the type is obvious and reused many times in complex equations.
+* Make use of the `apply_style` script provided for formatting.
+* Lines should be no longer than 100 characters.
+* Use spaces to indent, not tabs.
+* Curly brackets `{...}` should be on their own line.
+* There should be a space after conditionals, i.e. `if (test)`
+* No spaces inside `(parenthesis)` or `<template>` unless it improves readability.
+* No spaces around arrow: `this->fnc();`.
+* No trailing whitespace.
+* Enums use `UPPER_CASE`.
+* Macros use `UPPER_CASE`.
+* Align attributes by group in classes, and initialisers.
+* Use SQL style initialiser for lists and inheritance lists.
 
 
-## Comments and documentation 
+## Comments and documentation
 
-Don't do the following:
-
-``` c++
-// Computes exponential using magic
-double Exp(double const &x) 
-{
-    // No idea where these magic constants come from
-    static double const a = double(1ull << 20) / M_LN2;
-    static double const b = ((1ull << (10)) - 1) * double(1ull << 20); - 60801;
-    double in = x * a + b;
-
-    union 
-    { // How the f$#k does this work?
-      double d;
-      uint32_t i[2];
-    } conv;
-
-    conv.i[1] = static_cast<uint32_t>(in);
-    conv.i[0] = 0;
-
-    return conv.d;
-}
-```
-
-Instead, do the following:
+* Provide API documentation with your code.
+* Include a comment summary at the top of all files.
 
 ``` c++
 /* Approximation of the exponential function.
@@ -166,11 +89,7 @@ double Exp(double const &x)
 }
 ```
 
-
-
-If you do not understand some code, contact the original author. If he or she has left the company ask the most competent person. After working out what a piece of a non-obvious code is doing, remember to document it.
-
-Finally, comment the non-obvious:
+* Comment the non-obvious, not the obvious.
 
 ``` c++
 // Turns out sorting this list before processing it is faster due to branch 
@@ -186,14 +105,70 @@ for (const User& user: users)
 }   // iterate (users)
 ```
 
+* If you do not understand some code, contact the original author. If they have left the company ask the most competent person. After working out what a piece of a non-obvious code is doing, remember to document it.
+
+## Tests
+
+* Write tests and run them
+* Do not assume, do assert
+
+## Other
+
+* Use STL types wherever possible.
+* If a value is `const`, declare it so.
+* Prefer `shared_ptr` and `unique_ptr` over raw pointers. 
+* Use references where the value cannot be null. Use pointers where it can. 
+* Always prefer passing by `const` reference or reference where possible.
+* Use `make_shared` and `make_unique` for shared pointers.
+* Don't use `#define`. If you ignore this guidance, choose a `FETCH_STARTING_REALLY_LONG_NAME_THAT_CANNOT_POSSIBLY_CLASH_WITH_ANYTHING_ELSE` and undefine it as soon as you are done with it.
+* Use `static_cast`, `reinterpret_cast`, `dynamic_cast`, etc., rather than C-style casts.
+* Use meaningful names.
+* Structs are for POD. Classes are for everything else.
+* initialise class members in the following order of preference:
+	1. Inline initialisation.
+	2. Constructor initialiser list.
+	3. Constructor body. 
+* Uninitialised memory can cause serious bugs.
+* Use `nullptr`, not `0` or `NULL`.
+* Include header definitions in the same file.
+* Use `#pragma` once in headers.
+* Do not do `using namespace foo` or `namespace baz = ::foo::bar::baz` in `.hpp` files.
+* Stick to RAII principle and automatic memory management - destructors are ideally empty.
+* Use the following keywords when appropriate: 
+	1. `explicit`.
+	2. `override`.
+	3. `virtual`.
+	4. `final`.
+	5. `noexcept`.
+* Declare all constructors and assignment operators concretely or with default or delete (prefer delete).
+* Avoid `auto` except when the return type is clear.
+* Avoid use of RTTI.
+* Pre increment: `++i` as it is more performant for non primitive types.
+* Prefer `(u)int(16/32/64)_t` and `std::size_t`.
+* Use `int const &i` over `const int &i`.
+* Lambda captures must be explicit ref or copy.
+* `using` is preferable to `typedef`.
+* Make `using` private unless you intend to expose it.
+* TODOs should refer to the author in the style `TODO(`HUT`) :`.
+* Avoid leaving `TODOs` in code.
+* `snake_case_` variables with trailing underscore, except in structs where it is `snake_case` without underscore.
+* `namespace {.<template T>` only allowed if `typedef`/`using` indicates the type.
+* Use templates judiciously and defined to library code where only a small number of devs need understand them.
+* Variables should be initialised with `=` if primitive, or braced initialisation with parentheses if required.
+* initialiser lists should be initialised with parentheses by default, otherwise braced initialisation.
 
 
-## Use C++14
+## Naming
 
-We use C++14, but currently consider C++17 too immature for usage.
+Use meaningful names.
 
+For structs, use all lowercase with underscore to separate words, or camel case, i.e. `first_name` and `firstName` are both valid.
 
-## Namespaces 
+For classes, private member variables end with an`_`.
+
+For templates, use all uppercase with underscores to separate words. Long and explicit names are preferred to short and obscure names, e.g. `template <typename ARRAY_TYPE>` is preferable to `template <typename A>);`. Short names are acceptable where the type is obvious and reused many times in complex equations.
+
+### Namespaces 
 
 Don't do the following:
 
@@ -262,7 +237,7 @@ struct Person
 ```
 
 
-## Classes
+## Classes
 
 Mark all constructors and assignment operators explicitly; even those which are implicit. For example:
 
@@ -351,7 +326,7 @@ class MyClass
 Here, inline initialisation ensures that the default constructor does not produce uninitialised memory. In the second constructor, we manually initialise the `pointer_` but `size_` can be set using the initialisation list.
 
 
-## `nullptr`
+## `nullptr`
 
 Use the new C++11 `nullptr` keyword which designates an `rvalue` constant serving as a universal null pointer literal.
 
@@ -390,7 +365,7 @@ See more about this scenario at <a href="http://en.cppreference.com/w/cpp/langua
 
 
 
-### Handling `THREAD` synchronisation resources
+### Handling `THREAD` synchronisation resources
 
 Use locking guards provided in C++ `std` namespace, such as:
 
@@ -493,7 +468,7 @@ int main(int argc, char* argv[])
 ```
 
 
-### The `std::lock_guard<...>`
+### The `std::lock_guard<...>`
 
 The `std::lock_guard<T>` offers the most trivial API possible - constructor and destructor.
 
@@ -535,7 +510,7 @@ Below are some types which guarantee to manage **array** object types (continuou
 
 
 
-### Transfer between ownership models
+### Transfer between ownership models
 
 It is safe to transfer ownership from `std::unique_ptr` to `std::shared_ptr`.
 
@@ -615,14 +590,3 @@ Example of using smart pointer with **exclusive** ownership:
   //* in the nested scope above.
 }
 ```
-
-
-
-<br/>
-
-
-
-
-
-
-
