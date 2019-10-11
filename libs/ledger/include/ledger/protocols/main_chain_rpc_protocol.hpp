@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/time_travelogue.hpp"
 #include "meta/value_util.hpp"
 #include "network/service/protocol.hpp"
 
@@ -30,18 +30,11 @@
 namespace fetch {
 namespace ledger {
 
-struct TimeTravelogue
-{
-  using Blocks = std::vector<Block>;
-
-  Blocks blocks;
-  Digest next_hash;
-};
-
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Blocks = TimeTravelogue::Blocks;
+  using Travelogue = TimeTravelogue<Block>;
+  using Blocks = Travelogue::Blocks;
 
   enum
   {
@@ -90,11 +83,11 @@ private:
     return InverseCopy(blocks);
   }
 
-  TimeTravelogue TimeTravel(Digest start, int64_t limit)
+  Travelogue TimeTravel(Digest start, int64_t limit)
   {
-    auto ret_pair = chain_.TimeTravel(std::move(start), limit);
-    auto returned_blocks{limit > 0 ? Copy(ret_pair.first) : InverseCopy(ret_pair.first)};
-    return TimeTravelogue{std::move(returned_blocks), std::move(ret_pair.second)};
+    auto rv = chain_.TimeTravel(std::move(start), limit);
+    auto returned_blocks{limit > 0 ? Copy(rv.blocks) : InverseCopy(rv.blocks)};
+    return {std::move(returned_blocks), std::move(rv.next_hash), rv.proceed_in_this_direction};
   }
 
   static Blocks Copy(MainChain::Blocks const &blocks)
@@ -127,57 +120,4 @@ private:
 };
 
 }  // namespace ledger
-
-namespace serializers {
-
-template <class T, class D, class... Fields>
-struct MapSerializerTemplate
-{
-  using Type       = T;
-  using DriverType = D;
-
-  template <class Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &t)
-  {
-    value_util::Accumulate(
-        [&t, map = map_constructor(sizeof...(Fields))](uint8_t key, auto field) mutable -> uint8_t {
-          map.Append(key, field.Ref(t));
-          return static_cast<uint8_t>(key + 1);
-        },
-        static_cast<uint8_t>(1), Fields{}...);
-  }
-
-  template <class MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &t)
-  {
-    value_util::Accumulate(
-        [&t, &map](uint8_t key, auto field) -> uint8_t {
-          map.ExpectKeyGetValue(key, field.Ref(t));
-          return static_cast<uint8_t>(key + 1);
-        },
-        static_cast<uint8_t>(1), Fields{}...);
-  }
-};
-
-template <class F, F f>
-struct StructField
-{
-  template <class T>
-  static constexpr auto &&Ref(T &&t) noexcept
-  {
-    return std::forward<T>(t).*f;
-  }
-};
-
-#define STRUCT_FIELD(...) StructField<decltype(&__VA_ARGS__), &__VA_ARGS__>
-
-// All hail the Clang formatter's sense of style.
-template <class D>
-struct MapSerializer<ledger::TimeTravelogue, D>
-  : MapSerializerTemplate<ledger::TimeTravelogue, D, STRUCT_FIELD(ledger::TimeTravelogue::blocks),
-                          STRUCT_FIELD(ledger::TimeTravelogue::next_hash)>
-{
-};
-
-}  // namespace serializers
 }  // namespace fetch

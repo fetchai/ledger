@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/block_entropy.hpp"
+#include "meta/value_util.hpp"
 
 using fetch::beacon::BlockEntropy;
 
@@ -28,11 +29,20 @@ BlockEntropy::BlockEntropy() = default;
  * entropy
  */
 BlockEntropy::BlockEntropy(BlockEntropy const &rhs)
+  : qualified{rhs.qualified}
+  , group_public_key{rhs.group_public_key}
+  , block_number{rhs.block_number}
+  , group_signature{rhs.group_signature}
+{}
+
+BlockEntropy &BlockEntropy::operator=(BlockEntropy const &that)
 {
-  qualified        = rhs.qualified;
-  group_public_key = rhs.group_public_key;
-  block_number     = rhs.block_number;
-  group_signature  = rhs.group_signature;
+  qualified        = that.qualified;
+  group_public_key = that.group_public_key;
+  block_number     = that.block_number;
+  group_signature  = that.group_signature;
+  value_util::ClearAll(digest, confirmations);
+  return *this;
 }
 
 BlockEntropy::Digest BlockEntropy::EntropyAsSHA256() const

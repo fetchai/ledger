@@ -25,6 +25,7 @@
 #include "ledger/chain/block_db_record.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
+#include "ledger/chain/time_travelogue.hpp"
 #include "meta/value_util.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
@@ -181,7 +182,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
 
   DbRecord record;
 
-  if (block->body.previous_hash != GENESIS_DIGEST)
+  if (!block->body.previous_hash.empty())
   {
     // notify stored parent
     if (block_store_->Get(storage::ResourceID(block->body.previous_hash), record))
@@ -192,7 +193,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
         block_store_->Set(storage::ResourceID(record.hash()), record);
       }
       // before checking for this block's children in storage, reset next_hash to genesis
-      record.next_hash = GENESIS_DIGEST;
+      record.next_hash = BlockHash{};
     }
   }
   record.block = *block;
@@ -235,7 +236,7 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
     {
       *next_hash = record.next_hash;
     }
-    if (record.next_hash != GENESIS_DIGEST)
+    if (!record.next_hash.empty())
     {
       // What you hear is not a tip.
       references_.emplace(hash, record.next_hash);
@@ -404,7 +405,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
+MainChain::Blocks MainChain::GetChainPreceding(BlockHash current_hash, uint64_t limit) const
 {
   if (limit == 0)
   {
@@ -418,9 +419,8 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
   Blocks result;
 
   // lookup the heaviest block hash
-  for (BlockHash current_hash = std::move(start);
-       // exit once we have gathered enough blocks or reached genesis
-       result.size() < limit && current_hash != GENESIS_DIGEST;)
+  while (// stop once we have gathered enough blocks or passed genesis
+         !current_hash.empty() && result.size() < limit)
   {
     // lookup the block
     auto block = GetBlock(current_hash);
@@ -443,27 +443,32 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
 /**
  * Walk the block history collecting blocks until either genesis or the block limit is reached.
  * Unlike in GetChainPreceding, positive value in limit indicates forward-travel.
+ * Returned value is comprised of:
+ * - blocks collected;
+ * - next hash in this direction (zero if we reached genesis/chain's tip)
+ * - a flag to indicate whether chain can be traversed further unambiguously in this direction.
+ * When the flag returned is false in forward-travel, forward reference could not be unambiguously
+ * resolved from the latest block and thus the rest of the chain should be retrived from
+ * the heaviest block.
  *
- * @param start The hash of the first block
- * @param limit The maximum number of blocks to be returned, negative for towards genesis, positive
- * for towards tip
- * @return A pair made of an array of blocks, and the next hash in the chain in this direction
+ * @param start hash of the first block
+ * @param limit maximum amount of blocks returned, negative towards genesis, positive towards tip
+ * @return
  * @throws std::runtime_error if a block lookup occurs
  */
-std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHash current_hash,
-                                                                         int64_t   limit) const
+MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limit) const
 {
   if (limit <= 0)
   {
-    auto ret_blocks{GetChainPreceding(current_hash, static_cast<uint64_t>(-limit))};
+    auto ret_blocks{GetChainPreceding(std::move(current_hash), static_cast<uint64_t>(-limit))};
     if (ret_blocks.empty())
     {
-      return {Blocks{}, std::move(current_hash)};
+      return {Blocks{}, BlockHash{}, false};
     }
     auto next_hash{ret_blocks.back()->body.previous_hash};  // when next is previous
-    return {std::move(ret_blocks), std::move(next_hash)};
+    return {std::move(ret_blocks), std::move(next_hash), true};
   }
-  FETCH_LOG_WARN(LOGGING_NAME, "TimeTravel request, start hash = 0x", current_hash.ToHex(),
+  FETCH_LOG_DEBUG(LOGGING_NAME, "TimeTravel request, start hash = 0x", current_hash.ToHex(),
                   ", limit = ", limit);
 
   auto const lim =
@@ -475,25 +480,23 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
   Block     block;
   BlockHash next_hash;
 
-  FETCH_LOCK(lock_);
-  if (current_hash == GENESIS_DIGEST)
+  if (current_hash.empty())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Lookup for digest block");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Lookup for digest block");
     // The very beginning of the chain is requested, we need to start with the genesis block.
-    current_hash = GetGenesisBlockHash();
-    assert(current_hash != GENESIS_DIGEST);
+    current_hash = GENESIS_DIGEST;
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Starting TimeTravel, start hash = 0x", current_hash.ToHex());
-  while (
-      // stop once we have gathered enough blocks
-      result.size() < lim
-      // genesis as the next hash indicates the tip of the chain
-      && current_hash != GENESIS_DIGEST)
+  bool proceed_in_this_direction{true};
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TimeTravel, start hash = 0x", current_hash.ToHex());
+  FETCH_LOCK(lock_);
+  while (// stop once we have gathered enough blocks or passed genesis
+         !current_hash.empty() && result.size() < lim)
   {
-    // lookup the block in storage
-    FETCH_LOG_WARN(LOGGING_NAME, "Block 0x", current_hash.ToHex(), ", result size of ",
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Block 0x", current_hash.ToHex(), ", result size of ",
                     result.size());
+    // lookup the block in storage
     auto block{GetBlock(current_hash, &next_hash)};
     if (!block)
     {
@@ -502,26 +505,21 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
         // The block is in the cache yet GetBlock() failed.
         // This indicates that forward reference is ambiguous, so we stop the loop here
         // and the remote requester should now travel from the heaviest tip.
-        current_hash = BlockHash{};  // signal that forward-travelling can go no further
+        proceed_in_this_direction = false;  // signal that forward-travelling can go no further
         break;
       }
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to lookup block");
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "Next hash is 0x", next_hash.ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Next hash is 0x", next_hash.ToHex());
     // update the results
     result.push_back(std::move(block));
     // walk the stack
     current_hash = std::move(next_hash);
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Returning chain of length ", result.size(), ", next hash ", current_hash.ToHex());
-  FETCH_LOG_WARN(LOGGING_NAME, "Genesis hash: ", GENESIS_DIGEST);
-  for (auto const &b: result)
-  {
-	  FETCH_LOG_WARN(LOGGING_NAME, "Block ", b->body.hash.ToHex(), "  <--  ", b->body.previous_hash.ToHex(), "  (", b->body.block_number);
-  }
-  return {std::move(result), std::move(current_hash)};
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Returning chain of length ", result.size(), ", next hash ", current_hash.ToHex());
+  return {std::move(result), std::move(current_hash), proceed_in_this_direction};
 }
 
 /**
@@ -901,7 +899,7 @@ void MainChain::WriteToFile()
 
     // This block will now become the head in our file
     // Corner case - block is genesis
-    if (block->body.previous_hash == GENESIS_DIGEST)
+    if (block->body.previous_hash.empty())
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
 
@@ -1289,7 +1287,7 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
     switch (references_.count(hash))
     {
     case 0:
-      *next_hash = GENESIS_DIGEST;
+      *next_hash = BlockHash{};
       return true;
     case 1:
       *next_hash = references_.find(hash)->second;
@@ -1316,7 +1314,7 @@ bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) 
 
   // perform the lookup
   auto const it = block_chain_.find(hash);
-  if ((block_chain_.end() != it))
+  if (it != block_chain_.end())
   {
     block = it->second;
     return true;
@@ -1493,11 +1491,10 @@ bool MainChain::ReindexTips()
 MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 {
   auto genesis                = std::make_shared<Block>();
-  genesis->body.previous_hash = GENESIS_DIGEST;
+  genesis->body.hash = GENESIS_DIGEST;
   genesis->body.merkle_hash   = GENESIS_MERKLE_ROOT;
   genesis->body.miner         = Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose           = false;
-  genesis->UpdateDigest();
 
   return genesis;
 }
@@ -1511,20 +1508,6 @@ MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
 {
   FETCH_LOCK(lock_);
   return heaviest_.hash;
-}
-
-/**
- * Gets the hash of the genesis block
- *
- * @return
- */
-MainChain::BlockHash MainChain::GetGenesisBlockHash() const
-{
-  FETCH_LOCK(lock_);
-  assert(references_.count(GENESIS_DIGEST) == 1);
-
-  auto ref_itr{references_.find(GENESIS_DIGEST)};
-  return ref_itr->second;
 }
 
 /**

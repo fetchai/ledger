@@ -94,6 +94,8 @@ constexpr char const *ToString(BlockStatus status) noexcept
 }
 
 struct BlockDbRecord;
+template <class B>
+struct TimeTravelogue;
 
 class MainChain
 {
@@ -104,6 +106,7 @@ public:
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
+  using Travelogue       = TimeTravelogue<BlockPtr>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 5000ull;
@@ -141,16 +144,16 @@ public:
 
   /// @name Chain Queries
   /// @{
-  BlockPtr                     GetHeaviestBlock() const;
-  BlockHash                    GetHeaviestBlockHash() const;
-  BlockHash                    GetGenesisBlockHash() const;
-  Blocks                       GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
-  Blocks                       GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
-  std::pair<Blocks, BlockHash> TimeTravel(BlockHash start,
-                                          int64_t limit = static_cast<int64_t>(UPPER_BOUND)) const;
-  bool                         GetPathToCommonAncestor(
-                              Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
-                              BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
+  BlockPtr       GetHeaviestBlock() const;
+  BlockHash      GetHeaviestBlockHash() const;
+  BlockHash      GetGenesisBlockHash() const;
+  Blocks         GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
+  Blocks         GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
+  Travelogue TimeTravel(BlockHash start,
+                int64_t limit = static_cast<int64_t>(UPPER_BOUND)) const;
+  bool           GetPathToCommonAncestor(
+                Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
+                BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
   /// @}
 
   /// @name Tips
@@ -176,6 +179,7 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
+private:
   using DbRecord      = BlockDbRecord;
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;

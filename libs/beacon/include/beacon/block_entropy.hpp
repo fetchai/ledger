@@ -39,6 +39,9 @@ struct BlockEntropy : public BlockEntropyInterface
   BlockEntropy();
   BlockEntropy(BlockEntropy const &rhs);
 
+  BlockEntropy &operator=(BlockEntropy &&that) = default;
+  BlockEntropy &operator=(BlockEntropy const &that);
+
   // The members who succeeded DKG and are qualified to produce blocks (when new committee)
   Cabinet qualified;
 

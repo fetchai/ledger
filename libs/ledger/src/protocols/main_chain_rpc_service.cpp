@@ -251,13 +251,13 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
   {
 	  FETCH_LOG_WARN(LOGGING_NAME, "Adding a block ", block.body.hash.ToHex(), "  <--  ", block.body.previous_hash.ToHex(), "  (", block.body.block_number);
     // skip the genesis block
-    if (block.body.previous_hash == GENESIS_DIGEST)
+    if (block.body.previous_hash.empty())
     {
 	    FETCH_LOG_WARN(LOGGING_NAME, "Looks like genesis block");
-      if (block.body.hash != chain_.GetGenesisBlockHash())
+      if (block.body.hash != GENESIS_DIGEST)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Genesis hash mismatch: actual 0x", block.body.hash.ToHex(),
-                       ", expected 0x", chain_.GetGenesisBlockHash(),
+                       ", expected 0x", GENESIS_DIGEST.ToHex(),
                        ", skipping the whole alien chain");
         return false;
       }
@@ -385,7 +385,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         // Quite likely, we'll need more main chain blocks so preset the state.
         next_state = State::REQUEST_HEAVIEST_CHAIN;
 
-        auto peer_response = current_request_->As<TimeTravelogue>();
+        auto peer_response = current_request_->As<MainChainProtocol::Travelogue>();
 	      FETCH_LOG_WARN(LOGGING_NAME, "Received ", peer_response.blocks.size(), " blocks, next hash of ", peer_response.next_hash.ToHex());
 	      for (auto const &b: peer_response.blocks)
 	      {
@@ -483,7 +483,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitFromTip()
     if (PromiseState::SUCCESS == status)
     {
       // The request was successful, simply hand off the blocks to be added to the chain.
-      auto  peer_response = current_request_->As<TimeTravelogue>();
+      auto  peer_response = current_request_->As<MainChainProtocol::Travelogue>();
       auto &blocks        = peer_response.blocks;
       if (blocks.empty())
       {

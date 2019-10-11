@@ -107,93 +107,31 @@ namespace serializers {
 
 template <typename D>
 struct MapSerializer<ledger::Block::Body, D>
+  : MapSerializerTemplate<ledger::Block::Body, D,
+	MAP_STRUCT_FIELD(1, ledger::Block::Body::hash),
+	MAP_STRUCT_FIELD(2, ledger::Block::Body::previous_hash),
+	MAP_STRUCT_FIELD(3, ledger::Block::Body::merkle_hash),
+	MAP_STRUCT_FIELD(4, ledger::Block::Body::block_number),
+	MAP_STRUCT_FIELD(5, ledger::Block::Body::miner),
+	MAP_STRUCT_FIELD(6, ledger::Block::Body::miner_id),
+	MAP_STRUCT_FIELD(7, ledger::Block::Body::log2_num_lanes),
+	MAP_STRUCT_FIELD(8, ledger::Block::Body::slices),
+	MAP_STRUCT_FIELD(9, ledger::Block::Body::dag_epoch),
+	MAP_STRUCT_FIELD(10, ledger::Block::Body::timestamp),
+	MAP_STRUCT_FIELD(11, ledger::Block::Body::block_entropy)>
 {
-public:
-  using Type       = ledger::Block::Body;
-  using DriverType = D;
-
-  static uint8_t const HASH           = 1;
-  static uint8_t const PREVIOUS_HASH  = 2;
-  static uint8_t const MERKLE_HASH    = 3;
-  static uint8_t const BLOCK_NUMBER   = 4;
-  static uint8_t const MINER          = 5;
-  static uint8_t const MINER_ID       = 6;
-  static uint8_t const LOG2_NUM_LANES = 7;
-  static uint8_t const SLICES         = 8;
-  static uint8_t const DAG_EPOCH      = 9;
-  static uint8_t const TIMESTAMP      = 10;
-  static uint8_t const ENTROPY        = 11;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &body)
-  {
-    auto map = map_constructor(11);
-    map.Append(HASH, body.hash);
-    map.Append(PREVIOUS_HASH, body.previous_hash);
-    map.Append(MERKLE_HASH, body.merkle_hash);
-    map.Append(BLOCK_NUMBER, body.block_number);
-    map.Append(MINER, body.miner);
-    map.Append(MINER_ID, body.miner_id);
-    map.Append(LOG2_NUM_LANES, body.log2_num_lanes);
-    map.Append(SLICES, body.slices);
-    map.Append(DAG_EPOCH, body.dag_epoch);
-    map.Append(TIMESTAMP, body.timestamp);
-    map.Append(ENTROPY, body.block_entropy);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &body)
-  {
-    map.ExpectKeyGetValue(HASH, body.hash);
-    map.ExpectKeyGetValue(PREVIOUS_HASH, body.previous_hash);
-    map.ExpectKeyGetValue(MERKLE_HASH, body.merkle_hash);
-    map.ExpectKeyGetValue(BLOCK_NUMBER, body.block_number);
-    map.ExpectKeyGetValue(MINER, body.miner);
-    map.ExpectKeyGetValue(MINER_ID, body.miner_id);
-    map.ExpectKeyGetValue(LOG2_NUM_LANES, body.log2_num_lanes);
-    map.ExpectKeyGetValue(SLICES, body.slices);
-    map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);
-    map.ExpectKeyGetValue(TIMESTAMP, body.timestamp);
-    map.ExpectKeyGetValue(ENTROPY, body.block_entropy);
-  }
 };
 
 template <typename D>
 struct MapSerializer<ledger::Block, D>
+  : MapSerializerTemplate<ledger::Block, D,
+    MAP_STRUCT_FIELD(1, ledger::Block::body),
+    MAP_STRUCT_FIELD(2, ledger::Block::nonce),
+    MAP_STRUCT_FIELD(3, ledger::Block::proof),
+    MAP_STRUCT_FIELD(4, ledger::Block::weight),
+    MAP_STRUCT_FIELD(5, ledger::Block::total_weight),
+    MAP_STRUCT_FIELD(6, ledger::Block::miner_signature)>
 {
-public:
-  using Type       = ledger::Block;
-  using DriverType = D;
-
-  static uint8_t const BODY            = 1;
-  static uint8_t const NONCE           = 2;
-  static uint8_t const PROOF           = 3;
-  static uint8_t const WEIGHT          = 4;
-  static uint8_t const TOTAL_WEIGHT    = 5;
-  static uint8_t const MINER_SIGNATURE = 6;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &block)
-  {
-    auto map = map_constructor(6);
-    map.Append(BODY, block.body);
-    map.Append(NONCE, block.nonce);
-    map.Append(PROOF, block.proof);
-    map.Append(WEIGHT, block.weight);
-    map.Append(TOTAL_WEIGHT, block.total_weight);
-    map.Append(MINER_SIGNATURE, block.miner_signature);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &block)
-  {
-    map.ExpectKeyGetValue(BODY, block.body);
-    map.ExpectKeyGetValue(NONCE, block.nonce);
-    map.ExpectKeyGetValue(PROOF, block.proof);
-    map.ExpectKeyGetValue(WEIGHT, block.weight);
-    map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
-    map.ExpectKeyGetValue(MINER_SIGNATURE, block.miner_signature);
-  }
 };
 
 }  // namespace serializers

@@ -21,6 +21,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
+#include "meta/value_util.hpp"
 #include "vectorise/platform.hpp"
 
 #include <array>
@@ -807,6 +808,50 @@ struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
     n = fixed_point::FixedPoint<I, F>::FromBase(data);
   }
 };
+
+template <class T, class D, class... Fields>
+struct MapSerializerTemplate
+{
+  using Type       = T;
+  using DriverType = D;
+
+  template <class Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &t)
+  {
+    value_util::ForEach(
+        [&t, map = map_constructor(sizeof...(Fields))](auto field) mutable {
+          map.Append(field.Key(), field.Ref(t));
+        },
+        Fields{}...);
+  }
+
+  template <class MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &t)
+  {
+    value_util::ForEach(
+        [&t, &map](auto field) {
+          map.ExpectKeyGetValue(field.Key(), field.Ref(t));
+        },
+        Fields{}...);
+  }
+};
+
+template <uint8_t K, class F, F f>
+struct MapStructField
+{
+  static constexpr uint8_t Key() noexcept
+  {
+    return K;
+  }
+
+  template <class T>
+  static constexpr auto &&Ref(T &&t) noexcept
+  {
+    return std::forward<T>(t).*f;
+  }
+};
+
+#define MAP_STRUCT_FIELD(Key, ...) MapStructField<Key, decltype(&__VA_ARGS__), &__VA_ARGS__>
 
 }  // namespace serializers
 }  // namespace fetch
