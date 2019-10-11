@@ -43,9 +43,9 @@ struct BlockDbRecord
 
 namespace serializers {
 
-template <>
-struct MapSerializerTemplate<ledger::BlockDbRecord>
-  : MapSerializerTemplate<ledger::BlockDbRecord,
+template <class D>
+struct MapSerializer<ledger::BlockDbRecord, D>
+  : MapSerializerTemplate<ledger::BlockDbRecord, D,
                           SERIALIZED_STRUCT_FIELD(1, ledger::BlockDbRecord::block),
                           SERIALIZED_STRUCT_FIELD(2, ledger::BlockDbRecord::next_hash)>
 {

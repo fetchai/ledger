@@ -809,10 +809,11 @@ struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
   }
 };
 
-template <class T, class... Fields>
+template <class T, class D, class... Fields>
 struct MapSerializerTemplate
 {
-  using Type = T;
+  using Type       = T;
+  using DriverType = D;
 
   template <class Constructor>
   static void Serialize(Constructor &map_constructor, Type const &t)
@@ -828,12 +829,6 @@ struct MapSerializerTemplate
     value_util::ForEach(
         [&t, &map](auto field) { map.ExpectKeyGetValue(field.Key(), field.Ref(t)); }, Fields{}...);
   }
-};
-
-template <class T, class D>
-struct MapSerializer : MapSerializerTemplate<T>
-{
-  using DriverType = D;
 };
 
 template <uint8_t K, class F, F f>

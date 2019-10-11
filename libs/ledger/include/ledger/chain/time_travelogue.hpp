@@ -42,9 +42,9 @@ struct TimeTravelogue
 
 namespace serializers {
 
-template <class B>
-struct MapSerializerTemplate<ledger::TimeTravelogue<B>>
-  : MapSerializerTemplate<ledger::TimeTravelogue<B>,
+template <class B, class D>
+struct MapSerializer<ledger::TimeTravelogue<B>, D>
+  : MapSerializerTemplate<ledger::TimeTravelogue<B>, D,
                           SERIALIZED_STRUCT_FIELD(1, ledger::TimeTravelogue<B>::blocks),
                           SERIALIZED_STRUCT_FIELD(2, ledger::TimeTravelogue<B>::next_hash),
                           SERIALIZED_STRUCT_FIELD(3, ledger::TimeTravelogue<B>::proceed)>

@@ -105,9 +105,9 @@ public:
 
 namespace serializers {
 
-template <>
-struct MapSerializerTemplate<ledger::Block::Body>
-  : MapSerializerTemplate<ledger::Block::Body,
+template <class D>
+struct MapSerializer<ledger::Block::Body, D>
+  : MapSerializerTemplate<ledger::Block::Body, D,
                           SERIALIZED_STRUCT_FIELD(1, ledger::Block::Body::hash),
                           SERIALIZED_STRUCT_FIELD(2, ledger::Block::Body::previous_hash),
                           SERIALIZED_STRUCT_FIELD(3, ledger::Block::Body::merkle_hash),
@@ -122,9 +122,9 @@ struct MapSerializerTemplate<ledger::Block::Body>
 {
 };
 
-template <>
-struct MapSerializerTemplate<ledger::Block>
-  : MapSerializerTemplate<ledger::Block, SERIALIZED_STRUCT_FIELD(1, ledger::Block::body),
+template <class D>
+struct MapSerializer<ledger::Block, D>
+  : MapSerializerTemplate<ledger::Block, D, SERIALIZED_STRUCT_FIELD(1, ledger::Block::body),
                           SERIALIZED_STRUCT_FIELD(2, ledger::Block::nonce),
                           SERIALIZED_STRUCT_FIELD(3, ledger::Block::proof),
                           SERIALIZED_STRUCT_FIELD(4, ledger::Block::weight),
