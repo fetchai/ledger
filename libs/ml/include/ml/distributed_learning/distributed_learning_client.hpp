@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "../../../src/utilities/word2vec_utilities.cpp"
 #include "coordinator.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
@@ -28,7 +29,6 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/optimiser.hpp"
-#include "ml/utilities/word2vec_utilities.hpp"
 
 #include <condition_variable>
 #include <fstream>
