@@ -84,55 +84,54 @@ void VMSequentialModel::LayerAddImplementation(std::string const &   layer,
     throw std::runtime_error("attempted to add unknown layer type to sequential model");
   }
 }
-// void VMSequentialModel::Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
-//                                fetch::vm::Ptr<fetch::vm::String> const &optimiser)
-//{
-//  fetch::ml::ops::LossType loss_type;
-//  fetch::ml::OptimiserType optimiser_type;
-//
-//  if (loss->str == "mse")
-//  {
-//    loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
-//  }
-//  else
-//  {
-//    throw std::runtime_error("invalid loss function");
-//  }
-//
-//  // dense / fully connected layer
-//  if (optimiser->str == "ADAM")
-//  {
-//    optimiser_type = fetch::ml::OptimiserType::ADAM;
-//  }
-//  else
-//  {
-//    throw std::runtime_error("invalid loss function");
-//  }
-//
-//  model_->Compile(optimiser_type, loss_type);
-//}
-//
-// void VMSequentialModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
-//                            fetch::math::SizeType batch_size)
-//{
-//  // prepare dataloader
-//  dl_ = std::make_unique<TensorDataloader>();
-//  dl_->SetRandomMode(true);
-//  dl_->AddData(data->GetTensor(), labels->GetTensor());
-//  model_->SetDataloader(std::move(dl_));
-//
-//  // set batch size
-//  model_config_->batch_size = batch_size;
-//  model_->UpdateConfig(*model_config_);
-//
-//  // train for one epoch
-//  model_->Train();
-//}
-//
-// void VMSequentialModel::Evaluate()
-//{
-//  model_->Evaluate();
-//}
+void VMSequentialModel::Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
+                                fetch::vm::Ptr<fetch::vm::String> const &optimiser)
+{
+  fetch::ml::ops::LossType loss_type;
+  fetch::ml::OptimiserType optimiser_type;
+
+  if (loss->str == "mse")
+  {
+    loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
+  }
+  else
+  {
+    throw std::runtime_error("invalid loss function");
+  }
+
+  // dense / fully connected layer
+  if (optimiser->str == "adam")
+  {
+    optimiser_type = fetch::ml::OptimiserType::ADAM;
+  }
+  else
+  {
+    throw std::runtime_error("invalid optimiser");
+  }
+
+  model_->Compile(optimiser_type, loss_type);
+}
+
+void VMSequentialModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels, fetch::math::SizeType batch_size)
+{
+  // prepare dataloader
+  dl_ = std::make_unique<TensorDataloader>();
+  dl_->SetRandomMode(true);
+  dl_->AddData(data->GetTensor(), labels->GetTensor());
+  model_->SetDataloader(std::move(dl_));
+
+  // set batch size
+  model_config_->batch_size = batch_size;
+  model_->UpdateConfig(*model_config_);
+
+  // train for one epoch
+  model_->Train();
+}
+
+typename VMSequentialModel::DataType VMSequentialModel::Evaluate()
+{
+  return model_->Evaluate();
+}
 
 void VMSequentialModel::Bind(Module &module)
 {
@@ -143,10 +142,10 @@ void VMSequentialModel::Bind(Module &module)
       //        return Ptr<VMSequentialModel>{new VMSequentialModel(vm, type_id)};
       //      })
       .CreateMemberFunction("add", &VMSequentialModel::LayerAdd)
-      .CreateMemberFunction("add", &VMSequentialModel::LayerAddActivation);
-  //      .CreateMemberFunction("compile", &VMSequentialModel::Compile)
-  //      .CreateMemberFunction("fit", &VMSequentialModel::Fit)
-  //      .CreateMemberFunction("evaluate", &VMSequentialModel::Evaluate);
+      .CreateMemberFunction("add", &VMSequentialModel::LayerAddActivation)
+      .CreateMemberFunction("compile", &VMSequentialModel::Compile)
+      .CreateMemberFunction("fit", &VMSequentialModel::Fit)
+      .CreateMemberFunction("evaluate", &VMSequentialModel::Evaluate);
 }
 
 }  // namespace ml

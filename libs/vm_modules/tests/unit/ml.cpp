@@ -559,13 +559,13 @@ TEST_F(MLTests, sequential_model_test)
       model.add("dense", 10u64, 10u64, "relu");
       model.add("dense", 10u64, 10u64, "relu");
       model.add("dense", 10u64, 1u64);
-//      model.compile("mse", "adam");
-//
-//      // train the model
-//      model.fit(data, labels, 32);
-//
-//      // make a prediction
-//      var prediction = model.evaluate();
+      model.compile("mse", "adam");
+
+      // train the model
+      model.fit(data, labels, 32u64);
+
+      // make a prediction
+      var loss = model.evaluate();
 
     endfunction
   )";

@@ -62,13 +62,13 @@ public:
                               fetch::ml::details::ActivationType const &activation =
                                   fetch::ml::details::ActivationType::NOTHING);
 
-  //  void Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
-  //               fetch::vm::Ptr<fetch::vm::String> const &optimiser);
-  //
-  //  void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
-  //           fetch::math::SizeType batch_size);
-  //
-  //  void Evaluate();
+  void Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
+               fetch::vm::Ptr<fetch::vm::String> const &optimiser);
+
+  void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
+           fetch::math::SizeType batch_size);
+
+  DataType Evaluate();
 
   static void Bind(fetch::vm::Module &module);
 
