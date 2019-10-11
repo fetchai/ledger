@@ -236,7 +236,6 @@ bool BeaconManager::AddQualCoefficients(MuddleAddress const &           from,
   {
     for (uint32_t i = 0; i <= polynomial_degree_; ++i)
     {
-      ;
       A_ik[from_index][i] = coefficients[i];
     }
     return true;
