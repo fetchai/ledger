@@ -112,7 +112,8 @@ void VMSequentialModel::Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
   model_->Compile(optimiser_type, loss_type);
 }
 
-void VMSequentialModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels, fetch::math::SizeType batch_size)
+void VMSequentialModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
+                            fetch::math::SizeType const &batch_size)
 {
   // prepare dataloader
   dl_ = std::make_unique<TensorDataloader>();

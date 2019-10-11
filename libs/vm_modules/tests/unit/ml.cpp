@@ -562,7 +562,7 @@ TEST_F(MLTests, sequential_model_test)
       model.compile("mse", "adam");
 
       // train the model
-      model.fit(data, labels, 32u64);
+      model.fit(data, label, 32u64);
 
       // make a prediction
       var loss = model.evaluate();
