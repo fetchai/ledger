@@ -18,6 +18,7 @@
 
 #include "core/reactor.hpp"
 
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/notarisation_service.hpp"
 #include "ledger/testing/block_generator.hpp"
 
@@ -46,6 +47,7 @@ using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
 using BlockPtr       = BlockGenerator::BlockPtr;
+using BlockPtrConst  = BlockGenerator::BlockPtrConst;
 
 struct DummyManifesttCache : public ManifestCacheInterface
 {
@@ -69,6 +71,7 @@ struct NotarisationNode
   ProverPtr                     muddle_certificate;
   Muddle                        muddle;
   DummyManifesttCache           manifest_cache;
+  MainChain                     chain;
   NotarisationService           notarisation_service;
   std::unordered_set<BlockHash> notarised_blocks;
 
@@ -78,7 +81,8 @@ struct NotarisationNode
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , notarisation_service{*muddle}
+    , chain{false, ledger::MainChain::Mode::IN_MEMORY_DB}
+    , notarisation_service{*muddle, chain}
   {
     network_manager.Start();
     muddle->Start({muddle_port});
@@ -173,20 +177,20 @@ TEST(notarisation, notarise_blocks)
   std::unordered_set<NotarisationNode::BlockHash> expected_notarisations;
   std::vector<BlockPtr>                           blocks_to_sign;
   BlockGenerator                                  generator(1, 1);
-  for (uint16_t i = 0; i < 10; i++)
+  for (uint16_t i = 0; i < 9; i++)
   {
-    if (i == 0)
-    {
-      blocks_to_sign.push_back(generator());
-    }
-    else
-    {
-      blocks_to_sign.push_back(generator(blocks_to_sign[i - 1]));
-    }
+    auto          random_miner = rand() % committee_size;
+    BlockPtrConst previous     = nodes[random_miner]->chain.GetHeaviestBlock();
+    blocks_to_sign.push_back(generator(previous));
     blocks_to_sign[i]->body.block_entropy.qualified = cabinet;
-    auto random_miner                               = rand() % committee_size;
     blocks_to_sign[i]->body.miner_id = nodes[random_miner]->muddle_certificate->identity();
     expected_notarisations.insert(blocks_to_sign[i]->body.hash);
+
+    // Add this block to everyones chain
+    for (auto &node : nodes)
+    {
+      node->chain.AddBlock(*blocks_to_sign[i]);
+    }
   }
 
   // Start reactor
@@ -196,14 +200,14 @@ TEST(notarisation, notarise_blocks)
     node->reactor.Start();
   }
 
-  //  Start signing
+  // Start signing
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   for (auto const &block : blocks_to_sign)
   {
     for (auto &node : nodes)
     {
       node->notarisation_service.NotariseBlock(block->body);
-      EXPECT_TRUE(node->notarisation_service.GetNotarisations(block->body.block_number).size() ==
+      EXPECT_TRUE(node->notarisation_service.GetNotarisations(block->body.block_number).size() >=
                   1);
     }
   }

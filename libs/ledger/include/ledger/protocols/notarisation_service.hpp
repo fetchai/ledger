@@ -27,9 +27,12 @@
 namespace fetch {
 namespace ledger {
 
+class MainChain;
+
 /**
- * Assume for now blocks arrive in order. Should not notarise a new block which references an
- * non-fully notarised block
+ * Service which notarises a continuous chain of blocks. Proceeds onto next block height
+ * as long as one block at the previous height, which references a previous notarised block,
+ * is notarised
  */
 class NotarisationService
 {
@@ -69,7 +72,7 @@ public:
   NotarisationService()                            = delete;
   NotarisationService(NotarisationService const &) = delete;
 
-  NotarisationService(MuddleInterface &muddle);
+  NotarisationService(MuddleInterface &muddle, MainChain &main_chain);
 
   /// State methods
   /// @{
@@ -104,29 +107,35 @@ public:
   std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
 
 private:
-  /// Networking
+  /// @{Networking
   Endpoint &                  endpoint_;
   ServerPtr                   rpc_server_{nullptr};
   muddle::rpc::Client         rpc_client_;
   NotarisationServiceProtocol notarisation_protocol_;
   service::Promise            notarisation_promise_;
+  /// @}
 
   std::mutex                    mutex_;
   std::shared_ptr<StateMachine> state_machine_;
+
+  MainChain &chain_;  ///< Ref to system chain
 
   /// Management of active DKG keys
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
   SharedAeonExecutionUnit             active_exe_unit_;
 
-  /// Notarisations
+  /// @{Notarisations
   BlockHeightNotarisationShares
       notarisations_being_built_;  ///< Signature shares for blocks at a particular height
   BlockHeightGroupNotarisations
       notarisations_built_;  ///< Group signatures for blocks at a particular height
+  BlockHeightGroupNotarisations
+      detached_notarisations_built_;  ///< Group signatures for blocks without notarisated previous
   std::unordered_map<BlockHeight, uint32_t>
            previous_notarisation_rank_;  ///< Heighest rank notarised at a particular block height
-  uint64_t highest_notarised_block_height_{UINT64_MAX};  ///< Current highest notarised block height
-  static const uint32_t cutoff = 2;                      ///< Number of blocks behind
+  uint64_t highest_notarised_block_height_{0};  ///< Current highest notarised block height
+  static const uint32_t cutoff = 2;             ///< Number of blocks behind
+  /// @}
 
   CallbackFunction callback_;  ///< Callback for new block notarisation
 };
