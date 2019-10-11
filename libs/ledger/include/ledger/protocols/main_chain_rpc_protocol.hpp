@@ -34,7 +34,7 @@ class MainChainProtocol : public service::Protocol
 {
 public:
   using Travelogue = TimeTravelogue<Block>;
-  using Blocks = Travelogue::Blocks;
+  using Blocks     = Travelogue::Blocks;
 
   enum
   {

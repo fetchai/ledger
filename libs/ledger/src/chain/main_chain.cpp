@@ -24,8 +24,8 @@
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block_db_record.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/time_travelogue.hpp"
+#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "meta/value_util.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
@@ -127,7 +127,7 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 
   auto const status = InsertBlock(block);
   FETCH_LOG_WARN(LOGGING_NAME, "New Block: 0x", block->body.hash.ToHex(), " -> ", ToString(status),
-                  " (weight: ", block->weight, " total: ", block->total_weight, ")");
+                 " (weight: ", block->weight, " total: ", block->total_weight, ")");
   FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", block->body.hash.ToHex(), " -> ", ToString(status),
                   " (weight: ", block->weight, " total: ", block->total_weight, ")");
 
@@ -419,8 +419,8 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash current_hash, uint64_t 
   Blocks result;
 
   // lookup the heaviest block hash
-  while (// stop once we have gathered enough blocks or passed genesis
-         !current_hash.empty() && result.size() < limit)
+  while (  // stop once we have gathered enough blocks or passed genesis
+      !current_hash.empty() && result.size() < limit)
   {
     // lookup the block
     auto block = GetBlock(current_hash);
@@ -491,8 +491,8 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limi
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TimeTravel, start hash = 0x", current_hash.ToHex());
   FETCH_LOCK(lock_);
-  while (// stop once we have gathered enough blocks or passed genesis
-         !current_hash.empty() && result.size() < lim)
+  while (  // stop once we have gathered enough blocks or passed genesis
+      !current_hash.empty() && result.size() < lim)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Block 0x", current_hash.ToHex(), ", result size of ",
                     result.size());
@@ -518,7 +518,8 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limi
     current_hash = std::move(next_hash);
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Returning chain of length ", result.size(), ", next hash ", current_hash.ToHex());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Returning chain of length ", result.size(), ", next hash ",
+                  current_hash.ToHex());
   return {std::move(result), std::move(current_hash), proceed_in_this_direction};
 }
 
@@ -1202,8 +1203,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
       // This is the normal case where we do not have a previous hash
       block->is_loose = true;
 
-      FETCH_LOG_WARN(LOGGING_NAME, "Previous block not found: ",
-                      byte_array::ToBase64(block->body.previous_hash));
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Previous block not found: ", byte_array::ToBase64(block->body.previous_hash));
       FETCH_LOG_DEBUG(LOGGING_NAME, "Previous block not found: ",
                       byte_array::ToBase64(block->body.previous_hash));
     }
@@ -1223,7 +1224,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 
   if (block->is_loose)
   {
-      FETCH_LOG_WARN(LOGGING_NAME, "Is loose");
+    FETCH_LOG_WARN(LOGGING_NAME, "Is loose");
     // record the block as loose
     RecordLooseBlock(block);
     return BlockStatus::LOOSE;
@@ -1490,11 +1491,11 @@ bool MainChain::ReindexTips()
  */
 MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 {
-  auto genesis                = std::make_shared<Block>();
-  genesis->body.hash = GENESIS_DIGEST;
-  genesis->body.merkle_hash   = GENESIS_MERKLE_ROOT;
-  genesis->body.miner         = Address{crypto::Hash<crypto::SHA256>("")};
-  genesis->is_loose           = false;
+  auto genesis              = std::make_shared<Block>();
+  genesis->body.hash        = GENESIS_DIGEST;
+  genesis->body.merkle_hash = GENESIS_MERKLE_ROOT;
+  genesis->body.miner       = Address{crypto::Hash<crypto::SHA256>("")};
+  genesis->is_loose         = false;
 
   return genesis;
 }

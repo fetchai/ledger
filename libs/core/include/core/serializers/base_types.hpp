@@ -818,21 +818,16 @@ struct MapSerializerTemplate
   template <class Constructor>
   static void Serialize(Constructor &map_constructor, Type const &t)
   {
-    value_util::ForEach(
-        [&t, map = map_constructor(sizeof...(Fields))](auto field) mutable {
-          map.Append(field.Key(), field.Ref(t));
-        },
-        Fields{}...);
+    value_util::ForEach([&t, map = map_constructor(sizeof...(Fields))](
+                            auto field) mutable { map.Append(field.Key(), field.Ref(t)); },
+                        Fields{}...);
   }
 
   template <class MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &t)
   {
     value_util::ForEach(
-        [&t, &map](auto field) {
-          map.ExpectKeyGetValue(field.Key(), field.Ref(t));
-        },
-        Fields{}...);
+        [&t, &map](auto field) { map.ExpectKeyGetValue(field.Key(), field.Ref(t)); }, Fields{}...);
   }
 };
 

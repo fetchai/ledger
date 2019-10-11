@@ -522,7 +522,8 @@ def verify_txs(parameters, test_instance):
 
             # Check TX has executed, unless we expect it should already have been mined
             while True:
-                output('Getting status of', tx, ', identity', identity, 'balance of', balance, 'from node', node_index)
+                output('Getting status of', tx, ', identity', identity,
+                       'balance of', balance, 'from node', node_index)
                 status = api.tx.status(tx)
                 output('Status:', status)
 

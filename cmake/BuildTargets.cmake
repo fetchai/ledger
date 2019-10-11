@@ -148,7 +148,8 @@ macro (setup_compiler)
   # handle default logging level
   if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "")
     string(TOLOWER "${CMAKE_BUILD_TYPE}" CURRENT_BUILD_TYPE)
-    if ("${CURRENT_BUILD_TYPE}" STREQUAL "debug" OR "${CURRENT_BUILD_TYPE}" STREQUAL "relwithdebinfo")
+    if ("${CURRENT_BUILD_TYPE}" STREQUAL "debug"
+        OR "${CURRENT_BUILD_TYPE}" STREQUAL "relwithdebinfo")
       set(FETCH_COMPILE_LOGGING_LEVEL "debug")
     else ()
       set(FETCH_COMPILE_LOGGING_LEVEL "info")
