@@ -128,7 +128,7 @@ endfunction
 
 )";
 
-auto programOut = [](std::string const& name, std::vector<std::string> const &out) {
+auto programOut = [](std::string const &name, std::vector<std::string> const &out) {
   std::cout << "Error making program " << name << '\n';
   for (auto const &l : out)
   {
