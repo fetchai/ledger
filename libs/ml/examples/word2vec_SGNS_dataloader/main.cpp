@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "../../src/utilities/word2vec_utilities.cpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 #include "file_loader.hpp"
 #include "math/clustering/knn.hpp"
 #include "math/matrix_operations.hpp"

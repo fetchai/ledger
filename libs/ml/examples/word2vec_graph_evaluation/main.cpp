@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "../../src/utilities/word2vec_utilities.cpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
