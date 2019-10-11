@@ -30,10 +30,14 @@ namespace dmlf {
 class VmLauncherInterface
 {
 public:
-  VmLauncherInterface()
-  {}
-  virtual ~VmLauncherInterface()
-  {}
+  VmLauncherInterface() = default;
+  virtual ~VmLauncherInterface() = default;
+
+  VmLauncherInterface(const VmLauncherInterface &other) = delete;
+  VmLauncherInterface &operator=(const VmLauncherInterface &other)  = delete;
+
+  bool                 operator==(const VmLauncherInterface &other) = delete;
+  bool                 operator<(const VmLauncherInterface &other)  = delete;
 
   using VmOutputHandler = std::ostream;
   using Params          = std::vector<fetch::vm::Variant>;
@@ -58,13 +62,6 @@ public:
   virtual bool Execute(std::string const &program, std::string const &vm, std::string const &state,
                        std::string const &entrypoint, Params const &params) = 0;
   virtual void AttachExecuteErrorHandler(ExecuteErrorHandler)               = 0;
-
-protected:
-private:
-  VmLauncherInterface(const VmLauncherInterface &other) = delete;
-  VmLauncherInterface &operator=(const VmLauncherInterface &other)  = delete;
-  bool                 operator==(const VmLauncherInterface &other) = delete;
-  bool                 operator<(const VmLauncherInterface &other)  = delete;
 };
 
 }  // namespace dmlf

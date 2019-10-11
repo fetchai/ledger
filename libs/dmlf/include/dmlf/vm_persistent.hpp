@@ -30,28 +30,26 @@ namespace dmlf {
 class VmPersistent : public vm::IoObserverInterface
 {
 public:
-  VmPersistent()
-  {}
+  VmPersistent() = default;
   VmPersistent(VmPersistent &&other) = default;
   VmPersistent &operator=(VmPersistent &&other) = default;
 
-  virtual Status Read(const std::string &key, void *data, uint64_t &size) override;
-  virtual Status Write(const std::string &key, void const *data, uint64_t size) override;
-  virtual Status Exists(const std::string &key) override;
+  VmPersistent(const VmPersistent &other) = delete;
+  VmPersistent &operator=(const VmPersistent &other)  = delete;
 
-  virtual VmPersistent DeepCopy() const;
+  Status Read(std::string const  &key, void *data, uint64_t &size) override;
+  Status Write(std::string const &key, void const *data, uint64_t size) override;
+  Status Exists(std::string const &key) override;
 
-protected:
+  VmPersistent DeepCopy() const;
+
+  bool          operator==(const VmPersistent &other) = delete;
+  bool          operator<(const VmPersistent &other)  = delete;
 private:
   using Buffer = fetch::byte_array::ConstByteArray;
   using Store  = std::map<std::string, Buffer>;
 
   Store store_;
-
-  VmPersistent(const VmPersistent &other) = delete;
-  VmPersistent &operator=(const VmPersistent &other)  = delete;
-  bool          operator==(const VmPersistent &other) = delete;
-  bool          operator<(const VmPersistent &other)  = delete;
 };
 
 }  // namespace dmlf
