@@ -63,8 +63,8 @@ int main(int argc, char **argv)
 
   std::cout << "Setting up training data...: " << std::endl;
 
-  GraphW2VLoader<DataType> data_loader(window_size, negative_sample_size, freq_thresh,
-                                       max_word_count);
+  GraphW2VLoader<TensorType> data_loader(window_size, negative_sample_size, freq_thresh,
+                                         max_word_count);
 
   // set up dataloader
   /// DATA LOADING ///

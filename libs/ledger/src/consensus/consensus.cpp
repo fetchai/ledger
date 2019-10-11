@@ -25,6 +25,38 @@
 #include "beacon/block_entropy.hpp"
 #include "ledger/consensus/consensus.hpp"
 
+/**
+ * Consensus enforcement class.
+ *
+ * During operation, miners will stake tokens in order to get into
+ * the staking pool and are known as stakers (at genesis
+ * certain stakers will be pre-set). These stakers
+ * are selected to form a 'cabinet'.
+ *
+ * The cabinet will form a 'group public key' through
+ * use of threshold cryptography (MCL scheme). This is referred to
+ * as 'distributed key generation', DKG.
+ *
+ * Of these N cabinet members, during DKG some subset M will qualify to be able to
+ * sign the group public key. These are known as 'the qualified set',
+ * or qual.
+ *
+ * During block production, entropy is generated in blocks by signing
+ * (using this group key) the previous group signature. This entropy
+ * then sets on a block by block basis the priority ranking of qual.
+ *
+ * In the ideal case, the first member of qual for that block/entropy
+ * will produce the heaviest block to be accepted by the network. Other
+ * members of qual are forced to wait relative to block time to make
+ * a competing fork, for efficiency reasons.
+ *
+ * There are a number of thresholds/system limits:
+ * - max cabinet size        , the maximum allowed cabinet taken from stakers
+ * - qual threshold          , qual must be no less than 2/3rds of the cabinet
+ * - signing threshold       , (1/2)+1 of the cabinet
+ * - confirmation threshold  , set to signing threshold
+ */
+
 constexpr char const *LOGGING_NAME = "Consensus";
 
 using Consensus       = fetch::ledger::Consensus;
@@ -50,10 +82,11 @@ std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
 }
 
 template <typename T>
-void DeterministicShuffle(T &container, uint64_t entropy)
+T DeterministicShuffle(T &container, uint64_t entropy)
 {
   DRNG rng(entropy);
   std::shuffle(container.begin(), container.end(), rng);
+  return container;
 }
 }  // namespace
 
@@ -124,6 +157,25 @@ bool Consensus::ValidMinerForBlock(Block const &previous, Address const &address
                       }) != (*committee).end();
 }
 
+Block GetBlockPriorTo(Block const &current, MainChain const &chain)
+{
+  return *chain.GetBlock(current.body.previous_hash);
+}
+
+Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
+{
+  Block ret = current;
+
+  // Walk back the chain until we see a block specifying an aeon beginning (corner
+  // case for true genesis)
+  while (!ret.body.block_entropy.IsAeonBeginning() && !(current.body.block_number == 0))
+  {
+    ret = GetBlockPriorTo(ret, chain);
+  }
+
+  return ret;
+}
+
 uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Address const &address)
 {
   auto const committee = GetCommittee(previous);
@@ -151,49 +203,97 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Address cons
   return weight;
 }
 
-// TODO(HUT): use consensus to enforce block generation
-bool Consensus::ShouldGenerateBlock(Block const &previous, Address const &address)
+Consensus::WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabinet,
+                                              uint64_t                     entropy)
+{
+  Consensus::WeightedQual ret;
+  ret.reserve(cabinet.size());
+
+  for (auto const &i : cabinet)
+  {
+    ret.emplace_back(i);
+  }
+
+  return DeterministicShuffle(ret, entropy);
+}
+
+/**
+ * Determine whether the proposed block is valid according to consensus timing requirements.
+ * Requirements for this are that the miner is a member of qual, and that it is within its rights
+ * according to the time slot protocol and its weighting. So it tests:
+ *
+ * - block made by member of qual
+ * -
+ */
+bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) const
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
-  auto const committee = GetCommittee(previous);
+  Identity const &identity = proposed.body.miner_id;
 
-  if (!committee || committee->empty())
+  // Have to use the proposed block for this fn in case the block would be a new
+  // aeon beginning.
+  Block beginning_of_aeon = GetBeginningOfAeon(proposed, chain_);
+
+  BlockEntropy::Cabinet qualified_cabinet = beginning_of_aeon.body.block_entropy.qualified;
+  auto                  qualified_cabinet_weighted =
+      QualWeightedByEntropy(qualified_cabinet, previous.body.block_entropy.EntropyAsU64());
+
+  if (qualified_cabinet.find(identity.identifier()) == qualified_cabinet.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine committee for block generation");
+    FETCH_LOG_INFO(LOGGING_NAME, "Miner ", identity.identifier().ToBase64(),
+                   " attempted to mine block ", previous.body.block_number + 1,
+                   " but was not part of qual:");
+
+    for (auto const &member : qualified_cabinet)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, member.ToBase64());
+    }
+
     return false;
   }
 
-  // At this point the miner will decide if they should produce a block. The first miner in the
-  // committee will wait until block_interval after the block at the HEAD of the chain, the second
-  // miner 2*block_interval and so on.
-  uint32_t time_to_wait = block_interval_ms_;
-  bool     in_committee = false;
+  // TODO(HUT): check block has been signed correctly
 
-  bool found = false;
+  // Time slot protocol: within the block period, only the heaviest weighted miner may produce a
+  // block, outside this interval, any miner may produce a block.
+  uint64_t last_block_timestamp_ms     = previous.body.timestamp * 1000;
+  uint64_t proposed_block_timestamp_ms = proposed.body.timestamp * 1000;
+  uint64_t time_now_ms =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) * 1000;
 
-  for (const auto &i : (*committee))
+  // Blocks must be ahead in time of the previous, and less than or equal to current time or they
+  // will be rejected.
+  if (proposed_block_timestamp_ms > time_now_ms)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Block: ", previous.body.block_number,
-                    " Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
-                    "we are: ", address.address().ToBase64());
-
-    if (Address(i) == address)
-    {
-      in_committee = true;
-      found        = true;
-    }
-
-    if (!found)
-    {
-      time_to_wait += block_interval_ms_;
-    }
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Found block that appears to be minted ahead in time. This is invalid.");
+    return false;
   }
 
-  uint64_t time_now_ms           = static_cast<uint64_t>(std::time(nullptr)) * 1000;
-  uint64_t desired_time_for_next = (previous.first_seen_timestamp * 1000) + time_to_wait;
+  if (proposed_block_timestamp_ms < last_block_timestamp_ms)
+  {
+    FETCH_LOG_WARN(
+        LOGGING_NAME,
+        "Found block that indicates it was minted before the previous. This is invalid.");
+    return false;
+  }
 
-  return in_committee && desired_time_for_next <= time_now_ms;
+  assert(!qualified_cabinet_weighted.empty());
+
+  // First qual member can always produce
+  if (*qualified_cabinet_weighted.begin() == identity)
+  {
+    return true;
+  }
+
+  // Until the time slot has elapsed, others can not produce
+  if (last_block_timestamp_ms + block_interval_ms_ < time_now_ms)
+  {
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -221,25 +321,6 @@ bool Consensus::ShouldTriggerNewCommittee(Block const &block)
   }
 
   return false;
-}
-
-Block GetBlockPriorTo(Block const &current, MainChain const &chain)
-{
-  return *chain.GetBlock(current.body.previous_hash);
-}
-
-Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
-{
-  Block ret = current;
-
-  // Walk back the chain until we see a block specifying an aeon beginning (corner
-  // case for true genesis)
-  while (!ret.body.block_entropy.IsAeonBeginning() && !(current.body.block_number == 0))
-  {
-    ret = GetBlockPriorTo(ret, chain);
-  }
-
-  return ret;
 }
 
 void Consensus::UpdateCurrentBlock(Block const &current)
@@ -289,7 +370,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                    " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
 
     uint64_t last_block_time = current.body.timestamp;
-    auto     current_time    = static_cast<uint64_t>(std::time(nullptr));
+    auto     current_time =
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
     if (current.body.block_number == 0)
     {
@@ -321,6 +403,16 @@ NextBlockPtr Consensus::GenerateNextBlock()
 
   ret = std::make_unique<Block>();
 
+  // Note, it is important to do this here so the block when passed to ValidBlockTiming
+  // is well formed
+  ret->body.previous_hash = current_block_.body.hash;
+  ret->body.block_number  = block_number;
+  ret->body.miner         = mining_address_;
+  ret->body.miner_id      = mining_identity_;
+  ret->body.timestamp =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+  ret->weight = GetBlockGenerationWeight(current_block_, mining_address_);
+
   // Try to get entropy for the block we are generating - is allowed to fail if we request too
   // early
   if (EntropyGeneratorInterface::Status::OK !=
@@ -330,17 +422,43 @@ NextBlockPtr Consensus::GenerateNextBlock()
   }
 
   // Note here the previous block's entropy determines miner selection
-  if (!ShouldGenerateBlock(current_block_, mining_address_))
+  if (!ValidBlockTiming(current_block_, *ret))
   {
     return {};
   }
 
-  ret->body.previous_hash = current_block_.body.hash;
-  ret->body.block_number  = block_number;
-  ret->body.miner         = mining_address_;
-  ret->weight             = GetBlockGenerationWeight(current_block_, mining_address_);
-
   return ret;
+}
+
+// Helper function to determine whether the block has been signed correctly
+bool BlockSignedByQualMember(fetch::ledger::Block const &block)
+{
+  assert(!block.body.hash.empty());
+
+  // Is in qual check
+  if (block.body.block_entropy.qualified.find(block.body.miner_id.identifier()) ==
+      block.body.block_entropy.qualified.end())
+  {
+    return false;
+  }
+
+  return fetch::crypto::Verifier::Verify(block.body.miner_id, block.body.hash,
+                                         block.miner_signature);
+}
+
+/**
+ * Given a block entropy, determine whether it has been signed off on
+ * by enough qualified stakers.
+ */
+bool Consensus::EnoughQualSigned(BlockEntropy const &block_entropy) const
+{
+  FETCH_UNUSED(block_entropy);
+  // TODO(HUT): Here, the following checks will be performed (awaits Ed's changes):
+  // - Given the appropriate cabinet,
+  // - Are members of qual in this cabinet
+  // - Does qual meet threshold requirements: Are there enough members of qual, total
+  // - Have enough qual signed the block
+  return true;
 }
 
 Status Consensus::ValidBlock(Block const &current) const
@@ -351,6 +469,13 @@ Status Consensus::ValidBlock(Block const &current) const
   if (current.body.block_number == 0)
   {
     return Status::YES;
+  }
+
+  if (!BlockSignedByQualMember(current))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Saw block not signed by a member of qual! Block: ", current.body.block_number);
+    return Status::NO;
   }
 
   auto const block_preceeding = GetBlockPriorTo(current, chain_);
@@ -370,9 +495,11 @@ Status Consensus::ValidBlock(Block const &current) const
       return Status::NO;
     }
 
-    // Check that the members of qual in the block entropy were valid stakers
-
     // Check that the members of qual have all signed correctly
+    if (!EnoughQualSigned(block_entropy))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Received a block with a bad aeon starting point!");
+    }
 
     // Check that the members of qual meet threshold requirements
 
@@ -386,41 +513,21 @@ Status Consensus::ValidBlock(Block const &current) const
     group_pub_key          = beginning_of_aeon.body.block_entropy.group_public_key;
   }
 
-  //// TODO(HUT): check block itself is signed by a member of qual
-  // if(qualified_cabinet.find(current.body.miner) == qualified_cabinet.end())
-  //{
-  //  FETCH_LOG_WARN(LOGGING_NAME, "Received block from address not qualified to mine!");
-  //  return Status::NO;
-  //}
-
-  //// TODO(HUT): check signatures are an unbroken chain.
-  //// Determine that the entropy is correct (a signature of the previous signature)
-  // if(!dkg::BeaconManager::Verify(group_pub_key,
-  // block_preceeding.body.block_entropy.group_signature.getStr(),
-  // current.body.block_entropy.group_signature.getStr()))
-  //{
-  //  FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
-  //  return Status::NO;
-  //}
-
-  // Perform the time checks.
-  auto current_time = static_cast<uint64_t>(std::time(nullptr));
-
-  if (current.body.timestamp < block_preceeding.body.timestamp)
+  if (!dkg::BeaconManager::Verify(group_pub_key,
+                                  block_preceeding.body.block_entropy.EntropyAsSHA256(),
+                                  current.body.block_entropy.group_signature))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Found block with a timestamp before the previous block in time!");
+    FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
     return Status::NO;
   }
 
-  if (current.body.timestamp > current_time)
+  // Perform the time checks (also qual adherence). Note, this check should be last, as the checking
+  // logic relies on a well formed block.
+  if (!ValidBlockTiming(block_preceeding, current))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Found block with a timestamp ahead in time! Diff: ",
-                   current.body.timestamp - current_time);
-    return Status::UNKNOWN;
+    FETCH_LOG_WARN(LOGGING_NAME, "Found block with bad timings!");
+    return Status::NO;
   }
-
-  // TODO(HUT): perform time checks according to block producing intervals.
-  // DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
 
   return ret;
 }

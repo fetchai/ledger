@@ -71,7 +71,7 @@ std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>>
 }
 
 template <class TensorType>
-std::string WordAnalogyTest(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
+std::string WordAnalogyTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
                             TensorType const &embeddings, std::string const &word1,
                             std::string const &word2, std::string const &word3,
                             typename TensorType::SizeType k)
@@ -109,7 +109,7 @@ std::string WordAnalogyTest(dataloaders::GraphW2VLoader<typename TensorType::Typ
 }
 
 template <class TensorType>
-std::string KNNTest(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
+std::string KNNTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
                     TensorType const &embeddings, std::string const &word0,
                     typename TensorType::SizeType k)
 {
@@ -142,7 +142,7 @@ std::string KNNTest(dataloaders::GraphW2VLoader<typename TensorType::Type> const
 }
 
 template <class TensorType>
-std::string AnalogiesFileTest(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
+std::string AnalogiesFileTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
                               TensorType const &embeddings, std::string const &analogy_file,
                               bool verbose = false)
 {
