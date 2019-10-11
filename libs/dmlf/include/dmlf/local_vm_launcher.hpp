@@ -33,7 +33,7 @@ namespace dmlf {
 class LocalVmLauncher : public VmLauncherInterface
 {
 public:
-  LocalVmLauncher()  = default;
+  LocalVmLauncher()           = default;
   ~LocalVmLauncher() override = default;
 
   LocalVmLauncher(const LocalVmLauncher &other) = delete;
