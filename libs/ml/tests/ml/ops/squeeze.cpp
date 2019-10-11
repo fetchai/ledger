@@ -49,18 +49,28 @@ TYPED_TEST(SqueezeTest, forward_test)
   using DataType   = typename TypeParam::Type;
 
   TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000");
-  data.Reshape({6, 1});
+  data.Reshape({1, 6, 1});
 
   fetch::ml::ops::Squeeze<TypeParam> op;
 
   TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
-  ASSERT_EQ(prediction.shape().size(), 1);
-  ASSERT_EQ(prediction.shape().at(0), 6);
+  ASSERT_EQ(prediction.shape().size(), 2);
+  ASSERT_EQ(prediction.shape().at(0), 1);
+  ASSERT_EQ(prediction.shape().at(1), 6);
 
   ASSERT_TRUE(prediction.AllClose(data, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
+
+  TypeParam prediction2(op.ComputeOutputShape({std::make_shared<const TensorType>(prediction)}));
+  op.Forward({std::make_shared<const TensorType>(prediction)}, prediction2);
+
+  ASSERT_EQ(prediction2.shape().size(), 1);
+  ASSERT_EQ(prediction2.shape().at(0), 6);
+
+  ASSERT_TRUE(prediction2.AllClose(data, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(SqueezeTest, backward_test)
@@ -69,9 +79,9 @@ TYPED_TEST(SqueezeTest, backward_test)
   using DataType   = typename TypeParam::Type;
 
   TensorType data = TensorType::FromString("1, -2, 4, -10, 100");
-  data.Reshape({1, 5});
+  data.Reshape({1, 5, 1});
   TensorType error = TensorType::FromString("1, 1, 1, 2, 0");
-  error.Reshape({5});
+  error.Reshape({5, 1});
 
   auto shape = error.shape();
 
@@ -80,9 +90,10 @@ TYPED_TEST(SqueezeTest, backward_test)
   std::vector<TensorType> error_signal =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
-  ASSERT_EQ(error_signal.at(0).shape().size(), 2);
+  ASSERT_EQ(error_signal.at(0).shape().size(), 3);
   ASSERT_EQ(error_signal.at(0).shape().at(0), 1);
   ASSERT_EQ(error_signal.at(0).shape().at(1), 5);
+  ASSERT_EQ(error_signal.at(0).shape().at(2), 1);
 
   ASSERT_TRUE(error_signal.at(0).AllClose(error, fetch::math::function_tolerance<DataType>(),
                                           fetch::math::function_tolerance<DataType>()));
