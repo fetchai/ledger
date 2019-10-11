@@ -151,7 +151,7 @@ protected:
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchTransaction(action, *tx, block_number_++);
+    auto const status = contract_->DispatchTransaction(*tx, block_number_++);
     contract_->Detach();
 
     return status;
@@ -164,7 +164,7 @@ protected:
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchTransaction(tx->action(), *tx, block_number_++);
+    auto const status = contract_->DispatchTransaction(*tx, block_number_++);
     contract_->Detach();
 
     return status;
