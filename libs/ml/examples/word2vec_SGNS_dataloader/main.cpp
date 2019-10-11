@@ -62,25 +62,6 @@ std::pair<std::string, std::string> Model(fetch::ml::Graph<TensorType> &g, SizeT
   return std::pair<std::string, std::string>(error, skipgram);
 }
 
-void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
-                    GraphW2VLoader<TensorType> const &dl, std::string const &word0,
-                    std::string const &word1, std::string const &word2, std::string const &word3,
-                    SizeType K, std::string const &analogies_test_file)
-{
-  TensorType const &weights = utilities::GetEmbeddings(g, skip_gram_name);
-
-  std::string knn_results = utilities::KNNTest(dl, weights, word0, K);
-  std::cout << std::endl << knn_results << std::endl;
-
-  std::string word_analogy_results =
-      utilities::WordAnalogyTest(dl, weights, word1, word2, word3, K);
-  std::cout << std::endl << word_analogy_results << std::endl;
-
-  std::string analogies_file_results =
-      utilities::AnalogiesFileTest(dl, weights, analogies_test_file);
-  std::cout << std::endl << analogies_file_results << std::endl;
-}
-
 ////////////////////////////////
 /// PARAMETERS AND CONSTANTS ///
 ////////////////////////////////
@@ -213,8 +194,8 @@ int main(int argc, char **argv)
     // Test trained embeddings
     if (i % tp.test_frequency == 0)
     {
-      TestEmbeddings(*g, skipgram_layer, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k,
-                     analogies_test_file);
+      fetch::ml::utilities::TestEmbeddings(*g, skipgram_layer, data_loader, tp.word0, tp.word1,
+                                           tp.word2, tp.word3, tp.k, analogies_test_file);
     }
 
     fetch::ml::utilities::SaveGraph(*g, save_file + std::to_string(i));

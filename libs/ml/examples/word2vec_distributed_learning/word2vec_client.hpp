@@ -75,9 +75,6 @@ private:
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<TensorType>> w2v_data_loader_ptr_;
 
   Translator translator_;
-
-  void TestEmbeddings(std::string const &word0, std::string const &word1, std::string const &word2,
-                      std::string const &word3, SizeType K);
 };
 
 template <class TensorType>
@@ -152,35 +149,11 @@ void Word2VecClient<TensorType>::Test()
 {
   if (this->batch_counter_ % tp_.test_frequency == 1)
   {
-    TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);
-  }
-}
-
-template <class TensorType>
-void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::string const &word1,
-                                                std::string const &word2, std::string const &word3,
-                                                SizeType K)
-{
-  // Lock model
-  FETCH_LOCK(this->model_mutex_);
-
-  TensorType const &weights = utilities::GetEmbeddings(*this->g_ptr_, skipgram_);
-
-  std::string knn_results = utilities::KNNTest(*w2v_data_loader_ptr_, weights, word0, K);
-  std::string word_analogy_results =
-      utilities::WordAnalogyTest(*w2v_data_loader_ptr_, weights, word1, word2, word3, K);
-  std::string analogies_file_results =
-      utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights, tp_.analogies_test_file);
-
-  {
-    // Lock console
-    FETCH_LOCK(*this->console_mutex_ptr_);
-
-    std::cout << std::endl
-              << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;
-    std::cout << std::endl << knn_results << std::endl;
-    std::cout << std::endl << word_analogy_results << std::endl;
-    std::cout << std::endl << analogies_file_results << std::endl;
+    // Lock model
+    FETCH_LOCK(this->model_mutex_);
+    utilities::TestEmbeddings<TensorType>(
+        *this->g_ptr_, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1, tp_.word2, tp_.word3,
+        tp_.k, tp_.analogies_test_file, false, "/tmp/w2v_client_" + this->id_);
   }
 }
 

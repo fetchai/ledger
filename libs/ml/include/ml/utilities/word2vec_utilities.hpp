@@ -109,9 +109,8 @@ std::string WordAnalogyTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
 }
 
 template <class TensorType>
-std::string KNNTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
-                    TensorType const &embeddings, std::string const &word0,
-                    typename TensorType::SizeType k)
+std::string KNNTest(dataloaders::GraphW2VLoader<TensorType> const &dl, TensorType const &embeddings,
+                    std::string const &word0, typename TensorType::SizeType k)
 {
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
@@ -229,6 +228,41 @@ std::string AnalogiesFileTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
             << "%" << std::endl;
 
   return outstream.str();
+}
+
+template <class TensorType>
+void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
+                    dataloaders::GraphW2VLoader<TensorType> const &dl, std::string const &word0,
+                    std::string const &word1, std::string const &word2, std::string const &word3,
+                    math::SizeType K, std::string const &analogies_test_file, bool verbose = true,
+                    std::string outfile = "")
+{
+  TensorType const &weights = utilities::GetEmbeddings(g, skip_gram_name);
+
+  std::string knn_results = utilities::KNNTest(dl, weights, word0, K);
+
+  std::string word_analogy_results =
+      utilities::WordAnalogyTest(dl, weights, word1, word2, word3, K);
+
+  std::string analogies_file_results =
+      utilities::AnalogiesFileTest(dl, weights, analogies_test_file);
+
+  if (verbose)
+  {
+    std::cout << std::endl << knn_results << std::endl;
+    std::cout << std::endl << word_analogy_results << std::endl;
+    std::cout << std::endl << analogies_file_results << std::endl;
+  }
+  if (outfile.size())
+  {
+    std::ofstream test_file(outfile, std::ofstream::out | std::ofstream::app);
+    if (test_file)
+    {
+      test_file << std::endl << knn_results << std::endl;
+      test_file << std::endl << word_analogy_results << std::endl;
+      test_file << std::endl << analogies_file_results << std::endl;
+    }
+  }
 }
 
 inline std::string ReadFile(std::string const &path)
