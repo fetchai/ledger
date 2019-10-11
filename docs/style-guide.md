@@ -2,6 +2,7 @@
 
 We use C++14, but currently consider C++17 too immature for usage.
 
+
 ## File structure
 
 * Header files: `.hpp`
@@ -45,6 +46,15 @@ We use C++14, but currently consider C++17 too immature for usage.
 * Macros use `UPPER_CASE`.
 * Align attributes by group in classes, and initialisers.
 * Use SQL style initialiser for lists and inheritance lists.
+
+
+## Typing
+
+* Use STL types wherever possible.
+* Prefer `(u)int(16/32/64)_t` and `std::size_t`.
+* Use `static_cast`, `reinterpret_cast`, `dynamic_cast`, etc., rather than C-style casts.
+* Avoid `auto` except when the return type is clear.
+* Avoid use of RTTI.
 
 
 ## Comments and documentation
@@ -97,37 +107,32 @@ double Exp(double const &x)
 std::sort(users.begin(), users.end(), UserSortPredicate());
 for (const User& user: users)
 {
-    if (true == user.ready)
+    if (user.ready)
     {
         // Do something...
         
-    }   // if (user ready)
-}   // iterate (users)
+    }
+}
 ```
 
 * If you do not understand some code, contact the original author. If they have left the company ask the most competent person. After working out what a piece of a non-obvious code is doing, remember to document it.
+
 
 ## Tests
 
 * Write tests and run them
 * Do not assume, do assert
 
+
 ## Other
 
-* Use STL types wherever possible.
 * If a value is `const`, declare it so.
 * Prefer `shared_ptr` and `unique_ptr` over raw pointers. 
 * Use references where the value cannot be null. Use pointers where it can. 
 * Always prefer passing by `const` reference or reference where possible.
 * Use `make_shared` and `make_unique` for shared pointers.
 * Don't use `#define`. If you ignore this guidance, choose a `FETCH_STARTING_REALLY_LONG_NAME_THAT_CANNOT_POSSIBLY_CLASH_WITH_ANYTHING_ELSE` and undefine it as soon as you are done with it.
-* Use `static_cast`, `reinterpret_cast`, `dynamic_cast`, etc., rather than C-style casts.
-* Use meaningful names.
-* Structs are for POD. Classes are for everything else.
-* initialise class members in the following order of preference:
-	1. Inline initialisation.
-	2. Constructor initialiser list.
-	3. Constructor body. 
+* Structs are for POD. Classes are for everything else. 
 * Uninitialised memory can cause serious bugs.
 * Use `nullptr`, not `0` or `NULL`.
 * Include header definitions in the same file.
@@ -141,17 +146,13 @@ for (const User& user: users)
 	4. `final`.
 	5. `noexcept`.
 * Declare all constructors and assignment operators concretely or with default or delete (prefer delete).
-* Avoid `auto` except when the return type is clear.
-* Avoid use of RTTI.
 * Pre increment: `++i` as it is more performant for non primitive types.
-* Prefer `(u)int(16/32/64)_t` and `std::size_t`.
 * Use `int const &i` over `const int &i`.
 * Lambda captures must be explicit ref or copy.
 * `using` is preferable to `typedef`.
 * Make `using` private unless you intend to expose it.
 * TODOs should refer to the author in the style `TODO(`HUT`) :`.
 * Avoid leaving `TODOs` in code.
-* `snake_case_` variables with trailing underscore, except in structs where it is `snake_case` without underscore.
 * `namespace {.<template T>` only allowed if `typedef`/`using` indicates the type.
 * Use templates judiciously and defined to library code where only a small number of devs need understand them.
 * Variables should be initialised with `=` if primitive, or braced initialisation with parentheses if required.
@@ -160,13 +161,12 @@ for (const User& user: users)
 
 ## Naming
 
-Use meaningful names.
+* Use meaningful names.
+* For structs, use all lowercase with underscore to separate words, or camel case, i.e. `first_name` and `firstName` are both valid.
+* For classes, private member variables end with an `_`.
+* `snake_case_` variables with trailing underscore, except in structs where it is `snake_case` without underscore.
+* For templates, use all uppercase with underscores to separate words. Long and explicit names are preferred to short and obscure names, e.g. `template <typename ARRAY_TYPE>` is preferable to `template <typename A>);`. Short names are acceptable where the type is obvious and reused many times in complex equations.
 
-For structs, use all lowercase with underscore to separate words, or camel case, i.e. `first_name` and `firstName` are both valid.
-
-For classes, private member variables end with an`_`.
-
-For templates, use all uppercase with underscores to separate words. Long and explicit names are preferred to short and obscure names, e.g. `template <typename ARRAY_TYPE>` is preferable to `template <typename A>);`. Short names are acceptable where the type is obvious and reused many times in complex equations.
 
 ### Namespaces 
 
@@ -175,8 +175,7 @@ Don't do the following:
 ``` c++
 namespace fetch 
 {
-    using namespace std; // Pollutes all of the fetch namespace and causes
-                     // problems for every one.
+    using namespace std; // Pollutes all of the fetch namespace and causes problems for everyone.
 
 class MyFetchClass 
 {
@@ -225,7 +224,7 @@ namespace fetch
 
 ## Structs
 
-Use structs for passive data and, in some cases, template meta programming. Use `classes` for everything else. For example:
+* Use structs for passive data and, in some cases, template meta-programming. Use `classes` for everything else.
 
 ``` c++
 struct Person 
@@ -239,7 +238,12 @@ struct Person
 
 ## Classes
 
-Mark all constructors and assignment operators explicitly; even those which are implicit. For example:
+* Initialise class members in the following order of preference:
+	1. Inline initialisation.
+	2. Constructor initialiser list.
+	3. Constructor body.
+
+* Mark all constructors and assignment operators explicitly; even those which are implicit. For example:
 
 ``` c++
 class Transaction 
