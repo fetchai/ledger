@@ -271,11 +271,14 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
     // TODO(JMW): Block has already been notarised -> tell main chain
     return;
   }
-  // Determine rank of miner in qual
+
+  // If first block of the aeon then qual should match
   if (block.block_number == active_exe_unit_->aeon.round_start)
   {
     assert(block.block_entropy.qualified == active_exe_unit_->manager.qual());
   }
+
+  // Determine rank of miner in qual
   auto entropy_ranked_cabinet = Consensus::QualWeightedByEntropy(
       active_exe_unit_->manager.qual(), block.block_entropy.EntropyAsU64());
   auto miner_position =
@@ -295,11 +298,14 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
     }
   }
 
+  // Sign and verify own notarisation and then save for peers to query
   auto notarisation = active_exe_unit_->manager.Sign(block.hash);
   assert(active_exe_unit_->manager.VerifySignatureShare(block.hash, notarisation.signature,
                                                         notarisation.identity.identifier()));
   notarisations_being_built_[block.block_number][block.hash].insert(
       {notarisation.identity.identifier(), notarisation.signature});
+
+  // Set highest notarised block rank for this block height
   previous_notarisation_rank_[block.block_number] = miner_rank;
 }
 
