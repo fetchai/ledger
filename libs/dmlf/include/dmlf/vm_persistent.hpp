@@ -23,6 +23,7 @@
 #include "vm/vm.hpp"
 
 #include <memory>
+#include <unordered_map>
 
 namespace fetch {
 namespace dmlf {
@@ -30,9 +31,9 @@ namespace dmlf {
 class VmPersistent : public vm::IoObserverInterface
 {
 public:
-  VmPersistent()                     = default;
-  VmPersistent(VmPersistent &&other) = default;
-  VmPersistent &operator=(VmPersistent &&other) = default;
+  VmPersistent()                              = default;
+  VmPersistent(VmPersistent &&other) noexcept = default;
+  VmPersistent &operator=(VmPersistent &&other) noexcept = default;
 
   VmPersistent(const VmPersistent &other) = delete;
   VmPersistent &operator=(const VmPersistent &other) = delete;
@@ -48,7 +49,7 @@ public:
 
 private:
   using Buffer = fetch::byte_array::ConstByteArray;
-  using Store  = std::map<std::string, Buffer>;
+  using Store  = std::unordered_map<std::string, Buffer>;
 
   Store store_;
 };
