@@ -20,37 +20,31 @@
 #include "moment/clock_interfaces.hpp"
 
 #include <chrono>
-#include <iostream>
 
 namespace fetch {
 namespace moment {
 namespace detail {
 
-class SteadyClock final : public ClockInterface
+class SystemClock : public ClockInterface
 {
 public:
   // Construction / Destruction
-  SteadyClock()                    = default;
-  SteadyClock(SteadyClock const &) = delete;
-  SteadyClock(SteadyClock &&)      = delete;
-  ~SteadyClock() override          = default;
+  SystemClock()                    = default;
+  SystemClock(SystemClock const &) = delete;
+  SystemClock(SystemClock &&)      = delete;
+  ~SystemClock() override          = default;
 
   /// @name Clock Interface
   /// @{
-  TimestampChrono NowChrono() const override
+  Timestamp Now() const override
   {
-    return ChronoClock::now();
-  }
-
-  TimestampSystem NowSystem() const override
-  {
-    return {};
+    return AccurateSystemClock::now();
   }
   /// @}
 
   // Operators
-  SteadyClock &operator=(SteadyClock const &) = delete;
-  SteadyClock &operator=(SteadyClock &&) = delete;
+  SystemClock &operator=(SystemClock const &) = delete;
+  SystemClock &operator=(SystemClock &&) = delete;
 };
 
 }  // namespace detail
