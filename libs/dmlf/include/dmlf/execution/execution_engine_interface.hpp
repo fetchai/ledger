@@ -31,7 +31,7 @@ public:
   ExecutionEngineInterface(ExecutionEngineInterface const &other)  = delete;
   ExecutionEngineInterface(ExecutionEngineInterface const &&other) = delete;
   ExecutionEngineInterface &operator=(ExecutionEngineInterface const &other) = delete;
-  ExecutionEngineInterface &operator=(ExecutionEngineInterface const &&other) = delete;
+ExecutionEngineInterface &operator=(ExecutionEngineInterface &&other) = delete;
 
   using Name            = ExecutionInterface::Name;
   using SourceFiles     = ExecutionInterface::SourceFiles;
