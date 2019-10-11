@@ -258,7 +258,8 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
 {
   FETCH_LOCK(mutex_);
 
-  // Return if not eligible to notarise
+  // Return if not eligible to notarise, block is too far in the past of the highest notarised block
+  // or beyond the window of this aeon
   if (!active_exe_unit_ || block.block_number < active_exe_unit_->aeon.round_start ||
       block.block_number >= active_exe_unit_->aeon.round_end)
   {
@@ -269,6 +270,12 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
                notarisations_built_.at(block.block_number).end())
   {
     // TODO(JMW): Block has already been notarised -> tell main chain
+    return;
+  }
+  else if (block.block_number < BlockNumberCutoff())
+  {
+    // If block number is too far in the past of the head of the notarisation chain
+    // then return
     return;
   }
 
@@ -319,9 +326,18 @@ void NotarisationService::NewAeonExeUnit(SharedAeonExecutionUnit const &keys)
   aeon_exe_queue_.push_back(keys);
 }
 
-uint64_t NotarisationService::NextBlockHeight()
+uint64_t NotarisationService::NextBlockHeight() const
 {
   return highest_notarised_block_height_ + 1;
+}
+
+uint64_t NotarisationService::BlockNumberCutoff() const
+{
+  if (highest_notarised_block_height_ < cutoff_)
+  {
+    return 0;
+  }
+  return highest_notarised_block_height_ - cutoff_;
 }
 
 void NotarisationService::SetNotarisedBlockCallback(CallbackFunction callback)

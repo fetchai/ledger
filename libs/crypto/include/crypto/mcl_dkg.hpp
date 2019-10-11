@@ -175,7 +175,13 @@ public:
   {
     std::string sig_str;
     array.GetNextValue(sig_str);
-    b.setStr(sig_str);
+    bool check;
+    b.setStr(&check, sig_str.data());
+    if (!check)
+    {
+      throw SerializableException(error::TYPE_ERROR,
+                                  std::string("String does not convert to MCL type"));
+    }
   }
 };
 }  // namespace serializers

@@ -101,7 +101,8 @@ public:
 
   /// Helper function
   /// @{
-  uint64_t NextBlockHeight();
+  uint64_t NextBlockHeight() const;
+  uint64_t BlockNumberCutoff() const;
   /// @}
 
   std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
@@ -134,7 +135,7 @@ private:
   std::unordered_map<BlockHeight, uint32_t>
            previous_notarisation_rank_;  ///< Heighest rank notarised at a particular block height
   uint64_t highest_notarised_block_height_{0};  ///< Current highest notarised block height
-  static const uint32_t cutoff = 2;             ///< Number of blocks behind
+  static const uint32_t cutoff_ = 2;            ///< Number of blocks behind
   /// @}
 
   CallbackFunction callback_;  ///< Callback for new block notarisation
