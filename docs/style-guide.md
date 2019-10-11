@@ -127,14 +127,9 @@ for (const User& user: users)
 ## Other
 
 * If a value is `const`, declare it so.
-* Prefer `shared_ptr` and `unique_ptr` over raw pointers. 
-* Use references where the value cannot be null. Use pointers where it can. 
 * Always prefer passing by `const` reference or reference where possible.
-* Use `make_shared` and `make_unique` for shared pointers.
 * Don't use `#define`. If you ignore this guidance, choose a `FETCH_STARTING_REALLY_LONG_NAME_THAT_CANNOT_POSSIBLY_CLASH_WITH_ANYTHING_ELSE` and undefine it as soon as you are done with it.
 * Structs are for POD. Classes are for everything else. 
-* Uninitialised memory can cause serious bugs.
-* Use `nullptr`, not `0` or `NULL`.
 * Include header definitions in the same file.
 * Use `#pragma` once in headers.
 * Do not do `using namespace foo` or `namespace baz = ::foo::bar::baz` in `.hpp` files.
@@ -221,6 +216,7 @@ namespace fetch
 
 };
 ```
+
 
 ## Structs
 
@@ -330,7 +326,32 @@ class MyClass
 Here, inline initialisation ensures that the default constructor does not produce uninitialised memory. In the second constructor, we manually initialise the `pointer_` but `size_` can be set using the initialisation list.
 
 
-## `nullptr`
+## Memory management and pointers
+
+* Prefer `shared_ptr` and `unique_ptr` over raw pointers. 
+* Use references where the value cannot be null. Use pointers where it can. 
+* Use `make_shared` and `make_unique` for shared pointers.
+* Uninitialised memory can cause serious bugs.
+
+
+### Handling dynamically allocated memory resources
+
+Use smart pointers from the `std::` namespace dedicated to memory management, such as the most frequently used:
+
+* `std::shared_ptr<...>`.
+* `std::unique_ptr<...>`.
+
+Please note, the *default* delete policy for these types uses the **default** C++ delete operator for **single** objects. However, the API of these types offers custom deleter and allocator functions for managing non-default allocation/deallocation policies such as needed when managing **array** object types.
+
+Below are some types which guarantee to manage **array** object types (continuous block of memory) by default, and other types which do memory management as a side effect of their primary business logic.
+
+* `std::vector<...>` guarantees to manage a continuous block of memory (array) by definition.
+* `std::string<...>` guarantees to manage a continuous block of memory (array) by definition.
+* `SharedArray<...>` and `Array<...>` classes (from `fetch::memory` namespace) that guarantee to manage a continuous block of memory (array) by definition.
+* Classes from `fetch::byte_array` namespace, such as `BasicByteArray` 
+
+
+### nullptr
 
 Use the new C++11 `nullptr` keyword which designates an `rvalue` constant serving as a universal null pointer literal.
 
@@ -339,16 +360,95 @@ This replaces the buggy and weakly-typed literal `0` and the infamous `NULL` mac
 `nullptr` is also type safe.
 
 
+### Transfer between ownership models
+
+It is safe to transfer ownership from `std::unique_ptr` to `std::shared_ptr`.
+
+However, do **NOT** transfer ownership the other way around, i.e. from `std::shared_ptr` to `std::unique_ptr`.
+
+Any justification for doing this is highly questionable. If you really feel it is necessary to do this, then keep the following in mind:
+   
+* It is a **non**-trivial operation.
+* The `shared_ptr` type is **NOT** designed for this.
+* If you still want to proceed, then read <a href="https://stackoverflow.com/questions/15337461/move-ownership-from-stdshared-ptr-to-stdunique-ptr" target=_blank>this</a> which may provide some guidance.
+
+
+Example of using smart pointer with **shared** ownership:
+
+``` c++
+#include <memory>
+#include <iostream>
+
+//* Parent Scope block
+{
+  std::shared_ptr<int> a0;
+  
+  //* Nested scope block
+  {
+    std::shared_ptr<int> a1 = std::make_shared<int>(5); //* refcount=1
+    a0 = a1; //* The `a1` instance become shared at this point (refcount=2)
+    
+    //* BOTH instances are valid, controlling the same `int` instance:
+    std::cout << "a0 = " << *a0 << ", a1 = " << *a1 << std::endl;
+    
+    throw std::exception();
+    
+    //* The exception will cause stack unwinding, during which 
+    //* is the destructor of `a1` instance called automatically, 
+    //* what decrements refcount of shared object (to 1).
+    //* At this point, the `a0` shared object is controlling lifecycle
+    //* of the `int` instance created above in this scope.
+  }
+  
+  //* We are still in stack unwinding process here (due to earlier exception),
+  //* during which automatically called destructor of `a0` instance  decrements
+  //* refcount of shared object (to 0), what finally results to destruction of
+  //* the `int` instance allocated & initialised in the nested scope above.
+}
+```
+
+
+Example of using smart pointer with **exclusive** ownership:
+``` c++
+#include <memory>
+
+//* Parent Scope block
+{
+  std::unique_ptr<int> a0;
+  
+  //* Nested scope block
+  {
+    std::unique_ptr<int> a1 = std::make_unique<int>(5);
+
+    a0 = a1; //* Transfer of OWNERSHIP from `a1` to `a0`
+    //* The `a1` does NOT control lifecycle of the `int` instance anymore.
+    
+    //* This WILL result to throwing an exception since `a1` instance
+    //* is initialised to `nullptr`:
+    std::cout << "a1=" << *a1 <<std::endl;
+    
+    //* Automatically called destructor of `a1` instance,
+    //* which does NOTHING since `a1` does NOT possess
+    //* control over any object.
+  }
+  //* At this point, The `a0` variable is still controlling life-cycle of the
+  //* `int` instance created in nested scope above.
+  
+  //* Automatically called destructor of `a0` instance will
+  //* result to destruction of the `int` instance allocated & initialised
+  //* in the nested scope above.
+}
+```
+
+
 ## Resource handling
 
 It is important to manage resources whose lifecycle needs strict control, such as:
 
 * Thread synchronisation constructs (e.g. mutex).
-* Memory.
 * Filesystem objects.
 * Network connections.
 * Database sessions.
-* Etc. 
 
 This is especially critical in environments where exceptions can occur.
 
@@ -491,106 +591,5 @@ std::mutex(mtx);
 
     //* Automatically called destructor of the `guard` instance
     //* will implicitly unlock the mutex.
-}
-```
-
-
-
-### Handling dynamically allocated `MEMORY` resources
-
-Use smart pointers from the `std::` namespace dedicated to memory management, such as the most frequently used:
-
-* `std::shared_ptr<...>`.
-* `std::unique_ptr<...>`.
-
-Please note, the *default* delete policy for these types uses the **default** C++ delete operator for **single** objects. However, the API of these types offers custom deleter and allocator functions for managing non-default allocation/deallocation policies such as needed when managing **array** object types.
-
-Below are some types which guarantee to manage **array** object types (continuous block of memory) by default, and other types which do memory management as a side effect of their primary business logic.
-
-* `std::vector<...>` guarantees to manage a continuous block of memory (array) by definition.
-* `std::string<...>` guarantees to manage a continuous block of memory (array) by definition.
-* `SharedArray<...>` and `Array<...>` classes (from `fetch::memory` namespace) that guarantee to manage a continuous block of memory (array) by definition.
-* Classes from `fetch::byte_array` namespace, such as `BasicByteArray` 
-
-
-
-### Transfer between ownership models
-
-It is safe to transfer ownership from `std::unique_ptr` to `std::shared_ptr`.
-
-However, do **NOT** transfer ownership the other way around, i.e. from `std::shared_ptr` to `std::unique_ptr`.
-
-Any justification for doing this is highly questionable. If you really feel it is necessary to do this, then keep the following in mind:
-   
-* It is a **non**-trivial operation.
-* The `shared_ptr` type is **NOT** designed for this.
-* If you still want to proceed, then read <a href="https://stackoverflow.com/questions/15337461/move-ownership-from-stdshared-ptr-to-stdunique-ptr" target=_blank>this</a> which may provide some guidance.
-
-
-Example of using smart pointer with **shared** ownership:
-
-``` c++
-#include <memory>
-#include <iostream>
-
-//* Parent Scope block
-{
-  std::shared_ptr<int> a0;
-  
-  //* Nested scope block
-  {
-    std::shared_ptr<int> a1 = std::make_shared<int>(5); //* refcount=1
-    a0 = a1; //* The `a1` instance become shared at this point (refcount=2)
-    
-    //* BOTH instances are valid, controlling the same `int` instance:
-    std::cout << "a0 = " << *a0 << ", a1 = " << *a1 << std::endl;
-    
-    throw std::exception();
-    
-    //* The exception will cause stack unwinding, during which 
-    //* is the destructor of `a1` instance called automatically, 
-    //* what decrements refcount of shared object (to 1).
-    //* At this point, the `a0` shared object is controlling lifecycle
-    //* of the `int` instance created above in this scope.
-  }
-  
-  //* We are still in stack unwinding process here (due to earlier exception),
-  //* during which automatically called destructor of `a0` instance  decrements
-  //* refcount of shared object (to 0), what finally results to destruction of
-  //* the `int` instance allocated & initialised in the nested scope above.
-}
-```
-
-
-
-Example of using smart pointer with **exclusive** ownership:
-``` c++
-#include <memory>
-
-//* Parent Scope block
-{
-  std::unique_ptr<int> a0;
-  
-  //* Nested scope block
-  {
-    std::unique_ptr<int> a1 = std::make_unique<int>(5);
-
-    a0 = a1; //* Transfer of OWNERSHIP from `a1` to `a0`
-    //* The `a1` does NOT control lifecycle of the `int` instance anymore.
-    
-    //* This WILL result to throwing an exception since `a1` instance
-    //* is initialised to `nullptr`:
-    std::cout << "a1=" << *a1 <<std::endl;
-    
-    //* Automatically called destructor of `a1` instance,
-    //* which does NOTHING since `a1` does NOT possess
-    //* control over any object.
-  }
-  //* At this point, The `a0` variable is still controlling life-cycle of the
-  //* `int` instance created in nested scope above.
-  
-  //* Automatically called destructor of `a0` instance will
-  //* result to destruction of the `int` instance allocated & initialised
-  //* in the nested scope above.
 }
 ```
