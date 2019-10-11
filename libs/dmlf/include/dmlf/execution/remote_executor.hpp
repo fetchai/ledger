@@ -20,18 +20,14 @@
 #include "dmlf/execution/execution_engine_interface.hpp"
 #include "dmlf/execution/execution_interface.hpp"
 
-#include <map>
-#include <memory>
-#include <sstream>
-
 namespace fetch {
 namespace dmlf {
 
-class LocalExecuter : public ExecutionInterface
+class RemoteExecutor : public ExecutionInterface
 {
 public:
-  LocalExecuter();
-  virtual ~LocalExecuter();
+  RemoteExecutor();
+  virtual ~RemoteExecutor();
 
   using Name            = ExecutionInterface::Name;
   using SourceFiles     = ExecutionInterface::SourceFiles;
@@ -39,10 +35,6 @@ public:
   using Variant         = ExecutionInterface::Variant;
   using PromiseOfResult = ExecutionInterface::PromiseOfResult;
   using Params          = ExecutionInterface::Params;
-
-  using ErrorStage = ExecutionErrorMessage::Stage;
-  using ErrorCode  = ExecutionErrorMessage::Code;
-  using Error      = ExecutionResult::Error;
 
   virtual PromiseOfResult CreateExecutable(Target const &host, Name const &execName,
                                            SourceFiles const &sources) override;
@@ -56,10 +48,10 @@ public:
   virtual PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
                               std::string const &entrypoint) override;
 
-  LocalExecuter(LocalExecuter const &other) = delete;
-  LocalExecuter &operator=(LocalExecuter const &other)  = delete;
-  bool           operator==(LocalExecuter const &other) = delete;
-  bool           operator<(LocalExecuter const &other)  = delete;
+  RemoteExecutor(RemoteExecutor const &other) = delete;
+  RemoteExecutor &operator=(RemoteExecutor const &other)  = delete;
+  bool            operator==(RemoteExecutor const &other) = delete;
+  bool            operator<(RemoteExecutor const &other)  = delete;
 };
 
 }  // namespace dmlf
