@@ -308,7 +308,7 @@ struct OpSliceSaveableParams : public OpsSaveableParams
 };
 
 /**
- * Saveable parameters for Slice op
+ * Saveable parameters for Squeeze op
  * @tparam TensorType
  */
 template <typename TensorType>
