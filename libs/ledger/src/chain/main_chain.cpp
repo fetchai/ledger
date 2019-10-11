@@ -475,7 +475,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limi
       static_cast<std::size_t>(std::min(limit, static_cast<int64_t>(MainChain::UPPER_BOUND)));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
-  Blocks result;
+  Blocks    result;
   BlockHash next_hash;
 
   if (current_hash.empty())
