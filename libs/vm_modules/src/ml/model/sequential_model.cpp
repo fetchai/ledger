@@ -16,21 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "core/byte_array/decoders.hpp"
-//#include "ml/core/graph.hpp"
-//#include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
-//#include "ml/ops/activation.hpp"
-
-#include "ml/model/model_config.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/loss_functions/types.hpp"
-//#include "ml/saveparams/saveable_params.hpp"
-//#include "ml/utilities/graph_builder.hpp"
 #include "vm/module.hpp"
-//#include "vm_modules/math/tensor.hpp"
-//#include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/model/sequential_model.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 
@@ -46,8 +35,8 @@ using VMPtrString = Ptr<String>;
 VMSequentialModel::VMSequentialModel(VM *vm, TypeId type_id)
   : Object(vm, type_id)
 {
-  model_config_ = std::make_shared<ModelConfigType>();
-  model_        = std::make_shared<fetch::ml::model::Sequential<TensorType>>(*model_config_);
+//  model_config_ = std::make_shared<ModelConfigType>();
+//  model_        = std::make_shared<fetch::ml::model::Sequential<TensorType>>(*model_config_);
 }
 
 Ptr<VMSequentialModel> VMSequentialModel::Constructor(VM *vm, TypeId type_id)
@@ -56,8 +45,7 @@ Ptr<VMSequentialModel> VMSequentialModel::Constructor(VM *vm, TypeId type_id)
 }
 
 void VMSequentialModel::LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                                 math::SizeType const &inputs,
-                                 math::SizeType const &hidden_nodes)
+                                 math::SizeType const &inputs, math::SizeType const &hidden_nodes)
 {
 
   // dense / fully connected layer
@@ -100,24 +88,13 @@ void VMSequentialModel::Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
   model_->Compile(optimiser_type, loss_type);
 }
 
-void VMSequentialModel::Fit(vm::Ptr<vm::Array<Ptr<vm::Array<Ptr<TensorType>>>>> const &data,
-                            vm::Ptr<vm::Array<Ptr<TensorType>>> const &labels,
+void VMSequentialModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
                             fetch::math::SizeType batch_size)
 {
-
-  // convert label arrays to vector
-  std::vector<TensorType> v_label;
-
-  auto len = static_cast<fetch::math::SizeType>(labels->Count());
-  for (fetch::math::SizeType i{0}; i < len; i++)
-  {
-    AnyInteger         index(i, TypeIds::UInt16);
-    TemplateParameter1 element = data->GetIndexedValue(index);
-    input_names.push_back(element.Get<fetch::vm::Ptr<fetch::vm::String>>()->str);
-  }
-
   // prepare dataloader
-  dl_ = std::make_unique<TensorDataloader>(*labels, *data);
+  dl_ = std::make_unique<TensorDataloader>();
+  dl_->SetRandomMode(true);
+  dl_->AddData(data->GetTensor(), labels->GetTensor());
   model_->SetDataloader(std::move(dl_));
 
   // set batch size
@@ -135,7 +112,7 @@ void VMSequentialModel::Evaluate()
 
 void VMSequentialModel::Bind(Module &module)
 {
-  module.CreateClassType<VMSequentialModel>("Graph")
+  module.CreateClassType<VMSequentialModel>("SequentialModel")
       .CreateConstructor(&VMSequentialModel::Constructor)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMSequentialModel> {
         return Ptr<VMSequentialModel>{new VMSequentialModel(vm, type_id)};

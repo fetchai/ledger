@@ -24,9 +24,9 @@ namespace fetch {
 namespace vm_modules {
 namespace math {
 
-using SizeType = fetch::math::SizeType;
+using SizeType   = fetch::math::SizeType;
 using SizeVector = fetch::math::SizeVector;
-using DataType = fetch::fixed_point::fp64_t;
+using DataType   = fetch::fixed_point::fp64_t;
 
 }  // namespace math
 }  // namespace vm_modules

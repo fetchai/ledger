@@ -555,8 +555,8 @@ TEST_F(MLTests, sequential_model_test)
       var data = Tensor(data_shape);
       var label = Tensor(label_shape);
 
-//      // set up a model
-//      var model = Model("sequential");
+      // set up a model
+      var model = SequentialModel();
 //      model.add("dense", 10, 10, "relu");
 //      model.add("dense", 10, 10, "relu");
 //      model.add("dense", 10, 1);

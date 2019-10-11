@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/model/sequential.hpp"
+#include "vm/array.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
@@ -51,14 +52,13 @@ public:
   static fetch::vm::Ptr<VMSequentialModel> Constructor(fetch::vm::VM *   vm,
                                                        fetch::vm::TypeId type_id);
 
-  void LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                math::SizeType const &inputs,
+  void LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
                 math::SizeType const &hidden_nodes);
 
   void Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
                fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
-  void Fit(vm::Ptr<vm::Array<vm::Array<TensorType>>> const &data, fetch::vm::Ptr<vm::Array<TensorType>> const &labels,
+  void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
            fetch::math::SizeType batch_size);
 
   void Evaluate();
