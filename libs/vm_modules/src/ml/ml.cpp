@@ -21,6 +21,7 @@
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/ml.hpp"
+#include "vm_modules/ml/model/sequential_model.hpp"
 #include "vm_modules/ml/optimisation/optimiser.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/ml/training_pair.hpp"
@@ -47,6 +48,9 @@ void BindML(Module &module)
 
   // optimisers
   VMOptimiser::Bind(module);
+
+  // model
+  VMSequentialModel::Bind(module);
 
   // utilities
   utilities::VMScaler::Bind(module);

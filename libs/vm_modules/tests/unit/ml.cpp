@@ -19,7 +19,6 @@
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 #include "vm_test_toolkit.hpp"
 
@@ -557,9 +556,9 @@ TEST_F(MLTests, sequential_model_test)
 
       // set up a model
       var model = SequentialModel();
-//      model.add("dense", 10, 10, "relu");
-//      model.add("dense", 10, 10, "relu");
-//      model.add("dense", 10, 1);
+      model.add("dense", 10u64, 10u64, "relu");
+      model.add("dense", 10u64, 10u64, "relu");
+      model.add("dense", 10u64, 1u64);
 //      model.compile("mse", "adam");
 //
 //      // train the model

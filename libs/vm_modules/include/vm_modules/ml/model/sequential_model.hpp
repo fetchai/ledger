@@ -54,14 +54,21 @@ public:
 
   void LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
                 math::SizeType const &hidden_nodes);
+  void LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                          math::SizeType const &inputs, math::SizeType const &hidden_nodes,
+                          fetch::vm::Ptr<fetch::vm::String> const &activation);
+  void LayerAddImplementation(std::string const &layer, math::SizeType const &inputs,
+                              math::SizeType const &                    hidden_nodes,
+                              fetch::ml::details::ActivationType const &activation =
+                                  fetch::ml::details::ActivationType::NOTHING);
 
-  void Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
-               fetch::vm::Ptr<fetch::vm::String> const &optimiser);
-
-  void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
-           fetch::math::SizeType batch_size);
-
-  void Evaluate();
+  //  void Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
+  //               fetch::vm::Ptr<fetch::vm::String> const &optimiser);
+  //
+  //  void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
+  //           fetch::math::SizeType batch_size);
+  //
+  //  void Evaluate();
 
   static void Bind(fetch::vm::Module &module);
 

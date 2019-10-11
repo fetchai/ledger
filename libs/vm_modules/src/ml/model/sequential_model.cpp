@@ -35,8 +35,8 @@ using VMPtrString = Ptr<String>;
 VMSequentialModel::VMSequentialModel(VM *vm, TypeId type_id)
   : Object(vm, type_id)
 {
-//  model_config_ = std::make_shared<ModelConfigType>();
-//  model_        = std::make_shared<fetch::ml::model::Sequential<TensorType>>(*model_config_);
+  model_config_ = std::make_shared<ModelConfigType>();
+  model_        = std::make_shared<fetch::ml::model::Sequential<TensorType>>(*model_config_);
 }
 
 Ptr<VMSequentialModel> VMSequentialModel::Constructor(VM *vm, TypeId type_id)
@@ -47,80 +47,106 @@ Ptr<VMSequentialModel> VMSequentialModel::Constructor(VM *vm, TypeId type_id)
 void VMSequentialModel::LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                  math::SizeType const &inputs, math::SizeType const &hidden_nodes)
 {
+  LayerAddImplementation(layer->str, inputs, hidden_nodes,
+                         fetch::ml::details::ActivationType::NOTHING);
+}
 
-  // dense / fully connected layer
-  if (layer->str == "dense")
+void VMSequentialModel::LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                           math::SizeType const &                   inputs,
+                                           math::SizeType const &                   hidden_nodes,
+                                           fetch::vm::Ptr<fetch::vm::String> const &activation)
+{
+  fetch::ml::details::ActivationType activation_type = fetch::ml::details::ActivationType::NOTHING;
+  if (activation->str == "relu")
   {
-    model_->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-        inputs, hidden_nodes, fetch::ml::details::ActivationType::RELU);
+    activation_type = fetch::ml::details::ActivationType::RELU;
+  }
+  else
+  {
+    throw std::runtime_error("attempted to add unknown layer with unknown activation type");
+  }
+  LayerAddImplementation(layer->str, inputs, hidden_nodes, activation_type);
+}
+
+void VMSequentialModel::LayerAddImplementation(std::string const &   layer,
+                                               math::SizeType const &inputs,
+                                               math::SizeType const &hidden_nodes,
+                                               fetch::ml::details::ActivationType const &activation)
+{
+  // dense / fully connected layer
+  if (layer == "dense")
+  {
+    model_->template Add<fetch::ml::layers::FullyConnected<TensorType>>(inputs, hidden_nodes,
+                                                                        activation);
   }
   else
   {
     throw std::runtime_error("attempted to add unknown layer type to sequential model");
   }
 }
-
-void VMSequentialModel::Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
-                                fetch::vm::Ptr<fetch::vm::String> const &optimiser)
-{
-  fetch::ml::ops::LossType loss_type;
-  fetch::ml::OptimiserType optimiser_type;
-
-  if (loss->str == "mse")
-  {
-    loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
-  }
-  else
-  {
-    throw std::runtime_error("invalid loss function");
-  }
-
-  // dense / fully connected layer
-  if (optimiser->str == "ADAM")
-  {
-    optimiser_type = fetch::ml::OptimiserType::ADAM;
-  }
-  else
-  {
-    throw std::runtime_error("invalid loss function");
-  }
-
-  model_->Compile(optimiser_type, loss_type);
-}
-
-void VMSequentialModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
-                            fetch::math::SizeType batch_size)
-{
-  // prepare dataloader
-  dl_ = std::make_unique<TensorDataloader>();
-  dl_->SetRandomMode(true);
-  dl_->AddData(data->GetTensor(), labels->GetTensor());
-  model_->SetDataloader(std::move(dl_));
-
-  // set batch size
-  model_config_->batch_size = batch_size;
-  model_->UpdateConfig(*model_config_);
-
-  // train for one epoch
-  model_->Train();
-}
-
-void VMSequentialModel::Evaluate()
-{
-  model_->Evaluate();
-}
+// void VMSequentialModel::Compile(fetch::vm::Ptr<fetch::vm::String> const &loss,
+//                                fetch::vm::Ptr<fetch::vm::String> const &optimiser)
+//{
+//  fetch::ml::ops::LossType loss_type;
+//  fetch::ml::OptimiserType optimiser_type;
+//
+//  if (loss->str == "mse")
+//  {
+//    loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
+//  }
+//  else
+//  {
+//    throw std::runtime_error("invalid loss function");
+//  }
+//
+//  // dense / fully connected layer
+//  if (optimiser->str == "ADAM")
+//  {
+//    optimiser_type = fetch::ml::OptimiserType::ADAM;
+//  }
+//  else
+//  {
+//    throw std::runtime_error("invalid loss function");
+//  }
+//
+//  model_->Compile(optimiser_type, loss_type);
+//}
+//
+// void VMSequentialModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
+//                            fetch::math::SizeType batch_size)
+//{
+//  // prepare dataloader
+//  dl_ = std::make_unique<TensorDataloader>();
+//  dl_->SetRandomMode(true);
+//  dl_->AddData(data->GetTensor(), labels->GetTensor());
+//  model_->SetDataloader(std::move(dl_));
+//
+//  // set batch size
+//  model_config_->batch_size = batch_size;
+//  model_->UpdateConfig(*model_config_);
+//
+//  // train for one epoch
+//  model_->Train();
+//}
+//
+// void VMSequentialModel::Evaluate()
+//{
+//  model_->Evaluate();
+//}
 
 void VMSequentialModel::Bind(Module &module)
 {
   module.CreateClassType<VMSequentialModel>("SequentialModel")
       .CreateConstructor(&VMSequentialModel::Constructor)
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMSequentialModel> {
-        return Ptr<VMSequentialModel>{new VMSequentialModel(vm, type_id)};
-      })
+      //      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) ->
+      //      Ptr<VMSequentialModel> {
+      //        return Ptr<VMSequentialModel>{new VMSequentialModel(vm, type_id)};
+      //      })
       .CreateMemberFunction("add", &VMSequentialModel::LayerAdd)
-      .CreateMemberFunction("compile", &VMSequentialModel::Compile)
-      .CreateMemberFunction("fit", &VMSequentialModel::Fit)
-      .CreateMemberFunction("evaluate", &VMSequentialModel::Evaluate);
+      .CreateMemberFunction("add", &VMSequentialModel::LayerAddActivation);
+  //      .CreateMemberFunction("compile", &VMSequentialModel::Compile)
+  //      .CreateMemberFunction("fit", &VMSequentialModel::Fit)
+  //      .CreateMemberFunction("evaluate", &VMSequentialModel::Evaluate);
 }
 
 }  // namespace ml
