@@ -24,57 +24,6 @@ We use C++14, but currently consider C++17 too immature for usage.
 	3. `private`.
 
 
-## Error handling
-
-* Always check error codes and return codes.
-* Use exceptions *only* for exceptional circumstances.
-* Handle normal errors gracefully.
-
-* Do not rely on exceptions to avoid taking responsibility.
-* Do not throw exceptions in destructors as this can crash the program.
-
-
-## Formatting
-
-* Make use of the `apply_style` script provided for formatting.
-* Lines should be no longer than 100 characters.
-* Use spaces to indent, not tabs.
-* Curly brackets `{...}` should be on their own line.
-* There should be a space after conditionals, i.e. `if (test)`
-* No spaces inside `(parenthesis)` or `<template>` unless it improves readability.
-* No spaces around arrow: `this->fnc();`.
-* No trailing whitespace.
-* Enums use `UPPER_CASE`.
-* Macros use `UPPER_CASE`.
-* Align attributes by group in classes, and initialisers.
-* Variables should be initialised with `=` if primitive, or braced initialisation with parentheses if required.
-* Initialiser lists should be initialised with braces by default.
-* Use SQL style initialiser for lists and inheritance lists.
-
-```c++
-Foo::Foo()
-  : attribute1_{value1}
-  , attribute2_{value2}
-{}
-```
-
-
-## Typing
-
-* Use STL types wherever possible.
-* Prefer `(u)int(16/32/64)_t` and `std::size_t`.
-* Use `static_cast`, `reinterpret_cast`, `dynamic_cast`, etc., rather than C-style casts.
-* Avoid `auto` except when the return type is clear.
-* Avoid use of RTTI.
-
-* `using` is preferable to `typedef` for type alias definition.
-* Make `using` private unless you intend to expose it.
-* `namespace {.<template T>` only allowed if `typedef`/`using` indicates the type.
-
-* If a value is `const`, declare it so.
-* Use `int const &i` over `const int &i`.
-
-
 ## Comments and documentation
 
 * Provide API documentation with your code.
@@ -144,11 +93,52 @@ for (const User& user: users)
 
 ## Naming
 
-* Use meaningful names.
+* Use meaningful names, even in tests.
 * For structs, use all lowercase with underscore to separate words, or camel case, i.e. `first_name` and `firstName` are both valid.
 * For classes, private member variables end with an `_`.
 * `snake_case_` variables with trailing underscore, except in structs where it is `snake_case` without underscore.
 * For templates, use all uppercase with underscores to separate words. Long and explicit names are preferred to short and obscure names, e.g. `template <typename ARRAY_TYPE>` is preferable to `template <typename A>);`. Short names are acceptable where the type is obvious and reused many times in complex equations.
+
+
+## Formatting
+
+* Make use of the `apply_style` script provided for formatting.
+* Lines should be no longer than 100 characters.
+* Use spaces to indent, not tabs.
+* Curly brackets `{...}` should be on their own line.
+* There should be a space after conditionals, i.e. `if (test)`
+* No spaces inside `(parenthesis)` or `<template>` unless it improves readability.
+* No spaces around arrow: `this->fnc();`.
+* No trailing whitespace.
+* Enums use `UPPER_CASE`.
+* Macros use `UPPER_CASE`.
+* Align attributes by group in classes, and initialisers.
+* Variables should be initialised with `=` if primitive, or braced initialisation with parentheses if required.
+* Initialiser lists should be initialised with braces by default.
+* Use SQL style initialiser for lists and inheritance lists.
+
+```c++
+Foo::Foo()
+  : attribute1_{value1}
+  , attribute2_{value2}
+{}
+```
+
+
+## Typing
+
+* Use STL types wherever possible.
+* Prefer `(u)int(16/32/64)_t` and `std::size_t`.
+* Use `static_cast`, `reinterpret_cast`, `dynamic_cast`, etc., rather than C-style casts.
+* Avoid `auto` except when the return type is clear.
+* Avoid use of RTTI.
+
+* `using` is preferable to `typedef` for type alias definition.
+* Make `using` private unless you intend to expose it.
+* `namespace {.<template T>` only allowed if `typedef`/`using` indicates the type.
+
+* If a value is `const`, declare it so.
+* Use `int const &i` over `const int &i`.
 
 
 ## Namespaces 
@@ -292,6 +282,16 @@ class MyClass
 Here, inline initialisation ensures that the default constructor does not produce uninitialised memory. In the second constructor, we manually initialise the `pointer_` but `size_` can be set using the initialisation list.
 
 
+## Error handling
+
+* Always check error codes and return codes.
+* Use exceptions *only* for exceptional circumstances.
+* Handle normal errors gracefully.
+
+* Do not rely on exceptions to avoid taking responsibility.
+* Do not throw exceptions in destructors as this can crash the program.
+
+
 ## Memory handling
 
 * Use references where the value cannot be null. Use pointers where it can.
@@ -419,7 +419,7 @@ Use a scope based smart pointer concept to manage resource lifecycle. The `Smart
 
 The most important aspect of this strong bond is that the destructor is *automatically* called when the code flow is exiting the encapsulating scope. This includes exits caused by an exception being thrown. 
 
-Below are a few examples of how resources should be managed in the code:
+Below are a few examples of how resources should be managed in the code.
 
 ### Exception enabled environment and its impact on resource handling
 
