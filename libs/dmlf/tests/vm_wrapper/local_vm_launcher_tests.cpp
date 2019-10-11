@@ -36,7 +36,6 @@ namespace {
 
 namespace {
 
-using fetch::vm_modules::VMFactory;
 using namespace fetch::vm;
 using namespace fetch::dmlf;
 
@@ -129,10 +128,12 @@ endfunction
 
 )";
 
-auto programOut = [](std::string name, std::vector<std::string> const &out) {
+auto programOut = [](std::string const& name, std::vector<std::string> const &out) {
   std::cout << "Error making program " << name << '\n';
   for (auto const &l : out)
+  {
     std::cout << l << '\n';
+  }
 };
 
 auto executeOut = [](std::string const &program, std::string const &vm, std::string const &state,

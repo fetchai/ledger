@@ -33,10 +33,8 @@ namespace dmlf {
 class LocalVmLauncher : public VmLauncherInterface
 {
 public:
-  LocalVmLauncher()
-  {}
-  virtual ~LocalVmLauncher()
-  {}
+  LocalVmLauncher() = default;
+  ~LocalVmLauncher() = default;
 
   LocalVmLauncher(const LocalVmLauncher &other) = delete;
   LocalVmLauncher &operator=(const LocalVmLauncher &other)  = delete;
@@ -50,19 +48,19 @@ public:
 
   bool CreateProgram(std::string name, std::string const &source) override;
   bool HasProgram(std::string const &name) const override;
-  void AttachProgramErrorHandler(ProgramErrorHandler) override;
+  void AttachProgramErrorHandler(ProgramErrorHandler newHandler) override;
 
   bool CreateVM(std::string name) override;
   bool HasVM(std::string const &name) const override;
-  bool SetVmStdout(std::string const &vmName, VmOutputHandler &) override;
+  bool SetVmStdout(std::string const &vmName, VmOutputHandler &newHandler) override;
 
   bool CreateState(std::string name) override;
   bool HasState(std::string const &name) const override;
   bool CopyState(std::string const &srcName, std::string newName) override;
 
-  bool Execute(std::string const &program, std::string const &vm, std::string const &state,
+  bool Execute(std::string const &programName, std::string const &vmName, std::string const &stateName,
                std::string const &entrypoint, Params const &params) override;
-  void AttachExecuteErrorHandler(ExecuteErrorHandler) override;
+  void AttachExecuteErrorHandler(ExecuteErrorHandler newHandler) override;
 
   std::unordered_map<std::string, std::shared_ptr<VM>> vms_;
 

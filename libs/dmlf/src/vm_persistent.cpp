@@ -60,10 +60,7 @@ Status VmPersistent::Exists(const std::string &key)
   {
     return Status::ERROR;
   }
-  else
-  {
-    return Status::OK;
-  }
+  return Status::OK;
 }
 
 VmPersistent VmPersistent::DeepCopy() const
