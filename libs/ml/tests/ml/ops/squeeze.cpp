@@ -184,7 +184,7 @@ TYPED_TEST(SqueezeTest, saveparams_backward_test)
   fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(SqueezeTest, exp_graph_serialization_test)
+TYPED_TEST(SqueezeTest, squeeze_graph_serialization_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -196,7 +196,8 @@ TYPED_TEST(SqueezeTest, exp_graph_serialization_test)
   fetch::ml::Graph<TensorType> g;
 
   std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  std::string output_name = g.template AddNode<fetch::ml::ops::Squeeze<TensorType>>("Output", {});
+  std::string output_name =
+      g.template AddNode<fetch::ml::ops::Squeeze<TensorType>>("Output", {input_name});
 
   g.SetInput(input_name, data);
   TypeParam output = g.Evaluate("Output");

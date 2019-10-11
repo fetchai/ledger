@@ -283,6 +283,11 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
                                                                                       op);
     break;
   }
+  case ml::OpType::OP_SQUEEZE:
+  {
+    SerializeImplementation<TensorType, D, ml::OpSqueezeSaveableParams<TensorType>>(map, code, op);
+    break;
+  }
   case ml::OpType::OP_VARIABLE:
   {
     SerializeImplementation<TensorType, D, ml::OpVariableSaveableParams<TensorType>>(map, code, op);
@@ -594,6 +599,12 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   {
     op = DeserializeImplementation<TensorType, D, ml::OpTransposeSaveableParams<TensorType>>(map,
                                                                                              code);
+    break;
+  }
+  case ml::OpType::OP_SQUEEZE:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::OpSqueezeSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::OP_VARIABLE:
