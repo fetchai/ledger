@@ -43,7 +43,6 @@ using namespace fetch::dmlf;
 using Params = fetch::dmlf::LocalVmLauncher::Params;
 // using Status = fetch::dmlf::VmWrapperInterface::Status;
 
-
 auto const helloWorld = R"(
 function main()
 
@@ -799,7 +798,7 @@ TEST(VmLauncherDmlfTests, local_params)
   EXPECT_TRUE(createdState);
 
   Params params{Variant(5, TypeIds::Int32), Variant(6, TypeIds::Int32)};
-  bool executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
+  bool   executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
 
   EXPECT_TRUE(executedSuccesfully);
 
@@ -824,14 +823,12 @@ TEST(VmLauncherDmlfTests, local_less_params)
   EXPECT_TRUE(createdState);
 
   std::string errorMessage;
-  launcher.AttachExecuteErrorHandler([&errorMessage] (std::string const &, 
-        std::string const &, std::string const &, std::string const &error)
-  {
-    errorMessage = error;
-  });
+  launcher.AttachExecuteErrorHandler(
+      [&errorMessage](std::string const &, std::string const &, std::string const &,
+                      std::string const &error) { errorMessage = error; });
 
   Params params{Variant(5, TypeIds::Int32)};
-  bool executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
+  bool   executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
 
   EXPECT_FALSE(executedSuccesfully);
   EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 1");
@@ -855,14 +852,12 @@ TEST(VmLauncherDmlfTests, local_more_params)
   EXPECT_TRUE(createdState);
 
   std::string errorMessage;
-  launcher.AttachExecuteErrorHandler([&errorMessage] (std::string const &, 
-        std::string const &, std::string const &, std::string const &error)
-  {
-    errorMessage = error;
-  });
+  launcher.AttachExecuteErrorHandler(
+      [&errorMessage](std::string const &, std::string const &, std::string const &,
+                      std::string const &error) { errorMessage = error; });
 
-  Params params{Variant(5, TypeIds::Int32),Variant(5, TypeIds::Int32),Variant(5, TypeIds::Int32)};
-  bool executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
+  Params params{Variant(5, TypeIds::Int32), Variant(5, TypeIds::Int32), Variant(5, TypeIds::Int32)};
+  bool   executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
 
   EXPECT_FALSE(executedSuccesfully);
   EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 3");
@@ -886,14 +881,12 @@ TEST(VmLauncherDmlfTests, local_none_params)
   EXPECT_TRUE(createdState);
 
   std::string errorMessage;
-  launcher.AttachExecuteErrorHandler([&errorMessage] (std::string const &, 
-        std::string const &, std::string const &, std::string const &error)
-  {
-    errorMessage = error;
-  });
+  launcher.AttachExecuteErrorHandler(
+      [&errorMessage](std::string const &, std::string const &, std::string const &,
+                      std::string const &error) { errorMessage = error; });
 
   Params params{};
-  bool executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
+  bool   executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
 
   EXPECT_FALSE(executedSuccesfully);
   EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 0");
@@ -917,17 +910,16 @@ TEST(VmLauncherDmlfTests, local_wrong_type_params)
   EXPECT_TRUE(createdState);
 
   std::string errorMessage;
-  launcher.AttachExecuteErrorHandler([&errorMessage] (std::string const &, 
-        std::string const &, std::string const &, std::string const &error)
-  {
-    errorMessage = error;
-  });
+  launcher.AttachExecuteErrorHandler(
+      [&errorMessage](std::string const &, std::string const &, std::string const &,
+                      std::string const &error) { errorMessage = error; });
 
-  Params params{Variant(5, TypeIds::Float32),Variant(5, TypeIds::Int32)};
-  bool executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
+  Params params{Variant(5, TypeIds::Float32), Variant(5, TypeIds::Int32)};
+  bool   executedSuccesfully = launcher.Execute("add", "vm", "state", "add", params);
 
   EXPECT_FALSE(executedSuccesfully);
-  EXPECT_EQ(errorMessage, "mismatched parameters: expected argument 0to be of type Int32 but got Float32");
+  EXPECT_EQ(errorMessage,
+            "mismatched parameters: expected argument 0to be of type Int32 but got Float32");
 }
 
 }  // namespace
