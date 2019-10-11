@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include <cstring>
+#include <fstream>
 
 #include "vm/vm.hpp"
 #include "vm/module.hpp"
@@ -35,77 +36,180 @@ using fetch::vm::IR;
 
 namespace {
 
-char const *EMPTY = R"(
+char const *RETURN = R"(
   function main()
   endfunction
 )";
 
-char const *BASE_STRING = R"(
-  //BASE_STRING
+char const *VAR_DEC = R"(
   function main()
-    var x : String = "x";
+    var x : UInt32;
+  endfunction
+)";
+
+char const *VAR_DEC_ASS = R"(
+  function main()
+    var x : UInt32 = 1u32;
+  endfunction
+)";
+
+char const *PUSH_NULL = R"(
+  function main()
+    null;
+  endfunction
+)";
+
+char const *PUSH_FALSE = R"(
+  function main()
+    false;
+  endfunction
+)";
+
+char const *PUSH_TRUE = R"(
+  function main()
+    true;
+  endfunction
+)";
+
+char const *PUSH_STRING = R"(
+  function main()
+    "x";
+  endfunction
+)";
+
+char const *PUSH_CONST = R"(
+  function main()
+    "x";
+  endfunction
+)";
+
+char const *PUSH_VAR = R"(
+  function main()
+    var x : UInt32 = 1u32;
     x;
   endfunction
 )";
 
-char const *EQUAL_STRING = R"(
+char const *POP_TO_VAR = R"(
   function main()
-    var x : String = "x";
+    var x : UInt32 = 1u32;
+    x = x;
+  endfunction
+)";
+
+char const *INC = R"(
+  function main()
+    var x : UInt32 = 1u32;
+    x += 1u32;
+  endfunction
+)";
+
+char const *PRIM_EQ = R"(
+  function main()
+    var x : UInt32 = 1u32;
     x == x;
   endfunction
 )";
 
-char const *ADD_STRING = R"(
-  function main()
-    var x : String = "x";
-    x + x;
-  endfunction
-)";
-
-char const *BASE_UINT32 = R"(
-  //BASE_UINT32
-  function main()
-    var x : UInt32 = 1u32;
-    x;
-  endfunction
-)";
-
-char const *EQUAL_UINT32 = R"(
+char const *PRIM_ADD = R"(
   function main()
     var x : UInt32 = 1u32;
     x + x;
   endfunction
 )";
 
-char const *ADD_UINT32 = R"(
-  function main()
-    var x : UInt32 = 1u32;
-    x + x;
-  endfunction
-)";
-
-char const *SUB_UINT32 = R"(
+char const *PRIM_SUB = R"(
   function main()
     var x : UInt32 = 1u32;
     x - x;
   endfunction
 )";
 
-char const *MUL_UINT32 = R"(
+char const *PRIM_MUL = R"(
   function main()
     var x : UInt32 = 1u32;
     x * x;
   endfunction
 )";
 
-char const *DIV_UINT32 = R"(
+char const *PRIM_DIV = R"(
   function main()
     var x : UInt32 = 1u32;
     x / x;
   endfunction
 )";
 
-void OpcodeBenchmark(benchmark::State &state, char const *ETCH_CODE) {
+char const *PRIM_MOD = R"(
+  function main()
+    var x : UInt32 = 1u32;
+    x % x;
+  endfunction
+)";
+
+char const *PRIM_NEG = R"(
+  function main()
+    var x : UInt32 = 1u32;
+    -x;
+  endfunction
+)";
+
+char const *VAR_POST_INC = R"(
+  function main()
+    var x : UInt32 = 1u32;
+    x++;
+  endfunction
+)";
+
+char const *VAR_POST_DEC = R"(
+  function main()
+    var x : UInt32 = 1u32;
+    x--;
+  endfunction
+)";
+
+char const *NOT = R"(
+  function main()
+    !true;
+  endfunction
+)";
+
+char const *IF = R"(
+  function main()
+    if (true)
+    endif
+  endfunction
+)";
+
+char const *ELSE = R"(
+  function main()
+    if (true)
+    else
+    endif
+  endfunction
+)";
+
+char const *BASE_STRING = R"(
+  function main()
+    var x : String = "x";
+    x;
+  endfunction
+)";
+
+char const *OBJ_EQ = R"(
+  function main()
+    var x : String = "x";
+    x == x;
+  endfunction
+)";
+
+char const *OBJ_ADD = R"(
+  function main()
+    var x : String = "x";
+    x + x;
+  endfunction
+)";
+
+void OpcodeBenchmark(benchmark::State &state, char const *ETCH_CODE, std::string const &benchmarkName, std::string const &baselineName) {
   Module module;
   Compiler compiler(&module);
   IR ir;
@@ -133,27 +237,48 @@ void OpcodeBenchmark(benchmark::State &state, char const *ETCH_CODE) {
     vm.Execute(executable, "main", error, output);
   }
 
-  // write opcode lists to std::out
-  std::cout << "Opcodes: ";
+  // write opcode lists to file
+  std::ofstream ofs("opcode_lists.csv", std::ios::app);
+  ofs << benchmarkName << "," << baselineName << ",";
   std::vector<uint16_t> opcodes;
   for (auto& it : function->instructions)
   {
     opcodes.push_back(it.opcode);
-    std::cout << it.opcode << " ";
+    ofs << it.opcode;
+    if (it.opcode != fetch::vm::Opcodes::Return) {
+      ofs << ",";
+    }
   }
-  std::cout << std::endl;
+  ofs << std::endl;
 
 }
 
 } // namespace
 
-BENCHMARK_CAPTURE(OpcodeBenchmark,Empty,EMPTY);
-BENCHMARK_CAPTURE(OpcodeBenchmark,BaseString,BASE_STRING);
-BENCHMARK_CAPTURE(OpcodeBenchmark,EqualString,EQUAL_STRING);
-BENCHMARK_CAPTURE(OpcodeBenchmark,AddString,ADD_STRING);
-BENCHMARK_CAPTURE(OpcodeBenchmark,BaseUint32,BASE_UINT32);
-BENCHMARK_CAPTURE(OpcodeBenchmark,EqualUint32,EQUAL_UINT32);
-BENCHMARK_CAPTURE(OpcodeBenchmark,AddUint32,ADD_UINT32);
-BENCHMARK_CAPTURE(OpcodeBenchmark,SubUint32,SUB_UINT32);
-BENCHMARK_CAPTURE(OpcodeBenchmark,MulUint32,MUL_UINT32);
-BENCHMARK_CAPTURE(OpcodeBenchmark,DivUint32,DIV_UINT32);
+// BENCHMARK_CAPTURE(Function,Name,ETCH_CODE,"Name","BaselineName");
+BENCHMARK_CAPTURE(OpcodeBenchmark,Return,RETURN,"Return","Return");
+BENCHMARK_CAPTURE(OpcodeBenchmark,VariableDeclare,VAR_DEC,"VariableDeclare","Return");
+BENCHMARK_CAPTURE(OpcodeBenchmark,VariableDeclareAssign,VAR_DEC_ASS,"VariableDeclareAssign","Return");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PushNull,PUSH_NULL,"PushNull","Return");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PushFalse,PUSH_FALSE,"PushFalse","Return");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PushTrue,PUSH_TRUE,"PushTrue","Return");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PushString,PUSH_STRING,"PushString","Return");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PushConstant,PUSH_CONST,"PushConstant","Return");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PushVariable,PUSH_VAR,"PushVariable","VariableDeclareAssign");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PopToVariable,POP_TO_VAR,"PopToVariable","VariableDeclareAssign");
+BENCHMARK_CAPTURE(OpcodeBenchmark,Inc,INC,"Inc","VariableDeclareAssign");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PrimitiveEqual,PRIM_EQ,"PrimitiveEqual","PushVariable");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PrimitiveAdd,PRIM_ADD,"PrimitiveAdd","PushVariable");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PrimitiveSubtract,PRIM_SUB,"PrimitiveSubtract","PushVariable");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PrimitiveMultiply,PRIM_MUL,"PrimitiveMultiply","PushVariable");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PrimitiveDivide,PRIM_DIV,"PrimitiveDivide","PushVariable");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PrimitiveModulo,PRIM_MOD,"PrimitiveModulo","PushVariable");
+BENCHMARK_CAPTURE(OpcodeBenchmark,PrimitiveNegate,PRIM_NEG,"PrimitiveNegate","PushVariable");
+BENCHMARK_CAPTURE(OpcodeBenchmark,VariablePostfixInc,VAR_POST_INC,"VariablePostfixInc","PushVariable");
+BENCHMARK_CAPTURE(OpcodeBenchmark,VariablePostfixDec,VAR_POST_DEC,"VariablePostfixDec","PushVariable");
+BENCHMARK_CAPTURE(OpcodeBenchmark,Not,NOT,"Not","PushTrue");
+BENCHMARK_CAPTURE(OpcodeBenchmark,If,IF,"If","Return");
+BENCHMARK_CAPTURE(OpcodeBenchmark,Else,ELSE,"Else","If");
+BENCHMARK_CAPTURE(OpcodeBenchmark,BaseString,BASE_STRING,"BaseString","Return");
+BENCHMARK_CAPTURE(OpcodeBenchmark,ObjectEqual,OBJ_EQ,"ObjectEqual","BaseString");
+BENCHMARK_CAPTURE(OpcodeBenchmark,ObjectAdd,OBJ_ADD,"ObjectAdd","BaseString");
