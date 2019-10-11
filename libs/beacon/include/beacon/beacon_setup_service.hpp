@@ -209,7 +209,7 @@ private:
   // Timing management
   void          SetTimeToProceed(State state);
   Clock         system_clock_ = moment::GetClock("beacon:dkg_system", moment::ClockType::SYSTEM);
-  Clock         clock_        = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
+  Clock         clock_        = moment::GetClock("beacon:dkg", moment::ClockType::SYSTEM);
   DeadlineTimer timer_to_proceed_{"beacon:dkg"};
   uint64_t      reference_timepoint_   = 0;
   uint64_t      state_deadline_        = 0;

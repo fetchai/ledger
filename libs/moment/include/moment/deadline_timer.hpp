@@ -44,7 +44,7 @@ public:
   DeadlineTimer &operator=(DeadlineTimer &&) = default;
 
 private:
-  using Timestamp = ClockInterface::TimestampChrono;
+  using Timestamp = ClockInterface::Timestamp;
 
   ClockPtr  clock_;
   Timestamp deadline_{};
@@ -53,7 +53,7 @@ private:
 template <typename R, typename P>
 void DeadlineTimer::Restart(std::chrono::duration<R, P> const &period)
 {
-  deadline_ = clock_->NowChrono() + period;
+  deadline_ = clock_->Now() + period;
 }
 
 }  // namespace moment
