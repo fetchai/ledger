@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -62,7 +61,7 @@ public:
     return copyshare;
   }
   /**
-   * elementwise Squeeze
+   * Squeeze removes dimensions with size 1
    * @param inputs vector containing one tensor which is the input tensor to Squeeze
    * @return
    */
@@ -76,8 +75,8 @@ public:
   }
 
   /**
-   * elementwise Squeeze gradient is 1/x * error:
-   * f'(input0)= error_signal/input0
+   * Just re-assign error to different shaped array:
+   * f'(input0)= error_signal
    */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override

@@ -19,8 +19,11 @@
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
+#include "ml/core/graph.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/squeeze.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -74,15 +77,15 @@ TYPED_TEST(SqueezeTest, backward_test)
 
   fetch::ml::ops::Squeeze<TypeParam> op;
 
-  std::vector<TensorType> prediction =
+  std::vector<TensorType> error_signal =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
-  ASSERT_EQ(prediction.at(0).shape().size(), 2);
-  ASSERT_EQ(prediction.at(0).shape().at(0), 1);
-  ASSERT_EQ(prediction.at(0).shape().at(1), 5);
+  ASSERT_EQ(error_signal.at(0).shape().size(), 2);
+  ASSERT_EQ(error_signal.at(0).shape().at(0), 1);
+  ASSERT_EQ(error_signal.at(0).shape().at(1), 5);
 
-  ASSERT_TRUE(prediction.at(0).AllClose(error, fetch::math::function_tolerance<DataType>(),
-                                        fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(error_signal.at(0).AllClose(error, fetch::math::function_tolerance<DataType>(),
+                                          fetch::math::function_tolerance<DataType>()));
   fetch::math::state_clear<DataType>();
 }
 
@@ -146,7 +149,7 @@ TYPED_TEST(SqueezeTest, saveparams_backward_test)
 
   fetch::ml::ops::Squeeze<TypeParam> op;
 
-  std::vector<TensorType> prediction =
+  std::vector<TensorType> error_signal =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // extract saveparams
@@ -159,8 +162,8 @@ TYPED_TEST(SqueezeTest, saveparams_backward_test)
   fetch::serializers::MsgPackSerializer b;
   b << *dsp;
 
-  // make another prediction with the original op
-  prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
+  // get another error_signal with the original op
+  error_signal = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // deserialize
   b.seek(0);
@@ -170,13 +173,54 @@ TYPED_TEST(SqueezeTest, saveparams_backward_test)
   // rebuild node
   OpType new_op(*dsp2);
 
-  // check that new predictions match the old
-  std::vector<TensorType> new_prediction =
+  // check that new error_signal match the old
+  std::vector<TensorType> new_error_signal =
       new_op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  EXPECT_TRUE(prediction.at(0).AllClose(
-      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+  EXPECT_TRUE(error_signal.at(0).AllClose(
+      new_error_signal.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
   fetch::math::state_clear<DataType>();
+}
+
+TYPED_TEST(SqueezeTest, exp_graph_serialization_test)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using SPType     = fetch::ml::GraphSaveableParams<TensorType>;
+
+  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000");
+  data.Reshape({6, 1});
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string output_name = g.template AddNode<fetch::ml::ops::Squeeze<TensorType>>("Output", {});
+
+  g.SetInput(input_name, data);
+  TypeParam output = g.Evaluate("Output");
+
+  // extract saveparams
+  SPType gsp = g.GetGraphSaveableParams();
+
+  fetch::serializers::MsgPackSerializer b;
+  b << gsp;
+
+  // deserialize
+  b.seek(0);
+  SPType dsp2;
+  b >> dsp2;
+
+  // rebuild graph
+  auto new_graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
+  fetch::ml::utilities::BuildGraph(gsp, new_graph_ptr);
+
+  new_graph_ptr->SetInput(input_name, data);
+  TypeParam output2 = new_graph_ptr->Evaluate("Output");
+
+  // Test correct values
+  ASSERT_EQ(output.shape(), output2.shape());
+  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
 }
