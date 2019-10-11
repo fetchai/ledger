@@ -9,8 +9,8 @@ message SearchQuery {
 
     message DirectedSearch {
         message PlaneDistance {
-            float geo = 1; // distance in meters
-            float topic = 2;
+            double geo = 1; // distance in meters
+            double topic = 2;
         }
 
         message PlaneTarget {

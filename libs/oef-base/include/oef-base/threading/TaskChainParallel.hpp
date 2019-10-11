@@ -176,7 +176,7 @@ public:
 protected:
   std::shared_ptr<IN_PROTO>               global_input_ = nullptr;
   std::queue<TaskInputDataType>           tasks_;
-  uint32_t                                num_of_tasks_;
+  std::size_t                             num_of_tasks_;
   std::mutex                              result_mutex_;
   std::vector<std::shared_ptr<OUT_PROTO>> results_;
   uint32_t                                errored_tasks_ = 0;

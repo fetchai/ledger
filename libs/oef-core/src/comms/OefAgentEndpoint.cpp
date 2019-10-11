@@ -92,7 +92,7 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
       myself_sp->factory->EndpointClosed();
       myself_sp->factory.reset();
       Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
-      FETCH_LOG_INFO(LOGGING_NAME, "OnErrorHandler.CancelTaskGroup group=", myGroupId);
+      FETCH_LOG_INFO(LOGGING_NAME, "OnErrorHandler.CancelTaskGroup group=", myGroupId, " , ec=", ec);
     }
   });
 
@@ -118,7 +118,8 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
       myself_sp->factory->EndpointClosed();
       myself_sp->factory.reset();
       Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
-      FETCH_LOG_INFO(LOGGING_NAME, "OnProtoErrorHandler.CancelTaskGroup group=", myGroupId);
+      FETCH_LOG_INFO(LOGGING_NAME, "OnProtoErrorHandler.CancelTaskGroup group=", myGroupId,
+          ", message=", message);
     }
   });
 }

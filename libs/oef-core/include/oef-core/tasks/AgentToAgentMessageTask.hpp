@@ -51,7 +51,7 @@ public:
   void create_message(int32_t message_id, OEFURI::URI uri, const std::string &public_key)
   {
     message_pb_  = std::make_shared<Message>();
-    uint32_t did = pb_->dialogue_id();
+    int32_t did = pb_->dialogue_id();
     message_pb_->set_answer_id(message_id);
     message_pb_->set_source_uri(pb_->source_uri());
     message_pb_->set_target_uri(pb_->target_uri());

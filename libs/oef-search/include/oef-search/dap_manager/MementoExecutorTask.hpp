@@ -73,12 +73,12 @@ public:
         auto sp = this_wp.lock();
         if (sp && sp->errorHandler)
         {
-          sp->errorHandler(dap_name, path, "");
+          sp->errorHandler(dap_name, path, msg);
         }
         else
         {
           FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute memento chain, because call to dap ",
-                         dap_name, " failed!");
+                         dap_name, " failed! Message: ", msg);
         }
         if (sp)
         {

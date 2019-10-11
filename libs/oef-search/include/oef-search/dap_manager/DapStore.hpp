@@ -268,7 +268,7 @@ protected:
 
   void SetupFilters()
   {
-    dap_filters_["always_true"] = [](const std::string &dap,
+    dap_filters_["always_true"] = [](const std::string &,
                                      const std::unordered_set<std::string> &) -> bool {
       return true;
     };

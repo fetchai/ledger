@@ -34,10 +34,10 @@ public:
   bool operator==(const IOefTaskFactory &other) = delete;
   bool operator<(const IOefTaskFactory &other)  = delete;
 
-  virtual void ProcessMessage(ConstCharArrayBuffer &data)
+  virtual void ProcessMessage(ConstCharArrayBuffer &/*data*/)
   {}
   // Process the message, throw exceptions if they're bad.
-  virtual void ProcessMessageWithUri(const Uri &current_uri_, ConstCharArrayBuffer &data)
+  virtual void ProcessMessageWithUri(const Uri &/*current_uri_*/, ConstCharArrayBuffer &/*data*/)
   {}
 
 protected:
@@ -49,7 +49,7 @@ protected:
     std::istream is(&chars);
     auto         current = chars.RemainingData();
     auto         result  = proto.ParseFromIstream(&is);
-    auto         eaten   = current - chars.RemainingData();
+    auto         eaten   = static_cast<std::size_t>(current - chars.RemainingData());
     if (!result)
     {
       throw std::invalid_argument("Failed proto deserialisation.");

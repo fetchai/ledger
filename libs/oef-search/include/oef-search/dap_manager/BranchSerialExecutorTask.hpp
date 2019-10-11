@@ -34,12 +34,12 @@ public:
   {
     for (auto &leaf : root_->GetLeaves())
     {
-      this->Add(NodeDataType{"leaf", .leaf = leaf});
+      this->Add(NodeDataType(leaf));
     }
 
     for (auto &branch : root_->GetSubnodes())
     {
-      this->Add(NodeDataType{"branch", .branch = branch});
+      this->Add(NodeDataType(branch));
     }
 
     this->SetPipeBuilder(

@@ -44,7 +44,7 @@ public:
   virtual ~ProtoPathMessageSender()
   {}
 
-  void SetEndianness(Endianness newstate)
+  void SetEndianness(Endianness /*newstate*/)
   {}
 
   virtual consumed_needed_pair CheckForSpace(const mutable_buffers &data, IMessageWriter::TXQ &txq);

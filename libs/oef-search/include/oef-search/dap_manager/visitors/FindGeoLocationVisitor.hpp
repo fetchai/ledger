@@ -18,7 +18,7 @@ public:
 
   virtual ~FindGeoLocationVisitor() = default;
 
-  virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t depth)
+  virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t /*depth*/)
   {
     const auto &daps = node.GetDapNames();
 
@@ -30,7 +30,7 @@ public:
 
     return VisitNodeExitStates::COMPLETE;
   }
-  virtual VisitNodeExitStates VisitLeaf(Leaf &leaf, uint32_t depth)
+  virtual VisitNodeExitStates VisitLeaf(Leaf &/*leaf*/, uint32_t /*depth*/)
   {
     return VisitNodeExitStates::COMPLETE;
   }

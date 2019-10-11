@@ -17,12 +17,12 @@ public:
   virtual ~CollectDapsVisitor()
   {}
 
-  virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t depth)
+  virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t /*depth*/)
   {
     node.MergeDaps();
     return VisitNodeExitStates::COMPLETE;
   }
-  virtual VisitNodeExitStates VisitLeaf(Leaf &leaf, uint32_t depth)
+  virtual VisitNodeExitStates VisitLeaf(Leaf &/*leaf*/, uint32_t /*depth*/)
   {
     return VisitNodeExitStates::COMPLETE;
   }

@@ -11,7 +11,7 @@
 static Gauge wsep_count("mt-core.network.EndpointWebSocket");
 
 template <typename TXType>
-EndpointWebSocket<TXType>::EndpointWebSocket(asio::io_context &io_context,
+EndpointWebSocket<TXType>::EndpointWebSocket(asio::io_context &/*io_context*/,
                                              std::size_t sendBufferSize, std::size_t readBufferSize,
                                              ConfigMap configMap)
   : EndpointBase<TXType>(sendBufferSize, readBufferSize, configMap)
@@ -20,6 +20,7 @@ EndpointWebSocket<TXType>::EndpointWebSocket(asio::io_context &io_context,
 {
   //  wsep_count++;
 }
+
 
 template <typename TXType>
 EndpointWebSocket<TXType>::~EndpointWebSocket()
@@ -167,7 +168,7 @@ void EndpointWebSocket<TXType>::on_accept(std::error_code const & /*ec*/)
 }
 
 template <typename TXType>
-bool EndpointWebSocket<TXType>::is_eof(std::error_code const &ec) const
+bool EndpointWebSocket<TXType>::is_eof(std::error_code const &/*ec*/) const
 {
   return false;  // ec == boost::beast::websocket::error::closed;
 }

@@ -11,8 +11,8 @@ thread_local std::size_t thread_group_id;
 std::atomic<std::size_t> id_counter(0);
 
 Task::Task()
-  : cancelled(false)
-  , task_state_{TaskState ::NOT_PENDING}
+  : task_state_{TaskState ::NOT_PENDING}
+  , cancelled(false)
 {
   created_count++;
   group_id = thread_group_id;

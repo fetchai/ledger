@@ -37,7 +37,7 @@ public:
   virtual ~ProtoPathMessageReader()
   {}
 
-  void SetEndianness(Endianness newstate)
+  void SetEndianness(Endianness /*newstate*/)
   {}
 
   consumed_needed_pair initial();

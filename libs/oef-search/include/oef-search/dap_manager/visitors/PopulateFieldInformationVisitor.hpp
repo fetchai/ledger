@@ -20,13 +20,13 @@ public:
   virtual ~PopulateFieldInformationVisitor()
   {}
 
-  virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t depth)
+  virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t /*depth*/)
   {
     node.SetName("node" + std::to_string(node_counter_));
     ++node_counter_;
     return VisitNodeExitStates::COMPLETE;
   }
-  virtual VisitNodeExitStates VisitLeaf(Leaf &leaf, uint32_t depth)
+  virtual VisitNodeExitStates VisitLeaf(Leaf &leaf, uint32_t /*depth*/)
   {
     dap_store_->UpdateTargetFieldAndTableNames(leaf);
 

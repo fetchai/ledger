@@ -21,7 +21,6 @@
 #include "oef-messages/search_response.hpp"
 #include "oef-messages/search_update.hpp"
 
-#include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <random>
 #include <stdexcept>
 

@@ -8,7 +8,7 @@ void swap(KarmaAccount &v1, KarmaAccount &v2)
   v1.swap(v2);
 }
 
-bool KarmaAccount::perform(const std::string &action, bool force)
+bool KarmaAccount::perform(const std::string &action, bool /*force*/)
 {
   if (!policy)
   {

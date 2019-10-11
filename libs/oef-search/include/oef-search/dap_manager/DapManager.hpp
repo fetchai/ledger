@@ -237,7 +237,7 @@ public:
       FETCH_LOG_INFO(LOGGING_NAME, "---------------------");
 
       auto execute_task =
-          NodeExecutorFactory(BranchExecutorTask::NodeDataType{.type = "branch", .branch = root},
+          NodeExecutorFactory(BranchExecutorTask::NodeDataType(root),
                               identifier_sequence, this_sp);
 
       execute_task->SetMessageHandler([result](std::shared_ptr<IdentifierSequence> response) {
@@ -520,7 +520,7 @@ protected:
 
     auto res = PlaneDistanceLookup(
         "geo", query->directed_search(),
-        [query, this_wp, future](const double &source_distance, const double &distance) mutable {
+        [query, this_wp, future](const double &/*source_distance*/, const double &distance) mutable {
           query->mutable_directed_search()->mutable_distance()->set_geo(distance);
           auto sp = this_wp.lock();
           if (sp)

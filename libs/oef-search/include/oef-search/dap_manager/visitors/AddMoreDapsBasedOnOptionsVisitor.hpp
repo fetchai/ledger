@@ -18,7 +18,7 @@ public:
   virtual ~AddMoreDapsBasedOnOptionsVisitor()
   {}
 
-  virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t depth)
+  virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t /*depth*/)
   {
     std::vector<std::string> options{"all-branches", "all-node"};
     for (const auto &dap_name : dap_store_->GetDapNamesByOptions(options))
@@ -28,7 +28,7 @@ public:
     return VisitNodeExitStates::COMPLETE;
   }
 
-  virtual VisitNodeExitStates VisitLeaf(Leaf &leaf, uint32_t depth)
+  virtual VisitNodeExitStates VisitLeaf(Leaf &leaf, uint32_t /*depth*/)
   {
     std::vector<std::string> options{"all-leaf", "all-nodes"};
     for (const auto &dap_name : dap_store_->GetDapNamesByOptions(options))

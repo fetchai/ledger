@@ -9,7 +9,7 @@ PopulateActionsVisitorDescentPass::PopulateActionsVisitorDescentPass(
 {}
 
 PopulateActionsVisitorDescentPass::VisitNodeExitStates PopulateActionsVisitorDescentPass::VisitNode(
-    Branch &node, uint32_t depth)
+    Branch &node, uint32_t /*depth*/)
 {
   if (future_)
   {
@@ -68,7 +68,7 @@ PopulateActionsVisitorDescentPass::VisitNodeExitStates PopulateActionsVisitorDes
 }
 
 PopulateActionsVisitorDescentPass::VisitNodeExitStates PopulateActionsVisitorDescentPass::VisitLeaf(
-    Leaf &leaf, uint32_t depth)
+    Leaf &leaf, uint32_t /*depth*/)
 {
   if (future_)
   {

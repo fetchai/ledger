@@ -27,7 +27,7 @@ public:
     auto                                          this_sp = this->shared_from_this();
     std::weak_ptr<FutureCombiner<T, RESULT_TYPE>> this_wp = this_sp;
 
-    uint32_t future_idx = 0;
+    std::size_t future_idx = 0;
     {
       std::lock_guard<std::mutex> lock(mutex_);
 

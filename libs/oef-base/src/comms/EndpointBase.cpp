@@ -1,5 +1,4 @@
 #include "oef-base/comms/EndpointBase.hpp"
-#include "boost/beast/websocket/error.hpp"
 #include "logging/logging.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/utils/Uri.hpp"

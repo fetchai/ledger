@@ -5,6 +5,7 @@
 #include <map>
 #include <mutex>
 #include <vector>
+#include <algorithm>
 
 Monitoring::MonitoringInner *Monitoring::inner = 0;
 
@@ -52,7 +53,12 @@ void Monitoring::report(ReportFunc func)
 }
 
 void Monitoring::max(IdType id, CountType value)
-{}
+{
+  inner->access(id) = std::max(inner->access(id).load(), value);
+  auto prev_value = inner->access(id).load();
+  while(prev_value < value &&
+        !inner->access(id).compare_exchange_weak(prev_value, value));
+}
 
 Monitoring::CountType Monitoring::get(IdType id)
 {

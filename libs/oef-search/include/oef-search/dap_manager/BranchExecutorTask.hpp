@@ -20,6 +20,16 @@ public:
     std::shared_ptr<Leaf>               leaf   = nullptr;
     std::shared_ptr<Branch>             branch = nullptr;
     std::shared_ptr<IdentifierSequence> prev   = nullptr;
+
+    explicit NodeDataType(std::shared_ptr<Branch> branch_ptr)
+     : type{"branch"}
+     , branch{std::move(branch_ptr)}
+    {}
+
+    explicit NodeDataType(std::shared_ptr<Leaf> leaf_ptr)
+     : type{"leaf"}
+     , leaf{std::move(leaf_ptr)}
+    {}
   };
 
   BranchExecutorTask(std::shared_ptr<Branch> root)

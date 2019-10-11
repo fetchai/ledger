@@ -20,7 +20,7 @@ void KarmaPolicyBasic::Account::BringUpToDate()
     KARMA old_karma = karma;
     TICKS tc        = tick_counter;
     TICKS diff      = tc - when;
-    KARMA new_karma = std::min(karma + diff * tick_amounts, MAX_KARMA);
+    KARMA new_karma = static_cast<KARMA>(std::min(karma + diff * tick_amounts, MAX_KARMA));
 
     // Write this as long as nothing has updated karma while we were thinking.
     if (karma.compare_exchange_strong(old_karma, new_karma, std::memory_order_seq_cst))
@@ -53,10 +53,10 @@ KarmaPolicyBasic::KarmaPolicyBasic(const google::protobuf::Map<std::string, std:
 KarmaPolicyBasic::~KarmaPolicyBasic()
 {}
 
-void KarmaPolicyBasic::RefreshCycle(const std::chrono::milliseconds delta)
+void KarmaPolicyBasic::RefreshCycle(const std::chrono::milliseconds /*delta*/)
 {
   auto policies = getPolicies("refresh");
-  tick_amounts  = parseEffect(0, policies[0]);
+  tick_amounts  = static_cast<TICKS>(parseEffect(0, policies[0]));
   // FETCH_LOG_INFO(LOGGING_NAME, "KARMA: refreshTick of size ", tick_amounts);
   tick_counter++;
 }

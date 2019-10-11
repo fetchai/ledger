@@ -11,8 +11,8 @@ class ConstCharArrayBuffer : public std::streambuf
 {
 public:
   const std::vector<asio::const_buffer> &buffers;
-  int                                    current;
-  int                                    size;
+  uint32_t                               current;
+  uint32_t                               size;
 
   ConstCharArrayBuffer(const std::vector<asio::const_buffer> &thebuffers)
     : buffers(thebuffers)
@@ -125,7 +125,7 @@ public:
 
   void diagnostic()
   {
-    for (int i = 0; i < size; i++)
+    for (uint32_t i = 0; i < size; i++)
     {
       char c = get_char_at(i);
 
@@ -157,7 +157,7 @@ public:
     std::cout << std::endl;
   }
 
-  char get_char_at(int pos)
+  char get_char_at(uint32_t pos)
   {
     int buf = 0;
 
@@ -168,7 +168,7 @@ public:
 
     for (auto &b : buffers)
     {
-      int c = static_cast<int>(asio::buffer_size(b));
+      auto c = static_cast<uint32_t>(asio::buffer_size(b));
       if (pos >= c)
       {
         pos -= c;
@@ -210,7 +210,7 @@ public:
     return r;
   }
 
-  void advance(int amount = 1)
+  void advance(std::size_t amount = 1)
   {
     // std::cout << "advance: cur=" << current << "  amount=" << amount << std::endl;
     current += amount;
@@ -238,13 +238,13 @@ public:
     , size(other.size)
   {}
 
-  ConstCharArrayBuffer(const ConstCharArrayBuffer &other, std::size_t sizelimit)
+  ConstCharArrayBuffer(const ConstCharArrayBuffer &other, uint32_t sizelimit)
     : buffers(other.buffers)
     , current(other.current)
     , size(sizelimit)
   {}
 
-  std::size_t tell() const
+  uint32_t tell() const
   {
     return current;
   }

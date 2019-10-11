@@ -12,8 +12,8 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::CheckForMessage(con
 
   std::string s;
 
-  std::size_t consumed = 0;
-  std::size_t needed   = 1;
+  uint32_t consumed = 0;
+  uint32_t needed   = 1;
 
   ConstCharArrayBuffer chars(data);
   std::istream         is(&chars);
@@ -23,13 +23,13 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::CheckForMessage(con
     // std::cout << "CheckForMessage in " << chars.RemainingData() << " bytes." << std::endl;
     // chars.diagnostic();
 
-    uint32_t    body_size_u32;
-    std::size_t body_size;
-    uint32_t    head_size = sizeof(uint32_t);
+    uint32_t body_size_u32 = 0;
+    uint32_t body_size;
+    uint32_t head_size = sizeof(uint32_t);
 
     if (chars.RemainingData() < head_size)
     {
-      needed = head_size - chars.RemainingData();
+      needed = static_cast<uint32_t>(head_size - chars.RemainingData());
       break;
     }
 
@@ -75,9 +75,11 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::CheckForMessage(con
       break;
     }
 
-    if (chars.RemainingData() < body_size)
+    auto crmd = static_cast<uint32_t>(chars.RemainingData());
+
+    if (crmd < body_size)
     {
-      needed = body_size - chars.RemainingData();
+      needed = body_size - crmd;
       break;
     }
 
