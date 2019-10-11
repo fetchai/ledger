@@ -63,8 +63,8 @@ public:
 
   static PromiseOfResult MakePromise();
   static void            FulfillPromise(PromiseOfResult promise, ExecutionResult fulfiller);
-  static PromiseOfResult MakeFulfilledPromise(Error error);
   static PromiseOfResult MakeFulfilledPromise(ExecutionResult fulfiller);
+  static PromiseOfResult MakeFulfilledPromise(Error error);
   static PromiseOfResult MakeFulfilledPromiseSuccess();
   static PromiseOfResult MakeFulfilledPromiseError(ErrorCode error_code, std::string error_message);
 
