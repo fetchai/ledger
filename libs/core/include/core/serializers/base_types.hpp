@@ -809,11 +809,10 @@ struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
   }
 };
 
-template <class T, class D, class... Fields>
+template <class T, class... Fields>
 struct MapSerializerTemplate
 {
-  using Type       = T;
-  using DriverType = D;
+  using Type = T;
 
   template <class Constructor>
   static void Serialize(Constructor &map_constructor, Type const &t)
@@ -831,8 +830,14 @@ struct MapSerializerTemplate
   }
 };
 
+template <class T, class D>
+struct MapSerializer<T, D> : MapSerializerTemplate<T>
+{
+  using DriverType = D;
+};
+
 template <uint8_t K, class F, F f>
-struct MapStructField
+struct SerializedStructField
 {
   static constexpr uint8_t Key() noexcept
   {
@@ -846,7 +851,8 @@ struct MapStructField
   }
 };
 
-#define MAP_STRUCT_FIELD(Key, ...) MapStructField<Key, decltype(&__VA_ARGS__), &__VA_ARGS__>
+#define SERIALIZED_STRUCT_FIELD(Key, ...) \
+  SerializedStructField<Key, decltype(&__VA_ARGS__), &__VA_ARGS__>
 
 }  // namespace serializers
 }  // namespace fetch

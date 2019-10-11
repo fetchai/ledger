@@ -105,30 +105,31 @@ public:
 
 namespace serializers {
 
-template <typename D>
-struct MapSerializer<ledger::Block::Body, D>
-  : MapSerializerTemplate<ledger::Block::Body, D, MAP_STRUCT_FIELD(1, ledger::Block::Body::hash),
-                          MAP_STRUCT_FIELD(2, ledger::Block::Body::previous_hash),
-                          MAP_STRUCT_FIELD(3, ledger::Block::Body::merkle_hash),
-                          MAP_STRUCT_FIELD(4, ledger::Block::Body::block_number),
-                          MAP_STRUCT_FIELD(5, ledger::Block::Body::miner),
-                          MAP_STRUCT_FIELD(6, ledger::Block::Body::miner_id),
-                          MAP_STRUCT_FIELD(7, ledger::Block::Body::log2_num_lanes),
-                          MAP_STRUCT_FIELD(8, ledger::Block::Body::slices),
-                          MAP_STRUCT_FIELD(9, ledger::Block::Body::dag_epoch),
-                          MAP_STRUCT_FIELD(10, ledger::Block::Body::timestamp),
-                          MAP_STRUCT_FIELD(11, ledger::Block::Body::block_entropy)>
+template <>
+struct MapSerializerTemplate<ledger::Block::Body>
+  : MapSerializerTemplate<ledger::Block::Body,
+                          SERIALIZED_STRUCT_FIELD(1, ledger::Block::Body::hash),
+                          SERIALIZED_STRUCT_FIELD(2, ledger::Block::Body::previous_hash),
+                          SERIALIZED_STRUCT_FIELD(3, ledger::Block::Body::merkle_hash),
+                          SERIALIZED_STRUCT_FIELD(4, ledger::Block::Body::block_number),
+                          SERIALIZED_STRUCT_FIELD(5, ledger::Block::Body::miner),
+                          SERIALIZED_STRUCT_FIELD(6, ledger::Block::Body::miner_id),
+                          SERIALIZED_STRUCT_FIELD(7, ledger::Block::Body::log2_num_lanes),
+                          SERIALIZED_STRUCT_FIELD(8, ledger::Block::Body::slices),
+                          SERIALIZED_STRUCT_FIELD(9, ledger::Block::Body::dag_epoch),
+                          SERIALIZED_STRUCT_FIELD(10, ledger::Block::Body::timestamp),
+                          SERIALIZED_STRUCT_FIELD(11, ledger::Block::Body::block_entropy)>
 {
 };
 
-template <typename D>
-struct MapSerializer<ledger::Block, D>
-  : MapSerializerTemplate<ledger::Block, D, MAP_STRUCT_FIELD(1, ledger::Block::body),
-                          MAP_STRUCT_FIELD(2, ledger::Block::nonce),
-                          MAP_STRUCT_FIELD(3, ledger::Block::proof),
-                          MAP_STRUCT_FIELD(4, ledger::Block::weight),
-                          MAP_STRUCT_FIELD(5, ledger::Block::total_weight),
-                          MAP_STRUCT_FIELD(6, ledger::Block::miner_signature)>
+template <>
+struct MapSerializerTemplate<ledger::Block>
+  : MapSerializerTemplate<ledger::Block, SERIALIZED_STRUCT_FIELD(1, ledger::Block::body),
+                          SERIALIZED_STRUCT_FIELD(2, ledger::Block::nonce),
+                          SERIALIZED_STRUCT_FIELD(3, ledger::Block::proof),
+                          SERIALIZED_STRUCT_FIELD(4, ledger::Block::weight),
+                          SERIALIZED_STRUCT_FIELD(5, ledger::Block::total_weight),
+                          SERIALIZED_STRUCT_FIELD(6, ledger::Block::miner_signature)>
 {
 };
 

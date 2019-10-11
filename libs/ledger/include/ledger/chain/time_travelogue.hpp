@@ -25,29 +25,29 @@ namespace fetch {
 namespace ledger {
 
 /**
- * The class represents block structure in permanent chain storage file.
+ * Packet format used to convey heaviest chain for node sync.
  */
-struct BlockDbRecord
+template <class B>
+struct TimeTravelogue
 {
-  Block block;
-  // an empty hash designates end of the chain
-  Block::Hash next_hash;
+  using BlockType = B;
+  using Blocks    = std::vector<BlockType>;
 
-  Block::Hash hash() const
-  {
-    return block.body.hash;
-  }
+  Blocks blocks;
+  Digest next_hash;
+  bool   proceed;
 };
 
 }  // namespace ledger
 
 namespace serializers {
 
-template <>
-struct MapSerializerTemplate<ledger::BlockDbRecord>
-  : MapSerializerTemplate<ledger::BlockDbRecord,
-                          SERIALIZED_STRUCT_FIELD(1, ledger::BlockDbRecord::block),
-                          SERIALIZED_STRUCT_FIELD(2, ledger::BlockDbRecord::next_hash)>
+template <class B>
+struct MapSerializerTemplate<ledger::TimeTravelogue<B>>
+  : MapSerializerTemplate<ledger::TimeTravelogue<B>,
+                          SERIALIZED_STRUCT_FIELD(1, ledger::TimeTravelogue<B>::blocks),
+                          SERIALIZED_STRUCT_FIELD(2, ledger::TimeTravelogue<B>::next_hash),
+                          SERIALIZED_STRUCT_FIELD(3, ledger::TimeTravelogue<B>::proceed)>
 {
 };
 
