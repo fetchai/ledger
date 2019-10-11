@@ -70,7 +70,7 @@ public:
     return message_;
   }
 
-  operator bool() const
+  bool ok() const
   {
     return code_ == Code::SUCCESS;
   }

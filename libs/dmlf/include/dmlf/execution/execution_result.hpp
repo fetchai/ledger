@@ -56,9 +56,9 @@ public:
     return console_;
   }
 
-  operator bool() const
+  bool ok() const
   {
-    return error_;
+    return error_.ok();
   }
 
   static PromiseOfResult MakePromise();
