@@ -55,7 +55,7 @@ ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromise(
 ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromiseSuccess()
 {
   auto success = Error{ErrorStage::ENGINE, ErrorCode::SUCCESS, std::string{}};
-  return ExecutionResult::MakeFulfilledPromise(success);
+  return MakeFulfilledPromise(success);
 }
 
 ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromiseError(
