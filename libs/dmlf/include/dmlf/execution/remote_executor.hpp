@@ -29,10 +29,10 @@ public:
   RemoteExecutor();
   virtual ~RemoteExecutor();
 
-  RemoteExecutor(RemoteExecutor const &other)  = delete;
-  RemoteExecutor(RemoteExecutor const &&other) = delete;
+  RemoteExecutor(RemoteExecutor const &other) = delete;
+  RemoteExecutor(RemoteExecutor &&other)      = delete;
   RemoteExecutor &operator=(RemoteExecutor const &other) = delete;
-  RemoteExecutor &operator=(RemoteExecutor const &&other) = delete;
+  RemoteExecutor &operator=(RemoteExecutor &&other) = delete;
 
   using Name            = ExecutionInterface::Name;
   using SourceFiles     = ExecutionInterface::SourceFiles;

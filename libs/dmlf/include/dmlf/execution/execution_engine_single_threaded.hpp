@@ -35,10 +35,10 @@ public:
   ExecutionEngineSingleThreaded();
   virtual ~ExecutionEngineSingleThreaded();
 
-  ExecutionEngineSingleThreaded(ExecutionEngineSingleThreaded const &other)  = delete;
-  ExecutionEngineSingleThreaded(ExecutionEngineSingleThreaded const &&other) = delete;
+  ExecutionEngineSingleThreaded(ExecutionEngineSingleThreaded const &other) = delete;
+  ExecutionEngineSingleThreaded(ExecutionEngineSingleThreaded &&other)      = delete;
   ExecutionEngineSingleThreaded &operator=(ExecutionEngineSingleThreaded const &other) = delete;
-ExecutionEngineSingleThreaded &operator=(ExecutionEngineSingleThreaded &&other) = delete;
+  ExecutionEngineSingleThreaded &operator=(ExecutionEngineSingleThreaded &&other) = delete;
 
   using Name            = ExecutionEngineInterface::Name;
   using SourceFiles     = ExecutionEngineInterface::SourceFiles;

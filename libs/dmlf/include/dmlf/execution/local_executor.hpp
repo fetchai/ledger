@@ -33,10 +33,10 @@ public:
   LocalExecutor();
   virtual ~LocalExecutor();
 
-  LocalExecutor(LocalExecutor const &other)  = delete;
-  LocalExecutor(LocalExecutor const &&other) = delete;
+  LocalExecutor(LocalExecutor const &other) = delete;
+  LocalExecutor(LocalExecutor &&other)      = delete;
   LocalExecutor &operator=(LocalExecutor const &other) = delete;
-  LocalExecutor &operator=(LocalExecutor const &&other) = delete;
+  LocalExecutor &operator=(LocalExecutor &&other) = delete;
 
   using Name            = ExecutionInterface::Name;
   using SourceFiles     = ExecutionInterface::SourceFiles;
