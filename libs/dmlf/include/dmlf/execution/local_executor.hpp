@@ -33,6 +33,11 @@ public:
   LocalExecutor();
   virtual ~LocalExecutor();
 
+  LocalExecutor(LocalExecutor const &other)  = delete;
+  LocalExecutor(LocalExecutor const &&other) = delete;
+  LocalExecutor &operator=(LocalExecutor const &other) = delete;
+  LocalExecutor &operator=(LocalExecutor const &&other) = delete;
+
   using Name            = ExecutionInterface::Name;
   using SourceFiles     = ExecutionInterface::SourceFiles;
   using Target          = ExecutionInterface::Target;
@@ -55,11 +60,6 @@ public:
 
   virtual PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
                               std::string const &entrypoint) override;
-
-  LocalExecutor(LocalExecutor const &other) = delete;
-  LocalExecutor &operator=(LocalExecutor const &other)  = delete;
-  bool           operator==(LocalExecutor const &other) = delete;
-  bool           operator<(LocalExecutor const &other)  = delete;
 };
 
 }  // namespace dmlf

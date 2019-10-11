@@ -28,6 +28,11 @@ public:
   ExecutionEngineInterface();
   virtual ~ExecutionEngineInterface();
 
+  ExecutionEngineInterface(ExecutionEngineInterface const &other)  = delete;
+  ExecutionEngineInterface(ExecutionEngineInterface const &&other) = delete;
+  ExecutionEngineInterface &operator=(ExecutionEngineInterface const &other) = delete;
+  ExecutionEngineInterface &operator=(ExecutionEngineInterface const &&other) = delete;
+
   using Name            = ExecutionInterface::Name;
   using SourceFiles     = ExecutionInterface::SourceFiles;
   using Target          = ExecutionInterface::Target;
@@ -44,11 +49,6 @@ public:
 
   virtual PromiseOfResult Run(Name const &execName, Name const &stateName,
                               std::string const &entrypoint) = 0;
-
-  ExecutionEngineInterface(ExecutionEngineInterface const &other) = delete;
-  ExecutionEngineInterface &operator=(ExecutionEngineInterface const &other)  = delete;
-  bool                      operator==(ExecutionEngineInterface const &other) = delete;
-  bool                      operator<(ExecutionEngineInterface const &other)  = delete;
 };
 
 }  // namespace dmlf

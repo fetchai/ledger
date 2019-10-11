@@ -36,7 +36,7 @@ void ExecutionResult::FulfillPromise(PromiseOfResult &promise, ExecutionResult c
 
 ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromise(Error &error)
 {
-  auto promise = ExecutionResult::MakePromise();
+  auto promise = MakePromise();
   auto result  = ExecutionResult{Variant{}, error, std::string{}};
 
   ExecutionResult::FulfillPromise(promise, result);
@@ -47,8 +47,8 @@ ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromise(Error &er
 ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromise(
     ExecutionResult const &fulfiller)
 {
-  auto promise = ExecutionResult::MakePromise();
-  ExecutionResult::FulfillPromise(promise, fulfiller);
+  auto promise = MakePromise();
+  FulfillPromise(promise, fulfiller);
   return promise;
 }
 
@@ -62,7 +62,7 @@ ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromiseError(
     ErrorCode error_code, std::string const &error_message)
 {
   auto error = Error{ErrorStage::ENGINE, error_code, error_message};
-  return ExecutionResult::MakeFulfilledPromise(error);
+  return MakeFulfilledPromise(error);
 }
 
 }  // namespace dmlf

@@ -35,6 +35,11 @@ public:
   ExecutionEngineSingleThreaded();
   virtual ~ExecutionEngineSingleThreaded();
 
+  ExecutionEngineSingleThreaded(ExecutionEngineSingleThreaded const &other)  = delete;
+  ExecutionEngineSingleThreaded(ExecutionEngineSingleThreaded const &&other) = delete;
+  ExecutionEngineSingleThreaded &operator=(ExecutionEngineSingleThreaded const &other) = delete;
+  ExecutionEngineSingleThreaded &operator=(ExecutionEngineSingleThreaded const &&other) = delete;
+
   using Name            = ExecutionEngineInterface::Name;
   using SourceFiles     = ExecutionEngineInterface::SourceFiles;
   using Target          = ExecutionEngineInterface::Target;
@@ -53,11 +58,6 @@ public:
   virtual PromiseOfResult Run(Name const &execName, Name const &stateName,
                               std::string const &entrypoint) override;
 
-  ExecutionEngineSingleThreaded(ExecutionEngineSingleThreaded const &other) = delete;
-  ExecutionEngineSingleThreaded &operator=(ExecutionEngineSingleThreaded const &other)  = delete;
-  bool                           operator==(ExecutionEngineSingleThreaded const &other) = delete;
-  bool                           operator<(ExecutionEngineSingleThreaded const &other)  = delete;
-
 private:
   using ErrorStage = ExecutionErrorMessage::Stage;
   using ErrorCode  = ExecutionErrorMessage::Code;
@@ -69,8 +69,13 @@ private:
   using State            = VmPersistent;
   using PromiseFulfiller = std::shared_ptr<service::details::PromiseImplementation>;
 
-  std::unordered_map<std::string, std::shared_ptr<Executable>> executables_;
-  std::unordered_map<std::string, std::shared_ptr<State>>      states_;
+  using ExecutablePtr = std::shared_ptr<Executable>;
+  using ExecutableMap = std::unordered_map<std::string, ExecutablePtr>;
+  using StatePtr      = std::shared_ptr<State>;
+  using StateMap      = std::unordered_map<std::string, StatePtr>;
+
+  ExecutableMap executables_;
+  StateMap      states_;
 
   std::shared_ptr<fetch::vm::Module> module_ = VmFactory::GetModule(VmFactory::USE_SMART_CONTRACTS);
 };

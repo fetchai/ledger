@@ -56,9 +56,9 @@ public:
     return console_;
   }
 
-  bool ok() const
+  bool succeeded() const
   {
-    return error_.ok();
+    return error_.code() == ErrorCode::SUCCESS;
   }
 
   static PromiseOfResult MakePromise();

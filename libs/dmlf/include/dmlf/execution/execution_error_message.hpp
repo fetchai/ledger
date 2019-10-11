@@ -70,11 +70,6 @@ public:
     return message_;
   }
 
-  bool ok() const
-  {
-    return code_ == Code::SUCCESS;
-  }
-
 private:
   Stage       stage_;
   Code        code_;

@@ -29,6 +29,11 @@ public:
   RemoteExecutor();
   virtual ~RemoteExecutor();
 
+  RemoteExecutor(RemoteExecutor const &other)  = delete;
+  RemoteExecutor(RemoteExecutor const &&other) = delete;
+  RemoteExecutor &operator=(RemoteExecutor const &other) = delete;
+  RemoteExecutor &operator=(RemoteExecutor const &&other) = delete;
+
   using Name            = ExecutionInterface::Name;
   using SourceFiles     = ExecutionInterface::SourceFiles;
   using Target          = ExecutionInterface::Target;
@@ -47,11 +52,6 @@ public:
 
   virtual PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
                               std::string const &entrypoint) override;
-
-  RemoteExecutor(RemoteExecutor const &other) = delete;
-  RemoteExecutor &operator=(RemoteExecutor const &other)  = delete;
-  bool            operator==(RemoteExecutor const &other) = delete;
-  bool            operator<(RemoteExecutor const &other)  = delete;
 };
 
 }  // namespace dmlf

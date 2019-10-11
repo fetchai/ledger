@@ -25,9 +25,10 @@
 namespace {
 
 using fetch::dmlf::ExecutionResult;
+using fetch::dmlf::ExecutionErrorMessage;
+
 using PromiseOfResult = fetch::dmlf::ExecutionResult::PromiseOfResult;
 using State           = fetch::service::details::PromiseImplementation::State;
-using fetch::dmlf::ExecutionErrorMessage;
 
 class PromiseOfResultTests : public ::testing::Test
 {
