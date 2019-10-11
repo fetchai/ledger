@@ -235,7 +235,7 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
                     dataloaders::GraphW2VLoader<TensorType> const &dl, std::string const &word0,
                     std::string const &word1, std::string const &word2, std::string const &word3,
                     math::SizeType K, std::string const &analogies_test_file, bool verbose = true,
-                    std::string outfile = "")
+                    std::string const &outfile = "")
 {
   TensorType const &weights = utilities::GetEmbeddings(g, skip_gram_name);
 
@@ -253,7 +253,7 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
     std::cout << std::endl << word_analogy_results << std::endl;
     std::cout << std::endl << analogies_file_results << std::endl;
   }
-  if (outfile.size())
+  if (!outfile.empty())
   {
     std::ofstream test_file(outfile, std::ofstream::out | std::ofstream::app);
     if (test_file)
