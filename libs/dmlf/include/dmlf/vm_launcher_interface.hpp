@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/variant.hpp"
+
 #include <functional>
 #include <ostream>
 #include <string>
@@ -34,7 +36,7 @@ public:
   {}
 
   using VmOutputHandler = std::ostream;
-  using Params          = std::vector<std::string>;
+  using Params          = std::vector<fetch::vm::Variant>;
   // Program name, Error
   using ProgramErrorHandler = std::function<void(std::string const &, std::vector<std::string>)>;
   // Program name, VM name, State name, Error
@@ -54,7 +56,7 @@ public:
   virtual bool CopyState(std::string const &srcName, std::string newName) = 0;
 
   virtual bool Execute(std::string const &program, std::string const &vm, std::string const &state,
-                       std::string const &entrypoint, const Params /*params*/) = 0;
+                       std::string const &entrypoint, Params const &params) = 0;
   virtual void AttachExecuteErrorHandler(ExecuteErrorHandler)                  = 0;
 
 protected:
