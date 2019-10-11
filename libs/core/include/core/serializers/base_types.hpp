@@ -831,7 +831,7 @@ struct MapSerializerTemplate
 };
 
 template <class T, class D>
-struct MapSerializer<T, D> : MapSerializerTemplate<T>
+struct MapSerializer : MapSerializerTemplate<T>
 {
   using DriverType = D;
 };
