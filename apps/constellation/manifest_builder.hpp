@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace ledger {
+namespace shards {
 
 class Manifest;
 
