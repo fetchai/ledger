@@ -272,6 +272,8 @@ inline std::string ReadFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
+std::string GetStrTimestamp();
+
 }  // namespace utilities
 }  // namespace ml
 }  // namespace fetch

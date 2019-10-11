@@ -63,7 +63,7 @@ public:
 
   DataType analogy_score_ = static_cast<DataType>(0);
 
-  DataType GetAnalogyScore()
+  /*DataType GetAnalogyScore()
   {
     // first get hold of the skipgram layer by searching the return name in the graph
     std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
@@ -76,7 +76,7 @@ public:
 
     return utilities::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->GetWeights(),
                                         tp_.analogies_test_file);
-  }
+  }*/
 
   GradientType GetGradients() override;
 
@@ -176,7 +176,7 @@ void Word2VecClient<TensorType>::Run()
     // Train batches until coordinator will tell clients to stop
     this->TrainWithCoordinator();
   }
-  analogy_score_ = GetAnalogyScore();
+  //  analogy_score_ = GetAnalogyScore();
 }
 
 /**

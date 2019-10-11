@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/utilities/word2vec_utilities.hpp"
 #include "file_loader.hpp"
 #include "math/clustering/knn.hpp"
 #include "math/matrix_operations.hpp"
@@ -28,6 +27,7 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/utilities/graph_saver.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 
 #include <iostream>
 #include <string>
