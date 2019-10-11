@@ -55,19 +55,6 @@ class Variant
 public:
   using ConstByteArray = byte_array::ConstByteArray;
 
-  enum class Type
-  {
-    UNDEFINED,
-    INTEGER,
-    FLOATING_POINT,
-    FIXED_POINT,
-    BOOLEAN,
-    STRING,
-    NULL_VALUE,
-    ARRAY,
-    OBJECT,
-  };
-
   /// @name Non Value Helpers
   /// @{
   static Variant Null();
@@ -96,8 +83,6 @@ public:
 
   /// @name Basic Type Access
   /// @{
-  Type type() const;
-
   bool IsUndefined() const;
   bool IsInteger() const;
   bool IsFloatingPoint() const;
@@ -197,6 +182,19 @@ private:
     bool    boolean;
   };
 
+  enum class Type
+  {
+    UNDEFINED,
+    INTEGER,
+    FLOATING_POINT,
+    FIXED_POINT,
+    BOOLEAN,
+    STRING,
+    NULL_VALUE,
+    ARRAY,
+    OBJECT,
+  };
+
   // Data Elements
   Type           type_{Type::UNDEFINED};  ///< The type of the variant
   PrimitiveData  primitive_{};            ///< Union of primitive data values
@@ -284,7 +282,7 @@ Variant::Variant(T &&value, meta::IfIsString<T> * /*unused*/)
 template <typename T>
 meta::IfIsBoolean<T, bool> Variant::Is() const
 {
-  return type() == Type::BOOLEAN;
+  return IsBoolean();
 }
 
 /**
@@ -296,7 +294,7 @@ meta::IfIsBoolean<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsInteger<T, bool> Variant::Is() const
 {
-  return type() == Type::INTEGER;
+  return IsInteger();
 }
 
 /**
@@ -308,7 +306,7 @@ meta::IfIsInteger<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsFloat<T, bool> Variant::Is() const
 {
-  return type() == Type::FLOATING_POINT;
+  return IsFloatingPoint();
 }
 
 /**
@@ -320,7 +318,7 @@ meta::IfIsFloat<T, bool> Variant::Is() const
 template <typename T>
 math::meta::IfIsFixedPoint<T, bool> Variant::Is() const
 {
-  return type() == Type::FIXED_POINT;
+  return IsFixedPoint();
 }
 
 /**
@@ -332,7 +330,7 @@ math::meta::IfIsFixedPoint<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsString<T, bool> Variant::Is() const
 {
-  return type() == Type::STRING;
+  return IsString();
 }
 
 /**
@@ -345,7 +343,7 @@ meta::IfIsString<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsBoolean<T, T> Variant::As() const
 {
-  if (type() != Type::BOOLEAN)
+  if (!IsBoolean())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract boolean value");
   }
@@ -363,7 +361,7 @@ meta::IfIsBoolean<T, T> Variant::As() const
 template <typename T>
 meta::IfIsInteger<T, T> Variant::As() const
 {
-  if (type() != Type::INTEGER)
+  if (!IsInteger())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract integer value");
   }
@@ -381,7 +379,7 @@ meta::IfIsInteger<T, T> Variant::As() const
 template <typename T>
 meta::IfIsFloat<T, T> Variant::As() const
 {
-  if (type() != Type::FLOATING_POINT)
+  if (!IsFloatingPoint())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract floating point value");
   }
@@ -399,7 +397,7 @@ meta::IfIsFloat<T, T> Variant::As() const
 template <typename T>
 math::meta::IfIsFixedPoint<T, T> Variant::As() const
 {
-  if (type() != Type::FIXED_POINT)
+  if (!IsFixedPoint())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract fixed point value");
   }
@@ -417,7 +415,7 @@ math::meta::IfIsFixedPoint<T, T> Variant::As() const
 template <typename T>
 meta::IfIsConstByteArray<T, Variant::ConstByteArray const &> Variant::As() const
 {
-  if (type() != Type::STRING)
+  if (!IsString())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract string value");
   }
@@ -435,7 +433,7 @@ meta::IfIsConstByteArray<T, Variant::ConstByteArray const &> Variant::As() const
 template <typename T>
 meta::IfIsStdString<T, std::string> Variant::As() const
 {
-  if (type() != Type::STRING)
+  if (!IsString())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract string value");
   }
