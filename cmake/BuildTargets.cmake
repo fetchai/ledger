@@ -265,7 +265,8 @@ function (configure_vendor_targets)
   add_library(vendor-openssl-static INTERFACE)
   message(STATUS "OpenSSL include ${CMAKE_BINARY_DIR}/vendor/openssl/include")
   target_link_libraries(vendor-openssl-static INTERFACE ssl crypto)
-  target_include_directories(vendor-openssl-static INTERFACE ${CMAKE_BINARY_DIR}/vendor/openssl/include)
+  target_include_directories(vendor-openssl-static
+                             INTERFACE ${CMAKE_BINARY_DIR}/vendor/openssl/include)
 
   # Pybind11
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)
