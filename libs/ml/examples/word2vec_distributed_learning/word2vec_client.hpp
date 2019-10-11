@@ -94,9 +94,6 @@ private:
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<TensorType>> w2v_data_loader_ptr_;
 
   Translator translator_;
-
-  void TestEmbeddings(std::string const &word0, std::string const &word1, std::string const &word2,
-                      std::string const &word3, SizeType K);
 };
 
 template <class TensorType>
@@ -191,42 +188,12 @@ void Word2VecClient<TensorType>::Test()
 {
   if (this->batch_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
   {
-    TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);
+    // Lock model
+    FETCH_LOCK(this->model_mutex_);
+    utilities::TestEmbeddings<TensorType>(
+        *this->g_ptr_, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1, tp_.word2, tp_.word3,
+        tp_.k, tp_.analogies_test_file, false, "/tmp/w2v_client_" + this->id_);
   }
-}
-
-template <class TensorType>
-void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::string const &word1,
-                                                std::string const &word2, std::string const &word3,
-                                                SizeType K)
-{
-  // Lock model
-  FETCH_LOCK(this->model_mutex_);
-
-  // first get hold of the skipgram layer by searching the return name in the graph
-  std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
-      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(
-          (this->g_ptr_->GetNode(skipgram_))->GetOp());
-
-  // next get hold of the embeddings
-  std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =
-      sg_layer->GetEmbeddings(sg_layer);
-
-  {
-    // Lock console
-    FETCH_LOCK(*this->console_mutex_ptr_);
-
-    std::cout << std::endl;
-    std::cout << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;
-    fetch::ml::utilities::PrintKNN(*w2v_data_loader_ptr_, embeddings->GetWeights(), word0, K);
-    std::cout << std::endl;
-    fetch::ml::utilities::PrintWordAnalogy(*w2v_data_loader_ptr_, embeddings->GetWeights(), word1,
-                                           word2, word3, K);
-  }
-
-  DataType score = utilities::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->GetWeights(),
-                                                tp_.analogies_test_file);
-  std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
 }
 
 /**
