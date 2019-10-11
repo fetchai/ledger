@@ -107,11 +107,11 @@ public:
                     std::map<std::string, NodePtrType> &trainable_lookup);
 
   void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0});
-  bool SetRegularisation(std::string node_name, RegPtrType regulariser,
+  bool SetRegularisation(std::string const &node_name, RegPtrType regulariser,
                          DataType regularisation_rate = DataType{0.0});
 
   void SetFrozenState(bool frozen_state);
-  bool SetFrozenState(std::string node_name, bool frozen_state);
+  bool SetFrozenState(std::string const &node_name, bool frozen_state);
 
   ///////////////////////////////////
   /// public train/test functions ///
@@ -514,7 +514,7 @@ void Graph<TensorType>::SetRegularisation(RegPtrType regulariser, DataType regul
  * @param regularisation_rate
  */
 template <typename TensorType>
-bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regulariser,
+bool Graph<TensorType>::SetRegularisation(std::string const &node_name, RegPtrType regulariser,
                                           DataType regularisation_rate)
 {
   Compile();
@@ -546,7 +546,7 @@ void Graph<TensorType>::SetFrozenState(bool frozen_state)
  * @param frozen_state true=freeze variables, false=unfreeze variables
  */
 template <typename TensorType>
-bool Graph<TensorType>::SetFrozenState(std::string node_name, bool frozen_state)
+bool Graph<TensorType>::SetFrozenState(std::string const &node_name, bool frozen_state)
 {
   OpPtrType target_node_op = GetNode(node_name)->GetOp();
   auto *trainable_ptr = dynamic_cast<fetch::ml::ops::Trainable<TensorType> *>(target_node_op.get());
