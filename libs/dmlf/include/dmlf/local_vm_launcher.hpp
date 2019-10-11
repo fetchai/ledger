@@ -33,7 +33,7 @@ namespace dmlf {
 class LocalVmLauncher : public VmLauncherInterface
 {
 public:
-  LocalVmLauncher() = default;
+  LocalVmLauncher()  = default;
   ~LocalVmLauncher() = default;
 
   LocalVmLauncher(const LocalVmLauncher &other) = delete;
@@ -58,8 +58,9 @@ public:
   bool HasState(std::string const &name) const override;
   bool CopyState(std::string const &srcName, std::string newName) override;
 
-  bool Execute(std::string const &programName, std::string const &vmName, std::string const &stateName,
-               std::string const &entrypoint, Params const &params) override;
+  bool Execute(std::string const &programName, std::string const &vmName,
+               std::string const &stateName, std::string const &entrypoint,
+               Params const &params) override;
   void AttachExecuteErrorHandler(ExecuteErrorHandler newHandler) override;
 
   std::unordered_map<std::string, std::shared_ptr<VM>> vms_;

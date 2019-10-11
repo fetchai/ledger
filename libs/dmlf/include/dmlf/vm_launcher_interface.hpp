@@ -30,14 +30,14 @@ namespace dmlf {
 class VmLauncherInterface
 {
 public:
-  VmLauncherInterface() = default;
+  VmLauncherInterface()          = default;
   virtual ~VmLauncherInterface() = default;
 
   VmLauncherInterface(const VmLauncherInterface &other) = delete;
-  VmLauncherInterface &operator=(const VmLauncherInterface &other)  = delete;
+  VmLauncherInterface &operator=(const VmLauncherInterface &other) = delete;
 
-  bool                 operator==(const VmLauncherInterface &other) = delete;
-  bool                 operator<(const VmLauncherInterface &other)  = delete;
+  bool operator==(const VmLauncherInterface &other) = delete;
+  bool operator<(const VmLauncherInterface &other)  = delete;
 
   using VmOutputHandler = std::ostream;
   using Params          = std::vector<fetch::vm::Variant>;
