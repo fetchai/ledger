@@ -107,8 +107,11 @@ public:
                     std::map<std::string, NodePtrType> &trainable_lookup);
 
   void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0});
-  bool SetRegularisation(std::string node_name, RegPtrType regulariser,
+  bool SetRegularisation(std::string const &node_name, RegPtrType regulariser,
                          DataType regularisation_rate = DataType{0.0});
+
+  void SetFrozenState(bool frozen_state);
+  bool SetFrozenState(std::string const &node_name, bool frozen_state);
 
   ///////////////////////////////////
   /// public train/test functions ///
@@ -511,13 +514,56 @@ void Graph<TensorType>::SetRegularisation(RegPtrType regulariser, DataType regul
  * @param regularisation_rate
  */
 template <typename TensorType>
-bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regulariser,
+bool Graph<TensorType>::SetRegularisation(std::string const &node_name, RegPtrType regulariser,
                                           DataType regularisation_rate)
 {
   Compile();
   NodePtrType t             = trainable_lookup_.at(node_name);
   auto        trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
   trainable_ptr->SetRegularisation(regulariser, regularisation_rate);
+
+  return true;
+}
+
+/**
+ * Set variable freezing for all trainables in graph
+ * @tparam TensorType
+ * @param frozen_state true=freeze variables, false=unfreeze variables
+ */
+template <typename TensorType>
+void Graph<TensorType>::SetFrozenState(bool frozen_state)
+{
+  for (auto &curent_trainable : GetTrainables())
+  {
+    curent_trainable->SetFrozenState(frozen_state);
+  }
+}
+
+/**
+ * Set variable freezing for specified trainable or graph by its name
+ * @tparam TensorType
+ * @param node_name name of specific trainable
+ * @param frozen_state true=freeze variables, false=unfreeze variables
+ */
+template <typename TensorType>
+bool Graph<TensorType>::SetFrozenState(std::string const &node_name, bool frozen_state)
+{
+  OpPtrType target_node_op = GetNode(node_name)->GetOp();
+  auto *trainable_ptr = dynamic_cast<fetch::ml::ops::Trainable<TensorType> *>(target_node_op.get());
+  auto *graph_ptr     = dynamic_cast<fetch::ml::Graph<TensorType> *>(target_node_op.get());
+
+  if (trainable_ptr)
+  {
+    trainable_ptr->SetFrozenState(frozen_state);
+  }
+  else if (graph_ptr)
+  {
+    graph_ptr->SetFrozenState(frozen_state);
+  }
+  else
+  {
+    throw exceptions::InvalidMode("Node is not graph or trainable");
+  }
 
   return true;
 }
