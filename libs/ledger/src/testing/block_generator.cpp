@@ -34,10 +34,9 @@ namespace testing {
 
 BlockGenerator::BlockGenerator(std::size_t num_lanes, std::size_t num_slices)
   : num_slices_{num_slices}
+  , log2_num_lanes_{fetch::platform::ToLog2(static_cast<uint32_t>(num_lanes))}
 {
   assert(fetch::platform::IsLog2(num_lanes));
-
-  log2_num_lanes_ = fetch::platform::ToLog2(static_cast<uint32_t>(num_lanes));
 }
 
 void BlockGenerator::Reset()
@@ -88,19 +87,19 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
     block->body.miner          = Address{ident};
     block->body.log2_num_lanes = log2_num_lanes_;
     block->body.slices.resize(num_slices_);
+
+    block->UpdateTimestamp();
+
+    // compute the digest for the block
+    block->UpdateDigest();
   }
   else
   {
     // update the previous hash
-    block->body.previous_hash = fetch::ledger::GENESIS_DIGEST;
+    block->body.hash          = fetch::ledger::GENESIS_DIGEST;
     block->body.merkle_hash   = fetch::ledger::GENESIS_MERKLE_ROOT;
     block->body.miner         = Address{crypto::Hash<crypto::SHA256>("")};
   }
-
-  block->UpdateTimestamp();
-
-  // compute the digest for the block
-  block->UpdateDigest();
 
   return block;
 }

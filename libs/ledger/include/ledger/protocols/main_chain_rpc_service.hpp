@@ -167,7 +167,7 @@ private:
   Address         current_peer_address_;
   BlockHash       current_missing_block_;
   Promise         current_request_;
-  BlockHash       next_hash_requested_ = GENESIS_DIGEST;
+  BlockHash       next_hash_requested_;
   /// @}
 
   /// @name Transient gap that may occur when requesting main chain on startup

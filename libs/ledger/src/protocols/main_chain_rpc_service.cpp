@@ -252,7 +252,7 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     FETCH_LOG_WARN(LOGGING_NAME, "Adding a block ", block.body.hash.ToHex(), "  <--  ",
                    block.body.previous_hash.ToHex(), "  (", block.body.block_number);
     // skip the genesis block
-    if (block.body.previous_hash.empty())
+    if (block.IsGenesis())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Looks like genesis block");
       if (block.body.hash != GENESIS_DIGEST)
@@ -402,7 +402,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             FETCH_LOG_WARN(LOGGING_NAME, "Next hash empty");
             // The remote chain could not resolve forward reference unambiguously.
             next_state           = State::REQUEST_FROM_TIP;
-            next_hash_requested_ = GENESIS_DIGEST;
+            next_hash_requested_ = Digest{};
             left_edge_           = chain_.GetHeaviestBlock();
             assert(left_edge_);
           }

@@ -182,7 +182,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
 
   DbRecord record;
 
-  if (!block->body.previous_hash.empty())
+  if (!block->IsGenesis())
   {
     // notify stored parent
     if (block_store_->Get(storage::ResourceID(block->body.previous_hash), record))
@@ -898,7 +898,7 @@ void MainChain::WriteToFile()
 
     // This block will now become the head in our file
     // Corner case - block is genesis
-    if (block->body.previous_hash.empty())
+    if (block->IsGenesis())
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
 
@@ -1142,7 +1142,7 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
  */
 BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks)
 {
-  assert(!block->body.previous_hash.empty());
+  assert(!block->IsGenesis());
 
   MilliTimer myTimer("MainChain::InsertBlock", 500);
 
