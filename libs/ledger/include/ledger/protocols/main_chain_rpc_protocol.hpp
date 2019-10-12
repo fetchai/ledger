@@ -87,7 +87,7 @@ private:
   {
     auto rv = chain_.TimeTravel(std::move(start), limit);
     auto returned_blocks{limit > 0 ? Copy(rv.blocks) : InverseCopy(rv.blocks)};
-    return {std::move(returned_blocks), std::move(rv.next_hash), rv.proceed_in_this_direction};
+    return {std::move(returned_blocks), std::move(rv.next_hash), rv.proceed};
   }
 
   static Blocks Copy(MainChain::Blocks const &blocks)
