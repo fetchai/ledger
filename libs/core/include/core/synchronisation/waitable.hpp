@@ -33,6 +33,8 @@ class Waitable : Protected<T, M>
 private:
   mutable std::condition_variable condition_{};
   using ProtectedPayload = Protected<T, M>;
+  using ProtectedPayload::payload_;
+  using ProtectedPayload::mutex_;
 
 public:
   template <typename... Args>
