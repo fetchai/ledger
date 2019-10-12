@@ -37,10 +37,14 @@ private:
   using ProtectedPayload::payload_;
   using ProtectedPayload::mutex_;
 
-  template <class F, class... Args> using EnableIfVoidT = std::enable_if_t<std::is_void<decltype(std::declval<F>()(std::declval<Args>()...))>::value>;
-  template <class F, class... Args> using EnableIfNonVoidT
-	  = std::enable_if_t<!std::is_void<decltype(F(std::declval<Args>()...))>::value, decltype(std::declval<F>()(std::declval<Args>()...))>;
-  using ArgT = std::add_lvalue_reference_t<T>;
+  template <class F, class... Args>
+  using EnableIfVoidT =
+      std::enable_if_t<std::is_void<decltype(std::declval<F>()(std::declval<Args>()...))>::value>;
+  template <class F, class... Args>
+  using EnableIfNonVoidT =
+      std::enable_if_t<!std::is_void<decltype(F(std::declval<Args>()...))>::value,
+                       decltype(std::declval<F>()(std::declval<Args>()...))>;
+  using ArgT      = std::add_lvalue_reference_t<T>;
   using ConstArgT = std::add_lvalue_reference_t<std::add_const_t<T>>;
 
 public:
