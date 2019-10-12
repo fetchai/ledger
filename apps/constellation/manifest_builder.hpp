@@ -22,7 +22,7 @@ namespace shards {
 
 class Manifest;
 
-}  // namespace ledger
+}  // namespace shards
 
 class Settings;
 
