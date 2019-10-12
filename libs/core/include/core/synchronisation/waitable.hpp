@@ -23,6 +23,7 @@
 #include <condition_variable>
 #include <functional>
 #include <mutex>
+#include <type_traits>
 #include <utility>
 
 namespace fetch {
@@ -36,6 +37,12 @@ private:
   using ProtectedPayload::payload_;
   using ProtectedPayload::mutex_;
 
+  template <class F, class... Args> using EnableIfVoidT = std::enable_if_t<std::is_void<decltype(std::declval<F>()(std::declval<Args>()...))>::value>;
+  template <class F, class... Args> using EnableIfNonVoidT
+	  = std::enable_if_t<!std::is_void<decltype(F(std::declval<Args>()...))>::value, decltype(std::declval<F>()(std::declval<Args>()...))>;
+  using ArgT = std::add_lvalue_reference_t<T>;
+  using ConstArgT = std::add_lvalue_reference_t<std::add_const_t<T>>;
+
 public:
   template <typename... Args>
   explicit Waitable(Args &&... args);
@@ -47,7 +54,16 @@ public:
   Waitable &operator=(Waitable &&) = delete;
 
   template <typename Handler>
-  constexpr decltype(auto) Apply(Handler &&handler)
+  constexpr EnableIfVoidT<Handler, ArgT> Apply(Handler &&handler)
+  {
+    return ProtectedPayload::Apply([this, handler](auto &payload) {
+      handler(payload);
+      condition_.notify_all();
+    });
+  }
+
+  template <typename Handler>
+  constexpr EnableIfNonVoidT<Handler, ArgT> Apply(Handler &&handler)
   {
     return ProtectedPayload::Apply([this, handler](auto &payload) {
       auto &&result = handler(payload);
@@ -58,7 +74,16 @@ public:
   }
 
   template <typename Handler>
-  constexpr decltype(auto) Apply(Handler &&handler) const
+  constexpr EnableIfVoidT<Handler, ConstArgT> Apply(Handler &&handler) const
+  {
+    return ProtectedPayload::Apply([this, handler](auto const &payload) {
+      handler(payload);
+      condition_.notify_all();
+    });
+  }
+
+  template <typename Handler>
+  constexpr EnableIfNonVoidT<Handler, ConstArgT> Apply(Handler &&handler) const
   {
     return ProtectedPayload::Apply([this, handler](auto const &payload) {
       auto &&result = handler(payload);
