@@ -80,7 +80,7 @@ private:
 template <typename Visitor>
 void StakeUpdateQueue::VisitUnderlyingQueue(Visitor &&visitor)
 {
-  updates_.ApplyVoid([&](BlockUpdates &updates) { visitor(updates); });
+  updates_.Apply([&](BlockUpdates &updates) { visitor(updates); });
 }
 
 }  // namespace ledger

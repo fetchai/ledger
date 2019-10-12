@@ -130,7 +130,7 @@ protected:
 
   void OnMessage(Packet const &packet, MuddleAddress const & /*address*/)
   {
-    counters_.ApplyVoid([this, &packet](Counters &counters) {
+    counters_.Apply([this, &packet](Counters &counters) {
       ++(counters[NodeIndex(packet.GetSender())][NodeIndex(packet.GetTarget())]);
     });
   }
@@ -194,7 +194,7 @@ TEST_F(InteractionTests, DISABLED_MutualConnections)
     node3_->GetEndpoint().Send(node2_->GetAddress(), SERVICE, CHANNEL, "hello");
   }
 
-  counters_.ApplyVoid([](Counters const &counters) {
+  counters_.Apply([](Counters const &counters) {
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
     std::ostringstream oss;

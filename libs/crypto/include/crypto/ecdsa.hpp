@@ -83,12 +83,12 @@ public:
 
   void Load(ConstByteArray const &private_key) override
   {
-    private_key_.ApplyVoid([&private_key](auto &key) { key = PrivateKey{private_key}; });
+    private_key_.Apply([&private_key](auto &key) { key = PrivateKey{private_key}; });
   }
 
   void GenerateKeys()
   {
-    private_key_.ApplyVoid([](auto &key) { key = PrivateKey{}; });
+    private_key_.Apply([](auto &key) { key = PrivateKey{}; });
   }
 
   ConstByteArray Sign(ConstByteArray const &text) const final

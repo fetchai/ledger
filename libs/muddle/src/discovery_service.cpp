@@ -28,7 +28,7 @@ DiscoveryService::DiscoveryService()
 
 void DiscoveryService::UpdatePeers(Peers peers)
 {
-  possible_peers_.ApplyVoid([&peers](Peers &p) { p = std::move(peers); });
+  possible_peers_.Apply([&peers](Peers &p) { p = std::move(peers); });
 }
 
 DiscoveryService::Peers DiscoveryService::GetConnectionInformation()

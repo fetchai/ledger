@@ -114,7 +114,7 @@ void Reactor::StopWorker()
 
   if (worker_)
   {
-    worker_->ApplyVoid([](auto &worker) { worker.join(); });
+    worker_->Apply([](auto &worker) { worker.join(); });
     worker_.reset();
   }
 }
@@ -131,7 +131,7 @@ void Reactor::Monitor()
     // Step 1. If we have run out of work to execute then gather all the runnables that are ready
     if (work_queue.empty())
     {
-      work_map_.ApplyVoid([&work_queue](auto &work_map) {
+      work_map_.Apply([&work_queue](auto &work_map) {
         // loop through and evaluate the map
         auto it = work_map.begin();
         while (it != work_map.end())

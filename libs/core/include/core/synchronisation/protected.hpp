@@ -28,13 +28,13 @@ namespace fetch {
 template <typename T, typename M = Mutex>
 class Protected
 {
-private:
+protected:
   mutable M mutex_;
   T         payload_;
 
 public:
   template <typename... Args>
-  explicit Protected(Args &&... args);
+  explicit constexpr Protected(Args &&... args);
   ~Protected()                 = default;
   Protected(Protected const &) = delete;
   Protected(Protected &&)      = delete;
@@ -43,58 +43,26 @@ public:
   Protected &operator=(Protected &&) = delete;
 
   template <typename Handler>
-  void ApplyVoid(Handler &&handler)
+  constexpr decltype(auto) Apply(Handler &&handler)
   {
-    static_assert(std::is_void<decltype(handler(payload_))>::value,
-                  "Use this method with void handlers only");
-
     FETCH_LOCK(mutex_);
 
-    handler(payload_);
+    return std::forward<Handler>(handler)(payload_);
   }
 
   template <typename Handler>
-  void ApplyVoid(Handler &&handler) const
+  constexpr decltype(auto) Apply(Handler &&handler) const
   {
-    static_assert(std::is_void<decltype(handler(payload_))>::value,
-                  "Use this method with void handlers only");
-
     FETCH_LOCK(mutex_);
 
-    handler(payload_);
+    return std::forward<Handler>(handler)(payload_);
   }
-
-  template <typename Handler>
-  auto Apply(Handler &&handler) -> decltype(handler(payload_))
-  {
-    static_assert(!std::is_void<decltype(handler(payload_))>::value,
-                  "Use this method with non-void handlers only");
-
-    FETCH_LOCK(mutex_);
-
-    return handler(payload_);
-  }
-
-  template <typename Handler>
-  auto Apply(Handler &&handler) const -> decltype(handler(payload_))
-  {
-    static_assert(!std::is_void<decltype(handler(payload_))>::value,
-                  "Use this method with non-void handlers only");
-
-    FETCH_LOCK(mutex_);
-
-    return handler(payload_);
-  }
-
-  template <typename TT, typename MM>
-  friend class Waitable;
 };
 
 template <typename T, typename M>
 template <typename... Args>
-Protected<T, M>::Protected(Args &&... args)
-  : mutex_{}
-  , payload_{std::forward<Args>(args)...}
+constexpr Protected<T, M>::Protected(Args &&... args)
+  : payload_(std::forward<Args>(args)...)
 {}
 
 }  // namespace fetch

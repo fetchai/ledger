@@ -46,7 +46,7 @@ public:
 
   void Signal()
   {
-    count_.ApplyVoid([](auto &count) { --count; });
+    count_.Apply([](auto &count) { --count; });
   }
 
   void Wait()
@@ -74,7 +74,7 @@ TEST_F(WaitableTests, Wait_returns_when_the_condition_is_true)
     semaphore.Wait();
 
     waitable.Wait([](auto const &payload) -> bool { return payload.size() > 9000; });
-    waitable.ApplyVoid([](auto const &payload) { ASSERT_THAT(payload.size(), Gt(9000)); });
+    waitable.Apply([](auto const &payload) { ASSERT_THAT(payload.size(), Gt(9000)); });
   };
 
   auto increment = [this]() -> void {
@@ -83,7 +83,7 @@ TEST_F(WaitableTests, Wait_returns_when_the_condition_is_true)
 
     for (auto i = 0; i < 10000; ++i)
     {
-      waitable.ApplyVoid([](auto &payload) { payload.push_back(123); });
+      waitable.Apply([](auto &payload) { payload.push_back(123); });
     }
   };
 

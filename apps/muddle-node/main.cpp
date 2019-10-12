@@ -200,7 +200,7 @@ int main(int argc, char **argv)
     FETCH_UNUSED(payload);
 
     // aggregate the statistics
-    gStatistics.ApplyVoid([&](AggregateData &data) {
+    gStatistics.Apply([&](AggregateData &data) {
       ++(data.counters[from]);
       ++data.total_messages;
 

@@ -35,7 +35,7 @@ bool StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr con
 {
   bool new_snapshot{false};
 
-  updates_.ApplyVoid([&](BlockUpdates &updates) {
+  updates_.Apply([&](BlockUpdates &updates) {
     // ensure the output is empty (this should always be the case anyway)
     next.reset();
 
@@ -105,7 +105,7 @@ std::size_t StakeUpdateQueue::size() const
 void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Identity const &identity,
                                       StakeAmount stake)
 {
-  updates_.ApplyVoid([&](BlockUpdates &updates) { updates[block_index][identity] = stake; });
+  updates_.Apply([&](BlockUpdates &updates) { updates[block_index][identity] = stake; });
 }
 
 }  // namespace ledger

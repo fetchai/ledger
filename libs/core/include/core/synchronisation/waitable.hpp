@@ -28,11 +28,11 @@
 namespace fetch {
 
 template <typename T, typename M = std::mutex>
-class Waitable
+class Waitable : Protected<T, M>
 {
 private:
   mutable std::condition_variable condition_{};
-  Protected<T, M>                 protected_payload_;
+  using ProtectedPayload = Protected<T, M>;
 
 public:
   template <typename... Args>
@@ -45,44 +45,25 @@ public:
   Waitable &operator=(Waitable &&) = delete;
 
   template <typename Handler>
-  void ApplyVoid(Handler &&handler)
+  constexpr decltype(auto) Apply(Handler &&handler)
   {
-    protected_payload_.ApplyVoid([this, handler](auto &payload) {
-      handler(payload);
+    return ProtectedPayload::Apply([this, handler](auto &payload) {
+      auto &&result = handler(payload);
       condition_.notify_all();
+
+      return std::forward<decltype(result)>(result);
     });
   }
 
   template <typename Handler>
-  void ApplyVoid(Handler &&handler) const
+  constexpr decltype(auto) Apply(Handler &&handler) const
   {
-    protected_payload_.ApplyVoid([this, handler](auto const &payload) {
-      handler(payload);
-      condition_.notify_all();
-    });
-  }
-
-  template <typename Handler>
-  auto Apply(Handler &&handler) -> decltype(protected_payload_.Apply(handler))
-  {
-    return protected_payload_.Apply([this, handler](auto &payload) -> decltype(handler(payload)) {
-      auto result = handler(payload);
+    return ProtectedPayload::Apply([this, handler](auto const &payload) {
+      auto &&result = handler(payload);
       condition_.notify_all();
 
-      return result;
+      return std::forward<decltype(result)>(result);
     });
-  }
-
-  template <typename Handler>
-  auto Apply(Handler &&handler) const -> decltype(protected_payload_.Apply(handler))
-  {
-    return protected_payload_.Apply(
-        [this, handler](auto const &payload) -> decltype(handler(payload)) {
-          auto result = handler(payload);
-          condition_.notify_all();
-
-          return result;
-        });
   }
 
   template <typename Predicate>
@@ -94,17 +75,18 @@ public:
 template <typename T, typename M>
 template <typename... Args>
 Waitable<T, M>::Waitable(Args &&... args)
-  : protected_payload_{std::forward<Args>(args)...}
+  : ProtectedPayload(std::forward<Args>(args)...)
 {}
 
 template <typename T, typename M>
 template <typename Predicate>
 void Waitable<T, M>::Wait(Predicate &&predicate) const
 {
-  std::unique_lock<M> lock{protected_payload_.mutex_};
+  std::unique_lock<M> lock{mutex_};
 
-  condition_.wait(lock,
-                  [this, predicate]() -> bool { return predicate(protected_payload_.payload_); });
+  condition_.wait(lock, [this, predicate = std::forward<Predicate>(predicate)]() -> bool {
+    return predicate(payload_);
+  });
 }
 
 template <typename T, typename M>
@@ -112,11 +94,12 @@ template <typename Predicate, typename R, typename P>
 bool Waitable<T, M>::Wait(Predicate &&                       predicate,
                           std::chrono::duration<R, P> const &max_wait_time) const
 {
-  std::unique_lock<M> lock{protected_payload_.mutex_};
+  std::unique_lock<M> lock{mutex_};
 
-  return condition_.wait_for(lock, max_wait_time, [this, predicate]() -> bool {
-    return predicate(protected_payload_.payload_);
-  });
+  return condition_.wait_for(lock, max_wait_time,
+                             [this, predicate = std::forward<Predicate>(predicate)]() -> bool {
+                               return predicate(payload_);
+                             });
 }
 
 }  // namespace fetch
