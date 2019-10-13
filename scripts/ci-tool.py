@@ -218,7 +218,7 @@ def build_project(build_root, concurrency):
     exit_code = subprocess.call(build_cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
-        # sys.exit(exit_code)
+        sys.exit(exit_code)
 
 
 def clean_files(build_root):
@@ -404,30 +404,30 @@ def main():
     if args.build or args.all or args.commit:
         build_project(build_root, concurrency)
 
-    # if args.test or args.all:
-    #     test_project(
-    #         build_root,
-    #         exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
+    if args.test or args.all:
+        test_project(
+            build_root,
+            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
 
-    # if args.language_tests or args.all:
-    #     test_language(build_root)
+    if args.language_tests or args.all:
+        test_language(build_root)
 
-    # if args.slow_tests or args.all:
-    #     test_project(
-    #         build_root,
-    #         include_regex=SLOW_TEST_LABEL)
+    if args.slow_tests or args.all:
+        test_project(
+            build_root,
+            include_regex=SLOW_TEST_LABEL)
 
-    # if args.integration_tests or args.all:
-    #     test_project(
-    #         build_root,
-    #         include_regex=INTEGRATION_TEST_LABEL)
+    if args.integration_tests or args.all:
+        test_project(
+            build_root,
+            include_regex=INTEGRATION_TEST_LABEL)
 
-    # if args.end_to_end_tests or args.all:
-    #     test_end_to_end(project_root, build_root)
+    if args.end_to_end_tests or args.all:
+        test_end_to_end(project_root, build_root)
 
-    # if args.lint or args.all:
-    #     fetchai_code_quality.static_analysis(
-    #         project_root, build_root, args.fix, concurrency, args.commit, verbose=False)
+    if args.lint or args.all:
+        fetchai_code_quality.static_analysis(
+            project_root, build_root, args.fix, concurrency, args.commit, verbose=False)
 
     if sccache_path:
         subprocess.check_call([sccache_path, '-s'])
@@ -438,10 +438,10 @@ def main():
         # wait for the process to send
         t.join()
 
-        print('SCCACHE_LOG:')
+        output('SCCACHE_LOG:')
         with open('sccache.log', 'r') as sccache_log:
             for line in sccache_log:
-                print(line.strip())
+                output(line.strip())
 
 
 if __name__ == '__main__':
