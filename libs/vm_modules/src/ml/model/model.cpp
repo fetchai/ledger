@@ -78,7 +78,7 @@ void VMModel::LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer, math::Siz
   }
   else
   {
-    throw("no add method for non-sequential methods");
+    throw std::runtime_error("no add method for non-sequential methods");
   }
 }
 
@@ -102,7 +102,7 @@ void VMModel::LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
   }
   else
   {
-    throw("no add method for non-sequential methods");
+    throw std::runtime_error("no add method for non-sequential methods");
   }
 }
 
@@ -126,7 +126,7 @@ void VMModel::LayerAddImplementation(std::string const &layer, math::SizeType co
   }
   else
   {
-    throw("no add method for non-sequential methods");
+    throw std::runtime_error("no add method for non-sequential methods");
   }
 }
 
