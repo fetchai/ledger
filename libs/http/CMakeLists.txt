@@ -17,5 +17,9 @@ setup_compiler()
 setup_library(fetch-http)
 target_link_libraries(fetch-http PUBLIC fetch-network)
 
+if (_is_clang_compiler)
+  target_compile_options(fetch-http PRIVATE -Wshadow)
+endif ()
+
 add_subdirectory(examples)
 add_subdirectory(tests)

@@ -21,6 +21,7 @@
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
@@ -231,6 +232,280 @@ TYPED_TEST(GraphTest, applying_regularisation_all_trainables)
   // Test actual values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(GraphTest, variable_freezing_per_trainable)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+
+  TensorType data_1 = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType data_2 = TensorType::FromString("3, 0, 5, -2, 7, -4, 9, -6");
+
+  // Create a graph with a single weights node
+  fetch::ml::Graph<TensorType> g;
+
+  std::string weights = g.template AddNode<fetch::ml::ops::Weights<TensorType>>("Weights", {});
+
+  g.SetInput(weights, data_1);
+
+  // Freeze variable
+  g.SetFrozenState(weights, true);
+  auto node_ptr = g.GetNode(weights);
+  auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+
+  // Apply gradient
+  TensorType grad = op_ptr->GetGradients();
+  grad.Fill(static_cast<DataType>(2.0));
+  op_ptr->ApplyGradient(grad);
+
+  // Evaluate weights
+  TensorType prediction_1(op_ptr->ComputeOutputShape({}));
+  op_ptr->Forward({}, prediction_1);
+
+  // Test if weights didn't change
+  ASSERT_TRUE(prediction_1.AllClose(data_1, fetch::math::function_tolerance<DataType>(),
+                                    fetch::math::function_tolerance<DataType>()));
+
+  // Un-freeze variable
+  g.SetFrozenState(false);
+  op_ptr->ApplyGradient(grad);
+
+  // Evaluate weights
+  TensorType prediction_2(op_ptr->ComputeOutputShape({}));
+  op_ptr->Forward({}, prediction_2);
+
+  // Test actual values
+  ASSERT_TRUE(prediction_2.AllClose(data_2, fetch::math::function_tolerance<DataType>(),
+                                    fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(GraphTest, variable_freezing_all_trainables)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+
+  TensorType data_1 = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType data_2 = TensorType::FromString("3, 0, 5, -2, 7, -4, 9, -6");
+
+  // Create a graph with a single weights node
+  fetch::ml::Graph<TensorType> g;
+
+  std::string weights = g.template AddNode<fetch::ml::ops::Weights<TensorType>>("Weights", {});
+
+  g.SetInput(weights, data_1);
+
+  // Freeze variable
+  g.SetFrozenState(true);
+  auto node_ptr = g.GetNode(weights);
+  auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  TensorType grad = op_ptr->GetGradients();
+  grad.Fill(static_cast<DataType>(2.0));
+  op_ptr->ApplyGradient(grad);
+
+  // Evaluate weights
+  TensorType prediction_1(op_ptr->ComputeOutputShape({}));
+  op_ptr->Forward({}, prediction_1);
+
+  // Test actual values
+  ASSERT_TRUE(prediction_1.AllClose(data_1, fetch::math::function_tolerance<DataType>(),
+                                    fetch::math::function_tolerance<DataType>()));
+
+  // Un-freeze variable
+  g.SetFrozenState(false);
+  op_ptr->ApplyGradient(grad);
+
+  // Evaluate weights
+  TensorType prediction_2(op_ptr->ComputeOutputShape({}));
+  op_ptr->Forward({}, prediction_2);
+
+  // Test actual values
+  ASSERT_TRUE(prediction_2.AllClose(data_2, fetch::math::function_tolerance<DataType>(),
+                                    fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(GraphTest, variable_freezing_subgraph)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+
+  // Dummy values
+  TensorType data = TensorType::FromString("1; -2; 3");
+  TensorType gt   = TensorType::FromString("1; -2; 3");
+
+  // Create a graph
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string label = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+  std::string layer_1 =
+      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC1", {"Input"}, 3u, 3u);
+  std::string layer_2 =
+      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC2", {"FC1"}, 3u, 3u);
+  std::string layer_3 =
+      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC3", {"FC2"}, 3u, 3u);
+
+  // Add loss function
+  std::string error_output = g.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+      "num_error", {layer_3, label});
+
+  g.Compile();
+
+  // Calculate Gradient
+  g.SetInput(input, data);
+  g.SetInput(label, gt);
+  TypeParam output = g.Evaluate(error_output);
+  g.BackPropagate(error_output);
+
+  // Freeze variables
+  g.SetFrozenState(layer_1, true);
+  g.SetFrozenState(layer_3, true);
+
+  // Get weights before applying gradient
+  auto weights_1 = g.GetWeights();
+
+  // Apply gradient
+  auto gradient_vector = g.GetGradients();
+  for (auto grad : gradient_vector)
+  {
+    grad.Fill(static_cast<DataType>(2.0));
+  }
+  g.ApplyGradients(gradient_vector);
+
+  // Get weights after applying gradient
+  auto weights_2 = g.GetWeights();
+
+  ASSERT_TRUE(weights_1.at(0).AllClose(weights_2.at(0), static_cast<DataType>(0),
+                                       static_cast<DataType>(0)));
+  ASSERT_TRUE(weights_1.at(1).AllClose(weights_2.at(1), static_cast<DataType>(0),
+                                       static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_1.at(2).AllClose(weights_2.at(2), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_1.at(3).AllClose(weights_2.at(3), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_TRUE(weights_1.at(4).AllClose(weights_2.at(4), static_cast<DataType>(0),
+                                       static_cast<DataType>(0)));
+  ASSERT_TRUE(weights_1.at(5).AllClose(weights_2.at(5), static_cast<DataType>(0),
+                                       static_cast<DataType>(0)));
+
+  // Un-freeze variables
+  g.SetFrozenState(layer_1, false);
+  g.SetFrozenState(layer_3, false);
+
+  // Apply gradient
+  auto gradient_vector_2 = g.GetGradients();
+  for (auto grad : gradient_vector_2)
+  {
+    grad.Fill(static_cast<DataType>(2.0));
+  }
+  g.ApplyGradients(gradient_vector);
+
+  auto weights_3 = g.GetWeights();
+
+  ASSERT_FALSE(weights_2.at(0).AllClose(weights_3.at(0), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(1).AllClose(weights_3.at(1), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(2).AllClose(weights_3.at(2), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(3).AllClose(weights_3.at(3), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(4).AllClose(weights_3.at(4), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(5).AllClose(weights_3.at(5), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+}
+
+TYPED_TEST(GraphTest, variable_freezing_shared_layer)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+
+  // Dummy values
+  TensorType data = TensorType::FromString("1; -2; 3");
+  TensorType gt   = TensorType::FromString("1; -2; 3");
+
+  // Create a graph
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string label = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+  std::string layer_1 =
+      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC1", {"Input"}, 3u, 3u);
+  std::string layer_2 =
+      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC2", {"FC1"}, 3u, 3u);
+  std::string layer_3 =
+      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC1", {"FC2"});
+
+  // Add loss function
+  std::string error_output = g.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+      "num_error", {layer_3, label});
+
+  g.Compile();
+
+  // Calculate Gradient
+  g.SetInput(input, data);
+  g.SetInput(label, gt);
+  TypeParam output = g.Evaluate(error_output);
+  g.BackPropagate(error_output);
+
+  // Freeze variables
+  g.SetFrozenState(layer_1, true);
+
+  // Get weights before applying gradient
+  auto weights_1 = g.GetWeights();
+
+  // Apply gradient
+  auto gradient_vector = g.GetGradients();
+  for (auto grad : gradient_vector)
+  {
+    grad.Fill(static_cast<DataType>(2.0));
+  }
+  g.ApplyGradients(gradient_vector);
+
+  // Get weights after applying gradient
+  auto weights_2 = g.GetWeights();
+
+  // Test if layer1 and copy of layer1 is frozen
+  ASSERT_TRUE(weights_1.at(0).AllClose(weights_2.at(0), static_cast<DataType>(0),
+                                       static_cast<DataType>(0)));
+  ASSERT_TRUE(weights_1.at(1).AllClose(weights_2.at(1), static_cast<DataType>(0),
+                                       static_cast<DataType>(0)));
+  ASSERT_TRUE(weights_1.at(2).AllClose(weights_2.at(2), static_cast<DataType>(0),
+                                       static_cast<DataType>(0)));
+  ASSERT_TRUE(weights_1.at(3).AllClose(weights_2.at(3), static_cast<DataType>(0),
+                                       static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_1.at(4).AllClose(weights_2.at(4), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_1.at(5).AllClose(weights_2.at(5), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+
+  // Un-freeze variables
+  g.SetFrozenState(layer_1, false);
+
+  // Apply gradient
+  auto gradient_vector_2 = g.GetGradients();
+  for (auto grad : gradient_vector_2)
+  {
+    grad.Fill(static_cast<DataType>(2.0));
+  }
+  g.ApplyGradients(gradient_vector);
+
+  auto weights_3 = g.GetWeights();
+
+  // Test if everything is unfrozen
+  ASSERT_FALSE(weights_2.at(0).AllClose(weights_3.at(0), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(1).AllClose(weights_3.at(1), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(2).AllClose(weights_3.at(2), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(3).AllClose(weights_3.at(3), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(4).AllClose(weights_3.at(4), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(5).AllClose(weights_3.at(5), static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
 }
 
 TYPED_TEST(GraphTest,

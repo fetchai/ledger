@@ -117,9 +117,9 @@ private:
   static byte_array::ByteArray Convert(EC_POINT const *const           public_key,
                                        EC_GROUP const *const           group,
                                        context::Session<BN_CTX> const &session,
-                                       eECDSAEncoding const            binaryDataFormat)
+                                       eECDSAEncoding const            binary_data_format)
   {
-    switch (binaryDataFormat)
+    switch (binary_data_format)
     {
     case eECDSAEncoding::canonical:
       return Convert2Canonical(public_key, group, session);
@@ -138,12 +138,12 @@ private:
   }
 
   static byte_array::ByteArray Convert(EC_POINT const *const public_key,
-                                       eECDSAEncoding const  binaryDataFormat)
+                                       eECDSAEncoding const  binary_data_format)
   {
     UniquePointerType<EC_GROUP> group{createGroup()};
     context::Session<BN_CTX>    session;
 
-    switch (binaryDataFormat)
+    switch (binary_data_format)
     {
     case eECDSAEncoding::canonical:
     case eECDSAEncoding::bin:
@@ -157,9 +157,9 @@ private:
   }
 
   static UniquePointerType<EC_POINT> Convert(byte_array::ConstByteArray const &key_data,
-                                             eECDSAEncoding const              binaryDataFormat)
+                                             eECDSAEncoding const              binary_data_format)
   {
-    switch (binaryDataFormat)
+    switch (binary_data_format)
     {
     case eECDSAEncoding::canonical:
       return ConvertFromCanonical(key_data);
