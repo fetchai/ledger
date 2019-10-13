@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/fetch_backward.hpp"
+#include "logging/backtrace.hpp"
 
 #include <ostream>
 #include <sstream>

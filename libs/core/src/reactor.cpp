@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "logging/logging.hpp"
 #include "core/reactor.hpp"
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"
@@ -31,6 +32,7 @@
 #include <vector>
 
 static const std::chrono::milliseconds POLL_INTERVAL{15};
+static constexpr char const *LOGGING_NAME = "Reactor";
 
 using WorkQueue = std::deque<fetch::core::WeakRunnable>;
 
@@ -179,14 +181,12 @@ void Reactor::Monitor()
       }
       catch (std::exception const &ex)
       {
-        // TODO(tfr): make logging indendent of core        FETCH_LOG_WARN(LOGGING_NAME, "The
-        // reactor caught an exception! ", name_,
-        //                       " error: ", ex.what());
+        FETCH_LOG_WARN(LOGGING_NAME, "The reactor caught an exception! ", name_,
+                       " error: ", ex.what());
       }
       catch (...)
       {
-        // TODO(tfr): Logging not supported in code       FETCH_LOG_INFO(LOGGING_NAME, "Unknown
-        // error generated in reactor: ", name_);
+        FETCH_LOG_INFO(LOGGING_NAME, "Unknown error generated in reactor: ", name_);
       }
     }
   }

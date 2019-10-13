@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/common.hpp"
+#include "logging/logging.hpp"
 #include "meta/value_util.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
@@ -115,6 +116,10 @@ public:
   {
     if (src_offset + dest_size > size())
     {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "ReadBytes target array is too big for us to fill. dest_size=", dest_size,
+                     " src_offset=", src_offset, " size=", size());
+
       throw std::range_error("ReadBytes target array is too big");
     }
     std::memcpy(dest, pointer() + src_offset, dest_size);
@@ -284,6 +289,8 @@ public:
     if (errno == ERANGE)
     {
       errno = 0;
+      FETCH_LOG_ERROR(LOGGING_NAME, "AsInt() failed to convert value=", value, " to integer");
+
       throw std::domain_error("AsInt() failed to convert value=" + value + " to integer");
     }
 
@@ -298,6 +305,8 @@ public:
     if (errno == ERANGE)
     {
       errno = 0;
+      FETCH_LOG_ERROR(LOGGING_NAME, "AsFloat() failed to convert value=", value, " to double");
+
       throw std::domain_error("AsFloat() failed to convert value=" + value + " to double");
     }
 
@@ -475,6 +484,8 @@ protected:
   }
 
 private:
+  constexpr static char const *LOGGING_NAME = "ConstByteArray";
+
   /**
    * AddSize is a binary callable object that, when called,
    * returns the sum of its first argument and the size of the second.

@@ -17,4 +17,4 @@ setup_compiler()
 setup_library(fetch-json)
 target_link_libraries(fetch-json PUBLIC fetch-core fetch-variant fetch-logging)
 
-# add_test_target() add_subdirectory(examples) add_subdirectory(benchmark)
+add_test_target()

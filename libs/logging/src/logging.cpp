@@ -16,11 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-#include "logging/logging.hpp"
-#include "telemetry/counter.hpp"
-#include "telemetry/registry.hpp"
-
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
@@ -43,9 +38,10 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include <unordered_map>
+#include "logging/logging.hpp"
 
-#include "core/fetch_backward.hpp"
+#include <unordered_map>
+#include <mutex>
 
 #ifdef FETCH_ENABLE_BACKTRACE
 
@@ -87,30 +83,12 @@ private:
   using Logger     = spdlog::logger;
   using LoggerPtr  = std::shared_ptr<Logger>;
   using Registry   = std::unordered_map<std::string, LoggerPtr>;
-  using Mutex      = std::mutex;
-  using CounterPtr = telemetry::CounterPtr;
 
   Logger &GetLogger(char const *name);
 
-  Mutex                 lock_;
+  std::mutex            lock_;
   Registry              registry_;
   std::atomic<LogLevel> global_level_{LogLevel::TRACE};
-
-  // Telemetry
-  CounterPtr log_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_messages_total", "The number of log messages printed")};
-  CounterPtr log_trace_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_trace_messages_total", "The number of trace log messages printed")};
-  CounterPtr log_debug_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_debug_messages_total", "The number of debug log messages printed")};
-  CounterPtr log_info_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_info_messages_total", "The number of info log messages printed")};
-  CounterPtr log_warn_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_warn_messages_total", "The number of warning log messages printed")};
-  CounterPtr log_error_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_error_messages_total", "The number of error log messages printed")};
-  CounterPtr log_critical_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_critical_messages_total", "The number of critical log messages printed")};
 };
 
 constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;
@@ -187,39 +165,13 @@ void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
     return;
   }
 
-  {
-    FETCH_LOCK(lock_);
-    GetLogger(name).log(ConvertFromLevel(level), message);
-  }
-
-  // telemetry
-  log_messages_->increment();
-  switch (level)
-  {
-  case LogLevel::TRACE:
-    log_trace_messages_->increment();
-    break;
-  case LogLevel::DEBUG:
-    log_debug_messages_->increment();
-    break;
-  case LogLevel::INFO:
-    log_info_messages_->increment();
-    break;
-  case LogLevel::WARNING:
-    log_warn_messages_->increment();
-    break;
-  case LogLevel::ERROR:
-    log_error_messages_->increment();
-    break;
-  case LogLevel::CRITICAL:
-    log_critical_messages_->increment();
-    break;
-  }
+  std::lock_guard<std::mutex> guard(lock_);
+  GetLogger(name).log(ConvertFromLevel(level), message);
 }
 
 void LogRegistry::SetLevel(char const *name, LogLevel level)
 {
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
 
   auto it = registry_.find(name);
   if (it != registry_.end())
@@ -235,7 +187,7 @@ void LogRegistry::SetGlobalLevel(LogLevel level)
 
 LogLevelMap LogRegistry::GetLogLevelMap()
 {
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
 
   LogLevelMap level_map{};
   level_map.reserve(registry_.size());

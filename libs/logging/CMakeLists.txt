@@ -15,21 +15,4 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-logging)
-target_link_libraries(fetch-logging PUBLIC fetch-core fetch-telemetry vendor-spdlog)
-# ------------------------------------------------------------------------------
-# Example Targets
-# ------------------------------------------------------------------------------
-
-# add_subdirectory(examples)
-
-# ------------------------------------------------------------------------------
-# Test Targets
-# ------------------------------------------------------------------------------
-
-# add_test_target()
-
-# ------------------------------------------------------------------------------
-# Benchmark Targets
-# ------------------------------------------------------------------------------
-
-# add_subdirectory(benchmark)
+target_link_libraries(fetch-logging PUBLIC vendor-spdlog vendor-backward-cpp)
