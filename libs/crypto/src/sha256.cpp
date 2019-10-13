@@ -41,8 +41,6 @@ bool SHA256::Update(uint8_t const *const data_to_hash, std::size_t const size)
 
 void SHA256::Final(uint8_t *const hash)
 {
-  EVP_PKEY_up_ref(nullptr);
-
   auto const success = openssl_hasher_.Final(hash);
   FETCH_UNUSED(success);
   assert(success);
