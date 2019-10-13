@@ -5,10 +5,10 @@ MACOS_NODE_LABEL = 'mac-mini'
 enum Platform
 {
   DEFAULT_CLANG('Clang',      'clang',     'clang++',     ''),
-  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:d643eb6'),
-  CLANG7       ('Clang 7',    'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:561927b'),
-  GCC7         ('GCC 7',      'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:aa7a2f3'),
-  GCC8         ('GCC 8',      'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:aa7a2f3')
+  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.0'),
+  CLANG7       ('Clang 7',    'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.0'),
+  GCC7         ('GCC 7',      'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.0'),
+  GCC8         ('GCC 8',      'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.0')
 
   public Platform(label, cc, cxx, image)
   {
