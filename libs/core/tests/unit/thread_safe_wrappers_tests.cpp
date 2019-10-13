@@ -162,6 +162,16 @@ public:
       EXPECT_EQ(payload, new_value);
     });
 
+    protected_value.Apply([this](auto &payload) {
+      EXPECT_FALSE(is_read_only(payload));
+
+      EXPECT_EQ(payload, initial_value);
+      payload = new_value;
+
+      EXPECT_EQ(payload, new_value);
+      return payload;
+    });
+
     protected_value.ApplyVoid([this](auto &payload) { EXPECT_EQ(payload, new_value); });
   }
 
