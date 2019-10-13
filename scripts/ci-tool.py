@@ -355,17 +355,13 @@ def main():
 
     # attempt to detect the sccache path on the system
     sccache_path = shutil.which('sccache')
-    print('SCCACHE_PATH', sccache_path)
-
     if sccache_path:
         t = threading.Thread(target=run_sccache_server, args=(sccache_path,))
         t.daemon = True
         t.start()
 
+        # allow the sccache server to start up
         time.sleep(5)
-
-        # print out the stats
-        subprocess.check_call([sccache_path, '-s'])
 
     if args.build or args.lint or args.all:
         # choose the generater initially based on what already exists there

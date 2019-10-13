@@ -26,13 +26,11 @@ enum Platform
 
 LINUX_PLATFORMS_CORE = [
   Platform.CLANG6,
-  Platform.GCC7
-]
+  Platform.GCC7]
 
 LINUX_PLATFORMS_AUX = [
   Platform.CLANG7,
-  Platform.GCC8
-]
+  Platform.GCC8]
 
 enum Configuration
 {
