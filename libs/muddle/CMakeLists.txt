@@ -15,7 +15,11 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-muddle)
-target_link_libraries(fetch-muddle PUBLIC fetch-network fetch-logging fetch-moment fetch-telemetry)
+target_link_libraries(fetch-muddle
+                      PUBLIC fetch-network
+                             fetch-logging
+                             fetch-moment
+                             fetch-telemetry)
 
 if (_is_clang_compiler)
   target_compile_options(fetch-muddle PRIVATE -Wshadow)

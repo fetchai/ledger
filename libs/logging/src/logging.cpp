@@ -40,8 +40,8 @@
 
 #include "logging/logging.hpp"
 
-#include <unordered_map>
 #include <mutex>
+#include <unordered_map>
 
 #ifdef FETCH_ENABLE_BACKTRACE
 
@@ -80,9 +80,9 @@ public:
   }
 
 private:
-  using Logger     = spdlog::logger;
-  using LoggerPtr  = std::shared_ptr<Logger>;
-  using Registry   = std::unordered_map<std::string, LoggerPtr>;
+  using Logger    = spdlog::logger;
+  using LoggerPtr = std::shared_ptr<Logger>;
+  using Registry  = std::unordered_map<std::string, LoggerPtr>;
 
   Logger &GetLogger(char const *name);
 

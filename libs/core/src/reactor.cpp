@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "logging/logging.hpp"
 #include "core/reactor.hpp"
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"
+#include "logging/logging.hpp"
 
 #include <chrono>
 #include <deque>
@@ -32,7 +32,7 @@
 #include <vector>
 
 static const std::chrono::milliseconds POLL_INTERVAL{15};
-static constexpr char const *LOGGING_NAME = "Reactor";
+static constexpr char const *          LOGGING_NAME = "Reactor";
 
 using WorkQueue = std::deque<fetch::core::WeakRunnable>;
 
