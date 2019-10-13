@@ -76,12 +76,11 @@ endif (FETCH_DEBUG_SANITIZER)
 
 # Enable CCACHE - compiler caching to reduce build times
 if (FETCH_ENABLE_CCACHE)
-  find_program(SCCACGE_FOUND sccache)
+  find_program(SCCACHE_FOUND sccache)
   find_program(CCACHE_FOUND ccache)
 
-  if (SCCACGE_FOUND)
+  if (SCCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE sccache)
-    # set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK sccache)
     fetch_info("Found sccache on system - including")
   elseif (CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
