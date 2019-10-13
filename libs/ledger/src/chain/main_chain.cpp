@@ -146,14 +146,17 @@ BlockStatus MainChain::AddBlock(Block const &blk)
  */
 void MainChain::CacheBlock(IntBlockPtr const &block) const
 {
-  ASSERT(static_cast<bool>(block));
+  assert(static_cast<bool>(block));
 
   auto hash{block->body.hash};
   auto ret_val{block_chain_.emplace(hash, block)};
   // under all circumstances, it _should_ be a fresh block
-  ASSERT(ret_val.second);
+  assert(ret_val.second);
   // keep parent-child reference
-  references_.emplace(block->body.previous_hash, std::move(hash));
+  if (!block->IsGenesis())
+  {
+    references_.emplace(block->body.previous_hash, std::move(hash));
+  }
 }
 
 /**
@@ -175,8 +178,8 @@ MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash const &hash) co
  */
 void MainChain::KeepBlock(IntBlockPtr const &block) const
 {
-  ASSERT(static_cast<bool>(block));
-  ASSERT(static_cast<bool>(block_store_));
+  assert(static_cast<bool>(block));
+  assert(static_cast<bool>(block_store_));
 
   auto const &hash{block->body.hash};
 

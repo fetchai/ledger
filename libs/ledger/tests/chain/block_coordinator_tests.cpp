@@ -145,7 +145,7 @@ protected:
     // run one step of the state machine
     block_coordinator_->GetRunnable().Execute();
 
-    ASSERT_EQ(final_state, state_machine.state());
+    ASSERT_STREQ(BlockCoordinator::ToString(final_state), BlockCoordinator::ToString(state_machine.state()));
   }
 
   /**
