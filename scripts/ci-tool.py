@@ -218,7 +218,7 @@ def build_project(build_root, concurrency):
     exit_code = subprocess.call(build_cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
-        sys.exit(exit_code)
+        # sys.exit(exit_code)
 
 
 def clean_files(build_root):
@@ -307,6 +307,33 @@ def test_language(build_root):
     subprocess.check_call(cmd)
 
 
+def run_sccache_server(sccache_path):
+    cmd = [
+        sccache_path,
+    ]
+    env = {
+        'SCCACHE_START_SERVER': '1',
+        'SCCACHE_NO_DAEMON': '1',
+        'RUST_LOG': 'info',
+    }
+
+    # pull in local sccache configuration
+    for key, value in os.environ.items():
+        if key.startswith('SCCACHE'):
+            env[key] = value
+
+    print('sccache Server Config:', env)
+
+    with open('sccache.log', 'w') as sccache_log:
+        subprocess.check_call(
+            cmd, env=env, stdout=sccache_log, stderr=subprocess.STDOUT)
+
+
+def stop_sscache_server(sccache_path):
+    cmd = [sccache_path, '--stop-server']
+    subprocess.call(cmd)
+
+
 def main():
     # parse the options from the command line
     args = parse_commandline()
@@ -328,6 +355,17 @@ def main():
 
     # attempt to detect the sccache path on the system
     sccache_path = shutil.which('sccache')
+    print('SCCACHE_PATH', sccache_path)
+
+    if sccache_path:
+        t = threading.Thread(target=run_sccache_server, args=(sccache_path,))
+        t.daemon = True
+        t.start()
+
+        time.sleep(5)
+
+        # print out the stats
+        subprocess.check_call([sccache_path, '-s'])
 
     if args.build or args.lint or args.all:
         # choose the generater initially based on what already exists there
@@ -366,33 +404,44 @@ def main():
     if args.build or args.all or args.commit:
         build_project(build_root, concurrency)
 
-    if args.test or args.all:
-        test_project(
-            build_root,
-            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
+    # if args.test or args.all:
+    #     test_project(
+    #         build_root,
+    #         exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
 
-    if args.language_tests or args.all:
-        test_language(build_root)
+    # if args.language_tests or args.all:
+    #     test_language(build_root)
 
-    if args.slow_tests or args.all:
-        test_project(
-            build_root,
-            include_regex=SLOW_TEST_LABEL)
+    # if args.slow_tests or args.all:
+    #     test_project(
+    #         build_root,
+    #         include_regex=SLOW_TEST_LABEL)
 
-    if args.integration_tests or args.all:
-        test_project(
-            build_root,
-            include_regex=INTEGRATION_TEST_LABEL)
+    # if args.integration_tests or args.all:
+    #     test_project(
+    #         build_root,
+    #         include_regex=INTEGRATION_TEST_LABEL)
 
-    if args.end_to_end_tests or args.all:
-        test_end_to_end(project_root, build_root)
+    # if args.end_to_end_tests or args.all:
+    #     test_end_to_end(project_root, build_root)
 
-    if args.lint or args.all:
-        fetchai_code_quality.static_analysis(
-            project_root, build_root, args.fix, concurrency, args.commit, verbose=False)
+    # if args.lint or args.all:
+    #     fetchai_code_quality.static_analysis(
+    #         project_root, build_root, args.fix, concurrency, args.commit, verbose=False)
 
     if sccache_path:
         subprocess.check_call([sccache_path, '-s'])
+
+        # stop the server
+        stop_sscache_server(sccache_path)
+
+        # wait for the process to send
+        t.join()
+
+        print('SCCACHE_LOG:')
+        with open('sccache.log', 'r') as sccache_log:
+            for line in sccache_log:
+                print(line.strip())
 
 
 if __name__ == '__main__':
