@@ -10,4 +10,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-fetch_add_test(yaml-tests fetch-yaml yaml/gtest/)
+fetch_add_test(yaml-tests fetch-yaml unit/)
