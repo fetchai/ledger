@@ -10,4 +10,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-fetch_add_test(json_gtest fetch-json json/gtest/)
+fetch_add_test(json-unit-tests fetch-json unit/)
