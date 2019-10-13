@@ -18,8 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "dmlf/execution_result.hpp"
-#include "network/generics/promise_of.hpp"
+#include "dmlf/execution/execution_result.hpp"
 #include "vm/common.hpp"
 
 #include <functional>
@@ -36,24 +35,24 @@ public:
   ExecutionInterface()          = default;
   virtual ~ExecutionInterface() = default;
 
-  using Name        = std::string;
-  using SourceFiles = fetch::vm::SourceFiles;
-  using Target      = std::string;
-  using Artifact    = fetch::vm::Variant;
-  using Result      = ExecutionResult;
-  using Returned    = fetch::network::PromiseOf<ExecutionResult>;
-  using Params      = std::vector<Artifact>;
+  using Name            = std::string;
+  using SourceFiles     = fetch::vm::SourceFiles;
+  using Target          = std::string;
+  using Variant         = fetch::vm::Variant;
+  using PromiseOfResult = ExecutionResult::PromiseOfResult;
+  using Params          = std::vector<Variant>;
 
-  virtual Returned CreateExecutable(Target const &target, Name const &execName,
-                                    SourceFiles const &sources)                 = 0;
-  virtual Returned DeleteExecutable(Target const &target, Name const &execName) = 0;
+  virtual PromiseOfResult CreateExecutable(Target const &host, Name const &execName,
+                                           SourceFiles const &sources)               = 0;
+  virtual PromiseOfResult DeleteExecutable(Target const &host, Name const &execName) = 0;
 
-  virtual Returned CreateState(Target const &target, Name const &stateName)                  = 0;
-  virtual Returned CopyState(Target const &target, Name const &srcName, Name const &newName) = 0;
-  virtual Returned DeleteState(Target const &target, Name const &stateName)                  = 0;
+  virtual PromiseOfResult CreateState(Target const &host, Name const &stateName) = 0;
+  virtual PromiseOfResult CopyState(Target const &host, Name const &srcName,
+                                    Name const &newName)                         = 0;
+  virtual PromiseOfResult DeleteState(Target const &host, Name const &stateName) = 0;
 
-  virtual Returned Run(Target const &target, Name const &execName, Name const &stateName,
-                       std::string const &entrypoint) = 0;
+  virtual PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
+                              std::string const &entrypoint) = 0;
 
   ExecutionInterface(ExecutionInterface const &other) = delete;
   ExecutionInterface &operator=(ExecutionInterface const &other)  = delete;
