@@ -314,6 +314,7 @@ def run_sccache_server(sccache_path):
     env = {
         'SCCACHE_START_SERVER': '1',
         'SCCACHE_NO_DAEMON': '1',
+        'SCCACHE_IDLE_TIMEOUT': '0',
         'RUST_LOG': 'info',
     }
 
@@ -355,7 +356,7 @@ def main():
 
     # attempt to detect the sccache path on the system
     sccache_path = shutil.which('sccache')
-    if sccache_path:
+    if (args.build or args.lint or args.all) and sccache_path:
         t = threading.Thread(target=run_sccache_server, args=(sccache_path,))
         t.daemon = True
         t.start()
@@ -425,7 +426,7 @@ def main():
         fetchai_code_quality.static_analysis(
             project_root, build_root, args.fix, concurrency, args.commit, verbose=False)
 
-    if sccache_path:
+    if (args.build or args.lint or args.all) and sccache_path:
         subprocess.check_call([sccache_path, '-s'])
 
         # stop the server
