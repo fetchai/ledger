@@ -149,36 +149,41 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
 
   while (gradient_it != this->gradients_.end())
   {
-    // cache[i] = (beta1_t_ * cache[i]) + ((one_ - beta1_t_) * (input_gradients[i]/batch_size));
-    fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
-                          (one_ - beta1_t_) / static_cast<DataType>(batch_size), *gradient_it);
-    fetch::math::Multiply(*cached_weight_it, beta1_t_, *cached_weight_it);
-    fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
+    // Skip frozen trainables
+    if (!(*trainable_it)->GetFrozenState())
+    {
 
-    // mt   = cache[i] / (one_ - beta1_t_);
-    fetch::math::Divide(*cached_weight_it, (one_ - beta1_t_), *mt_it);
+      // cache[i] = (beta1_t_ * cache[i]) + ((one_ - beta1_t_) * (input_gradients[i]/batch_size));
+      fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
+                            (one_ - beta1_t_) / static_cast<DataType>(batch_size), *gradient_it);
+      fetch::math::Multiply(*cached_weight_it, beta1_t_, *cached_weight_it);
+      fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
 
-    // momentum[i] = (beta2_t_ * momentum[i]) + ((one_ - beta2_t_) *
-    // ((input_gradients[i]/batch_size)^2));
-    fetch::math::Divide((*trainable_it)->GetGradientsReferences(),
-                        static_cast<DataType>(batch_size), *vt_it);
-    fetch::math::Square(*vt_it, *vt_it);
-    fetch::math::Multiply(*vt_it, (one_ - beta2_t_), *vt_it);
-    fetch::math::Multiply(*momentum_it, beta2_t_, *momentum_it);
-    fetch::math::Add(*momentum_it, *vt_it, *momentum_it);
+      // mt   = cache[i] / (one_ - beta1_t_);
+      fetch::math::Divide(*cached_weight_it, (one_ - beta1_t_), *mt_it);
 
-    // vt   = momentum[i] / (one_ - beta2_t_);
-    fetch::math::Divide(*momentum_it, (one_ - beta2_t_), *vt_it);
+      // momentum[i] = (beta2_t_ * momentum[i]) + ((one_ - beta2_t_) *
+      // ((input_gradients[i]/batch_size)^2));
+      fetch::math::Divide((*trainable_it)->GetGradientsReferences(),
+                          static_cast<DataType>(batch_size), *vt_it);
+      fetch::math::Square(*vt_it, *vt_it);
+      fetch::math::Multiply(*vt_it, (one_ - beta2_t_), *vt_it);
+      fetch::math::Multiply(*momentum_it, beta2_t_, *momentum_it);
+      fetch::math::Add(*momentum_it, *vt_it, *momentum_it);
 
-    // output_gradients[i] = -this->learning_rate_ * mt / (sqrt(vt) + epsilon_);
-    fetch::math::Sqrt(*vt_it, *gradient_it);
-    fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
-    fetch::math::Divide(*mt_it, *gradient_it, *gradient_it);
-    fetch::math::Multiply(*gradient_it, -this->learning_rate_, *gradient_it);
+      // vt   = momentum[i] / (one_ - beta2_t_);
+      fetch::math::Divide(*momentum_it, (one_ - beta2_t_), *vt_it);
 
-    // we need to explicitly reset the gradients for this shared op to avoid double counting
-    // in the case of shared ops
-    (*trainable_it)->ResetGradients();
+      // output_gradients[i] = -this->learning_rate_ * mt / (sqrt(vt) + epsilon_);
+      fetch::math::Sqrt(*vt_it, *gradient_it);
+      fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
+      fetch::math::Divide(*mt_it, *gradient_it, *gradient_it);
+      fetch::math::Multiply(*gradient_it, -this->learning_rate_, *gradient_it);
+
+      // we need to explicitly reset the gradients for this shared op to avoid double counting
+      // in the case of shared ops
+      (*trainable_it)->ResetGradients();
+    }
 
     ++cached_weight_it;
     ++momentum_it;
