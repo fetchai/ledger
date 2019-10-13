@@ -20,9 +20,9 @@ target_link_libraries(fetch-crypto
                              fetch-meta
                              fetch-math
                              fetch-vectorise
-                             vendor-openssl-static
-                             vendor-mcl
-                             fetch-logging)
+                             fetch-logging
+                             vendor-openssl
+                             vendor-mcl)
 
 if (_is_clang_compiler)
   target_compile_options(fetch-crypto PRIVATE -Wshadow)
