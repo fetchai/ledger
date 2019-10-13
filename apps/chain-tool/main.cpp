@@ -575,13 +575,16 @@ private:
       }
       else
       {
-        if (node.first != GENESIS_DIGEST)
-        {
-          ++md.num_of_empty_blocks;
-        }
-
+        ++md.num_of_empty_blocks;
         md.roots.emplace(node.first);
       }
+    }
+
+    // We don't need to count genesis among empty blocks.
+    auto genesis_itr = tree.find(GENESIS_DIGEST);
+    if (genesis_itr != tree.end() && !genesis_itr->second.is_block_set)
+    {
+      --md.num_of_empty_blocks;
     }
 
     return md;

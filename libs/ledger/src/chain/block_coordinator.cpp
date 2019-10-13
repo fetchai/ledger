@@ -98,7 +98,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , block_sink_{block_sink}
   , periodic_print_{STATE_NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
-  , last_executed_block_{GENESIS_DIGEST}
   , certificate_{std::move(prover)}
   , mining_address_{certificate_->identity()}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
@@ -338,11 +337,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   FETCH_UNUSED(current_dag_epoch);
 
   // initial condition, the last processed block is empty
-  if (GENESIS_DIGEST == last_processed_block)
+  if (last_processed_block.empty())
   {
     // start up - we need to work out which of the blocks has been executed previously
 
-    if (GENESIS_DIGEST == previous_hash)
+    if (current_block_->IsGenesis())
     {
       // once we have got back to genesis then we need to start executing from the beginning
       return State::PRE_EXEC_BLOCK_VALIDATION;
@@ -424,7 +423,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
                       " merkle hash: ", common_parent->body.merkle_hash.ToHex());
 
       // this is a bad situation so the easiest solution is to revert back to genesis
-      execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
+      execution_manager_.SetLastProcessedBlock(Digest{});
       if (!storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT, 0))
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
@@ -912,7 +911,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
         dag_->RevertToEpoch(0);
       }
       storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT, 0);
-      execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
+      execution_manager_.SetLastProcessedBlock(Digest{});
     }
 
     // finally mark the block as invalid and purge it from the chain
@@ -1338,8 +1337,8 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
 
 void BlockCoordinator::Reset()
 {
-  last_executed_block_.ApplyVoid([](auto &digest) { digest = GENESIS_DIGEST; });
-  execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
+  last_executed_block_.ApplyVoid([](auto &digest) { digest = Digest{}; });
+  execution_manager_.SetLastProcessedBlock(Digest{});
   chain_.Reset();
 }
 
