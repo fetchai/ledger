@@ -1142,8 +1142,6 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
  */
 BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks)
 {
-  assert(!block->IsGenesis());
-
   MilliTimer myTimer("MainChain::InsertBlock", 500);
 
   if (block->body.hash.empty())
