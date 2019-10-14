@@ -184,8 +184,8 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<int32_t, 256> co
   n.Store(out);
   s << std::setprecision(std::numeric_limits<int32_t>::digits10);
   s << std::fixed;
-  s << std::hex << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3] << ", " << out[4] << ", "
-    << out[5] << ", " << out[6] << ", " << out[7];
+  s << std::hex << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3] << ", " << out[4]
+    << ", " << out[5] << ", " << out[6] << ", " << out[7];
 
   return s;
 }
@@ -197,7 +197,8 @@ inline VectorRegister<int32_t, 128> operator~(VectorRegister<int32_t, 128> const
 
 inline VectorRegister<int32_t, 256> operator~(VectorRegister<int32_t, 256> const &x)
 {
-  return VectorRegister<int32_t, 256>(_mm256_xor_si256(x.data(), _mm256_cmpeq_epi32(x.data(), x.data())));
+  return VectorRegister<int32_t, 256>(
+      _mm256_xor_si256(x.data(), _mm256_cmpeq_epi32(x.data(), x.data())));
 }
 
 inline VectorRegister<int32_t, 128> operator-(VectorRegister<int32_t, 128> const &x)
@@ -224,7 +225,7 @@ FETCH_ADD_OPERATOR(*, int32_t, 128, __m128i, _mm_mullo_epi32)
 FETCH_ADD_OPERATOR(>, int32_t, 128, __m128i, _mm_cmpgt_epi32)
 FETCH_ADD_OPERATOR(&, int32_t, 128, __m128i, _mm_and_si128)
 FETCH_ADD_OPERATOR(|, int32_t, 128, __m128i, _mm_or_si128)
-FETCH_ADD_OPERATOR(^, int32_t, 128, __m128i, _mm_xor_si128)
+FETCH_ADD_OPERATOR (^, int32_t, 128, __m128i, _mm_xor_si128)
 FETCH_ADD_OPERATOR(==, int32_t, 128, __m128i, _mm_cmpeq_epi32)
 
 FETCH_ADD_OPERATOR(+, int32_t, 256, __m256i, _mm256_add_epi32)
@@ -233,7 +234,7 @@ FETCH_ADD_OPERATOR(*, int32_t, 256, __m256i, _mm256_mullo_epi32)
 FETCH_ADD_OPERATOR(>, int32_t, 256, __m256i, _mm256_cmpgt_epi32)
 FETCH_ADD_OPERATOR(&, int32_t, 256, __m256i, _mm256_and_si256)
 FETCH_ADD_OPERATOR(|, int32_t, 256, __m256i, _mm256_or_si256)
-FETCH_ADD_OPERATOR(^, int32_t, 256, __m256i, _mm256_xor_si256)
+FETCH_ADD_OPERATOR (^, int32_t, 256, __m256i, _mm256_xor_si256)
 FETCH_ADD_OPERATOR(==, int32_t, 256, __m256i, _mm256_cmpeq_epi32)
 
 #undef FETCH_ADD_OPERATOR

@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/standard_functions/log.hpp"
 #include "math/trigonometry.hpp"
 #include "vectorise/math/standard_functions.hpp"
-#include "math/standard_functions/log.hpp"
 #include "vectorise/vectorise.hpp"
 
 #include "gtest/gtest.h"
@@ -104,7 +104,7 @@ using MyFPTypes =
                      fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
                      fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
                      fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
-                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>//,
+                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>  //,
                      /*fetch::vectorise::VectorRegister<double, 256>*/>;
 #else
 using MyTypes = ::testing::Types<fetch::vectorise::VectorRegister<float, 32>,
@@ -134,8 +134,8 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   {
     // We don't want to check overflows right now, so we pick random numbers, but well within the
     // type's limits
-    a[i]     = type(-i)*type((double(random()) / (double)(RAND_MAX)) *
-                (double)(fetch::math::numeric_max<type>()) / 2.0);
+    a[i]     = type(-i) * type((double(random()) / (double)(RAND_MAX)) *
+                           (double)(fetch::math::numeric_max<type>()) / 2.0);
     b[i]     = type((double(random()) / (double)(RAND_MAX)) *
                 (double)(fetch::math::numeric_max<type>()) / 2.0);
     sum[i]   = a[i] + b[i];
@@ -189,7 +189,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   using type       = typename TypeParam::type;
   using array_type = fetch::memory::SharedArray<type>;
 
-  std::size_t N = 20, offset = 2;
+  std::size_t            N = 20, offset = 2;
   alignas(32) array_type A(N), B(N), C(N), D(N), E(N);
   type sum{0}, partial_sum{0}, max_a{type(0)}, min_a{type(N)}, partial_max{0}, partial_min{type(N)};
 
@@ -295,15 +295,17 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
 {
   using type = typename TypeParam::type;
 
-  alignas(32) type PInf[TypeParam::E_BLOCK_COUNT], NInf[TypeParam::E_BLOCK_COUNT], NaN[TypeParam::E_BLOCK_COUNT], A[TypeParam::E_BLOCK_COUNT], B[TypeParam::E_BLOCK_COUNT], C[TypeParam::E_BLOCK_COUNT], D[TypeParam::E_BLOCK_COUNT];
+  alignas(32) type PInf[TypeParam::E_BLOCK_COUNT], NInf[TypeParam::E_BLOCK_COUNT],
+      NaN[TypeParam::E_BLOCK_COUNT], A[TypeParam::E_BLOCK_COUNT], B[TypeParam::E_BLOCK_COUNT],
+      C[TypeParam::E_BLOCK_COUNT], D[TypeParam::E_BLOCK_COUNT];
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     PInf[i] = type::POSITIVE_INFINITY;
     NInf[i] = type::NEGATIVE_INFINITY;
-    NaN[i] = type::NaN;
-    A[i] = fetch::math::Sin(type(-0.1) * type(i));
-    B[i] = fetch::math::Sin(type(0.1) * type(i + 1));
-    C[i] = A[i] + B[i];
+    NaN[i]  = type::NaN;
+    A[i]    = fetch::math::Sin(type(-0.1) * type(i));
+    B[i]    = fetch::math::Sin(type(0.1) * type(i + 1));
+    C[i]    = A[i] + B[i];
   }
   TypeParam vpos_inf{PInf};
   TypeParam vneg_inf{NInf};
@@ -315,7 +317,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   std::cout << "vpos_inf = " << vpos_inf << std::endl;
   std::cout << "vneg_inf = " << vneg_inf << std::endl;
   std::cout << "vnan = " << vnan << std::endl;
- 
+
   std::cout << "MAX = " << TypeParam::MaskMax() << std::endl;
   std::cout << "MIN = " << TypeParam::MaskMin() << std::endl;
   std::cout << "NaN != NaN" << std::endl;
@@ -333,9 +335,8 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   std::cout << "-inf < 0" << std::endl;
   EXPECT_TRUE(all_less_than(vneg_inf, TypeParam::_0()));
 
-
   VectorRegister<int32_t, TypeParam::E_VECTOR_SIZE> vtest_int(-1073709056);
-  VectorRegister<type, TypeParam::E_VECTOR_SIZE> vtest_fp(vtest_int.data());
+  VectorRegister<type, TypeParam::E_VECTOR_SIZE>    vtest_fp(vtest_int.data());
   std::cout << "vtest = " << vtest_int << std::endl;
   std::cout << "vtest = " << vtest_fp << std::endl;
   std::cout << "-inf < vtest = " << (vneg_inf < vtest_fp) << std::endl;
@@ -350,7 +351,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  auto vsum  = va + vb;
+  auto vsum = va + vb;
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
@@ -364,17 +365,17 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
-    A[i] = type::FP_MAX/2 + i;
-    B[i] = type::FP_MAX/2;
+    A[i] = type::FP_MAX / 2 + i;
+    B[i] = type::FP_MAX / 2;
     C[i] = A[i] + B[i];
   }
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_TRUE(type::IsStateOverflow());
   type::StateClear();
-  va = TypeParam(A);
-  vb = TypeParam(B);
-  vsum  = va + vb;
+  va   = TypeParam(A);
+  vb   = TypeParam(B);
+  vsum = va + vb;
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_TRUE(type::IsStateOverflow());
@@ -388,17 +389,17 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   type::StateClear();
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
-    A[i] = -type::FP_MAX/2 - i;
-    B[i] = -type::FP_MAX/2;
+    A[i] = -type::FP_MAX / 2 - i;
+    B[i] = -type::FP_MAX / 2;
     C[i] = A[i] + B[i];
   }
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_TRUE(type::IsStateOverflow());
   type::StateClear();
-  va = TypeParam(A);
-  vb = TypeParam(B);
-  vsum  = va + vb;
+  va   = TypeParam(A);
+  vb   = TypeParam(B);
+  vsum = va + vb;
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_TRUE(type::IsStateOverflow());
@@ -418,7 +419,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  vsum  = va + vpos_inf;
+  vsum = va + vpos_inf;
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
@@ -438,7 +439,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  vsum  = va + vneg_inf;
+  vsum = va + vneg_inf;
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
@@ -458,7 +459,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  vsum  = vpos_inf + vb;
+  vsum = vpos_inf + vb;
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
@@ -478,7 +479,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  vsum  = vneg_inf + vb;
+  vsum = vneg_inf + vb;
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
@@ -498,7 +499,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  vsum  = vpos_inf + vpos_inf;
+  vsum = vpos_inf + vpos_inf;
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
@@ -518,7 +519,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  vsum  = vneg_inf + vneg_inf;
+  vsum = vneg_inf + vneg_inf;
   EXPECT_FALSE(type::IsStateNaN());
   EXPECT_TRUE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
@@ -538,7 +539,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  vsum  = vpos_inf + vneg_inf;
+  vsum = vpos_inf + vneg_inf;
   EXPECT_TRUE(type::IsStateNaN());
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
@@ -561,7 +562,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  vsum  = vneg_inf + vpos_inf;
+  vsum = vneg_inf + vpos_inf;
   EXPECT_TRUE(type::IsStateNaN());
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
@@ -584,7 +585,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  vsum  = vneg_inf + vnan;
+  vsum = vneg_inf + vnan;
   EXPECT_TRUE(type::IsStateNaN());
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
@@ -607,7 +608,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());
   type::StateClear();
-  vsum  = vneg_inf + vnan;
+  vsum = vneg_inf + vnan;
   EXPECT_TRUE(type::IsStateNaN());
   EXPECT_FALSE(type::IsStateInfinity());
   EXPECT_FALSE(type::IsStateOverflow());

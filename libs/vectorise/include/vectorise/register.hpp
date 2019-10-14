@@ -137,6 +137,7 @@ public:
   {
     *ptr = data_;
   }
+
 private:
   type data_;
 };

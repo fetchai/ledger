@@ -184,10 +184,10 @@ TEST(FixedPointTest, Conversion_32_32)
   // Largest fractional closest to one, representable to a FixedPoint
   FixedPoint<32, 32> almost_one(0.9999999998);
   // Largest fractional closest to one, representable to a FixedPoint
-  FixedPoint<32, 32> largest_int(std::numeric_limits<int32_t>::max() -1);
+  FixedPoint<32, 32> largest_int(std::numeric_limits<int32_t>::max() - 1);
 
   // Smallest possible integer, increase by one, in order to allow for the fractional part.
-  FixedPoint<32, 32> smallest_int(std::numeric_limits<int32_t>::min() +2);
+  FixedPoint<32, 32> smallest_int(std::numeric_limits<int32_t>::min() + 2);
 
   // Largest possible Fixed Point number.
   FixedPoint<32, 32> largest_fixed_point = largest_int + almost_one;
@@ -626,7 +626,7 @@ TEST(FixedPointTest, Comparison_16_16)
   EXPECT_EQ(fp32_t::MIN_INT, 0x80020000);
   EXPECT_EQ(fp32_t::MAX, 0x7ffeffff);
   EXPECT_EQ(fp32_t::MIN, 0x80010001);
-  EXPECT_EQ(fp32_t::MAX_EXP.Data(), 0x000a65adL);  
+  EXPECT_EQ(fp32_t::MAX_EXP.Data(), 0x000a65adL);
   EXPECT_EQ(static_cast<int32_t>(fp32_t::MIN_EXP.Data()), static_cast<int32_t>(0xfff59a53L));
 }
 

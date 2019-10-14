@@ -198,7 +198,8 @@ inline VectorRegister<int64_t, 128> operator~(VectorRegister<int64_t, 128> const
 
 inline VectorRegister<int64_t, 256> operator~(VectorRegister<int64_t, 256> const &x)
 {
-  return VectorRegister<int64_t, 256>(_mm256_xor_si256(x.data(), _mm256_cmpeq_epi64(x.data(), x.data())));
+  return VectorRegister<int64_t, 256>(
+      _mm256_xor_si256(x.data(), _mm256_cmpeq_epi64(x.data(), x.data())));
 }
 
 inline VectorRegister<int64_t, 128> operator-(VectorRegister<int64_t, 128> const &x)
@@ -210,7 +211,6 @@ inline VectorRegister<int64_t, 256> operator-(VectorRegister<int64_t, 256> const
 {
   return VectorRegister<int64_t, 256>(_mm256_sub_epi64(_mm256_setzero_si256(), x.data()));
 }
-
 
 #define FETCH_ADD_OPERATOR(op, type, size, L, fnc)                                   \
   inline VectorRegister<type, size> operator op(VectorRegister<type, size> const &a, \
@@ -224,7 +224,7 @@ FETCH_ADD_OPERATOR(+, int64_t, 128, __m128i, _mm_add_epi64)
 FETCH_ADD_OPERATOR(-, int64_t, 128, __m128i, _mm_sub_epi64)
 FETCH_ADD_OPERATOR(&, int64_t, 128, __m128i, _mm_and_si128)
 FETCH_ADD_OPERATOR(|, int64_t, 128, __m128i, _mm_or_si128)
-FETCH_ADD_OPERATOR(^, int64_t, 128, __m128i, _mm_xor_si128)
+FETCH_ADD_OPERATOR (^, int64_t, 128, __m128i, _mm_xor_si128)
 FETCH_ADD_OPERATOR(==, int64_t, 128, __m128i, _mm_cmpeq_epi64)
 FETCH_ADD_OPERATOR(>, int64_t, 128, __m128i, _mm_cmpgt_epi64)
 
@@ -232,7 +232,7 @@ FETCH_ADD_OPERATOR(+, int64_t, 256, __m256i, _mm256_add_epi64)
 FETCH_ADD_OPERATOR(-, int64_t, 256, __m256i, _mm256_sub_epi64)
 FETCH_ADD_OPERATOR(&, int64_t, 256, __m256i, _mm256_and_si256)
 FETCH_ADD_OPERATOR(|, int64_t, 256, __m256i, _mm256_or_si256)
-FETCH_ADD_OPERATOR(^, int64_t, 256, __m256i, _mm256_xor_si256)
+FETCH_ADD_OPERATOR (^, int64_t, 256, __m256i, _mm256_xor_si256)
 FETCH_ADD_OPERATOR(==, int64_t, 256, __m256i, _mm256_cmpeq_epi64)
 FETCH_ADD_OPERATOR(>, int64_t, 256, __m256i, _mm256_cmpgt_epi64)
 

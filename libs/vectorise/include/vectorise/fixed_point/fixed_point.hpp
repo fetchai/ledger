@@ -77,7 +77,6 @@ struct TypeFromSize<64>
   static constexpr std::uint16_t decimals  = 9;
   static constexpr ValueType     tolerance = 0x200;                 // 0.00000012
   static constexpr ValueType     max_exp   = 0x000000157cd0e6e8LL;  // 21.48756259
-
 };
 
 // 32 bit implementation
@@ -153,7 +152,7 @@ public:
 
   static constexpr Type          SMALLEST_FRACTION{1};
   static constexpr Type          LARGEST_FRACTION{FRACTIONAL_MASK};
-  static constexpr Type          MAX_INT{((Type(FRACTIONAL_MASK >> 1) -1) << FRACTIONAL_BITS)};
+  static constexpr Type          MAX_INT{((Type(FRACTIONAL_MASK >> 1) - 1) << FRACTIONAL_BITS)};
   static constexpr Type          MIN_INT{-MAX_INT};
   static constexpr Type          MAX{MAX_INT | LARGEST_FRACTION};
   static constexpr Type          MIN{MIN_INT - LARGEST_FRACTION};
@@ -366,7 +365,7 @@ public:
   /////////////////////
 
   constexpr Type        Data() const;
-  constexpr Type        &Data();
+  constexpr Type &      Data();
   constexpr void        SetData(Type n) const;
   constexpr Type const *pointer() const;
   constexpr Type *      pointer();
@@ -573,11 +572,14 @@ FixedPoint<I, F> const FixedPoint<I, F>::FP_MAX{FixedPoint<I, F>::FromBase(Fixed
 template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::FP_MIN{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN)};
 template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::NaN{FixedPoint<I, F>::FromBase(Type(1) << (TOTAL_BITS -1) | FRACTIONAL_MASK)};
+FixedPoint<I, F> const FixedPoint<I, F>::NaN{
+    FixedPoint<I, F>::FromBase(Type(1) << (TOTAL_BITS - 1) | FRACTIONAL_MASK)};
 template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::POSITIVE_INFINITY{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MAX + FixedPoint<I, F>::_1.Data())};
+FixedPoint<I, F> const FixedPoint<I, F>::POSITIVE_INFINITY{
+    FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MAX + FixedPoint<I, F>::_1.Data())};
 template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::NEGATIVE_INFINITY{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN - FixedPoint<I, F>::_1.Data())};
+FixedPoint<I, F> const FixedPoint<I, F>::NEGATIVE_INFINITY{
+    FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN - FixedPoint<I, F>::_1.Data())};
 
 template <std::uint16_t I, std::uint16_t F>
 std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
@@ -670,7 +672,8 @@ constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsInteger<T> *)
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
-  } else if (CheckUnderflow(static_cast<NextType>(n)))
+  }
+  else if (CheckUnderflow(static_cast<NextType>(n)))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MIN;
@@ -1428,8 +1431,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator-=(FixedPoint<I, F> const 
       fp_state |= STATE_INFINITY;
       *this = NEGATIVE_INFINITY;
     }
-    else 
-    if (CheckOverflow(static_cast<NextType>(data_) - static_cast<NextType>(n.Data())))
+    else if (CheckOverflow(static_cast<NextType>(data_) - static_cast<NextType>(n.Data())))
     {
       fp_state |= STATE_OVERFLOW;
       data_ = MAX;
@@ -1479,8 +1481,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
     {
       // Normal number, return +/-∞ depending on the sign of n
       fp_state |= STATE_INFINITY;
-      *this = infinity((IsPosInfinity(*this) && n > _0) ||
-                       (IsNegInfinity(*this) && n < _0));
+      *this = infinity((IsPosInfinity(*this) && n > _0) || (IsNegInfinity(*this) && n < _0));
     }
   }
   else if (IsInfinity(n))
@@ -1495,8 +1496,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
     {
       // Normal number, return +/-∞ depending on the sign of *this
       fp_state |= STATE_INFINITY;
-      *this = infinity((*this > _0 && IsPosInfinity(n)) ||
-                       (*this < _0 && IsNegInfinity(n)));
+      *this = infinity((*this > _0 && IsPosInfinity(n)) || (*this < _0 && IsNegInfinity(n)));
     }
   }
   else
