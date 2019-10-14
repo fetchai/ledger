@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/execution_interface.hpp"
-#include "dmlf/execution_result.hpp"
+#include "dmlf/execution/execution_interface.hpp"
+#include "dmlf/execution/execution_result.hpp"
 #include "dmlf/execution_workload.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"

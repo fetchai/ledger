@@ -19,7 +19,7 @@
 #include "core/service_ids.hpp"
 #include "dmlf/remote_execution_host.hpp"
 #include "dmlf/remote_execution_protocol.hpp"
-#include "dmlf/execution_result.hpp"
+#include "dmlf/execution/execution_result.hpp"
 
 namespace fetch {
 namespace dmlf {

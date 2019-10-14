@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/execution_interface.hpp"
-#include "dmlf/execution_result.hpp"
+#include "dmlf/execution/execution_interface.hpp"
+#include "dmlf/execution/execution_result.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
