@@ -179,7 +179,7 @@ TEST(notarisation, notarise_blocks)
   BlockGenerator                                  generator(1, 1);
   for (uint16_t i = 0; i < 9; i++)
   {
-    auto          random_miner = rand() % committee_size;
+    auto          random_miner = static_cast<uint32_t>(rand()) % committee_size;
     BlockPtrConst previous     = nodes[random_miner]->chain.GetHeaviestBlock();
     blocks_to_sign.push_back(generator(previous));
     blocks_to_sign[i]->body.block_entropy.qualified = cabinet;
