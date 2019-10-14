@@ -328,7 +328,6 @@ inline VectorRegister<int64_t, 256> operator!=(VectorRegister<int64_t, 256> cons
                                                VectorRegister<int64_t, 256> const &b)
 {
   return ~(a == b);
->>>>>>> master
 }
 
 inline VectorRegister<int64_t, 128> operator<(VectorRegister<int64_t, 128> const &a,
