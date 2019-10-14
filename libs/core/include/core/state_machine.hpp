@@ -305,7 +305,7 @@ void StateMachine<S>::Execute()
     if (current_state_ != previous_state_)
     {
       // trigger the state change callback if configured
-      auto state_changed_callback{state_change_callback_.LockedRef()};
+      auto state_change_callback{state_change_callback_.LockedRef()};
       if (*state_change_callback)
       {
         (*state_change_callback)(current_state_, previous_state_);
