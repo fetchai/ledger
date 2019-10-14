@@ -43,7 +43,7 @@ using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_
 
 TYPED_TEST_CASE(SqueezeTest, BothTypes);
 
-TYPED_TEST(SqueezeTest, forward_test)
+TYPED_TEST(SqueezeTest, forward_1_6_1_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -73,7 +73,21 @@ TYPED_TEST(SqueezeTest, forward_test)
                                    fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(SqueezeTest, backward_test)
+TYPED_TEST(SqueezeTest, forward_throw_test)
+{
+  using TensorType = TypeParam;
+
+  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000");
+  data.Reshape({6});
+
+  fetch::ml::ops::Squeeze<TypeParam> op;
+
+  EXPECT_ANY_THROW(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TypeParam prediction({6});
+  EXPECT_ANY_THROW(op.Forward({std::make_shared<const TensorType>(data)}, prediction));
+}
+
+TYPED_TEST(SqueezeTest, backward_1_5_1_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -81,7 +95,7 @@ TYPED_TEST(SqueezeTest, backward_test)
   TensorType data = TensorType::FromString("1, -2, 4, -10, 100");
   data.Reshape({1, 5, 1});
   TensorType error = TensorType::FromString("1, 1, 1, 2, 0");
-  error.Reshape({5, 1});
+  error.Reshape({1, 5});
 
   auto shape = error.shape();
 
@@ -94,6 +108,32 @@ TYPED_TEST(SqueezeTest, backward_test)
   ASSERT_EQ(error_signal.at(0).shape().at(0), 1);
   ASSERT_EQ(error_signal.at(0).shape().at(1), 5);
   ASSERT_EQ(error_signal.at(0).shape().at(2), 1);
+
+  ASSERT_TRUE(error_signal.at(0).AllClose(error, fetch::math::function_tolerance<DataType>(),
+                                          fetch::math::function_tolerance<DataType>()));
+  fetch::math::state_clear<DataType>();
+}
+
+TYPED_TEST(SqueezeTest, backward_1_5_test)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+
+  TensorType data = TensorType::FromString("1, -2, 4, -10, 100");
+  data.Reshape({1, 5});
+  TensorType error = TensorType::FromString("1, 1, 1, 2, 0");
+  error.Reshape({5});
+
+  auto shape = error.shape();
+
+  fetch::ml::ops::Squeeze<TypeParam> op;
+
+  std::vector<TensorType> error_signal =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  ASSERT_EQ(error_signal.at(0).shape().size(), 2);
+  ASSERT_EQ(error_signal.at(0).shape().at(0), 1);
+  ASSERT_EQ(error_signal.at(0).shape().at(1), 5);
 
   ASSERT_TRUE(error_signal.at(0).AllClose(error, fetch::math::function_tolerance<DataType>(),
                                           fetch::math::function_tolerance<DataType>()));
