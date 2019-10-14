@@ -387,10 +387,17 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
 
   for (auto const &promise : promises)
   {
-    auto txs = promise->As<TxLayouts>();
+    try
+    {
+      auto txs = promise->As<TxLayouts>();
 
-    layouts.insert(layouts.end(), std::make_move_iterator(txs.begin()),
-                   std::make_move_iterator(txs.end()));
+      layouts.insert(layouts.end(), std::make_move_iterator(txs.begin()),
+                     std::make_move_iterator(txs.end()));
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store!");
+    }
   }
 
   return layouts;
