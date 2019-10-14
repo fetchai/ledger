@@ -60,8 +60,10 @@ public:
 
     return copyshare;
   }
+
   /**
-   * Squeeze removes dimensions with size 1
+   * Squeeze removes the first size 1 dimension encountered starting at the trailing edge.
+   * If no dimensions are size 1, it will throw.
    * @param inputs vector containing one tensor which is the input tensor to Squeeze
    * @return
    */
