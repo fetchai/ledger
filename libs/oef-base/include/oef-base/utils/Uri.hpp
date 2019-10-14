@@ -34,7 +34,7 @@ public:
   std::string proto;
   std::string host;
   std::string path;
-  uint16_t    port;
+  uint32_t    port;
   bool        valid;
 
   void diagnostic() const

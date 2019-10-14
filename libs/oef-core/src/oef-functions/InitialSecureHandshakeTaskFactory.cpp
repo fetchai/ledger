@@ -5,7 +5,7 @@
 #include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 #include "oef-messages/agent.hpp"
 
-void InitialSecureHandshakeTaskFactory::ProcessMessage(ConstCharArrayBuffer &data)
+void InitialSecureHandshakeTaskFactory::ProcessMessage(ConstCharArrayBuffer &)
 {
   // TODO(LR)
 }

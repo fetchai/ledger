@@ -26,6 +26,16 @@ void Endpoint<TXType>::async_write()
 {
   auto data = sendBuffer.GetDataBuffers();
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#endif
+
   int i = 0;
   for (auto &d : data)
   {
@@ -33,6 +43,14 @@ void Endpoint<TXType>::async_write()
                     " bytes on thr=", std::this_thread::get_id());
     ++i;
   }
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "run_sending: START");
 

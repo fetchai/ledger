@@ -22,7 +22,6 @@ struct mem_usage_result
 #include <mach/mach_init.h>
 #include <mach/mach_port.h>
 #include <mach/mach_traps.h>
-#include <mach/shared_memory_server.h>
 #include <mach/task.h>
 #include <mach/task_info.h>
 #include <mach/thread_act.h>
@@ -33,6 +32,24 @@ struct mem_usage_result
 #include <sys/types.h>
 #include <sys/vmmeter.h>
 //#include <mach/shared_region.h>
+//TODO move from shared_memory_server to shared_region
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-W#warnings"
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-W#warnings"
+#endif
+#include <mach/shared_memory_server.h>
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 mem_usage_result run_get_dynamic_proc_info(pid_t pid)
 {
@@ -75,7 +92,7 @@ mem_usage_result run_get_dynamic_proc_info(pid_t pid)
 }
 #endif
 
-mem_usage_result process_mem_usage(const std::string filename)
+mem_usage_result process_mem_usage(const std::string /*filename*/)
 {
   using std::ifstream;
   using std::ios_base;
@@ -140,10 +157,10 @@ ExitState MonitoringTask::run(void)
   {
     Gauge marker(yes);
     marker                          = 1;
-    Gauge("mt-core.gauge.vsize")    = r_self.vsize;
-    Gauge("mt-core.gauge.vsize.mb") = r_self.vsize / 1024 / 1024;
-    Gauge("mt-core.gauge.rss")      = r_self.rss;
-    Gauge("mt-core.gauge.rss.mb")   = r_self.rss / 1024 / 1024;
+    Gauge("mt-core.gauge.vsize")    = static_cast<std::size_t>(r_self.vsize);
+    Gauge("mt-core.gauge.vsize.mb") = static_cast<std::size_t>(r_self.vsize / 1024 / 1024);
+    Gauge("mt-core.gauge.rss")      = static_cast<std::size_t>(r_self.rss);
+    Gauge("mt-core.gauge.rss.mb")   = static_cast<std::size_t>(r_self.rss / 1024 / 1024);
   }
   else
   {

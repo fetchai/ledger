@@ -63,7 +63,7 @@ SearchUpdateTask::StateResult SearchUpdateTask::HandleResponse(void)
       FETCH_LOG_WARN(LOGGING_NAME, "  ", n);
     }
     auto answer = std::make_shared<OUT_PROTO>();
-    answer->set_answer_id(msg_id_);
+    answer->set_answer_id(static_cast<int32_t>(msg_id_));
     auto error = answer->mutable_oef_error();
     error->set_operation(fetch::oef::pb::Server_AgentMessage_OEFError::REGISTER_SERVICE);
     FETCH_LOG_WARN(LOGGING_NAME, "Sending error ", error, " ", agent_uri_);

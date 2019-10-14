@@ -52,9 +52,10 @@ protected:
 
 protected:
   std::shared_ptr<EndpointType> ep;
-  uint32_t                      connect_failures_;
 
   Uri                    uri;
   Core &                 core;
   const ConversationMap &conversationMap;
+
+  uint32_t                      connect_failures_;
 };

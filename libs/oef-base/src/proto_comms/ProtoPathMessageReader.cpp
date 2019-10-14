@@ -41,7 +41,7 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::CheckForMes
 
     if (chars.RemainingData() < head_size)
     {
-      needed = head_size - chars.RemainingData();
+      needed = static_cast<std::size_t>(head_size - chars.RemainingData());
       break;
     }
 
@@ -63,15 +63,16 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::CheckForMes
       break;
     }
 
-    if (chars.RemainingData() < body_size)
+    std::size_t remaining_size = static_cast<std::size_t>(chars.RemainingData());
+    if ( remaining_size < body_size)
     {
-      needed = body_size - chars.RemainingData();
+      needed = static_cast<std::size_t>(body_size - remaining_size);
       break;
     }
 
     TransportHeader leader;
 
-    auto         header_chars = ConstCharArrayBuffer(chars, chars.current + leader_size);
+    auto         header_chars = ConstCharArrayBuffer(chars, static_cast<uint32_t>(chars.current + leader_size));
     std::istream h_is(&header_chars);
     if (!leader.ParseFromIstream(&h_is))
     {
@@ -118,7 +119,7 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::CheckForMes
           uri.path = leader.uri();
         }
         onComplete(leader.status().success(), leader.id(), std::move(uri),
-                   ConstCharArrayBuffer(chars, chars.current + payload_size));
+                   ConstCharArrayBuffer(chars, static_cast<uint32_t>(chars.current + payload_size)));
       }
       else
       {

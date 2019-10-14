@@ -48,8 +48,8 @@ ProtoPathMessageSender::consumed_needed_pair ProtoPathMessageSender::CheckForSpa
       uint32_t leader_head_size  = sizeof(uint32_t);
       uint32_t payload_head_size = sizeof(uint32_t);
 
-      uint32_t payload_size = txq.front().second->ByteSize();
-      uint32_t leader_size  = leader.ByteSize();
+      auto payload_size = static_cast<uint32_t>(txq.front().second->ByteSize());
+      auto leader_size  = static_cast<uint32_t>(leader.ByteSize());
 
       uint32_t mesg_size = leader_head_size + leader_size + payload_head_size + payload_size;
       if (chars.RemainingSpace() < mesg_size)

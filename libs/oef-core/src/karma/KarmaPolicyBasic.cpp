@@ -20,7 +20,7 @@ void KarmaPolicyBasic::Account::BringUpToDate()
     KARMA old_karma = karma;
     TICKS tc        = tick_counter;
     TICKS diff      = tc - when;
-    KARMA new_karma = static_cast<KARMA>(std::min(karma + diff * tick_amounts, MAX_KARMA));
+    KARMA new_karma = static_cast<KARMA>(std::min(static_cast<unsigned long>(karma) + diff * tick_amounts, MAX_KARMA));
 
     // Write this as long as nothing has updated karma while we were thinking.
     if (karma.compare_exchange_strong(old_karma, new_karma, std::memory_order_seq_cst))

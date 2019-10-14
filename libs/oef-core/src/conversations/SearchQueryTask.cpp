@@ -61,7 +61,7 @@ SearchQueryTask::StateResult SearchQueryTask::HandleResponse(void)
   auto response = std::static_pointer_cast<IdentifierSequence>(conversation->GetReply(0));
 
   auto answer = std::make_shared<OUT_PROTO>();
-  answer->set_answer_id(msg_id_);
+  answer->set_answer_id(static_cast<int32_t>(msg_id_));
 
   if (!response->status().success())
   {

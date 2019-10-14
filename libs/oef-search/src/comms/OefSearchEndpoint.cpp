@@ -51,18 +51,18 @@ void OefSearchEndpoint::setup()
 
   auto myGroupId = GetIdentifier();
 
-  endpoint->SetOnCompleteHandler([myGroupId, myself_wp](bool success, unsigned long id, Uri uri,
+  endpoint->SetOnCompleteHandler([myGroupId, myself_wp](bool /*success*/, unsigned long id, Uri uri,
                                                         ConstCharArrayBuffer buffers) {
     if (auto myself_sp = myself_wp.lock())
     {
       Task::SetThreadGroupId(myGroupId);
       FETCH_LOG_INFO(LOGGING_NAME, "GOT DATA with path: ", uri.path, ", id: ", id);
-      uri.port = id;
+      uri.port = static_cast<uint32_t>(id);
       myself_sp->factory->ProcessMessageWithUri(uri, buffers);
     }
   });
 
-  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const &ec) {
+  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const &) {
     if (auto myself_sp = myself_wp.lock())
     {
       // myself_sp -> factory -> EndpointClosed();
@@ -87,6 +87,7 @@ void OefSearchEndpoint::setup()
       // myself_sp -> factory.reset();
       Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
     }
+    FETCH_LOG_INFO(LOGGING_NAME, "Proto error: ", message);
   });
 }
 

@@ -30,7 +30,7 @@ bool OutboundConversationWorkerTask::connect()
     ep->connect(uri, core);
 
     ep->SetOnCompleteHandler(
-        [this](bool success, unsigned long id, Uri uri_, ConstCharArrayBuffer buffer) {
+        [this](bool /*success*/, unsigned long id, Uri /*uri*/, ConstCharArrayBuffer buffer) {
           FETCH_LOG_INFO(LOGGING_NAME, "complete message ", id);
 
           auto iter = conversationMap.find(id);
@@ -64,7 +64,7 @@ bool OutboundConversationWorkerTask::connect()
   return false;
 }
 
-WorkloadProcessed OutboundConversationWorkerTask::process(WorkloadP workload, WorkloadState state)
+WorkloadProcessed OutboundConversationWorkerTask::process(WorkloadP workload, WorkloadState /*state*/)
 {
   if (connect_failures_ > CONNECT_FAILURE_LIMIT)
   {
@@ -83,7 +83,7 @@ WorkloadProcessed OutboundConversationWorkerTask::process(WorkloadP workload, Wo
 
   FETCH_LOG_INFO(LOGGING_NAME, "Send initiator...");
   Uri uri(workload->uri_);
-  uri.port  = workload->ident_;
+  uri.port  = static_cast<uint32_t>(workload->ident_);
   auto data = std::make_pair(uri, workload->proto_);
   ep->send(data);
   FETCH_LOG_INFO(LOGGING_NAME, "Starting search ep send loop...");

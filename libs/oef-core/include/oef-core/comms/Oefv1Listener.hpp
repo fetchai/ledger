@@ -19,7 +19,7 @@ class Oefv1Listener : public IOefListener<IOefTaskFactory<OefAgentEndpoint>, Oef
 public:
   using ConfigMap = std::unordered_map<std::string, std::string>;
 
-  Oefv1Listener(std::shared_ptr<Core> core, int port, IKarmaPolicy *karmaPolicy,
+  Oefv1Listener(std::shared_ptr<Core> core, unsigned short port, IKarmaPolicy *karmaPolicy,
                 ConfigMap endpointConfig);
   virtual ~Oefv1Listener()
   {
