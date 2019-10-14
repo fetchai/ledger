@@ -23,6 +23,7 @@
 #include "vm_modules/core/structured_data.hpp"
 #include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/crypto/sha256.hpp"
+#include "vm_modules/ledger/context.hpp"
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/math/exp.hpp"
 #include "vm_modules/math/math.hpp"
@@ -116,6 +117,12 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
   if ((MOD_ML & enabled) != 0u)
   {
     ml::BindML(*module);
+  }
+
+  // ledger modules
+  if ((MOD_LEDGER & enabled) != 0u)
+  {
+    vm_modules::ledger::BindLedgerContext(*module);
   }
 
   return module;

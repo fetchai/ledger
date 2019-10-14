@@ -57,7 +57,7 @@ public:
   struct Signatory
   {
     Identity       identity;   ///< The identity of the signer (public key)
-    Address        address;    ///< The address corresponding to the address
+    Address        address;    ///< The address corresponding to the identity
     ConstByteArray signature;  ///< The signature of the tx payload from the signer
   };
 

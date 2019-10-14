@@ -231,6 +231,9 @@ Module::Module()
       .CreateInstantiationType<Array<Ptr<String>>>()
       .CreateInstantiationType<Array<Ptr<Address>>>();
 
+  CreateFreeFunction("arrayTest",
+                     [](VM * /*vm*/, Ptr<Array<Ptr<Address>>> const & /*addresses*/) -> void {});
+
   GetClassInterface<String>()
       .CreateSerializeDefaultConstructor(
           [](VM *vm, TypeId) -> Ptr<String> { return Ptr<String>{new String(vm, "")}; })

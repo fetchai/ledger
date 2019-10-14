@@ -773,13 +773,13 @@ void Analyser::AnnotateForStatement(BlockNodePtr const &for_statement_node)
     {
       if ((count == 3) && (nodes[1]->type != nodes[2]->type))
       {
-        AddError(nodes[1]->line, "incompatible types");
+        AddError(nodes[1]->line, "incompatible types" + std::to_string(__LINE__));
         ++problems;
       }
     }
     else
     {
-      AddError(nodes[0]->line, "incompatible types");
+      AddError(nodes[0]->line, "incompatible types" + std::to_string(__LINE__));
       ++problems;
     }
   }
@@ -921,7 +921,7 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
     {
       if (!ConvertInitialiserList(expression_node, type_node->type))
       {
-        AddError(type_node->line, "incompatible types");
+        AddError(type_node->line, "incompatible types" + std::to_string(__LINE__));
         return;
       }
     }
@@ -929,7 +929,9 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
     {
       if (type_node->type != expression_node->type)
       {
-        AddError(type_node->line, "incompatible types");
+        AddError(type_node->line,
+                 "incompatible types : attempt to assign " + expression_node->type->name +
+                     " in to " + type_node->type->name + " (" + std::to_string(__LINE__) + ")");
         return;
       }
     }
@@ -977,7 +979,7 @@ void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
     {
       if (!ConvertInitialiserList(expression_node, function_->return_type))
       {
-        AddError(expression_node->line, "incompatible types");
+        AddError(expression_node->line, "incompatible types" + std::to_string(__LINE__));
         return;
       }
     }
@@ -1051,21 +1053,21 @@ bool Analyser::AnnotateAssignOp(ExpressionNodePtr const &node)
   {
     if (!ConvertInitialiserList(rhs, lhs->type))
     {
-      AddError(node->line, "incompatible types");
+      AddError(node->line, "incompatible types" + std::to_string(__LINE__));
       return false;
     }
   }
   else if (rhs->type->IsVoid())
   {
     // Can't assign from a function with no return value
-    AddError(node->line, "incompatible types");
+    AddError(node->line, "incompatible types" + std::to_string(__LINE__));
     return false;
   }
   else if (!rhs->type->IsNull())
   {
     if (lhs->type != rhs->type)
     {
-      AddError(node->line, "incompatible types");
+      AddError(node->line, "incompatible types" + std::to_string(__LINE__));
       return false;
     }
   }
@@ -1074,7 +1076,7 @@ bool Analyser::AnnotateAssignOp(ExpressionNodePtr const &node)
     if (lhs->type->IsPrimitive())
     {
       // Can't assign null to a primitive type
-      AddError(node->line, "incompatible types");
+      AddError(node->line, "incompatible types" + std::to_string(__LINE__));
       return false;
     }
     // Convert the null type to the correct type
@@ -1478,7 +1480,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
       {
         if (!ConvertInitialiserList(rhs, lhs->type))
         {
-          AddError(node->line, "incompatible types");
+          AddError(node->line, "incompatible types" + std::to_string(__LINE__));
           return false;
         }
       }
@@ -1486,14 +1488,14 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
       {
         if (!ConvertInitialiserList(lhs, rhs->type))
         {
-          AddError(node->line, "incompatible types");
+          AddError(node->line, "incompatible types" + std::to_string(__LINE__));
           return false;
         }
       }
 
       if (lhs->type != rhs->type)
       {
-        AddError(node->line, "incompatible types");
+        AddError(node->line, "incompatible types" + std::to_string(__LINE__));
         return false;
       }
       bool const enabled = IsOperatorEnabled(lhs->type, op);
@@ -1508,7 +1510,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
       if (lhs_is_primitive && lhs->node_kind != NodeKind::InitialiserList)
       {
         // unable to compare LHS primitive type to RHS null
-        AddError(node->line, "incompatible types");
+        AddError(node->line, "incompatible types" + std::to_string(__LINE__));
         return false;
       }
       // Convert the RHS null type to the correct type
@@ -1523,7 +1525,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
       if (rhs_is_primitive && rhs->node_kind != NodeKind::InitialiserList)
       {
         // unable to compare LHS null to RHS primitive type
-        AddError(node->line, "incompatible types");
+        AddError(node->line, "incompatible types" + std::to_string(__LINE__));
         return false;
       }
       // Convert the LHS null type to the correct type
@@ -1557,7 +1559,7 @@ bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const &node)
   {
     if (!ConvertInitialiserList(rhs, lhs->type))
     {
-      AddError(node->line, "incompatible types");
+      AddError(node->line, "incompatible types" + std::to_string(__LINE__));
       return false;
     }
   }
@@ -1565,13 +1567,13 @@ bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const &node)
   {
     if (!ConvertInitialiserList(lhs, rhs->type))
     {
-      AddError(node->line, "incompatible types");
+      AddError(node->line, "incompatible types" + std::to_string(__LINE__));
       return false;
     }
   }
   if (lhs->type != rhs->type)
   {
-    AddError(node->line, "incompatible types");
+    AddError(node->line, "incompatible types" + std::to_string(__LINE__));
     return false;
   }
   if (!IsOperatorEnabled(lhs->type, op))
@@ -2108,12 +2110,12 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
   Operator const op = GetOperator(node->node_kind);
   if (lhs->type->IsVoid() || lhs->type->IsNull())
   {
-    AddError(node->line, "incompatible types");
+    AddError(node->line, "incompatible types" + std::to_string(__LINE__));
     return false;
   }
   if (rhs->type->IsVoid() || rhs->type->IsNull())
   {
-    AddError(node->line, "incompatible types");
+    AddError(node->line, "incompatible types" + std::to_string(__LINE__));
     return false;
   }
   bool const lhs_is_primitive     = lhs->type->IsPrimitive();
@@ -2139,7 +2141,7 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
         {
           if (!ConvertInitialiserList(lhs, rhs->type))
           {
-            AddError(node->line, "incompatible types");
+            AddError(node->line, "incompatible types" + std::to_string(__LINE__));
             return false;
           }
         }
@@ -2167,7 +2169,7 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
         {
           if (!ConvertInitialiserList(rhs, lhs->type))
           {
-            AddError(node->line, "incompatible types");
+            AddError(node->line, "incompatible types" + std::to_string(__LINE__));
             return false;
           }
         }
@@ -2192,7 +2194,7 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
       }
     }
   }
-  AddError(node->line, "incompatible types");
+  AddError(node->line, "incompatible types" + std::to_string(__LINE__));
   return false;
 }
 
