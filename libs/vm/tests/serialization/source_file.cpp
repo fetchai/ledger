@@ -38,9 +38,9 @@ function main()
 endfunction
 )";
 
-const std::string GBY_WORLD_ETCH = R"(
+const std::string GBYE_WORLD_ETCH = R"(
 function main()
-  printLn("GoodBy world!!");
+  printLn("GoodBye world!!");
 endfunction
 )";
 
@@ -54,17 +54,17 @@ public:
   SourceFile        source_file_in, source_file_out;
   SourceFiles       source_file_s_in, source_file_s_out;
 
-  void SerializeFrom(std::string filename, std::string source)
+  void SerializeFrom(std::string const &filename, std::string const &source)
   {
-    source_file_in = SourceFile(std::move(filename), std::move(source));
+    source_file_in = SourceFile(filename, source);
     serializer << source_file_in;
     deserializer = MsgPackSerializer(serializer.data());
     deserializer >> source_file_out;
   }
 
-  void SerializeFrom(std::vector<SourceFile> source_files)
+  void SerializeFrom(std::vector<SourceFile> const &source_files)
   {
-    source_file_s_in = std::move(source_files);
+    source_file_s_in = source_files;
     serializer << source_file_s_in;
     deserializer = MsgPackSerializer(serializer.data());
     deserializer >> source_file_s_out;
@@ -77,13 +77,13 @@ TEST_F(SourceFileSerialization, source_file_single)
   SerializeFrom(filename, HELLO_WORLD_ETCH);
   ASSERT_EQ(source_file_out.filename, filename);
   ASSERT_EQ(source_file_out.source, HELLO_WORLD_ETCH);
-  ASSERT_NE(source_file_out.source, GBY_WORLD_ETCH);
+  ASSERT_NE(source_file_out.source, GBYE_WORLD_ETCH);
 }
 
 TEST_F(SourceFileSerialization, source_file_vector)
 {
   std::vector<SourceFile> source_files{SourceFile{"hw.etch", HELLO_WORLD_ETCH},
-                                       SourceFile{"bw.etch", GBY_WORLD_ETCH}};
+                                       SourceFile{"bw.etch", GBYE_WORLD_ETCH}};
   SerializeFrom(source_files);
   std::size_t i = 0;
   for (auto &source_file : source_files)
