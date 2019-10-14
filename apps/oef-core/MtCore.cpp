@@ -87,7 +87,7 @@ std::string prometheusUpThatNamingString(const std::string &name)
     case 'z':
       if (upshift)
       {
-        r += std::string(1, ::toupper(c));
+        r += std::string(1, static_cast<char>(::toupper(c)));
         upshift=false;
         break;
       }
