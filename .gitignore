@@ -23,6 +23,7 @@ docker_ccache/
 *~
 *.swp
 *.swo
+*.swn
 .idea/
 *.osm
 tags
