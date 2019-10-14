@@ -66,7 +66,7 @@ public:
   ~BitVector() = default;
 
   BitVector &operator=(BitVector &&) = default;
-  BitVector &operator                =(BitVector const &that);
+  BitVector &operator                =(BitVector const &other);
 
   void Resize(std::size_t bit_size);
 
