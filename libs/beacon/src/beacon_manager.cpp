@@ -88,7 +88,7 @@ std::vector<BeaconManager::Coefficient> BeaconManager::GetCoefficients()
   std::vector<Coefficient> coefficients;
   for (uint32_t k = 0; k <= polynomial_degree_; k++)
   {
-    coefficients.push_back(C_ik[cabinet_index_][k]);
+    coefficients.emplace_back(C_ik[cabinet_index_][k]);
   }
   return coefficients;
 }
