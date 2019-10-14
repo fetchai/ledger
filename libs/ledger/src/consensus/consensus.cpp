@@ -24,8 +24,6 @@
 #include <random>
 #include <utility>
 
-namespace {
-
 /**
  * Consensus enforcement class.
  *
@@ -57,6 +55,8 @@ namespace {
  * - signing threshold       , (1/2)+1 of the cabinet
  * - confirmation threshold  , set to signing threshold
  */
+
+namespace {
 
 constexpr char const *LOGGING_NAME = "Consensus";
 
