@@ -162,9 +162,9 @@ template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance,
                                       S (C::*func)(S /*current*/, S /*previous*/))
 {
-  callbacks_.ApplyVoid([func, instance, state](auto &callbacks) {
-    callbacks[state] = [func, instance](S state, S prev) { return (instance->*func)(state, prev); };
-  });
+  (*callbacks_.LockedRef())[state] = [func, instance](S state, S prev) {
+    return (instance->*func)(state, prev);
+  };
 }
 
 /**
@@ -180,12 +180,10 @@ template <typename S>
 template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)(S /*current*/))
 {
-  callbacks_.ApplyVoid([func, instance, state](auto &callbacks) {
-    callbacks[state] = [func, instance](S state, S prev) {
-      FETCH_UNUSED(prev);
-      return (instance->*func)(state);
-    };
-  });
+  (*callbacks_.LockedRef())[state] = [func, instance](S state, S prev) {
+    FETCH_UNUSED(prev);
+    return (instance->*func)(state);
+  };
 }
 
 /**
@@ -201,13 +199,11 @@ template <typename S>
 template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)())
 {
-  callbacks_.ApplyVoid([func, instance, state](auto &callbacks) {
-    callbacks[state] = [func, instance](S state, S prev) {
-      FETCH_UNUSED(state);
-      FETCH_UNUSED(prev);
-      return (instance->*func)();
-    };
-  });
+  (*callbacks_.LockedRef())[state] = [func, instance](S state, S prev) {
+    FETCH_UNUSED(state);
+    FETCH_UNUSED(prev);
+    return (instance->*func)();
+  };
 }
 
 /**
@@ -218,10 +214,9 @@ void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)())
 template <typename S>
 void StateMachine<S>::Reset()
 {
-  callbacks_.ApplyVoid([](auto &callbacks) { callbacks.clear(); });
+  callbacks_.LockedRef()->clear();
 
-  state_change_callback_.ApplyVoid(
-      [](auto &state_change_callback) { state_change_callback = StateChangeCallback{}; });
+  *state_change_callback_.LockedRef() = StateChangeCallback{};
 }
 
 /**
@@ -233,8 +228,7 @@ void StateMachine<S>::Reset()
 template <typename S>
 void StateMachine<S>::OnStateChange(StateChangeCallback cb)
 {
-  state_change_callback_.ApplyVoid(
-      [&cb](auto &state_change_callback) { state_change_callback = std::move(cb); });
+  *state_change_callback_.LockedRef() = std::move(cb);
 }
 
 /**
@@ -295,31 +289,29 @@ bool StateMachine<S>::IsReadyToExecute() const
 template <typename S>
 void StateMachine<S>::Execute()
 {
-  callbacks_.ApplyVoid([this](auto &callbacks) {
-    // iterate over the current state event callback map
-    auto it = callbacks.find(current_state_);
-    if (it != callbacks.end())
+  auto callbacks{callbacks_.LockedRef()};
+  // iterate over the current state event callback map
+  auto it = callbacks->find(current_state_);
+  if (it != callbacks->end())
+  {
+    // execute the state handler
+    S const next_state = it->second(current_state_, previous_state_);
+
+    // perform the state updates
+    previous_state_ = current_state_.load();
+    current_state_  = next_state;
+
+    // detect a state change
+    if (current_state_ != previous_state_)
     {
-      // execute the state handler
-      S const next_state = it->second(current_state_, previous_state_);
-
-      // perform the state updates
-      previous_state_ = current_state_.load();
-      current_state_  = next_state;
-
-      // detect a state change
-      if (current_state_ != previous_state_)
+      // trigger the state change callback if configured
+      auto state_changed_callback{state_change_callback_.LockedRef()};
+      if (*state_change_callback)
       {
-        // trigger the state change callback if configured
-        state_change_callback_.ApplyVoid([this](auto &state_change_callback) {
-          if (state_change_callback)
-          {
-            state_change_callback(current_state_, previous_state_);
-          }
-        });
+        (*state_change_callback)(current_state_, previous_state_);
       }
     }
-  });
+  }
 }
 
 /**

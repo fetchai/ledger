@@ -124,14 +124,10 @@ public:
           0, ByteArrayType(std::string("No context for HasLock.")));
     }
 
-    bool has_lock = false;
-    lock_status_.ApplyVoid([&context, &has_lock](LockStatus const &status) {
-      has_lock = (status.is_locked && (status.client == context.sender_address));
-    });
-
     has_lock_count_->increment();
 
-    return has_lock;
+    auto status{lock_status_.LockedCRef()};
+    return status->is_locked && status->client == context.sender_address;
   }
 
   bool LockResource(CallContext const &context)
@@ -144,15 +140,16 @@ public:
     }
 
     // attempt to lock this shard
-    bool success = false;
-    lock_status_.ApplyVoid([&context, &success](LockStatus &status) {
-      if (!status.is_locked)
+    bool success{false};
+    {
+      auto status{lock_status_.LockedRef()};
+      if (!status->is_locked)
       {
-        status.is_locked = true;
-        status.client    = context.sender_address;
-        success          = true;
+        status->is_locked = true;
+        status->client    = context.sender_address;
+        success           = true;
       }
-    });
+    }
 
     // print an error message on failure
     if (!success)
@@ -176,14 +173,15 @@ public:
 
     // attempt to unlock this shard
     bool success = false;
-    lock_status_.ApplyVoid([&context, &success](LockStatus &status) {
-      if (status.is_locked && (status.client == context.sender_address))
+    {
+      auto status{lock_status_.LockedRef()};
+      if (status->is_locked && (status->client == context.sender_address))
       {
-        status.is_locked = false;
-        status.client    = Identifier{};
-        success          = true;
+        status->is_locked = false;
+        status->client    = Identifier{};
+        success           = true;
       }
-    });
+    }
 
     if (!success)
     {

@@ -28,11 +28,39 @@
 namespace fetch {
 
 template <typename T, typename M = std::mutex>
-class Waitable
+class Waitable : Protected<T, M>
 {
-private:
+  using ProtectedPayload = Protected<T, M>;
+  using ProtectedPayload::mutex_;
+  using ProtectedPayload::payload_;
+
   mutable std::condition_variable condition_{};
-  Protected<T, M>                 protected_payload_;
+
+  template <class U>
+  struct Ref : public ProtectedPayload::template Ref<U>
+  {
+    using Parent    = typename ProtectedPayload::template Ref<U>;
+    using Type      = U;
+    using ConstType = std::add_const_t<U>;
+
+    std::condition_variable &condition_;
+
+    constexpr Ref(std::condition_variable &condition, M &mutex, U &payload)
+      : Parent(mutex, payload)
+      , condition_(condition)
+    {}
+
+    friend class Waitable<T, M>;
+
+  public:
+    ~Ref()
+    {
+      condition_.notify_all();
+    }
+  };
+
+  using reference       = Ref<T>;
+  using const_reference = Ref<std::add_const_t<T>>;
 
 public:
   template <typename... Args>
@@ -44,45 +72,53 @@ public:
   Waitable &operator=(Waitable const &) = delete;
   Waitable &operator=(Waitable &&) = delete;
 
+  constexpr reference LockedRef()
+  {
+    return {condition_, mutex_, payload_};
+  }
+  constexpr const_reference LockedRef() const
+  {
+    return {condition_, mutex_, payload_};
+  }
+  constexpr const_reference LockedCRef() const
+  {
+    return {condition_, mutex_, payload_};
+  }
+
   template <typename Handler>
   void ApplyVoid(Handler &&handler)
   {
-    protected_payload_.ApplyVoid([this, handler](auto &payload) {
-      handler(payload);
-      condition_.notify_all();
-    });
+    auto payload{ProtectedPayload::LockedRef()};
+    handler(*payload);
+    condition_.notify_all();
   }
 
   template <typename Handler>
   void ApplyVoid(Handler &&handler) const
   {
-    protected_payload_.ApplyVoid([this, handler](auto const &payload) {
-      handler(payload);
-      condition_.notify_all();
-    });
+    auto payload{ProtectedPayload::LockedRef()};
+    handler(*payload);
+    condition_.notify_all();
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler) -> decltype(protected_payload_.Apply(handler))
+  auto Apply(Handler &&handler)
   {
-    return protected_payload_.Apply([this, handler](auto &payload) -> decltype(handler(payload)) {
-      auto result = handler(payload);
-      condition_.notify_all();
+    auto payload{ProtectedPayload::LockedRef()};
+    auto result = handler(*payload);
+    condition_.notify_all();
 
-      return result;
-    });
+    return result;
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler) const -> decltype(protected_payload_.Apply(handler))
+  auto Apply(Handler &&handler) const
   {
-    return protected_payload_.Apply(
-        [this, handler](auto const &payload) -> decltype(handler(payload)) {
-          auto result = handler(payload);
-          condition_.notify_all();
+    auto payload{ProtectedPayload::LockedRef()};
+    auto result = handler(*payload);
+    condition_.notify_all();
 
-          return result;
-        });
+    return result;
   }
 
   template <typename Predicate>
@@ -94,17 +130,16 @@ public:
 template <typename T, typename M>
 template <typename... Args>
 Waitable<T, M>::Waitable(Args &&... args)
-  : protected_payload_{std::forward<Args>(args)...}
+  : ProtectedPayload(std::forward<Args>(args)...)
 {}
 
 template <typename T, typename M>
 template <typename Predicate>
 void Waitable<T, M>::Wait(Predicate &&predicate) const
 {
-  std::unique_lock<M> lock{protected_payload_.mutex_};
+  std::unique_lock<M> lock{mutex_};
 
-  condition_.wait(lock,
-                  [this, predicate]() -> bool { return predicate(protected_payload_.payload_); });
+  condition_.wait(lock, [this, predicate]() -> bool { return predicate(payload_); });
 }
 
 template <typename T, typename M>
@@ -112,11 +147,10 @@ template <typename Predicate, typename R, typename P>
 bool Waitable<T, M>::Wait(Predicate &&                       predicate,
                           std::chrono::duration<R, P> const &max_wait_time) const
 {
-  std::unique_lock<M> lock{protected_payload_.mutex_};
+  std::unique_lock<M> lock{mutex_};
 
-  return condition_.wait_for(lock, max_wait_time, [this, predicate]() -> bool {
-    return predicate(protected_payload_.payload_);
-  });
+  return condition_.wait_for(lock, max_wait_time,
+                             [this, predicate]() -> bool { return predicate(payload_); });
 }
 
 }  // namespace fetch

@@ -137,15 +137,14 @@ void ThreadPoolImplementation::Start()
 
   // start all the threads
   {
-    threads_.ApplyVoid([this](auto &threads) {
-      detailed_assert(threads.empty());
+    auto threads{threads_.LockedRef()};
+    detailed_assert(threads->empty());
 
-      for (std::size_t thread_idx = 0; thread_idx < max_threads_; ++thread_idx)
-      {
-        threads.emplace_back(
-            std::make_shared<std::thread>([this, thread_idx]() { this->ProcessLoop(thread_idx); }));
-      }
-    });
+    for (std::size_t thread_idx = 0; thread_idx < max_threads_; ++thread_idx)
+    {
+      threads->emplace_back(
+          std::make_shared<std::thread>([this, thread_idx]() { this->ProcessLoop(thread_idx); }));
+    }
   }
 
   // wait for the threads to start
@@ -175,50 +174,50 @@ void ThreadPoolImplementation::Start()
  */
 void ThreadPoolImplementation::Stop()
 {
-  threads_.ApplyVoid([this](auto &threads) {
-    // We have made the design decision that we will not allow pooled work to stop the thread pool.
-    // While strictly not necessary, this has been done as a guard against desired behaviour. If
-    // this assumption should prove to be invalid in the future removing this check here should
-    // result in full functioning code
-    for (auto &thread : threads)
+  auto threads{threads_.LockedRef()};
+
+  // We have made the design decision that we will not allow pooled work to stop the thread pool.
+  // While strictly not necessary, this has been done as a guard against desired behaviour. If
+  // this assumption should prove to be invalid in the future removing this check here should
+  // result in full functioning code
+  for (auto &thread : *threads)
+  {
+    if (std::this_thread::get_id() == thread->get_id())
     {
-      if (std::this_thread::get_id() == thread->get_id())
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Thread pools must not be killed by a thread they own.");
-        return;
-      }
+      FETCH_LOG_ERROR(LOGGING_NAME, "Thread pools must not be killed by a thread they own.");
+      return;
     }
+  }
 
-    // signal to all the working threads that they should immediately stop all further work
-    shutdown_ = true;
-    future_work_.Abort();
-    idle_work_.Abort();
-    work_.Abort();
+  // signal to all the working threads that they should immediately stop all further work
+  shutdown_ = true;
+  future_work_.Abort();
+  idle_work_.Abort();
+  work_.Abort();
 
+  {
+    // kick all the threads to start wake and
+    FETCH_LOCK(idle_mutex_);
+    work_available_.notify_all();
+  }
+
+  // wait for all the threads to conclude
+  for (auto &thread : *threads)
+  {
+    // do not join ourselves
+    if (std::this_thread::get_id() != thread->get_id())
     {
-      // kick all the threads to start wake and
-      FETCH_LOCK(idle_mutex_);
-      work_available_.notify_all();
+      thread->join();
     }
+  }
 
-    // wait for all the threads to conclude
-    for (auto &thread : threads)
-    {
-      // do not join ourselves
-      if (std::this_thread::get_id() != thread->get_id())
-      {
-        thread->join();
-      }
-    }
+  // delete all the thread instances
+  threads->clear();
 
-    // delete all the thread instances
-    threads.clear();
-
-    // clear all the work items inside the respective queues
-    future_work_.Clear();
-    idle_work_.Clear();
-    work_.Clear();
-  });
+  // clear all the work items inside the respective queues
+  future_work_.Clear();
+  idle_work_.Clear();
+  work_.Clear();
 }
 
 /**

@@ -44,22 +44,21 @@ Reactor::Reactor(std::string name)
 
 bool Reactor::Attach(WeakRunnable runnable)
 {
-  bool success{false};
-
   // convert to concrete runnable
   auto concrete_runnable = runnable.lock();
-  if (concrete_runnable)
-  {
-    success = work_map_.Apply([&concrete_runnable, &runnable](auto &work_map) -> bool {
-      // attempt to insert the element into the map
-      auto const result = work_map.insert(std::make_pair(concrete_runnable.get(), runnable));
 
-      // signal success if the insertion was successful
-      return result.second;
-    });
+  if (!concrete_runnable)
+  {
+    return false;
   }
 
-  return success;
+  auto work_map{work_map_.LockedRef()};
+
+  // attempt to insert the element into the map
+  auto const result = work_map->insert(std::make_pair(concrete_runnable.get(), runnable));
+
+  // signal success if the insertion was successful
+  return result.second;
 }
 
 bool Reactor::Attach(std::vector<WeakRunnable> runnables)
@@ -80,8 +79,7 @@ bool Reactor::Attach(std::vector<WeakRunnable> runnables)
 
 bool Reactor::Detach(Runnable const &runnable)
 {
-  return work_map_.Apply(
-      [&runnable](auto &work_map) -> bool { return work_map.erase(&runnable) > 0; });
+  return work_map_.LockedRef()->erase(&runnable) > 0;
 }
 
 void Reactor::Start()
@@ -114,7 +112,7 @@ void Reactor::StopWorker()
 
   if (worker_)
   {
-    worker_->ApplyVoid([](auto &worker) { worker.join(); });
+    worker_->LockedRef()->join();
     worker_.reset();
   }
 }
@@ -131,33 +129,33 @@ void Reactor::Monitor()
     // Step 1. If we have run out of work to execute then gather all the runnables that are ready
     if (work_queue.empty())
     {
-      work_map_.ApplyVoid([&work_queue](auto &work_map) {
-        // loop through and evaluate the map
-        auto it = work_map.begin();
-        while (it != work_map.end())
+      auto work_map{work_map_.LockedRef()};
+
+      // loop through and evaluate the map
+      auto it = work_map->begin();
+      while (it != work_map->end())
+      {
+        // attempt to lock the runnable
+        auto concrete_runnable = it->second.lock();
+
+        if (concrete_runnable)
         {
-          // attempt to lock the runnable
-          auto concrete_runnable = it->second.lock();
-
-          if (concrete_runnable)
+          // evaluate if the runnable is ready to execute, if it is then add it to the work queue
+          if (concrete_runnable->IsReadyToExecute())
           {
-            // evaluate if the runnable is ready to execute, if it is then add it to the work queue
-            if (concrete_runnable->IsReadyToExecute())
-            {
-              work_queue.emplace_back(it->second);
-            }
+            work_queue.emplace_back(it->second);
+          }
 
-            // advance to the next element in the map
-            ++it;
-          }
-          else
-          {
-            // the lifetime of the runnable has expired, remove
-            // and advance to next element in the map
-            it = work_map.erase(it);
-          }
+          // advance to the next element in the map
+          ++it;
         }
-      });
+        else
+        {
+          // the lifetime of the runnable has expired, remove
+          // and advance to next element in the map
+          it = work_map->erase(it);
+        }
+      }
     }
 
     // If the work queue is still empty then there is no work to do. Sleep the worker and try again

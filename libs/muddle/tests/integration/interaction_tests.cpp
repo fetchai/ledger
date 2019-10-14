@@ -130,9 +130,7 @@ protected:
 
   void OnMessage(Packet const &packet, MuddleAddress const & /*address*/)
   {
-    counters_.ApplyVoid([this, &packet](Counters &counters) {
-      ++(counters[NodeIndex(packet.GetSender())][NodeIndex(packet.GetTarget())]);
-    });
+    ++(*counters_.LockedRef())[NodeIndex(packet.GetSender())][NodeIndex(packet.GetTarget())];
   }
 
   static uint16_t GetListeningPort(MuddlePtr const &muddle)
@@ -194,32 +192,31 @@ TEST_F(InteractionTests, DISABLED_MutualConnections)
     node3_->GetEndpoint().Send(node2_->GetAddress(), SERVICE, CHANNEL, "hello");
   }
 
-  counters_.ApplyVoid([](Counters const &counters) {
+  auto counters{counters_.LockedRef()};
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
-    std::ostringstream oss;
-    oss << "\n\n";
+  std::ostringstream oss;
+  oss << "\n\n";
 
-    for (auto const &element : counters)
+  for (auto const &element : *counters)
+  {
+    for (auto const &other : element.second)
     {
-      for (auto const &other : element.second)
-      {
-        oss << element.first << " -> " << other.first << " : " << other.second << '\n';
-      }
+      oss << element.first << " -> " << other.first << " : " << other.second << '\n';
     }
+  }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, oss.str());
+  FETCH_LOG_DEBUG(LOGGING_NAME, oss.str());
 #endif
 
-    for (auto const &element : counters)
+  for (auto const &element : *counters)
+  {
+    for (auto const &other : element.second)
     {
-      for (auto const &other : element.second)
-      {
-        EXPECT_GE(other.second, MIN_NUM_MESSAGES);
-        EXPECT_LE(other.second, NUM_MESSAGES);
-      }
+      EXPECT_GE(other.second, MIN_NUM_MESSAGES);
+      EXPECT_LE(other.second, NUM_MESSAGES);
     }
-  });
+  }
 }
 
 }  // namespace

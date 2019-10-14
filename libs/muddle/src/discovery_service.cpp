@@ -28,12 +28,12 @@ DiscoveryService::DiscoveryService()
 
 void DiscoveryService::UpdatePeers(Peers peers)
 {
-  possible_peers_.ApplyVoid([&peers](Peers &p) { p = std::move(peers); });
+  *possible_peers_.LockedRef() = std::move(peers);
 }
 
 DiscoveryService::Peers DiscoveryService::GetConnectionInformation()
 {
-  return possible_peers_.Apply([](Peers const &peers) { return peers; });
+  return *possible_peers_.LockedRef();
 }
 
 }  // namespace muddle

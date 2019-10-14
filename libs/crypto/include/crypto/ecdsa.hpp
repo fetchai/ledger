@@ -83,19 +83,18 @@ public:
 
   void Load(ConstByteArray const &private_key) override
   {
-    private_key_.ApplyVoid([&private_key](auto &key) { key = PrivateKey{private_key}; });
+    *private_key_.LockedRef() = PrivateKey{private_key};
   }
 
   void GenerateKeys()
   {
-    private_key_.ApplyVoid([](auto &key) { key = PrivateKey{}; });
+    *private_key_.LockedRef() = PrivateKey{};
   }
 
   ConstByteArray Sign(ConstByteArray const &text) const final
   {
     // sign the message in a thread safe way
-    return private_key_.Apply(
-        [&text](PrivateKey const &key) { return Signature::Sign(key, text).signature(); });
+    return Signature::Sign(*private_key_.LockedRef(), text).signature();
   }
 
   Identity identity() const final
@@ -105,12 +104,12 @@ public:
 
   ConstByteArray public_key() const
   {
-    return private_key_.Apply([](PrivateKey const &key) { return key.PublicKey().KeyAsBin(); });
+    return private_key_.LockedRef()->PublicKey().KeyAsBin();
   }
 
-  ConstByteArray private_key()
+  ConstByteArray private_key() const
   {
-    return private_key_.Apply([](PrivateKey const &key) { return key.KeyAsBin(); });
+    return private_key_.LockedRef()->KeyAsBin();
   }
 
 private:

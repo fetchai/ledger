@@ -44,9 +44,14 @@ public:
   Semaphore &operator=(Semaphore const &) = delete;
   Semaphore &operator=(Semaphore &&) = delete;
 
-  void Signal()
+  void ApplySignal()
   {
     count_.ApplyVoid([](auto &count) { --count; });
+  }
+
+  void Signal()
+  {
+    --*count_.LockedRef();
   }
 
   void Wait()
@@ -67,10 +72,40 @@ public:
   Waitable<std::vector<int>> waitable{};
 };
 
-TEST_F(WaitableTests, Wait_returns_when_the_condition_is_true)
+TEST_F(WaitableTests, WaitReturnsWhenTheConditionIsTrue)
 {
   auto check = [this]() -> void {
     semaphore.Signal();
+    semaphore.Wait();
+
+    waitable.Wait([](auto const &payload) -> bool { return payload.size() > 9000; });
+
+    ASSERT_THAT(waitable.LockedRef()->size(), Gt(9000));
+  };
+
+  auto increment = [this]() -> void {
+    semaphore.Signal();
+    semaphore.Wait();
+
+    for (auto i = 0; i < 10000; ++i)
+    {
+      waitable.LockedRef()->push_back(123);
+    }
+  };
+
+  auto check_thread     = std::thread(std::move(check));
+  auto increment_thread = std::thread(std::move(increment));
+
+  semaphore.Signal();
+
+  increment_thread.join();
+  check_thread.join();
+}
+
+TEST_F(WaitableTests, Wait_returns_when_the_condition_is_true)
+{
+  auto check = [this]() -> void {
+    semaphore.ApplySignal();
     semaphore.Wait();
 
     waitable.Wait([](auto const &payload) -> bool { return payload.size() > 9000; });
@@ -78,7 +113,7 @@ TEST_F(WaitableTests, Wait_returns_when_the_condition_is_true)
   };
 
   auto increment = [this]() -> void {
-    semaphore.Signal();
+    semaphore.ApplySignal();
     semaphore.Wait();
 
     for (auto i = 0; i < 10000; ++i)
@@ -90,7 +125,7 @@ TEST_F(WaitableTests, Wait_returns_when_the_condition_is_true)
   auto check_thread     = std::thread(std::move(check));
   auto increment_thread = std::thread(std::move(increment));
 
-  semaphore.Signal();
+  semaphore.ApplySignal();
 
   increment_thread.join();
   check_thread.join();

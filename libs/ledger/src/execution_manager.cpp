@@ -178,7 +178,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   num_slices_       = block.slices.size();
 
   // update the state otherwise there is a race between when the executor thread wakes up
-  state_.ApplyVoid([](auto &state) { state = State::ACTIVE; });
+  *state_.LockedRef() = State::ACTIVE;
 
   // trigger the monitor / dispatch thread
   {
@@ -255,7 +255,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
   if (executor)
   {
     // increment the active counters
-    counters_.ApplyVoid([](auto &counters) { ++counters.active; });
+    ++counters_.LockedRef()->active;
 
     // execute the item
     item.Execute(*executor);
@@ -268,10 +268,11 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
                      " status: ", ledger::ToString(result.status));
     }
 
-    counters_.ApplyVoid([](auto &counters) {
-      --counters.active;
-      --counters.remaining;
-    });
+    {
+      auto counters{counters_.LockedRef()};
+      --counters->active;
+      --counters->remaining;
+    }
 
     ++completed_executions_;
     tx_executed_count_->increment();
@@ -354,7 +355,7 @@ Digest ExecutionManager::LastProcessedBlock()
 
 ExecutionManager::State ExecutionManager::GetState()
 {
-  return state_.Apply([](auto const &state) -> State { return state; });
+  return *state_.LockedRef();
 }
 
 bool ExecutionManager::Abort()
@@ -395,29 +396,29 @@ void ExecutionManager::MonitorThreadEntrypoint()
     case MonitorState::FAILED:
       FETCH_LOG_WARN(LOGGING_NAME, "Execution Engine experience fatal error");
 
-      state_.ApplyVoid([](auto &state) { state = State::EXECUTION_FAILED; });
-      monitor_state = MonitorState::IDLE;
+      *state_.LockedRef() = State::EXECUTION_FAILED;
+      monitor_state       = MonitorState::IDLE;
       break;
 
     case MonitorState::STALLED:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Stalled");
 
-      state_.ApplyVoid([](auto &state) { state = State::TRANSACTIONS_UNAVAILABLE; });
-      monitor_state = MonitorState::IDLE;
+      *state_.LockedRef() = State::TRANSACTIONS_UNAVAILABLE;
+      monitor_state       = MonitorState::IDLE;
       break;
 
     case MonitorState::COMPLETED:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Complete");
 
-      state_.ApplyVoid([](auto &state) { state = State::IDLE; });
-      monitor_state = MonitorState::IDLE;
+      *state_.LockedRef() = State::IDLE;
+      monitor_state       = MonitorState::IDLE;
       break;
 
     case MonitorState::IDLE:
     {
       blocks_completed_count_->increment();
 
-      state_.ApplyVoid([](auto &state) { state = State::IDLE; });
+      *state_.LockedRef() = State::IDLE;
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Idle");
 
@@ -427,8 +428,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_wake_.wait(lock);
       }
 
-      state_.ApplyVoid([](auto &state) { state = State::ACTIVE; });
-      current_block = last_block_hash_;
+      *state_.LockedRef() = State::ACTIVE;
+      current_block       = last_block_hash_;
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Active");
 
@@ -459,9 +460,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
         // determine the target number of executions being expected (must be
         // done before the thread pool dispatch)
-        counters_.ApplyVoid([&slice_plan](auto &counters) {
-          counters = Counters{0, slice_plan.size()};
-        });
+        *counters_.LockedRef() = Counters{0, slice_plan.size()};
 
         auto self = shared_from_this();
         for (auto &item : slice_plan)
@@ -488,9 +487,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
       if (!finished)
       {
-        counters_.ApplyVoid([](auto const &counters) {
-          FETCH_LOG_WARN(LOGGING_NAME, "### Extra long execution: remaining: ", counters.remaining);
-        });
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "### Extra long execution: remaining: ", counters.LockedRef()->remaining);
       }
       else
       {
