@@ -82,7 +82,7 @@ struct NotarisationNode
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
     , chain{false, ledger::MainChain::Mode::IN_MEMORY_DB}
-    , notarisation_service{*muddle, chain}
+    , notarisation_service{*muddle, chain, muddle_certificate}
   {
     network_manager.Start();
     muddle->Start({muddle_port});

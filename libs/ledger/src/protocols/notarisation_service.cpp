@@ -28,10 +28,12 @@ namespace ledger {
 
 char const *StateToString(NotarisationService::State state);
 
-NotarisationService::NotarisationService(MuddleInterface &muddle, MainChain &main_chain)
+NotarisationService::NotarisationService(MuddleInterface &muddle, MainChain &main_chain,
+                                         CertificatePtr const &certificate)
   : endpoint_{muddle.GetEndpoint()}
   , rpc_client_{"NotarisationService", endpoint_, SERVICE_MAIN_CHAIN, CHANNEL_RPC}
   , notarisation_protocol_{*this}
+  , certificate_{certificate}
   , state_machine_{std::make_shared<StateMachine>("NotarisationService", State::KEY_ROTATION,
                                                   StateToString)}
   , chain_{main_chain}
@@ -74,7 +76,7 @@ NotarisationService::State NotarisationService::OnNotarisationSynchronisation()
   // up to the point where we start notarising
   if (NextBlockHeight() < active_exe_unit_->aeon.round_start)
   {
-    // TODO(JMW): Should go fetch notarisations
+    // TODO(JMW): Should obtain these via broadcast
     state_machine_->Delay(std::chrono::milliseconds(500));
     return State::NOTARISATION_SYNCHRONISATION;
   }
@@ -111,13 +113,13 @@ NotarisationService::State NotarisationService::OnCollectNotarisations()
 
 NotarisationService::State NotarisationService::OnVerifyNotarisations()
 {
-  std::unordered_map<BlockHash, NotarisationInformation> ret;
+  BlockNotarisationShares ret;
 
   try
   {
     // Attempt to resolve the promise and add it
     if (!notarisation_promise_->IsSuccessful() ||
-        !notarisation_promise_->As<std::unordered_map<BlockHash, NotarisationInformation>>(ret))
+        !notarisation_promise_->As<BlockNotarisationShares>(ret))
     {
       return State::COLLECT_NOTARISATIONS;
     }
@@ -154,12 +156,22 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
         // Verify and add signature if we do not have an existing signature from this qual member
         if (existing_notarisations.find(address_sig_pairs.first) == existing_notarisations.end())
         {
-          if (active_exe_unit_->manager.VerifySignatureShare(block_hash, address_sig_pairs.second,
-                                                             address_sig_pairs.first))
+          SignedNotarisation signed_not = address_sig_pairs.second;
+          // Verify ecdsa signature
+          if (crypto::Verify(
+                  address_sig_pairs.first,
+                  (serializers::MsgPackSerializer() << block_hash << signed_not.notarisation_share)
+                      .data(),
+                  signed_not.ecdsa_signature))
           {
-            FETCH_LOG_INFO(LOGGING_NAME, "Added notarisation from node ",
-                           active_exe_unit_->manager.cabinet_index(address_sig_pairs.first));
-            existing_notarisations[address_sig_pairs.first] = address_sig_pairs.second;
+            // Verify notarisation
+            if (active_exe_unit_->manager.VerifySignatureShare(
+                    block_hash, signed_not.notarisation_share, address_sig_pairs.first))
+            {
+              FETCH_LOG_INFO(LOGGING_NAME, "Added notarisation from node ",
+                             active_exe_unit_->manager.cabinet_index(address_sig_pairs.first));
+              existing_notarisations[address_sig_pairs.first] = address_sig_pairs.second;
+            }
           }
         }
         // If we have collected enough signatures for this block hash then move onto next hash
@@ -177,8 +189,12 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
     for (auto const &hash : can_verify)
     {
       // Compute and verify group signature
-      auto sig = active_exe_unit_->manager.ComputeGroupSignature(
-          notarisations_being_built_[next_height][hash]);
+      std::unordered_map<MuddleAddress, Signature> notarisation_shares;
+      for (auto const &shares : notarisations_being_built_[next_height][hash])
+      {
+        notarisation_shares.insert({shares.first, shares.second.notarisation_share});
+      }
+      auto sig = active_exe_unit_->manager.ComputeGroupSignature(notarisation_shares);
       assert(active_exe_unit_->manager.VerifyGroupSignature(hash, sig));
 
       // Get hash of previous block
@@ -294,8 +310,6 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
   auto miner_rank =
       static_cast<uint32_t>(std::distance(entropy_ranked_cabinet.begin(), miner_position));
 
-  // TODO(JMW): Is previous block notarised? Is block too far back behind cutoff to be notarised?
-
   // Check if we have previously signed a higher ranked block at the same height
   if (previous_notarisation_rank_.find(block.block_number) != previous_notarisation_rank_.end())
   {
@@ -309,8 +323,11 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
   auto notarisation = active_exe_unit_->manager.Sign(block.hash);
   assert(active_exe_unit_->manager.VerifySignatureShare(block.hash, notarisation.signature,
                                                         notarisation.identity.identifier()));
+  // Sign notarisation with ecdsa private key
+  auto ecdsa_sig = certificate_->Sign(
+      (serializers::MsgPackSerializer() << block.hash << notarisation.signature).data());
   notarisations_being_built_[block.block_number][block.hash].insert(
-      {notarisation.identity.identifier(), notarisation.signature});
+      {notarisation.identity.identifier(), SignedNotarisation(ecdsa_sig, notarisation.signature)});
 
   // Set highest notarised block rank for this block height
   previous_notarisation_rank_[block.block_number] = miner_rank;

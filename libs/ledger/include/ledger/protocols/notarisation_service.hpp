@@ -48,6 +48,20 @@ public:
     COMPLETE
   };
 
+  struct SignedNotarisation
+  {
+    byte_array::ConstByteArray ecdsa_signature;
+    crypto::mcl::Signature     notarisation_share;
+
+    SignedNotarisation() = default;
+    SignedNotarisation(byte_array::ConstByteArray ecdsa_sig, crypto::mcl::Signature notarisation)
+      : ecdsa_signature{std::move(ecdsa_sig)}
+      , notarisation_share{std::move(notarisation)}
+    {}
+  };
+
+  using ConstByteArray                = byte_array::ConstByteArray;
+  using MuddleAddress                 = ConstByteArray;
   using BeaconManager                 = dkg::BeaconManager;
   using Block                         = ledger::Block;
   using BlockHash                     = Block::Hash;
@@ -62,9 +76,11 @@ public:
   using AeonExecutionUnit             = beacon::AeonExecutionUnit;
   using SharedAeonExecutionUnit       = std::shared_ptr<AeonExecutionUnit>;
   using Signature                     = crypto::mcl::Signature;
-  using NotarisationInformation       = std::unordered_map<BeaconManager::MuddleAddress, Signature>;
+  using Certificate                   = crypto::Prover;
+  using CertificatePtr                = std::shared_ptr<Certificate>;
   using CallbackFunction              = std::function<void(BlockHash)>;
-  using BlockNotarisationShares       = std::unordered_map<BlockHash, NotarisationInformation>;
+  using NotarisationShares            = std::unordered_map<MuddleAddress, SignedNotarisation>;
+  using BlockNotarisationShares       = std::unordered_map<BlockHash, NotarisationShares>;
   using BlockHeightNotarisationShares = std::map<BlockHeight, BlockNotarisationShares>;
   using BlockHeightGroupNotarisations =
       std::map<BlockHeight, std::unordered_map<BlockHash, Signature>>;
@@ -72,7 +88,8 @@ public:
   NotarisationService()                            = delete;
   NotarisationService(NotarisationService const &) = delete;
 
-  NotarisationService(MuddleInterface &muddle, MainChain &main_chain);
+  NotarisationService(MuddleInterface &muddle, MainChain &main_chain,
+                      CertificatePtr const &certificate);
 
   /// State methods
   /// @{
@@ -117,6 +134,7 @@ private:
   /// @}
 
   std::mutex                    mutex_;
+  CertificatePtr                certificate_;
   std::shared_ptr<StateMachine> state_machine_;
 
   MainChain &chain_;  ///< Ref to system chain
@@ -140,6 +158,35 @@ private:
 
   CallbackFunction callback_;  ///< Callback for new block notarisation
 };
-
 }  // namespace ledger
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<ledger::NotarisationService::SignedNotarisation, D>
+{
+public:
+  using Type       = ledger::NotarisationService::SignedNotarisation;
+  using DriverType = D;
+
+  static uint8_t const SIGNATURE    = 0;
+  static uint8_t const NOTARISATION = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &member)
+  {
+    auto map = map_constructor(2);
+
+    map.Append(SIGNATURE, member.ecdsa_signature);
+    map.Append(NOTARISATION, member.notarisation_share);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &member)
+  {
+    map.ExpectKeyGetValue(SIGNATURE, member.ecdsa_signature);
+    map.ExpectKeyGetValue(NOTARISATION, member.notarisation_share);
+  }
+};
+}  // namespace serializers
 }  // namespace fetch
