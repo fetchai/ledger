@@ -118,12 +118,14 @@ class IR;
 class IoObserverInterface;
 class Module;
 
+class VM;
 class ParameterPack
 {
 public:
   // Construction / Destruction
-  explicit ParameterPack(RegisteredTypes const &registered_types)
+  explicit ParameterPack(RegisteredTypes const &registered_types, VM *vm = nullptr)
     : registered_types_{registered_types}
+    , vm_{vm}
   {}
 
   ParameterPack(ParameterPack const &) = delete;
@@ -182,6 +184,11 @@ public:
     return success;
   }
 
+  // Implementation is at the bottom of file
+  // due to dependency on VM
+  template <typename T>
+  IfIsExternal<T, bool> AddSingle(T val);
+
   bool Add()
   {
     return true;
@@ -213,6 +220,7 @@ private:
   bool AddInternal(Ptr<Object> const &value)
   {
     // add the value to the map
+    // TODO: Check ownership of Ptr.
     Variant v;
     v.Construct(value, value->GetTypeId());
     params_.emplace_back(std::move(v));
@@ -224,6 +232,7 @@ private:
 
   RegisteredTypes const &registered_types_;
   VariantArray           params_{};
+  VM *                   vm_;
 };
 
 class VM
@@ -480,6 +489,25 @@ public:
     return constructor(this, type_id);
   }
 
+  template <typename T>
+  bool HasCPPCopyConstructor()
+  {
+    auto type_index = TypeIndex(typeid(T));
+    return (cpp_copy_constructors_.find(type_index) != cpp_copy_constructors_.end());
+  }
+
+  template <typename T>
+  Ptr<Object> CPPCopyConstruct(T const &val)
+  {
+    auto it = cpp_copy_constructors_.find(TypeIndex(typeid(T)));
+    if (it == cpp_copy_constructors_.end())
+    {
+      return {};
+    }
+
+    return it->second(this, static_cast<void const *>(&val));
+  }
+
   struct OpcodeInfo
   {
     OpcodeInfo() = default;
@@ -574,6 +602,7 @@ private:
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
+  CPPCopyConstructorMap          cpp_copy_constructors_;
   OpcodeInfo *                   current_op_{nullptr};
 
   /// @name Charges
@@ -1612,6 +1641,24 @@ private:
   friend class Module;
   friend class Generator;
 };
+
+template <typename T>
+IfIsExternal<T, bool> ParameterPack::AddSingle(T val)
+{
+  if (vm_ == nullptr)
+  {
+    throw std::runtime_error("Cannot copy construct C++-to-Etch objects without a VM instance.");
+  }
+  using DecayedType = typename std::decay<T>::type;
+
+  if (!vm_->HasCPPCopyConstructor<DecayedType>())
+  {
+    throw std::runtime_error("No C++-to-Etch copy constructor availble for type.");
+  }
+
+  AddInternal(vm_->CPPCopyConstruct<DecayedType>(val));
+  return true;
+}
 
 }  // namespace vm
 }  // namespace fetch

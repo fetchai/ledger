@@ -222,6 +222,7 @@ using ChargeEstimator = std::function<ChargeAmount(Args const &...)>;
 
 using Handler                   = std::function<void(VM *)>;
 using DefaultConstructorHandler = std::function<Ptr<Object>(VM *, TypeId)>;
+using CPPCopyConstructorHandler = std::function<Ptr<Object>(VM *, void const *)>;
 
 struct FunctionInfo
 {
@@ -245,6 +246,7 @@ struct FunctionInfo
 using FunctionInfoArray = std::vector<FunctionInfo>;
 
 using DeserializeConstructorMap = std::unordered_map<TypeIndex, DefaultConstructorHandler>;
+using CPPCopyConstructorMap     = std::unordered_map<TypeIndex, CPPCopyConstructorHandler>;
 
 class RegisteredTypes
 {

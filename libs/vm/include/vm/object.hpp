@@ -73,6 +73,13 @@ using IsAddress = std::is_base_of<Address, T>;
 template <typename T>
 using IsString = std::is_base_of<String, std::decay_t<T>>;
 
+template <typename T, typename R = void>
+using IfIsExternal = std::enable_if_t<
+    (!IsPtr<std::decay_t<T>>::value) && (!IsObject<std::decay_t<T>>::value) &&
+        (!IsVariant<std::decay_t<T>>::value) && (!IsPrimitive<std::decay_t<T>>::value) &&
+        (!IsString<std::decay_t<T>>::value) && (!IsAddress<std::decay_t<T>>::value),
+    R>;
+
 template <typename T>
 using IsNonconstRef = std::is_same<T, std::decay_t<T> &>;
 
