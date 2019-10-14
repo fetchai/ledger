@@ -32,13 +32,13 @@ using fetch::vm::SourceFiles;
 
 namespace {
 
-static const std::string HELLO_WORLD_ETCH = R"(
+const std::string HELLO_WORLD_ETCH = R"(
 function main()
   printLn("Hello world!!");
 endfunction
 )";
 
-static const std::string GBY_WORLD_ETCH = R"(
+const std::string GBY_WORLD_ETCH = R"(
 function main()
   printLn("GoodBy world!!");
 endfunction
@@ -56,7 +56,7 @@ public:
 
   void SerializeFrom(std::string filename, std::string source)
   {
-    source_file_in = SourceFile(filename, source);
+    source_file_in = SourceFile(std::move(filename), std::move(source));
     serializer << source_file_in;
     deserializer = MsgPackSerializer(serializer.data());
     deserializer >> source_file_out;
@@ -64,7 +64,7 @@ public:
 
   void SerializeFrom(std::vector<SourceFile> source_files)
   {
-    source_file_s_in = source_files;
+    source_file_s_in = std::move(source_files);
     serializer << source_file_s_in;
     deserializer = MsgPackSerializer(serializer.data());
     deserializer >> source_file_s_out;
