@@ -488,7 +488,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
       if (!finished)
       {
         FETCH_LOG_WARN(LOGGING_NAME,
-                       "### Extra long execution: remaining: ", counters.LockedRef()->remaining);
+                       "### Extra long execution: remaining: ", counters_.LockedRef()->remaining);
       }
       else
       {
