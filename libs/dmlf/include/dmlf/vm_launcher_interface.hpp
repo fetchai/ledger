@@ -27,7 +27,7 @@
 namespace fetch {
 namespace dmlf {
 
-class VmLauncherInterface
+class VmLauncherInterface : ExecutionEngineInterface
 {
 public:
   VmLauncherInterface()          = default;
@@ -36,8 +36,15 @@ public:
   VmLauncherInterface(const VmLauncherInterface &other) = delete;
   VmLauncherInterface &operator=(const VmLauncherInterface &other) = delete;
 
-  bool operator==(const VmLauncherInterface &other) = delete;
-  bool operator<(const VmLauncherInterface &other)  = delete;
+  ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) override;
+  ExecutionResult DeleteExecutable(Name const &execName)                             override;
+
+  ExecutionResult CreateState(Name const &stateName)                  override;
+  ExecutionResult CopyState(Name const &srcName, Name const &newName) override;
+  ExecutionResult DeleteState(Name const &stateName)                  override;
+
+  ExecutionResult Run(Name const &execName, Name const &stateName,
+                              std::string const &entrypoint) override;
 
   using VmOutputHandler = std::ostream;
   using Params          = std::vector<fetch::vm::Variant>;
@@ -55,9 +62,9 @@ public:
   virtual bool HasVM(std::string const &name) const                      = 0;
   virtual bool SetVmStdout(std::string const &vmName, VmOutputHandler &) = 0;
 
-  virtual bool CreateState(std::string name)                              = 0;
-  virtual bool HasState(std::string const &name) const                    = 0;
-  virtual bool CopyState(std::string const &srcName, std::string newName) = 0;
+  virtual bool CreateState2(std::string name)                              = 0;
+  virtual bool HasState2(std::string const &name) const                    = 0;
+  virtual bool CopyState2(std::string const &srcName, std::string newName) = 0;
 
   virtual bool Execute(std::string const &program, std::string const &vm, std::string const &state,
                        std::string const &entrypoint, Params const &params) = 0;

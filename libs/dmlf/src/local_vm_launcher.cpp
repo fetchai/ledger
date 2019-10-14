@@ -41,6 +41,108 @@ using State   = LocalVmLauncher::State;
 using VmFactory = fetch::vm_modules::VMFactory;
 }  // namespace
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+
+#pragma clang diagnostic ignored "-Wunused-parameter"
+ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFiles const &sources) 
+{
+  if (HasProgram(execName))
+  {
+    return EngineError("Didn't create " + execName, Error::Code::BAD_EXECUTABLE, "Error: executable " + execName + " already exists.");
+  }
+
+  auto newProgram = std::make_shared<Program>();
+  auto errors = fetch::vm_modules::VMFactory::Compile(module_, sources, *newProgram);
+
+  if (!errors.empty())
+  {
+    std::stringstream errorString;
+    for (auto const& line : errors) 
+    {
+      errorString << line << '\n';
+    }
+
+    return ExecutionResult{Variant{}, Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()}, "Compilation error: Didn't create " + execName};
+  }
+
+  programs_.emplace(execName, std::move(newProgram));
+
+  return ExecutionResult{Variant(), Error{Error::Stage::COMPILE, Error::Code::SUCCESS, ""}, "Created executable " + execName};
+}
+ExecutionResult LocalVmLauncher::DeleteExecutable(Name const &execName)                             
+{
+  return ExecutionResult{};
+}
+
+ExecutionResult LocalVmLauncher::CreateState(Name const &stateName)                  
+{
+  if (HasState(stateName))
+  {
+    return EngineError("Didn't create " + stateName, Error::Code::BAD_STATE, "Error: state " + stateName + " already exists.");
+  }
+  states_.emplace(stateName, std::make_shared<State>());
+  return ExecutionResult{Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""}, "Created state " + stateName};
+}
+ExecutionResult LocalVmLauncher::CopyState(Name const &srcName, Name const &newName) 
+{
+  return ExecutionResult{};
+}
+ExecutionResult LocalVmLauncher::DeleteState(Name const &stateName)                  
+{
+  return ExecutionResult{};
+}
+
+ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName,
+    std::string const &entrypoint) 
+{
+  if (!HasProgram(execName))
+  {
+    return EngineError("Could not run " + execName + " with state " + stateName, Error::Code::BAD_EXECUTABLE, "Error: No executable " + execName);
+  }
+  if (!HasState(stateName))
+  {
+    return EngineError("Could not run " + execName + " with state " + stateName, Error::Code::BAD_STATE, "Error: No state " + stateName);
+  }
+
+  auto &program = programs_[execName];
+  auto &state   = states_[stateName];
+
+  VM vm(module_.get());
+  vm.SetIOObserver(*state);
+  //Remove this
+  vm.AttachOutputDevice(VM::STDOUT, std::cout);
+
+  //fetch::vm::ParameterPack parameterPack(vm->registered_types());
+  //std::for_each(params.cbegin(), params.cend(),
+  //              [&parameterPack](auto const &v) { parameterPack.AddSingle(v); });
+
+  std::string        runTimeError;
+  fetch::vm::Variant output;
+  auto thereWasAnError = vm.Execute(*program, entrypoint, runTimeError, output);
+
+  if (!runTimeError.empty())
+  {
+    return ExecutionResult{output, 
+      Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)}, 
+      "Error running " + execName + " with state " + stateName}; 
+  }
+
+  return ExecutionResult{output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS, ""}, "Ran " + execName + " with state " + stateName};
+}
+
+ExecutionResult LocalVmLauncher::EngineError(std::string resultMessage, Error::Code code, std::string errorMessage) const
+{
+  return ExecutionResult( Variant(), Error(Error::Stage::ENGINE, code, std::move(errorMessage)), std::move(resultMessage));
+}
+
+ExecutionResult LocalVmLauncher::EngineSuccess(std::string resultMessage, std::string errorMessage) const
+{
+  return ExecutionResult( Variant(), Error(Error::Stage::ENGINE, Error::Code::SUCCESS, std::move(errorMessage)), std::move(resultMessage));
+}
+
+#pragma clang diagnostic pop
+
 bool LocalVmLauncher::CreateProgram(std::string name, std::string const &source)
 {
   if (HasProgram(name))
@@ -98,7 +200,7 @@ bool LocalVmLauncher::SetVmStdout(std::string const &vmName, VmOutputHandler &ne
   return true;
 }
 
-bool LocalVmLauncher::CreateState(std::string name)
+bool LocalVmLauncher::CreateState2(std::string name)
 {
   if (HasState(name))
   {
@@ -111,7 +213,7 @@ bool LocalVmLauncher::HasState(std::string const &name) const
 {
   return states_.find(name) != states_.end();
 }
-bool LocalVmLauncher::CopyState(std::string const &srcName, std::string newName)
+bool LocalVmLauncher::CopyState2(std::string const &srcName, std::string newName)
 {
   if (!HasState(srcName) || HasState(newName))
   {

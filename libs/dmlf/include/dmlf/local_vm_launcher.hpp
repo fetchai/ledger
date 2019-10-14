@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/vm_launcher_interface.hpp"
+#include "dmlf/execution/execution_engine_interface.hpp"
 
 #include "dmlf/vm_persistent.hpp"
 #include "vm/vm.hpp"
@@ -30,7 +30,7 @@
 namespace fetch {
 namespace dmlf {
 
-class LocalVmLauncher : public VmLauncherInterface
+class LocalVmLauncher : public ExecutionEngineInterface
 {
 public:
   LocalVmLauncher()           = default;
@@ -38,34 +38,58 @@ public:
 
   LocalVmLauncher(const LocalVmLauncher &other) = delete;
   LocalVmLauncher &operator=(const LocalVmLauncher &other)  = delete;
-  bool             operator==(const LocalVmLauncher &other) = delete;
-  bool             operator<(const LocalVmLauncher &other)  = delete;
 
   using Program   = fetch::vm::Executable;
   using VM        = fetch::vm::VM;
   using VmFactory = fetch::vm_modules::VMFactory;
   using State     = VmPersistent;
 
-  bool CreateProgram(std::string name, std::string const &source) override;
-  bool HasProgram(std::string const &name) const override;
-  void AttachProgramErrorHandler(ProgramErrorHandler newHandler) override;
+  // This will die
+  using VmOutputHandler = std::ostream;
+  using Params          = std::vector<fetch::vm::Variant>;
+  // Program name, Error
+  using ProgramErrorHandler = std::function<void(std::string const &, std::vector<std::string>)>;
+  // Program name, VM name, State name, Error
+  using ExecuteErrorHandler = std::function<void(std::string const &, std::string const &,
+                                                 std::string const &, std::string const &)>;
 
-  bool CreateVM(std::string name) override;
-  bool HasVM(std::string const &name) const override;
-  bool SetVmStdout(std::string const &vmName, VmOutputHandler &newHandler) override;
+  using Error = ExecutionResult::Error;
 
-  bool CreateState(std::string name) override;
-  bool HasState(std::string const &name) const override;
-  bool CopyState(std::string const &srcName, std::string newName) override;
+  ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) override;
+  ExecutionResult DeleteExecutable(Name const &execName)                             override;
+
+  ExecutionResult CreateState(Name const &stateName)                  override;
+  ExecutionResult CopyState(Name const &srcName, Name const &newName) override;
+  ExecutionResult DeleteState(Name const &stateName)                  override;
+
+  ExecutionResult Run(Name const &execName, Name const &stateName,
+                              std::string const &entrypoint) override;
+
+
+  // This will also die
+  bool CreateProgram(std::string name, std::string const &source) ;
+  bool HasProgram(std::string const &name) const ;
+  void AttachProgramErrorHandler(ProgramErrorHandler newHandler) ;
+
+  bool CreateVM(std::string name) ;
+  bool HasVM(std::string const &name) const ;
+  bool SetVmStdout(std::string const &vmName, VmOutputHandler &newHandler) ;
+
+  bool CreateState2(std::string name) ;
+  bool HasState(std::string const &name) const ;
+  bool CopyState2(std::string const &srcName, std::string newName) ;
 
   bool Execute(std::string const &programName, std::string const &vmName,
                std::string const &stateName, std::string const &entrypoint,
-               Params const &params) override;
-  void AttachExecuteErrorHandler(ExecuteErrorHandler newHandler) override;
-
-  std::unordered_map<std::string, std::shared_ptr<VM>> vms_;
+               Params const &params) ;
+  void AttachExecuteErrorHandler(ExecuteErrorHandler newHandler) ;
 
 private:
+
+  ExecutionResult EngineError(std::string resultMessage, Error::Code code, std::string errorMessage) const;
+  ExecutionResult EngineSuccess(std::string resultMessage, std::string errorMessage) const;
+
+  std::unordered_map<std::string, std::shared_ptr<VM>> vms_;
   std::unordered_map<std::string, std::shared_ptr<Program>> programs_;
   std::unordered_map<std::string, std::shared_ptr<State>>   states_;
 
