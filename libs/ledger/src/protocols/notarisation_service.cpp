@@ -29,11 +29,11 @@ namespace ledger {
 char const *StateToString(NotarisationService::State state);
 
 NotarisationService::NotarisationService(MuddleInterface &muddle, MainChain &main_chain,
-                                         CertificatePtr const &certificate)
+                                         CertificatePtr certificate)
   : endpoint_{muddle.GetEndpoint()}
   , rpc_client_{"NotarisationService", endpoint_, SERVICE_MAIN_CHAIN, CHANNEL_RPC}
   , notarisation_protocol_{*this}
-  , certificate_{certificate}
+  , certificate_{std::move(certificate)}
   , state_machine_{std::make_shared<StateMachine>("NotarisationService", State::KEY_ROTATION,
                                                   StateToString)}
   , chain_{main_chain}
@@ -281,17 +281,17 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
   {
     return;
   }
-  else if (notarisations_built_.find(block.block_number) != notarisations_built_.end() &&
-           notarisations_built_.at(block.block_number).find(block.hash) !=
-               notarisations_built_.at(block.block_number).end())
+  // Return if block has already been notarised
+  if (notarisations_built_.find(block.block_number) != notarisations_built_.end() &&
+      notarisations_built_.at(block.block_number).find(block.hash) !=
+          notarisations_built_.at(block.block_number).end())
   {
     // TODO(JMW): Block has already been notarised -> tell main chain
     return;
   }
-  else if (block.block_number < BlockNumberCutoff())
+  // Return if block is too far in the past of the head of the notarised chain
+  if (block.block_number < BlockNumberCutoff())
   {
-    // If block number is too far in the past of the head of the notarisation chain
-    // then return
     return;
   }
 

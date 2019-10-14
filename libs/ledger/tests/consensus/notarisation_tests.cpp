@@ -108,7 +108,7 @@ struct NotarisationNode
     return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
   }
 
-  void CreateNewAeonExeUnit(DkgOutput output)
+  void CreateNewAeonExeUnit(DkgOutput const &output)
   {
     SharedAeonExecutionUnit aeon_keys = std::make_shared<AeonExecutionUnit>();
     aeon_keys->manager.SetCertificate(muddle_certificate);
@@ -207,8 +207,7 @@ TEST(notarisation, notarise_blocks)
     for (auto &node : nodes)
     {
       node->notarisation_service.NotariseBlock(block->body);
-      EXPECT_TRUE(node->notarisation_service.GetNotarisations(block->body.block_number).size() >=
-                  1);
+      EXPECT_TRUE(!node->notarisation_service.GetNotarisations(block->body.block_number).empty());
     }
   }
 

@@ -88,8 +88,7 @@ public:
   NotarisationService()                            = delete;
   NotarisationService(NotarisationService const &) = delete;
 
-  NotarisationService(MuddleInterface &muddle, MainChain &main_chain,
-                      CertificatePtr const &certificate);
+  NotarisationService(MuddleInterface &muddle, MainChain &main_chain, CertificatePtr certificate);
 
   /// State methods
   /// @{
