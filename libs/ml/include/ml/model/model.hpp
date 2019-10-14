@@ -33,6 +33,12 @@ namespace fetch {
 namespace ml {
 namespace model {
 
+enum class MetricType
+{
+  LOSS,
+  ACCURACY
+};
+
 template <typename TensorType>
 class Model
 {
@@ -60,10 +66,14 @@ public:
   void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
   void SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr);
 
-  virtual void Train(SizeType n_steps);
-  virtual void Train(SizeType n_steps, DataType &loss);
-  virtual void Test(DataType &test_loss);
-  virtual void Predict(TensorType &input, TensorType &output);
+  void     Train();
+  void     Train(SizeType n_rounds);
+  void     Train(SizeType n_rounds, DataType &loss);
+  void     Test(DataType &test_loss);
+  void     Predict(TensorType &input, TensorType &output);
+  DataType Evaluate(std::vector<MetricType> const &metrics = std::vector<MetricType>());
+
+  void UpdateConfig(ModelConfig<DataType> &model_config);
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
@@ -83,11 +93,14 @@ protected:
   bool optimiser_set_ = false;
   bool compiled_      = false;
 
+  DataType loss_;
+
   virtual void PrintStats(SizeType epoch, DataType loss,
                           DataType test_loss = fetch::math::numeric_max<DataType>());
 
 private:
   bool SetOptimiser();
+  void TrainImplementation(DataType &loss, SizeType n_rounds = 1);
 };
 
 template <typename TensorType>
@@ -165,82 +178,35 @@ void Model<TensorType>::SetDataloader(std::unique_ptr<DataLoaderType> dataloader
 }
 
 /**
- * An interface to train that doesn't report loss
+ * An interface to train that trains for one epoch
  * @tparam TensorType
- * @param n_steps
  * @return
  */
 template <typename TensorType>
-void Model<TensorType>::Train(SizeType n_steps)
+void Model<TensorType>::Train()
+{
+  model_config_.subset_size = fetch::ml::optimisers::SIZE_NOT_SET;
+  DataType _;
+  Model<TensorType>::TrainImplementation(_);
+}
+
+/**
+ * An interface to train that doesn't report loss
+ * @tparam TensorType
+ * @param n_rounds
+ * @return
+ */
+template <typename TensorType>
+void Model<TensorType>::Train(SizeType n_rounds)
 {
   DataType _;
-  Model<TensorType>::Train(n_steps, _);
+  Model<TensorType>::Train(n_rounds, _);
 }
 
 template <typename TensorType>
-void Model<TensorType>::Train(SizeType n_steps, DataType &loss)
+void Model<TensorType>::Train(SizeType n_rounds, DataType &loss)
 {
-  if (!compiled_)
-  {
-    throw ml::exceptions::InvalidMode("must compile model before training");
-  }
-
-  dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
-
-  loss               = DataType{0};
-  DataType min_loss  = fetch::math::numeric_max<DataType>();
-  DataType test_loss = fetch::math::numeric_max<DataType>();
-  SizeType patience_count{0};
-  bool     stop_early = false;
-
-  // run for one subset - if this is not set it defaults to epoch
-  loss = optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
-  min_loss = loss;
-
-  // run for remaining epochs (or subsets) with early stopping
-  SizeType step{1};
-  while ((!stop_early) && (step < n_steps))
-  {
-    if (this->model_config_.print_stats)
-    {
-      if (this->model_config_.test)
-      {
-        Test(test_loss);
-      }
-      PrintStats(step, loss, test_loss);
-    }
-
-    if (this->model_config_.save_graph)
-    {
-      fetch::ml::utilities::SaveGraph(*graph_ptr_,
-                                      model_config_.graph_save_location + std::to_string(step));
-    }
-
-    // run optimiser for one epoch (or subset)
-    loss =
-        optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
-
-    // update early stopping
-    if (this->model_config_.early_stopping)
-    {
-      if (loss < (min_loss - this->model_config_.min_delta))
-      {
-        min_loss       = loss;
-        patience_count = 0;
-      }
-      else
-      {
-        patience_count++;
-      }
-
-      if (patience_count >= this->model_config_.patience)
-      {
-        stop_early = true;
-      }
-    }
-
-    step++;
-  }
+  TrainImplementation(loss, n_rounds);
 }
 
 template <typename TensorType>
@@ -277,6 +243,20 @@ void Model<TensorType>::Predict(TensorType &input, TensorType &output)
 }
 
 template <typename TensorType>
+typename Model<TensorType>::DataType Model<TensorType>::Evaluate(
+    std::vector<MetricType> const &metrics)
+{
+  FETCH_UNUSED(metrics);
+  return loss_;
+}
+
+template <typename TensorType>
+void Model<TensorType>::UpdateConfig(ModelConfig<DataType> &model_config)
+{
+  model_config_ = model_config;
+}
+
+template <typename TensorType>
 void Model<TensorType>::PrintStats(SizeType epoch, DataType loss, DataType test_loss)
 {
   if (this->model_config_.test)
@@ -288,6 +268,76 @@ void Model<TensorType>::PrintStats(SizeType epoch, DataType loss, DataType test_
   {
     std::cout << "epoch: " << epoch << ", loss: " << loss << std::endl;
   }
+}
+
+template <typename TensorType>
+void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
+{
+  if (!compiled_)
+  {
+    throw ml::exceptions::InvalidMode("must compile model before training");
+  }
+
+  dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
+
+  loss_              = DataType{0};
+  DataType min_loss  = fetch::math::numeric_max<DataType>();
+  DataType test_loss = fetch::math::numeric_max<DataType>();
+  SizeType patience_count{0};
+  bool     stop_early = false;
+
+  // run for one subset - if this is not set it defaults to epoch
+  loss_ =
+      optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
+  min_loss = loss_;
+
+  // run for remaining epochs (or subsets) with early stopping
+  SizeType step{1};
+
+  while ((!stop_early) && (step < n_rounds))
+  {
+    if (this->model_config_.print_stats)
+    {
+      if (this->model_config_.test)
+      {
+        Test(test_loss);
+      }
+      PrintStats(step, loss, test_loss);
+    }
+
+    if (this->model_config_.save_graph)
+    {
+      fetch::ml::utilities::SaveGraph(*graph_ptr_,
+                                      model_config_.graph_save_location + std::to_string(step));
+    }
+
+    // run optimiser for one epoch (or subset)
+    loss_ =
+        optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
+
+    // update early stopping
+    if (this->model_config_.early_stopping)
+    {
+      if (loss_ < (min_loss - this->model_config_.min_delta))
+      {
+        min_loss       = loss_;
+        patience_count = 0;
+      }
+      else
+      {
+        patience_count++;
+      }
+
+      if (patience_count >= this->model_config_.patience)
+      {
+        stop_early = true;
+      }
+    }
+
+    step++;
+  }
+
+  loss = loss_;
 }
 
 }  // namespace model
