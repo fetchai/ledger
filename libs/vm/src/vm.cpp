@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/vm.hpp"
 #include "vm/module.hpp"
+#include "vm/vm.hpp"
 
 #include <algorithm>
 #include <cassert>

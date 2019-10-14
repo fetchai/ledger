@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -37,6 +55,13 @@ function Test2(i: Int32, j: UInt64, s: String)
   printLn(j);
   print("Was here: ");
   printLn(s);
+endfunction
+
+function Test3(arr: Array< Float64>)
+  printLn(arr.count());
+  for(i in 0:arr.count())
+    printLn(arr[i]);
+  endfor
 endfunction
 )";
 
@@ -200,13 +225,35 @@ void SetInputParameters(ExecutionTask &task, Args... args)
   task.SerializeParameters(params);
 }
 
-int main()
+void TestA()
+{
+  // Creating execution task
+  ExecutionTask task;
+  task.function = "Test";
+  SetInputParameters(task, static_cast<std::string>("hello world"));
+
+  // Executing task
+  CreateVMAndRunScript(SCRIPT1, task);
+}
+
+void TestB()
 {
   // Creating execution task
   ExecutionTask task;
   task.function = "Test2";
-  std::map<int32_t, std::string> mymap;
   SetInputParameters(task, int32_t(2), uint64_t(9), static_cast<std::string>("hello world"));
+
+  // Executing task
+  CreateVMAndRunScript(SCRIPT1, task);
+}
+
+int main()
+{
+  // Creating execution task
+  ExecutionTask task;
+  task.function = "Test3";
+  std::vector<double> xxx{9, 2, 3, 4};
+  SetInputParameters(task, xxx);
 
   // Executing task
   CreateVMAndRunScript(SCRIPT1, task);

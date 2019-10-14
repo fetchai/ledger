@@ -551,7 +551,7 @@ public:
   static void Serialize(Constructor &map_constructor, Type const &variant)
   {
     auto map = map_constructor(2);
-    // TODO: This is seriously bad: Type Id can never be serialized
+    // TODO(tfr): This is dangerous: Type Id should never be serialized
     map.Append(TYPEID, variant.type_id);
 
     // primitive type variant
