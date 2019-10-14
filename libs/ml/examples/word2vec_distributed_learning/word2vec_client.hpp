@@ -61,23 +61,16 @@ public:
 
   void Test() override;
 
-  DataType analogy_score_ = static_cast<DataType>(0);
-  /*
-    DataType GetAnalogyScore()
-    {
-      // first get hold of the skipgram layer by searching the return name in the graph
-      std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
-          std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(
-              (this->g_ptr_->GetNode(skipgram_))->GetOp());
+  float analogy_score_ = 0.0f;
 
-      // next get hold of the embeddings
-      std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =
-          sg_layer->GetEmbeddings(sg_layer);
+  float GetAnalogyScore()
+  {
+    TensorType const &weights = utilities::GetEmbeddings(*this->g_ptr_, skipgram_);
 
-      return utilities::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->GetWeights(),
-                                          tp_.analogies_test_file);
-    }
-  */
+    return utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights, tp_.analogies_test_file)
+        .second;
+  }
+
   GradientType GetGradients() override;
 
   VectorTensorType TranslateGradients(GradientType &new_gradients) override;
@@ -176,7 +169,7 @@ void Word2VecClient<TensorType>::Run()
     // Train batches until coordinator will tell clients to stop
     this->TrainWithCoordinator();
   }
-  // analogy_score_ = GetAnalogyScore();
+  analogy_score_ = GetAnalogyScore();
 }
 
 /**

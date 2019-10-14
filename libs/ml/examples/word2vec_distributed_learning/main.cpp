@@ -184,9 +184,9 @@ int main(int argc, char **argv)
       auto *w2v_client = dynamic_cast<Word2VecClient<TensorType> *>(c.get());
 
       std::cout << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
-                << static_cast<double>(w2v_client->analogy_score_);
+                << w2v_client->analogy_score_;
       lossfile << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
-               << static_cast<double>(w2v_client->analogy_score_);
+               << w2v_client->analogy_score_;
     }
     std::cout << std::endl;
     lossfile << std::endl;
