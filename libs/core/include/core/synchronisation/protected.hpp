@@ -57,15 +57,6 @@ protected:
       mutex_.unlock();
     }
 
-    constexpr operator Type &() noexcept
-    {
-      return payload_;
-    }
-    constexpr operator ConstType &() const noexcept
-    {
-      return payload_;
-    }
-
     constexpr Type &operator*() noexcept
     {
       return payload_;
