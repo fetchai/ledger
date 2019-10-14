@@ -32,5 +32,5 @@
 	path = vendor/pybind11
 	url = https://github.com/pybind/pybind11.git
 [submodule "vendor/openssl"]
-	   path = vendor/openssl
-	   url = git@github.com:janbar/openssl-cmake.git
+	path = vendor/openssl
+	url = https://github.com/janbar/openssl-cmake.git

@@ -73,7 +73,7 @@ public:
     buffer.c[1] = (uint8_t)uflow();
     buffer.c[2] = (uint8_t)uflow();
     buffer.c[3] = (uint8_t)uflow();
-    i           = static_cast<int32_t>(ntohl(buffer.i));
+    i           = static_cast<int32_t>(ntohl(static_cast<uint32_t>(buffer.i)));
     // i = buffer.i;
 
     return *this;
