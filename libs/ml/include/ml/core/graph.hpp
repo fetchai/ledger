@@ -132,7 +132,7 @@ public:
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
   virtual fetch::ml::StateDict<TensorType> StateDict();
-  virtual void LoadStateDict(fetch::ml::StateDict<T> const &dict);
+  virtual void                             LoadStateDict(fetch::ml::StateDict<T> const &dict);
 
   ////////////////////////////////////
   /// public setters and accessors ///
