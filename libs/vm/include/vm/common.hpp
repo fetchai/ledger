@@ -316,7 +316,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &source_file)
   {
-    auto map = map_constructor(3);
+    auto map = map_constructor(2);
     map.Append(FILENAME, source_file.filename);
     map.Append(SOURCE, source_file.source);
   }
