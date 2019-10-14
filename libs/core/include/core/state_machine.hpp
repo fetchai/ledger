@@ -180,8 +180,7 @@ template <typename S>
 template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)(S /*current*/))
 {
-  (*callbacks_.LockedRef())[state] = [func, instance](S state, S prev) {
-    FETCH_UNUSED(prev);
+  (*callbacks_.LockedRef())[state] = [func, instance](S state, S /*prev*/) {
     return (instance->*func)(state);
   };
 }
