@@ -29,12 +29,7 @@ namespace fetch {
 namespace dmlf {
 
 namespace {
-using ProgramErrorHandler = LocalVmLauncher::ProgramErrorHandler;
-using VmOutputHandler     = LocalVmLauncher::VmOutputHandler;
-using Params              = LocalVmLauncher::Params;
-using ExecuteErrorHandler = LocalVmLauncher::ExecuteErrorHandler;
-
-using Program = LocalVmLauncher::Program;
+using Executable = LocalVmLauncher::Executable;
 using VM      = LocalVmLauncher::VM;
 using State   = LocalVmLauncher::State;
 
@@ -47,13 +42,13 @@ using VmFactory = fetch::vm_modules::VMFactory;
 #pragma clang diagnostic ignored "-Wunused-parameter"
 ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFiles const &sources) 
 {
-  if (HasProgram(execName))
+  if (HasExecutable(execName))
   {
     return EngineError("Didn't create " + execName, Error::Code::BAD_EXECUTABLE, "Error: executable " + execName + " already exists.");
   }
 
-  auto newProgram = std::make_shared<Program>();
-  auto errors = fetch::vm_modules::VMFactory::Compile(module_, sources, *newProgram);
+  auto newExecutable = std::make_shared<Executable>();
+  auto errors = fetch::vm_modules::VMFactory::Compile(module_, sources, *newExecutable);
 
   if (!errors.empty())
   {
@@ -66,7 +61,7 @@ ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFi
     return ExecutionResult{Variant{}, Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()}, "Compilation error: Didn't create " + execName};
   }
 
-  programs_.emplace(execName, std::move(newProgram));
+  programs_.emplace(execName, std::move(newExecutable));
 
   return ExecutionResult{Variant(), Error{Error::Stage::COMPILE, Error::Code::SUCCESS, ""}, "Created executable " + execName};
 }
@@ -86,7 +81,18 @@ ExecutionResult LocalVmLauncher::CreateState(Name const &stateName)
 }
 ExecutionResult LocalVmLauncher::CopyState(Name const &srcName, Name const &newName) 
 {
-  return ExecutionResult{};
+  if (!HasState(srcName))
+  {
+    return EngineError("Couldn't copy state " + srcName + " to " + newName, Error::Code::BAD_STATE, "Error: No state named " + srcName);
+  }
+  if (HasState(newName))
+  {
+    return EngineError("Couldn't copy state " + srcName + " to " + newName, Error::Code::BAD_DESTINATION, "Error: state " + srcName + " already exists.");
+  }
+
+  states_.emplace(std::move(newName), std::make_shared<State>(states_[srcName]->DeepCopy()));
+
+  return EngineSuccess("Copied state " + srcName + " to " + newName, "");
 }
 ExecutionResult LocalVmLauncher::DeleteState(Name const &stateName)                  
 {
@@ -96,7 +102,7 @@ ExecutionResult LocalVmLauncher::DeleteState(Name const &stateName)
 ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName,
     std::string const &entrypoint) 
 {
-  if (!HasProgram(execName))
+  if (!HasExecutable(execName))
   {
     return EngineError("Could not run " + execName + " with state " + stateName, Error::Code::BAD_EXECUTABLE, "Error: No executable " + execName);
   }
@@ -108,6 +114,8 @@ ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName
   auto &program = programs_[execName];
   auto &state   = states_[stateName];
 
+  // We create a a VM for each execution. It might be better to create a single VM and reuse it, but (currently) if you create a VM before
+  // compiling a program the VM is badly formed and crashes on execution
   VM vm(module_.get());
   vm.SetIOObserver(*state);
   //Remove this
@@ -143,122 +151,14 @@ ExecutionResult LocalVmLauncher::EngineSuccess(std::string resultMessage, std::s
 
 #pragma clang diagnostic pop
 
-bool LocalVmLauncher::CreateProgram(std::string name, std::string const &source)
-{
-  if (HasProgram(name))
-  {
-    return false;
-  }
-
-  fetch::vm::SourceFiles files      = {{name + ".etch", source}};
-  auto                   newProgram = std::make_shared<Program>();
-  auto errors = fetch::vm_modules::VMFactory::Compile(module_, files, *newProgram);
-
-  if (!errors.empty() && programErrorHandler_ != nullptr)
-  {
-    programErrorHandler_(name, errors);
-    return false;
-  }
-
-  programs_.emplace(std::move(name), std::move(newProgram));
-
-  return true;
-}
-bool LocalVmLauncher::HasProgram(std::string const &name) const
+bool LocalVmLauncher::HasExecutable(std::string const &name) const
 {
   return programs_.find(name) != programs_.end();
 }
-void LocalVmLauncher::AttachProgramErrorHandler(ProgramErrorHandler newHandler)
-{
-  programErrorHandler_ = newHandler;
-}
 
-bool LocalVmLauncher::CreateVM(std::string name)
-{
-  if (HasVM(name))
-  {
-    return false;
-  }
-  vms_.emplace(std::move(name), std::make_shared<VM>(module_.get()));
-  return true;
-}
-bool LocalVmLauncher::HasVM(std::string const &name) const
-{
-  return vms_.find(name) != vms_.end();
-}
-bool LocalVmLauncher::SetVmStdout(std::string const &vmName, VmOutputHandler &newHandler)
-{
-  auto it = vms_.find(vmName);
-  if (it == vms_.end())
-  {
-    return false;
-  }
-
-  auto vm = it->second;
-  vm->AttachOutputDevice(VM::STDOUT, newHandler);
-
-  return true;
-}
-
-bool LocalVmLauncher::CreateState2(std::string name)
-{
-  if (HasState(name))
-  {
-    return false;
-  }
-  states_.emplace(std::move(name), std::make_shared<State>());
-  return true;
-}
 bool LocalVmLauncher::HasState(std::string const &name) const
 {
   return states_.find(name) != states_.end();
-}
-bool LocalVmLauncher::CopyState2(std::string const &srcName, std::string newName)
-{
-  if (!HasState(srcName) || HasState(newName))
-  {
-    return false;
-  }
-
-  states_.emplace(std::move(newName), std::make_shared<State>(states_[srcName]->DeepCopy()));
-
-  return true;
-}
-
-bool LocalVmLauncher::Execute(std::string const &programName, std::string const &vmName,
-                              std::string const &stateName, std::string const &entrypoint,
-                              Params const &params)
-{
-  if (!HasProgram(programName) || !HasVM(vmName) || !HasState(stateName))
-  {
-    return false;
-  }
-
-  auto &program = programs_[programName];
-  auto &vm      = vms_[vmName];
-  auto &state   = states_[stateName];
-
-  vm->SetIOObserver(*state);
-
-  fetch::vm::ParameterPack parameterPack(vm->registered_types());
-  std::for_each(params.cbegin(), params.cend(),
-                [&parameterPack](auto const &v) { parameterPack.AddSingle(v); });
-
-  std::string        runTimeError;
-  fetch::vm::Variant output;
-  auto thereWasAnError = vm->Execute(*program, entrypoint, runTimeError, output, parameterPack);
-
-  if (!runTimeError.empty() && executeErrorhandler_ != nullptr)
-  {
-    executeErrorhandler_(programName, vmName, stateName, runTimeError);
-    return false;
-  }
-
-  return thereWasAnError;
-}
-void LocalVmLauncher::AttachExecuteErrorHandler(ExecuteErrorHandler newHandler)
-{
-  executeErrorhandler_ = newHandler;
 }
 
 }  // namespace dmlf

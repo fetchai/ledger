@@ -39,7 +39,7 @@ namespace {
 using namespace fetch::vm;
 using namespace fetch::dmlf;
 
-using Params = fetch::dmlf::LocalVmLauncher::Params;
+// using Params = fetch::dmlf::LocalVmLauncher::Params;
 // using Status = fetch::dmlf::VmWrapperInterface::Status;
 
 auto const helloWorld = R"(
@@ -621,8 +621,8 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick_VM_CopyState)
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-
-  launcher.CopyState2("state", "state2");
+  ExecutionResult copyStateResult = launcher.CopyState("state", "state2");
+  EXPECT_TRUE(copyStateResult.succeeded());
 
   result = launcher.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
