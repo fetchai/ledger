@@ -37,7 +37,7 @@ class Waitable : Protected<T, M>
   mutable std::condition_variable condition_{};
 
   template <class U>
-  struct Ref : public ProtectedPayload::template Ref<U>
+  class Ref : public ProtectedPayload::template Ref<U>
   {
     using Parent    = typename ProtectedPayload::template Ref<U>;
     using Type      = U;
