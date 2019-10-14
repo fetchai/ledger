@@ -41,9 +41,8 @@ RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::CreateExecutable(
   {
     return local_->CreateExecutable(target, execName, sources);
   }
-  std::cout << "TARGET:" << target << std::endl;
   return Returned([this, target, execName, sources](OpIdent const &op_id) {
-      client_->CallSpecificAddress(FromBase64(target), RPC_DMLF,
+      client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
                                  RemoteExecutionProtocol::RPC_DMLF_CREATE_EXE, op_id, execName,
                                  sources);
     return true;
@@ -128,12 +127,10 @@ RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::Run(Target const &
 
 byte_array::ConstByteArray RemoteExecutionClient::TargetUriToKey(std::string const &target)
 {
-  Uri uri;
-  uri.Parse(target);
-  return fetch::byte_array::FromBase64(uri.GetMuddleAddress());
+  return fetch::byte_array::FromBase64(target);
 }
 
-bool RemoteExecutionClient::ReturnResults(OpIdent const &op_id, ExecutionResult const & /*r*/)
+bool RemoteExecutionClient::ReturnResults(OpIdent const &op_id, ExecutionResult const &r)
 {
   auto iter = pending_results_.find(op_id);
   if (iter == pending_results_.end())
@@ -142,8 +139,9 @@ bool RemoteExecutionClient::ReturnResults(OpIdent const &op_id, ExecutionResult 
   }
   else
   {
-    byte_array::ConstByteArray bytes;
-    iter->second.GetInnerPromise()->Fulfill(bytes);
+    serializers::MsgPackSerializer serializer;
+    serializer << r;
+    iter->second.GetInnerPromise()->Fulfill(serializer.data());
   }
   return true;
 }
@@ -151,6 +149,7 @@ bool RemoteExecutionClient::ReturnResults(OpIdent const &op_id, ExecutionResult 
 RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::Returned(
     std::function<bool(OpIdent const &op_id)> func)
 {
+  counter ++;
   auto op_id = std::to_string(counter);
   func(op_id);
   auto prom               = service::MakePromise();

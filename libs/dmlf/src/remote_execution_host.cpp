@@ -24,57 +24,71 @@
 namespace fetch {
 namespace dmlf {
 
-RemoteExecutionHost::RemoteExecutionHost(MuddlePtr mud, ExecutionInterfacePtr executor)
-  : mud_(mud)
-  , executor_(executor)
-{
-  client_ = std::make_shared<RpcClient>("Host", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
-}
+  RemoteExecutionHost::RemoteExecutionHost(MuddlePtr mud, ExecutionInterfacePtr executor)
+    : mud_(mud)
+    , executor_(executor)
+  {
+    client_ = std::make_shared<RpcClient>("Host", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+  }
 
-bool RemoteExecutionHost::CreateExecutable(service::CallContext const &context,
-                                           OpIdent const &op_id, Name const &execName,
+  bool RemoteExecutionHost::CreateExecutable(service::CallContext const &context,
+                                             OpIdent const &op_id, Name const &execName,
+                                             SourceFiles const &sources)
+  {
+    pending_workloads_ . emplace_back(ExecutionWorkload(context.sender_address, op_id, "",
+                                                        [execName, sources](ExecutionInterfacePtr const &exec){
+                                                          return exec->CreateExecutable(execName, sources);
+                                                        }));
+    return true;
+  }
+  bool RemoteExecutionHost::DeleteExecutable(service::CallContext const & context,
+                                             OpIdent const & op_id, Name const & execName)
+  {
+    pending_workloads_ . emplace_back(ExecutionWorkload(context.sender_address, op_id, "",
+                                                        [execName](ExecutionInterfacePtr const &exec){
+                                                          return exec->DeleteExecutable(execName);
+                                                        }));
+    return true;
+  }
 
-                                           SourceFiles const &sources)
-{
-  std::cout << "RemoteExecutionHost::CreateExecutable" << std::endl;
-  // context.sender_address
-  pending_workloads_ . emplace_back(ExecutionWorkload(context.sender_address, op_id, "",
-                                                   [execName, sources](ExecutionInterfacePtr const &/*exec*/){
-                                                     return ExecutionResult();
-                                                   }));
-  return true;
-}
-bool RemoteExecutionHost::DeleteExecutable(service::CallContext const & /*call_context*/,
-                                           OpIdent const & /*op_id*/, Name const & /*execName*/)
-{
-  return true;
-}
+  bool RemoteExecutionHost::CreateState(service::CallContext const & context,
+                                        OpIdent const & op_id, Name const & stateName)
+  {
+    pending_workloads_ . emplace_back(ExecutionWorkload(context.sender_address, op_id, "",
+                                                        [stateName](ExecutionInterfacePtr const &exec){
+                                                          return exec->CreateState(stateName);
+                                                        }));  return true;
+  }
+  bool RemoteExecutionHost::CopyState(service::CallContext const & context,
+                                      OpIdent const & op_id, Name const & srcName,
+                                      Name const & newName)
+  {
+    pending_workloads_ . emplace_back(ExecutionWorkload(context.sender_address, op_id, "",
+                                                        [srcName, newName](ExecutionInterfacePtr const &exec){
+                                                          return exec->CopyState(srcName, newName);
+                                                        }));  return true;
+  }
+  bool RemoteExecutionHost::DeleteState(service::CallContext const & context,
+                                        OpIdent const & op_id, Name const & stateName)
+  {
+    pending_workloads_ . emplace_back(ExecutionWorkload(context.sender_address, op_id, "",
+                                                        [stateName](ExecutionInterfacePtr const &exec){
+                                                          return exec->DeleteState(stateName);
+                                                        }));  return true;
+  }
 
-bool RemoteExecutionHost::CreateState(service::CallContext const & /*call_context*/,
-                                      OpIdent const & /*op_id*/, Name const & /*stateName*/)
-{
-  return true;
-}
-bool RemoteExecutionHost::CopyState(service::CallContext const & /*call_context*/,
-                                    OpIdent const & /*op_id*/, Name const & /*srcName*/,
-                                    Name const & /*newName*/)
-{
-  return true;
-}
-bool RemoteExecutionHost::DeleteState(service::CallContext const & /*call_context*/,
-                                      OpIdent const & /*op_id*/, Name const & /*stateName*/)
-{
-  return true;
-}
+  bool RemoteExecutionHost::Run(service::CallContext const & context,
+                                OpIdent const & op_id, Name const & execName,
+                                Name const & stateName, std::string const & entrypoint)
+  {
+    pending_workloads_ . emplace_back(ExecutionWorkload(context.sender_address, op_id, "",
+                                                        [execName, stateName, entrypoint](ExecutionInterfacePtr const &exec){
+                                                          return exec->Run(execName, stateName, entrypoint);
+                                                        }));
+    return true;
+  }
 
-bool RemoteExecutionHost::Run(service::CallContext const & /*call_context*/,
-                              OpIdent const & /*op_id*/, Name const & /*execName*/,
-                              Name const & /*stateName*/, std::string const & /*entrypoint*/)
-{
-  return true;
-}
-
-bool RemoteExecutionHost::ExecuteOneWorkload(void)
+  bool RemoteExecutionHost::ExecuteOneWorkload(void)
 {
   if (pending_workloads_.empty())
   {

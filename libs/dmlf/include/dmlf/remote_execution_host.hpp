@@ -33,7 +33,7 @@ class RemoteExecutionHost
 public:
   using Name                  = ExecutionInterface::Name;
   using SourceFiles           = ExecutionInterface::SourceFiles;
-  using ExecutionInterfacePtr = std::shared_ptr<ExecutionInterface>;
+  using ExecutionInterfacePtr = ExecutionWorkload::ExecutionInterfacePtr;
 
   using MuddlePtr = muddle::MuddlePtr;
   using Uri       = network::Uri;

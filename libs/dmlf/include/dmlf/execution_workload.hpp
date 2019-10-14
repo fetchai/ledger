@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/execution/execution_interface.hpp"
+#include "dmlf/execution/execution_engine_interface.hpp"
 #include "dmlf/execution/execution_result.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 
@@ -29,7 +30,7 @@ class ExecutionWorkload
   friend class RemoteExecutionHost;
 
 public:
-  using ExecutionInterfacePtr = std::shared_ptr<ExecutionInterface>;
+  using ExecutionInterfacePtr = std::shared_ptr<ExecutionEngineInterface>;
   using Respondent            = fetch::byte_array::ConstByteArray;
   using OpIdent               = std::string;
   using Worker                = std::function<ExecutionResult(ExecutionInterfacePtr)>;

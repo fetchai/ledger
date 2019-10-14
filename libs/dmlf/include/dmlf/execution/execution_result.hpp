@@ -22,6 +22,7 @@
 #include "dmlf/execution/execution_error_message.hpp"
 #include "network/generics/promise_of.hpp"
 #include "vm/variant.hpp"
+#include "variant/variant.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -29,7 +30,8 @@ namespace dmlf {
 class ExecutionResult
 {
 public:
-  using Variant         = fetch::vm::Variant;
+  using Variant         = fetch::variant::Variant;
+  using Output          = Variant;
   using Error           = ExecutionErrorMessage;
   using ErrorCode       = ExecutionErrorMessage::Code;
   using ErrorStage      = ExecutionErrorMessage::Stage;
@@ -37,13 +39,19 @@ public:
 
   ExecutionResult() = default;
 
-  ExecutionResult(Variant output, Error error, std::string console)
+  ExecutionResult(Output output, Error error, std::string console)
     : output_(std::move(output))
     , error_(std::move(error))
     , console_(std::move(console))
   {}
 
-  Variant output() const
+  void log(const char *pref) const
+  {
+    std::cout << pref << " output = "<< output_ << std::endl;
+    std::cout << pref << " error  = "<< error_.message() << std::endl;
+  }
+
+  Output output() const
   {
     return output_;
   }
@@ -68,9 +76,10 @@ public:
   static PromiseOfResult MakeFulfilledPromiseSuccess();
   static PromiseOfResult MakeFulfilledPromiseError(ErrorCode          error_code,
                                                    std::string const &error_message);
-
+  static ExecutionResult MakeSuccess();
+  static ExecutionResult MakeIntegerResult(int r);
 private:
-  Variant     output_;
+  Output      output_;
   Error       error_;
   std::string console_;
 

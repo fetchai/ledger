@@ -22,8 +22,10 @@
 #include "muddle/rpc/server.hpp"
 #include "crypto/ecdsa.hpp"
 
+#include "dmlf/execution/execution_engine_interface.hpp"
 #include "dmlf/remote_execution_host.hpp"
 #include "dmlf/remote_execution_client.hpp"
+#include "dmlf/execution/execution_result.hpp"
 #include "dmlf/remote_execution_protocol.hpp"
 #include "core/service_ids.hpp"
 
@@ -36,7 +38,8 @@ namespace dmlf {
   using NetworkManager =fetch::network::NetworkManager;
   using MuddlePtr = fetch::muddle::MuddlePtr;
   using RemoteExecutionProtocol = fetch::dmlf::RemoteExecutionProtocol; 
-  using ExecutionInterfacePtr = ExecutionWorkload::ExecutionInterfacePtr;
+  using ExecutionInterfacePtr = std::shared_ptr<ExecutionInterface>;
+  using ExecutionEngineInterfacePtr = ExecutionWorkload::ExecutionInterfacePtr;
 
   using Server = muddle::rpc::Server;
   
@@ -57,6 +60,40 @@ namespace dmlf {
   const unsigned short int SERVER_PORT = 1766;
   const unsigned short int CLIENT_PORT = 1767;
 
+  class DummyExecutionInterface : public ExecutionEngineInterface
+  {
+  public:
+    DummyExecutionInterface() = default;
+    ~DummyExecutionInterface() override = default;
+    ExecutionResult CreateExecutable(Name const &/*execName*/, SourceFiles const &/*sources*/) override
+    {
+      return ExecutionResult::MakeSuccess();
+    }
+    ExecutionResult DeleteExecutable(Name const &/*execName*/) override
+    {
+      return ExecutionResult::MakeSuccess();
+    }
+
+    ExecutionResult CreateState(Name const &/*stateName*/) override
+    {
+      return ExecutionResult::MakeSuccess();
+    }
+    ExecutionResult CopyState(Name const &/*srcName*/, Name const &/*newName*/) override
+    {
+      return ExecutionResult::MakeSuccess();
+    }
+    ExecutionResult DeleteState(Name const &/*stateName*/) override
+    {
+      return ExecutionResult::MakeSuccess();
+    }
+
+    ExecutionResult Run(Name const &/*execName*/, Name const &/*stateName*/,
+                        std::string const &/*entrypoint*/) override
+    {
+      return ExecutionResult::MakeIntegerResult(4);
+    }
+  };
+
   class ServerHalf
   {
   public:
@@ -65,21 +102,28 @@ namespace dmlf {
     std::shared_ptr<RemoteExecutionProtocol> proto_;
 
     std::shared_ptr<RemoteExecutionHost> host_;
-    ExecutionInterfacePtr exec;
+    ExecutionEngineInterfacePtr exec_;
  std::shared_ptr<Server>                         server_;
-    ServerHalf()
+    ServerHalf(ExecutionEngineInterfacePtr exec = ExecutionEngineInterfacePtr()):exec_(exec)
     {
       auto ident = LoadIdentity(SERVER_PRIV);
       netm_ = std::make_shared<NetworkManager>("LrnrNet", 4);
       netm_->Start();
       mud_ = muddle::CreateMuddle("Test", ident, *(this->netm_), "127.0.0.1");
+
+      if (!exec_)
+      {
+        auto e =std::make_shared<DummyExecutionInterface>();
+        exec_ = e;
+      }
+
       host_ = std::make_shared<RemoteExecutionHost>(mud_, exec);
       mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
       mud_->Start({SERVER_PORT});
 
-         proto_  = std::make_shared<RemoteExecutionProtocol>(*host_);
-        server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
-        server_->Add(RPC_DMLF, proto_.get());
+      proto_  = std::make_shared<RemoteExecutionProtocol>(*host_);
+      server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+      server_->Add(RPC_DMLF, proto_.get());
     }
   };
 
@@ -100,15 +144,15 @@ namespace dmlf {
       netm_->Start();
       mud_ = muddle::CreateMuddle("Test", ident, *(this->netm_), "127.0.0.1");
       client_ = std::make_shared<RemoteExecutionClient>(mud_, exec);
-        mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
-        std::string server = "tcp://127.0.0.1:";
-        server += std::to_string(SERVER_PORT);
+      mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
+      std::string server = "tcp://127.0.0.1:";
+      server += std::to_string(SERVER_PORT);
 
-        mud_->Start({server}, {CLIENT_PORT});
+      mud_->Start({server}, {CLIENT_PORT});
 
-        proto_  = std::make_shared<RemoteExecutionProtocol>(*client_);
-        server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
-        server_->Add(RPC_DMLF, proto_.get());
+      proto_  = std::make_shared<RemoteExecutionProtocol>(*client_);
+      server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+      server_->Add(RPC_DMLF, proto_.get());
 
     }
   };
@@ -117,12 +161,15 @@ namespace dmlf {
   class MuddleLearnerNetworkerTests : public ::testing::Test
   {
   public:
-
-    ServerHalf server;
-    ClientHalf client;
+    std::shared_ptr<DummyExecutionInterface> iface;
+    std::shared_ptr<ServerHalf> server;
+    std::shared_ptr<ClientHalf> client;
 
     void SetUp() override
     {
+      iface = std::make_shared<DummyExecutionInterface>();
+      server = std::make_shared<ServerHalf>(iface);
+      client = std::make_shared<ClientHalf>();
     }
   };
 
@@ -131,14 +178,23 @@ namespace dmlf {
 
       sleep(1);
 
-      auto p1 = client . client_ -> CreateExecutable(SERVER_PUB, "exe1", "foo");
+      auto p1 = client -> client_ -> CreateExecutable(SERVER_PUB, "exe1", "foo");
+      auto p2 = client -> client_ -> CreateState(SERVER_PUB, "state1");
+      auto p3 = client -> client_ -> Run(SERVER_PUB, "exe1", "state1", "dummy_func");
 
       sleep(1);
-      std::cout << server . host_ -> ExecuteOneWorkload() << std::endl;
 
-      //std::cout << p1.Get() << std::endl;
-      
-      EXPECT_EQ(1, 2);
+      EXPECT_EQ(server -> host_ -> ExecuteOneWorkload(), true);
+      EXPECT_EQ(server -> host_ -> ExecuteOneWorkload(), true);
+      EXPECT_EQ(server -> host_ -> ExecuteOneWorkload(), true);
+      EXPECT_EQ(server -> host_ -> ExecuteOneWorkload(), false);
+
+      sleep(1);
+
+      p3.Wait();
+      auto res = p3.Get();
+
+      EXPECT_EQ(res.output().As<int>(), 4);
     }
 }
 }
