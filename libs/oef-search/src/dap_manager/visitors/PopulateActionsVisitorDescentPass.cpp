@@ -15,7 +15,7 @@ PopulateActionsVisitorDescentPass::VisitNodeExitStates PopulateActionsVisitorDes
   {
     auto result = future_->get();
 
-    if (result->success())
+    if (result != nullptr && result->success())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Gotcha ", current_dap_, " node now at ", node.ToString());
       node.AddMemento(current_dap_, std::move(result));
@@ -74,7 +74,7 @@ PopulateActionsVisitorDescentPass::VisitNodeExitStates PopulateActionsVisitorDes
   {
     auto result = future_->get();
 
-    if (result->success())
+    if (result != nullptr && result->success())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Gotcha ", current_dap_, " leaf now at ", leaf.ToString());
       leaf.AddMemento(current_dap_, std::move(result));
