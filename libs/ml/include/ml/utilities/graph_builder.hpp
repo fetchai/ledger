@@ -60,6 +60,7 @@
 #include "ml/ops/reshape.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/ops/sqrt.hpp"
+#include "ml/ops/squeeze.hpp"
 #include "ml/ops/subtract.hpp"
 #include "ml/ops/switch.hpp"
 #include "ml/ops/tanh.hpp"
@@ -413,6 +414,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case ops::Transpose<T>::OpCode():
   {
     op_ptr = GetOp<ops::Transpose<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::Squeeze<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Squeeze<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;
