@@ -52,7 +52,7 @@ public:
                 "type cannot be contained in the given register size.");
 
   VectorRegister() = default;
-  VectorRegister(type const *d)
+  VectorRegister(type const *d)  // NOLINT
   {
     data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(d->pointer()));
   }
@@ -60,13 +60,13 @@ public:
   {
     data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(list.begin()));
   }
-  VectorRegister(MMRegisterType const &d)
+  VectorRegister(MMRegisterType const &d)  // NOLINT
     : data_(d)
   {}
-  VectorRegister(MMRegisterType &&d)
+  VectorRegister(MMRegisterType &&d)  // NOLINT
     : data_(d)
   {}
-  VectorRegister(type const &c)
+  VectorRegister(type const &c)  // NOLINT
   {
     data_ = _mm_set1_epi32(c.Data());
   }
@@ -148,7 +148,7 @@ public:
                 "type cannot be contained in the given register size.");
 
   VectorRegister() = default;
-  VectorRegister(type const *d)
+  VectorRegister(type const *d)  // NOLINT
   {
     data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(d->pointer()));
   }
@@ -156,13 +156,13 @@ public:
   {
     data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(list.begin()));
   }
-  VectorRegister(MMRegisterType const &d)
+  VectorRegister(MMRegisterType const &d)  // NOLINT
     : data_(d)
   {}
-  VectorRegister(MMRegisterType &&d)
+  VectorRegister(MMRegisterType &&d)  // NOLINT
     : data_(d)
   {}
-  VectorRegister(type const &c)
+  VectorRegister(type const &c)  // NOLINT
   {
     data_ = _mm256_set1_epi32(c.Data());
   }
@@ -271,7 +271,7 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator~(
   {                                                                                               \
     VectorRegister<base_type, size> ret = operator op(VectorRegister<base_type, size>(a.data()),  \
                                                       VectorRegister<base_type, size>(b.data())); \
-    return VectorRegister<type, size>(ret.data());                                                \
+    return {ret.data()};                                                                          \
   }
 
 FETCH_ADD_OPERATOR(>=, fixed_point::fp32_t, 128, int32_t)
@@ -721,14 +721,13 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator/(
   ret[2] = d1[2] / d2[2];
   ret[3] = d1[3] / d2[3];
 
-  return VectorRegister<fixed_point::fp32_t, 128>(ret);
+  return {ret};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 256> operator/(
     VectorRegister<fixed_point::fp32_t, 256> const &a,
     VectorRegister<fixed_point::fp32_t, 256> const &b)
 {
-
   // TODO(private 440): SSE implementation required
   alignas(VectorRegister<fixed_point::fp32_t, 256>::E_REGISTER_SIZE) fixed_point::fp32_t d1[8];
   a.Store(d1);
@@ -740,40 +739,40 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator/(
 
   // don't divide by zero
   // set each of the 4 values in the vector register to either the solution of the division or 0
-  for (size_t i = 0; i < 8; i++)
+  for (std::size_t i = 0; i < 8; i++)
   {
     ret[i] = d1[i] / d2[i];
   }
 
-  return VectorRegister<fixed_point::fp32_t, 256>(ret);
+  return {ret};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 128> vector_zero_below_element(
     VectorRegister<fixed_point::fp32_t, 128> const & /*a*/, int const & /*n*/)
 {
   throw std::runtime_error("vector_zero_below_element not implemented.");
-  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
+  return {fixed_point::fp32_t{}};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 128> vector_zero_above_element(
     VectorRegister<fixed_point::fp32_t, 128> const & /*a*/, int const & /*n*/)
 {
   throw std::runtime_error("vector_zero_above_element not implemented.");
-  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
+  return {fixed_point::fp32_t{}};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 128> shift_elements_left(
     VectorRegister<fixed_point::fp32_t, 128> const & /*x*/)
 {
   throw std::runtime_error("shift_elements_left not implemented.");
-  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
+  return {fixed_point::fp32_t{}};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 128> shift_elements_right(
     VectorRegister<fixed_point::fp32_t, 128> const & /*x*/)
 {
   throw std::runtime_error("shift_elements_right not implemented.");
-  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
+  return {fixed_point::fp32_t{}};
 }
 
 inline fixed_point::fp32_t first_element(VectorRegister<fixed_point::fp32_t, 128> const &x)

@@ -36,24 +36,24 @@ public:
 
   static Ptr<Address> Constructor(VM *vm, TypeId type_id)
   {
-    return new Address{vm, type_id};
+    return Ptr<Address>{new Address{vm, type_id}};
   }
 
   static Ptr<Address> ConstructorFromString(VM *vm, TypeId type_id, Ptr<String> const &address)
   {
-    return new Address{vm, type_id, address};
+    return Ptr<Address>{new Address{vm, type_id, address}};
   }
 
-  static Ptr<String> ToString(VM *, Ptr<Address> const &address)
+  static Ptr<String> ToString(VM * /*vm*/, Ptr<Address> const &address)
   {
     return address->AsString();
   }
 
   // Construction / Destruction
-  Address(VM *vm, TypeId id, Ptr<String> const &address = Ptr<String>{}, bool signed_tx = false)
-    : Object(vm, id)
+  Address(VM *vm, TypeId type_id, Ptr<String> const &address = Ptr<String>{},
+          bool signed_tx = false)
+    : Object(vm, type_id)
     , signed_tx_{signed_tx}
-    , vm_{vm}
   {
     if (address && !ledger::Address::Parse(address->str.c_str(), address_))
     {
@@ -75,7 +75,7 @@ public:
 
   Ptr<String> AsString()
   {
-    return new String{vm_, std::string{address_.display()}};
+    return Ptr<String>{new String{vm_, std::string{address_.display()}}};
   }
 
   std::vector<uint8_t> ToBytes() const
@@ -181,7 +181,7 @@ public:
   {
     if (!ledger::Address::Parse(obj.template As<byte_array::ConstByteArray>(), address_))
     {
-      vm_->RuntimeError("Unable to parse address during JSON deserialization of " + GetUniqueId() +
+      vm_->RuntimeError("Unable to parse address during JSON deserialization of " + GetTypeName() +
                         ".");
     }
     return true;
@@ -190,7 +190,6 @@ public:
 private:
   ledger::Address address_;
   bool            signed_tx_{false};
-  VM *            vm_;
 };
 
 }  // namespace vm

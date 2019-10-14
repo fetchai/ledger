@@ -43,7 +43,7 @@ TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgra
   fetch::ml::layers::PRelu<TypeParam> fc(100u);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("PRelu_Input", input_data);
-  TypeParam output = fc.Evaluate("PRelu_LeakyReluOp", true);
+  TypeParam output = fc.Evaluate("PRelu_PReluOp", true);
 
   ASSERT_EQ(output.shape().size(), 3);
   ASSERT_EQ(output.shape()[0], 10);
@@ -131,10 +131,11 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
   auto      bp_err = prelu_node.BackPropagate(error_signal);
 
   ASSERT_EQ(bp_err.size(), 1);
-  ASSERT_EQ(bp_err[0].second.shape().size(), 3);
-  ASSERT_EQ(bp_err[0].second.shape()[0], 5);
-  ASSERT_EQ(bp_err[0].second.shape()[1], 10);
-  ASSERT_EQ(bp_err[0].second.shape()[2], 2);
+  auto err_signal = (*(bp_err.begin())).second.at(0);
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], 5);
+  ASSERT_EQ(err_signal.shape()[1], 10);
+  ASSERT_EQ(err_signal.shape()[2], 2);
 }
 
 TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
@@ -174,7 +175,7 @@ TYPED_TEST(PReluTest, saveparams_test)
   using SPType    = typename LayerType::SPType;
 
   std::string input_name  = "PRelu_Input";
-  std::string output_name = "PRelu_LeakyReluOp";
+  std::string output_name = "PRelu_PReluOp";
 
   TypeParam input({5, 10, 2});
   input.FillUniformRandom();
@@ -229,7 +230,6 @@ TYPED_TEST(PReluTest, saveparams_test)
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagate(error_output);
-  layer.ApplyRegularisation();
   auto grads = layer.GetGradients();
   for (auto &grad : grads)
   {
@@ -241,7 +241,6 @@ TYPED_TEST(PReluTest, saveparams_test)
   layer2.SetInput(label_name, labels);
   TypeParam loss2 = layer2.Evaluate(error_output);
   layer2.BackPropagate(error_output);
-  layer2.ApplyRegularisation();
   auto grads2 = layer2.GetGradients();
   for (auto &grad : grads2)
   {

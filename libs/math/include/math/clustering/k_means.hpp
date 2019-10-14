@@ -37,7 +37,7 @@ namespace fetch {
 namespace math {
 namespace clustering {
 
-using ClusteringType = Tensor<std::int64_t>;
+using ClusteringType = Tensor<int64_t>;
 
 enum class InitMode
 {
@@ -287,7 +287,7 @@ private:
       break;
     }
     default:
-      throw std::runtime_error("no such initialisation mode for KMeans");
+      throw exceptions::InvalidMode("no such initialisation mode for KMeans");
     }
 
     // reset the kcount
@@ -759,7 +759,7 @@ private:
   std::unordered_map<SizeType, SizeType>
       cluster_assignment_map_{};  // <internal label, original label>
 
-  bool reassign_;
+  bool reassign_{};
 
   InitMode       init_mode_        = InitMode::KMeansPP;
   KInferenceMode k_inference_mode_ = KInferenceMode::Off;

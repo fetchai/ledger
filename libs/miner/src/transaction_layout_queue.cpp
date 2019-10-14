@@ -252,7 +252,7 @@ bool TransactionLayoutQueue::empty() const
   return digests_.empty();
 }
 
-TransactionLayoutQueue::DigestSet const &TransactionLayoutQueue::digests() const
+DigestSet const &TransactionLayoutQueue::digests() const
 {
   return digests_;
 }

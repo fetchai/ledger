@@ -17,24 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/reactor.hpp"
-#include "core/serializers/counter.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "core/service_ids.hpp"
-#include "core/state_machine.hpp"
-#include "crypto/ecdsa.hpp"
-#include "crypto/prover.hpp"
 
+#include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
-#include "muddle/rpc/client.hpp"
-#include "muddle/rpc/server.hpp"
-#include "muddle/subscription.hpp"
-#include "network/generics/requesting_queue.hpp"
 
 #include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
-#include "beacon/event_manager.hpp"
-#include "ledger/shards/manifest.hpp"
+#include "beacon/create_new_certificate.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
 
 #include <cstdint>
@@ -63,21 +51,9 @@ using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
 
-ProverPtr CreateNewCertificate()
-{
-  using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::shared_ptr<Signer>;
-
-  SignerPtr certificate = std::make_shared<Signer>();
-
-  certificate->GenerateKeys();
-
-  return certificate;
-}
-
 struct DummyManifesttCache : public ManifestCacheInterface
 {
-  bool QueryManifest(Address const &, Manifest &) override
+  bool QueryManifest(Address const & /*address*/, Manifest & /*manifest*/) override
   {
     return false;
   }
@@ -100,6 +76,7 @@ struct CabinetNode
   DummyManifesttCache              manifest_cache;
   BeaconService                    beacon_service;
   crypto::Identity                 identity;
+  BlockEntropy                     genesis_block_entropy;
 
   CabinetNode(uint16_t port_number, uint16_t index)
     : event_manager{EventManager::New()}
@@ -107,7 +84,7 @@ struct CabinetNode
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
-    , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+    , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
     , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
     , identity{muddle_certificate->identity()}
   {
@@ -184,15 +161,20 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   uint64_t i = 0;
   for (auto &member : committee)
   {
-    all_cabinets[i % number_of_cabinets].insert(member->muddle_certificate->identity());
+    all_cabinets[i % number_of_cabinets].insert(
+        member->muddle_certificate->identity().identifier());
     ++i;
   }
 
   // Attaching the cabinet logic
   for (auto &member : committee)
   {
-    member->reactor.Attach(member->beacon_service.GetMainRunnable());
-    member->reactor.Attach(member->beacon_service.GetSetupRunnable());
+    auto runnables = member->beacon_service.GetWeakRunnables();
+
+    for (auto const &i : runnables)
+    {
+      member->reactor.Attach(i);
+    }
   }
 
   // Starting the beacon
@@ -208,6 +190,8 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
     rounds_finished[member->identity] = 0;
   }
 
+  // TODO(HUT): rewrite this test to check an unbroken stream of
+  // entropy is generated
   // Ready
   i = 0;
   while (i < static_cast<uint64_t>(total_renewals + 1))
@@ -222,7 +206,8 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
         member->beacon_service.StartNewCabinet(
             cabinet, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
             i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
-            static_cast<uint64_t>(std::time(nullptr)));
+            GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)),
+            member->genesis_block_entropy);
       }
     }
 
@@ -264,6 +249,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
 
 TEST(beacon, DISABLED_full_cycle)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
   //  SetGlobalLogLevel(LogLevel::CRITICAL);
   // TODO(tfr): Heuristically fails atm. RunHonestComitteeRenewal(100, 4, 4, 4, 10, 0.5);
   RunHonestComitteeRenewal(100, 4, 2, 2, 10, 0.5);

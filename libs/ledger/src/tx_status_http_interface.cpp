@@ -135,10 +135,8 @@ TxStatusHttpInterface::TxStatusHttpInterface(TxStatusCachePtr status_cache)
 
           return http::CreateJsonResponse(response);
         }
-        else
-        {
-          return http::CreateJsonResponse("{}", http::Status::CLIENT_ERROR_BAD_REQUEST);
-        }
+
+        return http::CreateJsonResponse("{}", http::Status::CLIENT_ERROR_BAD_REQUEST);
       });
 }
 

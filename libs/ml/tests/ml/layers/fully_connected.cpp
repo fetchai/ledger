@@ -61,60 +61,6 @@ std::shared_ptr<GraphType> BuildGraph(bool shared = false, bool time_distributed
   return g;
 }
 
-template <typename TensorType, typename GraphType>
-std::vector<TensorType> GetWeights(GraphType g, bool shared = false, bool time_distributed = false)
-{
-  auto                    state_dict = g->StateDict();
-  std::vector<TensorType> weights;
-
-  // check the naming is as expected
-  if (time_distributed)
-  {
-    weights.emplace_back(
-        state_dict.dict_["FC1_TimeDistributed_FullyConnected_Weights"].weights_->Copy());
-    weights.emplace_back(
-        state_dict.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
-  }
-  else
-  {
-    weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
-    weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
-  }
-
-  if (time_distributed)
-  {
-    if (shared)
-    {
-      weights.emplace_back(
-          state_dict.dict_["FC1_TimeDistributed_FullyConnected_Weights"].weights_->Copy());
-      weights.emplace_back(
-          state_dict.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
-    }
-    else
-    {
-      weights.emplace_back(
-          state_dict.dict_["FC2_TimeDistributed_FullyConnected_Weights"].weights_->Copy());
-      weights.emplace_back(
-          state_dict.dict_["FC2_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
-    }
-  }
-  else
-  {
-    if (shared)
-    {
-      weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
-      weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
-    }
-    else
-    {
-      weights.emplace_back(state_dict.dict_["FC2_FullyConnected_Weights"].weights_->Copy());
-      weights.emplace_back(state_dict.dict_["FC2_FullyConnected_Bias"].weights_->Copy());
-    }
-  }
-
-  return weights;
-}
-
 template <typename T>
 class FullyConnectedTest : public ::testing::Test
 {
@@ -195,11 +141,11 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   std::vector<TypeParam> backprop_error =
       fc.Backward({std::make_shared<TypeParam>(input_data)}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].shape()[0], 5);
-  ASSERT_EQ(backprop_error[0].shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].shape()[2], 2);
-  // No way to test actual values for now as weights are randomly initialised.
+  auto err_signal = (*(backprop_error.begin()));
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], 5);
+  ASSERT_EQ(err_signal.shape()[1], 10);
+  ASSERT_EQ(err_signal.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the class as an Ops
@@ -223,20 +169,19 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the c
   std::vector<TypeParam> backprop_error =
       fc.Backward({std::make_shared<TypeParam>(input_data)}, error_signal);
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].shape()[0], 50);
-  ASSERT_EQ(backprop_error[0].shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].shape()[2], 2);
-  // No way to test actual values for now as weights are randomly initialised.
+  auto err_signal = (*(backprop_error.begin()));
+  ASSERT_EQ(err_signal.shape().size(), 3);
+  ASSERT_EQ(err_signal.shape()[0], 50);
+  ASSERT_EQ(err_signal.shape()[1], 10);
+  ASSERT_EQ(err_signal.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
 {
-  using TensorType   = TypeParam;
-  using DataType     = typename TensorType::Type;
-  using SizeType     = typename TensorType::SizeType;
-  using GraphType    = fetch::ml::Graph<TensorType>;
-  using GraphPtrType = std::shared_ptr<GraphType>;
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
+  using GraphType  = fetch::ml::Graph<TensorType>;
 
   // create an auto encoder of two dense layers, both share same weights
   auto g_shared = BuildGraph<GraphType, TensorType, DataType>(true);
@@ -245,19 +190,12 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   auto g_not_shared = BuildGraph<GraphType, TensorType, DataType>();
 
   // check that all weights are equal and create compare list
-  auto g_shared_weights_before     = GetWeights<TensorType, GraphPtrType>(g_shared, true);
-  auto g_not_shared_weights_before = GetWeights<TensorType, GraphPtrType>(g_not_shared, false);
+  auto g_shared_weights_before     = g_shared->GetWeights();
+  auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
-  for (size_t i = 0; i < 4; i++)
+  for (std::size_t i = 0; i < 4; i++)
   {
     EXPECT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
-  }
-
-  // check the all weights are initialized to be the same
-  for (size_t i = 0; i < 2; i++)
-  {
-    EXPECT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
-    EXPECT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
   }
 
   // start training
@@ -290,48 +228,43 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   g_not_shared_optimiser.Run({data}, data, 1);
 
   // check that all weights are equal
-  auto g_shared_weights_after     = GetWeights<TensorType, GraphPtrType>(g_shared, true);
-  auto g_not_shared_weights_after = GetWeights<TensorType, GraphPtrType>(g_not_shared, false);
+  auto g_shared_weights_after     = g_shared->GetWeights();
+  auto g_not_shared_weights_after = g_not_shared->GetWeights();
 
-  // check the weights are equal after training for shared weights
-  for (size_t i = 0; i < 2; i++)
+  // check the weights and biases are equal after training for shared weights
+  for (std::size_t i = 0; i < 2; i++)
   {
     EXPECT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
   }
 
-  // check the weights are different after training for not shared weights
-  for (size_t i = 0; i < 2; i++)
+  // check the weights and biases are different after training for not shared weights
+  for (std::size_t i = 0; i < 2; i++)
   {
-    std::cout << "g_not_shared_weights_after[i].ToString(): "
-              << g_not_shared_weights_after[i].ToString() << std::endl;
-    std::cout << "g_not_shared_weights_after[i + 2].ToString(): "
-              << g_not_shared_weights_after[i + 2].ToString() << std::endl;
     EXPECT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
   }
 
-  // check the gradient of the shared weight matrices are the sum of individual weight matrice
+  // check the gradient of the shared weight matrices are the sum of individual weight matrix
   // gradients in not_shared_graph
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     TensorType shared_gradient = g_shared_weights_after[i] - g_shared_weights_before[i];
     TensorType not_shared_gradient =
-        g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2] -
-        g_not_shared_weights_before[i] - g_not_shared_weights_before[i + 2];
+        (g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2]) -
+        (g_not_shared_weights_before[i] + g_not_shared_weights_before[i + 2]);
 
     EXPECT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,
-        static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
+        static_cast<DataType>(10) * fetch::math::function_tolerance<DataType>()));
   }
 }
 
 TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
 {
-  using TensorType   = TypeParam;
-  using DataType     = typename TensorType::Type;
-  using SizeType     = typename TensorType::SizeType;
-  using GraphType    = fetch::ml::Graph<TensorType>;
-  using GraphPtrType = std::shared_ptr<GraphType>;
-  using FCType       = fetch::ml::layers::FullyConnected<TensorType>;
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
+  using GraphType  = fetch::ml::Graph<TensorType>;
+  using FCType     = fetch::ml::layers::FullyConnected<TensorType>;
 
   std::string descriptor = FCType::DESCRIPTOR;
 
@@ -342,11 +275,10 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   auto g_not_shared = BuildGraph<GraphType, TensorType, DataType>(false, true);
 
   // check that all weights are equal and create compare list
-  auto g_shared_weights_before = GetWeights<TensorType, GraphPtrType>(g_shared, true, true);
-  auto g_not_shared_weights_before =
-      GetWeights<TensorType, GraphPtrType>(g_not_shared, false, true);
+  auto g_shared_weights_before     = g_shared->GetWeights();
+  auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
-  for (size_t i = 0; i < 4; i++)
+  for (std::size_t i = 0; i < 4; i++)
   {
     ASSERT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
   }
@@ -376,6 +308,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   fetch::ml::optimisers::SGDOptimiser<TensorType> g_shared_optimiser(g_shared, {"Input"}, "Label",
                                                                      "Error", lr);
   DataType shared_loss = g_shared_optimiser.Run({data}, data, 1);
+
   //   Run 1 iteration of SGD to train on g not shared
   fetch::ml::optimisers::SGDOptimiser<TensorType> g_not_shared_optimiser(g_not_shared, {"Input"},
                                                                          "Label", "Error", lr);
@@ -384,8 +317,8 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   EXPECT_EQ(shared_loss, not_shared_loss);
 
   // check that all weights are equal
-  auto g_shared_weights_after     = GetWeights<TensorType, GraphPtrType>(g_shared, true, true);
-  auto g_not_shared_weights_after = GetWeights<TensorType, GraphPtrType>(g_not_shared, false, true);
+  auto g_shared_weights_after     = g_shared->GetWeights();
+  auto g_not_shared_weights_after = g_not_shared->GetWeights();
 
   // check the all weights are initialized to be the same
   for (size_t i = 0; i < 2; i++)
@@ -394,21 +327,28 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
     EXPECT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
   }
 
+  // check the all weights are initialized to be the same
+  for (std::size_t i = 0; i < 2; i++)
+  {
+    EXPECT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
+    EXPECT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
+  }
+
   // check the weights are equal after training for shared weights
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     EXPECT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
   }
 
   // check the weights are different after training for not shared weights
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     ASSERT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
   }
 
   // check the gradient of the shared weight matrices are the sum of individual weight matrice
   // gradients in not_shared_graph
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     TensorType shared_gradient = g_shared_weights_after[i] - g_shared_weights_before[i];
     TensorType not_shared_gradient =
@@ -417,8 +357,80 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
 
     EXPECT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,
-        static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
+        static_cast<DataType>(10) * fetch::math::function_tolerance<DataType>()));
   }
+}
+
+TYPED_TEST(FullyConnectedTest, share_weight_cache_clearining_check)
+{
+  using TensorType      = TypeParam;
+  using DataType        = typename TensorType::Type;
+  using SizeType        = typename TensorType::SizeType;
+  using GraphType       = fetch::ml::Graph<TensorType>;
+  using FCType          = fetch::ml::layers::FullyConnected<TensorType>;
+  using PlaceHolderType = fetch::ml::ops::PlaceHolder<TensorType>;
+  using MSEType         = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
+
+  // graph with two shared fully connected layers. We only backprop through one and check the other
+  // updates Input -> FC_1        -> LossOp
+  //       -> FC_1_Shared
+
+  auto        g          = std::make_shared<GraphType>();
+  std::string input      = g->template AddNode<PlaceHolderType>("Input", {});
+  std::string fc1        = g->template AddNode<FCType>("FC1", {input}, 10u, 10u);
+  std::string fc1_shared = g->template AddNode<FCType>("FC1", {input}, 10u, 10u);
+  std::string label      = g->template AddNode<PlaceHolderType>("Label", {});
+  std::string error      = g->template AddNode<MSEType>("Error", {fc1, label});
+  g->Compile();
+
+  // check that all weights are equal and create compare list
+  auto g_shared_weights_before = g->GetWeights();
+
+  // check that weight initialisation is shared for biases and weights
+  EXPECT_TRUE(g_shared_weights_before.size() == 4);
+  EXPECT_TRUE(g_shared_weights_before.at(0) == g_shared_weights_before.at(2));
+  EXPECT_TRUE(g_shared_weights_before.at(1) == g_shared_weights_before.at(3));
+
+  // start training
+  // set data
+  TensorType data;
+  data.Resize({10, 1});
+  for (SizeType i = 0; i < 10; i++)
+  {
+    data.Set(i, 0, static_cast<DataType>(i));
+  }
+
+  g->SetInput("Input", data.Copy());
+  TensorType fc1_pred        = g->Evaluate(fc1);
+  TensorType fc1_pred_shared = g->Evaluate(fc1_shared);
+
+  EXPECT_TRUE(
+      fc1_pred.AllClose(fc1_pred_shared, static_cast<DataType>(0), static_cast<DataType>(0)));
+
+  auto                                            lr = static_cast<DataType>(1);
+  fetch::ml::optimisers::SGDOptimiser<TensorType> opt(g, {"Input"}, "Label", "Error", lr);
+  opt.Run({data}, data, 1);
+
+  TensorType fc1_pred_after        = g->Evaluate(fc1);
+  TensorType fc1_pred_shared_after = g->Evaluate(fc1_shared);
+
+  auto g_shared_weights_after = g->GetWeights();
+
+  // check weights and biases are the same
+  EXPECT_TRUE(g_shared_weights_after.at(0).AllClose(
+      g_shared_weights_after.at(2), static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(g_shared_weights_after.at(1).AllClose(
+      g_shared_weights_after.at(3), static_cast<DataType>(0), static_cast<DataType>(0)));
+
+  // check layer predictions are the same
+  EXPECT_FALSE(
+      fc1_pred.AllClose(fc1_pred_after, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_FALSE(fc1_pred_shared.AllClose(fc1_pred_shared_after, static_cast<DataType>(0),
+                                        static_cast<DataType>(0)));
+
+  // check both shared layers still give the same prediction
+  EXPECT_TRUE(fc1_pred_after.AllClose(fc1_pred_shared_after, static_cast<DataType>(0),
+                                      static_cast<DataType>(0)));
 }
 
 TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
@@ -470,10 +482,11 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   auto      backprop_error = fc.BackPropagate(error_signal);
 
   ASSERT_EQ(backprop_error.size(), 1);
-  ASSERT_EQ(backprop_error[0].second.shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].second.shape()[0], 5);
-  ASSERT_EQ(backprop_error[0].second.shape()[1], 10);
-  ASSERT_EQ(backprop_error[0].second.shape()[2], 2);
+  auto err_sig = (*(backprop_error.begin())).second.at(0);
+  ASSERT_EQ(err_sig.shape().size(), 3);
+  ASSERT_EQ(err_sig.shape()[0], 5);
+  ASSERT_EQ(err_sig.shape()[1], 10);
+  ASSERT_EQ(err_sig.shape()[2], 2);
 }
 
 TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
@@ -578,7 +591,6 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagate(error_output);
-  layer.ApplyRegularisation();
   auto grads = layer.GetGradients();
   for (auto &grad : grads)
   {
@@ -661,7 +673,6 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagate(error_output);
-  layer.ApplyRegularisation();
   auto grads = layer.GetGradients();
   for (auto &grad : grads)
   {
@@ -673,7 +684,6 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   layer2.SetInput(label_name, labels);
   TypeParam loss2 = layer2.Evaluate(error_output);
   layer2.BackPropagate(error_output);
-  layer2.ApplyRegularisation();
   auto grads2 = layer2.GetGradients();
   for (auto &grad : grads2)
   {

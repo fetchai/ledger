@@ -34,7 +34,7 @@ public:
   using VectorRegisterType = typename ndarray_type::VectorRegisterType;
 
 protected:
-  void SetUp(const ::benchmark::State & /*st*/) override
+  void SetUp(::benchmark::State const & /*st*/) override
   {
     a_ = ndarray_type(N);
     b_ = ndarray_type(N);
@@ -44,12 +44,9 @@ protected:
     }
   }
 
-  void TearDown(const ::benchmark::State &) override
-  {}
-
   ndarray_type a_, b_;
 };
-BENCHMARK_TEMPLATE_F(ParallelDispatcherKernelBench, kernel_implementation, double)
+BENCHMARK_TEMPLATE_F(ParallelDispatcherKernelBench, kernel_implementation, double)  // NOLINT
 (benchmark::State &st)
 {
   // Standard implementation

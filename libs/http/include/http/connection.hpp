@@ -49,7 +49,6 @@ public:
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
     : socket_(std::move(socket))
     , manager_(manager)
-    , write_mutex_{}
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP connection from ",
                     socket_.remote_endpoint().address().to_string());
@@ -117,17 +116,15 @@ public:
         this->HandleError(ec, request);
         return;
       }
-      else
+
+      // only parse the header if there is data to be parsed
+      if (len != 0u)
       {
-        // only parse the header if there is data to be parsed
-        if (len)
+        if (request->ParseHeader(*buffer_ptr, len))
         {
-          if (request->ParseHeader(*buffer_ptr, len))
+          if (is_open_)
           {
-            if (is_open_)
-            {
-              ReadBody(buffer_ptr, request);
-            }
+            ReadBody(buffer_ptr, request);
           }
         }
       }
@@ -136,7 +133,7 @@ public:
     asio::async_read_until(socket_, *buffer_ptr, "\r\n\r\n", cb);
   }
 
-  void ReadBody(BufferPointerType buffer_ptr, SharedRequestType request)
+  void ReadBody(BufferPointerType const &buffer_ptr, SharedRequestType const &request)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body");
     // Check if we got all the body
@@ -170,12 +167,10 @@ public:
         this->HandleError(ec, request);
         return;
       }
-      else
+
+      if (is_open_)
       {
-        if (is_open_)
-        {
-          ReadBody(buffer_ptr, request);
-        }
+        ReadBody(buffer_ptr, request);
       }
     };
 
@@ -183,7 +178,7 @@ public:
                      asio::transfer_exactly(request->content_length() - buffer_ptr->size()), cb);
   }
 
-  void HandleError(std::error_code const &ec, SharedRequestType /*req*/)
+  void HandleError(std::error_code const &ec, SharedRequestType const & /*req*/)
   {
     std::stringstream ss;
     ss << ec << ":" << ec.message();
@@ -239,7 +234,7 @@ private:
   ResponseQueueType          write_queue_;
   Mutex                      write_mutex_;
 
-  HandleType handle_;
+  HandleType handle_{};
   bool       is_open_ = false;
 };
 }  // namespace http

@@ -70,18 +70,10 @@ const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
 
-SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features, DAGPtr dag,
-                                              StorageUnitInterface &storage_unit)
+SynergeticExecMgrPtr CreateSynergeticExecutor(DAGPtr dag, StorageUnitInterface &storage_unit)
 {
-  SynergeticExecMgrPtr execution_mgr{};
-
-  if (features.IsEnabled("synergetic"))
-  {
-    execution_mgr = std::make_unique<SynergeticExecutionManager>(
-        dag, 1u, [&storage_unit]() { return std::make_shared<SynergeticExecutor>(storage_unit); });
-  }
-
-  return execution_mgr;
+  return std::make_unique<SynergeticExecutionManager>(
+      dag, 1u, [&storage_unit]() { return std::make_shared<SynergeticExecutor>(storage_unit); });
 }
 }  // namespace
 
@@ -94,8 +86,7 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
 BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                                   BlockSinkInterface &      block_sink,
-                                   core::FeatureFlags const &features, ProverPtr const &prover,
+                                   BlockSinkInterface &block_sink, ProverPtr prover,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty, ConsensusPtr consensus)
   : chain_{chain}
@@ -108,7 +99,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , periodic_print_{STATE_NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
-  , mining_address_{prover->identity()}
+  , certificate_{std::move(prover)}
+  , mining_address_{certificate_->identity()}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
                                                   [](State state) { return ToString(state); })}
   , block_difficulty_{block_difficulty}
@@ -117,7 +109,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
-  , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag_, storage_unit_)}
+  , synergetic_exec_mgr_{CreateSynergeticExecutor(dag_, storage_unit_)}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reload_state_total",
         "The total number of times in the reload state")}
@@ -340,19 +332,17 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
       // once we have got back to genesis then we need to start executing from the beginning
       return State::PRE_EXEC_BLOCK_VALIDATION;
     }
-    else
-    {
-      // look up the previous block
-      auto previous_block = chain_.GetBlock(previous_hash);
-      if (!previous_block)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
-        return State::RESET;
-      }
 
-      // update the current block
-      current_block_ = previous_block;
+    // look up the previous block
+    auto previous_block = chain_.GetBlock(previous_hash);
+    if (!previous_block)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
+      return State::RESET;
     }
+
+    // update the current block
+    current_block_ = previous_block;
   }
   else if (current_hash == last_processed_block)
   {
@@ -495,7 +485,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   {
     return State::RESET;
   }
-  else if (mining_ && mining_enabled_ && ((Clock::now() >= next_block_time_) || consensus_))
+  if (mining_ && mining_enabled_ && ((Clock::now() >= next_block_time_) || consensus_))
   {
     if (consensus_)
     {
@@ -520,7 +510,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     next_block_->body.miner         = mining_address_;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->body.block_number,
-                   " beacon: ", next_block_->body.entropy);
+                   " beacon: ", next_block_->body.block_entropy.EntropyAsU64());
 
     // Attach current DAG state
     if (dag_)
@@ -537,11 +527,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     // trigger packing state
     return State::NEW_SYNERGETIC_EXECUTION;
   }
-  else
-  {
-    // delay the invocation of this state machine
-    state_machine_->Delay(std::chrono::milliseconds{100});
-  }
+
+  // delay the invocation of this state machine
+  state_machine_->Delay(std::chrono::milliseconds{100});
 
   return State::SYNCHRONISED;
 }
@@ -574,7 +562,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     if (consensus_)
     {
       consensus_->UpdateCurrentBlock(*previous);  // Only update with valid blocks
-      auto result = consensus_->ValidBlock(*previous, *current_block_);
+      auto result = consensus_->ValidBlock(*current_block_);
 
       if (!(result == ConsensusInterface::Status::YES ||
             result == ConsensusInterface::Status::UNKNOWN))
@@ -659,8 +647,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
       return State::RESET;
     }
 
-    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(current_block_->body.block_number,
-                                                          num_lanes_))
+    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(num_lanes_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(current_block_->body.hash),
                      ")");
@@ -777,22 +764,20 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
 
     return State::SYNERGETIC_EXECUTION;
   }
-  else
+
+  // status debug
+  if (tx_wait_periodic_.Poll())
   {
-    // status debug
-    if (tx_wait_periodic_.Poll())
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for ", pending_txs_->size(), " transactions to sync");
-    }
-
-    if (!dag_is_ready)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for DAG to sync");
-    }
-
-    // signal the the next execution of the state machine should be much later in the future
-    state_machine_->Delay(std::chrono::milliseconds{200});
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for ", pending_txs_->size(), " transactions to sync");
   }
+
+  if (!dag_is_ready)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for DAG to sync");
+  }
+
+  // signal the the next execution of the state machine should be much later in the future
+  state_machine_->Delay(std::chrono::milliseconds{200});
 
   return State::WAIT_FOR_TRANSACTIONS;
 }
@@ -983,8 +968,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
       return State::RESET;
     }
 
-    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(next_block_->body.block_number,
-                                                          num_lanes_))
+    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(num_lanes_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to valid work queue");
 
@@ -1091,6 +1075,11 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
   try
   {
+    // Before the block leaves, it must be signed.
+    next_block_->UpdateDigest();
+    next_block_->body.miner_id   = certificate_->identity();
+    next_block_->miner_signature = certificate_->Sign(next_block_->body.hash);
+
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
     {
@@ -1136,7 +1125,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   reset_state_count_->increment();
 
-  if (block)
+  if (block != nullptr && !block->body.hash.empty())
   {
     block_hash_->set(*reinterpret_cast<uint64_t const *>(block->body.hash.pointer()));
   }

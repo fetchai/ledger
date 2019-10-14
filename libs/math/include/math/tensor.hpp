@@ -122,13 +122,13 @@ public:
 
   static Tensor FromString(byte_array::ConstByteArray const &c);
   explicit Tensor(SizeType const &n);
-  Tensor(Tensor &&other)      = default;
-  Tensor(Tensor const &other) = default;
-  Tensor(SizeVector const &dims);
+  Tensor(Tensor &&other) noexcept = default;
+  Tensor(Tensor const &other)     = default;
+  explicit Tensor(SizeVector const &dims);
   virtual ~Tensor() = default;
 
   Tensor &operator=(Tensor const &other) = default;
-  Tensor &operator=(Tensor &&other) = default;
+  Tensor &operator=(Tensor &&other) noexcept = default;
 
   IteratorType      begin();
   IteratorType      end();
@@ -164,7 +164,7 @@ public:
 
   Type operator()(SizeType const &index) const;
   template <typename S>
-  std::enable_if_t<std::is_integral<S>::value, Type> &operator[](S const &i);
+  std::enable_if_t<std::is_integral<S>::value, Type> &operator[](S const &n);
   template <typename S>
   std::enable_if_t<std::is_integral<S>::value, Type> const &operator[](S const &i) const;
 
@@ -287,11 +287,11 @@ public:
 
   ConstSliceType Slice() const;
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
-  ConstSliceType Slice(SizeVector index, SizeVector axes) const;
+  ConstSliceType Slice(SizeVector indices, SizeVector axes) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
   TensorSlice    Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0);
-  TensorSlice    Slice(SizeVector index, SizeVector axes);
+  TensorSlice    Slice(SizeVector indices, SizeVector axes);
 
   /////////////
   /// Views ///
@@ -314,7 +314,7 @@ public:
   static Tensor              Stack(std::vector<TensorType> const &tensors);
   static Tensor              Concat(std::vector<Tensor> const &tensors, SizeType axis);
   static std::vector<Tensor> Split(Tensor const &tensor, SizeVector const &concat_points,
-                                   SizeType const axis);
+                                   SizeType axis);
 
   void Sort();
   void Sort(memory::Range const &range);
@@ -348,7 +348,7 @@ public:
 
     SliceIteratorType begin();
     SliceIteratorType end();
-    TensorSlice       Slice(SizeType i, SizeType axis);
+    TensorSlice       Slice(SizeType index, SizeType axis);
     void              ModifyRange(SizeType i, SizeType axis);
 
     template <typename G>
@@ -661,7 +661,7 @@ private:
     STensor &               tensor_;
     std::vector<SizeVector> range_;
     std::vector<SizeType>   axes_;
-    SizeType                axis_;
+    SizeType                axis_{};
   };
 };
 
@@ -709,12 +709,13 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     default:
       if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
       {
-        throw std::runtime_error("invalid character used in string to set tensor");
+        throw exceptions::InvalidNumericCharacter("invalid character used in string to set tensor");
       }
       else
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
-        elems.push_back(Type(std::atof(cur_elem.c_str())));
+        auto        float_val = std::atof(cur_elem.c_str());
+        elems.push_back(Type(float_val));
       }
       break;
     }
@@ -1021,13 +1022,13 @@ void Tensor<T, C>::Assign(Tensor const &other)
   else
   {
     if (!(Broadcast(
-            [](const T &x, const T &y, T &z) {
+            [](T const &x, T const &y, T &z) {
               FETCH_UNUSED(x);
               z = y;
             },
             *this, other, *this)))
     {
-      throw std::runtime_error("arrays not broadcastable for assignment!");
+      throw exceptions::WrongShape("arrays not broadcastable for assignment!");
     }
   }
 }
@@ -1292,7 +1293,7 @@ void Tensor<T, C>::Set(Args... args)
   assert(sizeof...(args) == stride_.size() + 1);  // Plus one as last arg is value
   if (sizeof...(args) != (stride_.size() + 1))
   {
-    throw std::runtime_error("too many or not enough indices given to Tensor::Set");
+    throw exceptions::WrongIndices("too many or not enough indices given to Tensor::Set");
   }
 
   uint64_t index = TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
@@ -1641,7 +1642,7 @@ Tensor<T, C> &Tensor<T, C>::Squeeze()
     {
       if (cur_dim == 0)
       {
-        throw std::runtime_error("cannot squeeze tensor, no dimensions of size 1");
+        throw exceptions::InvalidReshape("cannot squeeze tensor, no dimensions of size 1");
       }
       --cur_dim;
     }
@@ -2326,14 +2327,20 @@ std::string Tensor<T, C>::ToString() const
     {
       for (SizeType j(0); j < shape_[1]; ++j)
       {
-        ss << At(i, j) << ", ";
+        if (j == (shape_[1] - 1))
+        {
+          ss << At(i, j) << ";";
+        }
+        else
+        {
+          ss << At(i, j) << ", ";
+        }
       }
-      ss << "; ";
     }
   }
   else
   {
-    throw std::runtime_error("cannot convert > 2D tensors to string");
+    throw exceptions::WrongShape("cannot convert > 2D tensors to string");
   }
   return ss.str();
 }

@@ -19,6 +19,7 @@
 
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/regularisers/reg_types.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
@@ -152,10 +153,9 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
                                                                                       op);
     break;
   }
-  case ml::OpType::OP_LEAKY_RELU_OP:
+  case ml::OpType::OP_PRELU_OP:
   {
-    SerializeImplementation<TensorType, D, ml::OpLeakyReluOpSaveableParams<TensorType>>(map, code,
-                                                                                        op);
+    SerializeImplementation<TensorType, D, ml::OpPReluOpSaveableParams<TensorType>>(map, code, op);
     break;
   }
   case ml::OpType::OP_LOG:
@@ -349,7 +349,7 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   default:
   {
-    throw std::runtime_error("Unknown type for Serialization");
+    throw ml::exceptions::InvalidMode("Unknown type for Serialization");
   }
   }
 }
@@ -457,10 +457,10 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
                                                                                              code);
     break;
   }
-  case ml::OpType::OP_LEAKY_RELU_OP:
+  case ml::OpType::OP_PRELU_OP:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpLeakyReluOpSaveableParams<TensorType>>(
-        map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpPReluOpSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::OP_LOG:
@@ -667,7 +667,7 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   default:
   {
-    throw std::runtime_error("Unknown type for Deserialization");
+    throw ml::exceptions::InvalidMode("Unknown type for Deserialization");
   }
   }
 }
@@ -744,14 +744,20 @@ public:
       switch (key)
       {
       case WEIGHTS:
+      {
         output.weights_ = std::make_shared<V>();
         map.GetValue(*output.weights_);
         break;
+      }
       case DICT:
+      {
         map.GetValue(output.dict_);
         break;
+      }
       default:
-        throw std::runtime_error("unsupported key in statemap deserialization");
+      {
+        throw ml::exceptions::InvalidMode("unsupported key in statemap deserialization");
+      }
       }
     }
   }
@@ -1597,13 +1603,13 @@ struct MapSerializer<ml::OpLeakyReluSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for LeakyReluOp saveable params
+ * serializer for PReluOp saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
-struct MapSerializer<ml::OpLeakyReluOpSaveableParams<TensorType>, D>
+struct MapSerializer<ml::OpPReluOpSaveableParams<TensorType>, D>
 {
-  using Type       = ml::OpLeakyReluOpSaveableParams<TensorType>;
+  using Type       = ml::OpPReluOpSaveableParams<TensorType>;
   using DriverType = D;
 
   static uint8_t const BASE_OPS = 1;

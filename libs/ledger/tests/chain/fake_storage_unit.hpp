@@ -31,8 +31,8 @@ class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   using Transaction = fetch::ledger::Transaction;
-  using Digest      = fetch::ledger::Digest;
-  using DigestSet   = fetch::ledger::DigestSet;
+  using Digest      = fetch::Digest;
+  using DigestSet   = fetch::DigestSet;
   using ResourceID  = fetch::storage::ResourceID;
 
   /// @name State Interface
@@ -40,8 +40,8 @@ public:
   Document Get(ResourceAddress const &key) override;
   Document GetOrCreate(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
-  bool     Lock(ShardIndex shard) override;
-  bool     Unlock(ShardIndex shard) override;
+  bool     Lock(ShardIndex index) override;
+  bool     Unlock(ShardIndex index) override;
   /// @}
 
   /// @name Transaction Interface
@@ -49,12 +49,12 @@ public:
   void AddTransaction(Transaction const &tx) override;
   bool GetTransaction(Digest const &digest, Transaction &tx) override;
   bool HasTransaction(Digest const &digest) override;
-  void IssueCallForMissingTxs(DigestSet const &tx_set) override;
+  void IssueCallForMissingTxs(DigestSet const &digests) override;
   /// @}
 
   /// @name Transaction History Poll
   /// @{
-  TxLayouts PollRecentTx(uint32_t) override;
+  TxLayouts PollRecentTx(uint32_t /*unused*/) override;
   /// @}
 
   /// @name Revertible Document Store Interface
@@ -67,7 +67,7 @@ public:
   /// @}
 
   // Useful for test to force the hash
-  Hash EmulateCommit(Hash const &hash, uint64_t index);
+  Hash EmulateCommit(Hash const &commit_hash, uint64_t index);
 
   // Required to emulate the state being changed
   void SetCurrentHash(Hash const &hash);

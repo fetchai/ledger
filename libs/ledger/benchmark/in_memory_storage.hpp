@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -29,8 +29,8 @@ class InMemoryStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
   using Transaction = fetch::ledger::Transaction;
-  using Digest      = fetch::ledger::Digest;
-  using DigestSet   = fetch::ledger::DigestSet;
+  using Digest      = fetch::Digest;
+  using DigestSet   = fetch::DigestSet;
 
   // Construction / Destruction
   InMemoryStorageUnit()                            = default;
@@ -57,7 +57,7 @@ public:
   void IssueCallForMissingTxs(DigestSet const &tx_set) override;
   /// @}
 
-  TxLayouts PollRecentTx(uint32_t) override;
+  TxLayouts PollRecentTx(uint32_t /*unused*/) override;
 
   /// @name Revertible Document Store Interface
   /// @{

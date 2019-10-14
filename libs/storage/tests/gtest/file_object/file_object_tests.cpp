@@ -243,7 +243,7 @@ TEST_F(FileObjectTests, EraseFiles)
     consistency_check_.push_back(file_object_->id());
 
     // Erase elements half of the time
-    if (i % 2)
+    if ((i % 2) != 0u)
     {
       std::swap(consistency_check_[rng_() % consistency_check_.size()],
                 consistency_check_[consistency_check_.size() - 1]);
@@ -257,7 +257,7 @@ TEST_F(FileObjectTests, EraseFiles)
   }
 }
 
-TEST_F(FileObjectTests, DISABLED_SeekAndTellFiles)
+TEST_F(FileObjectTests, SeekAndTellFiles)
 {
   file_object_->New("test");
 
@@ -269,22 +269,29 @@ TEST_F(FileObjectTests, DISABLED_SeekAndTellFiles)
     ASSERT_EQ(file_object_->Tell(), 0);
     file_object_->Write(new_string);
 
+    ASSERT_EQ(std::string{file_object_->AsDocument().document}.size(), new_string.size());
+
     for (std::size_t j = 0; j < 10; ++j)
     {
-      uint64_t index_to_change = rng_() % new_string.size();
+      // Force first iteration to change from the start for easier debugging.
+      uint64_t index_to_change = j == 0 ? 0 : rng_() % new_string.size();
       uint64_t length_of_chars = rng_() % (new_string.size() - index_to_change);
 
       std::string new_chars(length_of_chars, NewChar());
 
       file_object_->Seek(index_to_change);
-      file_object_->Write((const uint8_t *)(new_chars.c_str()), new_chars.size());
+      file_object_->Write(reinterpret_cast<uint8_t const *>(new_chars.c_str()), new_chars.size());
 
       for (std::size_t k = 0; k < length_of_chars; ++k)
       {
         new_string[index_to_change + k] = new_chars[0];
       }
 
+      // Seek back to 0 to avoid comparing against a truncated string.
+      file_object_->Seek(0);
+
       ASSERT_EQ(std::string{file_object_->AsDocument().document}, new_string);
+      ASSERT_EQ(std::string{file_object_->AsDocument().document}.size(), new_string.size());
     }
 
     consistency_check_.push_back(file_object_->id());

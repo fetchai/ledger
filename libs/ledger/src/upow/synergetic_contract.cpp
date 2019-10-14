@@ -26,6 +26,7 @@
 #include "vectorise/uint/uint.hpp"
 #include "vm/array.hpp"
 #include "vm/compiler.hpp"
+#include "vm/function_decorators.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/core/structured_data.hpp"
 #include "vm_modules/math/bignumber.hpp"
@@ -39,6 +40,7 @@ namespace fetch {
 namespace ledger {
 namespace {
 
+using vm::FunctionDecoratorKind;
 using vm_modules::math::UInt256Wrapper;
 using vm_modules::VMFactory;
 using vm_modules::StructuredData;
@@ -53,16 +55,6 @@ using VmStructuredDataArray = vm::Ptr<vm::Array<VmStructuredData>>;
 
 constexpr char const *LOGGING_NAME = "SynergeticContract";
 
-enum class FunctionKind
-{
-  NONE,       ///< Normal (undecorated) function
-  WORK,       ///< A function that is called to do some work
-  OBJECTIVE,  ///< A function that is called to determine the quality of the work
-  PROBLEM,    ///< The problem function
-  CLEAR,      ///< The clear function
-  INVALID,    ///< The function has an invalid decorator
-};
-
 std::string ErrorsToLog(std::vector<std::string> const &errors)
 {
   // generate the complete error
@@ -73,43 +65,6 @@ std::string ErrorsToLog(std::vector<std::string> const &errors)
   }
 
   return oss.str();
-}
-
-FunctionKind DetermineKind(vm::Executable::Function const &fn)
-{
-  FunctionKind kind{FunctionKind::NONE};
-
-  // loop through all the function annotations
-  if (1u == fn.annotations.size())
-  {
-    // select the first annotation
-    auto const &annotation = fn.annotations.front();
-
-    if (annotation.name == "@work")
-    {
-      // only update the kind if one hasn't already been specified
-      kind = FunctionKind::WORK;
-    }
-    else if (annotation.name == "@objective")
-    {
-      kind = FunctionKind::OBJECTIVE;
-    }
-    else if (annotation.name == "@problem")
-    {
-      kind = FunctionKind::PROBLEM;
-    }
-    else if (annotation.name == "@clear")
-    {
-      kind = FunctionKind::CLEAR;
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Invalid decorator: ", annotation.name);
-      kind = FunctionKind::INVALID;
-    }
-  }
-
-  return kind;
 }
 
 VmStructuredData CreateProblemData(vm::VM *vm, ConstByteArray const &problem_data)
@@ -160,14 +115,14 @@ VmStructuredDataArray CreateProblemData(vm::VM *vm, ProblemData const &problem_d
   // move the constructed elements over to the array
   ret->elements = std::move(elements);
 
-  return {ret};
+  return VmStructuredDataArray{ret};
 }
 
 }  // namespace
 
 SynergeticContract::SynergeticContract(ConstByteArray const &source)
   : digest_{Hash<SHA256>(source)}
-  , module_{VMFactory::GetModule(VMFactory::USE_SYNERGETIC)}
+  , module_{VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
 {
   // ensure the source has size
   if (source.empty())
@@ -186,7 +141,8 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
   // compile the source to IR
   std::vector<std::string> errors{};
-  if (!compiler_->Compile(static_cast<std::string>(source), "default", *ir_, errors))
+  fetch::vm::SourceFiles   files = {{"default.etch", static_cast<std::string>(source)}};
+  if (!compiler_->Compile(files, "default_ir", *ir_, errors))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to compile contract: ", ErrorsToLog(errors));
     throw std::runtime_error("Failed to compile synergetic contract");
@@ -194,7 +150,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
   // generate the executable
   auto vm = std::make_unique<vm::VM>(module_.get());
-  if (!vm->GenerateExecutable(*ir_, "another", *executable_, errors))
+  if (!vm->GenerateExecutable(*ir_, "default_exe", *executable_, errors))
   {
     FETCH_LOG_WARN(LOGGING_NAME,
                    "Failed to generate executable for contract: ", ErrorsToLog(errors));
@@ -210,28 +166,31 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
     std::string *function = nullptr;
     switch (kind)
     {
-    case FunctionKind::WORK:
+    case FunctionDecoratorKind::WORK:
       name     = "work";
       function = &work_function_;
       break;
-    case FunctionKind::OBJECTIVE:
+    case FunctionDecoratorKind::OBJECTIVE:
       name     = "objective";
       function = &objective_function_;
       break;
-    case FunctionKind::PROBLEM:
+    case FunctionDecoratorKind::PROBLEM:
       name     = "problem";
       function = &problem_function_;
       break;
-    case FunctionKind::CLEAR:
+    case FunctionDecoratorKind::CLEAR:
       name     = "clear";
       function = &clear_function_;
       break;
-    case FunctionKind::NONE:
-    case FunctionKind::INVALID:
+    case FunctionDecoratorKind::NONE:
+    case FunctionDecoratorKind::ON_INIT:
+    case FunctionDecoratorKind::ACTION:
+    case FunctionDecoratorKind::QUERY:
+    case FunctionDecoratorKind::INVALID:
       break;
     }
 
-    if (function)
+    if (function != nullptr)
     {
       // sanity check
       assert(name != nullptr);
@@ -309,7 +268,7 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   // ensure the output of the objective function is "correct"
   if (vm::TypeIds::Int64 != objective_output.type_id)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect objective value from function");
+    FETCH_LOG_WARN(LOGGING_NAME, "Objective function must return Int64");
     return Status::VM_EXECUTION_ERROR;
   }
 
@@ -319,9 +278,9 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   return Status::SUCCESS;
 }
 
-Status SynergeticContract::Complete(uint64_t block, BitVector const &shards)
+Status SynergeticContract::Complete(Address const &address, BitVector const &shards)
 {
-  if (!storage_)
+  if (storage_ == nullptr)
   {
     return Status::NO_STATE_ACCESS;
   }
@@ -331,7 +290,7 @@ Status SynergeticContract::Complete(uint64_t block, BitVector const &shards)
   // setup the storage infrastructure
   CachedStorageAdapter storage_cache(*storage_);
   StateSentinelAdapter state_sentinel{
-      storage_cache, Identifier{digest_.ToHex() + "." + std::to_string(block)}, shards};
+      storage_cache, Identifier{digest_.ToHex() + "." + address.display()}, shards};
 
   // attach the state to the VM
   vm->SetIOObserver(state_sentinel);

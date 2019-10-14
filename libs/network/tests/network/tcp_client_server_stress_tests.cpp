@@ -27,12 +27,12 @@
 #include <iostream>
 #include <memory>
 
-// Test of the client and server.
+namespace {
 
 using namespace fetch::network;
 using namespace fetch::byte_array;
 
-static constexpr char const *LOGGING_NAME = "TcpClientServerStressTests";
+constexpr char const *LOGGING_NAME = "TcpClientServerStressTests";
 
 std::vector<MessageType> globalMessagesFromServer_{};
 std::mutex               messages_;
@@ -41,9 +41,9 @@ std::mutex               messages_;
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t port, NetworkManager nmanager)
+  Server(uint16_t port, NetworkManager const &nmanager)
     : TCPServer(port, nmanager)
-  {}  // note for debug purposes, server does not Start() automatically
+  {}
 
   ~Server() override = default;
 
@@ -104,7 +104,7 @@ void waitUntilConnected(std::string const &host, uint16_t port)
 }
 
 template <std::size_t N = 1>
-void TestCase0(std::string /*host*/, uint16_t port)
+void TestCase0(std::string const & /*host*/, uint16_t port)
 {
   std::cerr << "\nTEST CASE 0. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the server multiple times" << std::endl;
@@ -126,7 +126,7 @@ void TestCase0(std::string /*host*/, uint16_t port)
 }
 
 template <std::size_t N = 1>
-void TestCase1(std::string /*host*/, uint16_t port)
+void TestCase1(std::string const & /*host*/, uint16_t port)
 {
   std::cerr << "\nTEST CASE 1. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the server multiple times" << std::endl;
@@ -149,7 +149,7 @@ void TestCase1(std::string /*host*/, uint16_t port)
 }
 
 template <std::size_t N = 1>
-void TestCase2(std::string host, uint16_t port)
+void TestCase2(std::string const &host, uint16_t port)
 {
   std::cerr << "\nTEST CASE 2. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the server and send data to it" << std::endl;
@@ -302,7 +302,7 @@ void TestCase5(std::string host, uint16_t port)
     if (!(i->WaitForAlive(100)))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     std::atomic<std::size_t> send_atomic{0};
@@ -392,7 +392,7 @@ void TestCase6(std::string host, uint16_t port)
     if (!(i->WaitForAlive(1000)))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened 1");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     std::mutex messages_receive;
@@ -505,7 +505,7 @@ void TestCase7(std::string host, uint16_t port)
     if (!(i->WaitForAlive(1000)))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened!");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     std::mutex messages_receive;
@@ -574,13 +574,13 @@ void TestCase7(std::string host, uint16_t port)
     if (globalMessagesFromServer_ != to_send_from_client)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match client->server messages.");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     if (received_client != to_send_from_server)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server->client messages.");
-      throw 1;
+      throw std::runtime_error("error");
     }
   }
 }
@@ -627,3 +627,5 @@ INSTANTIATE_TEST_CASE_P(MyGroup, TCPClientServerTest, testing::Values<std::size_
                         testing::PrintToStringParamName());
 // testing::Values<std::size_t>(4): 4 is the number of iterations to run this test under 30 sec.
 // Change the number of iteration to increase/decrease test execution time.
+
+}  // namespace

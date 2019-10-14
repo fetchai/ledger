@@ -55,7 +55,7 @@ public:
                    std::weak_ptr<ClientManager> manager, NetworkManager network_manager)
     : socket_(std::move(socket))
     , manager_(std::move(manager))
-    , network_manager_(network_manager)
+    , network_manager_(network_manager)  // NOLINT
   {
     auto socket_ptr = socket_.lock();
     if (socket_ptr)
@@ -203,9 +203,9 @@ private:
       uint64_t magic;
       uint64_t length;
     } content;
-  } header_;
+  } header_{};
 
-  void ReadHeader(StrongStrand strong_strand)
+  void ReadHeader(StrongStrand const &strong_strand)
   {
     if (shutting_down_)
     {
@@ -243,7 +243,7 @@ private:
     asio::async_read(*socket_ptr, asio::buffer(header_.bytes, 2 * sizeof(uint64_t)), cb);
   }
 
-  void ReadBody(StrongStrand strong_strand)
+  void ReadBody(StrongStrand const &strong_strand)
   {
     if (shutting_down_)
     {
@@ -314,7 +314,7 @@ private:
   }
 
   // Always executed in a run(), in a strand
-  void WriteNext(SharedSelfType selfLock)
+  void WriteNext(SharedSelfType const &selfLock)
   {
     // Only one thread can get past here at a time. Effectively a try_lock
     // except that we can't unlock a mutex in the callback (undefined behaviour)

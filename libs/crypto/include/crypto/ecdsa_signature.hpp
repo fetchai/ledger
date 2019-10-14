@@ -51,9 +51,8 @@ public:
 
   ECDSASignature() = default;
 
-  ECDSASignature(byte_array::ConstByteArray binary_signature)
-    : hash_{}
-    , signature_ecdsa_ptr_{Convert(binary_signature, signatureBinaryDataFormat)}
+  explicit ECDSASignature(byte_array::ConstByteArray binary_signature)
+    : signature_ecdsa_ptr_{Convert(binary_signature, signatureBinaryDataFormat)}
     , signature_{std::move(binary_signature)}
   {}
 
@@ -65,7 +64,7 @@ public:
   friend class ECDSASignature;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(ECDSASignatureType<BIN_FORMAT> const &from)
+  explicit ECDSASignature(ECDSASignatureType<BIN_FORMAT> const &from)
     : hash_{from.hash_}
     , signature_ecdsa_ptr_{from.signature_ecdsa_ptr_}
     , signature_{BIN_FORMAT == signatureBinaryDataFormat
@@ -73,30 +72,26 @@ public:
                      : Convert(signature_ecdsa_ptr_, signatureBinaryDataFormat)}
   {}
 
-  // ECDSASignature(ECDSASignature&& from) = default;
-
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(ECDSASignatureType<BIN_FORMAT> &&from)
+  explicit ECDSASignature(ECDSASignatureType<BIN_FORMAT> &&from)
     : ECDSASignature{safeMoveConstruct(std::move(from))}
   {}
 
-  // ECDSASignature& operator = (ECDSASignature const & from) = default;
-
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature operator=(ECDSASignatureType<BIN_FORMAT> const &from)
+  ECDSASignature &operator=(ECDSASignatureType<BIN_FORMAT> const &from)
   {
     *this = ECDSASignature(from);
     return *this;
   }
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature operator=(ECDSASignatureType<BIN_FORMAT> &&from)
+  ECDSASignature &operator=(ECDSASignatureType<BIN_FORMAT> &&from)
   {
     *this = safeMoveConstruct(std::move(from));
     return *this;
   }
 
-  const byte_array::ConstByteArray &hash() const
+  byte_array::ConstByteArray const &hash() const
   {
     return hash_;
   }
@@ -106,7 +101,7 @@ public:
     return signature_ecdsa_ptr_;
   }
 
-  const byte_array::ConstByteArray &signature() const
+  byte_array::ConstByteArray const &signature() const
   {
     return signature_;
   }
@@ -231,7 +226,7 @@ private:
           "Convert2Bin<...,eECDSAEncoding::DER,...(): "
           "i2d_ECDSA_SIG(..., &ptr) failed.");
     }
-    else if (res_size > est_size)
+    if (res_size > est_size)
     {
       throw std::runtime_error(
           "Convert2Bin<...,eECDSAEncoding::DER,...(): i2d_ECDSA_SIG(..., &ptr) "
@@ -244,7 +239,7 @@ private:
     return der_sig;
   }
 
-  static UniquePointerType<ECDSA_SIG> ConvertDER(const byte_array::ConstByteArray &bin_sig)
+  static UniquePointerType<ECDSA_SIG> ConvertDER(byte_array::ConstByteArray const &bin_sig)
   {
     auto const *der_sig_ptr = static_cast<const uint8_t *>(bin_sig.pointer());
 
@@ -269,7 +264,7 @@ private:
     return AffineCoordConversionType::Convert2Canonical(r, s);
   }
 
-  static UniquePointerType<ECDSA_SIG> ConvertCanonical(const byte_array::ConstByteArray &bin_sig)
+  static UniquePointerType<ECDSA_SIG> ConvertCanonical(byte_array::ConstByteArray const &bin_sig)
   {
     UniquePointerType<BIGNUM, memory::eDeleteStrategy::clearing> r{BN_new()};
     UniquePointerType<BIGNUM, memory::eDeleteStrategy::clearing> s{BN_new()};
@@ -277,7 +272,7 @@ private:
     AffineCoordConversionType::ConvertFromCanonical(bin_sig, r.get(), s.get());
 
     UniquePointerType<ECDSA_SIG> signature{ECDSA_SIG_new()};
-    if (!ECDSA_SIG_set0(signature.get(), r.get(), s.get()))
+    if (ECDSA_SIG_set0(signature.get(), r.get(), s.get()) == 0)
     {
       throw std::runtime_error(
           "ConvertCanonical<...,eECDSAEncoding::DER,...>("
@@ -307,7 +302,7 @@ private:
     return {};
   }
 
-  static UniquePointerType<ECDSA_SIG> Convert(const byte_array::ConstByteArray &bin_sig,
+  static UniquePointerType<ECDSA_SIG> Convert(byte_array::ConstByteArray const &bin_sig,
                                               eECDSAEncoding input_signature_binary_data_type)
   {
     switch (input_signature_binary_data_type)
@@ -324,7 +319,7 @@ private:
   }
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-  static void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
+  static void ECDSA_SIG_get0(ECDSA_SIG const *sig, BIGNUM const **pr, BIGNUM const **ps)
   {
     if (pr != nullptr)
     {

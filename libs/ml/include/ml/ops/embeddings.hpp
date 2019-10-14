@@ -116,31 +116,34 @@ public:
     assert(inputs.size() == 1);
     assert(inputs.front()->shape().size() == 2);
 
-    SizeType batch_size = inputs.front()->shape(1);
-
-    TensorType transposed_input = inputs.front()->Transpose();
-    auto       e_it             = transposed_input.begin();
-    for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
+    if (!this->value_frozen_)
     {
-      for (SizeType n{0}; n < batch_size; n++)
+      SizeType batch_size = inputs.front()->shape(1);
+
+      TensorType transposed_input = inputs.front()->Transpose();
+      auto       e_it             = transposed_input.begin();
+      for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
       {
-
-        trailing_indices1_.at(0) = i;
-        trailing_indices1_.at(1) = n;
-        auto error_view          = error_signal.View(trailing_indices1_);
-        trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
-        updated_rows_.insert(static_cast<SizeType>(*e_it));
-        auto gradient_view = this->gradient_accumulation_->View(trailing_indices2_);
-
-        auto error_view_it    = error_view.cbegin();
-        auto gradient_view_it = gradient_view.begin();
-        while (error_view_it.is_valid())
+        for (SizeType n{0}; n < batch_size; n++)
         {
-          *gradient_view_it += *error_view_it;
-          ++error_view_it;
-          ++gradient_view_it;
+
+          trailing_indices1_.at(0) = i;
+          trailing_indices1_.at(1) = n;
+          auto error_view          = error_signal.View(trailing_indices1_);
+          trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
+          updated_rows_.insert(static_cast<SizeType>(*e_it));
+          auto gradient_view = this->gradient_accumulation_->View(trailing_indices2_);
+
+          auto error_view_it    = error_view.cbegin();
+          auto gradient_view_it = gradient_view.begin();
+          while (error_view_it.is_valid())
+          {
+            *gradient_view_it += *error_view_it;
+            ++error_view_it;
+            ++gradient_view_it;
+          }
+          ++e_it;
         }
-        ++e_it;
       }
     }
 

@@ -43,12 +43,11 @@ using VMPtrString    = Ptr<String>;
 
 VMGraph::VMGraph(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-  , graph_()
 {}
 
 Ptr<VMGraph> VMGraph::Constructor(VM *vm, TypeId type_id)
 {
-  return new VMGraph(vm, type_id);
+  return Ptr<VMGraph>{new VMGraph(vm, type_id)};
 }
 
 void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
@@ -58,7 +57,7 @@ void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
 
 Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 {
-  MathTensorType    t   = graph_.Evaluate(name->str);
+  MathTensorType    t   = graph_.Evaluate(name->str, false);
   Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
   (*ret).Copy(t);
   return ret;
@@ -131,6 +130,16 @@ void VMGraph::AddDropout(VMPtrString const &name, VMPtrString const &input_name,
   graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
 }
 
+void VMGraph::AddTranspose(VMPtrString const &name, VMPtrString const &input_name)
+{
+  graph_.AddNode<fetch::ml::ops::Transpose<MathTensorType>>(name->str, {input_name->str});
+}
+
+void VMGraph::AddExp(VMPtrString const &name, VMPtrString const &input_name)
+{
+  graph_.AddNode<fetch::ml::ops::Exp<MathTensorType>>(name->str, {input_name->str});
+}
+
 void VMGraph::LoadStateDict(Ptr<VMStateDict> const &sd)
 {
   graph_.LoadStateDict(sd->state_dict_);
@@ -146,8 +155,9 @@ void VMGraph::Bind(Module &module)
 {
   module.CreateClassType<VMGraph>("Graph")
       .CreateConstructor(&VMGraph::Constructor)
-      .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) -> Ptr<VMGraph> { return new VMGraph(vm, type_id); })
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMGraph> {
+        return Ptr<VMGraph>{new VMGraph(vm, type_id)};
+      })
       .CreateMemberFunction("setInput", &VMGraph::SetInput)
       .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
       .CreateMemberFunction("backPropagate", &VMGraph::BackPropagate)
@@ -160,6 +170,8 @@ void VMGraph::Bind(Module &module)
       .CreateMemberFunction("addDropout", &VMGraph::AddDropout)
       .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
       .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
+      .CreateMemberFunction("addTranspose", &VMGraph::AddTranspose)
+      .CreateMemberFunction("addExp", &VMGraph::AddExp)
       .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
       .CreateMemberFunction("stateDict", &VMGraph::StateDict)
       .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString)
@@ -197,7 +209,7 @@ fetch::vm::Ptr<fetch::vm::String> VMGraph::SerializeToString()
   serializers::MsgPackSerializer b;
   SerializeTo(b);
   auto byte_array_data = b.data().ToBase64();
-  return {new fetch::vm::String(vm_, static_cast<std::string>(byte_array_data))};
+  return Ptr<String>{new fetch::vm::String(vm_, static_cast<std::string>(byte_array_data))};
 }
 
 fetch::vm::Ptr<VMGraph> VMGraph::DeserializeFromString(

@@ -206,7 +206,8 @@ int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module
   file.close();
 
   /// Compiling
-  bool compiled = compiler->Compile(source, "myexecutable", ir, errors);
+  fetch::vm::SourceFiles files    = {{"default.etch", source}};
+  bool                   compiled = compiler->Compile(files, "default_ir", ir, errors);
 
   if (!compiled)
   {
@@ -230,7 +231,7 @@ int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module
   vm->AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
 
   /// executing
-  if (!vm->GenerateExecutable(ir, "main_ir", executable, errors))
+  if (!vm->GenerateExecutable(ir, "default_exe", executable, errors))
   {
     std::cout << "Failed to generate executable" << std::endl;
     for (auto &s : errors)
@@ -240,7 +241,7 @@ int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module
     return -1;
   }
 
-  if (!executable.FindFunction("main"))
+  if (executable.FindFunction("main") == nullptr)
   {
     std::cout << "Function 'main' not found" << std::endl;
     return -2;

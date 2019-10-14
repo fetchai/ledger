@@ -52,7 +52,7 @@ T UInt256Wrapper::ToPrimitive(VM * /*vm*/, Ptr<UInt256Wrapper> const &a)
   {
     uint8_t bytes[sizeof(T)];
     T       value;
-  } x;
+  } x{};
   for (uint64_t i = 0; i < sizeof(T); ++i)
   {
     x.bytes[i] = a->number_[i];
@@ -109,26 +109,26 @@ Ptr<UInt256Wrapper> UInt256Wrapper::ConstructorFromBytes(VM *vm, TypeId type_id,
 {
   try
   {
-    return new UInt256Wrapper(vm, type_id, ba->byte_array());
+    return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, type_id, ba->byte_array())};
   }
   catch (std::runtime_error const &e)
   {
     vm->RuntimeError(e.what());
   }
-  return nullptr;
+  return {};
 }
 
 Ptr<UInt256Wrapper> UInt256Wrapper::Constructor(VM *vm, TypeId type_id, uint64_t val)
 {
   try
   {
-    return new UInt256Wrapper(vm, type_id, val);
+    return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, type_id, val)};
   }
   catch (std::runtime_error const &e)
   {
     vm->RuntimeError(e.what());
   }
-  return nullptr;
+  return {};
 }
 
 double UInt256Wrapper::ToFloat64() const
@@ -187,7 +187,7 @@ bool UInt256Wrapper::ToJSON(JSONVariant &variant)
     value[i] = number_[i];
   }
 
-  variant["type"]  = GetUniqueId();
+  variant["type"]  = GetTypeName();
   variant["value"] = ToHex(value);
   return true;
 }
@@ -196,25 +196,25 @@ bool UInt256Wrapper::FromJSON(JSONVariant const &variant)
 {
   if (!variant.IsObject())
   {
-    vm_->RuntimeError("JSON deserialisation of " + GetUniqueId() + " must be an object.");
+    vm_->RuntimeError("JSON deserialisation of " + GetTypeName() + " must be an object.");
     return false;
   }
 
   if (!variant.Has("type"))
   {
-    vm_->RuntimeError("JSON deserialisation of " + GetUniqueId() + " must have field 'type'.");
+    vm_->RuntimeError("JSON deserialisation of " + GetTypeName() + " must have field 'type'.");
     return false;
   }
 
   if (!variant.Has("value"))
   {
-    vm_->RuntimeError("JSON deserialisation of " + GetUniqueId() + " must have field 'value'.");
+    vm_->RuntimeError("JSON deserialisation of " + GetTypeName() + " must have field 'value'.");
     return false;
   }
 
-  if (variant["type"].As<std::string>() != GetUniqueId())
+  if (variant["type"].As<std::string>() != GetTypeName())
   {
-    vm_->RuntimeError("Field 'type' must be '" + GetUniqueId() + "'.");
+    vm_->RuntimeError("Field 'type' must be '" + GetTypeName() + "'.");
     return false;
   }
 

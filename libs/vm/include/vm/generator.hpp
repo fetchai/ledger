@@ -155,16 +155,16 @@ struct Executable
       , return_type_id{return_type_id__}
     {}
 
-    uint16_t AddVariable(std::string name, TypeId type_id, uint16_t scope_number)
+    uint16_t AddVariable(std::string var_name, TypeId type_id, uint16_t scope_number)
     {
       auto const index = static_cast<uint16_t>(num_variables++);
-      variables.emplace_back(std::move(name), type_id, scope_number);
+      variables.emplace_back(std::move(var_name), type_id, scope_number);
       return index;
     }
     uint16_t AddInstruction(Instruction instruction)
     {
       auto const pc = static_cast<uint16_t>(instructions.size());
-      instructions.push_back(std::move(instruction));
+      instructions.push_back(instruction);
       return pc;
     }
     uint16_t FindLineNumber(uint16_t pc) const
@@ -206,9 +206,9 @@ struct Executable
     return index;
   }
 
-  Function const *FindFunction(std::string const &name) const
+  Function const *FindFunction(std::string const &fn_name) const
   {
-    auto it = function_map.find(name);
+    auto it = function_map.find(fn_name);
     if (it != function_map.end())
     {
       return &(functions[it->second]);
@@ -233,7 +233,7 @@ private:
 
   struct Loop
   {
-    uint16_t              scope_number;
+    uint16_t              scope_number{};
     std::vector<uint16_t> continue_pcs;
     std::vector<uint16_t> break_pcs;
   };

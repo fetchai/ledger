@@ -54,7 +54,7 @@ public:
 
     if (n > 0)
     {
-      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 32);
+      this->pointer_ = reinterpret_cast<type *>(_mm_malloc(this->padded_size() * sizeof(type), 32));
     }
   }
 
@@ -68,17 +68,17 @@ public:
 
   Array() = default;
 
-  Array(Array &&other)
+  Array(Array &&other) noexcept
   {
     std::swap(this->size_, other.size_);
     std::swap(this->pointer_, other.pointer_);
   }
 
-  Array &operator=(Array &&other)
+  Array &operator=(Array &&other) noexcept
   {
     std::swap(this->size_, other.size_);
-
     std::swap(this->pointer_, other.pointer_);
+
     return *this;
   }
 
@@ -88,7 +88,7 @@ public:
     this->operator=(other);
   }
 
-  SelfType &operator=(Array const &other)
+  SelfType &operator=(Array const &other)  // NOLINT
   {
     if (this->pointer_ != nullptr)
     {
@@ -98,7 +98,7 @@ public:
 
     if (this->size_ > 0)
     {
-      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 32);
+      this->pointer_ = reinterpret_cast<type *>(_mm_malloc(this->padded_size() * sizeof(type), 32));
     }
 
     for (std::size_t i = 0; i < this->size_; ++i)

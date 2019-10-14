@@ -44,10 +44,9 @@ public:
 
   explicit ClientManager(AbstractNetworkServer &server)
     : server_(server)
-    , clients_mutex_{}
   {}
 
-  ConnectionHandleType Join(ConnectionType client)
+  ConnectionHandleType Join(ConnectionType const &client)
   {
     ConnectionHandleType handle = client->handle();
     FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is joining");

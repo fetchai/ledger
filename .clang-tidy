@@ -1,42 +1,29 @@
 Checks: "-*,\
 bugprone-*,\
--clang-analyzer-security.FloatLoopCounter,\
+cert-dcl*,\
+cert-env*,\
+cert-err52-cpp,\
+cert-err60-cpp,\
+cert-flp30-c,\
+clang-analyzer-security.FloatLoopCounter,\
+google-build-explicit-make-pair,\
 google-build-namespaces,\
--google-explicit-constructor,\
-google-readability-todo,\
+google-explicit-constructor,\
+google-readability-*,\
 google-runtime-operator,\
-misc-suspicious-*,\
-misc-unused-*,\
-modernize-loop-convert,\
-modernize-make-shared,\
-modernize-make-unique,\
-modernize-pass-by-value,\
-modernize-use-*,\
--performance-*,\
-readability-braces-around-statements,\
-readability-container-size-empty,\
--readability-identifier-naming,\
-readability-simplify-boolean-expr,\
-readability-static-definition-in-anonymous-namespace"
+hicpp-exception-baseclass,\
+hicpp-explicit-conversions,\
+hicpp-use-*,\
+misc-*,\
+-misc-misplaced-widening-cast,\
+modernize-*,\
+performance-*,\
+readability-*,\
+-readability-identifier-naming"
 
-CheckOptions:
-  - key:             readability-identifier-naming.FunctionCase
-    value:           aNy_CasE
-  - key:             readability-identifier-naming.MemberCase
-    value:           lower_case
-  - key:             readability-identifier-naming.PublicMemberSuffix
-    value:           ''
-  - key:             readability-identifier-naming.ProtectedMemberSuffix
-    value:           '_'
-  - key:             readability-identifier-naming.PrivateMemberSuffix
-    value:           '_'
-  - key:             readability-identifier-naming.ClassCase
-    value:           CamelCase
-  - key:             readability-identifier-naming.EnumCase
-    value:           CamelCase
-  - key:             readability-identifier-naming.ParameterCase
-    value:           lower_case
-  - key:             readability-identifier-naming.UnionCase
-    value:           CamelCase
-  - key:             readability-identifier-naming.VariableCase
-    value:           lower_case
+# TODO(WK):
+#   remove -* exclusion
+#   cert-*
+#   google-build-*
+#   hicpp-signed-bitwise
+#   hicpp-special-member-functions

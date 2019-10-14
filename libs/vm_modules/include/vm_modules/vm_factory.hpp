@@ -44,16 +44,15 @@ public:
 
   enum Modules : uint64_t
   {
-    MOD_CORE = (1ull << 0ull),
-    MOD_MATH = (1ull << 1ull),
-    MOD_SYN  = (1ull << 2ull),
-    MOD_ML   = (1ull << 3ull),
+    MOD_CORE    = (1ull << 0ull),
+    MOD_MATH    = (1ull << 1ull),
+    MOD_BITWISE = (1ull << 2ull),
+    MOD_ML      = (1ull << 3ull),
   };
 
   enum UseCases : uint64_t
   {
-    USE_SMART_CONTRACTS = (MOD_CORE | MOD_MATH | MOD_ML),
-    USE_SYNERGETIC      = (MOD_CORE | MOD_MATH | MOD_SYN),
+    USE_SMART_CONTRACTS = (MOD_CORE | MOD_MATH | MOD_ML | MOD_BITWISE),
     USE_ALL             = (~uint64_t(0)),
   };
 
@@ -69,13 +68,13 @@ public:
    * Compile a source file, producing an executable
    *
    * @param: module The module which the user might have added various bindings/classes to etc.
-   * @param: source The raw source to compile
+   * @param: files The raw source to compile
    * @param: executable executable to fill
    *
    * @return: Vector of strings which represent errors found during compilation
    */
   static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> const &module,
-                                          std::string const &                       source,
+                                          fetch::vm::SourceFiles const &            files,
                                           fetch::vm::Executable &                   executable);
 };
 

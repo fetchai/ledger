@@ -21,8 +21,6 @@
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
@@ -35,16 +33,18 @@
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
+#include "beacon/block_entropy.hpp"
+#include "beacon/create_new_certificate.hpp"
 #include "beacon/event_manager.hpp"
+#include "moment/clocks.hpp"
 
 #include <cstdint>
-#include <ctime>
 #include <deque>
 #include <iostream>
 #include <random>
 #include <stdexcept>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 using namespace fetch;
@@ -56,21 +56,9 @@ using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
 
-ProverPtr CreateNewCertificate()
-{
-  using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::shared_ptr<Signer>;
-
-  SignerPtr certificate = std::make_shared<Signer>();
-
-  certificate->GenerateKeys();
-
-  return certificate;
-}
-
 struct DummyManifestCache : public ledger::ManifestCacheInterface
 {
-  bool QueryManifest(Address const &, ledger::Manifest &) override
+  bool QueryManifest(Address const & /*address*/, ledger::Manifest & /*manifest*/) override
   {
     return false;
   }
@@ -98,7 +86,7 @@ struct CabinetNode
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
+    , beacon_service{*muddle, manifest_cache, muddle_certificate, std::move(event_manager)}
   {
     network_manager.Start();
     muddle->Start({muddle_port});
@@ -120,9 +108,6 @@ int main()
   constexpr uint16_t number_of_nodes    = 16;
   constexpr uint16_t cabinet_size       = 4;
   constexpr uint16_t number_of_cabinets = number_of_nodes / cabinet_size;
-
-  // Initialising the BLS library
-  crypto::bls::Init();
 
   EventManager::SharedEventManager event_manager = EventManager::New();
 
@@ -149,15 +134,15 @@ int main()
   uint64_t i = 0;
   for (auto &member : committee)
   {
-    all_cabinets[i % number_of_cabinets].insert(member->muddle_certificate->identity());
+    all_cabinets[i % number_of_cabinets].insert(
+        member->muddle_certificate->identity().identifier());
     ++i;
   }
 
   // Attaching the cabinet logic
   for (auto &member : committee)
   {
-    member->reactor.Attach(member->beacon_service.GetMainRunnable());
-    member->reactor.Attach(member->beacon_service.GetSetupRunnable());
+    member->reactor.Attach(member->beacon_service.GetWeakRunnables());
   }
 
   // Starting the beacon
@@ -167,8 +152,9 @@ int main()
   }
 
   // Ready
-  uint64_t block_number = 0;
-  uint64_t aeon_length  = 10;
+  uint64_t     block_number = 0;
+  uint64_t     aeon_length  = 10;
+  BlockEntropy dummy_block_entropy;
 
   while (true)
   {
@@ -177,21 +163,23 @@ int main()
       auto cabinet = all_cabinets[block_number % number_of_cabinets];
       for (auto &member : committee)
       {
-        member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2),
-                                               block_number, block_number + aeon_length,
-                                               static_cast<uint64_t>(std::time(nullptr)));
+        member->beacon_service.StartNewCabinet(
+            cabinet, static_cast<uint32_t>(cabinet.size() / 2), block_number,
+            block_number + aeon_length,
+            GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)),
+            dummy_block_entropy);
       }
     }
 
-    uint64_t entropy;
-
     while (committee[block_number % committee.size()]->beacon_service.GenerateEntropy(
-               "", block_number, entropy) != fetch::ledger::EntropyGeneratorInterface::Status::OK)
+               block_number, dummy_block_entropy) !=
+           fetch::ledger::EntropyGeneratorInterface::Status::OK)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    FETCH_LOG_INFO("default", "Found entropy for block: ", block_number, " as ", entropy);
+    FETCH_LOG_INFO("default", "Found entropy for block: ", block_number, " as ",
+                   dummy_block_entropy.EntropyAsU64());
 
     ++block_number;
   }

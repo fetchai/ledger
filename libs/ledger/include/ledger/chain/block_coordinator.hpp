@@ -187,9 +187,8 @@ public:
   // Construction / Destruction
   BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                   BlockSinkInterface &block_sink, core::FeatureFlags const &features,
-                   ProverPtr const &prover, std::size_t num_lanes, std::size_t num_slices,
-                   std::size_t block_difficulty, ConsensusPtr consensus);
+                   BlockSinkInterface &block_sink, ProverPtr prover, std::size_t num_lanes,
+                   std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -327,6 +326,7 @@ private:
 
   /// @name State Machine State
   /// @{
+  ProverPtr       certificate_;             ///< The miners identity
   Address         mining_address_;          ///< The miners address
   StateMachinePtr state_machine_;           ///< The main state machine for this service
   std::size_t     block_difficulty_;        ///< The number of leading zeros needed in the proof
@@ -334,7 +334,7 @@ private:
   std::size_t     num_slices_;              ///< The current number of slices
   Flag            mining_{false};           ///< Flag to signal if this node generating blocks
   Flag            mining_enabled_{false};   ///< Short term signal to toggle on and off
-  BlockPeriod     block_period_;            ///< The desired period before a block is generated
+  BlockPeriod     block_period_{};          ///< The desired period before a block is generated
   Timepoint       next_block_time_;         ///< The next point that a block should be generated
   BlockPtr        current_block_{};         ///< The pointer to the current block (read only)
   NextBlockPtr    next_block_{};            ///< The next block being created (read / write)
@@ -343,11 +343,12 @@ private:
   PeriodicAction  exec_wait_periodic_;      ///< Periodic print for execution
   PeriodicAction  syncing_periodic_;        ///< Periodic print for synchronisation
   Timepoint       start_waiting_for_tx_{};  ///< The time at which we started waiting for txs
-  DeadlineTimer   wait_for_tx_timeout_{"bc:deadline"};  ///< Timeout when waiting for transactions
-  DeadlineTimer   wait_before_asking_for_missing_tx_{
-      "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
-  bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
-                                     ///< current block
+  /// Timeout when waiting for transactions
+  DeadlineTimer wait_for_tx_timeout_{"bc:deadline"};
+  /// Time to wait before asking peers for any missing txs
+  DeadlineTimer wait_before_asking_for_missing_tx_{"bc:deadline"};
+  /// true if a request for missing Txs has been issued for the current block
+  bool have_asked_for_missing_txs_{};
   /// @}
 
   /// @name Synergetic Contracts

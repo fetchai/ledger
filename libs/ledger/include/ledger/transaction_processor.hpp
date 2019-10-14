@@ -54,8 +54,8 @@ public:
 
   /// @name Transaction Processing
   /// @{
-  void AddTransaction(TransactionPtr const &mtx);
-  void AddTransaction(TransactionPtr &&mtx);
+  void AddTransaction(TransactionPtr const &tx);
+  void AddTransaction(TransactionPtr &&tx);
   /// @}
 
   // Operators

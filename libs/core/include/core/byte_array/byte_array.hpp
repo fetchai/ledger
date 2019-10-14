@@ -43,10 +43,10 @@ public:
 
   ByteArray() = default;
 
-  ByteArray(SuperType const &other)
+  ByteArray(SuperType const &other)  // NOLINT
     : SuperType(other.Copy())
   {}
-  ByteArray(SuperType &&other)
+  ByteArray(SuperType &&other)  // NOLINT
     : SuperType(other.IsUnique() ? std::move(other) : other.Copy())
   {}
 

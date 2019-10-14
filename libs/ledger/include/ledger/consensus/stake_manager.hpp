@@ -56,7 +56,7 @@ public:
   using CommitteePtr = std::shared_ptr<Committee const>;
 
   // Construction / Destruction
-  StakeManager(uint64_t committee_size);
+  explicit StakeManager(uint64_t committee_size);
   StakeManager(StakeManager const &) = delete;
   StakeManager(StakeManager &&)      = delete;
   ~StakeManager() override           = default;

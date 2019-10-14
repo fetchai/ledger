@@ -124,10 +124,18 @@ macro (setup_compiler)
     endif ()
   endif ()
 
-  # add a metric flag if needed
-  if (FETCH_ENABLE_METRICS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_METRICS")
-  endif (FETCH_ENABLE_METRICS)
+  # add the backtrace flat
+  if (FETCH_ENABLE_BACKTRACE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE")
+
+    find_library(DW_LIB dw)
+
+    if (DW_LIB AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE_WITH_DW")
+
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldw -ldl")
+    endif ()
+  endif (FETCH_ENABLE_BACKTRACE)
 
   # allow disabling of colour log file
   if (FETCH_DISABLE_COLOUR_LOG)
@@ -252,6 +260,9 @@ function (configure_vendor_targets)
     target_compile_definitions(vendor-asio INTERFACE ASIO_HAS_STD_STRING_VIEW)
   endif (APPLE)
 
+  # Pybind11
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)
+
   # Google Test
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
 
@@ -267,22 +278,10 @@ function (configure_vendor_targets)
                              -DMCL_VINT_FIXED_BUFFER
                              -DMCLBN_FP_UNIT_SIZE=4)
 
+  # TODO(HUT): remove unit size
+
   add_library(vendor-mcl INTERFACE)
   target_link_libraries(vendor-mcl INTERFACE mcl_st)
-
-  # BLS
-  add_library(vendor-bls-internal STATIC ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c256.cpp
-                                         ${FETCH_ROOT_VENDOR_DIR}/bls/src/bls_c384.cpp)
-  target_link_libraries(vendor-bls-internal PUBLIC vendor-mcl)
-  target_include_directories(vendor-bls-internal PUBLIC ${FETCH_ROOT_VENDOR_DIR}/bls/include)
-  target_compile_definitions(vendor-bls-internal
-                             PUBLIC
-                             -DMCL_USE_VINT
-                             -DMCL_VINT_FIXED_BUFFER)
-
-  add_library(vendor-bls INTERFACE)
-  target_link_libraries(vendor-bls INTERFACE vendor-bls-internal)
-  target_compile_definitions(vendor-bls INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
 
   # Google Benchmark Do not build the google benchmark library tests
   if (FETCH_ENABLE_BENCHMARKS)

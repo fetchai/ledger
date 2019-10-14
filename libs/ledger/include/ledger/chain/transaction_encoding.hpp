@@ -169,7 +169,7 @@ meta::IfIsInteger<T, T> DecodeInteger(fetch::serializers::MsgPackSerializer &buf
       {
         throw std::runtime_error("Output is not large enough to extract the encoded value");
       }
-      else if (signed_flag && !output_is_signed)
+      if (signed_flag && !output_is_signed)
       {
         throw std::runtime_error("Unable to extract signed value into unsigned value");
       }

@@ -33,7 +33,6 @@ namespace {
 
 class DummySink : public fetch::ledger::TransactionSink
 {
-
   std::size_t const       threshold_;
   std::size_t             count_{0};
   std::mutex              lock_;
@@ -44,7 +43,7 @@ public:
     : threshold_(threshold)
   {}
 
-  void OnTransaction(TransactionPtr const &) override
+  void OnTransaction(TransactionPtr const & /*tx*/) override
   {
     FETCH_LOCK(lock_);
     ++count_;

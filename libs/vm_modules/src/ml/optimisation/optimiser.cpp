@@ -99,8 +99,9 @@ void VMOptimiser::Bind(Module &module)
 {
   module.CreateClassType<VMOptimiser>("Optimiser")
       .CreateConstructor(&VMOptimiser::Constructor)
-      .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> { return new VMOptimiser(vm, type_id); })
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> {
+        return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id)};
+      })
       .CreateMemberFunction("run", &VMOptimiser::RunData)
       .CreateMemberFunction("run", &VMOptimiser::RunLoader)
       .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset)
@@ -108,15 +109,24 @@ void VMOptimiser::Bind(Module &module)
       .CreateMemberFunction("setDataloader", &VMOptimiser::SetDataloader);
 }
 
-Ptr<VMOptimiser> VMOptimiser::Constructor(VM *vm, TypeId type_id, Ptr<String> const &mode,
-                                          Ptr<VMGraph> const &     graph,
-                                          Ptr<VMDataLoader> const &loader,
-                                          Ptr<String> const &      input_node_names,
-                                          Ptr<String> const &      label_node_name,
-                                          Ptr<String> const &      output_node_names)
+Ptr<VMOptimiser> VMOptimiser::Constructor(
+    VM *vm, TypeId type_id, Ptr<String> const &mode, Ptr<VMGraph> const &graph,
+    Ptr<VMDataLoader> const &                            loader,
+    Ptr<fetch::vm::Array<Ptr<fetch::vm::String>>> const &input_node_names,
+    Ptr<String> const &label_node_name, Ptr<String> const &output_node_names)
 {
-  return new VMOptimiser(vm, type_id, mode->str, graph->GetGraph(), loader, {input_node_names->str},
-                         label_node_name->str, output_node_names->str);
+  auto                     n_elements = input_node_names->elements.size();
+  std::vector<std::string> input_names(n_elements);
+
+  for (fetch::math::SizeType i{0}; i < n_elements; i++)
+  {
+    Ptr<fetch::vm::String> ptr_string = input_node_names->elements.at(i);
+    input_names.at(i)                 = (ptr_string)->str;
+  }
+
+  return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id, mode->str, graph->GetGraph(), loader,
+                                          input_names, label_node_name->str,
+                                          output_node_names->str)};
 }
 
 VMOptimiser::DataType VMOptimiser::RunData(Ptr<fetch::vm_modules::math::VMTensor> const &data,

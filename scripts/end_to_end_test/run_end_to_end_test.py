@@ -163,8 +163,9 @@ class TestInstance():
             clear_path=False
         )
 
-        # Possibly soon to be depreciated functionality - set the block interval
-        instance._block_interval = self._block_interval
+        # Possibly soon to be deprecated functionality - set the block interval
+        instance.block_interval = self._block_interval
+        instance.feature_flags = ['synergetic']
 
         # configure the lanes and slices
         instance.lanes = self._lanes
@@ -186,7 +187,7 @@ class TestInstance():
         self._nodes[index].start()
         print('Starting Node {}...complete'.format(index))
 
-        time.sleep(0.5)
+        time.sleep(1)
 
     def setup_pos_for_nodes(self):
 
@@ -531,15 +532,7 @@ def verify_txs(parameters, test_instance):
                 if status == "Executed" or expect_mined:
                     output("found executed TX")
                     error_message = ""
-
-                    # There is an unavoidable race that can cause you to see a balance of 0
-                    # since the TX hasn't changed the state yet
-                    if api.tokens.balance(identity) == 0 and balance is not 0:
-                        output(
-                            f"Note: found a balance of 0 when expecting {balance}. Retrying.")
-                        pass
-                    else:
-                        break
+                    break
 
                 tx_b64 = codecs.encode(codecs.decode(
                     tx, 'hex'), 'base64').decode()
@@ -553,12 +546,33 @@ def verify_txs(parameters, test_instance):
                     output(next_error_message)
                     error_message = next_error_message
 
-            seen_balance = api.tokens.balance(identity)
-            if balance != seen_balance:
-                output(
-                    "Balance mismatch found after sending to node. Found {} expected {}".format(
-                        seen_balance, balance))
-                test_instance._watchdog.trigger()
+            failed_to_find = 0
+
+            while True:
+                seen_balance = api.tokens.balance(identity)
+
+                # There is an unavoidable race that can cause you to see a balance of 0
+                # since the TX can be lost even after supposedly being executed.
+                if seen_balance == 0 and balance is not 0:
+                    output(
+                        f"Note: found a balance of 0 when expecting {balance}. Retrying.")
+
+                    time.sleep(1)
+
+                    failed_to_find = failed_to_find + 1
+
+                    if failed_to_find > 5:
+                        # Forces the resubmission of wealth TX to the chain (TX most likely was lost)
+                        api.tokens.wealth(identity, balance)
+                        failed_to_find = 0
+                else:
+                    # Non-zero balance at this point. Stop waiting.
+                    if balance != seen_balance:
+                        output(
+                            "Balance mismatch found after sending to node. Found {} expected {}".format(
+                                seen_balance, balance))
+                        test_instance._watchdog.trigger()
+                    break
 
             output("Verified a wealth of {}".format(seen_balance))
 
@@ -701,7 +715,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
 
                 test_instance.stop()
         except Exception as e:
-            print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
+            print('Failed to parse yaml or to run test! Error: "{}"'.format(e))
             traceback.print_exc()
             test_instance.stop()
             # test_instance.dump_debug()

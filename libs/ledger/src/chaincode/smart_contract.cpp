@@ -85,6 +85,8 @@ void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &p
   }
 }
 
+constexpr char const *LOGGING_NAME = "SmartContract";
+
 }  // namespace
 
 /**
@@ -110,7 +112,8 @@ SmartContract::SmartContract(std::string const &source)
                               [this](vm::VM *) -> BlockIndex { return block_index_; });
 
   // create and compile the executable
-  auto errors = vm_modules::VMFactory::Compile(module_, source_, *executable_);
+  fetch::vm::SourceFiles files  = {{"default.etch", source}};
+  auto                   errors = vm_modules::VMFactory::Compile(module_, files, *executable_);
 
   // if there are any compilation errors
   if (!errors.empty())
@@ -130,6 +133,10 @@ SmartContract::SmartContract(std::string const &source)
     switch (kind)
     {
     case FunctionDecoratorKind::NONE:
+    case FunctionDecoratorKind::CLEAR:
+    case FunctionDecoratorKind::OBJECTIVE:
+    case FunctionDecoratorKind::PROBLEM:
+    case FunctionDecoratorKind::WORK:
       break;
     case FunctionDecoratorKind::ON_INIT:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering on_init: ", fn.name,
@@ -246,7 +253,7 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
 
   if (!valid)
   {
-    throw std::runtime_error("Invalid address formart");
+    throw std::runtime_error("Invalid address format");
   }
 }
 
@@ -264,7 +271,7 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obje
 
   if (msgpack::type::STR == obj.type)
   {
-    vm::Ptr<vm::String> string = new vm::String(vm, {obj.via.str.ptr, obj.via.str.size});
+    vm::Ptr<vm::String> string{new vm::String(vm, {obj.via.str.ptr, obj.via.str.size})};
     pack.Add(std::move(string));
     valid = true;
   }
@@ -316,7 +323,7 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Vari
   }
 
   // create the instance of the address
-  vm::Ptr<vm::String> vm_string = new vm::String(vm, obj.As<std::string>());
+  vm::Ptr<vm::String> vm_string(new vm::String(vm, obj.As<std::string>()));
   pack.Add(std::move(vm_string));
 }
 
@@ -327,21 +334,21 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Vari
  * @param pack The reference to the parameter pack to be populated
  * @param obj structured data object represented by generic fetch::variant::Variant type
  */
-void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type_id,
                                             vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  if (!vm->IsDefaultSerializeConstructable(expected_type))
+  if (!vm->IsDefaultSerializeConstructable(expected_type_id))
   {
-    throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
+    throw std::runtime_error("Type is not constructable: " + vm->GetTypeName(expected_type_id));
   }
 
   // Creating a new object and deserialise
-  vm::Ptr<vm::Object> object = vm->DefaultSerializeConstruct(expected_type);
+  vm::Ptr<vm::Object> object = vm->DefaultSerializeConstruct(expected_type_id);
   object->FromJSON(obj);
 
   if (!pack.Add(object))
   {
-    throw std::runtime_error("Could not add parameter " + vm->GetUniqueId(expected_type));
+    throw std::runtime_error("Could not add parameter " + vm->GetTypeName(expected_type_id));
   }
 }
 
@@ -352,17 +359,17 @@ void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type
  * @param pack The reference to the parameter pack to be populated
  * @param obj structured data object represented by generic MsgPack type
  */
-void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type_id,
                                             vm::ParameterPack & /*pack*/,
                                             msgpack::object const & /*obj*/)
 {
-  if (!vm->IsDefaultSerializeConstructable(expected_type))
+  if (!vm->IsDefaultSerializeConstructable(expected_type_id))
   {
-    throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
+    throw std::runtime_error("Type is not constructable: " + vm->GetTypeName(expected_type_id));
   }
 
   // TODO(issue 1256): Review design and implement equivalent for msgpack
-  throw std::runtime_error("No msgpack support for type " + vm->GetUniqueId(expected_type));
+  throw std::runtime_error("No msgpack support for type " + vm->GetTypeName(expected_type_id));
 }
 
 /**
@@ -375,10 +382,10 @@ void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type
  * @param variant The input variant from which the value is extracted
  */
 template <typename T>
-void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type,
+void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type_id,
                         T const &variant)
 {
-  switch (expected_type)
+  switch (expected_type_id)
   {
   case vm::TypeIds::Bool:
     AddToParameterPack<bool>(params, variant);
@@ -426,7 +433,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
     break;
 
   default:
-    AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
+    AddStructuredDataObjectToParameterPack(vm, expected_type_id, params, variant);
   }
 }
 
@@ -443,7 +450,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;
   std::vector<msgpack::object> input_params;
-  auto const                   parameter_data = tx.data();
+  decltype(auto)               parameter_data = tx.data();
 
   block_index_ = index;
 
@@ -486,7 +493,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
 
   // lookup the function / entry point which will be executed
   Executable::Function const *target_function = executable_->FindFunction(name);
-  if (!target_function ||
+  if ((target_function == nullptr) ||
       (input_params.size() != static_cast<std::size_t>(target_function->num_parameters)))
   {
     FETCH_LOG_WARN(LOGGING_NAME,
@@ -616,8 +623,8 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   vm->SetIOObserver(state());
 
   // lookup the executable
-  Executable::Function const *target_function = executable_->FindFunction(name);
-  if (!target_function)
+  auto const target_function = executable_->FindFunction(name);
+  if (target_function == nullptr)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup target function");
     return Status::FAILED;
@@ -749,7 +756,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
           response["status"] = "failed";
           response["result"] = "Failed to serialise object to JSON variant";
           FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
-                                           output.object->GetUniqueId());
+                                           output.object->GetTypeName());
           return Status::FAILED;
         }
       }

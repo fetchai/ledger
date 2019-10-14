@@ -113,7 +113,7 @@ public:
    * interface to call standard weights initialisation routines. defaults to xavier
    * @param mode  An enum indicating which type of initialisation to perform
    */
-  static void Initialise(TensorType &array, std::uint64_t in_size, std::uint64_t out_size,
+  static void Initialise(TensorType &array, uint64_t in_size, uint64_t out_size,
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
                          SizeType              seed = 123456789)
   {
@@ -170,7 +170,7 @@ public:
    * Fan in and fan out xavier not permitted with input and output sizes not known independently
    * @param mode  An enum indicating which type of initialisation to perform
    */
-  static void Initialise(TensorType &array, std::uint64_t data_size,
+  static void Initialise(TensorType &array, uint64_t data_size,
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
                          SizeType              seed = 123456789)
   {
@@ -201,12 +201,12 @@ public:
    * exports the weight values Array
    * @return const reference to internal values Array
    */
-  TensorType const &get_weights() const override
+  TensorType const &GetWeights() const override
   {
     return *this->data_;
   }
 
-  void SetWeights(TensorType &new_value) override
+  void SetWeights(TensorType const &new_value) override
   {
     this->data_->Assign(new_value);
   }
@@ -246,13 +246,13 @@ private:
   {
     // TODO (665) this is a uniform distribution; in principle we should be using a guassian
     // distribution instead we use a unifrom from -std dev -> + std dev
-    fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
+    fetch::random::LaggedFibonacciGenerator<> lfg(seed);
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg_.AsDouble();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsDouble();  // random value in range 0 <-> 1
       ran_val -= 0.5;
       ran_val *= 2.0;                 // random value in range -1 <-> +1
       ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
@@ -267,13 +267,13 @@ private:
   {
     // TODO (#1562) this is based on uniform random generator, and it should be set to default
     // weight initialization method distribution instead we use a unifrom from -std dev -> + std dev
-    fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
+    fetch::random::LaggedFibonacciGenerator<> lfg(seed);
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg_.AsDouble();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsDouble();  // random value in range 0 <-> 1
       ran_val -= 0.5;
       ran_val *= 2.0;                 // random value in range -1 <-> +1
       ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma

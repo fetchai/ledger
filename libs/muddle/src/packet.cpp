@@ -95,7 +95,7 @@ bool Packet::FromBuffer(Packet &packet, void const *buffer, std::size_t length)
   // read in the payload
   ByteArray payload{};
 
-  if (payload_length)
+  if (payload_length != 0u)
   {
     payload.Resize(payload_length);
     std::memcpy(payload.pointer(), raw + payload_offset, payload_length);

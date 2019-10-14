@@ -42,7 +42,7 @@ namespace fetch {
 namespace vm_modules {
 
 VMFactory::Errors VMFactory::Compile(std::shared_ptr<Module> const &module,
-                                     std::string const &source, Executable &executable)
+                                     SourceFiles const &files, Executable &executable)
 {
   std::vector<std::string> errors;
 
@@ -51,7 +51,7 @@ VMFactory::Errors VMFactory::Compile(std::shared_ptr<Module> const &module,
   IR   ir;
 
   // compile the source
-  bool const compiled = compiler->Compile(source, "default", ir, errors);
+  bool const compiled = compiler->Compile(files, "default_ir", ir, errors);
 
   if (!compiled)
   {
@@ -60,7 +60,7 @@ VMFactory::Errors VMFactory::Compile(std::shared_ptr<Module> const &module,
   }
 
   VM vm(module.get());  // TODO(tfr): refactor such that IR is first made executable
-  if (!vm.GenerateExecutable(ir, "default_ir", executable, errors))
+  if (!vm.GenerateExecutable(ir, "default_exe", executable, errors))
   {
     return errors;
   }
@@ -86,7 +86,7 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
   auto module = std::make_shared<Module>();
 
   // core modules
-  if (MOD_CORE & enabled)
+  if ((MOD_CORE & enabled) != 0u)
   {
     CreatePrint(*module);
     CreatePanic(*module);
@@ -100,20 +100,20 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
   }
 
   // math modules
-  if (MOD_MATH & enabled)
+  if ((MOD_MATH & enabled) != 0u)
   {
     math::BindMath(*module);
   }
 
-  // synergetic modules
-  if (MOD_SYN & enabled)
+  // bitwise operation modules
+  if ((MOD_BITWISE & enabled) != 0u)
   {
     BindBitShift(*module);
     BindBitwiseOps(*module);
   }
 
   // ml modules
-  if (MOD_ML & enabled)
+  if ((MOD_ML & enabled) != 0u)
   {
     ml::BindML(*module);
   }

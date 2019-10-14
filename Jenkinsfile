@@ -1,4 +1,4 @@
-DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.3.0'
+DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.1'
 HIGH_LOAD_NODE_LABEL = 'ledger'
 MACOS_NODE_LABEL = 'mac-mini'
 
@@ -106,7 +106,7 @@ def slow_tests_stage(Platform platform, Configuration config)
     }
 
     stage("End-to-End Tests ${stage_name_suffix(platform, config)}") {
-      sh './scripts/ci/install-test-dependencies.sh'
+      sh './scripts/install-test-dependencies.sh'
       sh "./scripts/ci-tool.py -E ${config.label}"
     }
   }

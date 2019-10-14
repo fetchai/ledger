@@ -25,11 +25,14 @@ target_link_libraries(fetch-ledger
                              fetch-miner
                              fetch-vm
                              fetch-vm-modules
-                             fetch-metrics
                              fetch-moment
                              fetch-dkg
                              fetch-beacon
                              vendor-msgpack)
+
+if (_is_clang_compiler)
+  target_compile_options(fetch-ledger PRIVATE -Wshadow)
+endif ()
 
 add_test_target()
 add_subdirectory(examples)

@@ -51,24 +51,24 @@ public:
                 "type cannot be contained in the given register size.");
 
   VectorRegister() = default;
-  VectorRegister(type const *d)
+  VectorRegister(type const *d)  // NOLINT
   {
-    data_ = _mm_load_si128((MMRegisterType *)d);
+    data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(d));
   }
   VectorRegister(std::initializer_list<type> const &list)
   {
     data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(list.begin()));
   }
-  VectorRegister(type const &c)
+  VectorRegister(type const &c)  // NOLINT
   {
     data_ = _mm_set1_epi32(c);
   }
 
-  VectorRegister(MMRegisterType const &d)
+  VectorRegister(MMRegisterType const &d)  // NOLINT
     : data_(d)
   {}
 
-  VectorRegister(MMRegisterType &&d)
+  VectorRegister(MMRegisterType &&d)  // NOLINT
     : data_(d)
   {}
 
@@ -118,21 +118,21 @@ public:
                 "type cannot be contained in the given register size.");
 
   VectorRegister() = default;
-  VectorRegister(type const *d)
+  VectorRegister(type const *d)  // NOLINT
   {
-    data_ = _mm256_load_si256((MMRegisterType *)d);
+    data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(d));
   }
   VectorRegister(std::initializer_list<type> const &list)
   {
     data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(list.begin()));
   }
-  VectorRegister(MMRegisterType const &d)
+  VectorRegister(MMRegisterType const &d)  // NOLINT
     : data_(d)
   {}
-  VectorRegister(MMRegisterType &&d)
+  VectorRegister(MMRegisterType &&d)  // NOLINT
     : data_(d)
   {}
-  VectorRegister(type const &c)
+  VectorRegister(type const &c)  // NOLINT
   {
     data_ = _mm256_set1_epi32(c);
   }
@@ -258,13 +258,12 @@ inline VectorRegister<int32_t, 128> operator/(VectorRegister<int32_t, 128> const
   ret[2] = d2[2] != 0 ? d1[2] / d2[2] : 0;
   ret[3] = d2[3] != 0 ? d1[3] / d2[3] : 0;
 
-  return VectorRegister<int32_t, 128>(ret);
+  return {ret};
 }
 
 inline VectorRegister<int32_t, 256> operator/(VectorRegister<int32_t, 256> const &a,
                                               VectorRegister<int32_t, 256> const &b)
 {
-
   // TODO(private 440): SSE implementation required
   alignas(32) int32_t d1[8];
   _mm256_store_si256(reinterpret_cast<__m256i *>(d1), a.data());
@@ -276,12 +275,12 @@ inline VectorRegister<int32_t, 256> operator/(VectorRegister<int32_t, 256> const
 
   // don't divide by zero
   // set each of the 4 values in the vector register to either the solution of the division or 0
-  for (size_t i = 0; i < 8; i++)
+  for (std::size_t i = 0; i < 8; i++)
   {
     ret[i] = d2[i] != 0 ? d1[i] / d2[i] : 0;
   }
 
-  return VectorRegister<int32_t, 256>(ret);
+  return {ret};
 }
 
 inline VectorRegister<int32_t, 128> operator!=(VectorRegister<int32_t, 128> const &a,

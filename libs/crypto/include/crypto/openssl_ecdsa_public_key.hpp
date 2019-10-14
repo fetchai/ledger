@@ -54,7 +54,7 @@ public:
     , key_binary_{Convert(public_key.get(), group, session, binaryDataFormat)}
   {}
 
-  ECDSAPublicKey(byte_array::ConstByteArray key_data)
+  explicit ECDSAPublicKey(byte_array::ConstByteArray key_data)
     : key_EC_POINT_{Convert(key_data, binaryDataFormat)}
     , key_EC_KEY_{ConvertToECKEY(key_EC_POINT_.get())}
     , key_binary_{std::move(key_data)}
@@ -65,7 +65,7 @@ public:
       ECDSAPublicKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPublicKey(EcdsaPublicKeyType<BINARY_DATA_FORMAT> const &from)
+  explicit ECDSAPublicKey(EcdsaPublicKeyType<BINARY_DATA_FORMAT> const &from)
     : key_EC_POINT_{from.key_EC_POINT_}
     , key_EC_KEY_{from.key_EC_KEY_}
     , key_binary_{BINARY_DATA_FORMAT == binaryDataFormat
@@ -74,7 +74,7 @@ public:
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPublicKey(EcdsaPublicKeyType<BINARY_DATA_FORMAT> &&from)
+  explicit ECDSAPublicKey(EcdsaPublicKeyType<BINARY_DATA_FORMAT> &&from)
     : key_EC_POINT_{std::move(from.key_EC_POINT_)}
     , key_EC_KEY_{std::move(from.key_EC_KEY_)}
     , key_binary_{BINARY_DATA_FORMAT == binaryDataFormat
@@ -106,7 +106,7 @@ public:
     return key_EC_KEY_;
   }
 
-  const byte_array::ConstByteArray &KeyAsBin() const
+  byte_array::ConstByteArray const &KeyAsBin() const
   {
     return key_binary_;
   }
@@ -117,9 +117,9 @@ private:
   static byte_array::ByteArray Convert(EC_POINT const *const           public_key,
                                        EC_GROUP const *const           group,
                                        context::Session<BN_CTX> const &session,
-                                       eECDSAEncoding const            binaryDataFormat)
+                                       eECDSAEncoding const            binary_data_format)
   {
-    switch (binaryDataFormat)
+    switch (binary_data_format)
     {
     case eECDSAEncoding::canonical:
       return Convert2Canonical(public_key, group, session);
@@ -138,12 +138,12 @@ private:
   }
 
   static byte_array::ByteArray Convert(EC_POINT const *const public_key,
-                                       eECDSAEncoding const  binaryDataFormat)
+                                       eECDSAEncoding const  binary_data_format)
   {
     UniquePointerType<EC_GROUP> group{createGroup()};
     context::Session<BN_CTX>    session;
 
-    switch (binaryDataFormat)
+    switch (binary_data_format)
     {
     case eECDSAEncoding::canonical:
     case eECDSAEncoding::bin:
@@ -157,9 +157,9 @@ private:
   }
 
   static UniquePointerType<EC_POINT> Convert(byte_array::ConstByteArray const &key_data,
-                                             eECDSAEncoding const              binaryDataFormat)
+                                             eECDSAEncoding const              binary_data_format)
   {
-    switch (binaryDataFormat)
+    switch (binary_data_format)
     {
     case eECDSAEncoding::canonical:
       return ConvertFromCanonical(key_data);
@@ -192,8 +192,8 @@ private:
                                            context::Session<BN_CTX> const &session)
   {
     SharedPointerType<BIGNUM> public_key_as_BN{BN_new()};
-    if (!EC_POINT_point2bn(group, public_key, ECDSAPublicKey::conversionForm,
-                           public_key_as_BN.get(), session.context().get()))
+    if (EC_POINT_point2bn(group, public_key, ECDSAPublicKey::conversionForm, public_key_as_BN.get(),
+                          session.context().get()) == nullptr)
     {
       throw std::runtime_error(
           "ECDSAPublicKey::Convert(...): "
@@ -203,7 +203,7 @@ private:
     byte_array::ByteArray pub_key_as_bin;
     pub_key_as_bin.Resize(static_cast<std::size_t>(BN_num_bytes(public_key_as_BN.get())));
 
-    if (!BN_bn2bin(public_key_as_BN.get(), static_cast<uint8_t *>(pub_key_as_bin.pointer())))
+    if (BN_bn2bin(public_key_as_BN.get(), static_cast<uint8_t *>(pub_key_as_bin.pointer())) == 0)
     {
       throw std::runtime_error("ECDSAPublicKey::Convert(...): `BN_bn2bin(...)` function failed.");
     }
@@ -223,8 +223,8 @@ private:
 
     AffineCoordConversionType::ConvertFromCanonical(key_data, x.get(), y.get());
 
-    if (!EC_POINT_set_affine_coordinates_GFp(group.get(), public_key.get(), x.get(), y.get(),
-                                             session.context().get()))
+    if (EC_POINT_set_affine_coordinates_GFp(group.get(), public_key.get(), x.get(), y.get(),
+                                            session.context().get()) == 0)
     {
       throw std::runtime_error(
           "ECDSAPublicKey::ConvertFromCanonical(...): "
@@ -237,8 +237,8 @@ private:
   static UniquePointerType<EC_POINT> ConvertFromBin(byte_array::ConstByteArray const &key_data)
   {
     SharedPointerType<BIGNUM> pub_key_as_BN{BN_new()};
-    if (!BN_bin2bn(static_cast<const uint8_t *>(key_data.pointer()), int(key_data.size()),
-                   pub_key_as_BN.get()))
+    if (BN_bin2bn(static_cast<const uint8_t *>(key_data.pointer()), int(key_data.size()),
+                  pub_key_as_BN.get()) == nullptr)
     {
       throw std::runtime_error("ECDSAPublicKey::ConvertToECPOINT(...): BN_bin2bn(...) failed.");
     }
@@ -247,8 +247,8 @@ private:
     UniquePointerType<EC_POINT> public_key{EC_POINT_new(group.get())};
     context::Session<BN_CTX>    session;
 
-    if (!EC_POINT_bn2point(group.get(), pub_key_as_BN.get(), public_key.get(),
-                           session.context().get()))
+    if (EC_POINT_bn2point(group.get(), pub_key_as_BN.get(), public_key.get(),
+                          session.context().get()) == nullptr)
     {
       throw std::runtime_error(
           "ECDSAPublicKey::ConvertToECPOINT(...): "
@@ -258,7 +258,7 @@ private:
     return public_key;
   }
 
-  static UniquePointerType<EC_KEY> ConvertToECKEY(const EC_POINT *key_EC_POINT)
+  static UniquePointerType<EC_KEY> ConvertToECKEY(EC_POINT const *key_EC_POINT)
   {
     UniquePointerType<EC_KEY> key{EC_KEY_new_by_curve_name(EcdsaCurveType::nid)};
     // TODO(issue 36): setting conv. form might not be really necessary (stuff
@@ -266,7 +266,7 @@ private:
     // without it)
     EC_KEY_set_conv_form(key.get(), conversionForm);
 
-    if (!EC_KEY_set_public_key(key.get(), key_EC_POINT))
+    if (EC_KEY_set_public_key(key.get(), key_EC_POINT) == 0)
     {
       throw std::runtime_error(
           "ECDSAPublicKey::ConvertToECKEY(...): "

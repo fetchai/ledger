@@ -21,7 +21,11 @@ target_link_libraries(fetch-crypto
                              fetch-math
                              fetch-vectorise
                              vendor-openssl
-                             vendor-bls)
+                             vendor-mcl)
+
+if (_is_clang_compiler)
+  target_compile_options(fetch-crypto PRIVATE -Wshadow)
+endif ()
 
 add_test_target()
 

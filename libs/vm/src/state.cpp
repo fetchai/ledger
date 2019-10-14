@@ -25,7 +25,7 @@ namespace vm {
 namespace {
 
 template <typename T, typename = std::enable_if_t<IsPrimitive<T>::value>>
-bool ReadHelper(TypeId /*type*/, std::string const &name, T &val, VM *vm)
+bool ReadHelper(TypeId /*type_id*/, std::string const &name, T &val, VM *vm)
 {
   if (!vm->HasIoObserver())
   {
@@ -49,7 +49,7 @@ bool WriteHelper(std::string const &name, T const &val, VM *vm)
   return result == IoObserverInterface::Status::OK;
 }
 
-bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, VM *vm)
+bool ReadHelper(TypeId type_id, std::string const &name, Ptr<Object> &val, VM *vm)
 {
   using fetch::byte_array::ByteArray;
 
@@ -58,15 +58,15 @@ bool ReadHelper(TypeId type, std::string const &name, Ptr<Object> &val, VM *vm)
     return true;
   }
 
-  if (!vm->IsDefaultSerializeConstructable(type))
+  if (!vm->IsDefaultSerializeConstructable(type_id))
   {
-    vm->RuntimeError("Cannot deserialise object of type " + vm->GetUniqueId(type) +
+    vm->RuntimeError("Cannot deserialise object of type " + vm->GetTypeName(type_id) +
                      " for which no serialisation constructor exists.");
 
     return false;
   }
 
-  val = vm->DefaultSerializeConstruct(type);
+  val = vm->DefaultSerializeConstruct(type_id);
 
   // create an initial buffer size
   ByteArray buffer;
@@ -206,6 +206,7 @@ public:
     {
       // mark the variable as existed if we get a positive result back
       existed_ = eExisted::no;
+
       if (Status::OK == vm_->GetIOObserver().Exists(name_))
       {
         existed_ = eExisted::yes;
@@ -225,7 +226,7 @@ private:
     {
       return {value_, template_param_type_id_};
     }
-    else if (Existed())
+    if (Existed())
     {
       if (ReadHelper(template_param_type_id_, name_, value_, vm_))
       {
@@ -233,7 +234,7 @@ private:
         return {value_, template_param_type_id_};
       }
     }
-    else if (default_value)
+    else if (default_value != nullptr)
     {
       return *default_value;
     }
@@ -309,7 +310,7 @@ struct StateFactory<T, std::enable_if_t<!IsMetatype<T>>>
   template <typename... Args>
   Ptr<IState> operator()(Args &&... args)
   {
-    return new State<T>{std::forward<Args>(args)...};
+    return Ptr<IState>{new State<T>{std::forward<Args>(args)...}};
   }
 };
 
@@ -317,7 +318,7 @@ template <typename T>
 struct StateFactory<T, std::enable_if_t<IsMetatype<T>>>
 {
   template <typename... Args>
-  Ptr<IState> operator()(Args &&...)
+  Ptr<IState> operator()(Args &&... /*unused*/)
   {
     return {};
   }
@@ -333,7 +334,7 @@ Ptr<IState> IState::ConstructorFromString(VM *vm, TypeId type_id, Ptr<String> co
   }
 
   vm->RuntimeError("Failed to construct State: the `name` is null reference");
-  return nullptr;
+  return {};
 }
 
 Ptr<IState> IState::ConstructorFromAddress(VM *vm, TypeId type_id, Ptr<Address> const &name)
@@ -344,7 +345,7 @@ Ptr<IState> IState::ConstructorFromAddress(VM *vm, TypeId type_id, Ptr<Address> 
   }
 
   vm->RuntimeError("Failed to construct State: the `name` is null reference");
-  return nullptr;
+  return {};
 }
 
 Ptr<IState> IState::ConstructIntrinsic(VM *vm, TypeId type_id, TypeId template_param_type_id,

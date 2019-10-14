@@ -69,27 +69,28 @@ public:
     , explanation_(std::string(explanation))
   {}
 
+  StorageException(StorageException const &) = default;
+  StorageException &operator=(StorageException const &) = default;
+
+  StorageException(StorageException &&) noexcept = default;
+  StorageException &operator=(StorageException &&) noexcept = default;
+
   ~StorageException() override = default;
 
   char const *what() const noexcept override
   {
     return explanation_.c_str();
   }
+
   uint64_t error_code() const
   {
     return error_code_;
   }
-  std::string explanation() const
-  {
-    return explanation_;
-  }
-
-  void StackTrace() const
-  {}
 
 private:
   uint64_t    error_code_;
   std::string explanation_;
 };
+
 }  // namespace storage
 }  // namespace fetch

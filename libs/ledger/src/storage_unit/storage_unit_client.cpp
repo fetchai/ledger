@@ -55,6 +55,9 @@ AddressList GenerateAddressList(ShardConfigs const &shards)
   return addresses;
 }
 
+constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
+constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
+
 }  // namespace
 
 using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<Transaction>;
@@ -384,10 +387,17 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
 
   for (auto const &promise : promises)
   {
-    auto txs = promise->As<TxLayouts>();
+    try
+    {
+      auto txs = promise->As<TxLayouts>();
 
-    layouts.insert(layouts.end(), std::make_move_iterator(txs.begin()),
-                   std::make_move_iterator(txs.end()));
+      layouts.insert(layouts.end(), std::make_move_iterator(txs.begin()),
+                     std::make_move_iterator(txs.end()));
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store!");
+    }
   }
 
   return layouts;
@@ -465,8 +475,6 @@ void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
 
 StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const &key)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "GetOrCreate: ", key.address());
-
   Document doc;
 
   try
@@ -515,8 +523,6 @@ StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
 
 void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Set: ", key.address(), " value: 0x", value.ToHex());
-
   try
   {
     // make the request to the RPC server

@@ -23,6 +23,7 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
@@ -174,20 +175,18 @@ public:
     if (!time_distributed_)
     {
       SizeType total_in_size = 1;
-      for (size_t i = 0; i < inputs.front()->shape().size() - 1; i++)
+      for (std::size_t i = 0; i < inputs.front()->shape().size() - 1; i++)
       {
         total_in_size *= inputs.front()->shape(i);
       }
       assert(total_in_size == this->in_size_);
       return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
     }
-    else
-    {
-      assert(inputs.front()->shape().size() == 3);
-      assert(inputs.front()->shape(0) == in_size_);
-      return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 2),
-              inputs.front()->shape(inputs.front()->shape().size() - 1)};
-    }
+
+    assert(inputs.front()->shape().size() == 3);
+    assert(inputs.front()->shape(0) == in_size_);
+    return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 2),
+            inputs.front()->shape(inputs.front()->shape().size() - 1)};
   }
 
   static constexpr OpType OpCode()

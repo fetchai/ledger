@@ -19,7 +19,6 @@
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 #include "vm_test_toolkit.hpp"
 
@@ -171,8 +170,13 @@ TEST_F(MLTests, dataloader_serialisation_test)
   auto const initial_training_pair = first_res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
   auto const training_pair         = res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
 
-  auto data1 = initial_training_pair->data()->GetTensor();
-  auto data2 = training_pair->data()->GetTensor();
+  AnyInteger index(0, TypeIds::UInt16);
+
+  auto array1 = initial_training_pair->data()->GetIndexedValue(index);
+  auto array2 = training_pair->data()->GetIndexedValue(index);
+
+  auto data1 = array1.Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()->GetTensor();
+  auto data2 = array2.Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()->GetTensor();
 
   auto label1 = initial_training_pair->label()->GetTensor();
   auto label2 = training_pair->label()->GetTensor();
@@ -350,7 +354,7 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       dataloader.addData(data_tensor, label_tensor);
 
       var batch_size = 8u64;
-      var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+      var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
 
       var state = State<Optimiser>("optimiser");
       state.set(optimiser);
@@ -417,7 +421,7 @@ TEST_F(MLTests, serialisation_several_components_test)
         dataloader_state.set(dataloader);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
         var optimiser_state = State<Optimiser>("optimiser");
         optimiser_state.set(optimiser);
 
@@ -480,7 +484,7 @@ TEST_F(MLTests, optimiser_set_graph_test)
         dataloader.addData(data_tensor, label_tensor);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
 
         optimiser.setGraph(graph);
         optimiser.setDataloader(dataloader);
@@ -533,5 +537,111 @@ TEST_F(MLTests, graph_step_test)
   auto const loss_reduction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
   EXPECT_GT(loss_reduction->GetTensor().At(0, 0), 0);
+}
+
+TEST_F(MLTests, sequential_model_test)
+{
+  static char const *sequential_model_src = R"(
+    function main()
+
+      // set up data and labels
+      var data_shape = Array<UInt64>(2);
+      data_shape[0] = 10u64;
+      data_shape[1] = 1000u64;
+      var label_shape = Array<UInt64>(2);
+      label_shape[0] = 1u64;
+      label_shape[1] = 1000u64;
+      var data = Tensor(data_shape);
+      var label = Tensor(label_shape);
+
+      // set up a model
+      var model = Model("sequential");
+      model.add("dense", 10u64, 10u64, "relu");
+      model.add("dense", 10u64, 10u64, "relu");
+      model.add("dense", 10u64, 1u64);
+      model.compile("mse", "adam");
+
+      // train the model
+      model.fit(data, label, 32u64);
+
+      // make a prediction
+      var loss = model.evaluate();
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(sequential_model_src));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, classifier_model_test)
+{
+  static char const *classifier_model_src = R"(
+    function main()
+
+      // set up data and labels
+      var data_shape = Array<UInt64>(2);
+      data_shape[0] = 10u64;
+      data_shape[1] = 1000u64;
+      var label_shape = Array<UInt64>(2);
+      label_shape[0] = 10u64;
+      label_shape[1] = 1000u64;
+      var data = Tensor(data_shape);
+      var label = Tensor(label_shape);
+
+      // set up a model
+      var hidden_layers = Array<UInt64>(3);
+      hidden_layers[0] = 10u64;
+      hidden_layers[1] = 10u64;
+      hidden_layers[2] = 10u64;
+      var model = Model("classifier");
+      model.compile("adam", hidden_layers);
+
+      // train the model
+      model.fit(data, label, 32u64);
+
+      // make a prediction
+      var loss = model.evaluate();
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(classifier_model_src));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, regressor_model_test)
+{
+  static char const *regressor_model_src = R"(
+    function main()
+
+      // set up data and labels
+      var data_shape = Array<UInt64>(2);
+      data_shape[0] = 10u64;
+      data_shape[1] = 1000u64;
+      var label_shape = Array<UInt64>(2);
+      label_shape[0] = 1u64;
+      label_shape[1] = 1000u64;
+      var data = Tensor(data_shape);
+      var label = Tensor(label_shape);
+
+      // set up a model
+      var hidden_layers = Array<UInt64>(3);
+      hidden_layers[0] = 10u64;
+      hidden_layers[1] = 10u64;
+      hidden_layers[2] = 1u64;
+      var model = Model("regressor");
+      model.compile("adam", hidden_layers);
+
+      // train the model
+      model.fit(data, label, 32u64);
+
+      // make a prediction
+      var loss = model.evaluate();
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(regressor_model_src));
+  ASSERT_TRUE(toolkit.Run());
 }
 }  // namespace

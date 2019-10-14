@@ -339,8 +339,7 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
 void Analyser::AddError(uint16_t line, std::string const &message)
 {
   std::ostringstream stream;
-  stream << "line " << line << ": "
-         << "error: " << message;
+  stream << filename_ << ": line " << line << ": error: " << message;
   errors_.push_back(stream.str());
 }
 
@@ -363,7 +362,7 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
     }
     case NodeKind::FunctionDefinitionStatement:
     {
-      BuildFunctionDefinition(block_node, ConvertToBlockNodePtr(child));
+      BuildFunctionDefinition(ConvertToBlockNodePtr(child));
       break;
     }
     case NodeKind::WhileStatement:
@@ -392,6 +391,7 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
 
 void Analyser::BuildFile(BlockNodePtr const &file_node)
 {
+  filename_          = file_node->text;
   file_node->symbols = CreateSymbolTable();
   BuildBlock(file_node);
 }
@@ -445,23 +445,22 @@ void Analyser::BuildPersistentStatement(NodePtr const &node)
   state_definitions_.Add(state_name, instantation_type);
 }
 
-void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
-                                       BlockNodePtr const &function_definition_node)
+void Analyser::BuildFunctionDefinition(BlockNodePtr const &function_definition_node)
 {
   function_definition_node->symbols = CreateSymbolTable();
   ExpressionNodePtr identifier_node =
       ConvertToExpressionNodePtr(function_definition_node->children[1]);
   std::string const &    name  = identifier_node->text;
-  auto const             count = static_cast<int>(function_definition_node->children.size());
+  auto const             count = function_definition_node->children.size();
   VariablePtrArray       parameter_variables;
   TypePtrArray           parameter_types;
   ExpressionNodePtrArray parameter_nodes;
-  auto const             num_parameters = int((count - 3) / 2);
+  auto const             num_parameters = (count - 3) / 2;
   int                    problems       = 0;
-  for (int i = 0; i < num_parameters; ++i)
+  for (std::size_t i = 0; i < num_parameters; ++i)
   {
     ExpressionNodePtr parameter_node =
-        ConvertToExpressionNodePtr(function_definition_node->children[std::size_t(2 + i * 2)]);
+        ConvertToExpressionNodePtr(function_definition_node->children[2 + i * 2]);
     std::string const &parameter_name = parameter_node->text;
     SymbolPtr          symbol         = function_definition_node->symbols->Find(parameter_name);
     if (symbol)
@@ -471,7 +470,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
       continue;
     }
     ExpressionNodePtr parameter_type_node =
-        ConvertToExpressionNodePtr(function_definition_node->children[std::size_t(3 + i * 2)]);
+        ConvertToExpressionNodePtr(function_definition_node->children[3 + i * 2]);
     TypePtr parameter_type = FindType(parameter_type_node);
     if (parameter_type == nullptr)
     {
@@ -504,12 +503,12 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
   {
     return_type = void_type_;
   }
-  if (problems)
+  if (problems != 0)
   {
     return;
   }
   FunctionGroupPtr fg;
-  SymbolPtr        symbol = parent_block_node->symbols->Find(name);
+  SymbolPtr        symbol = root_->symbols->Find(name);
   if (symbol)
   {
     fg = ConvertToFunctionGroupPtr(symbol);
@@ -524,7 +523,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
   else
   {
     fg = CreateFunctionGroup(name);
-    parent_block_node->symbols->Add(fg);
+    root_->symbols->Add(fg);
   }
   FunctionPtr function =
       CreateUserDefinedFreeFunction(name, parameter_types, parameter_variables, return_type);
@@ -709,6 +708,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
 
 void Analyser::AnnotateFile(BlockNodePtr const &file_node)
 {
+  filename_ = file_node->text;
   AnnotateBlock(file_node);
 }
 
@@ -1876,7 +1876,7 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
     SetFunctionGroupExpression(node, fg, lhs->type, lhs_is_instance);
     return true;
   }
-  else if (member_symbol->IsVariable())
+  if (member_symbol->IsVariable())
   {
     // member is a variable name
     // static member variable  lhs_is_instance == false
@@ -1884,12 +1884,10 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
     AddError(lhs->line, "not supported");
     return false;
   }
-  else
-  {
-    // member is a type name
-    AddError(lhs->line, "not supported");
-    return false;
-  }
+
+  // member is a type name
+  AddError(lhs->line, "not supported");
+  return false;
 }
 
 bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
@@ -1984,7 +1982,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     node->function = f;
     return true;
   }
-  else if (lhs->IsTypeExpression())
+  if (lhs->IsTypeExpression())
   {
     // Type constructor
     if (lhs->type->IsPrimitive())
@@ -2027,14 +2025,12 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     node->function = f;
     return true;
   }
-  else
-  {
-    // e.g.
-    // (a + b)();
-    // array[index]();
-    AddError(lhs->line, "operand does not support function-call operator");
-    return false;
-  }
+
+  // e.g.
+  // (a + b)();
+  // array[index]();
+  AddError(lhs->line, "operand does not support function-call operator");
+  return false;
 }
 
 // Returns true if control is able to reach the end of the block
@@ -2206,18 +2202,16 @@ TypePtr Analyser::ResolveType(TypePtr const &type, TypePtr const &instantiated_t
   {
     return instantiated_template_type;
   }
-  else if (type == template_parameter1_type_)
+  if (type == template_parameter1_type_)
   {
     return instantiated_template_type->types[0];
   }
-  else if (type == template_parameter2_type_)
+  if (type == template_parameter2_type_)
   {
     return instantiated_template_type->types[1];
   }
-  else
-  {
-    return type;
-  }
+
+  return type;
 }
 
 bool Analyser::MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const
@@ -2390,10 +2384,8 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
     root_->symbols->Add(type);
     return type;
   }
-  else  // (node->node_kind == NodeKind::Identifier)
-  {
-    return SearchSymbols(node->text);
-  }
+
+  return SearchSymbols(node->text);
 }
 
 SymbolPtr Analyser::SearchSymbols(std::string const &name)

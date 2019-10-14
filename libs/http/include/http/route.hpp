@@ -78,7 +78,8 @@ public:
         std::size_t j     = i + 1;
         while ((j < path.size()) && (count != 0))
         {
-          count += (path[j] == '(') - (path[j] == ')');
+          count +=
+              static_cast<std::size_t>(path[j] == '(') - static_cast<std::size_t>(path[j] == ')');
           ++j;
         }
 
@@ -111,7 +112,7 @@ public:
     return ret;
   }
 
-  void AddValidator(byte_array::ConstByteArray parameter, validators::Validator validator)
+  void AddValidator(byte_array::ConstByteArray const &parameter, validators::Validator validator)
   {
     validators_[parameter] = std::move(validator);
   }

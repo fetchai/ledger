@@ -51,24 +51,24 @@ public:
                 "type cannot be contained in the given register size.");
 
   VectorRegister() = default;
-  VectorRegister(type const *d)
+  VectorRegister(type const *d)  // NOLINT
   {
-    data_ = _mm_load_si128((MMRegisterType *)d);
+    data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(d));
   }
   VectorRegister(std::initializer_list<type> const &list)
   {
     data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(list.begin()));
   }
-  VectorRegister(type const &c)
+  VectorRegister(type const &c)  // NOLINT
   {
     data_ = _mm_set1_epi64x(c);
   }
 
-  VectorRegister(MMRegisterType const &d)
+  VectorRegister(MMRegisterType const &d)  // NOLINT
     : data_(d)
   {}
 
-  VectorRegister(MMRegisterType &&d)
+  VectorRegister(MMRegisterType &&d)  // NOLINT
     : data_(d)
   {}
 
@@ -118,24 +118,24 @@ public:
                 "type cannot be contained in the given register size.");
 
   VectorRegister() = default;
-  VectorRegister(type const *d)
+  VectorRegister(type const *d)  // NOLINT
   {
-    data_ = _mm256_load_si256((MMRegisterType *)d);
+    data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(d));
   }
   VectorRegister(std::initializer_list<type> const &list)
   {
     data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(list.begin()));
   }
-  VectorRegister(type const &c)
+  VectorRegister(type const &c)  // NOLINT
   {
     data_ = _mm256_set1_epi64x(c);
   }
 
-  VectorRegister(MMRegisterType const &d)
+  VectorRegister(MMRegisterType const &d)  // NOLINT
     : data_(d)
   {}
 
-  VectorRegister(MMRegisterType &&d)
+  VectorRegister(MMRegisterType &&d)  // NOLINT
     : data_(d)
   {}
 
@@ -253,7 +253,7 @@ inline VectorRegister<int64_t, 128> operator*(VectorRegister<int64_t, 128> const
   ret[0] = d1[0] * d2[0];
   ret[1] = d1[1] * d2[1];
 
-  return VectorRegister<int64_t, 128>(ret);
+  return {ret};
 }
 
 inline VectorRegister<int64_t, 256> operator*(VectorRegister<int64_t, 256> const &a,
@@ -273,7 +273,7 @@ inline VectorRegister<int64_t, 256> operator*(VectorRegister<int64_t, 256> const
   ret[2] = d1[2] * d2[2];
   ret[3] = d1[3] * d2[3];
 
-  return VectorRegister<int64_t, 256>(ret);
+  return {ret};
 }
 
 inline VectorRegister<int64_t, 128> operator/(VectorRegister<int64_t, 128> const &a,
@@ -293,7 +293,7 @@ inline VectorRegister<int64_t, 128> operator/(VectorRegister<int64_t, 128> const
   ret[0] = d2[0] != 0 ? d1[0] / d2[0] : 0;
   ret[1] = d2[1] != 0 ? d1[1] / d2[1] : 0;
 
-  return VectorRegister<int64_t, 128>(ret);
+  return {ret};
 }
 
 inline VectorRegister<int64_t, 256> operator/(VectorRegister<int64_t, 256> const &a,
@@ -310,12 +310,12 @@ inline VectorRegister<int64_t, 256> operator/(VectorRegister<int64_t, 256> const
 
   // don't divide by zero
   // set each of the 4 values in the vector register to either the solution of the division or 0
-  for (size_t i = 0; i < 4; i++)
+  for (std::size_t i = 0; i < 4; i++)
   {
     ret[i] = d2[i] != 0 ? d1[i] / d2[i] : 0;
   }
 
-  return VectorRegister<int64_t, 256>(ret);
+  return {ret};
 }
 
 inline VectorRegister<int64_t, 128> operator!=(VectorRegister<int64_t, 128> const &a,
@@ -328,6 +328,7 @@ inline VectorRegister<int64_t, 256> operator!=(VectorRegister<int64_t, 256> cons
                                                VectorRegister<int64_t, 256> const &b)
 {
   return ~(a == b);
+>>>>>>> master
 }
 
 inline VectorRegister<int64_t, 128> operator<(VectorRegister<int64_t, 128> const &a,

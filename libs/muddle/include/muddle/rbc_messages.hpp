@@ -144,28 +144,28 @@ public:
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
 
-  RBCMessage(RBCMessage const &) = default;  // TODO(?): make protected
+  RBCMessage(RBCMessage const &) = default;  // TODO (troels): make protected
 
-  /// @{ // TODO: Mkae protected
+  /// @{
   SerialisedMessage const &message() const;
   HashDigest               hash() const;
   /// @}
 protected:
-  RBCMessage(RBCMessageType type, uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
-             SerialisedMessage msg = "");
+  explicit RBCMessage(RBCMessageType type, uint16_t channel = 0, uint32_t id = 0,
+                      uint8_t counter = 0, SerialisedMessage msg = "");
 
 private:
   RBCMessageType    type_;
-  uint16_t          channel_;  ///< Channel Id of the broadcast channel
-  uint32_t          id_;       ///< Unique Id of the node
-  uint8_t           counter_;  ///< Counter for messages sent on RBC
-  SerialisedMessage payload_;  ///< Serialised message to be sent using RBC
+  uint16_t          channel_{};  ///< Channel Id of the broadcast channel
+  uint32_t          id_{};       ///< Unique Id of the node
+  uint8_t           counter_{};  ///< Counter for messages sent on RBC
+  SerialisedMessage payload_;    ///< Serialised message to be sent using RBC
 };
 
 class RHash : public RBCMessage
 {
 public:
-  RHash(RBCMessage const &msg)
+  explicit RHash(RBCMessage const &msg)
     : RBCMessage(msg)
   {}
   using RBCMessage::hash;
@@ -175,7 +175,7 @@ public:
 class RMessage : public RBCMessage
 {
 public:
-  RMessage(RBCMessage const &msg)
+  explicit RMessage(RBCMessage const &msg)
     : RBCMessage(msg)
   {}
   using RBCMessage::message;
@@ -186,12 +186,12 @@ template <RBCMessageType TYPE, typename Parent>
 class RBCMessageImpl final : public Parent
 {
 public:
-  RBCMessageImpl(uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
-                 SerialisedMessage msg = "")
+  explicit RBCMessageImpl(uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
+                          SerialisedMessage msg = "")
     : Parent{TYPE, channel, id, counter, msg}
   {}
 
-  RBCMessageImpl(RBCMessage const &msg)
+  explicit RBCMessageImpl(RBCMessage const &msg)
     : Parent(msg)
   {}
 
@@ -223,7 +223,7 @@ public:
     auto map = map_constructor(5);
     map.Append(TYPE, static_cast<uint8_t>(msg.type_));
     map.Append(CHANNEL, msg.channel_);
-    map.Append(ADDRESS, msg.id_);  // TODO(?): Remove and deduce from network connection
+    map.Append(ADDRESS, msg.id_);  // TODO (ed): Remove and deduce from network connection
     map.Append(COUNTER, msg.counter_);
     map.Append(PAYLOAD, msg.payload_);
   }
@@ -234,8 +234,8 @@ public:
     uint8_t type;
     map.ExpectKeyGetValue(TYPE, type);
     map.ExpectKeyGetValue(CHANNEL, msg.channel_);
-    // TODO(?): Remove and deduce from network connection
-    map.ExpectKeyGetValue(ADDRESS, msg.id_);
+    map.ExpectKeyGetValue(ADDRESS,
+                          msg.id_);  // TODO (ed): Remove and deduce from network connection
     map.ExpectKeyGetValue(COUNTER, msg.counter_);
     map.ExpectKeyGetValue(PAYLOAD, msg.payload_);
 

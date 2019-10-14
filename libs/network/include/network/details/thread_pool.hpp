@@ -88,13 +88,13 @@ public:
 
   /// @name Current / Future Work
   /// @{
-  void Post(WorkItem work, uint32_t milliseconds);
-  void Post(WorkItem work);
+  void Post(WorkItem item, uint32_t milliseconds);
+  void Post(WorkItem item);
   /// @}
 
   /// @name Idle / Background tasks
   /// @{
-  void PostIdle(WorkItem work);
+  void PostIdle(WorkItem idle_work);
   void SetIdleInterval(std::size_t milliseconds);
   /// @}
 

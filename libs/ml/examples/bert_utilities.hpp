@@ -74,7 +74,7 @@ struct BERTInterface
   }
 };
 
-std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
+inline std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
     BERTConfig const &config, GraphType &g)
 {
   // create a bert model based on the config passed in
@@ -131,8 +131,9 @@ std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
                         encoder_outputs);
 }
 
-void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node,
-                   std::vector<TensorType> input_data, TensorType output_data, bool verbose = true)
+inline void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes,
+                          std::string const &output_node, std::vector<TensorType> input_data,
+                          TensorType output_data, bool verbose = true)
 {
   // Evaluate the model classification performance on a set of test data.
   std::cout << "Starting forward passing for manual evaluation on: " << output_data.shape(1)
@@ -179,7 +180,7 @@ void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::stri
             << std::endl;
 }
 
-TensorType LoadTensorFromFile(std::string file_name)
+inline TensorType LoadTensorFromFile(std::string const &file_name)
 {
   std::ifstream weight_file(file_name);
   assert(weight_file.is_open());
@@ -191,13 +192,15 @@ TensorType LoadTensorFromFile(std::string file_name)
   return TensorType::FromString(weight_str);
 }
 
-void PutWeightInLayerNorm(StateDictType &state_dict, SizeType model_dims,
-                          std::string gamma_file_name, std::string beta_file_name,
-                          std::string gamma_weight_name, std::string beta_weight_name)
+inline void PutWeightInLayerNorm(StateDictType &state_dict, SizeType model_dims,
+                                 std::string const &gamma_file_name,
+                                 std::string const &beta_file_name,
+                                 std::string const &gamma_weight_name,
+                                 std::string const &beta_weight_name)
 {
   // load embedding layernorm gamma beta weights
-  TensorType layernorm_gamma = LoadTensorFromFile(std::move(gamma_file_name));
-  TensorType layernorm_beta  = LoadTensorFromFile(std::move(beta_file_name));
+  TensorType layernorm_gamma = LoadTensorFromFile(gamma_file_name);
+  TensorType layernorm_beta  = LoadTensorFromFile(beta_file_name);
   assert(layernorm_beta.size() == model_dims);
   assert(layernorm_gamma.size() == model_dims);
   layernorm_beta.Reshape({model_dims, 1, 1});
@@ -208,13 +211,14 @@ void PutWeightInLayerNorm(StateDictType &state_dict, SizeType model_dims,
   *(state_dict.dict_[beta_weight_name].weights_)  = layernorm_beta;
 }
 
-void PutWeightInFullyConnected(StateDictType &state_dict, SizeType in_size, SizeType out_size,
-                               std::string weights_file_name, std::string bias_file_name,
-                               std::string weights_name, std::string bias_name)
+inline void PutWeightInFullyConnected(StateDictType &state_dict, SizeType in_size,
+                                      SizeType out_size, std::string const &weights_file_name,
+                                      std::string const &bias_file_name,
+                                      std::string const &weights_name, std::string const &bias_name)
 {
   // load embedding layernorm gamma beta weights
-  TensorType weights = LoadTensorFromFile(std::move(weights_file_name));
-  TensorType bias    = LoadTensorFromFile(std::move(bias_file_name));
+  TensorType weights = LoadTensorFromFile(weights_file_name);
+  TensorType bias    = LoadTensorFromFile(bias_file_name);
   FETCH_UNUSED(in_size);
   assert(weights.shape() == SizeVector({out_size, in_size}));
   assert(bias.size() == out_size);
@@ -225,26 +229,25 @@ void PutWeightInFullyConnected(StateDictType &state_dict, SizeType in_size, Size
   *(state_dict.dict_[bias_name].weights_)    = bias;
 }
 
-void PutWeightInMultiheadAttention(StateDictType &state_dict, SizeType n_heads, SizeType model_dims,
-                                   std::string query_weights_file_name,
-                                   std::string query_bias_file_name,
-                                   std::string key_weights_file_name,
-                                   std::string key_bias_file_name,
-                                   std::string value_weights_file_name,
-                                   std::string value_bias_file_name, std::string query_weights_name,
-                                   std::string query_bias_name, std::string key_weights_name,
-                                   std::string key_bias_name, std::string value_weights_name,
-                                   std::string value_bias_name, std::string mattn_prefix)
+inline void PutWeightInMultiheadAttention(
+    StateDictType &state_dict, SizeType n_heads, SizeType model_dims,
+    std::string const &query_weights_file_name, std::string const &query_bias_file_name,
+    std::string const &key_weights_file_name, std::string const &key_bias_file_name,
+    std::string const &value_weights_file_name, std::string const &value_bias_file_name,
+    std::string const &query_weights_name, std::string const &query_bias_name,
+    std::string const &key_weights_name, std::string const &key_bias_name,
+    std::string const &value_weights_name, std::string const &value_bias_name,
+    std::string const &mattn_prefix)
 {
   // get weight arrays from file
-  TensorType query_weights = LoadTensorFromFile(std::move(query_weights_file_name));
-  TensorType query_bias    = LoadTensorFromFile(std::move(query_bias_file_name));
+  TensorType query_weights = LoadTensorFromFile(query_weights_file_name);
+  TensorType query_bias    = LoadTensorFromFile(query_bias_file_name);
   query_bias.Reshape({model_dims, 1, 1});
-  TensorType key_weights = LoadTensorFromFile(std::move(key_weights_file_name));
-  TensorType key_bias    = LoadTensorFromFile(std::move(key_bias_file_name));
+  TensorType key_weights = LoadTensorFromFile(key_weights_file_name);
+  TensorType key_bias    = LoadTensorFromFile(key_bias_file_name);
   key_bias.Reshape({model_dims, 1, 1});
-  TensorType value_weights = LoadTensorFromFile(std::move(value_weights_file_name));
-  TensorType value_bias    = LoadTensorFromFile(std::move(value_bias_file_name));
+  TensorType value_weights = LoadTensorFromFile(value_weights_file_name);
+  TensorType value_bias    = LoadTensorFromFile(value_bias_file_name);
   value_bias.Reshape({model_dims, 1, 1});
 
   // put weights into each head
@@ -282,7 +285,7 @@ void PutWeightInMultiheadAttention(StateDictType &state_dict, SizeType n_heads, 
   }
 }
 
-std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrainedBertModel(
+inline std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrainedBertModel(
     std::string const &file_path, BERTConfig const &config, GraphType &g)
 {
   SizeType n_encoder_layers  = config.n_encoder_layers;
@@ -431,9 +434,9 @@ std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrainedBert
                         encoder_outputs);
 }
 
-TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes, std::string output_node,
-                                BERTConfig const &config, GraphType g, SizeType batch_size,
-                                bool verbose)
+inline TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes,
+                                       std::string output_node, BERTConfig const &config,
+                                       GraphType g, SizeType batch_size, bool verbose)
 {
   std::string segment      = std::move(input_nodes[0]);
   std::string position     = std::move(input_nodes[1]);
@@ -491,7 +494,7 @@ TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes, std::strin
   return output;
 }
 
-void SaveGraphToFile(GraphType &g, std::string const file_name)
+inline void SaveGraphToFile(GraphType &g, std::string const &file_name)
 {
   // start serializing and writing to file
   fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
@@ -508,7 +511,7 @@ void SaveGraphToFile(GraphType &g, std::string const file_name)
   std::cout << "finish writing to file" << std::endl;
 }
 
-GraphType ReadFileToGraph(std::string const file_name)
+inline GraphType ReadFileToGraph(std::string const &file_name)
 {
   auto cur_time = std::chrono::high_resolution_clock::now();
   // start reading a file and deserializing
@@ -533,13 +536,14 @@ GraphType ReadFileToGraph(std::string const file_name)
   return *g;
 }
 
-std::vector<TensorType> PrepareTensorForBert(TensorType const &data, BERTConfig const &config)
+inline std::vector<TensorType> PrepareTensorForBert(TensorType const &data,
+                                                    BERTConfig const &config)
 {
   SizeType max_seq_len = config.max_seq_len;
   // check that data shape is proper for bert input
   if (data.shape().size() != 2 || data.shape(0) != max_seq_len)
   {
-    throw std::runtime_error("Incorrect data shape for given bert config");
+    throw fetch::ml::exceptions::InvalidMode("Incorrect data shape for given bert config");
   }
 
   // build segment, mask and pos data for each sentence in the data

@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/digest.hpp"
 #include "core/mutex.hpp"
 #include "ledger/chain/address.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/work.hpp"
@@ -46,7 +46,7 @@ public:
   using ProblemData     = std::vector<ConstByteArray>;
 
   // Construction / Destruction
-  SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors, ExecutorFactory const &);
+  SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors, ExecutorFactory const &factory);
   SynergeticExecutionManager(SynergeticExecutionManager const &) = delete;
   SynergeticExecutionManager(SynergeticExecutionManager &&)      = delete;
   ~SynergeticExecutionManager() override                         = default;
@@ -54,7 +54,7 @@ public:
   /// @name Synergetic Execution Manager Interface
   /// @{
   ExecStatus PrepareWorkQueue(Block const &current, Block const &previous) override;
-  bool       ValidateWorkAndUpdateState(uint64_t block, std::size_t num_lanes) override;
+  bool       ValidateWorkAndUpdateState(std::size_t num_lanes) override;
   /// @}
 
   // Operators
@@ -73,8 +73,7 @@ private:
   using WorkQueueStack = std::vector<WorkItemPtr>;
   using ThreadPool     = threading::Pool;
 
-  void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, uint64_t block,
-                   std::size_t num_lanes);
+  void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, std::size_t num_lanes);
 
   // System Components
   DAGPtr dag_;

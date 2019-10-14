@@ -248,7 +248,6 @@ public:
   template <typename... Ts>
   bool Execute(Executable const &executable, std::string const &name, std::string &error,
                Variant &output, Ts const &... parameters)
-
   {
     ParameterPack parameter_pack{registered_types_};
 
@@ -267,7 +266,7 @@ public:
     bool success{false};
 
     Executable::Function const *f = executable.FindFunction(name);
-    if (f)
+    if (f != nullptr)
     {
       auto const num_parameters = static_cast<std::size_t>(f->num_parameters);
 
@@ -282,8 +281,8 @@ public:
           if (parameter.type_id != f->variables[i].type_id)
           {
             error = "mismatched parameters: expected argument " + std::to_string(i);
-            error += "to be of type " + GetUniqueId(f->variables[i].type_id) + " but got ";
-            error += GetUniqueId(parameter.type_id);
+            error += "to be of type " + GetTypeName(f->variables[i].type_id) + " but got ";
+            error += GetTypeName(parameter.type_id);
             // clean up
             for (std::size_t j = 0; j < num_parameters; ++j)
             {
@@ -317,7 +316,7 @@ public:
     return success;
   }
 
-  std::string GetUniqueId(TypeId type_id) const
+  std::string GetTypeName(TypeId type_id) const
   {
     auto info = GetTypeInfo(type_id);
     return info.name;
@@ -332,7 +331,7 @@ public:
   template <typename T, typename... Ts>
   Ptr<T> CreateNewObject(Ts &&... args)
   {
-    return new T(this, GetTypeId<T>(), std::forward<Ts>(args)...);
+    return Ptr<T>{new T(this, GetTypeId<T>(), std::forward<Ts>(args)...)};
   }
 
   void SetIOObserver(IoObserverInterface &observer)
@@ -474,7 +473,7 @@ public:
     if (it == deserialization_constructors_.end())
     {
       RuntimeError("object is not default constructible.");
-      return nullptr;
+      return {};
     }
 
     auto &constructor = it->second;
@@ -493,15 +492,15 @@ public:
 
     std::string  name;
     Handler      handler;
-    ChargeAmount static_charge;
+    ChargeAmount static_charge{};
   };
 
   ChargeAmount GetChargeTotal() const;
-  void         IncreaseChargeTotal(ChargeAmount const amount);
+  void         IncreaseChargeTotal(ChargeAmount amount);
   ChargeAmount GetChargeLimit() const;
   void         SetChargeLimit(ChargeAmount limit);
 
-  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &);
+  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_charges);
 
 private:
   static const int FRAME_STACK_SIZE = 50;
@@ -553,22 +552,22 @@ private:
   OpcodeInfoArray                opcode_info_array_;
   OpcodeMap                      opcode_map_;
   Generator                      generator_;
-  Executable const *             executable_;
-  Executable::Function const *   function_;
+  Executable const *             executable_{};
+  Executable::Function const *   function_{};
   std::vector<Ptr<String>>       strings_;
-  Frame                          frame_stack_[FRAME_STACK_SIZE];
-  int                            frame_sp_;
-  int                            bsp_;
+  Frame                          frame_stack_[FRAME_STACK_SIZE]{};
+  int                            frame_sp_{};
+  int                            bsp_{};
   Variant                        stack_[STACK_SIZE];
-  int                            sp_;
-  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS];
-  int                            range_loop_sp_;
-  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS];
-  int                            live_object_sp_;
-  uint16_t                       pc_;
-  uint16_t                       instruction_pc_;
-  Executable::Instruction const *instruction_;
-  bool                           stop_;
+  int                            sp_{};
+  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS]{};
+  int                            range_loop_sp_{};
+  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};
+  int                            live_object_sp_{};
+  uint16_t                       pc_{};
+  uint16_t                       instruction_pc_{};
+  Executable::Instruction const *instruction_{};
+  bool                           stop_{};
   std::string                    error_;
   std::ostringstream             output_buffer_;
   IoObserverInterface *          io_observer_{nullptr};

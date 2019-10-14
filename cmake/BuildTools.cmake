@@ -255,8 +255,11 @@ function (add_fetch_gbench
       # define the target
       add_executable(${name} ${headers} ${srcs})
 
-      target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
-      target_link_libraries(${name} PRIVATE ${library} benchmark)
+      target_link_libraries(${name}
+                            PRIVATE ${library}
+                                    gmock
+                                    gmock_main
+                                    benchmark)
 
       # CoreFoundation Support on MacOS
       if (APPLE)

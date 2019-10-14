@@ -20,6 +20,8 @@
 #include "core/random.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/exceptions/exceptions.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -48,17 +50,23 @@ public:
 
   ReturnType GetNext() override;
 
-  bool AddData(InputType const &data, LabelType const &label) override;
+  bool AddData(InputType const &data, LabelType const &labels) override;
 
   SizeType Size() const override;
   bool     IsDone() const override;
   void     Reset() override;
+  bool     IsModeAvailable(DataLoaderMode mode) override;
 
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
+
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::TENSOR;
+  }
 
 protected:
   std::shared_ptr<SizeType> train_cursor_      = std::make_shared<SizeType>(0);
@@ -87,6 +95,7 @@ protected:
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
 
   random::Random rand;
+  SizeType       count_ = 0;
 
   void UpdateRanges();
   void UpdateCursor() override;
@@ -114,6 +123,7 @@ TensorDataLoader<LabelType, InputType>::GetNext()
     *this->current_cursor_ =
         this->current_min_ +
         (static_cast<SizeType>(decltype(rand)::generator()) % this->current_size_);
+    ++count_;
   }
   else
   {
@@ -152,12 +162,18 @@ TensorDataLoader<LabelType, InputType>::Size() const
 template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::IsDone() const
 {
+  if (this->random_mode_)
+  {
+    return (count_ > (this->current_max_ - this->current_min_));
+  }
+
   return *(this->current_cursor_) >= this->current_max_;
 }
 
 template <typename LabelType, typename InputType>
 void TensorDataLoader<LabelType, InputType>::Reset()
 {
+  count_                   = 0;
   *(this->current_cursor_) = this->current_min_;
 }
 
@@ -182,7 +198,7 @@ void TensorDataLoader<LabelType, InputType>::UpdateRanges()
   float validation_percentage = test_percentage + test_to_train_ratio_;
 
   // Define where test set starts
-  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(n_samples_));
+  test_offset_ = static_cast<uint32_t>(test_percentage * static_cast<float>(n_samples_));
 
   if (test_offset_ == static_cast<SizeType>(0))
   {
@@ -191,7 +207,7 @@ void TensorDataLoader<LabelType, InputType>::UpdateRanges()
 
   // Define where validation set starts
   validation_offset_ =
-      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(n_samples_));
+      static_cast<uint32_t>(validation_percentage * static_cast<float>(n_samples_));
 
   if (validation_offset_ <= test_offset_)
   {
@@ -237,7 +253,7 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
   {
     if (test_to_train_ratio_ == 0)
     {
-      throw std::runtime_error("Dataloader has no test set.");
+      throw exceptions::InvalidMode("Dataloader has no test set.");
     }
     this->current_cursor_ = test_cursor_;
     this->current_min_    = test_offset_;
@@ -249,7 +265,7 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
   {
     if (validation_to_train_ratio_ == 0)
     {
-      throw std::runtime_error("Dataloader has no validation set.");
+      throw exceptions::InvalidMode("Dataloader has no validation set.");
     }
     this->current_cursor_ = validation_cursor_;
     this->current_min_    = validation_offset_;
@@ -259,7 +275,31 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
   }
   default:
   {
-    throw std::runtime_error("Unsupported dataloader mode.");
+    throw exceptions::InvalidMode("Unsupported dataloader mode.");
+  }
+  }
+}
+
+template <typename LabelType, typename InputType>
+bool TensorDataLoader<LabelType, InputType>::IsModeAvailable(DataLoaderMode mode)
+{
+  switch (mode)
+  {
+  case DataLoaderMode::TRAIN:
+  {
+    return test_offset_ > 0;
+  }
+  case DataLoaderMode::TEST:
+  {
+    return test_offset_ < validation_offset_;
+  }
+  case DataLoaderMode::VALIDATE:
+  {
+    return validation_offset_ < n_samples_;
+  }
+  default:
+  {
+    throw exceptions::InvalidMode("Unsupported dataloader mode.");
   }
   }
 }
@@ -369,6 +409,7 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
 
     map.ExpectKeyGetValue(BATCH_LABEL_DIM, sp.batch_label_dim_);
     map.ExpectKeyGetValue(BATCH_DATA_DIM, sp.batch_data_dim_);
+    sp.UpdateRanges();
     sp.UpdateCursor();
   }
 };
