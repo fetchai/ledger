@@ -643,7 +643,7 @@ public:
     {
       auto sz = static_cast<uint32_t>(var.array_.size());
       serializer << sz;
-      for( auto const &element : var.array_)
+      for (auto const &element : var.array_)
       {
         Serialize(serializer, element);
       }
@@ -669,7 +669,7 @@ public:
     int typecode;
     deserializer >> typecode;
     auto type = static_cast<Type::Type>(typecode);
-    var.type_       = type;
+    var.type_ = type;
     switch (var.type_)
     {
     case Type::Type::UNDEFINED:
