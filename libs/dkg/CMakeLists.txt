@@ -21,6 +21,3 @@ target_link_libraries(fetch-dkg
                              fetch-network
                              fetch-ledger)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-dkg PRIVATE -Wshadow)
-endif ()

@@ -43,11 +43,11 @@ private:
 
   TensorType                         embeddings_;
   TensorType                         gradient_embeddings_;
-  std::vector<fetch::math::SizeType> updated_rows_embeddings_;
+  std::vector<fetch::math::DefaultSizeType> updated_rows_embeddings_;
 
   TensorType                         weights_;
   TensorType                         gradient_weights_;
-  std::vector<fetch::math::SizeType> updated_rows_weights_;
+  std::vector<fetch::math::DefaultSizeType> updated_rows_weights_;
 
   TensorType target_weights_;
   TensorType error_signal_;
@@ -231,7 +231,7 @@ void W2VModel<TensorType>::SGNSTrain(  // TODO (#1304) CBOW implementation not S
       // assign current context word
       auto output_view = word_vector_.View(0);
       Assign(output_view,
-             embeddings_.View(fetch::math::SizeType(
+             embeddings_.View(fetch::math::DefaultSizeType(
                  cur_context_word)));  // TODO (#1304) the w2v should be drawn from target weights
 
       // assign target weights (Embeddings: target -> weights)
@@ -240,7 +240,7 @@ void W2VModel<TensorType>::SGNSTrain(  // TODO (#1304) CBOW implementation not S
       for (DataType const &i : target)
       {
         auto view1 = target_weights_.View(j);
-        auto view2 = weights_.View(fetch::math::SizeType(i));
+        auto view2 = weights_.View(fetch::math::DefaultSizeType(i));
 
         Assign(view1, view2);
         j++;
@@ -278,17 +278,17 @@ void W2VModel<TensorType>::SGNSTrain(  // TODO (#1304) CBOW implementation not S
 
       // Embeddings: context Backward
       auto error_signal_view = error_words_.View(0);
-      auto view1 = gradient_embeddings_.View(static_cast<fetch::math::SizeType>(cur_context_word));
+      auto view1 = gradient_embeddings_.View(static_cast<fetch::math::DefaultSizeType>(cur_context_word));
       PolyfillInlineAdd(view1, error_signal_view);
 
       // Embeddings: target Backward
       j = 0;
       for (DataType const &i : target)
       {
-        auto ii = fetch::math::SizeType(double(i));
+        auto ii = fetch::math::DefaultSizeType(double(i));
         updated_rows_weights_.push_back(ii);
 
-        auto view2 = gradient_weights_.View(fetch::math::SizeType(double(i)));
+        auto view2 = gradient_weights_.View(fetch::math::DefaultSizeType(double(i)));
         auto view3 = error_target_weights_.View(j);
 
         PolyfillInlineAdd(view2, view3);
@@ -362,12 +362,12 @@ void W2VModel<TensorType>::CBOWTrain(TensorType &target, TensorType &context)
     {
       if (clear)
       {
-        Assign(output_view, embeddings_.View(fetch::math::SizeType(i)));
+        Assign(output_view, embeddings_.View(fetch::math::DefaultSizeType(i)));
         clear = false;
       }
       else
       {
-        auto view = embeddings_.View(fetch::math::SizeType(i));
+        auto view = embeddings_.View(fetch::math::DefaultSizeType(i));
         PolyfillInlineAdd(output_view, view);
       }
       valid_samples++;
@@ -386,7 +386,7 @@ void W2VModel<TensorType>::CBOWTrain(TensorType &target, TensorType &context)
   for (DataType const &i : target)
   {
     auto view1 = target_weights_.View(j);
-    auto view2 = weights_.View(fetch::math::SizeType(i));
+    auto view2 = weights_.View(fetch::math::DefaultSizeType(i));
 
     Assign(view1, view2);
     j++;
@@ -420,7 +420,7 @@ void W2VModel<TensorType>::CBOWTrain(TensorType &target, TensorType &context)
   {
     if (i >= 0)
     {
-      auto ii = static_cast<fetch::math::SizeType>(i);
+      auto ii = static_cast<fetch::math::DefaultSizeType>(i);
       updated_rows_embeddings_.push_back(ii);
 
       auto view1 = gradient_embeddings_.View(ii);
@@ -432,10 +432,10 @@ void W2VModel<TensorType>::CBOWTrain(TensorType &target, TensorType &context)
   j = 0;
   for (DataType const &i : target)
   {
-    auto ii = fetch::math::SizeType(double(i));
+    auto ii = fetch::math::DefaultSizeType(double(i));
     updated_rows_weights_.push_back(ii);
 
-    auto view1 = gradient_weights_.View(fetch::math::SizeType(double(i)));
+    auto view1 = gradient_weights_.View(fetch::math::DefaultSizeType(double(i)));
     auto view2 = error_target_weights_.View(j);
 
     PolyfillInlineAdd(view1, view2);

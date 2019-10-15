@@ -47,9 +47,9 @@ using namespace fetch::ml::layers;
 using namespace fetch::math;
 
 static const DataType LEARNING_RATE{0.1f};
-static const SizeType EPOCHS{200};
-static const SizeType BATCH_SIZE{64};
-static const SizeType PATIENCE = 25;
+static const DefaultSizeType EPOCHS{200};
+static const DefaultSizeType BATCH_SIZE{64};
+static const DefaultSizeType PATIENCE = 25;
 
 enum class LayerType
 {
@@ -101,8 +101,9 @@ LayerType GetLayerType(std::string const &layer_name)
  * names of the nodes
  */
 std::pair<std::string, std::vector<std::string>> ReadArchitecture(
-    std::string const &filename, std::shared_ptr<GraphType> const &g, SizeType line_num = 0)
+    std::string const &filename, std::shared_ptr<GraphType> const &g, DefaultSizeType line_num = 0)
 {
+  using SizeType = fetch::math::DefaultSizeType;
   char                     delimiter = ',';
   std::ifstream            file(filename);
   std::string              buf;
@@ -255,6 +256,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
  */
 int main(int argc, char **argv)
 {
+  using SizeType = fetch::math::DefaultSizeType;
   int         i;
   std::string input_dir;
   SizeType    model_num           = 0;

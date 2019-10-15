@@ -73,7 +73,7 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::DNNClassifier<TypeParam>;
 
-  fetch::math::SizeType n_training_steps = 10;
+  fetch::math::DefaultSizeType n_training_steps = 10;
 
   fetch::ml::model::ModelConfig<DataType> model_config;
   model_config.learning_rate_param.mode =
@@ -90,7 +90,7 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
                                                                train_data, train_labels);
 
   // test loss decreases
-  fetch::math::SizeType count{0};
+  fetch::math::DefaultSizeType count{0};
   while (count < n_training_steps)
   {
     DataType loss{0};
@@ -150,7 +150,7 @@ TYPED_TEST(ModelsTest, sgd_dnnclasifier_serialisation)
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::DNNClassifier<TypeParam>;
 
-  fetch::math::SizeType    n_training_steps = 10;
+  fetch::math::DefaultSizeType    n_training_steps = 10;
   auto                     tolerance        = static_cast<DataType>(0);
   auto                     learning_rate    = DataType{0.06f};
   fetch::ml::OptimiserType optimiser_type   = fetch::ml::OptimiserType::SGD;

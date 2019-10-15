@@ -34,7 +34,7 @@ namespace dataloaders {
 class Vocab
 {
 public:
-  using SizeType                         = fetch::math::SizeType;
+  using SizeType                         = fetch::math::DefaultSizeType;
   using DataType                         = std::map<std::string, std::pair<SizeType, SizeType>>;
   using ReverseDataType                  = std::map<SizeType, std::pair<std::string, SizeType>>;
   static constexpr SizeType UNKNOWN_WORD = fetch::math::numeric_max<SizeType>();

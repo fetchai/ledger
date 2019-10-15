@@ -148,7 +148,7 @@ public:
     std::vector<InputType> ret_images;
     ret_images.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, subset_size}));
 
-    for (fetch::math::SizeType index{0}; index < subset_size; ++index)
+    for (fetch::math::DefaultSizeType index{0}; index < subset_size; ++index)
     {
 
       SizeType i{0};

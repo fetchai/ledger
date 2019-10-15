@@ -83,9 +83,9 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
   {
     ArrayType gt = ArgMax(y, 0);  // y must be one hot - and we can ignore the zero cases
 
-    for (SizeType idx = 0; idx < n_examples; ++idx)
+    for (DefaultSizeType idx = 0; idx < n_examples; ++idx)
     {
-      ret -= Log(x.At(SizeType(gt[idx]), idx));
+      ret -= Log(x.At(DefaultSizeType(gt[idx]), idx));
     }
   }
   Divide(ret, static_cast<DataType>(n_examples), ret);

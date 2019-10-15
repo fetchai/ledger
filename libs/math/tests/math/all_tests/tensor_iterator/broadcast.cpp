@@ -40,18 +40,20 @@ TEST(tensor_iterator, simple_broadcast_test)
 
   ASSERT_TRUE(Broadcast([](double const &x, double const &y, double &z) { z = x + y; }, a, b, ret));
 
-  for (SizeType i = 0; i < ret.shape(0); ++i)
+  for (DefaultSizeType i = 0; i < ret.shape(0); ++i)
   {
-    for (SizeType j = 0; j < ret.shape(1); ++j)
+    for (DefaultSizeType j = 0; j < ret.shape(1); ++j)
     {
-      std::vector<SizeType> idxs = {i, j};
-      ASSERT_TRUE(static_cast<SizeType>(ret.Get(idxs)) == i + j);
+      std::vector<DefaultSizeType> idxs = {i, j};
+      ASSERT_TRUE(static_cast<DefaultSizeType>(ret.Get(idxs)) == i + j);
     }
   }
 }
 
 TEST(Tensor, broadcast_3D_test)
 {
+  using SizeType = fetch::math::DefaultSizeType;
+
   Tensor<double> a = Tensor<double>::Arange(0u, 21u, 1u);
   ASSERT_TRUE(a.size() == 21);
   a.Reshape({1, 3, 7});
@@ -95,6 +97,7 @@ TEST(Tensor, broadcast_3D_test)
 
 TEST(tensor_iterator, broadcast_shape_size_test)
 {
+  using SizeType = fetch::math::DefaultSizeType;
 
   Tensor<double> a = Tensor<double>::Arange(0u, 90u, 1u);
   a.Reshape({1, 3, 1, 6, 5});

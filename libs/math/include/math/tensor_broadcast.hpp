@@ -108,7 +108,7 @@ bool UpgradeIteratorFromBroadcast(SizeVector const &a, IteratorType &iterator)
     ++it2;
   }
 
-  SizeType total_repeats = 1;
+  DefaultSizeType total_repeats = 1;
   while (it1 != a.rend())
   {
     total_repeats *= (*it1);

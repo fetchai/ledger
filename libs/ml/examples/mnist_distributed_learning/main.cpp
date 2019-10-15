@@ -39,7 +39,7 @@ using namespace fetch::ml::distributed_learning;
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
-using SizeType         = fetch::math::SizeType;
+using SizeType         = fetch::math::DefaultSizeType;
 
 std::shared_ptr<TrainingClient<TensorType>> MakeClient(
     std::string const &id, ClientParams<DataType> &client_params, std::string const &images,

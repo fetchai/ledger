@@ -26,7 +26,7 @@
 template <class T, int C, int H, int W>
 void BM_BooleanMaskEmpty(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
   fetch::math::Tensor<T> mask(std::vector<SizeType>{C, H, W});
@@ -65,7 +65,7 @@ BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, fetch::fixed_point::FixedPoint<32, 32>, 
 template <class T, int C, int H, int W>
 void BM_BooleanMaskFull(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
   fetch::math::Tensor<T> mask(std::vector<SizeType>{C, H, W});
@@ -98,7 +98,7 @@ BENCHMARK_TEMPLATE(BM_BooleanMaskFull, fetch::fixed_point::FixedPoint<32, 32>, 2
 template <class T, int D, int H, int W>
 void BM_Scatter3D(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{D, H, W});
 
@@ -150,7 +150,7 @@ BENCHMARK_TEMPLATE(BM_Scatter3D, fetch::fixed_point::FixedPoint<32, 32>, 256, 25
 template <class T, int C, int H, int W>
 void BM_Product(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
 
@@ -187,7 +187,7 @@ BENCHMARK_TEMPLATE(BM_Product, fetch::fixed_point::FixedPoint<32, 32>, 256, 256,
 template <class T, int C, int H, int W>
 void BM_Max(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
 
@@ -224,7 +224,7 @@ BENCHMARK_TEMPLATE(BM_Max, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256
 template <class T, int C, int H, int W>
 void BM_MaxAxis(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
   fetch::math::Tensor<T> ret(std::vector<SizeType>{C, W});
@@ -262,7 +262,7 @@ BENCHMARK_TEMPLATE(BM_MaxAxis, fetch::fixed_point::FixedPoint<32, 32>, 256, 256,
 template <class T, int C, int H, int W>
 void BM_Min(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
 
@@ -299,7 +299,7 @@ BENCHMARK_TEMPLATE(BM_Min, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256
 template <class T, int H, int W>
 void BM_MinAxis(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
   fetch::math::Tensor<T> ret(std::vector<SizeType>{W});
@@ -337,7 +337,7 @@ BENCHMARK_TEMPLATE(BM_MinAxis, fetch::fixed_point::FixedPoint<32, 32>, 1024, 102
 template <class T, int C, int H, int W>
 void BM_Maximum(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t1(std::vector<SizeType>{C, H, W});
   fetch::math::Tensor<T> t2(std::vector<SizeType>{C, H, W});
@@ -375,7 +375,7 @@ BENCHMARK_TEMPLATE(BM_Maximum, fetch::fixed_point::FixedPoint<32, 32>, 256, 256,
 template <class T, int H, int W>
 void BM_ArgMaxAxis(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
   fetch::math::Tensor<T> ret(std::vector<SizeType>{W});
@@ -413,7 +413,7 @@ BENCHMARK_TEMPLATE(BM_ArgMaxAxis, fetch::fixed_point::FixedPoint<32, 32>, 1024, 
 template <class T, int C, int H, int W>
 void BM_Sum(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
 
@@ -450,7 +450,7 @@ BENCHMARK_TEMPLATE(BM_Sum, fetch::fixed_point::FixedPoint<32, 32>, 256, 256, 256
 template <class T, int H, int W>
 void BM_ReduceSum(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
   fetch::math::Tensor<T> ret(std::vector<SizeType>{H, 1});
@@ -488,7 +488,7 @@ BENCHMARK_TEMPLATE(BM_ReduceSum, fetch::fixed_point::FixedPoint<32, 32>, 1024, 1
 template <class T, int H, int W>
 void BM_ReduceMean(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
   fetch::math::Tensor<T> ret(std::vector<SizeType>{H, 1});
@@ -526,7 +526,7 @@ BENCHMARK_TEMPLATE(BM_ReduceMean, fetch::fixed_point::FixedPoint<32, 32>, 1024, 
 template <class T, int C, int H, int W>
 void BM_PeakToPeak(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
 
@@ -563,7 +563,7 @@ BENCHMARK_TEMPLATE(BM_PeakToPeak, fetch::fixed_point::FixedPoint<32, 32>, 256, 2
 template <class T, int H, int W>
 void BM_Dot(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
   fetch::math::Tensor<T> ret(std::vector<SizeType>{H, W});
@@ -601,7 +601,7 @@ BENCHMARK_TEMPLATE(BM_Dot, fetch::fixed_point::FixedPoint<32, 32>, 512, 512)
 template <class T, int H, int W>
 void BM_DotTranspose(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
   fetch::math::Tensor<T> ret(std::vector<SizeType>{H, W});
@@ -639,7 +639,7 @@ BENCHMARK_TEMPLATE(BM_DotTranspose, fetch::fixed_point::FixedPoint<32, 32>, 512,
 template <class T, int H, int W>
 void BM_TransposeDot(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
   fetch::math::Tensor<T> ret(std::vector<SizeType>{H, W});
@@ -677,7 +677,7 @@ BENCHMARK_TEMPLATE(BM_TransposeDot, fetch::fixed_point::FixedPoint<32, 32>, 512,
 template <class T, int C, int H, int W>
 void BM_DynamicStitch(benchmark::State &state)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   fetch::math::Tensor<T> data(std::vector<SizeType>{C, H, W});
   fetch::math::Tensor<T> indices(std::vector<SizeType>{C, H, W});

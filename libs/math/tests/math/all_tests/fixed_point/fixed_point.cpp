@@ -1323,7 +1323,7 @@ TEST(FixedPointTest, SQRT_16_16)
   {
     fp32_t e     = fp32_t::Sqrt(x);
     double r     = std::sqrt(static_cast<double>(x));
-    double delta = std::abs(static_cast<double>(e - r));
+    delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
@@ -1394,7 +1394,7 @@ TEST(FixedPointTest, SQRT_32_32)
   {
     fp64_t e     = fp64_t::Sqrt(x);
     double r     = std::sqrt(static_cast<double>(x));
-    double delta = std::abs(static_cast<double>(e - r));
+    delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
@@ -1786,7 +1786,7 @@ TEST(FixedPointTest, Tan_16_16)
   {
     fp32_t e     = fp32_t::Tan(x);
     double r     = std::tan(static_cast<double>(x));
-    double delta = std::abs(static_cast<double>(e - r));
+    delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
@@ -1866,7 +1866,7 @@ TEST(FixedPointTest, Tan_32_32)
   {
     fp64_t e     = fp64_t::Tan(x);
     double r     = std::tan(static_cast<double>(x));
-    double delta = std::abs(static_cast<double>(e - r));
+    delta = std::abs(static_cast<double>(e - r));
     max_error    = std::max(max_error, delta);
     avg_error += delta;
     iterations++;

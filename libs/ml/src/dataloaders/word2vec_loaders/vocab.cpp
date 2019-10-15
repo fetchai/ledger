@@ -189,7 +189,7 @@ std::string Vocab::WordFromIndex(SizeType index) const
  * @param word
  * @return
  */
-math::SizeType Vocab::IndexFromWord(std::string const &word) const
+math::DefaultSizeType Vocab::IndexFromWord(std::string const &word) const
 {
   auto word_it = vocab.find(word);
   if (word_it != vocab.end())

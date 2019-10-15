@@ -31,7 +31,7 @@ template <typename TensorType>
 class DNNRegressor : public Model<TensorType>
 {
 public:
-  using SizeType          = fetch::math::SizeType;
+  using SizeType          = fetch::math::DefaultSizeType;
   using DataType          = typename TensorType::Type;
   using CostFunctionType  = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
   using OptimiserType     = fetch::ml::OptimiserType;

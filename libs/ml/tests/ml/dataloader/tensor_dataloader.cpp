@@ -103,7 +103,7 @@ TYPED_TEST(TensorDataloaderTest, test_validation_splitting_dataloader_test)
 
 TYPED_TEST(TensorDataloaderTest, prepare_batch_test)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   SizeType feature_size_1 = 2;
   SizeType feature_size_2 = 3;

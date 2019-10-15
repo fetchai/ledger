@@ -92,7 +92,7 @@ TYPED_TEST(LayerNormTest, node_forward_test)  // Use the class as a Node
 
   fetch::ml::Node<TypeParam> ln(fetch::ml::OpType::LAYER_LAYER_NORM, "LayerNorm", []() {
     return std::make_shared<fetch::ml::layers::LayerNorm<TypeParam>>(
-        std::vector<fetch::math::SizeType>({5, 10}));
+        std::vector<fetch::math::DefaultSizeType>({5, 10}));
   });
   ln.AddInput(placeholder);
 
@@ -115,7 +115,7 @@ TYPED_TEST(LayerNormTest, node_backward_test)  // Use the class as a Node
 
   fetch::ml::Node<TypeParam> ln(fetch::ml::OpType::LAYER_LAYER_NORM, "LayerNorm", []() {
     return std::make_shared<fetch::ml::layers::LayerNorm<TypeParam>>(
-        std::vector<fetch::math::SizeType>({5, 10}));
+        std::vector<fetch::math::DefaultSizeType>({5, 10}));
   });
   ln.AddInput(placeholder);
 
@@ -193,7 +193,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   std::string input_name  = "LayerNorm_Input";
   std::string output_name = "LayerNorm_Beta_Addition";
 
-  std::vector<fetch::math::SizeType> data_shape = {3, 2};
+  std::vector<fetch::math::DefaultSizeType> data_shape = {3, 2};
   TypeParam                          input      = TypeParam::FromString(
       "1, 2, 3, 0;"
       "2, 3, 2, 1;"

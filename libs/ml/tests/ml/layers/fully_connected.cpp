@@ -444,8 +444,8 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
       ->SetData(data);
 
-  fetch::math::SizeType      in_size  = 50u;
-  fetch::math::SizeType      out_size = 42u;
+  fetch::math::DefaultSizeType      in_size  = 50u;
+  fetch::math::DefaultSizeType      out_size = 42u;
   fetch::ml::Node<TypeParam> fc(
       fetch::ml::OpType::LAYER_FULLY_CONNECTED, "FullyConnected", [in_size, out_size]() {
         return std::make_shared<fetch::ml::layers::FullyConnected<TypeParam>>(in_size, out_size);
@@ -469,8 +469,8 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
       ->SetData(data);
 
-  fetch::math::SizeType      in_size  = 50u;
-  fetch::math::SizeType      out_size = 42u;
+  fetch::math::DefaultSizeType      in_size  = 50u;
+  fetch::math::DefaultSizeType      out_size = 42u;
   fetch::ml::Node<TypeParam> fc(
       fetch::ml::OpType::LAYER_FULLY_CONNECTED, "FullyConnected", [in_size, out_size]() {
         return std::make_shared<fetch::ml::layers::FullyConnected<TypeParam>>(in_size, out_size);

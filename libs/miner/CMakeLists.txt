@@ -17,9 +17,5 @@ setup_compiler()
 setup_library(fetch-miner)
 target_link_libraries(fetch-miner PUBLIC fetch-core fetch-ledger)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-miner PRIVATE -Wshadow)
-endif ()
-
 # Unit tests
 add_test_target()

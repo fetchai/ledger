@@ -69,12 +69,12 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
 template <typename TypeParam>
 bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type tolerance,
              typename TypeParam::Type lr             = static_cast<typename TypeParam::Type>(0.5),
-             fetch::math::SizeType    training_steps = 100)
+             fetch::math::DefaultSizeType    training_steps = 100)
 {
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::DNNRegressor<TypeParam>;
 
-  fetch::math::SizeType n_training_steps = 10;
+  fetch::math::DefaultSizeType n_training_steps = 10;
 
   fetch::ml::model::ModelConfig<DataType> model_config;
   model_config.learning_rate_param.mode =
@@ -95,7 +95,7 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   model.Train(1, loss);
 
   // test loss decreases
-  fetch::math::SizeType count{0};
+  fetch::math::DefaultSizeType count{0};
   while (count < n_training_steps)
   {
     model.Train(1, later_loss);
@@ -152,7 +152,7 @@ TYPED_TEST(ModelsTest, sgd_dnnregressor_serialisation)
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::DNNRegressor<TypeParam>;
 
-  fetch::math::SizeType    n_training_steps = 10;
+  fetch::math::DefaultSizeType    n_training_steps = 10;
   auto                     tolerance        = static_cast<DataType>(0);
   auto                     learning_rate    = DataType{0.06f};
   fetch::ml::OptimiserType optimiser_type   = fetch::ml::OptimiserType::SGD;

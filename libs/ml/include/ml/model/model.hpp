@@ -38,7 +38,7 @@ class Model
 {
 public:
   using DataType          = typename TensorType::Type;
-  using SizeType          = fetch::math::SizeType;
+  using SizeType          = fetch::math::DefaultSizeType;
   using GraphType         = Graph<TensorType>;
   using DataLoaderType    = dataloaders::DataLoader<TensorType, TensorType>;
   using GraphPtrType      = typename std::shared_ptr<GraphType>;

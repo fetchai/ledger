@@ -37,10 +37,10 @@ namespace math {
  * @param ret Output tensor
  */
 template <typename F, typename T, typename C>
-void Reduce(SizeType axis, F function, const Tensor<T, C> &array, Tensor<T, C> &ret)
+void Reduce(DefaultSizeType axis, F function, const Tensor<T, C> &array, Tensor<T, C> &ret)
 {
   assert(ret.shape().at(axis) == 1);
-  for (SizeType i = 0; i < array.shape().size(); i++)
+  for (DefaultSizeType i = 0; i < array.shape().size(); i++)
   {
     if (i != axis)
     {
@@ -57,7 +57,7 @@ void Reduce(SizeType axis, F function, const Tensor<T, C> &array, Tensor<T, C> &
     while (it_a.is_valid())
     {
       // Move return array iterator every array.shape().at(axis) steps
-      for (SizeType j{0}; j < array.shape().at(0); ++j)
+      for (DefaultSizeType j{0}; j < array.shape().at(0); ++j)
       {
         // Apply function
         function(*it_a, *it_b);
@@ -79,7 +79,7 @@ void Reduce(SizeType axis, F function, const Tensor<T, C> &array, Tensor<T, C> &
     while (a_it.is_valid())
     {
       // Move return array iterator every array.shape().at(axis) steps
-      for (SizeType j{0}; j < array.shape().at(axis); ++j)
+      for (DefaultSizeType j{0}; j < array.shape().at(axis); ++j)
       {
         // Apply function
         function(*a_it, *r_it);
@@ -101,9 +101,9 @@ void Reduce(SizeType axis, F function, const Tensor<T, C> &array, Tensor<T, C> &
  * @param ret Output tensor
  */
 template <typename F, typename T, typename C>
-void Reduce(std::vector<SizeType> axes, F function, const Tensor<T, C> &array, Tensor<T, C> &ret)
+void Reduce(std::vector<DefaultSizeType> axes, F function, const Tensor<T, C> &array, Tensor<T, C> &ret)
 {
-  for (SizeType i{0}; i < axes.size(); i++)
+  for (DefaultSizeType i{0}; i < axes.size(); i++)
   {
     assert(ret.shape().at(axes.at(i)) == 1);
 
@@ -116,7 +116,7 @@ void Reduce(std::vector<SizeType> axes, F function, const Tensor<T, C> &array, T
 
   // If axes are not given like
   bool permuting_needed = false;
-  for (SizeType i{0}; i < axes.size(); i++)
+  for (DefaultSizeType i{0}; i < axes.size(); i++)
   {
     if (axes.at(i) != i)
     {
@@ -131,9 +131,9 @@ void Reduce(std::vector<SizeType> axes, F function, const Tensor<T, C> &array, T
     auto a_it = array.Slice().cbegin();
     auto r_it = ret.Slice().begin();
 
-    SizeType n = 1;
+    DefaultSizeType n = 1;
 
-    for (SizeType i{0}; i < axes.size(); i++)
+    for (DefaultSizeType i{0}; i < axes.size(); i++)
     {
       // Calculate number of steps between iterations
       n *= array.shape().at(axes.at(i));
@@ -146,7 +146,7 @@ void Reduce(std::vector<SizeType> axes, F function, const Tensor<T, C> &array, T
     while (a_it.is_valid())
     {
       // Move return array iterator every Nth steps
-      for (SizeType j{0}; j < n; ++j)
+      for (DefaultSizeType j{0}; j < n; ++j)
       {
         // Apply function
         function(*a_it, *r_it);
@@ -162,8 +162,8 @@ void Reduce(std::vector<SizeType> axes, F function, const Tensor<T, C> &array, T
     auto r_it = ret.begin();
 
     // Calculate number of steps between iterations
-    SizeType n = 1;
-    for (SizeType i{0}; i < axes.size(); i++)
+    DefaultSizeType n = 1;
+    for (DefaultSizeType i{0}; i < axes.size(); i++)
     {
       n *= array.shape().at(axes.at(i));
     }
@@ -171,7 +171,7 @@ void Reduce(std::vector<SizeType> axes, F function, const Tensor<T, C> &array, T
     while (a_it.is_valid())
     {
       // Move return array iterator every Nth steps
-      for (SizeType j{0}; j < n; ++j)
+      for (DefaultSizeType j{0}; j < n; ++j)
       {
         // Apply function
         function(*a_it, *r_it);

@@ -25,6 +25,7 @@ using namespace fetch::math;
 
 TEST(tensor_iterator, tensor_reduce_test)
 {
+  using SizeType = fetch::math::DefaultSizeType;
   Tensor<double> a = Tensor<double>::Arange(0u, 3u * 4u * 5u, 1u);
   a.Reshape({3, 4, 5});
 
@@ -52,6 +53,7 @@ TEST(tensor_iterator, tensor_reduce_test)
 
 TEST(tensor_iterator, dimension_reduction)
 {
+  using SizeType = fetch::math::DefaultSizeType;
   Tensor<double> a = Tensor<double>::Arange(0u, 3u * 4u * 5u, 1u);
   a.Reshape({3, 4, 5});
 

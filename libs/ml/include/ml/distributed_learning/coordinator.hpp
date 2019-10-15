@@ -45,7 +45,7 @@ enum class CoordinatorState
 
 struct CoordinatorParams
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   CoordinatorMode mode;
   SizeType        iterations_count;
@@ -56,7 +56,7 @@ template <typename TensorType>
 class Coordinator
 {
 public:
-  using SizeType      = fetch::math::SizeType;
+  using SizeType      = fetch::math::DefaultSizeType;
   using ClientPtrType = std::shared_ptr<TrainingClient<TensorType>>;
 
   explicit Coordinator(CoordinatorParams const &params);

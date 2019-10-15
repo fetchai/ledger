@@ -30,7 +30,7 @@ class MinMaxScaler : public Scaler<TensorType>
 {
 public:
   using DataType   = typename TensorType::Type;
-  using SizeType   = fetch::math::SizeType;
+  using SizeType   = fetch::math::DefaultSizeType;
   using SizeVector = fetch::math::SizeVector;
 
   MinMaxScaler() = default;

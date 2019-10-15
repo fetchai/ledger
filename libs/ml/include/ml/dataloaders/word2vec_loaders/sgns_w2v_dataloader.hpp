@@ -38,7 +38,7 @@ public:
   using DataType     = typename TensorType::Type;
   using InputType    = TensorType;
   using LabelType    = TensorType;
-  using SizeType     = fetch::math::SizeType;
+  using SizeType     = fetch::math::DefaultSizeType;
   using VocabType    = Vocab;
   using VocabPtrType = std::shared_ptr<VocabType>;
   using ReturnType   = std::pair<LabelType, std::vector<InputType>>;
@@ -176,7 +176,7 @@ typename TensorType::Type GraphW2VLoader<TensorType>::EstimatedSampleNumber()
  * @return
  */
 template <typename TensorType>
-math::SizeType GraphW2VLoader<TensorType>::Size() const
+math::DefaultSizeType GraphW2VLoader<TensorType>::Size() const
 {
   return size_;
 }
@@ -649,7 +649,7 @@ void GraphW2VLoader<TensorType>::LoadVocab(std::string const &filename)
  * @return
  */
 template <typename TensorType>
-math::SizeType GraphW2VLoader<TensorType>::vocab_size() const
+math::DefaultSizeType GraphW2VLoader<TensorType>::vocab_size() const
 {
   return vocab_->GetVocabCount();
 }
@@ -671,7 +671,7 @@ GraphW2VLoader<TensorType>::GetVocab() const
  * @return
  */
 template <typename TensorType>
-std::string GraphW2VLoader<TensorType>::WordFromIndex(SizeType index) const
+std::string GraphW2VLoader<TensorType>::WordFromIndex(math::DefaultSizeType index) const
 {
   return vocab_->WordFromIndex(index);
 }

@@ -197,6 +197,7 @@ TYPED_TEST(FreeFunctionsTest, Product_OneDimension)
 TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
 {
   using DataType = typename TypeParam::Type;
+  using SizeType = fetch::math::DefaultSizeType;
 
   SizeType  n_data{4};
   SizeType  n_features{2};

@@ -155,7 +155,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
   auto     it1 = input_array.cbegin();
   auto     it2 = mask.cbegin();
   auto     rit = ret.begin();
-  SizeType counter{0};
+  DefaultSizeType counter{0};
   while (rit.is_valid())
   {
     // TODO(private issue 193): implement boolean only array
@@ -196,7 +196,7 @@ void Scatter(ArrayType &input_array, ArrayType const &updates,
   assert(indices.size() == updates.size());
 
   auto     indices_it = indices.begin();
-  SizeType update_idx{0};
+  DefaultSizeType update_idx{0};
 
   while (indices_it != indices.end())
   {
@@ -316,7 +316,7 @@ void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
   else
   {
     // Max along a single axis
-    SizeType axis_length = array.shape()[axis];
+    DefaultSizeType axis_length = array.shape()[axis];
 
     assert(axis_length > 1);
     assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
@@ -328,7 +328,7 @@ void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
       ret.Assign(array.View(0));
 
       //
-      for (SizeType n{1}; n < axis_length; ++n)
+      for (DefaultSizeType n{1}; n < axis_length; ++n)
       {
         auto cur_view    = array.View(n);
         auto cur_view_it = cur_view.begin();
@@ -352,7 +352,7 @@ void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
       ret.Assign(array.Slice(0, axis));
 
       //
-      for (SizeType n{1}; n < axis_length; ++n)
+      for (DefaultSizeType n{1}; n < axis_length; ++n)
       {
         auto cur_slice    = array.Slice(n, axis);
         auto cur_slice_it = cur_slice.cbegin();
@@ -435,7 +435,7 @@ void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
   }
   else
   {  // Argmax along a single axis
-    SizeType axis_length = array.shape()[axis];
+    DefaultSizeType axis_length = array.shape()[axis];
     assert(axis_length > 1);
     assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
@@ -446,7 +446,7 @@ void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
       ret.Assign(array.View(0));
 
       //
-      for (SizeType n{1}; n < axis_length; ++n)
+      for (DefaultSizeType n{1}; n < axis_length; ++n)
       {
         auto cur_view    = array.View(n);
         auto cur_view_it = cur_view.begin();
@@ -470,7 +470,7 @@ void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
       ret.Assign(array.Slice(0, axis));
 
       //
-      for (SizeType n{1}; n < axis_length; ++n)
+      for (DefaultSizeType n{1}; n < axis_length; ++n)
       {
         auto cur_slice    = array.Slice(n, axis);
         auto cur_slice_it = cur_slice.cbegin();
@@ -557,7 +557,7 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Sum(ArrayType const &ar
  * @param ret Output Tensor of shape of input with size 1 along given axis
  */
 template <typename ArrayType>
-void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
+void ReduceSum(ArrayType const &obj1, DefaultSizeType axis, ArrayType &ret)
 {
 
   using DataType = typename ArrayType::Type;
@@ -574,7 +574,7 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
  * @return  Output Tensor of shape of input with size 1 along given axis
  */
 template <typename ArrayType>
-ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
+ArrayType ReduceSum(ArrayType const &obj1, DefaultSizeType axis)
 {
   SizeVector new_shape = obj1.shape();
   new_shape.at(axis)   = 1;
@@ -591,7 +591,7 @@ ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
  * @param ret Output Tensor of shape of input with size 1 along given axes
  */
 template <typename ArrayType>
-void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret)
+void ReduceSum(ArrayType const &obj1, std::vector<DefaultSizeType> axes, ArrayType &ret)
 {
 
   using DataType = typename ArrayType::Type;
@@ -608,11 +608,11 @@ void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
  * @return Output Tensor of shape of input with size 1 along given axes
  */
 template <typename ArrayType>
-ArrayType ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes)
+ArrayType ReduceSum(ArrayType const &obj1, std::vector<DefaultSizeType> axes)
 {
   SizeVector new_shape = obj1.shape();
 
-  for (SizeType i{0}; i < axes.size(); i++)
+  for (DefaultSizeType i{0}; i < axes.size(); i++)
   {
     new_shape.at(axes.at(i)) = 1;
   }
@@ -669,12 +669,12 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
  */
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &            obj1,
-                                                std::vector<SizeType> const &axes, ArrayType &ret)
+                                                std::vector<DefaultSizeType> const &axes, ArrayType &ret)
 {
   using Type = typename ArrayType::Type;
 
-  SizeType n{1};
-  for (SizeType i{0}; i < axes.size(); i++)
+  DefaultSizeType n{1};
+  for (DefaultSizeType i{0}; i < axes.size(); i++)
   {
     n *= obj1.shape().at(axes.at(i));
   }
@@ -692,12 +692,12 @@ meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &            obj
  */
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &            obj1,
-                                                     std::vector<SizeType> const &axes)
+                                                     std::vector<DefaultSizeType> const &axes)
 {
   using Type = typename ArrayType::Type;
 
-  SizeType n{1};
-  for (SizeType i{0}; i < axes.size(); i++)
+  DefaultSizeType n{1};
+  for (DefaultSizeType i{0}; i < axes.size(); i++)
   {
     n *= obj1.shape().at(axes.at(i));
   }
@@ -763,7 +763,7 @@ void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis
   }
   else
   {  // Argmax-Argmin along a single axis
-    SizeType axis_length = array.shape()[axis];
+    DefaultSizeType axis_length = array.shape()[axis];
     assert(axis_length > 1);
     assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
@@ -775,7 +775,7 @@ void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis
       min.Assign(array.View(0));
 
       //
-      for (SizeType n{1}; n < axis_length; ++n)
+      for (DefaultSizeType n{1}; n < axis_length; ++n)
       {
         auto cur_view    = array.View(n);
         auto cur_view_it = cur_view.begin();
@@ -810,7 +810,7 @@ void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis
       min.Assign(array.Slice(0, axis));
 
       //
-      for (SizeType n{1}; n < axis_length; ++n)
+      for (DefaultSizeType n{1}; n < axis_length; ++n)
       {
         auto cur_slice    = array.Slice(n, axis);
         auto cur_slice_it = cur_slice.cbegin();
@@ -856,7 +856,7 @@ ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const 
  * @param ret Output Tensor of shape of input with size 1 along given axis
  */
 template <typename ArrayType>
-void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
+void ReduceMax(ArrayType const &obj1, DefaultSizeType axis, ArrayType &ret)
 {
 
   using DataType = typename ArrayType::Type;
@@ -873,7 +873,7 @@ void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
  * @return Output Tensor of shape of input with size 1 along given axis
  */
 template <typename ArrayType>
-ArrayType ReduceMax(ArrayType const &obj1, SizeType axis)
+ArrayType ReduceMax(ArrayType const &obj1, DefaultSizeType axis)
 {
   SizeVector new_shape = obj1.shape();
   new_shape.at(axis)   = 1;
@@ -890,7 +890,7 @@ ArrayType ReduceMax(ArrayType const &obj1, SizeType axis)
  * @param ret Output Tensor of shape of input with size 1 along given axes
  */
 template <typename ArrayType>
-void ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret)
+void ReduceMax(ArrayType const &obj1, std::vector<DefaultSizeType> axes, ArrayType &ret)
 {
 
   using DataType = typename ArrayType::Type;
@@ -907,11 +907,11 @@ void ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
  * @return Output Tensor of shape of input with size 1 along given axes
  */
 template <typename ArrayType>
-ArrayType ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes)
+ArrayType ReduceMax(ArrayType const &obj1, std::vector<DefaultSizeType> axes)
 {
   SizeVector new_shape = obj1.shape();
 
-  for (SizeType i{0}; i < axes.size(); i++)
+  for (DefaultSizeType i{0}; i < axes.size(); i++)
   {
     new_shape.at(axes.at(i)) = 1;
   }
@@ -930,18 +930,18 @@ ArrayType ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes)
  */
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &ret,
-                                            SizeType axis = NO_AXIS)
+                                            DefaultSizeType axis = NO_AXIS)
 {
   using Type = typename ArrayType::Type;
 
   if (axis == NO_AXIS)
   {  // Argmax over the full array
     assert(ret.size() == SizeType(1));
-    SizeType position = 0;
+    DefaultSizeType position = 0;
     auto     it       = array.begin();
     Type     value    = numeric_lowest<Type>();
 
-    auto counter = SizeType{0};
+    auto counter = DefaultSizeType{0};
     while (it.is_valid())
     {
       if (*it > value)
@@ -958,7 +958,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
   else
   {
     // Argmax along a single axis
-    SizeType axis_length = array.shape()[axis];
+    DefaultSizeType axis_length = array.shape()[axis];
     assert(axis_length > 1);
     assert(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
@@ -969,7 +969,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
     {
       auto max_view = (array.View(0)).Copy();
 
-      for (SizeType n{1}; n < axis_length; ++n)
+      for (DefaultSizeType n{1}; n < axis_length; ++n)
       {
         auto cur_view = array.View(n);
 
@@ -995,7 +995,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
     {
       auto max_slice = (array.Slice(0, axis)).Copy();
 
-      for (SizeType n{1}; n < axis_length; ++n)
+      for (DefaultSizeType n{1}; n < axis_length; ++n)
       {
         auto cur_slice = array.Slice(n, axis);
 
@@ -1020,7 +1020,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
   }
 }
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> ArgMax(ArrayType const &array, SizeType axis = 0)
+meta::IfIsMathArray<ArrayType, ArrayType> ArgMax(ArrayType const &array, DefaultSizeType axis = 0)
 {
   assert((array.shape().size() == 1) || (array.shape().size() == 2));
   assert((axis == 0) || (axis == 1));
@@ -1067,7 +1067,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
     throw fetch::math::exceptions::WrongShape("expected A width to equal B height.");
   }
 
-  if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
+  if (ret.shape() != std::vector<DefaultSizeType>({aview.height(), bview.width()}))
   {
     ret.Resize({aview.height(), bview.width()});
   }
@@ -1117,7 +1117,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
     throw exceptions::WrongShape("expected A and B to have same width.");
   }
 
-  if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
+  if (ret.shape() != std::vector<DefaultSizeType>({aview.height(), bview.width()}))
   {
     ret.Resize({aview.height(), bview.height()});
   }
@@ -1168,12 +1168,13 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
     throw exceptions::WrongShape("expected A and B to have same height.");
   }
 
-  if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
+  if (ret.shape() != std::vector<DefaultSizeType>({aview.height(), bview.width()}))
   {
     ret.Resize({aview.width(), bview.width()});
   }
 
   using Type = typename ArrayType::Type;
+  // TODO(HUT): should you do this?
   using namespace linalg;
 
   enum
@@ -1205,6 +1206,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DynamicStitch(ArrayType &     
                                                                 ArrayType const &indices,
                                                                 ArrayType const &data)
 {
+  using SizeType = fetch::math::DefaultSizeType;
   assert(data.size() <= input_array.size());
   assert(input_array.size() > static_cast<typename ArrayType::SizeType>(Max(indices)));
   assert(static_cast<typename ArrayType::SizeType>(Min(indices)) >= 0);

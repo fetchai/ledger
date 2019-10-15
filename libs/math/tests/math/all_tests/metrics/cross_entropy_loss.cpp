@@ -32,7 +32,7 @@ TYPED_TEST_CASE(CrossEntropyTest, MyTypes);
 
 TYPED_TEST(CrossEntropyTest, perfect_match_test)
 {
-  using SizeType     = fetch::math::SizeType;
+  using SizeType     = fetch::math::DefaultSizeType;
   SizeType n_classes = 4;
   SizeType n_data    = 8;
 
@@ -66,7 +66,7 @@ TYPED_TEST(CrossEntropyTest, perfect_match_test)
 
 TYPED_TEST(CrossEntropyTest, value_test)
 {
-  using SizeType                         = fetch::math::SizeType;
+  using SizeType                         = fetch::math::DefaultSizeType;
   typename TypeParam::SizeType n_classes = 4;
   typename TypeParam::SizeType n_data    = 8;
 

@@ -92,6 +92,7 @@ TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
 
 TEST(TsneTests, tsne_test_2d_float)
 {
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
 
@@ -112,6 +113,7 @@ TEST(TsneTests, tsne_test_2d_float)
 
 TEST(TsneTests, tsne_test_2d_double)
 {
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
 
@@ -133,6 +135,7 @@ TEST(TsneTests, tsne_test_2d_double)
 TEST(TsneTests, tsne_test_2d_fixed_point)
 {
   using DataType = typename fetch::fixed_point::FixedPoint<32, 32>;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
 
@@ -153,6 +156,7 @@ TEST(TsneTests, tsne_test_2d_fixed_point)
 
 TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
 {
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
 

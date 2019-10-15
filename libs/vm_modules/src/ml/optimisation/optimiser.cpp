@@ -119,7 +119,7 @@ Ptr<VMOptimiser> VMOptimiser::Constructor(
   auto                     n_elements = input_node_names->elements.size();
   std::vector<std::string> input_names(n_elements);
 
-  for (fetch::math::SizeType i{0}; i < n_elements; i++)
+  for (fetch::math::DefaultSizeType i{0}; i < n_elements; i++)
   {
     Ptr<fetch::vm::String> ptr_string = input_node_names->elements.at(i);
     input_names.at(i)                 = (ptr_string)->str;

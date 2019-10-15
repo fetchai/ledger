@@ -32,7 +32,7 @@ namespace fetch {
 namespace ml {
 namespace optimisers {
 
-static constexpr fetch::math::SizeType SIZE_NOT_SET = fetch::math::numeric_max<math::SizeType>();
+static constexpr fetch::math::DefaultSizeType SIZE_NOT_SET = fetch::math::numeric_max<math::DefaultSizeType>();
 
 /**
  * Abstract gradient optimiser class
@@ -388,7 +388,7 @@ void Optimiser<T>::PrintStats(SizeType batch_size, SizeType subset_size)
 {
   cur_time_  = std::chrono::high_resolution_clock::now();
   time_span_ = std::chrono::duration_cast<std::chrono::duration<double>>(cur_time_ - start_time_);
-  if (subset_size == fetch::math::numeric_max<math::SizeType>())
+  if (subset_size == fetch::math::numeric_max<math::DefaultSizeType>())
   {
     stat_string_ =
         std::to_string(step_) + " (??%) -- " +

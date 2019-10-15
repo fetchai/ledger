@@ -234,7 +234,7 @@ template <class TensorType>
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
                     dataloaders::GraphW2VLoader<TensorType> const &dl, std::string const &word0,
                     std::string const &word1, std::string const &word2, std::string const &word3,
-                    math::SizeType K, std::string const &analogies_test_file, bool verbose = true,
+                    math::DefaultSizeType K, std::string const &analogies_test_file, bool verbose = true,
                     std::string const &outfile = "")
 {
   TensorType const &weights = utilities::GetEmbeddings(g, skip_gram_name);

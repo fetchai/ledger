@@ -42,7 +42,7 @@ class CommodityDataLoader : public DataLoader<LabelType, InputType>
 public:
   using DataType   = typename InputType::Type;
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
-  using SizeType   = math::SizeType;
+  using SizeType   = math::DefaultSizeType;
 
   CommodityDataLoader()
     : DataLoader<LabelType, InputType>()

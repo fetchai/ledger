@@ -124,8 +124,8 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   using SPType    = typename LayerType::SPType;
   using DataType  = typename TypeParam::Type;
 
-  fetch::math::SizeType n_heads   = 3;
-  fetch::math::SizeType model_dim = 6;
+  fetch::math::DefaultSizeType n_heads   = 3;
+  fetch::math::DefaultSizeType model_dim = 6;
 
   std::string output_name = "MultiheadAttention_Final_Transformation";
 

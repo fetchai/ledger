@@ -29,12 +29,12 @@
 namespace fetch {
 namespace math {
 
-using SizeType    = uint64_t;
+using DefaultSizeType    = uint64_t;
 using PtrDiffType = int64_t;
-using SizeVector  = std::vector<SizeType>;
-using SizeSet     = std::unordered_set<SizeType>;
+using SizeVector  = std::vector<DefaultSizeType>;
+using SizeSet     = std::unordered_set<DefaultSizeType>;
 
-constexpr SizeType NO_AXIS = SizeType(-1);
+constexpr DefaultSizeType NO_AXIS = DefaultSizeType(-1);
 
 template <typename T>
 static constexpr meta::IfIsNonFixedPointArithmetic<T, T> numeric_max()

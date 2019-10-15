@@ -22,10 +22,6 @@ target_link_libraries(fetch-core
                              vendor-backward-cpp
                              vendor-spdlog)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-core PRIVATE -Wshadow)
-endif ()
-
 # ------------------------------------------------------------------------------
 # Example Targets
 # ------------------------------------------------------------------------------

@@ -42,7 +42,7 @@ template <typename LabelType, typename InputType>
 class DataLoader
 {
 public:
-  using SizeType   = fetch::math::SizeType;
+  using SizeType   = fetch::math::DefaultSizeType;
   using SizeVector = fetch::math::SizeVector;
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
@@ -53,7 +53,7 @@ public:
   virtual ReturnType GetNext() = 0;
 
   virtual bool       AddData(InputType const &data, LabelType const &label) = 0;
-  virtual ReturnType PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set);
+  virtual ReturnType PrepareBatch(fetch::math::DefaultSizeType batch_size, bool &is_done_set);
 
   virtual SizeType Size() const                                   = 0;
   virtual bool     IsDone() const                                 = 0;
@@ -117,7 +117,7 @@ void DataLoader<LabelType, InputType>::SetDataSize(
  */
 template <typename LabelType, typename InputType>
 typename DataLoader<LabelType, InputType>::ReturnType
-DataLoader<LabelType, InputType>::PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set)
+DataLoader<LabelType, InputType>::PrepareBatch(fetch::math::DefaultSizeType batch_size, bool &is_done_set)
 {
   if (size_not_set_)
   {

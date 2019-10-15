@@ -38,6 +38,7 @@ using namespace fetch::math;
 
 TYPED_TEST(TensorViewTests, size_test)
 {
+  using SizeType = fetch::math::DefaultSizeType;
   auto              from   = static_cast<TypeParam>(2);
   auto              to     = static_cast<TypeParam>(50);
   auto              step   = static_cast<TypeParam>(1);

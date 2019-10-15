@@ -34,7 +34,7 @@ namespace distributed_learning {
  */
 struct Translator
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   template <typename TensorType>
   std::pair<TensorType, TensorType> Translate(TensorType                        gradient_update,

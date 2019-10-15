@@ -45,7 +45,7 @@ namespace distributed_learning {
 template <typename DataType>
 struct ClientParams
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
 
   SizeType batch_size{};
   DataType learning_rate;

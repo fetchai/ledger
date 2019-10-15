@@ -36,7 +36,7 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-using SizeType       = fetch::math::SizeType;
+using SizeType       = fetch::math::DefaultSizeType;
 using MathTensorType = fetch::math::Tensor<VMGraph::DataType>;
 using VMTensorType   = fetch::vm_modules::math::VMTensor;
 using VMPtrString    = Ptr<String>;

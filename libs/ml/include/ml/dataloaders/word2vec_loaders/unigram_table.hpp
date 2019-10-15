@@ -29,7 +29,7 @@ namespace ml {
 class UnigramTable
 {
 public:
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   explicit UnigramTable(std::vector<SizeType> const &frequencies = {}, SizeType size = 1e8);
 
   void ResetTable(std::vector<SizeType> const &count, SizeType size);

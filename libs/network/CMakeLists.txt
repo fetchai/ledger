@@ -23,10 +23,6 @@ target_link_libraries(fetch-network
                              vendor-asio
                              pthread)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-network PRIVATE -Wshadow)
-endif ()
-
 # Test targets
 add_test_target()
 

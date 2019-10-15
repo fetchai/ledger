@@ -42,10 +42,10 @@ public:
   enum : uint32_t
   {
     LOG_PADDING = 5,
-    PADDING     = static_cast<SizeType>(1) << LOG_PADDING
+    PADDING     = static_cast<DefaultSizeType>(1) << LOG_PADDING
   };
 
-  TensorView(ContainerType data, SizeType height, SizeType width, SizeType offset = 0)
+  TensorView(ContainerType data, DefaultSizeType height, DefaultSizeType width, DefaultSizeType offset = 0)
     : height_{height}
     , width_{width}
     , padded_height_{PadValue(height_)}
@@ -83,13 +83,13 @@ public:
   /// SIZES ///
   /////////////
 
-  static SizeType PadValue(SizeType size);
+  static DefaultSizeType PadValue(DefaultSizeType size);
 
-  SizeType           height() const;
-  SizeType           width() const;
-  SizeType           padded_size() const;
-  SizeType           padded_height() const;
-  constexpr SizeType padding();
+  DefaultSizeType           height() const;
+  DefaultSizeType           width() const;
+  DefaultSizeType           padded_size() const;
+  DefaultSizeType           padded_height() const;
+  constexpr DefaultSizeType padding();
 
   //////////////////
   /// ACCCESSORS ///
@@ -99,9 +99,9 @@ public:
   ContainerType &      data();
 
 private:
-  SizeType      height_{0};
-  SizeType      width_{0};
-  SizeType      padded_height_{0};
+  DefaultSizeType      height_{0};
+  DefaultSizeType      width_{0};
+  DefaultSizeType      padded_height_{0};
   ContainerType data_{};
 };
 
@@ -118,7 +118,7 @@ private:
 template <typename T, typename C>
 typename TensorView<T, C>::IteratorType TensorView<T, C>::begin()
 {
-  SizeType padded_size = padded_height_ * width_;
+  DefaultSizeType padded_size = padded_height_ * width_;
   return IteratorType(data_.pointer(), height_ * width_, padded_size, height_, padded_height_);
 }
 
@@ -131,7 +131,7 @@ typename TensorView<T, C>::IteratorType TensorView<T, C>::begin()
 template <typename T, typename C>
 typename TensorView<T, C>::IteratorType TensorView<T, C>::end()
 {
-  SizeType padded_size = padded_height_ * width_;
+  DefaultSizeType padded_size = padded_height_ * width_;
   return IteratorType(data_.pointer() + padded_size, height_ * width_, padded_size, height_,
                       padded_height_);
 }
@@ -158,7 +158,7 @@ typename TensorView<T, C>::ConstIteratorType TensorView<T, C>::cbegin() const
 template <typename T, typename C>
 typename TensorView<T, C>::ConstIteratorType TensorView<T, C>::cend() const
 {
-  SizeType padded_size = padded_height_ * width_;
+  DefaultSizeType padded_size = padded_height_ * width_;
   return ConstIteratorType(data_.pointer() + padded_size, height_ * width_, padded_size, height_,
                            padded_height_);
 }
@@ -229,14 +229,14 @@ template <typename T, typename C>
 template <typename S>
 std::enable_if_t<std::is_integral<S>::value, T> TensorView<T, C>::operator()(S i, S j) const
 {
-  return data_[static_cast<SizeType>(i) + static_cast<SizeType>(j) * padded_height_];
+  return data_[static_cast<DefaultSizeType>(i) + static_cast<DefaultSizeType>(j) * padded_height_];
 }
 
 template <typename T, typename C>
 template <typename S>
 std::enable_if_t<std::is_integral<S>::value, T> &TensorView<T, C>::operator()(S i, S j)
 {
-  return data_[static_cast<SizeType>(i) + static_cast<SizeType>(j) * padded_height_];
+  return data_[static_cast<DefaultSizeType>(i) + static_cast<DefaultSizeType>(j) * padded_height_];
 }
 
 template <typename T, typename C>
@@ -274,9 +274,9 @@ std::enable_if_t<std::is_integral<S>::value, T> &TensorView<T, C>::operator[](S 
  * @return the padded size
  */
 template <typename T, typename C>
-SizeType TensorView<T, C>::PadValue(SizeType size)
+DefaultSizeType TensorView<T, C>::PadValue(DefaultSizeType size)
 {
-  SizeType ret = SizeType(size / PADDING) * PADDING;
+  DefaultSizeType ret = DefaultSizeType(size / PADDING) * PADDING;
   if (ret < size)
   {
     ret += PADDING;
@@ -285,31 +285,31 @@ SizeType TensorView<T, C>::PadValue(SizeType size)
 }
 
 template <typename T, typename C>
-SizeType TensorView<T, C>::height() const
+DefaultSizeType TensorView<T, C>::height() const
 {
   return height_;
 }
 
 template <typename T, typename C>
-SizeType TensorView<T, C>::width() const
+DefaultSizeType TensorView<T, C>::width() const
 {
   return width_;
 }
 
 template <typename T, typename C>
-SizeType TensorView<T, C>::padded_size() const
+DefaultSizeType TensorView<T, C>::padded_size() const
 {
   return data_.padded_size();
 }
 
 template <typename T, typename C>
-SizeType TensorView<T, C>::padded_height() const
+DefaultSizeType TensorView<T, C>::padded_height() const
 {
   return padded_height_;
 }
 
 template <typename T, typename C>
-constexpr SizeType TensorView<T, C>::padding()
+constexpr DefaultSizeType TensorView<T, C>::padding()
 {
   return PADDING;
 }

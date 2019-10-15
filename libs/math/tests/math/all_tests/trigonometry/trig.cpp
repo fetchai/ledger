@@ -50,7 +50,7 @@ TYPED_TEST(TrigTest, sin)
 
 TYPED_TEST(TrigTest, sin_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 
@@ -95,7 +95,7 @@ TYPED_TEST(TrigTest, cos)
 
 TYPED_TEST(TrigTest, cos_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 
@@ -140,7 +140,7 @@ TYPED_TEST(TrigTest, tan)
 
 TYPED_TEST(TrigTest, tan_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 
@@ -185,7 +185,7 @@ TYPED_TEST(TrigTest, asin)
 
 TYPED_TEST(TrigTest, asin_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 
@@ -230,7 +230,7 @@ TYPED_TEST(TrigTest, acos)
 
 TYPED_TEST(TrigTest, acos_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 
@@ -275,7 +275,7 @@ TYPED_TEST(TrigTest, atan)
 
 TYPED_TEST(TrigTest, atan_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 
@@ -320,7 +320,7 @@ TYPED_TEST(TrigTest, sinh)
 
 TYPED_TEST(TrigTest, sinh_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 
@@ -365,7 +365,7 @@ TYPED_TEST(TrigTest, cosh)
 
 TYPED_TEST(TrigTest, cosh_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 
@@ -410,7 +410,7 @@ TYPED_TEST(TrigTest, tanh)
 
 TYPED_TEST(TrigTest, tanh_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 
@@ -455,7 +455,7 @@ TYPED_TEST(TrigTest, asinh)
 
 TYPED_TEST(TrigTest, asinh_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 
@@ -500,7 +500,7 @@ TYPED_TEST(TrigTest, acosh)
 
 TYPED_TEST(TrigTest, acosh_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 
@@ -545,7 +545,7 @@ TYPED_TEST(TrigTest, atanh)
 
 TYPED_TEST(TrigTest, atanh_22)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = fetch::math::DefaultSizeType;
   SizeType zero{0};
   SizeType one{1};
 

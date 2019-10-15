@@ -30,8 +30,8 @@ using namespace fetch::ml::dataloaders;
 
 TEST(C2vLoaderTest, loader_test)
 {
-  using TensorType  = fetch::math::Tensor<fetch::math::SizeType>;
-  using SizeType    = fetch::math::SizeType;
+  using TensorType  = fetch::math::Tensor<fetch::math::DefaultSizeType>;
+  using SizeType    = fetch::math::DefaultSizeType;
   using LabelType   = TensorType;
   using ContextType = TensorType;
 

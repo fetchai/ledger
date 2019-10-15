@@ -37,10 +37,9 @@ using namespace fetch::beacon;
 using namespace fetch::ledger;
 
 using Prover         = fetch::crypto::Prover;
-using ProverPtr      = std::shared_ptr<Prover>;
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
-using Address        = fetch::muddle::Packet::Address;
+//using Address        = fetch::muddle::Packet::Address;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 using MuddleAddress  = ConstByteArray;
 
