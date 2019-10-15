@@ -76,10 +76,7 @@ public:
 
 private:
   CoordinatorMode                                          mode_;
-  CoordinatorState                                         state_           = CoordinatorState::RUN;
-  SizeType                                                 iterations_done_ = 0;
-  SizeType                                                 iterations_count_;
-  mutable std::mutex                                       iterations_mutex_;
+  CoordinatorState                                         state_ = CoordinatorState::RUN;
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients_;
   SizeType                                                 number_of_peers_;
 
@@ -90,27 +87,13 @@ private:
 template <typename TensorType>
 Coordinator<TensorType>::Coordinator(CoordinatorParams const &params)
   : mode_(params.mode)
-  , iterations_count_(params.iterations_count)
   , number_of_peers_(params.number_of_peers)
 {}
 
 template <typename TensorType>
-void Coordinator<TensorType>::IncrementIterationsCounter()
-{
-  FETCH_LOCK(iterations_mutex_);
-  iterations_done_++;
-
-  if (iterations_done_ >= iterations_count_)
-  {
-    state_ = CoordinatorState::STOP;
-  }
-}
-
-template <typename TensorType>
 void Coordinator<TensorType>::Reset()
 {
-  iterations_done_ = 0;
-  state_           = CoordinatorState::RUN;
+  state_ = CoordinatorState::RUN;
 }
 
 template <typename TensorType>
