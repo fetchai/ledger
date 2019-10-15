@@ -68,7 +68,7 @@ public:
   LogRegistry(LogRegistry &&)      = delete;
   ~LogRegistry()                   = default;
 
-  void Log(LogLevel level, char const *name, std::string message);
+  void Log(LogLevel level, char const *name, std::string const &message);
   void SetLevel(char const *name, LogLevel level);
   void SetGlobalLevel(LogLevel level);
 
@@ -180,7 +180,7 @@ spdlog::level::level_enum ConvertFromLevel(LogLevel level)
 
 LogRegistry::LogRegistry() = default;
 
-void LogRegistry::Log(LogLevel level, char const *name, std::string message)
+void LogRegistry::Log(LogLevel level, char const *name, std::string const &message)
 {
   if (level < global_level_)
   {
@@ -189,7 +189,7 @@ void LogRegistry::Log(LogLevel level, char const *name, std::string message)
 
   {
     FETCH_LOCK(lock_);
-    GetLogger(name).log(ConvertFromLevel(level), std::move(message));
+    GetLogger(name).log(ConvertFromLevel(level), message);
   }
 
   // telemetry
@@ -292,7 +292,7 @@ void SetGlobalLogLevel(LogLevel level)
   registry.SetGlobalLevel(level);
 }
 
-void Log(LogLevel level, char const *name, std::string message)
+void Log(LogLevel level, char const *name, std::string const &message)
 {
   registry.Log(level, name, std::move(message));
 }

@@ -117,7 +117,7 @@ void MainChain::Reset()
  * @param block The block that will be added to the chain.
  * @return The status enumeration signalling the operation result
  */
-BlockStatus MainChain::AddBlock(Block const &blk)
+BlockStatus MainChain::AddBlock(Block const &block)
 {
   // create a copy of the block
   auto block = std::make_shared<Block>(blk);
@@ -664,11 +664,8 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash, BlockHash *next_h
     // convert the pointee type to const
     return std::static_pointer_cast<Block const>(internal_block);
   }
-  else
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to lookup block! Hash: ", hash.ToBase64());
-    return {};
-  }
+  FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to lookup block! Hash: ", hash.ToBase64());
+  return {};
 }
 
 /**
@@ -1279,7 +1276,7 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
   if (LookupBlockFromCache(hash, block))
   {
     // Check if forward reference is requested.
-    if (!next_hash)
+    if (next_hash == nullptr)
     {
       return true;
     }

@@ -103,7 +103,7 @@ OpenSslHasherImpl::~OpenSslHasherImpl()
 
 bool OpenSslHasher::Reset()
 {
-  bool const success = EVP_DigestInit_ex(impl_->evp_ctx, impl_->evp_type, nullptr);
+  auto const success = EVP_DigestInit_ex(impl_->evp_ctx, impl_->evp_type, nullptr) != 0;
   assert(success);
 
   return success;
@@ -111,7 +111,7 @@ bool OpenSslHasher::Reset()
 
 bool OpenSslHasher::Update(uint8_t const *const data_to_hash, std::size_t const size)
 {
-  bool const success = EVP_DigestUpdate(impl_->evp_ctx, data_to_hash, size);
+  auto const success = EVP_DigestUpdate(impl_->evp_ctx, data_to_hash, size) != 0;
   assert(success);
 
   return success;
@@ -119,7 +119,7 @@ bool OpenSslHasher::Update(uint8_t const *const data_to_hash, std::size_t const 
 
 bool OpenSslHasher::Final(uint8_t *const hash)
 {
-  bool const success = EVP_DigestFinal_ex(impl_->evp_ctx, hash, nullptr);
+  auto const success = EVP_DigestFinal_ex(impl_->evp_ctx, hash, nullptr) != 0;
   assert(success);
 
   return success;

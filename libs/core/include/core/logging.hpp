@@ -79,7 +79,7 @@ void SetGlobalLogLevel(LogLevel level);
  * @param name The name of the origin
  * @param message The message
  */
-void Log(LogLevel level, char const *name, std::string message);
+void Log(LogLevel level, char const *name, std::string const &message);
 
 /**
  * Retrieve the current map of active loggers and the configured level

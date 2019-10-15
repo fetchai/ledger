@@ -255,7 +255,9 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
     }
   }
   else
+  {
     FETCH_LOG_WARN(LOGGING_NAME, "No current_block at all");
+  }
 
   // if we have reached genesis then this is either because we have no state to reload in the case
   // of a fresh node, or a long series of errors prevents us from reloading previous state. In

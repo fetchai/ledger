@@ -283,7 +283,7 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
   }
 
   LogBuilder sync_summary(LogLevel::INFO, LOGGING_NAME, "Synced Summary:");
-  if (block_stats.count(BlockStatus::INVALID))
+  if (block_stats.count(BlockStatus::INVALID) != 0)
   {
     sync_summary.SetLevel(LogLevel::WARNING);
     sync_summary.Log(" Invalid: ", block_stats[BlockStatus::INVALID]);

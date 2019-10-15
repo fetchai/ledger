@@ -58,7 +58,7 @@ constexpr auto Accumulate(F &&f, A &&a, B &&b, Seq &&... seq)
 }
 
 template <class F>
-constexpr void ForEach(F &&) noexcept
+constexpr void ForEach(F &&/*f*/) noexcept
 {}
 
 template <class F, class T>
