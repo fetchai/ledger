@@ -49,7 +49,7 @@ public:
   void CreateClassType(std::string const &name, TypeIndex type_index);
 
   void CreateTemplateType(std::string const &name, TypeIndex type_index,
-      TypeIndexArray const &allowed_types_index_array);
+                          TypeIndexArray const &allowed_types_index_array);
 
   void CreateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
                                TypeIndexArray const &parameter_type_index_array);

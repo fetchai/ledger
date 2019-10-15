@@ -32,7 +32,7 @@ class Parser
 public:
   Parser();
   ~Parser() = default;
-  void AddTemplateName(std::string const &name);
+  void         AddTemplateName(std::string const &name);
   BlockNodePtr Parse(SourceFiles const &files, std::vector<std::string> &errors);
 
 private:

@@ -415,7 +415,8 @@ public:
     TypeIndexArray allowed_types_index_array;
     UnrollTypes<Args...>::Unroll(allowed_types_index_array);
     TypeIndex const type_index              = TypeIndex(typeid(Type));
-    auto            compiler_setup_function = [name, type_index, allowed_types_index_array](Compiler *compiler) {
+    auto            compiler_setup_function = [name, type_index,
+                                    allowed_types_index_array](Compiler *compiler) {
       compiler->CreateTemplateType(name, type_index, allowed_types_index_array);
     };
     AddCompilerSetupFunction(compiler_setup_function);

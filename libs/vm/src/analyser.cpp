@@ -144,7 +144,8 @@ void Analyser::Initialise()
                      array_type_);
   CreateTemplateType("Map", TypeIndex(typeid(IMap)), {any_type_, any_type_}, TypeIds::Unknown,
                      map_type_);
-  CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown, state_type_);
+  CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
+                     state_type_);
   CreateTemplateType("ShardedState", TypeIndex(typeid(IShardedState)), {any_type_},
                      TypeIds::Unknown, sharded_state_type_);
 }
@@ -203,7 +204,7 @@ void Analyser::CreateClassType(std::string const &name, TypeIndex type_index)
 }
 
 void Analyser::CreateTemplateType(std::string const &name, TypeIndex type_index,
-    TypeIndexArray const &allowed_types_index_array)
+                                  TypeIndexArray const &allowed_types_index_array)
 {
   TypePtr type;
   CreateTemplateType(name, type_index, GetTypes(allowed_types_index_array), TypeIds::Unknown, type);
@@ -849,8 +850,9 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodeP
   VariablePtr variable = CreateVariable(VariableKind::Use, variable_name);
   variable->type       = type;
   parent_block_node->symbols->Add(variable);
-  FunctionPtr constructor =
-      (type->template_type == sharded_state_type_) ? sharded_state_constructor_ : state_constructor_;
+  FunctionPtr constructor = (type->template_type == sharded_state_type_)
+                                ? sharded_state_constructor_
+                                : state_constructor_;
   name_node->variable = variable;
   name_node->function = constructor;
 }

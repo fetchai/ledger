@@ -44,7 +44,7 @@ private:
   }
 
   void CreateTemplateType(std::string const &name, TypeIndex type_index,
-      TypeIndexArray const &allowed_types_index_array)
+                          TypeIndexArray const &allowed_types_index_array)
   {
     parser_.AddTemplateName(name);
     analyser_.CreateTemplateType(name, type_index, allowed_types_index_array);
