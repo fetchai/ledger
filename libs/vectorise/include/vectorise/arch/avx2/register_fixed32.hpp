@@ -497,9 +497,11 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator+(
   bool is_infinity = any_equal_to(mask_pos_inf | mask_neg_inf,
                                   VectorRegister<fixed_point::fp32_t, 128>::MaskAllBits());
   bool is_nan = any_equal_to(mask_nan, VectorRegister<fixed_point::fp32_t, 128>::MaskAllBits());
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
+  fixed_point::fp32_t::fp_state |=
+      fixed_point::fp32_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
   fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_NAN * static_cast<uint32_t>(is_nan);
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
+  fixed_point::fp32_t::fp_state |=
+      fixed_point::fp32_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
 
   return sum;
 }
@@ -577,9 +579,11 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator+(
   bool is_infinity = any_equal_to(mask_pos_inf | mask_neg_inf,
                                   VectorRegister<fixed_point::fp32_t, 256>::MaskAllBits());
   bool is_nan = any_equal_to(mask_nan, VectorRegister<fixed_point::fp32_t, 256>::MaskAllBits());
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
+  fixed_point::fp32_t::fp_state |=
+      fixed_point::fp32_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
   fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_NAN * static_cast<uint32_t>(is_nan);
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
+  fixed_point::fp32_t::fp_state |=
+      fixed_point::fp32_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
 
   return sum;
 }
@@ -677,9 +681,11 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator*(
   bool is_infinity = any_equal_to(mask_pos_inf | mask_neg_inf,
                                   VectorRegister<fixed_point::fp32_t, 128>::MaskAllBits());
   bool is_nan = any_equal_to(mask_nan, VectorRegister<fixed_point::fp32_t, 128>::MaskAllBits());
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
+  fixed_point::fp32_t::fp_state |=
+      fixed_point::fp32_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
   fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_NAN * static_cast<uint32_t>(is_nan);
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
+  fixed_point::fp32_t::fp_state |=
+      fixed_point::fp32_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
 
   return {prod.data()};
 }
@@ -803,7 +809,7 @@ inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 128> const
     fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY;
     return fixed_point::fp32_t::POSITIVE_INFINITY;
   }
-   if (is_neg_inf)
+  if (is_neg_inf)
   {
     fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY;
     return fixed_point::fp32_t::NEGATIVE_INFINITY;
@@ -825,8 +831,8 @@ inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 128> const
       return fixed_point::fp32_t::FP_MAX;
     }
     if (fixed_point::fp32_t::CheckUnderflow(
-                 static_cast<fixed_point::fp32_t::NextType>(sum.Data()) +
-                 static_cast<fixed_point::fp32_t::NextType>(x_[i].Data())))
+            static_cast<fixed_point::fp32_t::NextType>(sum.Data()) +
+            static_cast<fixed_point::fp32_t::NextType>(x_[i].Data())))
     {
       fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW;
       return fixed_point::fp32_t::FP_MIN;

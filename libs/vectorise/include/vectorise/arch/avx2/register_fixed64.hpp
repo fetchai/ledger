@@ -505,9 +505,11 @@ inline VectorRegister<fixed_point::fp64_t, 128> operator+(
   bool is_infinity = any_equal_to(mask_pos_inf | mask_neg_inf,
                                   VectorRegister<fixed_point::fp64_t, 128>::MaskAllBits());
   bool is_nan = any_equal_to(mask_nan, VectorRegister<fixed_point::fp64_t, 128>::MaskAllBits());
-  fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
+  fixed_point::fp64_t::fp_state |=
+      fixed_point::fp64_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
   fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_NAN * static_cast<uint32_t>(is_nan);
-  fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
+  fixed_point::fp64_t::fp_state |=
+      fixed_point::fp64_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
 
   return sum;
 }
@@ -585,9 +587,11 @@ inline VectorRegister<fixed_point::fp64_t, 256> operator+(
   bool is_infinity = any_equal_to(mask_pos_inf | mask_neg_inf,
                                   VectorRegister<fixed_point::fp64_t, 256>::MaskAllBits());
   bool is_nan = any_equal_to(mask_nan, VectorRegister<fixed_point::fp64_t, 256>::MaskAllBits());
-  fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
+  fixed_point::fp64_t::fp_state |=
+      fixed_point::fp64_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
   fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_NAN * static_cast<uint32_t>(is_nan);
-  fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
+  fixed_point::fp64_t::fp_state |=
+      fixed_point::fp64_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
 
   return sum;
 }
@@ -611,12 +615,12 @@ inline VectorRegister<fixed_point::fp64_t, 128> operator*(
     VectorRegister<fixed_point::fp64_t, 128> const &b)
 {
   alignas(32) fixed_point::fp64_t::NextType a128[2], b128[2], prod128[2];
-  a128[0]    = _mm_extract_epi64(a.data(), 0);  // NOLINT
-  a128[1]    = _mm_extract_epi64(a.data(), 1);  // NOLINT
-  b128[0]    = _mm_extract_epi64(b.data(), 0);  // NOLINT
-  b128[1]    = _mm_extract_epi64(b.data(), 1);  // NOLINT
-  prod128[0] = (a128[0] * b128[0]) >> 32;
-  prod128[1] = (a128[1] * b128[1]) >> 32;
+  a128[0]       = _mm_extract_epi64(a.data(), 0);  // NOLINT
+  a128[1]       = _mm_extract_epi64(a.data(), 1);  // NOLINT
+  b128[0]       = _mm_extract_epi64(b.data(), 0);  // NOLINT
+  b128[1]       = _mm_extract_epi64(b.data(), 1);  // NOLINT
+  prod128[0]    = (a128[0] * b128[0]) >> 32;
+  prod128[1]    = (a128[1] * b128[1]) >> 32;
   __m256i vprod = _mm256_load_si256(reinterpret_cast<__m256i const *>(prod128));
   // vprod         = _mm256_bsrli_epi128(vprod, 4);
   vprod = _mm256_permute4x64_epi64(vprod, 0x8);
@@ -695,9 +699,11 @@ inline VectorRegister<fixed_point::fp64_t, 128> operator*(
   bool is_infinity = any_equal_to(mask_pos_inf | mask_neg_inf,
                                   VectorRegister<fixed_point::fp64_t, 128>::MaskAllBits());
   bool is_nan = any_equal_to(mask_nan, VectorRegister<fixed_point::fp64_t, 128>::MaskAllBits());
-  fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
+  fixed_point::fp64_t::fp_state |=
+      fixed_point::fp64_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
   fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_NAN * static_cast<uint32_t>(is_nan);
-  fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
+  fixed_point::fp64_t::fp_state |=
+      fixed_point::fp64_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
 
   return {prod.data()};
 }
@@ -843,8 +849,8 @@ inline fixed_point::fp64_t reduce(VectorRegister<fixed_point::fp64_t, 256> const
       return fixed_point::fp64_t::FP_MAX;
     }
     if (fixed_point::fp64_t::CheckUnderflow(
-                 static_cast<fixed_point::fp64_t::NextType>(sum.Data()) +
-                 static_cast<fixed_point::fp64_t::NextType>(x_[i].Data())))
+            static_cast<fixed_point::fp64_t::NextType>(sum.Data()) +
+            static_cast<fixed_point::fp64_t::NextType>(x_[i].Data())))
     {
       fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_OVERFLOW;
       return fixed_point::fp64_t::FP_MIN;

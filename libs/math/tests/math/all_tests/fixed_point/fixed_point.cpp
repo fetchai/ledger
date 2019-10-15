@@ -304,8 +304,8 @@ TEST(FixedPointTest, Conversion_32_32)
 
 //   // We cannot be smaller than the actual negative integer of the actual type
 //   EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<int64_t>::min());
-//   // On the other hand we expect to be exactly the same as the largest positive integer of int64_t
-//   EXPECT_TRUE(largest_fixed_point.Data() < std::numeric_limits<int64_t>::max());
+//   // On the other hand we expect to be exactly the same as the largest positive integer of
+//   int64_t EXPECT_TRUE(largest_fixed_point.Data() < std::numeric_limits<int64_t>::max());
 
 //   EXPECT_EQ(sizeof(one), 8);
 

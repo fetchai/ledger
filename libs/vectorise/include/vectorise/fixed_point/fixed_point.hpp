@@ -73,7 +73,7 @@ struct TypeFromSize<128>
   using SignedType                   = __int128_t;
   // Commented out, when we need to implement FixedPoint<128,128> fully, we will deal with that
   // then.
-  //using NextSize                        = TypeFromSize<256>;
+  // using NextSize                        = TypeFromSize<256>;
 };
 #endif
 
