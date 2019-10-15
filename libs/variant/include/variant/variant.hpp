@@ -594,19 +594,6 @@ public:
   using Type       = fetch::variant::Variant;
   using DriverType = D;
 
-  //  static uint8_t const FIELD_OUTPUT  = 1;
-  static uint8_t const FIELD_UNDEFINED      = 1;
-  static uint8_t const FIELD_INTEGER        = 2;
-  static uint8_t const FIELD_FLOATING_POINT = 3;
-  static uint8_t const FIELD_FIXED_POINT    = 4;
-  static uint8_t const FIELD_BOOLEAN        = 5;
-  static uint8_t const FIELD_STRING         = 6;
-  static uint8_t const FIELD_NULL_VALUE     = 7;
-  static uint8_t const FIELD_ARRAY          = 8;
-  static uint8_t const FIELD_ARRAY_COUNT    = 18;
-  static uint8_t const FIELD_OBJECT         = 9;
-  static uint8_t const FIELD_TYPE_NUMBER    = 254;
-
   template <typename Serializer>
   static void Serialize(Serializer &serializer, Type const &var)
   {
