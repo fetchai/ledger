@@ -77,7 +77,8 @@ TYPED_TEST(AvgPool2DTest, forward_test_3_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(AvgPool2DTest, forward_2_channels_test_3_2)
@@ -127,7 +128,8 @@ TYPED_TEST(AvgPool2DTest, forward_2_channels_test_3_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(AvgPool2DTest, backward_test)
@@ -163,38 +165,40 @@ TYPED_TEST(AvgPool2DTest, backward_test)
     }
   }
 
-  gt(0, 0, 0, 0) = DataType{0.111111f};
-  gt(0, 0, 1, 0) = DataType{0.111111f};
-  gt(0, 0, 2, 0) = DataType{0.333333f};
-  gt(0, 0, 3, 0) = DataType{0.222222f};
-  gt(0, 0, 4, 0) = DataType{0.222222f};
-  gt(0, 1, 0, 0) = DataType{0.111111f};
-  gt(0, 1, 1, 0) = DataType{0.111111f};
-  gt(0, 1, 2, 0) = DataType{0.333333f};
-  gt(0, 1, 3, 0) = DataType{0.222222f};
-  gt(0, 1, 4, 0) = DataType{0.222222f};
-  gt(0, 2, 0, 0) = DataType{0.333333f};
-  gt(0, 2, 1, 0) = DataType{0.333333f};
-  gt(0, 2, 2, 0) = DataType{0.888889f};
-  gt(0, 2, 3, 0) = DataType{0.555556f};
-  gt(0, 2, 4, 0) = DataType{0.555556f};
-  gt(0, 3, 0, 0) = DataType{0.222222f};
-  gt(0, 3, 1, 0) = DataType{0.222222f};
-  gt(0, 3, 2, 0) = DataType{0.555556f};
-  gt(0, 3, 3, 0) = DataType{0.333333f};
-  gt(0, 3, 4, 0) = DataType{0.333333f};
-  gt(0, 4, 0, 0) = DataType{0.222222f};
-  gt(0, 4, 1, 0) = DataType{0.222222f};
-  gt(0, 4, 2, 0) = DataType{0.555556f};
-  gt(0, 4, 3, 0) = DataType{0.333333f};
-  gt(0, 4, 4, 0) = DataType{0.333333f};
+  gt(0, 0, 0, 0) = DataType{1.0f / 9.0f};
+  gt(0, 0, 1, 0) = DataType{1.0f / 9.0f};
+  gt(0, 0, 2, 0) = DataType{3.0f / 9.0f};
+  gt(0, 0, 3, 0) = DataType{2.0f / 9.0f};
+  gt(0, 0, 4, 0) = DataType{2.0f / 9.0f};
+  gt(0, 1, 0, 0) = DataType{1.0f / 9.0f};
+  gt(0, 1, 1, 0) = DataType{1.0f / 9.0f};
+  gt(0, 1, 2, 0) = DataType{3.0f / 9.0f};
+  gt(0, 1, 3, 0) = DataType{2.0f / 9.0f};
+  gt(0, 1, 4, 0) = DataType{2.0f / 9.0f};
+  gt(0, 2, 0, 0) = DataType{3.0f / 9.0f};
+  gt(0, 2, 1, 0) = DataType{3.0f / 9.0f};
+  gt(0, 2, 2, 0) = DataType{8.0f / 9.0f};
+  gt(0, 2, 3, 0) = DataType{5.0f / 9.0f};
+  gt(0, 2, 4, 0) = DataType{5.0f / 9.0f};
+  gt(0, 3, 0, 0) = DataType{2.0f / 9.0f};
+  gt(0, 3, 1, 0) = DataType{2.0f / 9.0f};
+  gt(0, 3, 2, 0) = DataType{5.0f / 9.0f};
+  gt(0, 3, 3, 0) = DataType{3.0f / 9.0f};
+  gt(0, 3, 4, 0) = DataType{3.0f / 9.0f};
+  gt(0, 4, 0, 0) = DataType{2.0f / 9.0f};
+  gt(0, 4, 1, 0) = DataType{2.0f / 9.0f};
+  gt(0, 4, 2, 0) = DataType{5.0f / 9.0f};
+  gt(0, 4, 3, 0) = DataType{3.0f / 9.0f};
+  gt(0, 4, 4, 0) = DataType{3.0f / 9.0f};
 
   fetch::ml::ops::AvgPool2D<TensorType> op(3, 2);
   std::vector<TensorType>               prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt,
+                                     fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                     fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(AvgPool2DTest, backward_2_channels_test)
@@ -237,63 +241,65 @@ TYPED_TEST(AvgPool2DTest, backward_2_channels_test)
     }
   }
 
-  gt(0, 0, 0, 0) = DataType{0.111111f};
-  gt(0, 0, 1, 0) = DataType{0.111111f};
-  gt(0, 0, 2, 0) = DataType{0.333333f};
-  gt(0, 0, 3, 0) = DataType{0.222222f};
-  gt(0, 0, 4, 0) = DataType{0.222222f};
-  gt(0, 1, 0, 0) = DataType{0.111111f};
-  gt(0, 1, 1, 0) = DataType{0.111111f};
-  gt(0, 1, 2, 0) = DataType{0.333333f};
-  gt(0, 1, 3, 0) = DataType{0.222222f};
-  gt(0, 1, 4, 0) = DataType{0.222222f};
-  gt(0, 2, 0, 0) = DataType{0.333333f};
-  gt(0, 2, 1, 0) = DataType{0.333333f};
-  gt(0, 2, 2, 0) = DataType{0.888889f};
-  gt(0, 2, 3, 0) = DataType{0.555556f};
-  gt(0, 2, 4, 0) = DataType{0.555556f};
-  gt(0, 3, 0, 0) = DataType{0.222222f};
-  gt(0, 3, 1, 0) = DataType{0.222222f};
-  gt(0, 3, 2, 0) = DataType{0.555556f};
-  gt(0, 3, 3, 0) = DataType{0.333333f};
-  gt(0, 3, 4, 0) = DataType{0.333333f};
-  gt(0, 4, 0, 0) = DataType{0.222222f};
-  gt(0, 4, 1, 0) = DataType{0.222222f};
-  gt(0, 4, 2, 0) = DataType{0.555556f};
-  gt(0, 4, 3, 0) = DataType{0.333333f};
-  gt(0, 4, 4, 0) = DataType{0.333333f};
-  gt(1, 0, 0, 0) = DataType{0.222222f};
-  gt(1, 0, 1, 0) = DataType{0.222222f};
-  gt(1, 0, 2, 0) = DataType{0.666667f};
-  gt(1, 0, 3, 0) = DataType{0.444444f};
-  gt(1, 0, 4, 0) = DataType{0.444444f};
-  gt(1, 1, 0, 0) = DataType{0.222222f};
-  gt(1, 1, 1, 0) = DataType{0.222222f};
-  gt(1, 1, 2, 0) = DataType{0.666667f};
-  gt(1, 1, 3, 0) = DataType{0.444444f};
-  gt(1, 1, 4, 0) = DataType{0.444444f};
-  gt(1, 2, 0, 0) = DataType{0.666667f};
-  gt(1, 2, 1, 0) = DataType{0.666667f};
-  gt(1, 2, 2, 0) = DataType{1.77778f};
-  gt(1, 2, 3, 0) = DataType{1.11111f};
-  gt(1, 2, 4, 0) = DataType{1.11111f};
-  gt(1, 3, 0, 0) = DataType{0.444444f};
-  gt(1, 3, 1, 0) = DataType{0.444444f};
-  gt(1, 3, 2, 0) = DataType{1.11111f};
-  gt(1, 3, 3, 0) = DataType{0.666667f};
-  gt(1, 3, 4, 0) = DataType{0.666667f};
-  gt(1, 4, 0, 0) = DataType{0.444444f};
-  gt(1, 4, 1, 0) = DataType{0.444444f};
-  gt(1, 4, 2, 0) = DataType{1.11111f};
-  gt(1, 4, 3, 0) = DataType{0.666667f};
-  gt(1, 4, 4, 0) = DataType{0.666667f};
+  gt(0, 0, 0, 0) = DataType{1.0f / 9.0f};
+  gt(0, 0, 1, 0) = DataType{1.0f / 9.0f};
+  gt(0, 0, 2, 0) = DataType{3.0f / 9.0f};
+  gt(0, 0, 3, 0) = DataType{2.0f / 9.0f};
+  gt(0, 0, 4, 0) = DataType{2.0f / 9.0f};
+  gt(0, 1, 0, 0) = DataType{1.0f / 9.0f};
+  gt(0, 1, 1, 0) = DataType{1.0f / 9.0f};
+  gt(0, 1, 2, 0) = DataType{3.0f / 9.0f};
+  gt(0, 1, 3, 0) = DataType{2.0f / 9.0f};
+  gt(0, 1, 4, 0) = DataType{2.0f / 9.0f};
+  gt(0, 2, 0, 0) = DataType{3.0f / 9.0f};
+  gt(0, 2, 1, 0) = DataType{3.0f / 9.0f};
+  gt(0, 2, 2, 0) = DataType{8.0f / 9.0f};
+  gt(0, 2, 3, 0) = DataType{5.0f / 9.0f};
+  gt(0, 2, 4, 0) = DataType{5.0f / 9.0f};
+  gt(0, 3, 0, 0) = DataType{2.0f / 9.0f};
+  gt(0, 3, 1, 0) = DataType{2.0f / 9.0f};
+  gt(0, 3, 2, 0) = DataType{5.0f / 9.0f};
+  gt(0, 3, 3, 0) = DataType{3.0f / 9.0f};
+  gt(0, 3, 4, 0) = DataType{3.0f / 9.0f};
+  gt(0, 4, 0, 0) = DataType{2.0f / 9.0f};
+  gt(0, 4, 1, 0) = DataType{2.0f / 9.0f};
+  gt(0, 4, 2, 0) = DataType{5.0f / 9.0f};
+  gt(0, 4, 3, 0) = DataType{3.0f / 9.0f};
+  gt(0, 4, 4, 0) = DataType{3.0f / 9.0f};
+  gt(1, 0, 0, 0) = DataType{2.0f / 9.0f};
+  gt(1, 0, 1, 0) = DataType{2.0f / 9.0f};
+  gt(1, 0, 2, 0) = DataType{6.0f / 9.0f};
+  gt(1, 0, 3, 0) = DataType{4.0f / 9.0f};
+  gt(1, 0, 4, 0) = DataType{4.0f / 9.0f};
+  gt(1, 1, 0, 0) = DataType{2.0f / 9.0f};
+  gt(1, 1, 1, 0) = DataType{2.0f / 9.0f};
+  gt(1, 1, 2, 0) = DataType{6.0f / 9.0f};
+  gt(1, 1, 3, 0) = DataType{4.0f / 9.0f};
+  gt(1, 1, 4, 0) = DataType{4.0f / 9.0f};
+  gt(1, 2, 0, 0) = DataType{6.0f / 9.0f};
+  gt(1, 2, 1, 0) = DataType{6.0f / 9.0f};
+  gt(1, 2, 2, 0) = DataType{16.0f / 9.0f};
+  gt(1, 2, 3, 0) = DataType{10.0f / 9.0f};
+  gt(1, 2, 4, 0) = DataType{10.0f / 9.0f};
+  gt(1, 3, 0, 0) = DataType{4.0f / 9.0f};
+  gt(1, 3, 1, 0) = DataType{4.0f / 9.0f};
+  gt(1, 3, 2, 0) = DataType{10.0f / 9.0f};
+  gt(1, 3, 3, 0) = DataType{6.0f / 9.0f};
+  gt(1, 3, 4, 0) = DataType{6.0f / 9.0f};
+  gt(1, 4, 0, 0) = DataType{4.0f / 9.0f};
+  gt(1, 4, 1, 0) = DataType{4.0f / 9.0f};
+  gt(1, 4, 2, 0) = DataType{10.0f / 9.0f};
+  gt(1, 4, 3, 0) = DataType{6.0f / 9.0f};
+  gt(1, 4, 4, 0) = DataType{6.0f / 9.0f};
 
   fetch::ml::ops::AvgPool2D<TensorType> op(3, 2);
   std::vector<TensorType>               prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt,
+                                     fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                     fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(AvgPool2DTest, saveparams_test)

@@ -89,7 +89,7 @@ public:
     SizeType iterw;
     SizeType iterh;
     DataType sum;
-    DataType cnt = static_cast<DataType>(kernel_size_ * kernel_size_);
+    auto     cnt = static_cast<DataType>(kernel_size_ * kernel_size_);
     auto     oit = output.begin();
 
     for (SizeType n_i{0}; n_i < output.shape().at(2); n_i++)  // iterate over batch
@@ -144,7 +144,7 @@ public:
 
     SizeType iterh;
     SizeType iterw;
-    DataType cnt = static_cast<DataType>(kernel_size_ * kernel_size_);
+    auto     cnt = static_cast<DataType>(kernel_size_ * kernel_size_);
 
     auto erit = error_signal.cbegin();
     for (SizeType n_i{0}; n_i < error_signal.shape().at(2); n_i++)  // iterate over batch

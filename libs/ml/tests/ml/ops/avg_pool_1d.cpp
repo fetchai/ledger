@@ -46,7 +46,7 @@ TYPED_TEST(AvgPool1DTest, forward_test_3_2_2)
   TensorType          data({1, 10, 2});
   TensorType          gt({1, 4, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
-  std::vector<double> gt_input({0.666666f, 1.333333f, 2, 2.666666f});
+  std::vector<double> gt_input({2.0f / 3.0f, 4.0f / 3.0f, 6.0f / 3.0f, 8.0f / 3.0f});
 
   for (SizeType i_b{0}; i_b < 2; i_b++)
   {
@@ -66,7 +66,8 @@ TYPED_TEST(AvgPool1DTest, forward_test_3_2_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(AvgPool1DTest, backward_test)
@@ -93,23 +94,23 @@ TYPED_TEST(AvgPool1DTest, backward_test)
     }
   }
 
-  gt(0, 0, 0) = DataType{0.666667f};
+  gt(0, 0, 0) = DataType{2.0f / 3.0f};
   gt(0, 0, 1) = DataType{1.0f};
-  gt(0, 1, 0) = DataType{0.666667f};
+  gt(0, 1, 0) = DataType{2.0f / 3.0f};
   gt(0, 1, 1) = DataType{1.0f};
-  gt(0, 2, 0) = DataType{1.66667f};
-  gt(0, 2, 1) = DataType{2.33333f};
+  gt(0, 2, 0) = DataType{5.0f / 3.0f};
+  gt(0, 2, 1) = DataType{7.0f / 3.0f};
   gt(0, 3, 0) = DataType{1.0f};
-  gt(0, 3, 1) = DataType{1.33333f};
-  gt(0, 4, 0) = DataType{2.33333f};
+  gt(0, 3, 1) = DataType{4.0f / 3.0f};
+  gt(0, 4, 0) = DataType{7.0f / 3.0f};
   gt(0, 4, 1) = DataType{3.0f};
-  gt(0, 5, 0) = DataType{1.33333f};
-  gt(0, 5, 1) = DataType{1.66667f};
+  gt(0, 5, 0) = DataType{4.0f / 3.0f};
+  gt(0, 5, 1) = DataType{5.0f / 3.0f};
   gt(0, 6, 0) = DataType{3.0f};
-  gt(0, 6, 1) = DataType{3.66667f};
-  gt(0, 7, 0) = DataType{1.66667f};
+  gt(0, 6, 1) = DataType{11.0f / 3.0f};
+  gt(0, 7, 0) = DataType{5.0f / 3.0f};
   gt(0, 7, 1) = DataType{2.0f};
-  gt(0, 8, 0) = DataType{1.66667f};
+  gt(0, 8, 0) = DataType{5.0f / 3.0f};
   gt(0, 8, 1) = DataType{2.0f};
   gt(0, 9, 0) = DataType{0.0f};
   gt(0, 9, 1) = DataType{0.0f};
@@ -119,7 +120,9 @@ TYPED_TEST(AvgPool1DTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt,
+                                     fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                     fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(AvgPool1DTest, backward_test_2_channels)
@@ -176,7 +179,9 @@ TYPED_TEST(AvgPool1DTest, backward_test_2_channels)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt,
+                                     fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                     fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(AvgPool1DTest, forward_test_4_2)
@@ -205,7 +210,8 @@ TYPED_TEST(AvgPool1DTest, forward_test_4_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(AvgPool1DTest, forward_test_2_channels_4_1_2)
@@ -245,7 +251,8 @@ TYPED_TEST(AvgPool1DTest, forward_test_2_channels_4_1_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(AvgPool1DTest, forward_test_2_4_2)
@@ -274,7 +281,8 @@ TYPED_TEST(AvgPool1DTest, forward_test_2_4_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 TYPED_TEST(AvgPool1DTest, saveparams_test)

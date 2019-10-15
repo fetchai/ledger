@@ -88,7 +88,7 @@ public:
 
     SizeType iter;
     DataType sum;
-    DataType cnt    = static_cast<DataType>(kernel_size_);
+    auto     cnt    = static_cast<DataType>(kernel_size_);
     auto     out_it = output.begin();
 
     for (SizeType n_i{0}; n_i < output.shape().at(2); n_i++)  // iterate over batch
@@ -137,7 +137,7 @@ public:
     auto output_shape = error_signal.shape();
 
     SizeType iter;
-    DataType cnt = static_cast<DataType>(kernel_size_);
+    auto     cnt = static_cast<DataType>(kernel_size_);
 
     auto er_it = error_signal.cbegin();
 
