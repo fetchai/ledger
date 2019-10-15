@@ -58,6 +58,8 @@ namespace beacon {
 class BeaconService;
 }
 
+namespace constellation {
+
 /**
  * Top level container for all components that are required to run a ledger instance
  */
@@ -228,4 +230,5 @@ private:
   /// @}
 };
 
+}  // namespace constellation
 }  // namespace fetch

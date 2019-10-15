@@ -1,8 +1,8 @@
 #
-# F E T C H  C O N S T E L L A T I O N  L I B R A R Y
+# F E T C H   L E D G E R   L I B R A R Y
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-project(fetch-ledger)
+project(fetch-constellation)
 
 # CMake Configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -14,10 +14,11 @@ setup_compiler()
 # Main Library Target
 # ------------------------------------------------------------------------------
 
-setup_library(fetch-ledger)
-target_link_libraries(fetch-ledger
+setup_library(fetch-constellation)
+target_link_libraries(fetch-constellation
                       PUBLIC fetch-core
                              fetch-http
+                             fetch-ledger
                              fetch-network
                              fetch-crypto
                              fetch-math
@@ -30,10 +31,4 @@ target_link_libraries(fetch-ledger
                              fetch-beacon
                              vendor-msgpack)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-ledger PRIVATE -Wshadow)
-endif ()
-
-add_test_target()
-add_subdirectory(examples)
-add_subdirectory(benchmark)
+# TODO(HUT): Will do in subsequent PR add_test_target()
