@@ -226,7 +226,7 @@ TEST(VmLauncherDmlfTests, repeated_HelloWorld)
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
 
-TEST(VmLauncherDmlfTests, local_Tick_VM_2States)
+TEST(VmLauncherDmlfTests, local_Tick_2States)
 {
   LocalVmLauncher launcher;
 
@@ -296,7 +296,7 @@ TEST(VmLauncherDmlfTests, bad_stdOut)
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
 
-TEST(VmLauncherDmlfTests, local_Tick_Tick2_VM_State)
+TEST(VmLauncherDmlfTests, local_Tick_Tick2_State)
 {
   LocalVmLauncher launcher;
 
@@ -348,7 +348,7 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick2_VM_State)
   //EXPECT_EQ(output.str(), "0\n1\n3\n4\n6\n7\n9\n10\n");
 }
 
-TEST(VmLauncherDmlfTests, test_Tick_Tock_VM_State)
+TEST(VmLauncherDmlfTests, test_Tick_Tock_State)
 {
   LocalVmLauncher launcher;
 
@@ -401,7 +401,7 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_VM_State)
   //EXPECT_EQ(output.str(), "0\n0\n1\n1\n2\n2\n3\n3\n");
 }
 
-TEST(VmLauncherDmlfTests, test_Tick_TickTock_VM_State)
+TEST(VmLauncherDmlfTests, test_Tick_TickTock_State)
 {
   LocalVmLauncher launcher;
 
@@ -457,7 +457,7 @@ TEST(VmLauncherDmlfTests, test_Tick_TickTock_VM_State)
   //EXPECT_EQ(output.str(), "0\n1\n0\n2\n3\n2\n4\n5\n4\n");
 }
 
-TEST(VmLauncherDmlfTests, test_TickState_TockState2_VM)
+TEST(VmLauncherDmlfTests, test_TickState_TockState2)
 {
   LocalVmLauncher launcher;
 
@@ -512,7 +512,7 @@ TEST(VmLauncherDmlfTests, test_TickState_TockState2_VM)
   //EXPECT_EQ(output.str(), "0\n0\n1\n2\n4\n2\n5\n4\n");
 }
 
-TEST(VmLauncherDmlfTests, test_Tick_Tock_TickTock_VM_State)
+TEST(VmLauncherDmlfTests, test_Tick_Tock_TickTock_State)
 {
   LocalVmLauncher launcher;
 
@@ -566,14 +566,12 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_TickTock_VM_State)
   //EXPECT_EQ(output.str(), "0\n0\n1\n1\n2\n3\n3\n4\n");
 }
 
-TEST(VmLauncherDmlfTests, local_Tick_Tick_VM_State)
+TEST(VmLauncherDmlfTests, local_Tick_Tick_State)
 {
   LocalVmLauncher launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
-  std::cout << createdProgram.error().message() << "\n\n";
-
 
   createdProgram = launcher.CreateExecutable("tick2", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -634,7 +632,7 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick_VM_State)
   //EXPECT_EQ(output.str(), "0\n1\n2\n3\n4\n5\n6\n7\n");
 }
 
-TEST(VmLauncherDmlfTests, local_Tick_Tick_VM_CopyState)
+TEST(VmLauncherDmlfTests, local_Tick_Tick_CopyState)
 {
   LocalVmLauncher launcher;
 

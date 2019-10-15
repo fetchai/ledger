@@ -64,7 +64,7 @@ ExecutionResult LocalVmLauncher::DeleteExecutable(Name const &execName)
 
   executables_.erase(it);
 
-  return EngineSuccess("Deleted executable " + execName, "");
+  return EngineSuccess("Deleted executable " + execName);
 }
 
 ExecutionResult LocalVmLauncher::CreateState(Name const &stateName)                  
@@ -90,7 +90,7 @@ ExecutionResult LocalVmLauncher::CopyState(Name const &srcName, Name const &newN
   }
 
   states_.emplace(std::move(newName), std::make_shared<State>(states_[srcName]->DeepCopy()));
-  return EngineSuccess("Copied state " + srcName + " to " + newName, "");
+  return EngineSuccess("Copied state " + srcName + " to " + newName);
 }
 
 ExecutionResult LocalVmLauncher::DeleteState(Name const &stateName)                  
@@ -102,7 +102,7 @@ ExecutionResult LocalVmLauncher::DeleteState(Name const &stateName)
   }
 
   states_.erase(it);
-  return EngineSuccess("Deleted state " + stateName, "");
+  return EngineSuccess("Deleted state " + stateName);
 }
 
 ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName,
@@ -148,9 +148,9 @@ ExecutionResult LocalVmLauncher::EngineError(std::string resultMessage, Error::C
   return ExecutionResult( Variant(), Error(Error::Stage::ENGINE, code, std::move(errorMessage)), std::move(resultMessage));
 }
 
-ExecutionResult LocalVmLauncher::EngineSuccess(std::string resultMessage, std::string errorMessage) const
+ExecutionResult LocalVmLauncher::EngineSuccess(std::string resultMessage) const
 {
-  return ExecutionResult( Variant(), Error(Error::Stage::ENGINE, Error::Code::SUCCESS, std::move(errorMessage)), std::move(resultMessage));
+  return ExecutionResult( Variant(), Error(Error::Stage::ENGINE, Error::Code::SUCCESS, std::move(errorMessage)), "");
 }
 
 bool LocalVmLauncher::HasExecutable(std::string const &name) const
