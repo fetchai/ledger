@@ -55,7 +55,6 @@ public:
   virtual void     Set(ResourceAddress const &key, StateValue const &value) = 0;
   virtual bool     Lock(ShardIndex shard)                                   = 0;
   virtual bool     Unlock(ShardIndex shard)                                 = 0;
-  virtual Keys     KeyDump() const                                          = 0;
   virtual void     Reset()                                                  = 0;
   /// @}
 };
