@@ -1174,7 +1174,6 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
   }
 
   using Type = typename ArrayType::Type;
-  // TODO(HUT): should you do this?
   using namespace linalg;
 
   enum
