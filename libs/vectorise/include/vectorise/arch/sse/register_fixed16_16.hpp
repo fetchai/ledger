@@ -21,14 +21,13 @@
 #include "vectorise/arch/sse/register_int32.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
 #include <emmintrin.h>
 #include <immintrin.h>
 #include <smmintrin.h>
 
-#include <iostream>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace vectorize {

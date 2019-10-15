@@ -16,8 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-
+#include "core/mutex.hpp"
 #include "dmlf/networkers/filepassing_learner_networker.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
@@ -26,12 +25,14 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
+#include "gtest/gtest.h"
+
 #include <chrono>
-#include <ostream>
 #include <thread>
 
 namespace {
 
+using Mutex      = fetch::Mutex;
 using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 using NetP       = std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker>;
@@ -42,9 +43,7 @@ using UpdatePayload        = UpdateTypeForTesting::Payload;
 class LocalLearnerInstance
 {
 public:
-  // using Mutex = fetch::Mutex;
-  using Mutex = std::mutex;
-  using Lock  = std::unique_lock<Mutex>;
+  using Lock = std::unique_lock<Mutex>;
 
   NetP          net;
   std::size_t   number;
@@ -326,9 +325,6 @@ TEST_F(LocalLearnerNetworkerTests, multiThreadedFilePassingVersion)
 using namespace std::chrono_literals;
 class UpdateSerialisationTests : public ::testing::Test
 {
-protected:
-  void SetUp() override
-  {}
 };
 
 TEST_F(UpdateSerialisationTests, basicPass)
