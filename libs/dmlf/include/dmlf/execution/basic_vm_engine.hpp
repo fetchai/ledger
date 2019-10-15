@@ -37,33 +37,34 @@ public:
   ~BasicVmEngine() override = default;
 
   BasicVmEngine(const BasicVmEngine &other) = delete;
-  BasicVmEngine &operator=(const BasicVmEngine &other)  = delete;
+  BasicVmEngine &operator=(const BasicVmEngine &other) = delete;
 
-  using Executable   = fetch::vm::Executable;
-  using VM        = fetch::vm::VM;
-  using VmFactory = fetch::vm_modules::VMFactory;
-  using State     = VmPersistent;
-  using Error = ExecutionResult::Error;
+  using Executable = fetch::vm::Executable;
+  using VM         = fetch::vm::VM;
+  using VmFactory  = fetch::vm_modules::VMFactory;
+  using State      = VmPersistent;
+  using Error      = ExecutionResult::Error;
 
   ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) override;
-  ExecutionResult DeleteExecutable(Name const &execName)                             override;
+  ExecutionResult DeleteExecutable(Name const &execName) override;
 
-  ExecutionResult CreateState(Name const &stateName)                  override;
+  ExecutionResult CreateState(Name const &stateName) override;
   ExecutionResult CopyState(Name const &srcName, Name const &newName) override;
-  ExecutionResult DeleteState(Name const &stateName)                  override;
+  ExecutionResult DeleteState(Name const &stateName) override;
 
   ExecutionResult Run(Name const &execName, Name const &stateName,
-                              std::string const &entrypoint) override;
+                      std::string const &entrypoint) override;
 
 private:
   bool HasExecutable(std::string const &name) const;
   bool HasState(std::string const &name) const;
 
-  ExecutionResult EngineError(std::string resultMessage, Error::Code code, std::string errorMessage) const;
+  ExecutionResult EngineError(std::string resultMessage, Error::Code code,
+                              std::string errorMessage) const;
   ExecutionResult EngineSuccess(std::string resultMessage) const;
 
   std::unordered_map<std::string, std::shared_ptr<Executable>> executables_;
-  std::unordered_map<std::string, std::shared_ptr<State>>   states_;
+  std::unordered_map<std::string, std::shared_ptr<State>>      states_;
 
   std::shared_ptr<fetch::vm::Module> module_ = VmFactory::GetModule(VmFactory::USE_SMART_CONTRACTS);
 };

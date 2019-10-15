@@ -37,14 +37,14 @@ public:
   VmLauncherInterface &operator=(const VmLauncherInterface &other) = delete;
 
   ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) override;
-  ExecutionResult DeleteExecutable(Name const &execName)                             override;
+  ExecutionResult DeleteExecutable(Name const &execName) override;
 
-  ExecutionResult CreateState(Name const &stateName)                  override;
+  ExecutionResult CreateState(Name const &stateName) override;
   ExecutionResult CopyState(Name const &srcName, Name const &newName) override;
-  ExecutionResult DeleteState(Name const &stateName)                  override;
+  ExecutionResult DeleteState(Name const &stateName) override;
 
   ExecutionResult Run(Name const &execName, Name const &stateName,
-                              std::string const &entrypoint) override;
+                      std::string const &entrypoint) override;
 
   using VmOutputHandler = std::ostream;
   using Params          = std::vector<fetch::vm::Variant>;

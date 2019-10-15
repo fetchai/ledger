@@ -26,7 +26,7 @@ namespace dmlf {
 class ExecutionEngineInterface
 {
 public:
-  ExecutionEngineInterface() = default;
+  ExecutionEngineInterface()          = default;
   virtual ~ExecutionEngineInterface() = default;
 
   ExecutionEngineInterface(ExecutionEngineInterface const &other) = delete;
