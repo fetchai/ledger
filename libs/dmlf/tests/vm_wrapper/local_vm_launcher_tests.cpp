@@ -22,16 +22,6 @@
 
 #include "dmlf/execution/execution_error_message.hpp"
 #include "variant/variant.hpp"
-#include "vm/vm.hpp"
-#include "vm_modules/vm_factory.hpp"
-
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
 
 namespace {
 
@@ -44,7 +34,6 @@ using Stage = ExecutionErrorMessage::Stage;
 using Code = ExecutionErrorMessage::Code;
 
 // using Params = fetch::dmlf::LocalVmLauncher::Params;
-// using Status = fetch::dmlf::VmWrapperInterface::Status;
 
 auto const helloWorld = R"(
 
@@ -201,7 +190,7 @@ TEST(VmLauncherDmlfTests, basicEngine_DoubleHelloWorld)
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
 
-TEST(VmLauncherDmlfTests, repeated_HelloWorld)
+TEST(VmLauncherDmlfTests, basicEngine_repeated_HelloWorld)
 {
   LocalVmLauncher launcher;
 
@@ -279,22 +268,22 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_2States)
 //  //EXPECT_EQ(output.str(), "Hello world!!\n");
 //}
 
-TEST(VmLauncherDmlfTests, bad_stdOut)
-{
-  LocalVmLauncher launcher;
-
-  ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  std::stringstream badOutput;
-
-  ExecutionResult createdState = launcher.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = launcher.Run("helloWorld",  "state", "main");
-  EXPECT_TRUE(result.succeeded());
-  EXPECT_EQ(result.output().Get<int>(), 1);
-}
+//TEST(VmLauncherDmlfTests, bad_stdOut)
+//{
+//  LocalVmLauncher launcher;
+//
+//  ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+//  EXPECT_TRUE(createdProgram.succeeded());
+//
+//  std::stringstream badOutput;
+//
+//  ExecutionResult createdState = launcher.CreateState("state");
+//  EXPECT_TRUE(createdState.succeeded());
+//
+//  ExecutionResult result = launcher.Run("helloWorld",  "state", "main");
+//  EXPECT_TRUE(result.succeeded());
+//  EXPECT_EQ(result.output().Get<int>(), 1);
+//}
 
 TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick2_State)
 {
@@ -343,12 +332,9 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick2_State)
   result = launcher.Run("tick2",  "state", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 10);
-
-
-  //EXPECT_EQ(output.str(), "0\n1\n3\n4\n6\n7\n9\n10\n");
 }
 
-TEST(VmLauncherDmlfTests, test_Tick_Tock_State)
+TEST(VmLauncherDmlfTests, basicEngine_test_Tick_Tock_State)
 {
   LocalVmLauncher launcher;
 
@@ -396,12 +382,9 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_State)
   result = launcher.Run("tock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
-
-
-  //EXPECT_EQ(output.str(), "0\n0\n1\n1\n2\n2\n3\n3\n");
 }
 
-TEST(VmLauncherDmlfTests, test_Tick_TickTock_State)
+TEST(VmLauncherDmlfTests, basicEngine_test_Tick_TickTock_State)
 {
   LocalVmLauncher launcher;
 
@@ -452,12 +435,9 @@ TEST(VmLauncherDmlfTests, test_Tick_TickTock_State)
   result = launcher.Run("tickTock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
-
-
-  //EXPECT_EQ(output.str(), "0\n1\n0\n2\n3\n2\n4\n5\n4\n");
 }
 
-TEST(VmLauncherDmlfTests, test_TickState_TockState2)
+TEST(VmLauncherDmlfTests, basicEngine_test_TickState_TockState2)
 {
   LocalVmLauncher launcher;
 
@@ -507,12 +487,9 @@ TEST(VmLauncherDmlfTests, test_TickState_TockState2)
   result = launcher.Run("tick2",  "state", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
-
-
-  //EXPECT_EQ(output.str(), "0\n0\n1\n2\n4\n2\n5\n4\n");
 }
 
-TEST(VmLauncherDmlfTests, test_Tick_Tock_TickTock_State)
+TEST(VmLauncherDmlfTests, basicEngine_test_Tick_Tock_TickTock_State)
 {
   LocalVmLauncher launcher;
 
@@ -561,9 +538,6 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_TickTock_State)
   result = launcher.Run("tickTock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
-
-
-  //EXPECT_EQ(output.str(), "0\n0\n1\n1\n2\n3\n3\n4\n");
 }
 
 TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_State)
@@ -627,9 +601,6 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_State)
   result = launcher.Run("tick2",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 7);
-
-
-  //EXPECT_EQ(output.str(), "0\n1\n2\n3\n4\n5\n6\n7\n");
 }
 
 TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_CopyState)
@@ -679,9 +650,6 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_CopyState)
   result = launcher.Run("tick",  "state2", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
-
-
-  //EXPECT_EQ(output.str(), "0\n1\n2\n2\n3\n3\n4\n4\n");
 }
 
 TEST(VmLauncherDmlfTests, basicEngine_CopyState_BadSrc)
