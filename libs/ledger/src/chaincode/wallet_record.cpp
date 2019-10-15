@@ -92,7 +92,7 @@ bool DeedFromVariant(variant::Variant const &variant_deed, DeedPtr &deed)
   return true;
 }
 
-} // namespace
+}  // namespace
 
 // deed entry constants
 extern ConstByteArray const ADDRESS_NAME{"address"};
@@ -157,5 +157,5 @@ void WalletRecord::CollectStake(uint64_t block_index)
   }
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
