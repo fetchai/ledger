@@ -31,7 +31,7 @@ namespace dmlf {
 class VmState : public vm::IoObserverInterface
 {
 public:
-  VmState()                              = default;
+  VmState()                         = default;
   VmState(VmState &&other) noexcept = default;
   VmState &operator=(VmState &&other) noexcept = default;
 
