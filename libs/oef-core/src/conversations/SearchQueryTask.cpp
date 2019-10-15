@@ -22,11 +22,13 @@ SearchQueryTask::EntryPoint searchQueryTaskEntryPoints[] = {
 SearchQueryTask::SearchQueryTask(std::shared_ptr<SearchQueryTask::IN_PROTO> initiator,
                                  std::shared_ptr<OutboundConversations>     outbounds,
                                  std::shared_ptr<OefAgentEndpoint> endpoint, uint32_t msg_id,
-                                 std::string core_key, std::string agent_uri, uint16_t ttl)
+                                 std::string core_key, std::string agent_uri, uint16_t ttl,
+                                 uint64_t random_seed)
   : SearchConversationTask("search", std::move(initiator), std::move(outbounds),
                            std::move(endpoint), msg_id, std::move(core_key), std::move(agent_uri),
                            searchQueryTaskEntryPoints, this)
   , ttl_{ttl}
+  , random_seed_{random_seed}
 {
   tasks_created++;
 }
@@ -169,6 +171,7 @@ std::shared_ptr<SearchQueryTask::REQUEST_PROTO> SearchQueryTask::make_request_pr
     search_query->mutable_model()->CopyFrom(initiator->query());
   }
   search_query->set_ttl(ttl_);
+  search_query->set_id(random_seed_);
   FETCH_LOG_INFO(LOGGING_NAME, "Sending query to search: ", search_query->DebugString());
   return search_query;
 }

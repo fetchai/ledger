@@ -122,7 +122,8 @@ void OefFunctionsTaskFactory::ProcessMessage(ConstCharArrayBuffer &data)
       FETCH_LOG_INFO(LOGGING_NAME, "kSearchAgents", envelope.search_agents().DebugString());
       auto convTask = std::make_shared<SearchQueryTask>(
           std::shared_ptr<fetch::oef::pb::AgentSearch>(envelope.release_search_agents()), outbounds,
-          GetEndpoint(), envelope.msg_id(), core_key_, uri.ToString(), 1);
+          GetEndpoint(), envelope.msg_id(), core_key_, uri.ToString(), 1,
+          query_id_distribution_(random_engine_));
       convTask->SetDefaultSendReplyFunc(LOGGING_NAME, "kSearchAgents ");
       convTask->submit();
       break;
@@ -134,7 +135,8 @@ void OefFunctionsTaskFactory::ProcessMessage(ConstCharArrayBuffer &data)
       FETCH_LOG_INFO(LOGGING_NAME, "kSearchServices", envelope.search_services().DebugString());
       auto convTask = std::make_shared<SearchQueryTask>(
           std::shared_ptr<fetch::oef::pb::AgentSearch>(envelope.release_search_services()),
-          outbounds, GetEndpoint(), envelope.msg_id(), core_key_, uri.ToString(), 1);
+          outbounds, GetEndpoint(), envelope.msg_id(), core_key_, uri.ToString(), 1,
+          query_id_distribution_(random_engine_));
       convTask->SetDefaultSendReplyFunc(LOGGING_NAME, "kSearchServices ");
       convTask->submit();
       break;
@@ -147,7 +149,8 @@ void OefFunctionsTaskFactory::ProcessMessage(ConstCharArrayBuffer &data)
                      envelope.search_services_wide().DebugString());
       auto convTask = std::make_shared<SearchQueryTask>(
           std::shared_ptr<fetch::oef::pb::AgentSearch>(envelope.release_search_services_wide()),
-          outbounds, GetEndpoint(), envelope.msg_id(), core_key_, uri.ToString(), 4);
+          outbounds, GetEndpoint(), envelope.msg_id(), core_key_, uri.ToString(), 4,
+          query_id_distribution_(random_engine_));
       convTask->SetDefaultSendReplyFunc(LOGGING_NAME, "kSearchServicesWide ");
       convTask->submit();
       break;

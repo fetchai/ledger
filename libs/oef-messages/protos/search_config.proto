@@ -12,10 +12,12 @@ message SearchConfig {
   }
 
 
-  string search_key = 1;
-  string search_uri = 2;
+  string search_key       = 1;
+  string search_uri       = 2;
   repeated DapConfig daps = 3;
-  repeated string peers = 4;
+  repeated string peers   = 4;
+
+  uint64 query_cache_lifetime_sec = 5;
 
   uint32 comms_thread_count = 10;
   uint32 tasks_thread_count = 11;

@@ -96,6 +96,7 @@ int MtSearch::run()
   FETCH_LOG_INFO(LOGGING_NAME, "Search URI: ", config_.search_uri());
   FETCH_LOG_INFO(LOGGING_NAME, "comms_thread_count: ", config_.comms_thread_count());
   FETCH_LOG_INFO(LOGGING_NAME, "tasks_thread_count: ", config_.tasks_thread_count());
+  FETCH_LOG_INFO(LOGGING_NAME, "Search config: ", config_.DebugString());
 
   core = std::make_shared<Core>();
   auto tasks = std::make_shared<Taskpool>();
@@ -105,7 +106,12 @@ int MtSearch::run()
 
   dap_store_         = std::make_shared<DapStore>();
   search_peer_store_ = std::make_shared<SearchPeerStore>();
-  dap_manager_       = std::make_shared<DapManager>(dap_store_, search_peer_store_, outbounds);
+  dap_manager_       = std::make_shared<DapManager>(
+      dap_store_,
+      search_peer_store_,
+      outbounds,
+      config_.query_cache_lifetime_sec()
+      );
 
   std::size_t thread_group_id = 1500;
   for(const auto& dap_config : config_.daps()) {

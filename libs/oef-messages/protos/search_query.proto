@@ -29,4 +29,5 @@ message SearchQuery {
     uint32 ttl = 3;
     DirectedSearch directed_search = 4;
     ConstructQueryObjectRequest query_v2 = 5;
+    uint64 id = 6;
 }

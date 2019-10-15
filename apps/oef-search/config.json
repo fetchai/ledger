@@ -5,7 +5,7 @@
   "search_log": "./search.log",
   "comms_thread_count": 10,
   "tasks_thread_count": 10,
-  "search_broadcast_cache_lifetime_sec": 6,
+  "query_cache_lifetime_sec": 6,
   "director_port": 40000,
   "html_dir": "api/src/resources/website",
   "prometheus_api_path": "/metrics",
@@ -47,6 +47,5 @@
     }
   ],
   "peers": [
-    "tcp://127.0.0.1:10001"
   ]
 }

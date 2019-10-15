@@ -21,7 +21,7 @@ public:
   SearchQueryTask(std::shared_ptr<IN_PROTO>              initiator,
                   std::shared_ptr<OutboundConversations> outbounds,
                   std::shared_ptr<OefAgentEndpoint> endpoint, uint32_t msg_id, std::string core_key,
-                  std::string agent_uri, uint16_t ttl);
+                  std::string agent_uri, uint16_t ttl, uint64_t random_seed);
   virtual ~SearchQueryTask();
 
   static constexpr char const *LOGGING_NAME = "SearchQueryTask";
@@ -36,6 +36,7 @@ public:
 
 protected:
   uint16_t ttl_;
+  uint64_t random_seed_;
 
 private:
   SearchQueryTask(const SearchQueryTask &other) = delete;  // { copy(other); }

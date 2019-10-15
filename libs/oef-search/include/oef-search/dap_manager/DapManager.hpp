@@ -11,6 +11,7 @@
 #include "oef-search/dap_manager/BranchExecutorTask.hpp"
 #include "oef-search/dap_manager/DapStore.hpp"
 #include "oef-search/dap_manager/NodeExecutorFactory.hpp"
+#include "oef-search/dap_manager/IdCache.hpp"
 #include "oef-search/search_comms/SearchPeerStore.hpp"
 #include "visitors/AddMoreDapsBasedOnOptionsVisitor.hpp"
 #include "visitors/CollectDapsVisitor.hpp"
@@ -28,11 +29,15 @@ public:
 
   DapManager(std::shared_ptr<DapStore>              dap_store,
              std::shared_ptr<SearchPeerStore>       search_peer_store,
-             std::shared_ptr<OutboundConversations> outbounds)
+             std::shared_ptr<OutboundConversations> outbounds,
+             uint64_t query_cache_lifetime_sec)
     : dap_store_{std::move(dap_store)}
     , search_peer_store_{std::move(search_peer_store)}
     , outbounds_{std::move(outbounds)}
-  {}
+    , query_id_cache_{std::make_shared<IdCache>(query_cache_lifetime_sec, query_cache_lifetime_sec)}
+  {
+    query_id_cache_->submit();
+  }
   virtual ~DapManager() = default;
 
   void setup()
@@ -185,6 +190,11 @@ public:
     {
       result->set(false);
     }
+    else if (query_id_cache_->IsCached(query.id()))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Query cached, will be ignored!");
+      result->set(false);
+    }
     else if (query.has_directed_search() && query.directed_search().has_target())
     {
       if (query.directed_search().has_distance())
@@ -254,6 +264,8 @@ public:
   std::shared_ptr<FutureComplexType<std::shared_ptr<IdentifierSequence>>> broadcast(
       std::shared_ptr<Branch> root, const fetch::oef::pb::SearchQuery &query)
   {
+    query_id_cache_->Add(query.id());
+
     auto result  = std::make_shared<FutureComplexType<std::shared_ptr<IdentifierSequence>>>();
     auto this_sp = this->shared_from_this();
     std::weak_ptr<DapManager> this_wp = this_sp;
@@ -553,6 +565,7 @@ protected:
   std::shared_ptr<DapStore>              dap_store_;
   std::shared_ptr<SearchPeerStore>       search_peer_store_;
   std::shared_ptr<OutboundConversations> outbounds_;
+  std::shared_ptr<IdCache>               query_id_cache_;
   std::size_t                            parallel_call_msg_id = 2220;
   std::size_t                            single_call_msg_id   = 66600;
   std::size_t                            serial_call_msg_id   = 999000;
