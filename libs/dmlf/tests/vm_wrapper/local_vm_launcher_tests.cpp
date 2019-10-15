@@ -20,6 +20,7 @@
 
 #include "dmlf/local_vm_launcher.hpp"
 
+#include "dmlf/execution/execution_error_message.hpp"
 #include "variant/variant.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -38,6 +39,9 @@ namespace {
 
 using namespace fetch::vm;
 using namespace fetch::dmlf;
+
+using Stage = ExecutionErrorMessage::Stage;
+using Code = ExecutionErrorMessage::Code;
 
 // using Params = fetch::dmlf::LocalVmLauncher::Params;
 // using Status = fetch::dmlf::VmWrapperInterface::Status;
@@ -652,6 +656,200 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick_VM_CopyState)
 
 
   //EXPECT_EQ(output.str(), "0\n1\n2\n2\n3\n3\n4\n4\n");
+}
+
+TEST(VmLauncherDmlfTests, local_CopyState_BadSrc)
+{
+  LocalVmLauncher launcher;
+
+  ExecutionResult createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult copyState = launcher.CopyState("badName", "newState");
+  EXPECT_FALSE(copyState.succeeded());
+  EXPECT_EQ(copyState.error().stage(), Stage::ENGINE);
+  EXPECT_EQ(copyState.error().code(), Code::BAD_STATE);
+}
+
+TEST(VmLauncherDmlfTests, local_CopyState_BadDest)
+{
+  LocalVmLauncher launcher;
+
+  ExecutionResult createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+  ExecutionResult createdState2 = launcher.CreateState("other");
+  EXPECT_TRUE(createdState2.succeeded());
+
+  ExecutionResult copyState = launcher.CopyState("state", "other");
+  EXPECT_FALSE(copyState.succeeded());
+}
+TEST(VmLauncherDmlfTests, local_DeleteExecutable)
+{
+  LocalVmLauncher launcher;
+
+  ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = launcher.Run("helloWorld", "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 1);
+
+  ExecutionResult deleteResult = launcher.DeleteExecutable("goodbyeWorld");
+  EXPECT_FALSE(deleteResult.succeeded());
+  result = launcher.Run("helloWorld", "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 1);
+
+  deleteResult = launcher.DeleteExecutable("helloWorld");
+  EXPECT_TRUE(deleteResult.succeeded());
+  result = launcher.Run("helloWorld", "state", "main");
+  EXPECT_FALSE(result.succeeded());
+}
+
+TEST(VmLauncherDmlfTests, local_ReplaceExecutable)
+{
+  LocalVmLauncher launcher;
+
+  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = launcher.Run("tick", "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 0);
+
+  result = launcher.Run("tick", "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 1);
+
+  ExecutionResult deleteResult = launcher.DeleteExecutable("tick");
+  EXPECT_TRUE(deleteResult.succeeded());
+  result = launcher.Run("tick", "state", "main");
+  EXPECT_FALSE(result.succeeded());
+
+  createdProgram = launcher.CreateExecutable("tick", {{"etch", tick2}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  result = launcher.Run("tick", "state", "tick2");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 2);
+
+  result = launcher.Run("tick", "state", "tick2");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 4);
+}
+
+TEST(VmLauncherDmlfTests, local_Tick_Delete_State)
+{
+  LocalVmLauncher launcher;
+
+  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 0);
+
+  result = launcher.Run("tick",  "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 1);
+
+  ExecutionResult deleteState = launcher.DeleteState("badState");
+  EXPECT_FALSE(deleteState.succeeded());
+  deleteState = launcher.DeleteState("state");
+  EXPECT_TRUE(deleteState.succeeded());
+
+  result = launcher.Run("tick",  "state", "main");
+  EXPECT_FALSE(result.succeeded());
+  EXPECT_EQ(result.error().stage(), Stage::ENGINE);
+  EXPECT_EQ(result.error().code(), Code::BAD_STATE);
+}
+
+TEST(VmLauncherDmlfTests, local_Tick_Replace_State)
+{
+  LocalVmLauncher launcher;
+
+  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 0);
+
+  result = launcher.Run("tick",  "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 1);
+
+  ExecutionResult deleteState = launcher.DeleteState("state");
+  EXPECT_TRUE(deleteState.succeeded());
+
+  createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  result = launcher.Run("tick",  "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 0);
+
+  result = launcher.Run("tick",  "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 1);
+}
+
+TEST(VmLauncherDmlfTests, local_Tick_ReplaceByCopy_State)
+{
+  LocalVmLauncher launcher;
+
+  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 0);
+
+  result = launcher.Run("tick",  "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 1);
+
+  createdState = launcher.CreateState("state2");
+  EXPECT_TRUE(createdState.succeeded());
+
+  result = launcher.Run("tick",  "state2", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 0);
+
+  result = launcher.Run("tick",  "state2", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 1);
+
+
+
+  ExecutionResult deleteState = launcher.DeleteState("state");
+  EXPECT_TRUE(deleteState.succeeded());
+
+  ExecutionResult copyState = launcher.CopyState("state2", "state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  result = launcher.Run("tick",  "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 2);
+
+  result = launcher.Run("tick",  "state", "main");
+  EXPECT_TRUE(result.succeeded());
+  EXPECT_EQ(result.output().Get<int>(), 3);
 }
 
 //TEST(VmLauncherDmlfTests, local_params)

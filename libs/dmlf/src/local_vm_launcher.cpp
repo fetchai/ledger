@@ -58,7 +58,7 @@ ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFi
       errorString << line << '\n';
     }
 
-    return ExecutionResult{Variant{}, Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()}, "Compilation error: Didn't create " + execName};
+    return ExecutionResult{Variant{}, Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()}, "Compilation error: Did not create " + execName};
   }
 
   programs_.emplace(execName, std::move(newExecutable));
@@ -67,7 +67,14 @@ ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFi
 }
 ExecutionResult LocalVmLauncher::DeleteExecutable(Name const &execName)                             
 {
-  return ExecutionResult{};
+  if (!HasExecutable(execName))
+  {
+    return EngineError("Didn't delete executable " + execName, Error::Code::BAD_EXECUTABLE, "Error: executable " + execName + " does not exist.");
+  }
+
+  programs_.erase(execName);
+
+  return EngineSuccess("Deleted executable " + execName, "");
 }
 
 ExecutionResult LocalVmLauncher::CreateState(Name const &stateName)                  
@@ -96,7 +103,14 @@ ExecutionResult LocalVmLauncher::CopyState(Name const &srcName, Name const &newN
 }
 ExecutionResult LocalVmLauncher::DeleteState(Name const &stateName)                  
 {
-  return ExecutionResult{};
+  if (!HasState(stateName))
+  {
+    return EngineError("Did not delete state " + stateName, Error::Code::BAD_STATE, "Error: No state named " + stateName);
+  }
+
+  states_.erase(stateName);
+
+  return EngineSuccess("Deleted state " + stateName, "");
 }
 
 ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName,
