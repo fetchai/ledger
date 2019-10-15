@@ -20,9 +20,7 @@
 #include "dmlf/execution/execution_engine_interface.hpp"
 #include "dmlf/execution/execution_interface.hpp"
 
-#include <map>
 #include <memory>
-#include <sstream>
 
 namespace fetch {
 namespace dmlf {
@@ -30,7 +28,9 @@ namespace dmlf {
 class LocalExecutor : public ExecutionInterface
 {
 public:
-  LocalExecutor();
+  using ExecutionEnginePtr = std::shared_ptr<ExecutionEngineInterface>;
+
+  LocalExecutor(ExecutionEnginePtr &exec_engine);
   virtual ~LocalExecutor();
 
   LocalExecutor(LocalExecutor const &other) = delete;
@@ -60,6 +60,9 @@ public:
 
   virtual PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
                               std::string const &entrypoint) override;
+
+private:
+  ExecutionEnginePtr exec_engine_;
 };
 
 }  // namespace dmlf
