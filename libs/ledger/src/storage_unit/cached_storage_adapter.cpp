@@ -124,15 +124,12 @@ CachedStorageAdapter::Document CachedStorageAdapter::GetOrCreate(ResourceAddress
   else
   {
     // not in the cache need to retrieve
-    auto const storage_result = storage_.GetOrCreate(key);
+    result = storage_.GetOrCreate(key);
 
     if (!result.failed)
     {
       // update the result
-      AddCacheEntry(key, storage_result.document);
-
-      // update the result
-      result = storage_result;
+      AddCacheEntry(key, result.document);
     }
   }
 
