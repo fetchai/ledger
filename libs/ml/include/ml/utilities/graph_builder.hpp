@@ -41,6 +41,7 @@
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/avg_pool_1d.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/convolution_1d.hpp"
 #include "ml/ops/convolution_2d.hpp"
@@ -313,6 +314,14 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
+  case ops::AvgPool1D<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::AvgPool1D<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+
   case ops::Maximum<T>::OpCode():
   {
     op_ptr = GetOp<ops::Maximum<T>>(nsp.op_save_params);
