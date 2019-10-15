@@ -82,6 +82,7 @@ ExecutionResult LocalVmLauncher::CreateState(Name const &stateName)
   states_.emplace(stateName, std::make_shared<State>());
   return ExecutionResult{Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""}, "Created state " + stateName};
 }
+
 ExecutionResult LocalVmLauncher::CopyState(Name const &srcName, Name const &newName) 
 {
   if (!HasState(srcName))
@@ -90,13 +91,14 @@ ExecutionResult LocalVmLauncher::CopyState(Name const &srcName, Name const &newN
   }
   if (HasState(newName))
   {
-    return EngineError("Couldn't copy state " + srcName + " to " + newName, Error::Code::BAD_DESTINATION, "Error: state " + srcName + " already exists.");
+    return EngineError("Couldn't copy state " + srcName + " to " + newName, Error::Code::BAD_DESTINATION, "Error: state " + newName + " already exists.");
   }
 
   states_.emplace(std::move(newName), std::make_shared<State>(states_[srcName]->DeepCopy()));
 
   return EngineSuccess("Copied state " + srcName + " to " + newName, "");
 }
+
 ExecutionResult LocalVmLauncher::DeleteState(Name const &stateName)                  
 {
   if (!HasState(stateName))

@@ -133,6 +133,30 @@ function tock() : Int32
 endfunction
 )";
 
+auto const badCompile = R"(
+
+function main() 
+
+  return 1;
+
+endfunction)";
+
+auto const runtimeError = R"(
+
+function main() : Int32
+    
+    var name = Array<Int32>(2);
+    
+    var a = 0;
+    
+    for (i in 0:4)
+       a = name[i];
+    endfor
+
+    return 1;
+endfunction)";
+
+
 //auto const add = R"(
 //
 //function add(a : Int32, b : Int32)
@@ -191,7 +215,11 @@ TEST(VmLauncherDmlfTests, repeated_HelloWorld)
   createdState   = launcher.CreateState("state");
 
   EXPECT_FALSE(createdProgram.succeeded());
+  EXPECT_EQ(createdProgram.error().stage(), Stage::ENGINE);
+  EXPECT_EQ(createdProgram.error().code(), Code::BAD_EXECUTABLE);
   EXPECT_FALSE(createdState.succeeded());
+  EXPECT_EQ(createdState.error().stage(), Stage::ENGINE);
+  EXPECT_EQ(createdState.error().code(), Code::BAD_STATE);
 
   ExecutionResult result = launcher.Run("helloWorld",  "state", "main");
   EXPECT_TRUE(result.succeeded());
@@ -682,6 +710,8 @@ TEST(VmLauncherDmlfTests, local_CopyState_BadDest)
 
   ExecutionResult copyState = launcher.CopyState("state", "other");
   EXPECT_FALSE(copyState.succeeded());
+  EXPECT_EQ(copyState.error().stage(), Stage::ENGINE);
+  EXPECT_EQ(copyState.error().code(), Code::BAD_DESTINATION);
 }
 TEST(VmLauncherDmlfTests, local_DeleteExecutable)
 {
@@ -699,6 +729,8 @@ TEST(VmLauncherDmlfTests, local_DeleteExecutable)
 
   ExecutionResult deleteResult = launcher.DeleteExecutable("goodbyeWorld");
   EXPECT_FALSE(deleteResult.succeeded());
+  EXPECT_EQ(deleteResult.error().stage(), Stage::ENGINE);
+  EXPECT_EQ(deleteResult.error().code(), Code::BAD_EXECUTABLE);
   result = launcher.Run("helloWorld", "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
@@ -707,6 +739,8 @@ TEST(VmLauncherDmlfTests, local_DeleteExecutable)
   EXPECT_TRUE(deleteResult.succeeded());
   result = launcher.Run("helloWorld", "state", "main");
   EXPECT_FALSE(result.succeeded());
+  EXPECT_EQ(result.error().stage(), Stage::ENGINE);
+  EXPECT_EQ(result.error().code(), Code::BAD_EXECUTABLE);
 }
 
 TEST(VmLauncherDmlfTests, local_ReplaceExecutable)
@@ -731,6 +765,8 @@ TEST(VmLauncherDmlfTests, local_ReplaceExecutable)
   EXPECT_TRUE(deleteResult.succeeded());
   result = launcher.Run("tick", "state", "main");
   EXPECT_FALSE(result.succeeded());
+  EXPECT_EQ(result.error().stage(), Stage::ENGINE);
+  EXPECT_EQ(result.error().code(), Code::BAD_EXECUTABLE);
 
   createdProgram = launcher.CreateExecutable("tick", {{"etch", tick2}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -764,6 +800,8 @@ TEST(VmLauncherDmlfTests, local_Tick_Delete_State)
 
   ExecutionResult deleteState = launcher.DeleteState("badState");
   EXPECT_FALSE(deleteState.succeeded());
+  EXPECT_EQ(deleteState.error().stage(), Stage::ENGINE);
+  EXPECT_EQ(deleteState.error().code(), Code::BAD_STATE);
   deleteState = launcher.DeleteState("state");
   EXPECT_TRUE(deleteState.succeeded());
 
@@ -850,6 +888,32 @@ TEST(VmLauncherDmlfTests, local_Tick_ReplaceByCopy_State)
   result = launcher.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
+}
+
+TEST(VmLauncherDmlfTests, local_BadCompile)
+{
+  LocalVmLauncher launcher;
+
+  ExecutionResult createdProgram = launcher.CreateExecutable("badCompile", {{"etch", badCompile}});
+  EXPECT_FALSE(createdProgram.succeeded());
+  EXPECT_EQ(createdProgram.error().stage(), Stage::COMPILE);
+  EXPECT_EQ(createdProgram.error().code(), Code::COMPILATION_ERROR);
+}
+
+TEST(VmLauncherDmlfTests, local_runtimeError)
+{
+  LocalVmLauncher launcher;
+
+  ExecutionResult createdProgram = launcher.CreateExecutable("runtime", {{"etch", runtimeError}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = launcher.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = launcher.Run("runtime", "state", "main");
+  EXPECT_FALSE(result.succeeded());
+  EXPECT_EQ(result.error().stage(), Stage::RUNNING);
+  EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
 }
 
 //TEST(VmLauncherDmlfTests, local_params)
