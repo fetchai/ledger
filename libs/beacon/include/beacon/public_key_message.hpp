@@ -19,10 +19,9 @@
 
 #include "crypto/mcl_dkg.hpp"
 
-#include <vector>
-
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace fetch {
 namespace beacon {

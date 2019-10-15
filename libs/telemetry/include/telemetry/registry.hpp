@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "telemetry/measurement.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <algorithm>
 #include <initializer_list>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -82,7 +82,6 @@ public:
 private:
   using MeasurementPtr = std::shared_ptr<Measurement>;
   using Measurements   = std::vector<MeasurementPtr>;
-  using Mutex          = std::mutex;
 
   // Construction / Destruction
   Registry()  = default;
