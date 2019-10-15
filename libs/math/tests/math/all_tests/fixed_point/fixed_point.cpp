@@ -224,6 +224,104 @@ TEST(FixedPointTest, Conversion_32_32)
   EXPECT_EQ(fp64_t::DECIMAL_DIGITS, 9);
 }
 
+// TEST(FixedPointTest, Conversion_64_64)
+// {
+//   // Positive
+//   FixedPoint<64, 64> one(1);
+//   FixedPoint<64, 64> two(2);
+
+//   EXPECT_EQ(static_cast<int>(one), 1);
+//   EXPECT_EQ(static_cast<int>(two), 2);
+//   EXPECT_EQ(static_cast<float>(one), 1.0f);
+//   EXPECT_EQ(static_cast<float>(two), 2.0f);
+//   EXPECT_EQ(static_cast<double>(one), 1.0);
+//   EXPECT_EQ(static_cast<double>(two), 2.0);
+
+//   // Negative
+//   FixedPoint<64, 64> m_one(-1);
+//   FixedPoint<64, 64> m_two(-2);
+
+//   EXPECT_EQ(static_cast<int>(m_one), -1);
+//   EXPECT_EQ(static_cast<int>(m_two), -2);
+//   EXPECT_EQ(static_cast<float>(m_one), -1.0f);
+//   EXPECT_EQ(static_cast<float>(m_two), -2.0f);
+//   EXPECT_EQ(static_cast<double>(m_one), -1.0);
+//   EXPECT_EQ(static_cast<double>(m_two), -2.0);
+
+//   // _0
+//   FixedPoint<64, 64> zero(0);
+//   FixedPoint<64, 64> m_zero(-0);
+
+//   EXPECT_EQ(static_cast<int>(zero), 0);
+//   EXPECT_EQ(static_cast<int>(m_zero), 0);
+//   EXPECT_EQ(static_cast<float>(zero), 0.0f);
+//   EXPECT_EQ(static_cast<float>(m_zero), 0.0f);
+//   EXPECT_EQ(static_cast<double>(zero), 0.0);
+//   EXPECT_EQ(static_cast<double>(m_zero), 0.0);
+
+//   // Get raw value
+//   FixedPoint<64, 64> zero_point_five(0.5);
+//   FixedPoint<64, 64> one_point_five(1.5);
+//   FixedPoint<64, 64> two_point_five(2.5);
+//   FixedPoint<64, 64> m_one_point_five(-1.5);
+
+//   EXPECT_EQ(zero_point_five.Data(), 0x080000000);
+//   EXPECT_EQ(one.Data(), 0x100000000);
+//   EXPECT_EQ(one_point_five.Data(), 0x180000000);
+//   EXPECT_EQ(two_point_five.Data(), 0x280000000);
+
+//   // Convert from raw value
+//   FixedPoint<64, 64> two_point_five_raw(2, 0x080000000);
+//   FixedPoint<64, 64> m_two_point_five_raw(-2, 0x080000000);
+//   EXPECT_EQ(two_point_five, two_point_five_raw);
+//   EXPECT_EQ(m_one_point_five, m_two_point_five_raw);
+
+//   // Extreme cases:
+//   // smallest possible double representable to a FixedPoint
+//   FixedPoint<64, 64> infinitesimal(0.0000000004);
+//   // Largest fractional closest to one, representable to a FixedPoint
+//   FixedPoint<64, 64> almost_one(0.9999999998);
+//   // Largest fractional closest to one, representable to a FixedPoint
+//   FixedPoint<64, 64> largest_int(std::numeric_limits<int64_t>::max() - 1);
+
+//   // Smallest possible integer, increase by one, in order to allow for the fractional part.
+//   FixedPoint<64, 64> smallest_int(std::numeric_limits<int64_t>::min() + 2);
+
+//   // Largest possible Fixed Point number.
+//   FixedPoint<64, 64> largest_fixed_point = largest_int + almost_one;
+
+//   // Smallest possible Fixed Point number.
+//   FixedPoint<64, 64> smallest_fixed_point = smallest_int - almost_one;
+
+//   EXPECT_EQ(infinitesimal.Data(), fp128_t::SMALLEST_FRACTION);
+//   EXPECT_EQ(almost_one.Data(), fp128_t::LARGEST_FRACTION);
+//   EXPECT_EQ(largest_int.Data(), fp128_t::MAX_INT);
+//   EXPECT_EQ(smallest_int.Data(), fp128_t::MIN_INT);
+//   EXPECT_EQ(largest_fixed_point.Data(), fp128_t::MAX);
+//   EXPECT_EQ(smallest_fixed_point.Data(), fp128_t::MIN);
+//   EXPECT_EQ(fp128_t::MIN, 0x8000000100000001);
+//   EXPECT_EQ(fp128_t::MAX, 0x7ffffffeffffffff);
+
+//   // We cannot be smaller than the actual negative integer of the actual type
+//   EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<int64_t>::min());
+//   // On the other hand we expect to be exactly the same as the largest positive integer of int64_t
+//   EXPECT_TRUE(largest_fixed_point.Data() < std::numeric_limits<int64_t>::max());
+
+//   EXPECT_EQ(sizeof(one), 8);
+
+//   EXPECT_EQ(static_cast<int>(one), 1);
+//   EXPECT_EQ(static_cast<unsigned>(one), 1);
+//   EXPECT_EQ(static_cast<int32_t>(one), 1);
+//   EXPECT_EQ(static_cast<uint32_t>(one), 1);
+//   EXPECT_EQ(static_cast<long>(one), 1);
+//   EXPECT_EQ(static_cast<uint64_t>(one), 1);
+//   EXPECT_EQ(static_cast<int64_t>(one), 1);
+//   EXPECT_EQ(static_cast<uint64_t>(one), 1);
+
+//   EXPECT_EQ(fp128_t::TOLERANCE.Data(), 0x200);
+//   EXPECT_EQ(fp128_t::DECIMAL_DIGITS, 9);
+// }
+
 TEST(FixedPointTest, Addition_16_16)
 {
   // Positive

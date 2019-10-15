@@ -100,12 +100,10 @@ using MyTypes = ::testing::Types<
     fetch::vectorise::VectorRegister<double, 128>, fetch::vectorise::VectorRegister<double, 256>>;
 
 using MyFPTypes =
-    ::testing::Types</*fetch::vectorise::VectorRegister<float, 256>,*/
-                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
+    ::testing::Types<fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
                      fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
                      fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
-                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>  //,
-                     /*fetch::vectorise::VectorRegister<double, 256>*/>;
+                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>>;
 #else
 using MyTypes = ::testing::Types<fetch::vectorise::VectorRegister<float, 32>,
                                  fetch::vectorise::VectorRegister<int32_t, 32>,
@@ -291,7 +289,7 @@ class VectorNaNInfTest : public ::testing::Test
 {
 };
 TYPED_TEST_CASE(VectorNaNInfTest, MyFPTypes);
-TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
+TYPED_TEST(VectorNaNInfTest, nan_inf_add_tests)
 {
   using type = typename TypeParam::type;
 
@@ -312,34 +310,23 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   TypeParam vnan{NaN};
   TypeParam va{A};
   TypeParam vb{B};
-  std::cout << "va = " << va << std::endl;
-  std::cout << "vb = " << vb << std::endl;
-  std::cout << "vpos_inf = " << vpos_inf << std::endl;
-  std::cout << "vneg_inf = " << vneg_inf << std::endl;
-  std::cout << "vnan = " << vnan << std::endl;
-
-  std::cout << "MAX = " << TypeParam::MaskMax() << std::endl;
-  std::cout << "MIN = " << TypeParam::MaskMin() << std::endl;
-  std::cout << "NaN != NaN" << std::endl;
+  // NaN != NaN
   EXPECT_FALSE(any_equal_to(vnan, vnan));
-  std::cout << "-inf == -inf" << std::endl;
+  // -inf == -inf
   EXPECT_TRUE(all_equal_to(vneg_inf, vneg_inf));
-  std::cout << "+inf == +inf" << std::endl;
+  // +inf == +inf
   EXPECT_TRUE(all_equal_to(vpos_inf, vpos_inf));
-  std::cout << "-inf < +inf" << std::endl;
+  // -inf < +inf
   EXPECT_TRUE(all_less_than(vneg_inf, vpos_inf));
-  std::cout << "MAX < +inf" << std::endl;
+  // MAX < +inf
   EXPECT_TRUE(all_less_than(TypeParam::MaskMax(), vpos_inf));
-  std::cout << "-inf < MIN" << std::endl;
+  // -inf < MIN
   EXPECT_TRUE(all_less_than(vneg_inf, TypeParam::MaskMin()));
-  std::cout << "-inf < 0" << std::endl;
+  // -inf < 0
   EXPECT_TRUE(all_less_than(vneg_inf, TypeParam::_0()));
 
   VectorRegister<int32_t, TypeParam::E_VECTOR_SIZE> vtest_int(-1073709056);
   VectorRegister<type, TypeParam::E_VECTOR_SIZE>    vtest_fp(vtest_int.data());
-  std::cout << "vtest = " << vtest_int << std::endl;
-  std::cout << "vtest = " << vtest_fp << std::endl;
-  std::cout << "-inf < vtest = " << (vneg_inf < vtest_fp) << std::endl;
 
   // Normal state check
   type::StateClear();
@@ -620,6 +607,29 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
       EXPECT_EQ(C[i], D[i]);
     }
   }
+}
+
+TYPED_TEST(VectorNaNInfTest, nan_inf_mul_tests)
+{
+  using type = typename TypeParam::type;
+
+  alignas(32) type PInf[TypeParam::E_BLOCK_COUNT], NInf[TypeParam::E_BLOCK_COUNT],
+      NaN[TypeParam::E_BLOCK_COUNT], A[TypeParam::E_BLOCK_COUNT], B[TypeParam::E_BLOCK_COUNT],
+      C[TypeParam::E_BLOCK_COUNT], D[TypeParam::E_BLOCK_COUNT];
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    PInf[i] = type::POSITIVE_INFINITY;
+    NInf[i] = type::NEGATIVE_INFINITY;
+    NaN[i]  = type::NaN;
+    A[i]    = -type::FP_MAX / 2 - i;
+    B[i]    = -type::FP_MAX / 2;
+    C[i]    = A[i] + B[i];
+  }
+  TypeParam vpos_inf{PInf};
+  TypeParam vneg_inf{NInf};
+  TypeParam vnan{NaN};
+  TypeParam va{A};
+  TypeParam vb{B};
 
   // Infinity state check, A * B
   type::StateClear();

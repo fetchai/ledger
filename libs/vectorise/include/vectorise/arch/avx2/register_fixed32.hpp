@@ -255,14 +255,14 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator~(
     VectorRegister<fixed_point::fp32_t, 128> const &x)
 {
   VectorRegister<int32_t, 128> ret = operator~(VectorRegister<int32_t, 128>(x.data()));
-  return VectorRegister<fixed_point::fp32_t, 128>(ret.data());
+  return {ret.data()};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 256> operator~(
     VectorRegister<fixed_point::fp32_t, 256> const &x)
 {
   VectorRegister<int32_t, 256> ret = operator~(VectorRegister<int32_t, 256>(x.data()));
-  return VectorRegister<fixed_point::fp32_t, 256>(ret.data());
+  return {ret.data()};
 }
 
 #define FETCH_ADD_OPERATOR(op, type, size, base_type)                                             \
@@ -303,7 +303,7 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator==(
   VectorRegister<int32_t, 128> ret =
       (VectorRegister<int32_t, 128>(a.data()) == VectorRegister<int32_t, 128>(b.data()));
   ret.data() = _mm_blendv_epi8(ret.data(), _mm_setzero_si128(), (mask_nan_a | mask_nan_b).data());
-  return VectorRegister<fixed_point::fp32_t, 128>(ret.data());
+  return {ret.data()};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 256> operator==(
@@ -316,7 +316,7 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator==(
       (VectorRegister<int32_t, 256>(a.data()) == VectorRegister<int32_t, 256>(b.data()));
   ret.data() =
       _mm256_blendv_epi8(ret.data(), _mm256_setzero_si256(), (mask_nan_a | mask_nan_b).data());
-  return VectorRegister<fixed_point::fp32_t, 256>(ret.data());
+  return {ret.data()};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 128> operator!=(
@@ -328,7 +328,7 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator!=(
   VectorRegister<int32_t, 128> ret =
       (VectorRegister<int32_t, 128>(a.data()) != VectorRegister<int32_t, 128>(b.data()));
   ret.data() = _mm_blendv_epi8(ret.data(), _mm_setzero_si128(), (mask_nan_a | mask_nan_b).data());
-  return VectorRegister<fixed_point::fp32_t, 128>(ret.data());
+  return {ret.data()};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 256> operator!=(
@@ -341,7 +341,7 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator!=(
       (VectorRegister<int32_t, 256>(a.data()) != VectorRegister<int32_t, 256>(b.data()));
   ret.data() =
       _mm256_blendv_epi8(ret.data(), _mm256_setzero_si256(), (mask_nan_a | mask_nan_b).data());
-  return VectorRegister<fixed_point::fp32_t, 256>(ret.data());
+  return {ret.data()};
 }
 
 inline bool all_less_than(VectorRegister<fixed_point::fp32_t, 128> const &x,
@@ -411,7 +411,7 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator-(
   ret.data()                       = _mm_blendv_epi8(
       ret.data(), VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t::NaN).data(),
       mask.data());
-  return VectorRegister<fixed_point::fp32_t, 128>(ret.data());
+  return {ret.data()};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 256> operator-(
@@ -423,7 +423,7 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator-(
   ret.data()                       = _mm256_blendv_epi8(
       ret.data(), VectorRegister<fixed_point::fp32_t, 256>(fixed_point::fp32_t::NaN).data(),
       mask.data());
-  return VectorRegister<fixed_point::fp32_t, 256>(ret.data());
+  return {ret.data()};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 128> operator+(
@@ -497,9 +497,9 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator+(
   bool is_infinity = any_equal_to(mask_pos_inf | mask_neg_inf,
                                   VectorRegister<fixed_point::fp32_t, 128>::MaskAllBits());
   bool is_nan = any_equal_to(mask_nan, VectorRegister<fixed_point::fp32_t, 128>::MaskAllBits());
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY * is_infinity;
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_NAN * is_nan;
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW * is_overflow;
+  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
+  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_NAN * static_cast<uint32_t>(is_nan);
+  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
 
   return sum;
 }
@@ -577,9 +577,9 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator+(
   bool is_infinity = any_equal_to(mask_pos_inf | mask_neg_inf,
                                   VectorRegister<fixed_point::fp32_t, 256>::MaskAllBits());
   bool is_nan = any_equal_to(mask_nan, VectorRegister<fixed_point::fp32_t, 256>::MaskAllBits());
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY * is_infinity;
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_NAN * is_nan;
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW * is_overflow;
+  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
+  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_NAN * static_cast<uint32_t>(is_nan);
+  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
 
   return sum;
 }
@@ -677,11 +677,11 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator*(
   bool is_infinity = any_equal_to(mask_pos_inf | mask_neg_inf,
                                   VectorRegister<fixed_point::fp32_t, 128>::MaskAllBits());
   bool is_nan = any_equal_to(mask_nan, VectorRegister<fixed_point::fp32_t, 128>::MaskAllBits());
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY * is_infinity;
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_NAN * is_nan;
-  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW * is_overflow;
+  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY * static_cast<uint32_t>(is_infinity);
+  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_NAN * static_cast<uint32_t>(is_nan);
+  fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
 
-  return VectorRegister<fixed_point::fp32_t, 128>(prod.data());
+  return {prod.data()};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 256> operator*(
@@ -798,48 +798,42 @@ inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 128> const
     fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_NAN;
     return fixed_point::fp32_t::NaN;
   }
-  else if (is_pos_inf)
+  if (is_pos_inf)
   {
     fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY;
     return fixed_point::fp32_t::POSITIVE_INFINITY;
   }
-  else if (is_neg_inf)
+   if (is_neg_inf)
   {
     fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_INFINITY;
     return fixed_point::fp32_t::NEGATIVE_INFINITY;
   }
-  else
-  {
-    // We can't use AVX _mm_hadd_epi32 in this case as we need to check for overflows, but we still
-    // can save some cycles from doing only the overflow checks vs doing the full addition per
-    // element
+  // We can't use AVX _mm_hadd_epi32 in this case as we need to check for overflows, but we still
+  // can save some cycles from doing only the overflow checks vs doing the full addition per
+  // element
 
-    alignas(VectorRegister<fixed_point::fp32_t, 128>::E_REGISTER_SIZE) fixed_point::fp32_t x_[4];
-    x.Store(x_);
-    fixed_point::fp32_t sum{x_[0]};
-    for (size_t i = 1; i < 4; i++)
+  alignas(VectorRegister<fixed_point::fp32_t, 128>::E_REGISTER_SIZE) fixed_point::fp32_t x_[4];
+  x.Store(x_);
+  fixed_point::fp32_t sum{x_[0]};
+  for (size_t i = 1; i < 4; i++)
+  {
+    if (fixed_point::fp32_t::CheckOverflow(
+            static_cast<fixed_point::fp32_t::NextType>(sum.Data()) +
+            static_cast<fixed_point::fp32_t::NextType>(x_[i].Data())))
     {
-      if (fixed_point::fp32_t::CheckOverflow(
-              static_cast<fixed_point::fp32_t::NextType>(sum.Data()) +
-              static_cast<fixed_point::fp32_t::NextType>(x_[i].Data())))
-      {
-        fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW;
-        return fixed_point::fp32_t::FP_MAX;
-      }
-      else if (fixed_point::fp32_t::CheckUnderflow(
-                   static_cast<fixed_point::fp32_t::NextType>(sum.Data()) +
-                   static_cast<fixed_point::fp32_t::NextType>(x_[i].Data())))
-      {
-        fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW;
-        return fixed_point::fp32_t::FP_MIN;
-      }
-      else
-      {
-        sum.Data() += x_[i].Data();
-      }
+      fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW;
+      return fixed_point::fp32_t::FP_MAX;
     }
-    return sum;
+    if (fixed_point::fp32_t::CheckUnderflow(
+                 static_cast<fixed_point::fp32_t::NextType>(sum.Data()) +
+                 static_cast<fixed_point::fp32_t::NextType>(x_[i].Data())))
+    {
+      fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW;
+      return fixed_point::fp32_t::FP_MIN;
+    }
+    sum.Data() += x_[i].Data();
   }
+  return sum;
 }
 
 inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 256> const &x)
