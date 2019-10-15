@@ -73,9 +73,9 @@ EnableIf<IsAny8BitInteger<T>> StringifyNumber(std::ostream &out, T const &el)
 }
 
 template <typename T>
-void StringifyArrayElement(TypeId id, std::ostream &out, T const &el)
+void StringifyArrayElement(TypeId type_id, std::ostream &out, T const &el)
 {
-  if (id == TypeIds::Bool)
+  if (type_id == TypeIds::Bool)
   {
     StringifyBool(out, static_cast<bool>(el));
   }

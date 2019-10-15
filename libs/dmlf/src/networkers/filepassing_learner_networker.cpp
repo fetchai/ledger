@@ -46,9 +46,9 @@ void FilepassingLearnerNetworker::SetName(const std::string &name)
   }
 
   auto names = GetUpdateNames();
-  for (auto const &name : names)
+  for (auto const &name_to_unlink : names)
   {
-    ::unlink(name.c_str());
+    ::unlink(name_to_unlink.c_str());
   }
   running_ = true;
   watcher_ = std::make_shared<std::thread>(&FilepassingLearnerNetworker::CheckUpdates, this);
