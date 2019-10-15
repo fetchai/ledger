@@ -32,7 +32,7 @@ namespace ledger {
  * @return The corresponding status result for the operation
  */
 Contract::Result Contract::DispatchInitialise(Address const &owner, Transaction const &tx,
-                                              Transaction::BlockIndex block_index)
+                                              BlockIndex block_index)
 {
   Result status{Status::OK};
 

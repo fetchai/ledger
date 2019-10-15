@@ -26,7 +26,7 @@ namespace ledger {
 
 class Transfer : public vm::Object
 {
-  AddressPtr        address_{};
+  AddressPtr        address_;
   NativeTokenAmount amount_{0ull};
 
 public:

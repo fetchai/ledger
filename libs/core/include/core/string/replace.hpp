@@ -23,6 +23,7 @@ namespace fetch {
 namespace string {
 
 std::string Replace(std::string value, char before, char after);
+bool        Replace(std::string &orig, std::string const &what, std::string const &with);
 
 }  // namespace string
 }  // namespace fetch
