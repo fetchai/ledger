@@ -18,13 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/fnv.hpp"
 #include "meta/type_traits.hpp"
 #include "variant/detail/element_pool.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/meta/math_type_traits.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -594,85 +594,72 @@ public:
   using Type       = fetch::variant::Variant;
   using DriverType = D;
 
-  //  static uint8_t const FIELD_OUTPUT  = 1;
-  static uint8_t const FIELD_UNDEFINED = 1;
-  static uint8_t const FIELD_INTEGER = 2;
-  static uint8_t const FIELD_FLOATING_POINT = 3;
-  static uint8_t const FIELD_FIXED_POINT = 4;
-  static uint8_t const FIELD_BOOLEAN = 5;
-  static uint8_t const FIELD_STRING = 6;
-  static uint8_t const FIELD_NULL_VALUE = 7;
-  static uint8_t const FIELD_ARRAY = 8;
-  static uint8_t const FIELD_ARRAY_COUNT = 18;
-  static uint8_t const FIELD_OBJECT = 9;
-  static uint8_t const FIELD_TYPE_NUMBER  = 254;
-
   template <typename Serializer>
   static void Serialize(Serializer &serializer, Type const &var)
   {
-    int typecode = static_cast<int>(var.type_);
+    auto typecode = static_cast<int>(var.type_);
     serializer << typecode;
-    switch(var.type_)
+    switch (var.type_)
     {
     case Type::Type::UNDEFINED:
-      {
-        break;
-      }
+    {
+      break;
+    }
 
     case Type::Type::NULL_VALUE:
-      {
-        break;
-      }
+    {
+      break;
+    }
     case Type::Type::INTEGER:
-      {
-        serializer << var.primitive_.integer;
-        break;
-      }
+    {
+      serializer << var.primitive_.integer;
+      break;
+    }
     case Type::Type::FLOATING_POINT:
-      {
-        serializer << var.primitive_.float_point;
-        break;
-      }
+    {
+      serializer << var.primitive_.float_point;
+      break;
+    }
     case Type::Type::FIXED_POINT:
-      {
-        serializer <<  var.primitive_.integer;
-        break;
-      }
+    {
+      serializer << var.primitive_.integer;
+      break;
+    }
     case Type::Type::BOOLEAN:
-      {
-        serializer <<  var.primitive_.boolean;
-        break;
-      }
+    {
+      serializer << var.primitive_.boolean;
+      break;
+    }
     case Type::Type::STRING:
-      {
-        serializer <<  var.string_;
-        break;
-      }
+    {
+      serializer << var.string_;
+      break;
+    }
     default:
-      {
-        throw std::runtime_error{"Variant has unknown type."};
-      }
+    {
+      throw std::runtime_error{"Variant has unknown type."};
+    }
     case Type::Type::ARRAY:
+    {
+      auto sz = static_cast<uint32_t>(var.array_.size());
+      serializer << sz;
+      for( auto const &element : var.array_)
       {
-        uint32_t sz = static_cast<uint32_t>(var.array_.size());
-        serializer << sz;
-        for(std::size_t i=0;i<var.array_.size();i++)
-        {
-          Serialize(serializer, var.array_[i]);
-        }
-        break;
+        Serialize(serializer, element);
       }
+      break;
+    }
     case Type::Type::OBJECT:
+    {
+      auto sz = static_cast<uint32_t>(var.object_.size());
+      serializer << sz;
+      for (auto const &element : var.object_)
       {
-        uint32_t sz = static_cast<uint32_t>(var.object_.size());
-        serializer << sz;
-        for (auto const &element : var.object_)
-        {
-          serializer << element.first;
-          Serialize(serializer, *element.second);
-        }
-        break;
+        serializer << element.first;
+        Serialize(serializer, *element.second);
       }
+      break;
+    }
     }
   }
 
@@ -681,9 +668,9 @@ public:
   {
     int typecode;
     deserializer >> typecode;
-    Type::Type type = static_cast<Type::Type>(typecode);
-    var.type_ = type;
-    switch(var.type_)
+    auto type = static_cast<Type::Type>(typecode);
+    var.type_       = type;
+    switch (var.type_)
     {
     case Type::Type::UNDEFINED:
       break;
@@ -693,10 +680,10 @@ public:
       deserializer >> var.primitive_.integer;
       break;
     case Type::Type::FLOATING_POINT:
-      deserializer >>  var.primitive_.float_point;
+      deserializer >> var.primitive_.float_point;
       break;
     case Type::Type::FIXED_POINT:
-      deserializer >>  var.primitive_.integer;
+      deserializer >> var.primitive_.integer;
       break;
     case Type::Type::BOOLEAN:
       deserializer >> var.primitive_.boolean;
@@ -705,39 +692,39 @@ public:
       deserializer >> var.string_;
       break;
     case Type::Type::ARRAY:
+    {
+      uint32_t    count_tmp;
+      std::size_t count;
+      deserializer >> count_tmp;
+      count = count_tmp;
+      for (std::size_t i = 0; i < count; i++)
       {
-        uint32_t count_tmp;
-        std::size_t count;
-        deserializer >> count_tmp;
-        count = count_tmp;
-        for(std::size_t i=0;i<count;i++)
-        {
-          Type v;
-          Deserialize(deserializer, v);
-          var.array_.push_back(v);
-        }
-        break;
+        Type v;
+        Deserialize(deserializer, v);
+        var.array_.push_back(v);
       }
+      break;
+    }
     case Type::Type::OBJECT:
+    {
+      uint32_t    count_tmp;
+      std::size_t count;
+      deserializer >> count_tmp;
+      count = count_tmp;
+      for (std::size_t i = 0; i < count; i++)
       {
-        uint32_t count_tmp;
-        std::size_t count;
-        deserializer >> count_tmp;
-        count = count_tmp;
-        for(std::size_t i=0;i<count;i++)
-        {
-          Type v;
-          byte_array::ConstByteArray k;
-          deserializer >> k;
-          Deserialize(deserializer, v);
-          var[k]=v;
-        }
-        break;
+        Type                       v;
+        byte_array::ConstByteArray k;
+        deserializer >> k;
+        Deserialize(deserializer, v);
+        var[k] = v;
       }
+      break;
+    }
     default:
-      {
-        throw std::runtime_error{"Variant has unknown type."};
-      }
+    {
+      throw std::runtime_error{"Variant has unknown type."};
+    }
     }
   }
 };
