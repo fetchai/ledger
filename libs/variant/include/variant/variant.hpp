@@ -208,6 +208,9 @@ private:
 
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
+
+  template <typename T, typename D>
+  friend struct serializers::ForwardSerializer;
 };
 
 /**
@@ -585,7 +588,7 @@ void Variant::IterateObject(Function const &function) const
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<fetch::variant::Variant, D>
+struct ForwardSerializer<fetch::variant::Variant, D>
 {
 public:
   using Type       = fetch::variant::Variant;
@@ -604,58 +607,45 @@ public:
   static uint8_t const FIELD_OBJECT = 9;
   static uint8_t const FIELD_TYPE_NUMBER  = 254;
 
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &var)
+  template <typename Serializer>
+  static void Serialize(Serializer &serializer, Type const &var)
   {
     int typecode = static_cast<int>(var.type_);
+    serializer << typecode;
     switch(var.type_)
     {
     case Type::Type::UNDEFINED:
       {
-        auto map = map_constructor(1);
-        map.Append(FIELD_TYPE_NUMBER, typecode);
         break;
       }
 
     case Type::Type::NULL_VALUE:
       {
-        auto map = map_constructor(1);
-        map.Append(FIELD_TYPE_NUMBER, typecode);
         break;
       }
     case Type::Type::INTEGER:
       {
-        auto map = map_constructor(2);
-        map.Append(FIELD_TYPE_NUMBER, typecode);
-        map.Append(FIELD_INTEGER, var.primitive_.integer);
+        serializer << var.primitive_.integer;
         break;
       }
     case Type::Type::FLOATING_POINT:
       {
-        auto map = map_constructor(2);
-        map.Append(FIELD_TYPE_NUMBER, typecode);
-        map.Append(FIELD_FLOATING_POINT, var.primitive_.float_point);
+        serializer << var.primitive_.float_point;
         break;
       }
     case Type::Type::FIXED_POINT:
       {
-        auto map = map_constructor(2);
-        map.Append(FIELD_TYPE_NUMBER, typecode);
-        map.Append(FIELD_FIXED_POINT, var.primitive_.integer);
+        serializer <<  var.primitive_.integer;
         break;
       }
     case Type::Type::BOOLEAN:
       {
-        auto map = map_constructor(2);
-        map.Append(FIELD_TYPE_NUMBER, typecode);
-        map.Append(FIELD_BOOLEAN, var.primitive_.boolean);
+        serializer <<  var.primitive_.boolean;
         break;
       }
     case Type::Type::STRING:
       {
-        auto map = map_constructor(2);
-        map.Append(FIELD_TYPE_NUMBER, typecode);
-        map.Append(FIELD_STRING, var.string_);
+        serializer <<  var.string_;
         break;
       }
     default:
@@ -665,29 +655,32 @@ public:
     case Type::Type::ARRAY:
       {
         uint32_t sz = static_cast<uint32_t>(var.array_.size());
-        auto map = map_constructor(2 + sz);
-        map.Append(FIELD_TYPE_NUMBER, typecode);
-        map.Append(FIELD_ARRAY_COUNT, sz);
+        serializer << sz;
         for(std::size_t i=0;i<var.array_.size();i++)
         {
-          Serialize(map_constructor, var.array_[i]);
+          Serialize(serializer, var.array_[i]);
         }
         break;
       }
-        //     throw std::runtime_error{"Variant of non-POD not supported."};
-        //   }
-        // case Type::Type::OBJECT:
-        //   {
-      //     throw std::runtime_error{"Variant of non-POD not supported."};
-      //   }
+    case Type::Type::OBJECT:
+      {
+        uint32_t sz = static_cast<uint32_t>(var.object_.size());
+        serializer << sz;
+        for (auto const &element : var.object_)
+        {
+          serializer << element.first;
+          Serialize(serializer, *element.second);
+        }
+        break;
+      }
     }
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &var)
+  template <typename Deserializer>
+  static void Deserialize(Deserializer &deserializer, Type &var)
   {
     int typecode;
-    map.ExpectKeyGetValue(FIELD_TYPE_NUMBER, typecode);
+    deserializer >> typecode;
     Type::Type type = static_cast<Type::Type>(typecode);
     var.type_ = type;
     switch(var.type_)
@@ -697,36 +690,50 @@ public:
     case Type::Type::NULL_VALUE:
       break;
     case Type::Type::INTEGER:
-      map.ExpectKeyGetValue(FIELD_INTEGER, var.primitive_.integer);
+      deserializer >> var.primitive_.integer;
       break;
     case Type::Type::FLOATING_POINT:
-      map.ExpectKeyGetValue(FIELD_FLOATING_POINT, var.primitive_.float_point);
+      deserializer >>  var.primitive_.float_point;
       break;
     case Type::Type::FIXED_POINT:
-      map.ExpectKeyGetValue(FIELD_FIXED_POINT, var.primitive_.integer);
+      deserializer >>  var.primitive_.integer;
       break;
     case Type::Type::BOOLEAN:
-      map.ExpectKeyGetValue(FIELD_BOOLEAN, var.primitive_.boolean);
+      deserializer >> var.primitive_.boolean;
       break;
     case Type::Type::STRING:
-      map.ExpectKeyGetValue(FIELD_STRING, var.string_);
+      deserializer >> var.string_;
       break;
     case Type::Type::ARRAY:
       {
         uint32_t count_tmp;
         std::size_t count;
-        map.ExpectKeyGetValue(FIELD_ARRAY_COUNT,count_tmp);
+        deserializer >> count_tmp;
         count = count_tmp;
         for(std::size_t i=0;i<count;i++)
         {
           Type v;
-          Deserialize(map, v);
+          Deserialize(deserializer, v);
           var.array_.push_back(v);
         }
         break;
       }
-    // case FIELD_OBJECT:
-    //   throw std::runtime_error{"Variant of non-POD not supported."};
+    case Type::Type::OBJECT:
+      {
+        uint32_t count_tmp;
+        std::size_t count;
+        deserializer >> count_tmp;
+        count = count_tmp;
+        for(std::size_t i=0;i<count;i++)
+        {
+          Type v;
+          byte_array::ConstByteArray k;
+          deserializer >> k;
+          Deserialize(deserializer, v);
+          var[k]=v;
+        }
+        break;
+      }
     default:
       {
         throw std::runtime_error{"Variant has unknown type."};
