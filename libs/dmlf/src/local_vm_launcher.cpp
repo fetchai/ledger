@@ -36,10 +36,6 @@ using State   = LocalVmLauncher::State;
 using VmFactory = fetch::vm_modules::VMFactory;
 }  // namespace
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
-
-#pragma clang diagnostic ignored "-Wunused-parameter"
 ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFiles const &sources) 
 {
   if (HasExecutable(execName))
@@ -141,9 +137,10 @@ ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName
 
   std::string        runTimeError;
   fetch::vm::Variant output;
-  auto thereWasAnError = vm.Execute(*program, entrypoint, runTimeError, output);
+  //vm.Execute(*program, entrypoint, runTimeError, output);
+  bool allOK = vm.Execute(*program, entrypoint, runTimeError, output);
 
-  if (!runTimeError.empty())
+  if (!allOK || !runTimeError.empty())
   {
     return ExecutionResult{output, 
       Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)}, 
@@ -162,8 +159,6 @@ ExecutionResult LocalVmLauncher::EngineSuccess(std::string resultMessage, std::s
 {
   return ExecutionResult( Variant(), Error(Error::Stage::ENGINE, Error::Code::SUCCESS, std::move(errorMessage)), std::move(resultMessage));
 }
-
-#pragma clang diagnostic pop
 
 bool LocalVmLauncher::HasExecutable(std::string const &name) const
 {
