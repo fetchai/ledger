@@ -137,10 +137,6 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
   VM vm{module_.get()};
   vm.SetIOObserver(*state);
 
-  // fetch::vm::ParameterPack parameterPack(vm->registered_types());
-  // std::for_each(params.cbegin(), params.cend(),
-  //              [&parameterPack](auto const &v) { parameterPack.AddSingle(v); });
-
   std::string        runTimeError;
   fetch::vm::Variant output;
   bool               allOK = vm.Execute(*exec, entrypoint, runTimeError, output);
