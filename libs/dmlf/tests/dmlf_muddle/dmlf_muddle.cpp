@@ -176,20 +176,24 @@ namespace dmlf {
     TEST_F(MuddleLearnerNetworkerTests, test1)
     {
 
-      sleep(1);
+      while(server -> mud_ -> GetNumDirectlyConnectedPeers() < 1)
+      {
+        usleep(1000);
+      }
 
       auto p1 = client -> client_ -> CreateExecutable(SERVER_PUB, "exe1", "foo");
       auto p2 = client -> client_ -> CreateState(SERVER_PUB, "state1");
       auto p3 = client -> client_ -> Run(SERVER_PUB, "exe1", "state1", "dummy_func");
 
-      sleep(1);
-
-      EXPECT_EQ(server -> host_ -> ExecuteOneWorkload(), true);
-      EXPECT_EQ(server -> host_ -> ExecuteOneWorkload(), true);
-      EXPECT_EQ(server -> host_ -> ExecuteOneWorkload(), true);
-      EXPECT_EQ(server -> host_ -> ExecuteOneWorkload(), false);
-
-      sleep(1);
+      int pending = 3;
+      while(pending>0)
+      {
+        usleep(1000);
+        if (server -> host_ -> ExecuteOneWorkload())
+        {
+          pending--;
+        }
+      }
 
       p3.Wait();
       auto res = p3.Get();
