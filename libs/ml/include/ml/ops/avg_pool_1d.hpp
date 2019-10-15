@@ -72,7 +72,7 @@ public:
     return copyshare;
   }
   /**
-   * Applies 1D max pooling of kernel_size_ for each channel described here:
+   * Applies 1D avg pooling of kernel_size_ for each channel described here:
    * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
    * @param inputs vector of tensor references where at:
    * inputs[0] = input_data[input_channels x input_height]
@@ -101,13 +101,13 @@ public:
         {
           sum = static_cast<DataType>(0);
 
-          // Get maximum value on kernel_size_ window
+          // Get sum of value on kernel_size_ window
           for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
           {
             sum += inputs.at(0)->At(c, iter + j, n_i);
           }
 
-          // Set maximum value for each [kernel_size_] window to output
+          // Set average value for each [kernel_size_] window to output
           *out_it = sum / cnt;
           ++out_it;
         }
@@ -116,9 +116,9 @@ public:
   }
 
   /**
-   * Computes gradient of 1D max pooling of kernel_size_ for each channel described here:
+   * Computes gradient of 1D avg pooling of kernel_size_ for each channel described here:
    * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
-   * Error signal of max pool is passed only to max node
+   * Error signal of avg pool is passed to each node divided by kernel size
    * @param inputs vector of tensor references where at:
    * inputs[0] = input_data[input_channels x input_height]
    * @param error_signal tensor of size [output_channels=input_channels x
@@ -149,7 +149,7 @@ public:
         for (SizeType c{0}; c < output_shape.at(0); ++c)  // Iterate over output channels
         {
 
-          // Find max node
+          // Add error signal divided by kernel size
           for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
           {
             return_signal(c, iter + j, n_i) += *er_it / cnt;
