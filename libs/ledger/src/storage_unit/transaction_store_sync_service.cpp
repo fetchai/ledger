@@ -277,6 +277,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
                  " root(s). Remaining roots to sync: ", roots_to_sync_.size(), " / ",
                  uint64_t{1ull << root_size_});
 
+  state_machine_->Delay(10ms);
   return State::RESOLVING_SUBTREE;
 }
 
@@ -324,28 +325,9 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
   // evaluate if the syncing process if complete, this can only be the case when there are no in
   // flight requests and we have successfully evaluated all the roots we are after
   bool const is_subtree_sync_complete = roots_to_sync_.empty() && counts.pending == 0;
-
   if (!is_subtree_sync_complete)
   {
-    // determine what is the max number of in flight promises we should issue
-    auto const        directly_connected_peers = muddle_->AsEndpoint().GetDirectlyConnectedPeers();
-    std::size_t const maximum_inflight = MAX_REQUESTS_PER_NODE * directly_connected_peers.size();
-
-    bool const should_schedule_next_roots =
-        (counts.pending < maximum_inflight) && (!roots_to_sync_.empty());
-
-    // if there are still roots to be synced and we have not reached our maximum number of inflight
-    // requests then progress to the
-    if (should_schedule_next_roots)
-    {
-      return State::QUERY_SUBTREE;
-    }
-    else
-    {
-      // we are waiting for the in flight sub tree requests to terminate
-      state_machine_->Delay(10ms);
-      return State::RESOLVING_SUBTREE;
-    }
+    return State::QUERY_SUBTREE;
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "Completed sub-tree syncing");
