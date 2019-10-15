@@ -55,12 +55,14 @@ ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFi
 }
 ExecutionResult LocalVmLauncher::DeleteExecutable(Name const &execName)                             
 {
-  if (!HasExecutable(execName))
+  auto it = executables_.find(execName);
+
+  if (it == executables_.end())
   {
     return EngineError("Didn't delete executable " + execName, Error::Code::BAD_EXECUTABLE, "Error: executable " + execName + " does not exist.");
   }
 
-  executables_.erase(execName);
+  executables_.erase(it);
 
   return EngineSuccess("Deleted executable " + execName, "");
 }
@@ -93,12 +95,13 @@ ExecutionResult LocalVmLauncher::CopyState(Name const &srcName, Name const &newN
 
 ExecutionResult LocalVmLauncher::DeleteState(Name const &stateName)                  
 {
-  if (!HasState(stateName))
+  auto it = states_.find(stateName);
+  if (it == states_.end())
   {
     return EngineError("Did not delete state " + stateName, Error::Code::BAD_STATE, "Error: No state named " + stateName);
   }
 
-  states_.erase(stateName);
+  states_.erase(it);
   return EngineSuccess("Deleted state " + stateName, "");
 }
 
