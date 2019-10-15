@@ -99,6 +99,7 @@ enum class OpType : uint16_t
   OP_VARIABLE,
   OP_WEIGHTS,
   OP_SLICE,
+  OP_SQUEEZE,
 
   // OpKind - LOSS
   LOSS_CROSS_ENTROPY,
