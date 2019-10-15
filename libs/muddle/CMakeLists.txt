@@ -27,3 +27,4 @@ endif ()
 
 # Unit tests
 add_subdirectory(tests)
+add_subdirectory(benchmark)

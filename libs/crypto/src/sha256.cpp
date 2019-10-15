@@ -22,7 +22,6 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <openssl/evp.h>
 
 namespace fetch {
 namespace crypto {

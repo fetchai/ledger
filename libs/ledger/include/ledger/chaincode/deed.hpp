@@ -22,6 +22,7 @@
 #include "crypto/fnv.hpp"
 
 #include <cstdint>
+#include <memory>
 
 namespace fetch {
 namespace ledger {
@@ -60,6 +61,8 @@ private:
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
 };
+
+using DeedPtr = std::shared_ptr<Deed>;
 
 }  // namespace ledger
 

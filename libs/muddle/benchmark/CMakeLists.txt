@@ -14,4 +14,4 @@ setup_compiler()
 # Benchmark Targets
 # ------------------------------------------------------------------------------
 
-add_fetch_gbench(network-benchmarks fetch-network .)
+add_fetch_gbench(muddle-benchmarks fetch-muddle .)

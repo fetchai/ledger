@@ -21,6 +21,7 @@ target_link_libraries(fetch-dkg
                              fetch-network
                              fetch-address
                              fetch-entropy
+                             fetch-muddle
                              fetch-logging)
 
 if (_is_clang_compiler)

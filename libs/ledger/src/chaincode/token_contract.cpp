@@ -35,6 +35,9 @@ namespace fetch {
 namespace ledger {
 namespace {
 
+using fetch::byte_array::ConstByteArray;
+using fetch::variant::Variant;
+
 bool IsOperationValid(WalletRecord const &record, Transaction const &tx,
                       ConstByteArray const &operation)
 {
