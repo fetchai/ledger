@@ -86,7 +86,6 @@ public:
                                           BitVector const &shard_mask);
   TransactionBuilder &TargetChainCode(byte_array::ConstByteArray const &ref,
                                       BitVector const &                 shard_mask);
-  TransactionBuilder &TargetSynergetic(Address const &digest);
   TransactionBuilder &Action(byte_array::ConstByteArray const &action);
   TransactionBuilder &Data(byte_array::ConstByteArray const &data);
   /// @}

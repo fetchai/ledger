@@ -215,18 +215,18 @@ public:
     new_ranges.reserve(ranges_.size());
 
     // Insert axes at beginning
-    for (uint64_t axe : axes)
+    for (uint64_t axis : axes)
     {
-      new_ranges.push_back(ranges_[axe]);
+      new_ranges.push_back(ranges_[axis]);
     }
 
     for (SizeType i = 0; i < ranges_.size(); ++i)
     {
       // Search for axis
       bool add_axis = true;
-      for (uint64_t axe : axes)
+      for (uint64_t axis : axes)
       {
-        if (i == axe)
+        if (i == axis)
         {
           add_axis = false;
           break;

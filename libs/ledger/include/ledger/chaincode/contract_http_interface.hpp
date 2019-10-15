@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "http/module.hpp"
 #include "ledger/chaincode/chain_code_cache.hpp"
 
@@ -96,11 +97,10 @@ private:
   void WriteToAccessLog(variant::Variant const &entry);
   /// @}
 
-  StorageInterface &    storage_;
-  TransactionProcessor &processor_;
-  ChainCodeCache        contract_cache_{};
-  Mutex                 access_log_lock_;
-  std::ofstream         access_log_;
+  StorageInterface &       storage_;
+  TransactionProcessor &   processor_;
+  ChainCodeCache           contract_cache_{};
+  Protected<std::ofstream> access_log_;
 };
 
 }  // namespace ledger
