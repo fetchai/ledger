@@ -80,7 +80,6 @@ int main(int argc, char **argv)
       utilities::WordAnalogyTest(data_loader, weights, "king", "queen", "father", 20);
   std::cout << std::endl << word_analogy_results << std::endl;
 
-  std::string analogies_file_results =
-      utilities::AnalogiesFileTest(data_loader, weights, analogy_file);
-  std::cout << std::endl << analogies_file_results << std::endl;
+  auto analogies_file_results = utilities::AnalogiesFileTest(data_loader, weights, analogy_file);
+  std::cout << std::endl << analogies_file_results.first << std::endl;
 }
