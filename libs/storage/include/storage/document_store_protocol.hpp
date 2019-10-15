@@ -50,7 +50,6 @@ public:
   {
     GET = 0,
     GET_OR_CREATE,
-    LAZY_GET,
     SET,
 
     COMMIT,
