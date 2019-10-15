@@ -158,17 +158,7 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 template <class TensorType>
 void Word2VecClient<TensorType>::Run()
 {
-  this->ResetLossCnt();
-  if (this->coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
-  {
-    // Do one batch and end
-    this->TrainOnce();
-  }
-  else
-  {
-    // Train batches until coordinator will tell clients to stop
-    this->TrainWithCoordinator();
-  }
+  TrainingClient<TensorType>::Run();
   analogy_score_ = GetAnalogyScore();
 }
 
