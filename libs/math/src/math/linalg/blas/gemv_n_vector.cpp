@@ -129,7 +129,7 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
   {
     for (j = 0; j < int(a.width()); ++j)
     {
-      Type temp = alpha * x[jx];
+      temp = alpha * x[jx];
 
       auto ret_slice  = y.data().slice(0, y.padded_size());
       auto slice_fv_y = y.data().slice(0, y.padded_size());

@@ -29,6 +29,7 @@
 #pragma clang diagnostic ignored "-Wconversion"
 #pragma clang diagnostic ignored "-Wpedantic"
 #pragma clang diagnostic ignored "-Wmacro-redefined"
+#pragma clang diagnostic ignored "-Wshadow"
 #endif
 
 #include "mcl/bn256.hpp"
