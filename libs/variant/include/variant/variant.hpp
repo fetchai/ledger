@@ -597,7 +597,7 @@ public:
   template <typename Serializer>
   static void Serialize(Serializer &serializer, Type const &var)
   {
-    int typecode = static_cast<int>(var.type_);
+    auto typecode = static_cast<int>(var.type_);
     serializer << typecode;
     switch (var.type_)
     {
@@ -641,17 +641,17 @@ public:
     }
     case Type::Type::ARRAY:
     {
-      uint32_t sz = static_cast<uint32_t>(var.array_.size());
+      auto sz = static_cast<uint32_t>(var.array_.size());
       serializer << sz;
-      for (std::size_t i = 0; i < var.array_.size(); i++)
+      for( auto const &element : var.array_)
       {
-        Serialize(serializer, var.array_[i]);
+        Serialize(serializer, element);
       }
       break;
     }
     case Type::Type::OBJECT:
     {
-      uint32_t sz = static_cast<uint32_t>(var.object_.size());
+      auto sz = static_cast<uint32_t>(var.object_.size());
       serializer << sz;
       for (auto const &element : var.object_)
       {
@@ -668,7 +668,7 @@ public:
   {
     int typecode;
     deserializer >> typecode;
-    Type::Type type = static_cast<Type::Type>(typecode);
+    auto type = static_cast<Type::Type>(typecode);
     var.type_       = type;
     switch (var.type_)
     {
