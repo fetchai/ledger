@@ -18,7 +18,6 @@
 
 #include "dmlf/execution/basic_vm_engine.hpp"
 
-#include "dmlf/vm_persistent.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
 

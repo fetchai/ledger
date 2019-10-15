@@ -28,24 +28,24 @@
 namespace fetch {
 namespace dmlf {
 
-class VmPersistent : public vm::IoObserverInterface
+class VmState : public vm::IoObserverInterface
 {
 public:
-  VmPersistent()                              = default;
-  VmPersistent(VmPersistent &&other) noexcept = default;
-  VmPersistent &operator=(VmPersistent &&other) noexcept = default;
+  VmState()                              = default;
+  VmState(VmState &&other) noexcept = default;
+  VmState &operator=(VmState &&other) noexcept = default;
 
-  VmPersistent(const VmPersistent &other) = delete;
-  VmPersistent &operator=(const VmPersistent &other) = delete;
+  VmState(const VmState &other) = delete;
+  VmState &operator=(const VmState &other) = delete;
 
   Status Read(std::string const &key, void *data, uint64_t &size) override;
   Status Write(std::string const &key, void const *data, uint64_t size) override;
   Status Exists(std::string const &key) override;
 
-  VmPersistent DeepCopy() const;
+  VmState DeepCopy() const;
 
-  bool operator==(const VmPersistent &other) = delete;
-  bool operator<(const VmPersistent &other)  = delete;
+  bool operator==(const VmState &other) = delete;
+  bool operator<(const VmState &other)  = delete;
 
 private:
   using Buffer = fetch::byte_array::ConstByteArray;

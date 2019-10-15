@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/vm_persistent.hpp"
+#include "dmlf/execution/vm_state.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -25,7 +25,7 @@ namespace {
 using Status = vm::IoObserverInterface::Status;
 }
 
-Status VmPersistent::Read(const std::string &key, void *data, uint64_t &size)
+Status VmState::Read(const std::string &key, void *data, uint64_t &size)
 {
   auto it = store_.find(key);
 
@@ -46,13 +46,13 @@ Status VmPersistent::Read(const std::string &key, void *data, uint64_t &size)
   return Status::OK;
 }
 
-Status VmPersistent::Write(const std::string &key, const void *data, uint64_t size)
+Status VmState::Write(const std::string &key, const void *data, uint64_t size)
 {
   store_[key] = Buffer(reinterpret_cast<Buffer::ValueType const *>(data), size);
   return Status::OK;
 }
 
-Status VmPersistent::Exists(const std::string &key)
+Status VmState::Exists(const std::string &key)
 {
   auto i = store_.find(key);
 
@@ -63,9 +63,9 @@ Status VmPersistent::Exists(const std::string &key)
   return Status::OK;
 }
 
-VmPersistent VmPersistent::DeepCopy() const
+VmState VmState::DeepCopy() const
 {
-  VmPersistent newCopy;
+  VmState newCopy;
 
   for (const auto &i : store_)
   {

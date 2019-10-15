@@ -19,7 +19,7 @@
 
 #include "dmlf/execution/execution_engine_interface.hpp"
 
-#include "dmlf/vm_persistent.hpp"
+#include "dmlf/execution/vm_state.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
 
@@ -42,7 +42,7 @@ public:
   using Executable = fetch::vm::Executable;
   using VM         = fetch::vm::VM;
   using VmFactory  = fetch::vm_modules::VMFactory;
-  using State      = VmPersistent;
+  using State      = VmState;
   using Error      = ExecutionResult::Error;
 
   ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) override;
