@@ -60,7 +60,7 @@ private:
   bool HasState(std::string const &name) const;
 
   ExecutionResult EngineError(std::string resultMessage, Error::Code code, std::string errorMessage) const;
-  ExecutionResult EngineSuccess(std::string resultMessage, std::string errorMessage) const;
+  ExecutionResult EngineSuccess(std::string resultMessage) const;
 
   std::unordered_map<std::string, std::shared_ptr<Executable>> executables_;
   std::unordered_map<std::string, std::shared_ptr<State>>   states_;

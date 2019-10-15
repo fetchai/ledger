@@ -167,7 +167,7 @@ endfunction)";
 
 }  // namespace
 
-TEST(VmLauncherDmlfTests, local_HelloWorld)
+TEST(VmLauncherDmlfTests, basicEngine_HelloWorld)
 {
   LocalVmLauncher launcher;
 
@@ -182,7 +182,7 @@ TEST(VmLauncherDmlfTests, local_HelloWorld)
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
 
-TEST(VmLauncherDmlfTests, local_DoubleHelloWorld)
+TEST(VmLauncherDmlfTests, basicEngine_DoubleHelloWorld)
 {
   LocalVmLauncher launcher;
 
@@ -226,7 +226,7 @@ TEST(VmLauncherDmlfTests, repeated_HelloWorld)
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
 
-TEST(VmLauncherDmlfTests, local_Tick_2States)
+TEST(VmLauncherDmlfTests, basicEngine_Tick_2States)
 {
   LocalVmLauncher launcher;
 
@@ -296,7 +296,7 @@ TEST(VmLauncherDmlfTests, bad_stdOut)
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
 
-TEST(VmLauncherDmlfTests, local_Tick_Tick2_State)
+TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick2_State)
 {
   LocalVmLauncher launcher;
 
@@ -566,7 +566,7 @@ TEST(VmLauncherDmlfTests, test_Tick_Tock_TickTock_State)
   //EXPECT_EQ(output.str(), "0\n0\n1\n1\n2\n3\n3\n4\n");
 }
 
-TEST(VmLauncherDmlfTests, local_Tick_Tick_State)
+TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_State)
 {
   LocalVmLauncher launcher;
 
@@ -632,7 +632,7 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick_State)
   //EXPECT_EQ(output.str(), "0\n1\n2\n3\n4\n5\n6\n7\n");
 }
 
-TEST(VmLauncherDmlfTests, local_Tick_Tick_CopyState)
+TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_CopyState)
 {
   LocalVmLauncher launcher;
 
@@ -684,7 +684,7 @@ TEST(VmLauncherDmlfTests, local_Tick_Tick_CopyState)
   //EXPECT_EQ(output.str(), "0\n1\n2\n2\n3\n3\n4\n4\n");
 }
 
-TEST(VmLauncherDmlfTests, local_CopyState_BadSrc)
+TEST(VmLauncherDmlfTests, basicEngine_CopyState_BadSrc)
 {
   LocalVmLauncher launcher;
 
@@ -697,7 +697,7 @@ TEST(VmLauncherDmlfTests, local_CopyState_BadSrc)
   EXPECT_EQ(copyState.error().code(), Code::BAD_STATE);
 }
 
-TEST(VmLauncherDmlfTests, local_CopyState_BadDest)
+TEST(VmLauncherDmlfTests, basicEngine_CopyState_BadDest)
 {
   LocalVmLauncher launcher;
 
@@ -711,7 +711,7 @@ TEST(VmLauncherDmlfTests, local_CopyState_BadDest)
   EXPECT_EQ(copyState.error().stage(), Stage::ENGINE);
   EXPECT_EQ(copyState.error().code(), Code::BAD_DESTINATION);
 }
-TEST(VmLauncherDmlfTests, local_DeleteExecutable)
+TEST(VmLauncherDmlfTests, basicEngine_DeleteExecutable)
 {
   LocalVmLauncher launcher;
 
@@ -741,7 +741,7 @@ TEST(VmLauncherDmlfTests, local_DeleteExecutable)
   EXPECT_EQ(result.error().code(), Code::BAD_EXECUTABLE);
 }
 
-TEST(VmLauncherDmlfTests, local_ReplaceExecutable)
+TEST(VmLauncherDmlfTests, basicEngine_ReplaceExecutable)
 {
   LocalVmLauncher launcher;
 
@@ -778,7 +778,7 @@ TEST(VmLauncherDmlfTests, local_ReplaceExecutable)
   EXPECT_EQ(result.output().Get<int>(), 4);
 }
 
-TEST(VmLauncherDmlfTests, local_Tick_Delete_State)
+TEST(VmLauncherDmlfTests, basicEngine_Tick_Delete_State)
 {
   LocalVmLauncher launcher;
 
@@ -809,7 +809,7 @@ TEST(VmLauncherDmlfTests, local_Tick_Delete_State)
   EXPECT_EQ(result.error().code(), Code::BAD_STATE);
 }
 
-TEST(VmLauncherDmlfTests, local_Tick_Replace_State)
+TEST(VmLauncherDmlfTests, basicEngine_Tick_Replace_State)
 {
   LocalVmLauncher launcher;
 
@@ -842,7 +842,7 @@ TEST(VmLauncherDmlfTests, local_Tick_Replace_State)
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
 
-TEST(VmLauncherDmlfTests, local_Tick_ReplaceByCopy_State)
+TEST(VmLauncherDmlfTests, basicEngine_Tick_ReplaceByCopy_State)
 {
   LocalVmLauncher launcher;
 
@@ -888,7 +888,7 @@ TEST(VmLauncherDmlfTests, local_Tick_ReplaceByCopy_State)
   EXPECT_EQ(result.output().Get<int>(), 3);
 }
 
-TEST(VmLauncherDmlfTests, local_BadCompile)
+TEST(VmLauncherDmlfTests, basicEngine_BadCompile)
 {
   LocalVmLauncher launcher;
 
@@ -898,7 +898,7 @@ TEST(VmLauncherDmlfTests, local_BadCompile)
   EXPECT_EQ(createdProgram.error().code(), Code::COMPILATION_ERROR);
 }
 
-TEST(VmLauncherDmlfTests, local_runtimeError)
+TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
 {
   LocalVmLauncher launcher;
 
@@ -914,7 +914,7 @@ TEST(VmLauncherDmlfTests, local_runtimeError)
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
 }
 
-//TEST(VmLauncherDmlfTests, local_params)
+//TEST(VmLauncherDmlfTests, basicEngine_params)
 //{
 //  LocalVmLauncher launcher;
 //
@@ -933,7 +933,7 @@ TEST(VmLauncherDmlfTests, local_runtimeError)
 //  //EXPECT_EQ(output.str(), "Add 5 plus 6 equals 11\n");
 //}
 
-//TEST(VmLauncherDmlfTests, local_less_params)
+//TEST(VmLauncherDmlfTests, basicEngine_less_params)
 //{
 //  LocalVmLauncher launcher;
 //
@@ -955,7 +955,7 @@ TEST(VmLauncherDmlfTests, local_runtimeError)
 //  EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 1");
 //}
 //
-//TEST(VmLauncherDmlfTests, local_more_params)
+//TEST(VmLauncherDmlfTests, basicEngine_more_params)
 //{
 //  LocalVmLauncher launcher;
 //
@@ -977,7 +977,7 @@ TEST(VmLauncherDmlfTests, local_runtimeError)
 //  EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 3");
 //}
 //
-//TEST(VmLauncherDmlfTests, local_none_params)
+//TEST(VmLauncherDmlfTests, basicEngine_none_params)
 //{
 //  LocalVmLauncher launcher;
 //
@@ -999,7 +999,7 @@ TEST(VmLauncherDmlfTests, local_runtimeError)
 //  EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 0");
 //}
 //
-//TEST(VmLauncherDmlfTests, local_wrong_type_params)
+//TEST(VmLauncherDmlfTests, basicEngine_wrong_type_params)
 //{
 //  LocalVmLauncher launcher;
 //

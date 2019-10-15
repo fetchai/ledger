@@ -122,7 +122,7 @@ ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName
 
   // We create a a VM for each execution. It might be better to create a single VM and reuse it, but (currently) if you create a VM before
   // compiling the VM is badly formed and crashes on execution
-  VM vm(module_.get());
+  VM vm{module_.get()};
   vm.SetIOObserver(*state);
 
   //fetch::vm::ParameterPack parameterPack(vm->registered_types());
@@ -145,12 +145,12 @@ ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName
 
 ExecutionResult LocalVmLauncher::EngineError(std::string resultMessage, Error::Code code, std::string errorMessage) const
 {
-  return ExecutionResult( Variant(), Error(Error::Stage::ENGINE, code, std::move(errorMessage)), std::move(resultMessage));
+  return ExecutionResult{ Variant(), Error{Error::Stage::ENGINE, code, std::move(errorMessage)}, std::move(resultMessage)};
 }
 
 ExecutionResult LocalVmLauncher::EngineSuccess(std::string resultMessage) const
 {
-  return ExecutionResult( Variant(), Error(Error::Stage::ENGINE, Error::Code::SUCCESS, std::move(errorMessage)), "");
+  return ExecutionResult{ Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""}, std::move(resultMessage)};
 }
 
 bool LocalVmLauncher::HasExecutable(std::string const &name) const
