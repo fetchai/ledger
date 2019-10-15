@@ -603,12 +603,12 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     {
       return fail("Slice count mismatch");
     }
-  }
 
-  // Check: Ensure the digests are the correct size
-  if (DIGEST_LENGTH_BYTES != current_block_->body.previous_hash.size())
-  {
-    return fail("Previous block hash size mismatch");
+    // Check: Ensure the digests are the correct size
+    if (DIGEST_LENGTH_BYTES != current_block_->body.previous_hash.size())
+    {
+      return fail("Previous block hash size mismatch");
+    }
   }
 
   // Validating DAG hashes

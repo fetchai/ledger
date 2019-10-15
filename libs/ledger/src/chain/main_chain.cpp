@@ -151,7 +151,7 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
   auto hash{block->body.hash};
   auto ret_val{block_chain_.emplace(hash, block)};
   // under all circumstances, it _should_ be a fresh block
-  assert(ret_val.second);
+  ASSERT(ret_val.second);
   // keep parent-child reference
   if (!block->IsGenesis())
   {
