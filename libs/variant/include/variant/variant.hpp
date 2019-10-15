@@ -23,6 +23,8 @@
 #include "variant/detail/element_pool.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/meta/math_type_traits.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -203,6 +205,12 @@ private:
   ConstByteArray string_;                 ///< The string value of the variant
   VariantList    array_;                  ///< The array value of the variant
   VariantObject  object_;                 ///< The object value of the variant
+
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
+
+  template <typename T, typename D>
+  friend struct serializers::ForwardSerializer;
 };
 
 /**
@@ -576,4 +584,163 @@ void Variant::IterateObject(Function const &function) const
 }
 
 }  // namespace variant
+
+namespace serializers {
+
+template <typename D>
+struct ForwardSerializer<fetch::variant::Variant, D>
+{
+public:
+  using Type       = fetch::variant::Variant;
+  using DriverType = D;
+
+  //  static uint8_t const FIELD_OUTPUT  = 1;
+  static uint8_t const FIELD_UNDEFINED = 1;
+  static uint8_t const FIELD_INTEGER = 2;
+  static uint8_t const FIELD_FLOATING_POINT = 3;
+  static uint8_t const FIELD_FIXED_POINT = 4;
+  static uint8_t const FIELD_BOOLEAN = 5;
+  static uint8_t const FIELD_STRING = 6;
+  static uint8_t const FIELD_NULL_VALUE = 7;
+  static uint8_t const FIELD_ARRAY = 8;
+  static uint8_t const FIELD_ARRAY_COUNT = 18;
+  static uint8_t const FIELD_OBJECT = 9;
+  static uint8_t const FIELD_TYPE_NUMBER  = 254;
+
+  template <typename Serializer>
+  static void Serialize(Serializer &serializer, Type const &var)
+  {
+    int typecode = static_cast<int>(var.type_);
+    serializer << typecode;
+    switch(var.type_)
+    {
+    case Type::Type::UNDEFINED:
+      {
+        break;
+      }
+
+    case Type::Type::NULL_VALUE:
+      {
+        break;
+      }
+    case Type::Type::INTEGER:
+      {
+        serializer << var.primitive_.integer;
+        break;
+      }
+    case Type::Type::FLOATING_POINT:
+      {
+        serializer << var.primitive_.float_point;
+        break;
+      }
+    case Type::Type::FIXED_POINT:
+      {
+        serializer <<  var.primitive_.integer;
+        break;
+      }
+    case Type::Type::BOOLEAN:
+      {
+        serializer <<  var.primitive_.boolean;
+        break;
+      }
+    case Type::Type::STRING:
+      {
+        serializer <<  var.string_;
+        break;
+      }
+    default:
+      {
+        throw std::runtime_error{"Variant has unknown type."};
+      }
+    case Type::Type::ARRAY:
+      {
+        uint32_t sz = static_cast<uint32_t>(var.array_.size());
+        serializer << sz;
+        for(std::size_t i=0;i<var.array_.size();i++)
+        {
+          Serialize(serializer, var.array_[i]);
+        }
+        break;
+      }
+    case Type::Type::OBJECT:
+      {
+        uint32_t sz = static_cast<uint32_t>(var.object_.size());
+        serializer << sz;
+        for (auto const &element : var.object_)
+        {
+          serializer << element.first;
+          Serialize(serializer, *element.second);
+        }
+        break;
+      }
+    }
+  }
+
+  template <typename Deserializer>
+  static void Deserialize(Deserializer &deserializer, Type &var)
+  {
+    int typecode;
+    deserializer >> typecode;
+    Type::Type type = static_cast<Type::Type>(typecode);
+    var.type_ = type;
+    switch(var.type_)
+    {
+    case Type::Type::UNDEFINED:
+      break;
+    case Type::Type::NULL_VALUE:
+      break;
+    case Type::Type::INTEGER:
+      deserializer >> var.primitive_.integer;
+      break;
+    case Type::Type::FLOATING_POINT:
+      deserializer >>  var.primitive_.float_point;
+      break;
+    case Type::Type::FIXED_POINT:
+      deserializer >>  var.primitive_.integer;
+      break;
+    case Type::Type::BOOLEAN:
+      deserializer >> var.primitive_.boolean;
+      break;
+    case Type::Type::STRING:
+      deserializer >> var.string_;
+      break;
+    case Type::Type::ARRAY:
+      {
+        uint32_t count_tmp;
+        std::size_t count;
+        deserializer >> count_tmp;
+        count = count_tmp;
+        for(std::size_t i=0;i<count;i++)
+        {
+          Type v;
+          Deserialize(deserializer, v);
+          var.array_.push_back(v);
+        }
+        break;
+      }
+    case Type::Type::OBJECT:
+      {
+        uint32_t count_tmp;
+        std::size_t count;
+        deserializer >> count_tmp;
+        count = count_tmp;
+        for(std::size_t i=0;i<count;i++)
+        {
+          Type v;
+          byte_array::ConstByteArray k;
+          deserializer >> k;
+          Deserialize(deserializer, v);
+          var[k]=v;
+        }
+        break;
+      }
+    default:
+      {
+        throw std::runtime_error{"Variant has unknown type."};
+      }
+    }
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch
