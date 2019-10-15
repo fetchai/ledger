@@ -184,8 +184,8 @@ public:
 protected:
   ProtoPipeBuilder protoPipeBuilder;
 
-  std::shared_ptr<OUT_PROTO> last_output;
-  std::queue<PipeDataType>   pipe_;
+  std::shared_ptr<OUT_PROTO> last_output = nullptr;
+  std::queue<PipeDataType>   pipe_{};
 
-  std::vector<EntryPoint> entryPoint;
+  std::vector<EntryPoint> entryPoint{};
 };

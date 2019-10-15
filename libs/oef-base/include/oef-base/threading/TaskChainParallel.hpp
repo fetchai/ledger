@@ -67,9 +67,14 @@ public:
       std::lock_guard<std::mutex> lock(result_mutex_);
       if ((results_.size() + errored_tasks_) == num_of_tasks_)
       {
+        FETCH_LOG_INFO(LOGGING_NAME, "Task done!");
         if (messageHandler && outputMerger)
         {
           messageHandler(outputMerger(GetOutputs()));
+        }
+        else
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "No message handler!");
         }
         wake();
         if (errored_tasks_ == 0)
@@ -175,10 +180,10 @@ public:
 
 protected:
   std::shared_ptr<IN_PROTO>               global_input_ = nullptr;
-  std::queue<TaskInputDataType>           tasks_;
-  std::size_t                             num_of_tasks_;
+  std::queue<TaskInputDataType>           tasks_{};
+  std::size_t                             num_of_tasks_ = 0;
   std::mutex                              result_mutex_;
-  std::vector<std::shared_ptr<OUT_PROTO>> results_;
+  std::vector<std::shared_ptr<OUT_PROTO>> results_{};
   uint32_t                                errored_tasks_ = 0;
 
   std::vector<EntryPoint> entryPoint;
