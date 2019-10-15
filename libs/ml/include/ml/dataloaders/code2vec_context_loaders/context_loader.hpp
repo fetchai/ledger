@@ -67,7 +67,8 @@ public:
     , iterator_position_get_next_context_(0)
     , iterator_position_get_next_(0)
     , current_function_index_(0)
-    , max_contexts_(max_contexts_){};
+    , max_contexts_(max_contexts_)
+  {}
 
   ContextLabelPair        GetNextContext();
   ContextTensorsLabelPair GetNext() override;
