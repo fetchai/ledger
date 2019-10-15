@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/local_vm_launcher.hpp"
+#include "dmlf/execution/basic_vm_engine.hpp"
 
 #include "dmlf/vm_persistent.hpp"
 #include "vm/vm.hpp"
@@ -28,7 +28,7 @@
 namespace fetch {
 namespace dmlf {
 
-ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFiles const &sources) 
+ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFiles const &sources) 
 {
   if (HasExecutable(execName))
   {
@@ -53,7 +53,7 @@ ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFi
   return ExecutionResult{Variant(), Error{Error::Stage::COMPILE, Error::Code::SUCCESS, ""}, "Created executable " + execName};
 }
 
-ExecutionResult LocalVmLauncher::DeleteExecutable(Name const &execName)                             
+ExecutionResult BasicVmEngine::DeleteExecutable(Name const &execName)                             
 {
   auto it = executables_.find(execName);
 
@@ -67,7 +67,7 @@ ExecutionResult LocalVmLauncher::DeleteExecutable(Name const &execName)
   return EngineSuccess("Deleted executable " + execName);
 }
 
-ExecutionResult LocalVmLauncher::CreateState(Name const &stateName)                  
+ExecutionResult BasicVmEngine::CreateState(Name const &stateName)                  
 {
   if (HasState(stateName))
   {
@@ -78,7 +78,7 @@ ExecutionResult LocalVmLauncher::CreateState(Name const &stateName)
   return ExecutionResult{Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""}, "Created state " + stateName};
 }
 
-ExecutionResult LocalVmLauncher::CopyState(Name const &srcName, Name const &newName) 
+ExecutionResult BasicVmEngine::CopyState(Name const &srcName, Name const &newName) 
 {
   if (!HasState(srcName))
   {
@@ -93,7 +93,7 @@ ExecutionResult LocalVmLauncher::CopyState(Name const &srcName, Name const &newN
   return EngineSuccess("Copied state " + srcName + " to " + newName);
 }
 
-ExecutionResult LocalVmLauncher::DeleteState(Name const &stateName)                  
+ExecutionResult BasicVmEngine::DeleteState(Name const &stateName)                  
 {
   auto it = states_.find(stateName);
   if (it == states_.end())
@@ -105,7 +105,7 @@ ExecutionResult LocalVmLauncher::DeleteState(Name const &stateName)
   return EngineSuccess("Deleted state " + stateName);
 }
 
-ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName,
+ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
     std::string const &entrypoint) 
 {
   if (!HasExecutable(execName))
@@ -143,22 +143,22 @@ ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName
   return ExecutionResult{output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS, ""}, "Ran " + execName + " with state " + stateName};
 }
 
-ExecutionResult LocalVmLauncher::EngineError(std::string resultMessage, Error::Code code, std::string errorMessage) const
+ExecutionResult BasicVmEngine::EngineError(std::string resultMessage, Error::Code code, std::string errorMessage) const
 {
   return ExecutionResult{ Variant(), Error{Error::Stage::ENGINE, code, std::move(errorMessage)}, std::move(resultMessage)};
 }
 
-ExecutionResult LocalVmLauncher::EngineSuccess(std::string resultMessage) const
+ExecutionResult BasicVmEngine::EngineSuccess(std::string resultMessage) const
 {
   return ExecutionResult{ Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""}, std::move(resultMessage)};
 }
 
-bool LocalVmLauncher::HasExecutable(std::string const &name) const
+bool BasicVmEngine::HasExecutable(std::string const &name) const
 {
   return executables_.find(name) != executables_.end();
 }
 
-bool LocalVmLauncher::HasState(std::string const &name) const
+bool BasicVmEngine::HasState(std::string const &name) const
 {
   return states_.find(name) != states_.end();
 }

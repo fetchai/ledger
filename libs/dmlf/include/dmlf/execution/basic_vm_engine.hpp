@@ -30,14 +30,14 @@
 namespace fetch {
 namespace dmlf {
 
-class LocalVmLauncher : public ExecutionEngineInterface
+class BasicVmEngine : public ExecutionEngineInterface
 {
 public:
-  LocalVmLauncher()           = default;
-  ~LocalVmLauncher() override = default;
+  BasicVmEngine()           = default;
+  ~BasicVmEngine() override = default;
 
-  LocalVmLauncher(const LocalVmLauncher &other) = delete;
-  LocalVmLauncher &operator=(const LocalVmLauncher &other)  = delete;
+  BasicVmEngine(const BasicVmEngine &other) = delete;
+  BasicVmEngine &operator=(const BasicVmEngine &other)  = delete;
 
   using Executable   = fetch::vm::Executable;
   using VM        = fetch::vm::VM;

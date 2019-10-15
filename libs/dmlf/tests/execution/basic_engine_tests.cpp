@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 
-#include "dmlf/local_vm_launcher.hpp"
+#include "dmlf/execution/basic_vm_engine.hpp"
 
 #include "dmlf/execution/execution_error_message.hpp"
 #include "variant/variant.hpp"
@@ -33,7 +33,7 @@ using namespace fetch::dmlf;
 using Stage = ExecutionErrorMessage::Stage;
 using Code = ExecutionErrorMessage::Code;
 
-// using Params = fetch::dmlf::LocalVmLauncher::Params;
+// using Params = fetch::dmlf::BasicVmEngine::Params;
 
 auto const helloWorld = R"(
 
@@ -158,7 +158,7 @@ endfunction)";
 
 TEST(VmLauncherDmlfTests, basicEngine_HelloWorld)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -173,7 +173,7 @@ TEST(VmLauncherDmlfTests, basicEngine_HelloWorld)
 
 TEST(VmLauncherDmlfTests, basicEngine_DoubleHelloWorld)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -192,7 +192,7 @@ TEST(VmLauncherDmlfTests, basicEngine_DoubleHelloWorld)
 
 TEST(VmLauncherDmlfTests, basicEngine_repeated_HelloWorld)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -217,7 +217,7 @@ TEST(VmLauncherDmlfTests, basicEngine_repeated_HelloWorld)
 
 TEST(VmLauncherDmlfTests, basicEngine_Tick_2States)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -270,7 +270,7 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_2States)
 
 //TEST(VmLauncherDmlfTests, bad_stdOut)
 //{
-//  LocalVmLauncher launcher;
+//  BasicVmEngine launcher;
 //
 //  ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
 //  EXPECT_TRUE(createdProgram.succeeded());
@@ -287,7 +287,7 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_2States)
 
 TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick2_State)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -336,7 +336,7 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick2_State)
 
 TEST(VmLauncherDmlfTests, basicEngine_test_Tick_Tock_State)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -386,7 +386,7 @@ TEST(VmLauncherDmlfTests, basicEngine_test_Tick_Tock_State)
 
 TEST(VmLauncherDmlfTests, basicEngine_test_Tick_TickTock_State)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -439,7 +439,7 @@ TEST(VmLauncherDmlfTests, basicEngine_test_Tick_TickTock_State)
 
 TEST(VmLauncherDmlfTests, basicEngine_test_TickState_TockState2)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -491,7 +491,7 @@ TEST(VmLauncherDmlfTests, basicEngine_test_TickState_TockState2)
 
 TEST(VmLauncherDmlfTests, basicEngine_test_Tick_Tock_TickTock_State)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -542,7 +542,7 @@ TEST(VmLauncherDmlfTests, basicEngine_test_Tick_Tock_TickTock_State)
 
 TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_State)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -605,7 +605,7 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_State)
 
 TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_CopyState)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -654,7 +654,7 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_CopyState)
 
 TEST(VmLauncherDmlfTests, basicEngine_CopyState_BadSrc)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdState = launcher.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
@@ -667,7 +667,7 @@ TEST(VmLauncherDmlfTests, basicEngine_CopyState_BadSrc)
 
 TEST(VmLauncherDmlfTests, basicEngine_CopyState_BadDest)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdState = launcher.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
@@ -681,7 +681,7 @@ TEST(VmLauncherDmlfTests, basicEngine_CopyState_BadDest)
 }
 TEST(VmLauncherDmlfTests, basicEngine_DeleteExecutable)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -711,7 +711,7 @@ TEST(VmLauncherDmlfTests, basicEngine_DeleteExecutable)
 
 TEST(VmLauncherDmlfTests, basicEngine_ReplaceExecutable)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -748,7 +748,7 @@ TEST(VmLauncherDmlfTests, basicEngine_ReplaceExecutable)
 
 TEST(VmLauncherDmlfTests, basicEngine_Tick_Delete_State)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -779,7 +779,7 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_Delete_State)
 
 TEST(VmLauncherDmlfTests, basicEngine_Tick_Replace_State)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -812,7 +812,7 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_Replace_State)
 
 TEST(VmLauncherDmlfTests, basicEngine_Tick_ReplaceByCopy_State)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -858,7 +858,7 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_ReplaceByCopy_State)
 
 TEST(VmLauncherDmlfTests, basicEngine_BadCompile)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("badCompile", {{"etch", badCompile}});
   EXPECT_FALSE(createdProgram.succeeded());
@@ -868,7 +868,7 @@ TEST(VmLauncherDmlfTests, basicEngine_BadCompile)
 
 TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
 {
-  LocalVmLauncher launcher;
+  BasicVmEngine launcher;
 
   ExecutionResult createdProgram = launcher.CreateExecutable("runtime", {{"etch", runtimeError}});
   EXPECT_TRUE(createdProgram.succeeded());
@@ -884,7 +884,7 @@ TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
 
 //TEST(VmLauncherDmlfTests, basicEngine_params)
 //{
-//  LocalVmLauncher launcher;
+//  BasicVmEngine launcher;
 //
 //  ExecutionResult createdProgram = launcher.CreateExecutable("add", {{"etch", add}});
 //  EXPECT_TRUE(createdProgram.succeeded());
@@ -903,7 +903,7 @@ TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
 
 //TEST(VmLauncherDmlfTests, basicEngine_less_params)
 //{
-//  LocalVmLauncher launcher;
+//  BasicVmEngine launcher;
 //
 //  ExecutionResult createdProgram = launcher.CreateExecutable("add", {{"etch", add}});
 //  EXPECT_TRUE(createdProgram.succeeded());
@@ -925,7 +925,7 @@ TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
 //
 //TEST(VmLauncherDmlfTests, basicEngine_more_params)
 //{
-//  LocalVmLauncher launcher;
+//  BasicVmEngine launcher;
 //
 //  ExecutionResult createdProgram = launcher.CreateExecutable("add", {{"etch", add}});
 //  EXPECT_TRUE(createdProgram.succeeded());
@@ -947,7 +947,7 @@ TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
 //
 //TEST(VmLauncherDmlfTests, basicEngine_none_params)
 //{
-//  LocalVmLauncher launcher;
+//  BasicVmEngine launcher;
 //
 //  ExecutionResult createdProgram = launcher.CreateExecutable("add", {{"etch", add}});
 //  EXPECT_TRUE(createdProgram.succeeded());
@@ -969,7 +969,7 @@ TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
 //
 //TEST(VmLauncherDmlfTests, basicEngine_wrong_type_params)
 //{
-//  LocalVmLauncher launcher;
+//  BasicVmEngine launcher;
 //
 //  ExecutionResult createdProgram = launcher.CreateExecutable("add", {{"etch", add}});
 //  EXPECT_TRUE(createdProgram.succeeded());
