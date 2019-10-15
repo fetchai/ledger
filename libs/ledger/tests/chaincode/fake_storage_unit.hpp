@@ -36,7 +36,6 @@ public:
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::Transaction>;
   using StateStoreType =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
-  /*using state_archive_type = std::unordered_map<BookmarkType, StateStoreType>; */
   using LockStoreType = std::unordered_set<ShardIndex>;
   using MutexType     = std::mutex;
   using HashType      = fetch::byte_array::ConstByteArray;

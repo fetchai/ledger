@@ -120,7 +120,7 @@ public:
           std::string("Cannot create container type with more than 1 << 32 elements"));
     }
 
-    // Allocating needed mempry
+    // Allocating needed memory
     serializer_.Allocate(count);
 
     created_ = true;

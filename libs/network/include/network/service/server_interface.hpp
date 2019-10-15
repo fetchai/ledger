@@ -176,7 +176,7 @@ private:
   }
 
   Protocol *members_[256] = {nullptr};  // TODO(issue 19): Not thread-safe
-  friend class FeedSubscriptionManager;
 };
+
 }  // namespace service
 }  // namespace fetch

@@ -207,7 +207,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   // clang-format on
 
   state_machine_->OnStateChange([this](State current, State previous) {
-    FETCH_UNUSED(this);
     if (periodic_print_.Poll())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
@@ -559,7 +558,6 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   auto fail{[this](char const *reason) {
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
                    ToBase64(current_block_->body.hash), ')');
-    FETCH_UNUSED(reason);
 
     chain_.RemoveBlock(current_block_->body.hash);
     return State::RESET;
