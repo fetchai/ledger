@@ -195,11 +195,26 @@ Module::Module()
   CreateFreeFunction("toFixed32", &toFixed32);
   CreateFreeFunction("toFixed64", &toFixed64);
 
-  GetClassInterface<IMatrix>()
+  CreateTemplateType<IMatrix, AnyFloatingPoint>("Matrix")
       .CreateConstructor(&IMatrix::Constructor)
       .EnableIndexOperator(&IMatrix::GetIndexedValue, &IMatrix::SetIndexedValue)
       .CreateInstantiationType<Matrix<double>>()
-      .CreateInstantiationType<Matrix<float>>();
+      .CreateInstantiationType<Matrix<float>>()
+      .EnableOperator(Operator::Negate)
+  .EnableOperator(Operator::Add)
+  .EnableOperator(Operator::Subtract)
+  .EnableOperator(Operator::Multiply)
+  .EnableOperator(Operator::InplaceAdd)
+  .EnableOperator(Operator::InplaceSubtract)
+  .EnableLeftOperator(Operator::Multiply)
+  .EnableRightOperator(Operator::Add)
+  .EnableRightOperator(Operator::Subtract)
+  .EnableRightOperator(Operator::Multiply)
+  .EnableRightOperator(Operator::Divide)
+  .EnableRightOperator(Operator::InplaceAdd)
+  .EnableRightOperator(Operator::InplaceSubtract)
+  .EnableRightOperator(Operator::InplaceMultiply)
+  .EnableRightOperator(Operator::InplaceDivide);
 
   GetClassInterface<IArray>()
       .CreateConstructor(&IArray::Constructor)
