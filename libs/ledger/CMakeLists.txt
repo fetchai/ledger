@@ -1,5 +1,5 @@
 #
-# F E T C H  C O N S T E L L A T I O N  L I B R A R Y
+# F E T C H   L E D G E R   L I B R A R Y
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-ledger)

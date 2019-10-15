@@ -64,7 +64,6 @@ constexpr char const *LOGGING_NAME = "main";
 
 using fetch::Settings;
 using fetch::crypto::Prover;
-// using fetch::constellation::Constellation;
 using fetch::BootstrapMonitor;
 using fetch::core::WeakRunnable;
 using fetch::network::Uri;
