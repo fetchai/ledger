@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "meta/type_util.hpp"
 
 #include <cmath>
@@ -287,6 +289,7 @@ struct InitialiserListPlaceholder
 
 struct SourceFile
 {
+  SourceFile() = default;
   SourceFile(std::string filename__, std::string source__)
     : filename{std::move(filename__)}
     , source{std::move(source__)}
@@ -297,4 +300,34 @@ struct SourceFile
 using SourceFiles = std::vector<SourceFile>;
 
 }  // namespace vm
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<fetch::vm::SourceFile, D>
+{
+public:
+  using Type       = fetch::vm::SourceFile;
+  using DriverType = D;
+
+  static uint8_t const FILENAME = 1;
+  static uint8_t const SOURCE   = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &source_file)
+  {
+    auto map = map_constructor(2);
+    map.Append(FILENAME, source_file.filename);
+    map.Append(SOURCE, source_file.source);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &source_file)
+  {
+    map.ExpectKeyGetValue(FILENAME, source_file.filename);
+    map.ExpectKeyGetValue(SOURCE, source_file.source);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

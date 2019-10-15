@@ -310,6 +310,18 @@ struct OpSliceSaveableParams : public OpsSaveableParams
 };
 
 /**
+ * Saveable parameters for Squeeze op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpSqueezeSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+
+  fetch::ml::OpType op_type = OpType::OP_SQUEEZE;
+};
+
+/**
  * Saveable parameters for LeakyRelu op
  * @tparam TensorType
  */
