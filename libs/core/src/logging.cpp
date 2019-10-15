@@ -325,13 +325,4 @@ void LogBuilder::SetName(char const *name)
   name_ = name;
 }
 
-template <typename... Args>
-void LogBuilder::Log(Args &&... args)
-{
-  if (enabled_)
-  {
-    accum_ += detail::Format(std::forward<Args>(args)...);
-  }
-}
-
 }  // namespace fetch

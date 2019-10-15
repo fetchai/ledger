@@ -108,7 +108,13 @@ public:
   void SetName(char const *name);
 
   template <typename... Args>
-  void Log(Args &&... args);
+  void Log(Args &&... args)
+  {
+    if (enabled_)
+    {
+      accum_ += detail::Format(std::forward<Args>(args)...);
+    }
+  }
 };
 
 template <typename... Args>
