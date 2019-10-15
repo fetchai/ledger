@@ -272,7 +272,7 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     {
       auto const status = chain_.AddBlock(block);
       ++block_stats[status];
-      block_report.Log(ToString(status));
+      block_report.Log(ledger::ToString(status));
     }
     else
     {
@@ -290,7 +290,7 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
   }
   for (auto status : {BlockStatus::ADDED, BlockStatus::LOOSE, BlockStatus::DUPLICATE})
   {
-    sync_summary.Log(' ', ToString(status), ": ", block_stats[status]);
+    sync_summary.Log(' ', ledger::ToString(status), ": ", block_stats[status]);
   }
   sync_summary.Log(" from muddle://", ToBase64(address));
 
