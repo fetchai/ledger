@@ -54,7 +54,7 @@ TYPED_TEST(AvgPool2DTest, forward_test_3_2)
 
   TensorType          data({1, input_width, input_height, batch_size});
   TensorType          gt({1, output_width, output_height, batch_size});
-  std::vector<double> gt_input({4, 8, 12, 16, 8, 16, 24, 32});
+  std::vector<double> gt_input({1, 3, 5, 7, 3, 9, 15, 21});
   for (SizeType i{0}; i < input_width; ++i)
   {
     for (SizeType j{0}; j < input_height; ++j)
@@ -97,7 +97,7 @@ TYPED_TEST(AvgPool2DTest, forward_2_channels_test_3_2)
 
   TensorType          data({channels_size, input_width, input_height, batch_size});
   TensorType          gt({channels_size, output_width, output_height, batch_size});
-  std::vector<double> gt_input({4, 8, 12, 16, 8, 16, 24, 32, 8, 16, 24, 32, 16, 32, 48, 64});
+  std::vector<double> gt_input({1, 3, 5, 7, 3, 9, 15, 21, 2, 6, 10, 14, 6, 18, 30, 42});
 
   for (SizeType c{0}; c < channels_size; ++c)
   {
@@ -163,10 +163,31 @@ TYPED_TEST(AvgPool2DTest, backward_test)
     }
   }
 
-  gt(0, 2, 2, 0) = DataType{1};
-  gt(0, 4, 2, 0) = DataType{2};
-  gt(0, 2, 4, 0) = DataType{2};
-  gt(0, 4, 4, 0) = DataType{3};
+  gt(0, 0, 0, 0) = DataType{0.111111f};
+  gt(0, 0, 1, 0) = DataType{0.111111f};
+  gt(0, 0, 2, 0) = DataType{0.333333f};
+  gt(0, 0, 3, 0) = DataType{0.222222f};
+  gt(0, 0, 4, 0) = DataType{0.222222f};
+  gt(0, 1, 0, 0) = DataType{0.111111f};
+  gt(0, 1, 1, 0) = DataType{0.111111f};
+  gt(0, 1, 2, 0) = DataType{0.333333f};
+  gt(0, 1, 3, 0) = DataType{0.222222f};
+  gt(0, 1, 4, 0) = DataType{0.222222f};
+  gt(0, 2, 0, 0) = DataType{0.333333f};
+  gt(0, 2, 1, 0) = DataType{0.333333f};
+  gt(0, 2, 2, 0) = DataType{0.888889f};
+  gt(0, 2, 3, 0) = DataType{0.555556f};
+  gt(0, 2, 4, 0) = DataType{0.555556f};
+  gt(0, 3, 0, 0) = DataType{0.222222f};
+  gt(0, 3, 1, 0) = DataType{0.222222f};
+  gt(0, 3, 2, 0) = DataType{0.555556f};
+  gt(0, 3, 3, 0) = DataType{0.333333f};
+  gt(0, 3, 4, 0) = DataType{0.333333f};
+  gt(0, 4, 0, 0) = DataType{0.222222f};
+  gt(0, 4, 1, 0) = DataType{0.222222f};
+  gt(0, 4, 2, 0) = DataType{0.555556f};
+  gt(0, 4, 3, 0) = DataType{0.333333f};
+  gt(0, 4, 4, 0) = DataType{0.333333f};
 
   fetch::ml::ops::AvgPool2D<TensorType> op(3, 2);
   std::vector<TensorType>               prediction =
@@ -216,14 +237,56 @@ TYPED_TEST(AvgPool2DTest, backward_2_channels_test)
     }
   }
 
-  gt(0, 2, 2, 0) = DataType{1};
-  gt(0, 4, 2, 0) = DataType{2};
-  gt(0, 2, 4, 0) = DataType{2};
-  gt(0, 4, 4, 0) = DataType{3};
-  gt(1, 2, 2, 0) = DataType{2};
-  gt(1, 4, 2, 0) = DataType{4};
-  gt(1, 2, 4, 0) = DataType{4};
-  gt(1, 4, 4, 0) = DataType{6};
+  gt(0, 0, 0, 0) = DataType{0.111111f};
+  gt(0, 0, 1, 0) = DataType{0.111111f};
+  gt(0, 0, 2, 0) = DataType{0.333333f};
+  gt(0, 0, 3, 0) = DataType{0.222222f};
+  gt(0, 0, 4, 0) = DataType{0.222222f};
+  gt(0, 1, 0, 0) = DataType{0.111111f};
+  gt(0, 1, 1, 0) = DataType{0.111111f};
+  gt(0, 1, 2, 0) = DataType{0.333333f};
+  gt(0, 1, 3, 0) = DataType{0.222222f};
+  gt(0, 1, 4, 0) = DataType{0.222222f};
+  gt(0, 2, 0, 0) = DataType{0.333333f};
+  gt(0, 2, 1, 0) = DataType{0.333333f};
+  gt(0, 2, 2, 0) = DataType{0.888889f};
+  gt(0, 2, 3, 0) = DataType{0.555556f};
+  gt(0, 2, 4, 0) = DataType{0.555556f};
+  gt(0, 3, 0, 0) = DataType{0.222222f};
+  gt(0, 3, 1, 0) = DataType{0.222222f};
+  gt(0, 3, 2, 0) = DataType{0.555556f};
+  gt(0, 3, 3, 0) = DataType{0.333333f};
+  gt(0, 3, 4, 0) = DataType{0.333333f};
+  gt(0, 4, 0, 0) = DataType{0.222222f};
+  gt(0, 4, 1, 0) = DataType{0.222222f};
+  gt(0, 4, 2, 0) = DataType{0.555556f};
+  gt(0, 4, 3, 0) = DataType{0.333333f};
+  gt(0, 4, 4, 0) = DataType{0.333333f};
+  gt(1, 0, 0, 0) = DataType{0.222222f};
+  gt(1, 0, 1, 0) = DataType{0.222222f};
+  gt(1, 0, 2, 0) = DataType{0.666667f};
+  gt(1, 0, 3, 0) = DataType{0.444444f};
+  gt(1, 0, 4, 0) = DataType{0.444444f};
+  gt(1, 1, 0, 0) = DataType{0.222222f};
+  gt(1, 1, 1, 0) = DataType{0.222222f};
+  gt(1, 1, 2, 0) = DataType{0.666667f};
+  gt(1, 1, 3, 0) = DataType{0.444444f};
+  gt(1, 1, 4, 0) = DataType{0.444444f};
+  gt(1, 2, 0, 0) = DataType{0.666667f};
+  gt(1, 2, 1, 0) = DataType{0.666667f};
+  gt(1, 2, 2, 0) = DataType{1.77778f};
+  gt(1, 2, 3, 0) = DataType{1.11111f};
+  gt(1, 2, 4, 0) = DataType{1.11111f};
+  gt(1, 3, 0, 0) = DataType{0.444444f};
+  gt(1, 3, 1, 0) = DataType{0.444444f};
+  gt(1, 3, 2, 0) = DataType{1.11111f};
+  gt(1, 3, 3, 0) = DataType{0.666667f};
+  gt(1, 3, 4, 0) = DataType{0.666667f};
+  gt(1, 4, 0, 0) = DataType{0.444444f};
+  gt(1, 4, 1, 0) = DataType{0.444444f};
+  gt(1, 4, 2, 0) = DataType{1.11111f};
+  gt(1, 4, 3, 0) = DataType{0.666667f};
+  gt(1, 4, 4, 0) = DataType{0.666667f};
 
   fetch::ml::ops::AvgPool2D<TensorType> op(3, 2);
   std::vector<TensorType>               prediction =
@@ -253,7 +316,7 @@ TYPED_TEST(AvgPool2DTest, saveparams_test)
 
   TensorType          data({channels_size, input_width, input_height, batch_size});
   TensorType          gt({channels_size, output_width, output_height, batch_size});
-  std::vector<double> gt_input({4, 8, 12, 16, 8, 16, 24, 32, 8, 16, 24, 32, 16, 32, 48, 64});
+  std::vector<double> gt_input({1, 3, 5, 7, 3, 9, 15, 21, 2, 6, 10, 14, 6, 18, 30, 42});
 
   for (SizeType c{0}; c < channels_size; ++c)
   {

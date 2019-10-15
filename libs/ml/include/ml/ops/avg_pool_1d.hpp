@@ -87,8 +87,8 @@ public:
     assert(output.shape() == ComputeOutputShape(inputs));
 
     SizeType iter;
-    DataType max;
-    DataType val;
+    DataType sum;
+    DataType cnt    = static_cast<DataType>(kernel_size_);
     auto     out_it = output.begin();
 
     for (SizeType n_i{0}; n_i < output.shape().at(2); n_i++)  // iterate over batch
@@ -99,20 +99,16 @@ public:
         iter = i * stride_size_;
         for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
         {
-          max = inputs.at(0)->At(c, iter, n_i);
+          sum = static_cast<DataType>(0);
 
           // Get maximum value on kernel_size_ window
-          for (SizeType j{1}; j < kernel_size_; j++)  // Iterate over kernel width
+          for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
           {
-            val = inputs.at(0)->At(c, iter + j, n_i);
-            if (val > max)
-            {
-              max = val;
-            }
+            sum += inputs.at(0)->At(c, iter + j, n_i);
           }
 
           // Set maximum value for each [kernel_size_] window to output
-          *out_it = max;
+          *out_it = sum / cnt;
           ++out_it;
         }
       }
@@ -141,10 +137,9 @@ public:
     auto output_shape = error_signal.shape();
 
     SizeType iter;
-    DataType max;
-    DataType val;
-    SizeType max_iter;
-    auto     er_it = error_signal.cbegin();
+    DataType cnt = static_cast<DataType>(kernel_size_);
+
+    auto er_it = error_signal.cbegin();
 
     for (SizeType n_i{0}; n_i < output_shape.at(2); n_i++)  // iterate over batch
     {
@@ -153,22 +148,13 @@ public:
         iter = i * stride_size_;
         for (SizeType c{0}; c < output_shape.at(0); ++c)  // Iterate over output channels
         {
-          max      = inputs.at(0)->At(c, iter, n_i);
-          max_iter = iter;
 
           // Find max node
           for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
           {
-            val = inputs.at(0)->At(c, iter + j, n_i);
-            if (val > max)
-            {
-              max      = val;
-              max_iter = iter + j;
-            }
+            return_signal(c, iter + j, n_i) += *er_it / cnt;
           }
 
-          // Add error to max node
-          return_signal.Set(c, max_iter, n_i, return_signal.At(c, max_iter, n_i) + *er_it);
           ++er_it;
         }
       }

@@ -71,7 +71,7 @@ public:
     return copyshare;
   }
   /**
-   * Applies 2D max pooling of kernel_size_ x kernel_size_ for each channel described here:
+   * Applies 2D avg pooling of kernel_size_ x kernel_size_ for each channel described here:
    * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
    * @param inputs vector of tensor references where at:
    * inputs[0] = input_data[input_channels x input_height x input_width]
@@ -88,8 +88,8 @@ public:
 
     SizeType iterw;
     SizeType iterh;
-    DataType val;
-    DataType max;
+    DataType sum;
+    DataType cnt = static_cast<DataType>(kernel_size_ * kernel_size_);
     auto     oit = output.begin();
 
     for (SizeType n_i{0}; n_i < output.shape().at(2); n_i++)  // iterate over batch
@@ -104,23 +104,19 @@ public:
 
           for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
           {
-            max = inputs.at(0)->At(c, iterw, iterh, n_i);
+            sum = static_cast<DataType>(0);
 
-            // Get maximum value on kernel_size_ x kernel_size_ window
+            // Sum all values on kernel_size_ x kernel_size_ window
             for (SizeType jw{0}; jw < kernel_size_; jw++)  // Iterate over kernel width
             {
               for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
               {
-                val = inputs.at(0)->At(c, iterw + jw, iterh + jh, n_i);
-                if (val > max)
-                {
-                  max = val;
-                }
+                sum += inputs.at(0)->At(c, iterw + jw, iterh + jh, n_i);
               }
             }
 
-            // Set maximum value for each [kernel_size_ x kernel_size_] window to output
-            *oit = max;
+            // Set average value for each [kernel_size_ x kernel_size_] window to output
+            *oit = sum / cnt;
             ++oit;
           }
         }
@@ -129,9 +125,9 @@ public:
   }
 
   /**
-   * Computes gradient of 2D max pooling of kernel_size_ x kernel_size for each channel described
+   * Computes gradient of 2D avg pooling of kernel_size_ x kernel_size for each channel described
    * here: http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf Error signal
-   * of max pool is passed only to max node
+   * of avg pool is averaged to all node
    * @param inputs vector of tensor references where at:
    * inputs[0] = input_data[input_channels x input_height x input_width]
    * @param error_signal tensor of size  [output_channels x
@@ -148,11 +144,9 @@ public:
 
     SizeType iterh;
     SizeType iterw;
-    DataType max;
-    DataType val;
-    SizeType max_iterw;
-    SizeType max_iterh;
-    auto     erit = error_signal.cbegin();
+    DataType cnt = static_cast<DataType>(kernel_size_ * kernel_size_);
+
+    auto erit = error_signal.cbegin();
     for (SizeType n_i{0}; n_i < error_signal.shape().at(2); n_i++)  // iterate over batch
     {
       // Iterate width over kernel stride
@@ -166,29 +160,15 @@ public:
           // Iterate over output channels
           for (SizeType c{0}; c < error_signal.shape().at(0); ++c)
           {
-            max       = inputs.at(0)->At(c, iterw, iterh, n_i);
-            max_iterw = iterw;
-            max_iterh = iterh;
-
-            // Find max node
+            // Add error signal to return_signal nodes divided by number of kernel nodes
             for (SizeType jw{0}; jw < kernel_size_; jw++)  // Iterate over kernel width
             {
               for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
               {
-
-                val = inputs.at(0)->At(c, iterw + jw, iterh + jh, n_i);
-                if (val > max)
-                {
-                  max       = val;
-                  max_iterw = iterw + jw;
-                  max_iterh = iterh + jh;
-                }
+                return_signal(c, iterw + jw, iterh + jh, n_i) += *erit / cnt;
               }
             }
 
-            // Add error to max node
-            return_signal(c, max_iterw, max_iterh, n_i) =
-                return_signal(c, max_iterw, max_iterh, n_i) + *erit;
             ++erit;
           }
         }
