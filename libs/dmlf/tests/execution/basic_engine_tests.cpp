@@ -156,52 +156,52 @@ endfunction)";
 
 }  // namespace
 
-TEST(VmLauncherDmlfTests, basicEngine_HelloWorld)
+TEST(BasicVmEngineDmlfTests, HelloWorld)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("helloWorld", "state", "main");
+  ExecutionResult result = engine.Run("helloWorld", "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_DoubleHelloWorld)
+TEST(BasicVmEngineDmlfTests, DoubleHelloWorld)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("helloWorld",  "state", "main");
+  ExecutionResult result = engine.Run("helloWorld",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  result = launcher.Run("helloWorld",  "state", "main");
+  result = engine.Run("helloWorld",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_repeated_HelloWorld)
+TEST(BasicVmEngineDmlfTests, repeated_HelloWorld)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
-  createdState   = launcher.CreateState("state");
+  createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+  createdState   = engine.CreateState("state");
 
   EXPECT_FALSE(createdProgram.succeeded());
   EXPECT_EQ(createdProgram.error().stage(), Stage::ENGINE);
@@ -210,40 +210,40 @@ TEST(VmLauncherDmlfTests, basicEngine_repeated_HelloWorld)
   EXPECT_EQ(createdState.error().stage(), Stage::ENGINE);
   EXPECT_EQ(createdState.error().code(), Code::BAD_STATE);
 
-  ExecutionResult result = launcher.Run("helloWorld",  "state", "main");
+  ExecutionResult result = engine.Run("helloWorld",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_Tick_2States)
+TEST(BasicVmEngineDmlfTests, Tick_2States)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state1");
+  ExecutionResult createdState = engine.CreateState("state1");
   EXPECT_TRUE(createdState.succeeded());
-  createdState = launcher.CreateState("state2");
+  createdState = engine.CreateState("state2");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick",  "state1", "main");
+  ExecutionResult result = engine.Run("tick",  "state1", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick",  "state1", "main");
+  result = engine.Run("tick",  "state1", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  result = launcher.Run("tick",  "state2", "main");
+  result = engine.Run("tick",  "state2", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick",  "state1", "main");
+  result = engine.Run("tick",  "state1", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
-  result = launcher.Run("tick",  "state2", "main");
+  result = engine.Run("tick",  "state2", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
@@ -251,665 +251,665 @@ TEST(VmLauncherDmlfTests, basicEngine_Tick_2States)
 // Repeated things
 
 // Breaks VM
-// TEST(VmLauncherDmlfTests, break_vm)
+// TEST(BasicVmEngineDmlfTests, break_vm)
 //{
 //
 //
-//  ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+//  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
 //  EXPECT_TRUE(createdProgram.succeeded());
 //
 //
-//  ExecutionResult createdState = launcher.CreateState("state");
+//  ExecutionResult createdState = engine.CreateState("state");
 //  EXPECT_TRUE(createdState.succeeded());
 //
-//  ExecutionResult result = launcher.Run("helloWorld",  "state", "main");
+//  ExecutionResult result = engine.Run("helloWorld",  "state", "main");
 //  EXPECT_TRUE(result.succeeded());
 //
 //  //EXPECT_EQ(output.str(), "Hello world!!\n");
 //}
 
-//TEST(VmLauncherDmlfTests, bad_stdOut)
+//TEST(BasicVmEngineDmlfTests, bad_stdOut)
 //{
-//  BasicVmEngine launcher;
+//  BasicVmEngine engine;
 //
-//  ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+//  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
 //  EXPECT_TRUE(createdProgram.succeeded());
 //
 //  std::stringstream badOutput;
 //
-//  ExecutionResult createdState = launcher.CreateState("state");
+//  ExecutionResult createdState = engine.CreateState("state");
 //  EXPECT_TRUE(createdState.succeeded());
 //
-//  ExecutionResult result = launcher.Run("helloWorld",  "state", "main");
+//  ExecutionResult result = engine.Run("helloWorld",  "state", "main");
 //  EXPECT_TRUE(result.succeeded());
 //  EXPECT_EQ(result.output().Get<int>(), 1);
 //}
 
-TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick2_State)
+TEST(BasicVmEngineDmlfTests, Tick_Tick2_State)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  createdProgram = launcher.CreateExecutable("tick2", {{"etch", tick2}});
+  createdProgram = engine.CreateExecutable("tick2", {{"etch", tick2}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  ExecutionResult result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick2",  "state", "tick2");
+  result = engine.Run("tick2",  "state", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
 
-  result = launcher.Run("tick2",  "state", "tick2");
+  result = engine.Run("tick2",  "state", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 6);
 
-  result = launcher.Run("tick2",  "state", "tick2");
+  result = engine.Run("tick2",  "state", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 7);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 9);
 
-  result = launcher.Run("tick2",  "state", "tick2");
+  result = engine.Run("tick2",  "state", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 10);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_test_Tick_Tock_State)
+TEST(BasicVmEngineDmlfTests, Tick_Tock_State)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
 
-  createdProgram = launcher.CreateExecutable("tock", {{"etch", tock}});
+  createdProgram = engine.CreateExecutable("tock", {{"etch", tock}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  ExecutionResult result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tock",  "state", "tock");
+  result = engine.Run("tock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  result = launcher.Run("tock",  "state", "tock");
+  result = engine.Run("tock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
-  result = launcher.Run("tock",  "state", "tock");
+  result = engine.Run("tock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
 
-  result = launcher.Run("tock",  "state", "tock");
+  result = engine.Run("tock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_test_Tick_TickTock_State)
+TEST(BasicVmEngineDmlfTests, Tick_TickTock_State)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
 
-  createdProgram = launcher.CreateExecutable("tickTock", {{"etch", tickTock}});
+  createdProgram = engine.CreateExecutable("tickTock", {{"etch", tickTock}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  ExecutionResult result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tickTock",  "state", "tick");
+  result = engine.Run("tickTock",  "state", "tick");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  result = launcher.Run("tickTock",  "state", "tock");
+  result = engine.Run("tickTock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
-  result = launcher.Run("tickTock",  "state", "tick");
+  result = engine.Run("tickTock",  "state", "tick");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
 
-  result = launcher.Run("tickTock",  "state", "tock");
+  result = engine.Run("tickTock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
 
-  result = launcher.Run("tickTock",  "state", "tick");
+  result = engine.Run("tickTock",  "state", "tick");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 5);
 
-  result = launcher.Run("tickTock",  "state", "tock");
+  result = engine.Run("tickTock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_test_TickState_TockState2)
+TEST(BasicVmEngineDmlfTests, TickState_TockState2)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
 
-  createdProgram = launcher.CreateExecutable("tick2", {{"etch", tick2}});
+  createdProgram = engine.CreateExecutable("tick2", {{"etch", tick2}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
-  createdState = launcher.CreateState("state2");
+  createdState = engine.CreateState("state2");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  ExecutionResult result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick2",  "state2", "tick2");
+  result = engine.Run("tick2",  "state2", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  result = launcher.Run("tick2",  "state2", "tick2");
+  result = engine.Run("tick2",  "state2", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
 
-  result = launcher.Run("tick",  "state2", "main");
+  result = engine.Run("tick",  "state2", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
 
-  result = launcher.Run("tick2",  "state", "tick2");
+  result = engine.Run("tick2",  "state", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
 
-  result = launcher.Run("tick",  "state2", "main");
+  result = engine.Run("tick",  "state2", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 5);
 
-  result = launcher.Run("tick2",  "state", "tick2");
+  result = engine.Run("tick2",  "state", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_test_Tick_Tock_TickTock_State)
+TEST(BasicVmEngineDmlfTests, Tick_Tock_TickTock_State)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
 
-  createdProgram = launcher.CreateExecutable("tickTock", {{"etch", tickTock}});
+  createdProgram = engine.CreateExecutable("tickTock", {{"etch", tickTock}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  createdProgram = launcher.CreateExecutable("tock", {{"etch", tock}});
+  createdProgram = engine.CreateExecutable("tock", {{"etch", tock}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  ExecutionResult result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tock",  "state", "tock");
+  result = engine.Run("tock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tickTock",  "state", "tick");
+  result = engine.Run("tickTock",  "state", "tick");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  result = launcher.Run("tickTock",  "state", "tock");
+  result = engine.Run("tickTock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
-  result = launcher.Run("tock",  "state", "tock");
+  result = engine.Run("tock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
 
-  result = launcher.Run("tickTock",  "state", "tick");
+  result = engine.Run("tickTock",  "state", "tick");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
 
-  result = launcher.Run("tickTock",  "state", "tock");
+  result = engine.Run("tickTock",  "state", "tock");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_State)
+TEST(BasicVmEngineDmlfTests, Tick_Tick_State)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  createdProgram = launcher.CreateExecutable("tick2", {{"etch", tick}});
-  EXPECT_TRUE(createdProgram.succeeded());
-  createdProgram = launcher.CreateExecutable("tick3", {{"etch", tick}});
-  EXPECT_TRUE(createdProgram.succeeded());
-  createdProgram = launcher.CreateExecutable("tick4", {{"etch", tick}});
-  EXPECT_TRUE(createdProgram.succeeded());
-  createdProgram = launcher.CreateExecutable("tick5", {{"etch", tick}});
-  EXPECT_TRUE(createdProgram.succeeded());
-  createdProgram = launcher.CreateExecutable("tick6", {{"etch", tick}});
-  EXPECT_TRUE(createdProgram.succeeded());
-  createdProgram = launcher.CreateExecutable("tick7", {{"etch", tick}});
-  EXPECT_TRUE(createdProgram.succeeded());
-  createdProgram = launcher.CreateExecutable("tick8", {{"etch", tick}});
-  EXPECT_TRUE(createdProgram.succeeded());
-  createdProgram = launcher.CreateExecutable("tick9", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  createdProgram = engine.CreateExecutable("tick2", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+  createdProgram = engine.CreateExecutable("tick3", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+  createdProgram = engine.CreateExecutable("tick4", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+  createdProgram = engine.CreateExecutable("tick5", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+  createdProgram = engine.CreateExecutable("tick6", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+  createdProgram = engine.CreateExecutable("tick7", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+  createdProgram = engine.CreateExecutable("tick8", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+  createdProgram = engine.CreateExecutable("tick9", {{"etch", tick}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  ExecutionResult result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick2",  "state", "main");
+  result = engine.Run("tick2",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
-  result = launcher.Run("tick2",  "state", "main");
+  result = engine.Run("tick2",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
 
-  result = launcher.Run("tick2",  "state", "main");
+  result = engine.Run("tick2",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 5);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 6);
 
-  result = launcher.Run("tick2",  "state", "main");
+  result = engine.Run("tick2",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 7);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_Tick_Tick_CopyState)
+TEST(BasicVmEngineDmlfTests, Tick_Tick_CopyState)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  ExecutionResult result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  ExecutionResult copyStateResult = launcher.CopyState("state", "state2");
+  ExecutionResult copyStateResult = engine.CopyState("state", "state2");
   EXPECT_TRUE(copyStateResult.succeeded());
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
-  result = launcher.Run("tick",  "state2", "main");
+  result = engine.Run("tick",  "state2", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
 
-  result = launcher.Run("tick",  "state2", "main");
+  result = engine.Run("tick",  "state2", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
 
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
 
-  result = launcher.Run("tick",  "state2", "main");
+  result = engine.Run("tick",  "state2", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_CopyState_BadSrc)
+TEST(BasicVmEngineDmlfTests, CopyState_BadSrc)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult copyState = launcher.CopyState("badName", "newState");
+  ExecutionResult copyState = engine.CopyState("badName", "newState");
   EXPECT_FALSE(copyState.succeeded());
   EXPECT_EQ(copyState.error().stage(), Stage::ENGINE);
   EXPECT_EQ(copyState.error().code(), Code::BAD_STATE);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_CopyState_BadDest)
+TEST(BasicVmEngineDmlfTests, CopyState_BadDest)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
-  ExecutionResult createdState2 = launcher.CreateState("other");
+  ExecutionResult createdState2 = engine.CreateState("other");
   EXPECT_TRUE(createdState2.succeeded());
 
-  ExecutionResult copyState = launcher.CopyState("state", "other");
+  ExecutionResult copyState = engine.CopyState("state", "other");
   EXPECT_FALSE(copyState.succeeded());
   EXPECT_EQ(copyState.error().stage(), Stage::ENGINE);
   EXPECT_EQ(copyState.error().code(), Code::BAD_DESTINATION);
 }
-TEST(VmLauncherDmlfTests, basicEngine_DeleteExecutable)
+TEST(BasicVmEngineDmlfTests, DeleteExecutable)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("helloWorld", "state", "main");
+  ExecutionResult result = engine.Run("helloWorld", "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  ExecutionResult deleteResult = launcher.DeleteExecutable("goodbyeWorld");
+  ExecutionResult deleteResult = engine.DeleteExecutable("goodbyeWorld");
   EXPECT_FALSE(deleteResult.succeeded());
   EXPECT_EQ(deleteResult.error().stage(), Stage::ENGINE);
   EXPECT_EQ(deleteResult.error().code(), Code::BAD_EXECUTABLE);
-  result = launcher.Run("helloWorld", "state", "main");
+  result = engine.Run("helloWorld", "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  deleteResult = launcher.DeleteExecutable("helloWorld");
+  deleteResult = engine.DeleteExecutable("helloWorld");
   EXPECT_TRUE(deleteResult.succeeded());
-  result = launcher.Run("helloWorld", "state", "main");
+  result = engine.Run("helloWorld", "state", "main");
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
   EXPECT_EQ(result.error().code(), Code::BAD_EXECUTABLE);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_ReplaceExecutable)
+TEST(BasicVmEngineDmlfTests, ReplaceExecutable)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick", "state", "main");
+  ExecutionResult result = engine.Run("tick", "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick", "state", "main");
+  result = engine.Run("tick", "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  ExecutionResult deleteResult = launcher.DeleteExecutable("tick");
+  ExecutionResult deleteResult = engine.DeleteExecutable("tick");
   EXPECT_TRUE(deleteResult.succeeded());
-  result = launcher.Run("tick", "state", "main");
+  result = engine.Run("tick", "state", "main");
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
   EXPECT_EQ(result.error().code(), Code::BAD_EXECUTABLE);
 
-  createdProgram = launcher.CreateExecutable("tick", {{"etch", tick2}});
+  createdProgram = engine.CreateExecutable("tick", {{"etch", tick2}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  result = launcher.Run("tick", "state", "tick2");
+  result = engine.Run("tick", "state", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
-  result = launcher.Run("tick", "state", "tick2");
+  result = engine.Run("tick", "state", "tick2");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 4);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_Tick_Delete_State)
+TEST(BasicVmEngineDmlfTests, Tick_Delete_State)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  ExecutionResult result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  ExecutionResult deleteState = launcher.DeleteState("badState");
+  ExecutionResult deleteState = engine.DeleteState("badState");
   EXPECT_FALSE(deleteState.succeeded());
   EXPECT_EQ(deleteState.error().stage(), Stage::ENGINE);
   EXPECT_EQ(deleteState.error().code(), Code::BAD_STATE);
-  deleteState = launcher.DeleteState("state");
+  deleteState = engine.DeleteState("state");
   EXPECT_TRUE(deleteState.succeeded());
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
   EXPECT_EQ(result.error().code(), Code::BAD_STATE);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_Tick_Replace_State)
+TEST(BasicVmEngineDmlfTests, Tick_Replace_State)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  ExecutionResult result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  ExecutionResult deleteState = launcher.DeleteState("state");
+  ExecutionResult deleteState = engine.DeleteState("state");
   EXPECT_TRUE(deleteState.succeeded());
 
-  createdState = launcher.CreateState("state");
+  createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_Tick_ReplaceByCopy_State)
+TEST(BasicVmEngineDmlfTests, Tick_ReplaceByCopy_State)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("tick", {{"etch", tick}});
+  ExecutionResult createdProgram = engine.CreateExecutable("tick", {{"etch", tick}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("tick",  "state", "main");
+  ExecutionResult result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  createdState = launcher.CreateState("state2");
+  createdState = engine.CreateState("state2");
   EXPECT_TRUE(createdState.succeeded());
 
-  result = launcher.Run("tick",  "state2", "main");
+  result = engine.Run("tick",  "state2", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 0);
 
-  result = launcher.Run("tick",  "state2", "main");
+  result = engine.Run("tick",  "state2", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
 
 
-  ExecutionResult deleteState = launcher.DeleteState("state");
+  ExecutionResult deleteState = engine.DeleteState("state");
   EXPECT_TRUE(deleteState.succeeded());
 
-  ExecutionResult copyState = launcher.CopyState("state2", "state");
+  ExecutionResult copyState = engine.CopyState("state2", "state");
   EXPECT_TRUE(createdState.succeeded());
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 2);
 
-  result = launcher.Run("tick",  "state", "main");
+  result = engine.Run("tick",  "state", "main");
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 3);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_BadCompile)
+TEST(BasicVmEngineDmlfTests, BadCompile)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("badCompile", {{"etch", badCompile}});
+  ExecutionResult createdProgram = engine.CreateExecutable("badCompile", {{"etch", badCompile}});
   EXPECT_FALSE(createdProgram.succeeded());
   EXPECT_EQ(createdProgram.error().stage(), Stage::COMPILE);
   EXPECT_EQ(createdProgram.error().code(), Code::COMPILATION_ERROR);
 }
 
-TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
+TEST(BasicVmEngineDmlfTests, RuntimeError)
 {
-  BasicVmEngine launcher;
+  BasicVmEngine engine;
 
-  ExecutionResult createdProgram = launcher.CreateExecutable("runtime", {{"etch", runtimeError}});
+  ExecutionResult createdProgram = engine.CreateExecutable("runtime", {{"etch", runtimeError}});
   EXPECT_TRUE(createdProgram.succeeded());
 
-  ExecutionResult createdState = launcher.CreateState("state");
+  ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = launcher.Run("runtime", "state", "main");
+  ExecutionResult result = engine.Run("runtime", "state", "main");
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::RUNNING);
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
 }
 
-//TEST(VmLauncherDmlfTests, basicEngine_params)
+//TEST(BasicVmEngineDmlfTests, params)
 //{
-//  BasicVmEngine launcher;
+//  BasicVmEngine engine;
 //
-//  ExecutionResult createdProgram = launcher.CreateExecutable("add", {{"etch", add}});
+//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", add}});
 //  EXPECT_TRUE(createdProgram.succeeded());
 //
 //
-//  ExecutionResult createdState = launcher.CreateState("state");
+//  ExecutionResult createdState = engine.CreateState("state");
 //  EXPECT_TRUE(createdState.succeeded());
 //
 //  Params params{Variant(5, TypeIds::Int32), Variant(6, TypeIds::Int32)};
-//  ExecutionResult result = launcher.Run("add",  "state", "add", params);
+//  ExecutionResult result = engine.Run("add",  "state", "add", params);
 //
 //  EXPECT_TRUE(result.succeeded());
 //
 //  //EXPECT_EQ(output.str(), "Add 5 plus 6 equals 11\n");
 //}
 
-//TEST(VmLauncherDmlfTests, basicEngine_less_params)
+//TEST(BasicVmEngineDmlfTests, less_params)
 //{
-//  BasicVmEngine launcher;
+//  BasicVmEngine engine;
 //
-//  ExecutionResult createdProgram = launcher.CreateExecutable("add", {{"etch", add}});
+//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", add}});
 //  EXPECT_TRUE(createdProgram.succeeded());
 //
 //
-//  ExecutionResult createdState = launcher.CreateState("state");
+//  ExecutionResult createdState = engine.CreateState("state");
 //  EXPECT_TRUE(createdState.succeeded());
 //
 //  std::string errorMessage;
@@ -917,21 +917,21 @@ TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
 //                      std::string const &error) { errorMessage = error; });
 //
 //  Params params{Variant(5, TypeIds::Int32)};
-//  ExecutionResult result = launcher.Run("add",  "state", "add", params);
+//  ExecutionResult result = engine.Run("add",  "state", "add", params);
 //
 //  EXPECT_FALSE(result.succeeded());
 //  EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 1");
 //}
 //
-//TEST(VmLauncherDmlfTests, basicEngine_more_params)
+//TEST(BasicVmEngineDmlfTests, more_params)
 //{
-//  BasicVmEngine launcher;
+//  BasicVmEngine engine;
 //
-//  ExecutionResult createdProgram = launcher.CreateExecutable("add", {{"etch", add}});
+//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", add}});
 //  EXPECT_TRUE(createdProgram.succeeded());
 //
 //
-//  ExecutionResult createdState = launcher.CreateState("state");
+//  ExecutionResult createdState = engine.CreateState("state");
 //  EXPECT_TRUE(createdState.succeeded());
 //
 //  std::string errorMessage;
@@ -939,21 +939,21 @@ TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
 //                      std::string const &error) { errorMessage = error; });
 //
 //  Params params{Variant(5, TypeIds::Int32), Variant(5, TypeIds::Int32), Variant(5, TypeIds::Int32)};
-//  ExecutionResult result = launcher.Run("add",  "state", "add", params);
+//  ExecutionResult result = engine.Run("add",  "state", "add", params);
 //
 //  EXPECT_FALSE(result.succeeded());
 //  EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 3");
 //}
 //
-//TEST(VmLauncherDmlfTests, basicEngine_none_params)
+//TEST(BasicVmEngineDmlfTests, none_params)
 //{
-//  BasicVmEngine launcher;
+//  BasicVmEngine engine;
 //
-//  ExecutionResult createdProgram = launcher.CreateExecutable("add", {{"etch", add}});
+//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", add}});
 //  EXPECT_TRUE(createdProgram.succeeded());
 //
 //
-//  ExecutionResult createdState = launcher.CreateState("state");
+//  ExecutionResult createdState = engine.CreateState("state");
 //  EXPECT_TRUE(createdState.succeeded());
 //
 //  std::string errorMessage;
@@ -961,21 +961,21 @@ TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
 //                      std::string const &error) { errorMessage = error; });
 //
 //  Params params{};
-//  ExecutionResult result = launcher.Run("add",  "state", "add", params);
+//  ExecutionResult result = engine.Run("add",  "state", "add", params);
 //
 //  EXPECT_FALSE(result.succeeded());
 //  EXPECT_EQ(errorMessage, "mismatched parameters: expected 2 arguments, but got 0");
 //}
 //
-//TEST(VmLauncherDmlfTests, basicEngine_wrong_type_params)
+//TEST(BasicVmEngineDmlfTests, wrong_type_params)
 //{
-//  BasicVmEngine launcher;
+//  BasicVmEngine engine;
 //
-//  ExecutionResult createdProgram = launcher.CreateExecutable("add", {{"etch", add}});
+//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", add}});
 //  EXPECT_TRUE(createdProgram.succeeded());
 //
 //
-//  ExecutionResult createdState = launcher.CreateState("state");
+//  ExecutionResult createdState = engine.CreateState("state");
 //  EXPECT_TRUE(createdState.succeeded());
 //
 //  std::string errorMessage;
@@ -983,7 +983,7 @@ TEST(VmLauncherDmlfTests, basicEngine_runtimeError)
 //                      std::string const &error) { errorMessage = error; });
 //
 //  Params params{Variant(5, TypeIds::Float32), Variant(5, TypeIds::Int32)};
-//  ExecutionResult result = launcher.Run("add",  "state", "add", params);
+//  ExecutionResult result = engine.Run("add",  "state", "add", params);
 //
 //  EXPECT_FALSE(result.succeeded());
 //  EXPECT_EQ(errorMessage,
