@@ -32,6 +32,7 @@ class Parser
 public:
   Parser();
   ~Parser() = default;
+  void         AddTemplateName(std::string const &name);
   BlockNodePtr Parse(SourceFiles const &files, std::vector<std::string> &errors);
 
 private:
@@ -75,7 +76,7 @@ private:
 
   using StringSet = std::unordered_set<std::string>;
 
-  StringSet const          template_names_;
+  StringSet                template_names_;
   std::string              filename_;
   std::vector<Token>       tokens_;
   int                      index_{};
