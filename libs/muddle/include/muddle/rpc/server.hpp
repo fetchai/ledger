@@ -26,7 +26,7 @@
 #include "network/tcp/tcp_server.hpp"
 
 #include <array>
-#include <tuple>  // emulation layer
+#include <tuple>
 #include <unordered_map>
 
 namespace fetch {

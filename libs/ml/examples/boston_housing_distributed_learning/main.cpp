@@ -251,7 +251,6 @@ int main(int argc, char **argv)
     // Instantiate NUMBER_OF_CLIENTS clients
     clients[i] = MakeClient(i, client_params, data_tensors.at(i), label_tensors.at(i),
                             test_set_ratio, console_mutex_ptr);
-    // TODO(1597): Replace ID with something more sensible
   }
 
   // Give list of clients to coordinator

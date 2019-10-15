@@ -16,24 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/fnv_detail.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 
 namespace fetch {
-namespace crypto {
-namespace detail {
+namespace ml {
+namespace utilities {
 
-template <>
-FNVConfig<uint32_t>::NumberType const FNVConfig<uint32_t>::prime = (1ull << 24u) + (1ull << 8u) +
-                                                                   0x93ull;
-template <>
-FNVConfig<uint32_t>::NumberType const FNVConfig<uint32_t>::offset = 0x811c9dc5;
+// Timestamp for logging
+std::string GetStrTimestamp()
+{
+  auto now       = std::chrono::system_clock::now();
+  auto in_time_t = std::chrono::system_clock::to_time_t(now);
 
-template <>
-FNVConfig<uint64_t>::NumberType const FNVConfig<uint64_t>::prime = (1ull << 40u) + (1ull << 8u) +
-                                                                   0xb3ull;
-template <>
-FNVConfig<uint64_t>::NumberType const FNVConfig<uint64_t>::offset = 0xcbf29ce484222325;
+  auto now_milliseconds =
+      std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
-}  // namespace detail
-}  // namespace crypto
+  std::stringstream ss;
+  ss << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H:%M:%S");
+
+  // add milliseconds to timestamp string
+  ss << '.' << std::setfill('0') << std::setw(3) << now_milliseconds.count();
+
+  return ss.str();
+}
+
+}  // namespace utilities
+}  // namespace ml
 }  // namespace fetch

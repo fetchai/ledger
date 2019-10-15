@@ -64,9 +64,10 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file,
 
 int main(int argc, char **argv)
 {
-  if (argc != 3)
+  if (argc != 4)
   {
-    std::cout << "Usage : " << argv[0] << " PATH/TO/text8 analogies_test_file" << std::endl;
+    std::cout << "Usage : " << argv[0] << " PATH/TO/text8 analogies_test_file output_csv_file"
+              << std::endl;
     return 1;
   }
 
@@ -74,11 +75,11 @@ int main(int argc, char **argv)
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients    = 3;
-  SizeType number_of_rounds     = 50;
-  coord_params.number_of_peers  = 2;
-  coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
-  coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
+  SizeType number_of_clients   = 5;
+  SizeType number_of_rounds    = 1000;
+  coord_params.number_of_peers = 3;
+  coord_params.mode            = CoordinatorMode::ASYNCHRONOUS;
+  SizeType iterations_count    = 100;  //  Synchronization occurs after this number of batches
   // have been processed in total by the clients
 
   client_params.batch_size    = 10000;
@@ -93,6 +94,7 @@ int main(int argc, char **argv)
   client_params.embedding_size       = 100;               // dimension of embedding vec
   client_params.starting_learning_rate_per_sample =
       DataType{0.0025f};  // these are the learning rates we have for each sample
+  client_params.test_frequency = 1000;
 
   client_params.k     = 20;       // how many nearest neighbours to compare against
   client_params.word0 = "three";  // test word to consider
@@ -129,7 +131,8 @@ int main(int argc, char **argv)
     cp.data                        = {client_data[i]};
     auto client =
         std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
-    // TODO(1597): Replace ID with something more sensible
+    client->SetMaxUpdates(iterations_count);
+
     clients[i] = client;
     vocabs.push_back(client->GetVocab());
   }
@@ -171,6 +174,24 @@ int main(int argc, char **argv)
     {
       t.join();
     }
+
+    std::ofstream lossfile(std::string(argv[3]), std::ofstream::out | std::ofstream::app);
+
+    std::cout << "Test losses:";
+    lossfile << utilities::GetStrTimestamp();
+    for (auto &c : clients)
+    {
+      auto *w2v_client = dynamic_cast<Word2VecClient<TensorType> *>(c.get());
+
+      std::cout << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
+                << w2v_client->analogy_score_;
+      lossfile << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
+               << w2v_client->analogy_score_;
+    }
+    std::cout << std::endl;
+    lossfile << std::endl;
+
+    lossfile.close();
 
     if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
     {

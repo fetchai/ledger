@@ -243,7 +243,6 @@ public:
   /**
    * Reset the state of the file handle to starting conditions. This consists of a header and a
    * separator (it is convenient to have a starting invalid separator).
-   *
    */
   void Clear()
   {
