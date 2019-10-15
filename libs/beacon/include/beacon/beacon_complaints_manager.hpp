@@ -78,7 +78,7 @@ public:
 class ComplaintAnswersManager
 {
   using MuddleAddress    = byte_array::ConstByteArray;
-  using Share            = std::string;
+  using Share            = dkg::DKGMessage::Share;
   using ExposedShares    = std::pair<Share, Share>;
   using Answer           = std::unordered_map<MuddleAddress, ExposedShares>;
   using ComplaintAnswers = std::unordered_map<MuddleAddress, Answer>;
@@ -108,7 +108,7 @@ public:
 class QualComplaintsManager
 {
   using MuddleAddress = byte_array::ConstByteArray;
-  using Share         = std::string;
+  using Share         = dkg::DKGMessage::Share;
   using ExposedShares = std::pair<Share, Share>;
   using QualComplaints =
       std::unordered_map<MuddleAddress, std::unordered_map<MuddleAddress, ExposedShares>>;

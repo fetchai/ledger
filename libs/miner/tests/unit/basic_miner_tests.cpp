@@ -70,11 +70,6 @@ protected:
     miner_ = std::make_unique<BasicMiner>(uint32_t{LOG2_NUM_LANES});
   }
 
-  void TearDown() override
-  {
-    miner_.reset();
-  }
-
   LayoutMap PopulateWithTransactions(std::size_t num_transactions, std::size_t duplicates = 1)
   {
     LayoutMap layout{};

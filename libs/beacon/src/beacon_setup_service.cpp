@@ -1001,7 +1001,7 @@ void BeaconSetupService::OnNewSharesPacket(muddle::Packet const &packet,
 
   fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
 
-  std::pair<std::string, std::string> shares;
+  std::pair<MessageShare, MessageShare> shares;
   serialiser >> shares;
 
   // Dispatch the event

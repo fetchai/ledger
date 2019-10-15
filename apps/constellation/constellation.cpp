@@ -134,7 +134,7 @@ ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
 
     if (it == cfg.manifest.end())
     {
-      FETCH_LOG_ERROR(Constellation::LOGGING_NAME, "Unable to update manifest for lane ", i);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to update manifest for lane ", i);
       throw std::runtime_error("Invalid manifest provided");
     }
 

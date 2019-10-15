@@ -24,7 +24,6 @@
 #include <sstream>
 
 using fetch::json::JSONDocument;
-using fetch::variant::Variant;
 
 TEST(JsonTests, SimpleParseTest)
 {
@@ -92,14 +91,13 @@ TEST(JsonTests, TypeParsing)
 
   JSONDocument doc;
   doc.Parse(doc_content);
-  EXPECT_EQ(doc["a"].type(), Variant::Type::INTEGER);
-  EXPECT_EQ(doc["b"].type(), Variant::Type::FLOATING_POINT);
-  EXPECT_EQ(doc["c"].type(), Variant::Type::FLOATING_POINT);
-  EXPECT_EQ(doc["d"].type(), Variant::Type::STRING);
-  EXPECT_EQ(doc["e"].type(), Variant::Type::NULL_VALUE);
-
-  EXPECT_EQ(doc["f"].type(), Variant::Type::BOOLEAN);
-  EXPECT_EQ(doc["g"].type(), Variant::Type::BOOLEAN);
+  EXPECT_TRUE(doc["a"].IsInteger());
+  EXPECT_TRUE(doc["b"].IsFloatingPoint());
+  EXPECT_TRUE(doc["c"].IsFloatingPoint());
+  EXPECT_TRUE(doc["d"].IsString());
+  EXPECT_TRUE(doc["e"].IsNull());
+  EXPECT_TRUE(doc["f"].IsBoolean());
+  EXPECT_TRUE(doc["g"].IsBoolean());
 }
 
 TEST(JsonTests, ParsingExeptions)

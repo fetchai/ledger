@@ -26,7 +26,9 @@
 #include "shards/manifest_cache_interface.hpp"
 
 #include "gtest/gtest.h"
-#include <iostream>
+
+#include <bitset>
+#include <memory>
 
 using namespace fetch;
 using namespace fetch::network;
@@ -123,7 +125,9 @@ private:
         {
           continue;
         }
-        SendShares(cab_i, {"fake share", "fake share"});
+        bn::Fr fake;
+        fake.clear();
+        SendShares(cab_i, {fake, fake});
       }
     }
     else
@@ -149,8 +153,10 @@ private:
     }
     else if (Failure(Failures::MESSAGES_WITH_INVALID_CRYPTO))
     {
-      SendBroadcast(DKGEnvelope{
-          CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES), {"fake coefficient"}}});
+      bn::G2 fake;
+      fake.clear();
+      SendBroadcast(
+          DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES), {fake}}});
     }
     else
     {
@@ -166,12 +172,12 @@ private:
 
   void SendBadCoefficients()
   {
-    std::vector<std::string> coefficients;
-    bn::G2                   fake;
+    std::vector<MessageCoefficient> coefficients;
+    bn::G2                          fake;
     fake.clear();
     for (std::size_t k = 0; k <= beacon_->manager.polynomial_degree(); k++)
     {
-      coefficients.push_back(fake.getStr());
+      coefficients.push_back(fake);
     }
     // Send empty coefficients to everyone
     SendBroadcast(DKGEnvelope{
@@ -233,13 +239,17 @@ private:
     std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaint_answers;
     if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
     {
-      complaint_answers.insert({"unknown reporter", {"fake share", "fake share2"}});
+      MessageShare fake;
+      fake.clear();
+      complaint_answers.insert({"unknown reporter", {fake, fake}});
     }
     else if (Failure(Failures::MESSAGES_WITH_INVALID_CRYPTO))
     {
+      MessageShare fake;
+      fake.clear();
       for (auto const &reporter : complaints_manager_.ComplaintsAgainstSelf())
       {
-        complaint_answers.insert({reporter, {"fake share", "fake share"}});
+        complaint_answers.insert({reporter, {fake, fake}});
       }
     }
     else if (!Failure(Failures::SEND_EMPTY_COMPLAINT_ANSWER))
@@ -260,14 +270,14 @@ private:
 
   void BroadcastQualCoefficients() override
   {
+    MessageCoefficient fake;
+    fake.clear();
     if (Failure(Failures::BAD_QUAL_COEFFICIENTS))
     {
-      std::vector<std::string> coefficients;
-      bn::G2                   fake;
-      fake.clear();
+      std::vector<MessageCoefficient> coefficients;
       for (std::size_t k = 0; k <= beacon_->manager.polynomial_degree(); k++)
       {
-        coefficients.push_back(fake.getStr());
+        coefficients.push_back(fake);
       }
       SendBroadcast(DKGEnvelope{
           CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES), coefficients}});
@@ -275,8 +285,8 @@ private:
     else if (Failure(Failures::QUAL_MESSAGES_WITH_INVALID_CRYPTO))
     {
       beacon_->manager.GetQualCoefficients();
-      SendBroadcast(DKGEnvelope{CoefficientsMessage{
-          static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES), {"fake coefficients"}}});
+      SendBroadcast(DKGEnvelope{
+          CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES), {fake}}});
     }
     else
     {
@@ -296,6 +306,8 @@ private:
 
   void BroadcastQualComplaints() override
   {
+    MessageShare fake;
+    fake.clear();
     if (Failure(Failures::SEND_FALSE_QUAL_COMPLAINT))
     {
       auto victim = beacon_->aeon.members.begin();
@@ -311,7 +323,7 @@ private:
     {
       SendBroadcast(
           DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-                                    {{"unknown sender", {"fake share", "fake share"}}}}});
+                                    {{"unknown sender", {fake, fake}}}}});
     }
     else if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
@@ -325,9 +337,8 @@ private:
       {
         ++victim;
       }
-      SendBroadcast(
-          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-                                    {{*victim, {"fake share", "fake share"}}}}});
+      SendBroadcast(DKGEnvelope{SharesMessage{
+          static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS), {{*victim, {fake, fake}}}}});
     }
     else
     {
@@ -345,6 +356,8 @@ private:
 
   void BroadcastReconstructionShares() override
   {
+    MessageShare fake;
+    fake.clear();
     SharesExposedMap complaint_shares;
     if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
@@ -353,7 +366,7 @@ private:
     }
     else if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
     {
-      complaint_shares.insert({"unknown address", {"fake share", "fake share1"}});
+      complaint_shares.insert({"unknown address", {fake, fake}});
       SendBroadcast(DKGEnvelope{SharesMessage{
           static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
     }
@@ -362,7 +375,7 @@ private:
       for (auto const &in : qual_complaints_manager_.Complaints())
       {
         beacon_->manager.AddReconstructionShare(in);
-        complaint_shares.insert({in, {"fake share", "fake share"}});
+        complaint_shares.insert({in, {fake, fake}});
       }
       SendBroadcast(DKGEnvelope{SharesMessage{
           static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
@@ -655,7 +668,7 @@ TEST(dkg_setup, DISABLED_send_multiple_messages)
   // Node 0 broadcasts bad coefficients which fails verification by everyone and is
   // rejected from qual. Another node sends multiple of each DKG message but should succeed in DKG.
   // A third node sends fake qual coefficients. Should trigger warning and this node's shares will
-  // be reconstructed but should succeed in the DKG. Thirs behavious important to test as it means
+  // be reconstructed but should succeed in the DKG. This behaviour is important to test as it means
   // reconstruction computes the correct thing.
   GenerateTest(5, 3, 4, 4,
                {{FaultySetupService::Failures::BAD_COEFFICIENT},

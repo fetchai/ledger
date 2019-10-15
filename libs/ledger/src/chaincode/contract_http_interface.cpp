@@ -17,9 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "core/string/replace.hpp"
 #include "http/json_response.hpp"
 #include "json/document.hpp"
 #include "ledger/chain/json_transaction.hpp"
@@ -35,7 +33,6 @@
 #include <exception>
 #include <iomanip>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <utility>
 
@@ -472,8 +469,7 @@ void ContractHttpInterface::RecordQuery(ConstByteArray const &   contract_name,
 
 void ContractHttpInterface::WriteToAccessLog(variant::Variant const &entry)
 {
-  FETCH_LOCK(access_log_lock_);
-  access_log_ << entry << '\n';
+  access_log_.ApplyVoid([&entry](auto &log) { log << entry << '\n'; });
 }
 
 }  // namespace ledger

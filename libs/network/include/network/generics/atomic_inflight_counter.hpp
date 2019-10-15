@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "core/future_timepoint.hpp"
 #include "logging/logging.hpp"
 
@@ -85,7 +86,6 @@ public:
 
 private:
   using CondVar = std::condition_variable;
-  using Mutex   = std::mutex;
   using Lock    = std::unique_lock<Mutex>;
 
   struct Counter

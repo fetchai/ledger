@@ -45,7 +45,6 @@ public:
       std::function<void(Packet const & /*packet*/, Address const & /*last hop*/)>;
   using BasicMessageCallback =
       std::function<void(Address const & /*address*/, Payload const & /*payload*/)>;
-  using Mutex = std::mutex;
 
   static constexpr char const *LOGGING_NAME = "Subscription";
 
