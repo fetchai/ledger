@@ -44,9 +44,6 @@ public:
 
   VmState DeepCopy() const;
 
-  bool operator==(const VmState &other) = delete;
-  bool operator<(const VmState &other)  = delete;
-
 private:
   using Buffer = fetch::byte_array::ConstByteArray;
   using Store  = std::unordered_map<std::string, Buffer>;
