@@ -22,9 +22,22 @@ using fetch::beacon::BlockEntropy;
 
 BlockEntropy::BlockEntropy() = default;
 
+/**
+ * Copy constructor - no need for the digest or confirmations
+ * since the copy constructor is used to create the next block
+ * entropy
+ */
+BlockEntropy::BlockEntropy(BlockEntropy const &rhs)
+{
+  qualified        = rhs.qualified;
+  group_public_key = rhs.group_public_key;
+  block_number     = rhs.block_number;
+  group_signature  = rhs.group_signature;
+}
+
 BlockEntropy::Digest BlockEntropy::EntropyAsSHA256() const
 {
-  return crypto::Hash<crypto::SHA256>(group_signature /*.getStr()*/);
+  return crypto::Hash<crypto::SHA256>(group_signature);
 }
 
 // This will always be safe so long as the entropy function is properly sha256-ing

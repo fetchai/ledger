@@ -63,25 +63,23 @@ int main(int argc, char **argv)
 
   std::cout << "Setting up training data...: " << std::endl;
 
-  GraphW2VLoader<DataType> data_loader(window_size, negative_sample_size, freq_thresh,
-                                       max_word_count);
+  GraphW2VLoader<TensorType> data_loader(window_size, negative_sample_size, freq_thresh,
+                                         max_word_count);
 
   // set up dataloader
   /// DATA LOADING ///
   data_loader.BuildVocabAndData({utilities::ReadFile(dataloader_file)}, min_count, false);
   std::string skip_gram_name = "SkipGram";
 
-  // first get hold of the skipgram layer by searching the return name in the graph
-  auto sg_layer = std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(
-      g_ptr->GetNode(skip_gram_name)->GetOp());
+  TensorType const &weights = utilities::GetEmbeddings(*g_ptr, skip_gram_name);
 
-  // next get hold of the embeddings
-  std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =
-      sg_layer->GetEmbeddings(sg_layer);
+  std::string knn_results = utilities::KNNTest(data_loader, weights, "three", 20);
+  std::cout << std::endl << knn_results << std::endl;
 
-  DataType score =
-      utilities::TestWithAnalogies<TensorType>(data_loader, embeddings->GetWeights(), analogy_file);
-  std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
-  utilities::PrintKNN(data_loader, embeddings->GetWeights(), "three", 20);
-  utilities::PrintWordAnalogy(data_loader, embeddings->GetWeights(), "king", "queen", "father", 20);
+  std::string word_analogy_results =
+      utilities::WordAnalogyTest(data_loader, weights, "king", "queen", "father", 20);
+  std::cout << std::endl << word_analogy_results << std::endl;
+
+  auto analogies_file_results = utilities::AnalogiesFileTest(data_loader, weights, analogy_file);
+  std::cout << std::endl << analogies_file_results.first << std::endl;
 }

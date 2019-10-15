@@ -40,6 +40,7 @@ struct OpVariableSaveableParams : public OpDataHolderSaveableParams<TensorType>
   std::shared_ptr<TensorType> gradient_accumulation;
   RegularisationType          regularisation_type = RegularisationType::NONE;
   DataType                    regularisation_rate = fetch::math::numeric_max<DataType>();
+  bool                        value_frozen;
 };
 
 namespace ops {
@@ -83,6 +84,8 @@ public:
     this->SetRegularisation(
         fetch::ml::details::CreateRegulariser<TensorType>(sp.regularisation_type),
         sp.regularisation_rate);
+
+    this->value_frozen_ = sp.value_frozen;
   }
 
   ~Variable() override = default;
@@ -110,6 +113,7 @@ public:
     }
 
     sp->regularisation_rate = this->regularisation_rate_;
+    sp->value_frozen        = this->value_frozen_;
 
     return sp;
   }
@@ -119,13 +123,22 @@ public:
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
-    gradient_accumulation_->InlineAdd(error_signal);
+
+    if (!this->value_frozen_)
+    {
+      gradient_accumulation_->InlineAdd(error_signal);
+      reset_gradients_ = true;
+    }
     return {error_signal};
   }
 
   void AddToGradient(TensorType const &extern_grad)
   {
-    gradient_accumulation_->InlineAdd(extern_grad);
+    if (!this->value_frozen_)
+    {
+      gradient_accumulation_->InlineAdd(extern_grad);
+      reset_gradients_ = true;
+    }
   }
 
   /**
@@ -140,6 +153,7 @@ public:
     if (shape_changed)
     {
       gradient_accumulation_ = std::make_shared<TensorType>(this->data_->shape());
+      reset_gradients_       = true;
       return true;
     }
     return false;
@@ -147,9 +161,12 @@ public:
 
   void ApplyGradient(TensorType const &grad) override
   {
-    ApplyRegularisation();
-    this->data_->InlineAdd(grad);
-    ResetGradients();
+    if (!this->value_frozen_)
+    {
+      ApplyRegularisation();
+      this->data_->InlineAdd(grad);
+      ResetGradients();
+    }
   }
 
   /**
@@ -157,7 +174,11 @@ public:
    */
   void ResetGradients() override
   {
-    gradient_accumulation_->Fill(typename T::Type(0));
+    if (reset_gradients_)
+    {
+      gradient_accumulation_->Fill(typename T::Type(0));
+      reset_gradients_ = false;
+    }
   }
 
   /**
@@ -179,6 +200,7 @@ public:
   static constexpr char const *DESCRIPTOR = "Variable";
 
 protected:
+  bool               reset_gradients_ = true;
   TensorPtrType      gradient_accumulation_;
   RegularisationType regularisation_type = RegularisationType::NONE;
   DataType           regularisation_rate = fetch::math::numeric_max<DataType>();
