@@ -95,10 +95,11 @@ LogLevelMap GetLogLevelMap();
 
 class LogBuilder
 {
-  LogLevel level_;
+  LogLevel    level_;
   char const *name_;
   std::string accum_;
-  bool enabled_;
+  bool        enabled_;
+
 public:
   LogBuilder(LogLevel level, char const *name, std::string zero = {});
   ~LogBuilder();
@@ -106,8 +107,8 @@ public:
   void SetLevel(LogLevel level);
   void SetName(char const *name);
 
-  template<typename... Args>
-  void Log(Args &&...args);
+  template <typename... Args>
+  void Log(Args &&... args);
 };
 
 template <typename... Args>

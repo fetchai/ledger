@@ -284,12 +284,12 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
   LogBuilder sync_summary(LogLevel::INFO, LOGGING_NAME, "Synced Summary:");
   if (block_stats.count(BlockStatus::INVALID))
   {
-	  sync_summary.SetLevel(LogLevel::WARNING);
-	  sync_summary.Log(" Invalid: ", block_stats[BlockStatus::INVALID]);
+    sync_summary.SetLevel(LogLevel::WARNING);
+    sync_summary.Log(" Invalid: ", block_stats[BlockStatus::INVALID]);
   }
-  for (auto status: {BlockStatus::ADDED, BlockStatus::LOOSE, BlockStatus::DUPLICATE})
+  for (auto status : {BlockStatus::ADDED, BlockStatus::LOOSE, BlockStatus::DUPLICATE})
   {
-	  sync_summary.Log(' ', ToString(status), ": ", block_stats[status]);
+    sync_summary.Log(' ', ToString(status), ": ", block_stats[status]);
   }
   sync_summary.Log(" from muddle://", ToBase64(address));
 

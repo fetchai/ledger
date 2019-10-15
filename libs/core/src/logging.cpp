@@ -78,7 +78,7 @@ public:
   LogRegistry &operator=(LogRegistry const &) = delete;
   LogRegistry &operator=(LogRegistry &&) = delete;
 
-  constexpr LogLevel global_level() const noexcept
+  LogLevel global_level() const noexcept
   {
     return global_level_;
   }
@@ -303,25 +303,35 @@ LogLevelMap GetLogLevelMap()
 }
 
 LogBuilder::LogBuilder(LogLevel level, char const *name, std::string zero)
-	: level_(level), name_(name), accum_(std::move(zero)), enabled_(level >= registry.global_level()) {}
+  : level_(level)
+  , name_(name)
+  , accum_(std::move(zero))
+  , enabled_(level >= registry.global_level())
+{}
 
-~LogBuilder() { Log(level_, name_, std::move(accum_)); }
-
-void LogBuilder::SetLevel(LogLevel level) {
-	level_ = level;
-	enabled_ = level >= registry.global_level();
+LogBuilder::~LogBuilder()
+{
+  fetch::Log(level_, name_, std::move(accum_));
 }
 
-void LogBuilder::SetName(char const *name) { name_ = name; }
-
-template<typename... Args>
-void LogBuilder::Log(Args &&...args)
+void LogBuilder::SetLevel(LogLevel level)
 {
-	if (enabled_)
-	{
-		accum_ += detail::Format(std::forward<Args>(args)...);
-	}
-	return *this;
+  level_   = level;
+  enabled_ = level >= registry.global_level();
+}
+
+void LogBuilder::SetName(char const *name)
+{
+  name_ = name;
+}
+
+template <typename... Args>
+void LogBuilder::Log(Args &&... args)
+{
+  if (enabled_)
+  {
+    accum_ += detail::Format(std::forward<Args>(args)...);
+  }
 }
 
 }  // namespace fetch
