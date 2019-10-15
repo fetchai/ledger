@@ -112,6 +112,8 @@ public:
       std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
       ClientParams<DataType> const &client_params, std::shared_ptr<std::mutex> console_mutex_ptr);
 
+  virtual ~TrainingClient() = default;
+
   void SetNetworker(std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> i_learner_ptr);
 
   virtual void Run();
