@@ -50,9 +50,9 @@ ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFi
   }
 
   executables_.emplace(execName, std::move(newExecutable));
-
   return ExecutionResult{Variant(), Error{Error::Stage::COMPILE, Error::Code::SUCCESS, ""}, "Created executable " + execName};
 }
+
 ExecutionResult LocalVmLauncher::DeleteExecutable(Name const &execName)                             
 {
   auto it = executables_.find(execName);
