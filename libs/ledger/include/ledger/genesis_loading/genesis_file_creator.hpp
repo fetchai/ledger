@@ -42,6 +42,7 @@ public:
   ~GenesisFileCreator()                          = default;
 
   void LoadFile(std::string const &name);
+  void CreateFile(std::vector<std::shared_ptr<crypto::Prover>> const &identities, std::string const &name);
 
   // Operators
   GenesisFileCreator &operator=(GenesisFileCreator const &) = delete;

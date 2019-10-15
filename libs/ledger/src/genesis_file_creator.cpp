@@ -135,7 +135,45 @@ GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
 {}
 
 /**
- * Load a 'state file' with a given name
+ * Load a 'genesis file' with a given name
+ *
+ * @param name THe path to the file to be loaded
+ */
+void GenesisFileCreator::LoadFile(std::string const &name)
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Clearing state and installing genesis");
+
+  json::JSONDocument doc{};
+  if (LoadFromFile(doc, name))
+  {
+    // check the version
+    int        version{0};
+    bool const is_correct_version =
+        variant::Extract(doc.root(), "version", version) && (version == VERSION);
+
+    if (is_correct_version)
+    {
+      // Note: consensus has to be loaded before the state since that generates the block
+      if (consensus_)
+      {
+        LoadConsensus(doc["consensus"]);
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "No stake manager provided when loading from stake file!");
+      }
+
+      LoadState(doc["accounts"]);
+    }
+    else
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "Incorrect stake file version!");
+    }
+  }
+}
+
+/**
+ * Create a 'genesis file' with a given name
  *
  * @param name THe path to the file to be loaded
  */

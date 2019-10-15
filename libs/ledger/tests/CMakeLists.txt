@@ -20,3 +20,4 @@ fetch_add_slow_test(ledger-executor-tests fetch-ledger executors)
 target_include_directories(ledger-executor-tests PRIVATE chaincode)
 
 fetch_add_slow_test(ledger-dag-tests fetch-ledger dag)
+fetch_add_slow_test(ledger-multiple-constellation-test fetch-ledger multiple_constellation)
