@@ -95,7 +95,7 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
   }
   else
   {
-    // update the previous hash
+    // update the hash
     block->body.hash        = fetch::ledger::GENESIS_DIGEST;
     block->body.merkle_hash = fetch::ledger::GENESIS_MERKLE_ROOT;
     block->body.miner       = Address{crypto::Hash<crypto::SHA256>("")};

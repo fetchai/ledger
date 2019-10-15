@@ -195,7 +195,7 @@ private:
   struct HeaviestTip
   {
     uint64_t  weight{0};
-    BlockHash hash{GENESIS_DIGEST};
+    BlockHash hash;
 
     bool Update(Block const &block);
   };
