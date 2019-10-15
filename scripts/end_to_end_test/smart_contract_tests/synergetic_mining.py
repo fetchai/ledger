@@ -79,7 +79,7 @@ endfunction
 
 
 def submit_synergetic_data(api, contract, data, entity):
-    api.sync([api.contracts.submit_data(entity, contract.digest, value=value)
+    api.sync([api.contracts.submit_data(entity, contract.digest, contract.address, value=value)
               for value in data])
 
     print('Submitted:', sorted(data))
@@ -88,7 +88,8 @@ def submit_synergetic_data(api, contract, data, entity):
 
     result = contract.query(api, 'query_result')
     print('Result:', result)
-    assert result == sum(data)
+    assert result == sum(data), \
+        'Expected {}, found {}'.format(sum(data), result)
 
 
 def run(options):
@@ -101,7 +102,7 @@ def run(options):
     print('Create wealth...')
     api.sync(api.tokens.wealth(entity1, 100000000))
 
-    contract = Contract(CONTRACT_TEXT)
+    contract = Contract(CONTRACT_TEXT, entity1)
 
     # deploy the contract to the network
     print('Create contract...')

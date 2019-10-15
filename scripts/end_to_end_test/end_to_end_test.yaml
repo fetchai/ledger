@@ -145,3 +145,48 @@ steps:
   - sleep: 5
   - run_python_test: { "script": ".smart_contract_tests.synergetic_mining" }
 ...
+
+---
+test_description: >
+  Test person-to-contract transfer
+
+setup_conditions:
+  test_name: "person_to_contract_transfer"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.person_to_contract_transfer" }
+...
+
+---
+test_description: >
+  Test contract-to-person transfer
+
+setup_conditions:
+  test_name: "contract_to_person_transfer"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.contract_to_person_transfer" }
+...
+
+---
+test_description: >
+  Test contract-to-contract transfer
+
+setup_conditions:
+  test_name: "contract_to_contract_transfer"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.contract_to_contract_transfer" }
+...
