@@ -109,7 +109,6 @@ int main(int ac, char **av)
     // Instantiate NUMBER_OF_CLIENTS clients
     clients[i] = MakeClient(std::to_string(i), client_params, av[1], av[2], test_set_ratio,
                             console_mutex_ptr);
-    // TODO(1597): Replace ID with something more sensible
   }
 
   // Give list of clients to coordinator
