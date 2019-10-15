@@ -32,6 +32,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <unordered_map>
 
 static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
 static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
@@ -242,10 +243,7 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 
 bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
 {
-  std::size_t added{0};
-  std::size_t loose{0};
-  std::size_t duplicate{0};
-  std::size_t invalid{0};
+  std::unordered_map<BlockStatus, std::size_t> block_stats;
 
   for (auto &block : block_list)
   {
@@ -267,65 +265,33 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     // recompute the digest
     block.UpdateDigest();
 
-    // add the block
+    // add this block
+    LogBuilder block_report(LogLevel::DEBUG, LOGGING_NAME, "Chain sync: ");
     if (block.proof())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block is proof");
       auto const status = chain_.AddBlock(block);
-
-      switch (status)
-      {
-      case BlockStatus::ADDED:
-        FETCH_LOG_WARN(LOGGING_NAME, "Synced new block: 0x", block.body.hash.ToHex(),
-                       " from: muddle://", ToBase64(address));
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", block.body.hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
-        ++added;
-        break;
-      case BlockStatus::LOOSE:
-        FETCH_LOG_WARN(LOGGING_NAME, "Synced loose block: 0x", block.body.hash.ToHex(),
-                       " from: muddle://", ToBase64(address));
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", block.body.hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
-        ++loose;
-        break;
-      case BlockStatus::DUPLICATE:
-        FETCH_LOG_WARN(LOGGING_NAME, "Synced duplicate block: 0x", block.body.hash.ToHex(),
-                       " from: muddle://", ToBase64(address));
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", block.body.hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
-        ++duplicate;
-        break;
-      case BlockStatus::INVALID:
-        FETCH_LOG_WARN(LOGGING_NAME, "Synced invalid block: 0x", block.body.hash.ToHex(),
-                       " from: muddle://", ToBase64(address));
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", block.body.hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
-        ++invalid;
-        break;
-      }
+      ++block_stats[status];
+      block_report.Log(ToString(status));
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Synced bad proof block: 0x", block.body.hash.ToHex(),
-                     " from: muddle://", ToBase64(address));
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", block.body.hash.ToHex(),
-                      " from: muddle://", ToBase64(address));
-      ++invalid;
+      ++block_stats[BlockStatus::INVALID];
+      block_report.Log("Bad Proof");
     }
+    block_report.Log(" block 0x", block.body.hash.ToHex(), " from muddle://", ToBase64(address));
   }
 
-  if (invalid != 0u)
+  LogBuilder sync_summary(LogLevel::INFO, LOGGING_NAME, "Synced Summary:");
+  if (block_stats.count(BlockStatus::INVALID))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Synced Summary: Invalid: ", invalid, " Added: ", added,
-                   " Loose: ", loose, " Duplicate: ", duplicate, " from: muddle://",
-                   ToBase64(address));
+	  sync_summary.SetLevel(LogLevel::WARNING);
+	  sync_summary.Log(" Invalid: ", block_stats[BlockStatus::INVALID]);
   }
-  else
+  for (auto status: {BlockStatus::ADDED, BlockStatus::LOOSE, BlockStatus::DUPLICATE})
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary: Added: ", added, " Loose: ", loose,
-                   " Duplicate: ", duplicate, " from: muddle://", ToBase64(address));
+	  sync_summary.Log(' ', ToString(status), ": ", block_stats[status]);
   }
+  sync_summary.Log(" from muddle://", ToBase64(address));
 
   return true;
 }

@@ -79,7 +79,7 @@ void SetGlobalLogLevel(LogLevel level);
  * @param name The name of the origin
  * @param message The message
  */
-void Log(LogLevel level, char const *name, std::string &&message);
+void Log(LogLevel level, char const *name, std::string message);
 
 /**
  * Retrieve the current map of active loggers and the configured level
@@ -92,6 +92,23 @@ LogLevelMap GetLogLevelMap();
 
 /// @name Helper Wrappers
 /// @{
+
+class LogBuilder
+{
+  LogLevel level_;
+  char const *name_;
+  std::string accum_;
+  bool enabled_;
+public:
+  LogBuilder(LogLevel level, char const *name, std::string zero = {});
+  ~LogBuilder();
+
+  void SetLevel(LogLevel level);
+  void SetName(char const *name);
+
+  template<typename... Args>
+  void Log(Args &&...args);
+};
 
 template <typename... Args>
 void LogTraceV2(char const *name, Args &&... args)

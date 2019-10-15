@@ -88,7 +88,7 @@ public:
     map.ExpectKeyGetValue(HEADER, header);
     map.ExpectKeyGetValue(TARGET, target);
 
-    p.SetHeader(header);
+    p.SetHeader(std::move(header));
     p.SetTarget(target);
   }
 };

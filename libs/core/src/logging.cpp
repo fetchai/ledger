@@ -68,7 +68,7 @@ public:
   LogRegistry(LogRegistry &&)      = delete;
   ~LogRegistry()                   = default;
 
-  void Log(LogLevel level, char const *name, std::string &&message);
+  void Log(LogLevel level, char const *name, std::string message);
   void SetLevel(char const *name, LogLevel level);
   void SetGlobalLevel(LogLevel level);
 
@@ -78,7 +78,7 @@ public:
   LogRegistry &operator=(LogRegistry const &) = delete;
   LogRegistry &operator=(LogRegistry &&) = delete;
 
-  LogLevel global_level() const
+  constexpr LogLevel global_level() const noexcept
   {
     return global_level_;
   }
@@ -180,7 +180,7 @@ spdlog::level::level_enum ConvertFromLevel(LogLevel level)
 
 LogRegistry::LogRegistry() = default;
 
-void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
+void LogRegistry::Log(LogLevel level, char const *name, std::string message)
 {
   if (level < global_level_)
   {
@@ -189,7 +189,7 @@ void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
 
   {
     FETCH_LOCK(lock_);
-    GetLogger(name).log(ConvertFromLevel(level), message);
+    GetLogger(name).log(ConvertFromLevel(level), std::move(message));
   }
 
   // telemetry
@@ -292,7 +292,7 @@ void SetGlobalLogLevel(LogLevel level)
   registry.SetGlobalLevel(level);
 }
 
-void Log(LogLevel level, char const *name, std::string &&message)
+void Log(LogLevel level, char const *name, std::string message)
 {
   registry.Log(level, name, std::move(message));
 }
@@ -300,6 +300,28 @@ void Log(LogLevel level, char const *name, std::string &&message)
 LogLevelMap GetLogLevelMap()
 {
   return registry.GetLogLevelMap();
+}
+
+LogBuilder::LogBuilder(LogLevel level, char const *name, std::string zero)
+	: level_(level), name_(name), accum_(std::move(zero)), enabled_(level >= registry.global_level()) {}
+
+~LogBuilder() { Log(level_, name_, std::move(accum_)); }
+
+void LogBuilder::SetLevel(LogLevel level) {
+	level_ = level;
+	enabled_ = level >= registry.global_level();
+}
+
+void LogBuilder::SetName(char const *name) { name_ = name; }
+
+template<typename... Args>
+void LogBuilder::Log(Args &&...args)
+{
+	if (enabled_)
+	{
+		accum_ += detail::Format(std::forward<Args>(args)...);
+	}
+	return *this;
 }
 
 }  // namespace fetch
