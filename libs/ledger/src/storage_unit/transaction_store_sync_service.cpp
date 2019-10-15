@@ -277,7 +277,6 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
                  " root(s). Remaining roots to sync: ", roots_to_sync_.size(), " / ",
                  uint64_t{1ull << root_size_});
 
-  state_machine_->Delay(10ms);
   return State::RESOLVING_SUBTREE;
 }
 
@@ -327,6 +326,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
   bool const is_subtree_sync_complete = roots_to_sync_.empty() && counts.pending == 0;
   if (!is_subtree_sync_complete)
   {
+    state_machine_->Delay(10ms);
     return State::QUERY_SUBTREE;
   }
 
