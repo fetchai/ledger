@@ -98,7 +98,7 @@ ExecutionResult BasicVmEngine::CopyState(Name const &srcName, Name const &newNam
                        "Error: state " + newName + " already exists.");
   }
 
-  states_.emplace(std::move(newName), std::make_shared<State>(states_[srcName]->DeepCopy()));
+  states_.emplace(newName, std::make_shared<State>(states_[srcName]->DeepCopy()));
   return EngineSuccess("Copied state " + srcName + " to " + newName);
 }
 
