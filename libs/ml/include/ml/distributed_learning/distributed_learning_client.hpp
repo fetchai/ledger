@@ -28,6 +28,7 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/optimiser.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 
 #include <condition_variable>
 #include <fstream>
@@ -117,7 +118,7 @@ public:
 
   void SetCoordinator(std::shared_ptr<Coordinator<TensorType>> coordinator_ptr);
 
-  void Run();
+  virtual void Run();
 
   void Train();
 
@@ -133,9 +134,25 @@ public:
 
   void SetParams(ClientParams<DataType> const &new_params);
 
+  void SetMaxUpdates(SizeType max_updates)
+  {
+    max_updates_ = max_updates;
+  }
+
   GraphPtrType GetModel();
 
   std::string GetId() const;
+
+  void ResetLossCnt()
+  {
+    train_loss_sum_ = static_cast<DataType>(0);
+    train_loss_cnt_ = 0;
+  }
+
+  DataType GetLossAverage()
+  {
+    return train_loss_sum_ / static_cast<DataType>(train_loss_cnt_);
+  }
 
 protected:
   // Client id (identification name)
@@ -144,6 +161,9 @@ protected:
   // Latest loss
   DataType train_loss_ = fetch::math::numeric_max<DataType>();
   DataType test_loss_  = fetch::math::numeric_max<DataType>();
+
+  DataType train_loss_sum_ = static_cast<DataType>(0);
+  SizeType train_loss_cnt_ = 0;
 
   // Client's own graph and mutex to protect its weights
   GraphPtrType       g_ptr_;
@@ -185,7 +205,9 @@ protected:
   DataType learning_rate_ = static_cast<DataType>(0);
 
   // Count for number of batches
-  SizeType batch_counter_ = 0;
+  SizeType batch_counter_  = 0;
+  SizeType update_counter_ = 0;
+  SizeType max_updates_    = 0;
 
   GradientType GetNewGradients();
 
@@ -196,7 +218,6 @@ protected:
   // Print to console flag
   bool print_loss_;
 
-  std::string   GetStrTimestamp();
   TimestampType GetTimestamp();
 
   void TrainOnce();
@@ -283,6 +304,7 @@ std::string TrainingClient<TensorType>::GetId() const
 template <class TensorType>
 void TrainingClient<TensorType>::Run()
 {
+  ResetLossCnt();
   if (coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
   {
     // Do one batch and end
@@ -326,8 +348,13 @@ void TrainingClient<TensorType>::Train()
 
     TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
     train_loss_            = *(loss_tensor.begin());
+
+    train_loss_sum_ += train_loss_;
+    train_loss_cnt_++;
+
     g_ptr_->BackPropagate(error_name_);
   }
+  update_counter_++;
 }
 
 /**
@@ -439,25 +466,6 @@ typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::Ge
   return new_gradients;
 }
 
-// Timestamp for logging
-template <class TensorType>
-std::string TrainingClient<TensorType>::GetStrTimestamp()
-{
-  auto now       = std::chrono::system_clock::now();
-  auto in_time_t = std::chrono::system_clock::to_time_t(now);
-
-  auto now_milliseconds =
-      std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-
-  std::stringstream ss;
-  ss << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H:%M:%S");
-
-  // add milliseconds to timestamp string
-  ss << '.' << std::setfill('0') << std::setw(3) << now_milliseconds.count();
-
-  return ss.str();
-}
-
 // Timestamp for gradient queue
 template <class TensorType>
 int64_t TrainingClient<TensorType>::GetTimestamp()
@@ -484,7 +492,7 @@ void TrainingClient<TensorType>::TrainOnce()
   // Upload to https://plot.ly/create/#/ for visualisation
   if (lossfile)
   {
-    lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
+    lossfile << utilities::GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
              << static_cast<double>(test_loss_) << "\n";
   }
 
@@ -501,7 +509,7 @@ void TrainingClient<TensorType>::TrainOnce()
 
   if (lossfile)
   {
-    lossfile << GetStrTimestamp() << ", "
+    lossfile << utilities::GetStrTimestamp() << ", "
              << "STOPPED"
              << "\n";
     lossfile.close();
@@ -523,10 +531,10 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
 {
   std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
 
-  while (coordinator_ptr_->GetState() == CoordinatorState::RUN)
+  update_counter_ = 0;
+  while (update_counter_ < max_updates_)
   {
     DoBatch();
-    coordinator_ptr_->IncrementIterationsCounter();
 
     // Validate loss for logging purpose
     Test();
@@ -536,7 +544,7 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
 
     if (lossfile)
     {
-      lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
+      lossfile << utilities::GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
                << static_cast<double>(test_loss_) << "\n";
     }
 
@@ -554,7 +562,7 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
 
   if (lossfile)
   {
-    lossfile << GetStrTimestamp() << ", "
+    lossfile << utilities::GetStrTimestamp() << ", "
              << "STOPPED"
              << "\n";
     lossfile.close();
@@ -593,6 +601,7 @@ void TrainingClient<TensorType>::DoBatch()
       GradientType     gt            = GetNewGradients();
       VectorTensorType new_gradients = TranslateGradients(gt);
       GraphAddGradients(g_ptr_, new_gradients);
+      update_counter_++;
     }
   }
 
