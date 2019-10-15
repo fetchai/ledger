@@ -120,20 +120,20 @@ void MainChain::Reset()
 BlockStatus MainChain::AddBlock(Block const &block)
 {
   // create a copy of the block
-  auto block = std::make_shared<Block>(blk);
+  auto blk = std::make_shared<Block>(block);
 
   // At this point we assume that the weight has been correctly set by the miner
-  block->total_weight = 1;
+  blk->total_weight = 1;
 
-  auto const status = InsertBlock(block);
-  FETCH_LOG_WARN(LOGGING_NAME, "New Block: 0x", block->body.hash.ToHex(), " -> ", ToString(status),
-                 " (weight: ", block->weight, " total: ", block->total_weight, ")");
-  FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", block->body.hash.ToHex(), " -> ", ToString(status),
-                  " (weight: ", block->weight, " total: ", block->total_weight, ")");
+  auto const status = InsertBlock(blk);
+  FETCH_LOG_WARN(LOGGING_NAME, "New Block: 0x", blk->body.hash.ToHex(), " -> ", ToString(status),
+                 " (weight: ", blk->weight, " total: ", blk->total_weight, ")");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", blk->body.hash.ToHex(), " -> ", ToString(status),
+                  " (weight: ", blk->weight, " total: ", blk->total_weight, ")");
 
   if (status == BlockStatus::ADDED)
   {
-    AddBlockToBloomFilter(*block);
+    AddBlockToBloomFilter(*blk);
   }
 
   return status;
