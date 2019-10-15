@@ -28,14 +28,6 @@
 namespace fetch {
 namespace dmlf {
 
-namespace {
-using Executable = LocalVmLauncher::Executable;
-using VM      = LocalVmLauncher::VM;
-using State   = LocalVmLauncher::State;
-
-using VmFactory = fetch::vm_modules::VMFactory;
-}  // namespace
-
 ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFiles const &sources) 
 {
   if (HasExecutable(execName))
@@ -57,7 +49,7 @@ ExecutionResult LocalVmLauncher::CreateExecutable(Name const &execName, SourceFi
     return ExecutionResult{Variant{}, Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()}, "Compilation error: Did not create " + execName};
   }
 
-  programs_.emplace(execName, std::move(newExecutable));
+  executables_.emplace(execName, std::move(newExecutable));
 
   return ExecutionResult{Variant(), Error{Error::Stage::COMPILE, Error::Code::SUCCESS, ""}, "Created executable " + execName};
 }
@@ -68,7 +60,7 @@ ExecutionResult LocalVmLauncher::DeleteExecutable(Name const &execName)
     return EngineError("Didn't delete executable " + execName, Error::Code::BAD_EXECUTABLE, "Error: executable " + execName + " does not exist.");
   }
 
-  programs_.erase(execName);
+  executables_.erase(execName);
 
   return EngineSuccess("Deleted executable " + execName, "");
 }
@@ -79,6 +71,7 @@ ExecutionResult LocalVmLauncher::CreateState(Name const &stateName)
   {
     return EngineError("Didn't create " + stateName, Error::Code::BAD_STATE, "Error: state " + stateName + " already exists.");
   }
+
   states_.emplace(stateName, std::make_shared<State>());
   return ExecutionResult{Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""}, "Created state " + stateName};
 }
@@ -95,7 +88,6 @@ ExecutionResult LocalVmLauncher::CopyState(Name const &srcName, Name const &newN
   }
 
   states_.emplace(std::move(newName), std::make_shared<State>(states_[srcName]->DeepCopy()));
-
   return EngineSuccess("Copied state " + srcName + " to " + newName, "");
 }
 
@@ -107,7 +99,6 @@ ExecutionResult LocalVmLauncher::DeleteState(Name const &stateName)
   }
 
   states_.erase(stateName);
-
   return EngineSuccess("Deleted state " + stateName, "");
 }
 
@@ -123,15 +114,13 @@ ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName
     return EngineError("Could not run " + execName + " with state " + stateName, Error::Code::BAD_STATE, "Error: No state " + stateName);
   }
 
-  auto &program = programs_[execName];
+  auto &exec = executables_[execName];
   auto &state   = states_[stateName];
 
   // We create a a VM for each execution. It might be better to create a single VM and reuse it, but (currently) if you create a VM before
-  // compiling a program the VM is badly formed and crashes on execution
+  // compiling the VM is badly formed and crashes on execution
   VM vm(module_.get());
   vm.SetIOObserver(*state);
-  //Remove this
-  vm.AttachOutputDevice(VM::STDOUT, std::cout);
 
   //fetch::vm::ParameterPack parameterPack(vm->registered_types());
   //std::for_each(params.cbegin(), params.cend(),
@@ -139,8 +128,7 @@ ExecutionResult LocalVmLauncher::Run(Name const &execName, Name const &stateName
 
   std::string        runTimeError;
   fetch::vm::Variant output;
-  //vm.Execute(*program, entrypoint, runTimeError, output);
-  bool allOK = vm.Execute(*program, entrypoint, runTimeError, output);
+  bool allOK = vm.Execute(*exec, entrypoint, runTimeError, output);
 
   if (!allOK || !runTimeError.empty())
   {
@@ -164,7 +152,7 @@ ExecutionResult LocalVmLauncher::EngineSuccess(std::string resultMessage, std::s
 
 bool LocalVmLauncher::HasExecutable(std::string const &name) const
 {
-  return programs_.find(name) != programs_.end();
+  return executables_.find(name) != executables_.end();
 }
 
 bool LocalVmLauncher::HasState(std::string const &name) const

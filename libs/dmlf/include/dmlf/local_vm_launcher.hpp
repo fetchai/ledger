@@ -62,7 +62,7 @@ private:
   ExecutionResult EngineError(std::string resultMessage, Error::Code code, std::string errorMessage) const;
   ExecutionResult EngineSuccess(std::string resultMessage, std::string errorMessage) const;
 
-  std::unordered_map<std::string, std::shared_ptr<Executable>> programs_;
+  std::unordered_map<std::string, std::shared_ptr<Executable>> executables_;
   std::unordered_map<std::string, std::shared_ptr<State>>   states_;
 
   std::shared_ptr<fetch::vm::Module> module_ = VmFactory::GetModule(VmFactory::USE_SMART_CONTRACTS);
