@@ -39,32 +39,32 @@ TEST_F(VariantTests, PrimitiveConstruction)
 {
   {
     Variant v;
-    EXPECT_EQ(v.type(), Variant::Type::UNDEFINED);
+    EXPECT_TRUE(v.IsUndefined());
   }
 
   {
     Variant v{1};
-    EXPECT_EQ(v.type(), Variant::Type::INTEGER);
+    EXPECT_TRUE(v.IsInteger());
   }
 
   {
     Variant v{20u};
-    EXPECT_EQ(v.type(), Variant::Type::INTEGER);
+    EXPECT_TRUE(v.IsInteger());
   }
 
   {
     Variant v{true};
-    EXPECT_EQ(v.type(), Variant::Type::BOOLEAN);
+    EXPECT_TRUE(v.IsBoolean());
   }
 
   {
     Variant v{3.14f};
-    EXPECT_EQ(v.type(), Variant::Type::FLOATING_POINT);
+    EXPECT_TRUE(v.IsFloatingPoint());
   }
 
   {
     Variant v{2.71828};
-    EXPECT_EQ(v.type(), Variant::Type::FLOATING_POINT);
+    EXPECT_TRUE(v.IsFloatingPoint());
   }
 }
 
@@ -73,54 +73,54 @@ TEST_F(VariantTests, PrimitiveCopyConstruction)
   {
     Variant orig;
     Variant v{orig};  // NOLINT
-    EXPECT_EQ(v.type(), Variant::Type::UNDEFINED);
+    EXPECT_TRUE(v.IsUndefined());
   }
 
   {
     Variant orig{1};
     Variant v{orig};  // NOLINT
-    EXPECT_EQ(v.type(), Variant::Type::INTEGER);
+    EXPECT_TRUE(v.IsInteger());
   }
 
   {
     Variant orig{20u};
     Variant v{orig};  // NOLINT
-    EXPECT_EQ(v.type(), Variant::Type::INTEGER);
+    EXPECT_TRUE(v.IsInteger());
   }
 
   {
     Variant orig{true};
     Variant v{orig};  // NOLINT
-    EXPECT_EQ(v.type(), Variant::Type::BOOLEAN);
+    EXPECT_TRUE(v.IsBoolean());
   }
 
   {
     Variant orig{3.14f};
     Variant v{orig};  // NOLINT
-    EXPECT_EQ(v.type(), Variant::Type::FLOATING_POINT);
+    EXPECT_TRUE(v.IsFloatingPoint());
   }
 
   {
     Variant orig{2.71828};
     Variant v{orig};  // NOLINT
-    EXPECT_EQ(v.type(), Variant::Type::FLOATING_POINT);
+    EXPECT_TRUE(v.IsFloatingPoint());
   }
 }
 
 TEST_F(VariantTests, PrimitiveAssignment)
 {
   Variant v;
-  EXPECT_EQ(v.type(), Variant::Type::UNDEFINED);
+  EXPECT_TRUE(v.IsUndefined());
   v = 1;
-  EXPECT_EQ(v.type(), Variant::Type::INTEGER);
+  EXPECT_TRUE(v.IsInteger());
   v = 20u;
-  EXPECT_EQ(v.type(), Variant::Type::INTEGER);
+  EXPECT_TRUE(v.IsInteger());
   v = false;
-  EXPECT_EQ(v.type(), Variant::Type::BOOLEAN);
+  EXPECT_TRUE(v.IsBoolean());
   v = 3.13f;
-  EXPECT_EQ(v.type(), Variant::Type::FLOATING_POINT);
+  EXPECT_TRUE(v.IsFloatingPoint());
   v = 3.66;
-  EXPECT_EQ(v.type(), Variant::Type::FLOATING_POINT);
+  EXPECT_TRUE(v.IsFloatingPoint());
 }
 
 TEST_F(VariantTests, CheckPrimitiveIsValue)

@@ -96,29 +96,29 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   for (uint32_t index = 0; index < cabinet_size; ++index)
   {
     std::shared_ptr<BeaconManager> manager      = beacon_managers[index];
-    std::vector<std::string>       coefficients = manager->GetCoefficients();
+    std::vector<PublicKey>         coefficients = manager->GetCoefficients();
     for (uint32_t elem = 0; elem < threshold; ++elem)
     {
       // Coefficients generated should be non-zero
-      EXPECT_NE(coefficients[elem], zero.getStr());
+      EXPECT_FALSE(coefficients[elem].isZero());
       for (uint32_t index1 = 0; index1 < cabinet_size; ++index1)
       {
         if (index1 != index)
         {
           std::shared_ptr<BeaconManager> another_manager = beacon_managers[index1];
-          std::vector<std::string>       coefficients1   = another_manager->GetCoefficients();
+          std::vector<PublicKey>         coefficients1   = another_manager->GetCoefficients();
           // Coefficients should be different
           EXPECT_NE(coefficients, coefficients1);
           // Shares generated ourself are non-zero
-          EXPECT_NE(manager->GetOwnShares(member_ptrs[index1]->identity().identifier()).first,
-                    zero.getStr());
-          EXPECT_NE(manager->GetOwnShares(member_ptrs[index1]->identity().identifier()).second,
-                    zero.getStr());
+          EXPECT_FALSE(
+              manager->GetOwnShares(member_ptrs[index1]->identity().identifier()).first.isZero());
+          EXPECT_FALSE(
+              manager->GetOwnShares(member_ptrs[index1]->identity().identifier()).second.isZero());
           // Shares received from others should be zero
-          EXPECT_EQ(manager->GetReceivedShares(member_ptrs[index1]->identity().identifier()).first,
-                    zero.getStr());
-          EXPECT_EQ(manager->GetReceivedShares(member_ptrs[index1]->identity().identifier()).second,
-                    zero.getStr());
+          EXPECT_TRUE(manager->GetReceivedShares(member_ptrs[index1]->identity().identifier())
+                          .first.isZero());
+          EXPECT_TRUE(manager->GetReceivedShares(member_ptrs[index1]->identity().identifier())
+                          .second.isZero());
         }
       }
     }
@@ -137,16 +137,14 @@ TEST(beacon_manager, dkg_and_threshold_signing)
             beacon_managers[1]->GetOwnShares(my_address));
 
   // Add shares and coefficients failing verification from malicious party
-  PrivateKey  s_i;
-  PrivateKey  sprime_i;
-  std::string malicious_share1 = beacon_managers[2]->GetOwnShares(my_address).first;
-  s_i.setStr(malicious_share1);
+  PrivateKey sprime_i;
+  PrivateKey s_i = beacon_managers[2]->GetOwnShares(my_address).first;
   // Modify one shares
   PrivateKey tmp;
   tmp.setRand();
   bn::Fr::add(tmp, tmp, s_i);
-  std::pair<std::string, std::string> wrong_shares = {
-      tmp.getStr(), beacon_managers[2]->GetOwnShares(my_address).second};
+  std::pair<PrivateKey, PrivateKey> wrong_shares = {
+      tmp, beacon_managers[2]->GetOwnShares(my_address).second};
 
   beacon_managers[0]->AddShares(malicious, wrong_shares);
   beacon_managers[0]->AddCoefficients(malicious, beacon_managers[2]->GetCoefficients());
@@ -209,8 +207,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
     secret_key_test.clear();
     for (auto &mem : qual)
     {
-      PrivateKey share;
-      share.setStr(manager->GetReceivedShares(mem).first);
+      PrivateKey share = manager->GetReceivedShares(mem).first;
       bn::Fr::add(secret_key_test, secret_key_test, share);
     }
     PrivateKey              computed_secret_key;

@@ -21,6 +21,7 @@
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "crypto/mcl_dkg.hpp"
 #include "muddle/rpc/client.hpp"
 
 #include <string>
@@ -42,8 +43,8 @@ class DKGMessage
 {
 public:
   using MuddleAddress = byte_array::ConstByteArray;
-  using Coefficient   = std::string;
-  using Share         = std::string;
+  using Coefficient   = crypto::mcl::PublicKey;
+  using Share         = crypto::mcl::PrivateKey;
   using CabinetId     = MuddleAddress;
 
   enum class MessageType : uint8_t

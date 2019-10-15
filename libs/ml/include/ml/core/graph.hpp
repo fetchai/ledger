@@ -45,10 +45,12 @@ namespace optimisers {
 template <typename TensorType>
 class Optimiser;
 }  // namespace optimisers
+
 namespace model {
 template <typename TensorType>
 class ModelInterface;
 }  // namespace model
+
 namespace distributed_learning {
 template <typename TensorType>
 class TrainingClient;
@@ -129,8 +131,8 @@ public:
   bool                            InsertNode(std::string const &node_name, NodePtrType node_ptr);
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
-  virtual struct fetch::ml::StateDict<TensorType> StateDict();
-  virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
+  virtual fetch::ml::StateDict<TensorType> StateDict();
+  virtual void                             LoadStateDict(fetch::ml::StateDict<T> const &dict);
 
   ////////////////////////////////////
   /// public setters and accessors ///
@@ -783,10 +785,10 @@ void Graph<TensorType>::ResetGraphCache(bool input_size_changed, NodePtrType n)
  */
 
 template <typename TensorType>
-struct fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict()
+fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict()
 {
   Compile();
-  struct fetch::ml::StateDict<TensorType> state_dict;
+  fetch::ml::StateDict<TensorType> state_dict;
   StateDict(state_dict);
   return state_dict;
 }
@@ -823,7 +825,7 @@ void Graph<TensorType>::StateDict(fetch::ml::StateDict<TensorType> &state_dict)
  * @param dict  state dictionary to import to weights
  */
 template <typename TensorType>
-void Graph<TensorType>::LoadStateDict(struct fetch::ml::StateDict<TensorType> const &dict)
+void Graph<TensorType>::LoadStateDict(fetch::ml::StateDict<TensorType> const &dict)
 {
   assert(!dict.weights_);
   for (auto const &t : trainable_lookup_)
@@ -1144,7 +1146,7 @@ void Graph<TensorType>::RecursiveApply(ValType &val, GraphFunc graph_func) const
     auto op_ptr    = node_pair.second->GetOp();
     auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
 
-    // if its a graph
+    // if it's a graph
     if (graph_ptr)
     {
       ((*graph_ptr).*graph_func)(val);

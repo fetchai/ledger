@@ -50,11 +50,6 @@ protected:
     generator_.Seed();
   }
 
-  void TearDown() override
-  {
-    queue_.reset();
-  }
-
   TransactionLayoutQueuePtr queue_;
   TransactionGenerator      generator_{};
 };

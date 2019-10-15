@@ -45,15 +45,15 @@ public:
   using DataType     = typename TensorType::Type;
   using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
-  virtual struct fetch::ml::StateDict<T> StateDict() const                            = 0;
-  virtual void              LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
-  virtual TensorType const &GetWeights() const                                        = 0;
-  virtual void              SetWeights(TensorType const &new_value)                   = 0;
-  virtual TensorType const &GetGradientsReferences() const                            = 0;
-  virtual TensorType        GetGradients() const                                      = 0;
-  virtual void              ResetGradients()                                          = 0;
-  virtual void              ApplyGradient(TensorType const &grad)                     = 0;
-  virtual void              ApplyRegularisation()                                     = 0;
+  virtual fetch::ml::StateDict<T> StateDict() const                                  = 0;
+  virtual void                    LoadStateDict(fetch::ml::StateDict<T> const &dict) = 0;
+  virtual TensorType const &      GetWeights() const                                 = 0;
+  virtual void                    SetWeights(TensorType const &new_value)            = 0;
+  virtual TensorType const &      GetGradientsReferences() const                     = 0;
+  virtual TensorType              GetGradients() const                               = 0;
+  virtual void                    ResetGradients()                                   = 0;
+  virtual void                    ApplyGradient(TensorType const &grad)              = 0;
+  virtual void                    ApplyRegularisation()                              = 0;
 
   void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
   {
