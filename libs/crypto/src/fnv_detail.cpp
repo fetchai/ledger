@@ -23,13 +23,13 @@ namespace crypto {
 namespace detail {
 
 template <>
-FNVConfig<uint32_t>::NumberType const FNVConfig<uint32_t>::prime = (1ull << 24) + (1ull << 8) +
+FNVConfig<uint32_t>::NumberType const FNVConfig<uint32_t>::prime = (1ull << 24u) + (1ull << 8u) +
                                                                    0x93ull;
 template <>
 FNVConfig<uint32_t>::NumberType const FNVConfig<uint32_t>::offset = 0x811c9dc5;
 
 template <>
-FNVConfig<uint64_t>::NumberType const FNVConfig<uint64_t>::prime = (1ull << 40) + (1ull << 8) +
+FNVConfig<uint64_t>::NumberType const FNVConfig<uint64_t>::prime = (1ull << 40u) + (1ull << 8u) +
                                                                    0xb3ull;
 template <>
 FNVConfig<uint64_t>::NumberType const FNVConfig<uint64_t>::offset = 0xcbf29ce484222325;
