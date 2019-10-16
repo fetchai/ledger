@@ -585,6 +585,7 @@ void Variant::IterateObject(Function const &function) const
 
 }  // namespace variant
 
+
 namespace serializers {
 
 template <typename D>
