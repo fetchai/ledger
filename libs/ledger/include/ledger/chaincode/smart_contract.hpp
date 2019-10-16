@@ -31,9 +31,14 @@ struct Executable;
 class Module;
 }  // namespace vm
 
-namespace ledger {
+namespace chain {
 
 class Address;
+
+} // namespace chain
+
+namespace ledger {
+
 
 /**
  * Smart Contract instance

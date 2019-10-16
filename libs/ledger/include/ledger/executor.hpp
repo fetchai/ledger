@@ -28,9 +28,13 @@
 #include <memory>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Address;
+
+} // namespace chain
+namespace ledger {
+
 class TokenContract;
 class CachedStorageAdapter;
 class StateSentinelAdapter;

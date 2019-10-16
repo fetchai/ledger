@@ -20,10 +20,14 @@
 #include "ledger/upow/synergetic_contract.hpp"
 
 namespace fetch {
+namespace chain {
+
+class Address;
+
+} // namespace chain
 namespace ledger {
 
 class StorageInterface;
-class Address;
 
 class SynergeticContractFactory
 {

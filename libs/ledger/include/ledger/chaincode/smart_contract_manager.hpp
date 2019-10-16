@@ -21,10 +21,14 @@
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
+namespace chain {
+
+class Address;
+
+} // namespace chain
 namespace ledger {
 
 class Identifier;
-class Address;
 
 class SmartContractManager : public Contract
 {
