@@ -122,7 +122,7 @@ protected:
 private:
   using MuddlePtr              = muddle::MuddlePtr;
   using NetworkManager         = network::NetworkManager;
-  using BlockPackingAlgorithm  = miner::BasicMiner;
+  using BlockPackingAlgorithm  = ledger::BasicMiner;
   using BlockCoordinator       = ledger::BlockCoordinator;
   using MainChain              = ledger::MainChain;
   using MainChainRpcService    = ledger::MainChainRpcService;

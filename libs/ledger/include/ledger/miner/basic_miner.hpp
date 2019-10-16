@@ -31,7 +31,7 @@
 #include <cstdint>
 
 namespace fetch {
-namespace miner {
+namespace ledger {
 
 /**
  * Simplistic greedy search algorithm for generating / packing blocks. Has rudimentary support to
@@ -112,5 +112,5 @@ private:
   /// @}
 };
 
-}  // namespace miner
+}  // namespace ledger
 }  // namespace fetch

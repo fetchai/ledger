@@ -23,7 +23,7 @@
 #include <utility>
 
 namespace fetch {
-namespace miner {
+namespace ledger {
 
 /**
  * Adds a transaction layout to the queue
@@ -257,5 +257,5 @@ DigestSet const &TransactionLayoutQueue::digests() const
   return digests_;
 }
 
-}  // namespace miner
+}  // namespace ledger
 }  // namespace fetch

@@ -24,7 +24,7 @@
 #include "miner/transaction_item.hpp"
 
 namespace fetch {
-namespace miner {
+namespace ledger {
 
 class AnnealerMiner : public MinerInterface
 {
@@ -158,5 +158,5 @@ private:
   GeneratorType generator_;
 };
 
-}  // namespace miner
+}  // namespace ledger
 }  // namespace fetch

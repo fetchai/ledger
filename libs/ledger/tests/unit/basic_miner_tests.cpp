@@ -54,7 +54,7 @@ protected:
   static_assert(IsLog2(NUM_LANES), "Number of lanes must be a valid 2 power");
 
   using Rng               = std::mt19937_64;
-  using BasicMiner        = fetch::miner::BasicMiner;
+  using BasicMiner        = fetch::ledger::BasicMiner;
   using BasicMinerPtr     = std::unique_ptr<BasicMiner>;
   using Clock             = std::chrono::high_resolution_clock;
   using Timepoint         = Clock::time_point;

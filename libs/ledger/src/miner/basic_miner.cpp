@@ -35,7 +35,7 @@
 #include <vector>
 
 namespace fetch {
-namespace miner {
+namespace ledger {
 namespace {
 
 /**
@@ -306,5 +306,5 @@ bool BasicMiner::SortByFee(TransactionLayout const &a, TransactionLayout const &
   return a.charge() > b.charge();
 }
 
-}  // namespace miner
+}  // namespace ledger
 }  // namespace fetch

@@ -43,7 +43,7 @@ namespace ledger {
 class BlockGenerator
 {
 public:
-  using TransactionType       = std::shared_ptr<miner::TransactionItem>;
+  using TransactionType       = std::shared_ptr<ledger::TransactionItem>;
   using block_index_MapType   = std::vector<std::vector<uint64_t>>;
   using BlockFeesListType     = std::vector<uint64_t>;
   using DigestType            = TransactionSummary::TxDigest;
@@ -300,8 +300,8 @@ private:
     {
     case Strategy::FEE_OCCUPANCY:
       std::sort(unspent_.begin(), unspent_.end(),
-                [](std::shared_ptr<miner::TransactionItem> const &a,
-                   std::shared_ptr<miner::TransactionItem> const &b) {
+                [](std::shared_ptr<ledger::TransactionItem> const &a,
+                   std::shared_ptr<ledger::TransactionItem> const &b) {
                   return (a->summary().fee / a->summary().resources.size()) <
                          (b->summary().fee / b->summary().resources.size());
                 });
@@ -309,8 +309,8 @@ private:
     case Strategy::FEE:
 
       std::sort(unspent_.begin(), unspent_.end(),
-                [](std::shared_ptr<miner::TransactionItem> const &a,
-                   std::shared_ptr<miner::TransactionItem> const &b) {
+                [](std::shared_ptr<ledger::TransactionItem> const &a,
+                   std::shared_ptr<ledger::TransactionItem> const &b) {
                   return (a->summary().fee) < (b->summary().fee);
                 });
       break;
@@ -350,7 +350,7 @@ private:
       {
         // TODO(issue 30):  Move to Transaction item?
         uint32_t const lane_index =
-            miner::MapResourceToLane(resource, tx->summary().contract_name, log2_lane_count_);
+            ledger::MapResourceToLane(resource, tx->summary().contract_name, log2_lane_count_);
 
         tx->lanes.insert(lane_index);
 

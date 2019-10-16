@@ -26,7 +26,7 @@
 #include <utility>
 
 namespace fetch {
-namespace miner {
+namespace ledger {
 
 class TransactionLayoutQueue
 {
@@ -83,5 +83,5 @@ void TransactionLayoutQueue::Sort(SortPredicate &&predicate)
   list_.sort(std::forward<SortPredicate>(predicate));
 }
 
-}  // namespace miner
+}  // namespace ledger
 }  // namespace fetch
