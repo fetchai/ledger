@@ -17,27 +17,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
-#include "http/json_response.hpp"
-#include "http/module.hpp"
-#include "http/server.hpp"
+#include "vm/io_observer_interface.hpp"
 
-#include <mutex>
+#include "core/byte_array/const_byte_array.hpp"
+#include "vm/vm.hpp"
+
+#include <memory>
+#include <unordered_map>
 
 namespace fetch {
+namespace dmlf {
 
-class OpenAPIHttpModule : public http::HTTPModule
+class VmState : public vm::IoObserverInterface
 {
 public:
-  OpenAPIHttpModule();
-  void Reset(http::HTTPServer *srv = nullptr);
+  VmState()                         = default;
+  VmState(VmState &&other) noexcept = default;
+  VmState &operator=(VmState &&other) noexcept = default;
+
+  VmState(const VmState &other) = delete;
+  VmState &operator=(const VmState &other) = delete;
+
+  Status Read(std::string const &key, void *data, uint64_t &size) override;
+  Status Write(std::string const &key, void const *data, uint64_t size) override;
+  Status Exists(std::string const &key) override;
+
+  VmState DeepCopy() const;
 
 private:
-  using Variant        = variant::Variant;
-  using ConstByteArray = byte_array::ConstByteArray;
+  using Buffer = fetch::byte_array::ConstByteArray;
+  using Store  = std::unordered_map<std::string, Buffer>;
 
-  http::HTTPServer *server_{nullptr};
-  std::mutex        server_lock_;
+  Store store_;
 };
 
+}  // namespace dmlf
 }  // namespace fetch

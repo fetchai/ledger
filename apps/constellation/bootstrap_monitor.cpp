@@ -170,7 +170,7 @@ bool BootstrapMonitor::UpdateExternalAddress()
   {
     auto const &ip_address = response["ip"];
 
-    if (ip_address.Is<std::string>())
+    if (ip_address.IsString())
     {
       external_address_ = ip_address.As<std::string>();
       FETCH_LOG_INFO(LOGGING_NAME, "Detected external address as: ", external_address_);

@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/macros.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/mcl_dkg.hpp"
 
@@ -25,13 +24,13 @@
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
-using fetch::random::LinearCongruentialGenerator;
+using RNG = fetch::random::LinearCongruentialGenerator;
 
 namespace {
-using RNG = LinearCongruentialGenerator;
+
 RNG rng;
 
-ConstByteArray GenerateRandomData(size_t length)
+ConstByteArray GenerateRandomData(std::size_t length)
 {
   std::size_t rng_word_size = sizeof(RNG::RandomType);
   std::size_t num_words     = length / rng_word_size;
