@@ -298,7 +298,7 @@ private:
     for (SizeType i{0}; i < input_data_size; i++)
     {
       // Compute the Gaussian kernel and entropy for the current precision
-      DataType inf = std::numeric_limits<DataType>::max();
+      DataType inf = math::numeric_max<DataType>();
 
       DataType beta_min = -inf;
       DataType beta_max = inf;
