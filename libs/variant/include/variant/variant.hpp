@@ -603,41 +603,37 @@ public:
     {
     case Type::Type::UNDEFINED:
     {
-      break;
+      return;
     }
 
     case Type::Type::NULL_VALUE:
     {
-      break;
+      return;
     }
     case Type::Type::INTEGER:
     {
       serializer << var.primitive_.integer;
-      break;
+      return;
     }
     case Type::Type::FLOATING_POINT:
     {
       serializer << var.primitive_.float_point;
-      break;
+      return;
     }
     case Type::Type::FIXED_POINT:
     {
       serializer << var.primitive_.integer;
-      break;
+      return;
     }
     case Type::Type::BOOLEAN:
     {
       serializer << var.primitive_.boolean;
-      break;
+      return;
     }
     case Type::Type::STRING:
     {
       serializer << var.string_;
-      break;
-    }
-    default:
-    {
-      throw std::runtime_error{"Variant has unknown type."};
+      return;
     }
     case Type::Type::ARRAY:
     {
@@ -647,7 +643,7 @@ public:
       {
         Serialize(serializer, element);
       }
-      break;
+      return;
     }
     case Type::Type::OBJECT:
     {
@@ -658,9 +654,10 @@ public:
         serializer << element.first;
         Serialize(serializer, *element.second);
       }
-      break;
+      return;
     }
-    }
+    };
+    throw std::runtime_error{"Variant has unknown type."};
   }
 
   template <typename Deserializer>
@@ -673,24 +670,24 @@ public:
     switch (var.type_)
     {
     case Type::Type::UNDEFINED:
-      break;
+      return;
     case Type::Type::NULL_VALUE:
-      break;
+      return;
     case Type::Type::INTEGER:
       deserializer >> var.primitive_.integer;
-      break;
+      return;
     case Type::Type::FLOATING_POINT:
       deserializer >> var.primitive_.float_point;
-      break;
+      return;
     case Type::Type::FIXED_POINT:
       deserializer >> var.primitive_.integer;
-      break;
+      return;
     case Type::Type::BOOLEAN:
       deserializer >> var.primitive_.boolean;
-      break;
+      return;
     case Type::Type::STRING:
       deserializer >> var.string_;
-      break;
+      return;
     case Type::Type::ARRAY:
     {
       uint32_t    count_tmp;
@@ -703,7 +700,7 @@ public:
         Deserialize(deserializer, v);
         var.array_.push_back(v);
       }
-      break;
+      return;
     }
     case Type::Type::OBJECT:
     {
@@ -719,13 +716,10 @@ public:
         Deserialize(deserializer, v);
         var[k] = v;
       }
-      break;
+      return;
     }
-    default:
-    {
-      throw std::runtime_error{"Variant has unknown type."};
-    }
-    }
+    };
+    throw std::runtime_error{"Variant has unknown type."};
   }
 };
 
