@@ -116,6 +116,21 @@ public:
     }
   }
 
+  std::vector<std::string> GetDapsForAttributeType(const std::string& type) const
+  {
+    auto it = target_query_type_to_tbandfield_name_.find(type);
+    std::vector<std::string> daps{};
+    if (it != target_query_type_to_tbandfield_name_.end())
+    {
+      auto it2 = attributes_to_dapnames_.find(it->second.second);
+      if (it2 != attributes_to_dapnames_.end())
+      {
+        daps = it2->second;
+      }
+    }
+    return daps;
+  }
+
   std::unordered_set<std::string> GetDapsForAttributeName(const std::string &attributeName) const
   {
     std::unordered_set<std::string> dap_names_tmp_{};

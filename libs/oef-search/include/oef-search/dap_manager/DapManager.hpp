@@ -350,6 +350,69 @@ public:
     return result;
   }
 
+
+  std::shared_ptr<FutureComplexType<std::pair<std::string, std::string>>> GetCoreInfo()
+  {
+    auto response = std::make_shared<FutureComplexType<std::pair<std::string, std::string>>>();
+
+    auto request = std::make_shared<ConstructQueryConstraintObjectRequest>();
+    request->set_operator_("LIST_CORES");
+
+    using IN_PROTO  = ConstructQueryConstraintObjectRequest;
+    using OUT_PROTO = ConstructQueryConstraintObjectRequest;
+
+    auto address_daps = dap_store_->GetDapsForAttributeType("address");
+    if (address_daps.empty() || address_daps.size()>1)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Address registry not found or more then one (size=", address_daps.size(), ")");
+      response->set(std::make_pair("",""));
+      return response;
+    }
+
+    auto convTask = std::make_shared<DapConversationTask<IN_PROTO, OUT_PROTO>>(
+        *(address_daps.begin()), "calculate", ++single_call_msg_id, request, outbounds_);
+
+    convTask->submit();
+
+    convTask->messageHandler = [response](std::shared_ptr<OUT_PROTO> proto) {
+      if (proto->operator_() == "LIST_CORES" &&
+          proto->query_field_value().typecode() == "string_list")
+      {
+        if (proto->query_field_value().v_s_size() == 0)
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "No core address found in address registry!");
+          response->set(std::make_pair("",""));
+        }
+        else
+        {
+          //TODO handle multiple core
+          auto core = proto->query_field_value().v_s(0);
+          Uri uri(core);
+          auto resp = std::make_pair(uri.proto, uri.host+":"+std::to_string(uri.port));
+          response->set(std::move(resp));
+          if (proto->query_field_value().v_s_size()>1)
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "Multiple core registered with the node! Using only the first! Proto: ", proto->DebugString());
+          }
+        }
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Got unexpected response for distance calculation call: ",
+                       proto->DebugString());
+        response->set(std::make_pair("",""));
+      }
+    };
+
+    convTask->errorHandler = [response](const std::string &dap_name, const std::string &path,
+                                        const std::string &msg) {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to call ", dap_name, " with path: ", path, ": ", msg);
+      response->set(std::make_pair("",""));
+    };
+
+    return response;
+  }
+
 protected:
   std::shared_ptr<Future<bool>> VisitQueryTreeNetwork(std::shared_ptr<Branch> root)
   {
