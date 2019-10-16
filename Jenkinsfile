@@ -246,6 +246,10 @@ def run_basic_checks()
         stage('Style Check') {
           sh './scripts/apply_style.py -d'
         }
+
+        stage('Circular Dependencies') {
+          sh './scripts/detect-circular-dependencies.py'
+        }
       }
     }
   }
