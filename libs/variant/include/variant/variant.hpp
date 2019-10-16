@@ -57,19 +57,6 @@ class Variant
 public:
   using ConstByteArray = byte_array::ConstByteArray;
 
-  enum class Type
-  {
-    UNDEFINED,
-    INTEGER,
-    FLOATING_POINT,
-    FIXED_POINT,
-    BOOLEAN,
-    STRING,
-    NULL_VALUE,
-    ARRAY,
-    OBJECT,
-  };
-
   /// @name Non Value Helpers
   /// @{
   static Variant Null();
@@ -98,8 +85,6 @@ public:
 
   /// @name Basic Type Access
   /// @{
-  Type type() const;
-
   bool IsUndefined() const;
   bool IsInteger() const;
   bool IsFloatingPoint() const;
@@ -187,6 +172,24 @@ public:
 
   friend std::ostream &operator<<(std::ostream &stream, Variant const &variant);
 
+  enum class Type
+  {
+    UNDEFINED,
+    INTEGER,
+    FLOATING_POINT,
+    FIXED_POINT,
+    BOOLEAN,
+    STRING,
+    NULL_VALUE,
+    ARRAY,
+    OBJECT,
+  };
+
+  constexpr Type type() const
+  {
+    return type_;
+  }
+
 private:
   using VariantList   = std::vector<Variant>;
   using VariantObject = std::unordered_map<ConstByteArray, std::unique_ptr<Variant>>;
@@ -205,12 +208,6 @@ private:
   ConstByteArray string_;                 ///< The string value of the variant
   VariantList    array_;                  ///< The array value of the variant
   VariantObject  object_;                 ///< The object value of the variant
-
-  template <typename T, typename D>
-  friend struct serializers::MapSerializer;
-
-  template <typename T, typename D>
-  friend struct serializers::ForwardSerializer;
 };
 
 /**
@@ -292,7 +289,7 @@ Variant::Variant(T &&value, meta::IfIsString<T> * /*unused*/)
 template <typename T>
 meta::IfIsBoolean<T, bool> Variant::Is() const
 {
-  return type() == Type::BOOLEAN;
+  return IsBoolean();
 }
 
 /**
@@ -304,7 +301,7 @@ meta::IfIsBoolean<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsInteger<T, bool> Variant::Is() const
 {
-  return type() == Type::INTEGER;
+  return IsInteger();
 }
 
 /**
@@ -316,7 +313,7 @@ meta::IfIsInteger<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsFloat<T, bool> Variant::Is() const
 {
-  return type() == Type::FLOATING_POINT;
+  return IsFloatingPoint();
 }
 
 /**
@@ -328,7 +325,7 @@ meta::IfIsFloat<T, bool> Variant::Is() const
 template <typename T>
 math::meta::IfIsFixedPoint<T, bool> Variant::Is() const
 {
-  return type() == Type::FIXED_POINT;
+  return IsFixedPoint();
 }
 
 /**
@@ -340,7 +337,7 @@ math::meta::IfIsFixedPoint<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsString<T, bool> Variant::Is() const
 {
-  return type() == Type::STRING;
+  return IsString();
 }
 
 /**
@@ -353,7 +350,7 @@ meta::IfIsString<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsBoolean<T, T> Variant::As() const
 {
-  if (type() != Type::BOOLEAN)
+  if (!IsBoolean())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract boolean value");
   }
@@ -371,7 +368,7 @@ meta::IfIsBoolean<T, T> Variant::As() const
 template <typename T>
 meta::IfIsInteger<T, T> Variant::As() const
 {
-  if (type() != Type::INTEGER)
+  if (!IsInteger())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract integer value");
   }
@@ -389,7 +386,7 @@ meta::IfIsInteger<T, T> Variant::As() const
 template <typename T>
 meta::IfIsFloat<T, T> Variant::As() const
 {
-  if (type() != Type::FLOATING_POINT)
+  if (!IsFloatingPoint())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract floating point value");
   }
@@ -407,9 +404,9 @@ meta::IfIsFloat<T, T> Variant::As() const
 template <typename T>
 math::meta::IfIsFixedPoint<T, T> Variant::As() const
 {
-  if (type() != Type::FIXED_POINT)
+  if (!IsFixedPoint())
   {
-    throw std::runtime_error("Variant type mismatch, unable to extract floating point value");
+    throw std::runtime_error("Variant type mismatch, unable to extract fixed point value");
   }
 
   return static_cast<T>(fixed_point::fp64_t::FromBase(primitive_.integer));
@@ -425,7 +422,7 @@ math::meta::IfIsFixedPoint<T, T> Variant::As() const
 template <typename T>
 meta::IfIsConstByteArray<T, Variant::ConstByteArray const &> Variant::As() const
 {
-  if (type() != Type::STRING)
+  if (!IsString())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract string value");
   }
@@ -443,7 +440,7 @@ meta::IfIsConstByteArray<T, Variant::ConstByteArray const &> Variant::As() const
 template <typename T>
 meta::IfIsStdString<T, std::string> Variant::As() const
 {
-  if (type() != Type::STRING)
+  if (!IsString())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract string value");
   }
@@ -582,7 +579,6 @@ void Variant::IterateObject(Function const &function) const
     throw std::runtime_error("Variant type mismatch, expected `object` type.");
   }
 }
-
 }  // namespace variant
 
 namespace serializers {
@@ -591,76 +587,74 @@ template <typename D>
 struct ForwardSerializer<fetch::variant::Variant, D>
 {
 public:
-  using Type       = fetch::variant::Variant;
+  using Type       = variant::Variant;
   using DriverType = D;
+  using Variant    = fetch::variant::Variant;
 
   template <typename Serializer>
   static void Serialize(Serializer &serializer, Type const &var)
   {
-    auto typecode = static_cast<int>(var.type_);
+    auto typecode = static_cast<int>(var.type());
     serializer << typecode;
-    switch (var.type_)
+    switch (var.type())
     {
     case Type::Type::UNDEFINED:
     {
-      break;
+      return;
     }
 
     case Type::Type::NULL_VALUE:
     {
-      break;
+      return;
     }
     case Type::Type::INTEGER:
     {
-      serializer << var.primitive_.integer;
-      break;
+      serializer << var.As<int64_t>();
+      return;
     }
     case Type::Type::FLOATING_POINT:
     {
-      serializer << var.primitive_.float_point;
-      break;
+      serializer << var.As<double>();
+      return;
     }
     case Type::Type::FIXED_POINT:
     {
-      serializer << var.primitive_.integer;
-      break;
+      serializer << var.As<fixed_point::fp64_t>();
+      return;
     }
     case Type::Type::BOOLEAN:
     {
-      serializer << var.primitive_.boolean;
-      break;
+      serializer << var.As<bool>();
+      return;
     }
     case Type::Type::STRING:
     {
-      serializer << var.string_;
-      break;
-    }
-    default:
-    {
-      throw std::runtime_error{"Variant has unknown type."};
+      serializer << var.As<byte_array::ConstByteArray>();
+      return;
     }
     case Type::Type::ARRAY:
     {
-      auto sz = static_cast<uint32_t>(var.array_.size());
+      auto sz = static_cast<uint32_t>(var.size());
       serializer << sz;
-      for( auto const &element : var.array_)
+      for (std::size_t i = 0; i < var.size(); i++)
       {
-        Serialize(serializer, element);
+        Serialize(serializer, var[i]);
       }
-      break;
+      return;
     }
     case Type::Type::OBJECT:
     {
-      auto sz = static_cast<uint32_t>(var.object_.size());
+      auto sz = static_cast<uint32_t>(var.size());
       serializer << sz;
-      for (auto const &element : var.object_)
-      {
-        serializer << element.first;
-        Serialize(serializer, *element.second);
-      }
-      break;
+      var.IterateObject([&](auto const &k, auto const &v) {
+        serializer << k;
+        Serialize(serializer, v);
+        return true;
+      });
+      return;
     }
-    }
+    };
+    throw std::runtime_error{"Variant has unknown type."};
   }
 
   template <typename Deserializer>
@@ -669,63 +663,79 @@ public:
     int typecode;
     deserializer >> typecode;
     auto type = static_cast<Type::Type>(typecode);
-    var.type_       = type;
-    switch (var.type_)
+    switch (type)
     {
     case Type::Type::UNDEFINED:
-      break;
+    {
+      var = Variant::Undefined();
+      return;
+    }
     case Type::Type::NULL_VALUE:
-      break;
+    {
+      var = Variant::Null();
+      return;
+    }
     case Type::Type::INTEGER:
-      deserializer >> var.primitive_.integer;
-      break;
+    {
+      int64_t tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
     case Type::Type::FLOATING_POINT:
-      deserializer >> var.primitive_.float_point;
-      break;
+    {
+      double tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
     case Type::Type::FIXED_POINT:
-      deserializer >> var.primitive_.integer;
-      break;
+    {
+      fixed_point::fp64_t tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
     case Type::Type::BOOLEAN:
-      deserializer >> var.primitive_.boolean;
-      break;
+    {
+      bool tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
     case Type::Type::STRING:
-      deserializer >> var.string_;
-      break;
+    {
+      byte_array::ConstByteArray tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
     case Type::Type::ARRAY:
     {
-      uint32_t    count_tmp;
-      std::size_t count;
-      deserializer >> count_tmp;
-      count = count_tmp;
+      uint64_t count;
+      deserializer >> count;
+      var = variant::Variant::Array(count);
       for (std::size_t i = 0; i < count; i++)
       {
-        Type v;
-        Deserialize(deserializer, v);
-        var.array_.push_back(v);
+        Deserialize(deserializer, var[i]);
       }
-      break;
+      return;
     }
     case Type::Type::OBJECT:
     {
-      uint32_t    count_tmp;
-      std::size_t count;
-      deserializer >> count_tmp;
-      count = count_tmp;
-      for (std::size_t i = 0; i < count; i++)
+      uint64_t count;
+      deserializer >> count;
+      var = variant::Variant::Object();
+      for (uint64_t i = 0; i < count; i++)
       {
-        Type                       v;
         byte_array::ConstByteArray k;
         deserializer >> k;
-        Deserialize(deserializer, v);
-        var[k] = v;
+        Deserialize(deserializer, var[k]);
       }
-      break;
+      return;
     }
-    default:
-    {
-      throw std::runtime_error{"Variant has unknown type."};
-    }
-    }
+    };
+    throw std::runtime_error{"Variant has unknown type."};
   }
 };
 

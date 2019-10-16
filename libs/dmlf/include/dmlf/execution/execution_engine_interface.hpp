@@ -26,13 +26,8 @@ namespace dmlf {
 class ExecutionEngineInterface
 {
 public:
-  ExecutionEngineInterface() = default;
+  ExecutionEngineInterface()          = default;
   virtual ~ExecutionEngineInterface() = default;
-
-  ExecutionEngineInterface(ExecutionEngineInterface const &other) = delete;
-  ExecutionEngineInterface(ExecutionEngineInterface &&other)      = delete;
-  ExecutionEngineInterface &operator=(ExecutionEngineInterface const &other) = delete;
-  ExecutionEngineInterface &operator=(ExecutionEngineInterface &&other) = delete;
 
   using Name        = ExecutionInterface::Name;
   using SourceFiles = ExecutionInterface::SourceFiles;

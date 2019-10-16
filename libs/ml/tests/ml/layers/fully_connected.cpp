@@ -321,7 +321,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   auto g_not_shared_weights_after = g_not_shared->GetWeights();
 
   // check the all weights are initialized to be the same
-  for (size_t i = 0; i < 2; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     EXPECT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
     EXPECT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);

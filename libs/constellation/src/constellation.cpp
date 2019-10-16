@@ -16,9 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "constellation.hpp"
+#include "constellation/constellation.hpp"
+#include "constellation/health_check_http_module.hpp"
+#include "constellation/logging_http_module.hpp"
+#include "constellation/muddle_status_http_module.hpp"
+#include "constellation/open_api_http_module.hpp"
+#include "constellation/telemetry_http_module.hpp"
 #include "core/bloom_filter.hpp"
-#include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/telemetry.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
@@ -30,17 +34,13 @@
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
-#include "logging_http_module.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
-#include "muddle_status_http_module.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
-#include "open_api_http_module.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
-#include "telemetry_http_module.hpp"
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
@@ -69,12 +69,12 @@ using fetch::network::NetworkManager;
 using ExecutorPtr = std::shared_ptr<Executor>;
 
 namespace fetch {
-namespace {
+namespace constellation {
 
 using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
-using CertificatePtr   = Constellation::CertificatePtr;
-using Config           = Constellation::Config;
-using ConsensusPtr     = Constellation::ConsensusPtr;
+using CertificatePtr   = constellation::Constellation::CertificatePtr;
+using Config           = constellation::Constellation::Config;
+using ConsensusPtr     = constellation::Constellation::ConsensusPtr;
 using ConstByteArray   = byte_array::ConstByteArray;
 using EntropyPtr       = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 using Identity         = crypto::Identity;
@@ -118,8 +118,9 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type servi
   return it->second.local_port();
 }
 
-std::shared_ptr<ledger::DAGInterface> GenerateDAG(std::string const &db_name, bool load_on_start,
-                                                  Constellation::CertificatePtr certificate)
+std::shared_ptr<ledger::DAGInterface> GenerateDAG(
+    std::string const &db_name, bool load_on_start,
+    constellation::Constellation::CertificatePtr certificate)
 {
   return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
 }
@@ -135,7 +136,7 @@ ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
 
     if (it == cfg.manifest.end())
     {
-      FETCH_LOG_ERROR(Constellation::LOGGING_NAME, "Unable to update manifest for lane ", i);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to update manifest for lane ", i);
       throw std::runtime_error("Invalid manifest provided");
     }
 
@@ -171,7 +172,7 @@ ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
   return configs;
 }
 
-StakeManagerPtr CreateStakeManager(Constellation::Config const &cfg)
+StakeManagerPtr CreateStakeManager(constellation::Constellation::Config const &cfg)
 {
   StakeManagerPtr mgr{};
 
@@ -183,7 +184,7 @@ StakeManagerPtr CreateStakeManager(Constellation::Config const &cfg)
   return mgr;
 }
 
-ConsensusPtr CreateConsensus(Constellation::Config const &cfg, StakeManagerPtr stake,
+ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, StakeManagerPtr stake,
                              BeaconServicePtr beacon, MainChain const &chain,
                              Identity const &identity)
 {
@@ -212,9 +213,10 @@ muddle::MuddlePtr CreateBeaconNetwork(Config const &cfg, CertificatePtr certific
   return network;
 }
 
-BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleInterface &muddle,
-                                     ledger::ShardManagementService &manifest_cache,
-                                     CertificatePtr                  certificate)
+BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const &cfg,
+                                     MuddleInterface &                           muddle,
+                                     ledger::ShardManagementService &            manifest_cache,
+                                     CertificatePtr                              certificate)
 {
   BeaconServicePtr                         beacon{};
   beacon::EventManager::SharedEventManager event_manager = beacon::EventManager::New();
@@ -227,8 +229,6 @@ BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleInt
 
   return beacon;
 }
-
-}  // namespace
 
 /**
  * Construct a constellation instance
@@ -591,4 +591,5 @@ void Constellation::SignalStop()
   active_ = false;
 }
 
+}  // namespace constellation
 }  // namespace fetch

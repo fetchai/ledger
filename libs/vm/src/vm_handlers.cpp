@@ -39,8 +39,7 @@ void VM::Handler__VariableDeclare()
   }
   else
   {
-    Primitive p{};
-    p.Zero();
+    Primitive p{0u};
     variable.Construct(p, instruction_->type_id);
   }
 }

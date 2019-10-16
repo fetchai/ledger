@@ -21,8 +21,9 @@
 #include "settings.hpp"
 #include "vectorise/platform.hpp"
 
+using namespace fetch::constellation;
+
 namespace fetch {
-namespace {
 
 /**
  * Determine the network mode based on the settings configuration
@@ -45,8 +46,6 @@ Constellation::NetworkMode GetNetworkMode(Settings const &settings)
 
   return mode;
 }
-
-}  // namespace
 
 /**
  * Build the Constellation's configuration based on the settings based in.
