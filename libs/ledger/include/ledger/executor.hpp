@@ -53,7 +53,8 @@ public:
   /// @{
   Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
                  BitVector const &shards) override;
-  void   SettleFees(chain::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
+  void   SettleFees(chain::Address const &miner, TokenAmount amount,
+                    uint32_t log2_num_lanes) override;
   /// @}
 
 private:

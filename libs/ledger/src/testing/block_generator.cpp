@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block.hpp"
-#include "chain/constants.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "vectorise/platform.hpp"
 

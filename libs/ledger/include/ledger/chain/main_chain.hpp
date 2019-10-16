@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "bloom_filter/bloom_filter.hpp"
+#include "chain/constants.hpp"
+#include "chain/transaction_layout.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/digest.hpp"
@@ -25,8 +27,6 @@
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
-#include "chain/constants.hpp"
-#include "chain/transaction_layout.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"

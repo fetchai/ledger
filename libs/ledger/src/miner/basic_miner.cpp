@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "chain/transaction.hpp"
-#include "logging/logging.hpp"
 #include "ledger/miner/basic_miner.hpp"
+#include "logging/logging.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"

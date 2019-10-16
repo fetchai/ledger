@@ -193,7 +193,7 @@ public:
 
 private:
   chain::Address address_;
-  bool            signed_tx_{false};
+  bool           signed_tx_{false};
 
   static chain::Address StringToAddress(VM *vm, Ptr<String> const &address_str)
   {

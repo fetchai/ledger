@@ -187,7 +187,10 @@ function (fetch_add_test
   if ("DISABLED" IN_LIST ARGV)
     fetch_warning("Disabled test: ${name} - ${file}")
   else ()
-    _internal_add_fetch_test("${name}" "${library}" "${directory}" 120)
+    _internal_add_fetch_test("${name}"
+                             "${library}"
+                             "${directory}"
+                             120)
   endif ()
 endfunction ()
 

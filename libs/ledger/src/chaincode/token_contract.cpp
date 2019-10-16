@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
-#include "chain/constants.hpp"
-#include "chain/transaction.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
@@ -127,7 +127,8 @@ bool TokenContract::SubtractTokens(chain::Address const &address, uint64_t amoun
   return status == StateAdapter::Status::OK;
 }
 
-bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address const &to, uint64_t amount)
+bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address const &to,
+                                   uint64_t amount)
 {
   // look up the state record (to see if there is a deed associated with this address)
   WalletRecord from_record{};

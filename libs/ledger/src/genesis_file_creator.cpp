@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
+#include "chain/constants.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/identity.hpp"
@@ -24,7 +25,6 @@
 #include "json/document.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
-#include "chain/constants.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_manager.hpp"

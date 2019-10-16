@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/address.hpp"
 #include "bootstrap_monitor.hpp"
+#include "chain/address.hpp"
 #include "config_builder.hpp"
 #include "constants.hpp"
 #include "constellation/constellation.hpp"

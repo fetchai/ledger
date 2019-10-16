@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
+#include "chain/transaction_builder.hpp"
 #include "core/bitvector.hpp"
 #include "crypto/ecdsa.hpp"
 #include "in_memory_storage.hpp"
-#include "chain/transaction_builder.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/identifier.hpp"

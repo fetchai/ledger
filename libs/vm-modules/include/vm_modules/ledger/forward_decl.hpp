@@ -34,7 +34,6 @@ namespace math {
 class UInt256Wrapper;
 }  // namespace math
 
-
 namespace ledger {
 
 class Transfer;

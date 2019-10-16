@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/address.hpp"
 #include "beacon/block_entropy.hpp"
+#include "chain/address.hpp"
+#include "chain/transaction_layout.hpp"
+#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/digest.hpp"
 #include "core/serializers/base_types.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
-#include "chain/transaction_layout.hpp"
-#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/dag/dag_epoch.hpp"
 #include "moment/clocks.hpp"
 
@@ -59,17 +59,17 @@ public:
 
   struct Body
   {
-    Digest       hash;               ///< The hash of the block
-    Digest       previous_hash;      ///< The hash of the previous block
-    Digest       merkle_hash;        ///< The merkle state hash across all shards
-    uint64_t     block_number{0};    ///< The height of the block from genesis
-    chain::Address      miner;              ///< The identity of the generated miner
-    Identity     miner_id;           ///< The identity of the generated miner
-    uint32_t     log2_num_lanes{0};  ///< The log2(number of lanes)
-    Slices       slices;             ///< The slice lists
-    DAGEpoch     dag_epoch;          ///< DAG epoch containing information on new dag_nodes
-    uint64_t     timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
-    BlockEntropy block_entropy;      ///< Entropy that determines miner priority for the next block
+    Digest         hash;               ///< The hash of the block
+    Digest         previous_hash;      ///< The hash of the previous block
+    Digest         merkle_hash;        ///< The merkle state hash across all shards
+    uint64_t       block_number{0};    ///< The height of the block from genesis
+    chain::Address miner;              ///< The identity of the generated miner
+    Identity       miner_id;           ///< The identity of the generated miner
+    uint32_t       log2_num_lanes{0};  ///< The log2(number of lanes)
+    Slices         slices;             ///< The slice lists
+    DAGEpoch       dag_epoch;          ///< DAG epoch containing information on new dag_nodes
+    uint64_t       timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
+    BlockEntropy   block_entropy;  ///< Entropy that determines miner priority for the next block
   };
 
   /// @name Block Contents

@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_layout.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/digest.hpp"
-#include "chain/transaction_layout.hpp"
 #include "storage/document.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -31,10 +31,9 @@ namespace chain {
 
 class Transaction;
 
-} // namespace chain
+}  // namespace chain
 
 namespace ledger {
-
 
 class StorageInterface
 {
@@ -76,8 +75,8 @@ public:
   /// @{
   virtual void AddTransaction(chain::Transaction const &tx)                 = 0;
   virtual bool GetTransaction(Digest const &digest, chain::Transaction &tx) = 0;
-  virtual bool HasTransaction(Digest const &digest)                  = 0;
-  virtual void IssueCallForMissingTxs(DigestSet const &tx_set)       = 0;
+  virtual bool HasTransaction(Digest const &digest)                         = 0;
+  virtual void IssueCallForMissingTxs(DigestSet const &tx_set)              = 0;
   /// @}
 
   virtual TxLayouts PollRecentTx(uint32_t) = 0;

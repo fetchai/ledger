@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "json/document.hpp"
 #include "json/exceptions.hpp"
-#include "chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
@@ -31,8 +31,8 @@ namespace ledger {
  * @param tx The reference to the originating transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result Contract::DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx,
-                                              BlockIndex block_index)
+Contract::Result Contract::DispatchInitialise(chain::Address const &    owner,
+                                              chain::Transaction const &tx, BlockIndex block_index)
 {
   Result status{Status::OK};
 

@@ -27,7 +27,7 @@ namespace chain {
 class Transaction;
 class TransactionLayout;
 
-} // namespace chain
+}  // namespace chain
 
 namespace ledger {
 

@@ -35,7 +35,8 @@ def _resolve_dependency_tree(print_tree, name, all_dependencies, index=None, roo
 
     #tree = _update_tree(tree, name, index)
     for dep in all_dependencies.get(name, []):
-        _resolve_dependency_tree(print_tree, dep, all_dependencies, index + 1, root)
+        _resolve_dependency_tree(
+            print_tree, dep, all_dependencies, index + 1, root)
 
 
 def compute_dependency_graph(all_dependencies):
@@ -89,15 +90,16 @@ def compute_dependency_graph(all_dependencies):
             if len(passed) == 0:
                 zero_deps.append(r)
 
-
     pprint(libraries)
     pprint(order)
 
 
 def parse_commandline():
     parser = argparse.ArgumentParser()
-    parser.add_argument('build_path', help='The path to the build output folder')
-    parser.add_argument('target', nargs='?', help='The specific target to evalute')
+    parser.add_argument(
+        'build_path', help='The path to the build output folder')
+    parser.add_argument('target', nargs='?',
+                        help='The specific target to evalute')
     return parser.parse_args()
 
 
@@ -108,7 +110,6 @@ def main():
     if not os.path.isfile(cache_file_path):
         print('Unable to locate the cmake cache file are you sure you have configured the project correctly?')
         sys.exit(1)
-
 
     all_dependencies = {}
     with open(cache_file_path, 'r') as cache_file:
@@ -150,7 +151,6 @@ def main():
             exit_code = 1
 
     sys.exit(exit_code)
-
 
 
 if __name__ == '__main__':

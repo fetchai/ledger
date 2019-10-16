@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
+#include "chain/transaction_serializer.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/commandline/params.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/ecdsa.hpp"
-#include "chain/transaction.hpp"
-#include "chain/transaction_builder.hpp"
-#include "chain/transaction_serializer.hpp"
 #include "storage/resource_mapper.hpp"
 #include "vectorise/threading/pool.hpp"
 

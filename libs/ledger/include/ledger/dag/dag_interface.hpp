@@ -56,8 +56,8 @@ public:
 
   // TODO(HUT): resolve this part of the interface
   virtual void AddTransaction(chain::Transaction const &tx, DAGTypes type) = 0;
-  virtual void AddWork(Work const &work)                            = 0;
-  virtual void AddArbitrary(ConstByteArray const &payload)          = 0;
+  virtual void AddWork(Work const &work)                                   = 0;
+  virtual void AddArbitrary(ConstByteArray const &payload)                 = 0;
 
   virtual DAGEpoch             CreateEpoch(uint64_t block_number)  = 0;
   virtual bool                 CommitEpoch(DAGEpoch)               = 0;

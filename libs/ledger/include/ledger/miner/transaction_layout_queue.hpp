@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/digest.hpp"
 #include "chain/transaction_layout.hpp"
+#include "core/digest.hpp"
 
 #include <cstddef>
 #include <cstdint>

@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_builder.hpp"
 #include "contract_test.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "json/document.hpp"
-#include "chain/transaction_builder.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "mock_storage_unit.hpp"

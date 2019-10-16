@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
 #include "chain/constants.hpp"
 #include "chain/transaction.hpp"
+#include "ledger/chain/block.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <map>

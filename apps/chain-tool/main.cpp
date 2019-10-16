@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/commandline/params.hpp"
-#include "core/filesystem/read_file_contents.hpp"
-#include "core/filesystem/write_to_file.hpp"
-#include "ledger/chain/block_db_record.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_layout.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "chain/transaction_rpc_serializers.hpp"
+#include "core/commandline/params.hpp"
+#include "core/filesystem/read_file_contents.hpp"
+#include "core/filesystem/write_to_file.hpp"
+#include "ledger/chain/block_db_record.hpp"
 #include "meta/log2.hpp"
 
 #include "storage/object_store.hpp"
@@ -780,7 +780,7 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
           uint64_t tx_idx_in_slice{0};
           for (auto const &tx_layout : slice)
           {
-            auto const  lane{ResourceID{tx_layout.digest()}.lane(log2_num_of_lanes)};
+            auto const         lane{ResourceID{tx_layout.digest()}.lane(log2_num_of_lanes)};
             chain::Transaction tx;
 
             bool res{false};

@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_layout.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/digest.hpp"
 #include "core/random/lcg.hpp"
-#include "chain/transaction_layout.hpp"
 
 class TransactionGenerator
 {

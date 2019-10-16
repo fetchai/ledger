@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
 #include "chain/constants.hpp"
+#include "ledger/chain/block.hpp"
 
 namespace fetch {
 namespace ledger {

@@ -85,8 +85,8 @@ private:
     {}
 
     chain::Transaction data;
-    AddressSet  delivered_to;
-    Timepoint   created{Clock::now()};
+    AddressSet         delivered_to;
+    Timepoint          created{Clock::now()};
   };
 
   using Self    = TransactionStoreSyncProtocol;

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "bloom_filter/bloom_filter.hpp"
+#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -24,7 +25,6 @@
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block_db_record.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"

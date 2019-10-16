@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lcg.hpp"
-#include "crypto/ecdsa.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
+#include "core/random/lcg.hpp"
+#include "crypto/ecdsa.hpp"
 #include "meta/type_traits.hpp"
 
 #include <cstdint>

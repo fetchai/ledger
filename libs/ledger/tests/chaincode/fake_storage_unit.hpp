@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/sha256.hpp"
-#include "chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <algorithm>
@@ -124,7 +124,7 @@ public:
   }
 
   bool GetTransaction(fetch::byte_array::ConstByteArray const &digest,
-                      fetch::chain::Transaction &             tx) override
+                      fetch::chain::Transaction &              tx) override
   {
     FETCH_LOCK(mutex_);
     bool success = false;

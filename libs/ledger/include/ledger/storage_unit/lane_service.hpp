@@ -47,12 +47,11 @@ class ObjectStoreProtocol;
 class RevertibleDocumentStoreProtocol;
 }  // namespace storage
 
-
 namespace chain {
 
 class Transaction;
 
-} // namespace chain
+}  // namespace chain
 
 namespace ledger {
 

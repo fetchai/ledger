@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_builder.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "chain/transaction_builder.hpp"
-#include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/transient_object_store.hpp"
 

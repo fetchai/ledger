@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ledger/context.hpp"
-#include "chain/transaction.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -58,8 +58,7 @@ void BindLedgerContext(vm::Module &module)
   Context::Bind(module);
 }
 
-ContextPtr Context::Factory(vm::VM *vm, fetch::chain::Transaction const &tx,
-                            BlockIndex block_index)
+ContextPtr Context::Factory(vm::VM *vm, fetch::chain::Transaction const &tx, BlockIndex block_index)
 {
   return vm->CreateNewObject<Context>(tx, block_index);
 }

@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/set_thread_name.hpp"
 #include "core/string/to_lower.hpp"
-#include "chain/transaction.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
 #include "logging/logging.hpp"

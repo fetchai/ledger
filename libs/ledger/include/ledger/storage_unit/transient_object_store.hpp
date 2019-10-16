@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_layout.hpp"
 #include "core/containers/queue.hpp"
 #include "core/mutex.hpp"
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"
 #include "core/state_machine.hpp"
-#include "chain/transaction_layout.hpp"
 #include "logging/logging.hpp"
 #include "storage/object_store.hpp"
 
@@ -356,7 +356,7 @@ typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(u
 {
   static const std::chrono::milliseconds MAX_WAIT{5};
 
-  TxLayouts                 layouts{};
+  TxLayouts                layouts{};
   chain::TransactionLayout summary;
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
@@ -410,7 +410,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
   if (newly_seen)
   {
     std::size_t count{decltype(most_recent_seen_)::QUEUE_LENGTH};
-    bool const inserted = most_recent_seen_.Push(chain::TransactionLayout{object, log2_num_lanes_},
+    bool const  inserted = most_recent_seen_.Push(chain::TransactionLayout{object, log2_num_lanes_},
                                                  count, std::chrono::milliseconds{100});
     if (inserted && recent_queue_last_size_ != count)
     {

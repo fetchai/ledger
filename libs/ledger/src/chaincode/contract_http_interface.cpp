@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/json_transaction.hpp"
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "http/json_response.hpp"
 #include "json/document.hpp"
-#include "chain/json_transaction.hpp"
-#include "chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"

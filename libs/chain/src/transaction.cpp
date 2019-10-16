@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/verifier.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_serializer.hpp"
+#include "crypto/verifier.hpp"
 
 #include <algorithm>
 #include <cassert>

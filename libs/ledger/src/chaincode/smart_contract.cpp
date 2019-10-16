@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
@@ -560,8 +560,8 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
  * @param owner The owner identity of the contract (i.e. the creator of the contract)
  * @return The corresponding status result for the operation
  */
-Contract::Result SmartContract::InvokeInit(chain::Address const &owner, chain::Transaction const &tx,
-                                           BlockIndex index)
+Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
+                                           chain::Transaction const &tx, BlockIndex index)
 {
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());

@@ -43,7 +43,7 @@ namespace chain {
 class Transaction;
 class Address;
 
-} // namespace chain
+}  // namespace chain
 
 namespace ledger {
 
@@ -66,13 +66,13 @@ public:
     int64_t return_value{0};
   };
 
-  using BlockIndex     = chain::TransactionLayout::BlockIndex;
-  using Identity       = crypto::Identity;
-  using ConstByteArray = byte_array::ConstByteArray;
-  using ContractName   = ConstByteArray;
-  using Query          = variant::Variant;
-  using InitialiseHandler =
-      std::function<Result(chain::Address const &, chain::Transaction const &tx, BlockIndex block_index)>;
+  using BlockIndex            = chain::TransactionLayout::BlockIndex;
+  using Identity              = crypto::Identity;
+  using ConstByteArray        = byte_array::ConstByteArray;
+  using ContractName          = ConstByteArray;
+  using Query                 = variant::Variant;
+  using InitialiseHandler     = std::function<Result(
+      chain::Address const &, chain::Transaction const &tx, BlockIndex block_index)>;
   using TransactionHandler    = std::function<Result(chain::Transaction const &, BlockIndex)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
@@ -92,7 +92,8 @@ public:
   void Attach(ledger::StateAdapter &state);
   void Detach();
 
-  Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx, BlockIndex block_index);
+  Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx,
+                            BlockIndex block_index);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
   Result DispatchTransaction(ConstByteArray const &name, chain::Transaction const &tx,
                              BlockIndex block_index);
@@ -118,8 +119,8 @@ protected:
   /// @{
   void OnInitialise(InitialiseHandler &&handler);
   template <typename C>
-  void OnInitialise(C *instance,
-                    Result (C::*func)(chain::Address const &, chain::Transaction const &, BlockIndex));
+  void OnInitialise(C *instance, Result (C::*func)(chain::Address const &,
+                                                   chain::Transaction const &, BlockIndex));
   /// @}
 
   /// @name Transaction Handlers
@@ -178,13 +179,13 @@ private:
  * @param func The member function pointer
  */
 template <typename C>
-void Contract::OnInitialise(C *instance,
-                            Result (C::*func)(chain::Address const &, chain::Transaction const &, BlockIndex))
+void Contract::OnInitialise(C *instance, Result (C::*func)(chain::Address const &,
+                                                           chain::Transaction const &, BlockIndex))
 {
-  OnInitialise(
-      [instance, func](chain::Address const &owner, chain::Transaction const &tx, BlockIndex block_index) {
-        return (instance->*func)(owner, tx, block_index);
-      });
+  OnInitialise([instance, func](chain::Address const &owner, chain::Transaction const &tx,
+                                BlockIndex block_index) {
+    return (instance->*func)(owner, tx, block_index);
+  });
 }
 
 /**

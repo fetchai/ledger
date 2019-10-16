@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/encoders.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_serializer.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/encoders.hpp"
 
 namespace fetch {
 namespace serializers {

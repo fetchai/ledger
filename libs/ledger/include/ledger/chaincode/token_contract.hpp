@@ -29,7 +29,7 @@ namespace chain {
 class Address;
 class Transaction;
 
-} // namespace chain
+}  // namespace chain
 namespace ledger {
 
 class TokenContract : public Contract

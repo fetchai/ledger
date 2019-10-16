@@ -403,7 +403,8 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
   return layouts;
 }
 
-bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx)
+bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
+                                       chain::Transaction &              tx)
 {
   bool success{false};
 

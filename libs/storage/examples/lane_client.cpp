@@ -146,7 +146,7 @@ public:
 
   void AddTransaction(ConstByteArray const &tx_data)
   {
-    json::JSONDocument  doc(tx_data);
+    json::JSONDocument doc(tx_data);
     chain::Transaction tx;
   }
 
@@ -176,7 +176,7 @@ enum
 void AddTransactionDialog()
 {
   chain::Transaction tx;
-  std::string         contract_name, args, res;
+  std::string        contract_name, args, res;
   std::cout << "Contract name: ";
 
   std::getline(std::cin, contract_name);

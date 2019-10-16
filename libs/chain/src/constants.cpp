@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/digest.hpp"
-#include "chain/constants.hpp"
 
 namespace fetch {
 namespace chain {

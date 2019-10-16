@@ -28,10 +28,9 @@ namespace chain {
 
 class Address;
 
-} // namespace chain
+}  // namespace chain
 
 namespace ledger {
-
 
 class ExecutorInterface
 {
@@ -50,8 +49,9 @@ public:
   /// @name Executor Interface
   /// @{
   virtual Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
-                         BitVector const &shards)                                              = 0;
-  virtual void   SettleFees(chain::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) = 0;
+                         BitVector const &shards)    = 0;
+  virtual void   SettleFees(chain::Address const &miner, TokenAmount amount,
+                            uint32_t log2_num_lanes) = 0;
   /// @}
 };
 

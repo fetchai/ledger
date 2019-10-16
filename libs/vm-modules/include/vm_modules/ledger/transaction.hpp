@@ -27,7 +27,7 @@ namespace fetch {
 namespace chain {
 class Transaction;
 class Address;
-}  // namespace ledger
+}  // namespace chain
 
 namespace vm_modules {
 namespace ledger {
@@ -73,13 +73,13 @@ public:
 
 private:
   std::shared_ptr<fetch::chain::Transaction> tx_;
-  DigestPtr                                   digest_;
-  AddressPtr                                  from_;
-  TransfersPtr                                transfers_;
-  AddressPtr                                  contract_digest_;
-  AddressPtr                                  contract_address_;
-  StringPtr                                   action_;
-  AddressesPtr                                signatories_;
+  DigestPtr                                  digest_;
+  AddressPtr                                 from_;
+  TransfersPtr                               transfers_;
+  AddressPtr                                 contract_digest_;
+  AddressPtr                                 contract_address_;
+  StringPtr                                  action_;
+  AddressesPtr                               signatories_;
 };
 
 }  // namespace ledger

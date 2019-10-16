@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/identity.hpp"
-#include "chain/transaction.hpp"
-#include "chain/transaction_builder.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/identifier.hpp"
@@ -202,7 +202,7 @@ protected:
     return status;
   }
 
-  Contract::Result InvokeInit(Identity const &                  owner,
+  Contract::Result InvokeInit(Identity const &                 owner,
                               fetch::chain::Transaction const &tx = fetch::chain::Transaction{})
   {
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
