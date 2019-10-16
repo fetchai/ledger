@@ -37,7 +37,8 @@ protobuf_generate_cpp(PROTO_SRCS
                       protos/search_config.proto
                       protos/transport.proto
                       protos/search_transport.proto
-                      protos/search_response.proto)
+                      protos/search_response.proto
+                      protos/director.proto)
 
 add_library(protos ${PROTO_HDRS} ${PROTO_SRCS})
 target_link_libraries(protos ${Protobuf_LIBRARIES})

@@ -19,6 +19,8 @@ message SearchConfig {
 
   uint64 query_cache_lifetime_sec = 5;
 
+  string director_uri = 6;
+
   uint32 comms_thread_count = 10;
   uint32 tasks_thread_count = 11;
 

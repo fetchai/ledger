@@ -17,8 +17,9 @@
 #include "oef-search/comms/OefListenerStarterTask.hpp"
 #include "oef-search/dap_comms/OutboundDapConversationCreator.hpp"
 #include "oef-search/search_comms/OutboundSearchConversationCreator.hpp"
-#include <stdio.h>
+#include "oef-search/functions/DirectorTaskFactory.hpp"
 
+#include <stdio.h>
 #include <ctype.h>
 
 
@@ -221,7 +222,7 @@ void MtSearch::startListeners()
   IOefListener<IOefTaskFactory<OefSearchEndpoint>, OefSearchEndpoint>::FactoryCreator initialFactoryCreator =
       [this](std::shared_ptr<OefSearchEndpoint> endpoint)
       {
-        return std::make_shared<SearchTaskFactory>(endpoint, outbounds, dap_manager_);
+        return std::make_shared<SearchTaskFactory>(std::move(endpoint), outbounds, dap_manager_);
       };
 
   Uri search_uri(config_.search_uri());
@@ -230,6 +231,21 @@ void MtSearch::startListeners()
 
   auto task = std::make_shared<OefListenerStarterTask<Endpoint>>(search_uri.port, listeners, core, initialFactoryCreator, endpointConfig);
   task -> submit();
+
+  if (!config_.director_uri().empty())
+  {
+    Uri director_uri(config_.director_uri());
+    FETCH_LOG_INFO(LOGGING_NAME, "Director listener started on ", director_uri.port);
+
+    auto directorFactoryCreator = [this](std::shared_ptr<OefSearchEndpoint> endpoint)
+        -> std::shared_ptr<IOefTaskFactory<OefSearchEndpoint>>
+    {
+      return std::make_shared<DirectorTaskFactory>(std::move(endpoint), outbounds, dap_manager_, config_);
+    };
+
+    auto d_task = std::make_shared<OefListenerStarterTask<Endpoint>>(director_uri.port, listeners, core, directorFactoryCreator, endpointConfig);
+    d_task -> submit();
+  }
 
 }
 
