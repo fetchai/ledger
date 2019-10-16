@@ -299,8 +299,9 @@ private:
     {
       // Compute the Gaussian kernel and entropy for the current precision
       DataType inf = math::numeric_max<DataType>();
+      DataType neg_inf = math::numeric_lowest<DataType>();
 
-      DataType beta_min = -inf;
+      DataType beta_min = neg_inf;
       DataType beta_max = inf;
 
       // Slice of pairwise affinities
@@ -321,7 +322,7 @@ private:
         if (entropy_diff > 0)
         {
           beta_min = beta.At(i);
-          if (beta_max == inf || beta_max == -inf)
+          if (beta_max == inf || beta_max == neg_inf)
           {
             beta.Set(i, beta.At(i) * DataType(2));
           }
@@ -333,7 +334,7 @@ private:
         else
         {
           beta_max = beta.At(i);
-          if (beta_min == inf || beta_min == -inf)
+          if (beta_min == inf || beta_min == neg_inf)
           {
             beta.Set(i, beta.At(i) / DataType(2));
           }
