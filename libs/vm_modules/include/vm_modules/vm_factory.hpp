@@ -48,11 +48,12 @@ public:
     MOD_MATH    = (1ull << 1ull),
     MOD_BITWISE = (1ull << 2ull),
     MOD_ML      = (1ull << 3ull),
+    MOD_LEDGER  = (1ull << 4ull),
   };
 
   enum UseCases : uint64_t
   {
-    USE_SMART_CONTRACTS = (MOD_CORE | MOD_MATH | MOD_ML | MOD_BITWISE),
+    USE_SMART_CONTRACTS = (MOD_CORE | MOD_MATH | MOD_ML | MOD_BITWISE | MOD_LEDGER),
     USE_ALL             = (~uint64_t(0)),
   };
 
