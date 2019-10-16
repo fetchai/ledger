@@ -35,11 +35,6 @@ public:
   ExecutionEngineInterface()          = default;
   virtual ~ExecutionEngineInterface() = default;
 
-  ExecutionEngineInterface(ExecutionEngineInterface const &other) = delete;
-  ExecutionEngineInterface(ExecutionEngineInterface &&other)      = delete;
-  ExecutionEngineInterface &operator=(ExecutionEngineInterface const &other) = delete;
-  ExecutionEngineInterface &operator=(ExecutionEngineInterface &&other) = delete;
-
   virtual ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) = 0;
   virtual ExecutionResult DeleteExecutable(Name const &execName)                             = 0;
 
