@@ -591,8 +591,9 @@ template <typename D>
 struct ForwardSerializer<fetch::variant::Variant, D>
 {
 public:
-  using Type       = fetch::variant::Variant;
+  using Type       = variant::Variant;
   using DriverType = D;
+  using Variant = fetch::variant::Variant;
 
   template <typename Serializer>
   static void Serialize(Serializer &serializer, Type const &var)
@@ -612,7 +613,7 @@ public:
     }
     case Type::Type::INTEGER:
     {
-      serializer << var.As<int>();
+      serializer << var.As<int64_t>();
       return;
     }
     case Type::Type::FLOATING_POINT:
@@ -622,7 +623,7 @@ public:
     }
     case Type::Type::FIXED_POINT:
     {
-      serializer << var.As<int>();
+      serializer << var.As<fixed_point::fp64_t>();
       return;
     }
     case Type::Type::BOOLEAN:
@@ -632,7 +633,7 @@ public:
     }
     case Type::Type::STRING:
     {
-      serializer << var.As<std::string>();
+      serializer << var.As<byte_array::ConstByteArray>();
       return;
     }
     case Type::Type::ARRAY:
@@ -670,12 +671,12 @@ public:
     {
     case Type::Type::UNDEFINED:
     {
-      var = fetch::variant::Variant::Undefined();
+      var = Variant::Undefined();
       return;
     }
     case Type::Type::NULL_VALUE:
     {
-      var = fetch::variant::Variant::Null();
+      var = Variant::Null();
       return;
     }
     case Type::Type::INTEGER:
@@ -694,7 +695,7 @@ public:
     }
     case Type::Type::FIXED_POINT:
     {
-      int64_t tmp;
+      fixed_point::fp64_t tmp;
       deserializer >> tmp;
       var = tmp;
       return;
@@ -708,7 +709,7 @@ public:
     }
     case Type::Type::STRING:
     {
-      std::string tmp;
+      byte_array::ConstByteArray tmp;
       deserializer >> tmp;
       var = tmp;
       return;
@@ -717,12 +718,10 @@ public:
     {
       uint64_t count;
       deserializer >> count;
-      var = fetch::variant::Variant::Array(count);
+      var = variant::Variant::Array(count);
       for (std::size_t i = 0; i < count; i++)
       {
-        Type v;
-        Deserialize(deserializer, v);
-        var[i] = v;
+        Deserialize(deserializer, var[i]);
       }
       return;
     }
@@ -730,14 +729,12 @@ public:
     {
       uint64_t count;
       deserializer >> count;
-      var = fetch::variant::Variant::Object();
+      var = variant::Variant::Object();
       for (uint64_t i = 0; i < count; i++)
       {
-        Type                       v;
         byte_array::ConstByteArray k;
         deserializer >> k;
-        Deserialize(deserializer, v);
-        var[k] = v;
+        Deserialize(deserializer, var[k]);
       }
       return;
     }
