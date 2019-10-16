@@ -31,7 +31,7 @@
 
 using fetch::ledger::consensus::DummyMiner;
 using fetch::ledger::Block;
-using fetch::ledger::Address;
+using fetch::chain::Address;
 
 using Blocks = std::vector<Block>;
 using Body   = Block::Body;

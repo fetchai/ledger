@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
+#include "logging/logging.hpp"
 #include "muddle/packet.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
@@ -248,7 +248,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
     // skip the genesis block
-    if (it->body.previous_hash == GENESIS_DIGEST)
+    if (it->body.previous_hash == chain::GENESIS_DIGEST)
     {
       continue;
     }

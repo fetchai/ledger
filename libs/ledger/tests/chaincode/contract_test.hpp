@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/identifier.hpp"
@@ -51,19 +51,19 @@ protected:
   using MockStorageUnitPtr    = std::unique_ptr<StrictMockStorageUnit>;
   using Resources             = std::vector<ConstByteArray>;
   using CertificatePtr        = std::unique_ptr<fetch::crypto::ECDSASigner>;
-  using AddressPtr            = std::unique_ptr<fetch::ledger::Address>;
+  using AddressPtr            = std::unique_ptr<fetch::chain::Address>;
   using StateAdapter          = fetch::ledger::StateAdapter;
   using StateSentinelAdapter  = fetch::ledger::StateSentinelAdapter;
   using Query                 = Contract::Query;
   using IdentifierPtr         = std::shared_ptr<Identifier>;
   using CachedStorageAdapter  = fetch::ledger::CachedStorageAdapter;
-  using TransactionPtr        = fetch::ledger::TransactionBuilder::TransactionPtr;
+  using TransactionPtr        = fetch::chain::TransactionBuilder::TransactionPtr;
 
   void SetUp() override
   {
     block_number_  = 0u;
     certificate_   = std::make_unique<fetch::crypto::ECDSASigner>();
-    owner_address_ = std::make_unique<fetch::ledger::Address>(certificate_->identity());
+    owner_address_ = std::make_unique<fetch::chain::Address>(certificate_->identity());
     storage_       = std::make_unique<StrictMockStorageUnit>();
   }
 
@@ -107,7 +107,7 @@ protected:
       packer_.pack(arg);
     }
 
-    void PackInternal(fetch::ledger::Address const &address)
+    void PackInternal(fetch::chain::Address const &address)
     {
       auto const &id = address.address();
 
@@ -132,8 +132,8 @@ protected:
   Contract::Result SendSmartAction(ConstByteArray const &action,
                                    ConstByteArray const &data = ConstByteArray{})
   {
-    using fetch::ledger::TransactionBuilder;
-    using fetch::ledger::Address;
+    using fetch::chain::TransactionBuilder;
+    using fetch::chain::Address;
 
     // build the transaction
     tx_ = TransactionBuilder()
@@ -159,7 +159,7 @@ protected:
 
   Contract::Result SendAction(TransactionPtr const &tx)
   {
-    using ContractMode = fetch::ledger::Transaction::ContractMode;
+    using ContractMode = fetch::chain::Transaction::ContractMode;
 
     Identifier id;
 
@@ -202,14 +202,14 @@ protected:
     return status;
   }
 
-  Contract::Result InvokeInit(Identity const &                  owner,
-                              fetch::ledger::Transaction const &tx = fetch::ledger::Transaction{})
+  Contract::Result InvokeInit(Identity const &                 owner,
+                              fetch::chain::Transaction const &tx = fetch::chain::Transaction{})
   {
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 
     contract_->Attach(storage_adapter);
     auto const status =
-        contract_->DispatchInitialise(fetch::ledger::Address{owner}, tx, block_number_);
+        contract_->DispatchInitialise(fetch::chain::Address{owner}, tx, block_number_);
     contract_->Detach();
 
     return status;

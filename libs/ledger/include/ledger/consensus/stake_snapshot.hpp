@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
 #include "crypto/identity.hpp"
+#include "logging/logging.hpp"
 
 #include <memory>
 #include <vector>

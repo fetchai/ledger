@@ -17,17 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_builder.hpp"
 #include "meta/type_traits.hpp"
 
 #include <cstdint>
 
 using fetch::crypto::ECDSASigner;
-using fetch::ledger::Transaction;
-using fetch::ledger::TransactionBuilder;
+using fetch::chain::Transaction;
+using fetch::chain::TransactionBuilder;
 using fetch::byte_array::ByteArray;
 using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;
 
@@ -48,7 +48,7 @@ fetch::meta::IfIsUnsignedInteger<Word, ByteArray> GenerateRandomArray(
 inline TransactionList GenerateTransactions(std::size_t count, ECDSASigner const &signer,
                                             bool large_packets = false)
 {
-  using fetch::ledger::Address;
+  using fetch::chain::Address;
   using fetch::BitVector;
 
   using fetch::random::LinearCongruentialGenerator;

@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_builder.hpp"
 #include "contract_test.hpp"
 #include "core/containers/is_in.hpp"
 #include "core/string/replace.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_adapter.hpp"
 #include "mock_storage_unit.hpp"
@@ -39,13 +39,13 @@ using ::testing::Return;
 using fetch::byte_array::ConstByteArray;
 using fetch::core::IsIn;
 using fetch::string::Replace;
-using fetch::ledger::Address;
+using fetch::chain::Address;
 using fetch::ledger::SmartContract;
 using fetch::storage::ResourceAddress;
 using fetch::variant::Variant;
 using ContractDigest = ConstByteArray;
-using fetch::ledger::TransactionBuilder;
-using fetch::ledger::Transaction;
+using fetch::chain::TransactionBuilder;
+using fetch::chain::Transaction;
 
 template <typename T>
 ConstByteArray RawBytes(T value)
@@ -361,7 +361,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   EXPECT_TRUE(IsIn(query_handlers, "balance"));
 
   fetch::crypto::ECDSASigner target{};
-  fetch::ledger::Address     target_address{target.identity()};
+  fetch::chain::Address      target_address{target.identity()};
 
   auto const owner_key  = contract_name_->full_name() + ".state." + owner_address_->display();
   auto const target_key = contract_name_->full_name() + ".state." + target_address.display();

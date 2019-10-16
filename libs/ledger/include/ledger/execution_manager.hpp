@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
+#include "chain/constants.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "core/synchronisation/protected.hpp"
 #include "core/synchronisation/waitable.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/chain/constants.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"
@@ -115,8 +115,8 @@ private:
   Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
   ExecutionPlan execution_plan_;
 
-  Digest  last_block_hash_ = GENESIS_DIGEST;
-  Address last_block_miner_{};
+  Digest         last_block_hash_ = chain::GENESIS_DIGEST;
+  chain::Address last_block_miner_{};
 
   Mutex     monitor_lock_;
   Condition monitor_wake_;

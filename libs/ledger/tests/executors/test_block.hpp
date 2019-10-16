@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/constants.hpp"
+#include "chain/constants.hpp"
 #include "ledger/execution_manager.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -104,7 +104,7 @@ struct TestBlock
 
             // create the transaction summary
             current_slice.emplace_back(
-                fetch::ledger::TransactionLayout{GenerateHash(rng), mask, 1, 0, 100});
+                fetch::chain::TransactionLayout{GenerateHash(rng), mask, 1, 0, 100});
 
             ++num_transactions;
           }
@@ -172,7 +172,7 @@ struct TestBlock
   }
 
   static TestBlock Generate(std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
-                            Digest const &previous_hash = fetch::ledger::GENESIS_DIGEST)
+                            Digest const &previous_hash = fetch::chain::GENESIS_DIGEST)
   {
     TestBlock block;
     block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices, previous_hash);
