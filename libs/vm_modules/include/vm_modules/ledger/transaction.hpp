@@ -34,15 +34,6 @@ namespace ledger {
 
 class Transaction : public fetch::vm::Object
 {
-  std::shared_ptr<fetch::ledger::Transaction> tx_;
-  DigestPtr                                   digest_;
-  AddressPtr                                  from_;
-  TransfersPtr                                transfers_;
-  AddressPtr                                  contract_digest_;
-  AddressPtr                                  contract_address_;
-  StringPtr                                   action_;
-  AddressesPtr                                signatories_;
-  // BitVectorPtr shard_mask_; //TODO(pb): Implement in the next stage
 
 public:
   Transaction() = delete;
@@ -84,6 +75,16 @@ public:
   StringPtr  action() const;
   // BitVector const &     shard_mask() const; //TODO(pb): Implement in the next stage
   AddressesPtr signatories() const;
+
+private:
+  std::shared_ptr<fetch::ledger::Transaction> tx_;
+  DigestPtr                                   digest_;
+  AddressPtr                                  from_;
+  TransfersPtr                                transfers_;
+  AddressPtr                                  contract_digest_;
+  AddressPtr                                  contract_address_;
+  StringPtr                                   action_;
+  AddressesPtr                                signatories_;
 };
 
 }  // namespace ledger

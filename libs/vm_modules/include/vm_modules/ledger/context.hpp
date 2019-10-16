@@ -26,14 +26,9 @@ namespace ledger {
 
 class Context : public vm::Object
 {
-  TransactionPtr transaction_;
-  BlockPtr       block_;
-
 public:
-  Context() = delete;
   Context(vm::VM *vm, vm::TypeId type_id, fetch::ledger::Transaction const &tx,
           BlockIndex block_index);
-  ~Context() override = default;
 
   TransactionPtr transaction() const;
   BlockPtr       block() const;
@@ -41,6 +36,10 @@ public:
   static void       Bind(fetch::vm::Module &module);
   static ContextPtr Factory(vm::VM *vm, fetch::ledger::Transaction const &tx,
                             BlockIndex block_index);
+
+private:
+  TransactionPtr transaction_;
+  BlockPtr       block_;
 };
 
 void BindLedgerContext(vm::Module &module);

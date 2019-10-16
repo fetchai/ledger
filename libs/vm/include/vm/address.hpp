@@ -130,7 +130,7 @@ public:
 
   std::size_t GetHashCode() override
   {
-    return std::hash<ledger::Address>{}(address_) /* ^ std::hash<bool>{}(signed_tx_)*/;
+    return std::hash<ledger::Address>{}(address_);
   }
 
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override

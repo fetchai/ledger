@@ -26,19 +26,19 @@ namespace ledger {
 
 class Transfer : public vm::Object
 {
-  AddressPtr        address_;
-  NativeTokenAmount amount_{0ull};
-
 public:
-  Transfer() = delete;
   Transfer(vm::VM *vm, vm::TypeId type_id, AddressPtr to, NativeTokenAmount amount);
-  ~Transfer() override = default;
+
   static void        Bind(vm::Module &module);
   static TransferPtr Constructor(vm::VM *vm, vm::TypeId type_id, AddressPtr const &to,
                                  NativeTokenAmount amount);
 
   AddressPtr        to() const;      ///< The destination address for fund transfers
   NativeTokenAmount amount() const;  ///< The amount of tokens being transferred
+
+private:
+  AddressPtr        address_;
+  NativeTokenAmount amount_{0ull};
 };
 
 }  // namespace ledger

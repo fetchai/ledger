@@ -25,16 +25,16 @@ namespace ledger {
 
 class Block : public vm::Object
 {
-  BlockIndex blockIndex_{};
-
 public:
-  Block() = delete;
   Block(vm::VM *vm, vm::TypeId type_id, BlockIndex block_index);
   ~Block() override = default;
 
   static void Bind(vm::Module &module);
 
   BlockIndex block_index() const;
+
+private:
+  BlockIndex blockIndex_{};
 };
 
 }  // namespace ledger
