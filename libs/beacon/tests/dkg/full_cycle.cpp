@@ -16,23 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_service.hpp"
+#include "beacon/create_new_certificate.hpp"
 #include "core/reactor.hpp"
-
+#include "ledger/shards/manifest_cache_interface.hpp"
 #include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 
-#include "beacon/beacon_service.hpp"
-#include "beacon/create_new_certificate.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
+#include "gtest/gtest.h"
 
 #include <cstdint>
 #include <ctime>
 #include <deque>
 #include <iostream>
-#include <random>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
+
+namespace {
 
 using namespace fetch;
 using namespace fetch::beacon;
@@ -41,9 +42,6 @@ using namespace std::chrono_literals;
 
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
-
-#include "gtest/gtest.h"
-#include <iostream>
 
 using Prover         = fetch::crypto::Prover;
 using ProverPtr      = std::shared_ptr<Prover>;
@@ -254,3 +252,5 @@ TEST(beacon, DISABLED_full_cycle)
   // TODO(tfr): Heuristically fails atm. RunHonestComitteeRenewal(100, 4, 4, 4, 10, 0.5);
   RunHonestComitteeRenewal(100, 4, 2, 2, 10, 0.5);
 }
+
+}  // namespace
