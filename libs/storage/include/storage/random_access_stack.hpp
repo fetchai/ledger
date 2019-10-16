@@ -438,7 +438,7 @@ public:
 
     if (!header_.Write(fin))
     {
-      throw StorageException("Error could not write header from clear");
+      throw StorageException("Error could not write header from clear. DB name: " + filename_);
     }
 
     fin.close();

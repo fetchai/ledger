@@ -278,7 +278,7 @@ uint64_t BeaconSetupService::PreDKGThreshold()
   // Needs at least two members to be distributed
   if (ret < 2)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "DKG has to few in cabinet: ", cabinet_size);
+    FETCH_LOG_WARN(LOGGING_NAME, "DKG has too few in cabinet: ", cabinet_size);
     ret = 3;
   }
 

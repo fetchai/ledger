@@ -42,6 +42,11 @@ Reactor::Reactor(std::string name)
   : name_{std::move(name)}
 {}
 
+Reactor::~Reactor()
+{
+  Stop();
+}
+
 bool Reactor::Attach(WeakRunnable runnable)
 {
   bool success{false};

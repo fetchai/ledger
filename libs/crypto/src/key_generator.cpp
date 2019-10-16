@@ -56,7 +56,7 @@ char const *GetKeyPath()
  *
  * @return The shared pointer to the new key
  */
-ProverPtr GenerateP2PKey()
+ProverPtr GenerateP2PKey(bool force_new)
 {
   char const *key_path = GetKeyPath();
 
@@ -64,6 +64,7 @@ ProverPtr GenerateP2PKey()
   bool      certificate_loaded = false;
 
   // Step 1. Attempt to load the existing key
+  if(!force_new)
   {
     std::ifstream input_file(key_path, std::ios::in | std::ios::binary);
 

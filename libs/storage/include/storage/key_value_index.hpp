@@ -865,7 +865,7 @@ private:
       if (depth > key_type::BITS)
       {
         throw StorageException(
-            "Depth of binary search reached higher value than size of key in bits");
+            "Depth of binary search reached higher value than size of key in bits. Depth: " + std::to_string(depth));
       }
 
       index = next;
