@@ -50,16 +50,15 @@ public:
   }
 
   // Construction / Destruction
-  Address(VM *vm, TypeId type_id, Ptr<String> const &address = Ptr<String>{},
-          bool signed_tx = false)
-    : Object(vm, type_id)
+  Address(VM *vm, TypeId id, ledger::Address address, bool signed_tx = false)
+    : Object(vm, id)
+    , address_{std::move(address)}
     , signed_tx_{signed_tx}
-  {
-    if (address && !ledger::Address::Parse(address->str.c_str(), address_))
-    {
-      vm->RuntimeError("Unable to parse address");
-    }
-  }
+  {}
+
+  Address(VM *vm, TypeId id, Ptr<String> const &address = Ptr<String>{}, bool signed_tx = false)
+    : Address{vm, id, StringToAddress(vm, address), signed_tx}
+  {}
 
   ~Address() override = default;
 
@@ -129,6 +128,11 @@ public:
     return true;
   }
 
+  std::size_t GetHashCode() override
+  {
+    return std::hash<ledger::Address>{}(address_);
+  }
+
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {
     Ptr<Address> lhs = lhso;
@@ -190,6 +194,16 @@ public:
 private:
   ledger::Address address_;
   bool            signed_tx_{false};
+
+  static ledger::Address StringToAddress(VM *vm, Ptr<String> const &address_str)
+  {
+    ledger::Address address;
+    if (address_str && !ledger::Address::Parse(address_str->str.c_str(), address))
+    {
+      vm->RuntimeError("Unable to parse address");
+    }
+    return address;
+  }
 };
 
 }  // namespace vm

@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,33 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/replace.hpp"
-
-#include <algorithm>
-#include <string>
+#include "vm/address.hpp"
+#include "vm_modules/ledger/forward_decl.hpp"
 
 namespace fetch {
-namespace string {
+namespace vm_modules {
+namespace ledger {
 
-std::string Replace(std::string value, char before, char after)
+class Transfer : public vm::Object
 {
-  std::replace(value.begin(), value.end(), before, after);
-  return value;
-}
+public:
+  Transfer(vm::VM *vm, vm::TypeId type_id, AddressPtr to, NativeTokenAmount amount);
 
-bool Replace(std::string &orig, std::string const &what, std::string const &with)
-{
-  auto start{orig.find(what)};
+  static void        Bind(vm::Module &module);
+  static TransferPtr Constructor(vm::VM *vm, vm::TypeId type_id, AddressPtr const &to,
+                                 NativeTokenAmount amount);
 
-  if (start == std::string::npos)
-  {
-    return false;
-  }
+  AddressPtr        to() const;      ///< The destination address for fund transfers
+  NativeTokenAmount amount() const;  ///< The amount of tokens being transferred
 
-  orig.replace(start, what.size(), with);
+private:
+  AddressPtr        address_;
+  NativeTokenAmount amount_{0ull};
+};
 
-  return true;
-}
-
-}  // namespace string
+}  // namespace ledger
+}  // namespace vm_modules
 }  // namespace fetch

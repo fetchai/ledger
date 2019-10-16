@@ -136,22 +136,22 @@ protected:
     using fetch::ledger::Address;
 
     // build the transaction
-    auto tx = TransactionBuilder()
-                  .From(Address{certificate_->identity()})
-                  .TargetSmartContract(*contract_address_, *owner_address_, shards_)
-                  .Action(action)
-                  .Signer(certificate_->identity())
-                  .Data(data)
-                  .Seal()
-                  .Sign(*certificate_)
-                  .Build();
+    tx_ = TransactionBuilder()
+              .From(Address{certificate_->identity()})
+              .TargetSmartContract(*contract_address_, *owner_address_, shards_)
+              .Action(action)
+              .Signer(certificate_->identity())
+              .Data(data)
+              .Seal()
+              .Sign(*certificate_)
+              .Build();
 
     // adapt the storage engine for this execution
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchTransaction(action, *tx, block_number_++);
+    auto const status = contract_->DispatchTransaction(action, *tx_, block_number_++);
     contract_->Detach();
 
     return status;
@@ -159,8 +159,27 @@ protected:
 
   Contract::Result SendAction(TransactionPtr const &tx)
   {
+    using ContractMode = fetch::ledger::Transaction::ContractMode;
+
+    Identifier id;
+
+    switch (tx->contract_mode())
+    {
+    case ContractMode::PRESENT:
+      id = Identifier{tx->contract_digest().address().ToHex() + "." +
+                      tx->contract_address().display()};
+      break;
+    case ContractMode::CHAIN_CODE:
+      id = Identifier{tx->chain_code()};
+      break;
+    case ContractMode::NOT_PRESENT:
+      throw std::runtime_error("Not implemented");
+    case ContractMode::SYNERGETIC:
+      throw std::runtime_error("Not implemented");
+    }
+
     // adapt the storage engine for this execution
-    StateSentinelAdapter storage_adapter{*storage_, Identifier{tx->chain_code()}, shards_};
+    StateSentinelAdapter storage_adapter{*storage_, std::move(id), shards_};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
@@ -183,12 +202,14 @@ protected:
     return status;
   }
 
-  Contract::Result InvokeInit(Identity const &owner)
+  Contract::Result InvokeInit(Identity const &                  owner,
+                              fetch::ledger::Transaction const &tx = fetch::ledger::Transaction{})
   {
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 
     contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchInitialise(fetch::ledger::Address{owner});
+    auto const status =
+        contract_->DispatchInitialise(fetch::ledger::Address{owner}, tx, block_number_);
     contract_->Detach();
 
     return status;
@@ -216,4 +237,5 @@ protected:
   CertificatePtr       certificate_;
   AddressPtr           owner_address_;
   MockStorageUnitPtr   storage_;
+  TransactionPtr       tx_;
 };

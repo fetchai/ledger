@@ -112,6 +112,9 @@ SmartContract::SmartContract(std::string const &source)
   module_->CreateFreeFunction("getBlockNumber",
                               [this](vm::VM *) -> BlockIndex { return block_index_; });
 
+  module_->CreateFreeFunction(
+      "getContext", [this](vm::VM *) -> vm_modules::ledger::ContextPtr { return context_; });
+
   // create and compile the executable
   fetch::vm::SourceFiles files  = {{"default.etch", source}};
   auto                   errors = vm_modules::VMFactory::Compile(module_, files, *executable_);
@@ -486,6 +489,8 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
 
+  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, index);
+
   // TODO(WK) inject charge limit
   // vm->SetChargeLimit(123);
   // vm->UpdateCharges({});
@@ -555,10 +560,13 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
  * @param owner The owner identity of the contract (i.e. the creator of the contract)
  * @return The corresponding status result for the operation
  */
-Contract::Result SmartContract::InvokeInit(Address const &owner)
+Contract::Result SmartContract::InvokeInit(Address const &owner, Transaction const &tx,
+                                           BlockIndex index)
 {
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
+
+  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, index);
 
   // TODO(WK) inject charge limit
   // vm->SetChargeLimit(123);

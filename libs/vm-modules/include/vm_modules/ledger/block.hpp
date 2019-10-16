@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,33 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/replace.hpp"
-
-#include <algorithm>
-#include <string>
+#include "vm_modules/ledger/forward_decl.hpp"
 
 namespace fetch {
-namespace string {
+namespace vm_modules {
+namespace ledger {
 
-std::string Replace(std::string value, char before, char after)
+class Block : public vm::Object
 {
-  std::replace(value.begin(), value.end(), before, after);
-  return value;
-}
+public:
+  Block(vm::VM *vm, vm::TypeId type_id, BlockIndex block_index);
 
-bool Replace(std::string &orig, std::string const &what, std::string const &with)
-{
-  auto start{orig.find(what)};
+  static void Bind(vm::Module &module);
 
-  if (start == std::string::npos)
-  {
-    return false;
-  }
+  BlockIndex block_index() const;
 
-  orig.replace(start, what.size(), with);
+private:
+  BlockIndex blockIndex_{};
+};
 
-  return true;
-}
-
-}  // namespace string
+}  // namespace ledger
+}  // namespace vm_modules
 }  // namespace fetch

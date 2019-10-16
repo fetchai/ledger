@@ -61,12 +61,13 @@ public:
     int64_t return_value{0};
   };
 
-  using BlockIndex            = TransactionLayout::BlockIndex;
-  using Identity              = crypto::Identity;
-  using ConstByteArray        = byte_array::ConstByteArray;
-  using ContractName          = ConstByteArray;
-  using Query                 = variant::Variant;
-  using InitialiseHandler     = std::function<Result(Address const &)>;
+  using BlockIndex     = TransactionLayout::BlockIndex;
+  using Identity       = crypto::Identity;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using ContractName   = ConstByteArray;
+  using Query          = variant::Variant;
+  using InitialiseHandler =
+      std::function<Result(Address const &, Transaction const &tx, BlockIndex block_index)>;
   using TransactionHandler    = std::function<Result(Transaction const &, BlockIndex)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
@@ -86,10 +87,10 @@ public:
   void Attach(ledger::StateAdapter &state);
   void Detach();
 
-  Result DispatchInitialise(Address const &owner);
+  Result DispatchInitialise(Address const &owner, Transaction const &tx, BlockIndex block_index);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
   Result DispatchTransaction(ConstByteArray const &name, Transaction const &tx,
-                             TransactionLayout::BlockIndex block_index);
+                             BlockIndex block_index);
   /// @}
 
   /// @name Dispatch Maps Accessors
@@ -112,7 +113,8 @@ protected:
   /// @{
   void OnInitialise(InitialiseHandler &&handler);
   template <typename C>
-  void OnInitialise(C *instance, Result (C::*func)(Address const &));
+  void OnInitialise(C *instance,
+                    Result (C::*func)(Address const &, Transaction const &, BlockIndex));
   /// @}
 
   /// @name Transaction Handlers
@@ -171,9 +173,13 @@ private:
  * @param func The member function pointer
  */
 template <typename C>
-void Contract::OnInitialise(C *instance, Result (C::*func)(Address const &))
+void Contract::OnInitialise(C *instance,
+                            Result (C::*func)(Address const &, Transaction const &, BlockIndex))
 {
-  OnInitialise([instance, func](Address const &owner) { return (instance->*func)(owner); });
+  OnInitialise(
+      [instance, func](Address const &owner, Transaction const &tx, BlockIndex block_index) {
+        return (instance->*func)(owner, tx, block_index);
+      });
 }
 
 /**

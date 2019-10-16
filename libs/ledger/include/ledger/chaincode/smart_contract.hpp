@@ -19,6 +19,7 @@
 
 #include "crypto/fnv.hpp"  // needed for std::hash<ConstByteArray> !!!
 #include "ledger/chaincode/contract.hpp"
+#include "vm_modules/ledger/context.hpp"
 
 #include <memory>
 #include <string>
@@ -64,14 +65,15 @@ private:
   // Transaction /
   Result InvokeAction(std::string const &name, Transaction const &tx, BlockIndex index);
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
-  Result InvokeInit(Address const &owner);
+  Result InvokeInit(Address const &owner, Transaction const &tx, BlockIndex index);
 
-  BlockIndex     block_index_{};  ///< The index current contract's block
-  std::string    source_;         ///< The source of the current contract
-  ConstByteArray digest_;         ///< The digest of the current contract
-  ExecutablePtr  executable_;     ///< The internal script object of the parsed source
-  ModulePtr      module_;         ///< The internal module instance for the contract
-  std::string    init_fn_name_;
+  BlockIndex                     block_index_{};  ///< The index current contract's block
+  std::string                    source_;         ///< The source of the current contract
+  ConstByteArray                 digest_;         ///< The digest of the current contract
+  ExecutablePtr                  executable_;  ///< The internal script object of the parsed source
+  ModulePtr                      module_;      ///< The internal module instance for the contract
+  std::string                    init_fn_name_;
+  vm_modules::ledger::ContextPtr context_;
 };
 
 }  // namespace ledger
