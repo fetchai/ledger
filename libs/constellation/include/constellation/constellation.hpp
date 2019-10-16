@@ -58,6 +58,8 @@ namespace beacon {
 class BeaconService;
 }
 
+namespace constellation {
+
 /**
  * Top level container for all components that are required to run a ledger instance
  */
@@ -72,8 +74,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using ConsensusPtr   = std::shared_ptr<ledger::Consensus>;
 
-  static constexpr uint32_t    DEFAULT_BLOCK_DIFFICULTY = 6;
-  static constexpr char const *LOGGING_NAME             = "constellation";
+  static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
   struct Config
   {
@@ -228,4 +229,5 @@ private:
   /// @}
 };
 
+}  // namespace constellation
 }  // namespace fetch

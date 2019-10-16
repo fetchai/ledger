@@ -87,7 +87,6 @@ private:
   using Logger     = spdlog::logger;
   using LoggerPtr  = std::shared_ptr<Logger>;
   using Registry   = std::unordered_map<std::string, LoggerPtr>;
-  using Mutex      = std::mutex;
   using CounterPtr = telemetry::CounterPtr;
 
   Logger &GetLogger(char const *name);

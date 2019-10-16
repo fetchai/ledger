@@ -19,7 +19,7 @@
 #include "bootstrap_monitor.hpp"
 #include "config_builder.hpp"
 #include "constants.hpp"
-#include "constellation.hpp"
+#include "constellation/constellation.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
@@ -64,19 +64,18 @@ constexpr char const *LOGGING_NAME = "main";
 
 using fetch::Settings;
 using fetch::crypto::Prover;
-using fetch::Constellation;
 using fetch::BootstrapMonitor;
 using fetch::core::WeakRunnable;
 using fetch::network::Uri;
 
 using BootstrapPtr = std::unique_ptr<BootstrapMonitor>;
 using ProverPtr    = std::shared_ptr<Prover>;
-using NetworkMode  = fetch::Constellation::NetworkMode;
-using UriSet       = fetch::Constellation::UriSet;
+using NetworkMode  = fetch::constellation::Constellation::NetworkMode;
+using UriSet       = fetch::constellation::Constellation::UriSet;
 using Uris         = std::vector<Uri>;
 
-std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
-std::atomic<std::size_t>            gInterruptCount{0};
+std::atomic<fetch::constellation::Constellation *> gConstellationInstance{nullptr};
+std::atomic<std::size_t>                           gInterruptCount{0};
 
 UriSet ToUriSet(Uris const &uris)
 {
@@ -231,11 +230,11 @@ int main(int argc, char **argv)
       }
 
       // attempt to build the configuration for constellation
-      Constellation::Config cfg = BuildConstellationConfig(settings);
+      fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
 
       // create and run the constellation
       auto constellation =
-          std::make_unique<fetch::Constellation>(std::move(p2p_key), std::move(cfg));
+          std::make_unique<fetch::constellation::Constellation>(std::move(p2p_key), std::move(cfg));
 
       // update the instance pointer
       gConstellationInstance = constellation.get();

@@ -26,7 +26,9 @@
 #include "muddle/rbc.hpp"
 
 #include "gtest/gtest.h"
-#include <iostream>
+
+#include <bitset>
+#include <memory>
 
 using namespace fetch;
 using namespace fetch::network;

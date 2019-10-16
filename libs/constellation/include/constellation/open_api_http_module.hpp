@@ -17,51 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/hasher_interface.hpp"
+#include "core/logging.hpp"
+#include "http/json_response.hpp"
+#include "http/module.hpp"
+#include "http/server.hpp"
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
+#include <mutex>
 
 namespace fetch {
+namespace constellation {
 
-namespace byte_array {
-class ConstByteArray;
-}
-
-namespace crypto {
-namespace internal {
-
-enum class OpenSslDigestType
-{
-  MD5,
-  SHA1,
-  SHA2_256,
-  SHA2_512
-};
-
-class OpenSslHasherImpl;
-
-class OpenSslHasher
+class OpenAPIHttpModule : public http::HTTPModule
 {
 public:
-  explicit OpenSslHasher(OpenSslDigestType type);
-  ~OpenSslHasher();
-  OpenSslHasher(OpenSslHasher const &) = delete;
-  OpenSslHasher(OpenSslHasher &&)      = delete;
-
-  OpenSslHasher &operator=(OpenSslHasher const &) = delete;
-  OpenSslHasher &operator=(OpenSslHasher &&) = delete;
-
-  bool        Reset();
-  bool        Update(uint8_t const *data_to_hash, std::size_t size);
-  bool        Final(uint8_t *hash);
-  std::size_t HashSize() const;
+  OpenAPIHttpModule();
+  void Reset(http::HTTPServer *srv = nullptr);
 
 private:
-  std::unique_ptr<internal::OpenSslHasherImpl> impl_;
+  using Variant        = variant::Variant;
+  using ConstByteArray = byte_array::ConstByteArray;
+
+  http::HTTPServer *server_{nullptr};
+  std::mutex        server_lock_;
 };
 
-}  // namespace internal
-}  // namespace crypto
+}  // namespace constellation
 }  // namespace fetch
