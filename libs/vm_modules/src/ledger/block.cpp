@@ -16,33 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/replace.hpp"
-
-#include <algorithm>
-#include <string>
+#include "vm/module.hpp"
+#include "vm_modules/ledger/block.hpp"
 
 namespace fetch {
-namespace string {
+namespace vm_modules {
+namespace ledger {
 
-std::string Replace(std::string value, char before, char after)
+using namespace fetch::vm;
+
+Block::Block(VM *vm, vm::TypeId type_id, BlockIndex block_index)
+  : Object{vm, type_id}
+  , blockIndex_{block_index}
+{}
+
+void Block::Bind(vm::Module &module)
 {
-  std::replace(value.begin(), value.end(), before, after);
-  return value;
+  module.CreateClassType<Block>("Block").CreateMemberFunction("blockNumber", &Block::block_index);
 }
 
-bool Replace(std::string &orig, std::string const &what, std::string const &with)
+BlockIndex Block::block_index() const
 {
-  auto start{orig.find(what)};
-
-  if (start == std::string::npos)
-  {
-    return false;
-  }
-
-  orig.replace(start, what.size(), with);
-
-  return true;
+  return blockIndex_;
 }
 
-}  // namespace string
+}  // namespace ledger
+}  // namespace vm_modules
 }  // namespace fetch

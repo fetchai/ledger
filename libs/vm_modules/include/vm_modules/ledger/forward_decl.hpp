@@ -17,13 +17,45 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
+#include "vm/array.hpp"
+#include "vm/object.hpp"
 
 namespace fetch {
-namespace string {
 
-std::string Replace(std::string value, char before, char after);
-bool        Replace(std::string &orig, std::string const &what, std::string const &with);
+namespace vm {
+class Module;
+class Address;
+class IArray;
+}  // namespace vm
 
-}  // namespace string
+namespace vm_modules {
+
+namespace math {
+class UInt256Wrapper;
+}  // namespace math
+
+namespace ledger {
+
+class Transfer;
+class Block;
+class Transaction;
+class Context;
+
+using AddressPtr = vm::Ptr<vm::Address>;
+
+using DigestPtr      = vm::Ptr<math::UInt256Wrapper>;
+using StringPtr      = vm::Ptr<vm::String>;
+using TransferPtr    = vm::Ptr<Transfer>;
+using TransactionPtr = vm::Ptr<Transaction>;
+using BlockPtr       = vm::Ptr<Block>;
+using ContextPtr     = vm::Ptr<Context>;
+
+using NativeTokenAmount = uint64_t;
+using BlockIndex        = uint64_t;
+
+using AddressesPtr = vm::Ptr<vm::Array<AddressPtr>>;
+using TransfersPtr = vm::Ptr<vm::Array<TransferPtr>>;
+
+}  // namespace ledger
+}  // namespace vm_modules
 }  // namespace fetch

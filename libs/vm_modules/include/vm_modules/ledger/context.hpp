@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,33 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/replace.hpp"
-
-#include <algorithm>
-#include <string>
+#include "vm_modules/ledger/block.hpp"
+#include "vm_modules/ledger/transaction.hpp"
 
 namespace fetch {
-namespace string {
+namespace vm_modules {
+namespace ledger {
 
-std::string Replace(std::string value, char before, char after)
+class Context : public vm::Object
 {
-  std::replace(value.begin(), value.end(), before, after);
-  return value;
-}
+public:
+  Context(vm::VM *vm, vm::TypeId type_id, fetch::ledger::Transaction const &tx,
+          BlockIndex block_index);
 
-bool Replace(std::string &orig, std::string const &what, std::string const &with)
-{
-  auto start{orig.find(what)};
+  TransactionPtr transaction() const;
+  BlockPtr       block() const;
 
-  if (start == std::string::npos)
-  {
-    return false;
-  }
+  static void       Bind(fetch::vm::Module &module);
+  static ContextPtr Factory(vm::VM *vm, fetch::ledger::Transaction const &tx,
+                            BlockIndex block_index);
 
-  orig.replace(start, what.size(), with);
+private:
+  TransactionPtr transaction_;
+  BlockPtr       block_;
+};
 
-  return true;
-}
+void BindLedgerContext(vm::Module &module);
 
-}  // namespace string
+}  // namespace ledger
+}  // namespace vm_modules
 }  // namespace fetch

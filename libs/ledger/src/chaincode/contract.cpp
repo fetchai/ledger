@@ -31,13 +31,14 @@ namespace ledger {
  * @param tx The reference to the originating transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result Contract::DispatchInitialise(Address const &owner)
+Contract::Result Contract::DispatchInitialise(Address const &owner, Transaction const &tx,
+                                              BlockIndex block_index)
 {
   Result status{Status::OK};
 
   if (init_handler_)
   {
-    status = init_handler_(owner);
+    status = init_handler_(owner, tx, block_index);
   }
 
   return status;
