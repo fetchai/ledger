@@ -204,11 +204,8 @@ private:
   VariantList    array_;                  ///< The array value of the variant
   VariantObject  object_;                 ///< The object value of the variant
 
-  // template <typename T, typename D>
-  // friend struct serializers::MapSerializer;
-  //
-  // template <typename T, typename D>
-  // friend struct serializers::ForwardSerializer;
+  template <typename T, typename D>
+  friend struct serializers::ForwardSerializer;
 };
 
 /**
@@ -580,7 +577,6 @@ void Variant::IterateObject(Function const &function) const
     throw std::runtime_error("Variant type mismatch, expected `object` type.");
   }
 }
-
 }  // namespace variant
 
 
@@ -597,9 +593,9 @@ public:
   template <typename Serializer>
   static void Serialize(Serializer &serializer, Type const &var)
   {
-    auto typecode = static_cast<int>(var.type());
+    auto typecode = static_cast<int>(var.type_);
     serializer << typecode;
-    switch (var.type())
+    switch (var.type_)
     {
     case Type::Type::UNDEFINED:
     {
