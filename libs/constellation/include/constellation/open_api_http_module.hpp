@@ -17,12 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "constellation/constellation.hpp"
+#include "core/logging.hpp"
+#include "http/json_response.hpp"
+#include "http/module.hpp"
+#include "http/server.hpp"
+
+#include <mutex>
 
 namespace fetch {
+namespace constellation {
 
-class Settings;
+class OpenAPIHttpModule : public http::HTTPModule
+{
+public:
+  OpenAPIHttpModule();
+  void Reset(http::HTTPServer *srv = nullptr);
 
-constellation::Constellation::Config BuildConstellationConfig(Settings const &settings);
+private:
+  using Variant        = variant::Variant;
+  using ConstByteArray = byte_array::ConstByteArray;
 
+  http::HTTPServer *server_{nullptr};
+  std::mutex        server_lock_;
+};
+
+}  // namespace constellation
 }  // namespace fetch

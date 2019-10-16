@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle_status_http_module.hpp"
+#include "constellation/muddle_status_http_module.hpp"
 
 #include "http/json_response.hpp"
 #include "muddle/muddle_status.hpp"
 
 namespace fetch {
+namespace constellation {
 
 MuddleStatusModule::MuddleStatusModule()
 {
@@ -39,4 +40,5 @@ MuddleStatusModule::MuddleStatusModule()
       });
 }
 
+}  // namespace constellation
 }  // namespace fetch
