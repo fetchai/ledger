@@ -593,7 +593,7 @@ struct ForwardSerializer<fetch::variant::Variant, D>
 public:
   using Type       = variant::Variant;
   using DriverType = D;
-  using Variant = fetch::variant::Variant;
+  using Variant    = fetch::variant::Variant;
 
   template <typename Serializer>
   static void Serialize(Serializer &serializer, Type const &var)
