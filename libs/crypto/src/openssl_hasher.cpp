@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
 #include "crypto/openssl_hasher.hpp"
 
 #include <openssl/evp.h>
@@ -25,9 +23,7 @@
 #include <openssl/sha.h>
 
 #include <cassert>
-#include <cstddef>
 #include <memory>
-#include <utility>
 
 namespace fetch {
 namespace crypto {
@@ -134,10 +130,12 @@ bool OpenSslHasher::Final(uint8_t *const hash)
 }
 
 OpenSslHasher::OpenSslHasher(OpenSslDigestType const type)
-  : impl_(std::make_shared<OpenSslHasherImpl>(type))
+  : impl_(std::make_unique<OpenSslHasherImpl>(type))
 {
   Reset();
 }
+
+OpenSslHasher::~OpenSslHasher() = default;
 
 std::size_t OpenSslHasher::HashSize() const
 {

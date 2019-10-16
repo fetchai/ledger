@@ -21,6 +21,7 @@
 #include "http/module.hpp"
 
 namespace fetch {
+namespace constellation {
 
 class HealthCheckHttpModule : public http::HTTPModule
 {
@@ -71,4 +72,5 @@ private:
   BlockCoordinator const &   block_coordinator_;
 };
 
+}  // namespace constellation
 }  // namespace fetch
