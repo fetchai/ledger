@@ -248,7 +248,7 @@ def run_basic_checks()
         }
 
         stage('Circular Dependencies') {
-          sh 'mkdir -p build-deps && pushd build-deps && cmake ../ && popd && ./scripts/detect-circular-dependencies.py build-deps/'
+          sh 'mkdir -p build-deps && cd build-deps && cmake ../ && cd - && ./scripts/detect-circular-dependencies.py build-deps/'
         }
       }
     }
