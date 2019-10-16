@@ -171,9 +171,11 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   }
 
   // update the last block hash
-  last_block_hash_  = block.hash;
-  last_block_miner_ = block.miner;
-  num_slices_       = block.slices.size();
+  summary_.Apply([&block](Summary &summary) {
+    summary.last_block_hash  = block.hash;
+    summary.last_block_miner = block.miner;
+  });
+  num_slices_ = block.slices.size();
 
   // update the state otherwise there is a race between when the executor thread wakes up
   state_.Set(State::ACTIVE);
@@ -339,14 +341,14 @@ void ExecutionManager::Stop()
 
 void ExecutionManager::SetLastProcessedBlock(Digest hash)
 {
-  // TODO(issue 33): thread safety
-  last_block_hash_ = hash;
+  summary_.Apply([&hash](Summary &summary) { summary.last_block_hash = std::move(hash); });
 }
 
 Digest ExecutionManager::LastProcessedBlock()
 {
-  // TODO(issue 33): thread safety
-  return last_block_hash_;
+  Digest last_processed_block{};
+  summary_.Apply([&](Summary const &summary) { last_processed_block = summary.last_block_hash; });
+  return last_processed_block;
 }
 
 ExecutionManager::State ExecutionManager::GetState()
@@ -425,7 +427,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
       }
 
       state_.Set(State::ACTIVE);
-      current_block = last_block_hash_;
+      summary_.Apply(
+          [&current_block](Summary const &summary) { current_block = summary.last_block_hash; });
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Active");
 
@@ -588,8 +591,13 @@ void ExecutionManager::MonitorThreadEntrypoint()
           FETCH_LOCK(idle_executors_lock_);
           if (!idle_executors_.empty())
           {
+            Address last_block_miner{};
+            summary_.Apply([&last_block_miner](Summary const &summary) {
+              last_block_miner = summary.last_block_miner;
+            });
+
             // get the first one and settle the fees
-            idle_executors_.front()->SettleFees(last_block_miner_, aggregate_block_fees,
+            idle_executors_.front()->SettleFees(last_block_miner, aggregate_block_fees,
                                                 log2_num_lanes_);
 
             fees_settled_count_->increment();

@@ -32,6 +32,7 @@
 #include "network/service/protocol.hpp"
 #include "storage/resource_mapper.hpp"
 #include "storage/transient_object_store.hpp"
+#include "telemetry/telemetry.hpp"
 #include "vectorise/platform.hpp"
 
 #include <chrono>
@@ -100,12 +101,19 @@ private:
   TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
   TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
 
+  static telemetry::HistogramPtr CreateHistogram(char const *name, char const *description,
+                                                 int lane);
+
   ObjectStore *store_;  ///< The pointer to the object store
 
   mutex::Mutex cache_mutex_{__LINE__, __FILE__};  ///< The mutex protecting cache_
   Cache        cache_;
 
   int id_;
+
+  telemetry::HistogramPtr pull_objects_histogram_;
+  telemetry::HistogramPtr pull_subtree_histogram_;
+  telemetry::HistogramPtr pull_specific_histogram_;
 };
 
 }  // namespace ledger

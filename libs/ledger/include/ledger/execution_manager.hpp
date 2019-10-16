@@ -105,6 +105,14 @@ private:
   using CounterPtr        = telemetry::CounterPtr;
   using HistogramPtr      = telemetry::HistogramPtr;
 
+  struct Summary
+  {
+    Digest  last_block_hash{GENESIS_DIGEST};
+    Address last_block_miner{};
+  };
+
+  using SyncSummary = SynchronisedState<Summary>;
+
   uint32_t const log2_num_lanes_;
 
   Flag running_{false};
@@ -117,8 +125,7 @@ private:
   Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
   ExecutionPlan execution_plan_;
 
-  Digest  last_block_hash_ = GENESIS_DIGEST;
-  Address last_block_miner_{};
+  SyncSummary summary_;
 
   Mutex     monitor_lock_;
   Condition monitor_wake_;
