@@ -73,7 +73,7 @@ private:
   BeaconServicePtr beacon_;
   MainChain const &chain_;
   Identity         mining_identity_;
-  Address          mining_address_;
+  chain::Address          mining_address_;
 
   // Global variables relating to consensus
   uint64_t aeon_period_        = 0;
@@ -91,8 +91,8 @@ private:
   uint32_t         block_interval_ms_{std::numeric_limits<uint32_t>::max()};
 
   CommitteePtr GetCommittee(Block const &previous);
-  bool         ValidMinerForBlock(Block const &previous, Address const &address);
-  uint64_t     GetBlockGenerationWeight(Block const &previous, Address const &address);
+  bool         ValidMinerForBlock(Block const &previous, chain::Address const &address);
+  uint64_t     GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
   bool         ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool         ShouldTriggerNewCommittee(Block const &block);
   bool         EnoughQualSigned(BlockEntropy const &block_entropy) const;

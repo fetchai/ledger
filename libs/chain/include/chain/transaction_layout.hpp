@@ -23,7 +23,7 @@
 //#include "ledger/execution_result.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Transaction;
 
@@ -76,15 +76,15 @@ private:
   friend struct serializers::MapSerializer;
 };
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch
 
 namespace std {
 
 template <>
-struct hash<fetch::ledger::TransactionLayout>
+struct hash<fetch::chain::TransactionLayout>
 {
-  std::size_t operator()(fetch::ledger::TransactionLayout const &layout) const
+  std::size_t operator()(fetch::chain::TransactionLayout const &layout) const
   {
     assert(layout.digest().size() >= sizeof(std::size_t));
     return *reinterpret_cast<std::size_t const *>(layout.digest().pointer());

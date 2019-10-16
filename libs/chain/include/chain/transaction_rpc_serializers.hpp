@@ -26,16 +26,16 @@ namespace fetch {
 namespace serializers {
 
 template <typename D>
-struct ForwardSerializer<ledger::Transaction, D>
+struct ForwardSerializer<chain::Transaction, D>
 {
 public:
-  using Type       = ledger::Transaction;
+  using Type       = chain::Transaction;
   using DriverType = D;
 
   template <typename Serializer>
   static void Serialize(Serializer &s, Type const &tx)
   {
-    ledger::TransactionSerializer serializer{};
+    chain::TransactionSerializer serializer{};
     serializer << tx;
     s << serializer.data();
   }
@@ -48,7 +48,7 @@ public:
     s >> data;
 
     // create and extract the serializer
-    ledger::TransactionSerializer serializer{data};
+    chain::TransactionSerializer serializer{data};
     serializer >> tx;
   }
 };

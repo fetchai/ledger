@@ -327,7 +327,7 @@ private:
   /// @name State Machine State
   /// @{
   ProverPtr       certificate_;             ///< The miners identity
-  Address         mining_address_;          ///< The miners address
+  chain::Address         mining_address_;          ///< The miners address
   StateMachinePtr state_machine_;           ///< The main state machine for this service
   std::size_t     block_difficulty_;        ///< The number of leading zeros needed in the proof
   std::size_t     num_lanes_;               ///< The current number of lanes

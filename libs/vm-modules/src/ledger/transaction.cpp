@@ -28,8 +28,8 @@ using namespace fetch::vm;
 
 namespace {
 
-AddressPtr CreateAddress(VM *vm, fetch::ledger::Address const &address,
-                         fetch::ledger::Transaction::Signatories const &signatories)
+AddressPtr CreateAddress(VM *vm, fetch::chain::Address const &address,
+                         fetch::chain::Transaction::Signatories const &signatories)
 {
   // TODO(pb): Performance - `std::vector<...>` in not suited for effective search (signatories are
   // returned as `std::vector<Signatory>` type.
@@ -40,7 +40,7 @@ AddressPtr CreateAddress(VM *vm, fetch::ledger::Address const &address,
   return vm->CreateNewObject<Address>(address, has_signed);
 }
 
-AddressesPtr CreateSignatories(VM *vm, fetch::ledger::Transaction const &tx)
+AddressesPtr CreateSignatories(VM *vm, fetch::chain::Transaction const &tx)
 {
   auto const size{tx.signatories().size()};
   auto       signatories{vm->CreateNewObject<vm::Array<AddressPtr>>(vm->GetTypeId<Address>(),
@@ -53,7 +53,7 @@ AddressesPtr CreateSignatories(VM *vm, fetch::ledger::Transaction const &tx)
   return signatories;
 }
 
-TransfersPtr CreateTransfers(VM *vm, fetch::ledger::Transaction const &tx)
+TransfersPtr CreateTransfers(VM *vm, fetch::chain::Transaction const &tx)
 {
   auto const &transfers{tx.transfers()};
   auto const  size{tx.transfers().size()};
@@ -89,9 +89,9 @@ void Transaction::Bind(vm::Module &module)
       .CreateMemberFunction("signatories", &Transaction::signatories);
 }
 
-Transaction::Transaction(vm::VM *vm, vm::TypeId type_id, fetch::ledger::Transaction const &tx)
+Transaction::Transaction(vm::VM *vm, vm::TypeId type_id, fetch::chain::Transaction const &tx)
   : Object{vm, type_id}
-  , tx_{std::make_shared<fetch::ledger::Transaction>(tx)}
+  , tx_{std::make_shared<fetch::chain::Transaction>(tx)}
   , digest_{vm->CreateNewObject<math::UInt256Wrapper>(tx.digest())}
   , from_{CreateAddress(vm, tx.from(), tx.signatories())}
   , transfers_{CreateTransfers(vm, tx)}

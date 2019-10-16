@@ -194,7 +194,7 @@ SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_
 }
 
 WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &     contract_digest,
-                                           Address const &    contract_address,
+                                           chain::Address const &    contract_address,
                                            ProblemData const &problem_data)
 {
   // create the synergetic contract

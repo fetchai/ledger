@@ -29,7 +29,7 @@ class Prover;
 
 }  // namespace crypto
 
-namespace ledger {
+namespace chain {
 
 /**
  * Builder class to construct transactions. This class caches the serial version of the transactions
@@ -104,5 +104,5 @@ private:
   TransactionPtr partial_transaction_;
 };
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

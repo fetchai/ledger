@@ -65,8 +65,8 @@ public:
 
   /// @name Storage Unit Interface
   /// @{
-  void      AddTransaction(Transaction const &tx) override;
-  bool      GetTransaction(ConstByteArray const &digest, Transaction &tx) override;
+  void      AddTransaction(chain::Transaction const &tx) override;
+  bool      GetTransaction(ConstByteArray const &digest, chain::Transaction &tx) override;
   bool      HasTransaction(ConstByteArray const &digest) override;
   void      IssueCallForMissingTxs(DigestSet const &tx_set) override;
   TxLayouts PollRecentTx(uint32_t max_to_poll) override;

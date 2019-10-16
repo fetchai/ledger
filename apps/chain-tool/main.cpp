@@ -46,7 +46,7 @@ struct BlockChain;
 using DIRPtr          = std::unique_ptr<DIR, DIRDeleter>;
 using LaneIdx         = uint64_t;
 using BlockStore      = ObjectStore<BlockDbRecord>;
-using TxStore         = ObjectStore<Transaction>;
+using TxStore         = ObjectStore<chain::Transaction>;
 using TxStores        = std::unordered_map<LaneIdx, TxStore>;
 using TxStoresPtr     = std::shared_ptr<TxStores>;
 using BlockHash       = Block::Hash;
@@ -575,7 +575,7 @@ private:
       }
       else
       {
-        if (node.first != GENESIS_DIGEST)
+        if (node.first != chain::GENESIS_DIGEST)
         {
           ++md.num_of_empty_blocks;
         }
@@ -781,7 +781,7 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
           for (auto const &tx_layout : slice)
           {
             auto const  lane{ResourceID{tx_layout.digest()}.lane(log2_num_of_lanes)};
-            Transaction tx;
+            chain::Transaction tx;
 
             bool res{false};
             try

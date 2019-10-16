@@ -278,7 +278,7 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   return Status::SUCCESS;
 }
 
-Status SynergeticContract::Complete(Address const &address, BitVector const &shards)
+Status SynergeticContract::Complete(chain::Address const &address, BitVector const &shards)
 {
   if (storage_ == nullptr)
   {

@@ -58,7 +58,7 @@ SmartContractManager::SmartContractManager()
   OnTransaction("create", this, &SmartContractManager::OnCreate);
 }
 
-Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockIndex block_index)
+Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx, BlockIndex block_index)
 {
   // attempt to parse the transaction
   variant::Variant data;

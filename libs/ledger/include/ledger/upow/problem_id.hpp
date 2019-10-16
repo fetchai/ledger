@@ -29,7 +29,7 @@ namespace ledger {
 
 struct ProblemId
 {
-  Address const                    contract_address;
+  chain::Address const                    contract_address;
   byte_array::ConstByteArray const contract_digest;
 
   bool operator<(ProblemId const &other) const
@@ -41,6 +41,7 @@ struct ProblemId
 
     return contract_digest < other.contract_digest;
   }
+
   bool operator==(ProblemId const &other) const
   {
     return contract_address == other.contract_address && contract_digest == other.contract_digest;
@@ -57,7 +58,7 @@ struct hash<fetch::ledger::ProblemId>
 {
   std::size_t operator()(fetch::ledger::ProblemId const &id) const noexcept
   {
-    std::hash<fetch::ledger::Address>            a;
+    std::hash<fetch::chain::Address>            a;
     std::hash<fetch::byte_array::ConstByteArray> b;
 
     return a(id.contract_address) + b(id.contract_digest);

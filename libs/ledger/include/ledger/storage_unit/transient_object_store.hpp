@@ -50,8 +50,8 @@ class TransientObjectStore
 public:
   using Callback     = std::function<void(Object const &)>;
   using Archive      = ObjectStore<Object>;
-  using TxLayouts    = std::vector<ledger::TransactionLayout>;
-  using TxArray      = std::vector<ledger::Transaction>;
+  using TxLayouts    = std::vector<chain::TransactionLayout>;
+  using TxArray      = std::vector<chain::Transaction>;
   using WeakRunnable = core::WeakRunnable;
 
   static constexpr char const *LOGGING_NAME = "TransientObjectStore";
@@ -98,7 +98,7 @@ private:
 
   using StateMachinePtr = std::shared_ptr<core::StateMachine<Phase>>;
   using Queue           = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
-  using RecentQueue     = fetch::core::MPMCQueue<ledger::TransactionLayout, 1 << 15>;
+  using RecentQueue     = fetch::core::MPMCQueue<chain::TransactionLayout, 1 << 15>;
   using Cache           = std::unordered_map<ResourceID, Object>;
   using Flag            = std::atomic<bool>;
 
@@ -357,7 +357,7 @@ typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(u
   static const std::chrono::milliseconds MAX_WAIT{5};
 
   TxLayouts                 layouts{};
-  ledger::TransactionLayout summary;
+  chain::TransactionLayout summary;
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
   {
@@ -410,7 +410,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
   if (newly_seen)
   {
     std::size_t count{decltype(most_recent_seen_)::QUEUE_LENGTH};
-    bool const inserted = most_recent_seen_.Push(ledger::TransactionLayout{object, log2_num_lanes_},
+    bool const inserted = most_recent_seen_.Push(chain::TransactionLayout{object, log2_num_lanes_},
                                                  count, std::chrono::milliseconds{100});
     if (inserted && recent_queue_last_size_ != count)
     {

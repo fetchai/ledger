@@ -63,9 +63,9 @@ namespace {
  * @param: tx the transaction triggering the smart contract
  * @param: params the parameters
  */
-void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &params)
+void ValidateAddressesInParams(chain::Transaction const &tx, vm::ParameterPack const &params)
 {
-  std::unordered_set<Address> signing_addresses;
+  std::unordered_set<chain::Address> signing_addresses;
   for (auto const &sig : tx.signatories())
   {
     signing_addresses.insert(sig.address);
@@ -296,8 +296,8 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obje
 // TODO(issue 1256): Whole this function can be dropped once the issue is resolved
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  Address address{};
-  if (!Address::Parse(obj.As<ConstByteArray>(), address))
+  chain::Address address{};
+  if (!chain::Address::Parse(obj.As<ConstByteArray>(), address))
   {
     throw std::runtime_error("Unable to parse address");
   }
@@ -448,7 +448,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result SmartContract::InvokeAction(std::string const &name, Transaction const &tx,
+Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Transaction const &tx,
                                              BlockIndex index)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
@@ -560,7 +560,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
  * @param owner The owner identity of the contract (i.e. the creator of the contract)
  * @return The corresponding status result for the operation
  */
-Contract::Result SmartContract::InvokeInit(Address const &owner, Transaction const &tx,
+Contract::Result SmartContract::InvokeInit(chain::Address const &owner, chain::Transaction const &tx,
                                            BlockIndex index)
 {
   // Get clean VM instance

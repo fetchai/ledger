@@ -26,9 +26,15 @@
 #include <vector>
 
 namespace fetch {
-namespace ledger {
+
+namespace chain {
 
 class Transaction;
+
+} // namespace chain
+
+namespace ledger {
+
 
 class StorageInterface
 {
@@ -60,7 +66,7 @@ class StorageUnitInterface : public StorageInterface
 public:
   using Hash           = byte_array::ConstByteArray;
   using ConstByteArray = byte_array::ConstByteArray;
-  using TxLayouts      = std::vector<TransactionLayout>;
+  using TxLayouts      = std::vector<chain::TransactionLayout>;
 
   // Construction / Destruction
   StorageUnitInterface()           = default;
@@ -68,8 +74,8 @@ public:
 
   /// @name Transaction Interface
   /// @{
-  virtual void AddTransaction(Transaction const &tx)                 = 0;
-  virtual bool GetTransaction(Digest const &digest, Transaction &tx) = 0;
+  virtual void AddTransaction(chain::Transaction const &tx)                 = 0;
+  virtual bool GetTransaction(Digest const &digest, chain::Transaction &tx) = 0;
   virtual bool HasTransaction(Digest const &digest)                  = 0;
   virtual void IssueCallForMissingTxs(DigestSet const &tx_set)       = 0;
   /// @}

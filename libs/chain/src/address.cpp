@@ -29,7 +29,7 @@
 #include <utility>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 namespace {
 
 using byte_array::ToBase58;
@@ -194,5 +194,5 @@ bool Address::operator>=(Address const &other) const
   return address_ >= other.address_;
 }
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

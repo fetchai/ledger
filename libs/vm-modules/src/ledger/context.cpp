@@ -18,6 +18,7 @@
 
 #include "vm/module.hpp"
 #include "vm_modules/ledger/context.hpp"
+#include "chain/transaction.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -25,10 +26,10 @@ namespace ledger {
 
 using namespace fetch::vm;
 
-Context::Context(VM *vm, TypeId type_id, fetch::ledger::Transaction const &tx,
+Context::Context(VM *vm, TypeId type_id, fetch::chain::Transaction const &tx,
                  BlockIndex block_index)
   : Object{vm, type_id}
-  , transaction_{vm->CreateNewObject<Transaction>(tx)}
+  , transaction_{vm->CreateNewObject<vm_modules::ledger::Transaction>(tx)}
   , block_{vm->CreateNewObject<Block>(block_index)}
 {}
 
@@ -57,7 +58,7 @@ void BindLedgerContext(vm::Module &module)
   Context::Bind(module);
 }
 
-ContextPtr Context::Factory(vm::VM *vm, fetch::ledger::Transaction const &tx,
+ContextPtr Context::Factory(vm::VM *vm, fetch::chain::Transaction const &tx,
                             BlockIndex block_index)
 {
   return vm->CreateNewObject<Context>(tx, block_index);

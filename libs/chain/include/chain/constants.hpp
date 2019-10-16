@@ -22,7 +22,7 @@
 #include <cstdint>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 constexpr uint64_t FINALITY_PERIOD = 10;
 
@@ -33,5 +33,5 @@ extern uint64_t STAKE_COOL_DOWN_PERIOD;
 extern Digest GENESIS_DIGEST;
 extern Digest GENESIS_MERKLE_ROOT;
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

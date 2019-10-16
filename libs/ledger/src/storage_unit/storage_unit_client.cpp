@@ -60,7 +60,7 @@ constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
 
 }  // namespace
 
-using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<Transaction>;
+using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
 
 StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards,
                                      uint32_t log2_num_lanes)
@@ -113,7 +113,7 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
 // return the last committed hash (should correspond to the state hash before you began execution)
 byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 {
-  ConstByteArray last_commit_hash = GENESIS_MERKLE_ROOT;
+  ConstByteArray last_commit_hash = chain::GENESIS_MERKLE_ROOT;
 
   {
     FETCH_LOCK(merkle_mutex_);
@@ -135,7 +135,7 @@ byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 {
   // determine if the unit requests the genesis block
-  bool const genesis_state = hash == GENESIS_MERKLE_ROOT;
+  bool const genesis_state = hash == chain::GENESIS_MERKLE_ROOT;
 
   FETCH_LOCK(merkle_mutex_);
 
@@ -149,7 +149,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
     // fill the tree with empty leaf nodes
     for (std::size_t i = 0; i < num_lanes(); ++i)
     {
-      tree[i] = GENESIS_MERKLE_ROOT;
+      tree[i] = chain::GENESIS_MERKLE_ROOT;
     }
 
     permanent_state_merkle_stack_.New(MERKLE_FILENAME_DOC,
@@ -303,7 +303,7 @@ bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
 {
   bool success{false};
 
-  if (hash == GENESIS_MERKLE_ROOT)
+  if (hash == chain::GENESIS_MERKLE_ROOT)
   {
     success = true;
   }
@@ -348,7 +348,7 @@ StorageUnitClient::Address const &StorageUnitClient::LookupAddress(
   return LookupAddress(resource.lane(log2_num_lanes_));
 }
 
-void StorageUnitClient::AddTransaction(Transaction const &tx)
+void StorageUnitClient::AddTransaction(chain::Transaction const &tx)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Adding tx: 0x", tx.digest().ToHex());
 
@@ -403,7 +403,7 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
   return layouts;
 }
 
-bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest, Transaction &tx)
+bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx)
 {
   bool success{false};
 
@@ -416,7 +416,7 @@ bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
                                                     TxStoreProtocol::GET, resource);
 
     // wait for the response to be delivered
-    tx = promise->As<Transaction>();
+    tx = promise->As<chain::Transaction>();
 
     success = true;
   }

@@ -32,7 +32,7 @@ class FakeExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
   using Digest    = fetch::Digest;
-  using Address   = fetch::ledger::Address;
+  using Address   = fetch::chain::Address;
   using BitVector = fetch::BitVector;
   using Clock     = std::chrono::high_resolution_clock;
   using Timepoint = Clock::time_point;

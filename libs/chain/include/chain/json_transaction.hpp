@@ -21,7 +21,7 @@ namespace fetch {
 namespace variant {
 class Variant;
 }
-namespace ledger {
+namespace chain {
 
 class Transaction;
 
@@ -29,5 +29,5 @@ bool FromJsonTransaction(variant::Variant const &src, Transaction &dst);
 bool ToJsonTransaction(Transaction const &src, variant::Variant &dst,
                        bool include_metadata = false);
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

@@ -171,7 +171,7 @@ std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
   return ret;
 }
 
-void DAG::AddTransaction(Transaction const &tx, DAGTypes type)
+void DAG::AddTransaction(chain::Transaction const &tx, DAGTypes type)
 {
   if (type != DAGTypes::DATA)
   {

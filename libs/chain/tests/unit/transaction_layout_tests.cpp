@@ -29,9 +29,9 @@
 #include <memory>
 
 using fetch::byte_array::FromBase64;
-using fetch::ledger::TransactionLayout;
-using fetch::ledger::TransactionBuilder;
-using fetch::ledger::Address;
+using fetch::chain::TransactionLayout;
+using fetch::chain::TransactionBuilder;
+using fetch::chain::Address;
 using fetch::crypto::ECDSASigner;
 using fetch::BitVector;
 

@@ -90,7 +90,7 @@ void Block::UpdateDigest()
 
 void Block::UpdateTimestamp()
 {
-  if (body.previous_hash != GENESIS_DIGEST)
+  if (body.previous_hash != chain::GENESIS_DIGEST)
   {
     body.timestamp = GetTime(clock_);
   }

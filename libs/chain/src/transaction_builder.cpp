@@ -33,7 +33,7 @@
 static constexpr char const *LOGGING_NAME = "TxBuilder";
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 using byte_array::ConstByteArray;
 
@@ -346,5 +346,5 @@ TransactionBuilder::Sealer TransactionBuilder::Seal()
   return sealer;
 }
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

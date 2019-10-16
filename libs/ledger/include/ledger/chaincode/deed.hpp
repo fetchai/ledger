@@ -25,22 +25,26 @@
 #include <memory>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Transaction;
+
+} // namespace chain
+namespace ledger {
+
 
 struct Deed
 {
   using Weight             = uint64_t;
   using Threshold          = Weight;
   using DeedOperation      = byte_array::ConstByteArray;
-  using Signees            = std::unordered_map<Address, Weight>;
+  using Signees            = std::unordered_map<chain::Address, Weight>;
   using OperationTresholds = std::unordered_map<DeedOperation, Threshold>;
   using Weights            = std::unordered_map<Weight, uint64_t>;
   using MandatorityMatrix  = std::unordered_map<Threshold, Weights>;
 
   bool              IsSane() const;
-  bool              Verify(Transaction const &tx, DeedOperation const &operation) const;
+  bool              Verify(chain::Transaction const &tx, DeedOperation const &operation) const;
   MandatorityMatrix InferMandatoryWeights() const;
 
   Deed()             = default;

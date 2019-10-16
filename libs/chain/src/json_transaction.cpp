@@ -25,7 +25,7 @@
 #include "variant/variant_utils.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 using variant::Variant;
 using variant::Extract;
@@ -115,5 +115,5 @@ bool ToJsonTransaction(Transaction const &src, Variant &dst, bool include_metada
   return success;
 }
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

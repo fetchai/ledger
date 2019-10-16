@@ -24,7 +24,7 @@
 
 namespace fetch {
 
-namespace ledger {
+namespace chain {
 class Transaction;
 class Address;
 }  // namespace ledger
@@ -36,7 +36,7 @@ class Transaction : public fetch::vm::Object
 {
 
 public:
-  Transaction(vm::VM *vm, vm::TypeId type_id, fetch::ledger::Transaction const &tx);
+  Transaction(vm::VM *vm, vm::TypeId type_id, fetch::chain::Transaction const &tx);
 
   static void Bind(vm::Module &module);
 
@@ -72,7 +72,7 @@ public:
   AddressesPtr signatories() const;
 
 private:
-  std::shared_ptr<fetch::ledger::Transaction> tx_;
+  std::shared_ptr<fetch::chain::Transaction> tx_;
   DigestPtr                                   digest_;
   AddressPtr                                  from_;
   TransfersPtr                                transfers_;

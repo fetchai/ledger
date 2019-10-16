@@ -248,7 +248,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
     // skip the genesis block
-    if (it->body.previous_hash == GENESIS_DIGEST)
+    if (it->body.previous_hash == chain::GENESIS_DIGEST)
     {
       continue;
     }

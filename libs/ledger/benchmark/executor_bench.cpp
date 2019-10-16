@@ -33,9 +33,9 @@
 namespace {
 
 using fetch::ledger::Executor;
-using fetch::ledger::Transaction;
-using fetch::ledger::TransactionBuilder;
-using fetch::ledger::Address;
+using fetch::chain::Transaction;
+using fetch::chain::TransactionBuilder;
+using fetch::chain::Address;
 using fetch::ledger::TokenContract;
 using fetch::ledger::StateSentinelAdapter;
 using fetch::ledger::Identifier;

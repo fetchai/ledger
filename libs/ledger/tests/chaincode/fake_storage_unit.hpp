@@ -33,7 +33,7 @@ class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   using TransactionStoreType =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::Transaction>;
+      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::chain::Transaction>;
   using StateStoreType =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
   using LockStoreType = std::unordered_set<ShardIndex>;
@@ -117,14 +117,14 @@ public:
     return success;
   }
 
-  void AddTransaction(fetch::ledger::Transaction const &tx) override
+  void AddTransaction(fetch::chain::Transaction const &tx) override
   {
     FETCH_LOCK(mutex_);
     transactions_[tx.digest()] = tx;
   }
 
   bool GetTransaction(fetch::byte_array::ConstByteArray const &digest,
-                      fetch::ledger::Transaction &             tx) override
+                      fetch::chain::Transaction &             tx) override
   {
     FETCH_LOCK(mutex_);
     bool success = false;

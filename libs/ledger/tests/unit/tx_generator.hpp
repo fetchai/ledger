@@ -25,7 +25,7 @@
 class TransactionGenerator
 {
 public:
-  using TransactionLayout = fetch::ledger::TransactionLayout;
+  using TransactionLayout = fetch::chain::TransactionLayout;
 
   explicit TransactionGenerator(uint32_t log2_num_lanes = 0)
     : log2_num_lanes_{log2_num_lanes}

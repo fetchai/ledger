@@ -24,10 +24,10 @@ namespace fetch {
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<ledger::TransactionLayout, D>
+struct MapSerializer<chain::TransactionLayout, D>
 {
 public:
-  using Type       = ledger::TransactionLayout;
+  using Type       = chain::TransactionLayout;
   using DriverType = D;
 
   static uint8_t const DIGEST      = 1;

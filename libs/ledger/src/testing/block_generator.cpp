@@ -85,16 +85,16 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
     block->body.previous_hash  = from->body.hash;
     block->body.merkle_hash    = merkle_root;
     block->body.block_number   = from->body.block_number + 1u;
-    block->body.miner          = Address{ident};
+    block->body.miner          = chain::Address{ident};
     block->body.log2_num_lanes = log2_num_lanes_;
     block->body.slices.resize(num_slices_);
   }
   else
   {
     // update the previous hash
-    block->body.previous_hash = fetch::ledger::GENESIS_DIGEST;
-    block->body.merkle_hash   = fetch::ledger::GENESIS_MERKLE_ROOT;
-    block->body.miner         = Address{crypto::Hash<crypto::SHA256>("")};
+    block->body.previous_hash = chain::GENESIS_DIGEST;
+    block->body.merkle_hash   = chain::GENESIS_MERKLE_ROOT;
+    block->body.miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
   }
 
   block->UpdateTimestamp();

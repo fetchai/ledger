@@ -42,7 +42,7 @@ namespace {
 
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
-using fetch::ledger::FromJsonTransaction;
+using fetch::chain::FromJsonTransaction;
 using fetch::variant::Variant;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
@@ -84,9 +84,9 @@ std::string GenerateTimestamp()
 bool CreateTxFromJson(Variant const &tx_obj, std::vector<ConstByteArray> &txs,
                       TransactionProcessor &processor)
 {
-  auto tx = std::make_shared<Transaction>();
+  auto tx = std::make_shared<chain::Transaction>();
 
-  if (FromJsonTransaction(tx_obj, *tx))
+  if (chain::FromJsonTransaction(tx_obj, *tx))
   {
     txs.emplace_back(tx->digest());
     processor.AddTransaction(std::move(tx));
@@ -100,9 +100,9 @@ bool CreateTxFromJson(Variant const &tx_obj, std::vector<ConstByteArray> &txs,
 bool CreateTxFromBuffer(ConstByteArray const &encoded_tx, std::vector<ConstByteArray> &txs,
                         TransactionProcessor &processor)
 {
-  auto tx = std::make_shared<Transaction>();
+  auto tx = std::make_shared<chain::Transaction>();
 
-  TransactionSerializer tx_serializer{encoded_tx};
+  chain::TransactionSerializer tx_serializer{encoded_tx};
   if (tx_serializer.Deserialize(*tx))
   {
     txs.emplace_back(tx->digest());

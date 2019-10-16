@@ -26,9 +26,15 @@
 #include <thread>
 
 namespace fetch {
-namespace ledger {
+
+namespace chain {
 
 class Transaction;
+
+} // namespace chain
+
+namespace ledger {
+
 class StorageUnitInterface;
 class BlockPackerInterface;
 class TransactionStatusCache;

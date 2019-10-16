@@ -24,7 +24,7 @@
 #include <utility>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 namespace {
 
 constexpr char const *LOGGING_NAME = "TransactionLayout";
@@ -156,5 +156,5 @@ bool TransactionLayout::operator==(TransactionLayout const &other) const
   return digest_ == other.digest_;
 }
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

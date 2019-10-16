@@ -35,7 +35,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "AnnealerMiner";
 
-  void EnqueueTransaction(ledger::TransactionSummary const &tx) override
+  void EnqueueTransaction(chain::TransactionSummary const &tx) override
   {
     FETCH_LOCK(pending_queue_lock_);
 

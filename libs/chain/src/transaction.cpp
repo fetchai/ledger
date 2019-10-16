@@ -24,7 +24,7 @@
 #include <cassert>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 /**
  * Compute the total amount being transferred in this transaction
@@ -281,5 +281,5 @@ bool Transaction::IsVerified() const
   return verified_;
 }
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

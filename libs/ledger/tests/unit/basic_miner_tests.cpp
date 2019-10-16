@@ -58,7 +58,7 @@ protected:
   using BasicMinerPtr     = std::unique_ptr<BasicMiner>;
   using Clock             = std::chrono::high_resolution_clock;
   using Timepoint         = Clock::time_point;
-  using TransactionLayout = fetch::ledger::TransactionLayout;
+  using TransactionLayout = fetch::chain::TransactionLayout;
   using MainChain         = fetch::ledger::MainChain;
   using Block             = fetch::ledger::Block;
   using LayoutMap         = DigestMap<TransactionLayout>;

@@ -30,7 +30,7 @@ struct BlockDbRecord
 {
   Block block;
   // genesis (hopefully) cannot be next hash so is used as undefined value
-  Block::Hash next_hash = GENESIS_DIGEST;
+  Block::Hash next_hash = chain::GENESIS_DIGEST;
 
   Block::Hash hash() const
   {

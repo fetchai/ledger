@@ -85,7 +85,7 @@ void TransactionStoreSyncProtocol::TrimCache()
 
 /// @}
 
-void TransactionStoreSyncProtocol::OnNewTx(Transaction const &o)
+void TransactionStoreSyncProtocol::OnNewTx(chain::Transaction const &o)
 {
   FETCH_LOCK(cache_mutex_);
   cache_.emplace_back(o);
@@ -143,7 +143,7 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSpecific
     std::vector<storage::ResourceID> const &rids)
 {
   TxArray     ret;
-  Transaction tx;
+  chain::Transaction tx;
 
   for (auto const &rid : rids)
   {

@@ -27,7 +27,7 @@
 using fetch::ledger::Identifier;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
-using fetch::ledger::Address;
+using fetch::chain::Address;
 
 ConstByteArray GenerateSequence(std::size_t size)
 {

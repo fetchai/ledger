@@ -28,8 +28,8 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::ledger::Address;
-using fetch::ledger::TransactionBuilder;
+using fetch::chain::Address;
+using fetch::chain::TransactionBuilder;
 
 using AddressArray = std::vector<Address>;
 using PrivateKey   = crypto::ECDSASigner;

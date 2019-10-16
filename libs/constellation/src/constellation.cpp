@@ -55,7 +55,7 @@
 #include <utility>
 
 using fetch::byte_array::ToBase64;
-using fetch::ledger::Address;
+using fetch::chain::Address;
 using fetch::ledger::Executor;
 using fetch::ledger::GenesisFileCreator;
 using fetch::shards::Manifest;
@@ -321,8 +321,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
   // Configure/override global parameters
-  ledger::STAKE_WARM_UP_PERIOD   = cfg_.stake_delay_period;
-  ledger::STAKE_COOL_DOWN_PERIOD = cfg_.stake_delay_period;
+  chain::STAKE_WARM_UP_PERIOD   = cfg_.stake_delay_period;
+  chain::STAKE_COOL_DOWN_PERIOD = cfg_.stake_delay_period;
 
   if (cfg_.kademlia_routing)
   {

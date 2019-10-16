@@ -59,7 +59,7 @@ public:
   static constexpr char const *LOGGING_NAME = "DAGSyncService";
 
   using MuddleEndpoint = muddle::MuddleEndpoint;
-  using TransactionPtr = std::shared_ptr<Transaction>;
+  using TransactionPtr = std::shared_ptr<chain::Transaction>;
 
   using Client          = muddle::rpc::Client;
   using ClientPtr       = std::shared_ptr<Client>;

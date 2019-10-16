@@ -53,12 +53,12 @@ public:
   /// @{
   Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
                  BitVector const &shards) override;
-  void   SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
+  void   SettleFees(chain::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
   /// @}
 
 private:
   using TokenContractPtr        = std::shared_ptr<TokenContract>;
-  using TransactionPtr          = std::shared_ptr<Transaction>;
+  using TransactionPtr          = std::shared_ptr<chain::Transaction>;
   using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
 
   bool RetrieveTransaction(Digest const &digest);

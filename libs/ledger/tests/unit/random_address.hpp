@@ -30,9 +30,9 @@
  * @return The generated address
  */
 template <typename RNG>
-fetch::ledger::Address GenerateRandomAddress(RNG &&rng)
+fetch::chain::Address GenerateRandomAddress(RNG &&rng)
 {
-  using Address = fetch::ledger::Address;
+  using Address = fetch::chain::Address;
   using RngWord = typename std::decay_t<RNG>::RandomType;
 
   static constexpr std::size_t ADDRESS_WORD_SIZE = Address::RAW_LENGTH / sizeof(RngWord);

@@ -88,7 +88,7 @@ public:
   using BlockHash            = Block::Hash;
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
-  using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
+  using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 5000ull;
@@ -175,7 +175,7 @@ public:
   struct HeaviestTip
   {
     uint64_t  weight{0};
-    BlockHash hash{GENESIS_DIGEST};
+    BlockHash hash{chain::GENESIS_DIGEST};
 
     bool Update(Block const &block);
   };

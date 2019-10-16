@@ -20,9 +20,9 @@
 #include <cstdint>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 using BlockIndex = uint64_t;
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

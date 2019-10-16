@@ -20,7 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Transaction;
 
@@ -70,5 +70,5 @@ private:
   ConstByteArray serial_data_;
 };
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

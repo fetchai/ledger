@@ -33,7 +33,7 @@
 namespace fetch {
 namespace ledger {
 
-Work::Work(Digest digest, Address address, crypto::Identity miner)
+Work::Work(Digest digest, chain::Address address, crypto::Identity miner)
   : contract_digest_{std::move(digest)}
   , contract_address_{std::move(address)}
   , miner_{std::move(miner)}
@@ -44,7 +44,7 @@ Digest const &Work::contract_digest() const
   return contract_digest_;
 }
 
-Address const &Work::address() const
+chain::Address const &Work::address() const
 {
   return contract_address_;
 }
@@ -69,7 +69,7 @@ void Work::UpdateDigest(Digest digest)
   contract_digest_ = std::move(digest);
 }
 
-void Work::UpdateAddress(Address address)
+void Work::UpdateAddress(chain::Address address)
 {
   contract_address_ = std::move(address);
 }

@@ -29,6 +29,9 @@
 #include <utility>
 #include <vector>
 
+using fetch::chain::Transaction;
+using fetch::chain::TransactionLayout;
+
 namespace fetch {
 namespace ledger {
 

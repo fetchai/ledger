@@ -28,9 +28,9 @@
 #include <memory>
 
 using fetch::crypto::ECDSASigner;
-using fetch::ledger::Transaction;
-using fetch::ledger::TransactionBuilder;
-using fetch::ledger::Address;
+using fetch::chain::Transaction;
+using fetch::chain::TransactionBuilder;
+using fetch::chain::Address;
 using fetch::ledger::FromJsonTransaction;
 using fetch::ledger::ToJsonTransaction;
 using fetch::variant::Variant;

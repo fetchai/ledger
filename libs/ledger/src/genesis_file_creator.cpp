@@ -237,13 +237,13 @@ void GenesisFileCreator::LoadState(Variant const &object)
   genesis_block.body.timestamp    = start_time_;
   genesis_block.body.merkle_hash  = merkle_commit_hash;
   genesis_block.body.block_number = 0;
-  genesis_block.body.miner        = ledger::Address(crypto::Hash<crypto::SHA256>(""));
+  genesis_block.body.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
   genesis_block.UpdateDigest();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: ", genesis_block.body.hash.ToBase64());
 
-  ledger::GENESIS_MERKLE_ROOT = merkle_commit_hash;
-  ledger::GENESIS_DIGEST      = genesis_block.body.hash;
+  chain::GENESIS_MERKLE_ROOT = merkle_commit_hash;
+  chain::GENESIS_DIGEST      = genesis_block.body.hash;
 
   block_coordinator_.Reset();
 }
@@ -298,7 +298,7 @@ void GenesisFileCreator::LoadConsensus(Variant const &object)
         FETCH_LOG_INFO(LOGGING_NAME, "Found identity raw!, ", identity_raw);
 
         auto identity = crypto::Identity(FromBase64(identity_raw));
-        auto address  = Address(identity);
+        auto address  = chain::Address(identity);
 
         FETCH_LOG_INFO(LOGGING_NAME,
                        "Restoring stake. Identity: ", identity.identifier().ToBase64(),

@@ -31,7 +31,7 @@ namespace ledger {
 class TransactionLayoutQueue
 {
 public:
-  using TransactionLayout = ledger::TransactionLayout;
+  using TransactionLayout = chain::TransactionLayout;
   using UnderlyingList    = std::list<TransactionLayout>;
   using Iterator          = UnderlyingList::iterator;
   using ConstIterator     = UnderlyingList::const_iterator;

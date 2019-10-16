@@ -49,7 +49,7 @@ public:
 
   using Block             = ledger::Block;
   using MainChain         = ledger::MainChain;
-  using TransactionLayout = ledger::TransactionLayout;
+  using TransactionLayout = chain::TransactionLayout;
 
   // Construction / Destruction
   explicit BasicMiner(uint32_t log2_num_lanes);
@@ -59,8 +59,8 @@ public:
 
   /// @name Miner Interface
   /// @{
-  void     EnqueueTransaction(ledger::Transaction const &tx) override;
-  void     EnqueueTransaction(ledger::TransactionLayout const &layout) override;
+  void     EnqueueTransaction(chain::Transaction const &tx) override;
+  void     EnqueueTransaction(chain::TransactionLayout const &layout) override;
   void     GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
                          MainChain const &chain) override;
   uint64_t GetBacklog() const override;

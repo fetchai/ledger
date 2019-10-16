@@ -35,6 +35,7 @@ namespace serializers {
 namespace {
 
 using namespace fetch::ledger;
+using namespace fetch::chain;
 using namespace fetch::byte_array;
 
 TEST(LedgerSerializers, address)

@@ -26,7 +26,7 @@
 #include <vector>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 /**
  * The transaction class
@@ -169,5 +169,5 @@ private:
   friend class TransactionSerializer;
 };
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

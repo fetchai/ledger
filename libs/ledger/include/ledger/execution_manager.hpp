@@ -115,8 +115,8 @@ private:
   Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
   ExecutionPlan execution_plan_;
 
-  Digest  last_block_hash_ = GENESIS_DIGEST;
-  Address last_block_miner_{};
+  Digest  last_block_hash_ = chain::GENESIS_DIGEST;
+  chain::Address last_block_miner_{};
 
   Mutex     monitor_lock_;
   Condition monitor_wake_;

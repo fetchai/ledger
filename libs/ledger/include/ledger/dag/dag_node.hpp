@@ -66,7 +66,7 @@ struct DAGNode
   DigestList       previous;            ///< previous nodes.
   ConstByteArray   contents;            ///< payload to be deserialised.
   Digest           contract_digest;     ///< The contract which this node is associated with.
-  Address          contract_address;    ///< The address of the associated contract
+  chain::Address          contract_address;    ///< The address of the associated contract
   crypto::Identity identity;            ///< identity of the creator
 
   /// Serialisable entries to verify state
@@ -79,18 +79,18 @@ struct DAGNode
   uint64_t oldest_epoch_referenced = std::numeric_limits<uint64_t>::max();
   uint64_t weight                  = 0;
 
-  bool SetContents(Transaction const &tx)
+  bool SetContents(chain::Transaction const &tx)
   {
-    ledger::TransactionSerializer ser{};
+    chain::TransactionSerializer ser{};
     ser.Serialize(tx);
     contents = ser.data();
 
     return true;
   }
 
-  bool GetContents(Transaction &tx)
+  bool GetContents(chain::Transaction &tx)
   {
-    ledger::TransactionSerializer ser{contents};
+    chain::TransactionSerializer ser{contents};
     ser.Deserialize(tx);
 
     return true;

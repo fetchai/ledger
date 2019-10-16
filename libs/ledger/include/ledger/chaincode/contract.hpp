@@ -37,10 +37,15 @@ namespace fetch {
 namespace variant {
 class Variant;
 }
-namespace ledger {
+
+namespace chain {
 
 class Transaction;
 class Address;
+
+} // namespace chain
+
+namespace ledger {
 
 /**
  * Contract - Base class for all smart contract and chain code instances
@@ -61,14 +66,14 @@ public:
     int64_t return_value{0};
   };
 
-  using BlockIndex     = TransactionLayout::BlockIndex;
+  using BlockIndex     = chain::TransactionLayout::BlockIndex;
   using Identity       = crypto::Identity;
   using ConstByteArray = byte_array::ConstByteArray;
   using ContractName   = ConstByteArray;
   using Query          = variant::Variant;
   using InitialiseHandler =
-      std::function<Result(Address const &, Transaction const &tx, BlockIndex block_index)>;
-  using TransactionHandler    = std::function<Result(Transaction const &, BlockIndex)>;
+      std::function<Result(chain::Address const &, chain::Transaction const &tx, BlockIndex block_index)>;
+  using TransactionHandler    = std::function<Result(chain::Transaction const &, BlockIndex)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
   using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
@@ -87,9 +92,9 @@ public:
   void Attach(ledger::StateAdapter &state);
   void Detach();
 
-  Result DispatchInitialise(Address const &owner, Transaction const &tx, BlockIndex block_index);
+  Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx, BlockIndex block_index);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Result DispatchTransaction(ConstByteArray const &name, Transaction const &tx,
+  Result DispatchTransaction(ConstByteArray const &name, chain::Transaction const &tx,
                              BlockIndex block_index);
   /// @}
 
@@ -114,7 +119,7 @@ protected:
   void OnInitialise(InitialiseHandler &&handler);
   template <typename C>
   void OnInitialise(C *instance,
-                    Result (C::*func)(Address const &, Transaction const &, BlockIndex));
+                    Result (C::*func)(chain::Address const &, chain::Transaction const &, BlockIndex));
   /// @}
 
   /// @name Transaction Handlers
@@ -122,7 +127,7 @@ protected:
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
   void OnTransaction(std::string const &name, C *instance,
-                     Result (C::*func)(Transaction const &, BlockIndex));
+                     Result (C::*func)(chain::Transaction const &, BlockIndex));
   /// @}
 
   /// @name Query Handler Registration
@@ -134,7 +139,7 @@ protected:
 
   /// @name Chain Code State Utils
   /// @{
-  bool ParseAsJson(Transaction const &tx, variant::Variant &output);
+  bool ParseAsJson(chain::Transaction const &tx, variant::Variant &output);
 
   template <typename T>
   bool GetStateRecord(T &record, ConstByteArray const &key);
@@ -174,10 +179,10 @@ private:
  */
 template <typename C>
 void Contract::OnInitialise(C *instance,
-                            Result (C::*func)(Address const &, Transaction const &, BlockIndex))
+                            Result (C::*func)(chain::Address const &, chain::Transaction const &, BlockIndex))
 {
   OnInitialise(
-      [instance, func](Address const &owner, Transaction const &tx, BlockIndex block_index) {
+      [instance, func](chain::Address const &owner, chain::Transaction const &tx, BlockIndex block_index) {
         return (instance->*func)(owner, tx, block_index);
       });
 }
@@ -192,10 +197,10 @@ void Contract::OnInitialise(C *instance,
  */
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
-                             Result (C::*func)(Transaction const &, BlockIndex))
+                             Result (C::*func)(chain::Transaction const &, BlockIndex))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name, [instance, func](Transaction const &tx, BlockIndex block_index) {
+  OnTransaction(name, [instance, func](chain::Transaction const &tx, BlockIndex block_index) {
     return (instance->*func)(tx, block_index);
   });
 }

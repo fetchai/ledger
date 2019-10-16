@@ -44,7 +44,7 @@ class Block
 {
 public:
   using Proof        = consensus::ProofOfWork;
-  using Slice        = std::vector<TransactionLayout>;
+  using Slice        = std::vector<chain::TransactionLayout>;
   using Slices       = std::vector<Slice>;
   using DAGEpoch     = fetch::ledger::DAGEpoch;
   using Hash         = Digest;
@@ -63,7 +63,7 @@ public:
     Digest       previous_hash;      ///< The hash of the previous block
     Digest       merkle_hash;        ///< The merkle state hash across all shards
     uint64_t     block_number{0};    ///< The height of the block from genesis
-    Address      miner;              ///< The identity of the generated miner
+    chain::Address      miner;              ///< The identity of the generated miner
     Identity     miner_id;           ///< The identity of the generated miner
     uint32_t     log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices       slices;             ///< The slice lists

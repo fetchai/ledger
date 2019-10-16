@@ -29,7 +29,7 @@ namespace crypto {
 class Identity;
 }
 
-namespace ledger {
+namespace chain {
 
 /**
  * The Address is a unifying mechanism between multiple different public keys types into a single
@@ -109,15 +109,15 @@ private:
   ConstByteArray display_;  ///< The display representation
 };
 
-}  // namespace ledger
+}  // namespace chain
 
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<ledger::Address, D>  // TODO(issue 1422): Use forward to bytearray
+struct MapSerializer<chain::Address, D>  // TODO(issue 1422): Use forward to bytearray
 {
 public:
-  using Type       = ledger::Address;
+  using Type       = chain::Address;
   using DriverType = D;
 
   static uint8_t const ADDRESS = 1;
@@ -145,9 +145,9 @@ public:
 namespace std {
 
 template <>
-struct hash<fetch::ledger::Address>
+struct hash<fetch::chain::Address>
 {
-  std::size_t operator()(fetch::ledger::Address const &address) const noexcept
+  std::size_t operator()(fetch::chain::Address const &address) const noexcept
   {
     auto const &raw_address = address.address();
 

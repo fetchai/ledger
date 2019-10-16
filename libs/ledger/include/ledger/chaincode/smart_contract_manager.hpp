@@ -39,7 +39,7 @@ public:
 private:
   /// @name Transaction Handlers
   /// @{
-  Result OnCreate(Transaction const &tx, BlockIndex /*index*/);
+  Result OnCreate(chain::Transaction const &tx, BlockIndex /*index*/);
   /// @}
 };
 

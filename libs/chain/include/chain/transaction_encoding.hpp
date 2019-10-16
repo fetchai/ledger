@@ -25,7 +25,7 @@
 #include <stdexcept>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 namespace detail {
 
 template <typename T>
@@ -204,5 +204,5 @@ meta::IfIsInteger<T, T> DecodeInteger(fetch::serializers::MsgPackSerializer &buf
 }
 
 }  // namespace detail
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

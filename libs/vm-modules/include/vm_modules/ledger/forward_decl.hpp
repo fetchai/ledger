@@ -34,12 +34,13 @@ namespace math {
 class UInt256Wrapper;
 }  // namespace math
 
+
 namespace ledger {
 
 class Transfer;
 class Block;
-class Transaction;
 class Context;
+class Transaction;
 
 using AddressPtr = vm::Ptr<vm::Address>;
 

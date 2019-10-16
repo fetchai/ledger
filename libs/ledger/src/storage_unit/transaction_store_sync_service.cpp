@@ -253,7 +253,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
     for (auto &tx : result.promised)
     {
       // add the transaction to the verifier
-      verifier_.AddTransaction(std::make_shared<Transaction>(tx));
+      verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
 
       ++synced_tx;
     }
@@ -372,7 +372,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
     for (auto &tx : result.promised)
     {
-      verifier_.AddTransaction(std::make_shared<Transaction>(tx));
+      verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
       ++synced_tx;
     }
   }

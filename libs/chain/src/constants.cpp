@@ -21,7 +21,7 @@
 #include "chain/constants.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 using byte_array::FromBase64;
 
@@ -31,5 +31,5 @@ uint64_t STAKE_COOL_DOWN_PERIOD = 100;
 Digest GENESIS_DIGEST      = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
 Digest GENESIS_MERKLE_ROOT = FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

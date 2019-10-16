@@ -36,7 +36,7 @@
 #include <utility>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 namespace {
 
 using byte_array::ByteArray;
@@ -583,5 +583,5 @@ TransactionSerializer &TransactionSerializer::operator>>(Transaction &tx)
   return *this;
 }
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

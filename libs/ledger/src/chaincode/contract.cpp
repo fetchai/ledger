@@ -31,7 +31,7 @@ namespace ledger {
  * @param tx The reference to the originating transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result Contract::DispatchInitialise(Address const &owner, Transaction const &tx,
+Contract::Result Contract::DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx,
                                               BlockIndex block_index)
 {
   Result status{Status::OK};
@@ -75,7 +75,7 @@ Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &
  * @return The corresponding status result for the operation
  */
 Contract::Result Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
-                                               Transaction const &tx, BlockIndex block_index)
+                                               chain::Transaction const &tx, BlockIndex block_index)
 {
   Result status{Status::NOT_FOUND};
 
@@ -156,7 +156,7 @@ void Contract::OnQuery(std::string const &name, QueryHandler &&handler)
  * @param output THe output JSON object to be populated
  * @return true if successful, otherwise falses
  */
-bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
+bool Contract::ParseAsJson(chain::Transaction const &tx, variant::Variant &output)
 {
   bool success{false};
 
