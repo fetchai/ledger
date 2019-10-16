@@ -17,15 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
+#include "http/json_response.hpp"
 #include "http/module.hpp"
+#include "http/server.hpp"
+#include "logging/logging.hpp"
+
+#include <mutex>
 
 namespace fetch {
+namespace constellation {
 
-class MuddleStatusModule : public http::HTTPModule
+class OpenAPIHttpModule : public http::HTTPModule
 {
 public:
-  MuddleStatusModule();
-  ~MuddleStatusModule() override = default;
+  OpenAPIHttpModule();
+  void Reset(http::HTTPServer *srv = nullptr);
+
+private:
+  using Variant        = variant::Variant;
+  using ConstByteArray = byte_array::ConstByteArray;
+
+  http::HTTPServer *server_{nullptr};
+  std::mutex        server_lock_;
 };
 
+}  // namespace constellation
 }  // namespace fetch

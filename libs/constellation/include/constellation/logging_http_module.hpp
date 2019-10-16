@@ -24,6 +24,7 @@
 #include <string>
 
 namespace fetch {
+namespace constellation {
 
 class LoggingHttpModule : public http::HTTPModule
 {
@@ -159,4 +160,5 @@ private:
   }
 };
 
+}  // namespace constellation
 }  // namespace fetch
