@@ -206,11 +206,11 @@ private:
   VariantList    array_;                  ///< The array value of the variant
   VariantObject  object_;                 ///< The object value of the variant
 
-  template <typename T, typename D>
-  friend struct serializers::MapSerializer;
-
-  template <typename T, typename D>
-  friend struct serializers::ForwardSerializer;
+  //template <typename T, typename D>
+  //friend struct serializers::MapSerializer;
+//
+  //template <typename T, typename D>
+  //friend struct serializers::ForwardSerializer;
 };
 
 /**
@@ -597,9 +597,9 @@ public:
   template <typename Serializer>
   static void Serialize(Serializer &serializer, Type const &var)
   {
-    auto typecode = static_cast<int>(var.type_);
+    auto typecode = static_cast<int>(var.type());
     serializer << typecode;
-    switch (var.type_)
+    switch (var.type())
     {
     case Type::Type::UNDEFINED:
     {
@@ -612,48 +612,48 @@ public:
     }
     case Type::Type::INTEGER:
     {
-      serializer << var.primitive_.integer;
+      serializer << var.As<int>();
       return;
     }
     case Type::Type::FLOATING_POINT:
     {
-      serializer << var.primitive_.float_point;
+      serializer << var.As<double>();
       return;
     }
     case Type::Type::FIXED_POINT:
     {
-      serializer << var.primitive_.integer;
+      serializer << var.As<int>();
       return;
     }
     case Type::Type::BOOLEAN:
     {
-      serializer << var.primitive_.boolean;
+      serializer << var.As<bool>();
       return;
     }
     case Type::Type::STRING:
     {
-      serializer << var.string_;
+      serializer << var.As<std::string>();
       return;
     }
     case Type::Type::ARRAY:
     {
-      auto sz = static_cast<uint32_t>(var.array_.size());
+      auto sz = static_cast<uint32_t>(var.size());
       serializer << sz;
-      for (auto const &element : var.array_)
+      for(std::size_t i=0;i<var.size();i++)
       {
-        Serialize(serializer, element);
+        Serialize(serializer, var[i]);
       }
       return;
     }
     case Type::Type::OBJECT:
     {
-      auto sz = static_cast<uint32_t>(var.object_.size());
+      auto sz = static_cast<uint32_t>(var.size());
       serializer << sz;
-      for (auto const &element : var.object_)
-      {
-        serializer << element.first;
-        Serialize(serializer, *element.second);
-      }
+      var.IterateObject([&](auto const &k, auto const &v){
+          serializer << k;
+          Serialize(serializer, v);
+          return true;
+        });
       return;
     }
     };
@@ -666,49 +666,72 @@ public:
     int typecode;
     deserializer >> typecode;
     auto type = static_cast<Type::Type>(typecode);
-    var.type_ = type;
-    switch (var.type_)
+    switch (type)
     {
     case Type::Type::UNDEFINED:
-      return;
+      {
+        var = fetch::variant::Variant::Undefined();
+        return;
+      }
     case Type::Type::NULL_VALUE:
-      return;
+      {
+        var = fetch::variant::Variant::Null();
+        return;
+      }
     case Type::Type::INTEGER:
-      deserializer >> var.primitive_.integer;
-      return;
+      {
+        int64_t tmp;
+        deserializer >> tmp;
+        var = tmp;
+        return;
+      }
     case Type::Type::FLOATING_POINT:
-      deserializer >> var.primitive_.float_point;
-      return;
+      {
+        double tmp;
+        deserializer >> tmp;
+        var = tmp;
+        return;
+      }
     case Type::Type::FIXED_POINT:
-      deserializer >> var.primitive_.integer;
-      return;
+      {
+        int64_t tmp;
+        deserializer >> tmp;
+        var = tmp;
+        return;
+      }
     case Type::Type::BOOLEAN:
-      deserializer >> var.primitive_.boolean;
-      return;
+      {
+        bool tmp;
+        deserializer >> tmp;
+        var = tmp;
+        return;
+      }
     case Type::Type::STRING:
-      deserializer >> var.string_;
-      return;
+      {
+        std::string tmp;
+        deserializer >> tmp;
+        var = tmp;
+        return;
+      }
     case Type::Type::ARRAY:
     {
-      uint32_t    count_tmp;
-      std::size_t count;
-      deserializer >> count_tmp;
-      count = count_tmp;
+      uint64_t    count;
+      deserializer >> count;
+      var = fetch::variant::Variant::Array(count);
       for (std::size_t i = 0; i < count; i++)
       {
         Type v;
         Deserialize(deserializer, v);
-        var.array_.push_back(v);
+        var[i]=v;
       }
       return;
     }
     case Type::Type::OBJECT:
     {
-      uint32_t    count_tmp;
-      std::size_t count;
-      deserializer >> count_tmp;
-      count = count_tmp;
-      for (std::size_t i = 0; i < count; i++)
+      uint64_t    count;
+      deserializer >> count;
+      var = fetch::variant::Variant::Object();
+      for (uint64_t i = 0; i < count; i++)
       {
         Type                       v;
         byte_array::ConstByteArray k;
