@@ -45,7 +45,7 @@ class Word2VecClient : public TrainingClient<TensorType>
   using DataType         = typename TensorType::Type;
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
-  using GradientType     = Update<TensorType>;
+  using GradientType     = fetch::dmlf::Update<TensorType>;
 
 public:
   Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
@@ -71,9 +71,9 @@ public:
         .second;
   }
 
-  GradientType GetGradients() override;
+  std::shared_ptr<GradientType> GetGradients() override;
 
-  VectorTensorType TranslateGradients(GradientType &new_gradients) override;
+  VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients) override;
 
   std::pair<std::vector<std::string>, byte_array::ConstByteArray> GetVocab();
   void AddVocab(const std::pair<std::vector<std::string>, byte_array::ConstByteArray> &vocab_info);
@@ -183,11 +183,11 @@ void Word2VecClient<TensorType>::Test()
  * @return vector of gradient update values
  */
 template <class TensorType>
-typename Word2VecClient<TensorType>::GradientType Word2VecClient<TensorType>::GetGradients()
+std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(this->model_mutex_);
-  return GradientType(this->g_ptr_->GetGradients(), this->GetTimestamp(), this->id_,
-                      w2v_data_loader_ptr_->GetVocabHash());
+  return std::make_shared<GradientType>(this->g_ptr_->GetGradients(), this->id_,
+                                        w2v_data_loader_ptr_->GetVocabHash());
 }
 
 /**
@@ -216,13 +216,21 @@ void Word2VecClient<TensorType>::AddVocab(
 
 template <class TensorType>
 typename Word2VecClient<TensorType>::VectorTensorType
-Word2VecClient<TensorType>::TranslateGradients(Word2VecClient::GradientType &new_gradients)
+Word2VecClient<TensorType>::TranslateGradients(
+    std::shared_ptr<Word2VecClient::GradientType> &new_gradients)
 {
-  assert(new_gradients.data.size() == 2);  // Translation unit is only defined for word2vec
+  assert(new_gradients->GetGradients().size() ==
+         2);  // Translation unit is only defined for word2vec
 
   VectorTensorType ret;
-  ret.push_back(translator_.Translate<TensorType>(new_gradients.data[0], new_gradients.hash).first);
-  ret.push_back(translator_.Translate<TensorType>(new_gradients.data[1], new_gradients.hash).first);
+  ret.push_back(
+      translator_
+          .Translate<TensorType>(new_gradients->GetGradients().at(0), new_gradients->GetHash())
+          .first);
+  ret.push_back(
+      translator_
+          .Translate<TensorType>(new_gradients->GetGradients().at(1), new_gradients->GetHash())
+          .first);
   return ret;
 }
 

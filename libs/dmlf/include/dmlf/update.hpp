@@ -22,6 +22,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "dmlf/update_interface.hpp"
+#include "ml/distributed_learning/distributed_learning_types.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -41,6 +42,8 @@ public:
   using VectorTensor  = std::vector<TensorType>;
   using TimeStampType = UpdateInterface::TimeStampType;
   using Fingerprint   = UpdateInterface::Fingerprint;
+  using UpdateType    = fetch::ml::distributed_learning::UpdateType;
+  using HashType      = byte_array::ConstByteArray;
 
   using Payload = VectorTensor;
 
@@ -51,6 +54,16 @@ public:
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
+  {}
+
+  explicit Update(VectorTensor gradients, std::string client_id, byte_array::ConstByteArray hash,
+                  UpdateType uptype = UpdateType::GRADIENTS)
+    : stamp_{CurrentTime()}
+    , gradients_{std::move(gradients)}
+    , fingerprint_{ComputeFingerprint()}
+    , client_id_{std::move(client_id)}
+    , hash_{std::move(hash)}
+    , update_type_(uptype)
   {}
 
   ~Update() override = default;
@@ -89,6 +102,11 @@ public:
     return gradients_;
   }
 
+  virtual HashType const &GetHash() const
+  {
+    return hash_;
+  }
+
   Update(Update const &other) = delete;
   Update &operator=(Update const &other)  = delete;
   bool    operator==(Update const &other) = delete;
@@ -113,6 +131,10 @@ private:
   TimeStampType stamp_;
   VectorTensor  gradients_;
   Fingerprint   fingerprint_;
+
+  std::string client_id_;
+  HashType    hash_;
+  UpdateType  update_type_ = UpdateType::GRADIENTS;
 };
 
 }  // namespace dmlf
@@ -129,14 +151,21 @@ public:
   static uint8_t const TIME_STAMP  = 1;
   static uint8_t const GRADIENTS   = 2;
   static uint8_t const FINGERPRINT = 3;
+  static uint8_t const CLIENT_ID   = 4;
+  static uint8_t const HASH        = 5;
+  static uint8_t const UPDATE_TYPE = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &update)
   {
-    auto map = map_constructor(3);
+    auto map = map_constructor(6);
     map.Append(TIME_STAMP, update.stamp_);
     map.Append(GRADIENTS, update.gradients_);
     map.Append(FINGERPRINT, update.fingerprint_);
+
+    map.Append(CLIENT_ID, update.client_id_);
+    map.Append(HASH, update.hash_);
+    map.Append(UPDATE_TYPE, static_cast<uint8_t>(update.update_type_));
   }
 
   template <typename MapDeserializer>
@@ -145,6 +174,13 @@ public:
     map.ExpectKeyGetValue(TIME_STAMP, update.stamp_);
     map.ExpectKeyGetValue(GRADIENTS, update.gradients_);
     map.ExpectKeyGetValue(FINGERPRINT, update.fingerprint_);
+
+    map.ExpectKeyGetValue(CLIENT_ID, update.client_id_);
+    map.ExpectKeyGetValue(HASH, update.hash_);
+
+    uint8_t update_type;
+    map.ExpectKeyGetValue(UPDATE_TYPE, update_type);
+    update.update_type_ = static_cast<fetch::ml::distributed_learning::UpdateType>(update_type);
   }
 };
 

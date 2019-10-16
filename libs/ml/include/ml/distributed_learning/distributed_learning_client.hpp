@@ -25,6 +25,7 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
+#include "ml/distributed_learning/distributed_learning_types.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
@@ -59,39 +60,6 @@ struct ClientParams
   std::string              error_name   = "Error";
 };
 
-enum class UpdateType : uint16_t
-{
-  GRADIENTS,
-  WEIGHTS,
-};
-
-/** Struct to store updates and information about the update
- *
- * @tparam TensorType
- */
-template <typename TensorType>
-struct Update
-{
-  using VectorTensorType = std::vector<TensorType>;
-  using TimestampType    = int64_t;
-  VectorTensorType           data;
-  UpdateType                 update_type = UpdateType::GRADIENTS;
-  TimestampType              timestamp{};
-  std::string                client_id;
-  byte_array::ConstByteArray hash;
-
-  Update(VectorTensorType grad, TimestampType second, std::string client_id,
-         byte_array::ConstByteArray hash, UpdateType uptype = UpdateType::GRADIENTS)
-    : data{std::move(grad)}
-    , update_type{uptype}
-    , timestamp{second}
-    , client_id{std::move(client_id)}
-    , hash{std::move(hash)}
-  {}
-
-  Update() = default;
-};
-
 template <class TensorType>
 class TrainingClient
 {
@@ -99,7 +67,7 @@ class TrainingClient
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
-  using GradientType     = Update<TensorType>;
+  using GradientType     = fetch::dmlf::Update<TensorType>;
   using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
 
 public:
@@ -122,7 +90,7 @@ public:
 
   virtual void Test();
 
-  virtual GradientType GetGradients();
+  virtual std::shared_ptr<GradientType> GetGradients();
 
   VectorTensorType GetWeights() const;
 
@@ -188,9 +156,9 @@ protected:
   SizeType update_counter_ = 0;
   SizeType max_updates_    = 0;
 
-  virtual VectorTensorType TranslateGradients(GradientType &new_gradients)
+  virtual VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients)
   {
-    return new_gradients.data;
+    return new_gradients->GetGradients();
   }
   // Print to console flag
   bool print_loss_;
@@ -410,11 +378,11 @@ void TrainingClient<TensorType>::Test()
  * @return vector of gradient update values
  */
 template <class TensorType>
-typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetGradients()
+std::shared_ptr<fetch::dmlf::Update<TensorType>> TrainingClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(model_mutex_);
-  return GradientType(g_ptr_->GetGradients(), GetTimestamp(), id_, byte_array::ConstByteArray(),
-                      UpdateType::GRADIENTS);
+  return std::make_shared<GradientType>(g_ptr_->GetGradients(), id_, byte_array::ConstByteArray(),
+                                        UpdateType::GRADIENTS);
 }
 
 /**
@@ -464,14 +432,8 @@ void TrainingClient<TensorType>::DoBatch()
   // Train one batch to create own gradient
   Train();
 
-  // Load own gradient
-  GradientType current_gradients = GetGradients();
-
   // Push own gradient to iLearner
-  i_learner_ptr_->PushUpdate(
-      std::make_shared<fetch::dmlf::Update<TensorType>>(current_gradients.data));
-
-  VectorTensorType new_gradients;
+  i_learner_ptr_->PushUpdate(GetGradients());
 
   SizeType ucnt = 0;
 
@@ -479,8 +441,9 @@ void TrainingClient<TensorType>::DoBatch()
   while (i_learner_ptr_->GetUpdateCount() > 0)
   {
     ucnt++;
-    new_gradients = i_learner_ptr_->GetUpdate<fetch::dmlf::Update<TensorType>>()->GetGradients();
-    // TRANSLATE GRADIENT!!!
+    auto             new_update    = i_learner_ptr_->GetUpdate<fetch::dmlf::Update<TensorType>>();
+    VectorTensorType new_gradients = TranslateGradients(new_update);
+
     GraphAddGradients(g_ptr_, new_gradients);
     update_counter_++;
   }
