@@ -64,6 +64,33 @@ void DirectorTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCha
       SendExceptionReply("update", current_uri, e, endpoint);
     }
   }
+  else if (current_uri.path == "/peer")
+  {
+    Actions update;
+    try
+    {
+      IOefTaskFactory::read(update, data, data.size - data.current);
+      FETCH_LOG_INFO(LOGGING_NAME, "Got peer: ", update.ShortDebugString());
+
+      for(const auto& upd : update.actions())
+      {
+        if (upd.operator_() == "ADD_PEER"
+          && upd.query_field_type() == "address"
+          && !upd.query_field_value().s().empty())
+        {
+          peers_->AddPeer(upd.query_field_value().s());
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Got invalid peer update: ", upd.ShortDebugString());
+        }
+      }
+    }
+    catch (std::exception &e) {
+      FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
+      SendExceptionReply("update", current_uri, e, endpoint);
+    }
+  }
   else
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Can't handle path: ", current_uri.path);

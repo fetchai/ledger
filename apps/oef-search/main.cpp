@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
   config_file = argv[1];
 
-  MtSearch mySearch;
+  auto mtSearch = std::make_shared<MtSearch>();
 
   if (config_file.empty())
   {
@@ -25,11 +25,13 @@ int main(int argc, char *argv[])
   }
 
 
-  if (!mySearch.configure(config_file, ""))
+  if (!mtSearch->configure(config_file, ""))
   {
     FETCH_LOG_WARN("MAIN", "Configuration failed, shutting down...");
     return 1;
   }
 
-  mySearch.run();
+  mtSearch->run();
+
+  return 0;
 }

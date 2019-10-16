@@ -17,25 +17,28 @@
 #include "oef-search/dap_manager/DapStore.hpp"
 #include "oef-search/dap_manager/DapManager.hpp"
 #include "oef-search/search_comms/SearchPeerStore.hpp"
+#include "oef-search/comms/IAddSearchPeer.hpp"
 
 class Core;
 class OefSearchEndpoint;
 
-class MtSearch
+class MtSearch : public IAddSearchPeer, public std::enable_shared_from_this<MtSearch>
 {
 public:
   
   static constexpr char const *LOGGING_NAME = "MtSearch";
 
   MtSearch()
+  : thread_group_id_{1500}
   {
   }
-  virtual ~MtSearch()
-  {
-  }
+  virtual ~MtSearch() = default;
 
   bool configure(const std::string &config_file="", const std::string &config_json="");
   int run();
+
+  void AddPeer(const std::string&) override;
+
 protected:
 private:
   std::shared_ptr<Core> core;
@@ -49,6 +52,8 @@ private:
 
   Threadpool comms_runners;
   Threadpool tasks_runners;
+
+  std::size_t thread_group_id_;
 
   void startListeners();
   bool configureFromJsonFile(const std::string &config_file);

@@ -90,6 +90,18 @@ std::string prometheusUpThatNamingString(const std::string &name)
   return r;
 }
 
+void MtSearch::AddPeer(const std::string& peer_uri)
+{
+  ++thread_group_id_;
+  Uri uri(peer_uri);
+  search_peer_store_->AddPeer(peer_uri);
+  outbounds -> AddConversationCreator(
+      Uri(peer_uri),
+      std::make_shared<OutboundSearchConversationCreator>(thread_group_id_, uri, *core)
+  );
+}
+
+
 int MtSearch::run()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Starting search...");
@@ -114,24 +126,19 @@ int MtSearch::run()
       config_.query_cache_lifetime_sec()
       );
 
-  std::size_t thread_group_id = 1500;
-  for(const auto& dap_config : config_.daps()) {
-    ++thread_group_id;
+  for(const auto& dap_config : config_.daps())
+  {
+    ++thread_group_id_;
     Uri uri(dap_config.uri());
     dap_store_->AddDap(dap_config.name());
     outbounds -> AddConversationCreator(
         Uri("dap://"+dap_config.name()+":0"),
-        std::make_shared<OutboundDapConversationCreator>(thread_group_id, uri, *core, dap_config.name())
+        std::make_shared<OutboundDapConversationCreator>(thread_group_id_, uri, *core, dap_config.name())
     );
   }
-  for(const auto& peer_uri : config_.peers()) {
-    ++thread_group_id;
-    Uri uri(peer_uri);
-    search_peer_store_->AddPeer(peer_uri);
-    outbounds -> AddConversationCreator(
-        Uri(peer_uri),
-        std::make_shared<OutboundSearchConversationCreator>(thread_group_id, uri, *core)
-    );
+  for(const auto& peer_uri : config_.peers())
+  {
+    AddPeer(peer_uri);
   }
 
   dap_manager_->setup();
@@ -219,10 +226,19 @@ int MtSearch::run()
 
 void MtSearch::startListeners()
 {
+  auto                    this_sp = this->shared_from_this();
+  std::weak_ptr<MtSearch> this_wp = this_sp;
+
   IOefListener<IOefTaskFactory<OefSearchEndpoint>, OefSearchEndpoint>::FactoryCreator initialFactoryCreator =
-      [this](std::shared_ptr<OefSearchEndpoint> endpoint)
+      [this_wp](std::shared_ptr<OefSearchEndpoint> endpoint) -> std::shared_ptr<SearchTaskFactory>
       {
-        return std::make_shared<SearchTaskFactory>(std::move(endpoint), outbounds, dap_manager_);
+        auto sp = this_wp.lock();
+        if (sp)
+        {
+          return std::make_shared<SearchTaskFactory>(std::move(endpoint), sp->outbounds, sp->dap_manager_);
+        }
+        FETCH_LOG_ERROR(LOGGING_NAME, "Can't create SearchTaskFactory because can't lock week pointer!");
+        return nullptr;
       };
 
   Uri search_uri(config_.search_uri());
@@ -237,10 +253,16 @@ void MtSearch::startListeners()
     Uri director_uri(config_.director_uri());
     FETCH_LOG_INFO(LOGGING_NAME, "Director listener started on ", director_uri.port);
 
-    auto directorFactoryCreator = [this](std::shared_ptr<OefSearchEndpoint> endpoint)
+    auto directorFactoryCreator = [this_wp](std::shared_ptr<OefSearchEndpoint> endpoint)
         -> std::shared_ptr<IOefTaskFactory<OefSearchEndpoint>>
     {
-      return std::make_shared<DirectorTaskFactory>(std::move(endpoint), outbounds, dap_manager_, config_);
+      auto sp = this_wp.lock();
+      if (sp)
+      {
+        return std::make_shared<DirectorTaskFactory>(std::move(endpoint), sp->outbounds, sp->dap_manager_, sp->config_, sp);
+      }
+      FETCH_LOG_ERROR(LOGGING_NAME, "Can't create DirectorTaskFactory because can't lock week pointer!");
+      return nullptr;
     };
 
     auto d_task = std::make_shared<OefListenerStarterTask<Endpoint>>(director_uri.port, listeners, core, directorFactoryCreator, endpointConfig);

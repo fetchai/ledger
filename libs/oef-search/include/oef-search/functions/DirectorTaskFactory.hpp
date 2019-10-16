@@ -9,6 +9,7 @@
 #include "oef-messages/search_remove.hpp"
 #include "oef-messages/search_update.hpp"
 #include "oef-search/comms/OefSearchEndpoint.hpp"
+#include "oef-search/comms/IAddSearchPeer.hpp"
 #include "oef-search/dap_manager/DapManager.hpp"
 #include "oef-messages/search_config.hpp"
 #include <exception>
@@ -24,10 +25,12 @@ public:
   DirectorTaskFactory(std::shared_ptr<OefSearchEndpoint>   the_endpoint,
                     std::shared_ptr<OutboundConversations> outbounds,
                     std::shared_ptr<DapManager>            dap_manager,
-                    fetch::oef::pb::SearchConfig&          node_config)
+                    fetch::oef::pb::SearchConfig&          node_config,
+                    std::shared_ptr<IAddSearchPeer>        peers)
     : IOefTaskFactory(the_endpoint, outbounds)
     , dap_manager_{std::move(dap_manager)}
     , node_config_{node_config}
+    , peers_{std::move(peers)}
   {}
 
   virtual ~DirectorTaskFactory()
@@ -44,6 +47,7 @@ protected:
 protected:
   std::shared_ptr<DapManager> dap_manager_;
   fetch::oef::pb::SearchConfig& node_config_;
+  std::shared_ptr<IAddSearchPeer> peers_;
 
 private:
   DirectorTaskFactory(const DirectorTaskFactory &other) = delete;
