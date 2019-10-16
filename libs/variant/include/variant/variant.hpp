@@ -206,11 +206,11 @@ private:
   VariantList    array_;                  ///< The array value of the variant
   VariantObject  object_;                 ///< The object value of the variant
 
-  //template <typename T, typename D>
-  //friend struct serializers::MapSerializer;
-//
-  //template <typename T, typename D>
-  //friend struct serializers::ForwardSerializer;
+  // template <typename T, typename D>
+  // friend struct serializers::MapSerializer;
+  //
+  // template <typename T, typename D>
+  // friend struct serializers::ForwardSerializer;
 };
 
 /**
@@ -639,7 +639,7 @@ public:
     {
       auto sz = static_cast<uint32_t>(var.size());
       serializer << sz;
-      for(std::size_t i=0;i<var.size();i++)
+      for (std::size_t i = 0; i < var.size(); i++)
       {
         Serialize(serializer, var[i]);
       }
@@ -649,11 +649,11 @@ public:
     {
       auto sz = static_cast<uint32_t>(var.size());
       serializer << sz;
-      var.IterateObject([&](auto const &k, auto const &v){
-          serializer << k;
-          Serialize(serializer, v);
-          return true;
-        });
+      var.IterateObject([&](auto const &k, auto const &v) {
+        serializer << k;
+        Serialize(serializer, v);
+        return true;
+      });
       return;
     }
     };
@@ -669,66 +669,66 @@ public:
     switch (type)
     {
     case Type::Type::UNDEFINED:
-      {
-        var = fetch::variant::Variant::Undefined();
-        return;
-      }
+    {
+      var = fetch::variant::Variant::Undefined();
+      return;
+    }
     case Type::Type::NULL_VALUE:
-      {
-        var = fetch::variant::Variant::Null();
-        return;
-      }
+    {
+      var = fetch::variant::Variant::Null();
+      return;
+    }
     case Type::Type::INTEGER:
-      {
-        int64_t tmp;
-        deserializer >> tmp;
-        var = tmp;
-        return;
-      }
+    {
+      int64_t tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
     case Type::Type::FLOATING_POINT:
-      {
-        double tmp;
-        deserializer >> tmp;
-        var = tmp;
-        return;
-      }
+    {
+      double tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
     case Type::Type::FIXED_POINT:
-      {
-        int64_t tmp;
-        deserializer >> tmp;
-        var = tmp;
-        return;
-      }
+    {
+      int64_t tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
     case Type::Type::BOOLEAN:
-      {
-        bool tmp;
-        deserializer >> tmp;
-        var = tmp;
-        return;
-      }
+    {
+      bool tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
     case Type::Type::STRING:
-      {
-        std::string tmp;
-        deserializer >> tmp;
-        var = tmp;
-        return;
-      }
+    {
+      std::string tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
     case Type::Type::ARRAY:
     {
-      uint64_t    count;
+      uint64_t count;
       deserializer >> count;
       var = fetch::variant::Variant::Array(count);
       for (std::size_t i = 0; i < count; i++)
       {
         Type v;
         Deserialize(deserializer, v);
-        var[i]=v;
+        var[i] = v;
       }
       return;
     }
     case Type::Type::OBJECT:
     {
-      uint64_t    count;
+      uint64_t count;
       deserializer >> count;
       var = fetch::variant::Variant::Object();
       for (uint64_t i = 0; i < count; i++)
