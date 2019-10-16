@@ -37,7 +37,7 @@ void Uri::parse(const std::string &s)
       case PROTO:
         if (part.length() && part.str().back() == ':')
         {
-          proto        = part;
+          proto        = part.str().substr(0, static_cast<unsigned long>(part.length()-1));
           expectedpart = HOST;
           break;
         }

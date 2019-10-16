@@ -34,6 +34,36 @@ void DirectorTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCha
       }
     });
   }
+  else if (current_uri.path == "/location")
+  {
+    Actions update;
+    try
+    {
+      IOefTaskFactory::read(update, data, data.size - data.current);
+      FETCH_LOG_INFO(LOGGING_NAME, "Got location update: ", update.DebugString());
+
+      auto result_future =
+          dap_manager_->parallelCall("update", update);
+      result_future->MakeNotification().Then([result_future, this_wp, current_uri](){
+        auto status = result_future->get();
+        FETCH_LOG_INFO(LOGGING_NAME, "Update status: ", status->ShortDebugString());
+        auto sp = this_wp.lock();
+        if (sp)
+        {
+          SendReply<Successfulness>("", current_uri, std::move(status), sp->endpoint);
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME,
+                        "Failed to lock weak pointer, response can't be sent to director!");
+        }
+      });
+    }
+    catch (std::exception &e) {
+      FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
+      SendExceptionReply("update", current_uri, e, endpoint);
+    }
+  }
   else
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Can't handle path: ", current_uri.path);
