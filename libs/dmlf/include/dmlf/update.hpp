@@ -24,6 +24,8 @@
 #include "dmlf/update_interface.hpp"
 #include "ml/distributed_learning/distributed_learning_types.hpp"
 
+#include "ml/utilities/word2vec_utilities.hpp"
+
 #include <chrono>
 #include <cstdint>
 #include <vector>
@@ -70,18 +72,18 @@ public:
 
   byte_array::ByteArray Serialise() override
   {
-    serializers::MsgPackSerializer serializer;
+    serializers::LargeObjectSerializeHelper serializer;
     serializer << *this;
-    return serializer.data();
+    return serializer.buffer.data();
   }
   byte_array::ByteArray Serialise(std::string type) override
   {
-    serializers::MsgPackSerializer serializer;
-    serializers::MsgPackSerializer serializer_;
+    serializers::LargeObjectSerializeHelper serializer;
+    serializers::LargeObjectSerializeHelper serializer_;
     serializer_ << *this;
     serializer << type;
-    serializer << serializer_.data();
-    return serializer.data();
+    serializer << serializer_.buffer.data();
+    return serializer.buffer.data();
   }
   void DeSerialise(const byte_array::ByteArray &map) override
   {
@@ -123,9 +125,9 @@ private:
 
   Fingerprint ComputeFingerprint()
   {
-    serializers::MsgPackSerializer serializer;
+    serializers::LargeObjectSerializeHelper serializer;
     serializer << gradients_;
-    return crypto::Hash<crypto::SHA256>(serializer.data());
+    return crypto::Hash<crypto::SHA256>(serializer.buffer.data());
   }
 
   TimeStampType stamp_;
@@ -162,7 +164,6 @@ public:
     map.Append(TIME_STAMP, update.stamp_);
     map.Append(GRADIENTS, update.gradients_);
     map.Append(FINGERPRINT, update.fingerprint_);
-
     map.Append(CLIENT_ID, update.client_id_);
     map.Append(HASH, update.hash_);
     map.Append(UPDATE_TYPE, static_cast<uint8_t>(update.update_type_));

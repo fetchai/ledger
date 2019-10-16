@@ -433,7 +433,8 @@ void TrainingClient<TensorType>::DoBatch()
   Train();
 
   // Push own gradient to iLearner
-  i_learner_ptr_->PushUpdate(GetGradients());
+  auto update = GetGradients();
+  i_learner_ptr_->PushUpdate(update);
 
   SizeType ucnt = 0;
 
