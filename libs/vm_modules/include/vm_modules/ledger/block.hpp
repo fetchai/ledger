@@ -27,7 +27,6 @@ class Block : public vm::Object
 {
 public:
   Block(vm::VM *vm, vm::TypeId type_id, BlockIndex block_index);
-  ~Block() override = default;
 
   static void Bind(vm::Module &module);
 
