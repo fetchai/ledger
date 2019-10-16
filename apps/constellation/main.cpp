@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "address/address.hpp"
+#include "chain/address.hpp"
 #include "bootstrap_monitor.hpp"
 #include "config_builder.hpp"
 #include "constants.hpp"

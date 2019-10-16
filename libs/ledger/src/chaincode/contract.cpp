@@ -19,7 +19,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "json/document.hpp"
 #include "json/exceptions.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {

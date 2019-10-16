@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/chaincode/deed.hpp"
 
 #include <unordered_set>

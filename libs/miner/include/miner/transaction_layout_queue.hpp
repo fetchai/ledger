@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/digest.hpp"
-#include "ledger/chain/transaction_layout.hpp"
+#include "chain/transaction_layout.hpp"
 
 #include <cstddef>
 #include <cstdint>

@@ -22,7 +22,7 @@
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"
 #include "core/state_machine.hpp"
-#include "ledger/chain/transaction_layout.hpp"
+#include "chain/transaction_layout.hpp"
 #include "logging/logging.hpp"
 #include "storage/object_store.hpp"
 

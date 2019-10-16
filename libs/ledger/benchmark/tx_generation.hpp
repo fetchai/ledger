@@ -19,8 +19,8 @@
 
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_builder.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
 #include "meta/type_traits.hpp"
 
 #include <cstdint>

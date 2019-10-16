@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "address/address.hpp"
+#include "chain/address.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv.hpp"
 

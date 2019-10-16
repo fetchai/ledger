@@ -24,7 +24,7 @@
 #include "core/synchronisation/protected.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"

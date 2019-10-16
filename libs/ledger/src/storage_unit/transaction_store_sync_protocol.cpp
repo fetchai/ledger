@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction_rpc_serializers.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 
 #include <algorithm>

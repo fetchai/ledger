@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/dag/dag.hpp"
 #include "ledger/dag/dag_node.hpp"
 

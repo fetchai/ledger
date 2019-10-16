@@ -1,5 +1,5 @@
 #
-# F E T C H   A D D R E S S   L I B R A R Y
+# F E T C H   C H A I N   L I B R A R Y
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-address)
@@ -14,5 +14,7 @@ setup_compiler()
 # Main Library Target
 # ------------------------------------------------------------------------------
 
-setup_library(fetch-address)
-target_link_libraries(fetch-address PUBLIC fetch-core fetch-crypto fetch-logging)
+setup_library(fetch-chain)
+target_link_libraries(fetch-chain PUBLIC fetch-core fetch-variant fetch-storage
+  fetch-beacon # probably remove block entropy
+  )

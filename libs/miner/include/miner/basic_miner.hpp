@@ -21,7 +21,7 @@
 #include "core/mutex.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/transaction_layout.hpp"
+#include "chain/transaction_layout.hpp"
 #include "meta/log2.hpp"
 #include "miner/transaction_layout_queue.hpp"
 #include "telemetry/telemetry.hpp"

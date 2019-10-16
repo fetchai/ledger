@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "address/address.hpp"
+#include "chain/address.hpp"
 #include "core/bitvector.hpp"
 #include "core/digest.hpp"
 #include "crypto/identity.hpp"

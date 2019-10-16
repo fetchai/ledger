@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "address/address.hpp"
+#include "chain/address.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "core/synchronisation/protected.hpp"
 #include "core/synchronisation/waitable.hpp"
-#include "ledger/chain/constants.hpp"
+#include "chain/constants.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"

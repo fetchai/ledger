@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/constants.hpp"
+#include "chain/constants.hpp"
 #include "ledger/execution_manager.hpp"
 #include "storage/resource_mapper.hpp"
 

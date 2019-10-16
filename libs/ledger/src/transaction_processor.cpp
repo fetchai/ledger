@@ -18,8 +18,8 @@
 
 #include "core/set_thread_name.hpp"
 #include "ledger/block_packer_interface.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_layout.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_layout.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"

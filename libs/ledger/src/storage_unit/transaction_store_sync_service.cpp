@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/macros.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"

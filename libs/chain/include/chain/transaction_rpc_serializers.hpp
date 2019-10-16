@@ -19,8 +19,8 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_serializer.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_serializer.hpp"
 
 namespace fetch {
 namespace serializers {

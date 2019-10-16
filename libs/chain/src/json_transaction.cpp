@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/json_transaction.hpp"
-
+#include "chain/json_transaction.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_serializer.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_serializer.hpp"
 #include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"

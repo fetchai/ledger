@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/constants.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
+#include "chain/constants.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_layout_rpc_serializers.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
 

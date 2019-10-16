@@ -19,7 +19,7 @@
 
 #include "ledger/consensus/consensus_interface.hpp"
 
-#include "address/address.hpp"
+#include "chain/address.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/main_chain.hpp"
 

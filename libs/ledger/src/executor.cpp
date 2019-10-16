@@ -20,7 +20,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"

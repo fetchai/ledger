@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/verifier.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_serializer.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_serializer.hpp"
 
 #include <algorithm>
 #include <cassert>

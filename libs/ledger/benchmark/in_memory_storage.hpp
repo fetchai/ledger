@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/digest.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <memory>

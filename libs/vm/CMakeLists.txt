@@ -20,7 +20,7 @@ target_link_libraries(fetch-vm
                              fetch-math
                              fetch-core
                              fetch-variant
-                             fetch-address
+                             fetch-chain
                              fetch-logging)
 if (_is_clang_compiler)
   target_compile_options(fetch-vm PRIVATE -Wshadow)

@@ -20,7 +20,7 @@
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/constants.hpp"
+#include "chain/constants.hpp"
 #include "moment/clocks.hpp"
 
 #include <cstddef>

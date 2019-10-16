@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_layout.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_layout.hpp"
 #include "logging/logging.hpp"
 #include "storage/resource_mapper.hpp"
 

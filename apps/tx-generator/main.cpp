@@ -21,9 +21,9 @@
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_builder.hpp"
-#include "ledger/chain/transaction_serializer.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
+#include "chain/transaction_serializer.hpp"
 #include "storage/resource_mapper.hpp"
 #include "vectorise/threading/pool.hpp"
 

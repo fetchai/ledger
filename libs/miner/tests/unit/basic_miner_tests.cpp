@@ -18,8 +18,8 @@
 
 #include "bloom_filter/bloom_filter.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_layout.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_layout.hpp"
 #include "ledger/resource_mapper.hpp"
 #include "meta/log2.hpp"
 #include "miner/basic_miner.hpp"

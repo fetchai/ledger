@@ -21,7 +21,7 @@
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"

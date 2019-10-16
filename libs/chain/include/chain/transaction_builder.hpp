@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 
 #include <memory>
 

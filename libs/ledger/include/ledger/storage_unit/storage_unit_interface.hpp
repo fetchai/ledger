@@ -19,7 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/digest.hpp"
-#include "ledger/chain/transaction_layout.hpp"
+#include "chain/transaction_layout.hpp"
 #include "storage/document.hpp"
 #include "storage/resource_mapper.hpp"
 
