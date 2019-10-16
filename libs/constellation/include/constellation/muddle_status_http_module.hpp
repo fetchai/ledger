@@ -20,6 +20,7 @@
 #include "http/module.hpp"
 
 namespace fetch {
+namespace constellation {
 
 class MuddleStatusModule : public http::HTTPModule
 {
@@ -28,4 +29,5 @@ public:
   ~MuddleStatusModule() override = default;
 };
 
+}  // namespace constellation
 }  // namespace fetch
