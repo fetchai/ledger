@@ -172,18 +172,6 @@ public:
 
   friend std::ostream &operator<<(std::ostream &stream, Variant const &variant);
 
-private:
-  using VariantList   = std::vector<Variant>;
-  using VariantObject = std::unordered_map<ConstByteArray, std::unique_ptr<Variant>>;
-  using Pool          = detail::ElementPool<Variant>;
-
-  union PrimitiveData
-  {
-    int64_t integer;
-    double  float_point;
-    bool    boolean;
-  };
-
   enum class Type
   {
     UNDEFINED,
@@ -197,15 +185,29 @@ private:
     OBJECT,
   };
 
+  constexpr Type type() const
+  {
+    return type_;
+  }
+
+private:
+  using VariantList   = std::vector<Variant>;
+  using VariantObject = std::unordered_map<ConstByteArray, std::unique_ptr<Variant>>;
+  using Pool          = detail::ElementPool<Variant>;
+
+  union PrimitiveData
+  {
+    int64_t integer;
+    double  float_point;
+    bool    boolean;
+  };
+
   // Data Elements
   Type           type_{Type::UNDEFINED};  ///< The type of the variant
   PrimitiveData  primitive_{};            ///< Union of primitive data values
   ConstByteArray string_;                 ///< The string value of the variant
   VariantList    array_;                  ///< The array value of the variant
   VariantObject  object_;                 ///< The object value of the variant
-
-  template <typename T, typename D>
-  friend struct serializers::ForwardSerializer;
 };
 
 /**
@@ -579,7 +581,6 @@ void Variant::IterateObject(Function const &function) const
 }
 }  // namespace variant
 
-
 namespace serializers {
 
 template <typename D>
@@ -593,9 +594,9 @@ public:
   template <typename Serializer>
   static void Serialize(Serializer &serializer, Type const &var)
   {
-    auto typecode = static_cast<int>(var.type_);
+    auto typecode = static_cast<int>(var.type());
     serializer << typecode;
-    switch (var.type_)
+    switch (var.type())
     {
     case Type::Type::UNDEFINED:
     {
