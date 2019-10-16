@@ -36,13 +36,9 @@ class Transaction : public fetch::vm::Object
 {
 
 public:
-  Transaction() = delete;
   Transaction(vm::VM *vm, vm::TypeId type_id, fetch::ledger::Transaction const &tx);
-  ~Transaction() override = default;
 
   static void Bind(vm::Module &module);
-  // static vm::Ptr<Transaction> Constructor(vm::VM *vm, vm::TypeId type_id,
-  //                                           fetch::ledger::Transaction const &tx);
 
   /// @name Identification
   /// @{
@@ -70,10 +66,9 @@ public:
 
   /// @name Contract Accessors
   /// @{
-  AddressPtr contract_digest() const;
-  AddressPtr contract_address() const;
-  StringPtr  action() const;
-  // BitVector const &     shard_mask() const; //TODO(pb): Implement in the next stage
+  AddressPtr   contract_digest() const;
+  AddressPtr   contract_address() const;
+  StringPtr    action() const;
   AddressesPtr signatories() const;
 
 private:
