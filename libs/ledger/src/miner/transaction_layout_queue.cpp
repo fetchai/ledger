@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "miner/transaction_layout_queue.hpp"
+#include "ledger/miner/transaction_layout_queue.hpp"
 
 #include <algorithm>
 #include <unordered_set>

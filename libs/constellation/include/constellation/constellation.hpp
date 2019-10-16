@@ -37,7 +37,7 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "miner/basic_miner.hpp"
+#include "ledger/miner/basic_miner.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 #include "open_api_http_module.hpp"

@@ -21,7 +21,7 @@
 #include "ledger/chain/main_chain.hpp"
 #include "chain/transaction.hpp"
 #include "logging/logging.hpp"
-#include "miner/basic_miner.hpp"
+#include "ledger/miner/basic_miner.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"

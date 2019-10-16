@@ -20,7 +20,7 @@
 #include "core/digest.hpp"
 #include "core/random/lcg.hpp"
 #include "chain/transaction_layout.hpp"
-#include "miner/transaction_layout_queue.hpp"
+#include "ledger/miner/transaction_layout_queue.hpp"
 #include "tx_generator.hpp"
 
 #include "gtest/gtest.h"

@@ -19,7 +19,6 @@ add_executable(constellation
 target_link_libraries(constellation
                       PRIVATE fetch-ledger
                               fetch-constellation
-                              fetch-miner
                               fetch-http
                               fetch-beacon
                               fetch-settings

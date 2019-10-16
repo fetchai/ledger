@@ -23,7 +23,7 @@
 #include "ledger/chain/block.hpp"
 #include "chain/transaction_layout.hpp"
 #include "meta/log2.hpp"
-#include "miner/transaction_layout_queue.hpp"
+#include "ledger/miner/transaction_layout_queue.hpp"
 #include "telemetry/telemetry.hpp"
 #include "vectorise/threading/pool.hpp"
 
