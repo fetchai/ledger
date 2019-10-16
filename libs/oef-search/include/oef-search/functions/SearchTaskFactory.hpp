@@ -2,7 +2,6 @@
 
 #include "oef-base/comms/ConstCharArrayBuffer.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
-#include "oef-base/proto_comms/TSendProtoTask.hpp"
 #include "oef-base/utils/OefUri.hpp"
 #include "oef-base/utils/Uri.hpp"
 #include "oef-messages/search_query.hpp"
@@ -29,34 +28,6 @@ public:
 
   virtual ~SearchTaskFactory()
   {}
-
-  template <typename PROTO>
-  void SendReply(const std::string &log_message, const Uri &uri, std::shared_ptr<PROTO> response)
-  {
-    try
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "SendReply: ", log_message, " ", response->DebugString(),
-                     ", PATH: ");
-      uri.diagnostic();
-      auto resp_pair    = std::make_pair(uri, response);
-      auto reply_sender = std::make_shared<
-          TSendProtoTask<OefSearchEndpoint, std::pair<Uri, std::shared_ptr<PROTO>>>>(
-          resp_pair, this->endpoint);
-      reply_sender->submit();
-    }
-    catch (std::exception &e)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to send reply: ", e.what());
-    }
-  }
-
-  void SendExceptionReply(const std::string &where, const Uri &uri, const std::exception &e)
-  {
-    auto status = std::make_shared<Successfulness>();
-    status->set_success(false);
-    status->add_narrative(e.what());
-    SendReply<Successfulness>("Exception@" + where, uri, std::move(status));
-  }
 
   virtual void ProcessMessageWithUri(const Uri &current_uri, ConstCharArrayBuffer &data);
   // Process the message, throw exceptions if they're bad.

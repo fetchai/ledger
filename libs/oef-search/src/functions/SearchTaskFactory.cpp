@@ -1,6 +1,7 @@
 #include "oef-search/functions/SearchTaskFactory.hpp"
 #include "oef-base/threading/Future.hpp"
 #include "oef-base/threading/FutureCombiner.hpp"
+#include "oef-search/functions/ReplyMethods.hpp"
 
 void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharArrayBuffer &data)
 {
@@ -34,7 +35,7 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
             auto empty = std::make_shared<IdentifierSequence>();
             empty->mutable_status()->set_success(false);
             empty->mutable_status()->add_narrative("Ignored");
-            sp->SendReply<IdentifierSequence>("", current_uri, std::move(empty));
+            SendReply<IdentifierSequence>("", current_uri, std::move(empty), sp->endpoint);
           }
         }
         else
@@ -47,7 +48,7 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
     catch (std::exception &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
-      SendExceptionReply("search", current_uri, e);
+      SendExceptionReply("search", current_uri, e, endpoint);
     }
   }
   else if (current_uri.path == "/update")
@@ -67,7 +68,7 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
           auto sp = this_wp.lock();
           if (sp)
           {
-            sp->SendReply<Successfulness>("", current_uri, std::move(status));
+            SendReply<Successfulness>("", current_uri, std::move(status), sp->endpoint);
           }
           else
           {
@@ -80,7 +81,7 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
     catch (std::exception &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
-      SendExceptionReply("update", current_uri, e);
+      SendExceptionReply("update", current_uri, e, endpoint);
     }
   }
   else if (current_uri.path == "/remove")
@@ -110,21 +111,21 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
         auto sp = this_wp.lock();
         if (sp)
         {
-          sp->SendReply<Successfulness>("", current_uri, std::move(status));
+          SendReply<Successfulness>("", current_uri, std::move(status), sp->endpoint);
         }
       });
     }
     catch (std::exception &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
-      SendExceptionReply("remove", current_uri, e);
+      SendExceptionReply("remove", current_uri, e, endpoint);
     }
   }
   else
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Can't handle path: ", current_uri.path);
     SendExceptionReply("UnknownPath", current_uri,
-                       std::runtime_error("Path " + current_uri.path + " not supported!"));
+                       std::runtime_error("Path " + current_uri.path + " not supported!"), endpoint);
   }
 }
 
@@ -178,7 +179,7 @@ void SearchTaskFactory::HandleQuery(const fetch::oef::pb::SearchQuery &query,
         auto sp = this_wp.lock();
         if (sp)
         {
-          sp->SendReply<IdentifierSequence>("", current_uri, std::move(result));
+          SendReply<IdentifierSequence>("", current_uri, std::move(result), sp->endpoint);
         }
         result_future.reset();
       });
