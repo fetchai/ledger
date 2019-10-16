@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/execution/execution_interface.hpp"
+#include "dmlf/execution/execution_result.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -25,29 +26,23 @@ namespace dmlf {
 class ExecutionEngineInterface
 {
 public:
-  ExecutionEngineInterface();
-  virtual ~ExecutionEngineInterface();
+  ExecutionEngineInterface()          = default;
+  virtual ~ExecutionEngineInterface() = default;
 
-  ExecutionEngineInterface(ExecutionEngineInterface const &other) = delete;
-  ExecutionEngineInterface(ExecutionEngineInterface &&other)      = delete;
-  ExecutionEngineInterface &operator=(ExecutionEngineInterface const &other) = delete;
-  ExecutionEngineInterface &operator=(ExecutionEngineInterface &&other) = delete;
+  using Name        = ExecutionInterface::Name;
+  using SourceFiles = ExecutionInterface::SourceFiles;
+  using Target      = ExecutionInterface::Target;
+  using Variant     = ExecutionInterface::Variant;
+  using Params      = ExecutionInterface::Params;
 
-  using Name            = ExecutionInterface::Name;
-  using SourceFiles     = ExecutionInterface::SourceFiles;
-  using Target          = ExecutionInterface::Target;
-  using Variant         = ExecutionInterface::Variant;
-  using PromiseOfResult = ExecutionInterface::PromiseOfResult;
-  using Params          = ExecutionInterface::Params;
+  virtual ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) = 0;
+  virtual ExecutionResult DeleteExecutable(Name const &execName)                             = 0;
 
-  virtual PromiseOfResult CreateExecutable(Name const &execName, SourceFiles const &sources) = 0;
-  virtual PromiseOfResult DeleteExecutable(Name const &execName)                             = 0;
+  virtual ExecutionResult CreateState(Name const &stateName)                  = 0;
+  virtual ExecutionResult CopyState(Name const &srcName, Name const &newName) = 0;
+  virtual ExecutionResult DeleteState(Name const &stateName)                  = 0;
 
-  virtual PromiseOfResult CreateState(Name const &stateName)                  = 0;
-  virtual PromiseOfResult CopyState(Name const &srcName, Name const &newName) = 0;
-  virtual PromiseOfResult DeleteState(Name const &stateName)                  = 0;
-
-  virtual PromiseOfResult Run(Name const &execName, Name const &stateName,
+  virtual ExecutionResult Run(Name const &execName, Name const &stateName,
                               std::string const &entrypoint) = 0;
 };
 

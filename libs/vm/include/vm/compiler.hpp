@@ -43,6 +43,13 @@ private:
     analyser_.CreateClassType(name, type_index);
   }
 
+  void CreateTemplateType(std::string const &name, TypeIndex type_index,
+                          TypeIndexArray const &allowed_types_index_array)
+  {
+    parser_.AddTemplateName(name);
+    analyser_.CreateTemplateType(name, type_index, allowed_types_index_array);
+  }
+
   void CreateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
                                TypeIndexArray const &parameter_type_index_array)
   {
@@ -83,6 +90,16 @@ private:
   void EnableOperator(TypeIndex type_index, Operator op)
   {
     analyser_.EnableOperator(type_index, op);
+  }
+
+  void EnableLeftOperator(TypeIndex type_index, Operator op)
+  {
+    analyser_.EnableLeftOperator(type_index, op);
+  }
+
+  void EnableRightOperator(TypeIndex type_index, Operator op)
+  {
+    analyser_.EnableRightOperator(type_index, op);
   }
 
   void EnableIndexOperator(TypeIndex type_index, TypeIndexArray const &input_type_index_array,

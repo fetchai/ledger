@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "open_api_http_module.hpp"
+#include "constellation/open_api_http_module.hpp"
 
 #include <mutex>
 
 namespace fetch {
+namespace constellation {
 
 OpenAPIHttpModule::OpenAPIHttpModule()
 {
@@ -88,4 +89,5 @@ void OpenAPIHttpModule::Reset(http::HTTPServer *srv)
   server_ = srv;
 }
 
+}  // namespace constellation
 }  // namespace fetch
