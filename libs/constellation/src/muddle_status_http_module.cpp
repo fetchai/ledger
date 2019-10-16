@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
-#include "http/json_response.hpp"
-#include "http/module.hpp"
-#include "http/server.hpp"
+#include "constellation/muddle_status_http_module.hpp"
 
-#include <mutex>
+#include "http/json_response.hpp"
+#include "muddle/muddle_status.hpp"
 
 namespace fetch {
+namespace constellation {
 
-class OpenAPIHttpModule : public http::HTTPModule
+MuddleStatusModule::MuddleStatusModule()
 {
-public:
-  OpenAPIHttpModule();
-  void Reset(http::HTTPServer *srv = nullptr);
+  Get("/api/status/muddle", "Returns the status of the muddle instances present on the node",
+      [](http::ViewParameters const &, http::HTTPRequest const &request) {
+        auto const &params = request.query();
 
-private:
-  using Variant        = variant::Variant;
-  using ConstByteArray = byte_array::ConstByteArray;
+        std::string network_name{};
+        if (params.Has("network"))
+        {
+          network_name = static_cast<std::string>(params["network"]);
+        }
 
-  http::HTTPServer *server_{nullptr};
-  std::mutex        server_lock_;
-};
+        return http::CreateJsonResponse(muddle::GetStatusSummary(network_name));
+      });
+}
 
+}  // namespace constellation
 }  // namespace fetch
