@@ -38,8 +38,7 @@ public:
   virtual ~ExecutionInterface() = default;
 
   using Name        = std::string;
-  using SourceFiles = std::string;
-  // using SourceFiles     = fetch::vm::SourceFiles;
+  using SourceFiles     = fetch::vm::SourceFiles;
   using Target          = std::string;
   using Variant         = fetch::vm::Variant;
   using PromiseOfResult = ExecutionResult::PromiseOfResult;
