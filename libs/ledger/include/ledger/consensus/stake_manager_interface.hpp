@@ -26,7 +26,7 @@ namespace chain {
 
 class Address;
 
-} // namespace chain
+}  // namespace chain
 namespace ledger {
 
 class Block;

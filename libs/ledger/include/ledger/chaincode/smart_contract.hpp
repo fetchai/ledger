@@ -35,10 +35,9 @@ namespace chain {
 
 class Address;
 
-} // namespace chain
+}  // namespace chain
 
 namespace ledger {
-
 
 /**
  * Smart Contract instance
