@@ -15,6 +15,4 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-chain)
-target_link_libraries(fetch-chain PUBLIC fetch-core fetch-variant fetch-storage
-  fetch-beacon # probably remove block entropy
-  )
+target_link_libraries(fetch-chain PUBLIC fetch-core fetch-variant fetch-storage)

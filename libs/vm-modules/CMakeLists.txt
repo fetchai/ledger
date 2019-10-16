@@ -22,7 +22,6 @@ target_link_libraries(fetch-vm-modules
                              fetch-ml
                              fetch-json
                              fetch-variant
-                             fetch-ledger # TODO REMOVE ME
                              fetch-logging)
 
 if (_is_clang_compiler)
