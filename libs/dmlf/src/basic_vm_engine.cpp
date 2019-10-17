@@ -175,6 +175,7 @@ ExecutionResult BasicVmEngine::NewRun(Name const &execName, Name const &stateNam
   VM vm{module_.get()};
   vm.SetIOObserver(*state);
 
+  // Convert and check function signature
   auto const *func = exec->FindFunction(entrypoint);
 
   if (func == nullptr)
@@ -192,8 +193,7 @@ ExecutionResult BasicVmEngine::NewRun(Name const &execName, Name const &stateNam
                            " recieved " + std::to_string(params.size()));
   }
 
-  using ParameterPack = fetch::vm::ParameterPack;
-  ParameterPack parameterPack(vm.registered_types());
+  fetch::vm::ParameterPack parameterPack(vm.registered_types());
   for (std::size_t i = 0; i < numParameters; ++i)
   {
     auto const &typeId = func->variables[i].type_id;
@@ -207,10 +207,12 @@ ExecutionResult BasicVmEngine::NewRun(Name const &execName, Name const &stateNam
     parameterPack.AddSingle(Convert(params[i], typeId));
   }
 
+  // Run
   std::string        runTimeError;
   fetch::vm::Variant output;
   bool               allOK = vm.Execute(*exec, entrypoint, runTimeError, output, parameterPack);
 
+  // Check how it went
   if (!allOK || !runTimeError.empty())
   {
     return ExecutionResult{
