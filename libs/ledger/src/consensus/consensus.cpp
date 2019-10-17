@@ -98,7 +98,7 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain c
   , beacon_{std::move(beacon)}
   , chain_{chain}
   , mining_identity_{std::move(mining_identity)}
-  , mining_address_{Address(mining_identity_)}
+  , mining_address_{chain::Address(mining_identity_)}
   , aeon_period_{aeon_period}
   , max_committee_size_{max_committee_size}
   , block_interval_ms_{block_interval_ms}
@@ -142,7 +142,7 @@ Consensus::CommitteePtr Consensus::GetCommittee(Block const &previous)
   return std::make_shared<Committee>(committee_copy);
 }
 
-bool Consensus::ValidMinerForBlock(Block const &previous, Address const &address)
+bool Consensus::ValidMinerForBlock(Block const &previous, chain::Address const &address)
 {
   auto const committee = GetCommittee(previous);
 
@@ -154,7 +154,7 @@ bool Consensus::ValidMinerForBlock(Block const &previous, Address const &address
 
   return std::find_if((*committee).begin(), (*committee).end(),
                       [&address](Identity const &identity) {
-                        return address == Address(identity);
+                        return address == chain::Address(identity);
                       }) != (*committee).end();
 }
 
@@ -177,7 +177,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
   return ret;
 }
 
-uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Address const &address)
+uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
 {
   auto const committee = GetCommittee(previous);
 
@@ -192,7 +192,7 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Address cons
   // TODO(EJF): Depending on the committee sizes this would need to be improved
   for (auto const &member : *committee)
   {
-    if (address == Address(member))
+    if (address == chain::Address(member))
     {
       break;
     }

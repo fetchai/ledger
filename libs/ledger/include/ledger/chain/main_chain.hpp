@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter.hpp"
+#include "bloom_filter/bloom_filter.hpp"
+#include "chain/constants.hpp"
+#include "chain/transaction_layout.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/digest.hpp"
@@ -25,8 +27,6 @@
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
-#include "ledger/chain/constants.hpp"
-#include "ledger/chain/transaction_layout.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
@@ -88,7 +88,7 @@ public:
   using BlockHash            = Block::Hash;
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
-  using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
+  using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 5000ull;
@@ -175,7 +175,7 @@ public:
   struct HeaviestTip
   {
     uint64_t  weight{0};
-    BlockHash hash{GENESIS_DIGEST};
+    BlockHash hash{chain::GENESIS_DIGEST};
 
     bool Update(Block const &block);
   };
