@@ -42,9 +42,7 @@ public:
   BasicVmEngine &operator=(const BasicVmEngine &other) = delete;
 
   using Executable    = fetch::vm::Executable;
-  using LedgerVariant = fetch::variant::Variant;
   using VmVariant     = fetch::vm::Variant;
-  using Params        = std::vector<LedgerVariant>;
   using VM            = fetch::vm::VM;
   using VmFactory     = fetch::vm_modules::VMFactory;
   using State         = VmState;
@@ -59,10 +57,8 @@ public:
   ExecutionResult CopyState(Name const &srcName, Name const &newName) override;
   ExecutionResult DeleteState(Name const &stateName) override;
 
-  ExecutionResult Run(Name const &execName, Name const &stateName,
-                      std::string const &entrypoint) override;
-  ExecutionResult NewRun(Name const &execName, Name const &stateName, std::string const &entrypoint,
-                         Params params);
+  ExecutionResult Run(Name const &execName, Name const &stateName, std::string const &entrypoint,
+                         Params params) override;
 
 private:
   bool HasExecutable(std::string const &name) const;

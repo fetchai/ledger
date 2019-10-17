@@ -117,43 +117,6 @@ ExecutionResult BasicVmEngine::DeleteState(Name const &stateName)
 }
 
 ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
-                                   std::string const &entrypoint)
-{
-  if (!HasExecutable(execName))
-  {
-    return EngineError("Could not run " + execName + " with state " + stateName,
-                       Error::Code::BAD_EXECUTABLE, "Error: No executable " + execName);
-  }
-  if (!HasState(stateName))
-  {
-    return EngineError("Could not run " + execName + " with state " + stateName,
-                       Error::Code::BAD_STATE, "Error: No state " + stateName);
-  }
-
-  auto &exec  = executables_[execName];
-  auto &state = states_[stateName];
-
-  // We create a a VM for each execution. It might be better to create a single VM and reuse it, but
-  // (currently) if you create a VM before compiling the VM is badly formed and crashes on execution
-  VM vm{module_.get()};
-  vm.SetIOObserver(*state);
-
-  std::string        runTimeError;
-  fetch::vm::Variant output;
-  bool               allOK = vm.Execute(*exec, entrypoint, runTimeError, output);
-
-  if (!allOK || !runTimeError.empty())
-  {
-    return ExecutionResult{
-        output, Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)},
-        "Error running " + execName + " with state " + stateName};
-  }
-
-  return ExecutionResult{output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS, ""},
-                         "Ran " + execName + " with state " + stateName};
-}
-
-ExecutionResult BasicVmEngine::NewRun(Name const &execName, Name const &stateName,
                                       std::string const &entrypoint, Params params)
 {
   if (!HasExecutable(execName))
