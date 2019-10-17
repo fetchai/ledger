@@ -22,9 +22,9 @@
 #include "ledger/protocols/notarisation_service.hpp"
 #include "ledger/testing/block_generator.hpp"
 
-#include "shards/manifest_cache_interface.hpp"
 #include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "shards/manifest_cache_interface.hpp"
 
 #include "beacon/aeon.hpp"
 #include "beacon/create_new_certificate.hpp"
@@ -137,11 +137,11 @@ TEST(notarisation, notarise_blocks)
   TrustedDealer dealer(cabinet, threshold);
 
   // Connect muddles together (localhost for this example)
-  for (uint32_t ii = 0; ii < committee_size; ii++)
+  for (uint32_t i = 0; i < committee_size; i++)
   {
-    for (uint32_t jj = ii + 1; jj < committee_size; jj++)
+    for (uint32_t j = i + 1; j < committee_size; j++)
     {
-      nodes[ii]->muddle->ConnectTo(nodes[jj]->address(), nodes[jj]->GetHint());
+      nodes[i]->muddle->ConnectTo(nodes[j]->address(), nodes[j]->GetHint());
     }
   }
 
