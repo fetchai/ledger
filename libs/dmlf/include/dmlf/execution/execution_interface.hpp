@@ -52,7 +52,7 @@ public:
                               std::string const &entrypoint) = 0;
 
   ExecutionInterface(ExecutionInterface const &other) = delete;
-  ExecutionInterface &operator=(ExecutionInterface const &other)  = delete;
+  ExecutionInterface &operator=(ExecutionInterface const &other) = delete;
 };
 
 }  // namespace dmlf
