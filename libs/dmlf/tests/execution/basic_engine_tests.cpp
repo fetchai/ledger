@@ -167,7 +167,7 @@ TEST(BasicVmEngineDmlfTests, HelloWorld)
 
   ExecutionResult result = engine.Run("helloWorld", "state", "main");
   EXPECT_TRUE(result.succeeded());
-  EXPECT_EQ(result.output().Get<int>(), 1);
+  EXPECT_EQ(result.output().As<int>(), 1);
 }
 
 TEST(BasicVmEngineDmlfTests, DoubleHelloWorld)
@@ -182,11 +182,11 @@ TEST(BasicVmEngineDmlfTests, DoubleHelloWorld)
 
   ExecutionResult result = engine.Run("helloWorld", "state", "main");
   EXPECT_TRUE(result.succeeded());
-  EXPECT_EQ(result.output().Get<int>(), 1);
+  EXPECT_EQ(result.output().As<int>(), 1);
 
   result = engine.Run("helloWorld", "state", "main");
   EXPECT_TRUE(result.succeeded());
-  EXPECT_EQ(result.output().Get<int>(), 1);
+  EXPECT_EQ(result.output().As<int>(), 1);
 }
 
 TEST(BasicVmEngineDmlfTests, repeated_HelloWorld)
@@ -211,7 +211,7 @@ TEST(BasicVmEngineDmlfTests, repeated_HelloWorld)
 
   ExecutionResult result = engine.Run("helloWorld", "state", "main");
   EXPECT_TRUE(result.succeeded());
-  EXPECT_EQ(result.output().Get<int>(), 1);
+  EXPECT_EQ(result.output().As<int>(), 1);
 }
 
 TEST(BasicVmEngineDmlfTests, Tick_2States)
@@ -228,23 +228,23 @@ TEST(BasicVmEngineDmlfTests, Tick_2States)
 
   ExecutionResult result = engine.Run("tick", "state1", "main");
   EXPECT_TRUE(result.succeeded());
-  EXPECT_EQ(result.output().Get<int>(), 0);
+  EXPECT_EQ(result.output().As<int>(), 0);
 
   result = engine.Run("tick", "state1", "main");
   EXPECT_TRUE(result.succeeded());
-  EXPECT_EQ(result.output().Get<int>(), 1);
+  EXPECT_EQ(result.output().As<int>(), 1);
 
   result = engine.Run("tick", "state2", "main");
   EXPECT_TRUE(result.succeeded());
-  EXPECT_EQ(result.output().Get<int>(), 0);
+  EXPECT_EQ(result.output().As<int>(), 0);
 
   result = engine.Run("tick", "state1", "main");
   EXPECT_TRUE(result.succeeded());
-  EXPECT_EQ(result.output().Get<int>(), 2);
+  EXPECT_EQ(result.output().As<int>(), 2);
 
   result = engine.Run("tick", "state2", "main");
   EXPECT_TRUE(result.succeeded());
-  EXPECT_EQ(result.output().Get<int>(), 1);
+  EXPECT_EQ(result.output().As<int>(), 1);
 }
 
 // Repeated things
