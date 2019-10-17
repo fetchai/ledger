@@ -179,14 +179,17 @@ ExecutionResult BasicVmEngine::NewRun(Name const &execName, Name const &stateNam
 
   if (func == nullptr) 
   {
-    return EngineError("Wrong entrypoint\n", Error::Code::RUNTIME_ERROR, "Blah");
+    return EngineError("Could not run " + entrypoint, Error::Code::RUNTIME_ERROR, "Error: " + entrypoint +" does not exist");
   }
 
   auto const numParameters = static_cast<std::size_t>(func->num_parameters);
 
   if (numParameters != params.size()) 
   {
-    return EngineError("Wrong entrypoint\n", Error::Code::RUNTIME_ERROR, "Blah");
+    return EngineError("Could not run " + entrypoint
+			, Error::Code::RUNTIME_ERROR
+			, "Wrong number of parameters expected " + std::to_string(numParameters) 
+				+ " recieved " + std::to_string(params.size()));
   }
 
   using ParameterPack = fetch::vm::ParameterPack;
@@ -198,10 +201,8 @@ ExecutionResult BasicVmEngine::NewRun(Name const &execName, Name const &stateNam
 		if (!Convertable(params[i], typeId))
 		{
 			return EngineError("Wrong parameters for " + entrypoint, Error::Code::RUNTIME_ERROR
-				, "Error at parameter");// + /*std::toString(i) +*/ " Expected " + func->variables[i].name());	
+				, "Error at parameter " + std::to_string(i) + " Expected " + vm.GetTypeName(typeId));
 		}
-    //std::cout <<"GOT " << params[i].As<int>() << '\n';
-    //parameterPack.AddSingle(fetch::vm::Variant(params[i].As<int>(), func->variables[i].type_id));
     parameterPack.AddSingle(Convert(params[i], typeId));
   }
 
@@ -248,11 +249,9 @@ bool BasicVmEngine::Convertable(LedgerVariant const& ledgerVariant, TypeId const
   switch(typeId)
   {
     case fetch::vm::TypeIds::Bool:
-/*
 		{
 			return ledgerVariant.IsBoolean();
 		}
-*/
     case fetch::vm::TypeIds::Int8:
     case fetch::vm::TypeIds::UInt8:
     case fetch::vm::TypeIds::Int16:
@@ -278,7 +277,7 @@ BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const& ledgerVaria
   {
     case fetch::vm::TypeIds::Bool:
 		{
-			return VmVariant(ledgerVariant.As<int>() != 0, typeId);
+			return VmVariant(ledgerVariant.As<bool>() != 0, typeId);
 		}
     case fetch::vm::TypeIds::Int8:
     case fetch::vm::TypeIds::UInt8:
