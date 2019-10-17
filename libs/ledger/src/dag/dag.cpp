@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/dag/dag.hpp"
 #include "ledger/dag/dag_node.hpp"
 
@@ -171,7 +171,7 @@ std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
   return ret;
 }
 
-void DAG::AddTransaction(Transaction const &tx, DAGTypes type)
+void DAG::AddTransaction(chain::Transaction const &tx, DAGTypes type)
 {
   if (type != DAGTypes::DATA)
   {

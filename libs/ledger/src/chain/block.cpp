@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/constants.hpp"
 #include "moment/clocks.hpp"
 
 #include <cstddef>
@@ -90,7 +90,7 @@ void Block::UpdateDigest()
 
 void Block::UpdateTimestamp()
 {
-  if (body.previous_hash != GENESIS_DIGEST)
+  if (body.previous_hash != chain::GENESIS_DIGEST)
   {
     body.timestamp = GetTime(clock_);
   }

@@ -19,10 +19,10 @@
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include "core/commandline/parameter_parser.hpp"
-#include "core/json/document.hpp"
-#include "core/logging.hpp"
 #include "core/string/trim.hpp"
+#include "json/document.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "logging/logging.hpp"
 #include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "version/cli_header.hpp"
@@ -146,11 +146,11 @@ public:
 
   void AddTransaction(ConstByteArray const &tx_data)
   {
-    json::JSONDocument  doc(tx_data);
-    ledger::Transaction tx;
+    json::JSONDocument doc(tx_data);
+    chain::Transaction tx;
   }
 
-  void AddTransaction(ledger::Transaction &tx)
+  void AddTransaction(chain::Transaction &tx)
   {
     //    tx.UpdateDigests();
   }
@@ -175,8 +175,8 @@ enum
 
 void AddTransactionDialog()
 {
-  ledger::Transaction tx;
-  std::string         contract_name, args, res;
+  chain::Transaction tx;
+  std::string        contract_name, args, res;
   std::cout << "Contract name: ";
 
   std::getline(std::cin, contract_name);

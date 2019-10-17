@@ -18,6 +18,8 @@
 
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
 
+#include <sstream>
+
 namespace fetch {
 namespace ml {
 namespace dataloaders {

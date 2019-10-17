@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction_rpc_serializers.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 
 #include <algorithm>
@@ -85,7 +85,7 @@ void TransactionStoreSyncProtocol::TrimCache()
 
 /// @}
 
-void TransactionStoreSyncProtocol::OnNewTx(Transaction const &o)
+void TransactionStoreSyncProtocol::OnNewTx(chain::Transaction const &o)
 {
   FETCH_LOCK(cache_mutex_);
   cache_.emplace_back(o);
@@ -142,8 +142,8 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(
 TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSpecificObjects(
     std::vector<storage::ResourceID> const &rids)
 {
-  TxArray     ret;
-  Transaction tx;
+  TxArray            ret;
+  chain::Transaction tx;
 
   for (auto const &rid : rids)
   {
