@@ -37,7 +37,7 @@ public:
   ExecutionInterface()          = default;
   virtual ~ExecutionInterface() = default;
 
-  using Name        = std::string;
+  using Name            = std::string;
   using SourceFiles     = fetch::vm::SourceFiles;
   using Target          = std::string;
   using Variant         = fetch::vm::Variant;

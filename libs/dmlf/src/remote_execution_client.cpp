@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
 #include "core/service_ids.hpp"
 #include "dmlf/remote_execution_client.hpp"
 #include "dmlf/remote_execution_protocol.hpp"
-#include "core/byte_array/decoders.hpp"
 
 namespace fetch {
 namespace dmlf {
 
-  using fetch::byte_array::FromBase64;
+using fetch::byte_array::FromBase64;
 
 RemoteExecutionClient::RemoteExecutionClient(RemoteExecutionClient::MuddlePtr    mud,
                                              std::shared_ptr<ExecutionInterface> local)
@@ -42,7 +42,7 @@ RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::CreateExecutable(
     return local_->CreateExecutable(target, execName, sources);
   }
   return Returned([this, target, execName, sources](OpIdent const &op_id) {
-      client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
+    client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
                                  RemoteExecutionProtocol::RPC_DMLF_CREATE_EXE, op_id, execName,
                                  sources);
     return true;
@@ -149,7 +149,7 @@ bool RemoteExecutionClient::ReturnResults(OpIdent const &op_id, ExecutionResult 
 RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::Returned(
     std::function<bool(OpIdent const &op_id)> func)
 {
-  counter ++;
+  counter++;
   auto op_id = std::to_string(counter);
   func(op_id);
   auto prom               = service::MakePromise();

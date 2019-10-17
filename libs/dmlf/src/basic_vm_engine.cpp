@@ -47,12 +47,14 @@ ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFile
     }
 
     return ExecutionResult{
-      fetch::variant::Variant{}, Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()},
+        fetch::variant::Variant{},
+        Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()},
         "Compilation error: Did not create " + execName};
   }
 
   executables_.emplace(execName, std::move(newExecutable));
-  return ExecutionResult{fetch::variant::Variant(), Error{Error::Stage::COMPILE, Error::Code::SUCCESS, ""},
+  return ExecutionResult{fetch::variant::Variant(),
+                         Error{Error::Stage::COMPILE, Error::Code::SUCCESS, ""},
                          "Created executable " + execName};
 }
 
@@ -80,7 +82,8 @@ ExecutionResult BasicVmEngine::CreateState(Name const &stateName)
   }
 
   states_.emplace(stateName, std::make_shared<State>());
-  return ExecutionResult{fetch::variant::Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""},
+  return ExecutionResult{fetch::variant::Variant(),
+                         Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""},
                          "Created state " + stateName};
 }
 
@@ -144,29 +147,30 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
   if (!allOK || !runTimeError.empty())
   {
     return ExecutionResult{
-      //output,
-          fetch::variant::Variant(),
-          Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)},
+        // output,
+        fetch::variant::Variant(),
+        Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)},
         "Error running " + execName + " with state " + stateName};
   }
 
   return ExecutionResult{
-    //output,
-           fetch::variant::Variant(),
-     Error{Error::Stage::RUNNING, Error::Code::SUCCESS, ""},
-                         "Ran " + execName + " with state " + stateName};
+      // output,
+      fetch::variant::Variant(), Error{Error::Stage::RUNNING, Error::Code::SUCCESS, ""},
+      "Ran " + execName + " with state " + stateName};
 }
 
 ExecutionResult BasicVmEngine::EngineError(std::string resultMessage, Error::Code code,
                                            std::string errorMessage) const
 {
-  return ExecutionResult{fetch::variant::Variant(), Error{Error::Stage::ENGINE, code, std::move(errorMessage)},
+  return ExecutionResult{fetch::variant::Variant(),
+                         Error{Error::Stage::ENGINE, code, std::move(errorMessage)},
                          std::move(resultMessage)};
 }
 
 ExecutionResult BasicVmEngine::EngineSuccess(std::string resultMessage) const
 {
-  return ExecutionResult{fetch::variant::Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""},
+  return ExecutionResult{fetch::variant::Variant(),
+                         Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""},
                          std::move(resultMessage)};
 }
 

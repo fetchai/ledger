@@ -21,8 +21,8 @@
 #include "core/serializers/main_serializer.hpp"
 #include "dmlf/execution/execution_error_message.hpp"
 #include "network/generics/promise_of.hpp"
-#include "vm/variant.hpp"
 #include "variant/variant.hpp"
+#include "vm/variant.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -47,8 +47,8 @@ public:
 
   void log(const char *pref) const
   {
-    std::cout << pref << " output = "<< output_ << std::endl;
-    std::cout << pref << " error  = "<< error_.message() << std::endl;
+    std::cout << pref << " output = " << output_ << std::endl;
+    std::cout << pref << " error  = " << error_.message() << std::endl;
   }
 
   Output output() const
@@ -78,6 +78,7 @@ public:
                                                    std::string const &error_message);
   static ExecutionResult MakeSuccess();
   static ExecutionResult MakeIntegerResult(int r);
+
 private:
   Output      output_;
   Error       error_;
