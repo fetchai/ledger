@@ -12,5 +12,4 @@ setup_compiler()
 
 fetch_add_slow_test(dmlf_local_gtest fetch-dmlf local)
 fetch_add_slow_test(dmlf_muddle_gtest fetch-dmlf muddle)
-fetch_add_test(dmlf_vm_wrapper_gtest fetch-dmlf vm_wrapper)
 fetch_add_test(dmlf_execution_gtest fetch-dmlf execution)
