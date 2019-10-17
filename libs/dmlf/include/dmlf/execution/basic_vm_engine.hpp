@@ -24,7 +24,6 @@
 #include "vm_modules/vm_factory.hpp"
 
 #include <memory>
-#include <sstream>
 #include <unordered_map>
 
 namespace fetch {
@@ -59,9 +58,8 @@ private:
   bool HasExecutable(std::string const &name) const;
   bool HasState(std::string const &name) const;
 
-  ExecutionResult EngineError(std::string resultMessage, Error::Code code,
-                              std::string errorMessage) const;
-  ExecutionResult EngineSuccess(std::string resultMessage) const;
+  ExecutionResult EngineError(Error::Code code, std::string errorMessage) const;
+  ExecutionResult EngineSuccess(std::string successMessage) const;
 
   std::unordered_map<std::string, std::shared_ptr<Executable>> executables_;
   std::unordered_map<std::string, std::shared_ptr<State>>      states_;

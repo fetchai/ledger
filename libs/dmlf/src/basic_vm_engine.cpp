@@ -31,8 +31,7 @@ ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFile
 {
   if (HasExecutable(execName))
   {
-    return EngineError("Didn't create " + execName, Error::Code::BAD_EXECUTABLE,
-                       "Error: executable " + execName + " already exists.");
+    return EngineError(Error::Code::BAD_EXECUTABLE, "executable " + execName + " already exists.");
   }
 
   auto newExecutable = std::make_shared<Executable>();
@@ -48,12 +47,14 @@ ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFile
 
     return ExecutionResult{
         Variant{}, Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()},
-        "Compilation error: Did not create " + execName};
+        std::string{}};
   }
 
   executables_.emplace(execName, std::move(newExecutable));
-  return ExecutionResult{Variant(), Error{Error::Stage::COMPILE, Error::Code::SUCCESS, ""},
-                         "Created executable " + execName};
+  return ExecutionResult{
+      Variant{},
+      Error{Error::Stage::COMPILE, Error::Code::SUCCESS, "Created executable " + execName},
+      std::string{}};
 }
 
 ExecutionResult BasicVmEngine::DeleteExecutable(Name const &execName)
@@ -62,8 +63,7 @@ ExecutionResult BasicVmEngine::DeleteExecutable(Name const &execName)
 
   if (it == executables_.end())
   {
-    return EngineError("Didn't delete executable " + execName, Error::Code::BAD_EXECUTABLE,
-                       "Error: executable " + execName + " does not exist.");
+    return EngineError(Error::Code::BAD_EXECUTABLE, "executable " + execName + " does not exist.");
   }
 
   executables_.erase(it);
@@ -75,27 +75,24 @@ ExecutionResult BasicVmEngine::CreateState(Name const &stateName)
 {
   if (HasState(stateName))
   {
-    return EngineError("Didn't create " + stateName, Error::Code::BAD_STATE,
-                       "Error: state " + stateName + " already exists.");
+    return EngineError(Error::Code::BAD_STATE, "state " + stateName + " already exists.");
   }
 
   states_.emplace(stateName, std::make_shared<State>());
-  return ExecutionResult{Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""},
-                         "Created state " + stateName};
+  return ExecutionResult{
+      Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, "Created state " + stateName},
+      std::string{}};
 }
 
 ExecutionResult BasicVmEngine::CopyState(Name const &srcName, Name const &newName)
 {
   if (!HasState(srcName))
   {
-    return EngineError("Couldn't copy state " + srcName + " to " + newName, Error::Code::BAD_STATE,
-                       "Error: No state named " + srcName);
+    return EngineError(Error::Code::BAD_STATE, "No state named " + srcName);
   }
   if (HasState(newName))
   {
-    return EngineError("Couldn't copy state " + srcName + " to " + newName,
-                       Error::Code::BAD_DESTINATION,
-                       "Error: state " + newName + " already exists.");
+    return EngineError(Error::Code::BAD_DESTINATION, "state " + newName + " already exists.");
   }
 
   states_.emplace(newName, std::make_shared<State>(states_[srcName]->DeepCopy()));
@@ -107,8 +104,7 @@ ExecutionResult BasicVmEngine::DeleteState(Name const &stateName)
   auto it = states_.find(stateName);
   if (it == states_.end())
   {
-    return EngineError("Did not delete state " + stateName, Error::Code::BAD_STATE,
-                       "Error: No state named " + stateName);
+    return EngineError(Error::Code::BAD_STATE, "No state named " + stateName);
   }
 
   states_.erase(it);
@@ -120,49 +116,51 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
 {
   if (!HasExecutable(execName))
   {
-    return EngineError("Could not run " + execName + " with state " + stateName,
-                       Error::Code::BAD_EXECUTABLE, "Error: No executable " + execName);
+    return EngineError(Error::Code::BAD_EXECUTABLE, "No executable " + execName);
   }
   if (!HasState(stateName))
   {
-    return EngineError("Could not run " + execName + " with state " + stateName,
-                       Error::Code::BAD_STATE, "Error: No state " + stateName);
+    return EngineError(Error::Code::BAD_STATE, "No state " + stateName);
   }
 
-  auto &exec  = executables_[execName];
-  auto &state = states_[stateName];
+  auto &             exec  = executables_[execName];
+  auto &             state = states_[stateName];
+  std::ostringstream console{};
 
   // We create a a VM for each execution. It might be better to create a single VM and reuse it, but
   // (currently) if you create a VM before compiling the VM is badly formed and crashes on execution
   VM vm{module_.get()};
   vm.SetIOObserver(*state);
+  vm.AttachOutputDevice(fetch::vm::VM::STDOUT, console);
 
   std::string        runTimeError;
   fetch::vm::Variant output;
-  bool               allOK = vm.Execute(*exec, entrypoint, runTimeError, output);
 
+  bool allOK = vm.Execute(*exec, entrypoint, runTimeError, output);
   if (!allOK || !runTimeError.empty())
   {
     return ExecutionResult{
         output, Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)},
-        "Error running " + execName + " with state " + stateName};
+        console.str()};
   }
 
-  return ExecutionResult{output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS, ""},
-                         "Ran " + execName + " with state " + stateName};
+  return ExecutionResult{output,
+                         Error{Error::Stage::RUNNING, Error::Code::SUCCESS,
+                               "Ran " + execName + " with state " + stateName},
+                         console.str()};
 }
 
-ExecutionResult BasicVmEngine::EngineError(std::string resultMessage, Error::Code code,
-                                           std::string errorMessage) const
+ExecutionResult BasicVmEngine::EngineError(Error::Code code, std::string errorMessage) const
 {
-  return ExecutionResult{Variant(), Error{Error::Stage::ENGINE, code, std::move(errorMessage)},
-                         std::move(resultMessage)};
+  return ExecutionResult{Variant{}, Error{Error::Stage::ENGINE, code, std::move(errorMessage)},
+                         std::string{}};
 }
 
-ExecutionResult BasicVmEngine::EngineSuccess(std::string resultMessage) const
+ExecutionResult BasicVmEngine::EngineSuccess(std::string successMessage) const
 {
-  return ExecutionResult{Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""},
-                         std::move(resultMessage)};
+  return ExecutionResult{
+      Variant{}, Error{Error::Stage::ENGINE, Error::Code::SUCCESS, std::move(successMessage)},
+      std::string{}};
 }
 
 bool BasicVmEngine::HasExecutable(std::string const &name) const

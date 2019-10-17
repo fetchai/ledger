@@ -18,8 +18,8 @@
 
 #include "gtest/gtest.h"
 
-#include "dmlf/execution/local_executor.hpp"
 #include "dmlf/execution/basic_vm_engine.hpp"
+#include "dmlf/execution/local_executor.hpp"
 
 #include "variant/variant.hpp"
 #include "vm/variant.hpp"
@@ -61,53 +61,101 @@ std::string const hello_world_etch_output = "Hello world!!\n";
 class LocalExecutorTests : public ::testing::Test
 {
 public:
-  std::shared_ptr<LocalExecutor> executor;
-  std::shared_ptr<ExecutionEngineInterface>   engine;
-  SourceFile      source_file;
-  ExecutionResult result;
-  PromiseOfResult result_promise;
-  const std::string host;
-  
+  std::shared_ptr<LocalExecutor>            executor;
+  std::shared_ptr<ExecutionEngineInterface> engine;
+  SourceFile                                source_file;
+  ExecutionResult                           result;
+  PromiseOfResult                           result_promise;
+  const std::string                         host;
+
   void SetUp() override
   {
-    engine = std::make_shared<BasicVmEngine>();
+    engine   = std::make_shared<BasicVmEngine>();
     executor = std::make_shared<LocalExecutor>(engine);
   }
 
-  void CreateExecutable(std::string exec_name, SourceFile source_file)
+  PromiseOfResult CreateExecutable(std::string const &exec_name, SourceFile const &source_file)
   {
-    result_promise = executor->CreateExecutable(host, exec_name, {source_file});
+    return executor->CreateExecutable(host, exec_name, {source_file});
   }
-  
-  void RunExecutable(std::string exec_name)
+
+  PromiseOfResult DeleteExecutable(std::string const &exec_name)
   {
-    result_promise = executor->Run(host, exec_name, std::string{}, "main");
+    return executor->DeleteExecutable(host, exec_name);
   }
-  
-  bool OperationSuccessful()
+
+  PromiseOfResult CreateState(std::string const &state_name)
   {
-    result = result_promise.Get();
+    return executor->CreateState(host, state_name);
+  }
+
+  PromiseOfResult DeleteState(std::string const &state_name)
+  {
+    return executor->DeleteState(host, state_name);
+  }
+
+  PromiseOfResult RunExecutable(std::string const &exec_name, std::string const &state_name)
+  {
+    return executor->Run(host, exec_name, state_name, "main");
+  }
+
+  bool IsSuccessfullyFulfilled(PromiseOfResult &promise)
+  {
+    result = promise.Get();
     return result.succeeded() && result.console().empty() && result.output().type_id == Unknown;
   }
 
-  bool OperationSuccessfulWithOutput(std::string output)
+  bool IsSuccessfullyFulfilledWithOutput(PromiseOfResult &promise, std::string const &output)
   {
-    result = result_promise.Get();
+    result = promise.Get();
     return result.succeeded() && result.console() == output && result.output().type_id == Unknown;
   }
-
 };
+
+TEST_F(LocalExecutorTests, create_state)
+{
+  result_promise = CreateState("State");
+  ASSERT_TRUE(IsSuccessfullyFulfilled(result_promise));
+
+  result_promise = CreateState("State");
+  ASSERT_FALSE(IsSuccessfullyFulfilled(result_promise));
+}
+
+TEST_F(LocalExecutorTests, delete_state)
+{
+  result_promise = DeleteState("State");
+  ASSERT_FALSE(IsSuccessfullyFulfilled(result_promise));
+
+  CreateState("State").Wait();
+  result_promise = DeleteState("State");
+  ASSERT_TRUE(IsSuccessfullyFulfilled(result_promise));
+}
 
 TEST_F(LocalExecutorTests, create_executable)
 {
-  CreateExecutable("HelloWorld", SourceFile{"hello_world.etch", hello_world_etch});
-  ASSERT_TRUE(OperationSuccessful());
+  result_promise = CreateExecutable("HelloWorld", SourceFile{"hello_world.etch", hello_world_etch});
+  ASSERT_TRUE(IsSuccessfullyFulfilled(result_promise));
+
+  result_promise = CreateExecutable("HelloWorld", SourceFile{"hello_world.etch", hello_world_etch});
+  ASSERT_FALSE(IsSuccessfullyFulfilled(result_promise));
+}
+
+TEST_F(LocalExecutorTests, delete_executable)
+{
+  result_promise = DeleteExecutable("HelloWorld");
+  ASSERT_FALSE(IsSuccessfullyFulfilled(result_promise));
+
+  CreateExecutable("HelloWorld", SourceFile{"hello_world.etch", hello_world_etch}).Wait();
+  result_promise = DeleteExecutable("HelloWorld");
+  ASSERT_TRUE(IsSuccessfullyFulfilled(result_promise));
 }
 
 TEST_F(LocalExecutorTests, void_function_void)
 {
-  CreateExecutable("HelloWorld", SourceFile{"hello_world.etch", hello_world_etch});
-  RunExecutable("HelloWorld");
-  ASSERT_TRUE(OperationSuccessfulWithOutput(hello_world_etch_output));
+  CreateExecutable("HelloWorld", SourceFile{"hello_world.etch", hello_world_etch}).Wait();
+  CreateState("State").Wait();
+
+  result_promise = RunExecutable("HelloWorld", "State");
+  ASSERT_TRUE(IsSuccessfullyFulfilledWithOutput(result_promise, hello_world_etch_output));
 }
 }  // namespace
