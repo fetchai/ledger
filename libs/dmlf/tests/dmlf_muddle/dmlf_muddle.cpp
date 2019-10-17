@@ -107,7 +107,7 @@ public:
   std::shared_ptr<RemoteExecutionHost> host_;
   ExecutionEngineInterfacePtr          exec_;
   std::shared_ptr<Server>              server_;
-  ServerHalf(ExecutionEngineInterfacePtr exec = ExecutionEngineInterfacePtr())
+  explicit ServerHalf(ExecutionEngineInterfacePtr exec = ExecutionEngineInterfacePtr())
     : exec_(exec)
   {
     auto ident = LoadIdentity(SERVER_PRIV);

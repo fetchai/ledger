@@ -37,28 +37,16 @@ public:
   using Name                  = ExecutionInterface::Name;
 
   ExecutionWorkload(Respondent respondent, OpIdent op_id, Name state_name, Worker worker)
-    : respondent_(respondent)
-    , op_id_(op_id)
-    , state_name_(state_name)
-    , worker_(worker)
+    : respondent_(std::move(respondent))
+    , op_id_(std::move(op_id))
+    , state_name_(std::move(state_name))
+    , worker_(std::move(worker))
   {}
-  virtual ~ExecutionWorkload()
-  {}
+  virtual ~ExecutionWorkload() = default
 
-  ExecutionWorkload(ExecutionWorkload const &other)
-    : respondent_(other.respondent_)
-    , op_id_(other.op_id_)
-    , state_name_(other.state_name_)
-    , worker_(other.worker_)
-  {}
-  ExecutionWorkload &operator=(ExecutionWorkload const &other)
-  {
-    respondent_ = other.respondent_;
-    op_id_      = other.op_id_;
-    state_name_ = other.state_name_;
-    worker_     = other.worker_;
-    return *this;
-  }
+  ExecutionWorkload(ExecutionWorkload const &other) = default;
+  ExecutionWorkload &operator=(ExecutionWorkload const &other) = default
+
   bool operator==(ExecutionWorkload const &other) = delete;
   bool operator<(ExecutionWorkload const &other)  = delete;
 

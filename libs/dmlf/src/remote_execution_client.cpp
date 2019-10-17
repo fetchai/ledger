@@ -28,8 +28,8 @@ using fetch::byte_array::FromBase64;
 
 RemoteExecutionClient::RemoteExecutionClient(RemoteExecutionClient::MuddlePtr    mud,
                                              std::shared_ptr<ExecutionInterface> local)
-  : local_(local)
-  , mud_(mud)
+  : local_(std::move(local))
+  , mud_(std::move(mud))
 {
   client_ = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
 }

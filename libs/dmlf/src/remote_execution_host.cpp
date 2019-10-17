@@ -25,8 +25,8 @@ namespace fetch {
 namespace dmlf {
 
 RemoteExecutionHost::RemoteExecutionHost(MuddlePtr mud, ExecutionInterfacePtr executor)
-  : mud_(mud)
-  , executor_(executor)
+  : mud_(std::move(mud))
+  , executor_(std::move(executor))
 {
   client_ = std::make_shared<RpcClient>("Host", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
 }
@@ -88,7 +88,7 @@ bool RemoteExecutionHost::Run(service::CallContext const &context, OpIdent const
   return true;
 }
 
-bool RemoteExecutionHost::ExecuteOneWorkload(void)
+bool RemoteExecutionHost::ExecuteOneWorkload()
 {
   if (pending_workloads_.empty())
   {

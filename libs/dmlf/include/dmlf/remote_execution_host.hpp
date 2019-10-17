@@ -42,7 +42,7 @@ public:
 
   using PendingWorkloads = std::list<ExecutionWorkload>;
 
-  RemoteExecutionHost(MuddlePtr mud_, ExecutionInterfacePtr executor_);
+  RemoteExecutionHost(MuddlePtr mud, ExecutionInterfacePtr executor);
 
   virtual ~RemoteExecutionHost()
   {}
@@ -52,22 +52,22 @@ public:
   bool                 operator==(RemoteExecutionHost const &other) = delete;
   bool                 operator<(RemoteExecutionHost const &other)  = delete;
 
-  virtual bool CreateExecutable(service::CallContext const &call_context, OpIdent const &op_id,
+  virtual bool CreateExecutable(service::CallContext const &context, OpIdent const &op_id,
                                 Name const &execName, SourceFiles const &sources);
-  virtual bool DeleteExecutable(service::CallContext const &call_context, OpIdent const &op_id,
+  virtual bool DeleteExecutable(service::CallContext const &context, OpIdent const &op_id,
                                 Name const &execName);
 
-  virtual bool CreateState(service::CallContext const &call_context, OpIdent const &op_id,
+  virtual bool CreateState(service::CallContext const &context, OpIdent const &op_id,
                            Name const &stateName);
-  virtual bool CopyState(service::CallContext const &call_context, OpIdent const &op_id,
+  virtual bool CopyState(service::CallContext const &context, OpIdent const &op_id,
                          Name const &srcName, Name const &newName);
-  virtual bool DeleteState(service::CallContext const &call_context, OpIdent const &op_id,
+  virtual bool DeleteState(service::CallContext const &context, OpIdent const &op_id,
                            Name const &stateName);
 
-  virtual bool Run(service::CallContext const &call_context, OpIdent const &op_id,
+  virtual bool Run(service::CallContext const &context, OpIdent const &op_id,
                    Name const &execName, Name const &stateName, std::string const &entrypoint);
 
-  bool ExecuteOneWorkload(void);
+  bool ExecuteOneWorkload();
 
 protected:
 private:
