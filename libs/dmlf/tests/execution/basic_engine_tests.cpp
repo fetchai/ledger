@@ -942,7 +942,7 @@ TEST(BasicVmEngineDmlfTests, Add64)
 
   ExecutionResult result =
       engine.Run("add", "state", "add",
-                    Params{LedgerVariant(0), LedgerVariant(std::numeric_limits<int>::max())});
+                 Params{LedgerVariant(0), LedgerVariant(std::numeric_limits<int>::max())});
   EXPECT_TRUE(result.succeeded());
   std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), std::numeric_limits<int>::max());
@@ -994,8 +994,7 @@ TEST(BasicVmEngineDmlfTests, TrueBoolCompare)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result =
-      engine.Run("compare", "state", "compare", Params{LedgerVariant(true)});
+  ExecutionResult result = engine.Run("compare", "state", "compare", Params{LedgerVariant(true)});
   EXPECT_TRUE(result.succeeded());
   std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 1);
@@ -1011,8 +1010,7 @@ TEST(BasicVmEngineDmlfTests, FalseBoolCompare)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result =
-      engine.Run("compare", "state", "compare", Params{LedgerVariant(false)});
+  ExecutionResult result = engine.Run("compare", "state", "compare", Params{LedgerVariant(false)});
   EXPECT_TRUE(result.succeeded());
   std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 0);

@@ -48,7 +48,8 @@ ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFile
     }
 
     return ExecutionResult{
-        LedgerVariant{}, Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()},
+        LedgerVariant{},
+        Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()},
         "Compilation error: Did not create " + execName};
   }
 
@@ -116,7 +117,7 @@ ExecutionResult BasicVmEngine::DeleteState(Name const &stateName)
 }
 
 ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
-                                      std::string const &entrypoint, Params params)
+                                   std::string const &entrypoint, Params params)
 {
   if (!HasExecutable(execName))
   {
@@ -170,15 +171,16 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
   }
 
   // Run
-  std::string        runTimeError;
-  VmVariant vmOutput;
-  bool               allOK = vm.Execute(*exec, entrypoint, runTimeError, vmOutput, parameterPack);
+  std::string runTimeError;
+  VmVariant   vmOutput;
+  bool        allOK = vm.Execute(*exec, entrypoint, runTimeError, vmOutput, parameterPack);
 
   // Check how it went
   if (!allOK || !runTimeError.empty())
   {
     return ExecutionResult{
-        LedgerVariant{}, Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)},
+        LedgerVariant{},
+        Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)},
         "Error running " + execName + " with state " + stateName};
   }
 
@@ -189,7 +191,8 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
 ExecutionResult BasicVmEngine::EngineError(std::string resultMessage, Error::Code code,
                                            std::string errorMessage) const
 {
-  return ExecutionResult{LedgerVariant(), Error{Error::Stage::ENGINE, code, std::move(errorMessage)},
+  return ExecutionResult{LedgerVariant(),
+                         Error{Error::Stage::ENGINE, code, std::move(errorMessage)},
                          std::move(resultMessage)};
 }
 

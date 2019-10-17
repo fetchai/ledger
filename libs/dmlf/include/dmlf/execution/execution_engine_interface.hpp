@@ -29,12 +29,12 @@ public:
   ExecutionEngineInterface()          = default;
   virtual ~ExecutionEngineInterface() = default;
 
-  using Name        = ExecutionInterface::Name;
-  using SourceFiles = ExecutionInterface::SourceFiles;
-  using Target      = ExecutionInterface::Target;
-  using Variant     = ExecutionInterface::Variant;
+  using Name          = ExecutionInterface::Name;
+  using SourceFiles   = ExecutionInterface::SourceFiles;
+  using Target        = ExecutionInterface::Target;
+  using Variant       = ExecutionInterface::Variant;
   using LedgerVariant = fetch::variant::Variant;
-  using Params      = std::vector<LedgerVariant>;
+  using Params        = std::vector<LedgerVariant>;
 
   virtual ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) = 0;
   virtual ExecutionResult DeleteExecutable(Name const &execName)                             = 0;
@@ -43,8 +43,8 @@ public:
   virtual ExecutionResult CopyState(Name const &srcName, Name const &newName) = 0;
   virtual ExecutionResult DeleteState(Name const &stateName)                  = 0;
 
-  virtual ExecutionResult Run(Name const &execName, Name const &stateName, std::string const &entrypoint,
-                         Params params) = 0;
+  virtual ExecutionResult Run(Name const &execName, Name const &stateName,
+                              std::string const &entrypoint, Params params) = 0;
 };
 
 }  // namespace dmlf

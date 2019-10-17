@@ -41,12 +41,12 @@ public:
   BasicVmEngine(const BasicVmEngine &other) = delete;
   BasicVmEngine &operator=(const BasicVmEngine &other) = delete;
 
-  using Executable    = fetch::vm::Executable;
-  using VmVariant     = fetch::vm::Variant;
-  using VM            = fetch::vm::VM;
-  using VmFactory     = fetch::vm_modules::VMFactory;
-  using State         = VmState;
-  using Error         = ExecutionResult::Error;
+  using Executable = fetch::vm::Executable;
+  using VmVariant  = fetch::vm::Variant;
+  using VM         = fetch::vm::VM;
+  using VmFactory  = fetch::vm_modules::VMFactory;
+  using State      = VmState;
+  using Error      = ExecutionResult::Error;
 
   using TypeId = fetch::vm::TypeId;
 
@@ -58,15 +58,15 @@ public:
   ExecutionResult DeleteState(Name const &stateName) override;
 
   ExecutionResult Run(Name const &execName, Name const &stateName, std::string const &entrypoint,
-                         Params params) override;
+                      Params params) override;
 
 private:
   bool HasExecutable(std::string const &name) const;
   bool HasState(std::string const &name) const;
 
-  bool      Convertable(LedgerVariant const &ledgerVariant, TypeId const &typeId) const;
-  VmVariant Convert(LedgerVariant const &ledgerVariant, TypeId const &typeId) const;
-  LedgerVariant Convert(VmVariant const& vmVariant) const;
+  bool          Convertable(LedgerVariant const &ledgerVariant, TypeId const &typeId) const;
+  VmVariant     Convert(LedgerVariant const &ledgerVariant, TypeId const &typeId) const;
+  LedgerVariant Convert(VmVariant const &vmVariant) const;
 
   ExecutionResult EngineError(std::string resultMessage, Error::Code code,
                               std::string errorMessage) const;
