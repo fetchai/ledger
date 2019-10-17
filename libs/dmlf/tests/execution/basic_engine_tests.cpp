@@ -1007,4 +1007,20 @@ TEST(BasicVmEngineDmlfTests, FalseBoolCompare)
   EXPECT_EQ(result.output().Get<int>(), 0);
 }
 
+TEST(BasicVmEngineDmlfTests, BadParamsTrueIntToFloatCompare)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.NewRun("compare", "state", "compare", Params{fetch::variant::Variant(6.5), fetch::variant::Variant(5)});
+  EXPECT_FALSE(result.succeeded());
+  EXPECT_EQ(result.error().stage(), Stage::ENGINE);
+  EXPECT_EQ(result.error().code() , Code::RUNTIME_ERROR);
+}
+
 }  // namespace

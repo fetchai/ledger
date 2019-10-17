@@ -197,7 +197,8 @@ ExecutionResult BasicVmEngine::NewRun(Name const &execName, Name const &stateNam
 
 		if (!Convertable(params[i], typeId))
 		{
-			return EngineError("Wrong parameters", Error::Code::RUNTIME_ERROR, "Hmph");	
+			return EngineError("Wrong parameters for " + entrypoint, Error::Code::RUNTIME_ERROR
+				, "Error at parameter");// + /*std::toString(i) +*/ " Expected " + func->variables[i].name());	
 		}
     //std::cout <<"GOT " << params[i].As<int>() << '\n';
     //parameterPack.AddSingle(fetch::vm::Variant(params[i].As<int>(), func->variables[i].type_id));
@@ -242,9 +243,34 @@ bool BasicVmEngine::HasState(std::string const &name) const
   return states_.find(name) != states_.end();
 }
 
-bool BasicVmEngine::Convertable(LedgerVariant const& /*ledgerVariant*/, TypeId const& /*typeId*/)
+bool BasicVmEngine::Convertable(LedgerVariant const& ledgerVariant, TypeId const& typeId)
 {
-  return true;
+  switch(typeId)
+  {
+    case fetch::vm::TypeIds::Bool:
+/*
+		{
+			return ledgerVariant.IsBoolean();
+		}
+*/
+    case fetch::vm::TypeIds::Int8:
+    case fetch::vm::TypeIds::UInt8:
+    case fetch::vm::TypeIds::Int16:
+    case fetch::vm::TypeIds::UInt16:
+    case fetch::vm::TypeIds::Int32:
+    case fetch::vm::TypeIds::UInt32:
+    case fetch::vm::TypeIds::Int64:
+    {
+      return ledgerVariant.IsInteger();
+    }
+    case fetch::vm::TypeIds::Float32:
+    case fetch::vm::TypeIds::Float64:
+    {
+      return ledgerVariant.IsFloatingPoint();
+    }
+    default:
+      return false;
+  }
 }
 BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const& ledgerVariant, TypeId const& typeId)
 {
