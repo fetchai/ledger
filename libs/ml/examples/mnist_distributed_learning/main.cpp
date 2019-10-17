@@ -88,11 +88,11 @@ int main(int ac, char **av)
 
   ClientParams<DataType> client_params;
 
-  SizeType number_of_clients                    = 3;
+  SizeType number_of_clients                    = 10;
   SizeType number_of_rounds                     = 10;
   bool     synchronisation                      = false;
   client_params.max_updates                     = 10;
-  SizeType number_of_peers                      = 2;
+  SizeType number_of_peers                      = 3;
   client_params.batch_size                      = 32;
   client_params.learning_rate                   = static_cast<DataType>(.001f);
   float                       test_set_ratio    = 0.03f;

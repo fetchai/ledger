@@ -36,9 +36,7 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::distributed_learning;
 
-// using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
-using DataType = float;
-
+using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;

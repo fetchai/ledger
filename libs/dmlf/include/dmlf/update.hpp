@@ -23,7 +23,6 @@
 #include "crypto/sha256.hpp"
 #include "dmlf/update_interface.hpp"
 #include "ml/distributed_learning/distributed_learning_types.hpp"
-
 #include "ml/utilities/word2vec_utilities.hpp"
 
 #include <chrono>
