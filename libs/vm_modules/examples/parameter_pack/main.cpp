@@ -215,10 +215,13 @@ void SetInputParameters(ExecutionTask &task, Args... args)
   auto          vm = std::make_unique<VM>(module.get());
   ParameterPack params{vm->registered_types(), vm.get()};
 
+  auto args = PrepareArguments(...);
+  auto args = PrepareMsgPackArguments(...);
+
   // Adding parameters
-  if (!params.Add(args...))
+  if (!params.Add(args..., x))
   {
-    throw std::runtime_error("could not pack parameters");
+    throw std::runtime_error("Could not pack parameters.");
   }
 
   // Serializing the parameters
