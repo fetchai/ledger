@@ -47,6 +47,12 @@ class ObjectStoreProtocol;
 class RevertibleDocumentStoreProtocol;
 }  // namespace storage
 
+namespace chain {
+
+class Transaction;
+
+}  // namespace chain
+
 namespace ledger {
 
 class TxFinderProtocol;
@@ -54,7 +60,6 @@ class TransactionStoreSyncProtocol;
 class TransactionStoreSyncService;
 class LaneController;
 class LaneControllerProtocol;
-class Transaction;
 
 class LaneService
 {
@@ -97,8 +102,8 @@ private:
   using ServerPtr                 = std::shared_ptr<Server>;
   using StateDb                   = storage::NewRevertibleDocumentStore;
   using StateDbProto              = storage::RevertibleDocumentStoreProtocol;
-  using TxStore                   = storage::TransientObjectStore<Transaction>;
-  using TxStoreProto              = storage::ObjectStoreProtocol<Transaction>;
+  using TxStore                   = storage::TransientObjectStore<chain::Transaction>;
+  using TxStoreProto              = storage::ObjectStoreProtocol<chain::Transaction>;
   using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;

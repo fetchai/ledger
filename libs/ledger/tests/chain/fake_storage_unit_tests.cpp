@@ -35,11 +35,6 @@ protected:
     storage_ = std::make_unique<FakeStorageUnit>();
   }
 
-  void TearDown() override
-  {
-    storage_.reset();
-  }
-
   void CheckValueIsPresent(char const *key, char const *value)
   {
     auto const result = storage_->Get(ResourceAddress{key});

@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
@@ -49,10 +48,10 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-bool GenerateContractName(Transaction const &tx, Identifier &identifier)
+bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
 {
   // Step 1 - Translate the tx into a common name
-  using ContractMode = Transaction::ContractMode;
+  using ContractMode = chain::Transaction::ContractMode;
 
   ConstByteArray contract_name{};
   switch (tx.contract_mode())
@@ -83,9 +82,9 @@ bool GenerateContractName(Transaction const &tx, Identifier &identifier)
   return true;
 }
 
-bool IsCreateWealth(Transaction const &tx)
+bool IsCreateWealth(chain::Transaction const &tx)
 {
-  return (tx.contract_mode() == Transaction::ContractMode::CHAIN_CODE) &&
+  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
          (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
 }
 
@@ -182,7 +181,7 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
   return result;
 }
 
-void Executor::SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes)
+void Executor::SettleFees(chain::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes)
 {
   telemetry::FunctionTimer const timer{*settle_fees_duration_};
 
@@ -215,7 +214,7 @@ bool Executor::RetrieveTransaction(Digest const &digest)
   try
   {
     // create a new transaction
-    current_tx_ = std::make_unique<Transaction>();
+    current_tx_ = std::make_unique<chain::Transaction>();
 
     // load the transaction from the store
     success = storage_->GetTransaction(digest, *current_tx_);
@@ -242,7 +241,7 @@ bool Executor::ValidationChecks(Result &result)
 
   // CHECK: Determine if the transaction is valid for the given block
   auto const tx_validity = current_tx_->GetValidity(block_);
-  if (Transaction::Validity::VALID != tx_validity)
+  if (chain::Transaction::Validity::VALID != tx_validity)
   {
     result.status = Status::TX_NOT_VALID_FOR_BLOCK;
     return false;

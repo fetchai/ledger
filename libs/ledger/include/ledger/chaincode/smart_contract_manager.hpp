@@ -21,10 +21,14 @@
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
+namespace chain {
+
+class Address;
+
+}  // namespace chain
 namespace ledger {
 
 class Identifier;
-class Address;
 
 class SmartContractManager : public Contract
 {
@@ -39,7 +43,7 @@ public:
 private:
   /// @name Transaction Handlers
   /// @{
-  Result OnCreate(Transaction const &tx, BlockIndex /*index*/);
+  Result OnCreate(chain::Transaction const &tx, BlockIndex /*index*/);
   /// @}
 };
 

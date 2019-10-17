@@ -82,6 +82,8 @@ enum class OpType : uint16_t
   OP_MATRIX_MULTIPLY,
   OP_MAX_POOL_1D,
   OP_MAX_POOL_2D,
+  OP_AVG_POOL_1D,
+  OP_AVG_POOL_2D,
   OP_MAXIMUM,
   OP_MULTIPLY,
   OP_PLACEHOLDER,
@@ -99,6 +101,7 @@ enum class OpType : uint16_t
   OP_VARIABLE,
   OP_WEIGHTS,
   OP_SLICE,
+  OP_SQUEEZE,
 
   // OpKind - LOSS
   LOSS_CROSS_ENTROPY,

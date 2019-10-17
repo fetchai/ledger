@@ -16,26 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/json_transaction.hpp"
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
-#include "core/logging.hpp"
-#include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "core/string/replace.hpp"
 #include "http/json_response.hpp"
-#include "ledger/chain/json_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "json/document.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 
 #include <ctime>
 #include <exception>
 #include <iomanip>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <utility>
 
@@ -45,7 +42,7 @@ namespace {
 
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
-using fetch::ledger::FromJsonTransaction;
+using fetch::chain::FromJsonTransaction;
 using fetch::variant::Variant;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
@@ -87,9 +84,9 @@ std::string GenerateTimestamp()
 bool CreateTxFromJson(Variant const &tx_obj, std::vector<ConstByteArray> &txs,
                       TransactionProcessor &processor)
 {
-  auto tx = std::make_shared<Transaction>();
+  auto tx = std::make_shared<chain::Transaction>();
 
-  if (FromJsonTransaction(tx_obj, *tx))
+  if (chain::FromJsonTransaction(tx_obj, *tx))
   {
     txs.emplace_back(tx->digest());
     processor.AddTransaction(std::move(tx));
@@ -103,9 +100,9 @@ bool CreateTxFromJson(Variant const &tx_obj, std::vector<ConstByteArray> &txs,
 bool CreateTxFromBuffer(ConstByteArray const &encoded_tx, std::vector<ConstByteArray> &txs,
                         TransactionProcessor &processor)
 {
-  auto tx = std::make_shared<Transaction>();
+  auto tx = std::make_shared<chain::Transaction>();
 
-  TransactionSerializer tx_serializer{encoded_tx};
+  chain::TransactionSerializer tx_serializer{encoded_tx};
   if (tx_serializer.Deserialize(*tx))
   {
     txs.emplace_back(tx->digest());
@@ -472,8 +469,7 @@ void ContractHttpInterface::RecordQuery(ConstByteArray const &   contract_name,
 
 void ContractHttpInterface::WriteToAccessLog(variant::Variant const &entry)
 {
-  FETCH_LOCK(access_log_lock_);
-  access_log_ << entry << '\n';
+  access_log_.ApplyVoid([&entry](auto &log) { log << entry << '\n'; });
 }
 
 }  // namespace ledger

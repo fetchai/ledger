@@ -17,7 +17,6 @@ setup_compiler()
 fetch_add_test(p2ptrust_gtest fetch-network p2ptrust)
 fetch_add_test(p2p_gtest fetch-network p2p)
 fetch_add_test(network_peer_gtest fetch-network gtest)
-fetch_add_test(packet_gtest fetch-network packet)
 
 fetch_add_slow_test(thread_pool_gtest fetch-network thread_pool)
 

@@ -91,9 +91,9 @@ public:
    * constructs a state dictionary used for exporting/saving weights
    * @return
    */
-  struct fetch::ml::StateDict<T> StateDict() const override
+  fetch::ml::StateDict<T> StateDict() const override
   {
-    struct fetch::ml::StateDict<T> d;
+    fetch::ml::StateDict<T> d;
     d.weights_ = this->data_;
     return d;
   }
@@ -102,8 +102,7 @@ public:
    * load from a state dictionary to import weights
    * @param dict
    */
-  void
-  LoadStateDict(struct fetch::ml::StateDict<T> const &dict) override
+  void LoadStateDict(fetch::ml::StateDict<T> const &dict) override
   {
     assert(dict.dict_.empty());
     this->SetData(*dict.weights_);

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/fetch_mcl.hpp"
 
 #include <array>
@@ -152,4 +153,96 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size
 
 }  // namespace mcl
 }  // namespace crypto
+
+namespace serializers {
+template <typename D>
+struct ArraySerializer<crypto::mcl::Signature, D>
+{
+
+public:
+  using Type       = crypto::mcl::Signature;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(1);
+    array.Append(b.getStr());
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    std::string sig_str;
+    array.GetNextValue(sig_str);
+    bool check;
+    b.setStr(&check, sig_str.data());
+    if (!check)
+    {
+      throw SerializableException(error::TYPE_ERROR,
+                                  std::string("String does not convert to MCL type"));
+    }
+  }
+};
+
+template <typename D>
+struct ArraySerializer<crypto::mcl::PrivateKey, D>
+{
+
+public:
+  using Type       = crypto::mcl::PrivateKey;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(1);
+    array.Append(b.getStr());
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    std::string sig_str;
+    array.GetNextValue(sig_str);
+    bool check;
+    b.setStr(&check, sig_str.data());
+    if (!check)
+    {
+      throw SerializableException(error::TYPE_ERROR,
+                                  std::string("String does not convert to MCL type"));
+    }
+  }
+};
+
+template <typename D>
+struct ArraySerializer<crypto::mcl::PublicKey, D>
+{
+
+public:
+  using Type       = crypto::mcl::PublicKey;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(1);
+    array.Append(b.getStr());
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    std::string sig_str;
+    array.GetNextValue(sig_str);
+    bool check;
+    b.setStr(&check, sig_str.data());
+    if (!check)
+    {
+      throw SerializableException(error::TYPE_ERROR,
+                                  std::string("String does not convert to MCL type"));
+    }
+  }
+};
+}  // namespace serializers
 }  // namespace fetch

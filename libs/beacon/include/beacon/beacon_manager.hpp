@@ -85,7 +85,6 @@ public:
   DkgOutput        GetDkgOutput();
   void             SetDkgOutput(DkgOutput const &output);
   void             SetQual(std::set<MuddleAddress> qual);
-  void             SetGroupPublicKey(PublicKey const &public_key);
   void             NewCabinet(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
   void             Reset();
 
@@ -174,16 +173,14 @@ public:
   {
     auto map = map_constructor(2);
 
-    map.Append(SIGNATURE, member.signature.getStr());
+    map.Append(SIGNATURE, member.signature);
     map.Append(IDENTITY, member.identity);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &member)
   {
-    std::string sig_str;
-    map.ExpectKeyGetValue(SIGNATURE, sig_str);
-    member.signature.setStr(sig_str);
+    map.ExpectKeyGetValue(SIGNATURE, member.signature);
     map.ExpectKeyGetValue(IDENTITY, member.identity);
   }
 };

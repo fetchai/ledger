@@ -16,18 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 #include "vm/address.hpp"
@@ -62,9 +63,9 @@ namespace {
  * @param: tx the transaction triggering the smart contract
  * @param: params the parameters
  */
-void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &params)
+void ValidateAddressesInParams(chain::Transaction const &tx, vm::ParameterPack const &params)
 {
-  std::unordered_set<Address> signing_addresses;
+  std::unordered_set<chain::Address> signing_addresses;
   for (auto const &sig : tx.signatories())
   {
     signing_addresses.insert(sig.address);
@@ -110,6 +111,9 @@ SmartContract::SmartContract(std::string const &source)
 
   module_->CreateFreeFunction("getBlockNumber",
                               [this](vm::VM *) -> BlockIndex { return block_index_; });
+
+  module_->CreateFreeFunction(
+      "getContext", [this](vm::VM *) -> vm_modules::ledger::ContextPtr { return context_; });
 
   // create and compile the executable
   fetch::vm::SourceFiles files  = {{"default.etch", source}};
@@ -292,8 +296,8 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obje
 // TODO(issue 1256): Whole this function can be dropped once the issue is resolved
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  Address address{};
-  if (!Address::Parse(obj.As<ConstByteArray>(), address))
+  chain::Address address{};
+  if (!chain::Address::Parse(obj.As<ConstByteArray>(), address))
   {
     throw std::runtime_error("Unable to parse address");
   }
@@ -444,7 +448,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result SmartContract::InvokeAction(std::string const &name, Transaction const &tx,
+Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Transaction const &tx,
                                              BlockIndex index)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
@@ -484,6 +488,8 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
 
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
+
+  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, index);
 
   // TODO(WK) inject charge limit
   // vm->SetChargeLimit(123);
@@ -554,10 +560,13 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
  * @param owner The owner identity of the contract (i.e. the creator of the contract)
  * @return The corresponding status result for the operation
  */
-Contract::Result SmartContract::InvokeInit(Address const &owner)
+Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
+                                           chain::Transaction const &tx, BlockIndex index)
 {
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
+
+  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, index);
 
   // TODO(WK) inject charge limit
   // vm->SetChargeLimit(123);

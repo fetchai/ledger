@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/block_entropy.hpp"
 #include "core/random/lcg.hpp"
+#include "ledger/consensus/consensus.hpp"
 
 #include <ctime>
 #include <random>
 #include <utility>
-
-#include "beacon/block_entropy.hpp"
-#include "ledger/consensus/consensus.hpp"
 
 /**
  * Consensus enforcement class.
@@ -57,6 +56,8 @@
  * - confirmation threshold  , set to signing threshold
  */
 
+namespace {
+
 constexpr char const *LOGGING_NAME = "Consensus";
 
 using Consensus       = fetch::ledger::Consensus;
@@ -68,7 +69,6 @@ using fetch::ledger::MainChain;
 using fetch::ledger::Block;
 using fetch::beacon::BlockEntropy;
 
-namespace {
 using DRNG = fetch::random::LinearCongruentialGenerator;
 
 std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
@@ -88,6 +88,7 @@ T DeterministicShuffle(T &container, uint64_t entropy)
   std::shuffle(container.begin(), container.end(), rng);
   return container;
 }
+
 }  // namespace
 
 Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
@@ -97,7 +98,7 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain c
   , beacon_{std::move(beacon)}
   , chain_{chain}
   , mining_identity_{std::move(mining_identity)}
-  , mining_address_{Address(mining_identity_)}
+  , mining_address_{chain::Address(mining_identity_)}
   , aeon_period_{aeon_period}
   , max_committee_size_{max_committee_size}
   , block_interval_ms_{block_interval_ms}
@@ -141,7 +142,7 @@ Consensus::CommitteePtr Consensus::GetCommittee(Block const &previous)
   return std::make_shared<Committee>(committee_copy);
 }
 
-bool Consensus::ValidMinerForBlock(Block const &previous, Address const &address)
+bool Consensus::ValidMinerForBlock(Block const &previous, chain::Address const &address)
 {
   auto const committee = GetCommittee(previous);
 
@@ -153,7 +154,7 @@ bool Consensus::ValidMinerForBlock(Block const &previous, Address const &address
 
   return std::find_if((*committee).begin(), (*committee).end(),
                       [&address](Identity const &identity) {
-                        return address == Address(identity);
+                        return address == chain::Address(identity);
                       }) != (*committee).end();
 }
 
@@ -176,7 +177,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
   return ret;
 }
 
-uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Address const &address)
+uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
 {
   auto const committee = GetCommittee(previous);
 
@@ -191,7 +192,7 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Address cons
   // TODO(EJF): Depending on the committee sizes this would need to be improved
   for (auto const &member : *committee)
   {
-    if (address == Address(member))
+    if (address == chain::Address(member))
     {
       break;
     }

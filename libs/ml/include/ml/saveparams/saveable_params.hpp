@@ -19,6 +19,8 @@
 
 #include "ml/meta/ml_type_traits.hpp"
 
+#include <unordered_map>
+
 namespace fetch {
 namespace ml {
 
@@ -308,6 +310,18 @@ struct OpSliceSaveableParams : public OpsSaveableParams
 };
 
 /**
+ * Saveable parameters for Squeeze op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpSqueezeSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+
+  fetch::ml::OpType op_type = OpType::OP_SQUEEZE;
+};
+
+/**
  * Saveable parameters for LeakyRelu op
  * @tparam TensorType
  */
@@ -399,6 +413,22 @@ struct OpMaxPool2DSaveableParams : public OpsSaveableParams
   fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::ml::OpType     op_type     = OpType::OP_MAX_POOL_2D;
+};
+
+template <typename TensorType>
+struct OpAvgPool1DSaveableParams : public OpsSaveableParams
+{
+  fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type     = OpType::OP_AVG_POOL_1D;
+};
+
+template <typename TensorType>
+struct OpAvgPool2DSaveableParams : public OpsSaveableParams
+{
+  fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type     = OpType::OP_AVG_POOL_2D;
 };
 
 /**
