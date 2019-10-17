@@ -36,7 +36,7 @@ using Stage = ExecutionErrorMessage::Stage;
 using Code  = ExecutionErrorMessage::Code;
 
 using LedgerVariant = BasicVmEngine::LedgerVariant;
-using Params = BasicVmEngine::Params;
+using Params        = BasicVmEngine::Params;
 
 auto const helloWorld = R"(
 
@@ -906,7 +906,8 @@ TEST(BasicVmEngineDmlfTests, Add)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.NewRun("add", "state", "add", Params{LedgerVariant(1), LedgerVariant(2)});
+  ExecutionResult result =
+      engine.NewRun("add", "state", "add", Params{LedgerVariant(1), LedgerVariant(2)});
   EXPECT_TRUE(result.succeeded());
   std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().Get<int>(), 3);
@@ -922,7 +923,8 @@ TEST(BasicVmEngineDmlfTests, Add8)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.NewRun("add", "state", "add", Params{LedgerVariant(1), LedgerVariant(2)});
+  ExecutionResult result =
+      engine.NewRun("add", "state", "add", Params{LedgerVariant(1), LedgerVariant(2)});
   EXPECT_TRUE(result.succeeded());
   std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().Get<int>(), 3);
@@ -938,7 +940,9 @@ TEST(BasicVmEngineDmlfTests, Add64)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.NewRun("add", "state", "add", Params{LedgerVariant(0), LedgerVariant(std::numeric_limits<int>::max())});
+  ExecutionResult result =
+      engine.NewRun("add", "state", "add",
+                    Params{LedgerVariant(0), LedgerVariant(std::numeric_limits<int>::max())});
   EXPECT_TRUE(result.succeeded());
   std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().Get<int>(), std::numeric_limits<int>::max());
@@ -948,13 +952,15 @@ TEST(BasicVmEngineDmlfTests, TrueIntToFloatCompare)
 {
   BasicVmEngine engine;
 
-  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
+  ExecutionResult createdProgram =
+      engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
   EXPECT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.NewRun("compare", "state", "compare", Params{LedgerVariant(5), LedgerVariant(6.5)});
+  ExecutionResult result =
+      engine.NewRun("compare", "state", "compare", Params{LedgerVariant(5), LedgerVariant(6.5)});
   EXPECT_TRUE(result.succeeded());
   std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().Get<int>(), 1);
@@ -964,13 +970,15 @@ TEST(BasicVmEngineDmlfTests, FalseIntToFloatCompare)
 {
   BasicVmEngine engine;
 
-  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
+  ExecutionResult createdProgram =
+      engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
   EXPECT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.NewRun("compare", "state", "compare", Params{LedgerVariant(5), LedgerVariant(4.5)});
+  ExecutionResult result =
+      engine.NewRun("compare", "state", "compare", Params{LedgerVariant(5), LedgerVariant(4.5)});
   EXPECT_TRUE(result.succeeded());
   std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().Get<int>(), 0);
@@ -986,7 +994,8 @@ TEST(BasicVmEngineDmlfTests, TrueBoolCompare)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.NewRun("compare", "state", "compare", Params{LedgerVariant(true)});
+  ExecutionResult result =
+      engine.NewRun("compare", "state", "compare", Params{LedgerVariant(true)});
   EXPECT_TRUE(result.succeeded());
   std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().Get<int>(), 1);
@@ -1002,7 +1011,8 @@ TEST(BasicVmEngineDmlfTests, FalseBoolCompare)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.NewRun("compare", "state", "compare", Params{LedgerVariant(false)});
+  ExecutionResult result =
+      engine.NewRun("compare", "state", "compare", Params{LedgerVariant(false)});
   EXPECT_TRUE(result.succeeded());
   std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().Get<int>(), 0);
@@ -1012,23 +1022,26 @@ TEST(BasicVmEngineDmlfTests, BadParamsTrueIntToFloatCompare)
 {
   BasicVmEngine engine;
 
-  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
+  ExecutionResult createdProgram =
+      engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
   EXPECT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.NewRun("compare", "state", "compare", Params{LedgerVariant(6.5), LedgerVariant(5)});
+  ExecutionResult result =
+      engine.NewRun("compare", "state", "compare", Params{LedgerVariant(6.5), LedgerVariant(5)});
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
-  EXPECT_EQ(result.error().code() , Code::RUNTIME_ERROR);
+  EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
 }
 
 TEST(BasicVmEngineDmlfTests, WrongNumberOfParamsTrueIntToFloatCompare)
 {
   BasicVmEngine engine;
 
-  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
+  ExecutionResult createdProgram =
+      engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
   EXPECT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
@@ -1037,7 +1050,7 @@ TEST(BasicVmEngineDmlfTests, WrongNumberOfParamsTrueIntToFloatCompare)
   ExecutionResult result = engine.NewRun("compare", "state", "compare", Params{LedgerVariant(6.5)});
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
-  EXPECT_EQ(result.error().code() , Code::RUNTIME_ERROR);
+  EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
 }
 
 }  // namespace

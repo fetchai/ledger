@@ -20,9 +20,9 @@
 #include "dmlf/execution/execution_engine_interface.hpp"
 
 #include "dmlf/execution/vm_state.hpp"
+#include "variant/variant.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
-#include "variant/variant.hpp"
 
 #include <memory>
 #include <sstream>
@@ -50,7 +50,7 @@ public:
   using State         = VmState;
   using Error         = ExecutionResult::Error;
 
-  using TypeId        = fetch::vm::TypeId;
+  using TypeId = fetch::vm::TypeId;
 
   ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) override;
   ExecutionResult DeleteExecutable(Name const &execName) override;
@@ -61,15 +61,15 @@ public:
 
   ExecutionResult Run(Name const &execName, Name const &stateName,
                       std::string const &entrypoint) override;
-  ExecutionResult NewRun(Name const &execName, Name const &stateName,
-                      std::string const &entrypoint, Params params);
+  ExecutionResult NewRun(Name const &execName, Name const &stateName, std::string const &entrypoint,
+                         Params params);
 
 private:
   bool HasExecutable(std::string const &name) const;
   bool HasState(std::string const &name) const;
 
-  bool      Convertable(LedgerVariant const& ledgerVariant, TypeId const& typeId);
-  VmVariant Convert(LedgerVariant const& ledgerVariant, TypeId const& typeId);
+  bool      Convertable(LedgerVariant const &ledgerVariant, TypeId const &typeId);
+  VmVariant Convert(LedgerVariant const &ledgerVariant, TypeId const &typeId);
 
   ExecutionResult EngineError(std::string resultMessage, Error::Code code,
                               std::string errorMessage) const;

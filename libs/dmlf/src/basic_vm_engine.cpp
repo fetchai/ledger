@@ -154,7 +154,7 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
 }
 
 ExecutionResult BasicVmEngine::NewRun(Name const &execName, Name const &stateName,
-                                   std::string const &entrypoint, Params params)
+                                      std::string const &entrypoint, Params params)
 {
   if (!HasExecutable(execName))
   {
@@ -177,32 +177,33 @@ ExecutionResult BasicVmEngine::NewRun(Name const &execName, Name const &stateNam
 
   auto const *func = exec->FindFunction(entrypoint);
 
-  if (func == nullptr) 
+  if (func == nullptr)
   {
-    return EngineError("Could not run " + entrypoint, Error::Code::RUNTIME_ERROR, "Error: " + entrypoint +" does not exist");
+    return EngineError("Could not run " + entrypoint, Error::Code::RUNTIME_ERROR,
+                       "Error: " + entrypoint + " does not exist");
   }
 
   auto const numParameters = static_cast<std::size_t>(func->num_parameters);
 
-  if (numParameters != params.size()) 
+  if (numParameters != params.size())
   {
-    return EngineError("Could not run " + entrypoint
-			, Error::Code::RUNTIME_ERROR
-			, "Wrong number of parameters expected " + std::to_string(numParameters) 
-				+ " recieved " + std::to_string(params.size()));
+    return EngineError("Could not run " + entrypoint, Error::Code::RUNTIME_ERROR,
+                       "Wrong number of parameters expected " + std::to_string(numParameters) +
+                           " recieved " + std::to_string(params.size()));
   }
 
   using ParameterPack = fetch::vm::ParameterPack;
   ParameterPack parameterPack(vm.registered_types());
   for (std::size_t i = 0; i < numParameters; ++i)
   {
-		auto const& typeId = func->variables[i].type_id;
+    auto const &typeId = func->variables[i].type_id;
 
-		if (!Convertable(params[i], typeId))
-		{
-			return EngineError("Wrong parameters for " + entrypoint, Error::Code::RUNTIME_ERROR
-				, "Error at parameter " + std::to_string(i) + " Expected " + vm.GetTypeName(typeId));
-		}
+    if (!Convertable(params[i], typeId))
+    {
+      return EngineError(
+          "Wrong parameters for " + entrypoint, Error::Code::RUNTIME_ERROR,
+          "Error at parameter " + std::to_string(i) + " Expected " + vm.GetTypeName(typeId));
+    }
     parameterPack.AddSingle(Convert(params[i], typeId));
   }
 
@@ -244,61 +245,61 @@ bool BasicVmEngine::HasState(std::string const &name) const
   return states_.find(name) != states_.end();
 }
 
-bool BasicVmEngine::Convertable(LedgerVariant const& ledgerVariant, TypeId const& typeId)
+bool BasicVmEngine::Convertable(LedgerVariant const &ledgerVariant, TypeId const &typeId)
 {
-  switch(typeId)
+  switch (typeId)
   {
-    case fetch::vm::TypeIds::Bool:
-		{
-			return ledgerVariant.IsBoolean();
-		}
-    case fetch::vm::TypeIds::Int8:
-    case fetch::vm::TypeIds::UInt8:
-    case fetch::vm::TypeIds::Int16:
-    case fetch::vm::TypeIds::UInt16:
-    case fetch::vm::TypeIds::Int32:
-    case fetch::vm::TypeIds::UInt32:
-    case fetch::vm::TypeIds::Int64:
-    {
-      return ledgerVariant.IsInteger();
-    }
-    case fetch::vm::TypeIds::Float32:
-    case fetch::vm::TypeIds::Float64:
-    {
-      return ledgerVariant.IsFloatingPoint();
-    }
-    default:
-      return false;
+  case fetch::vm::TypeIds::Bool:
+  {
+    return ledgerVariant.IsBoolean();
+  }
+  case fetch::vm::TypeIds::Int8:
+  case fetch::vm::TypeIds::UInt8:
+  case fetch::vm::TypeIds::Int16:
+  case fetch::vm::TypeIds::UInt16:
+  case fetch::vm::TypeIds::Int32:
+  case fetch::vm::TypeIds::UInt32:
+  case fetch::vm::TypeIds::Int64:
+  {
+    return ledgerVariant.IsInteger();
+  }
+  case fetch::vm::TypeIds::Float32:
+  case fetch::vm::TypeIds::Float64:
+  {
+    return ledgerVariant.IsFloatingPoint();
+  }
+  default:
+    return false;
   }
 }
-BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const& ledgerVariant, TypeId const& typeId)
+BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const &ledgerVariant,
+                                                TypeId const &       typeId)
 {
-  switch(typeId)
+  switch (typeId)
   {
-    case fetch::vm::TypeIds::Bool:
-		{
-			return VmVariant(ledgerVariant.As<bool>() != 0, typeId);
-		}
-    case fetch::vm::TypeIds::Int8:
-    case fetch::vm::TypeIds::UInt8:
-    case fetch::vm::TypeIds::Int16:
-    case fetch::vm::TypeIds::UInt16:
-    case fetch::vm::TypeIds::Int32:
-    case fetch::vm::TypeIds::UInt32:
-    case fetch::vm::TypeIds::Int64:
-    {
-      return VmVariant(ledgerVariant.As<int>(), typeId);
-    }
-    case fetch::vm::TypeIds::Float32:
-    case fetch::vm::TypeIds::Float64:
-    {
-      return VmVariant(ledgerVariant.As<double>(), typeId);
-    }
-    default:
-      return VmVariant();
+  case fetch::vm::TypeIds::Bool:
+  {
+    return VmVariant(ledgerVariant.As<bool>() != 0, typeId);
+  }
+  case fetch::vm::TypeIds::Int8:
+  case fetch::vm::TypeIds::UInt8:
+  case fetch::vm::TypeIds::Int16:
+  case fetch::vm::TypeIds::UInt16:
+  case fetch::vm::TypeIds::Int32:
+  case fetch::vm::TypeIds::UInt32:
+  case fetch::vm::TypeIds::Int64:
+  {
+    return VmVariant(ledgerVariant.As<int>(), typeId);
+  }
+  case fetch::vm::TypeIds::Float32:
+  case fetch::vm::TypeIds::Float64:
+  {
+    return VmVariant(ledgerVariant.As<double>(), typeId);
+  }
+  default:
+    return VmVariant();
   }
 }
-
 
 }  // namespace dmlf
 }  // namespace fetch
