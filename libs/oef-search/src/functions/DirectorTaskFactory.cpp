@@ -72,6 +72,7 @@ void DirectorTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCha
       IOefTaskFactory::read(update, data, data.size - data.current);
       FETCH_LOG_INFO(LOGGING_NAME, "Got peer: ", update.ShortDebugString());
 
+      uint16_t count = 0;
       for(const auto& upd : update.actions())
       {
         if (upd.operator_() == "ADD_PEER"
@@ -82,9 +83,14 @@ void DirectorTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCha
         }
         else
         {
+          ++count;
           FETCH_LOG_WARN(LOGGING_NAME, "Got invalid peer update: ", upd.ShortDebugString());
         }
       }
+
+      auto status = std::make_shared<Successfulness>();
+      status->set_success(count==0);
+      SendReply<Successfulness>("", current_uri, std::move(status), endpoint);
     }
     catch (std::exception &e) {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());

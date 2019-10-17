@@ -389,7 +389,7 @@ public:
           auto core = proto->query_field_value().v_s(0);
           FETCH_LOG_INFO(LOGGING_NAME, "Got address response: ", proto->ShortDebugString());
           Uri uri(core);
-          auto resp = std::make_pair(uri.proto, uri.host+":"+std::to_string(uri.port));
+          auto resp = std::make_pair(uri.proto, "tcp://"+uri.host+":"+std::to_string(uri.port));
           response->set(std::move(resp));
           if (proto->query_field_value().v_s_size()>1)
           {
