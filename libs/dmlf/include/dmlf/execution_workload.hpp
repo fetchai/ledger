@@ -42,13 +42,12 @@ public:
     , state_name_(std::move(state_name))
     , worker_(std::move(worker))
   {}
-  virtual ~ExecutionWorkload() = default
+  virtual ~ExecutionWorkload() = default;
 
-      ExecutionWorkload(ExecutionWorkload const &other) = default;
-  ExecutionWorkload &operator=(ExecutionWorkload const &other) = default
+  ExecutionWorkload(ExecutionWorkload const &other) = default;
+  ExecutionWorkload &operator=(ExecutionWorkload const &other) = default;
 
-      bool
-       operator==(ExecutionWorkload const &other) = delete;
+  bool operator==(ExecutionWorkload const &other) = delete;
   bool operator<(ExecutionWorkload const &other)  = delete;
 
 protected:
