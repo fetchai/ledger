@@ -197,6 +197,7 @@ TEST_F(MuddleLearnerNetworkerTests, test1)
     }
   }
 
+  usleep(1000);
   p3.Wait();
   auto res = p3.Get();
 
