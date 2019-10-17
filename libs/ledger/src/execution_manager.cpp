@@ -342,16 +342,12 @@ void ExecutionManager::Stop()
 
 void ExecutionManager::SetLastProcessedBlock(Digest hash)
 {
-  state_.ApplyVoid([&hash](Summary &summary) {
-    summary.last_block_hash = std::move(hash);
-  });
+  state_.ApplyVoid([&hash](Summary &summary) { summary.last_block_hash = std::move(hash); });
 }
 
 Digest ExecutionManager::LastProcessedBlock()
 {
-  return state_.Apply([](Summary const &summary) {
-    return summary.last_block_hash;
-  });
+  return state_.Apply([](Summary const &summary) { return summary.last_block_hash; });
 }
 
 ExecutionManager::State ExecutionManager::GetState()
@@ -603,9 +599,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
           if (!idle_executors_.empty())
           {
             // lookup the last block miner
-            chain::Address const last_block_miner = state_.Apply([](Summary const &summary) {
-              return summary.last_block_miner;
-            });
+            chain::Address const last_block_miner =
+                state_.Apply([](Summary const &summary) { return summary.last_block_miner; });
 
             // get the first one and settle the fees
             idle_executors_.front()->SettleFees(last_block_miner, aggregate_block_fees,

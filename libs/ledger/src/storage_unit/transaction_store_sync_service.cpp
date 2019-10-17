@@ -324,7 +324,6 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
     return State::QUERY_SUBTREE;
   }
 
-
   FETCH_LOG_INFO(LOGGING_NAME, "Completed sub-tree syncing");
 
   // cleanup
