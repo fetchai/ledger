@@ -200,7 +200,7 @@ TEST_F(MuddleLearnerNetworkerTests, test1)
   p3.Wait();
   auto res = p3.Get();
 
-  EXPECT_EQ(res.output().As<int>(), 4);
+  EXPECT_EQ(res.output().Get<int>(), 4);
 }
 }  // namespace dmlf
 }  // namespace fetch

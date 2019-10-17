@@ -19,9 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "dmlf/execution/execution_result.hpp"
-#include "network/generics/promise_of.hpp"
 #include "vm/common.hpp"
-#include "vm/variant.hpp"
 
 #include <functional>
 #include <ostream>
