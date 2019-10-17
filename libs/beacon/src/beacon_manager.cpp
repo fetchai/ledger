@@ -612,8 +612,9 @@ bool BeaconManager::VerifySignatureShare(MessagePayload const &message, Signatur
 bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
                            MessagePayload const &            message,
                            byte_array::ConstByteArray const &signature)
-                           {
-  if (group_public_key.empty() || message.empty() || signature.empty()) {
+{
+  if (group_public_key.empty() || message.empty() || signature.empty())
+  {
     return false;
   }
 
@@ -623,11 +624,13 @@ bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
   // Check strings deserialise into correct MCL types
   bool check_deserialisation;
   tmp.setStr(&check_deserialisation, std::string(group_public_key).data());
-  if (check_deserialisation) {
+  if (check_deserialisation)
+  {
     tmp2.setStr(&check_deserialisation, std::string(signature).data());
   }
 
-  if (!check_deserialisation) {
+  if (!check_deserialisation)
+  {
     return false;
   }
 }
