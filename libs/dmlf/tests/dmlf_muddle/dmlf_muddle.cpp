@@ -169,15 +169,19 @@ public:
 
   void SetUp() override
   {
+    usleep(1000);
     iface  = std::make_shared<DummyExecutionInterface>();
+    usleep(1000);
     server = std::make_shared<ServerHalf>(iface);
+    usleep(1000);
     client = std::make_shared<ClientHalf>();
+    usleep(1000);
   }
 };
 
 TEST_F(MuddleLearnerNetworkerTests, test1)
 {
-
+  usleep(1000);
   while (server->mud_->GetNumDirectlyConnectedPeers() < 1)
   {
     usleep(1000);
