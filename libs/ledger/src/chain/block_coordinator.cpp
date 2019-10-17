@@ -614,6 +614,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     }
   }
 
+  // TODO(JMW): Check notarisation is correct
+
   // reset the tx wait period
   tx_wait_periodic_.Reset();
 
