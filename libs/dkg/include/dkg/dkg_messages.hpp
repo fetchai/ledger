@@ -53,6 +53,7 @@ public:
     COEFFICIENT,
     SHARE,
     COMPLAINT,
+    NOTARISATION_KEY,
     FINAL_STATE
   };
 
@@ -233,6 +234,43 @@ public:
     return complaints_;
   }
   ///@}
+};
+
+class NotarisationKeyMessage : public DKGMessage
+{
+  using NotarisationKey       = byte_array::ConstByteArray;
+  using ECDSASignature        = byte_array::ConstByteArray;
+  using SignedNotarisationKey = std::pair<NotarisationKey, ECDSASignature>;
+
+  SignedNotarisationKey payload_;
+
+public:
+  explicit NotarisationKeyMessage(DKGSerializer &serialiser)
+    : DKGMessage{MessageType::NOTARISATION_KEY}
+  {
+    serialiser >> payload_;
+  }
+  explicit NotarisationKeyMessage(SignedNotarisationKey const &payload)
+    : DKGMessage{MessageType::NOTARISATION_KEY}
+    , payload_{payload}
+  {}
+  ~NotarisationKeyMessage() override = default;
+
+  DKGSerializer Serialize() const override
+  {
+    DKGSerializer serializer;
+    serializer << payload_;
+    return serializer;
+  }
+
+  NotarisationKey PublicKey() const
+  {
+    return payload_.first;
+  }
+  ECDSASignature Signature() const
+  {
+    return payload_.second;
+  };
 };
 
 class DKGEnvelope

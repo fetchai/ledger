@@ -58,12 +58,13 @@ BeaconSetupService::ReliableChannelPtr BeaconSetupService::ReliableBroadcastFact
 
 BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
                                        ManifestCacheInterface &manifest_cache,
-                                       CertificatePtr          certificate)
+                                       CertificatePtr certificate, NotarisationPtr notarisation)
   : identity_{std::move(identity)}
   , manifest_cache_{manifest_cache}
   , muddle_{muddle}
   , endpoint_{muddle_.GetEndpoint()}
   , shares_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
+  , notarisation_{std::move(notarisation)}
   , certificate_{std::move(certificate)}
   , rbc_{ReliableBroadcastFactory()}
   , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
@@ -100,6 +101,8 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   state_machine_->RegisterHandler(State::WAIT_FOR_QUAL_COMPLAINTS, this, &BeaconSetupService::OnWaitForQualComplaints);
   state_machine_->RegisterHandler(State::WAIT_FOR_RECONSTRUCTION_SHARES, this, &BeaconSetupService::OnWaitForReconstructionShares);
   state_machine_->RegisterHandler(State::COMPUTE_PUBLIC_SIGNATURE, this, &BeaconSetupService::OnComputePublicSignature);
+  state_machine_->RegisterHandler(State::GENERATE_NOTARISATION_KEY, this, &BeaconSetupService::OnGenerateNotarisationKey);
+  state_machine_->RegisterHandler(State::WAIT_FOR_NOTARISATION_KEYS, this, &BeaconSetupService::OnWaitForNotarisationKeys);
   state_machine_->RegisterHandler(State::DRY_RUN_SIGNING, this, &BeaconSetupService::OnDryRun);
   state_machine_->RegisterHandler(State::BEACON_READY, this, &BeaconSetupService::OnBeaconReady);
   // clang-format on
@@ -641,8 +644,44 @@ BeaconSetupService::State BeaconSetupService::OnComputePublicSignature()
 
   beacon_->manager.ComputePublicKeys();
 
-  SetTimeToProceed(State::DRY_RUN_SIGNING);
-  return State::DRY_RUN_SIGNING;
+  SetTimeToProceed(State::GENERATE_NOTARISATION_KEY);
+  return State::GENERATE_NOTARISATION_KEY;
+}
+
+BeaconSetupService::State BeaconSetupService::OnGenerateNotarisationKey()
+{
+  if (notarisation_)
+  {
+    ConstByteArray notarisation_public_key = notarisation_->GenerateKeys();
+    ConstByteArray signature               = certificate_->Sign(notarisation_public_key);
+
+    // Insert own signed notarisation key into entropy cabinet details
+    auto signed_notarisation_key = std::make_pair(notarisation_public_key, signature);
+    beacon_->block_entropy.member_details.insert(
+        {certificate_->identity().identifier(), signed_notarisation_key});
+    SendBroadcast(DKGEnvelope{NotarisationKeyMessage{signed_notarisation_key}});
+    SetTimeToProceed(State::WAIT_FOR_NOTARISATION_KEYS);
+    return State::WAIT_FOR_NOTARISATION_KEYS;
+  }
+  else
+  {
+    SetTimeToProceed(State::DRY_RUN_SIGNING);
+    return State::DRY_RUN_SIGNING;
+  }
+}
+
+BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
+{
+  if (beacon_->block_entropy.member_details.size() == beacon_->manager.qual().size())
+  {
+    SetTimeToProceed(State::DRY_RUN_SIGNING);
+    return State::DRY_RUN_SIGNING;
+  }
+  else if (timer_to_proceed_.HasExpired())
+  {
+    // TODO: If we do not have enough notarisation keys (how many is enough?) then we should reset?
+    return State::RESET;
+  }
 }
 
 /**
@@ -933,6 +972,20 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &              from,
       OnComplaints(*complaint_ptr, from);
     }
     break;
+  }
+  case DKGMessage::MessageType::NOTARISATION_KEY:
+  {
+    auto ptr = std::dynamic_pointer_cast<NotarisationKeyMessage>(msg_ptr);
+    if (ptr != nullptr)
+    {
+      auto iter = beacon_->block_entropy.member_details.find(from);
+      if (iter == beacon_->block_entropy.member_details.end() &&
+          crypto::Verifier::Verify(Identity(from), ptr->PublicKey(), ptr->Signature()))
+      {
+        beacon_->block_entropy.member_details.insert(
+            {from, std::make_pair(ptr->PublicKey(), ptr->Signature())});
+      }
+    }
   }
   case DKGMessage::MessageType::FINAL_STATE:
   {
@@ -1363,7 +1416,10 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
   time_slot_map[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
-  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
+  // TODO(JMW): Fix this!
+  time_slot_map[BeaconSetupService::State::GENERATE_NOTARISATION_KEY]  = 10;
+  time_slot_map[BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS] = 10;
+  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]            = 10;
 
   time_slot_for_state = time_slot_map[state];
 
@@ -1488,6 +1544,12 @@ char const *ToString(BeaconSetupService::State state)
     break;
   case BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE:
     text = "Compute the group public signature";
+    break;
+  case BeaconSetupService::State::GENERATE_NOTARISATION_KEY:
+    text = "Generate notarisation keys";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS:
+    text = "Waiting for notarisation keys";
     break;
   case BeaconSetupService::State::DRY_RUN_SIGNING:
     text = "Dry run of signing a seed value";

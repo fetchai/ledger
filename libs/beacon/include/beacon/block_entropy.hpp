@@ -28,19 +28,25 @@ namespace beacon {
 
 struct BlockEntropy : public BlockEntropyInterface
 {
-  using MuddleAddress   = byte_array::ConstByteArray;
-  using GroupPublicKey  = byte_array::ConstByteArray;
-  using MemberPublicKey = byte_array::ConstByteArray;
-  using MemberSignature = byte_array::ConstByteArray;
-  using Confirmations   = std::map<MemberPublicKey, MemberSignature>;
-  using GroupSignature  = byte_array::ConstByteArray;
-  using Cabinet         = std::set<MuddleAddress>;
+  using MuddleAddress         = byte_array::ConstByteArray;
+  using GroupPublicKey        = byte_array::ConstByteArray;
+  using MemberPublicKey       = byte_array::ConstByteArray;
+  using MemberSignature       = byte_array::ConstByteArray;
+  using Confirmations         = std::map<MemberPublicKey, MemberSignature>;
+  using GroupSignature        = byte_array::ConstByteArray;
+  using NotarisationKey       = byte_array::ConstByteArray;
+  using ECDSASignature        = byte_array::ConstByteArray;
+  using Cabinet               = std::set<MuddleAddress>;
+  using SignedNotarisationKey = std::pair<NotarisationKey, ECDSASignature>;
+  using CabinetMemberDetails  = std::unordered_map<MuddleAddress, SignedNotarisationKey>;
 
   BlockEntropy();
   BlockEntropy(BlockEntropy const &rhs);
 
-  // The members who succeeded DKG and are qualified to produce blocks (when new committee)
-  Cabinet qualified;
+  // When new committee, block contains muddle address of those who suceeded the DKG and
+  // are qualified to produce blocks, and notarisation key (signed)
+  Cabinet              qualified;
+  CabinetMemberDetails member_details{};
 
   // The group public key (when new committee)
   GroupPublicKey group_public_key;
@@ -82,6 +88,7 @@ public:
   static uint8_t const BLOCK_NUMBER     = 3;
   static uint8_t const CONFIRMATIONS    = 4;
   static uint8_t const GROUP_SIGNATURE  = 5;
+  static uint8_t const MEMBER_DETAILS   = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &member)
@@ -93,6 +100,7 @@ public:
     map.Append(BLOCK_NUMBER, member.block_number);
     map.Append(CONFIRMATIONS, member.confirmations);
     map.Append(GROUP_SIGNATURE, member.group_signature);
+    map.Append(MEMBER_DETAILS, member.member_details);
   }
 
   template <typename MapDeserializer>
@@ -103,6 +111,7 @@ public:
     map.ExpectKeyGetValue(BLOCK_NUMBER, member.block_number);
     map.ExpectKeyGetValue(CONFIRMATIONS, member.confirmations);
     map.ExpectKeyGetValue(GROUP_SIGNATURE, member.group_signature);
+    map.ExpectKeyGetValue(MEMBER_DETAILS, member.member_details);
   }
 };
 }  // namespace serializers

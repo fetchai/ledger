@@ -26,7 +26,8 @@
 namespace fetch {
 namespace ledger {
 
-char const *StateToString(NotarisationService::State state);
+char const *                   StateToString(NotarisationService::State state);
+NotarisationService::Generator NotarisationService::generator_;
 
 NotarisationService::NotarisationService(MuddleInterface &muddle, MainChain &main_chain,
                                          CertificatePtr certificate)
@@ -43,12 +44,20 @@ NotarisationService::NotarisationService(MuddleInterface &muddle, MainChain &mai
   rpc_server_->Add(RPC_NOTARISATION, &notarisation_protocol_);
 
   // clang-format off
-      state_machine_->RegisterHandler(State::KEY_ROTATION, this, &NotarisationService::OnKeyRotation);
-      state_machine_->RegisterHandler(State::NOTARISATION_SYNCHRONISATION, this, &NotarisationService::OnNotarisationSynchronisation);
-      state_machine_->RegisterHandler(State::COLLECT_NOTARISATIONS, this, &NotarisationService::OnCollectNotarisations);
-      state_machine_->RegisterHandler(State::VERIFY_NOTARISATIONS, this, &NotarisationService::OnVerifyNotarisations);
-      state_machine_->RegisterHandler(State::COMPLETE, this, &NotarisationService::OnComplete);
+  state_machine_->RegisterHandler(State::KEY_ROTATION, this, &NotarisationService::OnKeyRotation);
+  state_machine_->RegisterHandler(State::NOTARISATION_SYNCHRONISATION, this, &NotarisationService::OnNotarisationSynchronisation);
+  state_machine_->RegisterHandler(State::COLLECT_NOTARISATIONS, this, &NotarisationService::OnCollectNotarisations);
+  state_machine_->RegisterHandler(State::VERIFY_NOTARISATIONS, this, &NotarisationService::OnVerifyNotarisations);
+  state_machine_->RegisterHandler(State::COMPLETE, this, &NotarisationService::OnComplete);
   // clang-format on
+
+  static std::once_flag flag;
+
+  std::call_once(flag, []() {
+    fetch::crypto::mcl::details::MCLInitialiser();
+    generator_.clear();
+    crypto::mcl::SetGenerator(generator_);
+  });
 }
 
 NotarisationService::State NotarisationService::OnKeyRotation()
@@ -331,6 +340,13 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
 
   // Set highest notarised block rank for this block height
   previous_notarisation_rank_[block.block_number] = miner_rank;
+}
+
+NotarisationService::ConstByteArray NotarisationService::GenerateKeys()
+{
+  auto keys    = crypto::mcl::GeneratePublicPrivateKeys(generator_);
+  private_key_ = keys.first;
+  return keys.second.getStr();
 }
 
 std::vector<std::weak_ptr<core::Runnable>> NotarisationService::GetWeakRunnables()

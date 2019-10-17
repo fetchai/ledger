@@ -21,6 +21,7 @@
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
 #include "dkg/dkg_messages.hpp"
+#include "ledger/protocols/notarisation_service.hpp"
 #include "moment/clocks.hpp"
 #include "moment/deadline_timer.hpp"
 #include "muddle/muddle_endpoint.hpp"
@@ -74,6 +75,8 @@ public:
     WAIT_FOR_QUAL_COMPLAINTS,
     WAIT_FOR_RECONSTRUCTION_SHARES,
     COMPUTE_PUBLIC_SIGNATURE,
+    GENERATE_NOTARISATION_KEY,
+    WAIT_FOR_NOTARISATION_KEYS,
     DRY_RUN_SIGNING,
     BEACON_READY
   };
@@ -102,6 +105,7 @@ public:
   using DKGEnvelope             = dkg::DKGEnvelope;
   using ComplaintsMessage       = dkg::ComplaintsMessage;
   using FinalStateMessage       = dkg::FinalStateMessage;
+  using NotarisationKeyMessage  = dkg::NotarisationKeyMessage;
   using CoefficientsMessage     = dkg::CoefficientsMessage;
   using ConnectionsMessage      = dkg::ConnectionsMessage;
   using SharesMessage           = dkg::SharesMessage;
@@ -114,9 +118,12 @@ public:
   using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
   using CertificatePtr          = std::shared_ptr<dkg::BeaconManager::Certificate>;
   using Clock                   = moment::ClockPtr;
+  using NotarisationService     = ledger::NotarisationService;
+  using NotarisationPtr         = std::shared_ptr<NotarisationService>;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
-                     ManifestCacheInterface &manifest_cache, CertificatePtr certificate);
+                     ManifestCacheInterface &manifest_cache, CertificatePtr certificate,
+                     NotarisationPtr notarisation = nullptr);
   BeaconSetupService(BeaconSetupService const &) = delete;
   BeaconSetupService(BeaconSetupService &&)      = delete;
 
@@ -133,6 +140,8 @@ public:
   State OnWaitForQualComplaints();
   State OnWaitForReconstructionShares();
   State OnComputePublicSignature();
+  State OnGenerateNotarisationKey();
+  State OnWaitForNotarisationKeys();
   State OnDryRun();
   State OnBeaconReady();
   /// @}
@@ -153,6 +162,7 @@ protected:
   MuddleInterface &       muddle_;
   MuddleEndpoint &        endpoint_;
   SubscriptionPtr         shares_subscription_;
+  NotarisationPtr         notarisation_;
 
   CertificatePtr     certificate_;
   ReliableChannelPtr rbc_;

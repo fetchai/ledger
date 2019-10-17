@@ -84,6 +84,9 @@ public:
   using BlockHeightNotarisationShares = std::map<BlockHeight, BlockNotarisationShares>;
   using BlockHeightGroupNotarisations =
       std::map<BlockHeight, std::unordered_map<BlockHash, Signature>>;
+  using NotarisationPublicKey  = crypto::mcl::PublicKey;
+  using NotarisationPrivateKey = crypto::mcl::PrivateKey;
+  using Generator              = crypto::mcl::Generator;
 
   NotarisationService()                            = delete;
   NotarisationService(NotarisationService const &) = delete;
@@ -112,7 +115,8 @@ public:
 
   /// Call to notarise block
   /// @{
-  void NotariseBlock(BlockBody const &block);
+  void           NotariseBlock(BlockBody const &block);
+  ConstByteArray GenerateKeys();
   /// @}
 
   /// Helper function
@@ -139,8 +143,11 @@ private:
   MainChain &chain_;  ///< Ref to system chain
 
   /// Management of active DKG keys
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
-  SharedAeonExecutionUnit             active_exe_unit_;
+  std::deque<SharedAeonExecutionUnit>            aeon_exe_queue_;
+  SharedAeonExecutionUnit                        active_exe_unit_;
+  std::set<MuddleAddress, NotarisationPublicKey> notarisation_public_keys_;
+  NotarisationPrivateKey                         private_key_;
+  static Generator                               generator_;
 
   /// @{Notarisations
   BlockHeightNotarisationShares
