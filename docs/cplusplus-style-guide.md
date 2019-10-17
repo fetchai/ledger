@@ -2,6 +2,22 @@
 
 We use C++14, but currently consider C++17 too immature for usage.
 
+This documents contains guidelines regarding:
+
+* File structure
+* Comments and documentation
+* Tests
+* Naming
+* Formatting
+* Typing
+* Namespaces
+* Structs
+* Classes
+* Error handling
+* Memory handling
+* Resource handling
+* Other
+
 
 ## File structure
 
