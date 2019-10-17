@@ -41,6 +41,8 @@ public:
   virtual ~OutboundSearchConversationWorkerTask()
   {}
 
+  friend class OutboundSearchConversationCreator;
+
 protected:
   std::shared_ptr<OutboundConversations> outbounds_;
 
@@ -62,7 +64,6 @@ protected:
   virtual bool connect() override
   {
     if (OutboundConversationWorkerTask::connect())
-
     {
       register_address();
       return true;
@@ -83,6 +84,8 @@ OutboundSearchConversationCreator::OutboundSearchConversationCreator(
   worker->SetThreadGroupId(0);
 
   worker->submit();
+
+  worker->connect();
 }
 
 OutboundSearchConversationCreator::~OutboundSearchConversationCreator()
