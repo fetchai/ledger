@@ -21,7 +21,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "dmlf/execution/execution_error_message.hpp"
 #include "network/generics/promise_of.hpp"
-#include "vm/variant.hpp"
+#include "variant/variant.hpp"
 
 namespace fetch {
 namespace dmlf {

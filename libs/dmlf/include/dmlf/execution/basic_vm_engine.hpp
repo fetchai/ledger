@@ -42,6 +42,7 @@ public:
   BasicVmEngine &operator=(const BasicVmEngine &other) = delete;
 
   using Executable = fetch::vm::Executable;
+  using LedgerVariant = ExecutionEngineInterface::Variant;
   using VmVariant  = fetch::vm::Variant;
   using VM         = fetch::vm::VM;
   using VmFactory  = fetch::vm_modules::VMFactory;

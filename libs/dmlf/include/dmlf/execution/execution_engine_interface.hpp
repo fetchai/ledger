@@ -33,8 +33,7 @@ public:
   using SourceFiles   = ExecutionInterface::SourceFiles;
   using Target        = ExecutionInterface::Target;
   using Variant       = ExecutionInterface::Variant;
-  using LedgerVariant = fetch::variant::Variant;
-  using Params        = std::vector<LedgerVariant>;
+  using Params        = std::vector<Variant>;
 
   virtual ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) = 0;
   virtual ExecutionResult DeleteExecutable(Name const &execName)                             = 0;
