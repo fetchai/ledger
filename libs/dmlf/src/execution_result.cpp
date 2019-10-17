@@ -23,12 +23,15 @@ namespace dmlf {
 
 ExecutionResult ExecutionResult::MakeSuccess()
 {
-  return ExecutionResult{Variant{}, Error{ErrorStage::ENGINE, ErrorCode::SUCCESS, std::string{}}, std::string{}};
+  return ExecutionResult{Variant{}, Error{ErrorStage::ENGINE, ErrorCode::SUCCESS, std::string{}},
+                         std::string{}};
 }
 
 ExecutionResult ExecutionResult::MakeIntegerResult(int r)
 {
-  return ExecutionResult{Variant{r, vm::TypeIds::Int32}, Error{ErrorStage::ENGINE, ErrorCode::SUCCESS, std::string{}}, std::string{}};
+  return ExecutionResult{Variant{r, vm::TypeIds::Int32},
+                         Error{ErrorStage::ENGINE, ErrorCode::SUCCESS, std::string{}},
+                         std::string{}};
 }
 
 ExecutionResult::PromiseOfResult ExecutionResult::MakePromise()
