@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter.hpp"
+#include "bloom_filter/bloom_filter.hpp"
+#include "chain/constants.hpp"
+#include "chain/transaction_layout.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
 #include "fake_block_sink.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
-#include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/transaction_layout.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
@@ -44,6 +44,7 @@
 namespace {
 
 using namespace fetch::ledger;
+using namespace fetch::chain;
 
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
@@ -63,7 +64,7 @@ using BlockPtr            = std::shared_ptr<Block>;
 using ScheduleStatus      = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
 using State               = fetch::ledger::BlockCoordinator::State;
-using AddressPtr          = std::unique_ptr<Address>;
+using AddressPtr          = std::unique_ptr<fetch::chain::Address>;
 using DAGPtr              = BlockCoordinator::DAGPtr;
 using BeaconServicePtr    = std::shared_ptr<fetch::beacon::BeaconService>;
 using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManager>;
@@ -87,7 +88,7 @@ protected:
     // generate a public/private key pair
     auto signer = std::make_shared<ECDSASigner>();
 
-    address_           = std::make_unique<Address>(signer->identity());
+    address_           = std::make_unique<fetch::chain::Address>(signer->identity());
     main_chain_        = std::make_unique<MainChain>(false, MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<StrictMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<StrictMock<MockExecutionManager>>(storage_unit_->fake);
@@ -285,7 +286,7 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
 
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -351,7 +352,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b3));
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   {
     InSequence s;
@@ -652,7 +653,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -740,7 +741,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -831,7 +832,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -928,7 +929,7 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);

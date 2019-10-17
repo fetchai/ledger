@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "bloom_filter/bloom_filter.hpp"
+#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/assert.hpp"
-#include "core/bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block_db_record.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -189,7 +189,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
 
   DbRecord record;
 
-  if (block->body.previous_hash != GENESIS_DIGEST)
+  if (block->body.previous_hash != chain::GENESIS_DIGEST)
   {
     // notify stored parent
     if (block_store_->Get(storage::ResourceID(block->body.previous_hash), record))
@@ -200,7 +200,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
         block_store_->Set(storage::ResourceID(record.hash()), record);
       }
       // before checking for this block's children in storage, reset next_hash to genesis
-      record.next_hash = GENESIS_DIGEST;
+      record.next_hash = chain::GENESIS_DIGEST;
     }
   }
   record.block = *block;
@@ -422,7 +422,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
   // lookup the heaviest block hash
   for (BlockHash current_hash = std::move(start);
        // exit once we have gathered enough blocks or reached genesis
-       result.size() < limit && current_hash != GENESIS_DIGEST;)
+       result.size() < limit && current_hash != chain::GENESIS_DIGEST;)
   {
     // lookup the block
     auto block = GetBlock(current_hash);
@@ -476,7 +476,7 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
        // check for returned subchain size
        result.size() < lim
        // genesis as the next hash designates the tip of the chain
-       && current_hash != GENESIS_DIGEST
+       && current_hash != chain::GENESIS_DIGEST
        // lookup the block in storage
        && LoadBlock(current_hash, block, &next_hash);
        // walk the stack
@@ -841,7 +841,7 @@ void MainChain::WriteToFile()
   IntBlockPtr block = block_chain_.at(heaviest_.hash);
 
   // skip if the block store is not persistent
-  if (block_store_ && (block->body.block_number >= FINALITY_PERIOD))
+  if (block_store_ && (block->body.block_number >= chain::FINALITY_PERIOD))
   {
     MilliTimer myTimer("MainChain::WriteToFile", 500);
 
@@ -849,7 +849,7 @@ void MainChain::WriteToFile()
 
     // Find the block N back from our heaviest
     bool failed = false;
-    for (std::size_t i = 0; i < FINALITY_PERIOD; ++i)
+    for (std::size_t i = 0; i < chain::FINALITY_PERIOD; ++i)
     {
       if (!LookupBlock(block->body.previous_hash, block))
       {
@@ -868,7 +868,7 @@ void MainChain::WriteToFile()
 
     // This block will now become the head in our file
     // Corner case - block is genesis
-    if (block->body.previous_hash == GENESIS_DIGEST)
+    if (block->body.previous_hash == chain::GENESIS_DIGEST)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
 
@@ -930,7 +930,7 @@ void MainChain::WriteToFile()
  */
 void MainChain::TrimCache()
 {
-  static const uint64_t CACHE_TRIM_THRESHOLD = 2 * FINALITY_PERIOD;
+  static const uint64_t CACHE_TRIM_THRESHOLD = 2 * chain::FINALITY_PERIOD;
   assert(static_cast<bool>(block_store_));
 
   MilliTimer myTimer("MainChain::TrimCache");
@@ -1443,9 +1443,9 @@ bool MainChain::ReindexTips()
 MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 {
   auto genesis                = std::make_shared<Block>();
-  genesis->body.previous_hash = GENESIS_DIGEST;
-  genesis->body.merkle_hash   = GENESIS_MERKLE_ROOT;
-  genesis->body.miner         = Address{crypto::Hash<crypto::SHA256>("")};
+  genesis->body.previous_hash = chain::GENESIS_DIGEST;
+  genesis->body.merkle_hash   = chain::GENESIS_MERKLE_ROOT;
+  genesis->body.miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose           = false;
   genesis->UpdateDigest();
 

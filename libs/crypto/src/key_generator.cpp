@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/ecdsa.hpp"
+#include "logging/logging.hpp"
 
 #include <cstdlib>
 #include <fstream>
