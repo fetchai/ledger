@@ -22,10 +22,12 @@
 #include "dmlf/execution/vm_state.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
+#include "variant/variant.hpp"
 
 #include <memory>
 #include <sstream>
 #include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace dmlf {
@@ -39,11 +41,16 @@ public:
   BasicVmEngine(const BasicVmEngine &other) = delete;
   BasicVmEngine &operator=(const BasicVmEngine &other) = delete;
 
-  using Executable = fetch::vm::Executable;
-  using VM         = fetch::vm::VM;
-  using VmFactory  = fetch::vm_modules::VMFactory;
-  using State      = VmState;
-  using Error      = ExecutionResult::Error;
+  using Executable    = fetch::vm::Executable;
+  using LedgerVariant = fetch::variant::Variant;
+  using VmVariant     = fetch::vm::Variant;
+  using Params        = std::vector<LedgerVariant>;
+  using VM            = fetch::vm::VM;
+  using VmFactory     = fetch::vm_modules::VMFactory;
+  using State         = VmState;
+  using Error         = ExecutionResult::Error;
+
+  using TypeId        = fetch::vm::TypeId;
 
   ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) override;
   ExecutionResult DeleteExecutable(Name const &execName) override;
@@ -54,10 +61,15 @@ public:
 
   ExecutionResult Run(Name const &execName, Name const &stateName,
                       std::string const &entrypoint) override;
+  ExecutionResult NewRun(Name const &execName, Name const &stateName,
+                      std::string const &entrypoint, Params params);
 
 private:
   bool HasExecutable(std::string const &name) const;
   bool HasState(std::string const &name) const;
+
+  bool      Convertable(LedgerVariant const& ledgerVariant, TypeId const& typeId);
+  VmVariant Convert(LedgerVariant const& ledgerVariant, TypeId const& typeId);
 
   ExecutionResult EngineError(std::string resultMessage, Error::Code code,
                               std::string errorMessage) const;

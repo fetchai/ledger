@@ -18,6 +18,7 @@
 
 #include "dmlf/execution/basic_vm_engine.hpp"
 
+#include "vm/common.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
 
@@ -152,6 +153,72 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
                          "Ran " + execName + " with state " + stateName};
 }
 
+ExecutionResult BasicVmEngine::NewRun(Name const &execName, Name const &stateName,
+                                   std::string const &entrypoint, Params params)
+{
+  if (!HasExecutable(execName))
+  {
+    return EngineError("Could not run " + execName + " with state " + stateName,
+                       Error::Code::BAD_EXECUTABLE, "Error: No executable " + execName);
+  }
+  if (!HasState(stateName))
+  {
+    return EngineError("Could not run " + execName + " with state " + stateName,
+                       Error::Code::BAD_STATE, "Error: No state " + stateName);
+  }
+
+  auto &exec  = executables_[execName];
+  auto &state = states_[stateName];
+
+  // We create a a VM for each execution. It might be better to create a single VM and reuse it, but
+  // (currently) if you create a VM before compiling the VM is badly formed and crashes on execution
+  VM vm{module_.get()};
+  vm.SetIOObserver(*state);
+
+  auto const *func = exec->FindFunction(entrypoint);
+
+  if (func == nullptr) 
+  {
+    return EngineError("Wrong entrypoint\n", Error::Code::RUNTIME_ERROR, "Blah");
+  }
+
+  auto const numParameters = static_cast<std::size_t>(func->num_parameters);
+
+  if (numParameters != params.size()) 
+  {
+    return EngineError("Wrong entrypoint\n", Error::Code::RUNTIME_ERROR, "Blah");
+  }
+
+  using ParameterPack = fetch::vm::ParameterPack;
+  ParameterPack parameterPack(vm.registered_types());
+  for (std::size_t i = 0; i < numParameters; ++i)
+  {
+		auto const& typeId = func->variables[i].type_id;
+
+		if (!Convertable(params[i], typeId))
+		{
+			return EngineError("Wrong parameters", Error::Code::RUNTIME_ERROR, "Hmph");	
+		}
+    //std::cout <<"GOT " << params[i].As<int>() << '\n';
+    //parameterPack.AddSingle(fetch::vm::Variant(params[i].As<int>(), func->variables[i].type_id));
+    parameterPack.AddSingle(Convert(params[i], typeId));
+  }
+
+  std::string        runTimeError;
+  fetch::vm::Variant output;
+  bool               allOK = vm.Execute(*exec, entrypoint, runTimeError, output, parameterPack);
+
+  if (!allOK || !runTimeError.empty())
+  {
+    return ExecutionResult{
+        output, Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)},
+        "Error running " + execName + " with state " + stateName};
+  }
+
+  return ExecutionResult{output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS, ""},
+                         "Ran " + execName + " with state " + stateName};
+}
+
 ExecutionResult BasicVmEngine::EngineError(std::string resultMessage, Error::Code code,
                                            std::string errorMessage) const
 {
@@ -174,6 +241,39 @@ bool BasicVmEngine::HasState(std::string const &name) const
 {
   return states_.find(name) != states_.end();
 }
+
+bool BasicVmEngine::Convertable(LedgerVariant const& /*ledgerVariant*/, TypeId const& /*typeId*/)
+{
+  return true;
+}
+BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const& ledgerVariant, TypeId const& typeId)
+{
+  switch(typeId)
+  {
+    case fetch::vm::TypeIds::Bool:
+		{
+			return VmVariant(ledgerVariant.As<int>() != 0, typeId);
+		}
+    case fetch::vm::TypeIds::Int8:
+    case fetch::vm::TypeIds::UInt8:
+    case fetch::vm::TypeIds::Int16:
+    case fetch::vm::TypeIds::UInt16:
+    case fetch::vm::TypeIds::Int32:
+    case fetch::vm::TypeIds::UInt32:
+    case fetch::vm::TypeIds::Int64:
+    {
+      return VmVariant(ledgerVariant.As<int>(), typeId);
+    }
+    case fetch::vm::TypeIds::Float32:
+    case fetch::vm::TypeIds::Float64:
+    {
+      return VmVariant(ledgerVariant.As<double>(), typeId);
+    }
+    default:
+      return VmVariant();
+  }
+}
+
 
 }  // namespace dmlf
 }  // namespace fetch

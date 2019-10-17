@@ -23,6 +23,8 @@
 #include "dmlf/execution/execution_error_message.hpp"
 #include "variant/variant.hpp"
 
+#include <limits>
+
 namespace {
 
 namespace {
@@ -33,7 +35,7 @@ using namespace fetch::dmlf;
 using Stage = ExecutionErrorMessage::Stage;
 using Code  = ExecutionErrorMessage::Code;
 
-// using Params = fetch::dmlf::BasicVmEngine::Params;
+using Params = BasicVmEngine::Params;
 
 auto const helloWorld = R"(
 
@@ -145,13 +147,49 @@ function main() : Int32
     return 1;
 endfunction)";
 
-// auto const add = R"(
-//
-// function add(a : Int32, b : Int32)
-//  printLn("Add " + toString(a) + " plus " + toString(b) + " equals " + toString(a+b));
-// endfunction
-//
-//)";
+auto const add = R"(
+
+ function add(a : Int32, b : Int32) : Int32
+  return a + b;
+ endfunction
+
+)";
+
+auto const Add8 = R"(
+
+ function add(a : Int8, b : Int8) : Int8
+  return a + b;
+ endfunction
+
+)";
+
+auto const Add64 = R"(
+
+ function add(a : Int64, b : Int64) : Int64
+  return a + b;
+ endfunction
+
+)";
+
+auto const IntToFloatCompare = R"(
+function compare(a : Int32, b: Float64) : Int32
+  if (a < toInt32(b))
+    return 1;
+  else
+    return 0;
+  endif
+endfunction
+)";
+
+auto const BoolCompare = R"(
+function compare(a : Bool) : Int32
+  if (a)
+    return 1;
+  else
+    return 0;
+  endif
+endfunction
+)";
 
 }  // namespace
 
@@ -165,7 +203,7 @@ TEST(BasicVmEngineDmlfTests, HelloWorld)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.Run("helloWorld", "state", "main");
+  ExecutionResult result = engine.NewRun("helloWorld", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
@@ -180,11 +218,11 @@ TEST(BasicVmEngineDmlfTests, DoubleHelloWorld)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.Run("helloWorld", "state", "main");
+  ExecutionResult result = engine.NewRun("helloWorld", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 
-  result = engine.Run("helloWorld", "state", "main");
+  result = engine.NewRun("helloWorld", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
@@ -209,7 +247,7 @@ TEST(BasicVmEngineDmlfTests, repeated_HelloWorld)
   EXPECT_EQ(createdState.error().stage(), Stage::ENGINE);
   EXPECT_EQ(createdState.error().code(), Code::BAD_STATE);
 
-  ExecutionResult result = engine.Run("helloWorld", "state", "main");
+  ExecutionResult result = engine.NewRun("helloWorld", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().Get<int>(), 1);
 }
@@ -855,6 +893,118 @@ TEST(BasicVmEngineDmlfTests, RuntimeError)
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::RUNNING);
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
+}
+
+TEST(BasicVmEngineDmlfTests, Add)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", add}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.NewRun("add", "state", "add", Params{fetch::variant::Variant(1), fetch::variant::Variant(2)});
+  EXPECT_TRUE(result.succeeded());
+  std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().Get<int>(), 3);
+}
+
+TEST(BasicVmEngineDmlfTests, Add8)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", Add8}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.NewRun("add", "state", "add", Params{fetch::variant::Variant(1), fetch::variant::Variant(2)});
+  EXPECT_TRUE(result.succeeded());
+  std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().Get<int>(), 3);
+}
+
+TEST(BasicVmEngineDmlfTests, Add64)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", Add64}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.NewRun("add", "state", "add", Params{fetch::variant::Variant(0), fetch::variant::Variant(std::numeric_limits<int>::max())});
+  EXPECT_TRUE(result.succeeded());
+  std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().Get<int>(), std::numeric_limits<int>::max());
+}
+
+TEST(BasicVmEngineDmlfTests, TrueIntToFloatCompare)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.NewRun("compare", "state", "compare", Params{fetch::variant::Variant(5), fetch::variant::Variant(6.5)});
+  EXPECT_TRUE(result.succeeded());
+  std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().Get<int>(), 1);
+}
+
+TEST(BasicVmEngineDmlfTests, FalseIntToFloatCompare)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.NewRun("compare", "state", "compare", Params{fetch::variant::Variant(5), fetch::variant::Variant(4.5)});
+  EXPECT_TRUE(result.succeeded());
+  std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().Get<int>(), 0);
+}
+
+TEST(BasicVmEngineDmlfTests, TrueBoolCompare)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", BoolCompare}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.NewRun("compare", "state", "compare", Params{fetch::variant::Variant(7)});
+  EXPECT_TRUE(result.succeeded());
+  std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().Get<int>(), 1);
+}
+
+TEST(BasicVmEngineDmlfTests, FalseBoolCompare)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", BoolCompare}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.NewRun("compare", "state", "compare", Params{fetch::variant::Variant(0)});
+  EXPECT_TRUE(result.succeeded());
+  std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().Get<int>(), 0);
 }
 
 }  // namespace
