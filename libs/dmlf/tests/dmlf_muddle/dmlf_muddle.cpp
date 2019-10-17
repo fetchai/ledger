@@ -170,7 +170,7 @@ public:
   void SetUp() override
   {
     usleep(1000);
-    iface  = std::make_shared<DummyExecutionInterface>();
+    iface = std::make_shared<DummyExecutionInterface>();
     usleep(1000);
     server = std::make_shared<ServerHalf>(iface);
     usleep(1000);

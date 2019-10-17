@@ -64,8 +64,8 @@ public:
   virtual bool DeleteState(service::CallContext const &context, OpIdent const &op_id,
                            Name const &stateName);
 
-  virtual bool Run(service::CallContext const &context, OpIdent const &op_id,
-                   Name const &execName, Name const &stateName, std::string const &entrypoint);
+  virtual bool Run(service::CallContext const &context, OpIdent const &op_id, Name const &execName,
+                   Name const &stateName, std::string const &entrypoint);
 
   bool ExecuteOneWorkload();
 

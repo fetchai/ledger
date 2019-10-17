@@ -44,10 +44,11 @@ public:
   {}
   virtual ~ExecutionWorkload() = default
 
-  ExecutionWorkload(ExecutionWorkload const &other) = default;
+      ExecutionWorkload(ExecutionWorkload const &other) = default;
   ExecutionWorkload &operator=(ExecutionWorkload const &other) = default
 
-  bool operator==(ExecutionWorkload const &other) = delete;
+      bool
+       operator==(ExecutionWorkload const &other) = delete;
   bool operator<(ExecutionWorkload const &other)  = delete;
 
 protected:
