@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/json/document.hpp"
-#include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "json/document.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
+#include "logging/logging.hpp"
 #include "vectorise/uint/uint.hpp"
 #include "vm/array.hpp"
 #include "vm/compiler.hpp"
@@ -278,7 +278,7 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   return Status::SUCCESS;
 }
 
-Status SynergeticContract::Complete(Address const &address, BitVector const &shards)
+Status SynergeticContract::Complete(chain::Address const &address, BitVector const &shards)
 {
   if (storage_ == nullptr)
   {

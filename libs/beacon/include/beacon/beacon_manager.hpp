@@ -86,7 +86,6 @@ public:
   DkgOutput        GetDkgOutput();
   void             SetDkgOutput(DkgOutput const &output);
   void             SetQual(std::set<MuddleAddress> qual);
-  void             SetGroupPublicKey(PublicKey const &public_key);
   void             NewCabinet(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
   void             Reset();
 
@@ -97,6 +96,8 @@ public:
   bool          VerifySignatureShare(MessagePayload const &message, Signature const &signature,
                                      MuddleAddress const &signer);
   bool          VerifyGroupSignature(MessagePayload const &message, Signature const &signature);
+  static bool   Verify(byte_array::ConstByteArray const &group_public_key,
+                       MessagePayload const &message, byte_array::ConstByteArray const &signature);
   Signature     GroupSignature() const;
   void          SetMessage(MessagePayload next_message);
   SignedMessage Sign();

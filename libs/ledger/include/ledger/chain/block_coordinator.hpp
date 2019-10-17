@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/future_timepoint.hpp"
 #include "core/mutex.hpp"
 #include "core/periodic_action.hpp"
@@ -24,7 +25,6 @@
 #include "core/synchronisation/protected.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/protocols/notarisation_service.hpp"
@@ -330,7 +330,8 @@ private:
 
   /// @name State Machine State
   /// @{
-  Address         mining_address_;          ///< The miners address
+  ProverPtr       certificate_;             ///< The miners identity
+  chain::Address  mining_address_;          ///< The miners address
   StateMachinePtr state_machine_;           ///< The main state machine for this service
   std::size_t     block_difficulty_;        ///< The number of leading zeros needed in the proof
   std::size_t     num_lanes_;               ///< The current number of lanes

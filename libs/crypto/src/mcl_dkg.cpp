@@ -18,7 +18,7 @@
 
 #include "crypto/mcl_dkg.hpp"
 
-#include <mcl/bn256.hpp>
+#include "mcl/bn256.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -186,7 +186,7 @@ bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &s
  */
 std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b)
 {
-  size_t m = a.size();
+  std::size_t m = a.size();
   if ((b.size() != m) || (m == 0))
   {
     throw std::invalid_argument("mcl_interpolate_polynom: bad m");
@@ -199,14 +199,14 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
     for (auto i = static_cast<long>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t1, t1, a[k]);
-      bn::Fr::add(t1, t1, prod[static_cast<size_t>(i)]);
+      bn::Fr::add(t1, t1, prod[static_cast<std::size_t>(i)]);
     }
 
     t2 = 0;
     for (auto i = static_cast<long>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t2, t2, a[k]);
-      bn::Fr::add(t2, t2, res[static_cast<size_t>(i)]);
+      bn::Fr::add(t2, t2, res[static_cast<std::size_t>(i)]);
     }
     bn::Fr::inv(t1, t1);
 
@@ -231,8 +231,8 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
         bn::Fr::add(prod[k], t1, prod[k - 1]);
         for (auto i = static_cast<long>(k - 1); i >= 1; i--)
         {
-          bn::Fr::mul(t2, prod[static_cast<size_t>(i)], t1);
-          bn::Fr::add(prod[static_cast<size_t>(i)], t2, prod[static_cast<size_t>(i - 1)]);
+          bn::Fr::mul(t2, prod[static_cast<std::size_t>(i)], t1);
+          bn::Fr::add(prod[static_cast<std::size_t>(i)], t2, prod[static_cast<std::size_t>(i - 1)]);
         }
         bn::Fr::mul(prod[0], prod[0], t1);
       }
@@ -282,13 +282,6 @@ bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature con
   bn::pairing(e2, PH, y);
 
   return e1 == e2;
-}
-
-bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign)
-{
-  bn::G2 generator;
-  SetGenerator(generator);
-  return VerifySign(y, message, sign, generator);
 }
 
 /**

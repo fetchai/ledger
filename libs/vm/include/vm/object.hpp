@@ -168,7 +168,7 @@ public:
     return type_id_;
   }
 
-  std::string GetUniqueId() const;
+  std::string GetTypeName() const;
 
 protected:
   Variant &       Push();

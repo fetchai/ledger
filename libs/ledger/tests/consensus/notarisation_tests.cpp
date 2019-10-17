@@ -22,7 +22,7 @@
 #include "ledger/protocols/notarisation_service.hpp"
 #include "ledger/testing/block_generator.hpp"
 
-#include "ledger/shards/manifest_cache_interface.hpp"
+#include "shards/manifest_cache_interface.hpp"
 #include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 
@@ -49,9 +49,9 @@ using Address        = fetch::muddle::Packet::Address;
 using BlockPtr       = BlockGenerator::BlockPtr;
 using BlockPtrConst  = BlockGenerator::BlockPtrConst;
 
-struct DummyManifesttCache : public ManifestCacheInterface
+struct DummyManifesttCache : public fetch::shards::ManifestCacheInterface
 {
-  bool QueryManifest(Address const & /*address*/, Manifest & /*manifest*/) override
+  bool QueryManifest(Address const & /*address*/, fetch::shards::Manifest & /*manifest*/) override
   {
     return false;
   }

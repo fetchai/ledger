@@ -41,17 +41,17 @@ class MuddleInterface;
 
 }  // namespace muddle
 
-namespace ledger {
+namespace shards {
 
 class ManifestCacheInterface;
 
-}  // namespace ledger
+}  // namespace shards
 
 namespace beacon {
 
 struct DryRunInfo
 {
-  std::string                       public_key;
+  crypto::mcl::PublicKey            public_key;
   AeonExecutionUnit::SignatureShare sig_share;
 };
 
@@ -91,11 +91,11 @@ public:
   using ReliableChannel         = muddle::BroadcastChannelInterface;
   using ReliableChannelPtr      = std::unique_ptr<ReliableChannel>;
   using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
-  using MessageCoefficient      = std::string;
-  using MessageShare            = std::string;
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using CallbackFunction        = std::function<void(SharedAeonExecutionUnit)>;
   using DKGMessage              = dkg::DKGMessage;
+  using MessageCoefficient      = DKGMessage::Coefficient;
+  using MessageShare            = DKGMessage::Share;
   using ComplaintsManager       = beacon::ComplaintsManager;
   using ComplaintAnswersManager = beacon::ComplaintAnswersManager;
   using QualComplaintsManager   = beacon::QualComplaintsManager;
@@ -106,7 +106,7 @@ public:
   using ConnectionsMessage      = dkg::ConnectionsMessage;
   using SharesMessage           = dkg::SharesMessage;
   using DKGSerializer           = dkg::DKGSerializer;
-  using ManifestCacheInterface  = ledger::ManifestCacheInterface;
+  using ManifestCacheInterface  = shards::ManifestCacheInterface;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
   using DeadlineTimer    = fetch::moment::DeadlineTimer;
   using SignatureShare   = AeonExecutionUnit::SignatureShare;
@@ -209,7 +209,7 @@ private:
   // Timing management
   void          SetTimeToProceed(State state);
   Clock         system_clock_ = moment::GetClock("beacon:dkg_system", moment::ClockType::SYSTEM);
-  Clock         clock_        = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
+  Clock         clock_        = moment::GetClock("beacon:dkg", moment::ClockType::SYSTEM);
   DeadlineTimer timer_to_proceed_{"beacon:dkg"};
   uint64_t      reference_timepoint_   = 0;
   uint64_t      state_deadline_        = 0;

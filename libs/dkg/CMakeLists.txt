@@ -19,4 +19,11 @@ target_link_libraries(fetch-dkg
                       PUBLIC fetch-core
                              fetch-crypto
                              fetch-network
-                             fetch-ledger)
+                             fetch-chain
+                             fetch-entropy
+                             fetch-muddle
+                             fetch-logging)
+
+if (_is_clang_compiler)
+  target_compile_options(fetch-dkg PRIVATE -Wshadow)
+endif ()

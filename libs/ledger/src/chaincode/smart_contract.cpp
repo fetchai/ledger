@@ -16,18 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 #include "vm/address.hpp"
@@ -62,9 +63,9 @@ namespace {
  * @param: tx the transaction triggering the smart contract
  * @param: params the parameters
  */
-void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &params)
+void ValidateAddressesInParams(chain::Transaction const &tx, vm::ParameterPack const &params)
 {
-  std::unordered_set<Address> signing_addresses;
+  std::unordered_set<chain::Address> signing_addresses;
   for (auto const &sig : tx.signatories())
   {
     signing_addresses.insert(sig.address);
@@ -110,6 +111,9 @@ SmartContract::SmartContract(std::string const &source)
 
   module_->CreateFreeFunction("getBlockNumber",
                               [this](vm::VM *) -> BlockIndex { return block_index_; });
+
+  module_->CreateFreeFunction(
+      "getContext", [this](vm::VM *) -> vm_modules::ledger::ContextPtr { return context_; });
 
   // create and compile the executable
   fetch::vm::SourceFiles files  = {{"default.etch", source}};
@@ -292,8 +296,8 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obje
 // TODO(issue 1256): Whole this function can be dropped once the issue is resolved
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  Address address{};
-  if (!Address::Parse(obj.As<ConstByteArray>(), address))
+  chain::Address address{};
+  if (!chain::Address::Parse(obj.As<ConstByteArray>(), address))
   {
     throw std::runtime_error("Unable to parse address");
   }
@@ -334,21 +338,21 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Vari
  * @param pack The reference to the parameter pack to be populated
  * @param obj structured data object represented by generic fetch::variant::Variant type
  */
-void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type_id,
                                             vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  if (!vm->IsDefaultSerializeConstructable(expected_type))
+  if (!vm->IsDefaultSerializeConstructable(expected_type_id))
   {
-    throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
+    throw std::runtime_error("Type is not constructable: " + vm->GetTypeName(expected_type_id));
   }
 
   // Creating a new object and deserialise
-  vm::Ptr<vm::Object> object = vm->DefaultSerializeConstruct(expected_type);
+  vm::Ptr<vm::Object> object = vm->DefaultSerializeConstruct(expected_type_id);
   object->FromJSON(obj);
 
   if (!pack.Add(object))
   {
-    throw std::runtime_error("Could not add parameter " + vm->GetUniqueId(expected_type));
+    throw std::runtime_error("Could not add parameter " + vm->GetTypeName(expected_type_id));
   }
 }
 
@@ -359,17 +363,17 @@ void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type
  * @param pack The reference to the parameter pack to be populated
  * @param obj structured data object represented by generic MsgPack type
  */
-void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type,
+void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type_id,
                                             vm::ParameterPack & /*pack*/,
                                             msgpack::object const & /*obj*/)
 {
-  if (!vm->IsDefaultSerializeConstructable(expected_type))
+  if (!vm->IsDefaultSerializeConstructable(expected_type_id))
   {
-    throw std::runtime_error("Type is not constructable: " + vm->GetUniqueId(expected_type));
+    throw std::runtime_error("Type is not constructable: " + vm->GetTypeName(expected_type_id));
   }
 
   // TODO(issue 1256): Review design and implement equivalent for msgpack
-  throw std::runtime_error("No msgpack support for type " + vm->GetUniqueId(expected_type));
+  throw std::runtime_error("No msgpack support for type " + vm->GetTypeName(expected_type_id));
 }
 
 /**
@@ -382,10 +386,10 @@ void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type
  * @param variant The input variant from which the value is extracted
  */
 template <typename T>
-void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type,
+void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type_id,
                         T const &variant)
 {
-  switch (expected_type)
+  switch (expected_type_id)
   {
   case vm::TypeIds::Bool:
     AddToParameterPack<bool>(params, variant);
@@ -433,7 +437,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
     break;
 
   default:
-    AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
+    AddStructuredDataObjectToParameterPack(vm, expected_type_id, params, variant);
   }
 }
 
@@ -444,7 +448,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result SmartContract::InvokeAction(std::string const &name, Transaction const &tx,
+Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Transaction const &tx,
                                              BlockIndex index)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
@@ -484,6 +488,8 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
 
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
+
+  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, index);
 
   // TODO(WK) inject charge limit
   // vm->SetChargeLimit(123);
@@ -554,10 +560,13 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
  * @param owner The owner identity of the contract (i.e. the creator of the contract)
  * @return The corresponding status result for the operation
  */
-Contract::Result SmartContract::InvokeInit(Address const &owner)
+Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
+                                           chain::Transaction const &tx, BlockIndex index)
 {
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
+
+  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, index);
 
   // TODO(WK) inject charge limit
   // vm->SetChargeLimit(123);
@@ -756,7 +765,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
           response["status"] = "failed";
           response["result"] = "Failed to serialise object to JSON variant";
           FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
-                                           output.object->GetUniqueId());
+                                           output.object->GetTypeName());
           return Status::FAILED;
         }
       }

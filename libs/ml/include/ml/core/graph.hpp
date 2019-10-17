@@ -45,10 +45,12 @@ namespace optimisers {
 template <typename TensorType>
 class Optimiser;
 }  // namespace optimisers
+
 namespace model {
 template <typename TensorType>
 class ModelInterface;
 }  // namespace model
+
 namespace distributed_learning {
 template <typename TensorType>
 class TrainingClient;
@@ -107,8 +109,11 @@ public:
                     std::map<std::string, NodePtrType> &trainable_lookup);
 
   void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0});
-  bool SetRegularisation(std::string node_name, RegPtrType regulariser,
+  bool SetRegularisation(std::string const &node_name, RegPtrType regulariser,
                          DataType regularisation_rate = DataType{0.0});
+
+  void SetFrozenState(bool frozen_state);
+  bool SetFrozenState(std::string const &node_name, bool frozen_state);
 
   ///////////////////////////////////
   /// public train/test functions ///
@@ -126,9 +131,8 @@ public:
   bool                            InsertNode(std::string const &node_name, NodePtrType node_ptr);
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
-  virtual struct fetch::ml::StateDict<TensorType> StateDict();
-
-  virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
+  virtual fetch::ml::StateDict<TensorType> StateDict();
+  virtual void                             LoadStateDict(fetch::ml::StateDict<T> const &dict);
 
   ////////////////////////////////////
   /// public setters and accessors ///
@@ -512,13 +516,56 @@ void Graph<TensorType>::SetRegularisation(RegPtrType regulariser, DataType regul
  * @param regularisation_rate
  */
 template <typename TensorType>
-bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regulariser,
+bool Graph<TensorType>::SetRegularisation(std::string const &node_name, RegPtrType regulariser,
                                           DataType regularisation_rate)
 {
   Compile();
   NodePtrType t             = trainable_lookup_.at(node_name);
   auto        trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
   trainable_ptr->SetRegularisation(regulariser, regularisation_rate);
+
+  return true;
+}
+
+/**
+ * Set variable freezing for all trainables in graph
+ * @tparam TensorType
+ * @param frozen_state true=freeze variables, false=unfreeze variables
+ */
+template <typename TensorType>
+void Graph<TensorType>::SetFrozenState(bool frozen_state)
+{
+  for (auto &curent_trainable : GetTrainables())
+  {
+    curent_trainable->SetFrozenState(frozen_state);
+  }
+}
+
+/**
+ * Set variable freezing for specified trainable or graph by its name
+ * @tparam TensorType
+ * @param node_name name of specific trainable
+ * @param frozen_state true=freeze variables, false=unfreeze variables
+ */
+template <typename TensorType>
+bool Graph<TensorType>::SetFrozenState(std::string const &node_name, bool frozen_state)
+{
+  OpPtrType target_node_op = GetNode(node_name)->GetOp();
+  auto *trainable_ptr = dynamic_cast<fetch::ml::ops::Trainable<TensorType> *>(target_node_op.get());
+  auto *graph_ptr     = dynamic_cast<fetch::ml::Graph<TensorType> *>(target_node_op.get());
+
+  if (trainable_ptr)
+  {
+    trainable_ptr->SetFrozenState(frozen_state);
+  }
+  else if (graph_ptr)
+  {
+    graph_ptr->SetFrozenState(frozen_state);
+  }
+  else
+  {
+    throw exceptions::InvalidMode("Node is not graph or trainable");
+  }
 
   return true;
 }
@@ -547,11 +594,13 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
     auto grad_it = grad.begin();
     ApplyGradients(grad_it);
 
+    // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
+    // reset cache on all nodes
     for (auto const &t : nodes_)
     {
-      // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
       ResetGraphCache(false, t.second);
     }
+
     return;
   }
   case GraphState::UPDATED:
@@ -736,10 +785,10 @@ void Graph<TensorType>::ResetGraphCache(bool input_size_changed, NodePtrType n)
  */
 
 template <typename TensorType>
-struct fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict()
+fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict()
 {
   Compile();
-  struct fetch::ml::StateDict<TensorType> state_dict;
+  fetch::ml::StateDict<TensorType> state_dict;
   StateDict(state_dict);
   return state_dict;
 }
@@ -776,7 +825,7 @@ void Graph<TensorType>::StateDict(fetch::ml::StateDict<TensorType> &state_dict)
  * @param dict  state dictionary to import to weights
  */
 template <typename TensorType>
-void Graph<TensorType>::LoadStateDict(struct fetch::ml::StateDict<TensorType> const &dict)
+void Graph<TensorType>::LoadStateDict(fetch::ml::StateDict<TensorType> const &dict)
 {
   assert(!dict.weights_);
   for (auto const &t : trainable_lookup_)
@@ -1097,7 +1146,7 @@ void Graph<TensorType>::RecursiveApply(ValType &val, GraphFunc graph_func) const
     auto op_ptr    = node_pair.second->GetOp();
     auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
 
-    // if its a graph
+    // if it's a graph
     if (graph_ptr)
     {
       ((*graph_ptr).*graph_func)(val);

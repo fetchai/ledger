@@ -19,8 +19,8 @@
 
 #include "ledger/consensus/consensus_interface.hpp"
 
+#include "chain/address.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chain/address.hpp"
 #include "ledger/chain/main_chain.hpp"
 
 #include "beacon/beacon_service.hpp"
@@ -44,7 +44,7 @@ public:
   using Identity          = crypto::Identity;
   using WeightedQual      = std::vector<Identity>;
   using MainChain         = ledger::MainChain;
-  using BlockEntropy      = beacon::BlockEntropy;
+  using BlockEntropy      = ledger::Block::BlockEntropy;
 
   Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
             Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size,
@@ -75,7 +75,7 @@ private:
   BeaconServicePtr beacon_;
   MainChain const &chain_;
   Identity         mining_identity_;
-  Address          mining_address_;
+  chain::Address   mining_address_;
 
   // Global variables relating to consensus
   uint64_t aeon_period_        = 0;
@@ -93,10 +93,11 @@ private:
   uint32_t         block_interval_ms_{std::numeric_limits<uint32_t>::max()};
 
   CommitteePtr GetCommittee(Block const &previous);
-  bool         ValidMinerForBlock(Block const &previous, Address const &address);
-  uint64_t     GetBlockGenerationWeight(Block const &previous, Address const &address);
+  bool         ValidMinerForBlock(Block const &previous, chain::Address const &address);
+  uint64_t     GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
   bool         ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool         ShouldTriggerNewCommittee(Block const &block);
+  bool         EnoughQualSigned(BlockEntropy const &block_entropy) const;
 };
 
 }  // namespace ledger

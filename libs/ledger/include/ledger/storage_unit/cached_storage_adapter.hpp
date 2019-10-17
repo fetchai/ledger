@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <string>
@@ -78,9 +79,7 @@ private:
 
   /// @name Cache Data
   /// @{
-  mutable Mutex lock_;
-  Cache         cache_{};                ///< The local cache
-  bool          flush_required_{false};  ///< Top level cache flush flag
+  Protected<Cache> cache_{};  ///< The local cache
   /// @}
 };
 

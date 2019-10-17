@@ -10,4 +10,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-fetch_add_slow_test(fetch-beacon-tests fetch-beacon dkg)
+fetch_add_slow_test(beacon-unit-tests fetch-beacon unit/)

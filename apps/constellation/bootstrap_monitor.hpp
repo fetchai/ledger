@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "constellation.hpp"
+#include "constellation/constellation.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
 #include "core/state_machine.hpp"
@@ -41,7 +41,7 @@ namespace fetch {
 class BootstrapMonitor
 {
 public:
-  using UriSet    = Constellation::UriSet;
+  using UriSet    = constellation::Constellation::UriSet;
   using Prover    = crypto::Prover;
   using ProverPtr = std::shared_ptr<Prover>;
   using Identity  = crypto::Identity;

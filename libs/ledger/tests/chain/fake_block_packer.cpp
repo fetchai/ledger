@@ -21,10 +21,10 @@
 #include "ledger/chain/block.hpp"
 #include "vectorise/platform.hpp"
 
-void FakeBlockPacker::EnqueueTransaction(fetch::ledger::Transaction const & /*tx*/)
+void FakeBlockPacker::EnqueueTransaction(fetch::chain::Transaction const & /*tx*/)
 {}
 
-void FakeBlockPacker::EnqueueTransaction(fetch::ledger::TransactionLayout const & /*layout*/)
+void FakeBlockPacker::EnqueueTransaction(fetch::chain::TransactionLayout const & /*layout*/)
 {}
 
 void FakeBlockPacker::GenerateBlock(fetch::ledger::Block &block, std::size_t num_lanes,

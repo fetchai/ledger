@@ -144,8 +144,6 @@ Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
 bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
                 Generator const &G);
 
-bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign);
-
 Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
 
 std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size,
@@ -161,6 +159,66 @@ struct ArraySerializer<crypto::mcl::Signature, D>
 
 public:
   using Type       = crypto::mcl::Signature;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(1);
+    array.Append(b.getStr());
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    std::string sig_str;
+    array.GetNextValue(sig_str);
+    bool check;
+    b.setStr(&check, sig_str.data());
+    if (!check)
+    {
+      throw SerializableException(error::TYPE_ERROR,
+                                  std::string("String does not convert to MCL type"));
+    }
+  }
+};
+
+template <typename D>
+struct ArraySerializer<crypto::mcl::PrivateKey, D>
+{
+
+public:
+  using Type       = crypto::mcl::PrivateKey;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(1);
+    array.Append(b.getStr());
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    std::string sig_str;
+    array.GetNextValue(sig_str);
+    bool check;
+    b.setStr(&check, sig_str.data());
+    if (!check)
+    {
+      throw SerializableException(error::TYPE_ERROR,
+                                  std::string("String does not convert to MCL type"));
+    }
+  }
+};
+
+template <typename D>
+struct ArraySerializer<crypto::mcl::PublicKey, D>
+{
+
+public:
+  using Type       = crypto::mcl::PublicKey;
   using DriverType = D;
 
   template <typename Constructor>

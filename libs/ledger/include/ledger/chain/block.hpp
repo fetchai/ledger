@@ -18,13 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/block_entropy.hpp"
+#include "chain/address.hpp"
+#include "chain/transaction_layout.hpp"
+#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/digest.hpp"
 #include "core/serializers/base_types.hpp"
-#include "ledger/chain/address.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
-#include "ledger/chain/transaction_layout.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/dag/dag_epoch.hpp"
 #include "moment/clocks.hpp"
 
@@ -44,7 +44,7 @@ class Block
 {
 public:
   using Proof        = consensus::ProofOfWork;
-  using Slice        = std::vector<TransactionLayout>;
+  using Slice        = std::vector<chain::TransactionLayout>;
   using Slices       = std::vector<Slice>;
   using DAGEpoch     = fetch::ledger::DAGEpoch;
   using Hash         = Digest;
@@ -59,17 +59,17 @@ public:
 
   struct Body
   {
-    Digest       hash;               ///< The hash of the block
-    Digest       previous_hash;      ///< The hash of the previous block
-    Digest       merkle_hash;        ///< The merkle state hash across all shards
-    uint64_t     block_number{0};    ///< The height of the block from genesis
-    Address      miner;              ///< The identity of the generated miner
-    Identity     miner_id;           ///< The identity of the generated miner
-    uint32_t     log2_num_lanes{0};  ///< The log2(number of lanes)
-    Slices       slices;             ///< The slice lists
-    DAGEpoch     dag_epoch;          ///< DAG epoch containing information on new dag_nodes
-    uint64_t     timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
-    BlockEntropy block_entropy;      ///< Entropy that determines miner priority for the next block
+    Digest         hash;               ///< The hash of the block
+    Digest         previous_hash;      ///< The hash of the previous block
+    Digest         merkle_hash;        ///< The merkle state hash across all shards
+    uint64_t       block_number{0};    ///< The height of the block from genesis
+    chain::Address miner;              ///< The identity of the generated miner
+    Identity       miner_id;           ///< The identity of the generated miner
+    uint32_t       log2_num_lanes{0};  ///< The log2(number of lanes)
+    Slices         slices;             ///< The slice lists
+    DAGEpoch       dag_epoch;          ///< DAG epoch containing information on new dag_nodes
+    uint64_t       timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
+    BlockEntropy   block_entropy;  ///< Entropy that determines miner priority for the next block
   };
 
   /// @name Block Contents
@@ -77,8 +77,8 @@ public:
   Body body;  ///< The core fields that make up a block
   /// @}
 
-  // TODO(HUT): Miners in qual must sign the block.
-  /* Digest miner_signature; */
+  // Miners in qual must sign the block.
+  Digest miner_signature;
 
   /// @name Proof of Work specifics
   /// @{
@@ -165,21 +165,23 @@ public:
   using Type       = ledger::Block;
   using DriverType = D;
 
-  static uint8_t const BODY         = 1;
-  static uint8_t const NONCE        = 2;
-  static uint8_t const PROOF        = 3;
-  static uint8_t const WEIGHT       = 4;
-  static uint8_t const TOTAL_WEIGHT = 5;
+  static uint8_t const BODY            = 1;
+  static uint8_t const NONCE           = 2;
+  static uint8_t const PROOF           = 3;
+  static uint8_t const WEIGHT          = 4;
+  static uint8_t const TOTAL_WEIGHT    = 5;
+  static uint8_t const MINER_SIGNATURE = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &block)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(6);
     map.Append(BODY, block.body);
     map.Append(NONCE, block.nonce);
     map.Append(PROOF, block.proof);
     map.Append(WEIGHT, block.weight);
     map.Append(TOTAL_WEIGHT, block.total_weight);
+    map.Append(MINER_SIGNATURE, block.miner_signature);
   }
 
   template <typename MapDeserializer>
@@ -190,6 +192,7 @@ public:
     map.ExpectKeyGetValue(PROOF, block.proof);
     map.ExpectKeyGetValue(WEIGHT, block.weight);
     map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
+    map.ExpectKeyGetValue(MINER_SIGNATURE, block.miner_signature);
   }
 };
 

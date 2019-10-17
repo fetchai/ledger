@@ -48,6 +48,9 @@ public:
 
   void CreateClassType(std::string const &name, TypeIndex type_index);
 
+  void CreateTemplateType(std::string const &name, TypeIndex type_index,
+                          TypeIndexArray const &allowed_types_index_array);
+
   void CreateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
                                TypeIndexArray const &parameter_type_index_array);
 
@@ -68,6 +71,10 @@ public:
                             ChargeAmount charge);
 
   void EnableOperator(TypeIndex type_index, Operator op);
+
+  void EnableLeftOperator(TypeIndex type_index, Operator op);
+
+  void EnableRightOperator(TypeIndex type_index, Operator op);
 
   void EnableIndexOperator(TypeIndex type_index, TypeIndexArray const &input_type_index_array,
                            TypeIndex output_type_index, Handler const &get_handler,
@@ -203,11 +210,10 @@ private:
   TypePtr        any_primitive_type_;
   TypePtr        any_integer_type_;
   TypePtr        any_floating_point_type_;
-  TypePtr        matrix_type_;
   TypePtr        array_type_;
   TypePtr        map_type_;
-  TypePtr        sharded_StateType_;
-  TypePtr        StateType_;
+  TypePtr        sharded_state_type_;
+  TypePtr        state_type_;
   TypePtr        initialiser_list_type_;
 
   BlockNodePtr             root_;

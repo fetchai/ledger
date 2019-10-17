@@ -16,14 +16,47 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/block_entropy.hpp"
 #include "core/random/lcg.hpp"
+#include "ledger/consensus/consensus.hpp"
 
 #include <ctime>
 #include <random>
 #include <utility>
 
-#include "beacon/block_entropy.hpp"
-#include "ledger/consensus/consensus.hpp"
+/**
+ * Consensus enforcement class.
+ *
+ * During operation, miners will stake tokens in order to get into
+ * the staking pool and are known as stakers (at genesis
+ * certain stakers will be pre-set). These stakers
+ * are selected to form a 'cabinet'.
+ *
+ * The cabinet will form a 'group public key' through
+ * use of threshold cryptography (MCL scheme). This is referred to
+ * as 'distributed key generation', DKG.
+ *
+ * Of these N cabinet members, during DKG some subset M will qualify to be able to
+ * sign the group public key. These are known as 'the qualified set',
+ * or qual.
+ *
+ * During block production, entropy is generated in blocks by signing
+ * (using this group key) the previous group signature. This entropy
+ * then sets on a block by block basis the priority ranking of qual.
+ *
+ * In the ideal case, the first member of qual for that block/entropy
+ * will produce the heaviest block to be accepted by the network. Other
+ * members of qual are forced to wait relative to block time to make
+ * a competing fork, for efficiency reasons.
+ *
+ * There are a number of thresholds/system limits:
+ * - max cabinet size        , the maximum allowed cabinet taken from stakers
+ * - qual threshold          , qual must be no less than 2/3rds of the cabinet
+ * - signing threshold       , (1/2)+1 of the cabinet
+ * - confirmation threshold  , set to signing threshold
+ */
+
+namespace {
 
 constexpr char const *LOGGING_NAME = "Consensus";
 
@@ -35,7 +68,6 @@ using StakeManagerPtr = Consensus::StakeManagerPtr;
 using fetch::ledger::MainChain;
 using fetch::ledger::Block;
 
-namespace {
 using DRNG = fetch::random::LinearCongruentialGenerator;
 
 std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
@@ -55,6 +87,7 @@ T DeterministicShuffle(T &container, uint64_t entropy)
   std::shuffle(container.begin(), container.end(), rng);
   return container;
 }
+
 }  // namespace
 
 Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
@@ -64,7 +97,7 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain c
   , beacon_{std::move(beacon)}
   , chain_{chain}
   , mining_identity_{std::move(mining_identity)}
-  , mining_address_{Address(mining_identity_)}
+  , mining_address_{chain::Address(mining_identity_)}
   , aeon_period_{aeon_period}
   , max_committee_size_{max_committee_size}
   , block_interval_ms_{block_interval_ms}
@@ -108,7 +141,7 @@ Consensus::CommitteePtr Consensus::GetCommittee(Block const &previous)
   return std::make_shared<Committee>(committee_copy);
 }
 
-bool Consensus::ValidMinerForBlock(Block const &previous, Address const &address)
+bool Consensus::ValidMinerForBlock(Block const &previous, chain::Address const &address)
 {
   auto const committee = GetCommittee(previous);
 
@@ -120,7 +153,7 @@ bool Consensus::ValidMinerForBlock(Block const &previous, Address const &address
 
   return std::find_if((*committee).begin(), (*committee).end(),
                       [&address](Identity const &identity) {
-                        return address == Address(identity);
+                        return address == chain::Address(identity);
                       }) != (*committee).end();
 }
 
@@ -143,7 +176,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
   return ret;
 }
 
-uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Address const &address)
+uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
 {
   auto const committee = GetCommittee(previous);
 
@@ -158,7 +191,7 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Address cons
   // TODO(EJF): Depending on the committee sizes this would need to be improved
   for (auto const &member : *committee)
   {
-    if (address == Address(member))
+    if (address == chain::Address(member))
     {
       break;
     }
@@ -397,6 +430,37 @@ NextBlockPtr Consensus::GenerateNextBlock()
   return ret;
 }
 
+// Helper function to determine whether the block has been signed correctly
+bool BlockSignedByQualMember(fetch::ledger::Block const &block)
+{
+  assert(!block.body.hash.empty());
+
+  // Is in qual check
+  if (block.body.block_entropy.qualified.find(block.body.miner_id.identifier()) ==
+      block.body.block_entropy.qualified.end())
+  {
+    return false;
+  }
+
+  return fetch::crypto::Verifier::Verify(block.body.miner_id, block.body.hash,
+                                         block.miner_signature);
+}
+
+/**
+ * Given a block entropy, determine whether it has been signed off on
+ * by enough qualified stakers.
+ */
+bool Consensus::EnoughQualSigned(BlockEntropy const &block_entropy) const
+{
+  FETCH_UNUSED(block_entropy);
+  // TODO(HUT): Here, the following checks will be performed (awaits Ed's changes):
+  // - Given the appropriate cabinet,
+  // - Are members of qual in this cabinet
+  // - Does qual meet threshold requirements: Are there enough members of qual, total
+  // - Have enough qual signed the block
+  return true;
+}
+
 Status Consensus::ValidBlock(Block const &current) const
 {
   Status ret = Status::YES;
@@ -405,6 +469,13 @@ Status Consensus::ValidBlock(Block const &current) const
   if (current.body.block_number == 0)
   {
     return Status::YES;
+  }
+
+  if (!BlockSignedByQualMember(current))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Saw block not signed by a member of qual! Block: ", current.body.block_number);
+    return Status::NO;
   }
 
   auto const block_preceeding = GetBlockPriorTo(current, chain_);
@@ -425,6 +496,10 @@ Status Consensus::ValidBlock(Block const &current) const
     }
 
     // Check that the members of qual have all signed correctly
+    if (!EnoughQualSigned(block_entropy))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Received a block with a bad aeon starting point!");
+    }
 
     // Check that the members of qual meet threshold requirements
 
@@ -438,15 +513,13 @@ Status Consensus::ValidBlock(Block const &current) const
     group_pub_key          = beginning_of_aeon.body.block_entropy.group_public_key;
   }
 
-  //// TODO(HUT): check signatures are an unbroken chain.
-  //// Determine that the entropy is correct (a signature of the previous signature)
-  // if(!dkg::BeaconManager::Verify(group_pub_key,
-  // block_preceeding.body.block_entropy.group_signature.getStr(),
-  // current.body.block_entropy.group_signature.getStr()))
-  //{
-  //  FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
-  //  return Status::NO;
-  //}
+  if (!dkg::BeaconManager::Verify(group_pub_key,
+                                  block_preceeding.body.block_entropy.EntropyAsSHA256(),
+                                  current.body.block_entropy.group_signature))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
+    return Status::NO;
+  }
 
   // Perform the time checks (also qual adherence). Note, this check should be last, as the checking
   // logic relies on a well formed block.
