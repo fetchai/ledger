@@ -64,8 +64,9 @@ private:
   bool HasExecutable(std::string const &name) const;
   bool HasState(std::string const &name) const;
 
-  bool      Convertable(LedgerVariant const &ledgerVariant, TypeId const &typeId);
-  VmVariant Convert(LedgerVariant const &ledgerVariant, TypeId const &typeId);
+  bool      Convertable(LedgerVariant const &ledgerVariant, TypeId const &typeId) const;
+  VmVariant Convert(LedgerVariant const &ledgerVariant, TypeId const &typeId) const;
+  LedgerVariant Convert(VmVariant const& vmVariant) const;
 
   ExecutionResult EngineError(std::string resultMessage, Error::Code code,
                               std::string errorMessage) const;

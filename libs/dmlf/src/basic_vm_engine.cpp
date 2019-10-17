@@ -48,12 +48,12 @@ ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFile
     }
 
     return ExecutionResult{
-        Variant{}, Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()},
+        LedgerVariant{}, Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()},
         "Compilation error: Did not create " + execName};
   }
 
   executables_.emplace(execName, std::move(newExecutable));
-  return ExecutionResult{Variant(), Error{Error::Stage::COMPILE, Error::Code::SUCCESS, ""},
+  return ExecutionResult{LedgerVariant(), Error{Error::Stage::COMPILE, Error::Code::SUCCESS, ""},
                          "Created executable " + execName};
 }
 
@@ -68,7 +68,6 @@ ExecutionResult BasicVmEngine::DeleteExecutable(Name const &execName)
   }
 
   executables_.erase(it);
-
   return EngineSuccess("Deleted executable " + execName);
 }
 
@@ -81,7 +80,7 @@ ExecutionResult BasicVmEngine::CreateState(Name const &stateName)
   }
 
   states_.emplace(stateName, std::make_shared<State>());
-  return ExecutionResult{Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""},
+  return ExecutionResult{LedgerVariant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""},
                          "Created state " + stateName};
 }
 
@@ -172,31 +171,31 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
 
   // Run
   std::string        runTimeError;
-  fetch::vm::Variant output;
-  bool               allOK = vm.Execute(*exec, entrypoint, runTimeError, output, parameterPack);
+  VmVariant vmOutput;
+  bool               allOK = vm.Execute(*exec, entrypoint, runTimeError, vmOutput, parameterPack);
 
   // Check how it went
   if (!allOK || !runTimeError.empty())
   {
     return ExecutionResult{
-        output, Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)},
+        LedgerVariant{}, Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)},
         "Error running " + execName + " with state " + stateName};
   }
 
-  return ExecutionResult{output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS, ""},
+  return ExecutionResult{Convert(vmOutput), Error{Error::Stage::RUNNING, Error::Code::SUCCESS, ""},
                          "Ran " + execName + " with state " + stateName};
 }
 
 ExecutionResult BasicVmEngine::EngineError(std::string resultMessage, Error::Code code,
                                            std::string errorMessage) const
 {
-  return ExecutionResult{Variant(), Error{Error::Stage::ENGINE, code, std::move(errorMessage)},
+  return ExecutionResult{LedgerVariant(), Error{Error::Stage::ENGINE, code, std::move(errorMessage)},
                          std::move(resultMessage)};
 }
 
 ExecutionResult BasicVmEngine::EngineSuccess(std::string resultMessage) const
 {
-  return ExecutionResult{Variant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""},
+  return ExecutionResult{LedgerVariant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""},
                          std::move(resultMessage)};
 }
 
@@ -210,7 +209,7 @@ bool BasicVmEngine::HasState(std::string const &name) const
   return states_.find(name) != states_.end();
 }
 
-bool BasicVmEngine::Convertable(LedgerVariant const &ledgerVariant, TypeId const &typeId)
+bool BasicVmEngine::Convertable(LedgerVariant const &ledgerVariant, TypeId const &typeId) const
 {
   switch (typeId)
   {
@@ -238,13 +237,13 @@ bool BasicVmEngine::Convertable(LedgerVariant const &ledgerVariant, TypeId const
   }
 }
 BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const &ledgerVariant,
-                                                TypeId const &       typeId)
+                                                TypeId const &       typeId) const
 {
   switch (typeId)
   {
   case fetch::vm::TypeIds::Bool:
   {
-    return VmVariant(ledgerVariant.As<bool>() != 0, typeId);
+    return VmVariant(ledgerVariant.As<bool>(), typeId);
   }
   case fetch::vm::TypeIds::Int8:
   case fetch::vm::TypeIds::UInt8:
@@ -263,6 +262,34 @@ BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const &ledgerVaria
   }
   default:
     return VmVariant();
+  }
+}
+
+BasicVmEngine::LedgerVariant BasicVmEngine::Convert(VmVariant const &vmVariant) const
+{
+  switch (vmVariant.type_id)
+  {
+  case fetch::vm::TypeIds::Bool:
+  {
+    return LedgerVariant{vmVariant.Get<bool>()};
+  }
+  case fetch::vm::TypeIds::Int8:
+  case fetch::vm::TypeIds::UInt8:
+  case fetch::vm::TypeIds::Int16:
+  case fetch::vm::TypeIds::UInt16:
+  case fetch::vm::TypeIds::Int32:
+  case fetch::vm::TypeIds::UInt32:
+  case fetch::vm::TypeIds::Int64:
+  {
+    return LedgerVariant{vmVariant.Get<int>()};
+  }
+  case fetch::vm::TypeIds::Float32:
+  case fetch::vm::TypeIds::Float64:
+  {
+    return LedgerVariant{vmVariant.Get<double>()};
+  }
+  default:
+    return LedgerVariant{};
   }
 }
 

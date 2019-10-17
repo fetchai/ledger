@@ -29,7 +29,7 @@ namespace dmlf {
 class ExecutionResult
 {
 public:
-  using Variant         = fetch::vm::Variant;
+  using Variant         = fetch::variant::Variant;
   using Error           = ExecutionErrorMessage;
   using ErrorCode       = ExecutionErrorMessage::Code;
   using ErrorStage      = ExecutionErrorMessage::Stage;
