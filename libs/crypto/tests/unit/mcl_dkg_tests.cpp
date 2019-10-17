@@ -241,3 +241,16 @@ TEST(MclDkgTests, Signing)
   Signature group_signature = LagrangeInterpolation(threshold_signatures);
   EXPECT_TRUE(VerifySign(outputs[0].group_public_key, message, group_signature, group_g));
 }
+
+TEST(MclDkgTests, GeneratePublicPrivateKeys)
+{
+  fetch::crypto::mcl::details::MCLInitialiser();
+  Generator generator;
+  SetGenerator(generator);
+
+  auto key_pair = GeneratePublicPrivateKeys(generator);
+
+  std::string message   = "hello";
+  auto        signature = SignShare(message, key_pair.first);
+  EXPECT_TRUE(VerifySign(key_pair.second, message, signature, generator));
+}

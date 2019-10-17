@@ -389,6 +389,18 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size
   return output;
 }
 
+/**
+ * Generates a random private key and the corresponding public key
+ */
+std::pair<PrivateKey, PublicKey> GeneratePublicPrivateKeys(Generator G)
+{
+  std::pair<PrivateKey, PublicKey> key_pair;
+  key_pair.first.setRand();
+  key_pair.second.clear();
+  bn::G2::mul(key_pair.second, G, key_pair.first);
+  return key_pair;
+}
+
 }  // namespace mcl
 }  // namespace crypto
 }  // namespace fetch
