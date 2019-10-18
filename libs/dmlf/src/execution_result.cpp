@@ -23,7 +23,7 @@ namespace dmlf {
 
 ExecutionResult ExecutionResult::MakeResultFromStatus(Error const &status)
 {
-  ExecutionResult res{fetch::vm::Variant{}, status, std::string{}};
+  ExecutionResult res{Variant{}, status, std::string{}};
   return res;
 }
 

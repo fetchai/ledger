@@ -22,14 +22,9 @@
 #include "dmlf/execution/local_executor.hpp"
 
 #include "variant/variant.hpp"
-#include "vm/variant.hpp"
-#include "vm/vm.hpp"
-#include "vm_modules/vm_factory.hpp"
 
-#include <fstream>
 #include <iostream>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -40,9 +35,10 @@ using fetch::dmlf::ExecutionResult;
 using fetch::dmlf::ExecutionEngineInterface;
 using fetch::dmlf::LocalExecutor;
 using fetch::vm::SourceFile;
-using fetch::vm::TypeIds::Unknown;
 
 using PromiseOfResult = fetch::dmlf::ExecutionResult::PromiseOfResult;
+using Params          = fetch::dmlf::LocalExecutor::Params;
+using VariantType     = fetch::variant::Variant::Type;
 
 namespace {
 
@@ -96,19 +92,19 @@ public:
 
   PromiseOfResult RunExecutable(std::string const &exec_name, std::string const &state_name)
   {
-    return executor->Run(host, exec_name, state_name, "main");
+    return executor->Run(host, exec_name, state_name, "main", Params{});
   }
 
   bool IsSuccessfullyFulfilled(PromiseOfResult &promise)
   {
     result = promise.Get();
-    return result.succeeded() && result.console().empty() && result.output().type_id == Unknown;
+    return result.succeeded() && result.console().empty() && result.output().type() == VariantType::UNDEFINED;
   }
 
   bool IsSuccessfullyFulfilledWithOutput(PromiseOfResult &promise, std::string const &output)
   {
     result = promise.Get();
-    return result.succeeded() && result.console() == output && result.output().type_id == Unknown;
+    return result.succeeded() && result.console() == output && result.output().type() == VariantType::UNDEFINED;
   }
 };
 
