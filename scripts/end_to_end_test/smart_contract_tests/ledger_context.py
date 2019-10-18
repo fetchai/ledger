@@ -21,11 +21,11 @@ from fetchai.ledger.contract import Contract
 from fetchai.ledger.crypto import Entity
 
 CONTRACT_TEXT = """
-persistent block_number_state : UInt64;
+persistent action_block_number_state : UInt64;
 persistent init_block_number_state : UInt64;
 
 @init
-function set_init_block_number_state(owner : Address)
+function set_init_block_number_state(owner : Address) : Int64
   use init_block_number_state;
 
   var context = getContext();
@@ -33,6 +33,8 @@ function set_init_block_number_state(owner : Address)
   var block_number = block.blockNumber();
 
   init_block_number_state.set(block_number);
+
+  return toInt64(block_number);
 endfunction
 
 @query
@@ -44,19 +46,20 @@ endfunction
 
 @action
 function set_block_number_state()
-  use block_number_state;
+  use action_block_number_state;
 
   var context = getContext();
   var block = context.block();
   var block_number = block.blockNumber();
 
-  block_number_state.set(block_number);
+  action_block_number_state.set(block_number);
 endfunction
 
 @query
 function query_block_number_state() : UInt64
-  use block_number_state;
-  return block_number_state.get(0u64);
+  use action_block_number_state;
+
+  return action_block_number_state.get(0u64);
 endfunction
 """
 
