@@ -414,7 +414,7 @@ int main(int argc, char **argv)
       // Training loop
       // run first loop to get loss
 
-      DataType min_loss       = std::numeric_limits<DataType>::max();
+      DataType min_loss       = numeric_max<DataType>();
       SizeType patience_count = 0;
 
       for (SizeType k{0}; k < EPOCHS; k++)
