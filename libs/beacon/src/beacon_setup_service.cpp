@@ -1369,7 +1369,7 @@ double TimePerSlot(uint64_t cabinet_size)
   // This assigns a time in seconds to each slot. Dividing by 100 is an arbitrary way to select the
   // time for a single slot from the total DKG time and we could equally just set the time per slot
   // directly.
-  return expected_dkg_time_s / 100.;
+  return static_cast<double>(expected_dkg_time_s) / 100.;
 }
 
 void BeaconSetupService::SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
@@ -1398,9 +1398,10 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
                  ToString(state), "\" at ", current_time);
   condition_to_proceed_ = false;
 
-  uint64_t cabinet_size        = beacon_->aeon.members.size();
-  double   time_per_slot       = TimePerSlot(cabinet_size);
-  uint64_t expected_dkg_time_s = static_cast<uint64_t>(time_per_slot * time_slots_in_dkg_);
+  uint64_t cabinet_size  = beacon_->aeon.members.size();
+  double   time_per_slot = TimePerSlot(cabinet_size);
+  auto     expected_dkg_time_s =
+      static_cast<uint64_t>(time_per_slot * static_cast<double>(time_slots_in_dkg_));
 
   FETCH_LOG_INFO(BeaconSetupService::LOGGING_NAME, "Note: Expect DKG time to be ",
                  expected_dkg_time_s, " s");
