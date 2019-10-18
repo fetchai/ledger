@@ -118,11 +118,11 @@ public:
   void MergeDaps()
   {
     std::vector<const std::unordered_set<std::string> *> dap_names_list{};
-    for (auto node : subnodes_)
+    for (auto& node : subnodes_)
     {
       dap_names_list.push_back(&(node->GetDapNames()));
     }
-    for (auto leaf : leaves_)
+    for (auto& leaf : leaves_)
     {
       dap_names_list.push_back(&(leaf->GetDapNames()));
     }
@@ -143,6 +143,14 @@ public:
     if (!no_match)
     {
       dap_names_.insert(first->begin(), first->end());
+      for(auto& node : subnodes_)
+      {
+        node->ClearDapNames();
+      }
+      for(auto& leaf : leaves_)
+      {
+        leaf->ClearDapNames();
+      }
     }
   }
 

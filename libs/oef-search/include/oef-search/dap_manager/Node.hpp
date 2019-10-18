@@ -37,6 +37,11 @@ public:
     return dap_names_;
   }
 
+  virtual void ClearDapNames()
+  {
+    dap_names_.clear();
+  }
+
   virtual void AddMemento(std::string                                    dap_name,
                           std::shared_ptr<ConstructQueryMementoResponse> memento)
   {
