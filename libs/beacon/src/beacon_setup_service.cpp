@@ -21,9 +21,9 @@
 #include "core/containers/set_difference.hpp"
 #include "core/containers/set_intersection.hpp"
 #include "crypto/verifier.hpp"
-#include "ledger/shards/shard_management_service.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "shards/shard_management_service.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"
@@ -35,7 +35,7 @@
 namespace fetch {
 namespace beacon {
 
-using ledger::ServiceIdentifier;
+using shards::ServiceIdentifier;
 
 char const *ToString(BeaconSetupService::State state);
 
@@ -222,7 +222,7 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
   auto const connected_peers   = muddle_.GetDirectlyConnectedPeers();
   auto const outstanding_peers = aeon_members - connected_peers;
 
-  ledger::Manifest manifest{};
+  shards::Manifest manifest{};
   for (auto const &address : outstanding_peers)
   {
     std::unique_ptr<network::Uri> hint{};

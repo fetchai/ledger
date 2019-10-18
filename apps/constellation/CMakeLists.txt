@@ -19,9 +19,8 @@ add_executable(constellation
 target_link_libraries(constellation
                       PRIVATE fetch-ledger
                               fetch-constellation
-                              fetch-miner
                               fetch-http
-                              fetch-dkg
+                              fetch-beacon
                               fetch-settings
                               fetch-version)
 target_include_directories(constellation PRIVATE ${FETCH_ROOT_DIR}/libs/python/include)

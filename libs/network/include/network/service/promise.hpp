@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "core/serializers/exception.hpp"
+#include "logging/logging.hpp"
 #include "network/service/types.hpp"
 
 #include <array>

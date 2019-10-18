@@ -33,7 +33,7 @@ public:
   using SourceFiles = ExecutionInterface::SourceFiles;
   using Target      = ExecutionInterface::Target;
   using Variant     = ExecutionInterface::Variant;
-  using Params      = ExecutionInterface::Params;
+  using Params      = std::vector<Variant>;
 
   virtual ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) = 0;
   virtual ExecutionResult DeleteExecutable(Name const &execName)                             = 0;
@@ -43,7 +43,7 @@ public:
   virtual ExecutionResult DeleteState(Name const &stateName)                  = 0;
 
   virtual ExecutionResult Run(Name const &execName, Name const &stateName,
-                              std::string const &entrypoint) = 0;
+                              std::string const &entrypoint, Params params) = 0;
 };
 
 }  // namespace dmlf

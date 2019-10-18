@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/digest.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <memory>
@@ -28,7 +28,7 @@
 class InMemoryStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
-  using Transaction = fetch::ledger::Transaction;
+  using Transaction = fetch::chain::Transaction;
   using Digest      = fetch::Digest;
   using DigestSet   = fetch::DigestSet;
 
