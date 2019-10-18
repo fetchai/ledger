@@ -41,7 +41,6 @@ TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
 
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
 
   SizeType RANDOM_SEED{123456};
   DataType LEARNING_RATE{500};  // (seems very high!)
@@ -153,6 +152,8 @@ TEST(TsneTests, tsne_test_2d_fixed_point)
 
 TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
 {
+  using DataType = typename TypeParam::Type;
+
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
 
@@ -161,12 +162,14 @@ TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
   ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
   ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
 
-  EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323879718780517578, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(1, 0)), -3.1758825778961181641, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(0, 25)), -1.7577359676361083984, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(1, 25)), 2.6265761852264404297, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(0, 50)), 0.2358369976282119751, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(1, 50)), 1.679751276969909668, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(0, 99)), -0.87262111902236938477, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At(1, 99)), 3.0463356971740722656, 1e-4);
+  double tolerance = 60 * double(fetch::math::function_tolerance<DataType>());
+
+  EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323879718780517578, tolerance);
+  EXPECT_NEAR(double(output_matrix.At(1, 0)), -3.1758825778961181641, tolerance);
+  EXPECT_NEAR(double(output_matrix.At(0, 25)), -1.7577359676361083984, tolerance);
+  EXPECT_NEAR(double(output_matrix.At(1, 25)), 2.6265761852264404297, tolerance);
+  EXPECT_NEAR(double(output_matrix.At(0, 50)), 0.2358369976282119751, tolerance);
+  EXPECT_NEAR(double(output_matrix.At(1, 50)), 1.679751276969909668, tolerance);
+  EXPECT_NEAR(double(output_matrix.At(0, 99)), -0.87262111902236938477, tolerance);
+  EXPECT_NEAR(double(output_matrix.At(1, 99)), 3.0463356971740722656, tolerance);
 }
