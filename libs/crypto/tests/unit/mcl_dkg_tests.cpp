@@ -271,22 +271,18 @@ TEST(MclNotarisationTests, AggregateSigningVerification)
     all_public_keys.push_back(new_keys.second);
   }
 
-  MessagePayload         message = "Hello";
-  std::vector<Signature> signatures;
-  std::vector<bool>      signers;
-  signers.resize(committee_size, false);
+  MessagePayload                          message = "Hello";
+  std::unordered_map<uint32_t, Signature> signatures;
   for (uint32_t i = 0; i < committee_size; ++i)
   {
     if (i)
     {
-      signers[i]          = true;
-      Signature signature = AggregateSign(message, keys[i].first, keys[i].second, all_public_keys);
-      EXPECT_TRUE(AggregateVerify(message, signature, keys[i].second, all_public_keys, generator));
-      signatures.push_back(signature);
+      Signature signature = SignShare(message, keys[i].first);
+      EXPECT_TRUE(VerifySign(keys[i].second, message, signature, generator));
+      signatures.insert({i, signature});
     }
   }
 
-  Signature aggregate_signature = ComputeAggregateSignature(signatures);
-  EXPECT_TRUE(
-      VerifyAggregateSignature(message, aggregate_signature, signers, all_public_keys, generator));
+  auto aggregate_signature = ComputeAggregateSignature(signatures, all_public_keys);
+  EXPECT_TRUE(VerifyAggregateSignature(message, aggregate_signature, all_public_keys, generator));
 }
