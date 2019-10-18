@@ -76,8 +76,8 @@ Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &
  */
 Contract::Result Contract::DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index)
 {
-  Result         status{Status::NOT_FOUND};
-  decltype(auto) name = tx.action();
+  Result      status{Status::NOT_FOUND};
+  auto const &name = tx.action();
 
   auto it = transaction_handlers_.find(name);
   if (it != transaction_handlers_.end())
