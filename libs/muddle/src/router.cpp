@@ -288,7 +288,7 @@ Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
  */
 void Router::Route(Handle handle, PacketPtr const &packet)
 {
-  FETCH_LOG_INFO(logging_name_, "RX: (conn: ", handle, ") ", DescribePacket(*packet));
+  FETCH_LOG_TRACE(logging_name_, "RX: (conn: ", handle, ") ", DescribePacket(*packet));
 
   // discard all foreign packets
   if (packet->GetNetworkId() != network_id_.value())
@@ -518,13 +518,6 @@ Router::AddressSet Router::GetDirectlyConnectedPeerSet() const
     }
   }
 
-  //if(current_direct_peers.size() != peers.size())
-  //{
-  //  FETCH_LOG_INFO("testme2", "Peers size mismatch! Current: ", current_direct_peers.size(), " final: ", peers.size());
-
-  //  ERROR_BACKTRACE;
-  //}
-
   return peers;
 }
 
@@ -743,7 +736,7 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet)
     buffer.Resize(packet->GetPacketSize());
     if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))
     {
-      FETCH_LOG_INFO(logging_name_, "TX: (conn: ", handle, ") ", DescribePacket(*packet));
+      FETCH_LOG_TRACE(logging_name_, "TX: (conn: ", handle, ") ", DescribePacket(*packet));
 
       // dispatch to the connection object
       conn->Send(buffer);
@@ -806,7 +799,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     buffer.Resize(packet->GetPacketSize());
     if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))
     {
-      FETCH_LOG_INFO(logging_name_, "BX:           ", DescribePacket(*packet));
+      FETCH_LOG_TRACE(logging_name_, "BX:           ", DescribePacket(*packet));
 
       // broadcast the data across the network
       register_.Broadcast(buffer);

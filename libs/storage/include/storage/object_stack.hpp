@@ -36,7 +36,6 @@ class ObjectStack : public ObjectStore<T, S>
 public:
   void Push(T const &object)
   {
-    std::cerr << "Push " << this->size() << std::endl; // DELETEME_NH
     return this->Set(storage::ResourceAddress(std::to_string(this->size())), object);
   }
 
@@ -57,7 +56,6 @@ public:
    */
   bool Get(uint64_t index, T &object)
   {
-    std::cerr << "Get " << index << std::endl; // DELETEME_NH
     return ObjectStore<T, S>::Get(storage::ResourceAddress(std::to_string(index)).as_resource_id(),
                                   object);
   }

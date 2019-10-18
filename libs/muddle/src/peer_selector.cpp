@@ -168,8 +168,6 @@ void PeerSelector::Periodically()
 {
   FETCH_LOCK(lock_);
 
-  //std::cerr << "periodic action is happening" << std::endl; // DELETEME_NH
-
   // kademlia selection
   if (PeerSelectionMode::KADEMLIA == mode_)
   {
@@ -183,11 +181,6 @@ void PeerSelector::Periodically()
   auto const target_peers              = desired_addresses_ + kademlia_addresses_;
   auto const outstanding_peers         = target_peers - currently_connected_peers;
   auto const unwanted_peers            = current_outgoing_peers - desired_addresses_;
-
-  if(outstanding_peers.size() > 0)
-  {
-    FETCH_LOG_INFO("argh", "Attempting to resolve outstanding peers: ", outstanding_peers.size());
-  }
 
   // resolve any outstanding unknown addresses
   ResolveAddresses(outstanding_peers);
@@ -246,11 +239,6 @@ void PeerSelector::ResolveAddresses(Addresses const &addresses)
         unresolved_addresses.erase(peer.first);
       }
     }
-  }
-
-  if(!unresolved_addresses.empty())
-  {
-    FETCH_LOG_INFO("argh2", "Resolving add for: ", unresolved_addresses.size(), " Note: pending is: ", pending_resolutions_.size());
   }
 
   for (auto const &address : unresolved_addresses)

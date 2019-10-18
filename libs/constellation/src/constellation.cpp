@@ -409,8 +409,6 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
 {
   using Peers = muddle::MuddleInterface::Peers;
 
-  std::cerr << "point A" << std::endl; // DELETEME_NH
-
   //---------------------------------------------------------------
   // Step 1. Start all the components
   //---------------------------------------------------------------
@@ -419,7 +417,6 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   if (cfg_.block_interval_ms > 0)
   {
     block_coordinator_.SetBlockPeriod(std::chrono::milliseconds{cfg_.block_interval_ms});
-    std::cerr << "point B" << std::endl; // DELETEME_NH
   }
 
   /// NETWORKING INFRASTRUCTURE
@@ -479,15 +476,12 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   // beacon network
   if (beacon_network_)
   {
-    std::cerr << "point C" << std::endl; // DELETEME_NH
     beacon_network_->Start({LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::DKG)});
-    std::cerr << "point D" << std::endl; // DELETEME_NH
   }
 
   // BEFORE the block coordinator starts its state set up special genesis
   if (cfg_.proof_of_stake || cfg_.load_genesis_file)
   {
-    std::cerr << "point E" << std::endl; // DELETEME_NH
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Loading from genesis save file. Location: ", cfg_.genesis_file_location);
 
@@ -495,41 +489,32 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
 
     if (cfg_.genesis_file_location.empty())
     {
-    std::cerr << "point F" << std::endl; // DELETEME_NH
       creator.LoadFile(GENESIS_FILENAME);
     }
     else
     {
-    std::cerr << "point G" << std::endl; // DELETEME_NH
       creator.LoadFile(cfg_.genesis_file_location);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
   }
 
-  std::cerr << "point H" << std::endl; // DELETEME_NH
   // reactor important to run the block/chain state machine
   reactor_.Start();
-  std::cerr << "point I" << std::endl; // DELETEME_NH
 
   /// BLOCK EXECUTION & MINING
 
-  std::cerr << "point J" << std::endl; // DELETEME_NH
   execution_manager_->Start();
-  std::cerr << "point K" << std::endl; // DELETEME_NH
   tx_processor_.Start();
-  std::cerr << "point L" << std::endl; // DELETEME_NH
 
   /// INPUT INTERFACES
 
   // Finally start the HTTP server
   http_.Start(http_port_);
-  std::cerr << "point M" << std::endl; // DELETEME_NH
 
   // The block coordinator needs to access correctly started lanes to recover state in the case of
   // a crash.
   reactor_.Attach(block_coordinator_.GetWeakRunnable());
-  std::cerr << "point N" << std::endl; // DELETEME_NH
 
   //---------------------------------------------------------------
   // Step 2. Main monitor loop

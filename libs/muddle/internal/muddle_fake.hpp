@@ -290,9 +290,8 @@ public:
     throw std::runtime_error("Get listening ports functionality not implemented");
     return {};
   };
-  Addresses GetDirectlyConnectedPeers(bool print_debug = false) const override
+  Addresses GetDirectlyConnectedPeers() const override
   {
-    FETCH_UNUSED(print_debug);
     return FakeNetwork::GetConnections(node_address_);
   };
   Addresses GetIncomingConnectedPeers() const override
