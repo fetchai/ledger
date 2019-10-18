@@ -158,6 +158,7 @@ void ComplaintAnswersManager::ResetCabinet()
   FETCH_LOCK(mutex_);
   finished_ = false;
   complaints_.clear();
+  complaint_answers_received_.clear();
 }
 
 void ComplaintAnswersManager::AddComplaintAgainst(MuddleAddress const &member)
