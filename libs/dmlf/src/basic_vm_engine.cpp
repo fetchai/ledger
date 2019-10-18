@@ -53,7 +53,9 @@ ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFile
   }
 
   executables_.emplace(execName, std::move(newExecutable));
-  return ExecutionResult{LedgerVariant(), Error{Error::Stage::COMPILE, Error::Code::SUCCESS, "Created executable " + execName},
+  return ExecutionResult{
+      LedgerVariant(),
+      Error{Error::Stage::COMPILE, Error::Code::SUCCESS, "Created executable " + execName},
       std::string{}};
 }
 
@@ -79,7 +81,8 @@ ExecutionResult BasicVmEngine::CreateState(Name const &stateName)
 
   states_.emplace(stateName, std::make_shared<State>());
   return ExecutionResult{
-      LedgerVariant{}, Error{Error::Stage::ENGINE, Error::Code::SUCCESS, "Created state " + stateName},
+      LedgerVariant{},
+      Error{Error::Stage::ENGINE, Error::Code::SUCCESS, "Created state " + stateName},
       std::string{}};
 }
 
@@ -137,8 +140,7 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
 
   if (func == nullptr)
   {
-    return EngineError(Error::Code::RUNTIME_ERROR,
-                       entrypoint + " does not exist");
+    return EngineError(Error::Code::RUNTIME_ERROR, entrypoint + " does not exist");
   }
 
   auto const numParameters = static_cast<std::size_t>(func->num_parameters);
@@ -157,8 +159,8 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
 
     if (!Convertable(params[i], typeId))
     {
-      return EngineError(Error::Code::RUNTIME_ERROR,
-          "Wrong parameter at " + std::to_string(i) + " Expected " + vm.GetTypeName(typeId));
+      return EngineError(Error::Code::RUNTIME_ERROR, "Wrong parameter at " + std::to_string(i) +
+                                                         " Expected " + vm.GetTypeName(typeId));
     }
     parameterPack.AddSingle(Convert(params[i], typeId));
   }
@@ -166,8 +168,8 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
   // Run
   std::string runTimeError;
   VmVariant   vmOutput;
-  
-  bool        allOK = vm.Execute(*exec, entrypoint, runTimeError, vmOutput, parameterPack);
+
+  bool allOK = vm.Execute(*exec, entrypoint, runTimeError, vmOutput, parameterPack);
   if (!allOK || !runTimeError.empty())
   {
     return ExecutionResult{
@@ -176,20 +178,22 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
         console.str()};
   }
 
-  return ExecutionResult{Convert(vmOutput), Error{Error::Stage::RUNNING, Error::Code::SUCCESS, "Ran " + execName + " with state " + stateName},
-        console.str()};
+  return ExecutionResult{Convert(vmOutput),
+                         Error{Error::Stage::RUNNING, Error::Code::SUCCESS,
+                               "Ran " + execName + " with state " + stateName},
+                         console.str()};
 }
 
 ExecutionResult BasicVmEngine::EngineError(Error::Code code, std::string errorMessage) const
 {
   return ExecutionResult{LedgerVariant(),
-                         Error{Error::Stage::ENGINE, code, std::move(errorMessage)},
-                         std::string{}};
+                         Error{Error::Stage::ENGINE, code, std::move(errorMessage)}, std::string{}};
 }
 
 ExecutionResult BasicVmEngine::EngineSuccess(std::string successMessage) const
 {
-  return ExecutionResult{LedgerVariant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, std::move(successMessage)},
+  return ExecutionResult{
+      LedgerVariant(), Error{Error::Stage::ENGINE, Error::Code::SUCCESS, std::move(successMessage)},
       std::string{}};
 }
 
