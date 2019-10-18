@@ -74,10 +74,10 @@ Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
-                                               chain::Transaction const &tx, BlockIndex block_index)
+Contract::Result Contract::DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index)
 {
-  Result status{Status::NOT_FOUND};
+  Result      status{Status::NOT_FOUND};
+  auto const &name = tx.action();
 
   auto it = transaction_handlers_.find(name);
   if (it != transaction_handlers_.end())
