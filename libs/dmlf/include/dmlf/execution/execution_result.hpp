@@ -61,9 +61,9 @@ public:
     return error_.code() == ErrorCode::SUCCESS;
   }
 
-  static ExecutionResult MakeResultFromStatus(Error status);
+  static ExecutionResult MakeResultFromStatus(Error const &status);
   static ExecutionResult MakeSuccessfulResult();
-  static ExecutionResult MakeErroneousResult(ErrorCode err_code, std::string err_msg);
+  static ExecutionResult MakeErroneousResult(ErrorCode err_code, std::string const &err_msg);
 
   static PromiseOfResult MakePromise();
   static void            FulfillPromise(PromiseOfResult &promise, ExecutionResult const &fulfiller);

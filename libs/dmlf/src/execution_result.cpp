@@ -21,7 +21,7 @@
 namespace fetch {
 namespace dmlf {
 
-ExecutionResult ExecutionResult::MakeResultFromStatus(Error status)
+ExecutionResult ExecutionResult::MakeResultFromStatus(Error const &status)
 {
   ExecutionResult res{fetch::vm::Variant{}, status, std::string{}};
   return res;
@@ -33,7 +33,7 @@ ExecutionResult ExecutionResult::MakeSuccessfulResult()
   return MakeResultFromStatus(status);
 }
 
-ExecutionResult ExecutionResult::MakeErroneousResult(ErrorCode err_code, std::string err_msg)
+ExecutionResult ExecutionResult::MakeErroneousResult(ErrorCode err_code, std::string const &err_msg)
 {
   Error err{ErrorStage::ENGINE, err_code, err_msg};
   return MakeResultFromStatus(err);

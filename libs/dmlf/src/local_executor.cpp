@@ -29,9 +29,6 @@ LocalExecutor::LocalExecutor(ExecutionEnginePtr &exec_engine)
   : exec_engine_{exec_engine}
 {}
 
-LocalExecutor::~LocalExecutor()
-{}
-
 LocalExecutor::PromiseOfResult LocalExecutor::CreateExecutable(Target const & /*host*/,
                                                                Name const &       execName,
                                                                SourceFiles const &sources)

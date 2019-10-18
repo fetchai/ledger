@@ -30,8 +30,8 @@ class LocalExecutor : public ExecutionInterface
 public:
   using ExecutionEnginePtr = std::shared_ptr<ExecutionEngineInterface>;
 
-  LocalExecutor(ExecutionEnginePtr &exec_engine);
-  virtual ~LocalExecutor();
+  explicit LocalExecutor(ExecutionEnginePtr &exec_engine);
+  virtual ~LocalExecutor() = default;
 
   LocalExecutor(LocalExecutor const &other) = delete;
   LocalExecutor(LocalExecutor &&other)      = delete;
@@ -49,16 +49,16 @@ public:
   using ErrorCode  = ExecutionErrorMessage::Code;
   using Error      = ExecutionResult::Error;
 
-  virtual PromiseOfResult CreateExecutable(Target const &host, Name const &execName,
+  PromiseOfResult CreateExecutable(Target const &host, Name const &execName,
                                            SourceFiles const &sources) override;
-  virtual PromiseOfResult DeleteExecutable(Target const &host, Name const &execName) override;
+  PromiseOfResult DeleteExecutable(Target const &host, Name const &execName) override;
 
-  virtual PromiseOfResult CreateState(Target const &host, Name const &stateName) override;
-  virtual PromiseOfResult CopyState(Target const &host, Name const &srcName,
+  PromiseOfResult CreateState(Target const &host, Name const &stateName) override;
+  PromiseOfResult CopyState(Target const &host, Name const &srcName,
                                     Name const &newName) override;
-  virtual PromiseOfResult DeleteState(Target const &host, Name const &stateName) override;
+  PromiseOfResult DeleteState(Target const &host, Name const &stateName) override;
 
-  virtual PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
+  PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
                               std::string const &entrypoint) override;
 
 private:
