@@ -37,10 +37,10 @@ public:
   using OpIdent         = ExecutionWorkload::OpIdent;
   using PendingResults  = std::map<OpIdent, PromiseOfResult>;
 
-  RemoteExecutionClient(MuddlePtr mud_, std::shared_ptr<ExecutionInterface> local =
-                                            std::shared_ptr<ExecutionInterface>());
+  explicit RemoteExecutionClient(MuddlePtr mud, std::shared_ptr<ExecutionInterface> local =
+                                                    std::shared_ptr<ExecutionInterface>());
 
-  virtual ~RemoteExecutionClient() = default;
+  ~RemoteExecutionClient() override = default;
 
   static constexpr char const *LOCAL = "local:///";
 
@@ -74,7 +74,7 @@ private:
   PendingResults pending_results_;
   std::size_t    counter = 0;
 
-  PromiseOfResult Returned(std::function<bool(OpIdent const &op_id)>);
+  PromiseOfResult Returned(const std::function<bool(OpIdent const &op_id)> &func);
 
   byte_array::ConstByteArray TargetUriToKey(std::string const &target);
 };

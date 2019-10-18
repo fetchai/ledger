@@ -130,7 +130,7 @@ byte_array::ConstByteArray RemoteExecutionClient::TargetUriToKey(std::string con
   return fetch::byte_array::FromBase64(target);
 }
 
-bool RemoteExecutionClient::ReturnResults(OpIdent const &op_id, ExecutionResult const &r)
+bool RemoteExecutionClient::ReturnResults(OpIdent const &op_id, ExecutionResult const &result)
 {
   auto iter = pending_results_.find(op_id);
   if (iter == pending_results_.end())
@@ -140,14 +140,14 @@ bool RemoteExecutionClient::ReturnResults(OpIdent const &op_id, ExecutionResult 
   else
   {
     serializers::MsgPackSerializer serializer;
-    serializer << r;
+    serializer << result;
     iter->second.GetInnerPromise()->Fulfill(serializer.data());
   }
   return true;
 }
 
 RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::Returned(
-    std::function<bool(OpIdent const &op_id)> func)
+    const std::function<bool(OpIdent const &op_id)> &func)
 {
   counter++;
   auto op_id = std::to_string(counter);

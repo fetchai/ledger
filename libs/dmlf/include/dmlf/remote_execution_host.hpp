@@ -44,8 +44,7 @@ public:
 
   RemoteExecutionHost(MuddlePtr mud, ExecutionInterfacePtr executor);
 
-  virtual ~RemoteExecutionHost()
-  {}
+  virtual ~RemoteExecutionHost() = default;
 
   RemoteExecutionHost(RemoteExecutionHost const &other) = delete;
   RemoteExecutionHost &operator=(RemoteExecutionHost const &other)  = delete;
