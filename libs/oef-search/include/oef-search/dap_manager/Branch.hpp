@@ -84,7 +84,9 @@ public:
 
   std::shared_ptr<ConstructQueryObjectRequest> ToProto(const std::string &dap_name)
   {
-    auto pt = std::make_shared<ConstructQueryObjectRequest>(*proto_);
+    auto pt = std::make_shared<ConstructQueryObjectRequest>();
+    pt->set_operator_(proto_->operator_());
+    pt->set_node_name(proto_->node_name());
     for (const std::string &dap_name : dap_names_)
     {
       pt->add_dap_names(dap_name);
