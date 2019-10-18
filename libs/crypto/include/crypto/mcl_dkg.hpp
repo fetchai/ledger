@@ -120,34 +120,24 @@ void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j)
 /**
  * Helper functions for computations used in the DKG
  */
-void   SetGenerator(Generator &group_g);
-void   SetGenerators(Generator &group_g, Generator &group_h);
+// For DKG
+void   SetGenerator(Generator &group_g, std::string string_to_hash = "");
+void   SetGenerators(Generator &group_g, Generator &group_h, std::string string_to_hash = "",
+                     std::string string_to_hash2 = "");
 bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
                   bn::Fr const &share2);
-
 bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2);
-
-void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
-
+void   UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
 bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
-
-void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
-                   std::vector<bn::Fr> const &b_i, uint32_t index);
-
-bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
-
+void   ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
+                     std::vector<bn::Fr> const &b_i, uint32_t index);
 std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b);
 
 // For signatures
 Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
-
-bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
-                Generator const &G);
-
-bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign);
-
+bool      VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
+                     Generator const &G);
 Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
-
 std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size,
                                                          uint32_t threshold);
 
