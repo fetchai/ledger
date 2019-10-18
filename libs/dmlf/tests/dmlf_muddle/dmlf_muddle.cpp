@@ -92,7 +92,7 @@ public:
   }
 
   ExecutionResult Run(Name const & /*execName*/, Name const & /*stateName*/,
-                      std::string const & /*entrypoint*/) override
+                      std::string const & /*entrypoint*/, Params /*params*/) override
   {
     return ExecutionResult::MakeIntegerResult(4);
   }
@@ -210,7 +210,7 @@ TEST_F(MuddleLearnerNetworkerTests, test1)
   p3.Wait();
   auto res = p3.Get();
 
-  EXPECT_EQ(res.output().Get<int>(), 4);
+  EXPECT_EQ(res.output().As<int>(), 4);
 }
 }  // namespace dmlf
 }  // namespace fetch

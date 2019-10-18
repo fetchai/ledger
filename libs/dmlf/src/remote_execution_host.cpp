@@ -83,7 +83,7 @@ bool RemoteExecutionHost::Run(service::CallContext const &context, OpIdent const
   pending_workloads_.emplace_back(
       ExecutionWorkload(context.sender_address, op_id, "",
                         [execName, stateName, entrypoint](ExecutionInterfacePtr const &exec) {
-                          return exec->Run(execName, stateName, entrypoint);
+                          return exec->Run(execName, stateName, entrypoint, {});
                         }));
   return true;
 }
