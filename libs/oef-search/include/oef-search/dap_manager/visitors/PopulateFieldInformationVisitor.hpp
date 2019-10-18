@@ -5,11 +5,11 @@
 
 #include <memory>
 
-class PopulateFieldInformationVisitor : public Visitor<Queue>
+class PopulateFieldInformationVisitor : public Visitor<Stack>
 {
 public:
   static constexpr char const *LOGGING_NAME = "PopulateFieldInformationVisitor";
-  using VisitNodeExitStates                 = typename Visitor<Queue>::VisitNodeExitStates;
+  using VisitNodeExitStates                 = typename Visitor<Stack>::VisitNodeExitStates;
 
   PopulateFieldInformationVisitor(std::shared_ptr<DapStore> dap_store)
     : dap_store_{std::move(dap_store)}

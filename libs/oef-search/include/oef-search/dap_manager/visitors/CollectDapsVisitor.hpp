@@ -5,11 +5,11 @@
 
 #include <memory>
 
-class CollectDapsVisitor : public Visitor<Queue>
+class CollectDapsVisitor : public Visitor<Stack>
 {
 public:
   static constexpr char const *LOGGING_NAME = "CollectDapsVisitor";
-  using VisitNodeExitStates                 = typename Visitor<Queue>::VisitNodeExitStates;
+  using VisitNodeExitStates                 = typename Visitor<Stack>::VisitNodeExitStates;
 
   CollectDapsVisitor()
   {}

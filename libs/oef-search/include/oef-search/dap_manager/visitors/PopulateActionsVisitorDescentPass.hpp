@@ -6,52 +6,14 @@
 #include <memory>
 #include <stack>
 
-template <class T>
-class Stack
-{
-public:
-  void push(const T &value)
-  {
-    stack_.push(value);
-  }
-
-  void push(T &&value)
-  {
-    stack_.push(std::move(value));
-  }
-
-  T &top()
-  {
-    return stack_.top();
-  }
-
-  const T &top() const
-  {
-    return stack_.top();
-  }
-
-  void pop()
-  {
-    stack_.pop();
-  }
-
-  bool empty() const
-  {
-    return stack_.empty();
-  }
-
-private:
-  std::stack<T> stack_;
-};
-
 class DapManager;
 class DapStore;
 
-class PopulateActionsVisitorDescentPass : public Visitor<Stack>
+class PopulateActionsVisitorDescentPass : public Visitor<Queue>
 {
 public:
   static constexpr char const *LOGGING_NAME = "PopulateActionsVisitorDescentPass";
-  using VisitNodeExitStates                 = typename Visitor<Stack>::VisitNodeExitStates;
+  using VisitNodeExitStates                 = typename Visitor<Queue>::VisitNodeExitStates;
 
   PopulateActionsVisitorDescentPass(std::shared_ptr<DapManager> dap_manager,
                                     std::shared_ptr<DapStore>   dap_store);

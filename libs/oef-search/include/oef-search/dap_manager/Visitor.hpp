@@ -180,3 +180,42 @@ public:
 private:
   std::queue<T> queue_;
 };
+
+
+template <class T>
+class Stack
+{
+public:
+  void push(const T &value)
+  {
+    stack_.push(value);
+  }
+
+  void push(T &&value)
+  {
+    stack_.push(std::move(value));
+  }
+
+  T &top()
+  {
+    return stack_.top();
+  }
+
+  const T &top() const
+  {
+    return stack_.top();
+  }
+
+  void pop()
+  {
+    stack_.pop();
+  }
+
+  bool empty() const
+  {
+    return stack_.empty();
+  }
+
+private:
+  std::stack<T> stack_;
+};
