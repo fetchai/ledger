@@ -29,8 +29,7 @@ ExecutionResult ExecutionResult::MakeSuccess()
 
 ExecutionResult ExecutionResult::MakeIntegerResult(int r)
 {
-  return ExecutionResult{Variant{r},
-                         Error{ErrorStage::ENGINE, ErrorCode::SUCCESS, std::string{}},
+  return ExecutionResult{Variant{r}, Error{ErrorStage::ENGINE, ErrorCode::SUCCESS, std::string{}},
                          std::string{}};
 }
 
