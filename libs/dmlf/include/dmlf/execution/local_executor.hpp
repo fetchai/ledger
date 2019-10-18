@@ -20,9 +20,7 @@
 #include "dmlf/execution/execution_engine_interface.hpp"
 #include "dmlf/execution/execution_interface.hpp"
 
-#include <map>
 #include <memory>
-#include <sstream>
 
 namespace fetch {
 namespace dmlf {
@@ -30,13 +28,7 @@ namespace dmlf {
 class LocalExecutor : public ExecutionInterface
 {
 public:
-  LocalExecutor();
-  virtual ~LocalExecutor();
-
-  LocalExecutor(LocalExecutor const &other) = delete;
-  LocalExecutor(LocalExecutor &&other)      = delete;
-  LocalExecutor &operator=(LocalExecutor const &other) = delete;
-  LocalExecutor &operator=(LocalExecutor &&other) = delete;
+  using ExecutionEnginePtr = std::shared_ptr<ExecutionEngineInterface>;
 
   using Name            = ExecutionInterface::Name;
   using SourceFiles     = ExecutionInterface::SourceFiles;
@@ -49,17 +41,27 @@ public:
   using ErrorCode  = ExecutionErrorMessage::Code;
   using Error      = ExecutionResult::Error;
 
-  virtual PromiseOfResult CreateExecutable(Target const &host, Name const &execName,
-                                           SourceFiles const &sources) override;
-  virtual PromiseOfResult DeleteExecutable(Target const &host, Name const &execName) override;
+  explicit LocalExecutor(ExecutionEnginePtr &exec_engine);
+  ~LocalExecutor() override = default;
 
-  virtual PromiseOfResult CreateState(Target const &host, Name const &stateName) override;
-  virtual PromiseOfResult CopyState(Target const &host, Name const &srcName,
-                                    Name const &newName) override;
-  virtual PromiseOfResult DeleteState(Target const &host, Name const &stateName) override;
+  LocalExecutor(LocalExecutor const &other) = delete;
+  LocalExecutor(LocalExecutor &&other)      = delete;
+  LocalExecutor &operator=(LocalExecutor const &other) = delete;
+  LocalExecutor &operator=(LocalExecutor &&other) = delete;
 
-  virtual PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
-                              std::string const &entrypoint) override;
+  PromiseOfResult CreateExecutable(Target const &host, Name const &execName,
+                                   SourceFiles const &sources) override;
+  PromiseOfResult DeleteExecutable(Target const &host, Name const &execName) override;
+
+  PromiseOfResult CreateState(Target const &host, Name const &stateName) override;
+  PromiseOfResult CopyState(Target const &host, Name const &srcName, Name const &newName) override;
+  PromiseOfResult DeleteState(Target const &host, Name const &stateName) override;
+
+  PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
+                      std::string const &entrypoint, Params params) override;
+
+private:
+  ExecutionEnginePtr exec_engine_;
 };
 
 }  // namespace dmlf

@@ -21,6 +21,24 @@
 namespace fetch {
 namespace dmlf {
 
+ExecutionResult ExecutionResult::MakeResultFromStatus(Error const &status)
+{
+  ExecutionResult res{Variant{}, status, std::string{}};
+  return res;
+}
+
+ExecutionResult ExecutionResult::MakeSuccessfulResult()
+{
+  Error status{ErrorStage::ENGINE, ErrorCode::SUCCESS, std::string{}};
+  return MakeResultFromStatus(status);
+}
+
+ExecutionResult ExecutionResult::MakeErroneousResult(ErrorCode err_code, std::string const &err_msg)
+{
+  Error err{ErrorStage::ENGINE, err_code, err_msg};
+  return MakeResultFromStatus(err);
+}
+
 ExecutionResult::PromiseOfResult ExecutionResult::MakePromise()
 {
   fetch::network::PromiseOf<ExecutionResult> promise{service::MakePromise()};
