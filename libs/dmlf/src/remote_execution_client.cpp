@@ -111,7 +111,8 @@ RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::DeleteState(Target
 RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::Run(Target const &     target,
                                                                   Name const &       execName,
                                                                   Name const &       stateName,
-                                                                  std::string const &entrypoint)
+                                                                  std::string const &entrypoint,
+                                                                  Params params)
 {
   if (target.empty() || target == "local:///")
   {

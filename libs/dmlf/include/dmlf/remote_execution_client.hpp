@@ -19,7 +19,6 @@
 
 #include "dmlf/execution/execution_interface.hpp"
 #include "dmlf/execution_workload.hpp"
-#include "dmlf/vm_wrapper_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -59,7 +58,7 @@ public:
   PromiseOfResult DeleteState(Target const &target, Name const &stateName) override;
 
   PromiseOfResult Run(Target const &target, Name const &execName, Name const &stateName,
-                      std::string const &entrypoint) override;
+                      std::string const &entrypoint, Params params) override;
 
   // This is the exported interface which is called with results from the remote host.
 
