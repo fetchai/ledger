@@ -149,18 +149,15 @@ public:
       {
         node->ClearDapNames();
       }
-      std::string table_name{""},
-                  field_name{""};
+      std::string table_name{""};
       for(auto& leaf : leaves_)
       {
         leaf->ClearDapNames();
         UpdateTargetString(table_name, leaf->GetTargetTableName());
-        UpdateTargetString(field_name, leaf->GetTargetFieldName());
       }
       for(auto& leaf : leaves_)
       {
         leaf->SetTargetTableName(table_name);
-        leaf->SetTargetFieldName(field_name);
       }
     }
   }
