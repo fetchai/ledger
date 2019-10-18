@@ -113,6 +113,7 @@ steps:
   - restart_nodes: { "nodes": [0] }
   - verify_txs: { "name": "batch1", "nodes": [0], "expect_mined": true }
 ...
+
 ---
 test_description: >
   DISABLED - Transactions sync and are executed across nodes when using POS
