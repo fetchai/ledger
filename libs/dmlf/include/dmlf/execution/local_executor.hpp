@@ -50,16 +50,15 @@ public:
   using Error      = ExecutionResult::Error;
 
   PromiseOfResult CreateExecutable(Target const &host, Name const &execName,
-                                           SourceFiles const &sources) override;
+                                   SourceFiles const &sources) override;
   PromiseOfResult DeleteExecutable(Target const &host, Name const &execName) override;
 
   PromiseOfResult CreateState(Target const &host, Name const &stateName) override;
-  PromiseOfResult CopyState(Target const &host, Name const &srcName,
-                                    Name const &newName) override;
+  PromiseOfResult CopyState(Target const &host, Name const &srcName, Name const &newName) override;
   PromiseOfResult DeleteState(Target const &host, Name const &stateName) override;
 
   PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
-                              std::string const &entrypoint) override;
+                      std::string const &entrypoint) override;
 
 private:
   ExecutionEnginePtr exec_engine_;
