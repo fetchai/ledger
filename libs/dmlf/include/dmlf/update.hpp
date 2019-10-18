@@ -22,7 +22,6 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "dmlf/update_interface.hpp"
-#include "ml/distributed_learning/distributed_learning_types.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
 
 #include <chrono>
@@ -31,6 +30,12 @@
 
 namespace fetch {
 namespace dmlf {
+
+enum class UpdateType : uint8_t
+{
+  GRADIENTS,
+  WEIGHTS,
+};
 
 template <typename T>
 class Update : public UpdateInterface
@@ -43,7 +48,6 @@ public:
   using VectorTensor  = std::vector<TensorType>;
   using TimeStampType = UpdateInterface::TimeStampType;
   using Fingerprint   = UpdateInterface::Fingerprint;
-  using UpdateType    = fetch::ml::distributed_learning::UpdateType;
   using HashType      = byte_array::ConstByteArray;
 
   using Payload = VectorTensor;
@@ -174,7 +178,7 @@ public:
 
     uint8_t update_type;
     map.ExpectKeyGetValue(UPDATE_TYPE, update_type);
-    update.update_type_ = static_cast<fetch::ml::distributed_learning::UpdateType>(update_type);
+    update.update_type_ = static_cast<fetch::dmlf::UpdateType>(update_type);
   }
 };
 

@@ -25,7 +25,6 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/distributed_learning/distributed_learning_types.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
@@ -381,7 +380,7 @@ std::shared_ptr<fetch::dmlf::Update<TensorType>> TrainingClient<TensorType>::Get
 {
   FETCH_LOCK(model_mutex_);
   return std::make_shared<GradientType>(g_ptr_->GetGradients(), byte_array::ConstByteArray(),
-                                        UpdateType::GRADIENTS);
+                                        fetch::dmlf::UpdateType::GRADIENTS);
 }
 
 /**
