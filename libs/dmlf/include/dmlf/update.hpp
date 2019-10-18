@@ -160,7 +160,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &update)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(5);
     map.Append(TIME_STAMP, update.stamp_);
     map.Append(GRADIENTS, update.gradients_);
     map.Append(FINGERPRINT, update.fingerprint_);
