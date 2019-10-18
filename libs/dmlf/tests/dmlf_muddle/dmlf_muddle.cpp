@@ -174,22 +174,22 @@ public:
     server_port = (unsigned short int)(rand() % 10000 + 10000);
     client_port = server_port + 1;
 
-    usleep(1000);
+    usleep(100000);
     iface = std::make_shared<DummyExecutionInterface>();
-    usleep(1000);
+    usleep(100000);
     server = std::make_shared<ServerHalf>(iface);
-    usleep(1000);
+    usleep(100000);
     client = std::make_shared<ClientHalf>();
-    usleep(1000);
+    usleep(100000);
   }
 };
 
 TEST_F(MuddleLearnerNetworkerTests, test1)
 {
-  usleep(1000);
+  usleep(100000);
   while (server->mud_->GetNumDirectlyConnectedPeers() < 1)
   {
-    usleep(1000);
+    usleep(100000);
   }
 
   auto p1 = client->client_->CreateExecutable(SERVER_PUB, "exe1", {{"exe1.etch", "foo"}});
@@ -199,14 +199,14 @@ TEST_F(MuddleLearnerNetworkerTests, test1)
   int pending = 3;
   while (pending > 0)
   {
-    usleep(1000);
+    usleep(100000);
     if (server->host_->ExecuteOneWorkload())
     {
       pending--;
     }
   }
 
-  usleep(1000);
+  usleep(100000);
   p3.Wait();
   auto res = p3.Get();
 
