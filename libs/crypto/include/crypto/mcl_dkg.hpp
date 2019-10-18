@@ -121,9 +121,9 @@ void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j)
  * Helper functions for computations used in the DKG
  */
 // For DKG
-void   SetGenerator(Generator &group_g, std::string string_to_hash = "");
-void   SetGenerators(Generator &group_g, Generator &group_h, std::string string_to_hash = "",
-                     std::string string_to_hash2 = "");
+void SetGenerator(Generator &generator_g, std::string string_to_hash = "");
+void SetGenerators(Generator &generator_g, Generator &generator_h, std::string string_to_hash = "",
+                   std::string string_to_hash2 = "");
 bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
                   bn::Fr const &share2);
 bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2);
