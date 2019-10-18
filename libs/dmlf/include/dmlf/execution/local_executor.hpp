@@ -31,7 +31,7 @@ public:
   using ExecutionEnginePtr = std::shared_ptr<ExecutionEngineInterface>;
 
   explicit LocalExecutor(ExecutionEnginePtr &exec_engine);
-  virtual ~LocalExecutor() = default;
+  ~LocalExecutor() override = default;
 
   LocalExecutor(LocalExecutor const &other) = delete;
   LocalExecutor(LocalExecutor &&other)      = delete;
