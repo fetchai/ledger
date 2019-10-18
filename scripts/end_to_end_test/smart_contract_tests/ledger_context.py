@@ -21,14 +21,30 @@ from fetchai.ledger.contract import Contract
 from fetchai.ledger.crypto import Entity
 
 CONTRACT_TEXT = """
+persistent init_block_number_state : UInt64;
+
+@init
+function set_init_block_number_state()
+  use init_block_number_state;
+  init_block_number_state.set(getContext().block().blockNumber());
+endfunction
+
+@query
+function get_init_block_number_state() : UInt64
+  use init_block_number_state;
+  return init_block_number_state.get(0u64);
+endfunction
+
 @action
 function set_block_number_state()
-  State<UInt64>('block_number_state').set(getContext().block().blockNumber());
+  use block_number_state;
+  block_number_state.set(getContext().block().blockNumber());
 endfunction
 
 @query
 function query_block_number_state() : UInt64
-    return State<UInt64>('block_number_state').get(0u64);
+  use block_number_state;
+  return block_number_state.get(0u64);
 endfunction
 """
 
@@ -46,6 +62,8 @@ def run(options):
 
     # deploy the contract to the network
     api.sync(api.contracts.create(entity1, contract, 2000))
+
+    assert contract.query(api, 'get_init_block_number_state') > 0
 
     api.sync(contract.action(api, 'set_block_number_state', 400, [entity1]))
 
