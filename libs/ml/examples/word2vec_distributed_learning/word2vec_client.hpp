@@ -186,7 +186,7 @@ template <class TensorType>
 std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(this->model_mutex_);
-  return std::make_shared<GradientType>(this->g_ptr_->GetGradients(), this->id_,
+  return std::make_shared<GradientType>(this->g_ptr_->GetGradients(),
                                         w2v_data_loader_ptr_->GetVocabHash());
 }
 

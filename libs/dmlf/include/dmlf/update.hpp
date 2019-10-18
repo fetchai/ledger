@@ -57,12 +57,11 @@ public:
     , fingerprint_{ComputeFingerprint()}
   {}
 
-  explicit Update(VectorTensor gradients, std::string client_id, byte_array::ConstByteArray hash,
+  explicit Update(VectorTensor gradients, byte_array::ConstByteArray hash,
                   UpdateType uptype = UpdateType::GRADIENTS)
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
-    , client_id_{std::move(client_id)}
     , hash_{std::move(hash)}
     , update_type_(uptype)
   {}
@@ -133,9 +132,8 @@ private:
   VectorTensor  gradients_;
   Fingerprint   fingerprint_;
 
-  std::string client_id_;
-  HashType    hash_;
-  UpdateType  update_type_ = UpdateType::GRADIENTS;
+  HashType   hash_;
+  UpdateType update_type_ = UpdateType::GRADIENTS;
 };
 
 }  // namespace dmlf
@@ -152,9 +150,8 @@ public:
   static uint8_t const TIME_STAMP  = 1;
   static uint8_t const GRADIENTS   = 2;
   static uint8_t const FINGERPRINT = 3;
-  static uint8_t const CLIENT_ID   = 4;
-  static uint8_t const HASH        = 5;
-  static uint8_t const UPDATE_TYPE = 6;
+  static uint8_t const HASH        = 4;
+  static uint8_t const UPDATE_TYPE = 5;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &update)
@@ -163,7 +160,6 @@ public:
     map.Append(TIME_STAMP, update.stamp_);
     map.Append(GRADIENTS, update.gradients_);
     map.Append(FINGERPRINT, update.fingerprint_);
-    map.Append(CLIENT_ID, update.client_id_);
     map.Append(HASH, update.hash_);
     map.Append(UPDATE_TYPE, static_cast<uint8_t>(update.update_type_));
   }
@@ -174,8 +170,6 @@ public:
     map.ExpectKeyGetValue(TIME_STAMP, update.stamp_);
     map.ExpectKeyGetValue(GRADIENTS, update.gradients_);
     map.ExpectKeyGetValue(FINGERPRINT, update.fingerprint_);
-
-    map.ExpectKeyGetValue(CLIENT_ID, update.client_id_);
     map.ExpectKeyGetValue(HASH, update.hash_);
 
     uint8_t update_type;
