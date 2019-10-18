@@ -154,7 +154,7 @@ public:
       for(auto& leaf : leaves_)
       {
         leaf->ClearDapNames();
-        UpdateTargetString(table_name, leaf->GetTargetFieldName());
+        UpdateTargetString(table_name, leaf->GetTargetTableName());
         UpdateTargetString(field_name, leaf->GetTargetFieldName());
       }
       for(auto& leaf : leaves_)
