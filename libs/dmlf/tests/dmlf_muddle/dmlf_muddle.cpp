@@ -194,7 +194,7 @@ TEST_F(MuddleLearnerNetworkerTests, test1)
 
   auto p1 = client->client_->CreateExecutable(SERVER_PUB, "exe1", {{"exe1.etch", "foo"}});
   auto p2 = client->client_->CreateState(SERVER_PUB, "state1");
-  auto p3 = client->client_->Run(SERVER_PUB, "exe1", "state1", "dummy_func");
+  auto p3 = client->client_->Run(SERVER_PUB, "exe1", "state1", "dummy_func", {});
 
   int pending = 3;
   while (pending > 0)

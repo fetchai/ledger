@@ -112,11 +112,11 @@ RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::Run(Target const &
                                                                   Name const &       execName,
                                                                   Name const &       stateName,
                                                                   std::string const &entrypoint,
-                                                                  Params params)
+                                                                  Params /*params*/)
 {
   if (target.empty() || target == "local:///")
   {
-    return local_->Run(target, execName, stateName, entrypoint);
+    return local_->Run(target, execName, stateName, entrypoint, {});
   }
   return Returned([this, target, execName, stateName, entrypoint](OpIdent const &op_id) {
     client_->CallSpecificAddress(TargetUriToKey(target), RPC_DMLF,
