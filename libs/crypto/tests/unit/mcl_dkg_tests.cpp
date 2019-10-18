@@ -241,3 +241,52 @@ TEST(MclDkgTests, Signing)
   Signature group_signature = LagrangeInterpolation(threshold_signatures);
   EXPECT_TRUE(VerifySign(outputs[0].group_public_key, message, group_signature, group_g));
 }
+
+TEST(MclDkgTests, GenerateKeys)
+{
+  fetch::crypto::mcl::details::MCLInitialiser();
+  Generator generator;
+  SetGenerator(generator);
+
+  auto           keys      = GenerateKeyPair(generator);
+  MessagePayload message   = "hello";
+  Signature      signature = SignShare(message, keys.first);
+  EXPECT_TRUE(VerifySign(keys.second, message, signature, generator));
+}
+
+TEST(MclNotarisationTests, AggregateSigningVerification)
+{
+  fetch::crypto::mcl::details::MCLInitialiser();
+  using KeyPair = std::pair<PrivateKey, PublicKey>;
+
+  Generator generator;
+  SetGenerator(generator);
+  uint32_t               committee_size = 4;
+  std::vector<KeyPair>   keys;
+  std::vector<PublicKey> all_public_keys;
+  for (uint32_t i = 0; i < committee_size; ++i)
+  {
+    auto new_keys = GenerateKeyPair(generator);
+    keys.push_back(new_keys);
+    all_public_keys.push_back(new_keys.second);
+  }
+
+  MessagePayload         message = "Hello";
+  std::vector<Signature> signatures;
+  std::vector<bool>      signers;
+  signers.resize(committee_size, false);
+  for (uint32_t i = 0; i < committee_size; ++i)
+  {
+    if (i)
+    {
+      signers[i]          = true;
+      Signature signature = AggregateSign(message, keys[i].first, keys[i].second, all_public_keys);
+      EXPECT_TRUE(AggregateVerify(message, signature, keys[i].second, all_public_keys, generator));
+      signatures.push_back(signature);
+    }
+  }
+
+  Signature aggregate_signature = ComputeAggregateSignature(signatures);
+  EXPECT_TRUE(
+      VerifyAggregateSignature(message, aggregate_signature, signers, all_public_keys, generator));
+}

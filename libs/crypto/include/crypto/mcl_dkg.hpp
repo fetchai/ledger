@@ -148,8 +148,26 @@ bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature con
 
 Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
 
-std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size,
-                                                         uint32_t threshold);
+std::vector<DkgKeyInformation>   TrustedDealerGenerateKeys(uint32_t committee_size,
+                                                           uint32_t threshold);
+std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator);
+
+// For aggregate signatures
+bn::Fr    SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
+                                          std::vector<PublicKey> const &cabinet_notarisation_keys);
+Signature AggregateSign(MessagePayload const &message, PrivateKey const &priv_key,
+                        PublicKey const &             publicKey,
+                        std::vector<PublicKey> const &cabinet_public_keys);
+bool      AggregateVerify(MessagePayload const &message, Signature const &sign,
+                          PublicKey const &public_key, std::vector<PublicKey> const &cabinet_public_keys,
+                          Generator const &G);
+Signature ComputeAggregateSignature(std::vector<Signature> const &signatures);
+PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
+                                    std::vector<PublicKey> const &cabinet_public_keys);
+bool      VerifyAggregateSignature(MessagePayload const &message, Signature const &sign,
+                                   std::vector<bool> const &     signers,
+                                   std::vector<PublicKey> const &cabinet_public_keys,
+                                   Generator const &             G);
 
 }  // namespace mcl
 }  // namespace crypto

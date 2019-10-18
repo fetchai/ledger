@@ -396,6 +396,186 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size
   return output;
 }
 
+/**
+ * Generates a private key and the corresponding public key
+ *
+ * @param generator Choice of generator on the elliptic curve
+ * @return Pair of private and public keys
+ */
+std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator)
+{
+  std::pair<PrivateKey, PublicKey> key_pair;
+  key_pair.first.setRand();
+  key_pair.second.clear();
+  bn::G2::mul(key_pair.second, generator, key_pair.first);
+  return key_pair;
+}
+
+/**
+ * Computes a deterministic hash to the finite prime field from one public key and the set
+ * of all elligible notarisation keys
+ *
+ * @param notarisation_key Particular public key of a cabinet member
+ * @param cabinet_notarisation_keys Public keys of all cabinet members
+ * @return Element of prime field
+ */
+bn::Fr SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
+                                       std::vector<PublicKey> const &cabinet_notarisation_keys)
+{
+  bn::Fr coefficient;
+  coefficient.clear();
+  std::string concatenated_keys;
+  concatenated_keys += notarisation_key.getStr();
+  for (auto const &key : cabinet_notarisation_keys)
+  {
+    concatenated_keys += key.getStr();
+  }
+  coefficient.setHashOf(concatenated_keys);
+  return coefficient;
+}
+
+/**
+ * Signs a message that can be used to compute an aggregate signature
+ *
+ * @param message Message to be signed
+ * @param priv_key Private key of signer
+ * @param public_key Public key of signer
+ * @param cabinet_public_keys Public keys of all elligible signers
+ * @return Signature of message
+ */
+Signature AggregateSign(MessagePayload const &message, PrivateKey const &priv_key,
+                        PublicKey const &             public_key,
+                        std::vector<PublicKey> const &cabinet_public_keys)
+{
+  // Hash and map message to point on curve
+  bn::Fp Hm;
+  bn::G1 PH;
+  Hm.setHashOf(message.pointer(), message.size());
+  bn::mapToG1(PH, Hm);
+
+  // Compute signature
+  bn::Fr aggregate_coefficient = SignatureAggregationCoefficient(public_key, cabinet_public_keys);
+  bn::Fr::mul(aggregate_coefficient, aggregate_coefficient, priv_key);
+  bn::G1 sign;
+  sign.clear();
+  bn::G1::mul(sign, PH, aggregate_coefficient);
+  return sign;
+}
+
+/**
+ * Verifies a signature share that can be used to compute an aggregate signature
+ *
+ * @param message Message that was signed
+ * @param sign Signature to be verified
+ * @param public_key Public key of signer
+ * @param cabinet_public_keys Public keys of all elligible signers
+ * @param generator Generator of elliptic curve
+ * @return Bool for whether the signature passed verification
+ */
+bool AggregateVerify(MessagePayload const &message, Signature const &sign,
+                     PublicKey const &public_key, std::vector<PublicKey> const &cabinet_public_keys,
+                     Generator const &generator)
+{
+  bn::Fp12 e1, e2;
+
+  // hash and map message to point on curve
+  bn::Fp Hm;
+  bn::G1 PH;
+  Hm.setHashOf(message.pointer(), message.size());
+  bn::mapToG1(PH, Hm);
+
+  // Modified public key
+  bn::Fr aggregate_coefficient = SignatureAggregationCoefficient(public_key, cabinet_public_keys);
+  bn::G2 modified_public_key;
+  modified_public_key.clear();
+  bn::G2::mul(modified_public_key, public_key, aggregate_coefficient);
+
+  bn::pairing(e1, sign, generator);
+  bn::pairing(e2, PH, modified_public_key);
+
+  return e1 == e2;
+}
+
+/**
+ * Computes aggregate signature of a set of signature shares of the same message
+
+ * @param signatures Signatures to be combined
+ * @return The aggregate signature
+ */
+Signature ComputeAggregateSignature(std::vector<Signature> const &signatures)
+{
+  Signature aggregate_signature;
+  aggregate_signature.clear();
+  for (auto const &sig : signatures)
+  {
+    bn::G1::add(aggregate_signature, aggregate_signature, sig);
+  }
+  return aggregate_signature;
+}
+
+/**
+ * Computes the aggregated public key from a set of parties who signed a particular message
+ *
+ * @param signers Vector of bools indicated whether this member participated in the aggregate
+ * signature
+ * @param cabinet_public_keys Public keys of all elligible signers
+ * @return Aggregated public key
+ */
+PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
+                                    std::vector<PublicKey> const &cabinet_public_keys)
+{
+  PublicKey aggregate_key;
+  aggregate_key.clear();
+  assert(signers.size() == cabinet_public_keys.size());
+  for (size_t i = 0; i < cabinet_public_keys.size(); ++i)
+  {
+    if (signers[i])
+    {
+      // Compute public_key_i ^ coefficient_i
+      PublicKey modified_public_key;
+      modified_public_key.clear();
+      bn::Fr aggregate_coefficient =
+          SignatureAggregationCoefficient(cabinet_public_keys[i], cabinet_public_keys);
+      bn::G2::mul(modified_public_key, cabinet_public_keys[i], aggregate_coefficient);
+
+      bn::G2::add(aggregate_key, aggregate_key, modified_public_key);
+    }
+  }
+  return aggregate_key;
+}
+
+/**
+ * Verifies an aggregate signature
+ *
+ * @param message Message that was signed
+ * @param sign Aggregate signature
+ * @param signers Vector of bools indicating who participated in the aggregate signature
+ * @param cabinet_public_keys Public keys of all elligible signers
+ * @param generator Generator of elliptic curve
+ * @return Bool for whether the signature passed verification
+ */
+bool VerifyAggregateSignature(MessagePayload const &message, Signature const &sign,
+                              std::vector<bool> const &     signers,
+                              std::vector<PublicKey> const &cabinet_public_keys,
+                              Generator const &             generator)
+{
+  bn::Fp12 e1, e2;
+
+  // hash and map message to point on curve
+  bn::Fp Hm;
+  bn::G1 PH;
+  Hm.setHashOf(message.pointer(), message.size());
+  bn::mapToG1(PH, Hm);
+
+  // Compute aggregate  public key
+  PublicKey aggregate_key = ComputeAggregatePublicKey(signers, cabinet_public_keys);
+
+  bn::pairing(e1, sign, generator);
+  bn::pairing(e2, PH, aggregate_key);
+
+  return e1 == e2;
+}
+
 }  // namespace mcl
 }  // namespace crypto
 }  // namespace fetch
