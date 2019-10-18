@@ -69,9 +69,6 @@ void BeaconManager::GenerateCoefficients()
     b_i[k].setRand();
   }
 
-  // Let z_i = f(0)
-  z_i[cabinet_index_] = a_i[0];
-
   for (uint32_t k = 0; k <= polynomial_degree_; k++)
   {
     C_ik[cabinet_index_][k] =
@@ -333,7 +330,7 @@ void BeaconManager::ComputePublicKeys()
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys begin.");
   generics::MilliTimer myTimer("BeaconManager::ComputePublicKeys");
 
-  // For all parties in $QUAL$, set $y_i = A_{i0} = g^{z_i} \bmod p$.
+  // For all parties in $QUAL$, set $y_i = A_{i0}
   for (auto const &iq : qual_)
   {
     CabinetIndex it = identity_to_index_[iq];
@@ -447,8 +444,6 @@ bool BeaconManager::RunReconstruction()
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " polynomial being reconstructed.");
       continue;
     }
-    // compute $z_i$ using Lagrange interpolation (without corrupted parties)
-    z_i[victim_index] = crypto::mcl::ComputeZi(in.second.first, in.second.second);
     std::vector<PrivateKey> points;
     std::vector<PrivateKey> shares_f;
     for (const auto &index : parties)
@@ -522,7 +517,6 @@ void BeaconManager::Reset()
   crypto::mcl::Init(public_key_shares_, cabinet_size_);
   crypto::mcl::Init(s_ij, cabinet_size_, cabinet_size_);
   crypto::mcl::Init(sprime_ij, cabinet_size_, cabinet_size_);
-  crypto::mcl::Init(z_i, cabinet_size_);
   crypto::mcl::Init(C_ik, cabinet_size_, polynomial_degree_ + 1);
   crypto::mcl::Init(A_ik, cabinet_size_, polynomial_degree_ + 1);
   crypto::mcl::Init(g__s_ij, cabinet_size_, cabinet_size_);
