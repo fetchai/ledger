@@ -45,6 +45,7 @@ endfunction
 @action
 function set_block_number_state()
   use block_number_state;
+
   var context = getContext();
   var block = context.block();
   var block_number = block.blockNumber();
