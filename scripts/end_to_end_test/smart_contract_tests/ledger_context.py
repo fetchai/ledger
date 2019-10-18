@@ -23,7 +23,7 @@ from fetchai.ledger.crypto import Entity
 CONTRACT_TEXT = """
 @action
 function set_block_number_state()
-  State<UInt64>('block_number_state').set(getBlockNumber());
+  State<UInt64>('block_number_state').set(getContext().block().blockNumber());
 endfunction
 
 @query
