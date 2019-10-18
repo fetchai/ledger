@@ -171,7 +171,7 @@ public:
   void SetUp() override
   {
     srand((unsigned int)time(NULL));
-    server_port = rand()%10000 + 10000;
+    server_port = rand() % 10000 + 10000;
     client_port = server_port + 1;
 
     usleep(1000);
