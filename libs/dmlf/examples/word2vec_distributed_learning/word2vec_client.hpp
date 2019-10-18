@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/distributed_learning/distributed_learning_client.hpp"
+#include "dmlf/distributed_learning/translator.hpp"
 #include "math/clustering/knn.hpp"
-#include "ml/distributed_learning/distributed_learning_client.hpp"
-#include "ml/distributed_learning/translator.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
 #include "word2vec_training_params.hpp"

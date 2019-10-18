@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/distributed_learning/distributed_learning_client.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
