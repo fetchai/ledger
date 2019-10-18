@@ -28,6 +28,7 @@
 #include "dmlf/remote_execution_client.hpp"
 #include "dmlf/remote_execution_host.hpp"
 #include "dmlf/remote_execution_protocol.hpp"
+#include <ctime>
 
 #include <iostream>
 #include <thread>
@@ -59,8 +60,8 @@ const char *CLIENT_PRIV = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
 const char *CLIENT_PUB =
     "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
 
-const unsigned short int SERVER_PORT = 1766;
-const unsigned short int CLIENT_PORT = 1767;
+const unsigned short int server_port = 1766;
+const unsigned short int client_port = 1767;
 
 class DummyExecutionInterface : public ExecutionEngineInterface
 {
@@ -123,7 +124,7 @@ public:
 
     host_ = std::make_shared<RemoteExecutionHost>(mud_, exec);
     mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
-    mud_->Start({SERVER_PORT});
+    mud_->Start({server_port});
 
     proto_  = std::make_shared<RemoteExecutionProtocol>(*host_);
     server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
@@ -150,9 +151,9 @@ public:
     client_ = std::make_shared<RemoteExecutionClient>(mud_, exec);
     mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
     std::string server = "tcp://127.0.0.1:";
-    server += std::to_string(SERVER_PORT);
+    server += std::to_string(server_port);
 
-    mud_->Start({server}, {CLIENT_PORT});
+    mud_->Start({server}, {client_port});
 
     proto_  = std::make_shared<RemoteExecutionProtocol>(*client_);
     server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
@@ -169,6 +170,10 @@ public:
 
   void SetUp() override
   {
+    srand(time(NULL));
+    server_port = rand()%10000 + 10000;
+    client_port = server_port + 1;
+
     usleep(1000);
     iface = std::make_shared<DummyExecutionInterface>();
     usleep(1000);
