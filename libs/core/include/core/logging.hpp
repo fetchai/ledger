@@ -213,7 +213,7 @@ void LogCriticalV2(char const *name, Args &&... args)
     p.address    = true;                                    \
     p.print(st, trace);                                     \
                                                             \
-    FETCH_LOG_INFO(LOGGING_NAME, "Trace: \n", trace.str()); \
+    FETCH_LOG_INFO("BACKTRACE", "Trace: \n", trace.str()); \
   }
 
 /// @}

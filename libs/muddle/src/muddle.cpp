@@ -255,9 +255,17 @@ Muddle::Ports Muddle::GetListeningPorts() const
  *
  * @return The set of addresses
  */
-Muddle::Addresses Muddle::GetDirectlyConnectedPeers() const
+Muddle::Addresses Muddle::GetDirectlyConnectedPeers(bool print_debug) const
 {
-  return router_.GetDirectlyConnectedPeerSet();
+  auto router_peers = router_.GetDirectlyConnectedPeerSet();
+  auto peer_select_peers = register_->GetCurrentAddressSet();
+
+  if(router_peers != peer_select_peers && print_debug)
+  {
+    FETCH_LOG_INFO(logging_name_, "mismatch!!! ", router_peers.size(), " vs ", peer_select_peers.size(), " thread ID: ", std::this_thread::get_id());
+  }
+
+  return router_peers;
 }
 
 /**

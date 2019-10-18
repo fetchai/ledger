@@ -225,6 +225,10 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
   ledger::Manifest manifest{};
   for (auto const &address : outstanding_peers)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), "Attempting to connect to outstanding peer: ", address.ToBase64(), " thread ID: ", std::this_thread::get_id());
+
+    muddle_.GetDirectlyConnectedPeers(true);
+
     std::unique_ptr<network::Uri> hint{};
 
     // lookup the manifest for the desired address
@@ -240,11 +244,14 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
 
     if (hint)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " connecting with hint to: ", address.ToBase64());
+
       // tell muddle to connect to the address with the specified hint
       muddle_.ConnectTo(address, *hint);
     }
     else
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " connecting without hint to: ", address.ToBase64());
       // tell muddle to connect to the address using normal service discovery
       muddle_.ConnectTo(address);
     }
@@ -252,6 +259,12 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
 
   // request removal of unwanted connections
   auto unwanted_connections = muddle_.GetRequestedPeers() - aeon_members;
+
+  for(auto const &unwanted : unwanted_connections)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Note: disconnecting from unwanted connection: ", unwanted.ToBase64());
+  }
+
   muddle_.DisconnectFrom(unwanted_connections);
 
   // Update telemetry
@@ -271,18 +284,18 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
 uint64_t BeaconSetupService::PreDKGThreshold()
 {
   uint64_t cabinet_size = beacon_->aeon.members.size();
-  uint64_t threshold    = beacon_->manager.polynomial_degree() + 1;
+//  uint64_t threshold    = beacon_->manager.polynomial_degree() + 1;
+//
+//  uint64_t ret = threshold + (cabinet_size / 3);
+//
+//  // Needs at least two members to be distributed
+//  if (ret < 2)
+//  {
+//    FETCH_LOG_WARN(LOGGING_NAME, "DKG has too few in cabinet: ", cabinet_size);
+//    ret = 3;
+//  }
 
-  uint64_t ret = threshold + (cabinet_size / 3);
-
-  // Needs at least two members to be distributed
-  if (ret < 2)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "DKG has too few in cabinet: ", cabinet_size);
-    ret = 3;
-  }
-
-  return ret;
+  return cabinet_size;
 }
 
 uint32_t BeaconSetupService::QualSize()
@@ -361,17 +374,29 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   const bool is_ok = (ready_connections_.size() >= require_connections &&
                       connections_.size() >= require_connections);
 
+  // Useful debug
+  static std::string print_string;
+
   if (!condition_to_proceed_ && is_ok)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                   " State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
-                   seconds_for_state_);
+
+    std::string to_print{"Node " + std::to_string(beacon_->manager.cabinet_index()) +
+                   " State: " + ToString(state_machine_->state()) +
+                   " Ready. Seconds to spare: " + std::to_string(state_deadline_ - GetTime(system_clock_)) + " of " +
+                   std::to_string(seconds_for_state_)};
+
+    if(print_string != to_print)
+    {
+      print_string = to_print;
+      FETCH_LOG_INFO(LOGGING_NAME, print_string);
+    }
   }
 
   if (timer_to_proceed_.HasExpired())
   {
+    print_string = "";
+
     if (!condition_to_proceed_)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
@@ -389,7 +414,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 
   if (!condition_to_proceed_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to be ready before starting DKG. We have: ",
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), ". Waiting for all peers to be ready before starting DKG. We have: ",
                    can_see.size(), " expect: ", require_connections,
                    " Other ready peers: ", ready_connections_.size());
   }
@@ -406,6 +431,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
  */
 BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 {
+  std::cerr << "Quitting since got too far." << std::endl; // DELETEME_NH
+  exit(1);
   FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_SHARES));
 
@@ -1339,7 +1366,7 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
   }
   if (cabinet_size < 8)
   {
-    expected_dkg_time_s = 10;
+    expected_dkg_time_s = 30;
   }
 
   FETCH_LOG_INFO(BeaconSetupService::LOGGING_NAME, "Note: Expect DKG time to be ",

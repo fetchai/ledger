@@ -457,11 +457,11 @@ public:
     // to it by scheduling updates until the next flush
     if ((kv.parent != IndexType(-1)) && (update_parent))
     {
-      if (stack_.DirectWrite())
-      {
-        UpdateParents(kv.parent, index, kv);
-      }
-      else
+      //if (stack_.DirectWrite())
+      //{
+      //  UpdateParents(kv.parent, index, kv);
+      //}
+      //else
       {
         schedule_update_[index] = kv;
       }
@@ -862,11 +862,11 @@ private:
     {
       ++depth;
 
-      if (depth > key_type::BITS)
-      {
-        throw StorageException(
-            "Depth of binary search reached higher value than size of key in bits. Depth: " + std::to_string(depth));
-      }
+      //if (depth > key_type::BITS)
+      //{
+      //  throw StorageException(
+      //      "Depth of binary search reached higher value than size of key in bits. Depth: " + std::to_string(depth));
+      //}
 
       index = next;
 
