@@ -17,12 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
 #include "dmlf/execution/execution_result.hpp"
 #include "vm/common.hpp"
 
-#include <functional>
-#include <ostream>
 #include <string>
 #include <vector>
 
@@ -38,7 +35,7 @@ public:
   using Name            = std::string;
   using SourceFiles     = fetch::vm::SourceFiles;
   using Target          = std::string;
-  using Variant         = fetch::vm::Variant;
+  using Variant         = ExecutionResult::Variant;
   using PromiseOfResult = ExecutionResult::PromiseOfResult;
   using Params          = std::vector<Variant>;
 
@@ -55,9 +52,7 @@ public:
                               std::string const &entrypoint) = 0;
 
   ExecutionInterface(ExecutionInterface const &other) = delete;
-  ExecutionInterface &operator=(ExecutionInterface const &other)  = delete;
-  bool                operator==(ExecutionInterface const &other) = delete;
-  bool                operator<(ExecutionInterface const &other)  = delete;
+  ExecutionInterface &operator=(ExecutionInterface const &other) = delete;
 };
 
 }  // namespace dmlf

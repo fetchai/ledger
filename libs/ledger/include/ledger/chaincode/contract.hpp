@@ -95,8 +95,7 @@ public:
   Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx,
                             BlockIndex block_index);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Result DispatchTransaction(ConstByteArray const &name, chain::Transaction const &tx,
-                             BlockIndex block_index);
+  Result DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index);
   /// @}
 
   /// @name Dispatch Maps Accessors
