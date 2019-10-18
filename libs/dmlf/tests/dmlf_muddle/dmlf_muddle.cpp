@@ -170,7 +170,7 @@ public:
 
   void SetUp() override
   {
-    srand(static_cast<unsigned int>(time(NULL)));
+    srand(static_cast<unsigned int>(time(nullptr)));
     server_port = static_cast<unsigned short int>(rand() % 10000 + 10000);
     client_port = static_cast<unsigned short int>(server_port + 1);
 
