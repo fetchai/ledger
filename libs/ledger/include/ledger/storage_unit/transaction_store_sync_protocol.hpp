@@ -99,12 +99,19 @@ private:
   TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count);
   TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
 
+  static telemetry::HistogramPtr CreateHistogram(char const *name, char const *description,
+                                                 int lane);
+
   ObjectStore *store_;  ///< The pointer to the object store
 
   Mutex cache_mutex_;  ///< The mutex protecting cache_
   Cache cache_;
 
   int id_;
+
+  telemetry::HistogramPtr pull_objects_histogram_;
+  telemetry::HistogramPtr pull_subtree_histogram_;
+  telemetry::HistogramPtr pull_specific_histogram_;
 };
 
 }  // namespace ledger

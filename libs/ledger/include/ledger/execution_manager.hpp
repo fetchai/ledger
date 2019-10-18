@@ -103,20 +103,24 @@ private:
   using CounterPtr        = telemetry::CounterPtr;
   using HistogramPtr      = telemetry::HistogramPtr;
 
+  struct Summary
+  {
+    State          state{State::IDLE};
+    Digest         last_block_hash{chain::GENESIS_DIGEST};
+    chain::Address last_block_miner{};
+  };
+
   uint32_t const log2_num_lanes_;
 
   Flag running_{false};
   Flag monitor_ready_{false};
 
-  Protected<State> state_{State::IDLE};
+  Protected<Summary> state_{};
 
   StorageUnitPtr storage_;
 
   Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
   ExecutionPlan execution_plan_;
-
-  Digest         last_block_hash_ = chain::GENESIS_DIGEST;
-  chain::Address last_block_miner_{};
 
   Mutex     monitor_lock_;
   Condition monitor_wake_;
