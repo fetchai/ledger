@@ -30,7 +30,6 @@ function build_graph(graph : Graph)
   var conv1D_2_kernel_size    = 51;
   var conv1D_2_stride         = 2;
 
-
   graph.addPlaceholder("Input");
   graph.addPlaceholder("Label");
 
