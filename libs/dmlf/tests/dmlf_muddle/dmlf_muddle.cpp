@@ -170,9 +170,9 @@ public:
 
   void SetUp() override
   {
-    srand((unsigned int)time(NULL));
-    server_port = (unsigned short int)(rand() % 10000 + 10000);
-    client_port = (unsigned short int)(server_port + 1);
+    srand(static_cast<unsigned int>(time(NULL)));
+    server_port = static_cast<unsigned short int>(rand() % 10000 + 10000);
+    client_port = static_cast<unsigned short int>(server_port + 1);
 
     usleep(100000);
     iface = std::make_shared<DummyExecutionInterface>();
