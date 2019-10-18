@@ -22,7 +22,6 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "dmlf/update_interface.hpp"
-#include "ml/utilities/word2vec_utilities.hpp"
 
 #include <chrono>
 #include <cstdint>
