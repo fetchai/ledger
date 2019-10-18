@@ -37,7 +37,9 @@ namespace beacon {
 
 using shards::ServiceIdentifier;
 
-char const *ToString(BeaconSetupService::State state);
+char const *                                  ToString(BeaconSetupService::State state);
+std::map<BeaconSetupService::State, uint64_t> BeaconSetupService::time_slot_map_;
+uint64_t                                      BeaconSetupService::time_slots_in_dkg_;
 
 // Convenience factory to set up the RBC/PBC
 BeaconSetupService::ReliableChannelPtr BeaconSetupService::ReliableBroadcastFactory()
@@ -106,6 +108,27 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
 
   // Set subscription for receiving shares
   shares_subscription_->SetMessageHandler(this, &BeaconSetupService::OnNewSharesPacket);
+
+  // Set time slots for each state
+  static std::once_flag flag;
+  std::call_once(flag, []() {
+    time_slot_map_[BeaconSetupService::State::RESET]                          = 0;
+    time_slot_map_[BeaconSetupService::State::CONNECT_TO_ALL]                 = 10;
+    time_slot_map_[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 10;
+    time_slot_map_[BeaconSetupService::State::WAIT_FOR_SHARES]                = 10;
+    time_slot_map_[BeaconSetupService::State::WAIT_FOR_COMPLAINTS]            = 10;
+    time_slot_map_[BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS]     = 10;
+    time_slot_map_[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
+    time_slot_map_[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
+    time_slot_map_[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
+    time_slot_map_[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
+    time_slot_map_[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
+
+    for (auto &slot : time_slot_map_)
+    {
+      time_slots_in_dkg_ += slot.second;
+    }
+  });
 }
 
 BeaconSetupService::State BeaconSetupService::OnIdle()
@@ -682,7 +705,9 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     SendBroadcast(DKGEnvelope{FinalStateMessage{own_signature}});
   }
 
-  auto desired_signatures_min = (beacon_->manager.qual().size() / 2) + 1;
+  // Need at least DKG threshold number of signatures otherwise there will not be enough
+  // parties who agree of the dkg output to compute threshold signatures
+  auto desired_signatures_min = beacon_->manager.polynomial_degree() + 1;
 
   // When the timer has expired, try to create the final structure
   if (timer_to_proceed_.HasExpired())
@@ -939,7 +964,6 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &              from,
     auto ptr = std::dynamic_pointer_cast<FinalStateMessage>(msg_ptr);
     if (ptr != nullptr)
     {
-      // TODO(HUT): might be unnecessary to check given guarantee of reliable broadcast
       if (final_state_payload_.find(from) == final_state_payload_.end())
       {
         final_state_payload_.insert({from, ptr->payload_});
@@ -1307,7 +1331,7 @@ std::vector<std::weak_ptr<core::Runnable>> BeaconSetupService::GetWeakRunnables(
   return {state_machine_, rbc_->GetRunnable()};
 }
 
-uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
+double TimePerSlot(uint64_t cabinet_size)
 {
   // Default
   uint64_t expected_dkg_time_s = 10 * (cabinet_size << 1u);
@@ -1342,34 +1366,20 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
     expected_dkg_time_s = 10;
   }
 
-  FETCH_LOG_INFO(BeaconSetupService::LOGGING_NAME, "Note: Expect DKG time to be ",
-                 expected_dkg_time_s, " s");
-
-  return expected_dkg_time_s;
+  // This assigns a time in seconds to each slot. Dividing by 100 is an arbitrary way to select the
+  // time for a single slot from the total DKG time and we could equally just set the time per slot
+  // directly.
+  return expected_dkg_time_s / 100.;
 }
 
-void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
-                    uint64_t &time_slot_for_state)
+void BeaconSetupService::SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
+                                        uint64_t &time_slot_for_state)
 {
-  std::map<BeaconSetupService::State, uint64_t> time_slot_map;
-
-  time_slot_map[BeaconSetupService::State::RESET]                          = 0;
-  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_SHARES]                = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINTS]            = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS]     = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
-  time_slot_map[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
-  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
-
-  time_slot_for_state = time_slot_map[state];
+  time_slot_for_state = time_slot_map_[state];
 
   while (state != BeaconSetupService::State::RESET)
   {
-    time_slots_total += time_slot_map[state];
+    time_slots_total += time_slot_map_[state];
     state = BeaconSetupService::State(static_cast<uint8_t>(state) - 1);
   }
 }
@@ -1389,7 +1399,11 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   condition_to_proceed_ = false;
 
   uint64_t cabinet_size        = beacon_->aeon.members.size();
-  uint64_t expected_dkg_time_s = GetExpectedDKGTime(cabinet_size);
+  double   time_per_slot       = TimePerSlot(cabinet_size);
+  uint64_t expected_dkg_time_s = static_cast<uint64_t>(time_per_slot * time_slots_in_dkg_);
+
+  FETCH_LOG_INFO(BeaconSetupService::LOGGING_NAME, "Note: Expect DKG time to be ",
+                 expected_dkg_time_s, " s");
 
   // RESET state will delay DKG until the start point (or next start point)
   if (state == BeaconSetupService::State::RESET)
@@ -1425,8 +1439,6 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     return;
   }
   // Assign each state an equal amount of time for now
-  uint64_t time_slots_in_dkg   = 100;
-  double   time_per_slot       = double(expected_dkg_timespan_) / double(time_slots_in_dkg);
   uint64_t time_slots_total    = 0;
   uint64_t time_slot_for_state = 0;
 
