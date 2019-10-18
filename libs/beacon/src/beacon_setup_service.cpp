@@ -191,16 +191,16 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   beacon_->manager.Reset();
 
   // Initiating setup
+  connections_.clear();
+  ready_connections_.clear();
+  shares_received_.clear();
   coefficients_received_.clear();
-  complaint_answers_manager_.ResetCabinet();
+  qual_coefficients_received_.clear();
+  reconstruction_shares_received_.clear();
   complaints_manager_.ResetCabinet(identity_.identifier(),
                                    beacon_->manager.polynomial_degree() + 1);
-  connections_.clear();
-  qual_coefficients_received_.clear();
+  complaint_answers_manager_.ResetCabinet();
   qual_complaints_manager_.Reset();
-  ready_connections_.clear();
-  reconstruction_shares_received_.clear();
-  shares_received_.clear();
   final_state_payload_.clear();
   rbc_->Enable(false);
 
@@ -1420,7 +1420,9 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     {
       failures++;
       next_start_point += dkg_time;
-      dkg_time = dkg_time + uint64_t(0.5 * double(expected_dkg_time_s));
+      time_per_slot += 0.5 * time_per_slot;
+      dkg_time =
+          dkg_time + static_cast<uint64_t>(time_per_slot * static_cast<double>(time_slots_in_dkg_));
     }
 
     expected_dkg_timespan_ = dkg_time;
