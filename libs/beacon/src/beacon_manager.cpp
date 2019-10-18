@@ -612,7 +612,7 @@ bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
     return false;
   }
 
-  return crypto::mcl::VerifySign(tmp, message, tmp2, BeaconManager::group_g_);
+  return crypto::mcl::VerifySign(tmp, message, tmp2, group_g_);
 }
 
 /**
