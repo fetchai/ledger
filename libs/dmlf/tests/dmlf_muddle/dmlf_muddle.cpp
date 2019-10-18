@@ -172,7 +172,7 @@ public:
   {
     srand((unsigned int)time(NULL));
     server_port = (unsigned short int)(rand() % 10000 + 10000);
-    client_port = server_port + 1;
+    client_port = (unsigned short int)(server_port + 1);
 
     usleep(100000);
     iface = std::make_shared<DummyExecutionInterface>();
