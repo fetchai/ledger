@@ -149,14 +149,39 @@ public:
       {
         node->ClearDapNames();
       }
+      std::string table_name{""},
+                  field_name{""};
       for(auto& leaf : leaves_)
       {
         leaf->ClearDapNames();
+        UpdateTargetString(table_name, leaf->GetTargetFieldName());
+        UpdateTargetString(field_name, leaf->GetTargetFieldName());
+      }
+      for(auto& leaf : leaves_)
+      {
+        leaf->SetTargetTableName(table_name);
+        leaf->SetTargetFieldName(field_name);
       }
     }
   }
 
 protected:
+  inline void UpdateTargetString(std::string& target, const std::string& source)
+  {
+    if (!source.empty())
+    {
+      if (target.empty())
+      {
+        target = source;
+      }
+      else if (target != source)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Target table or field name not the same for all merged leaves! ",
+            "Target: '", target, "', Source: '", source, "'");
+      }
+    }
+  }
+
   void Print(std::shared_ptr<Branch> &root, uint32_t depth = 0)
   {
     FETCH_LOG_INFO(LOGGING_NAME, std::string(depth, ' '), root->ToString());

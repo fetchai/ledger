@@ -41,6 +41,11 @@ public:
     return proto_->target_field_name();
   }
 
+  const std::string &GetTargetTableName() const
+  {
+    return proto_->target_table_name();
+  }
+
   const std::string &GetQueryFieldType() const
   {
     return proto_->query_field_type();
