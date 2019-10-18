@@ -26,14 +26,14 @@ namespace dmlf {
 class ExecutionEngineInterface
 {
 public:
-  ExecutionEngineInterface()          = default;
-  virtual ~ExecutionEngineInterface() = default;
-
   using Name        = ExecutionInterface::Name;
   using SourceFiles = ExecutionInterface::SourceFiles;
   using Target      = ExecutionInterface::Target;
   using Variant     = ExecutionInterface::Variant;
   using Params      = std::vector<Variant>;
+
+  ExecutionEngineInterface()          = default;
+  virtual ~ExecutionEngineInterface() = default;
 
   virtual ExecutionResult CreateExecutable(Name const &execName, SourceFiles const &sources) = 0;
   virtual ExecutionResult DeleteExecutable(Name const &execName)                             = 0;
