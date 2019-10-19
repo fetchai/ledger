@@ -88,7 +88,3 @@ def run(options):
     api.sync(contract.action(api, 'set_block_number_state', 400, [entity1]))
 
     assert block_number <= contract.query(api, 'query_block_number_state')
-
-
-if __name__ == '__main__':  # ???
-    run({'host': '127.0.0.1', 'port': 8000})
