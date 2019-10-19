@@ -20,6 +20,8 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "core/synchronisation/protected.hpp"
+#include "logging/logging.hpp"
+#include "network/service/call_context.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document_store.hpp"
 #include "storage/new_revertible_document_store.hpp"

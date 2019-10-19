@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "logging/logging.hpp"
 #include "muddle/rbc.hpp"
 
 namespace fetch {

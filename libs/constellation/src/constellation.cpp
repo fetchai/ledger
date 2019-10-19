@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "bloom_filter/bloom_filter.hpp"
 #include "constellation/constellation.hpp"
 #include "constellation/health_check_http_module.hpp"
 #include "constellation/logging_http_module.hpp"
 #include "constellation/muddle_status_http_module.hpp"
 #include "constellation/open_api_http_module.hpp"
 #include "constellation/telemetry_http_module.hpp"
-#include "core/bloom_filter.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/telemetry.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
@@ -55,15 +55,14 @@
 #include <utility>
 
 using fetch::byte_array::ToBase64;
+using fetch::chain::Address;
 using fetch::ledger::Executor;
-using fetch::ledger::Manifest;
-using fetch::ledger::ServiceIdentifier;
-using fetch::network::AtomicInFlightCounter;
-using fetch::network::AtomicCounterName;
-using fetch::ledger::Address;
 using fetch::ledger::GenesisFileCreator;
+using fetch::shards::Manifest;
+using fetch::shards::ServiceIdentifier;
 using fetch::muddle::MuddleInterface;
-using fetch::ledger::Manifest;
+using fetch::network::AtomicCounterName;
+using fetch::network::AtomicInFlightCounter;
 using fetch::network::NetworkManager;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
@@ -215,7 +214,7 @@ muddle::MuddlePtr CreateBeaconNetwork(Config const &cfg, CertificatePtr certific
 
 BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const &cfg,
                                      MuddleInterface &                           muddle,
-                                     ledger::ShardManagementService &            manifest_cache,
+                                     shards::ShardManagementService &            manifest_cache,
                                      CertificatePtr                              certificate)
 {
   BeaconServicePtr                         beacon{};
@@ -322,8 +321,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
   // Configure/override global parameters
-  ledger::STAKE_WARM_UP_PERIOD   = cfg_.stake_delay_period;
-  ledger::STAKE_COOL_DOWN_PERIOD = cfg_.stake_delay_period;
+  chain::STAKE_WARM_UP_PERIOD   = cfg_.stake_delay_period;
+  chain::STAKE_COOL_DOWN_PERIOD = cfg_.stake_delay_period;
 
   if (cfg_.kademlia_routing)
   {

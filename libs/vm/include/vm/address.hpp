@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "ledger/chain/address.hpp"
 
 #include "vm/vm.hpp"
 
@@ -50,16 +50,15 @@ public:
   }
 
   // Construction / Destruction
-  Address(VM *vm, TypeId type_id, Ptr<String> const &address = Ptr<String>{},
-          bool signed_tx = false)
-    : Object(vm, type_id)
+  Address(VM *vm, TypeId id, chain::Address address, bool signed_tx = false)
+    : Object(vm, id)
+    , address_{std::move(address)}
     , signed_tx_{signed_tx}
-  {
-    if (address && !ledger::Address::Parse(address->str.c_str(), address_))
-    {
-      vm->RuntimeError("Unable to parse address");
-    }
-  }
+  {}
+
+  Address(VM *vm, TypeId id, Ptr<String> const &address = Ptr<String>{}, bool signed_tx = false)
+    : Address{vm, id, StringToAddress(vm, address), signed_tx}
+  {}
 
   ~Address() override = default;
 
@@ -96,21 +95,21 @@ public:
     }
 
     // update the value
-    address_ = ledger::Address({data.data(), data.size()});
+    address_ = chain::Address({data.data(), data.size()});
   }
 
-  ledger::Address const &address() const
+  chain::Address const &address() const
   {
     return address_;
   }
 
-  Address &operator=(ledger::Address const &address)
+  Address &operator=(chain::Address const &address)
   {
     address_ = address;
     return *this;
   }
 
-  bool operator==(ledger::Address const &other) const
+  bool operator==(chain::Address const &other) const
   {
     return address_ == other;
   }
@@ -125,8 +124,13 @@ public:
   {
     fetch::byte_array::ConstByteArray raw_address{};
     buffer >> raw_address;
-    address_ = ledger::Address{raw_address};
+    address_ = chain::Address{raw_address};
     return true;
+  }
+
+  std::size_t GetHashCode() override
+  {
+    return std::hash<chain::Address>{}(address_);
   }
 
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
@@ -179,7 +183,7 @@ public:
 
   bool FromJSON(vm::JSONVariant const &obj) override
   {
-    if (!ledger::Address::Parse(obj.template As<byte_array::ConstByteArray>(), address_))
+    if (!chain::Address::Parse(obj.template As<byte_array::ConstByteArray>(), address_))
     {
       vm_->RuntimeError("Unable to parse address during JSON deserialization of " + GetTypeName() +
                         ".");
@@ -188,8 +192,18 @@ public:
   }
 
 private:
-  ledger::Address address_;
-  bool            signed_tx_{false};
+  chain::Address address_;
+  bool           signed_tx_{false};
+
+  static chain::Address StringToAddress(VM *vm, Ptr<String> const &address_str)
+  {
+    chain::Address address;
+    if (address_str && !chain::Address::Parse(address_str->str.c_str(), address))
+    {
+      vm->RuntimeError("Unable to parse address");
+    }
+    return address;
+  }
 };
 
 }  // namespace vm

@@ -16,15 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 #include "vm/function_decorators.hpp"
@@ -57,7 +58,8 @@ SmartContractManager::SmartContractManager()
   OnTransaction("create", this, &SmartContractManager::OnCreate);
 }
 
-Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockIndex /*index*/)
+Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
+                                                BlockIndex                block_index)
 {
   // attempt to parse the transaction
   variant::Variant data;
@@ -164,7 +166,8 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
     smart_contract.Attach(state());
 
     // Dispatch to the init. method
-    auto const status = smart_contract.DispatchInitialise(tx.signatories().begin()->address);
+    auto const status =
+        smart_contract.DispatchInitialise(tx.signatories().begin()->address, tx, block_index);
     if (status.status != Status::OK)
     {
       return status;

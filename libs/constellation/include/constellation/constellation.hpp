@@ -19,30 +19,30 @@
 
 #include "core/feature_flags.hpp"
 #include "core/reactor.hpp"
+#include "entropy/entropy_generator_interface.hpp"
 #include "http/module.hpp"
 #include "http/server.hpp"
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/consensus/entropy_generator_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
+#include "ledger/miner/basic_miner.hpp"
 #include "ledger/protocols/dag_service.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
-#include "ledger/shards/manifest.hpp"
-#include "ledger/shards/shard_management_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "miner/basic_miner.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 #include "open_api_http_module.hpp"
+#include "shards/manifest.hpp"
+#include "shards/shard_management_service.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <atomic>
@@ -68,7 +68,7 @@ class Constellation : public ledger::BlockSinkInterface
 public:
   using CertificatePtr = std::shared_ptr<crypto::Prover>;
   using UriSet         = std::unordered_set<network::Uri>;
-  using Manifest       = ledger::Manifest;
+  using Manifest       = shards::Manifest;
   using NetworkMode    = ledger::MainChainRpcService::Mode;
   using FeatureFlags   = core::FeatureFlags;
   using ConstByteArray = byte_array::ConstByteArray;
@@ -122,7 +122,7 @@ protected:
 private:
   using MuddlePtr              = muddle::MuddlePtr;
   using NetworkManager         = network::NetworkManager;
-  using BlockPackingAlgorithm  = miner::BasicMiner;
+  using BlockPackingAlgorithm  = ledger::BasicMiner;
   using BlockCoordinator       = ledger::BlockCoordinator;
   using MainChain              = ledger::MainChain;
   using MainChainRpcService    = ledger::MainChainRpcService;
@@ -148,8 +148,7 @@ private:
   using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
   using BeaconServicePtr       = std::shared_ptr<fetch::beacon::BeaconService>;
   using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
-
-  using ShardManagementService = ledger::ShardManagementService;
+  using ShardManagementService = shards::ShardManagementService;
   using ShardMgmtServicePtr    = std::shared_ptr<ShardManagementService>;
   using ShardConfigs           = ledger::ShardConfigs;
   using TxStatusCache          = ledger::TransactionStatusCache;

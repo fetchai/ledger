@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
+#include "chain/transaction_serializer.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/commandline/params.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_builder.hpp"
-#include "ledger/chain/transaction_serializer.hpp"
 #include "storage/resource_mapper.hpp"
 #include "vectorise/threading/pool.hpp"
 
@@ -37,9 +37,9 @@ using fetch::commandline::Params;
 using fetch::crypto::ECDSASigner;
 using fetch::threading::Pool;
 using fetch::byte_array::ConstByteArray;
-using fetch::ledger::TransactionBuilder;
-using fetch::ledger::TransactionSerializer;
-using fetch::ledger::Address;
+using fetch::chain::TransactionBuilder;
+using fetch::chain::TransactionSerializer;
+using fetch::chain::Address;
 using fetch::serializers::MsgPackSerializer;
 using fetch::serializers::SizeCounter;
 using fetch::BitVector;
