@@ -43,7 +43,7 @@ constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_
   switch (tx_processing_pipeline_status)
   {
   case TransactionStatus::UNKNOWN:
-    return PublicTxStatus::UNKNOWN;
+    break;
 
   case TransactionStatus::PENDING:
     return PublicTxStatus::PENDING;
@@ -85,7 +85,7 @@ constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_
     case ContractExecutionStatus::RESOURCE_FAILURE:
     case ContractExecutionStatus::TX_LOOKUP_FAILURE:
     case ContractExecutionStatus::INEXPLICABLE_FAILURE:
-      return PublicTxStatus::FATAL_ERROR;
+      break;
     }
     return PublicTxStatus::FATAL_ERROR;
 

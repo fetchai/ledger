@@ -45,7 +45,7 @@ function get_init_block_number_state() : UInt64
 endfunction
 
 @action
-function set_block_number_state()
+function set_block_number_state() : Int64
   use action_block_number_state;
 
   var context = getContext();
@@ -53,6 +53,8 @@ function set_block_number_state()
   var block_number = block.blockNumber();
 
   action_block_number_state.set(block_number);
+
+  return toInt64(block_number);
 endfunction
 
 @query
@@ -76,10 +78,17 @@ def run(options):
     contract = Contract(CONTRACT_TEXT)
 
     # deploy the contract to the network
-    api.sync(api.contracts.create(entity1, contract, 2000))
+    status = api.sync(api.contracts.create(entity1, contract, 2000))[0]
 
-    assert contract.query(api, 'get_init_block_number_state') > 0
+    block_number = status.exit_code
+
+    assert block_number > 0
+    assert block_number == contract.query(api, 'get_init_block_number_state')
 
     api.sync(contract.action(api, 'set_block_number_state', 400, [entity1]))
 
-    assert contract.query(api, 'query_block_number_state') > 0
+    assert block_number <= contract.query(api, 'query_block_number_state')
+
+
+if __name__ == '__main__':  # ???
+    run({'host': '127.0.0.1', 'port': 8000})
