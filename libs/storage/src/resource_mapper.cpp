@@ -23,6 +23,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/resource_mapper.hpp"
+#include "core/logging.hpp"
 
 #include <limits>
 #include <type_traits>
@@ -39,7 +40,7 @@ namespace storage {
 ResourceID::ResourceID(byte_array::ConstByteArray id)
   : id_(std::move(id))
 {
-  assert(id.size() == RESOURCE_ID_SIZE_IN_BYTES);
+  assert(id_.size() == RESOURCE_ID_SIZE_IN_BYTES);
 }
 
 /**

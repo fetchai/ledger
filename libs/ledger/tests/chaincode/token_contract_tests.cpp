@@ -350,13 +350,13 @@ TEST_F(TokenContractTests, CheckDeedAmend)
 
 TEST_F(TokenContractTests, DISABLED_CheckDeedDeletion)
 {
-  uint64_t const origina_wealth  = 1000;
+  uint64_t const original_wealth  = 1000;
   uint64_t const transfer_amount = 400;
 
   Entities entities(4);
 
   // 1st PRE-CONDITION: Create WEALTH
-  ASSERT_TRUE(CreateWealth(entities[0], origina_wealth));
+  ASSERT_TRUE(CreateWealth(entities[0], original_wealth));
 
   // 2nd PRE-CONDITION: Create DEED
   SigneesPtr signees{std::make_shared<Deed::Signees>()};
@@ -379,14 +379,14 @@ TEST_F(TokenContractTests, DISABLED_CheckDeedDeletion)
       Transfer(entities[0].address, entities[1].address, {&entities[0]}, transfer_amount, false));
   uint64_t balance = std::numeric_limits<uint64_t>::max();
   ASSERT_TRUE(GetBalance(entities[0].address, balance));
-  ASSERT_EQ(origina_wealth, balance);
+  ASSERT_EQ(original_wealth, balance);
   // EXPECTED to **PASS**: 2nd transfer cofigured to conform with deed and so it
   // shall pass:
   ASSERT_TRUE(
       Transfer(entities[0].address, entities[1].address, {&entities[0], &entities[1]}, 400));
   balance = std::numeric_limits<uint64_t>::max();
   ASSERT_TRUE(GetBalance(entities[0].address, balance));
-  ASSERT_EQ(origina_wealth - transfer_amount, balance);
+  ASSERT_EQ(original_wealth - transfer_amount, balance);
 
   // TESTS OBJECTIVE: Deletion of the DEED
   // EXPECTED TO **PASS**
@@ -405,7 +405,7 @@ TEST_F(TokenContractTests, DISABLED_CheckDeedDeletion)
   EXPECT_TRUE(Transfer(entities[0].address, entities[1].address, {&entities[0]}, transfer_amount));
   balance = std::numeric_limits<uint64_t>::max();
   EXPECT_TRUE(GetBalance(entities[0].address, balance));
-  EXPECT_EQ(origina_wealth - transfer_amount - transfer_amount, balance);
+  EXPECT_EQ(original_wealth - transfer_amount - transfer_amount, balance);
 }
 
 TEST_F(TokenContractTests, CheckDeedAmendDoesNotAffectBalance)

@@ -86,8 +86,8 @@ bool GenerateContractName(Transaction const &tx, Identifier &identifier)
 
 bool IsCreateWealth(Transaction const &tx)
 {
-  return (tx.contract_mode() == Transaction::ContractMode::CHAIN_CODE) &&
-         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
+  return tx.contract_mode() == Transaction::ContractMode::CHAIN_CODE &&
+         tx.chain_code() == "fetch.token" && tx.action() == "wealth";
 }
 
 }  // namespace
@@ -211,22 +211,20 @@ bool Executor::RetrieveTransaction(Digest const &digest)
 {
   telemetry::FunctionTimer const timer{*tx_retrieve_duration_};
 
-  bool success{false};
-
   try
   {
     // create a new transaction
     current_tx_ = std::make_unique<Transaction>();
 
     // load the transaction from the store
-    success = storage_->GetTransaction(digest, *current_tx_);
+    return storage_->GetTransaction(digest, *current_tx_);
   }
   catch (std::exception const &ex)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Exception caught when retrieving tx from store: ", ex.what());
   }
-
-  return success;
+  
+  return false;
 }
 
 bool Executor::ValidationChecks(Result &result)

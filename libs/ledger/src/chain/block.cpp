@@ -92,7 +92,7 @@ void Block::UpdateTimestamp()
 
 bool Block::IsGenesis() const
 {
-  return body.previous_hash.empty();
+  return body.hash == GENESIS_DIGEST;
 }
 
 }  // namespace ledger

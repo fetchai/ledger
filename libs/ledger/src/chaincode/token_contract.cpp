@@ -29,6 +29,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -70,15 +71,30 @@ constexpr uint64_t MAX_TOKENS = 0xFFFFFFFFFFFFFFFFull;
 TokenContract::TokenContract()
 {
   // TODO(tfr): I think the function CreateWealth should be OnInit?
-  OnTransaction("deed", this, &TokenContract::Deed);
-  OnTransaction("wealth", this, &TokenContract::CreateWealth);
-  OnTransaction("transfer", this, &TokenContract::Transfer);
-  OnTransaction("addStake", this, &TokenContract::AddStake);
-  OnTransaction("deStake", this, &TokenContract::DeStake);
-  OnTransaction("collectStake", this, &TokenContract::CollectStake);
-  OnQuery("balance", this, &TokenContract::Balance);
-  OnQuery("stake", this, &TokenContract::Stake);
-  OnQuery("cooldownStake", this, &TokenContract::CooldownStake);
+  static const std::pair<std::string, Contract::Result (TokenContract::*)(Transaction const &, BlockIndex)> tx_handlers[] = {
+    {"deed", &TokenContract::Deed},
+    {"wealth", &TokenContract::CreateWealth},
+    {"transfer", &TokenContract::Transfer},
+    {"addStake", &TokenContract::AddStake},
+    {"deStake", &TokenContract::DeStake},
+    {"collectStake", &TokenContract::CollectStake}
+  };
+
+  static const std::pair<std::string, Contract::Status (TokenContract::*)(Query const &query, Query &response)> query_handlers[] = {
+    {"balance", &TokenContract::Balance},
+    {"stake", &TokenContract::Stake},
+    {"cooldownStake", &TokenContract::CooldownStake}
+  };
+
+  for (auto const &handler: tx_handlers)
+  {
+    OnTransaction(handler.first, this, handler.second);
+  }
+  for (auto const &handler: query_handlers)
+  {
+    OnQuery(handler.first, this, handler.second);
+  }
+
 }
 
 uint64_t TokenContract::GetBalance(Address const &address)

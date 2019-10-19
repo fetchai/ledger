@@ -192,30 +192,5 @@ private:
   /// @}
 };
 
-constexpr char const *MainChainRpcService::ToString(State state) noexcept
-{
-  switch (state)
-  {
-  case State::REQUEST_HEAVIEST_CHAIN:
-    return "Requesting Heaviest Chain";
-  case State::WAIT_FOR_HEAVIEST_CHAIN:
-    return "Waiting for Heaviest Chain";
-  case State::REQUEST_FROM_TIP:
-    return "Still Requesting Heaviest Chain";
-  case State::WAIT_FROM_TIP:
-    return "Once Again Waiting for Heaviest Chain";
-  case State::FURTHER_FROM_TIP:
-    return "Requesting Heaviest Chain Even Further";
-  case State::SYNCHRONISING:
-    return "Synchronising";
-  case State::WAITING_FOR_RESPONSE:
-    return "Waiting for Sync Response";
-  case State::SYNCHRONISED:
-    return "Synchronised";
-  }
-
-  return "unknown";
-}
-
 }  // namespace ledger
 }  // namespace fetch

@@ -94,20 +94,21 @@ constexpr void ZeroAll(Ts &&... ts)
 
 namespace detail_ {
 
+struct Yes
+{
+};
+struct No
+{
+};
+
 template <class T>
 class NonClearable
 {
-  struct Yes
-  {
-  };
-  struct No
-  {
-  };
-
   template <class U>
   static constexpr auto Can(U &&u) -> decltype(u.clear(), Yes{});
   template <class U>
   static constexpr auto Can(U &&u) -> decltype(u.Clear(), Yes{});
+
   static constexpr No   Can(...);
 
 public:
@@ -119,6 +120,26 @@ public:
 
 template <class T>
 static constexpr auto NonClearableV = NonClearable<std::decay_t<T>>::value;
+
+template <class T>
+class NonResettable
+{
+  template <class U>
+  static constexpr auto Can(U &&u) -> decltype(u.clear(), Yes{});
+  template <class U>
+  static constexpr auto Can(U &&u) -> decltype(u.Resett(), Yes{});
+
+  static constexpr No   Can(...);
+
+public:
+  enum : bool
+  {
+    value = std::is_same<decltype(Can(std::declval<T>())), No>::value
+  };
+};
+
+template <class T>
+static constexpr auto NonResettableV = NonResettable<std::decay_t<T>>::value;
 
 }  // namespace detail_
 
@@ -147,6 +168,33 @@ template <class... Ts>
 constexpr void ClearAll(Ts &&... ts)
 {
   ForEach(ClearOne{}, std::forward<Ts>(ts)...);
+}
+
+struct ResetOne
+{
+  template <class T>
+  constexpr decltype(std::declval<T>().clear()) operator()(T &&t) const
+  {
+    return std::forward<T>(t).clear();
+  }
+
+  template <class T>
+  constexpr decltype(std::declval<T>().Reset()) operator()(T &&t) const
+  {
+    return std::forward<T>(t).Reset();
+  }
+
+  template <class T>
+  constexpr std::enable_if_t<detail_::NonResettableV<T>> operator()(T &&t) const
+  {
+    ZeroOne{}(std::forward<T>(t));
+  }
+};
+
+template <class... Ts>
+constexpr void ResetAll(Ts &&... ts)
+{
+  ForEach(ResetOne{}, std::forward<Ts>(ts)...);
 }
 
 }  // namespace value_util

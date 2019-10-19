@@ -34,6 +34,7 @@
 #include "ledger/transaction_status_cache.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
+#include "meta/value_util.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
@@ -69,6 +70,8 @@ const std::size_t               MIN_BLOCK_SYNC_SLIPPAGE_FOR_WAITLESS_SYNC_OF_MIS
 const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
+
+#define DELETE_LATER(...) FETCH_LOG_DEBUG(LOGGING_NAME, __VA_ARGS__)
 
 SynergeticExecMgrPtr CreateSynergeticExecutor(DAGPtr dag, StorageUnitInterface &storage_unit)
 {
@@ -244,18 +247,18 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
   {
     if (current_block_->IsGenesis())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Set current_block to genesis ",
+      DELETE_LATER("Set current_block to genesis ",
                      current_block_->body.hash.ToHex());
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Set current_block to non-genesis ",
+      DELETE_LATER("Set current_block to non-genesis ",
                      current_block_->body.hash.ToHex());
     }
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "No current_block at all");
+    DELETE_LATER("No current_block at all");
   }
 
   // if we have reached genesis then this is either because we have no state to reload in the case
@@ -294,6 +297,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   // ensure that we have a current block that we are executing
   if (!current_block_)
   {
+	  DELETE_LATER("Taking heaviest block");
     current_block_ = chain_.GetHeaviestBlock();
   }
 
@@ -307,6 +311,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
   // update the current block telemetry
   current_block_num_->set(current_block_->body.block_number);
+  DELETE_LATER("Current block num: ", current_block_num_);
 
   // determine if extra debug is wanted or needed
   bool const extra_debug = syncing_periodic_.Poll();
@@ -340,10 +345,12 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   // initial condition, the last processed block is empty
   if (last_processed_block.empty())
   {
+	  DELETE_LATER("Last processed empty");
     // start up - we need to work out which of the blocks has been executed previously
 
     if (current_block_->IsGenesis())
     {
+	    DELETE_LATER("Current is genesis, on to pre exec");
       // once we have got back to genesis then we need to start executing from the beginning
       return State::PRE_EXEC_BLOCK_VALIDATION;
     }
@@ -352,6 +359,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     auto previous_block = chain_.GetBlock(previous_hash);
     if (!previous_block)
     {
+	    DELETE_LATER("No block with prev hash ", previous_hash.ToHex(), " on our chain");
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
       return State::RESET;
     }
@@ -361,11 +369,13 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   }
   else if (current_hash == last_processed_block)
   {
+	  DELETE_LATER("On to synchronised");
     // the block coordinator has now successfully synced with the chain of blocks.
     return State::SYNCHRONISED;
   }
   else
   {
+	  DELETE_LATER("Normal case");
     // normal case - we have processed at least one block
 
     // find the path to ancestor - retain this path if it is long for efficiency reasons.
@@ -373,14 +383,17 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     if (blocks_to_common_ancestor_.empty())
     {
+	    DELETE_LATER("No blocks to common ancestor");
       lookup_success = chain_.GetPathToCommonAncestor(
           blocks_to_common_ancestor_, current_hash, last_processed_block,
           COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT, MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT);
+      DELETE_LATER("Lookup success: ", lookup_success);
     }
     else
     {
       lookup_success = true;
     }
+      DELETE_LATER("Lookup success: ", lookup_success);
 
     if (!lookup_success)
     {
@@ -398,6 +411,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     // update the telemetry
     next_block_num_->set(next_block->body.block_number);
+    DELETE_LATER("Next block num: ", next_block_num_);
 
     if (extra_debug)
     {
@@ -463,6 +477,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
       return State::RESET;
     }
 
+    DELETE_LATER("Ok, now we're here");
     // update the current block and begin scheduling
     current_block_ = next_block;
 
@@ -470,6 +485,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     if (blocks_to_common_ancestor_.size() < THRESHOLD_FOR_FAST_SYNCING)
     {
+	    DELETE_LATER("Blocks below threshold");
       blocks_to_common_ancestor_.clear();
     }
 
@@ -1122,19 +1138,20 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
 BlockCoordinator::State BlockCoordinator::OnReset()
 {
-  Block const *block = nullptr;
+  Block const *block;
 
   if (next_block_)
   {
     block = next_block_.get();
   }
-  else if (current_block_)
+  else if(current_block_)
   {
     block = current_block_.get();
   }
   else
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block!");
+    block = nullptr;
   }
 
   reset_state_count_->increment();
@@ -1142,17 +1159,17 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   if (block != nullptr && !block->body.hash.empty())
   {
     block_hash_->set(*reinterpret_cast<uint64_t const *>(block->body.hash.pointer()));
+    DELETE_LATER("block_hash: ", block_hash.ToHex());
   }
 
   if (consensus_)
   {
+	  DELETE_LATER("There's consensus");
     consensus_->UpdateCurrentBlock(*block);
     consensus_->Refresh();
   }
 
-  current_block_.reset();
-  next_block_.reset();
-  pending_txs_.reset();
+  value_util::ResetAll(current_block_, next_block_, pending_txs_);
 
   // we should update the next block time
   UpdateNextBlockTime();

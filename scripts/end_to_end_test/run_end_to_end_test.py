@@ -375,7 +375,7 @@ def extract(test, key, expected=True, expect_type=None, default=None):
 def setup_test(test_yaml, test_instance):
     output("Setting up test: {}".format(test_yaml))
 
-    test_name = extract(test_yaml, 'test_name', expected=True, expect_type=str)
+    test_name = extract_test_name(test_yaml)
     number_of_nodes = extract(
         test_yaml, 'number_of_nodes', expected=True, expect_type=int)
     node_load_directory = extract(
@@ -673,7 +673,10 @@ def run_steps(test_yaml, test_instance):
             sys.exit(1)
 
 
-def run_test(build_directory, yaml_file, constellation_exe):
+def extract_test_name(setup_conditions):
+    return extract(setup_conditions, 'test_name', expected=True, expect_type=str)
+
+def run_test(build_directory, yaml_file, constellation_exe, name_filter=None):
 
     # Read YAML file
     with open(yaml_file, 'r') as stream:
@@ -682,6 +685,11 @@ def run_test(build_directory, yaml_file, constellation_exe):
 
             # Parse yaml documents as tests (sequentially)
             for test in all_yaml:
+
+                setup_conditions = extract(test, 'setup_conditions')
+                if name_filter is not None and extract_test_name(setup_conditions) not in name_filter:
+                    continue
+
                 # Create a new test instance
                 description = extract(test, 'test_description')
                 output("\n=================================================")
@@ -697,7 +705,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
                     build_directory, constellation_exe, yaml_file)
 
                 # Configure the test - this will start the nodes asynchronously
-                setup_test(extract(test, 'setup_conditions'), test_instance)
+                setup_test(setup_conditions, test_instance)
 
                 # Run the steps in the test
                 run_steps(extract(test, 'steps'), test_instance)
