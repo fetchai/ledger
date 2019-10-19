@@ -287,7 +287,7 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
  */
 void MuddleRegister::Leave(ConnectionHandle handle)
 {
-  FETCH_LOCK(lock_);
+  std::unique_lock<std::mutex> lock(lock_);
 
   FETCH_LOG_TRACE(logging_name_, "### Connection ", handle, " ended");
 
@@ -316,10 +316,13 @@ void MuddleRegister::Leave(ConnectionHandle handle)
     handle_index_.erase(it);
   }
 
+  auto callback_copy = left_callback_;
+  lock.unlock();
+
   // signal the router
-  if (left_callback_)
+  if (callback_copy)
   {
-    left_callback_(handle);
+    callback_copy(handle);
   }
 }
 
