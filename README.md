@@ -61,6 +61,8 @@ rm -f *.db
 Connect to the `alpha` test network:
 
 ```
+git checkout release/v0.7.x
+(build constellation)
 ./constellation -bootstrap -network alpha
 ```
 
