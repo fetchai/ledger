@@ -167,8 +167,8 @@ class TestInstance():
         instance.lanes = self._lanes
         instance.slices = self._slices
 
-        assert len(
-            self._nodes) == index, "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(
+        assert len(self._nodes) == index, \
+            "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(
             len(self._nodes), index)
 
         self._nodes.append(instance)
