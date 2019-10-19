@@ -23,7 +23,7 @@
 #include "core/state_machine.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
+#include "shards/manifest_cache_interface.hpp"
 
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -51,14 +51,13 @@ using namespace fetch;
 using namespace fetch::beacon;
 
 using Prover         = fetch::crypto::Prover;
-using ProverPtr      = std::shared_ptr<Prover>;
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
 
-struct DummyManifestCache : public ledger::ManifestCacheInterface
+struct DummyManifestCache : public shards::ManifestCacheInterface
 {
-  bool QueryManifest(Address const & /*address*/, ledger::Manifest & /*manifest*/) override
+  bool QueryManifest(Address const & /*address*/, shards::Manifest & /*manifest*/) override
   {
     return false;
   }

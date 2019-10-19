@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/address.hpp"
+#include "chain/address.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
 

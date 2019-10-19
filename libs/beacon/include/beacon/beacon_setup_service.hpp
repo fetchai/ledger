@@ -41,11 +41,11 @@ class MuddleInterface;
 
 }  // namespace muddle
 
-namespace ledger {
+namespace shards {
 
 class ManifestCacheInterface;
 
-}  // namespace ledger
+}  // namespace shards
 
 namespace beacon {
 
@@ -106,7 +106,7 @@ public:
   using ConnectionsMessage      = dkg::ConnectionsMessage;
   using SharesMessage           = dkg::SharesMessage;
   using DKGSerializer           = dkg::DKGSerializer;
-  using ManifestCacheInterface  = ledger::ManifestCacheInterface;
+  using ManifestCacheInterface  = shards::ManifestCacheInterface;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
   using DeadlineTimer    = fetch::moment::DeadlineTimer;
   using SignatureShare   = AeonExecutionUnit::SignatureShare;

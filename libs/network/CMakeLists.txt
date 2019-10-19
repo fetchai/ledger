@@ -20,8 +20,9 @@ target_link_libraries(fetch-network
                              fetch-crypto
                              fetch-math
                              fetch-version
-                             fetch-muddle # remove
+                             fetch-json
                              vendor-asio
+                             fetch-logging
                              pthread)
 
 if (_is_clang_compiler)
@@ -33,4 +34,3 @@ add_test_target()
 
 # Example targets
 add_subdirectory(examples)
-add_subdirectory(benchmark)

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/tcp/abstract_server.hpp"
 

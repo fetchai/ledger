@@ -22,12 +22,14 @@ target_link_libraries(fetch-ledger
                              fetch-crypto
                              fetch-math
                              fetch-storage
-                             fetch-miner
                              fetch-vm
                              fetch-vm-modules
                              fetch-moment
-                             fetch-dkg
                              fetch-beacon
+                             fetch-bloomfilter
+                             fetch-logging
+                             fetch-entropy
+                             fetch-shards
                              vendor-msgpack)
 
 if (_is_clang_compiler)

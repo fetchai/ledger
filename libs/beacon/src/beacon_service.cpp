@@ -37,7 +37,7 @@ namespace beacon {
 char const *ToString(BeaconService::State state);
 
 BeaconService::BeaconService(MuddleInterface &               muddle,
-                             ledger::ManifestCacheInterface &manifest_cache,
+                             shards::ManifestCacheInterface &manifest_cache,
                              const CertificatePtr &certificate, SharedEventManager event_manager)
   : certificate_{certificate}
   , identity_{certificate->identity()}
