@@ -86,11 +86,6 @@ macro (setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   endif (FETCH_WARNINGS_AS_ERRORS)
 
-  # Temporary workaround for Apple Clang >= 11.0
-  if (APPLE AND _is_clang_compiler AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 11.0))
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-stack-check")
-  endif ()
-
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
   if (FETCH_ENABLE_COVERAGE)
@@ -138,7 +133,7 @@ macro (setup_compiler)
     if (DW_LIB AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE_WITH_DW")
 
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldw ${CMAKE_DL_LIBS}")
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldw -ldl")
     endif ()
   endif (FETCH_ENABLE_BACKTRACE)
 
