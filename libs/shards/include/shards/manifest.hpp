@@ -61,7 +61,7 @@ public:
 
   std::string FindExternalAddress(
       ServiceIdentifier::Type type,
-      uint32_t                index = ServiceIdentifier::INVALID_SERVICE_IDENTIFIER) const;
+      uint32_t                index = ServiceIdentifier::SINGLETON_SERVICE) const;
 
   bool Parse(ConstByteArray const &text);
 

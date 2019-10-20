@@ -122,7 +122,8 @@ bool Manifest::Parse(ConstByteArray const &text)
     {
       // attempt to extract the main section of the manifest
       if (ExtractSection(doc["p2p"], ServiceIdentifier{ServiceIdentifier::Type::CORE}) &&
-          ExtractSection(doc["http"], ServiceIdentifier{ServiceIdentifier::Type::HTTP}))
+          ExtractSection(doc["http"], ServiceIdentifier{ServiceIdentifier::Type::HTTP}) &&
+          ExtractSection(doc["dkg"], ServiceIdentifier{ServiceIdentifier::Type::DKG}))
       {
         auto lanes = doc["lanes"];
 
