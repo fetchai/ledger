@@ -393,7 +393,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
                    seconds_for_state_);
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     if (!condition_to_proceed_)
     {
@@ -441,7 +441,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
                    seconds_for_state_);
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     BroadcastComplaints();
     SetTimeToProceed(State::WAIT_FOR_COMPLAINTS);
@@ -466,7 +466,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
                    seconds_for_state_);
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     complaints_manager_.Finish(beacon_->aeon.members);
 
@@ -497,7 +497,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
                    seconds_for_state_);
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     complaint_answers_manager_.Finish(beacon_->aeon.members, identity_.identifier());
     CheckComplaintAnswers();
@@ -536,7 +536,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
                    seconds_for_state_);
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     BroadcastQualComplaints();
 
@@ -561,7 +561,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
                    seconds_for_state_);
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     qual_complaints_manager_.Finish(beacon_->manager.qual(), identity_.identifier());
 
@@ -614,12 +614,16 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
     }
   }
 
-  if (timer_to_proceed_.HasExpired() || received_count == remaining_honest.size() - 1)
+  if (!condition_to_proceed_ && received_count == remaining_honest.size() - 1)
   {
+    condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
                    " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
                    seconds_for_state_);
+  }
 
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
+  {
     // Process reconstruction shares. Reconstruction shares from non-qual members
     // or people in qual complaints should not be considered
     for (auto const &share : reconstruction_shares_received_)
