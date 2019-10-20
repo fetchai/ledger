@@ -83,12 +83,13 @@ public:
   Counters Resolve();
   Counters Resolve(Timepoint const &time_point);
 
-  bool     HasCompletedPromises() const;
-  bool     HasFailedPromises() const;
-  void     DiscardFailures();
-  void     DiscardCompleted();
-  bool     Empty() const;
-  uint64_t Size() const;
+  bool        HasCompletedPromises() const;
+  bool        HasFailedPromises() const;
+  void        DiscardFailures();
+  void        DiscardCompleted();
+  bool        Empty() const;
+  uint64_t    Size() const;
+  std::size_t GetNumPending() const;
 
   // Operators
   RequestingQueueOf &operator=(RequestingQueueOf const &) = delete;
@@ -335,6 +336,12 @@ uint64_t RequestingQueueOf<K, R, P, H>::Size() const
 {
   FETCH_LOCK(mutex_);
   return requests_.size() + completed_.size() + failed_.size();
+}
+
+template <typename K, typename R, typename P, typename H>
+std::size_t RequestingQueueOf<K, R, P, H>::GetNumPending() const
+{
+  return num_pending_;
 }
 
 }  // namespace network

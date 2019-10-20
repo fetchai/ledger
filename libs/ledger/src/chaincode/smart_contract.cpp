@@ -109,9 +109,6 @@ SmartContract::SmartContract(std::string const &source)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
 
-  module_->CreateFreeFunction("getBlockNumber",
-                              [this](vm::VM *) -> BlockIndex { return block_index_; });
-
   module_->CreateFreeFunction(
       "getContext", [this](vm::VM *) -> vm_modules::ledger::ContextPtr { return context_; });
 
