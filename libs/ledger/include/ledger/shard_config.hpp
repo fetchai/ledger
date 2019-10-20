@@ -60,7 +60,7 @@ struct ShardConfig
   /// @{
   std::size_t verification_threads{1};  ///< Num threads for tx verification
   Timeperiod  sync_service_timeout{5000};
-  Timeperiod  sync_service_promise_timeout{2000};
+  Timeperiod  sync_service_promise_timeout{30000};
   Timeperiod  sync_service_fetch_period{5000};
   /// @}
 };
