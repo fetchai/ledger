@@ -275,7 +275,7 @@ TEST(MclNotarisationTests, AggregateSigningVerification)
   std::unordered_map<uint32_t, Signature> signatures;
   for (uint32_t i = 0; i < committee_size; ++i)
   {
-    if (i)
+    if (i != 0u)
     {
       Signature signature = SignShare(message, keys[i].first);
       EXPECT_TRUE(VerifySign(keys[i].second, message, signature, generator));

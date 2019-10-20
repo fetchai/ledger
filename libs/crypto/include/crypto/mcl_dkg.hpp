@@ -163,7 +163,7 @@ PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
 bool      VerifyAggregateSignature(MessagePayload const &                         message,
                                    std::pair<Signature, std::vector<bool>> const &aggregate_signature,
                                    std::vector<PublicKey> const &                 cabinet_public_keys,
-                                   Generator const &                              G);
+                                   Generator const &                              generator);
 
 }  // namespace mcl
 }  // namespace crypto
