@@ -43,6 +43,9 @@ public:
     , console_(std::move(console))
   {}
 
+  static ExecutionResult MakeSuccess();
+  static ExecutionResult MakeIntegerResult(int r);
+
   Variant output() const
   {
     return output_;

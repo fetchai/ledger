@@ -21,6 +21,18 @@
 namespace fetch {
 namespace dmlf {
 
+ExecutionResult ExecutionResult::MakeSuccess()
+{
+  return ExecutionResult{Variant{}, Error{ErrorStage::ENGINE, ErrorCode::SUCCESS, std::string{}},
+                         std::string{}};
+}
+
+ExecutionResult ExecutionResult::MakeIntegerResult(int r)
+{
+  return ExecutionResult{Variant{r}, Error{ErrorStage::ENGINE, ErrorCode::SUCCESS, std::string{}},
+                         std::string{}};
+}
+
 ExecutionResult ExecutionResult::MakeResultFromStatus(Error const &status)
 {
   ExecutionResult res{Variant{}, status, std::string{}};
