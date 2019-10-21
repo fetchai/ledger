@@ -380,7 +380,7 @@ void BeaconManager::AddReconstructionShare(MuddleAddress const &                
     reconstruction_shares.insert(
         {share.first, {{}, std::vector<PrivateKey>(cabinet_size_, zeroFr_)}});
   }
-  else if (reconstruction_shares.at(share.first).second[from_index] != zeroFr_)
+  else if (!reconstruction_shares.at(share.first).second[from_index].isZero())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
                    " received duplicate reconstruction shares from node ", from_index);
@@ -434,8 +434,8 @@ bool BeaconManager::RunReconstruction()
     if (parties.size() <= polynomial_degree_)
     {
       // Do not have enough good shares to be able to do reconstruction
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " reconstruction for ", victim_index,
-                     " failed with party size ", parties.size());
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " reconstruction for node ",
+                     victim_index, " failed with party size ", parties.size());
       return false;
     }
     if (in.first == certificate_->identity().identifier())

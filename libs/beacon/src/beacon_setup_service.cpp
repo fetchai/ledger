@@ -389,8 +389,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
-                   seconds_for_state_);
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
   if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
@@ -437,8 +436,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
-                   seconds_for_state_);
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
   if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
@@ -462,8 +460,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
-                   seconds_for_state_);
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
   if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
@@ -493,8 +490,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
-                   seconds_for_state_);
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
   if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
@@ -532,8 +528,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
-                   seconds_for_state_);
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
   if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
@@ -557,8 +552,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
-                   seconds_for_state_);
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
   if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
@@ -618,8 +612,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_), " of ",
-                   seconds_for_state_);
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
   if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
@@ -638,7 +631,11 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
       }
       for (auto const &elem : share.second)
       {
-        beacon_->manager.VerifyReconstructionShare(from, elem);
+        // Check person who's shares are being exposed is a member of qual
+        if (beacon_->manager.qual().find(elem.first) != beacon_->manager.qual().end())
+        {
+          beacon_->manager.VerifyReconstructionShare(from, elem);
+        }
       }
     }
 
