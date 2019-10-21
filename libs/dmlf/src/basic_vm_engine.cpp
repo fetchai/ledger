@@ -302,14 +302,14 @@ BasicVmEngine::LedgerVariant BasicVmEngine::Convert(VmVariant const &vmVariant) 
     return LedgerVariant{vmVariant.Get<double>()};
   }
   case fetch::vm::TypeIds::Fixed32:
-	{
-		return LedgerVariant{vmVariant.Get<fp32_t>()};	
-	}
+  {
+    return LedgerVariant{vmVariant.Get<fp32_t>()};
+  }
   case fetch::vm::TypeIds::Fixed64:
-	{
-		return LedgerVariant{vmVariant.Get<fp64_t>()};	
-	}
-	
+  {
+    return LedgerVariant{vmVariant.Get<fp64_t>()};
+  }
+
   default:
     return LedgerVariant{};
   }
