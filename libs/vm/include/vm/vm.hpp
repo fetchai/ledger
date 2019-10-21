@@ -220,7 +220,7 @@ private:
   bool AddInternal(Ptr<Object> const &value)
   {
     // add the value to the map
-    // TODO: Check ownership of Ptr.
+    // TODO(tfr): Check ownership of Ptr.
     Variant v;
     v.Construct(value, value->GetTypeId());
     params_.emplace_back(std::move(v));

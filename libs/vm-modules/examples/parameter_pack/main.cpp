@@ -207,11 +207,11 @@ void SetInputParameters(ExecutionTask &task, Args... args)
   // the unique type identifiers.
   auto module = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
 
-  // TODO: Needed to ensure that types are registered.
+  // TODO(tfr): Needed to ensure that types are registered.
   auto compiler = std::make_shared<Compiler>(module.get());
 
   // ParameterPack params{module->registered_types()};
-  // TODO: Preferably we would get rid of the VM here
+  // TODO(tfr): Preferably we would get rid of the VM here
   auto          vm = std::make_unique<VM>(module.get());
   ParameterPack params{vm->registered_types(), vm.get()};
 
