@@ -58,43 +58,42 @@ This documents contains guidelines regarding:
    *
    * @return the exponential of x.
    */
-double Exp(double const &x) 
+double Exp(double const &x)
 {
-    // We use the constants explained in [1] and additional make e the
-    // base rather than using 2.
-    static double const a = double(1ull << 20) / M_LN2;
-    static double const b = ((1ull << (10)) - 1) * double(1ull << 20); - 60801;
-    double in = x * a + b;
+  // We use the constants explained in [1] and additional make e the
+  // base rather than using 2.
+  static double const a = double(1ull << 20) / M_LN2;
+  static double const b = ((1ull << (10)) - 1) * double(1ull << 20) - 60801;
+  double in = x * a + b;
 
-    // Move the computed bits into the exponent with spilling into the
-    // Mantissa. The spilling creates the linear interpolation, while
-    // the exponent creates exact results whenever the argument is an integer.     
-    union 
-    { 
-      double d;
-      uint32_t i[2];
-    } conv;
+  // Move the computed bits into the exponent with spilling into the
+  // Mantissa. The spilling creates the linear interpolation, while
+  // the exponent creates exact results whenever the argument is an integer.
+  union
+  {
+    double   d;
+    uint32_t i[2];
+  } conv;
 
-    conv.i[1] = static_cast<uint32_t>(in);
-    conv.i[0] = 0;
+  conv.i[1] = static_cast<uint32_t>(in);
+  conv.i[0] = 0;
 
-    return conv.d;
+  return conv.d;
 }
 ```
 
 * Comment the non-obvious, not the obvious.
 
 ``` c++
-// Turns out sorting this list before processing it is faster due to branch 
+// Turns out sorting this list before processing it is faster due to branch
 // prediction, so don't remove this without checking the profile:
 std::sort(users.begin(), users.end(), UserSortPredicate());
-for (const User& user: users)
+for (const User &user : users)
 {
-    if (user.ready)
-    {
-        // Do something...
-        
-    }
+  if (user.ready)
+  {
+    // Do something...
+  }
 }
 ```
 
@@ -156,40 +155,40 @@ Foo::Foo()
 * If a value is `const`, declare it so.
 * Use `int const &i` over `const int &i`.
 
-
-## Namespaces 
+## Namespaces
 
 * Do not do `using namespace foo` or `namespace baz = ::foo::bar::baz` in `.hpp` files.
 * Do not do `using namespace foo` in the top `fetch` namespace, as it pollutes all of it. Instead, do the following:
 
-``` c++
-namespace fetch 
-{
-    namespace details 
+``` c++ namespace fetch
+  {
+    namespace details {
+    struct FetchImpl
     {
-        struct FecthImpl { /* ... */ };
-      
-        void HelperFunction(FecthImpl & s) 
-        {
-           /* ... */
-        }  
+      /* ... */
     };
 
-    class MyFetchClass {
+    void HelperFunction(FetchImpl &s)
+    {
+      /* ... */
+    }
+    };  // namespace details
 
-        public:
+    class MyFetchClass
+    {
 
-            void DoSomeThing() {
-              // This improves readability
-              using namespace details; 
+    public:
+      void DoSomeThing()
+      {
+        // This improves readability
+        using namespace details;
 
-              FetchImpl f;
-              HelperFunction(f);
-            }
-            // ...
+        FetchImpl f;
+        HelperFunction(f);
+      }
+      // ...
     };
-
-};
+  };
 ```
 
 
@@ -198,73 +197,71 @@ namespace fetch
 Use structs for Plain Old Data (POD) and, in some cases, template meta-programming. Use `classes` for everything else.
 
 ``` c++
-struct Person 
+struct Person
 {
-    std::string name;
-    int age;
-    // ...
+  std::string name;
+  int         age;
+  // ...
 };
 ```
-
 
 ## Classes
 
 * Initialise class members in the following order of preference:
-	1. Inline initialisation.
-	2. Constructor initialiser list.
-	3. Constructor body.
+  1. Inline initialisation.
+  2. Constructor initialiser list.
+  3. Constructor body.
 
 * Mark all constructors and assignment operators explicitly, even those which are implicit, to ensure there is no confusion about the intended behaviour of the class.
 * Mark unneeded default implementations as deleted. C++ infers whether to create implicit constructors based on whether there are user defined ones. This means that when someone declares a constructor, C++ may remove the default constructor.
 
-``` c++
-class Transaction 
+``` c++ class Transaction
 {
-  public:
-      Transaction() = default;
-      Transaction(Transaction const&) = default;
-      Transaction(Transaction &&) = deleted;
+public:
+  Transaction()                    = default;
+  Transaction(Transaction const &) = default;
+  Transaction(Transaction &&)      = deleted;
 
-      ~Transaction() = default;
+  ~Transaction() = default;
 
-      Transaction operator(Transaction const&) = default;
-      Transaction operator(Transaction &&) = deleted;
+  Transaction operator(Transaction const &) = default;
+  Transaction operator(Transaction &&)      = deleted;
 }
 ```
 
 * Mark a class `final` if it is not meant to be subclassed. The same counts for final implementations of virtual functions.
 
 ``` c++
-class Foo 
+class Foo
 {
-  public:
-      virtual ~Foo() { }
-      virtual void Greet() = 0;
-      virtual void Say(std::string const&) = 0;   
+public:
+  virtual ~Foo()
+  {}
+  virtual void Greet()                  = 0;
+  virtual void Say(std::string const &) = 0;
 };
 
-class Bar : public Foo 
+class Bar : public Foo
 {
-  public:
-      void Greet() override final 
-      {
-        // ...
-      }
-      
-      void Say(std::string const& what) override 
-      {
-        // .. 
-      };     
+public:
+  void Greet() override final
+  {
+    // ...
+  }
+
+  void Say(std::string const &what) override{
+      // ..
+  };
 };
 
-class Baz final : public Bar 
+class Baz final : public Bar
 {
-  public:
-      void Say(std::string const& what) override 
-      {
-        // ...
-      } 
-}; 
+public:
+  void Say(std::string const &what) override
+  {
+    // ...
+  }
+};
 ```
 
 C++14 allows for inline initialisation of member variables which should be preferred at all times as uninitialised memory can have secondary effects making it almost impossible to debug a problem. 
@@ -274,24 +271,24 @@ When it is not possible to use inline initialisation, member variables should be
 Last resort is initialisation inside the constructors body. In most cases, a combination of the above will be used. For example:
 
 ``` c++
-class MyClass 
+class MyClass
 {
-  public:
-      MyClass() = default;
-      
-      MyClass(std::size_t n)
-        : size_(n) 
-      {
-        pointer_ = new int[n];
-        for(std::size_t i=0; i< n; ++i)
-        {
-          pointer_[i] = 0;    
-        }
-      }
-      // ...
-  private:
-      std::size_t size_ = 0;
-      int* pointer_ = nullptr;
+public:
+  MyClass() = default;
+
+  MyClass(std::size_t n)
+    : size_(n)
+  {
+    pointer_ = new int[n];
+    for (std::size_t i = 0; i < n; ++i)
+    {
+      pointer_[i] = 0;
+    }
+  }
+  // ...
+private:
+  std::size_t size_    = 0;
+  int *       pointer_ = nullptr;
 };
 ```
 
@@ -351,34 +348,33 @@ Any justification for doing this is highly questionable. If you really feel it i
 * The `shared_ptr` type is **NOT** designed for this.
 * If you still want to proceed, then read <a href="https://stackoverflow.com/questions/15337461/move-ownership-from-stdshared-ptr-to-stdunique-ptr" target=_blank>this</a> which may provide some guidance.
 
-
 Example of using smart pointer with **shared** ownership:
 
 ``` c++
-#include <memory>
 #include <iostream>
+#include <memory>
 
 //* Parent Scope block
 {
   std::shared_ptr<int> a0;
-  
+
   //* Nested scope block
   {
-    std::shared_ptr<int> a1 = std::make_shared<int>(5); //* refcount=1
-    a0 = a1; //* The `a1` instance become shared at this point (refcount=2)
-    
+    std::shared_ptr<int> a1 = std::make_shared<int>(5);  //* refcount=1
+    a0                      = a1;  //* The `a1` instance become shared at this point (refcount=2)
+
     //* BOTH instances are valid, controlling the same `int` instance:
     std::cout << "a0 = " << *a0 << ", a1 = " << *a1 << std::endl;
-    
+
     throw std::exception();
-    
-    //* The exception will cause stack unwinding, during which 
-    //* is the destructor of `a1` instance called automatically, 
+
+    //* The exception will cause stack unwinding, during which
+    //* is the destructor of `a1` instance called automatically,
     //* what decrements refcount of shared object (to 1).
     //* At this point, the `a0` shared object is controlling lifecycle
     //* of the `int` instance created above in this scope.
   }
-  
+
   //* We are still in stack unwinding process here (due to earlier exception),
   //* during which automatically called destructor of `a0` instance  decrements
   //* refcount of shared object (to 0), what finally results to destruction of
@@ -386,33 +382,32 @@ Example of using smart pointer with **shared** ownership:
 }
 ```
 
-
-Example of using smart pointer with **exclusive** ownership:
+    Example of using smart pointer with **exclusive **ownership :
 ``` c++
 #include <memory>
 
 //* Parent Scope block
 {
   std::unique_ptr<int> a0;
-  
+
   //* Nested scope block
   {
     std::unique_ptr<int> a1 = std::make_unique<int>(5);
 
-    a0 = a1; //* Transfer of OWNERSHIP from `a1` to `a0`
+    a0 = a1;  //* Transfer of OWNERSHIP from `a1` to `a0`
     //* The `a1` does NOT control lifecycle of the `int` instance anymore.
-    
+
     //* This WILL result to throwing an exception since `a1` instance
     //* is initialised to `nullptr`:
-    std::cout << "a1=" << *a1 <<std::endl;
-    
+    std::cout << "a1=" << *a1 << std::endl;
+
     //* Automatically called destructor of `a1` instance,
     //* which does NOTHING since `a1` does NOT possess
     //* control over any object.
   }
   //* At this point, The `a0` variable is still controlling life-cycle of the
   //* `int` instance created in nested scope above.
-  
+
   //* Automatically called destructor of `a0` instance will
   //* result to destruction of the `int` instance allocated & initialised
   //* in the nested scope above.
@@ -478,71 +473,67 @@ It offers more flexibility and allows the following:
 //* to retain state across lock and signal change of the state
 std::condition_variable condition;
 
-//* Variable keeping the state  
+//* Variable keeping the state
 bool a_state = 0;
 
 //* Global mutex variable
 std::mutex(mtx);
 
-auto increment_fnc() -> void
+auto increment_fnc()->void
 {
-    {
-      //* this constructor locks mutex automatically
-      std::unique_lock<mutex> lock(mtx);
-
-      //* Updating value of state keeping variable (in thread safe way - see comment bellow)
-      ++a_state;
-
-      //* It is *not* necessary to explicitly call `lock.unlock()` since
-      //* it will be called implicitly by destructor of the `lock` object. 
-    }
-    
-    //* Signal on condition to notify *ALL* listeners waiting for the signal.
-    //* Mind to note here that this is **independent** from specific
-    //* synchronisation object (like mutex), reason being it can be signalled
-    //* from anywhere (e.g. outside of mutex locked scope).
-    condition.notify_all();
-}
-
-auto decrement_fnc() -> void
-{
+  {
+    //* this constructor locks mutex automatically
     std::unique_lock<mutex> lock(mtx);
 
-    //* Waiting for condition to signal.
-    //* An std::function (e.g. lambda) can be passed to prevent spurious
-    //* wake ups, for example condition.wait(lock, [](){/* ... */ return A_CONDITION;})
-    
-    //* The `wait(lock)` implicitly UNlock the mutex **BEFORE** falling
-    //* to wait state (essentially relocating thread to wait queue on OS level).
-    condition.wait(lock, [orig_state = a_state, &state = a_state](){
-        //* Here we are trying to figure whether the state has changed since we started
-        //* to monitor/listen to the signalling.
-        if (orig_state < state) 
-        {
-          --state; //* Modifying state
-          return true;
-        }
-        return false;
-      });
-    //* The `wait(lock)` implicitly reacquire back (locks) the mutex after it handled
-    //* signalled condition.
+    //* Updating value of state keeping variable (in thread safe way - see comment bellow)
+    ++a_state;
 
     //* It is *not* necessary to explicitly call `lock.unlock()` since
-    //* it will be called implicitly by destructor of the `lock` object. 
+    //* it will be called implicitly by destructor of the `lock` object.
+  }
+
+  //* Signal on condition to notify *ALL* listeners waiting for the signal.
+  //* Mind to note here that this is **independent** from specific
+  //* synchronisation object (like mutex), reason being it can be signalled
+  //* from anywhere (e.g. outside of mutex locked scope).
+  condition.notify_all();
 }
 
-int main(int argc, char* argv[]) 
+auto decrement_fnc()->void
 {
-    std::thread t1([]() {
-        increment_fnc();
-      });
+  std::unique_lock<mutex> lock(mtx);
 
-    std::thread t2([]() {
-        decrement_fnc();
-      });
+  //* Waiting for condition to signal.
+  //* An std::function (e.g. lambda) can be passed to prevent spurious
+  //* wake ups, for example condition.wait(lock, [](){/* ... */ return A_CONDITION;})
 
-    t1.join();
-    t2.join();
+  //* The `wait(lock)` implicitly UNlock the mutex **BEFORE** falling
+  //* to wait state (essentially relocating thread to wait queue on OS level).
+  condition.wait(lock, [orig_state = a_state, &state = a_state]() {
+    //* Here we are trying to figure whether the state has changed since we started
+    //* to monitor/listen to the signalling.
+    if (orig_state < state)
+    {
+      --state;  //* Modifying state
+      return true;
+    }
+    return false;
+  });
+  //* The `wait(lock)` implicitly reacquire back (locks) the mutex after it handled
+  //* signalled condition.
+
+  //* It is *not* necessary to explicitly call `lock.unlock()` since
+  //* it will be called implicitly by destructor of the `lock` object.
+}
+
+int main(int argc, char *argv[])
+{
+  std::thread t1([]() { increment_fnc(); });
+
+  std::thread t2([]() { decrement_fnc(); });
+
+  t1.join();
+  t2.join();
 }
 ```
 
@@ -552,19 +543,20 @@ The `std::lock_guard<T>` offers the most trivial API possible - constructor and 
 
 It locks the synchronisation object of `T` type **immediately** at construction time, and releases the lock in the destructor.
 
-The constructor of this class is able to take a lockable object (e.g. mutex) in any state (locked or unlocked) and thus `adopting` its pre-existing lock state. For example:
+The constructor of this class is able to take a lockable object (e.g. mutex) in any state (locked or unlocked) and thus 'adopting' its pre-existing lock state. For example:
 
 ``` c++
-#include<mutex>
+#include <mutex>
+
 std::mutex(mtx);
 
 {
-    std::unique_lock<mutex> guard(mtx);
+  std::unique_lock<mutex> guard(mtx);
 
-    //* Some code desired to be executed thread safe manner.
+  //* Some code desired to be executed thread safe manner.
 
-    //* Automatically called destructor of the `guard` instance
-    //* will implicitly unlock the mutex.
+  //* Automatically called destructor of the `guard` instance
+  //* will implicitly unlock the mutex.
 }
 ```
 
