@@ -18,6 +18,7 @@
 
 #include "dmlf/execution/basic_vm_engine.hpp"
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/common.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -27,6 +28,10 @@
 
 namespace fetch {
 namespace dmlf {
+
+// This must match the type as defined in variant::variant.hpp
+using fp64_t = fetch::fixed_point::fp64_t;
+using fp32_t = fetch::fixed_point::fp32_t;
 
 ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFiles const &sources)
 {
@@ -230,6 +235,11 @@ bool BasicVmEngine::Convertable(LedgerVariant const &ledgerVariant, TypeId const
   {
     return ledgerVariant.IsFloatingPoint();
   }
+  case fetch::vm::TypeIds::Fixed32:
+  case fetch::vm::TypeIds::Fixed64:
+  {
+    return ledgerVariant.IsFixedPoint();
+  }
   default:
     return false;
   }
@@ -257,6 +267,11 @@ BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const &ledgerVaria
   case fetch::vm::TypeIds::Float64:
   {
     return VmVariant(ledgerVariant.As<double>(), typeId);
+  }
+  case fetch::vm::TypeIds::Fixed32:
+  case fetch::vm::TypeIds::Fixed64:
+  {
+    return VmVariant(ledgerVariant.As<fp64_t>(), typeId);
   }
   default:
     return VmVariant();
@@ -286,6 +301,15 @@ BasicVmEngine::LedgerVariant BasicVmEngine::Convert(VmVariant const &vmVariant) 
   {
     return LedgerVariant{vmVariant.Get<double>()};
   }
+  case fetch::vm::TypeIds::Fixed32:
+	{
+		return LedgerVariant{vmVariant.Get<fp32_t>()};	
+	}
+  case fetch::vm::TypeIds::Fixed64:
+	{
+		return LedgerVariant{vmVariant.Get<fp64_t>()};	
+	}
+	
   default:
     return LedgerVariant{};
   }

@@ -22,6 +22,7 @@
 
 #include "dmlf/execution/execution_error_message.hpp"
 #include "variant/variant.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <limits>
 
@@ -37,6 +38,9 @@ using Code  = ExecutionErrorMessage::Code;
 
 using LedgerVariant = BasicVmEngine::LedgerVariant;
 using Params        = BasicVmEngine::Params;
+
+using fp64_t = fetch::fixed_point::fp64_t;
+using fp32_t = fetch::fixed_point::fp32_t;
 
 auto const helloWorld = R"(
 
@@ -172,6 +176,14 @@ auto const Add64 = R"(
 
 )";
 
+auto const AddFloat = R"(
+
+function add(a : Fixed64, b : Fixed32) : Fixed64
+  return a + toFixed64(b);
+endfunction
+
+)";
+
 auto const IntToFloatCompare = R"(
 function compare(a : Int32, b: Float64) : Int32
   if (a < toInt32(b))
@@ -191,6 +203,7 @@ function compare(a : Bool) : Int32
   endif
 endfunction
 )";
+
 
 }  // namespace
 
@@ -946,6 +959,24 @@ TEST(BasicVmEngineDmlfTests, Add64)
   EXPECT_TRUE(result.succeeded());
   std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), std::numeric_limits<int>::max());
+}
+
+TEST(BasicVmEngineDmlfTests, AddFloat)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloat}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result =
+      engine.Run("add", "state", "add",
+                 Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
+  EXPECT_TRUE(result.succeeded());
+  std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
 }
 
 TEST(BasicVmEngineDmlfTests, TrueIntToFloatCompare)
