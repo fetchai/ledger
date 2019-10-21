@@ -2,6 +2,7 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 
 #include "oef-base/conversation/IOutboundConversationCreator.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
@@ -15,6 +16,10 @@ class Core;
 class OutboundSearchConversationCreator : public IOutboundConversationCreator
 {
 public:
+  using Lock  = IOutboundConversationCreator::Lock;
+  using IOutboundConversationCreator::mutex_;
+  using IOutboundConversationCreator::ident2conversation_;
+
   OutboundSearchConversationCreator(size_t thread_group_id, const Uri &search_uri, Core &core);
   virtual ~OutboundSearchConversationCreator();
   virtual std::shared_ptr<OutboundConversation> start(
@@ -29,7 +34,6 @@ private:
 
   std::shared_ptr<OutboundConversationWorkerTask> worker;
 
-  std::map<unsigned long, std::shared_ptr<OutboundConversation>> ident2conversation;
   Uri search_uri_;
 
   OutboundSearchConversationCreator(const OutboundSearchConversationCreator &other) = delete;

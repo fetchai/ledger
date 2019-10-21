@@ -17,22 +17,20 @@
 
 #include <google/protobuf/message.h>
 
-std::map<unsigned long, std::shared_ptr<OutboundConversation>> ident2conversation;
 
 // ------------------------------------------------------------------------------------------
 
 class OutboundSearchConversationWorkerTask : public OutboundConversationWorkerTask
 {
 public:
-  using ConversationMap = OutboundConversationWorkerTask::ConversationMap;
 
   static constexpr char const *LOGGING_NAME = "OutboundSearchConversationWorkerTask";
 
   OutboundSearchConversationWorkerTask(Core &core, const std::string &core_key, const Uri &core_uri,
                                        const Uri &                            search_uri,
                                        std::shared_ptr<OutboundConversations> outbounds,
-                                       const ConversationMap &                ConversationMap)
-    : OutboundConversationWorkerTask(core, search_uri, ConversationMap)
+                                       const IOutboundConversationCreator&                conversationCreator)
+    : OutboundConversationWorkerTask(core, search_uri, conversationCreator)
     , outbounds_(std::move(outbounds))
     , core_uri(core_uri)
     , core_key(core_key)
@@ -79,7 +77,7 @@ OutboundSearchConversationCreator::OutboundSearchConversationCreator(
     std::shared_ptr<OutboundConversations> outbounds)
 {
   worker = std::make_shared<OutboundSearchConversationWorkerTask>(
-      core, core_key, core_uri, search_uri, outbounds, ident2conversation);
+      core, core_key, core_uri, search_uri, outbounds, *this);
 
   worker->SetThreadGroupId(0);
 
@@ -97,6 +95,7 @@ std::shared_ptr<OutboundConversation> OutboundSearchConversationCreator::start(
     const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Starting search conversation");
+  Lock lock(mutex_);
   auto this_id = ident++;
 
   std::shared_ptr<OutboundConversation> conv;
@@ -123,7 +122,7 @@ std::shared_ptr<OutboundConversation> OutboundSearchConversationCreator::start(
         target_path.path + " is not a valid target, to start a OutboundSearchConversationCreator!");
   }
 
-  ident2conversation[this_id] = conv;
+  ident2conversation_[this_id] = conv;
   worker->post(conv);
   return conv;
 }

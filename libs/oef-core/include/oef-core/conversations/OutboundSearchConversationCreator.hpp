@@ -2,6 +2,7 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 
 #include "oef-base/conversation/IOutboundConversationCreator.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
@@ -15,6 +16,10 @@ class Core;
 class OutboundSearchConversationCreator : public IOutboundConversationCreator
 {
 public:
+  using Lock  = IOutboundConversationCreator::Lock;
+  using IOutboundConversationCreator::mutex_;
+  using IOutboundConversationCreator::ident2conversation_;
+
   OutboundSearchConversationCreator(const std::string &core_key, const Uri &core_uri,
                                     const Uri &search_uri, Core &core,
                                     std::shared_ptr<OutboundConversations> outbounds);

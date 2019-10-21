@@ -22,7 +22,7 @@ OutboundSearchConversationCreator::OutboundSearchConversationCreator(size_t     
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Creating search to search conversation creator for ",
                  search_uri.ToString());
-  worker = std::make_shared<OutboundConversationWorkerTask>(core, search_uri, ident2conversation);
+  worker = std::make_shared<OutboundConversationWorkerTask>(core, search_uri, *this);
 
   worker->SetThreadGroupId(thread_group_id);
 
@@ -40,6 +40,7 @@ std::shared_ptr<OutboundConversation> OutboundSearchConversationCreator::start(
     const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Starting search to search conversation with ", search_uri_.ToString()," ...");
+  Lock lock(mutex_);
   auto this_id = ident++;
 
   std::shared_ptr<OutboundConversation> conv;
@@ -57,7 +58,7 @@ std::shared_ptr<OutboundConversation> OutboundSearchConversationCreator::start(
         target_path.path + " is not a valid target, to start a OutboundSearchConversationCreator!");
   }
 
-  ident2conversation[this_id] = conv;
+  ident2conversation_[this_id] = conv;
   worker->post(conv);
   return conv;
 }

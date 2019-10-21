@@ -17,7 +17,7 @@ OutboundDapConversationCreator::OutboundDapConversationCreator(size_t     thread
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Creating dap conversation with ", dap_name, " @ ",
                  dap_uri.ToString());
-  worker = std::make_shared<OutboundConversationWorkerTask>(core, dap_uri, ident2conversation);
+  worker = std::make_shared<OutboundConversationWorkerTask>(core, dap_uri, *this);
 
   worker->SetThreadGroupId(thread_group_id);
 
@@ -34,6 +34,7 @@ std::shared_ptr<OutboundConversation> OutboundDapConversationCreator::start(
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Starting dap conversation with ", target_path.host, ":",
                  target_path.port, "/", target_path.path);
+  Lock lock(mutex_);
   auto this_id = ident++;
 
   std::shared_ptr<OutboundConversation> conv;
@@ -75,7 +76,7 @@ std::shared_ptr<OutboundConversation> OutboundDapConversationCreator::start(
         target_path.path + " is not a valid target, to start a OutboundDapConversationCreator!");
   }
 
-  ident2conversation[this_id] = conv;
+  ident2conversation_[this_id] = conv;
   worker->post(conv);
   return conv;
 }

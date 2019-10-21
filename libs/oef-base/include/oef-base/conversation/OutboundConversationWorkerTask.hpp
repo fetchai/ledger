@@ -11,6 +11,7 @@
 
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundTypedConversation.hpp"
+#include "oef-base/conversation/IOutboundConversationCreator.hpp"
 
 #include "logging/logging.hpp"
 #include "oef-base/utils/Uri.hpp"
@@ -29,14 +30,13 @@ public:
   using WorkloadP    = Parent::WorkloadP;
   using TXType       = std::pair<Uri, std::shared_ptr<google::protobuf::Message>>;
   using EndpointType = ProtoMessageEndpoint<TXType, ProtoPathMessageReader, ProtoPathMessageSender>;
-  using ConversationMap = std::map<unsigned long, std::shared_ptr<OutboundConversation>>;
 
   static constexpr char const *LOGGING_NAME = "OutboundConversationWorkerTask";
 
-  OutboundConversationWorkerTask(Core &core, const Uri &uri, const ConversationMap &conversationMap)
+  OutboundConversationWorkerTask(Core &core, const Uri &uri, const IOutboundConversationCreator &conversation_creator)
     : uri(uri)
     , core(core)
-    , conversationMap(conversationMap)
+    , conversation_creator_(conversation_creator)
     , connect_failures_{0}
   {}
 
@@ -55,7 +55,7 @@ protected:
 
   Uri                    uri;
   Core &                 core;
-  const ConversationMap &conversationMap;
+  const IOutboundConversationCreator &conversation_creator_;
 
   uint32_t                      connect_failures_;
 };

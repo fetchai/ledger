@@ -4,18 +4,8 @@
 void OutboundConversationWorkerTask::OnPeerError(unsigned long id, int status_code,
                                                  const std::string &message)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "error message uri=(", uri.ToString(),") id=", id);
-  auto iter = conversationMap.find(id);
-
-  if (iter != conversationMap.end())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "wakeup (uri=", uri.ToString(),")!!");
-    iter->second->HandleError(status_code, message);
-  }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "complete message not handled (uri=", uri.ToString(), ")");
-  }
+  FETCH_LOG_WARN(LOGGING_NAME, "error message uri=(", uri.ToString(),") id=", id, " message=", message);
+  conversation_creator_.HandleError(id, uri, status_code, message);
 }
 
 bool OutboundConversationWorkerTask::connect()
@@ -33,18 +23,7 @@ bool OutboundConversationWorkerTask::connect()
     ep->SetOnCompleteHandler(
         [this](bool /*success*/, unsigned long id, Uri /*uri*/, ConstCharArrayBuffer buffer) {
           FETCH_LOG_INFO(LOGGING_NAME, "complete message from ", uri.ToString(), " id=", id);
-
-          auto iter = conversationMap.find(id);
-
-          if (iter != conversationMap.end())
-          {
-            FETCH_LOG_INFO(LOGGING_NAME, "wakeup (uri=", uri.ToString(),")!!");
-            iter->second->HandleMessage(buffer);
-          }
-          else
-          {
-            FETCH_LOG_INFO(LOGGING_NAME, "complete message not handled (uri=", uri.ToString(), ")");
-          }
+          conversation_creator_.HandleMessage(id, uri, std::move(buffer));
         });
 
     ep->SetOnPeerErrorHandler(
