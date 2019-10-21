@@ -57,7 +57,19 @@ public:
 
   void PrepareOptimiser();
 
+  void Run() override;
+
   void Test() override;
+
+  float analogy_score_ = 0.0f;
+
+  float GetAnalogyScore()
+  {
+    TensorType const &weights = utilities::GetEmbeddings(*this->g_ptr_, skipgram_);
+
+    return utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights, tp_.analogies_test_file)
+        .second;
+  }
 
   GradientType GetGradients() override;
 
@@ -141,13 +153,33 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 }
 
 /**
+ * Main loop that runs in thread
+ */
+template <class TensorType>
+void Word2VecClient<TensorType>::Run()
+{
+  this->ResetLossCnt();
+  if (this->coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
+  {
+    // Do one batch and end
+    this->TrainOnce();
+  }
+  else
+  {
+    // Train batches until coordinator will tell clients to stop
+    this->TrainWithCoordinator();
+  }
+  analogy_score_ = GetAnalogyScore();
+}
+
+/**
  * Run model on test set to get test loss
  * @param test_loss
  */
 template <class TensorType>
 void Word2VecClient<TensorType>::Test()
 {
-  if (this->batch_counter_ % tp_.test_frequency == 1)
+  if (this->batch_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
   {
     // Lock model
     FETCH_LOCK(this->model_mutex_);

@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
-#include "core/json/exceptions.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "json/document.hpp"
+#include "json/exceptions.hpp"
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
@@ -31,13 +31,14 @@ namespace ledger {
  * @param tx The reference to the originating transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result Contract::DispatchInitialise(Address const &owner)
+Contract::Result Contract::DispatchInitialise(chain::Address const &    owner,
+                                              chain::Transaction const &tx, BlockIndex block_index)
 {
   Result status{Status::OK};
 
   if (init_handler_)
   {
-    status = init_handler_(owner);
+    status = init_handler_(owner, tx, block_index);
   }
 
   return status;
@@ -73,10 +74,10 @@ Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
-                                               Transaction const &tx, BlockIndex block_index)
+Contract::Result Contract::DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index)
 {
-  Result status{Status::NOT_FOUND};
+  Result      status{Status::NOT_FOUND};
+  auto const &name = tx.action();
 
   auto it = transaction_handlers_.find(name);
   if (it != transaction_handlers_.end())
@@ -155,7 +156,7 @@ void Contract::OnQuery(std::string const &name, QueryHandler &&handler)
  * @param output THe output JSON object to be populated
  * @return true if successful, otherwise falses
  */
-bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
+bool Contract::ParseAsJson(chain::Transaction const &tx, variant::Variant &output)
 {
   bool success{false};
 

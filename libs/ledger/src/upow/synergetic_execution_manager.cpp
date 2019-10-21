@@ -22,6 +22,7 @@
 #include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
+#include "logging/logging.hpp"
 
 namespace fetch {
 namespace ledger {

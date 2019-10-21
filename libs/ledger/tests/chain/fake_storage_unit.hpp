@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/constants.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <map>
@@ -30,7 +30,7 @@
 class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
-  using Transaction = fetch::ledger::Transaction;
+  using Transaction = fetch::chain::Transaction;
   using Digest      = fetch::Digest;
   using DigestSet   = fetch::DigestSet;
   using ResourceID  = fetch::storage::ResourceID;
@@ -88,6 +88,6 @@ private:
   TransactionStore transaction_store_{};
   StatePtr         state_{std::make_shared<State>()};
   StateHistory     state_history_{};
-  StateHashStack   state_history_stack_{fetch::ledger::GENESIS_MERKLE_ROOT};
-  Hash             current_hash_{fetch::ledger::GENESIS_MERKLE_ROOT};
+  StateHashStack   state_history_stack_{fetch::chain::GENESIS_MERKLE_ROOT};
+  Hash             current_hash_{fetch::chain::GENESIS_MERKLE_ROOT};
 };

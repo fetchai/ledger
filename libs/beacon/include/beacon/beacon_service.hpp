@@ -19,7 +19,7 @@
 
 #include "core/state_machine.hpp"
 
-#include "ledger/consensus/entropy_generator_interface.hpp"
+#include "entropy/entropy_generator_interface.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -31,6 +31,7 @@
 #include "beacon/event_manager.hpp"
 #include "beacon/events.hpp"
 #include "beacon/public_key_message.hpp"
+#include "core/digest.hpp"
 
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -95,7 +96,7 @@ public:
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
-  BeaconService(MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
+  BeaconService(MuddleInterface &muddle, shards::ManifestCacheInterface &manifest_cache,
                 const CertificatePtr &certificate, SharedEventManager event_manager);
 
   /// @name Entropy Generator

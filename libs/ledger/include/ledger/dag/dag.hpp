@@ -108,7 +108,7 @@ public:
 
   // Interface for adding what internally becomes a dag node. Easy to modify this interface
   // so do as you like with it Ed
-  void AddTransaction(Transaction const &tx, DAGTypes type) override;
+  void AddTransaction(chain::Transaction const &tx, DAGTypes type) override;
   void AddWork(Work const &solution) override;
   void AddArbitrary(ConstByteArray const &payload) override;
 

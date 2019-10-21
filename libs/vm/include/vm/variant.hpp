@@ -38,11 +38,6 @@ union Primitive
   float    f32;
   double   f64;
 
-  constexpr void Zero() noexcept
-  {
-    ui64 = 0;
-  }
-
   template <typename T>
   auto Get() const noexcept;
 

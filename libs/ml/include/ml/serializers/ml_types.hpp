@@ -204,6 +204,18 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
                                                                                       op);
     break;
   }
+  case ml::OpType::OP_AVG_POOL_1D:
+  {
+    SerializeImplementation<TensorType, D, ml::OpAvgPool1DSaveableParams<TensorType>>(map, code,
+                                                                                      op);
+    break;
+  }
+  case ml::OpType::OP_AVG_POOL_2D:
+  {
+    SerializeImplementation<TensorType, D, ml::OpAvgPool2DSaveableParams<TensorType>>(map, code,
+                                                                                      op);
+    break;
+  }
   case ml::OpType::OP_MAXIMUM:
   {
     SerializeImplementation<TensorType, D, ml::OpMaximumSaveableParams<TensorType>>(map, code, op);
@@ -512,6 +524,18 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   case ml::OpType::OP_MAX_POOL_2D:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpMaxPool2DSaveableParams<TensorType>>(map,
+                                                                                             code);
+    break;
+  }
+  case ml::OpType::OP_AVG_POOL_1D:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::OpAvgPool1DSaveableParams<TensorType>>(map,
+                                                                                             code);
+    break;
+  }
+  case ml::OpType::OP_AVG_POOL_2D:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::OpAvgPool2DSaveableParams<TensorType>>(map,
                                                                                              code);
     break;
   }
@@ -1822,7 +1846,7 @@ struct MapSerializer<ml::OpMatrixMultiplySaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for MaxPool1D saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1861,13 +1885,91 @@ struct MapSerializer<ml::OpMaxPool1DSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for MaxPool2D saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpMaxPool2DSaveableParams<TensorType>, D>
 {
   using Type       = ml::OpMaxPool2DSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const BASE_OPS    = 1;
+  static uint8_t const OP_CODE     = 2;
+  static uint8_t const KERNEL_SIZE = 3;
+  static uint8_t const STRIDE_SIZE = 4;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(4);
+
+    // serialize parent class first
+    auto ops_pointer = static_cast<ml::OpsSaveableParams const *>(&sp);
+    map.Append(BASE_OPS, *(ops_pointer));
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(KERNEL_SIZE, sp.kernel_size);
+    map.Append(STRIDE_SIZE, sp.stride_size);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto ops_pointer = static_cast<ml::OpsSaveableParams *>(&sp);
+    map.ExpectKeyGetValue(BASE_OPS, (*ops_pointer));
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);
+    map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
+  }
+};
+
+/**
+ * serializer for AvgPool1D saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::OpAvgPool1DSaveableParams<TensorType>, D>
+{
+  using Type       = ml::OpAvgPool1DSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const BASE_OPS    = 1;
+  static uint8_t const OP_CODE     = 2;
+  static uint8_t const KERNEL_SIZE = 3;
+  static uint8_t const STRIDE_SIZE = 4;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(4);
+
+    // serialize parent class first
+    auto ops_pointer = static_cast<ml::OpsSaveableParams const *>(&sp);
+    map.Append(BASE_OPS, *(ops_pointer));
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(KERNEL_SIZE, sp.kernel_size);
+    map.Append(STRIDE_SIZE, sp.stride_size);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto ops_pointer = static_cast<ml::OpsSaveableParams *>(&sp);
+    map.ExpectKeyGetValue(BASE_OPS, (*ops_pointer));
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);
+    map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
+  }
+};
+
+/**
+ * serializer for MaxPool2D saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::OpAvgPool2DSaveableParams<TensorType>, D>
+{
+  using Type       = ml::OpAvgPool2DSaveableParams<TensorType>;
   using DriverType = D;
 
   static uint8_t const BASE_OPS    = 1;

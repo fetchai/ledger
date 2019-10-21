@@ -193,6 +193,26 @@ public:
       return *this;
     }
 
+    ClassInterface &EnableLeftOperator(Operator op)
+    {
+      TypeIndex const type_index__            = type_index_;
+      auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
+        compiler->EnableLeftOperator(type_index__, op);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
+    ClassInterface &EnableRightOperator(Operator op)
+    {
+      TypeIndex const type_index__            = type_index_;
+      auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
+        compiler->EnableRightOperator(type_index__, op);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
     template <typename GetterReturnType, typename... GetterArgs, typename SetterReturnType,
               typename... SetterArgs>
     ClassInterface &EnableIndexOperator(GetterReturnType (Type::*getter)(GetterArgs...),
@@ -413,6 +433,20 @@ public:
     TypeIndex const type_index              = TypeIndex(typeid(Type));
     auto            compiler_setup_function = [name, type_index](Compiler *compiler) {
       compiler->CreateClassType(name, type_index);
+    };
+    AddCompilerSetupFunction(compiler_setup_function);
+    return ClassInterface<Type>(this, type_index);
+  }
+
+  template <typename Type, typename... Args>
+  ClassInterface<Type> CreateTemplateType(std::string const &name)
+  {
+    TypeIndexArray allowed_types_index_array;
+    UnrollTypes<Args...>::Unroll(allowed_types_index_array);
+    TypeIndex const type_index              = TypeIndex(typeid(Type));
+    auto            compiler_setup_function = [name, type_index,
+                                    allowed_types_index_array](Compiler *compiler) {
+      compiler->CreateTemplateType(name, type_index, allowed_types_index_array);
     };
     AddCompilerSetupFunction(compiler_setup_function);
     return ClassInterface<Type>(this, type_index);

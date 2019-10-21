@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <algorithm>
@@ -33,10 +33,9 @@ class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   using TransactionStoreType =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::Transaction>;
+      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::chain::Transaction>;
   using StateStoreType =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
-  /*using state_archive_type = std::unordered_map<BookmarkType, StateStoreType>; */
   using LockStoreType = std::unordered_set<ShardIndex>;
   using MutexType     = std::mutex;
   using HashType      = fetch::byte_array::ConstByteArray;
@@ -118,14 +117,14 @@ public:
     return success;
   }
 
-  void AddTransaction(fetch::ledger::Transaction const &tx) override
+  void AddTransaction(fetch::chain::Transaction const &tx) override
   {
     FETCH_LOCK(mutex_);
     transactions_[tx.digest()] = tx;
   }
 
   bool GetTransaction(fetch::byte_array::ConstByteArray const &digest,
-                      fetch::ledger::Transaction &             tx) override
+                      fetch::chain::Transaction &              tx) override
   {
     FETCH_LOCK(mutex_);
     bool success = false;

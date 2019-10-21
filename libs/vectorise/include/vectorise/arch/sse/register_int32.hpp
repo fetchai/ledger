@@ -21,14 +21,13 @@
 #include "vectorise/info.hpp"
 #include "vectorise/register.hpp"
 
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
 #include <emmintrin.h>
 #include <immintrin.h>
 #include <smmintrin.h>
 
-#include <iostream>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace vectorize {

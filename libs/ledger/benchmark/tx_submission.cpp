@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_builder.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction_builder.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/transient_object_store.hpp"
 
@@ -34,8 +34,8 @@
 namespace {
 
 using fetch::storage::ResourceID;
-using fetch::ledger::Transaction;
-using fetch::ledger::TransactionBuilder;
+using fetch::chain::Transaction;
+using fetch::chain::TransactionBuilder;
 using fetch::crypto::ECDSASigner;
 
 using TransientStore   = fetch::storage::TransientObjectStore<Transaction>;
