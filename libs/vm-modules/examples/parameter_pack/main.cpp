@@ -69,6 +69,7 @@ struct ExecutionTask
 {
   std::string    function;
   ConstByteArray parameters;
+  // TODO(tfr): Add full unique function signature.
 
   bool DeserializeParameters(vm::VM *vm, ParameterPack &params, Executable::Function const *f) const
   {
@@ -91,7 +92,10 @@ struct ExecutionTask
       if (type_id <= vm::TypeIds::PrimitiveMaxId)
       {
         Variant param;
-        serializer >> param;
+
+        serializer >> param.primitive.i64;
+        param.type_id = type_id;
+
         params.AddSingle(param);
       }
       else
@@ -129,7 +133,7 @@ struct ExecutionTask
       auto &param = params[i];
       if (param.type_id <= vm::TypeIds::PrimitiveMaxId)
       {
-        serializer << param;
+        serializer << param.primitive.i64;
       }
       else
       {
