@@ -77,7 +77,7 @@ public:
       uri.path     = uri.path.substr(1);
       conversation = outbounds->startConversation(uri, initiator);
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Conversation created");
+      FETCH_LOG_INFO(LOGGING_NAME, "Conversation created with ", uri.ToString());
 
       auto                this_sp = this->template shared_from_base<DapConversationTask>();
       std::weak_ptr<Task> this_wp = this_sp;
@@ -92,10 +92,10 @@ public:
               })
               .Waiting())
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Sleeping");
+        FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (", uri.ToString(), ")");
         return DapConversationTask::StateResult(1, DEFER);
       }
-      FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping");
+      FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping (", uri.ToString(), ")");
       return DapConversationTask::StateResult(1, COMPLETE);
     }
     catch (std::exception &e)
@@ -115,8 +115,8 @@ public:
 
   virtual StateResult HandleResponse(void)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-    FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());
+    FETCH_LOG_INFO(LOGGING_NAME, "Woken (", dap_name_, ")");
+    FETCH_LOG_INFO(LOGGING_NAME, "Response from ", dap_name_, ": ", conversation->GetAvailableReplyCount());
 
     if (conversation->GetAvailableReplyCount() == 0)
     {
@@ -132,7 +132,7 @@ public:
     auto resp = conversation->GetReply(0);
     if (!resp)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Got nullptr as reply");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Got nullptr as reply from ", dap_name_);
       (*task_errored)++;
       if (errorHandler)
       {
@@ -159,7 +159,7 @@ public:
       return DapConversationTask::StateResult(0, ERRORED);
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "COMPLETE");
+    FETCH_LOG_INFO(LOGGING_NAME, "COMPLETE (", dap_name_, ")");
 
     return DapConversationTask::StateResult(0, COMPLETE);
   }

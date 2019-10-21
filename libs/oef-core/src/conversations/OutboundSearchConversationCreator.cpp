@@ -96,7 +96,7 @@ OutboundSearchConversationCreator::~OutboundSearchConversationCreator()
 std::shared_ptr<OutboundConversation> OutboundSearchConversationCreator::start(
     const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting search conversation...");
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting search conversation");
   auto this_id = ident++;
 
   std::shared_ptr<OutboundConversation> conv;
@@ -118,6 +118,7 @@ std::shared_ptr<OutboundConversation> OutboundSearchConversationCreator::start(
   }
   else
   {
+    FETCH_LOG_ERROR(LOGGING_NAME, target_path.path + " is not a valid target, to start a OutboundSearchConversationCreator!");
     throw std::invalid_argument(
         target_path.path + " is not a valid target, to start a OutboundSearchConversationCreator!");
   }

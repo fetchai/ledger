@@ -18,8 +18,9 @@
 OutboundSearchConversationCreator::OutboundSearchConversationCreator(size_t     thread_group_id,
                                                                      const Uri &search_uri,
                                                                      Core &     core)
+                                                                     : search_uri_(search_uri)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Creating search to search conversation with ",
+  FETCH_LOG_INFO(LOGGING_NAME, "Creating search to search conversation creator for ",
                  search_uri.ToString());
   worker = std::make_shared<OutboundConversationWorkerTask>(core, search_uri, ident2conversation);
 
@@ -30,13 +31,15 @@ OutboundSearchConversationCreator::OutboundSearchConversationCreator(size_t     
 
 OutboundSearchConversationCreator::~OutboundSearchConversationCreator()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Removing search to search conversation creator for ",
+                 search_uri_.ToString());
   worker.reset();
 }
 
 std::shared_ptr<OutboundConversation> OutboundSearchConversationCreator::start(
     const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting search to search conversation...");
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting search to search conversation with ", search_uri_.ToString()," ...");
   auto this_id = ident++;
 
   std::shared_ptr<OutboundConversation> conv;

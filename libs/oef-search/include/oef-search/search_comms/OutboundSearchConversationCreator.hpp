@@ -30,6 +30,7 @@ private:
   std::shared_ptr<OutboundConversationWorkerTask> worker;
 
   std::map<unsigned long, std::shared_ptr<OutboundConversation>> ident2conversation;
+  Uri search_uri_;
 
   OutboundSearchConversationCreator(const OutboundSearchConversationCreator &other) = delete;
   OutboundSearchConversationCreator &operator=(const OutboundSearchConversationCreator &other) =
