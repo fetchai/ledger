@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/execution/execution_interface.hpp"
+#include "dmlf/execution/execution_params.hpp"
 #include "dmlf/execution_workload.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -35,6 +36,7 @@ public:
   using PromiseOfResult = fetch::network::PromiseOf<ExecutionResult>;
   using OpIdent         = ExecutionWorkload::OpIdent;
   using PendingResults  = std::map<OpIdent, PromiseOfResult>;
+  using Params          = ExecutionParams;
 
   explicit RemoteExecutionClient(MuddlePtr mud, std::shared_ptr<ExecutionInterface> local =
                                                     std::shared_ptr<ExecutionInterface>());
@@ -58,7 +60,7 @@ public:
   PromiseOfResult DeleteState(Target const &target, Name const &stateName) override;
 
   PromiseOfResult Run(Target const &target, Name const &execName, Name const &stateName,
-                      std::string const &entrypoint, Params params) override;
+                      std::string const &entrypoint, const Params &params) override;
 
   // This is the exported interface which is called with results from the remote host.
 

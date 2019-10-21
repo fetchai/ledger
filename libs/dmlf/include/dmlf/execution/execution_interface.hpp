@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/execution/execution_params.hpp"
 #include "dmlf/execution/execution_result.hpp"
 #include "vm/common.hpp"
 
@@ -37,7 +38,7 @@ public:
   using Target          = std::string;
   using Variant         = ExecutionResult::Variant;
   using PromiseOfResult = ExecutionResult::PromiseOfResult;
-  using Params          = std::vector<Variant>;
+  using Params          = ExecutionParams;
 
   virtual PromiseOfResult CreateExecutable(Target const &host, Name const &execName,
                                            SourceFiles const &sources)               = 0;
@@ -49,7 +50,7 @@ public:
   virtual PromiseOfResult DeleteState(Target const &host, Name const &stateName) = 0;
 
   virtual PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
-                              std::string const &entrypoint, Params params) = 0;
+                              std::string const &entrypoint, const Params &params) = 0;
 
   ExecutionInterface(ExecutionInterface const &other) = delete;
   ExecutionInterface &operator=(ExecutionInterface const &other) = delete;
