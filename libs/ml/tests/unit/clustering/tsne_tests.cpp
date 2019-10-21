@@ -152,7 +152,7 @@ TEST(TsneTests, tsne_test_2d_fixed_point)
 
 TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
 {
-  using DataType  = typename TypeParam::Type;
+  using DataType = typename TypeParam::Type;
 
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
