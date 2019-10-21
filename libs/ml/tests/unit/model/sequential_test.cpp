@@ -29,23 +29,20 @@
 using SizeVector = fetch::math::SizeVector;
 
 template <typename T>
-class ModelsTest : public ::testing::Test
+class SequentialModelTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(ModelsTest, MyTypes);
+TYPED_TEST_CASE(SequentialModelTest, MyTypes);
 namespace {
 template <typename TypeParam>
-void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label,
-                                TypeParam &test_datum, TypeParam &test_label)
+void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label)
 {
   train_data  = TypeParam::FromString("0, 1, 0; 1, 0, 0; 0, 0, 1");
   train_label = TypeParam::FromString("0, 1, 2");
-  test_datum  = TypeParam::FromString("1; 0; 0");
-  test_label  = TypeParam::FromString("1");
 }
 
 template <typename TypeParam, typename DataType, typename ModelType>
@@ -63,11 +60,11 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
   // run model in training modeConfig
   auto model = ModelType(model_config);
   model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
-      3, 100, fetch::ml::details::ActivationType::RELU);
+      3, 7, fetch::ml::details::ActivationType::RELU);
   model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
-      100, 100, fetch::ml::details::ActivationType::RELU);
+      7, 5, fetch::ml::details::ActivationType::RELU);
   model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
-      100, 1, fetch::ml::details::ActivationType::RELU);
+      5, 1);
   model.SetDataloader(std::move(data_loader_ptr));
   model.Compile(optimiser_type, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
 
@@ -82,8 +79,6 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::Sequential<TypeParam>;
 
-  fetch::math::SizeType n_training_steps = 10;
-
   fetch::ml::model::ModelConfig<DataType> model_config;
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
@@ -91,75 +86,66 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
 
   // set up data
-  TypeParam train_data, train_labels, test_datum, test_label;
-  PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels, test_datum, test_label);
+  TypeParam train_data, train_labels;
+  PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels);
 
   // set up model
   ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
                                                                train_data, train_labels);
-
-  DataType loss{0};
-  DataType later_loss{0};
-  model.Train(1, loss);
-
   // test loss decreases
-  fetch::math::SizeType count{0};
-  while (count < n_training_steps)
-  {
-    model.Train(1, later_loss);
-    EXPECT_LE(later_loss, loss);
-    count++;
-  }
+  DataType              loss{0};
+  DataType              later_loss{0};
 
+  model.Train(1, loss);
   model.Train(training_steps);
+  model.Train(1, later_loss);
+
+  EXPECT_LE(later_loss, loss);
 
   // test prediction performance
-  TypeParam pred({3, 1});
-  model.Predict(test_datum, pred);
-
-  EXPECT_TRUE(pred.AllClose(test_label, tolerance, tolerance));
+  TypeParam pred;
+  model.Predict(train_data, pred);
+  EXPECT_TRUE(pred.AllClose(train_labels, tolerance, tolerance));
 
   return true;
 }
 
-TYPED_TEST(ModelsTest, adagrad_sequential)
-{
-
-  // TODO (1556) - ADAGRAD not currently working
-  //  using DataType  = typename TypeParam::Type;
-  //  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD,
-  //  static_cast<DataType>(1e-1)));
-}
-
-TYPED_TEST(ModelsTest, adam_sequential)
+TYPED_TEST(SequentialModelTest, adagrad_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, static_cast<DataType>(1e-5),
-                                 static_cast<DataType>(1e-2), 10));
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, static_cast<DataType>(1e-2),
+      DataType{0.03f}, 400));
 }
 
-TYPED_TEST(ModelsTest, momentum_sequential)
+TYPED_TEST(SequentialModelTest, adam_sequential)
+{
+  using DataType = typename TypeParam::Type;
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, static_cast<DataType>(1e-2),
+                                 DataType{0.05f}, 400));
+}
+
+TYPED_TEST(SequentialModelTest, momentum_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, static_cast<DataType>(1e-4),
                                  static_cast<DataType>(0.5), 200));
 }
 
-TYPED_TEST(ModelsTest, rmsprop_sequential)
+TYPED_TEST(SequentialModelTest, rmsprop_sequential)
 {
-  // TODO(1557) - RMSPROP diverges for fixed point
-  //  using DataType = typename TypeParam::Type;
-  //  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
-  //                                 static_cast<DataType>(1e-5)));
+  using DataType = typename TypeParam::Type;
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
+                                 static_cast<DataType>(1e-2),
+                                 static_cast<DataType>(0.005), 200));
 }
 
-TYPED_TEST(ModelsTest, sgd_sequential)
+TYPED_TEST(SequentialModelTest, sgd_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, static_cast<DataType>(1e-1)));
 }
 
-TYPED_TEST(ModelsTest, sgd_sequential_serialisation)
+TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
 {
 
   using DataType                          = typename TypeParam::Type;
@@ -179,8 +165,8 @@ TYPED_TEST(ModelsTest, sgd_sequential_serialisation)
   model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
 
   // set up data
-  TypeParam train_data, train_labels, test_datum, test_label;
-  PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels, test_datum, test_label);
+  TypeParam train_data, train_labels;
+  PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels);
 
   // set up model
   ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
@@ -199,21 +185,21 @@ TYPED_TEST(ModelsTest, sgd_sequential_serialisation)
   auto model2 = std::make_shared<fetch::ml::model::Sequential<TypeParam>>();
   b >> *model2;
 
-  model.Predict(test_datum, pred1);
-  model2->Predict(test_datum, pred2);
+  model.Predict(train_data, pred1);
+  model2->Predict(train_data, pred2);
 
   // Test if deserialised model returns same results
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
 
   // Do one iteration step
   model2->Train(n_training_steps);
-  model2->Predict(test_datum, pred1);
+  model2->Predict(train_data, pred1);
 
   // Test if only one model is being trained
   EXPECT_FALSE(pred1.AllClose(pred2, tolerance, tolerance));
 
   model.Train(n_training_steps);
-  model.Predict(test_datum, pred2);
+  model.Predict(train_data, pred2);
 
   // Test if both models returns same results after training
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
