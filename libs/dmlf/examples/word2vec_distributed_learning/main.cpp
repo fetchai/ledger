@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/networkers/local_learner_networker.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
-#include "ml/distributed_learning/coordinator.hpp"
 #include "word2vec_client.hpp"
 
 #include <iostream>
@@ -71,19 +72,18 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  CoordinatorParams           coord_params{};
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients   = 5;
-  SizeType number_of_rounds    = 1000;
-  coord_params.number_of_peers = 3;
-  coord_params.mode            = CoordinatorMode::ASYNCHRONOUS;
-  SizeType iterations_count    = 100;  //  Synchronization occurs after this number of batches
+  SizeType number_of_clients = 5;
+  SizeType number_of_rounds  = 1000;
+  SizeType number_of_peers   = 3;
+  bool     synchronisation   = false;
   // have been processed in total by the clients
 
   client_params.batch_size    = 10000;
   client_params.learning_rate = static_cast<DataType>(.001f);
+  client_params.max_updates   = 100;  //  Synchronization occurs after this number of batches
 
   // Word2Vec parameters:
   client_params.vocab_file           = "/tmp/vocab.txt";
@@ -110,9 +110,7 @@ int main(int argc, char **argv)
   client_params.learning_rate_param.starting_learning_rate = client_params.starting_learning_rate;
   client_params.learning_rate_param.ending_learning_rate   = client_params.ending_learning_rate;
 
-  std::shared_ptr<std::mutex>              console_mutex_ptr = std::make_shared<std::mutex>();
-  std::shared_ptr<Coordinator<TensorType>> coordinator =
-      std::make_shared<Coordinator<TensorType>>(coord_params);
+  std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
   std::cout << "FETCH Distributed Word2vec Demo" << std::endl;
 
   std::string train_file            = argv[1];
@@ -120,7 +118,22 @@ int main(int argc, char **argv)
 
   std::vector<std::string> client_data = SplitTrainingData(train_file, number_of_clients);
 
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>>         clients(number_of_clients);
+  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
+
+  // Create networkers
+  for (SizeType i(0); i < number_of_clients; ++i)
+  {
+    networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
+    networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
+  }
+
+  for (SizeType i(0); i < number_of_clients; ++i)
+  {
+    networkers[i]->AddPeers(networkers);
+    networkers[i]->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
+        networkers[i]->GetPeerCount(), number_of_peers));
+  }
 
   std::vector<std::pair<std::vector<std::string>, fetch::byte_array::ConstByteArray>> vocabs;
 
@@ -131,7 +144,6 @@ int main(int argc, char **argv)
     cp.data                        = {client_data[i]};
     auto client =
         std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
-    client->SetMaxUpdates(iterations_count);
 
     clients[i] = client;
     vocabs.push_back(client->GetVocab());
@@ -147,13 +159,10 @@ int main(int argc, char **argv)
     }
   }
 
-  // Give list of clients to coordinator
-  coordinator->SetClientsList(clients);
-
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     // Give each client pointer to coordinator
-    clients[i]->SetCoordinator(coordinator);
+    clients[i]->SetNetworker(networkers[i]);
   }
 
   // Main loop
@@ -161,7 +170,6 @@ int main(int argc, char **argv)
   {
 
     // Start all clients
-    coordinator->Reset();
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
     for (auto &c : clients)
@@ -193,7 +201,7 @@ int main(int argc, char **argv)
 
     lossfile.close();
 
-    if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
+    if (!synchronisation)
     {
       continue;
     }
