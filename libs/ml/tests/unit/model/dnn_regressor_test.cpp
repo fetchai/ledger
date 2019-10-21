@@ -85,8 +85,8 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
                                                                train_data, train_labels);
   // test loss decreases
-  DataType              loss{0};
-  DataType              later_loss{0};
+  DataType loss{0};
+  DataType later_loss{0};
 
   model.Train(1, loss);
   model.Train(training_steps);
@@ -106,7 +106,7 @@ TYPED_TEST(DNNRegressorModelTest, adagrad_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, static_cast<DataType>(1e-4),
-      DataType{0.03f}, 400));
+                                 DataType{0.03f}, 400));
 }
 
 TYPED_TEST(DNNRegressorModelTest, adam_dnnregressor)
@@ -126,16 +126,14 @@ TYPED_TEST(DNNRegressorModelTest, momentum_dnnregressor)
 TYPED_TEST(DNNRegressorModelTest, rmsprop_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
-                                 static_cast<DataType>(1e-2),
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, static_cast<DataType>(1e-2),
                                  static_cast<DataType>(0.005), 200));
 }
 
 TYPED_TEST(DNNRegressorModelTest, sgd_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::SGD,
-                                 static_cast<DataType>(1e-2),
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, static_cast<DataType>(1e-2),
                                  static_cast<DataType>(0.5), 400));
 }
 

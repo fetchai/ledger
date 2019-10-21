@@ -63,8 +63,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
       3, 7, fetch::ml::details::ActivationType::RELU);
   model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
       7, 5, fetch::ml::details::ActivationType::RELU);
-  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
-      5, 1);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(5, 1);
   model.SetDataloader(std::move(data_loader_ptr));
   model.Compile(optimiser_type, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
 
@@ -93,8 +92,8 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
                                                                train_data, train_labels);
   // test loss decreases
-  DataType              loss{0};
-  DataType              later_loss{0};
+  DataType loss{0};
+  DataType later_loss{0};
 
   model.Train(1, loss);
   model.Train(training_steps);
@@ -114,7 +113,7 @@ TYPED_TEST(SequentialModelTest, adagrad_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, static_cast<DataType>(1e-2),
-      DataType{0.03f}, 400));
+                                 DataType{0.03f}, 400));
 }
 
 TYPED_TEST(SequentialModelTest, adam_sequential)
@@ -134,8 +133,7 @@ TYPED_TEST(SequentialModelTest, momentum_sequential)
 TYPED_TEST(SequentialModelTest, rmsprop_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
-                                 static_cast<DataType>(1e-2),
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, static_cast<DataType>(1e-2),
                                  static_cast<DataType>(0.005), 200));
 }
 

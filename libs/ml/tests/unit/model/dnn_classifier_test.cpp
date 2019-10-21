@@ -65,7 +65,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
 
 template <typename TypeParam>
 bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type tolerance,
-             typename TypeParam::Type lr = static_cast<typename TypeParam::Type>(0.5),
+             typename TypeParam::Type lr             = static_cast<typename TypeParam::Type>(0.5),
              fetch::math::SizeType    training_steps = 100)
 {
   using DataType  = typename TypeParam::Type;
@@ -86,8 +86,8 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
                                                                train_data, train_labels);
 
   // test loss decreases
-  DataType              loss{0};
-  DataType              later_loss{0};
+  DataType loss{0};
+  DataType later_loss{0};
 
   model.Train(1, loss);
   model.Train(training_steps);
@@ -106,15 +106,14 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
 TYPED_TEST(DNNClassifierModelTest, adagrad_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-1f},
-      DataType{0.01f}, 100));
+  ASSERT_TRUE(
+      RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-1f}, DataType{0.01f}, 100));
 }
 
 TYPED_TEST(DNNClassifierModelTest, adam_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, DataType{1e-5f},
-                                 DataType{0.1f}));
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, DataType{1e-5f}, DataType{0.1f}));
 }
 
 TYPED_TEST(DNNClassifierModelTest, momentum_dnnclasifier)
@@ -126,8 +125,7 @@ TYPED_TEST(DNNClassifierModelTest, momentum_dnnclasifier)
 TYPED_TEST(DNNClassifierModelTest, rmsprop_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
-                                 DataType{1e-2f},
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-2f},
                                  DataType{0.001f}, 400));
 }
 
