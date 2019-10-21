@@ -638,7 +638,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   }
 }
 
-TEST(dkg_setup, DISABLED_bad_messages)
+TEST(dkg_setup, bad_messages)
 {
   // Node 0 sends pre-qual messages with invalid crypto - is excluded from qual.
   // Another node sends certain messages with unknown member in it. Ignored and not excluded.

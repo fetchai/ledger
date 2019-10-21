@@ -33,29 +33,33 @@ namespace mcl {
 
 std::atomic<bool> details::MCLInitialiser::was_initialised{false};
 
-void SetGenerator(Generator &group_g)
+void SetGenerator(Generator &generator_g, std::string string_to_hash)
 {
-  group_g.clear();
+  generator_g.clear();
 
-  const bn::Fp2 g("1380305877306098957770911920312855400078250832364663138573638818396353623780",
-                  "14633108267626422569982187812838828838622813723380760182609272619611213638781");
-
-  bn::mapToG2(group_g, g);
+  if (string_to_hash.empty())
+  {
+    string_to_hash = "Fetch.ai Elliptic Curve Generator G";
+  }
+  bn::hashAndMapToG2(generator_g, string_to_hash);
 }
 
-void SetGenerators(Generator &group_g, Generator &group_h)
+void SetGenerators(Generator &generator_g, Generator &generator_h, std::string string_to_hash,
+                   std::string string_to_hash2)
 {
-  group_g.clear();
-  group_h.clear();
+  generator_g.clear();
+  generator_h.clear();
 
-  // Values taken from TMCG main.cpp
-  const bn::Fp2 g("1380305877306098957770911920312855400078250832364663138573638818396353623780",
-                  "14633108267626422569982187812838828838622813723380760182609272619611213638781");
-  const bn::Fp2 h("6798148801244076840612542066317482178930767218436703568023723199603978874964",
-                  "12726557692714943631796519264243881146330337674186001442981874079441363994424");
-
-  bn::mapToG2(group_g, g);
-  bn::mapToG2(group_h, h);
+  if (string_to_hash.empty())
+  {
+    string_to_hash = "Fetch.ai Elliptic Curve Generator G";
+  }
+  if (string_to_hash2.empty())
+  {
+    string_to_hash2 = "Fetch.ai Elliptic Curve Generator h";
+  }
+  bn::hashAndMapToG2(generator_g, string_to_hash);
+  bn::hashAndMapToG2(generator_h, string_to_hash2);
 }
 
 /**
@@ -135,46 +139,6 @@ void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i
     bn::Fr::mul(tmpF, pow, a_i[k]);  // j^k * a_i[k]
     bn::Fr::add(s_i, s_i, tmpF);
   }
-}
-
-/**
- * Computation of the a polynomial (whose coefficients are unknown) evaluated at 0
- *
- * @param parties Set of points (not equal to 0) at which the polynomial has been evaluated
- * @param shares The value of polynomial at the points parties
- * @return The value of the polynomial evaluated at 0 (z_i)
- */
-bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares)
-{
-  // compute $z_i$ using Lagrange interpolation (without corrupted parties)
-  bn::Fr z{0};
-  for (auto jt : parties)
-  {
-    // compute optimized Lagrange coefficients
-    bn::Fr rhsF{1}, lhsF{1}, tmpF;
-    for (auto lt : parties)
-    {
-      if (lt != jt)
-      {
-        bn::Fr::mul(rhsF, rhsF, lt + 1);  // adjust index in computation
-      }
-    }
-    for (auto lt : parties)
-    {
-      if (lt != jt)
-      {
-        tmpF = (lt + 1);
-        bn::Fr::sub(tmpF, tmpF, (jt + 1));
-        bn::Fr::mul(lhsF, lhsF, tmpF);
-      }
-    }
-    bn::Fr::inv(lhsF, lhsF);
-
-    bn::Fr::mul(rhsF, rhsF, lhsF);
-    bn::Fr::mul(tmpF, rhsF, shares[jt]);  // use the provided shares (interpolation points)
-    bn::Fr::add(z, z, tmpF);
-  }
-  return z;
 }
 
 /**

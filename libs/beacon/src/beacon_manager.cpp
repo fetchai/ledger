@@ -69,9 +69,6 @@ void BeaconManager::GenerateCoefficients()
     b_i[k].setRand();
   }
 
-  // Let z_i = f(0)
-  z_i[cabinet_index_] = a_i[0];
-
   for (uint32_t k = 0; k <= polynomial_degree_; k++)
   {
     C_ik[cabinet_index_][k] =
@@ -333,7 +330,7 @@ void BeaconManager::ComputePublicKeys()
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys begin.");
   generics::MilliTimer myTimer("BeaconManager::ComputePublicKeys");
 
-  // For all parties in $QUAL$, set $y_i = A_{i0} = g^{z_i} \bmod p$.
+  // For all parties in $QUAL$, set $y_i = A_{i0}
   for (auto const &iq : qual_)
   {
     CabinetIndex it = identity_to_index_[iq];
@@ -383,7 +380,7 @@ void BeaconManager::AddReconstructionShare(MuddleAddress const &                
     reconstruction_shares.insert(
         {share.first, {{}, std::vector<PrivateKey>(cabinet_size_, zeroFr_)}});
   }
-  else if (reconstruction_shares.at(share.first).second[from_index] != zeroFr_)
+  else if (!reconstruction_shares.at(share.first).second[from_index].isZero())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
                    " received duplicate reconstruction shares from node ", from_index);
@@ -437,8 +434,8 @@ bool BeaconManager::RunReconstruction()
     if (parties.size() <= polynomial_degree_)
     {
       // Do not have enough good shares to be able to do reconstruction
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " reconstruction for ", victim_index,
-                     " failed with party size ", parties.size());
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " reconstruction for node ",
+                     victim_index, " failed with party size ", parties.size());
       return false;
     }
     if (in.first == certificate_->identity().identifier())
@@ -447,8 +444,6 @@ bool BeaconManager::RunReconstruction()
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " polynomial being reconstructed.");
       continue;
     }
-    // compute $z_i$ using Lagrange interpolation (without corrupted parties)
-    z_i[victim_index] = crypto::mcl::ComputeZi(in.second.first, in.second.second);
     std::vector<PrivateKey> points;
     std::vector<PrivateKey> shares_f;
     for (const auto &index : parties)
@@ -522,7 +517,6 @@ void BeaconManager::Reset()
   crypto::mcl::Init(public_key_shares_, cabinet_size_);
   crypto::mcl::Init(s_ij, cabinet_size_, cabinet_size_);
   crypto::mcl::Init(sprime_ij, cabinet_size_, cabinet_size_);
-  crypto::mcl::Init(z_i, cabinet_size_);
   crypto::mcl::Init(C_ik, cabinet_size_, polynomial_degree_ + 1);
   crypto::mcl::Init(A_ik, cabinet_size_, polynomial_degree_ + 1);
   crypto::mcl::Init(g__s_ij, cabinet_size_, cabinet_size_);
@@ -566,18 +560,6 @@ BeaconManager::AddResult BeaconManager::AddSignaturePart(Identity const & from,
   return AddResult::SUCCESS;
 }
 
-BeaconManager::Signature BeaconManager::ComputeGroupSignature(
-    std::unordered_map<MuddleAddress, Signature> sig_shares)
-{
-  std::unordered_map<uint32_t, Signature> points;
-  for (auto const &address_sig_pair : sig_shares)
-  {
-    uint32_t index = identity_to_index_[address_sig_pair.first];
-    points.insert({index, address_sig_pair.second});
-  }
-  return crypto::mcl::LagrangeInterpolation(points);
-}
-
 /**
  * @brief verifies the group signature.
  */
@@ -594,19 +576,6 @@ bool BeaconManager::Verify(Signature const &signature)
 {
   // TODO(HUT): use the static helper
   return VerifyGroupSignature(current_message_, signature);
-}
-
-/**
- * @brief verifies a signed message by a cabinet member, where all parameters are specified.
- */
-
-bool BeaconManager::VerifySignatureShare(MessagePayload const &message, Signature const &signature,
-                                         MuddleAddress const &signer)
-{
-  auto index = identity_to_index_[signer];
-
-  return crypto::mcl::VerifySign(public_key_shares_[index], message, signature,
-                                 BeaconManager::group_g_);
 }
 
 bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
@@ -633,14 +602,8 @@ bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
   {
     return false;
   }
-}
 
-/**
- * @brief verifies a signed message by the group, where all parameters are specified.
- */
-bool BeaconManager::VerifyGroupSignature(MessagePayload const &message, Signature const &signature)
-{
-  return crypto::mcl::VerifySign(public_key_, message, signature, BeaconManager::group_g_);
+  return crypto::mcl::VerifySign(tmp, message, tmp2, group_g_);
 }
 
 /**
@@ -678,20 +641,6 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Computed bad signature share");
   }
-
-  return smsg;
-}
-
-/**
- * @brief signs any message.
- */
-BeaconManager::SignedMessage BeaconManager::Sign(ConstByteArray const &message)
-{
-  Signature signature = crypto::mcl::SignShare(message, secret_share_);
-
-  SignedMessage smsg;
-  smsg.identity  = certificate_->identity();
-  smsg.signature = signature;
 
   return smsg;
 }

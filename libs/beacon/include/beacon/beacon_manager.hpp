@@ -90,18 +90,13 @@ public:
   void             Reset();
 
   AddResult     AddSignaturePart(Identity const &from, Signature const &signature);
-  Signature     ComputeGroupSignature(std::unordered_map<MuddleAddress, Signature> sig_shares);
   bool          Verify();
   bool          Verify(Signature const &signature);
-  bool          VerifySignatureShare(MessagePayload const &message, Signature const &signature,
-                                     MuddleAddress const &signer);
-  bool          VerifyGroupSignature(MessagePayload const &message, Signature const &signature);
   static bool   Verify(byte_array::ConstByteArray const &group_public_key,
                        MessagePayload const &message, byte_array::ConstByteArray const &signature);
   Signature     GroupSignature() const;
   void          SetMessage(MessagePayload next_message);
   SignedMessage Sign();
-  SignedMessage Sign(ConstByteArray const &message);
 
   /// Property methods
   /// @{
@@ -139,7 +134,6 @@ private:
   PrivateKey                           xprime_i;
   std::vector<PublicKey>               y_i;
   std::vector<std::vector<PrivateKey>> s_ij, sprime_ij;  ///< Secret shares
-  std::vector<PrivateKey>              z_i;
   std::vector<std::vector<PublicKey>>  C_ik;  ///< Verification vectors from cabinet members
   std::vector<std::vector<PublicKey>>  A_ik;  ///< Qual verification vectors
   std::vector<std::vector<PublicKey>>  g__s_ij;
