@@ -135,8 +135,8 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
 
 // For signatures
 Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
-bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
-                Generator const &G);
+bool      VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
+                     Generator const &G);
 Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
 std::vector<DkgKeyInformation>   TrustedDealerGenerateKeys(uint32_t committee_size,
                                                            uint32_t threshold);
