@@ -428,9 +428,10 @@ bn::Fr SignatureAggregationCoefficient(PublicKey const &             notarisatio
   // Reserve first 48 bytes for some fixed value for hygenic reuse of the
   // hashing function
   std::string concatenated_keys = "BLS Aggregation";
+  concatenated_keys.reserve(cabinet_notarisation_keys.size() * 310);
   while (concatenated_keys.length() < 48)
   {
-    concatenated_keys += "0";
+    concatenated_keys.push_back('0');
   }
 
   concatenated_keys += notarisation_key.getStr();
