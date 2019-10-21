@@ -204,7 +204,6 @@ function compare(a : Bool) : Int32
 endfunction
 )";
 
-
 }  // namespace
 
 TEST(BasicVmEngineDmlfTests, HelloWorld)
@@ -922,7 +921,7 @@ TEST(BasicVmEngineDmlfTests, Add)
   ExecutionResult result =
       engine.Run("add", "state", "add", Params{LedgerVariant(1), LedgerVariant(2)});
   EXPECT_TRUE(result.succeeded());
-  //std::cout << result.error().message() << '\n';
+  // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 3);
 }
 
@@ -939,7 +938,7 @@ TEST(BasicVmEngineDmlfTests, Add8)
   ExecutionResult result =
       engine.Run("add", "state", "add", Params{LedgerVariant(1), LedgerVariant(2)});
   EXPECT_TRUE(result.succeeded());
-  //std::cout << result.error().message() << '\n';
+  // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 3);
 }
 
@@ -957,7 +956,7 @@ TEST(BasicVmEngineDmlfTests, Add64)
       engine.Run("add", "state", "add",
                  Params{LedgerVariant(0), LedgerVariant(std::numeric_limits<int>::max())});
   EXPECT_TRUE(result.succeeded());
-  //std::cout << result.error().message() << '\n';
+  // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), std::numeric_limits<int>::max());
 }
 
@@ -971,11 +970,10 @@ TEST(BasicVmEngineDmlfTests, AddFloat)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result =
-      engine.Run("add", "state", "add",
-                 Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
+  ExecutionResult result = engine.Run(
+      "add", "state", "add", Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
   EXPECT_TRUE(result.succeeded());
-  //std::cout << result.error().message() << '\n';
+  // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
 }
 
@@ -993,7 +991,7 @@ TEST(BasicVmEngineDmlfTests, TrueIntToFloatCompare)
   ExecutionResult result =
       engine.Run("compare", "state", "compare", Params{LedgerVariant(5), LedgerVariant(6.5)});
   EXPECT_TRUE(result.succeeded());
-  //std::cout << result.error().message() << '\n';
+  // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
@@ -1011,7 +1009,7 @@ TEST(BasicVmEngineDmlfTests, FalseIntToFloatCompare)
   ExecutionResult result =
       engine.Run("compare", "state", "compare", Params{LedgerVariant(5), LedgerVariant(4.5)});
   EXPECT_TRUE(result.succeeded());
-  //std::cout << result.error().message() << '\n';
+  // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 0);
 }
 
@@ -1027,7 +1025,7 @@ TEST(BasicVmEngineDmlfTests, TrueBoolCompare)
 
   ExecutionResult result = engine.Run("compare", "state", "compare", Params{LedgerVariant(true)});
   EXPECT_TRUE(result.succeeded());
-  //std::cout << result.error().message() << '\n';
+  // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
@@ -1043,7 +1041,7 @@ TEST(BasicVmEngineDmlfTests, FalseBoolCompare)
 
   ExecutionResult result = engine.Run("compare", "state", "compare", Params{LedgerVariant(false)});
   EXPECT_TRUE(result.succeeded());
-  //std::cout << result.error().message() << '\n';
+  // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 0);
 }
 
