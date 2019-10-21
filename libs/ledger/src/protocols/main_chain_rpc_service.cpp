@@ -284,11 +284,6 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
         ++invalid;
         break;
       }
-#define DELETE_LATER(...) __VA_ARGS__
-#define LWARN(...) FETCH_LOG_WARN(LOGGING_NAME, __func__, ": ", __VA_ARGS__)
-#define HEX(...) (__VA_ARGS__).ToHex().SubArray(0, 8)
-      DELETE_LATER(LWARN("block slices: ", it->body.slices.size()));
-      if(!it->body.slices.empty()) DELETE_LATER(LWARN("first slice of ", it->body.slices.front().size(), " transactions"));
     }
     else
     {
