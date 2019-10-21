@@ -398,6 +398,9 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
   return GetChainPreceding(GetHeaviestBlockHash(), limit);
 }
 
+#define DELETE_LATER(...) __VA_ARGS__
+#define LWARN(...) FETCH_LOG_WARN(LOGGING_NAME, __func__, ": ", __VA_ARGS__)
+#define HEX(...) (__VA_ARGS__).ToHex().SubArray(0, 8)
 /**
  * Walk the block history collecting blocks until either genesis or the block limit is reached
  *
@@ -431,6 +434,8 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to lookup block");
     }
+    DELETE_LATER(LWARN("block slices: ", block->body.slices.size()));
+    if(!block->body.slices.empty()) DELETE_LATER(LWARN("first slice of ", block->body.slices.front().size(), " transactions"));
 
     // walk the hash
     current_hash = block->body.previous_hash;
