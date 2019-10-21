@@ -130,10 +130,21 @@ void Taskpool::run(std::size_t thread_idx)
     {
     case DEFER:
     {
-      Counter("mt-core.tasks.run.deferred")++;
-      suspend(mytask);
+      if (mytask->GetMissedMakeRunnableCallsAndClear()==0)
+      {
+        Counter("mt-core.tasks.run.deferred")++;
+        suspend(mytask);
+      }
+      else
+      {
+        Lock lock(mutex);
+        Counter("mt-core.tasks.run.deferred.rerun")++;
+        mytask->SetTaskState(Task::TaskState::PENDING);
+        pending_tasks.push_back(mytask);
+        work_available.notify_one();
+      }
+      break;
     }
-    break;
     case ERRORED:
     {
       Counter("mt-core.tasks.run.errored")++;

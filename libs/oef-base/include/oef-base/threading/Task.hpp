@@ -43,6 +43,11 @@ public:
 
   virtual bool MakeRunnable();
 
+  virtual uint16_t GetMissedMakeRunnableCallsAndClear()
+  {
+    return missed_make_runnable_.exchange(0);
+  }
+
   std::size_t GetTaskId()
   {
     return task_id;
@@ -77,4 +82,5 @@ private:
   std::atomic<bool>         cancelled;
   std::size_t               group_id;
   std::size_t               task_id;
+  std::atomic<uint16_t>     missed_make_runnable_;
 };
