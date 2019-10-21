@@ -405,7 +405,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     if (!storage_unit_.HashExists(common_parent->body.merkle_hash,
                                   common_parent->body.block_number))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
+      FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's merkle hash cannot be retrieved! block: 0x",
                       current_hash.ToHex(), " number: ", common_parent->body.block_number,
                       " merkle hash: ", common_parent->body.merkle_hash.ToHex());
 

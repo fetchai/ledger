@@ -59,11 +59,10 @@ bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
   case ContractMode::NOT_PRESENT:
     break;
   case ContractMode::PRESENT:
-    contract_name = tx.contract_digest().address().ToHex() + "." + tx.contract_address().display() +
-                    "." + tx.action();
+    contract_name = tx.contract_digest().address().ToHex() + "." + tx.contract_address().display();
     break;
   case ContractMode::CHAIN_CODE:
-    contract_name = tx.chain_code() + "." + tx.action();
+    contract_name = tx.chain_code();
     break;
 
   case ContractMode::SYNERGETIC:
@@ -300,14 +299,13 @@ bool Executor::ExecuteTransactionContract(Result &result)
     }
 
     // create the cache and state sentinel (lock and unlock resources as well as sandbox)
-    StateSentinelAdapter storage_adapter{*storage_cache_, contract_id.GetParent(), allowed_shards_};
+    StateSentinelAdapter storage_adapter{*storage_cache_, contract_id, allowed_shards_};
 
     // lookup or create the instance of the contract as is needed
-    auto const is_token_contract = (contract_id.GetParent().full_name() == "fetch.token");
+    auto const is_token_contract = (contract_id.full_name() == "fetch.token");
 
-    auto contract = is_token_contract
-                        ? token_contract_
-                        : chain_code_cache_.Lookup(contract_id.GetParent(), *storage_);
+    auto contract =
+        is_token_contract ? token_contract_ : chain_code_cache_.Lookup(contract_id, *storage_);
     if (!contract)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id.full_name());
@@ -318,9 +316,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
     contract->Attach(storage_adapter);
 
     // Dispatch the transaction to the contract
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract_id.name());
-    auto const contract_status =
-        contract->DispatchTransaction(contract_id.name(), *current_tx_, block_);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", current_tx_->action());
+    auto const contract_status = contract->DispatchTransaction(*current_tx_, block_);
 
     // detach the chain code from the current context
     contract->Detach();
