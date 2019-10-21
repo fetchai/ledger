@@ -52,6 +52,16 @@ public:
     ident_ = ident;
   }
 
+  virtual void SetId(const std::string& id)
+  {
+    id_ = id;
+  }
+
+  const std::string& GetId() const
+  {
+    return id_;
+  }
+
   virtual const unsigned long &GetIdentifier() const
   {
     return ident_;
@@ -61,6 +71,7 @@ protected:
   Uri           uri_;
   ProtoP        proto_;
   unsigned long ident_;
+  std::string id_{};
 
 private:
   OutboundConversation(const OutboundConversation &other) = delete;  // { copy(other); }

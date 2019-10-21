@@ -58,6 +58,7 @@ std::shared_ptr<OutboundConversation> OutboundSearchConversationCreator::start(
         target_path.path + " is not a valid target, to start a OutboundSearchConversationCreator!");
   }
 
+  conv->SetId(search_uri_.ToString());
   ident2conversation_[this_id] = conv;
   worker->post(conv);
   return conv;

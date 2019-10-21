@@ -35,6 +35,7 @@ public:
   Notification::NotificationBuilder post(WorkloadP workload)
   {
     Lock       lock(mutex);
+    FETCH_LOG_INFO(LOGGING_NAME, "Adding workload for id=", workload->GetId());
     WaitableP  waitable = std::make_shared<Waitable>();
     QueueEntry qe(workload, waitable);
     queue.push(qe);
@@ -81,11 +82,11 @@ public:
         auto it = current.begin();
         while (it != current.end())
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "working...");
+          FETCH_LOG_INFO(LOGGING_NAME, "working (id=", it->first->GetId(),")...");
           state = not_started.find(*it) != not_started.end() ? WorkloadState::START
                                                              : WorkloadState::RESUME;
           auto result = process(it->first, state);
-          FETCH_LOG_INFO(LOGGING_NAME, "Reply was ",
+          FETCH_LOG_INFO(LOGGING_NAME, "Reply was (id=", it->first->GetId(), ")",
                          workloadProcessedNames[static_cast<int>(result)]);
 
           switch (result)
