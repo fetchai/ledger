@@ -344,14 +344,6 @@ BeaconService::State BeaconService::OnCompleteState()
   block_entropy_being_created_->group_signature =
       active_exe_unit_->manager.GroupSignature().getStr();
 
-  // Check when in debug mode that the block entropy signing has gone correctly
-  if (!dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
-                                  block_entropy_previous_->EntropyAsSHA256(),
-                                  block_entropy_being_created_->group_signature))
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify freshly signed entropy!");
-  }
-
   // Save it for querying
   completed_block_entropy_[index] = block_entropy_being_created_;
 

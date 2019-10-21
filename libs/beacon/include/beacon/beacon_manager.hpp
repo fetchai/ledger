@@ -133,7 +133,6 @@ private:
   PrivateKey                           xprime_i;
   std::vector<PublicKey>               y_i;
   std::vector<std::vector<PrivateKey>> s_ij, sprime_ij;  ///< Secret shares
-  std::vector<PrivateKey>              z_i;
   std::vector<std::vector<PublicKey>>  C_ik;  ///< Verification vectors from cabinet members
   std::vector<std::vector<PublicKey>>  A_ik;  ///< Qual verification vectors
   std::vector<std::vector<PublicKey>>  g__s_ij;
