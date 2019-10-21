@@ -589,10 +589,10 @@ FixedPoint<I, F> const FixedPoint<I, F>::NaN{
     FixedPoint<I, F>::FromBase(Type(1) << (TOTAL_BITS - 1) | FRACTIONAL_MASK)};
 template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::POSITIVE_INFINITY{
-    FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MAX + FixedPoint<I, F>::_1.Data())};
+    FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MAX + FixedPoint<I, F>::ONE_MASK)};
 template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::NEGATIVE_INFINITY{
-    FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN - FixedPoint<I, F>::_1.Data())};
+    FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN - FixedPoint<I, F>::ONE_MASK)};
 
 template <uint16_t I, uint16_t F>
 std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
