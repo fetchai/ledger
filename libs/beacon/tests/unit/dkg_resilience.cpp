@@ -650,8 +650,7 @@ TEST(dkg_setup, bad_messages)
                 {FaultySetupService::Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES}});
 }
 
-// disabled due to timeouts TODO(HUT): fix
-TEST(dkg_setup, DISABLED_send_empty_complaint_answer)
+TEST(dkg_setup, send_empty_complaint_answer)
 {
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then does not send real shares and instead sends empty complaint answer.
