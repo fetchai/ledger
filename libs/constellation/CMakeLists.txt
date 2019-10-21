@@ -23,7 +23,6 @@ target_link_libraries(fetch-constellation
                              fetch-crypto
                              fetch-math
                              fetch-storage
-                             fetch-miner
                              fetch-vm
                              fetch-vm-modules
                              fetch-moment

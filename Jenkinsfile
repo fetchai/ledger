@@ -246,6 +246,10 @@ def run_basic_checks()
         stage('Style Check') {
           sh './scripts/apply_style.py -d'
         }
+
+        stage('Circular Dependencies') {
+          sh 'mkdir -p build-deps && cd build-deps && cmake ../ && cd - && ./scripts/detect-circular-dependencies.py build-deps/'
+        }
       }
     }
   }

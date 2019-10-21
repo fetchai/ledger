@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
+#include "chain/address.hpp"
 #include "config_builder.hpp"
 #include "constants.hpp"
 #include "constellation/constellation.hpp"
@@ -24,7 +25,6 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/commandline/params.hpp"
-#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/runnable.hpp"
 #include "core/string/to_lower.hpp"
@@ -33,12 +33,12 @@
 #include "crypto/identity.hpp"
 #include "crypto/key_generator.hpp"
 #include "crypto/prover.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/shards/manifest.hpp"
+#include "logging/logging.hpp"
 #include "network/adapters.hpp"
 #include "network/peer.hpp"
 #include "network/uri.hpp"
 #include "settings.hpp"
+#include "shards/manifest.hpp"
 #include "version/cli_header.hpp"
 #include "version/fetch_version.hpp"
 
@@ -62,10 +62,10 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "main";
 
-using fetch::Settings;
-using fetch::crypto::Prover;
 using fetch::BootstrapMonitor;
+using fetch::Settings;
 using fetch::core::WeakRunnable;
+using fetch::crypto::Prover;
 using fetch::network::Uri;
 
 using BootstrapPtr = std::unique_ptr<BootstrapMonitor>;

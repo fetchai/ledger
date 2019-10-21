@@ -15,7 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-http)
-target_link_libraries(fetch-http PUBLIC fetch-network)
+target_link_libraries(fetch-http PUBLIC fetch-network fetch-logging fetch-telemetry)
 
 if (_is_clang_compiler)
   target_compile_options(fetch-http PRIVATE -Wshadow)
