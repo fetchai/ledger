@@ -66,54 +66,63 @@ public:
 
     while (true)
     {
+      try {
 
-      {
-        Lock lock(mutex);
-        while (!queue.empty() && current.size() < N)
         {
-          current.insert(queue.front());
-          not_started.insert(queue.front());
-          queue.pop();
+          Lock lock(mutex);
+          while (!queue.empty() && current.size() < N)
+          {
+            current.insert(queue.front());
+            not_started.insert(queue.front());
+            queue.pop();
+          }
+        }
+
+        auto it = current.begin();
+        while (it != current.end())
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "working...");
+          state = not_started.find(*it) != not_started.end() ? WorkloadState::START
+                                                             : WorkloadState::RESUME;
+          auto result = process(it->first, state);
+          FETCH_LOG_INFO(LOGGING_NAME, "Reply was ",
+                         workloadProcessedNames[static_cast<int>(result)]);
+
+          switch (result)
+          {
+            case WorkloadProcessed::COMPLETE:
+            {
+              it->second->wake();
+              not_started.erase(*it);
+              it = current.erase(it);
+              break;
+            }
+            case WorkloadProcessed::NOT_COMPLETE:
+            {
+              not_started.erase(*it);
+              ++it;
+              break;
+            }
+            case WorkloadProcessed::NOT_STARTED:
+            {
+              ++it;
+              break;
+            }
+          }
+        }
+
+        // if there is no more work or we have more then N work on flight and we started all the work
+        {
+          Lock lock(mutex);
+          if ((queue.empty() || current.size() >= N) && not_started.empty())
+          {
+            return DEFER;
+          }
         }
       }
-
-      auto it = current.begin();
-      while (it != current.end())
+      catch (std::exception& e)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "working...");
-        state = not_started.find(*it) != not_started.end() ? WorkloadState::START
-                                                           : WorkloadState::RESUME;
-        auto result = process(it->first, state);
-        FETCH_LOG_INFO(LOGGING_NAME, "Reply was ",
-                       workloadProcessedNames[static_cast<int>(result)]);
-
-        switch (result)
-        {
-        case WorkloadProcessed::COMPLETE:
-        {
-          it->second->wake();
-          not_started.erase(*it);
-          it = current.erase(it);
-          break;
-        }
-        case WorkloadProcessed::NOT_COMPLETE:
-        {
-          not_started.erase(*it);
-          ++it;
-          break;
-        }
-        case WorkloadProcessed::NOT_STARTED:
-        {
-          ++it;
-          break;
-        }
-        }
-      }
-
-      // if there is no more work or we have more then N work on flight and we started all the work
-      if ((queue.empty() || current.size() >= N) && not_started.empty())
-      {
-        return DEFER;
+        FETCH_LOG_ERROR(LOGGING_NAME, "Exception in the worker loop: ", e.what());
       }
     }
   }
