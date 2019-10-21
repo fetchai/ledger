@@ -38,7 +38,7 @@ enum class TransactionStatus : uint8_t
   SUBMITTED,  ///< Special case for the data based synergetic transactions
 };
 
-constexpr char const *ToString(TransactionStatus status)
+constexpr char const *ToString(TransactionStatus status) noexcept
 {
   switch (status)
   {

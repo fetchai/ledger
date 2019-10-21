@@ -48,7 +48,6 @@ using fetch::generics::MilliTimer;
 namespace fetch {
 namespace ledger {
 
-MainChain::BlockPtr delete_later;
 #define DELETE_LATER(...) FETCH_LOG_WARN(LOGGING_NAME, __func__, ": ", __VA_ARGS__)
 /**
  * Constructs the main chain
@@ -83,12 +82,6 @@ MainChain::MainChain(bool const enable_bloom_filter, Mode mode)
   auto genesis = CreateGenesisBlock();
   AddBlockToCache(genesis);
   AddTip(genesis);
-  delete_later = genesis;
-  DELETE_LATER("Cache entries");
-  for (auto const &delete_then: block_chain_)
-  {
-	  DELETE_LATER("Cache entry: ", delete_then.first.ToHex().SubArray(0, 8), " (", delete_then.second->body.hash.ToHex().SubArray(0, 8), "  <--  ", delete_then.second->body.previous_hash.ToHex().SubArray(0, 8));
-  }
 }
 
 MainChain::~MainChain()
@@ -127,7 +120,6 @@ void MainChain::Reset()
  */
 BlockStatus MainChain::AddBlock(Block const &block)
 {
-	if(delete_later) DELETE_LATER("AddBlock: genesis hash is ", delete_later->body.hash.ToHex());
   // create a copy of the block
   auto blk = std::make_shared<Block>(block);
 
@@ -153,7 +145,6 @@ BlockStatus MainChain::AddBlock(Block const &block)
  */
 void MainChain::CacheBlock(IntBlockPtr const &block) const
 {
-if(delete_later) DELETE_LATER("CacheBlock: genesis hash is ", delete_later->body.hash.ToHex());
   assert(static_cast<bool>(block));
 
   auto const &hash{block->body.hash};
@@ -175,8 +166,6 @@ if(delete_later) DELETE_LATER("CacheBlock: genesis hash is ", delete_later->body
  */
 MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash const &hash) const
 {
-if(delete_later) DELETE_LATER("UncacheBlock: genesis hash is ", delete_later->body.hash.ToHex());
-if (hash == GENESIS_DIGEST) DELETE_LATER("Removing genesis");
   return block_chain_.erase(hash);
   // references are kept intact while this cache is alive
 }
@@ -188,7 +177,6 @@ if (hash == GENESIS_DIGEST) DELETE_LATER("Removing genesis");
  */
 void MainChain::KeepBlock(IntBlockPtr const &block) const
 {
-if(delete_later) DELETE_LATER("KeepBlock: genesis hash is ", delete_later->body.hash.ToHex());
   assert(static_cast<bool>(block));
   assert(static_cast<bool>(block_store_));
 
@@ -239,7 +227,6 @@ if(delete_later) DELETE_LATER("KeepBlock: genesis hash is ", delete_later->body.
  */
 bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_hash) const
 {
-if(delete_later) DELETE_LATER("LoadBlock: genesis hash is ", delete_later->body.hash.ToHex());
   assert(static_cast<bool>(block_store_));
 
   DbRecord record;
@@ -267,7 +254,6 @@ if(delete_later) DELETE_LATER("LoadBlock: genesis hash is ", delete_later->body.
 
 void MainChain::AddBlockToBloomFilter(Block const &block) const
 {
-if(delete_later) DELETE_LATER("AddBlockToBloomFilter: genesis hash is ", delete_later->body.hash.ToHex());
   for (auto const &slice : block.body.slices)
   {
     for (auto const &tx : slice)
@@ -284,7 +270,6 @@ if(delete_later) DELETE_LATER("AddBlockToBloomFilter: genesis hash is ", delete_
  */
 MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 {
-if(delete_later) DELETE_LATER("GetHeaviestBlock: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
   auto block_ptr = GetBlock(heaviest_.hash);
   assert(block_ptr);
@@ -301,7 +286,6 @@ if(delete_later) DELETE_LATER("GetHeaviestBlock: genesis hash is ", delete_later
  */
 bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks)
 {
-if(delete_later) DELETE_LATER("RemoveTree: genesis hash is ", delete_later->body.hash.ToHex());
   // check if the block is actually found in this chain
   IntBlockPtr root;
   bool        retVal{LookupBlock(removed_hash, root)};
@@ -356,7 +340,6 @@ if(delete_later) DELETE_LATER("RemoveTree: genesis hash is ", delete_later->body
  */
 bool MainChain::RemoveBlock(BlockHash const &hash)
 {
-if(delete_later) DELETE_LATER("RemoveBlock: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
 
   // Step 0. Manually set heaviest to a block we still know is valid
@@ -408,7 +391,6 @@ if(delete_later) DELETE_LATER("RemoveBlock: genesis hash is ", delete_later->bod
  */
 MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
-if(delete_later) DELETE_LATER("GetHeaviestChain: genesis hash is ", delete_later->body.hash.ToHex());
   MilliTimer myTimer("MainChain::HeaviestChain");
 
   return GetChainPreceding(GetHeaviestBlockHash(), limit);
@@ -424,7 +406,6 @@ if(delete_later) DELETE_LATER("GetHeaviestChain: genesis hash is ", delete_later
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash current_hash, uint64_t limit) const
 {
-if(delete_later) DELETE_LATER("GetChainPreceding: genesis hash is ", delete_later->body.hash.ToHex());
   if (limit == 0)
   {
     return Blocks{};
@@ -478,8 +459,6 @@ if(delete_later) DELETE_LATER("GetChainPreceding: genesis hash is ", delete_late
  */
 MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limit) const
 {
-if(delete_later) DELETE_LATER("TimeTravel: genesis hash is ", delete_later->body.hash.ToHex());
-  DELETE_LATER("Genesis hash: ", GENESIS_DIGEST.ToHex());
   if (limit <= 0)
   {
     // Travel back in time.
@@ -493,8 +472,6 @@ if(delete_later) DELETE_LATER("TimeTravel: genesis hash is ", delete_later->body
     auto next_hash{ret_blocks.back()->body.previous_hash};  // when next is previous
     return {std::move(ret_blocks), std::move(next_hash), true};
   }
-  DELETE_LATER("TimeTravel request, start hash = 0x", current_hash.ToHex(),
-                  ", limit = ", limit);
 
   auto const lim =
       static_cast<std::size_t>(std::min(limit, static_cast<int64_t>(MainChain::UPPER_BOUND)));
@@ -505,24 +482,18 @@ if(delete_later) DELETE_LATER("TimeTravel: genesis hash is ", delete_later->body
 
   if (current_hash.empty())
   {
-    DELETE_LATER( "Lookup for digest block");
     // The very beginning of the chain is requested, we need to start with the genesis block.
     current_hash = GENESIS_DIGEST;
   }
 
   bool proceed_in_this_direction{true};
 
-  DELETE_LATER("Starting TimeTravel, start hash = 0x", current_hash.ToHex());
   FETCH_LOCK(lock_);
   while (  // stop once we have gathered enough blocks or passed genesis
       !current_hash.empty() && result.size() < lim)
   {
-    DELETE_LATER("Block 0x", current_hash.ToHex(), ", result size of ",
-                    result.size());
     // lookup the block in storage
     auto block{GetBlock(current_hash, &next_hash)};
-    if (block) DELETE_LATER("Block hash: ", block->body.hash.ToHex(), "; prev: ", block->body.previous_hash.ToHex());
-    else DELETE_LATER("no block");
     if (!block)
     {
       if (IsBlockInCache(current_hash))
@@ -536,18 +507,12 @@ if(delete_later) DELETE_LATER("TimeTravel: genesis hash is ", delete_later->body
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to lookup block");
     }
-    DELETE_LATER("Next hash is 0x", next_hash.ToHex());
+    DELETE_LATER("block slices: ", block->body.slices.size());
+    if(!block->body.slices.empty()) DELETE_LATER("first slice of ", block->body.slices.front().size(), " transactions");
     // update the results
     result.push_back(std::move(block));
     // walk the stack
     current_hash = std::move(next_hash);
-  }
-
-  DELETE_LATER("Returning chain of length ", result.size(), ", next hash ",
-                  current_hash.ToHex());
-  for (auto const &block: result)
-  {
-	  DELETE_LATER("Sending block ", block->body.hash.ToHex(), " <-- ", block->body.previous_hash.ToHex());
   }
 
   return {std::move(result), std::move(current_hash), proceed_in_this_direction};
@@ -684,8 +649,6 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
  */
 MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash, BlockHash *next_hash) const
 {
-	DELETE_LATER("Starting GetBlock");
-if(delete_later) DELETE_LATER("GetBlock: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
 
   // attempt to lookup the block
@@ -706,7 +669,6 @@ if(delete_later) DELETE_LATER("GetBlock: genesis hash is ", delete_later->body.h
  */
 MainChain::BlockHashSet MainChain::GetMissingTips() const
 {
-if(delete_later) DELETE_LATER("GetMissingTips: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
 
   BlockHashSet tips{};
@@ -732,7 +694,6 @@ if(delete_later) DELETE_LATER("GetMissingTips: genesis hash is ", delete_later->
  */
 MainChain::BlockHashes MainChain::GetMissingBlockHashes(uint64_t limit) const
 {
-if(delete_later) DELETE_LATER("GetMissingBlockHashes: genesis hash is ", delete_later->body.hash.ToHex());
   limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   FETCH_LOCK(lock_);
 
@@ -757,7 +718,6 @@ if(delete_later) DELETE_LATER("GetMissingBlockHashes: genesis hash is ", delete_
  */
 bool MainChain::HasMissingBlocks() const
 {
-if(delete_later) DELETE_LATER("HasMissingBlocks: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
   return !loose_blocks_.empty();
 }
@@ -769,7 +729,6 @@ if(delete_later) DELETE_LATER("HasMissingBlocks: genesis hash is ", delete_later
  */
 MainChain::BlockHashSet MainChain::GetTips() const
 {
-if(delete_later) DELETE_LATER("GetTips: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
 
   BlockHashSet hash_set;
@@ -788,7 +747,6 @@ if(delete_later) DELETE_LATER("GetTips: genesis hash is ", delete_later->body.ha
  */
 void MainChain::RecoverFromFile(Mode mode)
 {
-if(delete_later) DELETE_LATER("RecoverFromFile: genesis hash is ", delete_later->body.hash.ToHex());
   // TODO(private issue 667): Complete loading of chain on startup ill-advised
 
   assert(static_cast<bool>(block_store_));
@@ -903,7 +861,6 @@ if(delete_later) DELETE_LATER("RecoverFromFile: genesis hash is ", delete_later-
  */
 void MainChain::WriteToFile()
 {
-if(delete_later) DELETE_LATER("WriteToFile: genesis hash is ", delete_later->body.hash.ToHex());
   // lookup the heaviest block
   IntBlockPtr block = block_chain_.at(heaviest_.hash);
 
@@ -989,7 +946,6 @@ if(delete_later) DELETE_LATER("WriteToFile: genesis hash is ", delete_later->bod
   }
 
   // Clear the block from ram
-if(block == delete_later) DELETE_LATER("Removing genesis");
   FlushBlock(block);
 
   // Force flush of the file object!
@@ -1006,7 +962,6 @@ if(block == delete_later) DELETE_LATER("Removing genesis");
  */
 void MainChain::TrimCache()
 {
-if(delete_later) DELETE_LATER("TrimCache: genesis hash is ", delete_later->body.hash.ToHex());
   static const uint64_t CACHE_TRIM_THRESHOLD = 2 * FINALITY_PERIOD;
   assert(static_cast<bool>(block_store_));
 
@@ -1016,7 +971,6 @@ if(delete_later) DELETE_LATER("TrimCache: genesis hash is ", delete_later->body.
 
   uint64_t const heaviest_block_num = GetHeaviestBlock()->body.block_number;
 
-  DELETE_LATER("Thres: ", CACHE_TRIM_THRESHOLD, "; heavy num: ", heaviest_block_num);
   if (CACHE_TRIM_THRESHOLD < heaviest_block_num)
   {
     uint64_t const trim_threshold = heaviest_block_num - CACHE_TRIM_THRESHOLD;
@@ -1084,8 +1038,6 @@ if(delete_later) DELETE_LATER("TrimCache: genesis hash is ", delete_later->body.
  */
 void MainChain::FlushBlock(IntBlockPtr const &block)
 {
-if(delete_later) DELETE_LATER("FlushBlock: genesis hash is ", delete_later->body.hash.ToHex());
-if(block == delete_later) DELETE_LATER("Removing genesis");
   // remove the block from the block map
   UncacheBlock(block->body.hash);
 
@@ -1097,7 +1049,6 @@ if(block == delete_later) DELETE_LATER("Removing genesis");
 // walk through it adding the blocks, so long as we do breadth first search (!!)
 void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
 {
-if(delete_later) DELETE_LATER("CompleteLooseBlocks: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
 
   // Determine if this block is actually a loose block, if it isn't exit immediately
@@ -1153,7 +1104,6 @@ if(delete_later) DELETE_LATER("CompleteLooseBlocks: genesis hash is ", delete_la
  */
 void MainChain::RecordLooseBlock(IntBlockPtr const &block)
 {
-if(delete_later) DELETE_LATER("RecordLooseBlock: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
 
   // Get vector of waiting blocks and push ours on
@@ -1173,7 +1123,6 @@ if(delete_later) DELETE_LATER("RecordLooseBlock: genesis hash is ", delete_later
  */
 bool MainChain::UpdateTips(IntBlockPtr const &block)
 {
-if(delete_later) DELETE_LATER("UpdateTips: genesis hash is ", delete_later->body.hash.ToHex());
   assert(!block->is_loose);
   assert(block->weight != 0);
   assert(block->total_weight != 0);
@@ -1195,7 +1144,6 @@ if(delete_later) DELETE_LATER("UpdateTips: genesis hash is ", delete_later->body
  */
 BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks)
 {
-if(delete_later) DELETE_LATER("InsertBlock: genesis hash is ", delete_later->body.hash.ToHex());
   MilliTimer myTimer("MainChain::InsertBlock", 500);
 
   if (block->body.hash.empty())
@@ -1327,7 +1275,6 @@ if(delete_later) DELETE_LATER("InsertBlock: genesis hash is ", delete_later->bod
  */
 bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
 {
-if(delete_later) DELETE_LATER("LookupBlock: genesis hash is ", delete_later->body.hash.ToHex());
   if (LookupBlockFromCache(hash, block))
   {
     // Check if forward reference is requested.
@@ -1335,9 +1282,7 @@ if(delete_later) DELETE_LATER("LookupBlock: genesis hash is ", delete_later->bod
     {
       return true;
     }
-    DELETE_LATER("LookupBlock: Found block, hash ", block->body.hash.ToHex());
     // We'll need to check if there is a unique block next to this one.
-    DELETE_LATER("RefCount: ", references_.count(hash));
     switch (references_.count(hash))
     {
     case 0:
@@ -1364,26 +1309,15 @@ if(delete_later) DELETE_LATER("LookupBlock: genesis hash is ", delete_later->bod
  */
 bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const
 {
-	DELETE_LATER("LookupFromCache: hash ", hash.ToHex());
-if(delete_later) DELETE_LATER("LookupBlockFromCache: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
 
-  DELETE_LATER("Cache entries");
-  for (auto const &delete_then: block_chain_)
-  {
-	  DELETE_LATER("Cache entry: ", delete_then.first.ToHex().SubArray(0, 8), " (", delete_then.second->body.hash.ToHex().SubArray(0, 8), "  <--  ", delete_then.second->body.previous_hash.ToHex().SubArray(0, 8));
-  }
   // perform the lookup
   auto const it = block_chain_.find(hash);
   if (it != block_chain_.end())
   {
-	  DELETE_LATER("Found block with hash ", it->second->body.hash.ToHex());
     block = it->second;
-	  if (block == delete_later) DELETE_LATER("It is genesis");
-    DELETE_LATER("Block's hash: ", block->body.hash.ToHex());
     return true;
   }
-  DELETE_LATER("No block in hash");
 
   return false;
 }
@@ -1399,7 +1333,6 @@ if(delete_later) DELETE_LATER("LookupBlockFromCache: genesis hash is ", delete_l
 bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
                                        BlockHash *next_hash) const
 {
-if(delete_later) DELETE_LATER("LookupBlockFromStorage: genesis hash is ", delete_later->body.hash.ToHex());
   if (block_store_)
   {
     // create the output block
@@ -1429,7 +1362,6 @@ if(delete_later) DELETE_LATER("LookupBlockFromStorage: genesis hash is ", delete
  */
 bool MainChain::IsBlockInCache(BlockHash const &hash) const
 {
-if(delete_later) DELETE_LATER("IsBlockInCache: genesis hash is ", delete_later->body.hash.ToHex());
   return block_chain_.find(hash) != block_chain_.end();
 }
 
@@ -1440,7 +1372,6 @@ if(delete_later) DELETE_LATER("IsBlockInCache: genesis hash is ", delete_later->
  */
 void MainChain::AddBlockToCache(IntBlockPtr const &block) const
 {
-if(delete_later) DELETE_LATER("AddBlockToCache: genesis hash is ", delete_later->body.hash.ToHex());
   block->is_loose = false;
 
   if (!IsBlockInCache(block->body.hash))
@@ -1457,7 +1388,6 @@ if(delete_later) DELETE_LATER("AddBlockToCache: genesis hash is ", delete_later-
  */
 bool MainChain::AddTip(IntBlockPtr const &block)
 {
-if(delete_later) DELETE_LATER("AddTip: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
 
   // record the tip weight
@@ -1473,7 +1403,6 @@ if(delete_later) DELETE_LATER("AddTip: genesis hash is ", delete_later->body.has
  */
 bool MainChain::DetermineHeaviestTip()
 {
-if(delete_later) DELETE_LATER("DetermineHeaviestTip: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
 
   if (!tips_.empty())
@@ -1506,7 +1435,6 @@ if(delete_later) DELETE_LATER("DetermineHeaviestTip: genesis hash is ", delete_l
  */
 bool MainChain::ReindexTips()
 {
-if(delete_later) DELETE_LATER("ReindexTips: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
 
   // Tips are hashes of cached non-loose blocks that don't have any forward references
@@ -1561,13 +1489,11 @@ if(delete_later) DELETE_LATER("ReindexTips: genesis hash is ", delete_later->bod
  */
 MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 {
-if(delete_later) DELETE_LATER("CreateGenesisBlock: genesis hash is ", delete_later->body.hash.ToHex());
   auto genesis              = std::make_shared<Block>();
   genesis->body.hash        = GENESIS_DIGEST;
   genesis->body.merkle_hash = GENESIS_MERKLE_ROOT;
   genesis->body.miner       = Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose         = false;
-  DELETE_LATER("Created genesis block, hash = ", genesis->body.hash.ToHex());
 
   return genesis;
 }
@@ -1579,7 +1505,6 @@ if(delete_later) DELETE_LATER("CreateGenesisBlock: genesis hash is ", delete_lat
  */
 MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
 {
-if(delete_later) DELETE_LATER("GetHeaviestBlockHash: genesis hash is ", delete_later->body.hash.ToHex());
   FETCH_LOCK(lock_);
   return heaviest_.hash;
 }
@@ -1592,7 +1517,6 @@ if(delete_later) DELETE_LATER("GetHeaviestBlockHash: genesis hash is ", delete_l
  */
 bool MainChain::HeaviestTip::Update(Block const &block)
 {
-if(delete_later) DELETE_LATER("HeaviestTip: genesis hash is ", delete_later->body.hash.ToHex());
   bool updated{false};
 
   if ((block.total_weight > weight) || ((block.total_weight == weight) && (block.body.hash > hash)))
@@ -1609,7 +1533,6 @@ if(delete_later) DELETE_LATER("HeaviestTip: genesis hash is ", delete_later->bod
 
 MainChain::BlockHash MainChain::GetHeadHash()
 {
-if(delete_later) DELETE_LATER("GetHeadHash: genesis hash is ", delete_later->body.hash.ToHex());
   byte_array::ByteArray buffer;
 
   // determine is the hash has already been stored once
@@ -1631,7 +1554,6 @@ if(delete_later) DELETE_LATER("GetHeadHash: genesis hash is ", delete_later->bod
 
 void MainChain::SetHeadHash(BlockHash const &hash)
 {
-if(delete_later) DELETE_LATER("SetHeadHash: genesis hash is ", delete_later->body.hash.ToHex());
   assert(hash.size() == 32);
 
   // move to the beginning of the file and write out the hash

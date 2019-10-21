@@ -29,6 +29,9 @@
 #include <utility>
 #include <vector>
 
+#define DELETE_LATER(...) __VA_ARGS__
+#define LWARN(...) FETCH_LOG_WARN(LOGGING_NAME, __func__, ": ", __VA_ARGS__)
+#define HASH(...) (__VA_ARGS__).ToHex().SubArray(0, 8)
 namespace fetch {
 namespace ledger {
 
@@ -87,6 +90,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
     // update the status cache with the state of this transaction
     if (status_cache_)
     {
+	    DELETE_LATER(LWARN("Setting ", HASH(tx->digest()), " to pending"));
       status_cache_->Update(tx->digest(), TransactionStatus::PENDING);
     }
     break;
@@ -100,6 +104,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
       // update the status cache with the state of this transaction
       if (status_cache_)
       {
+	    DELETE_LATER(LWARN("Setting ", HASH(tx->digest()), " to submitted"));
         status_cache_->Update(tx->digest(), TransactionStatus::SUBMITTED);
       }
     }
@@ -126,6 +131,7 @@ void TransactionProcessor::ThreadEntryPoint()
 
     for (auto const &summary : new_txs)
     {
+	    DELETE_LATER(LWARN("Packing transaction ", HASH(summary.digest())));
       packer_.EnqueueTransaction(summary);
     }
   }

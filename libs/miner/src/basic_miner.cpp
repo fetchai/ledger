@@ -34,6 +34,9 @@
 #include <thread>
 #include <vector>
 
+#define DELETE_LATER(...) __VA_ARGS__
+#define LWARN(...) FETCH_LOG_WARN(LOGGING_NAME, "  __DELETE_LATER__: ", __func__, ": ", __VA_ARGS__)
+#define HEX(...) (__VA_ARGS__).ToHex().SubArray(0, 8)
 namespace fetch {
 namespace miner {
 namespace {
@@ -99,20 +102,24 @@ void BasicMiner::EnqueueTransaction(ledger::Transaction const &tx)
 void BasicMiner::EnqueueTransaction(ledger::TransactionLayout const &layout)
 {
   FETCH_LOCK(pending_lock_);
+  DELETE_LATER(LWARN("Trying to enqueue"));
 
   if (layout.mask().size() != (1u << log2_num_lanes_))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Disgarding layout due to incompatible mask size");
+    FETCH_LOG_WARN(LOGGING_NAME, "Discarding layout due to incompatible mask size");
     return;
   }
 
+  DELETE_LATER(LWARN("Trying to pend"));
   if (pending_.Add(layout))
   {
+	  DELETE_LATER(LWARN("New pool size: ", pending_.size()));
     max_pending_pool_size_->max(pending_.size());
     FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (added) 0x", layout.digest().ToHex());
   }
   else
   {
+DELETE_LATER(LWARN("Failed to add"));
     duplicate_count_->increment();
     FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) ", layout.digest().ToHex());
   }
@@ -178,7 +185,14 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
 
       auto start = mining_pool_.begin();
       auto end   = start;
-      std::advance(end, static_cast<int32_t>(std::min(num_tx_per_thread, mining_pool_.size())));
+      if (i < num_threads - 1)
+      {
+	      std::advance(end, num_tx_per_thread);
+      }
+      else
+      {
+	      end = mining_pool_.end();
+      }
 
       // TODO(private issue XXX): While this efficiently breaks up the transaction queue into even
       //  chunks it assumes that the fees of the transactions are roughly the same. This algorithm

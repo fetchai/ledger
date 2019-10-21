@@ -274,7 +274,6 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
 {
   std::unordered_map<BlockStatus, std::size_t> block_stats;
-  DELETE_LATER("Genesis hash: ", GENESIS_DIGEST.ToHex());
 
   for (auto &block : block_list)
   {
@@ -293,6 +292,8 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
       continue;
     }
 
+    DELETE_LATER("block slices: ", block.body.slices.size());
+    if(!block.body.slices.empty()) DELETE_LATER("first slice of ", block.body.slices.front().size(), " transactions");
     // recompute the digest
     block.UpdateDigest();
 
@@ -334,7 +335,6 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
  */
 MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
 {
-	DELETE_LATER("Requesting heaviest");
   state_request_heaviest_->increment();
 
   State next_state{State::REQUEST_HEAVIEST_CHAIN};
@@ -344,14 +344,12 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   if (!peer.empty())
   {
     current_peer_address_ = peer;
-    DELETE_LATER("Calling address, Genesis hash: ", GENESIS_DIGEST.ToHex(), ",\nnext_hash_requested: ", next_hash_requested_.ToHex());
     current_request_      = rpc_client_.CallSpecificAddress(
         current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::TIME_TRAVEL, next_hash_requested_,
         MAX_CHAIN_REQUEST_SIZE);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
-  DELETE_LATER("After calling address");
 
   state_machine_->Delay(std::chrono::milliseconds{500});
   return next_state;
@@ -374,14 +372,9 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
   {
     // determine the status of the request that is in flight
     auto const status = current_request_->state();
-    if (status == PromiseState::WAITING)
-    {
-	    DELETE_LATER(LOGGING_NAME, "Promise state of waiting");
-    }
 
     if (PromiseState::WAITING != status)
     {
-      DELETE_LATER(LOGGING_NAME, "Status of no wait (we need more permanent solution)");
       if (PromiseState::SUCCESS == status)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Status of success (success gives you a status)");
