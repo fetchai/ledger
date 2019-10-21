@@ -149,7 +149,7 @@ struct ExecutionTask
 ConstByteArray CreateVMAndRunScript(std::string script, ExecutionTask const &task)
 {
   fetch::vm::SourceFiles files;
-  files.push_back(fetch::vm::SourceFile("hello.etch", script));
+  files.push_back(fetch::vm::SourceFile("hello.etch", std::move(script)));
 
   auto executable = std::make_unique<Executable>();
   auto module     = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
