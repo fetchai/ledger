@@ -97,16 +97,18 @@ bool Task::submit()
   return false;
 }
 
-void Task::MakeRunnable()
+bool Task::MakeRunnable()
 {
+  bool status = false;
   if (this->pool)
   {
-    this->pool->MakeRunnable(shared_from_this());
+    status = this->pool->MakeRunnable(shared_from_this());
   }
   else
   {
     Counter("mt-core.tasks.MakeRunnable.no-taskpool")++;
   }
+  return status;
 }
 
 bool Task::submit(std::shared_ptr<Taskpool> pool, const std::chrono::milliseconds &delay)

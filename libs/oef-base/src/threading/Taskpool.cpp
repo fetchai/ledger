@@ -207,10 +207,10 @@ void Taskpool::remove(TaskP task)
   }
 }
 
-void Taskpool::MakeRunnable(TaskP task)
+bool Taskpool::MakeRunnable(TaskP task)
 {
   Lock lock(mutex);
-
+  bool status = false;
   auto iter = suspended_tasks.find(task);
   if (iter != suspended_tasks.end())
   {
@@ -220,7 +220,9 @@ void Taskpool::MakeRunnable(TaskP task)
     suspended_tasks.erase(iter);
     pending_tasks.push_front(task);
     work_available.notify_one();
+    status = true;
   }
+  return status;
 }
 
 void Taskpool::UpdateStatus() const

@@ -44,7 +44,7 @@ public:
   static std::weak_ptr<Taskpool> GetDefaultTaskpool();
 
   virtual void remove(TaskP task);
-  virtual void MakeRunnable(TaskP task);
+  virtual bool MakeRunnable(TaskP task);
 
   struct TaskpoolStatus
   {

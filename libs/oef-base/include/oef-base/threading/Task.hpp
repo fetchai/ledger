@@ -41,7 +41,7 @@ public:
   bool submit(std::shared_ptr<Taskpool> pool);
   bool submit();
 
-  virtual void MakeRunnable();
+  virtual bool MakeRunnable();
 
   std::size_t GetTaskId()
   {

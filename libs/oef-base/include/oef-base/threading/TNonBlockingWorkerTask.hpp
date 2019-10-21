@@ -34,15 +34,18 @@ public:
 
   Notification::NotificationBuilder post(WorkloadP workload)
   {
-    Lock       lock(mutex);
-    FETCH_LOG_INFO(LOGGING_NAME, "Adding workload for id=", workload->GetId());
     WaitableP  waitable = std::make_shared<Waitable>();
     QueueEntry qe(workload, waitable);
-    queue.push(qe);
 
+    {
+      Lock lock(mutex);
+      queue.push(qe);
+    }
     // now make this task runnable.
 
-    this->MakeRunnable();
+    bool status = this->MakeRunnable();
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Added workload for id=", workload->GetId(), "! Runnable status: ", status);
 
     return waitable->MakeNotification();
   }
