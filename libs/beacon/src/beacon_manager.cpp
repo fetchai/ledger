@@ -566,7 +566,7 @@ BeaconManager::AddResult BeaconManager::AddSignaturePart(Identity const & from,
 bool BeaconManager::Verify()
 {
   group_signature_ = crypto::mcl::LagrangeInterpolation(signature_buffer_);
-  return VerifyGroupSignature(current_message_, group_signature_);
+  return Verify(group_signature_);
 }
 
 /**
@@ -575,7 +575,7 @@ bool BeaconManager::Verify()
 bool BeaconManager::Verify(Signature const &signature)
 {
   // TODO(HUT): use the static helper
-  return VerifyGroupSignature(current_message_, signature);
+  return crypto::mcl::VerifySign(public_key_, current_message_, signature, group_g_);
 }
 
 bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,

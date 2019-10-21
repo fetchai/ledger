@@ -103,7 +103,6 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   state_machine_->RegisterHandler(State::WAIT_FOR_QUAL_COMPLAINTS, this, &BeaconSetupService::OnWaitForQualComplaints);
   state_machine_->RegisterHandler(State::WAIT_FOR_RECONSTRUCTION_SHARES, this, &BeaconSetupService::OnWaitForReconstructionShares);
   state_machine_->RegisterHandler(State::COMPUTE_PUBLIC_SIGNATURE, this, &BeaconSetupService::OnComputePublicSignature);
-  state_machine_->RegisterHandler(State::GENERATE_NOTARISATION_KEY, this, &BeaconSetupService::OnGenerateNotarisationKey);
   state_machine_->RegisterHandler(State::WAIT_FOR_NOTARISATION_KEYS, this, &BeaconSetupService::OnWaitForNotarisationKeys);
   state_machine_->RegisterHandler(State::DRY_RUN_SIGNING, this, &BeaconSetupService::OnDryRun);
   state_machine_->RegisterHandler(State::BEACON_READY, this, &BeaconSetupService::OnBeaconReady);
@@ -125,8 +124,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
     time_slot_map_[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
     time_slot_map_[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
     time_slot_map_[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
-    time_slot_map_[BeaconSetupService::State::GENERATE_NOTARISATION_KEY]      = 10;
-    time_slot_map_[BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS]     = 10;
+    time_slot_map_[BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS]     = 20;
     time_slot_map_[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
 
     for (auto &slot : time_slot_map_)
@@ -194,6 +192,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
 
   assert(beacon_);
   beacon_->manager.Reset();
+  notarisation_manager_.reset();
 
   // Initiating setup
   connections_.clear();
@@ -202,6 +201,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   coefficients_received_.clear();
   qual_coefficients_received_.clear();
   reconstruction_shares_received_.clear();
+  notarisation_keys_received_.clear();
   complaints_manager_.ResetCabinet(identity_.identifier(),
                                    beacon_->manager.polynomial_degree() + 1);
   complaint_answers_manager_.ResetCabinet();
@@ -670,43 +670,51 @@ BeaconSetupService::State BeaconSetupService::OnComputePublicSignature()
 
   beacon_->manager.ComputePublicKeys();
 
-  SetTimeToProceed(State::GENERATE_NOTARISATION_KEY);
-  return State::GENERATE_NOTARISATION_KEY;
+  SetTimeToProceed(State::WAIT_FOR_NOTARISATION_KEYS);
+  return State::WAIT_FOR_NOTARISATION_KEYS;
 }
 
-BeaconSetupService::State BeaconSetupService::OnGenerateNotarisationKey()
+BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
 {
   if (notarisation_)
   {
-    ConstByteArray notarisation_public_key = notarisation_->GenerateKeys();
-    ConstByteArray signature               = certificate_->Sign(notarisation_public_key);
+    if (state_machine_->previous_state() != State::WAIT_FOR_NOTARISATION_KEYS)
+    {
+      assert(!notarisation_manager_);
+      auto notarisation_manager_ = std::make_shared<ledger::NotarisationManager>();
+      NotarisationManager::PublicKey notarisation_public_key =
+          notarisation_manager_->GenerateKeys();
+      ConstByteArray signature = certificate_->Sign(notarisation_public_key.getStr());
 
-    // Insert own signed notarisation key into entropy cabinet details
-    auto signed_notarisation_key = std::make_pair(notarisation_public_key, signature);
-    beacon_->block_entropy.member_details.insert(
-        {certificate_->identity().identifier(), signed_notarisation_key});
-    SendBroadcast(DKGEnvelope{NotarisationKeyMessage{signed_notarisation_key}});
-    SetTimeToProceed(State::WAIT_FOR_NOTARISATION_KEYS);
-    return State::WAIT_FOR_NOTARISATION_KEYS;
+      // Insert own signed notarisation key into entropy cabinet details
+      auto signed_notarisation_key = std::make_pair(notarisation_public_key.getStr(), signature);
+      beacon_->block_entropy.member_details.insert(
+          {certificate_->identity().identifier(), signed_notarisation_key});
+      notarisation_keys_received_.insert(
+          {certificate_->identity().identifier(), notarisation_public_key});
+      SendBroadcast(DKGEnvelope{NotarisationKeyMessage{signed_notarisation_key}});
+    }
+
+    if (notarisation_keys_received_.size() == beacon_->manager.qual().size())
+    {
+      notarisation_manager_->SetAeonDetails(beacon_->aeon.round_start, beacon_->aeon.round_end,
+                                            beacon_->manager.polynomial_degree() + 1,
+                                            notarisation_keys_received_);
+
+      SetTimeToProceed(State::DRY_RUN_SIGNING);
+      return State::DRY_RUN_SIGNING;
+    }
+    else if (timer_to_proceed_.HasExpired())
+    {
+      // TODO: If we do not have enough notarisation keys (how many is enough?) then we should
+      //  reset?
+      return State::RESET;
+    }
   }
   else
   {
     SetTimeToProceed(State::DRY_RUN_SIGNING);
     return State::DRY_RUN_SIGNING;
-  }
-}
-
-BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
-{
-  if (beacon_->block_entropy.member_details.size() == beacon_->manager.qual().size())
-  {
-    SetTimeToProceed(State::DRY_RUN_SIGNING);
-    return State::DRY_RUN_SIGNING;
-  }
-  else if (timer_to_proceed_.HasExpired())
-  {
-    // TODO: If we do not have enough notarisation keys (how many is enough?) then we should reset?
-    return State::RESET;
   }
 }
 
@@ -1006,14 +1014,9 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &              from,
     auto ptr = std::dynamic_pointer_cast<NotarisationKeyMessage>(msg_ptr);
     if (ptr != nullptr)
     {
-      auto iter = beacon_->block_entropy.member_details.find(from);
-      if (iter == beacon_->block_entropy.member_details.end() &&
-          crypto::Verifier::Verify(Identity(from), ptr->PublicKey(), ptr->Signature()))
-      {
-        beacon_->block_entropy.member_details.insert(
-            {from, std::make_pair(ptr->PublicKey(), ptr->Signature())});
-      }
+      OnNotarisationKey(*ptr, from);
     }
+    break;
   }
   case DKGMessage::MessageType::FINAL_STATE:
   {
@@ -1236,6 +1239,33 @@ void BeaconSetupService::OnReconstructionShares(SharesMessage const &shares_msg,
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " received duplicate reconstruction shares from node ",
                    beacon_->manager.cabinet_index(from));
+  }
+}
+
+/**
+ * Handler for signed notarisation keys, which verifies the ECDSA signature on the message
+ *
+ * @param key_msg Pointer of NotarisationKeyMessage
+ * @param from Muddle address of sender
+ */
+void BeaconSetupService::OnNotarisationKey(NotarisationKeyMessage const &key_msg,
+                                           MuddleAddress const &         from)
+{
+  auto iter = notarisation_keys_received_.find(from);
+  if (beacon_->manager.qual().find(from) != beacon_->manager.qual().end() &&
+      iter == notarisation_keys_received_.end() &&
+      crypto::Verifier::Verify(Identity(from), key_msg.PublicKey(), key_msg.Signature()))
+  {
+    NotarisationManager::PublicKey notarisation_key;
+    notarisation_key.clear();
+    bool check;
+    notarisation_key.setStr(&check, std::string(key_msg.PublicKey()).data());
+    if (check)
+    {
+      beacon_->block_entropy.member_details.insert(
+          {from, std::make_pair(key_msg.PublicKey(), key_msg.Signature())});
+      notarisation_keys_received_.insert({from, notarisation_key});
+    }
   }
 }
 
@@ -1559,9 +1589,6 @@ char const *ToString(BeaconSetupService::State state)
     break;
   case BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE:
     text = "Compute the group public signature";
-    break;
-  case BeaconSetupService::State::GENERATE_NOTARISATION_KEY:
-    text = "Generate notarisation keys";
     break;
   case BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS:
     text = "Waiting for notarisation keys";

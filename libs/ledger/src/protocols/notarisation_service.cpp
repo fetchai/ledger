@@ -26,8 +26,7 @@
 namespace fetch {
 namespace ledger {
 
-char const *                   StateToString(NotarisationService::State state);
-NotarisationService::Generator NotarisationService::generator_;
+char const *StateToString(NotarisationService::State state);
 
 NotarisationService::NotarisationService(MuddleInterface &muddle, MainChain &main_chain,
                                          CertificatePtr certificate)
@@ -50,14 +49,6 @@ NotarisationService::NotarisationService(MuddleInterface &muddle, MainChain &mai
   state_machine_->RegisterHandler(State::VERIFY_NOTARISATIONS, this, &NotarisationService::OnVerifyNotarisations);
   state_machine_->RegisterHandler(State::COMPLETE, this, &NotarisationService::OnComplete);
   // clang-format on
-
-  static std::once_flag flag;
-
-  std::call_once(flag, []() {
-    fetch::crypto::mcl::details::MCLInitialiser();
-    generator_.clear();
-    crypto::mcl::SetGenerator(generator_);
-  });
 }
 
 NotarisationService::State NotarisationService::OnKeyRotation()
@@ -65,10 +56,10 @@ NotarisationService::State NotarisationService::OnKeyRotation()
   FETCH_LOCK(mutex_);
 
   // Checking whether the new keys have been generated
-  if (!aeon_exe_queue_.empty())
+  if (!aeon_notarisation_queue_.empty())
   {
-    active_exe_unit_ = aeon_exe_queue_.front();
-    aeon_exe_queue_.pop_front();
+    active_notarisation_unit_ = aeon_notarisation_queue_.front();
+    aeon_notarisation_queue_.pop_front();
 
     return State::NOTARISATION_SYNCHRONISATION;
   }
@@ -83,7 +74,7 @@ NotarisationService::State NotarisationService::OnNotarisationSynchronisation()
 
   // Wait for block notarisations until we have a continuous chain of notarised blocks
   // up to the point where we start notarising
-  if (NextBlockHeight() < active_exe_unit_->aeon.round_start)
+  if (NextBlockHeight() < active_notarisation_unit_->round_start())
   {
     // TODO(JMW): Should obtain these via broadcast
     state_machine_->Delay(std::chrono::milliseconds(500));
@@ -101,9 +92,9 @@ NotarisationService::State NotarisationService::OnCollectNotarisations()
   uint64_t next_height = NextBlockHeight();
 
   // Randomly select someone from qual to query
-  auto &      qual                = active_exe_unit_->manager.qual();
-  std::size_t random_member_index = static_cast<size_t>(rand()) % qual.size();
-  auto        it                  = std::next(qual.begin(), long(random_member_index));
+  auto &      members             = active_notarisation_unit_->notarisation_members();
+  std::size_t random_member_index = static_cast<size_t>(rand()) % members.size();
+  auto        it                  = std::next(members.begin(), long(random_member_index));
 
   // Try again if we picked out own address
   if (*it == endpoint_.GetAddress())
@@ -174,17 +165,17 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
                   signed_not.ecdsa_signature))
           {
             // Verify notarisation
-            if (active_exe_unit_->manager.VerifySignatureShare(
-                    block_hash, signed_not.notarisation_share, address_sig_pairs.first))
+            if (active_notarisation_unit_->Verify(block_hash, signed_not.notarisation_share,
+                                                  address_sig_pairs.first))
             {
               FETCH_LOG_INFO(LOGGING_NAME, "Added notarisation from node ",
-                             active_exe_unit_->manager.cabinet_index(address_sig_pairs.first));
+                             active_notarisation_unit_->Index(address_sig_pairs.first));
               existing_notarisations[address_sig_pairs.first] = address_sig_pairs.second;
             }
           }
         }
         // If we have collected enough signatures for this block hash then move onto next hash
-        if (existing_notarisations.size() > active_exe_unit_->manager.polynomial_degree() + 1)
+        if (existing_notarisations.size() > active_notarisation_unit_->threshold())
         {
           can_verify.insert(block_hash);
           break;
@@ -203,8 +194,8 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
       {
         notarisation_shares.insert({shares.first, shares.second.notarisation_share});
       }
-      auto sig = active_exe_unit_->manager.ComputeGroupSignature(notarisation_shares);
-      assert(active_exe_unit_->manager.VerifyGroupSignature(hash, sig));
+      auto sig = active_notarisation_unit_->ComputeAggregateSignature(notarisation_shares);
+      assert(active_notarisation_unit_->VerifyAggregateSignature(hash, sig));
 
       // Get hash of previous block
       auto block = chain_.GetBlock(hash);
@@ -260,7 +251,7 @@ NotarisationService::State NotarisationService::OnComplete()
 
   // Completed notarisation of a sequence of blocks during aeon. Any notarised blocks not received
   // through RPC will be obtained via broadcast
-  if (NextBlockHeight() > active_exe_unit_->aeon.round_end)
+  if (NextBlockHeight() > active_notarisation_unit_->round_end())
   {
     return State::KEY_ROTATION;
   }
@@ -285,8 +276,8 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
 
   // Return if not eligible to notarise, block is too far in the past of the highest notarised block
   // or beyond the window of this aeon
-  if (!active_exe_unit_ || block.block_number < active_exe_unit_->aeon.round_start ||
-      block.block_number >= active_exe_unit_->aeon.round_end)
+  if (!active_notarisation_unit_ || block.block_number < active_notarisation_unit_->round_start() ||
+      block.block_number >= active_notarisation_unit_->round_end())
   {
     return;
   }
@@ -304,15 +295,9 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
     return;
   }
 
-  // If first block of the aeon then qual should match
-  if (block.block_number == active_exe_unit_->aeon.round_start)
-  {
-    assert(block.block_entropy.qualified == active_exe_unit_->manager.qual());
-  }
-
   // Determine rank of miner in qual
   auto entropy_ranked_cabinet = Consensus::QualWeightedByEntropy(
-      active_exe_unit_->manager.qual(), block.block_entropy.EntropyAsU64());
+      active_notarisation_unit_->notarisation_members(), block.block_entropy.EntropyAsU64());
   auto miner_position =
       std::find(entropy_ranked_cabinet.begin(), entropy_ranked_cabinet.end(), block.miner_id);
   assert(miner_position != entropy_ranked_cabinet.end());
@@ -329,24 +314,17 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
   }
 
   // Sign and verify own notarisation and then save for peers to query
-  auto notarisation = active_exe_unit_->manager.Sign(block.hash);
-  assert(active_exe_unit_->manager.VerifySignatureShare(block.hash, notarisation.signature,
-                                                        notarisation.identity.identifier()));
+  auto notarisation = active_notarisation_unit_->Sign(block.hash);
+
+  assert(active_notarisation_unit_->Verify(block.hash, notarisation, endpoint_.GetAddress()));
   // Sign notarisation with ecdsa private key
-  auto ecdsa_sig = certificate_->Sign(
-      (serializers::MsgPackSerializer() << block.hash << notarisation.signature).data());
+  auto ecdsa_sig =
+      certificate_->Sign((serializers::MsgPackSerializer() << block.hash << notarisation).data());
   notarisations_being_built_[block.block_number][block.hash].insert(
-      {notarisation.identity.identifier(), SignedNotarisation(ecdsa_sig, notarisation.signature)});
+      {endpoint_.GetAddress(), SignedNotarisation(ecdsa_sig, notarisation)});
 
   // Set highest notarised block rank for this block height
   previous_notarisation_rank_[block.block_number] = miner_rank;
-}
-
-NotarisationService::ConstByteArray NotarisationService::GenerateKeys()
-{
-  auto keys    = crypto::mcl::GeneratePublicPrivateKeys(generator_);
-  private_key_ = keys.first;
-  return keys.second.getStr();
 }
 
 std::vector<std::weak_ptr<core::Runnable>> NotarisationService::GetWeakRunnables()
@@ -354,9 +332,9 @@ std::vector<std::weak_ptr<core::Runnable>> NotarisationService::GetWeakRunnables
   return {state_machine_};
 }
 
-void NotarisationService::NewAeonExeUnit(SharedAeonExecutionUnit const &keys)
+void NotarisationService::NewAeonNotarisationUnit(SharedAeonNotarisationUnit const &keys)
 {
-  aeon_exe_queue_.push_back(keys);
+  aeon_notarisation_queue_.push_back(keys);
 }
 
 uint64_t NotarisationService::NextBlockHeight() const

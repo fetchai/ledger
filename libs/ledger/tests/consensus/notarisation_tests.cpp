@@ -57,14 +57,15 @@ struct DummyManifesttCache : public fetch::shards::ManifestCacheInterface
   }
 };
 
-using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
+using Muddle                     = muddle::MuddlePtr;
+using ConstByteArray             = byte_array::ConstByteArray;
+using MuddleAddress              = ConstByteArray;
+using BlockHash                  = Digest;
+using AeonNotarisationUnit       = ledger::NotarisationManager;
+using SharedAeonNotarisationUnit = std::shared_ptr<AeonNotarisationUnit>;
 
 struct NotarisationNode
 {
-  using Muddle        = muddle::MuddlePtr;
-  using MuddleAddress = byte_array::ConstByteArray;
-  using BlockHash     = Digest;
-
   uint16_t                      muddle_port;
   network::NetworkManager       network_manager;
   core::Reactor                 reactor;
@@ -108,14 +109,9 @@ struct NotarisationNode
     return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
   }
 
-  void CreateNewAeonExeUnit(DkgOutput const &output)
+  void NewAeonExeUnit(SharedAeonNotarisationUnit notarisation_unit)
   {
-    SharedAeonExecutionUnit aeon_keys = std::make_shared<AeonExecutionUnit>();
-    aeon_keys->manager.SetCertificate(muddle_certificate);
-    aeon_keys->manager.SetDkgOutput(output);
-    aeon_keys->aeon.round_start = 0;
-    aeon_keys->aeon.round_end   = 10;
-    notarisation_service.NewAeonExeUnit(aeon_keys);
+    notarisation_service.NewAeonNotarisationUnit(std::move(notarisation_unit));
   }
 };
 
@@ -126,15 +122,13 @@ TEST(notarisation, notarise_blocks)
   uint32_t threshold      = 1;
 
   std::vector<std::shared_ptr<NotarisationNode>> nodes;
-  std::set<NotarisationNode::MuddleAddress>      cabinet;
+  std::set<MuddleAddress>                        cabinet;
   for (uint16_t i = 0; i < committee_size; ++i)
   {
     auto port_number = static_cast<uint16_t>(10000 + i);
     nodes.emplace_back(new NotarisationNode(port_number, i));
     cabinet.insert(nodes[i]->address());
   }
-
-  TrustedDealer dealer(cabinet, threshold);
 
   // Connect muddles together (localhost for this example)
   for (uint32_t i = 0; i < committee_size; i++)
@@ -167,16 +161,28 @@ TEST(notarisation, notarise_blocks)
   }
 
   // For each node create an aeon execution unit and give keys to notarisation service
-  std::vector<SharedAeonExecutionUnit> aeon_exe_units;
+  std::vector<SharedAeonNotarisationUnit>                 aeon_notarisation_units;
+  std::map<MuddleAddress, NotarisationManager::PublicKey> notarisation_keys;
   for (uint32_t i = 0; i < committee_size; i++)
   {
-    nodes[i]->CreateNewAeonExeUnit(dealer.GetKeys(nodes[i]->address()));
+    aeon_notarisation_units.emplace_back(new NotarisationManager());
+    auto key_i = aeon_notarisation_units[i]->GenerateKeys();
+    notarisation_keys.insert({nodes[i]->address(), key_i});
+  }
+
+  uint64_t round_start = 0;
+  uint64_t round_end   = 10;
+  for (uint32_t i = 0; i < committee_size; i++)
+  {
+    aeon_notarisation_units[i]->SetAeonDetails(round_start, round_end, threshold,
+                                               notarisation_keys);
+    nodes[i]->NewAeonExeUnit(aeon_notarisation_units[i]);
   }
 
   // Generate blocks!
-  std::unordered_set<NotarisationNode::BlockHash> expected_notarisations;
-  std::vector<BlockPtr>                           blocks_to_sign;
-  BlockGenerator                                  generator(1, 1);
+  std::unordered_set<BlockHash> expected_notarisations;
+  std::vector<BlockPtr>         blocks_to_sign;
+  BlockGenerator                generator(1, 1);
   for (uint16_t i = 0; i < 9; i++)
   {
     auto          random_miner = static_cast<uint32_t>(rand()) % committee_size;

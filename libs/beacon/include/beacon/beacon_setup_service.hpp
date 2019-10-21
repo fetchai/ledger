@@ -75,7 +75,6 @@ public:
     WAIT_FOR_QUAL_COMPLAINTS,
     WAIT_FOR_RECONSTRUCTION_SHARES,
     COMPUTE_PUBLIC_SIGNATURE,
-    GENERATE_NOTARISATION_KEY,
     WAIT_FOR_NOTARISATION_KEYS,
     DRY_RUN_SIGNING,
     BEACON_READY
@@ -115,11 +114,13 @@ public:
   using DeadlineTimer    = fetch::moment::DeadlineTimer;
   using SignatureShare   = AeonExecutionUnit::SignatureShare;
   using BeaconManager    = dkg::BeaconManager;
-  using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
-  using CertificatePtr          = std::shared_ptr<dkg::BeaconManager::Certificate>;
-  using Clock                   = moment::ClockPtr;
-  using NotarisationService     = ledger::NotarisationService;
-  using NotarisationPtr         = std::shared_ptr<NotarisationService>;
+  using GroupPubKeyPlusSigShare   = std::pair<std::string, SignatureShare>;
+  using CertificatePtr            = std::shared_ptr<dkg::BeaconManager::Certificate>;
+  using Clock                     = moment::ClockPtr;
+  using NotarisationManager       = ledger::NotarisationManager;
+  using SharedNotarisationManager = std::shared_ptr<NotarisationManager>;
+  using NotarisationService       = ledger::NotarisationService;
+  using NotarisationPtr           = std::shared_ptr<NotarisationService>;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
                      ManifestCacheInterface &manifest_cache, CertificatePtr certificate,
@@ -140,7 +141,6 @@ public:
   State OnWaitForQualComplaints();
   State OnWaitForReconstructionShares();
   State OnComputePublicSignature();
-  State OnGenerateNotarisationKey();
   State OnWaitForNotarisationKeys();
   State OnDryRun();
   State OnBeaconReady();
@@ -176,10 +176,11 @@ protected:
   QualComplaintsManager   qual_complaints_manager_;
 
   // Counters for types of messages received
-  std::set<MuddleAddress>                   shares_received_;
-  std::set<MuddleAddress>                   coefficients_received_;
-  std::set<MuddleAddress>                   qual_coefficients_received_;
-  std::map<MuddleAddress, SharesExposedMap> reconstruction_shares_received_;
+  std::set<MuddleAddress>                                 shares_received_;
+  std::set<MuddleAddress>                                 coefficients_received_;
+  std::set<MuddleAddress>                                 qual_coefficients_received_;
+  std::map<MuddleAddress, SharesExposedMap>               reconstruction_shares_received_;
+  std::map<MuddleAddress, NotarisationManager::PublicKey> notarisation_keys_received_;
 
   /// @name Methods to send messages
   /// @{
@@ -209,6 +210,7 @@ protected:
   CallbackFunction                                           callback_function_;
   std::deque<SharedAeonExecutionUnit>                        aeon_exe_queue_;
   SharedAeonExecutionUnit                                    beacon_;
+  SharedNotarisationManager                                  notarisation_manager_;
   std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
 
   std::map<MuddleAddress, ConstByteArray> final_state_payload_;
@@ -245,6 +247,7 @@ private:
   void OnComplaintAnswers(SharesMessage const &answer, MuddleAddress const &from);
   void OnQualComplaints(SharesMessage const &shares_msg, MuddleAddress const &from);
   void OnReconstructionShares(SharesMessage const &shares_msg, MuddleAddress const &from);
+  void OnNotarisationKey(NotarisationKeyMessage const &key_msg, MuddleAddress const &from);
   /// @}
 
   /// @name Helper methods

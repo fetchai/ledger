@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/aeon.hpp"
 #include "core/state_machine.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/protocols/notarisation_manager.hpp"
 #include "ledger/protocols/notarisation_protocol.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/server.hpp"
@@ -73,9 +73,10 @@ public:
   using Endpoint                      = muddle::MuddleEndpoint;
   using Server                        = fetch::muddle::rpc::Server;
   using ServerPtr                     = std::shared_ptr<Server>;
-  using AeonExecutionUnit             = beacon::AeonExecutionUnit;
-  using SharedAeonExecutionUnit       = std::shared_ptr<AeonExecutionUnit>;
-  using Signature                     = crypto::mcl::Signature;
+  using AeonNotarisationUnit          = ledger::NotarisationManager;
+  using SharedAeonNotarisationUnit    = std::shared_ptr<AeonNotarisationUnit>;
+  using Signature                     = NotarisationManager::Signature;
+  using AggregateSignature            = std::pair<Signature, std::vector<bool>>;
   using Certificate                   = crypto::Prover;
   using CertificatePtr                = std::shared_ptr<Certificate>;
   using CallbackFunction              = std::function<void(BlockHash)>;
@@ -83,10 +84,7 @@ public:
   using BlockNotarisationShares       = std::unordered_map<BlockHash, NotarisationShares>;
   using BlockHeightNotarisationShares = std::map<BlockHeight, BlockNotarisationShares>;
   using BlockHeightGroupNotarisations =
-      std::map<BlockHeight, std::unordered_map<BlockHash, Signature>>;
-  using NotarisationPublicKey  = crypto::mcl::PublicKey;
-  using NotarisationPrivateKey = crypto::mcl::PrivateKey;
-  using Generator              = crypto::mcl::Generator;
+      std::map<BlockHeight, std::unordered_map<BlockHash, AggregateSignature>>;
 
   NotarisationService()                            = delete;
   NotarisationService(NotarisationService const &) = delete;
@@ -109,14 +107,13 @@ public:
 
   /// Setup management
   /// @{
-  void NewAeonExeUnit(SharedAeonExecutionUnit const &keys);
+  void NewAeonNotarisationUnit(SharedAeonNotarisationUnit const &notarisation_manager);
   void SetNotarisedBlockCallback(CallbackFunction callback);
   /// @}
 
   /// Call to notarise block
   /// @{
-  void           NotariseBlock(BlockBody const &block);
-  ConstByteArray GenerateKeys();
+  void NotariseBlock(BlockBody const &block);
   /// @}
 
   /// Helper function
@@ -143,11 +140,8 @@ private:
   MainChain &chain_;  ///< Ref to system chain
 
   /// Management of active DKG keys
-  std::deque<SharedAeonExecutionUnit>            aeon_exe_queue_;
-  SharedAeonExecutionUnit                        active_exe_unit_;
-  std::set<MuddleAddress, NotarisationPublicKey> notarisation_public_keys_;
-  NotarisationPrivateKey                         private_key_;
-  static Generator                               generator_;
+  std::deque<SharedAeonNotarisationUnit> aeon_notarisation_queue_;
+  SharedAeonNotarisationUnit             active_notarisation_unit_;
 
   /// @{Notarisations
   BlockHeightNotarisationShares
