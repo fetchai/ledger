@@ -83,7 +83,6 @@ public:
   using LaneControllerPtr     = std::shared_ptr<LaneController>;
   using TxFinderProtocolPtr   = std::shared_ptr<TxFinderProtocol>;
   using MuddleEndpoint        = muddle::MuddleEndpoint;
-  using TxStoredTxCounterPtr  = telemetry::CounterPtr;
 
   static constexpr char const *LOGGING_NAME = "TransactionStoreSyncService";
   static constexpr std::size_t MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE = 128;
@@ -159,7 +158,6 @@ private:
 
   RequestingObjectCount pending_object_count_;
   uint64_t              max_object_count_{};
-  TxStoredTxCounterPtr  stored_transactions_;
 
   RequestingSubTreeList pending_subtree_;
   RequestingTxList      pending_objects_;
@@ -169,6 +167,13 @@ private:
   std::unordered_map<PromiseOfTxList::PromiseCounter, uint64_t> promise_id_to_roots_;
 
   std::atomic_bool is_ready_{false};
+
+  // telemetry
+  telemetry::CounterPtr stored_transactions_;
+  telemetry::CounterPtr resolve_count_failures_;
+  telemetry::CounterPtr subtree_requests_total_;
+  telemetry::CounterPtr subtree_response_total_;
+  telemetry::CounterPtr subtree_failure_total_;
 };
 
 }  // namespace ledger
