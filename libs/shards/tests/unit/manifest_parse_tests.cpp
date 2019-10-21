@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "network/uri.hpp"
-#include "shards/service_identifier.hpp"
 #include "shards/manifest.hpp"
+#include "shards/service_identifier.hpp"
 
 #include "gtest/gtest.h"
 
@@ -81,4 +81,4 @@ TEST(ManifestParseTests, CheckFullManifestParse)
   EXPECT_EQ(it->second.local_port(), 50012);
 }
 
-}
+}  // namespace

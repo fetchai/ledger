@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ TEST(ManifestEntryTests, CheckDefaultConstruction)
 
 TEST(ManifestEntryTests, CheckPeerConstruction)
 {
-  Peer peer{"127.0.0.1", 1234};
+  Peer          peer{"127.0.0.1", 1234};
   ManifestEntry entry{peer};
 
   EXPECT_EQ(entry.local_port(), 1234);
@@ -53,7 +53,7 @@ TEST(ManifestEntryTests, CheckPeerConstruction)
 
 TEST(ManifestEntryTests, CheckUriConstruction)
 {
-  Uri uri{"tcp://127.0.0.1:1234"};
+  Uri           uri{"tcp://127.0.0.1:1234"};
   ManifestEntry entry{uri};
 
   EXPECT_EQ(entry.local_port(), 1234);
@@ -68,7 +68,7 @@ TEST(ManifestEntryTests, CheckUriConstruction)
 
 TEST(ManifestEntryTests, CheckUriWithLocalPortConstruction)
 {
-  Uri uri{"tcp://127.0.0.1:1234"};
+  Uri           uri{"tcp://127.0.0.1:1234"};
   ManifestEntry entry{uri, 4321};
 
   EXPECT_EQ(entry.local_port(), 4321);

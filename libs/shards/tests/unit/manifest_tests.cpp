@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/uri.hpp"
 #include "shards/manifest.hpp"
 #include "shards/manifest_entry.hpp"
 #include "shards/service_identifier.hpp"
-#include "network/uri.hpp"
 
 #include "gtest/gtest.h"
 
@@ -35,7 +35,7 @@ using fetch::shards::ServiceIdentifier;
 struct ManifestItem
 {
   ServiceIdentifier id{};
-  ManifestEntry entry{};
+  ManifestEntry     entry{};
 };
 
 static ManifestItem CreateEntry(std::string const &uri, ServiceIdentifier::Type type)
@@ -50,11 +50,9 @@ static ManifestItem CreateEntry(std::string const &uri, ServiceIdentifier::Type 
   return item;
 }
 
-
 class ManifestTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     auto const http = CreateEntry("tcp://127.0.0.1:8000", ServiceIdentifier::Type::HTTP);
@@ -126,4 +124,4 @@ TEST_F(ManifestTests, CheckNotPresentServiceByType)
   ASSERT_TRUE(it == manifest_.end());
 }
 
-} // namespace
+}  // namespace
