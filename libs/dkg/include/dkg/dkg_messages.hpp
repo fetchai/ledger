@@ -250,9 +250,9 @@ public:
   {
     serialiser >> payload_;
   }
-  explicit NotarisationKeyMessage(SignedNotarisationKey const &payload)
+  explicit NotarisationKeyMessage(SignedNotarisationKey payload)
     : DKGMessage{MessageType::NOTARISATION_KEY}
-    , payload_{payload}
+    , payload_{std::move(payload)}
   {}
   ~NotarisationKeyMessage() override = default;
 

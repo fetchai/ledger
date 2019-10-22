@@ -300,8 +300,6 @@ private:
                                             beacon_->manager.GetQualCoefficients()}});
       }
     }
-
-    qual_coefficients_received_.insert(identity_.identifier());
   }
 
   void BroadcastQualComplaints() override

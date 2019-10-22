@@ -101,7 +101,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , periodic_print_{STATE_NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{chain::GENESIS_DIGEST}
-  , certificate_{std::move(prover)}
+  , certificate_{prover}
   , mining_address_{certificate_->identity()}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
                                                   [](State state) { return ToString(state); })}

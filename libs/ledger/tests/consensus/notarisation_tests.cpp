@@ -216,10 +216,7 @@ TEST(notarisation, notarise_blocks)
         it = pending_nodes.erase(it);
         break;
       }
-      else
-      {
-        ++it;
-      }
+      ++it;
     }
   }
 

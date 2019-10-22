@@ -332,7 +332,7 @@ std::vector<std::weak_ptr<core::Runnable>> NotarisationService::GetWeakRunnables
   return {state_machine_};
 }
 
-void NotarisationService::NewAeonNotarisationUnit(SharedAeonNotarisationUnit const &keys)
+void NotarisationService::NewAeonNotarisationUnit(SharedAeonNotarisationUnit const &notarisation_manager)
 {
   aeon_notarisation_queue_.push_back(keys);
 }

@@ -78,10 +78,7 @@ NotarisationManager::PublicKey NotarisationManager::GenerateKeys()
     public_key_  = keys.second;
     return keys.second;
   }
-  else
-  {
-    return public_key_;
-  }
+  return public_key_;
 }
 
 void NotarisationManager::SetAeonDetails(
