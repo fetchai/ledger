@@ -422,7 +422,7 @@ Contract::Status TokenContract::Stake(Query const &query, Query &response)
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to balance query");
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to stake query");
   }
 
   return Status::FAILED;

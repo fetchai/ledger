@@ -39,7 +39,6 @@ public:
   MOCK_METHOD2(Set, void(ResourceAddress const &, StateValue const &));
   MOCK_METHOD1(Lock, bool(ShardIndex));
   MOCK_METHOD1(Unlock, bool(ShardIndex));
-  MOCK_CONST_METHOD0(KeyDump, Keys());
   MOCK_METHOD0(Reset, void());
 };
 
@@ -51,7 +50,6 @@ public:
   {}
 
   ResourceAddress key{"key"};
-  //  StorageInterface::StateValue value{"value"};
 
   MockStorage          mock_storage{};
   CachedStorageAdapter cached_storage_adapter;

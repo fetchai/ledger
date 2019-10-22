@@ -49,7 +49,7 @@ FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body c
   return ScheduleStatus::SCHEDULED;
 }
 
-Digest FakeExecutionManager::LastProcessedBlock()
+Digest FakeExecutionManager::LastProcessedBlock() const
 {
   return last_processed_;
 }
