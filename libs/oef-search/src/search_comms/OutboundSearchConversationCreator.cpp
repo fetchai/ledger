@@ -48,7 +48,7 @@ std::shared_ptr<OutboundConversation> OutboundSearchConversationCreator::start(
 
   std::shared_ptr<OutboundConversation> conv;
 
-  if (target_path.path == "search")
+  if (target_path.path == "/search")
   {
     conv = std::make_shared<OutboundTypedConversation<IdentifierSequence>>(this_id, target_path,
                                                                            initiator);
