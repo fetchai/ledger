@@ -320,7 +320,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
     ContractContext ctx{token_contract_.get(), current_tx_->contract_address(), &storage_adapter};
     contract->updateContractContext(ctx);
 
-    auto const contract_status = contract->DispatchTransaction(*current_tx_, block_);
+    auto const contract_status =
+        contract->DispatchTransaction(*current_tx_, block_, token_contract_.get());
 
     // detach the chain code from the current context
     contract->Detach();

@@ -81,7 +81,8 @@ Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result Contract::DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index)
+Contract::Result Contract::DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index,
+                                               TokenContract *const token_contract)
 {
   Result      status{Status::NOT_FOUND};
   auto const &name = tx.action();
@@ -90,7 +91,7 @@ Contract::Result Contract::DispatchTransaction(chain::Transaction const &tx, Blo
   if (it != transaction_handlers_.end())
   {
     // dispatch the contract
-    status = it->second(tx, block_index);
+    status = it->second(tx, block_index, token_contract);
     ++transaction_counters_[name];
   }
 

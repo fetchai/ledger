@@ -192,8 +192,9 @@ SmartContract::SmartContract(std::string const &source)
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
       // register the transaction handler
-      OnTransaction(fn.name, [this, name = fn.name](auto const &tx, BlockIndex index) {
-        return InvokeAction(name, tx, index);
+      OnTransaction(fn.name, [this, name = fn.name](auto const &tx, BlockIndex index,
+                                                    TokenContract *token_contract) {
+        return InvokeAction(name, tx, index, token_contract);
       });
       break;
     case FunctionDecoratorKind::QUERY:
@@ -484,7 +485,8 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @return The corresponding status result for the operation
  */
 Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Transaction const &tx,
-                                             BlockIndex block_index)
+                                             BlockIndex block_index,
+                                             TokenContract * /*token_contract*/)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;

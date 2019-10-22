@@ -24,17 +24,19 @@ CONTRACT_TEXT = """
 persistent owner_address : Address;
 persistent balance_state : UInt64;
 persistent init_balance_state : UInt64;
+persistent init_transfer_state : Bool;
 
 @init
 function set_initial_balance_state(owner : Address) : Int64
   use init_balance_state;
+  use init_transfer_state;
   use owner_address;
 
   owner_address.set(owner);
-  init_balance_state.set(888u64);
-  // ??? init_balance_state.set(balance());
+  init_balance_state.set(balance());
+  init_transfer_state.set(releaseFunds(owner, 1u64));
 
-  return 777i64; // ??? toInt64(balance());
+  return toInt64(balance());
 endfunction
 
 @query
@@ -42,6 +44,13 @@ function get_initial_balance_state() : UInt64
   use init_balance_state;
 
   return init_balance_state.get(999u64);
+endfunction
+
+@query
+function get_initial_transfer_state() : Bool
+  use init_transfer_state;
+
+  return init_transfer_state.get();
 endfunction
 
 @action
@@ -75,12 +84,17 @@ def run(options):
 
     contract1 = Contract(CONTRACT_TEXT, entity1)
 
-    api.sync(api.contracts.create(entity1, contract1, 20000))
-    # ???
-    # query_init_balance = contract1.query(api, 'get_initial_balance_state')
-    # assert query_init_balance == 0, \
-    #     'Expected returned balance to be 0, found {}'.format(
-    #         query_init_balance)
+    status = api.sync(api.contracts.create(entity1, contract1, 20000))
+    assert status[0].exit_code == 0  # ???explanation
+
+    query_init_balance = contract1.query(api, 'get_initial_balance_state')
+    assert query_init_balance == 0, \
+        'Expected returned balance to be 0, found {}'.format(
+            query_init_balance)
+
+    query_init_transfer = contract1.query(api, 'get_initial_transfer_state')
+    assert query_init_transfer == False, \
+        'Expected transfer in @init to fail (balance is zero), but it succeeded'
 
     direct_balance1 = api.tokens.balance(contract1.address)
     assert direct_balance1 == 0, \

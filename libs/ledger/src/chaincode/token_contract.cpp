@@ -163,7 +163,8 @@ bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address 
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
 }
 
-Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx, BlockIndex /*index*/)
+Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx, BlockIndex /*index*/,
+                                             TokenContract * /*token_contract*/)
 {
   // parse the payload as JSON
   Variant data;
@@ -195,7 +196,8 @@ Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx, Block
  *
  * @return Status::OK if deed has been incorporated successfully.
  */
-Contract::Result TokenContract::Deed(chain::Transaction const &tx, BlockIndex /*index*/)
+Contract::Result TokenContract::Deed(chain::Transaction const &tx, BlockIndex /*index*/,
+                                     TokenContract * /*token_contract*/)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
@@ -250,13 +252,15 @@ Contract::Result TokenContract::Deed(chain::Transaction const &tx, BlockIndex /*
   return {Status::OK};
 }
 
-Contract::Result TokenContract::Transfer(chain::Transaction const &tx, BlockIndex /*index*/)
+Contract::Result TokenContract::Transfer(chain::Transaction const &tx, BlockIndex /*index*/,
+                                         TokenContract * /*token_contract*/)
 {
   FETCH_UNUSED(tx);
   return {Status::FAILED};
 }
 
-Contract::Result TokenContract::AddStake(chain::Transaction const &tx, BlockIndex block)
+Contract::Result TokenContract::AddStake(chain::Transaction const &tx, BlockIndex block,
+                                         TokenContract * /*token_contract*/)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Adding stake!");
 
@@ -309,7 +313,8 @@ Contract::Result TokenContract::AddStake(chain::Transaction const &tx, BlockInde
   return {Status::FAILED};
 }
 
-Contract::Result TokenContract::DeStake(chain::Transaction const &tx, BlockIndex block)
+Contract::Result TokenContract::DeStake(chain::Transaction const &tx, BlockIndex block,
+                                        TokenContract * /*token_contract*/)
 {
   // parse the payload as JSON
   Variant data;
@@ -350,7 +355,8 @@ Contract::Result TokenContract::DeStake(chain::Transaction const &tx, BlockIndex
   return {Status::FAILED};
 }
 
-Contract::Result TokenContract::CollectStake(chain::Transaction const &tx, BlockIndex block)
+Contract::Result TokenContract::CollectStake(chain::Transaction const &tx, BlockIndex block,
+                                             TokenContract * /*token_contract*/)
 {
   WalletRecord record{};
 

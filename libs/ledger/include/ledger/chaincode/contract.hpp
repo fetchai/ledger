@@ -84,14 +84,15 @@ public:
     int64_t return_value{0};
   };
 
-  using BlockIndex            = chain::TransactionLayout::BlockIndex;
-  using Identity              = crypto::Identity;
-  using ConstByteArray        = byte_array::ConstByteArray;
-  using ContractName          = ConstByteArray;
-  using Query                 = variant::Variant;
-  using InitialiseHandler     = std::function<Result(
+  using BlockIndex        = chain::TransactionLayout::BlockIndex;
+  using Identity          = crypto::Identity;
+  using ConstByteArray    = byte_array::ConstByteArray;
+  using ContractName      = ConstByteArray;
+  using Query             = variant::Variant;
+  using InitialiseHandler = std::function<Result(
       chain::Address const &, chain::Transaction const &tx, BlockIndex block_index)>;
-  using TransactionHandler    = std::function<Result(chain::Transaction const &, BlockIndex)>;
+  using TransactionHandler =
+      std::function<Result(chain::Transaction const &, BlockIndex, TokenContract *)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
   using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
@@ -113,7 +114,8 @@ public:
   Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx,
                             BlockIndex block_index);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Result DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index);
+  Result DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index,
+                             TokenContract *token_contract);
   /// @}
 
   /// @name Dispatch Maps Accessors
@@ -147,7 +149,8 @@ protected:
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
   void OnTransaction(std::string const &name, C *instance,
-                     Result (C::*func)(chain::Transaction const &, BlockIndex));
+                     Result (C::*func)(chain::Transaction const &, BlockIndex,
+                                       TokenContract *token_contract));
   /// @}
 
   /// @name Query Handler Registration
@@ -221,11 +224,13 @@ void Contract::OnInitialise(C *instance, Result (C::*func)(chain::Address const 
  */
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
-                             Result (C::*func)(chain::Transaction const &, BlockIndex))
+                             Result (C::*func)(chain::Transaction const &, BlockIndex,
+                                               TokenContract *token_contract))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name, [instance, func](chain::Transaction const &tx, BlockIndex block_index) {
-    return (instance->*func)(tx, block_index);
+  OnTransaction(name, [instance, func](chain::Transaction const &tx, BlockIndex block_index,
+                                       TokenContract *token_contract) {
+    return (instance->*func)(tx, block_index, token_contract);
   });
 }
 

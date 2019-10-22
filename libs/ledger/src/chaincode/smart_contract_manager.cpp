@@ -60,7 +60,8 @@ SmartContractManager::SmartContractManager()
 }
 
 Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
-                                                BlockIndex                block_index)
+                                                BlockIndex                block_index,
+                                                TokenContract *           token_contract)
 {
   // attempt to parse the transaction
   variant::Variant data;
@@ -172,8 +173,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
     state().PushContext(scope);
     smart_contract.Attach(state());
 
-    // ?????? token contract
-    ContractContext ctx{nullptr, tx.contract_address(), &state()};
+    ContractContext ctx{token_contract, tx.contract_address(), &state()};
     smart_contract.updateContractContext(ctx);
 
     init_status = smart_contract.DispatchInitialise(payable_address, tx, block_index);
