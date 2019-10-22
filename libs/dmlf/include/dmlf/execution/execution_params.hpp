@@ -20,4 +20,5 @@
 #include "variant/variant.hpp"
 #include <vector>
 
-using ExecutionParams = std::vector<fetch::variant::Variant>;
+using ExecutionParameter = fetch::variant::Variant;
+using ExecutionParameters = std::vector<ExecutionParameter>;

@@ -38,7 +38,7 @@ public:
   using Target          = std::string;
   using Variant         = ExecutionResult::Variant;
   using PromiseOfResult = ExecutionResult::PromiseOfResult;
-  using Params          = ExecutionParams;
+  using Params          = ExecutionParameters;
 
   virtual PromiseOfResult CreateExecutable(Target const &host, Name const &execName,
                                            SourceFiles const &sources)               = 0;

@@ -36,7 +36,7 @@ public:
   using PromiseOfResult = fetch::network::PromiseOf<ExecutionResult>;
   using OpIdent         = ExecutionWorkload::OpIdent;
   using PendingResults  = std::map<OpIdent, PromiseOfResult>;
-  using Params          = ExecutionParams;
+  using Params          = ExecutionParameters;
 
   explicit RemoteExecutionClient(MuddlePtr mud, std::shared_ptr<ExecutionInterface> local =
                                                     std::shared_ptr<ExecutionInterface>());

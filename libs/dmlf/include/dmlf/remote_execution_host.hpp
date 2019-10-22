@@ -40,7 +40,7 @@ public:
   using Uri       = network::Uri;
   using RpcClient = fetch::muddle::rpc::Client;
   using OpIdent   = ExecutionWorkload::OpIdent;
-  using Params    = ExecutionParams;
+  using Params    = ExecutionParameters;
 
   using PendingWorkloads = std::list<ExecutionWorkload>;
 
