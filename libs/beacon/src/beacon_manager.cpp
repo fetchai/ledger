@@ -110,7 +110,7 @@ std::pair<BeaconManager::Share, BeaconManager::Share> BeaconManager::GetReceived
   return shares_j;
 }
 
-bool BeaconManager::AddCoefficients(MuddleAddress const &           from,
+void BeaconManager::AddCoefficients(MuddleAddress const &           from,
                                     std::vector<Coefficient> const &coefficients)
 {
   if (coefficients.size() == polynomial_degree_ + 1)
@@ -119,19 +119,17 @@ bool BeaconManager::AddCoefficients(MuddleAddress const &           from,
     {
       C_ik[identity_to_index_[from]][i] = coefficients[i];
     }
-    return true;
+    return;
   }
   FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
                  " received coefficients of incorrect size from node ", identity_to_index_[from]);
-  return false;
 }
 
-bool BeaconManager::AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares)
+void BeaconManager::AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares)
 {
   CabinetIndex from_index               = identity_to_index_[from];
   s_ij[from_index][cabinet_index_]      = shares.first;
   sprime_ij[from_index][cabinet_index_] = shares.second;
-  return true;
 }
 
 /**
@@ -226,7 +224,7 @@ std::vector<BeaconManager::Coefficient> BeaconManager::GetQualCoefficients()
   return coefficients;
 }
 
-bool BeaconManager::AddQualCoefficients(MuddleAddress const &           from,
+void BeaconManager::AddQualCoefficients(MuddleAddress const &           from,
                                         std::vector<Coefficient> const &coefficients)
 {
   CabinetIndex from_index = identity_to_index_[from];
@@ -236,12 +234,11 @@ bool BeaconManager::AddQualCoefficients(MuddleAddress const &           from,
     {
       A_ik[from_index][i] = coefficients[i];
     }
-    return true;
+    return;
   }
   FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
                  " received qual coefficients of incorrect size from node ",
                  identity_to_index_[from]);
-  return false;
 }
 
 /**

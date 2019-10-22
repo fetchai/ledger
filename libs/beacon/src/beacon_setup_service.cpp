@@ -580,7 +580,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
     }
     if (qual_complaints_manager_.FindComplaint(identity_.identifier()))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " is in qual complaints");
     }
     BroadcastReconstructionShares();
@@ -650,7 +650,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
     // number of Byzantine nodes
     if (!beacon_->manager.RunReconstruction())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " DKG failed due to reconstruction failure. Resetting.");
       SetTimeToProceed(State::RESET);
       beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
@@ -984,7 +984,7 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &              from,
     break;
   }
   default:
-    FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                     " can not process payload from node ", beacon_->manager.cabinet_index(from));
   }
 }
@@ -1003,19 +1003,19 @@ void BeaconSetupService::OnExposedShares(SharesMessage const &shares, MuddleAddr
 
   if (phase1 == static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS))
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                     " received complaint answer from ", from_index);
     OnComplaintAnswers(shares, from_id);
   }
   else if (phase1 == static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS))
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                     " received QUAL complaint from ", from_index);
     OnQualComplaints(shares, from_id);
   }
   else if (phase1 == static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES))
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                     " received reconstruction share from ", from_index);
     OnReconstructionShares(shares, from_id);
   }
@@ -1073,12 +1073,10 @@ void BeaconSetupService::OnNewShares(const MuddleAddress &                      
 
   if (shares_received_.find(from) == shares_received_.end())
   {
-    if (beacon_->manager.AddShares(from, shares))
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                      " received shares from node  ", beacon_->manager.cabinet_index(from));
-      shares_received_.insert(from);
-    }
+    beacon_->manager.AddShares(from, shares);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                    " received shares from node  ", beacon_->manager.cabinet_index(from));
+    shares_received_.insert(from);
   }
   else
   {
@@ -1100,12 +1098,10 @@ void BeaconSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
   {
     if (coefficients_received_.find(from) == coefficients_received_.end())
     {
-      if (beacon_->manager.AddCoefficients(from, msg.coefficients()))
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                        " received coefficients from node  ", beacon_->manager.cabinet_index(from));
-        coefficients_received_.insert(from);
-      }
+      beacon_->manager.AddCoefficients(from, msg.coefficients());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                      " received coefficients from node  ", beacon_->manager.cabinet_index(from));
+      coefficients_received_.insert(from);
     }
     else
     {
@@ -1118,13 +1114,11 @@ void BeaconSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
   {
     if (qual_coefficients_received_.find(from) == qual_coefficients_received_.end())
     {
-      if (beacon_->manager.AddQualCoefficients(from, msg.coefficients()))
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                        " received qual coefficients from node  ",
-                        beacon_->manager.cabinet_index(from));
-        qual_coefficients_received_.insert(from);
-      }
+      beacon_->manager.AddQualCoefficients(from, msg.coefficients());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                      " received qual coefficients from node  ",
+                      beacon_->manager.cabinet_index(from));
+      qual_coefficients_received_.insert(from);
     }
     else
     {
@@ -1251,13 +1245,13 @@ bool BeaconSetupService::BuildQual()
   std::set<MuddleAddress> qual = beacon_->manager.qual();
   if (qual.find(identity_.identifier()) == qual.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " build qual failed as not in qual. Qual size: ", qual.size());
     return false;
   }
   if (qual.size() < QualSize())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " build qual failed as size ", qual.size(), " less than required ", QualSize());
     return false;
   }
