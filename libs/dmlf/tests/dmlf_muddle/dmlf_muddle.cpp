@@ -245,7 +245,8 @@ TEST_F(MuddleLearnerNetworkerTests, badFunctionName)
   auto p1 = client->client_->CreateExecutable(SERVER_PUB, "exe1",
                                               {{"add_source_code.etch", add_source_code}});
   auto p2 = client->client_->CreateState(SERVER_PUB, "state1");
-  auto p3 = client->client_->Run(SERVER_PUB, "exe1", "state1", "foo", {Variant(2), Variant(2)});
+  auto p3 = client->client_->Run(SERVER_PUB, "exe1", "state1", "foo",
+                                 {ExecutionParameter(2), ExecutionParameter(2)});
 
   std::cout << "Starting workloop" << std::endl;
 
