@@ -62,7 +62,7 @@ Connect to the `alpha` test network:
 
 ```
 git checkout release/v0.7.x
-(build constellation)
+./scripts/quickstart.sh
 ./constellation -bootstrap -network alpha
 ```
 
