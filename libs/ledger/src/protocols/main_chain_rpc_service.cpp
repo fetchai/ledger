@@ -293,7 +293,7 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     }
 
     DELETE_LATER("block slices: ", block.body.slices.size());
-    if(!block.body.slices.empty()) DELETE_LATER("first slice of ", block.body.slices.front().size(), " transactions");
+    for(std::size_t i{}; i < block.body.slices.size(); ++i) if(!block.body.slices[i].empty()) DELETE_LATER("Slice no. ", i, " contains ", block.body.slices[i].size(), " transactions");
     // recompute the digest
     block.UpdateDigest();
 

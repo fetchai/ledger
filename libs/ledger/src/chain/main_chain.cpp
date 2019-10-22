@@ -508,6 +508,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limi
       throw std::runtime_error("Failed to lookup block");
     }
     DELETE_LATER("block slices: ", block->body.slices.size());
+    for(std::size_t i{}; i < block->body.slices.size(); ++i) if(!block->body.slices[i].empty()) DELETE_LATER("Slice no. ", i, " contains ", block->body.slices[i].size(), " transactions");
     if(!block->body.slices.empty()) DELETE_LATER("first slice of ", block->body.slices.front().size(), " transactions");
     // update the results
     result.push_back(std::move(block));
