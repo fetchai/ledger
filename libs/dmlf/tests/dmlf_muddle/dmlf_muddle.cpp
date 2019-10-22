@@ -23,13 +23,16 @@
 #include "muddle/rpc/server.hpp"
 
 #include "core/service_ids.hpp"
+#include "dmlf/execution/basic_vm_engine.hpp"
 #include "dmlf/execution/execution_engine_interface.hpp"
+#include "dmlf/execution/execution_error_message.hpp"
+#include "dmlf/execution/execution_params.hpp"
 #include "dmlf/execution/execution_result.hpp"
 #include "dmlf/remote_execution_client.hpp"
 #include "dmlf/remote_execution_host.hpp"
 #include "dmlf/remote_execution_protocol.hpp"
-#include <ctime>
 
+#include <ctime>
 #include <iostream>
 #include <thread>
 
@@ -43,6 +46,8 @@ using ExecutionInterfacePtr       = std::shared_ptr<ExecutionInterface>;
 using ExecutionEngineInterfacePtr = ExecutionWorkload::ExecutionInterfacePtr;
 
 using Server = muddle::rpc::Server;
+
+using Variant = fetch::variant::Variant;
 
 CertificatePtr LoadIdentity(const std::string &privkey)
 {
@@ -59,6 +64,14 @@ char const *SERVER_PUB =
 char const *CLIENT_PRIV = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
 char const *CLIENT_PUB =
     "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
+
+auto const add_source_code = R"(
+
+ function add(a : Int32, b : Int32) : Int32
+  return a + b;
+ endfunction
+
+)";
 
 unsigned short int server_port = 1766;
 unsigned short int client_port = 1767;
@@ -164,9 +177,9 @@ public:
 class MuddleLearnerNetworkerTests : public ::testing::Test
 {
 public:
-  std::shared_ptr<DummyExecutionInterface> iface;
-  std::shared_ptr<ServerHalf>              server;
-  std::shared_ptr<ClientHalf>              client;
+  std::shared_ptr<ExecutionEngineInterface> exec_eng;
+  std::shared_ptr<ServerHalf>               server;
+  std::shared_ptr<ClientHalf>               client;
 
   void SetUp() override
   {
@@ -175,16 +188,17 @@ public:
     client_port = static_cast<unsigned short int>(server_port + 1);
 
     usleep(100000);
-    iface = std::make_shared<DummyExecutionInterface>();
+    // exec_eng = std::make_shared<DummyExecutionInterface>();
+    exec_eng = std::make_shared<BasicVmEngine>();
     usleep(100000);
-    server = std::make_shared<ServerHalf>(iface);
+    server = std::make_shared<ServerHalf>(exec_eng);
     usleep(100000);
     client = std::make_shared<ClientHalf>();
     usleep(100000);
   }
 };
 
-TEST_F(MuddleLearnerNetworkerTests, test1)
+TEST_F(MuddleLearnerNetworkerTests, canAdd)
 {
   usleep(100000);
   while (server->mud_->GetNumDirectlyConnectedPeers() < 1)
@@ -192,9 +206,12 @@ TEST_F(MuddleLearnerNetworkerTests, test1)
     usleep(100000);
   }
 
-  auto p1 = client->client_->CreateExecutable(SERVER_PUB, "exe1", {{"exe1.etch", "foo"}});
+  auto p1 = client->client_->CreateExecutable(SERVER_PUB, "exe1",
+                                              {{"add_source_code.etch", add_source_code}});
   auto p2 = client->client_->CreateState(SERVER_PUB, "state1");
-  auto p3 = client->client_->Run(SERVER_PUB, "exe1", "state1", "dummy_func", {});
+  auto p3 = client->client_->Run(SERVER_PUB, "exe1", "state1", "add", {Variant(2), Variant(2)});
+
+  std::cout << "Starting workloop" << std::endl;
 
   int pending = 3;
   while (pending > 0)
@@ -206,11 +223,52 @@ TEST_F(MuddleLearnerNetworkerTests, test1)
     }
   }
 
+  std::cout << "Waiting for result" << std::endl;
+
   usleep(100000);
   p3.Wait();
   auto res = p3.Get();
 
+  EXPECT_EQ(res.succeeded(), true);
+
   EXPECT_EQ(res.output().As<int>(), 4);
 }
+
+TEST_F(MuddleLearnerNetworkerTests, badFunctionName)
+{
+  usleep(100000);
+  while (server->mud_->GetNumDirectlyConnectedPeers() < 1)
+  {
+    usleep(100000);
+  }
+
+  auto p1 = client->client_->CreateExecutable(SERVER_PUB, "exe1",
+                                              {{"add_source_code.etch", add_source_code}});
+  auto p2 = client->client_->CreateState(SERVER_PUB, "state1");
+  auto p3 = client->client_->Run(SERVER_PUB, "exe1", "state1", "foo",
+                                 {ExecutionParameter(2), ExecutionParameter(2)});
+
+  std::cout << "Starting workloop" << std::endl;
+
+  int pending = 3;
+  while (pending > 0)
+  {
+    usleep(100000);
+    if (server->host_->ExecuteOneWorkload())
+    {
+      pending--;
+    }
+  }
+
+  std::cout << "Waiting for result" << std::endl;
+
+  usleep(100000);
+  p3.Wait();
+  auto res = p3.Get();
+
+  EXPECT_EQ(res.succeeded(), false);
+  EXPECT_EQ(res.error().code(), ExecutionErrorMessage::Code::RUNTIME_ERROR);
+}
+
 }  // namespace dmlf
 }  // namespace fetch
