@@ -28,10 +28,7 @@ public:
   
   static constexpr char const *LOGGING_NAME = "MtSearch";
 
-  MtSearch()
-  : thread_group_id_{1500}
-  {
-  }
+  MtSearch() = default;
   virtual ~MtSearch() = default;
 
   bool configure(const std::string &config_file="", const std::string &config_json="");
@@ -52,8 +49,6 @@ private:
 
   Threadpool comms_runners;
   Threadpool tasks_runners;
-
-  std::size_t thread_group_id_;
 
   void startListeners();
   bool configureFromJsonFile(const std::string &config_file);

@@ -20,7 +20,7 @@ public:
   using IOutboundConversationCreator::mutex_;
   using IOutboundConversationCreator::ident2conversation_;
 
-  OutboundDapConversationCreator(size_t thread_group_id, const Uri &dap_uri, Core &core,
+  OutboundDapConversationCreator(const Uri &dap_uri, Core &core,
                                  const std::string &dap_name);
   virtual ~OutboundDapConversationCreator();
   virtual std::shared_ptr<OutboundConversation> start(

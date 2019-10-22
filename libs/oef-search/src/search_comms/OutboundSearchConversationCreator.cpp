@@ -15,16 +15,16 @@
 
 #include <google/protobuf/message.h>
 
-OutboundSearchConversationCreator::OutboundSearchConversationCreator(size_t     thread_group_id,
-                                                                     const Uri &search_uri,
+OutboundSearchConversationCreator::OutboundSearchConversationCreator(const Uri &search_uri,
                                                                      Core &     core)
                                                                      : search_uri_(search_uri)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Creating search to search conversation creator for ",
-                 search_uri.ToString(), ", thread group ", thread_group_id);
   worker = std::make_shared<OutboundConversationWorkerTask>(core, search_uri, *this);
 
-  worker->SetThreadGroupId(thread_group_id);
+  worker->SetGroupId(worker->GetTaskId());
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Creating search to search conversation creator for ",
+                 search_uri.ToString(), ", group ", worker->GetTaskId());
 
   if (!worker->submit())
   {

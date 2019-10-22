@@ -20,7 +20,7 @@ public:
   using IOutboundConversationCreator::mutex_;
   using IOutboundConversationCreator::ident2conversation_;
 
-  OutboundSearchConversationCreator(size_t thread_group_id, const Uri &search_uri, Core &core);
+  OutboundSearchConversationCreator(const Uri &search_uri, Core &core);
   virtual ~OutboundSearchConversationCreator();
   virtual std::shared_ptr<OutboundConversation> start(
       const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator);

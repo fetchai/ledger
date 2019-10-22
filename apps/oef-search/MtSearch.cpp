@@ -92,12 +92,11 @@ std::string prometheusUpThatNamingString(const std::string &name)
 
 void MtSearch::AddPeer(const std::string& peer_uri)
 {
-  ++thread_group_id_;
   Uri uri(peer_uri);
   search_peer_store_->AddPeer(peer_uri);
   outbounds -> AddConversationCreator(
       Uri(peer_uri),
-      std::make_shared<OutboundSearchConversationCreator>(thread_group_id_, uri, *core)
+      std::make_shared<OutboundSearchConversationCreator>(uri, *core)
   );
 }
 
@@ -128,12 +127,11 @@ int MtSearch::run()
 
   for(const auto& dap_config : config_.daps())
   {
-    ++thread_group_id_;
     Uri uri(dap_config.uri());
     dap_store_->AddDap(dap_config.name());
     outbounds -> AddConversationCreator(
         Uri("dap://"+dap_config.name()+":0"),
-        std::make_shared<OutboundDapConversationCreator>(thread_group_id_, uri, *core, dap_config.name())
+        std::make_shared<OutboundDapConversationCreator>(uri, *core, dap_config.name())
     );
   }
   for(const auto& peer_uri : config_.peers())

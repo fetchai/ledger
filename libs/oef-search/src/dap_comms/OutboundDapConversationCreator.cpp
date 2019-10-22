@@ -11,15 +11,15 @@
 
 #include <google/protobuf/message.h>
 
-OutboundDapConversationCreator::OutboundDapConversationCreator(size_t     thread_group_id,
-                                                               const Uri &dap_uri, Core &core,
+OutboundDapConversationCreator::OutboundDapConversationCreator(const Uri &dap_uri, Core &core,
                                                                const std::string &dap_name)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Creating dap conversation with ", dap_name, " @ ",
-                 dap_uri.ToString());
   worker = std::make_shared<OutboundConversationWorkerTask>(core, dap_uri, *this);
 
-  worker->SetThreadGroupId(thread_group_id);
+  worker->SetGroupId(worker->GetTaskId());
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Creating dap conversation with ", dap_name, " @ ",
+                 dap_uri.ToString(), ", group ", worker->GetTaskId());
 
   worker->submit();
 }

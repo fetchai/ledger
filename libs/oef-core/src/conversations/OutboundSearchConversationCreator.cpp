@@ -79,7 +79,7 @@ OutboundSearchConversationCreator::OutboundSearchConversationCreator(
   worker = std::make_shared<OutboundSearchConversationWorkerTask>(
       core, core_key, core_uri, search_uri, outbounds, *this);
 
-  worker->SetThreadGroupId(0);
+  worker->SetGroupId(worker->GetTaskId());
 
   worker->submit();
 
