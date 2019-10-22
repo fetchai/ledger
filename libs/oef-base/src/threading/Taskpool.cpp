@@ -4,6 +4,8 @@
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/threading/Task.hpp"
 
+#include <algorithm>
+
 static std::weak_ptr<Taskpool> gDefaultTaskPool;
 
 static Gauge gauge_pending("mt-core.taskpool.gauge.runnable_tasks");
@@ -230,7 +232,18 @@ bool Taskpool::MakeRunnable(TaskP task)
   else
   {
     Counter("mt-core.tasks.made-runnable.failed")++;
-    FETCH_LOG_WARN(LOGGING_NAME, "Task not in suspended_tasks list!");
+    bool in_pending = std::find(pending_tasks.begin(), pending_tasks.end(), task) != pending_tasks.end();
+    bool in_running = false;
+    for(const auto& e : running_tasks)
+    {
+      if (e.second->GetTaskId() == task->GetTaskId())
+      {
+        in_running = true;
+        break;
+      }
+    }
+    FETCH_LOG_WARN(LOGGING_NAME, "Task ", task->GetTaskId(), " not in suspended_tasks list! in_pending=", in_pending,
+        ", in_running=", in_running);
   }
   return status;
 }

@@ -21,12 +21,15 @@ OutboundSearchConversationCreator::OutboundSearchConversationCreator(size_t     
                                                                      : search_uri_(search_uri)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Creating search to search conversation creator for ",
-                 search_uri.ToString());
+                 search_uri.ToString(), ", thread group ", thread_group_id);
   worker = std::make_shared<OutboundConversationWorkerTask>(core, search_uri, *this);
 
   worker->SetThreadGroupId(thread_group_id);
 
-  worker->submit();
+  if (!worker->submit())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Submit failed for conversation with ", search_uri.ToString());
+  }
 }
 
 OutboundSearchConversationCreator::~OutboundSearchConversationCreator()
