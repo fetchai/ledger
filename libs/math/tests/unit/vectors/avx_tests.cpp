@@ -436,5 +436,4 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
       }
     }
   }
-  std::cout << "done " << j << " NaN/Inf tests" << std::endl;
 }

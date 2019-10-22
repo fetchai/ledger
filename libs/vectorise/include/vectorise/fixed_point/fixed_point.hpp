@@ -20,7 +20,6 @@
 #include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
-//#include "vectorise/uint/int.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -50,18 +49,6 @@ struct TypeFromSize
 };
 
 #if (__SIZEOF_INT128__ == 16)
-// 256 bit implementation
-// template <>
-// struct TypeFromSize<256>
-// {
-//   static constexpr bool     is_valid = true;
-//   static constexpr uint16_t size     = 256;
-//   using ValueType                    = vectorise::Int<256>;
-//   using UnsignedType                 = vectorise::Int<256>;
-//   using SignedType                   = vectorise::Int<256>;
-//   // using NextSize                        = TypeFromSize<256>;
-// };
-
 // 128 bit implementation
 template <>
 struct TypeFromSize<128>

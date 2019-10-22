@@ -622,7 +622,6 @@ inline VectorRegister<fixed_point::fp64_t, 128> operator*(
   prod128[0]    = (a128[0] * b128[0]) >> 32;
   prod128[1]    = (a128[1] * b128[1]) >> 32;
   __m256i vprod = _mm256_load_si256(reinterpret_cast<__m256i const *>(prod128));
-  // vprod         = _mm256_bsrli_epi128(vprod, 4);
   vprod = _mm256_permute4x64_epi64(vprod, 0x8);
 
   auto prod = VectorRegister<int64_t, 128>(_mm256_extractf128_si256(vprod, 0));
