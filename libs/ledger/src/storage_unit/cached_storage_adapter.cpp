@@ -209,14 +209,6 @@ bool CachedStorageAdapter::HasCacheEntry(ResourceAddress const &address) const
 }
 
 /**
- * Return all valid keys
- */
-CachedStorageAdapter::Keys CachedStorageAdapter::KeyDump() const
-{
-  return storage_.KeyDump();
-}
-
-/**
  * Reset the database
  */
 void CachedStorageAdapter::Reset()

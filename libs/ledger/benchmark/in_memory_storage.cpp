@@ -96,11 +96,6 @@ bool InMemoryStorageUnit::Unlock(ShardIndex shard)
   return success;
 }
 
-Keys InMemoryStorageUnit::KeyDump() const
-{
-  throw std::runtime_error("Not implemented by design");
-}
-
 void InMemoryStorageUnit::Reset()
 {
   throw std::runtime_error("Not implemented by design");

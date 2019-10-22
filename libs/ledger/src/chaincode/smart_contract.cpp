@@ -279,7 +279,7 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obje
 
   if (!valid)
   {
-    throw std::runtime_error("Invalid address formart");
+    throw std::runtime_error("Invalid address format");
   }
 }
 

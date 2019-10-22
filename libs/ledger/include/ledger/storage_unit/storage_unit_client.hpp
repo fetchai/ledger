@@ -75,7 +75,6 @@ public:
   Document Get(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
 
-  Keys KeyDump() const override;
   void Reset() override;
 
   // state hash functions

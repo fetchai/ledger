@@ -78,13 +78,13 @@ bool RemoteExecutionHost::DeleteState(service::CallContext const &context, OpIde
 
 bool RemoteExecutionHost::Run(service::CallContext const &context, OpIdent const &op_id,
                               Name const &execName, Name const &stateName,
-                              std::string const &entrypoint)
+                              std::string const &entrypoint, const Params &params)
 {
-  pending_workloads_.emplace_back(
-      ExecutionWorkload(context.sender_address, op_id, "",
-                        [execName, stateName, entrypoint](ExecutionInterfacePtr const &exec) {
-                          return exec->Run(execName, stateName, entrypoint, {});
-                        }));
+  pending_workloads_.emplace_back(ExecutionWorkload(
+      context.sender_address, op_id, "",
+      [execName, stateName, entrypoint, params](ExecutionInterfacePtr const &exec) {
+        return exec->Run(execName, stateName, entrypoint, params);
+      }));
   return true;
 }
 

@@ -16,3 +16,5 @@ setup_compiler()
 
 setup_library(fetch-shards)
 target_link_libraries(fetch-shards PUBLIC fetch-core fetch-logging fetch-muddle)
+
+add_test_target()
