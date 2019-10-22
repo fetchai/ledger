@@ -45,18 +45,18 @@ class EntropyGeneratorInterface;
  *
  * Blocks and stake updates passed to the stake manager are assumed to be valid, including
  * the entropy within the block. The entropy together with the maximum stakers allowed
- * can be used to deterministically build a committee.
+ * can be used to deterministically build a cabinet.
  *
  */
 class StakeManager final : public StakeManagerInterface
 {
 public:
   using Identity     = crypto::Identity;
-  using Committee    = std::vector<Identity>;
-  using CommitteePtr = std::shared_ptr<Committee const>;
+  using Cabinet    = std::vector<Identity>;
+  using CabinetPtr = std::shared_ptr<Cabinet const>;
 
   // Construction / Destruction
-  explicit StakeManager(uint64_t committee_size);
+  explicit StakeManager(uint64_t cabinet_size);
   StakeManager(StakeManager const &) = delete;
   StakeManager(StakeManager &&)      = delete;
   ~StakeManager() override           = default;
@@ -64,7 +64,7 @@ public:
   /// @name Stake Manager Interface
   /// @{
   void         UpdateCurrentBlock(Block const &current) override;
-  CommitteePtr BuildCommittee(Block const &current);
+  CabinetPtr BuildCabinet(Block const &current);
   /// @}
 
   uint32_t BlockInterval();
@@ -72,13 +72,13 @@ public:
   // Accessors for the executor
   StakeUpdateQueue &      update_queue();
   StakeUpdateQueue const &update_queue() const;
-  uint64_t                committee_size() const;
-  void                    SetCommitteeSize(uint64_t size);
+  uint64_t                cabinet_size() const;
+  void                    SetCabinetSize(uint64_t size);
 
   std::shared_ptr<StakeSnapshot const> GetCurrentStakeSnapshot() const;
 
-  StakeManager::CommitteePtr Reset(StakeSnapshot const &snapshot);
-  StakeManager::CommitteePtr Reset(StakeSnapshot &&snapshot);
+  StakeManager::CabinetPtr Reset(StakeSnapshot const &snapshot);
+  StakeManager::CabinetPtr Reset(StakeSnapshot &&snapshot);
 
   // Operators
   StakeManager &operator=(StakeManager const &) = delete;
@@ -92,10 +92,10 @@ private:
   using StakeHistory     = std::map<BlockIndex, StakeSnapshotPtr>;
 
   StakeSnapshotPtr           LookupStakeSnapshot(BlockIndex block);
-  StakeManager::CommitteePtr ResetInternal(StakeSnapshotPtr &&snapshot);
+  StakeManager::CabinetPtr ResetInternal(StakeSnapshotPtr &&snapshot);
 
   // Config & Components
-  uint64_t committee_size_{0};  ///< The "static" size of the committee
+  uint64_t cabinet_size_{0};  ///< The "static" size of the cabinet
 
   StakeUpdateQueue update_queue_;            ///< The update queue of events
   StakeHistory     stake_history_{};         ///< Cache of historical snapshots
@@ -103,14 +103,14 @@ private:
   BlockIndex       current_block_index_{0};  ///< Block index of most recent snapshot
 };
 
-inline uint64_t StakeManager::committee_size() const
+inline uint64_t StakeManager::cabinet_size() const
 {
-  return committee_size_;
+  return cabinet_size_;
 }
 
-inline void StakeManager::SetCommitteeSize(uint64_t size)
+inline void StakeManager::SetCabinetSize(uint64_t size)
 {
-  committee_size_ = size;
+  cabinet_size_ = size;
 }
 
 inline StakeUpdateQueue &StakeManager::update_queue()

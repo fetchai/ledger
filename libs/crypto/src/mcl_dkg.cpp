@@ -334,13 +334,13 @@ Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> cons
 /**
  * Generates the group public key, public key shares and private key share for a number of
  * parties and a given signature threshold. Nodes must be allocated the outputs according
- * to their index in the committee.
+ * to their index in the cabinet.
  *
- * @param committee_size Number of parties for which private key shares are generated
+ * @param cabinet_size Number of parties for which private key shares are generated
  * @param threshold Number of parties required to generate a group signature
  * @return Vector of DkgOutputs containing the data to be given to each party
  */
-std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size,
+std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t cabinet_size,
                                                          uint32_t threshold)
 {
   std::vector<DkgKeyInformation> output;
@@ -357,8 +357,8 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size
 
   std::vector<PublicKey>  public_key_shares;
   std::vector<PrivateKey> private_key_shares;
-  Init(public_key_shares, committee_size);
-  Init(private_key_shares, committee_size);
+  Init(public_key_shares, cabinet_size);
+  Init(private_key_shares, cabinet_size);
 
   // Group secret key is polynomial evaluated at 0
   PublicKey group_public_key;
@@ -366,8 +366,8 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size
   PrivateKey group_private_key = vec_a[0];
   bn::G2::mul(group_public_key, generator, group_private_key);
 
-  // Generate committee public keys from their private key contributions
-  for (uint32_t i = 0; i < committee_size; ++i)
+  // Generate cabinet public keys from their private key contributions
+  for (uint32_t i = 0; i < cabinet_size; ++i)
   {
     PrivateKey pow;
     PrivateKey tmpF;
@@ -389,7 +389,7 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size
   }
 
   // Compute outputs for each member
-  for (uint32_t i = 0; i < committee_size; ++i)
+  for (uint32_t i = 0; i < cabinet_size; ++i)
   {
     output.emplace_back(group_public_key, public_key_shares, private_key_shares[i]);
   }

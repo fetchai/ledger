@@ -214,7 +214,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
       for (auto &member : committee)
       {
         // Polling events about aeons completed work
-        fetch::beacon::EventCommitteeCompletedWork event;
+        fetch::beacon::EventCabinetCompletedWork event;
         while (member->event_manager->Poll(event))
         {
           ++rounds_finished[member->identity];

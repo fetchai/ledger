@@ -256,9 +256,9 @@ void GenesisFileCreator::LoadConsensus(Variant const &object)
     double   parsed_value_double;
 
     // Optionally overwrite default parameters
-    if (variant::Extract(object, "committeeSize", parsed_value))
+    if (variant::Extract(object, "cabinetSize", parsed_value))
     {
-      consensus_->SetCommitteeSize(parsed_value);
+      consensus_->SetCabinetSize(parsed_value);
     }
 
     if (variant::Extract(object, "startTime", parsed_value))

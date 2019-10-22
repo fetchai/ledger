@@ -161,7 +161,7 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 {
   FETCH_LOCK(mutex_);
 
-  // Checking whether the next committee is ready
+  // Checking whether the next cabinet is ready
   // to produce random numbers.
   if (!aeon_exe_queue_.empty())
   {
@@ -330,7 +330,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 }
 
 /**
- * Entropy has been successfully generated. Set up the next entropy gen or rotate committee
+ * Entropy has been successfully generated. Set up the next entropy gen or rotate cabinet
  */
 BeaconService::State BeaconService::OnCompleteState()
 {
@@ -366,7 +366,7 @@ BeaconService::State BeaconService::OnCompleteState()
     return State::PREPARE_ENTROPY_GENERATION;
   }
 
-  EventCommitteeCompletedWork event;
+  EventCabinetCompletedWork event;
   event_manager_->Dispatch(event);
 
   return State::WAIT_FOR_SETUP_COMPLETION;
@@ -460,7 +460,7 @@ char const *ToString(BeaconService::State state)
     text = "Completion state";
     break;
   case BeaconService::State::COMITEE_ROTATION:
-    text = "Decide on committee rotation";
+    text = "Decide on cabinet rotation";
     break;
   case BeaconService::State::OBSERVE_ENTROPY_GENERATION:
     text = "Observe entropy generation";
