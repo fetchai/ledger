@@ -572,7 +572,6 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
     if (size > beacon_->manager.polynomial_degree())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " State: ", beacon_->manager.cabinet_index(),
                      " DKG has failed: complaints size ", size, " greater than threshold.");
       SetTimeToProceed(State::RESET);
       beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
