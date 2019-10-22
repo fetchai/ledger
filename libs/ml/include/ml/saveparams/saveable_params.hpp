@@ -324,6 +324,19 @@ struct OpSqueezeSaveableParams : public OpsSaveableParams
 };
 
 /**
+ * Saveable parameters for Squeeze op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpReduceMeanSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+  SizeType axis{};
+
+  fetch::ml::OpType op_type = OpType::OP_REDUCE_MEAN;
+};
+
+/**
  * Saveable parameters for LeakyRelu op
  * @tparam TensorType
  */
