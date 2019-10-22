@@ -145,6 +145,7 @@ public:
           ++e_it;
         }
       }
+      this->reset_gradients_ = true;
     }
 
     return {TensorType(error_signal.shape())};
