@@ -36,7 +36,7 @@ public:
     , msg_(msg)
   {}
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     if (!(msg_.empty()))
     {
@@ -61,7 +61,7 @@ public:
     , msg_(msg)
   {}
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     if (!(msg_.empty()))
     {
@@ -85,7 +85,7 @@ public:
     : std::runtime_error(msg)
   {}
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     if (!(msg_.empty()))
     {
@@ -110,7 +110,7 @@ public:
     , msg_(msg)
   {}
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     if (!(msg_.empty()))
     {
@@ -134,7 +134,7 @@ public:
     : std::runtime_error(msg)
   {}
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     return "attempted to assign data to tensor using invalid character";
   }
@@ -151,7 +151,7 @@ public:
     : std::runtime_error(msg)
   {}
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     return "invalid mode selected";
   }

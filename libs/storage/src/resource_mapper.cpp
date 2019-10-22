@@ -55,7 +55,7 @@ byte_array::ConstByteArray ResourceID::id() const
 /**
  * Gets the resource group value.
  *
- * @return THe resource group value
+ * @return The resource group value
  */
 ResourceID::Group ResourceID::resource_group() const
 {

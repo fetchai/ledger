@@ -116,7 +116,7 @@ bool HttpClient::Request(HTTPRequest const &request, HTTPResponse &response)
   // check the status code
   auto const raw_status_code = static_cast<uint16_t>(response.status());
 
-  return ((200 <= raw_status_code) && (300 > raw_status_code));
+  return (200 <= raw_status_code) && (300 > raw_status_code);
 }
 
 /**

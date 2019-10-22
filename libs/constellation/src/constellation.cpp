@@ -104,7 +104,7 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
 }
 
 uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type service,
-                         uint32_t instance = ServiceIdentifier::INVALID_SERVICE_IDENTIFIER)
+                         uint32_t instance = ServiceIdentifier::SINGLETON_SERVICE)
 {
   ServiceIdentifier const identifier{service, instance};
 
@@ -253,7 +253,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , http_network_manager_{"Http", HTTP_THREADS}
   , muddle_{muddle::CreateMuddle("IHUB", certificate, network_manager_,
                                  cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
-  // external address missing
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::CreateMuddle(
         "ISRD", internal_identity_, network_manager_,

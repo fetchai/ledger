@@ -137,7 +137,7 @@ GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
 /**
  * Load a 'state file' with a given name
  *
- * @param name THe path to the file to be loaded
+ * @param name The path to the file to be loaded
  */
 void GenesisFileCreator::LoadFile(std::string const &name)
 {

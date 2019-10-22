@@ -64,7 +64,7 @@ public:
   /// @{
   ScheduleStatus Execute(Block::Body const &block) override;
   void           SetLastProcessedBlock(Digest hash) override;
-  Digest         LastProcessedBlock() override;
+  Digest         LastProcessedBlock() const override;
   State          GetState() override;
   bool           Abort() override;
   /// @}

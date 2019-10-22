@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/fnv.hpp"  // needed for std::hash<ConstByteArray> !!!
+#include "crypto/fnv.hpp"  // needed for std::hash<ConstByteArray>
 #include "ledger/chaincode/contract.hpp"
 #include "vm_modules/ledger/context.hpp"
 
