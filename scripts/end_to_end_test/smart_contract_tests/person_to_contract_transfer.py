@@ -25,9 +25,12 @@ persistent balance_state : UInt64;
 persistent init_balance_state : UInt64;
 
 @init
-function set_initial_balance_state()
+function set_initial_balance_state() : Int64
   use init_balance_state;
-  init_balance_state.set(balance());
+  init_balance_state.set(888u64);
+  // ??? init_balance_state.set(balance());
+
+  return 777i64; // ??? toInt64(balance());
 endfunction
 
 @query
@@ -49,6 +52,11 @@ function query_balance_state() : UInt64
 
   return balance_state.get(567u64);
 endfunction
+
+@query
+function query_balance() : UInt64
+  return balance();
+endfunction
 """
 
 
@@ -63,11 +71,11 @@ def run(options):
     contract1 = Contract(CONTRACT_TEXT, entity1)
 
     api.sync(api.contracts.create(entity1, contract1, 2000))
-
-    query_init_balance = contract1.query(api, 'get_initial_balance_state')
-    assert query_init_balance == 0, \
-        'Expected returned balance to be 0, found {}'.format(
-            query_init_balance)
+# ???
+    # query_init_balance = contract1.query(api, 'get_initial_balance_state')
+    # assert query_init_balance == 0, \
+    #     'Expected returned balance to be 0, found {}'.format(
+    #         query_init_balance)
 
     direct_balance1 = api.tokens.balance(contract1.address)
     assert direct_balance1 == 0, \
@@ -94,6 +102,11 @@ def run(options):
     assert query_balance2 == 12345, \
         'Expected returned balance to be 12345, found {}'.format(
             query_balance2)
+
+    query_balance3 = contract1.query(api, 'query_balance')
+    assert query_balance3 == 12345, \
+        'Expected returned balance to be 12345, found {}'.format(
+            query_balance3)
 
 
 # ???

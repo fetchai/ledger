@@ -21,6 +21,7 @@
 #include "core/synchronisation/protected.hpp"
 #include "http/module.hpp"
 #include "ledger/chaincode/chain_code_cache.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 
 #include <fstream>
 #include <string>
@@ -97,6 +98,7 @@ private:
   void WriteToAccessLog(variant::Variant const &entry);
   /// @}
 
+  TokenContract            token_contract_{};
   StorageInterface &       storage_;
   TransactionProcessor &   processor_;
   ChainCodeCache           contract_cache_{};

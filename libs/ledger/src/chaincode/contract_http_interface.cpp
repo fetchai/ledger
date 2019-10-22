@@ -238,6 +238,13 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
 
     // attach, dispatch and detach
     contract->Attach(storage_adapter);
+
+    //???current tx may be null, but others cannot - make into references? raii for setting context
+    // and attaching storage
+    chain::Address address;
+    chain::Address::Parse(contract_id.name(), address);
+    ContractContext ctx{0, &token_contract_, nullptr, std::move(address), &storage_adapter};
+    contract->updateContractContext(ctx);
     auto const status = contract->DispatchQuery(query, doc.root(), response);
     contract->Detach();
 
