@@ -45,7 +45,6 @@ public:
   void     Set(ResourceAddress const &key, StateValue const &value) override;
   bool     Lock(ShardIndex shard) override;
   bool     Unlock(ShardIndex shard) override;
-  Keys     KeyDump() const override;
   void     Reset() override;
   /// @}
 

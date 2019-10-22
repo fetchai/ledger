@@ -345,7 +345,7 @@ void ExecutionManager::SetLastProcessedBlock(Digest hash)
   state_.ApplyVoid([&hash](Summary &summary) { summary.last_block_hash = std::move(hash); });
 }
 
-Digest ExecutionManager::LastProcessedBlock()
+Digest ExecutionManager::LastProcessedBlock() const
 {
   return state_.Apply([](Summary const &summary) { return summary.last_block_hash; });
 }

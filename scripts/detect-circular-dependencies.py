@@ -15,7 +15,7 @@ RECURSION_LIMIT = 20
 
 class CircularDependencyError(RuntimeError):
     def __init__(self):
-        super().__init__('Circular depenency detected')
+        super().__init__('Circular dependency detected')
 
 
 def _resolve_dependency_tree(print_tree, name, all_dependencies, index=None, root=None):
@@ -115,7 +115,7 @@ def main():
     with open(cache_file_path, 'r') as cache_file:
         for line in cache_file:
 
-            # find all the library depenencies
+            # find all the library dependencies
             match = LIBRARY_DEPENDS_MATCH.match(line)
             if match is None:
                 continue
@@ -147,7 +147,7 @@ def main():
         try:
             _resolve_dependency_tree(print_tree, root, all_dependencies)
         except CircularDependencyError as dep:
-            print('Circular depenency in library path found for {}'.format(root))
+            print('Circular dependency in library path found for {}'.format(root))
             exit_code = 1
 
     sys.exit(exit_code)
