@@ -69,14 +69,14 @@ public:
   std::vector<Coefficient> GetCoefficients();
   std::pair<Share, Share>  GetOwnShares(MuddleAddress const &receiver);
   std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &owner);
-  bool AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
-  bool AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
+  void AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  void AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
   std::unordered_set<MuddleAddress> ComputeComplaints(
       std::set<MuddleAddress> const &coeff_received);
   bool VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer);
   void ComputeSecretShare();
   std::vector<Coefficient> GetQualCoefficients();
-  bool AddQualCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  void AddQualCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
   SharesExposedMap ComputeQualComplaints(std::set<MuddleAddress> const &coeff_received);
   MuddleAddress    VerifyQualComplaint(MuddleAddress const &from, ComplaintAnswer const &answer);
   void             ComputePublicKeys();

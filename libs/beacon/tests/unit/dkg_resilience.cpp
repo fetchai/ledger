@@ -648,8 +648,7 @@ TEST(dkg_setup, bad_messages)
                 {FaultySetupService::Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES}});
 }
 
-// disabled due to timeouts TODO(HUT): fix
-TEST(dkg_setup, DISABLED_send_empty_complaint_answer)
+TEST(dkg_setup, send_empty_complaint_answer)
 {
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then does not send real shares and instead sends empty complaint answer.
@@ -661,7 +660,7 @@ TEST(dkg_setup, DISABLED_send_empty_complaint_answer)
                 {FaultySetupService::Failures::SEND_BAD_SHARE}});
 }
 
-TEST(dkg_setup, DISABLED_send_multiple_messages)
+TEST(dkg_setup, send_multiple_messages)
 {
   // Node 0 broadcasts bad coefficients which fails verification by everyone and is
   // rejected from qual. Another node sends multiple of each DKG message but should succeed in DKG.
