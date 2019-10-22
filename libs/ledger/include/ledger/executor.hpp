@@ -76,7 +76,7 @@ private:
   /// @{
   StakeUpdateInterface *stake_updates_{nullptr};
   StorageUnitPtr        storage_;             ///< The collection of resources
-  ChainCodeCache        chain_code_cache_{};  //< The factory to create new chain code instances
+  ChainCodeCache        chain_code_cache_{};  ///< The factory to create new chain code instances
   TokenContractPtr      token_contract_;
   /// @}
 

@@ -45,7 +45,7 @@ public:
 
   MOCK_METHOD1(Execute, ScheduleStatus(Block::Body const &));
   MOCK_METHOD1(SetLastProcessedBlock, void(Digest));
-  MOCK_METHOD0(LastProcessedBlock, Digest());
+  MOCK_CONST_METHOD0(LastProcessedBlock, Digest());
   MOCK_METHOD0(GetState, State());
   MOCK_METHOD0(Abort, bool());
 

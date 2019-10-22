@@ -60,7 +60,7 @@ public:
   /// @{
   virtual ScheduleStatus Execute(Block::Body const &block)          = 0;
   virtual void           SetLastProcessedBlock(Digest block_digest) = 0;
-  virtual Digest         LastProcessedBlock()                       = 0;
+  virtual Digest         LastProcessedBlock() const                 = 0;
   virtual State          GetState()                                 = 0;
   virtual bool           Abort()                                    = 0;
   /// @}

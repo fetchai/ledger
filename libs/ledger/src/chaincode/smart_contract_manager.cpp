@@ -160,17 +160,18 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
   }
 
   // if there is an init function to run, do so.
+  Result init_status;
   if (!on_init_function.empty())
   {
     // Attach our state to the smart contract
     smart_contract.Attach(state());
 
     // Dispatch to the init. method
-    auto const status =
+    init_status =
         smart_contract.DispatchInitialise(tx.signatories().begin()->address, tx, block_index);
-    if (status.status != Status::OK)
+    if (init_status.status != Status::OK)
     {
-      return status;
+      return init_status;
     }
 
     smart_contract.Detach();
@@ -183,10 +184,12 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
   if (status != StateAdapter::Status::OK)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Failed to store smart contract to state DB!");
-    return {Status::FAILED};
+    init_status.status = Status::FAILED;
+    return init_status;
   }
 
-  return {Status::OK};
+  init_status.status = Status::OK;
+  return init_status;
 }
 
 /**

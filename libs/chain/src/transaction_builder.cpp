@@ -209,7 +209,7 @@ TransactionBuilder &TransactionBuilder::ValidFrom(BlockIndex index)
  * Set the valid until field
  *
  * @param index The block number from which this transaction becomes invalid
- * @return THe current builder instance
+ * @return The current builder instance
  */
 TransactionBuilder &TransactionBuilder::ValidUntil(BlockIndex index)
 {
