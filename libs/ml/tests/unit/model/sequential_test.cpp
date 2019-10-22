@@ -82,7 +82,7 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
   model_config.learning_rate_param.starting_learning_rate = lr;
-  model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
+  model_config.learning_rate_param.exponential_decay_rate = DataType{0.99f};
 
   // set up data
   TypeParam train_data, train_labels;
@@ -112,35 +112,36 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
 TYPED_TEST(SequentialModelTest, adagrad_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, static_cast<DataType>(1e-2),
-                                 DataType{0.03f}, 400));
+  ASSERT_TRUE(
+      RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-4f}, DataType{0.03f}, 400));
 }
 
 TYPED_TEST(SequentialModelTest, adam_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, static_cast<DataType>(1e-2),
-                                 DataType{0.05f}, 400));
+  ASSERT_TRUE(
+      RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, DataType{1e-3f}, DataType{0.01f}, 400));
 }
 
 TYPED_TEST(SequentialModelTest, momentum_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, static_cast<DataType>(1e-4),
-                                 static_cast<DataType>(0.5), 200));
+  ASSERT_TRUE(
+      RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, DataType{1e-4f}, DataType{0.5f}, 200));
 }
 
 TYPED_TEST(SequentialModelTest, rmsprop_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, static_cast<DataType>(1e-2),
-                                 static_cast<DataType>(0.005), 200));
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-2f},
+                                 DataType{0.005f}, 200));
 }
 
 TYPED_TEST(SequentialModelTest, sgd_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, static_cast<DataType>(1e-1)));
+  ASSERT_TRUE(
+      RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-4f}, DataType{0.7f}, 400));
 }
 
 TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
@@ -148,8 +149,8 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
 
   using DataType                          = typename TypeParam::Type;
   fetch::ml::OptimiserType optimiser_type = fetch::ml::OptimiserType::SGD;
-  auto                     tolerance      = static_cast<DataType>(0);
-  auto                     lr             = static_cast<typename TypeParam::Type>(0.5);
+  auto                     tolerance      = DataType{0};
+  auto                     lr             = DataType{0.5f};
 
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::Sequential<TypeParam>;
@@ -160,7 +161,7 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
   model_config.learning_rate_param.starting_learning_rate = lr;
-  model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
+  model_config.learning_rate_param.exponential_decay_rate = DataType{0.99f};
 
   // set up data
   TypeParam train_data, train_labels;

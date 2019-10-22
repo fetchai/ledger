@@ -107,7 +107,7 @@ TYPED_TEST(DNNClassifierModelTest, adagrad_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-1f}, DataType{0.01f}, 100));
+      RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-2f}, DataType{0.01f}, 400));
 }
 
 TYPED_TEST(DNNClassifierModelTest, adam_dnnclasifier)
@@ -125,14 +125,15 @@ TYPED_TEST(DNNClassifierModelTest, momentum_dnnclasifier)
 TYPED_TEST(DNNClassifierModelTest, rmsprop_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-2f},
-                                 DataType{0.001f}, 400));
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-4f},
+                                 DataType{0.002f}, 400));
 }
 
 TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-1f}));
+  ASSERT_TRUE(
+      RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-2f}, DataType{0.7f}, 400));
 }
 
 TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier_serialisation)
