@@ -39,9 +39,29 @@ endfunction
 """
 
 TRANSFER_CONTRACT_TEXT = """
+persistent owner_address : Address;
+
+@init
+function init(owner : Address)
+  use owner_address;
+
+  owner_address.set(owner);
+endfunction
+
 @action
-function release_funds(target : Address, amount : UInt64)
-  releaseFunds(target, amount);
+function release_funds(target : Address, amount : UInt64) : Int64
+  if (releaseFunds(target, amount))
+    return 0i64;
+  endif
+
+  return -1i64;
+endfunction
+
+@query
+function attempt_transfer() : Bool
+  use owner_address;
+
+  return releaseFunds(owner_address.get(), 100u64);//???verify failure?
 endfunction
 """
 
@@ -84,8 +104,11 @@ def run(options):
     contract1_balance_before_transfer = api.tokens.balance(contract1.address)
 
     action_args = (Address(entity1), 2345)
-    api.sync(contract1.action(api, 'release_funds',
-                              100, [entity1], *action_args))
+    status = api.sync(contract1.action(api, 'release_funds',
+                                       100, [entity1], *action_args))
+    action_attempt_transfer = status[0].exit_code
+    assert action_attempt_transfer == 0, \
+        'Expected transfer in @query to succeed, but it failed'
 
     owner_balance_after_transfer = api.tokens.balance(Address(entity1))
     contract1_balance_after_transfer = api.tokens.balance(contract1.address)
@@ -95,3 +118,12 @@ def run(options):
         .format(owner_balance_after_transfer - owner_balance_before_transfer)
     assert contract1_balance_after_transfer == contract1_balance_before_transfer - 2345, \
         'Expected contract1 balance to decrease by exactly 2345'
+
+    query_attempt_transfer = contract1.query(api, 'attempt_transfer')
+    assert query_attempt_transfer == False, \
+        'Expected transfer in @query to fail, but it succeeded'
+
+
+# ???
+if __name__ == "__main__":
+    run({"host": "127.0.0.1", "port": 8000})

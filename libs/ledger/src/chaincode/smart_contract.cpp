@@ -148,6 +148,12 @@ SmartContract::SmartContract(std::string const &source)
   fetch::vm::SourceFiles files  = {{"default.etch", source}};
   auto                   errors = vm_modules::VMFactory::Compile(module_, files, *executable_);
 
+  //???
+  for (auto const &e : errors)
+  {
+    FETCH_LOG_WARN("???", e);
+  }
+
   // if there are any compilation errors
   if (!errors.empty())
   {

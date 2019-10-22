@@ -21,12 +21,16 @@ from fetchai.ledger.contract import Contract
 from fetchai.ledger.crypto import Entity, Address
 
 CONTRACT_TEXT = """
+persistent owner_address : Address;
 persistent balance_state : UInt64;
 persistent init_balance_state : UInt64;
 
 @init
-function set_initial_balance_state() : Int64
+function set_initial_balance_state(owner : Address) : Int64
   use init_balance_state;
+  use owner_address;
+
+  owner_address.set(owner);
   init_balance_state.set(888u64);
   // ??? init_balance_state.set(balance());
 
@@ -36,6 +40,7 @@ endfunction
 @query
 function get_initial_balance_state() : UInt64
   use init_balance_state;
+
   return init_balance_state.get(999u64);
 endfunction
 
@@ -70,8 +75,8 @@ def run(options):
 
     contract1 = Contract(CONTRACT_TEXT, entity1)
 
-    api.sync(api.contracts.create(entity1, contract1, 2000))
-# ???
+    api.sync(api.contracts.create(entity1, contract1, 20000))
+    # ???
     # query_init_balance = contract1.query(api, 'get_initial_balance_state')
     # assert query_init_balance == 0, \
     #     'Expected returned balance to be 0, found {}'.format(
