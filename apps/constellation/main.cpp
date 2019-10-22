@@ -174,7 +174,7 @@ BootstrapPtr CreateBootstrap(Settings const &settings, Config const &config,
         settings.discoverable.value(), settings.token.value(), core_service_peer.address());
 
     // run the discover
-    bootstrap->DiscoverPeers(uris, settings.external.value());
+    bootstrap->DiscoverPeers(uris, core_service_peer.address());
   }
 
   return bootstrap;
