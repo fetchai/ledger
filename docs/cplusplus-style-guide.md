@@ -47,17 +47,17 @@ This documents contains guidelines regarding:
 
 ``` c++
 /* Approximation of the exponential function.
-   * @x is the argument that is used in the exponent 2^(x / M_LN2).
-   *
-   * We exploit the IEEE-754 standard to efficiently create a linear
-   * interpolation between points of the form 2^n where n is an integer.
-   *
-   * You can find the full details in
-   * [1] "A fast, compact approximation of the exponential function",
-   * Nicol N. Schraudolph, 1999 Neural computation 11, 853-862.
-   *
-   * @return the exponential of x.
-   */
+ * @x is the argument that is used in the exponent 2^(x / M_LN2).
+ *
+ * We exploit the IEEE-754 standard to efficiently create a linear
+ * interpolation between points of the form 2^n where n is an integer.
+ *
+ * You can find the full details in
+ * [1] "A fast, compact approximation of the exponential function",
+ * Nicol N. Schraudolph, 1999 Neural computation 11, 853-862.
+ *
+ * @return the exponential of x.
+ */
 double Exp(double const &x)
 {
   // We use the constants explained in [1] and additional make e the
@@ -87,8 +87,8 @@ double Exp(double const &x)
 ``` c++
 // Turns out sorting this list before processing it is faster due to branch
 // prediction, so don't remove this without checking the profile:
-std::sort(users.begin(), users.end(), UserSortPredicate());
-for (const User &user : users)
+std::sort(users.begin(), users.end(), UserSortPredicate);
+for (User const &user : users)
 {
   if (user.ready)
   {
@@ -109,24 +109,24 @@ for (const User &user : users)
 ## Naming
 
 * Use meaningful names, even in tests.
-* For structs, use all lowercase with underscore to separate words, or camel case, i.e. `first_name` and `firstName` are both valid.
-* For classes, private member variables end with an `_`.
-* `snake_case_` variables with trailing underscore, except in structs where it is `snake_case` without underscore.
+* For struct and class names, use `PascalCase`.
+* Private and protected class member variables end with an `_`.
+* Variable names are `snake_case_` with trailing underscore, except in structs where it is `snake_case` without underscore.
 * For templates, use all uppercase with underscores to separate words. Long and explicit names are preferred to short and obscure names, e.g. `template <typename ARRAY_TYPE>` is preferable to `template <typename A>);`. Short names are acceptable where the type is obvious and reused many times in complex equations.
+* For enums use `UPPER_CASE`.
+* For macros use `UPPER_CASE`.
 
 
 ## Formatting
 
 * Make use of the `apply_style` script provided for formatting.
 * Lines should be no longer than 100 characters.
-* Use spaces to indent, not tabs.
+* Use 2 spaces to indent, not tabs.
 * Curly brackets `{...}` should be on their own line.
 * There should be a space after conditionals, i.e. `if (test)`
 * No spaces inside `(parenthesis)` or `<template>` unless it improves readability.
 * No spaces around arrow: `this->fnc();`.
 * No trailing whitespace.
-* Enums use `UPPER_CASE`.
-* Macros use `UPPER_CASE`.
 * Align attributes by group in classes, and initialisers.
 * Variables should be initialised with `=` if primitive, or braced initialisation with parentheses if required.
 * Initialiser lists should be initialised with braces by default.
@@ -155,14 +155,18 @@ Foo::Foo()
 * If a value is `const`, declare it so.
 * Use `int const &i` over `const int &i`.
 
+* Prefer `enum class` over regular `enum`.
+
 ## Namespaces
 
 * Do not do `using namespace foo` or `namespace baz = ::foo::bar::baz` in `.hpp` files.
 * Do not do `using namespace foo` in the top `fetch` namespace, as it pollutes all of it. Instead, do the following:
 
-``` c++ namespace fetch
+```c++
+namespace fetch
+{
+  namespace details
   {
-    namespace details {
     struct FetchImpl
     {
       /* ... */
@@ -189,6 +193,7 @@ Foo::Foo()
       // ...
     };
   };
+};
 ```
 
 
@@ -235,8 +240,7 @@ public:
 class Foo
 {
 public:
-  virtual ~Foo()
-  {}
+  virtual ~Foo()                        = default;
   virtual void Greet()                  = 0;
   virtual void Say(std::string const &) = 0;
 };
@@ -249,8 +253,8 @@ public:
     // ...
   }
 
-  void Say(std::string const &what) override{
-      // ..
+  void Say(std::string const &what) override {
+      // ...
   };
 };
 
@@ -264,9 +268,9 @@ public:
 };
 ```
 
-C++14 allows for inline initialisation of member variables which should be preferred at all times as uninitialised memory can have secondary effects making it almost impossible to debug a problem. 
+Inline initialisation of member variables is preferred at all times, as uninitialised memory can have secondary effects, making it almost impossible to debug a problem.
 
-When it is not possible to use inline initialisation, member variables should be initialised using the constructor initialisation list where they must be listed in the order they appear. 
+When it is not possible to use inline initialisation, member variables should be initialised using the constructor initialisation list where they must be listed in the order they appear.
 
 Last resort is initialisation inside the constructors body. In most cases, a combination of the above will be used. For example:
 
@@ -276,7 +280,7 @@ class MyClass
 public:
   MyClass() = default;
 
-  MyClass(std::size_t n)
+  explicit MyClass(std::size_t n)
     : size_(n)
   {
     pointer_ = new int[n];
@@ -286,6 +290,7 @@ public:
     }
   }
   // ...
+
 private:
   std::size_t size_    = 0;
   int *       pointer_ = nullptr;
@@ -310,8 +315,8 @@ Here, inline initialisation ensures that the default constructor does not produc
 * Use references where the value cannot be null. Use pointers where it can.
 * Make sure no uninitialised memory is accessed.
 * Always prefer passing by reference or `const` reference where possible.
-* Prefer `shared_ptr` and `unique_ptr` over raw pointers.
-* Use `make_shared` and `make_unique` for shared pointers.
+* Prefer smart over raw pointers.
+* Use `make_shared` and `make_unique` to wrap objects in smart pointers.
 * Stick to RAII principle and automatic memory management - destructors are ideally empty.
 
 ### nullptr
@@ -334,19 +339,13 @@ Below are some types which guarantee to manage **array** object types (continuou
 * `std::vector<...>` guarantees to manage a continuous block of memory (array) by definition.
 * `std::string<...>` guarantees to manage a continuous block of memory (array) by definition.
 * `SharedArray<...>` and `Array<...>` classes (from `fetch::memory` namespace) that guarantee to manage a continuous block of memory (array) by definition.
-* Classes from `fetch::byte_array` namespace, such as `BasicByteArray` 
+* Classes from `fetch::byte_array` namespace, such as `BasicByteArray`.
 
 ### Transfer between ownership models
 
 It is safe to transfer ownership from `std::unique_ptr` to `std::shared_ptr`.
 
-However, do **NOT** transfer ownership the other way around, i.e. from `std::shared_ptr` to `std::unique_ptr`.
-
-Any justification for doing this is highly questionable. If you really feel it is necessary to do this, then keep the following in mind:
-   
-* It is a **non**-trivial operation.
-* The `shared_ptr` type is **NOT** designed for this.
-* If you still want to proceed, then read <a href="https://stackoverflow.com/questions/15337461/move-ownership-from-stdshared-ptr-to-stdunique-ptr" target=_blank>this</a> which may provide some guidance.
+However, do **NOT** transfer ownership the other way around, as that will result in memory access exceptions; a non-owning `std::weak_ptr` should be used instead of `std::unique_ptr` (see [reference documentation](https://en.cppreference.com/w/cpp/memory/weak_ptr)).
 
 Example of using smart pointer with **shared** ownership:
 
@@ -354,63 +353,58 @@ Example of using smart pointer with **shared** ownership:
 #include <iostream>
 #include <memory>
 
-//* Parent Scope block
+// Parent scope block
 {
   std::shared_ptr<int> a0;
 
-  //* Nested scope block
+  // Nested scope block
   {
-    std::shared_ptr<int> a1 = std::make_shared<int>(5);  //* refcount=1
-    a0                      = a1;  //* The `a1` instance become shared at this point (refcount=2)
+    std::shared_ptr<int> a1 = std::make_shared<int>(5);  // refcount=1
+    a0                      = a1;  // Data in `a1` becomes shared (refcount=2)
 
-    //* BOTH instances are valid, controlling the same `int` instance:
+    // BOTH instances are valid, controlling the same `int` instance:
     std::cout << "a0 = " << *a0 << ", a1 = " << *a1 << std::endl;
 
     throw std::exception();
 
-    //* The exception will cause stack unwinding, during which
-    //* is the destructor of `a1` instance called automatically,
-    //* what decrements refcount of shared object (to 1).
-    //* At this point, the `a0` shared object is controlling lifecycle
-    //* of the `int` instance created above in this scope.
+    // The exception will cause stack unwinding, during which the destructor
+    // of `a1` is called automatically, decrementing the refcount of shared
+    // object (to 1).
+    // At this point, the `a0` shared object is controlling lifecycle
+    // of the `int` instance created above in this scope.
   }
 
-  //* We are still in stack unwinding process here (due to earlier exception),
-  //* during which automatically called destructor of `a0` instance  decrements
-  //* refcount of shared object (to 0), what finally results to destruction of
-  //* the `int` instance allocated & initialised in the nested scope above.
+  // We are still in stack unwinding process here (due to earlier exception),
+  // during which automatically called destructor of `a0` instance decrements
+  // refcount of shared object (to 0), which finally results in destruction of
+  // the `int` instance allocated & initialised in the nested scope above.
 }
 ```
 
-    Example of using smart pointer with **exclusive **ownership :
+Example of using smart pointer with **exclusive** ownership:
+
 ``` c++
 #include <memory>
 
-//* Parent Scope block
+// Parent Scope block
 {
   std::unique_ptr<int> a0;
 
-  //* Nested scope block
+  // Nested scope block
   {
     std::unique_ptr<int> a1 = std::make_unique<int>(5);
+    a0                      = a1;  // Transfer of OWNERSHIP from `a1` to `a0`
+    // `a1` does NOT control lifecycle of the `int` instance anymore.
 
-    a0 = a1;  //* Transfer of OWNERSHIP from `a1` to `a0`
-    //* The `a1` does NOT control lifecycle of the `int` instance anymore.
-
-    //* This WILL result to throwing an exception since `a1` instance
-    //* is initialised to `nullptr`:
+    // This will result in throwing an exception since `a1` is now `nullptr`
     std::cout << "a1=" << *a1 << std::endl;
 
-    //* Automatically called destructor of `a1` instance,
-    //* which does NOTHING since `a1` does NOT possess
-    //* control over any object.
+    // The automatically called destructor of `a1` does NOTHING since
+    // `a1` does NOT control any object.
   }
-  //* At this point, The `a0` variable is still controlling life-cycle of the
-  //* `int` instance created in nested scope above.
 
-  //* Automatically called destructor of `a0` instance will
-  //* result to destruction of the `int` instance allocated & initialised
-  //* in the nested scope above.
+  // Automatically called destructor of `a0` destroys the `int` instance
+  // allocated and initialised in the nested scope above.
 }
 ```
 
@@ -428,13 +422,13 @@ This is especially critical in environments where exceptions can occur.
 
 Use a scope based smart pointer concept to manage resource lifecycle. The `Smart Pointer` concept exploits the C++ native constructor-destructor (unbreakable) bond for the class/struct instance created on the stack using <a href="https://en.cppreference.com/w/cpp/language/direct_initialization" target=_blank>direct initialisation</a> where its lifecycle is strictly controlled by the encapsulating scope inside of the created instance.
 
-The most important aspect of this strong bond is that the destructor is *automatically* called when the code flow is exiting the encapsulating scope. This includes exits caused by an exception being thrown. 
+The most important aspect of this strong bond is that the destructor is *automatically* called when the code flow is exiting the encapsulating scope. This includes exits caused by an exception being thrown.
 
 Below are a few examples of how resources should be managed in the code.
 
 ### Exception enabled environment and its impact on resource handling
 
-The *most important rule* is that the destructor will **NEVER** throw an exception in any circumstance. 
+The *most important rule* is that the destructor will **NEVER** throw an exception in any circumstance.
 
 The reason for this is that a destructor for a *directly* initialised object (the lifecycle of which is controlled by a scope) is called automatically when any exception is thrown within that scope. This means that if the destructor throws yet another exception, it forces the C++ runtime to call `std::terminate` of the process (as per the C++ standard definition), since the C++ runtime is already in the <a href="http://en.cppreference.com/w/cpp/language/throw" target=_blank>stack unwinding</a> process caused by the first exception.
 
@@ -469,33 +463,33 @@ It offers more flexibility and allows the following:
 #include <mutex>
 #include <thread>
 
-//* A condition used in cooperation with `unique_lock<...>`
-//* to retain state across lock and signal change of the state
+// A condition used in cooperation with `unique_lock<...>`
+// to retain state across lock and signal change of the state
 std::condition_variable condition;
 
-//* Variable keeping the state
+// Variable keeping the state
 bool a_state = 0;
 
-//* Global mutex variable
+// Global mutex variable
 std::mutex(mtx);
 
 auto increment_fnc()->void
 {
   {
-    //* this constructor locks mutex automatically
+    // this constructor locks mutex automatically
     std::unique_lock<mutex> lock(mtx);
 
-    //* Updating value of state keeping variable (in thread safe way - see comment bellow)
+    // Updating value of state keeping variable (in thread safe way - see comment bellow)
     ++a_state;
 
-    //* It is *not* necessary to explicitly call `lock.unlock()` since
-    //* it will be called implicitly by destructor of the `lock` object.
+    // It is *not* necessary to explicitly call `lock.unlock()` since
+    // it will be called implicitly by destructor of the `lock` object.
   }
 
-  //* Signal on condition to notify *ALL* listeners waiting for the signal.
-  //* Mind to note here that this is **independent** from specific
-  //* synchronisation object (like mutex), reason being it can be signalled
-  //* from anywhere (e.g. outside of mutex locked scope).
+  // Signal on condition to notify *ALL* listeners waiting for the signal.
+  // Mind to note here that this is **independent** from specific
+  // synchronisation object (like mutex), reason being it can be signalled
+  // from anywhere (e.g. outside of mutex locked scope).
   condition.notify_all();
 }
 
@@ -503,27 +497,27 @@ auto decrement_fnc()->void
 {
   std::unique_lock<mutex> lock(mtx);
 
-  //* Waiting for condition to signal.
-  //* An std::function (e.g. lambda) can be passed to prevent spurious
-  //* wake ups, for example condition.wait(lock, [](){/* ... */ return A_CONDITION;})
+  // Waiting for condition to signal.
+  // An std::function (e.g. lambda) can be passed to prevent spurious
+  // wake ups, for example condition.wait(lock, [](){/* ... */ return A_CONDITION;})
 
-  //* The `wait(lock)` implicitly UNlock the mutex **BEFORE** falling
-  //* to wait state (essentially relocating thread to wait queue on OS level).
+  // The `wait(lock)` implicitly UNlock the mutex **BEFORE** falling
+  // to wait state (essentially relocating thread to wait queue on OS level).
   condition.wait(lock, [orig_state = a_state, &state = a_state]() {
-    //* Here we are trying to figure whether the state has changed since we started
-    //* to monitor/listen to the signalling.
+    // Here we are trying to figure whether the state has changed since we started
+    // to monitor/listen to the signalling.
     if (orig_state < state)
     {
-      --state;  //* Modifying state
+      --state;  // Modifying state
       return true;
     }
     return false;
   });
-  //* The `wait(lock)` implicitly reacquire back (locks) the mutex after it handled
-  //* signalled condition.
+  // The `wait(lock)` implicitly reacquire back (locks) the mutex after it handled
+  // signalled condition.
 
-  //* It is *not* necessary to explicitly call `lock.unlock()` since
-  //* it will be called implicitly by destructor of the `lock` object.
+  // It is *not* necessary to explicitly call `lock.unlock()` since
+  // it will be called implicitly by destructor of the `lock` object.
 }
 
 int main(int argc, char *argv[])
@@ -553,10 +547,10 @@ std::mutex(mtx);
 {
   std::unique_lock<mutex> guard(mtx);
 
-  //* Some code desired to be executed thread safe manner.
+  // Some code desired to be executed thread safe manner.
 
-  //* Automatically called destructor of the `guard` instance
-  //* will implicitly unlock the mutex.
+  // Automatically called destructor of the `guard` instance
+  // will implicitly unlock the mutex.
 }
 ```
 
