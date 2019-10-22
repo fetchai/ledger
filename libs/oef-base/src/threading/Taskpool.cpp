@@ -138,10 +138,7 @@ void Taskpool::run(std::size_t thread_idx)
       else
       {
         Counter("mt-core.tasks.run.deferred.rerun")++;
-        Lock lock(mutex);
-        mytask->SetTaskState(Task::TaskState::PENDING);
-        pending_tasks.push_back(mytask);
-        work_available.notify_one();
+        submit(mytask);
       }
       break;
     }
@@ -171,11 +168,8 @@ void Taskpool::run(std::size_t thread_idx)
     }
     case RERUN:
     {
-      Lock lock(mutex);
       Counter("mt-core.tasks.run.rerun")++;
-      mytask->SetTaskState(Task::TaskState::PENDING);
-      pending_tasks.push_back(mytask);
-      work_available.notify_one();
+      submit(mytask);
       break;
     }
     }
@@ -283,6 +277,7 @@ void Taskpool::suspend(TaskP task)
   if (task->GetTaskState() == Task::TaskState::PENDING)
   {
     // somebody else moved task to pending list while we were waiting for the mutex
+    FETCH_LOG_INFO(LOGGING_NAME, "Task ", task->GetTaskId(), " not suspended because is pending!");
     return;
   }
   task->SetTaskState(Task::TaskState::SUSPENDED);
