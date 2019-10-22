@@ -300,8 +300,6 @@ private:
                                             beacon_->manager.GetQualCoefficients()}});
       }
     }
-
-    qual_coefficients_received_.insert(identity_.identifier());
   }
 
   void BroadcastQualComplaints() override
@@ -662,7 +660,7 @@ TEST(dkg_setup, send_empty_complaint_answer)
                 {FaultySetupService::Failures::SEND_BAD_SHARE}});
 }
 
-TEST(dkg_setup, DISABLED_send_multiple_messages)
+TEST(dkg_setup, send_multiple_messages)
 {
   // Node 0 broadcasts bad coefficients which fails verification by everyone and is
   // rejected from qual. Another node sends multiple of each DKG message but should succeed in DKG.
