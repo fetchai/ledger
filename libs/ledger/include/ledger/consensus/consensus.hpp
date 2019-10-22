@@ -66,7 +66,7 @@ private:
 
   using Cabinet        = StakeManager::Cabinet;
   using CabinetPtr     = std::shared_ptr<Cabinet const>;
-  using BlockIndex       = uint64_t;
+  using BlockIndex     = uint64_t;
   using CabinetHistory = std::map<BlockIndex, CabinetPtr>;
 
   StakeManagerPtr  stake_;
@@ -76,9 +76,9 @@ private:
   chain::Address   mining_address_;
 
   // Global variables relating to consensus
-  uint64_t aeon_period_        = 0;
+  uint64_t aeon_period_      = 0;
   uint64_t max_cabinet_size_ = 0;
-  double   threshold_          = 1.0;
+  double   threshold_        = 1.0;
 
   // Consensus' view on the heaviest block etc.
   Block  current_block_;
@@ -86,16 +86,16 @@ private:
   Block  beginning_of_aeon_;
   Digest last_triggered_cabinet_;
 
-  uint64_t         default_start_time_ = 0;
+  uint64_t       default_start_time_ = 0;
   CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
-  uint32_t         block_interval_ms_{std::numeric_limits<uint32_t>::max()};
+  uint32_t       block_interval_ms_{std::numeric_limits<uint32_t>::max()};
 
   CabinetPtr GetCabinet(Block const &previous);
-  bool         ValidMinerForBlock(Block const &previous, chain::Address const &address);
-  uint64_t     GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
-  bool         ValidBlockTiming(Block const &previous, Block const &proposed) const;
-  bool         ShouldTriggerNewCabinet(Block const &block);
-  bool         EnoughQualSigned(BlockEntropy const &block_entropy) const;
+  bool       ValidMinerForBlock(Block const &previous, chain::Address const &address);
+  uint64_t   GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
+  bool       ValidBlockTiming(Block const &previous, Block const &proposed) const;
+  bool       ShouldTriggerNewCabinet(Block const &block);
+  bool       EnoughQualSigned(BlockEntropy const &block_entropy) const;
 };
 
 }  // namespace ledger

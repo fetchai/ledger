@@ -119,9 +119,8 @@ Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous)
 
   if (cabinet_history_.find(last_snapshot) == cabinet_history_.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "No cabinet history found for block: ", previous.body.block_number, " AKA ",
-                   last_snapshot);
+    FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block: ", previous.body.block_number,
+                   " AKA ", last_snapshot);
     return nullptr;
   }
 
@@ -152,10 +151,9 @@ bool Consensus::ValidMinerForBlock(Block const &previous, chain::Address const &
     return false;
   }
 
-  return std::find_if((*cabinet).begin(), (*cabinet).end(),
-                      [&address](Identity const &identity) {
-                        return address == chain::Address(identity);
-                      }) != (*cabinet).end();
+  return std::find_if((*cabinet).begin(), (*cabinet).end(), [&address](Identity const &identity) {
+           return address == chain::Address(identity);
+         }) != (*cabinet).end();
 }
 
 Block GetBlockPriorTo(Block const &current, MainChain const &chain)

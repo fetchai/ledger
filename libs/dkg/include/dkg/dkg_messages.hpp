@@ -204,8 +204,7 @@ public:
 
 class ComplaintsMessage : public DKGMessage
 {
-  std::unordered_set<CabinetId>
-      complaints_;  ///< Cabinet members that you are complaining against
+  std::unordered_set<CabinetId> complaints_;  ///< Cabinet members that you are complaining against
 public:
   // Construction/Destruction
   explicit ComplaintsMessage(DKGSerializer &serialiser)

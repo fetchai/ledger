@@ -55,8 +55,8 @@ void SignBLSSignature(benchmark::State &state)
 
   // Create keys
   auto     cabinet_size = static_cast<uint32_t>(state.range(0));
-  uint32_t threshold      = cabinet_size / 2 + 1;
-  auto     outputs = fetch::crypto::mcl::TrustedDealerGenerateKeys(cabinet_size, threshold);
+  uint32_t threshold    = cabinet_size / 2 + 1;
+  auto     outputs      = fetch::crypto::mcl::TrustedDealerGenerateKeys(cabinet_size, threshold);
   assert(outputs.size() == cabinet_size);
 
   // Randomly select index to sign
@@ -81,8 +81,8 @@ void VerifyBLSSignature(benchmark::State &state)
 
   // Create keys
   auto     cabinet_size = static_cast<uint32_t>(state.range(0));
-  uint32_t threshold      = cabinet_size / 2 + 1;
-  auto     outputs = fetch::crypto::mcl::TrustedDealerGenerateKeys(cabinet_size, threshold);
+  uint32_t threshold    = cabinet_size / 2 + 1;
+  auto     outputs      = fetch::crypto::mcl::TrustedDealerGenerateKeys(cabinet_size, threshold);
 
   // Randomly select index to sign
   auto sign_index = static_cast<uint32_t>(rng() % cabinet_size);
@@ -109,8 +109,8 @@ void ComputeGroupSignature(benchmark::State &state)
 
   // Create keys
   auto     cabinet_size = static_cast<uint32_t>(state.range(0));
-  uint32_t threshold      = cabinet_size / 2 + 1;
-  auto     outputs = fetch::crypto::mcl::TrustedDealerGenerateKeys(cabinet_size, threshold);
+  uint32_t threshold    = cabinet_size / 2 + 1;
+  auto     outputs      = fetch::crypto::mcl::TrustedDealerGenerateKeys(cabinet_size, threshold);
 
   for (auto _ : state)
   {

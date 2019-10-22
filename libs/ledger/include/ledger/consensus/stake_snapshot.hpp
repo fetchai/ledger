@@ -37,7 +37,7 @@ namespace ledger {
 class StakeSnapshot
 {
 public:
-  using Identity     = crypto::Identity;
+  using Identity   = crypto::Identity;
   using Cabinet    = std::vector<Identity>;
   using CabinetPtr = std::shared_ptr<Cabinet>;
 

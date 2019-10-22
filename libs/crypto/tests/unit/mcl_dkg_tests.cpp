@@ -206,7 +206,7 @@ TEST(MclDkgTests, Signing)
   fetch::crypto::mcl::details::MCLInitialiser();
 
   uint32_t cabinet_size = 200;
-  uint32_t threshold      = 101;
+  uint32_t threshold    = 101;
 
   // outputs[i] is assigned to node with index i in the cabinet
   auto outputs = TrustedDealerGenerateKeys(cabinet_size, threshold);

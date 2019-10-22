@@ -51,7 +51,7 @@ class EntropyGeneratorInterface;
 class StakeManager final : public StakeManagerInterface
 {
 public:
-  using Identity     = crypto::Identity;
+  using Identity   = crypto::Identity;
   using Cabinet    = std::vector<Identity>;
   using CabinetPtr = std::shared_ptr<Cabinet const>;
 
@@ -63,7 +63,7 @@ public:
 
   /// @name Stake Manager Interface
   /// @{
-  void         UpdateCurrentBlock(Block const &current) override;
+  void       UpdateCurrentBlock(Block const &current) override;
   CabinetPtr BuildCabinet(Block const &current);
   /// @}
 
@@ -91,7 +91,7 @@ private:
   using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
   using StakeHistory     = std::map<BlockIndex, StakeSnapshotPtr>;
 
-  StakeSnapshotPtr           LookupStakeSnapshot(BlockIndex block);
+  StakeSnapshotPtr         LookupStakeSnapshot(BlockIndex block);
   StakeManager::CabinetPtr ResetInternal(StakeSnapshotPtr &&snapshot);
 
   // Config & Components

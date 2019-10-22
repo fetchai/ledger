@@ -107,11 +107,11 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   std::cout << "- Setup" << std::endl;
   auto number_of_nodes = static_cast<uint16_t>(number_of_cabinets * cabinet_size);
 
-  std::vector<std::unique_ptr<CabinetNode>> committee;
+  std::vector<std::unique_ptr<CabinetNode>> cabinet;
   for (uint16_t ii = 0; ii < number_of_nodes; ++ii)
   {
     auto port_number = static_cast<uint16_t>(10000 + ii);
-    committee.emplace_back(new CabinetNode{port_number, ii});
+    cabinet.emplace_back(new CabinetNode{port_number, ii});
   }
   sleep_for(500ms);
 
@@ -120,7 +120,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   {
     for (uint32_t jj = ii + 1; jj < number_of_nodes; jj++)
     {
-      committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(), committee[jj]->GetHint());
+      cabinet[ii]->muddle->ConnectTo(cabinet[jj]->GetMuddleAddress(), cabinet[jj]->GetHint());
     }
   }
 
@@ -138,7 +138,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
 
     for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
     {
-      auto &muddle = *(committee[*it]->muddle);
+      auto &muddle = *(cabinet[*it]->muddle);
 
       if (EXPECTED_NUM_NODES <= muddle.GetNumDirectlyConnectedPeers())
       {
@@ -156,7 +156,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   all_cabinets.resize(number_of_cabinets);
 
   uint64_t i = 0;
-  for (auto &member : committee)
+  for (auto &member : cabinet)
   {
     all_cabinets[i % number_of_cabinets].insert(
         member->muddle_certificate->identity().identifier());
@@ -164,7 +164,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   }
 
   // Attaching the cabinet logic
-  for (auto &member : committee)
+  for (auto &member : cabinet)
   {
     auto runnables = member->beacon_service.GetWeakRunnables();
 
@@ -175,14 +175,14 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   }
 
   // Starting the beacon
-  for (auto &member : committee)
+  for (auto &member : cabinet)
   {
     member->reactor.Start();
   }
 
   // Stats
   std::unordered_map<crypto::Identity, uint64_t> rounds_finished;
-  for (auto &member : committee)
+  for (auto &member : cabinet)
   {
     rounds_finished[member->identity] = 0;
   }
@@ -193,25 +193,26 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   i = 0;
   while (i < static_cast<uint64_t>(total_renewals + 1))
   {
-    auto cabinet = all_cabinets[i % number_of_cabinets];
+    auto cabinet_select = all_cabinets[i % number_of_cabinets];
 
     if (i < total_renewals)
     {
       std::cout << "- Scheduling round " << i << std::endl;
-      for (auto &member : committee)
+      for (auto &member : cabinet)
       {
         member->beacon_service.StartNewCabinet(
-            cabinet, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
+            cabinet_select,
+            static_cast<uint32_t>(static_cast<double>(cabinet_select.size()) * threshold),
             i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
             GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)),
             member->genesis_block_entropy);
       }
     }
 
-    // Collecting information about the committees finishing
+    // Collecting information about the cabinets finishing
     for (uint64_t j = 0; j < 10; ++j)
     {
-      for (auto &member : committee)
+      for (auto &member : cabinet)
       {
         // Polling events about aeons completed work
         fetch::beacon::EventCabinetCompletedWork event;
@@ -228,7 +229,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   }
 
   std::cout << " - Stopping" << std::endl;
-  for (auto &member : committee)
+  for (auto &member : cabinet)
   {
     member->reactor.Stop();
     member->muddle->Stop();

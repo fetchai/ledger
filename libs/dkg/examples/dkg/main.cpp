@@ -104,8 +104,7 @@ int main()
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (cabinet[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() !=
-          (cabinet_size - 1))
+      if (cabinet[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() != (cabinet_size - 1))
       {
         break;
       }
