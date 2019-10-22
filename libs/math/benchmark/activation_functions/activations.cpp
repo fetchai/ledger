@@ -25,6 +25,8 @@
 
 #include "benchmark/benchmark.h"
 
+#include <sstream>
+
 using namespace fetch::math;
 
 template <typename T, DefaultSizeType L, DefaultSizeType H, DefaultSizeType W>

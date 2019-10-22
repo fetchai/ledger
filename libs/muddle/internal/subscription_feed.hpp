@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "muddle/packet.hpp"
 
 #include <cstdint>
 #include <memory>
-#include <mutex>
 #include <vector>
 
 namespace fetch {
@@ -54,7 +54,6 @@ public:
   bool            Dispatch(Packet const &packet, Address const &last_hop);
 
 private:
-  using Mutex               = std::mutex;
   using SubscriptionWeakPtr = std::weak_ptr<Subscription>;
   using SubscriptionList    = std::vector<SubscriptionWeakPtr>;
 

@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
+#include "chain/constants.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/address.hpp"
+#include "json/document.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
-#include "ledger/chain/constants.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_manager.hpp"
@@ -45,12 +45,12 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::storage::ResourceAddress;
-using fetch::storage::ResourceID;
-using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::json::JSONDocument;
+using fetch::storage::ResourceAddress;
+using fetch::storage::ResourceID;
+using fetch::variant::Variant;
 
 constexpr char const *LOGGING_NAME = "GenesisFile";
 constexpr int         VERSION      = 2;
@@ -137,7 +137,7 @@ GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
 /**
  * Load a 'state file' with a given name
  *
- * @param name THe path to the file to be loaded
+ * @param name The path to the file to be loaded
  */
 void GenesisFileCreator::LoadFile(std::string const &name)
 {
@@ -237,13 +237,13 @@ void GenesisFileCreator::LoadState(Variant const &object)
   genesis_block.body.timestamp    = start_time_;
   genesis_block.body.merkle_hash  = merkle_commit_hash;
   genesis_block.body.block_number = 0;
-  genesis_block.body.miner        = ledger::Address(crypto::Hash<crypto::SHA256>(""));
+  genesis_block.body.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
   genesis_block.UpdateDigest();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: ", genesis_block.body.hash.ToBase64());
 
-  ledger::GENESIS_MERKLE_ROOT = merkle_commit_hash;
-  ledger::GENESIS_DIGEST      = genesis_block.body.hash;
+  chain::GENESIS_MERKLE_ROOT = merkle_commit_hash;
+  chain::GENESIS_DIGEST      = genesis_block.body.hash;
 
   block_coordinator_.Reset();
 }
@@ -298,7 +298,7 @@ void GenesisFileCreator::LoadConsensus(Variant const &object)
         FETCH_LOG_INFO(LOGGING_NAME, "Found identity raw!, ", identity_raw);
 
         auto identity = crypto::Identity(FromBase64(identity_raw));
-        auto address  = Address(identity);
+        auto address  = chain::Address(identity);
 
         FETCH_LOG_INFO(LOGGING_NAME,
                        "Restoring stake. Identity: ", identity.identifier().ToBase64(),

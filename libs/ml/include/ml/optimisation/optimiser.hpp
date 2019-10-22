@@ -32,7 +32,8 @@ namespace fetch {
 namespace ml {
 namespace optimisers {
 
-static constexpr fetch::math::DefaultSizeType SIZE_NOT_SET = fetch::math::numeric_max<math::DefaultSizeType>();
+static constexpr fetch::math::DefaultSizeType SIZE_NOT_SET =
+    fetch::math::numeric_max<math::DefaultSizeType>();
 
 /**
  * Abstract gradient optimiser class

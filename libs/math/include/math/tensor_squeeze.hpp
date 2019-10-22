@@ -141,8 +141,8 @@ void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, DefaultSizeT
 {
   DefaultSizeType N;
 
-  DefaultSizeType   k{1};
-  SizeVector out_shape{};
+  DefaultSizeType k{1};
+  SizeVector      out_shape{};
   for (DefaultSizeType i = 0; i < input.shape().size(); ++i)
   {
     if (i != axis)
@@ -179,9 +179,9 @@ void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeVector c
 {
   DefaultSizeType N;
 
-  DefaultSizeType  k = 1;
-  SizeVector out_shape;
-  SizeSet    axes_set(axes.begin(), axes.end());
+  DefaultSizeType k = 1;
+  SizeVector      out_shape;
+  SizeSet         axes_set(axes.begin(), axes.end());
 
   for (DefaultSizeType i = 0; i < input.shape().size(); ++i)
   {

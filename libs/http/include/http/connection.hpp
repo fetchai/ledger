@@ -19,13 +19,13 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/http_connection_manager.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <deque>

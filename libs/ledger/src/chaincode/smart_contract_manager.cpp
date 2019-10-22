@@ -16,15 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 #include "vm/function_decorators.hpp"
@@ -57,7 +58,8 @@ SmartContractManager::SmartContractManager()
   OnTransaction("create", this, &SmartContractManager::OnCreate);
 }
 
-Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockIndex /*index*/)
+Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
+                                                BlockIndex                block_index)
 {
   // attempt to parse the transaction
   variant::Variant data;
@@ -158,16 +160,18 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
   }
 
   // if there is an init function to run, do so.
+  Result init_status;
   if (!on_init_function.empty())
   {
     // Attach our state to the smart contract
     smart_contract.Attach(state());
 
     // Dispatch to the init. method
-    auto const status = smart_contract.DispatchInitialise(tx.signatories().begin()->address);
-    if (status.status != Status::OK)
+    init_status =
+        smart_contract.DispatchInitialise(tx.signatories().begin()->address, tx, block_index);
+    if (init_status.status != Status::OK)
     {
-      return status;
+      return init_status;
     }
 
     smart_contract.Detach();
@@ -180,10 +184,12 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
   if (status != StateAdapter::Status::OK)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Failed to store smart contract to state DB!");
-    return {Status::FAILED};
+    init_status.status = Status::FAILED;
+    return init_status;
   }
 
-  return {Status::OK};
+  init_status.status = Status::OK;
+  return init_status;
 }
 
 /**

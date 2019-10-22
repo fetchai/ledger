@@ -2,7 +2,6 @@
 *                   @fetchai/ledger
 
 # External dependencies
-docker-images       @ejfitzgerald @n-hutton
 vendor/             @ejfitzgerald @n-hutton
 
 # CI / CD
@@ -23,8 +22,15 @@ libs/metrics/       @fetchai/ledger-core
 libs/miner/         @fetchai/ledger-core
 libs/network/       @fetchai/ledger-core
 libs/storage/       @fetchai/ledger-core
+libs/settings/      @fetchai/ledger-core
 libs/testing/       @fetchai/ledger-core
 libs/variant/       @fetchai/ledger-core
+libs/telemetry/     @fetchai/ledger-core
+libs/version/       @fetchai/ledger-core
+
+# Consensus
+libs/beacon/        @n-hutton @jinmannwong
+libs/dkg/           @n-hutton @jinmannwong
 
 # Common Libraries
 libs/core/          @fetchai/ledger
@@ -36,3 +42,7 @@ libs/vectorise/     @fetchai/ledger
 libs/ml/            @fetchai/ledger-vm
 libs/python/        @fetchai/ledger-vm
 libs/math/          @fetchai/ledger-vm
+
+# DMLF
+libs/dmlf/          @fetchai/ledger-dmlf
+

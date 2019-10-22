@@ -27,7 +27,9 @@
 #include "muddle/rpc/server.hpp"
 
 #include "gtest/gtest.h"
-#include <iostream>
+
+#include <cstdint>
+#include <memory>
 
 using namespace fetch;
 using namespace fetch::network;
@@ -37,7 +39,7 @@ using namespace fetch::muddle;
 using Prover         = fetch::crypto::Prover;
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
-//using Address        = fetch::muddle::Packet::Address;
+// using Address        = fetch::muddle::Packet::Address;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 
 ProverPtr CreateCertificate()

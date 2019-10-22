@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter.hpp"
+#include "bloom_filter/bloom_filter.hpp"
+#include "chain/transaction_layout_rpc_serializers.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/containers/set_difference.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/testing/block_generator.hpp"
 
 #include "gtest/gtest.h"
@@ -40,7 +40,7 @@ using fetch::ledger::Block;
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::ledger::Address;
+using fetch::chain::Address;
 
 using Rng               = std::mt19937_64;
 using MainChainPtr      = std::unique_ptr<MainChain>;
@@ -578,7 +578,7 @@ TEST_P(MainChainTests, AdditionOfBlocksOutOfOrder)
   // Try adding a non-sequential block (prev hash is itself)
   Block dummy;
   dummy.body.block_number = 2;
-  dummy.body.miner        = ledger::Address{ledger::Address::RawAddress{}};
+  dummy.body.miner        = chain::Address{chain::Address::RawAddress{}};
   dummy.UpdateDigest();
   dummy.body.previous_hash = dummy.body.hash;
 

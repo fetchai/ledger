@@ -152,9 +152,9 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
   assert(input_array.size() == mask.size());
   assert(ret.size() >= typename ArrayType::SizeType(Sum(mask)));
 
-  auto     it1 = input_array.cbegin();
-  auto     it2 = mask.cbegin();
-  auto     rit = ret.begin();
+  auto            it1 = input_array.cbegin();
+  auto            it2 = mask.cbegin();
+  auto            rit = ret.begin();
   DefaultSizeType counter{0};
   while (rit.is_valid())
   {
@@ -195,7 +195,7 @@ void Scatter(ArrayType &input_array, ArrayType const &updates,
 {
   assert(indices.size() == updates.size());
 
-  auto     indices_it = indices.begin();
+  auto            indices_it = indices.begin();
   DefaultSizeType update_idx{0};
 
   while (indices_it != indices.end())
@@ -668,8 +668,9 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
  * @param ret Output Tensor of shape of input with size 1 along given axes
  */
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &            obj1,
-                                                std::vector<DefaultSizeType> const &axes, ArrayType &ret)
+meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &                   obj1,
+                                                std::vector<DefaultSizeType> const &axes,
+                                                ArrayType &                         ret)
 {
   using Type = typename ArrayType::Type;
 
@@ -691,7 +692,7 @@ meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &            obj
  * @return Output Tensor of shape of input with size 1 along given axes
  */
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &            obj1,
+meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &                   obj1,
                                                      std::vector<DefaultSizeType> const &axes)
 {
   using Type = typename ArrayType::Type;
@@ -860,8 +861,7 @@ void ReduceMax(ArrayType const &obj1, DefaultSizeType axis, ArrayType &ret)
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(std::numeric_limits<DataType>::lowest());
-
+  ret.Fill(numeric_lowest<DataType>());
   Reduce(axis, [](DataType const &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
 
@@ -894,7 +894,7 @@ void ReduceMax(ArrayType const &obj1, std::vector<DefaultSizeType> axes, ArrayTy
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(std::numeric_limits<DataType>::min());
+  ret.Fill(numeric_lowest<DataType>());
 
   Reduce(axes, [](DataType const &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
@@ -938,8 +938,8 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
   {  // Argmax over the full array
     assert(ret.size() == SizeType(1));
     DefaultSizeType position = 0;
-    auto     it       = array.begin();
-    Type     value    = numeric_lowest<Type>();
+    auto            it       = array.begin();
+    Type            value    = numeric_lowest<Type>();
 
     auto counter = DefaultSizeType{0};
     while (it.is_valid())

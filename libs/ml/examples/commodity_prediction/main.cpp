@@ -46,7 +46,7 @@ using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 using namespace fetch::math;
 
-static const DataType LEARNING_RATE{0.1f};
+static const DataType        LEARNING_RATE{0.1f};
 static const DefaultSizeType EPOCHS{200};
 static const DefaultSizeType BATCH_SIZE{64};
 static const DefaultSizeType PATIENCE = 25;
@@ -103,7 +103,7 @@ LayerType GetLayerType(std::string const &layer_name)
 std::pair<std::string, std::vector<std::string>> ReadArchitecture(
     std::string const &filename, std::shared_ptr<GraphType> const &g, DefaultSizeType line_num = 0)
 {
-  using SizeType = fetch::math::DefaultSizeType;
+  using SizeType                     = fetch::math::DefaultSizeType;
   char                     delimiter = ',';
   std::ifstream            file(filename);
   std::string              buf;
@@ -416,7 +416,7 @@ int main(int argc, char **argv)
       // Training loop
       // run first loop to get loss
 
-      DataType min_loss       = std::numeric_limits<DataType>::max();
+      DataType min_loss       = numeric_max<DataType>();
       SizeType patience_count = 0;
 
       for (SizeType k{0}; k < EPOCHS; k++)

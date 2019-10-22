@@ -26,3 +26,8 @@ target_link_libraries(fetch-dmlf
 
 # Test targets
 add_test_target()
+
+# ------------------------------------------------------------------------------
+# Example Targets
+# ------------------------------------------------------------------------------
+add_subdirectory(examples)

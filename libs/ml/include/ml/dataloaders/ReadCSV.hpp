@@ -51,9 +51,9 @@ TensorType ReadCSV(std::string const &filename, math::DefaultSizeType const cols
     throw ml::exceptions::InvalidFile("ReadCSV cannot open file " + filename);
   }
 
-  std::string           buf;
-  char const            delimiter = ',';
-  std::string           field_value;
+  std::string                  buf;
+  char const                   delimiter = ',';
+  std::string                  field_value;
   fetch::math::DefaultSizeType row{0};
   fetch::math::DefaultSizeType col{0};
 

@@ -20,6 +20,7 @@ target_link_libraries(fetch-crypto
                              fetch-meta
                              fetch-math
                              fetch-vectorise
+                             fetch-logging
                              vendor-openssl
                              vendor-mcl)
 

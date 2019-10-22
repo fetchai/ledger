@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "storage/new_revertible_document_store.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -146,21 +146,6 @@ Hash NewRevertibleDocumentStore::CurrentHash()
 std::size_t NewRevertibleDocumentStore::size() const
 {
   return storage_.size();
-}
-
-NewRevertibleDocumentStore::Keys NewRevertibleDocumentStore::KeyDump()
-{
-  NewRevertibleDocumentStore::Keys all_keys;
-
-  auto it = storage_.begin();
-  while (it != storage_.end())
-  {
-    ResourceID key = ResourceID{it.GetKey()};
-    all_keys.push_back(key);
-    ++it;
-  }
-
-  return all_keys;
 }
 
 void NewRevertibleDocumentStore::Reset()

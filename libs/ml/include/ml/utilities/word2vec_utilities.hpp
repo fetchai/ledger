@@ -20,7 +20,9 @@
 #include "math/clustering/knn.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
+#include "ml/layers/skip_gram.hpp"
 
+#include <chrono>
 #include <cstring>
 #include <dirent.h>
 #include <fstream>
@@ -141,9 +143,10 @@ std::string KNNTest(dataloaders::GraphW2VLoader<TensorType> const &dl, TensorTyp
 }
 
 template <class TensorType>
-std::string AnalogiesFileTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
-                              TensorType const &embeddings, std::string const &analogy_file,
-                              bool verbose = false)
+std::pair<std::string, float> AnalogiesFileTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
+                                                TensorType const & embeddings,
+                                                std::string const &analogy_file,
+                                                bool               verbose = false)
 {
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
@@ -222,20 +225,20 @@ std::string AnalogiesFileTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
   outstream << "Unknown, success, fail: " << unknown_count << ' ' << success_count << ' '
             << fail_count << std::endl;
 
-  outstream << "Success percentage: "
-            << static_cast<float>(success_count) * 100.0f /
-                   static_cast<float>(success_count + fail_count)
-            << "%" << std::endl;
+  float success_fraction =
+      static_cast<float>(success_count) / static_cast<float>(success_count + fail_count);
 
-  return outstream.str();
+  outstream << "Success percentage: " << success_fraction * 100.0f << "%" << std::endl;
+
+  return std::make_pair(outstream.str(), success_fraction);
 }
 
 template <class TensorType>
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
                     dataloaders::GraphW2VLoader<TensorType> const &dl, std::string const &word0,
                     std::string const &word1, std::string const &word2, std::string const &word3,
-                    math::DefaultSizeType K, std::string const &analogies_test_file, bool verbose = true,
-                    std::string const &outfile = "")
+                    math::DefaultSizeType K, std::string const &analogies_test_file,
+                    bool verbose = true, std::string const &outfile = "")
 {
   TensorType const &weights = utilities::GetEmbeddings(g, skip_gram_name);
 
@@ -244,14 +247,13 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
   std::string word_analogy_results =
       utilities::WordAnalogyTest(dl, weights, word1, word2, word3, K);
 
-  std::string analogies_file_results =
-      utilities::AnalogiesFileTest(dl, weights, analogies_test_file);
+  auto analogies_file_results = utilities::AnalogiesFileTest(dl, weights, analogies_test_file);
 
   if (verbose)
   {
     std::cout << std::endl << knn_results << std::endl;
     std::cout << std::endl << word_analogy_results << std::endl;
-    std::cout << std::endl << analogies_file_results << std::endl;
+    std::cout << std::endl << analogies_file_results.first << std::endl;
   }
   if (!outfile.empty())
   {
@@ -260,7 +262,7 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
     {
       test_file << std::endl << knn_results << std::endl;
       test_file << std::endl << word_analogy_results << std::endl;
-      test_file << std::endl << analogies_file_results << std::endl;
+      test_file << std::endl << analogies_file_results.first << std::endl;
     }
   }
 }
@@ -270,6 +272,8 @@ inline std::string ReadFile(std::string const &path)
   std::ifstream t(path);
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
+
+std::string GetStrTimestamp();
 
 }  // namespace utilities
 }  // namespace ml
