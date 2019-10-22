@@ -75,7 +75,6 @@ public:
   // Use the current state to set the hash
   void UpdateHash();
 
-  Keys KeyDump() const override;
   void Reset() override;
 
 private:
