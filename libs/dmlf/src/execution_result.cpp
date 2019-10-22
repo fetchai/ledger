@@ -61,7 +61,7 @@ void ExecutionResult::FulfillPromise(PromiseOfResult &promise, ExecutionResult c
 {
   serializers::LargeObjectSerializeHelper serializer;
   serializer << fulfiller;
-  promise.GetInnerPromise()->Fulfill(serializer.buffer.data());
+  promise.GetInnerPromise()->Fulfill(serializer.data());
 }
 
 ExecutionResult::PromiseOfResult ExecutionResult::MakeFulfilledPromise(Error &error)

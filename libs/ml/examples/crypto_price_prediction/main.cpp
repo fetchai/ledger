@@ -134,9 +134,9 @@ void SaveGraphToFile(GraphType &g, std::string const &file_name)
   std::cout << "finish serializing" << std::endl;
 
   std::ofstream outFile(file_name, std::ios::out | std::ios::binary);
-  outFile.write(losh.buffer.data().char_pointer(), std::streamsize(losh.buffer.size()));
+  outFile.write(losh.data().char_pointer(), std::streamsize(losh.data().size()));
   outFile.close();
-  std::cout << losh.buffer.size() << std::endl;
+  std::cout << losh.data().size() << std::endl;
   std::cout << "finish writing to file" << std::endl;
 }
 

@@ -29,18 +29,18 @@ class Address;
 }  // namespace chain
 namespace ledger {
 
-class Block;
-
 class StakeManagerInterface
 {
 public:
+  using BlockIndex = uint64_t;
+
   // Construction / Destruction
   StakeManagerInterface()          = default;
   virtual ~StakeManagerInterface() = default;
 
   /// @name Stake Manager Interface
   /// @{
-  virtual void UpdateCurrentBlock(Block const &current) = 0;
+  virtual void UpdateCurrentBlock(BlockIndex block_index) = 0;
   /// @}
 
 private:

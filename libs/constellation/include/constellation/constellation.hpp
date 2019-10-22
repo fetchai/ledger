@@ -108,10 +108,10 @@ public:
     }
   };
 
-  Constellation(CertificatePtr certificate, Config config);
+  Constellation(CertificatePtr const &certificate, Config config);
   ~Constellation() override = default;
 
-  void Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor);
+  bool Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor);
   void SignalStop();
 
   void DumpOpenAPI(std::ostream &stream);

@@ -35,6 +35,8 @@
 namespace fetch {
 namespace ledger {
 
+class StorageInterface;
+
 class Consensus final : public ConsensusInterface
 {
 public:
@@ -47,13 +49,13 @@ public:
   using BlockEntropy      = ledger::Block::BlockEntropy;
 
   Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
-            Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size,
-            uint32_t block_interval_ms = 1000);
+            StorageInterface &storage, Identity mining_identity, uint64_t aeon_period,
+            uint64_t max_committee_size, uint32_t block_interval_ms = 1000);
 
   void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
   Status       ValidBlock(Block const &current) const override;
-  void         Reset(StakeSnapshot const &snapshot);
+  void         Reset(StakeSnapshot const &snapshot, StorageInterface &storage);
   void         Refresh() override;
 
   StakeManagerPtr stake();
@@ -63,12 +65,14 @@ public:
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
+  static constexpr uint64_t    INVALID_BLOCK  = 0xFFFFFFFFFFFFFFFFllu;
 
   using Committee        = StakeManager::Committee;
   using CommitteePtr     = std::shared_ptr<Committee const>;
   using BlockIndex       = uint64_t;
   using CommitteeHistory = std::map<BlockIndex, CommitteePtr>;
 
+  StorageInterface &storage_;
   StakeManagerPtr  stake_;
   BeaconServicePtr beacon_;
   MainChain const &chain_;
@@ -76,9 +80,9 @@ private:
   chain::Address   mining_address_;
 
   // Global variables relating to consensus
-  uint64_t aeon_period_        = 0;
-  uint64_t max_committee_size_ = 0;
-  double   threshold_          = 1.0;
+  uint64_t aeon_period_    = 0;
+  uint64_t committee_size_ = 0;
+  double   threshold_      = 1.0;
 
   // Consensus' view on the heaviest block etc.
   Block  current_block_;
@@ -96,6 +100,7 @@ private:
   bool         ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool         ShouldTriggerNewCommittee(Block const &block);
   bool         EnoughQualSigned(BlockEntropy const &block_entropy) const;
+  void         AddCommitteeToHistory(uint64_t block_number, CommitteePtr const &committee);
 };
 
 }  // namespace ledger

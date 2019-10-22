@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/consensus/stake_update_event.hpp"
+
 #include <cstdint>
 
 namespace fetch {
@@ -47,13 +49,15 @@ enum class ContractExecutionStatus
 
 struct ContractExecutionResult
 {
-  ContractExecutionStatus status{
-      ContractExecutionStatus::NOT_RUN};  ///< The status of the transaction
-  TokenAmount charge{0};                  ///< The number of units of charge
-  TokenAmount charge_rate{0};             ///< The cost of each unit of charge
-  TokenAmount charge_limit{0};            ///< Max. limit for units to charge defined by Tx sender
-  TokenAmount fee{0};                     ///< The total fee claimed by the miner
-  int64_t     return_value{0};            ///< Return value from executed contract function
+  /// The status of the transaction
+  ContractExecutionStatus status{ContractExecutionStatus::NOT_RUN};
+
+  TokenAmount       charge{0};        ///< The number of units of charge
+  TokenAmount       charge_rate{0};   ///< The cost of each unit of charge
+  TokenAmount       charge_limit{0};  ///< Max. limit for units to charge defined by Tx sender
+  TokenAmount       fee{0};           ///< The total fee claimed by the miner
+  int64_t           return_value{0};  ///< Return value from executed contract function
+  StakeUpdateEvents stake_updates{};  ///< The stake updates that occured during this execution
 };
 
 constexpr char const *ToString(ContractExecutionStatus status)

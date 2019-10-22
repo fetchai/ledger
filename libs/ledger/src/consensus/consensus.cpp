@@ -92,19 +92,19 @@ T DeterministicShuffle(T &container, uint64_t entropy)
 }  // namespace
 
 Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
-                     Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size,
-                     uint32_t block_interval_ms)
-  : stake_{std::move(stake)}
+                     StorageInterface &storage, Identity mining_identity, uint64_t aeon_period,
+                     uint64_t committee_size, uint32_t block_interval_ms)
+  : storage_{storage}
+  , stake_{std::move(stake)}
   , beacon_{std::move(beacon)}
   , chain_{chain}
   , mining_identity_{std::move(mining_identity)}
   , mining_address_{chain::Address(mining_identity_)}
   , aeon_period_{aeon_period}
-  , max_committee_size_{max_committee_size}
+  , committee_size_{committee_size}
   , block_interval_ms_{block_interval_ms}
 {
   assert(stake_);
-  FETCH_UNUSED(chain_);
 }
 
 // TODO(HUT): probably this is not required any more.
@@ -348,12 +348,16 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     beginning_of_aeon_ = GetBeginningOfAeon(current_block_, chain_);
   }
 
-  stake_->UpdateCurrentBlock(current_block_);
+  stake_->Load(storage_);
+
+  // this might cause a trim that is not flushed to the state DB, however, on the next block the
+  // full trim will take place and the state DB will be updated.
+  stake_->UpdateCurrentBlock(current_block_.body.block_number);
 
   if (ShouldTriggerNewCommittee(current_block_))
   {
     CabinetMemberList cabinet_member_list;
-    committee_history_[current.body.block_number] = stake_->BuildCommittee(current_block_);
+    committee_history_[current.body.block_number] = stake_->BuildCommittee(current_block_, committee_size_);
 
     TrimToSize(committee_history_, HISTORY_LENGTH);
 
@@ -533,13 +537,27 @@ Status Consensus::ValidBlock(Block const &current) const
   return ret;
 }
 
-void Consensus::Reset(StakeSnapshot const &snapshot)
+void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
 {
-  committee_history_[0] = stake_->Reset(snapshot);
+  committee_history_[0] = stake_->Reset(snapshot, committee_size_);
 
   if (committee_history_.find(0) == committee_history_.end())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "No committee history found for block when resetting.");
+  }
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Resetting stake aggregate...");
+
+  // additionally since we need to flush these changes to disk
+  bool const success = stake_->Save(storage);
+
+  if (success)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Reseting stake aggregate...complete");
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Reseting stake aggregate...FAILED");
   }
 }
 
@@ -554,8 +572,7 @@ void Consensus::SetThreshold(double threshold)
 
 void Consensus::SetCommitteeSize(uint64_t size)
 {
-  max_committee_size_ = size;
-  stake_->SetCommitteeSize(max_committee_size_);
+  committee_size_ = size;
 }
 
 StakeManagerPtr Consensus::stake()
@@ -566,4 +583,10 @@ StakeManagerPtr Consensus::stake()
 void Consensus::SetDefaultStartTime(uint64_t default_start_time)
 {
   default_start_time_ = default_start_time;
+}
+
+void Consensus::AddCommitteeToHistory(uint64_t block_number, CommitteePtr const &committee)
+{
+  committee_history_[block_number] = committee;
+  TrimToSize(committee_history_, HISTORY_LENGTH);
 }

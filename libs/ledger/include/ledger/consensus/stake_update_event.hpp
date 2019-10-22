@@ -18,30 +18,24 @@
 //------------------------------------------------------------------------------
 
 #include <cstdint>
+#include <vector>
+
+#include "crypto/identity.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class StakeSnapshot;
-
-
-
-class StakeUpdateInterface
+struct StakeUpdateEvent
 {
-public:
   using StakeAmount = uint64_t;
   using BlockIndex  = uint64_t;
 
-  // Construction / Destruction
-  StakeUpdateInterface()          = default;
-  virtual ~StakeUpdateInterface() = default;
-
-  /// @name Stake Update Interface
-  /// @{
-  virtual void AddStakeUpdate(BlockIndex block_index, crypto::Identity const &identity,
-                              StakeAmount stake) = 0;
-  /// @}
+  BlockIndex       block_index{0};
+  crypto::Identity from{};
+  StakeAmount      amount{0};
 };
 
-}  // namespace ledger
-}  // namespace fetch
+using StakeUpdateEvents = std::vector<StakeUpdateEvent>;
+
+} // namespace ledger
+} // namespace fetch

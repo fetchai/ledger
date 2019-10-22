@@ -50,7 +50,7 @@ protected:
   void SetUp() override
   {
     rng_.Seed(2048);
-    stake_manager_ = std::make_unique<StakeManager>(MAX_COMMITTEE_SIZE);
+    stake_manager_ = std::make_unique<StakeManager>();
   }
 
   void TearDown() override
@@ -71,7 +71,7 @@ protected:
 
     for (std::size_t round = 0; round < num_rounds; ++round)
     {
-      auto const committee = stake_manager_->BuildCommittee(block);
+      auto const committee = stake_manager_->BuildCommittee(block, MAX_COMMITTEE_SIZE);
       ASSERT_TRUE(static_cast<bool>(committee));
       ASSERT_EQ(committee->size(), committee_size);
 
@@ -83,7 +83,7 @@ protected:
       block.body.hash          = GenerateRandomAddress(rng_).address();
       block.body.block_number += 1;
 
-      stake_manager_->UpdateCurrentBlock(block);
+      stake_manager_->UpdateCurrentBlock(block.body.block_number);
     }
   }
 
@@ -107,7 +107,7 @@ TEST_F(StakeManagerTests, DISABLED_CheckBasicStakeChangeScenarios)
   }
 
   // configure the stake manager
-  stake_manager_->Reset(initial);
+  stake_manager_->Reset(initial, MAX_COMMITTEE_SIZE);
 
   // create the starting blocks (note block contains an address, not an identity)
   Block block;

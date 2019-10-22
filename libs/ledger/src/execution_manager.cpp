@@ -22,6 +22,7 @@
 #include "core/mutex.hpp"
 #include "core/set_thread_name.hpp"
 #include "ledger/execution_manager.hpp"
+#include "ledger/consensus/stake_update_event.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_status_cache.hpp"
@@ -174,9 +175,10 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
 
   // update the last block hash
   state_.ApplyVoid([&block](Summary &summary) {
-    summary.last_block_hash  = block.hash;
-    summary.last_block_miner = block.miner;
-    summary.state            = State::ACTIVE;
+    summary.last_block_hash   = block.hash;
+    summary.last_block_miner  = block.miner;
+    summary.last_block_number = block.block_number;
+    summary.state             = State::ACTIVE;
   });
   num_slices_ = block.slices.size();
 
@@ -333,8 +335,11 @@ void ExecutionManager::Stop()
   }
 
   // wait for the monitor thread to exit
-  monitor_thread_->join();
-  monitor_thread_.reset();
+  if (monitor_thread_)
+  {
+    monitor_thread_->join();
+    monitor_thread_.reset();
+  }
 
   // tear down the thread pool
   thread_pool_->Stop();
@@ -381,6 +386,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
   std::size_t current_slice        = 0;
   uint64_t    aggregate_block_fees = 0;
+  StakeUpdateEvents aggregated_stake_events{};
 
   Digest current_block;
 
@@ -438,6 +444,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_state        = MonitorState::SCHEDULE_NEXT_SLICE;
         current_slice        = 0;
         aggregate_block_fees = 0;
+        aggregated_stake_events.clear();
       }
 
       break;
@@ -530,6 +537,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
           // update aggregate fees
           aggregate_block_fees += item->fee();
+          item->AggregateStakeUpdates(aggregated_stake_events);
 
           if (tx_status_cache_)
           {
@@ -599,12 +607,18 @@ void ExecutionManager::MonitorThreadEntrypoint()
           if (!idle_executors_.empty())
           {
             // lookup the last block miner
-            chain::Address const last_block_miner =
-                state_.Apply([](Summary const &summary) { return summary.last_block_miner; });
+            chain::Address last_block_miner;
+            BlockIndex last_block_number{0};
+
+            // extract the information from the summary structure
+            state_.ApplyVoid([&last_block_miner, &last_block_number](Summary const &summary) {
+              last_block_miner  = summary.last_block_miner;
+              last_block_number = summary.last_block_number;
+            });
 
             // get the first one and settle the fees
-            idle_executors_.front()->SettleFees(last_block_miner, aggregate_block_fees,
-                                                log2_num_lanes_);
+            idle_executors_.front()->SettleFees(last_block_miner, last_block_number, aggregate_block_fees,
+                                                log2_num_lanes_, aggregated_stake_events);
             fees_settled_count_->increment();
             break;
           }

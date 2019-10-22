@@ -64,6 +64,7 @@ using fetch::muddle::MuddleInterface;
 using fetch::network::AtomicCounterName;
 using fetch::network::AtomicInFlightCounter;
 using fetch::network::NetworkManager;
+using fetch::ledger::StorageInterface;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -177,7 +178,7 @@ StakeManagerPtr CreateStakeManager(constellation::Constellation::Config const &c
 
   if (cfg.proof_of_stake)
   {
-    mgr = std::make_shared<ledger::StakeManager>(cfg.max_committee_size);
+    mgr = std::make_shared<ledger::StakeManager>();
   }
 
   return mgr;
@@ -185,14 +186,15 @@ StakeManagerPtr CreateStakeManager(constellation::Constellation::Config const &c
 
 ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, StakeManagerPtr stake,
                              BeaconServicePtr beacon, MainChain const &chain,
-                             Identity const &identity)
+                             StorageInterface &storage, Identity const &identity)
 {
   ConsensusPtr consensus{};
 
   if (stake)
   {
-    consensus = std::make_shared<ledger::Consensus>(stake, beacon, chain, identity, cfg.aeon_period,
-                                                    cfg.max_committee_size, cfg.block_interval_ms);
+    consensus = std::make_shared<ledger::Consensus>(stake, beacon, chain, storage, identity,
+                                                    cfg.aeon_period, cfg.max_committee_size,
+                                                    cfg.block_interval_ms);
   }
 
   return consensus;
@@ -222,8 +224,8 @@ BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const 
 
   if (cfg.proof_of_stake)
   {
-    beacon = std::make_unique<fetch::beacon::BeaconService>(muddle, manifest_cache, certificate,
-                                                            event_manager);
+    beacon = std::make_unique<fetch::beacon::BeaconService>(muddle, manifest_cache,
+                                                            std::move(certificate), event_manager);
   }
 
   return beacon;
@@ -241,7 +243,7 @@ BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const 
  * @param interface_address The current interface address TODO(EJF): This should be more integrated
  * @param db_prefix The database file(s) prefix
  */
-Constellation::Constellation(CertificatePtr certificate, Config config)
+Constellation::Constellation(CertificatePtr const &certificate, Config config)
   : active_{true}
   , cfg_{std::move(config)}
   , p2p_port_(LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::CORE))
@@ -268,11 +270,11 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , beacon_network_{CreateBeaconNetwork(cfg_, certificate, network_manager_)}
   , beacon_{CreateBeaconService(cfg_, *beacon_network_, *shard_management_, certificate)}
   , stake_{CreateStakeManager(cfg_)}
-  , consensus_{CreateConsensus(cfg_, stake_, beacon_, chain_, certificate->identity())}
+  , consensus_{CreateConsensus(cfg_, stake_, beacon_, chain_, *storage_, certificate->identity())}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] {
-          return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
+          return std::make_shared<Executor>(storage_);
         },
         tx_status_cache_)}
   , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
@@ -404,9 +406,11 @@ void Constellation::DumpOpenAPI(std::ostream &stream)
  *
  * @param initial_peers The peers that should be initially connected to
  */
-void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor)
+bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor)
 {
   using Peers = muddle::MuddleInterface::Peers;
+
+  bool startup_success{true};
 
   //---------------------------------------------------------------
   // Step 1. Start all the components
@@ -436,7 +440,7 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   if (!WaitForLaneServersToStart())
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to start lane server instances");
-    return;
+    return false;
   }
   FETCH_LOG_INFO(LOGGING_NAME, "Starting shard services...complete");
 
@@ -488,32 +492,48 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
 
     if (cfg_.genesis_file_location.empty())
     {
-      creator.LoadFile(GENESIS_FILENAME);
+      startup_success &= creator.LoadFile(GENESIS_FILENAME);
     }
     else
     {
-      creator.LoadFile(cfg_.genesis_file_location);
+      startup_success &= creator.LoadFile(cfg_.genesis_file_location);
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
+    if (!startup_success)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to restore state from genesis file");
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
+    }
   }
 
-  // reactor important to run the block/chain state machine
-  reactor_.Start();
+  if (startup_success)
+  {
+    // beacon network
+    if (beacon_network_)
+    {
+      beacon_network_->Start({LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::DKG)});
+    }
 
-  /// BLOCK EXECUTION & MINING
+    // reactor important to run the block/chain state machine
+    reactor_.Start();
 
-  execution_manager_->Start();
-  tx_processor_.Start();
+    /// BLOCK EXECUTION & MINING
 
-  /// INPUT INTERFACES
+    execution_manager_->Start();
+    tx_processor_.Start();
 
-  // Finally start the HTTP server
-  http_.Start(http_port_);
+    /// INPUT INTERFACES
 
-  // The block coordinator needs to access correctly started lanes to recover state in the case of
-  // a crash.
-  reactor_.Attach(block_coordinator_.GetWeakRunnable());
+    // Finally start the HTTP server
+    http_.Start(http_port_);
+
+    // The block coordinator needs to access correctly started lanes to recover state in the case of
+    // a crash.
+    reactor_.Attach(block_coordinator_.GetWeakRunnable());
+  }
 
   //---------------------------------------------------------------
   // Step 2. Main monitor loop
@@ -521,7 +541,7 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   bool start_up_in_progress{true};
 
   // monitor loop
-  while (active_)
+  while (startup_success && active_)
   {
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
@@ -578,6 +598,8 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   http_open_api_module_->Reset(nullptr);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
+
+  return startup_success;
 }
 
 void Constellation::OnBlock(ledger::Block const &block)

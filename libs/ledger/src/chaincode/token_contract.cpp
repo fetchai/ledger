@@ -286,8 +286,8 @@ Contract::Result TokenContract::AddStake(chain::Transaction const &tx, BlockInde
             FETCH_LOG_INFO(LOGGING_NAME, "Stake updates are happening");
 
             // record the stake update event
-            stake_updates_.emplace_back(StakeUpdate{crypto::Identity(input.FromBase64()),
-                                                    block + chain::STAKE_WARM_UP_PERIOD, amount});
+            stake_updates_.emplace_back(StakeUpdateEvent{
+              block + chain::STAKE_WARM_UP_PERIOD, crypto::Identity(input.FromBase64()), amount});
 
             // save the state
             auto const status = SetStateRecord(record, tx.from().display());
