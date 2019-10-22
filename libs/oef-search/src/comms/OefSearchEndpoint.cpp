@@ -15,8 +15,6 @@ static Gauge count("mt-search.network.OefSearchEndpoint");
 OefSearchEndpoint::OefSearchEndpoint(std::shared_ptr<ProtoEndpoint> endpoint)
   : Parent(std::move(endpoint))
 {
-  count++;
-  ident = count.get();
 }
 
 void OefSearchEndpoint::close(const std::string &reason)
@@ -49,7 +47,7 @@ void OefSearchEndpoint::setup()
 
   endpoint->SetOnStartHandler([myself_wp]() {});
 
-  auto myGroupId = GetIdentifier();
+  auto myGroupId = endpoint->GetIdentifier();
 
   endpoint->SetOnCompleteHandler([myGroupId, myself_wp](bool /*success*/, unsigned long id, Uri uri,
                                                         ConstCharArrayBuffer buffers) {

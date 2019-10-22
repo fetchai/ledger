@@ -50,10 +50,6 @@ public:
   void SetState(const std::string &stateName, bool value);
   bool GetState(const std::string &stateName) const;
 
-  std::size_t GetIdentifier() const
-  {
-    return ident;
-  }
 
   void AddGoFunction(std::function<void(SELF_P)> func)
   {
@@ -63,7 +59,6 @@ public:
 protected:
 private:
   std::map<std::string, bool>                         states;
-  std::size_t                                         ident;
   std::shared_ptr<IOefTaskFactory<OefSearchEndpoint>> factory;
   std::list<std::function<void(SELF_P)>>              go_functions;
 
