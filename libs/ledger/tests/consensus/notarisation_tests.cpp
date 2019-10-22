@@ -236,7 +236,7 @@ TEST(notarisation, notarise_blocks)
     blocks_to_sign[i]->body.miner_id = nodes[random_miner]->muddle_certificate->identity();
     expected_notarisations.insert(blocks_to_sign[i]->body.hash);
 
-    // Add this block to everyones chain
+    // Add this block to everyone's chain
     for (auto &node : nodes)
     {
       node->chain.AddBlock(*blocks_to_sign[i]);
@@ -254,7 +254,7 @@ TEST(notarisation, notarise_blocks)
     }
   }
 
-  // wait for all the nodes to completely connect
+  // Wait for to complete notarisations
   pending_nodes.resize(committee_size, 0);
   std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
   while (!pending_nodes.empty())

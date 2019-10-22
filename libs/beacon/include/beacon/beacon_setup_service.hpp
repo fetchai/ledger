@@ -75,8 +75,8 @@ public:
     WAIT_FOR_QUAL_COMPLAINTS,
     WAIT_FOR_RECONSTRUCTION_SHARES,
     COMPUTE_PUBLIC_SIGNATURE,
-    WAIT_FOR_NOTARISATION_KEYS,
     DRY_RUN_SIGNING,
+    WAIT_FOR_NOTARISATION_KEYS,
     BEACON_READY
   };
 
@@ -141,8 +141,8 @@ public:
   State OnWaitForQualComplaints();
   State OnWaitForReconstructionShares();
   State OnComputePublicSignature();
-  State OnWaitForNotarisationKeys();
   State OnDryRun();
+  State OnWaitForNotarisationKeys();
   State OnBeaconReady();
   /// @}
 
