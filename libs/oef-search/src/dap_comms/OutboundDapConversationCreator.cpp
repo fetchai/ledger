@@ -75,7 +75,7 @@ std::shared_ptr<OutboundConversation> OutboundDapConversationCreator::start(
     throw std::invalid_argument(
         target_path.path + " is not a valid target, to start a OutboundDapConversationCreator!");
   }
-
+  conv->SetId(target_path.ToString());
   ident2conversation_[this_id] = conv;
   worker->post(conv);
   return conv;

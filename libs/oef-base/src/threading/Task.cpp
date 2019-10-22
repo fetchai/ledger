@@ -13,7 +13,7 @@ std::atomic<std::size_t> id_counter(0);
 Task::Task()
   : task_state_{TaskState ::NOT_PENDING}
   , cancelled(false)
-  , missed_make_runnable_{0}
+  , made_runnable_{0}
 {
   created_count++;
   group_id = thread_group_id;
@@ -108,8 +108,8 @@ bool Task::MakeRunnable()
   else
   {
     Counter("mt-core.tasks.MakeRunnable.no-taskpool")++;
-    missed_make_runnable_++;
   }
+  made_runnable_++;
   return status;
 }
 
