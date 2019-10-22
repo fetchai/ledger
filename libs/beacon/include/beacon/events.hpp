@@ -20,7 +20,7 @@
 namespace fetch {
 namespace beacon {
 
-struct EventCommitteeCompletedWork
+struct EventCabinetCompletedWork
 {
   Aeon aeon;
 };
