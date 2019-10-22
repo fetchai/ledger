@@ -69,6 +69,7 @@ public:
   using Identity                      = Block::Identity;
   using BlockBody                     = Block::Body;
   using BlockHeight                   = uint64_t;
+  using BlockWeight                   = Block::Weight;
   using MuddleInterface               = muddle::MuddleInterface;
   using Endpoint                      = muddle::MuddleEndpoint;
   using Server                        = fetch::muddle::rpc::Server;
@@ -108,17 +109,16 @@ public:
   /// Setup management
   /// @{
   void NewAeonNotarisationUnit(SharedAeonNotarisationUnit const &notarisation_manager);
-  void SetNotarisedBlockCallback(CallbackFunction callback);
   /// @}
 
-  /// Call to notarise block
+  /// Calls from other services
   /// @{
-  void NotariseBlock(BlockBody const &block);
+  void                                     NotariseBlock(BlockBody const &block);
+  std::pair<BlockHash, AggregateSignature> HighestWeightNotarisedBlock(BlockHeight const &height);
   /// @}
 
   /// Helper function
   /// @{
-  uint64_t NextBlockHeight() const;
   uint64_t BlockNumberCutoff() const;
   /// @}
 
@@ -142,21 +142,19 @@ private:
   /// Management of active DKG keys
   std::deque<SharedAeonNotarisationUnit> aeon_notarisation_queue_;
   SharedAeonNotarisationUnit             active_notarisation_unit_;
+  SharedAeonNotarisationUnit             previous_notarisation_unit_;
 
   /// @{Notarisations
   BlockHeightNotarisationShares
       notarisations_being_built_;  ///< Signature shares for blocks at a particular height
   BlockHeightGroupNotarisations
       notarisations_built_;  ///< Group signatures for blocks at a particular height
-  BlockHeightGroupNotarisations
-      detached_notarisations_built_;  ///< Group signatures for blocks without notarisated previous
   std::unordered_map<BlockHeight, uint32_t>
-           previous_notarisation_rank_;  ///< Heighest rank notarised at a particular block height
-  uint64_t highest_notarised_block_height_{0};  ///< Current highest notarised block height
-  static const uint32_t cutoff_ = 2;            ///< Number of blocks behind
+           previous_notarisation_rank_;  ///< Highest rank notarised at a particular block height
+  uint64_t notarised_chain_height_{0};   ///< Current highest notarised block height in chain
+  uint64_t norisation_collection_height_{0};  // Block height current collecting signatures for
+  static const uint32_t cutoff_ = 2;          ///< Number of blocks behind
   /// @}
-
-  CallbackFunction callback_;  ///< Callback for new block notarisation
 };
 }  // namespace ledger
 

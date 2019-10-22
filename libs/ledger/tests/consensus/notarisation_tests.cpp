@@ -98,9 +98,6 @@ struct NotarisationNode
       finished = true;
       output   = beacon->manager.GetDkgOutput();
     });
-
-    notarisation_service->SetNotarisedBlockCallback(
-        [this](BlockHash hash) { notarised_blocks.insert(hash); });
   }
 
   ~NotarisationNode()
@@ -184,12 +181,6 @@ TEST(notarisation, notarise_blocks)
     }
   }
 
-  // Reset cabinet for rbc in pre-dkg sync
-  for (auto &node : nodes)
-  {
-    node->QueueCabinet(cabinet, threshold);
-  }
-
   // Attach runnables
   for (auto &node : nodes)
   {
@@ -203,69 +194,73 @@ TEST(notarisation, notarise_blocks)
     node->reactor.Start();
   }
 
-  // Loop until everyone we expect to finish completes the DKG
-  pending_nodes.resize(committee_size, 0);
-  std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
-  while (!pending_nodes.empty())
+  for (uint8_t rounds = 0; rounds < 1; ++rounds)
   {
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
-    {
-      if (nodes[*it]->finished)
-      {
-        it = pending_nodes.erase(it);
-        break;
-      }
-      ++it;
-    }
-  }
 
-  // Generate blocks!
-  std::unordered_set<BlockHash> expected_notarisations;
-  std::vector<BlockPtr>         blocks_to_sign;
-  BlockGenerator                generator(1, 1);
-  for (uint16_t i = 0; i < 9; i++)
-  {
-    auto          random_miner = static_cast<uint32_t>(rand()) % committee_size;
-    BlockPtrConst previous     = nodes[random_miner]->chain.GetHeaviestBlock();
-    blocks_to_sign.push_back(generator(previous));
-    blocks_to_sign[i]->body.block_entropy.qualified = cabinet;
-    blocks_to_sign[i]->body.miner_id = nodes[random_miner]->muddle_certificate->identity();
-    expected_notarisations.insert(blocks_to_sign[i]->body.hash);
-
-    // Add this block to everyone's chain
+    // Reset cabinet for dkg
     for (auto &node : nodes)
     {
-      node->chain.AddBlock(*blocks_to_sign[i]);
+      node->QueueCabinet(cabinet, threshold);
     }
-  }
 
-  // Start signing
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  for (auto const &block : blocks_to_sign)
-  {
-    for (auto &node : nodes)
+    // Loop until everyone we expect to finish completes the DKG
+    pending_nodes.resize(committee_size, 0);
+    std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
+    while (!pending_nodes.empty())
     {
-      node->notarisation_service->NotariseBlock(block->body);
-      EXPECT_TRUE(!node->notarisation_service->GetNotarisations(block->body.block_number).empty());
-    }
-  }
-
-  // Wait for to complete notarisations
-  pending_nodes.resize(committee_size, 0);
-  std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
-  while (!pending_nodes.empty())
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
-    {
-      if (nodes[*it]->notarised_blocks == expected_notarisations)
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
       {
-        it = pending_nodes.erase(it);
-      }
-      else
-      {
+        if (nodes[*it]->finished)
+        {
+          it = pending_nodes.erase(it);
+          break;
+        }
         ++it;
+      }
+    }
+
+    // Generate blocks and notarise
+    std::vector<BlockPtr> blocks_to_sign;
+    BlockGenerator        generator(1, 1);
+    for (uint16_t i = 0; i < 9; i++)
+    {
+      auto          random_miner = static_cast<uint32_t>(rand()) % committee_size;
+      BlockPtrConst previous     = nodes[random_miner]->chain.GetHeaviestBlock();
+      blocks_to_sign.push_back(generator(previous));
+      blocks_to_sign[i]->body.block_entropy.qualified = cabinet;
+      blocks_to_sign[i]->body.miner_id = nodes[random_miner]->muddle_certificate->identity();
+
+      // Add this block to everyone's chain and ask them to sign
+      for (auto &node : nodes)
+      {
+        node->chain.AddBlock(*blocks_to_sign[i]);
+        node->notarisation_service->NotariseBlock(blocks_to_sign[i]->body);
+        EXPECT_TRUE(
+            !node->notarisation_service->GetNotarisations(blocks_to_sign[i]->body.block_number)
+                 .empty());
+      }
+
+      // Wait for everyone to notarise this block
+      pending_nodes.resize(committee_size, 0);
+      std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
+      while (!pending_nodes.empty())
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
+        {
+          if (nodes[*it]
+                  ->notarisation_service
+                  ->HighestWeightNotarisedBlock(blocks_to_sign[i]->body.block_number)
+                  .first == blocks_to_sign[i]->body.hash)
+          {
+            it = pending_nodes.erase(it);
+          }
+          else
+          {
+            ++it;
+          }
+        }
       }
     }
   }
