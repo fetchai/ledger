@@ -65,6 +65,7 @@ NotarisationService::State NotarisationService::OnKeyRotation()
   // Checking whether the new keys have been generated
   if (!aeon_notarisation_queue_.empty())
   {
+    new_keys                  = false;
     active_notarisation_unit_ = aeon_notarisation_queue_.front();
     aeon_notarisation_queue_.pop_front();
 
@@ -86,7 +87,7 @@ NotarisationService::State NotarisationService::OnNotarisationSynchronisation()
     return State::NOTARISATION_SYNCHRONISATION;
   }
 
-  norisation_collection_height_ = notarised_chain_height_ + 1;
+  notarisation_collection_height_ = notarised_chain_height_ + 1;
   return State::COLLECT_NOTARISATIONS;
 }
 
@@ -107,7 +108,7 @@ NotarisationService::State NotarisationService::OnCollectNotarisations()
 
   notarisation_promise_ = rpc_client_.CallSpecificAddress(
       *it, RPC_NOTARISATION, NotarisationServiceProtocol::GET_NOTARISATIONS,
-      norisation_collection_height_);
+      notarisation_collection_height_);
 
   // Note: this delay is effectively how long we wait for the network event to resolve
   state_machine_->Delay(std::chrono::milliseconds(50));
@@ -151,8 +152,14 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
     for (auto const &block_hash_sigs : ret)
     {
       BlockHash block_hash = block_hash_sigs.first;
-      auto &    existing_notarisations =
-          notarisations_being_built_[norisation_collection_height_][block_hash];
+      // If we have already built a notarisation for this hash then continue
+      if (notarisations_built_[notarisation_collection_height_].find(block_hash) !=
+          notarisations_built_[notarisation_collection_height_].end())
+      {
+        continue;
+      }
+      auto &existing_notarisations =
+          notarisations_being_built_[notarisation_collection_height_][block_hash];
 
       // Add signature shares for this particular block hash
       for (auto const &address_sig_pairs : block_hash_sigs.second)
@@ -172,8 +179,8 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
             if (active_notarisation_unit_->Verify(block_hash, signed_not.notarisation_share,
                                                   address_sig_pairs.first))
             {
-              FETCH_LOG_INFO(LOGGING_NAME, "Added notarisation from node ",
-                             active_notarisation_unit_->Index(address_sig_pairs.first));
+              FETCH_LOG_DEBUG(LOGGING_NAME, "Added notarisation from node ",
+                              active_notarisation_unit_->Index(address_sig_pairs.first));
               existing_notarisations[address_sig_pairs.first] = address_sig_pairs.second;
             }
           }
@@ -194,15 +201,17 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
     {
       // Compute and verify group signature
       std::unordered_map<MuddleAddress, Signature> notarisation_shares;
-      for (auto const &shares : notarisations_being_built_[norisation_collection_height_][hash])
+      for (auto const &shares : notarisations_being_built_[notarisation_collection_height_][hash])
       {
         notarisation_shares.insert({shares.first, shares.second.notarisation_share});
       }
       auto sig = active_notarisation_unit_->ComputeAggregateSignature(notarisation_shares);
       assert(active_notarisation_unit_->VerifyAggregateSignature(hash, sig));
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Notarisation built for block ", hash.ToHex());
-      notarisations_built_[norisation_collection_height_][hash] = sig;
+      FETCH_LOG_INFO(LOGGING_NAME, "Notarisation built for block ", hash.ToHex());
+      assert(notarisations_built_[notarisation_collection_height_].find(hash) ==
+             notarisations_built_[notarisation_collection_height_].end());
+      notarisations_built_[notarisation_collection_height_][hash] = sig;
     }
   }
 
@@ -217,14 +226,14 @@ NotarisationService::State NotarisationService::OnComplete()
 
   // If chain has moved ahead faster while notarisations were being collected then reset
   // the collection height
-  if (notarised_chain_height_ + 1 > norisation_collection_height_)
+  if (notarised_chain_height_ + 1 > notarisation_collection_height_)
   {
-    norisation_collection_height_ = notarised_chain_height_ + 1;
+    notarisation_collection_height_ = notarised_chain_height_ + 1;
   }
 
   // Completed notarisation of a sequence of blocks during aeon. Any notarised blocks not received
   // through RPC will be obtained via broadcast
-  if (norisation_collection_height_ > active_notarisation_unit_->round_end())
+  if (new_keys)
   {
     // Save previous as we might still need to notarise blocks from previous aeon
     previous_notarisation_unit_ = active_notarisation_unit_;
@@ -349,6 +358,7 @@ void NotarisationService::NewAeonNotarisationUnit(
     SharedAeonNotarisationUnit const &notarisation_manager)
 {
   aeon_notarisation_queue_.push_back(notarisation_manager);
+  new_keys = true;
 }
 
 uint64_t NotarisationService::BlockNumberCutoff() const

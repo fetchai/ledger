@@ -140,6 +140,7 @@ private:
   MainChain &chain_;  ///< Ref to system chain
 
   /// Management of active DKG keys
+  bool                                   new_keys{false};
   std::deque<SharedAeonNotarisationUnit> aeon_notarisation_queue_;
   SharedAeonNotarisationUnit             active_notarisation_unit_;
   SharedAeonNotarisationUnit             previous_notarisation_unit_;
@@ -152,8 +153,8 @@ private:
   std::unordered_map<BlockHeight, uint32_t>
            previous_notarisation_rank_;  ///< Highest rank notarised at a particular block height
   uint64_t notarised_chain_height_{0};   ///< Current highest notarised block height in chain
-  uint64_t norisation_collection_height_{0};  // Block height current collecting signatures for
-  static const uint32_t cutoff_ = 2;          ///< Number of blocks behind
+  uint64_t notarisation_collection_height_{0};  // Block height current collecting signatures for
+  static const uint32_t cutoff_ = 2;            ///< Number of blocks behind
   /// @}
 };
 }  // namespace ledger

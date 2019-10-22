@@ -107,7 +107,8 @@ struct NotarisationNode
     network_manager.Stop();
   }
 
-  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold)
+  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold, uint64_t round_start,
+                    uint64_t round_end)
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -115,8 +116,8 @@ struct NotarisationNode
     beacon->manager.NewCabinet(cabinet, threshold);
 
     // Setting the aeon details
-    beacon->aeon.round_start = 0;
-    beacon->aeon.round_end   = 10;
+    beacon->aeon.round_start = round_start;
+    beacon->aeon.round_end   = round_end;
     beacon->aeon.members     = std::move(cabinet);
     // Plus 5 so tests pass on first DKG attempt
     beacon->aeon.start_reference_timepoint =
@@ -194,13 +195,14 @@ TEST(notarisation, notarise_blocks)
     node->reactor.Start();
   }
 
-  for (uint8_t rounds = 0; rounds < 1; ++rounds)
+  uint64_t round_length = 10;
+  for (uint8_t round = 0; round < 2; ++round)
   {
-
     // Reset cabinet for dkg
+    uint64_t round_start = round * round_length;
     for (auto &node : nodes)
     {
-      node->QueueCabinet(cabinet, threshold);
+      node->QueueCabinet(cabinet, threshold, round_start, round_start + round_length);
     }
 
     // Loop until everyone we expect to finish completes the DKG
@@ -220,10 +222,16 @@ TEST(notarisation, notarise_blocks)
       }
     }
 
+    // Reset DKG finished
+    for (auto &nodes : nodes)
+    {
+      nodes->finished = false;
+    }
+
     // Generate blocks and notarise
     std::vector<BlockPtr> blocks_to_sign;
     BlockGenerator        generator(1, 1);
-    for (uint16_t i = 0; i < 9; i++)
+    for (uint16_t i = 0; i < round_length - 1; i++)
     {
       auto          random_miner = static_cast<uint32_t>(rand()) % committee_size;
       BlockPtrConst previous     = nodes[random_miner]->chain.GetHeaviestBlock();
