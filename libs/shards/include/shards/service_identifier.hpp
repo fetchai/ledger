@@ -29,7 +29,7 @@ namespace shards {
 class ServiceIdentifier
 {
 public:
-  constexpr static uint32_t INVALID_SERVICE_IDENTIFIER{std::numeric_limits<uint32_t>::max()};
+  constexpr static uint32_t SINGLETON_SERVICE{std::numeric_limits<uint32_t>::max()};
 
   enum class Type : uint8_t
   {
@@ -42,7 +42,7 @@ public:
 
   // Construction / Destruction
   ServiceIdentifier() = default;
-  explicit ServiceIdentifier(Type type, uint32_t instance = INVALID_SERVICE_IDENTIFIER);
+  explicit ServiceIdentifier(Type type, uint32_t instance = SINGLETON_SERVICE);
   ServiceIdentifier(ServiceIdentifier const &) = default;
   ~ServiceIdentifier()                         = default;
 
@@ -56,7 +56,7 @@ public:
 
 private:
   Type     type_{Type::INVALID};
-  uint32_t instance_{INVALID_SERVICE_IDENTIFIER};
+  uint32_t instance_{SINGLETON_SERVICE};
 
   template <typename T, typename D>
   friend struct serializers::MapSerializer;

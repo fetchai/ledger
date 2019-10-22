@@ -209,9 +209,9 @@ void Contract::OnTransaction(std::string const &name, C *instance,
  * Register class member query handler
  *
  * @tparam C The class type
- * @param name THe query name
+ * @param name The query name
  * @param instance The pointer to the class instance
- * @param func THe member function pointer
+ * @param func The member function pointer
  */
 template <typename C>
 void Contract::OnQuery(std::string const &name, C *instance,

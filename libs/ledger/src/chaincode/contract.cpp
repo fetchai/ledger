@@ -153,7 +153,7 @@ void Contract::OnQuery(std::string const &name, QueryHandler &&handler)
  * Utility: Parse the contents of the transaction payload as a JSON object
  *
  * @param tx The input transaction to be processed
- * @param output THe output JSON object to be populated
+ * @param output The output JSON object to be populated
  * @return true if successful, otherwise falses
  */
 bool Contract::ParseAsJson(chain::Transaction const &tx, variant::Variant &output)

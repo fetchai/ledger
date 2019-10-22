@@ -117,6 +117,35 @@ public:
       return *this;
     }
 
+    template <typename T>
+    using CPPCopyConstructor = std::function<Ptr<Object>(vm::VM *, TypeId, T const &)>;
+
+    template <typename CPPType>
+    ClassInterface &CreateCPPCopyConstructor(CPPCopyConstructor<CPPType> constructor,
+                                             ChargeAmount                static_charge = 1)
+    {
+      // Note that unlike all the other functions, we need to be able to do the look up in the
+      // native C++ type and not the VM type.
+      TypeIndex const type_index = TypeIndex(typeid(CPPType));
+
+      auto const estimator = [static_charge]() -> ChargeAmount { return static_charge; };
+
+      CPPCopyConstructorHandler h = [constructor, estimator](VM *        vm,
+                                                             void const *ptr) -> Ptr<Object> {
+        if (EstimateCharge(vm, ChargeEstimator<>{std::move(estimator)}, std::tuple<>{}))
+        {
+          auto type_id   = vm->GetTypeId<Type>();
+          auto typed_ptr = static_cast<CPPType const *>(ptr);
+          return constructor(vm, type_id, *typed_ptr);
+        }
+
+        return {};
+      };
+      module_->cpp_copy_constructors_.insert({type_index, std::move(h)});
+
+      return *this;
+    }
+
     template <typename Callable>
     ClassInterface &CreateStaticMemberFunction(std::string const &name, Callable callable,
                                                ChargeAmount static_charge = 1)
@@ -430,6 +459,11 @@ public:
     return ClassInterface<Type>(this, type_index);
   }
 
+  RegisteredTypes const &registered_types() const
+  {
+    return registered_types_;
+  }
+
 private:
   template <typename Estimator, typename Callable>
   void InternalCreateFreeFunction(std::string const &name, Callable callable,
@@ -471,13 +505,15 @@ private:
 
   void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
                   RegisteredTypes &registered_types, FunctionInfoArray &function_info_array,
-                  DeserializeConstructorMap &deserialization_constructors)
+                  DeserializeConstructorMap &deserialization_constructors,
+                  CPPCopyConstructorMap &    cpp_copy_constructors)
   {
     type_info_array              = type_info_array_;
     type_info_map                = type_info_map_;
     registered_types             = registered_types_;
     function_info_array          = function_info_array_;
     deserialization_constructors = deserialization_constructors_;
+    cpp_copy_constructors        = cpp_copy_constructors_;
   }
 
   using CompilerSetupFunction = std::function<void(Compiler *)>;
@@ -493,6 +529,10 @@ private:
   RegisteredTypes                    registered_types_;
   FunctionInfoArray                  function_info_array_;
   DeserializeConstructorMap          deserialization_constructors_;
+
+  // C++ copy constructors are only used for easy contruction
+  // of C++ objects as Etch objects
+  CPPCopyConstructorMap cpp_copy_constructors_;
 
   friend class Compiler;
   friend class VM;

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/execution/execution_interface.hpp"
+#include "dmlf/execution/execution_params.hpp"
 #include "dmlf/execution/execution_result.hpp"
 #include "dmlf/execution_workload.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -39,6 +40,7 @@ public:
   using Uri       = network::Uri;
   using RpcClient = fetch::muddle::rpc::Client;
   using OpIdent   = ExecutionWorkload::OpIdent;
+  using Params    = ExecutionParameters;
 
   using PendingWorkloads = std::list<ExecutionWorkload>;
 
@@ -64,7 +66,7 @@ public:
                            Name const &stateName);
 
   virtual bool Run(service::CallContext const &context, OpIdent const &op_id, Name const &execName,
-                   Name const &stateName, std::string const &entrypoint);
+                   Name const &stateName, std::string const &entrypoint, const Params &params);
 
   bool ExecuteOneWorkload();
 
