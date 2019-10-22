@@ -83,9 +83,8 @@ macro (setup_compiler)
   endif ()
 
   if (FETCH_WARNINGS_AS_ERRORS)
-    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   endif (FETCH_WARNINGS_AS_ERRORS)
-  set(CMAKE_CXX_FLAGS "-I/usr/include/python2.7 -lpython2.7")
 
   # Temporary workaround for Apple Clang >= 11.0
   if (APPLE AND _is_clang_compiler AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 11.0))
