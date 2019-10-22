@@ -204,6 +204,30 @@ function compare(a : Bool) : Int32
 endfunction
 )";
 
+auto const AddArray = R"(
+
+function add(array : Array<Int32>) : Int32
+  return array[0] + array[1];
+endfunction
+
+)";
+
+auto const AddArrayThree = R"(
+
+function add(array : Array<Int32>) : Int32
+  return array[0] + array[1] + array[2];
+endfunction
+
+)";
+
+auto const Add3Array = R"(
+
+function add(array2 : Array<Array<Array<Int32>>>, array : Array<Int32>) : Int32
+  return array[0] + array[1] + array2[0][1][2];
+endfunction
+
+)";
+
 }  // namespace
 
 TEST(BasicVmEngineDmlfTests, HelloWorld)
@@ -1078,6 +1102,55 @@ TEST(BasicVmEngineDmlfTests, WrongNumberOfParamsTrueIntToFloatCompare)
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
+}
+
+TEST(BasicVmEngineDmlfTests, AddArray)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddArray}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "add", Params{LedgerVariant()});
+  //EXPECT_TRUE(result.succeeded());
+  std::cout << result.error().message() << '\n';
+  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
+}
+
+TEST(BasicVmEngineDmlfTests, AddArrayThree)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddArrayThree}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "add", Params{LedgerVariant()});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
+}
+
+TEST(BasicVmEngineDmlfTests, Add3Array)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", Add3Array}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "add", Params{LedgerVariant(), LedgerVariant()});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
 }
 
 }  // namespace
