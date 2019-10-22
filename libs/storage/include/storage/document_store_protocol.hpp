@@ -50,14 +50,12 @@ public:
   {
     GET = 0,
     GET_OR_CREATE,
-    LAZY_GET,
     SET,
 
     COMMIT,
     REVERT_TO_HASH,
     CURRENT_HASH,
     HASH_EXISTS,
-    KEY_DUMP,
     RESET,
 
     LOCK = 20,
@@ -77,8 +75,6 @@ public:
                                         "The total no. current_hash ops"))
     , hash_exists_count_(
           CreateCounter(lane, "ledger_statedb_hash_exist_total", "The total no. hash_exists ops"))
-    , key_dump_count_(
-          CreateCounter(lane, "ledger_statedb_key_dump_total", "The total no. key dump ops"))
     , reset_count_(CreateCounter(lane, "ledger_statedb_reset_total", "The total no. reset ops"))
     , lock_count_(CreateCounter(lane, "ledger_statedb_lock_total", "The total no. lock ops"))
     , unlock_count_(CreateCounter(lane, "ledger_statedb_unlock_total", "The total no. unlock ops"))
@@ -102,7 +98,6 @@ public:
     this->Expose(REVERT_TO_HASH, this, &RevertibleDocumentStoreProtocol::RevertToHash);
     this->Expose(CURRENT_HASH, this, &RevertibleDocumentStoreProtocol::CurrentHash);
     this->Expose(HASH_EXISTS, this, &RevertibleDocumentStoreProtocol::HashExists);
-    this->Expose(KEY_DUMP, this, &RevertibleDocumentStoreProtocol::KeyDump);
     this->Expose(RESET, this, &RevertibleDocumentStoreProtocol::Reset);
 
     this->ExposeWithClientContext(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
@@ -271,13 +266,6 @@ private:
     return success;
   }
 
-  NewRevertibleDocumentStore::Keys KeyDump()
-  {
-    auto const keys = doc_store_->KeyDump();
-    key_dump_count_->increment();
-    return keys;
-  }
-
   void Reset()
   {
     doc_store_->Reset();
@@ -308,7 +296,6 @@ private:
   telemetry::CounterPtr   revert_count_;
   telemetry::CounterPtr   current_hash_count_;
   telemetry::CounterPtr   hash_exists_count_;
-  telemetry::CounterPtr   key_dump_count_;
   telemetry::CounterPtr   reset_count_;
   telemetry::CounterPtr   lock_count_;
   telemetry::CounterPtr   unlock_count_;

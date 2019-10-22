@@ -138,7 +138,7 @@ TransactionLayout::BlockIndex TransactionLayout::valid_from() const
 /**
  * The block index until which the transaction is valid
  *
- * @return THe block index from which the transaction becomes invalid
+ * @return The block index from which the transaction becomes invalid
  */
 TransactionLayout::BlockIndex TransactionLayout::valid_until() const
 {
@@ -148,7 +148,7 @@ TransactionLayout::BlockIndex TransactionLayout::valid_until() const
 /**
  * Determine if the two objects are equal
  *
- * @param other THe other layout to compare against
+ * @param other The other layout to compare against
  * @return true if equal, otherwise false
  */
 bool TransactionLayout::operator==(TransactionLayout const &other) const

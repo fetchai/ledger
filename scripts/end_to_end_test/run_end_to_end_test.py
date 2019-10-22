@@ -113,14 +113,14 @@ class TestInstance():
             shutil.rmtree(f)
 
         # To avoid possible collisions, prepend output files with the date
-        self._random_identifer = '{0:%Y_%m_%d_%H_%M_%S}'.format(
+        self._random_identifier = '{0:%Y_%m_%d_%H_%M_%S}'.format(
             datetime.datetime.now())
 
-        self._random_identifer = "default"
+        self._random_identifier = "default"
 
         self._workspace = os.path.join(
             build_directory, 'end_to_end_test_{}'.format(
-                self._random_identifer))
+                self._random_identifier))
         self._build_directory = build_directory
         self._constellation_exe = os.path.abspath(constellation_exe)
         self._yaml_file = os.path.abspath(yaml_file)
