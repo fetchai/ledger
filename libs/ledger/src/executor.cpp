@@ -64,7 +64,6 @@ bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
   case ContractMode::CHAIN_CODE:
     contract_name = tx.chain_code();
     break;
-
   case ContractMode::SYNERGETIC:
     // synergetic contracts are not supported through normal pipeline
     break;
@@ -334,7 +333,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
       FETCH_LOG_WARN(LOGGING_NAME, "Transaction execution failed!");
       break;
     case Contract::Status::NOT_FOUND:
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up transaction handler");
       result.status = Status::CHAIN_CODE_LOOKUP_FAILURE;
       break;
     }
