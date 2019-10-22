@@ -57,15 +57,13 @@ struct ContractContext
   ContractContext &operator=(ContractContext const &) = default;
   ContractContext &operator=(ContractContext &&) = default;
 
-  ContractContext(chain::TransactionLayout::BlockIndex block_index_param,
-                  TokenContract *token_contract_param, chain::Transaction const *current_tx_param,
+  ContractContext(TokenContract *token_contract_param, chain::Transaction const *current_tx_param,
                   chain::Address address, StateAdapter *state_adapter_param);
 
-  chain::TransactionLayout::BlockIndex block_index{0u};
-  TokenContract *                      token_contract{nullptr};
-  chain::Transaction const *           current_tx{nullptr};
-  chain::Address                       contract_address{};
-  StateAdapter *                       state_adapter{nullptr};
+  TokenContract *           token_contract{nullptr};
+  chain::Transaction const *current_tx{nullptr};
+  chain::Address            contract_address{};
+  StateAdapter *            state_adapter{nullptr};
 };
 
 /**

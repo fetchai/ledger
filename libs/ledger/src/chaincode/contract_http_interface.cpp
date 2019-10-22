@@ -243,7 +243,7 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     // and attaching storage
     chain::Address address;
     chain::Address::Parse(contract_id.name(), address);
-    ContractContext ctx{0, &token_contract_, nullptr, std::move(address), &storage_adapter};
+    ContractContext ctx{&token_contract_, nullptr, std::move(address), &storage_adapter};
     contract->updateContractContext(ctx);
     auto const status = contract->DispatchQuery(query, doc.root(), response);
     contract->Detach();

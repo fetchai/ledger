@@ -317,8 +317,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
     // Dispatch the transaction to the contract
     FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", current_tx_->action());
 
-    ContractContext ctx{block_, token_contract_.get(), current_tx_.get(),
-                        current_tx_->contract_address(), &storage_adapter};
+    ContractContext ctx{token_contract_.get(), current_tx_.get(), current_tx_->contract_address(),
+                        &storage_adapter};
     contract->updateContractContext(ctx);
 
     auto const contract_status = contract->DispatchTransaction(*current_tx_, block_);

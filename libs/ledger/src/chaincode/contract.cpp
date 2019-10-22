@@ -25,12 +25,10 @@
 namespace fetch {
 namespace ledger {
 
-ContractContext::ContractContext(chain::TransactionLayout::BlockIndex block_index_param,
-                                 TokenContract *                      token_contract_param,
+ContractContext::ContractContext(TokenContract *           token_contract_param,
                                  chain::Transaction const *current_tx_param, chain::Address address,
                                  StateAdapter *state_adapter_param)
-  : block_index{block_index_param}
-  , token_contract{token_contract_param}
+  : token_contract{token_contract_param}
   , current_tx{current_tx_param}
   , contract_address{std::move(address)}  //???remove field, use current tx?
   , state_adapter{state_adapter_param}
