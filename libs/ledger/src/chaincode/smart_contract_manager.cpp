@@ -48,6 +48,7 @@ namespace {
 
 ConstByteArray const CONTRACT_SOURCE{"text"};
 ConstByteArray const CONTRACT_HASH{"digest"};
+ConstByteArray const CONTRACT_NONCE{"nonce"};
 
 constexpr char const *LOGGING_NAME = "SmartContractManager";
 
@@ -71,10 +72,12 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
 
   ConstByteArray contract_source;
   ConstByteArray contract_hash;
+  ConstByteArray nonce;
 
   // extract the fields from the contract
   bool const extract_success = Extract(data, CONTRACT_HASH, contract_hash) &&
-                               Extract(data, CONTRACT_SOURCE, contract_source);
+                               Extract(data, CONTRACT_SOURCE, contract_source) &&
+                               Extract(data, CONTRACT_NONCE, nonce);
 
   // fail if the extraction fails
   if (!extract_success)
@@ -92,6 +95,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
   FETCH_LOG_DEBUG(LOGGING_NAME, "---------------------------------------------------------------");
   FETCH_LOG_DEBUG(LOGGING_NAME, "New Contract Mode: ", contract_type);
   FETCH_LOG_DEBUG(LOGGING_NAME, "Digest...........: ", contract_hash);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Nonce............: ", nonce);
   FETCH_LOG_DEBUG(LOGGING_NAME, "Text.............:\n\n", contract_source, "\n\n");
   FETCH_LOG_DEBUG(LOGGING_NAME, "---------------------------------------------------------------");
 
@@ -113,13 +117,15 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
     return {Status::FAILED};
   }
 
+  nonce = FromBase64(nonce);
+  chain::Address const payable_address{crypto::Hash<crypto::SHA256>(tx.from().address() + nonce)};
+
   Identifier scope;
-  if (!scope.Parse(calculated_hash + "." + tx.from().display()))
+  if (!scope.Parse(calculated_hash + "." + payable_address.display()))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
     return {Status::FAILED};
   }
-  state().PushContext(scope);
 
   // construct a smart contract - this can throw for various reasons, need to catch this
   SmartContract smart_contract{std::string{contract_source}};
@@ -163,22 +169,24 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
   Result init_status;
   if (!on_init_function.empty())
   {
-    // Attach our state to the smart contract
+    state().PushContext(scope);
     smart_contract.Attach(state());
 
-    // Dispatch to the init. method
+    // ??? token contract
+    ContractContext ctx{block_index, nullptr, &tx, &state()};
+    smart_contract.updateContractContext(ctx);
+
     init_status =
-        smart_contract.DispatchInitialise(tx.signatories().begin()->address, tx, block_index);
+        smart_contract.DispatchInitialise(payable_address, tx, block_index);
+
+    state().PopContext();
+    smart_contract.Detach();
+
     if (init_status.status != Status::OK)
     {
       return init_status;
     }
-
-    smart_contract.Detach();
   }
-
-  // Revert to normal context
-  state().PopContext();
 
   auto const status = SetStateRecord(contract_source, calculated_hash);
   if (status != StateAdapter::Status::OK)

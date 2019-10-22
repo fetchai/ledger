@@ -316,6 +316,10 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     // Dispatch the transaction to the contract
     FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", current_tx_->action());
+
+    ContractContext ctx{block_, token_contract_.get(), current_tx_.get(), &storage_adapter};
+    contract->updateContractContext(ctx);
+
     auto const contract_status = contract->DispatchTransaction(*current_tx_, block_);
 
     // detach the chain code from the current context

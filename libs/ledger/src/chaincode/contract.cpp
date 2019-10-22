@@ -25,6 +25,17 @@
 namespace fetch {
 namespace ledger {
 
+ContractContext::ContractContext(chain::TransactionLayout::BlockIndex block_index_param,
+                                 TokenContract *                      token_contract_param,
+                                 chain::Transaction const *           current_tx_param,
+                                 StateAdapter *                       state_adapter_param)
+  : block_index{block_index_param}
+  , token_contract{token_contract_param}
+  , current_tx{current_tx_param}
+  , contract_address{current_tx->contract_address()}
+  , state_adapter{state_adapter_param}
+{}
+
 /**
  * Dispatch the initialisation handler
  *
@@ -198,6 +209,7 @@ ledger::StateAdapter &Contract::state()
  */
 void Contract::Attach(ledger::StateAdapter &state)
 {
+  // TODO(WK) detailed_assert(state_ == nullptr);
   state_ = &state;
 }
 
@@ -227,6 +239,16 @@ Contract::QueryHandlerMap const &Contract::query_handlers() const
 Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
 {
   return transaction_handlers_;
+}
+
+void Contract::updateContractContext(ContractContext context)
+{
+  context_ = std::move(context);
+}
+
+ContractContext const &Contract::context() const
+{
+  return context_;
 }
 
 }  // namespace ledger
