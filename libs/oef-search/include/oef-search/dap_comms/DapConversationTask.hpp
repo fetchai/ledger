@@ -74,7 +74,10 @@ public:
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Start: ", protocol_, dap_name_, "/", path_);
       Uri uri(protocol_ + dap_name_ + "/" + path_);
-      uri.path     = uri.path.substr(1);
+      if (!protocol_.empty())
+      {
+        uri.path = uri.path.substr(1);
+      }
       conversation = outbounds->startConversation(uri, initiator);
 
       FETCH_LOG_INFO(LOGGING_NAME, "Conversation created with ", uri.ToString());
