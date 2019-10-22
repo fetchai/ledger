@@ -68,7 +68,12 @@ public:
     return endpoint->GetRemoteId();
   }
 
-  std::shared_ptr<EndpointType> GetEndpoint()
+  virtual const Uri& GetAddress() const
+  {
+    return endpoint->GetAddress();
+  }
+
+  virtual std::shared_ptr<EndpointType> GetEndpoint()
   {
     return endpoint;
   }

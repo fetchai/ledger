@@ -62,29 +62,34 @@ void OefSearchEndpoint::setup()
     }
   });
 
-  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const &) {
+  const Uri endpoint_uri = endpoint->GetAddress();
+
+  endpoint->setOnErrorHandler([myGroupId, myself_wp, endpoint_uri](std::error_code const &) {
     if (auto myself_sp = myself_wp.lock())
     {
       // myself_sp -> factory -> EndpointClosed();
       // myself_sp -> factory.reset();
+      FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (", endpoint_uri.ToString(), ") called OnErrorHandler!");
       Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
     }
   });
 
-  endpoint->SetOnEofHandler([myGroupId, myself_wp]() {
+  endpoint->SetOnEofHandler([myGroupId, myself_wp, endpoint_uri]() {
     if (auto myself_sp = myself_wp.lock())
     {
       // myself_sp -> factory -> EndpointClosed();
       // myself_sp -> factory.reset();
+      FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (", endpoint_uri.ToString(), ") called OnEofHandler!");
       Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
     }
   });
 
-  endpoint->SetOnProtoErrorHandler([myGroupId, myself_wp](const std::string &message) {
+  endpoint->SetOnProtoErrorHandler([myGroupId, myself_wp, endpoint_uri](const std::string &message) {
     if (auto myself_sp = myself_wp.lock())
     {
       // myself_sp -> factory -> EndpointClosed();
       // myself_sp -> factory.reset();
+      FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (", endpoint_uri.ToString(), ") called OnProtoErrorHandler!");
       Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
     }
     FETCH_LOG_INFO(LOGGING_NAME, "Proto error: ", message);

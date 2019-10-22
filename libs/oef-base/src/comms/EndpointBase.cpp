@@ -28,6 +28,7 @@ bool EndpointBase<TXType>::connect(const Uri &uri, Core &core)
     else
     {
       *state = RUNNING_ENDPOINT;
+      address_ = uri;
       return true;
     }
   }

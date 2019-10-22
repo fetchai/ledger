@@ -5,6 +5,7 @@
 #include "oef-base/comms/RingBuffer.hpp"
 #include "oef-base/threading/Notification.hpp"
 #include "oef-base/threading/Waitable.hpp"
+#include "oef-base/utils/Uri.hpp"
 
 #include "logging/logging.hpp"
 #include "oef-base/comms/Core.hpp"
@@ -13,7 +14,6 @@
 #include <iostream>
 #include <list>
 
-class Uri;
 
 template <typename TXType>
 class EndpointBase : public ISocketOwner, public Waitable
@@ -126,6 +126,11 @@ public:
     }
   }
 
+  const Uri& GetAddress() const
+  {
+    return address_;
+  }
+
 protected:
   virtual void async_read(const std::size_t &bytes_needed) = 0;
   virtual void async_write()                               = 0;
@@ -149,6 +154,8 @@ protected:
   std::atomic<bool> asio_reading;
 
   std::shared_ptr<StateType> state;
+
+  Uri address_;
 
   virtual void error(std::error_code const &ec);
   virtual void proto_error(const std::string &msg);
