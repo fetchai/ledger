@@ -681,7 +681,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
     if (state_machine_->previous_state() != State::WAIT_FOR_NOTARISATION_KEYS)
     {
       assert(!notarisation_manager_);
-      auto notarisation_manager_ = std::make_shared<ledger::NotarisationManager>();
+      notarisation_manager_ = std::make_shared<ledger::NotarisationManager>();
       NotarisationManager::PublicKey notarisation_public_key =
           notarisation_manager_->GenerateKeys();
       ConstByteArray signature = certificate_->Sign(notarisation_public_key.getStr());
@@ -700,6 +700,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
       notarisation_manager_->SetAeonDetails(beacon_->aeon.round_start, beacon_->aeon.round_end,
                                             beacon_->manager.polynomial_degree() + 1,
                                             notarisation_keys_received_);
+      notarisation_->NewAeonNotarisationUnit(notarisation_manager_);
 
       SetTimeToProceed(State::DRY_RUN_SIGNING);
       return State::DRY_RUN_SIGNING;
