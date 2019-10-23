@@ -161,10 +161,8 @@ SmartContract::SmartContract(std::string const &source)
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
       // register the transaction handler
-      OnTransaction(fn.name, [this, name = fn.name](auto const &tx, BlockIndex index,
-                                                    TokenContract *token_contract) {
-        return InvokeAction(name, tx, index, token_contract);
-      });
+      OnTransaction(fn.name,
+                    [this, name = fn.name](auto const &tx) { return InvokeAction(name, tx); });
       break;
     case FunctionDecoratorKind::QUERY:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Query: ", fn.name,
@@ -453,9 +451,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Transaction const &tx,
-                                             BlockIndex block_index,
-                                             TokenContract * /*token_contract*/)
+Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Transaction const &tx)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;
@@ -493,7 +489,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
 
-  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, block_index);
+  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, context().block_index);
 
   // TODO(WK) inject charge limit
   // vm->SetChargeLimit(123);

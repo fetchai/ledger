@@ -164,8 +164,7 @@ bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address 
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
 }
 
-Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx, BlockIndex /*index*/,
-                                             TokenContract * /*token_contract*/)
+Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx)
 {
   // parse the payload as JSON
   Variant data;
@@ -197,8 +196,7 @@ Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx, Block
  *
  * @return Status::OK if deed has been incorporated successfully.
  */
-Contract::Result TokenContract::Deed(chain::Transaction const &tx, BlockIndex /*index*/,
-                                     TokenContract * /*token_contract*/)
+Contract::Result TokenContract::Deed(chain::Transaction const &tx)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
@@ -253,15 +251,13 @@ Contract::Result TokenContract::Deed(chain::Transaction const &tx, BlockIndex /*
   return {Status::OK};
 }
 
-Contract::Result TokenContract::Transfer(chain::Transaction const &tx, BlockIndex /*index*/,
-                                         TokenContract * /*token_contract*/)
+Contract::Result TokenContract::Transfer(chain::Transaction const &tx)
 {
   FETCH_UNUSED(tx);
   return {Status::FAILED};
 }
 
-Contract::Result TokenContract::AddStake(chain::Transaction const &tx, BlockIndex block,
-                                         TokenContract * /*token_contract*/)
+Contract::Result TokenContract::AddStake(chain::Transaction const &tx)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Adding stake!");
 
@@ -291,8 +287,9 @@ Contract::Result TokenContract::AddStake(chain::Transaction const &tx, BlockInde
             FETCH_LOG_INFO(LOGGING_NAME, "Stake updates are happening");
 
             // record the stake update event
-            stake_updates_.emplace_back(StakeUpdate{crypto::Identity(input.FromBase64()),
-                                                    block + chain::STAKE_WARM_UP_PERIOD, amount});
+            stake_updates_.emplace_back(
+                StakeUpdate{crypto::Identity(input.FromBase64()),
+                            context().block_index + chain::STAKE_WARM_UP_PERIOD, amount});
 
             // save the state
             auto const status = SetStateRecord(record, tx.from().display());
@@ -313,8 +310,7 @@ Contract::Result TokenContract::AddStake(chain::Transaction const &tx, BlockInde
   return {Status::FAILED};
 }
 
-Contract::Result TokenContract::DeStake(chain::Transaction const &tx, BlockIndex block,
-                                        TokenContract * /*token_contract*/)
+Contract::Result TokenContract::DeStake(chain::Transaction const &tx)
 {
   // parse the payload as JSON
   Variant data;
@@ -338,7 +334,7 @@ Contract::Result TokenContract::DeStake(chain::Transaction const &tx, BlockIndex
             record.stake -= amount;
 
             // Put it in a cooldown state
-            record.cooldown_stake[block + chain::STAKE_COOL_DOWN_PERIOD] += amount;
+            record.cooldown_stake[context().block_index + chain::STAKE_COOL_DOWN_PERIOD] += amount;
 
             // save the state
             auto const status = SetStateRecord(record, tx.from().display());
@@ -355,8 +351,7 @@ Contract::Result TokenContract::DeStake(chain::Transaction const &tx, BlockIndex
   return {Status::FAILED};
 }
 
-Contract::Result TokenContract::CollectStake(chain::Transaction const &tx, BlockIndex block,
-                                             TokenContract * /*token_contract*/)
+Contract::Result TokenContract::CollectStake(chain::Transaction const &tx)
 {
   WalletRecord record{};
 
@@ -366,7 +361,7 @@ Contract::Result TokenContract::CollectStake(chain::Transaction const &tx, Block
     if (IsOperationValid(record, tx, STAKE_NAME))
     {
       // Collect all cooled down stakes and put them back into the account
-      record.CollectStake(block);
+      record.CollectStake(context().block_index);
 
       auto const status = SetStateRecord(record, tx.from().display());
       if (status == StateAdapter::Status::OK)

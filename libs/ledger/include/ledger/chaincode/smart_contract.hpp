@@ -67,8 +67,7 @@ private:
   using ModulePtr = std::shared_ptr<vm::Module>;
 
   // Transaction /
-  Result InvokeAction(std::string const &name, chain::Transaction const &tx, BlockIndex block_index,
-                      TokenContract *token_contract);
+  Result InvokeAction(std::string const &name, chain::Transaction const &tx);
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
   Result InvokeInit(chain::Address const &owner, chain::Transaction const &tx);
 

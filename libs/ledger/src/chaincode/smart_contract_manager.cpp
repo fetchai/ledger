@@ -60,9 +60,7 @@ SmartContractManager::SmartContractManager()
   OnTransaction("create", this, &SmartContractManager::OnCreate);
 }
 
-Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
-                                                BlockIndex                block_index,
-                                                TokenContract *           token_contract)
+Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
 {
   // attempt to parse the transaction
   variant::Variant data;
@@ -171,7 +169,8 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
   Result init_status;
   if (!on_init_function.empty())
   {
-    smart_contract.Attach({token_contract, tx.contract_address(), &state(), block_index});
+    smart_contract.Attach(
+        {context().token_contract, tx.contract_address(), &state(), context().block_index});
     state().PushContext(scope.full_name());
     init_status = smart_contract.DispatchInitialise(payable_address, tx);
     state().PopContext();

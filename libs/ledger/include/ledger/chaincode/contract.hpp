@@ -74,8 +74,7 @@ public:
   using Query          = variant::Variant;
   using InitialiseHandler =
       std::function<Result(chain::Address const &, chain::Transaction const &)>;
-  using TransactionHandler =
-      std::function<Result(chain::Transaction const &, BlockIndex, TokenContract *)>;
+  using TransactionHandler    = std::function<Result(chain::Transaction const &)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
   using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
@@ -96,8 +95,7 @@ public:
 
   Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Result DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index,
-                             TokenContract *token_contract);
+  Result DispatchTransaction(chain::Transaction const &tx);
   /// @}
 
   ContractContext const &context() const;
@@ -131,8 +129,7 @@ protected:
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
   void OnTransaction(std::string const &name, C *instance,
-                     Result (C::*func)(chain::Transaction const &, BlockIndex,
-                                       TokenContract *token_contract));
+                     Result (C::*func)(chain::Transaction const &));
   /// @}
 
   /// @name Query Handler Registration
@@ -198,14 +195,11 @@ void Contract::OnInitialise(C *instance,
  */
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
-                             Result (C::*func)(chain::Transaction const &, BlockIndex,
-                                               TokenContract *))
+                             Result (C::*func)(chain::Transaction const &))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name, [instance, func](chain::Transaction const &tx, BlockIndex block_index,
-                                       TokenContract *token_contract) {
-    return (instance->*func)(tx, block_index, token_contract);
-  });
+  OnTransaction(name,
+                [instance, func](chain::Transaction const &tx) { return (instance->*func)(tx); });
 }
 
 /**
@@ -269,9 +263,7 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
     break;
   }
   case vm::IoObserverInterface::Status::ERROR:
-    break;
   case vm::IoObserverInterface::Status::PERMISSION_DENIED:
-    break;
   case vm::IoObserverInterface::Status::BUFFER_TOO_SMALL:
     break;
   }

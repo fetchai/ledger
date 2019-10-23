@@ -315,8 +315,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", current_tx_->action());
 
     contract->Attach({token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
-    auto const contract_status =
-        contract->DispatchTransaction(*current_tx_, block_, token_contract_);
+    auto const contract_status = contract->DispatchTransaction(*current_tx_);
     contract->Detach();
 
     // map the contract execution status
