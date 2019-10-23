@@ -20,10 +20,10 @@
 #include "chain/address.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "variant/variant.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -41,29 +41,12 @@ class Variant;
 namespace chain {
 
 class Transaction;
-class Address;
 
 }  // namespace chain
 
 namespace ledger {
 
 class TokenContract;
-
-struct ContractContext
-{
-  ContractContext()                        = default;
-  ContractContext(ContractContext const &) = default;
-  ContractContext(ContractContext &&)      = default;
-  ContractContext &operator=(ContractContext const &) = default;
-  ContractContext &operator=(ContractContext &&) = default;
-
-  ContractContext(TokenContract *token_contract_param, chain::Address address,
-                  StateAdapter *state_adapter_param);
-
-  TokenContract *token_contract{nullptr};
-  chain::Address contract_address{};
-  StateAdapter * state_adapter{nullptr};
-};
 
 /**
  * Contract - Base class for all smart contract and chain code instances
@@ -225,7 +208,7 @@ void Contract::OnInitialise(C *instance, Result (C::*func)(chain::Address const 
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
                              Result (C::*func)(chain::Transaction const &, BlockIndex,
-                                               TokenContract *token_contract))
+                                               TokenContract *))
 {
   // create the function handler and pass it to the normal function
   OnTransaction(name, [instance, func](chain::Transaction const &tx, BlockIndex block_index,

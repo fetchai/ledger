@@ -134,7 +134,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Synergetic contract source\n", source);
 
-  // additional modules
+  //???deduplicate with smart contract
   module_->CreateFreeFunction("balance", [this](vm::VM *) -> uint64_t {
     decltype(auto) c = context();
 
@@ -165,9 +165,6 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
         return success;
       });
-
-  //???  module_->CreateFreeFunction(
-  //      "getContext", [this](vm::VM *) -> vm_modules::ledger::ContextPtr { return context_; });
 
   // create the compiler and IR
   compiler_   = std::make_shared<vm::Compiler>(module_.get());
@@ -432,6 +429,16 @@ char const *ToString(SynergeticContract::Status status)
   }
 
   return text;
+}
+
+void SynergeticContract::updateContractContext(ContractContext context)
+{
+  context_ = std::move(context);
+}
+
+ContractContext const &SynergeticContract::context() const
+{
+  return context_;
 }
 
 }  // namespace ledger

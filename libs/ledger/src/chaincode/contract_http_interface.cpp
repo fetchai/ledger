@@ -23,6 +23,7 @@
 #include "http/json_response.hpp"
 #include "json/document.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
@@ -241,8 +242,6 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     // attach, dispatch and detach
     contract->Attach(storage_adapter);
 
-    //???current tx may be null, but others cannot - make into references? raii for setting context
-    // and attaching storage
     chain::Address address;
     chain::Address::Parse(contract_id.name(), address);
     ContractContext ctx{&token_contract_, std::move(address), &storage_adapter};

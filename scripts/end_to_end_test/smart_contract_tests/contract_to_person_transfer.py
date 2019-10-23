@@ -61,7 +61,7 @@ endfunction
 function attempt_transfer() : Bool
   use owner_address;
 
-  return releaseFunds(owner_address.get(), 100u64);//???verify failure?
+  return releaseFunds(owner_address.get(), 100u64);
 endfunction
 """
 
@@ -122,8 +122,3 @@ def run(options):
     query_attempt_transfer = contract1.query(api, 'attempt_transfer')
     assert query_attempt_transfer == False, \
         'Expected transfer in @query to fail, but it succeeded'
-
-
-# ???
-if __name__ == "__main__":
-    run({"host": "127.0.0.1", "port": 8000})

@@ -128,8 +128,3 @@ def run(options):
     assert query_balance3 == 12345, \
         'Expected returned balance to be 12345, found {}'.format(
             query_balance3)
-
-
-# ???
-if __name__ == "__main__":
-    run({"host": "127.0.0.1", "port": 8000})

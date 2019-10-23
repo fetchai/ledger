@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/bitvector.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
@@ -87,7 +88,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
 
       // complete the work and resolve the work queue
       contract->Attach(storage_);
-      SynergeticContractContext ctx(&token_contract_, solution->address(), &storage_adapter);
+      ContractContext ctx(&token_contract_, solution->address(), &storage_adapter);
       contract->updateContractContext(ctx);
       status = contract->Complete(solution->address(), shard_mask);
       contract->Detach();

@@ -291,8 +291,7 @@ Contract::Result TokenContract::AddStake(chain::Transaction const &tx, BlockInde
 
             // record the stake update event
             stake_updates_.emplace_back(StakeUpdate{crypto::Identity(input.FromBase64()),
-                                                    block + chain::STAKE_WARM_UP_PERIOD,
-                                                    amount});  //???context
+                                                    block + chain::STAKE_WARM_UP_PERIOD, amount});
 
             // save the state
             auto const status = SetStateRecord(record, tx.from().display());
@@ -338,7 +337,7 @@ Contract::Result TokenContract::DeStake(chain::Transaction const &tx, BlockIndex
             record.stake -= amount;
 
             // Put it in a cooldown state
-            record.cooldown_stake[block + chain::STAKE_COOL_DOWN_PERIOD] += amount;  //???context
+            record.cooldown_stake[block + chain::STAKE_COOL_DOWN_PERIOD] += amount;
 
             // save the state
             auto const status = SetStateRecord(record, tx.from().display());
@@ -366,7 +365,7 @@ Contract::Result TokenContract::CollectStake(chain::Transaction const &tx, Block
     if (IsOperationValid(record, tx, STAKE_NAME))
     {
       // Collect all cooled down stakes and put them back into the account
-      record.CollectStake(block);  //???context
+      record.CollectStake(block);
 
       auto const status = SetStateRecord(record, tx.from().display());
       if (status == StateAdapter::Status::OK)
