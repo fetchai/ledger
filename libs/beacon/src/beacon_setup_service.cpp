@@ -124,7 +124,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
     time_slot_map_[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
     time_slot_map_[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
     time_slot_map_[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
-    time_slot_map_[BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS]     = 10;
+    time_slot_map_[BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS]     = 20;
 
     for (auto &slot : time_slot_map_)
     {
@@ -803,6 +803,10 @@ BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
   {
     // TODO(JMW): If we do not have enough notarisation keys (how many is enough?) then we should
     //  reset?
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " failed to receive all notarisations keys ", notarisation_keys_received_.size(),
+                   " of ", beacon_->manager.qual().size());
+
     SetTimeToProceed(State::RESET);
     beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
     return State::RESET;

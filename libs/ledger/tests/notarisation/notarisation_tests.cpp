@@ -199,7 +199,7 @@ TEST(notarisation, notarise_blocks)
     node->reactor.Start();
   }
 
-  uint64_t round_length = 10;
+  uint64_t round_length = 5;
   for (uint8_t round = 0; round < 2; ++round)
   {
     // Reset cabinet for dkg
