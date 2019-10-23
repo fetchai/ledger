@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "oef-base/comms/EndpointWebSocket.hpp"
 
 // #include "boost/asio/bind_executor.hpp"
@@ -11,7 +29,7 @@
 static Gauge wsep_count("mt-core.network.EndpointWebSocket");
 
 template <typename TXType>
-EndpointWebSocket<TXType>::EndpointWebSocket(asio::io_context &/*io_context*/,
+EndpointWebSocket<TXType>::EndpointWebSocket(asio::io_context & /*io_context*/,
                                              std::size_t sendBufferSize, std::size_t readBufferSize,
                                              ConfigMap configMap)
   : EndpointBase<TXType>(sendBufferSize, readBufferSize, configMap)
@@ -20,7 +38,6 @@ EndpointWebSocket<TXType>::EndpointWebSocket(asio::io_context &/*io_context*/,
 {
   //  wsep_count++;
 }
-
 
 template <typename TXType>
 EndpointWebSocket<TXType>::~EndpointWebSocket()
@@ -168,7 +185,7 @@ void EndpointWebSocket<TXType>::on_accept(std::error_code const & /*ec*/)
 }
 
 template <typename TXType>
-bool EndpointWebSocket<TXType>::is_eof(std::error_code const &/*ec*/) const
+bool EndpointWebSocket<TXType>::is_eof(std::error_code const & /*ec*/) const
 {
   return false;  // ec == boost::beast::websocket::error::closed;
 }

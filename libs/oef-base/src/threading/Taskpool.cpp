@@ -1,8 +1,26 @@
-#include "oef-base/threading/Taskpool.hpp"
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "logging/logging.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/threading/Task.hpp"
+#include "oef-base/threading/Taskpool.hpp"
 
 #include <algorithm>
 
@@ -132,7 +150,7 @@ void Taskpool::run(std::size_t thread_idx)
     {
     case DEFER:
     {
-      if (mytask->GetMadeRunnableCountAndClear()==0)
+      if (mytask->GetMadeRunnableCountAndClear() == 0)
       {
         Counter("mt-core.tasks.run.deferred")++;
         suspend(mytask);
@@ -218,7 +236,7 @@ bool Taskpool::MakeRunnable(TaskP task)
 {
   Lock lock(mutex);
   bool status = false;
-  auto iter = suspended_tasks.find(task);
+  auto iter   = suspended_tasks.find(task);
   if (iter != suspended_tasks.end())
   {
     Counter("mt-core.tasks.made-runnable")++;
@@ -232,9 +250,10 @@ bool Taskpool::MakeRunnable(TaskP task)
   else
   {
     Counter("mt-core.tasks.made-runnable.failed")++;
-    bool in_pending = std::find(pending_tasks.begin(), pending_tasks.end(), task) != pending_tasks.end();
+    bool in_pending =
+        std::find(pending_tasks.begin(), pending_tasks.end(), task) != pending_tasks.end();
     bool in_running = false;
-    for(const auto& e : running_tasks)
+    for (const auto &e : running_tasks)
     {
       if (e.second->GetTaskId() == task->GetTaskId())
       {
@@ -242,8 +261,9 @@ bool Taskpool::MakeRunnable(TaskP task)
         break;
       }
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "Task ", task->GetTaskId(), " not in suspended_tasks list! in_pending=", in_pending,
-        ", in_running=", in_running);
+    FETCH_LOG_WARN(LOGGING_NAME, "Task ", task->GetTaskId(),
+                   " not in suspended_tasks list! in_pending=", in_pending,
+                   ", in_running=", in_running);
   }
   return status;
 }

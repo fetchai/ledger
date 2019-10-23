@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 namespace google {
 namespace protobuf {
@@ -52,12 +69,12 @@ public:
     ident_ = ident;
   }
 
-  virtual void SetId(const std::string& id)
+  virtual void SetId(const std::string &id)
   {
     id_ = id;
   }
 
-  const std::string& GetId() const
+  const std::string &GetId() const
   {
     return id_;
   }
@@ -71,7 +88,7 @@ protected:
   Uri           uri_;
   ProtoP        proto_;
   unsigned long ident_;
-  std::string id_{};
+  std::string   id_{};
 
 private:
   OutboundConversation(const OutboundConversation &other) = delete;  // { copy(other); }

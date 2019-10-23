@@ -1,20 +1,35 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include <memory>
 #include <mutex>
 #include <unordered_map>
 
-#include "oef-base/utils/Uri.hpp"
 #include "oef-base/comms/ConstCharArrayBuffer.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
+#include "oef-base/utils/Uri.hpp"
 
-namespace google
-{
-  namespace protobuf
-  {
-    class Message;
-  };
+namespace google {
+namespace protobuf {
+class Message;
 };
+};  // namespace google
 
 class IOutboundConversationCreator
 {
@@ -25,14 +40,14 @@ public:
   static constexpr char const *LOGGING_NAME = "IOutboundConversationCreator";
 
   IOutboundConversationCreator()
-  : ident2conversation_{}
-  {
-  }
+    : ident2conversation_{}
+  {}
   virtual ~IOutboundConversationCreator() = default;
 
-  virtual std::shared_ptr<OutboundConversation> start(const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator) = 0;
+  virtual std::shared_ptr<OutboundConversation> start(
+      const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator) = 0;
 
-  virtual void HandleMessage(unsigned long id, const Uri& uri, ConstCharArrayBuffer buffer) const
+  virtual void HandleMessage(unsigned long id, const Uri &uri, ConstCharArrayBuffer buffer) const
   {
     std::shared_ptr<OutboundConversation> conv = nullptr;
 
@@ -57,7 +72,8 @@ public:
     }
   }
 
-  virtual void HandleError(unsigned long id, const Uri& uri, int status_code, const std::string &message) const
+  virtual void HandleError(unsigned long id, const Uri &uri, int status_code,
+                           const std::string &message) const
   {
     std::shared_ptr<OutboundConversation> conv = nullptr;
     {
@@ -84,11 +100,11 @@ public:
 
 protected:
   std::unordered_map<unsigned long, std::shared_ptr<OutboundConversation>> ident2conversation_;
-  mutable Mutex mutex_;
+  mutable Mutex                                                            mutex_;
 
 private:
   IOutboundConversationCreator(const IOutboundConversationCreator &other) = delete;
-  IOutboundConversationCreator &operator=(const IOutboundConversationCreator &other) = delete;
-  bool operator==(const IOutboundConversationCreator &other) = delete;
-  bool operator<(const IOutboundConversationCreator &other) = delete;
+  IOutboundConversationCreator &operator=(const IOutboundConversationCreator &other)  = delete;
+  bool                          operator==(const IOutboundConversationCreator &other) = delete;
+  bool                          operator<(const IOutboundConversationCreator &other)  = delete;
 };

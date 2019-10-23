@@ -20,7 +20,7 @@ target_link_libraries(fetch-oef-core
                              fetch-oef-messages
                              fetch-oef-base
                              fetch-network
-  vendor-openssl)
+                             vendor-openssl)
 
 # Test targets add_test_target()
 

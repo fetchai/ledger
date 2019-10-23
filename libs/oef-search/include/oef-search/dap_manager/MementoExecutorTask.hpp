@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "DapManager.hpp"
 #include "Leaf.hpp"
@@ -73,11 +90,12 @@ public:
 
       auto this_sp = this->template shared_from_base<MementoExecutorTask>();
       std::weak_ptr<MementoExecutorTask> this_wp = this_sp;
-      auto id = this->GetTaskId();
-      auto task_id = conv_task_->GetTaskId();
+      auto                               id      = this->GetTaskId();
+      auto                               task_id = conv_task_->GetTaskId();
 
-      conv_task_->errorHandler = [this_wp, id, task_id](const std::string &dap_name, const std::string &path,
-                                           const std::string &msg) {
+      conv_task_->errorHandler = [this_wp, id, task_id](const std::string &dap_name,
+                                                        const std::string &path,
+                                                        const std::string &msg) {
         auto sp = this_wp.lock();
         if (sp && sp->errorHandler)
         {
@@ -85,8 +103,9 @@ public:
         }
         else
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "id=", id, ", task_id=", task_id, ";Failed to execute memento chain, because call to dap ",
-                         dap_name, " failed! Message: ", msg);
+          FETCH_LOG_WARN(LOGGING_NAME, "id=", id, ", task_id=", task_id,
+                         ";Failed to execute memento chain, because call to dap ", dap_name,
+                         " failed! Message: ", msg);
         }
         if (sp)
         {
@@ -95,7 +114,8 @@ public:
         }
       };
 
-      conv_task_->messageHandler = [this_wp, id, task_id](std::shared_ptr<IdentifierSequence> result) {
+      conv_task_->messageHandler = [this_wp, id,
+                                    task_id](std::shared_ptr<IdentifierSequence> result) {
         auto sp = this_wp.lock();
         if (sp)
         {
@@ -106,13 +126,15 @@ public:
           }
           else
           {
-            FETCH_LOG_WARN(LOGGING_NAME, "id=", id, ", task_id=", task_id, "; No messageHandler, loosing output!");
+            FETCH_LOG_WARN(LOGGING_NAME, "id=", id, ", task_id=", task_id,
+                           "; No messageHandler, loosing output!");
           }
           sp->wake();
         }
         else
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "id=", id, ", task_id=", task_id, "; Failed to set result, no shared_ptr!");
+          FETCH_LOG_WARN(LOGGING_NAME, "id=", id, ", task_id=", task_id,
+                         "; Failed to set result, no shared_ptr!");
         }
       };
       task_done.store(false);
@@ -128,7 +150,8 @@ public:
               })
               .Waiting())
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), "), will be woken by conv task ", conv_task_->GetTaskId());
+        FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(),
+                       "), will be woken by conv task ", conv_task_->GetTaskId());
         return ExitState ::DEFER;
       }
     }
@@ -138,7 +161,7 @@ public:
                      "), will be woken by conv task ", conv_task_->GetTaskId());
       return ExitState ::DEFER;
     }
-    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping (id=",  this->GetTaskId(), ")");
+    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping (id=", this->GetTaskId(), ")");
     return ExitState ::COMPLETE;
   }
 
@@ -161,5 +184,5 @@ protected:
   std::shared_ptr<DapManager>         dap_manager_;
   std::shared_ptr<ConvTask>           conv_task_;
   std::shared_ptr<IdentifierSequence> identifier_sequence_;
-  std::atomic<bool> task_done{false};
+  std::atomic<bool>                   task_done{false};
 };

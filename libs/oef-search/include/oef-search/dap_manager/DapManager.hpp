@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
@@ -10,8 +27,8 @@
 #include "oef-search/dap_comms/DapParallelConversationTask.hpp"
 #include "oef-search/dap_manager/BranchExecutorTask.hpp"
 #include "oef-search/dap_manager/DapStore.hpp"
-#include "oef-search/dap_manager/NodeExecutorFactory.hpp"
 #include "oef-search/dap_manager/IdCache.hpp"
+#include "oef-search/dap_manager/NodeExecutorFactory.hpp"
 #include "oef-search/search_comms/SearchPeerStore.hpp"
 #include "visitors/AddMoreDapsBasedOnOptionsVisitor.hpp"
 #include "visitors/CollectDapsVisitor.hpp"
@@ -29,8 +46,7 @@ public:
 
   DapManager(std::shared_ptr<DapStore>              dap_store,
              std::shared_ptr<SearchPeerStore>       search_peer_store,
-             std::shared_ptr<OutboundConversations> outbounds,
-             uint64_t query_cache_lifetime_sec)
+             std::shared_ptr<OutboundConversations> outbounds, uint64_t query_cache_lifetime_sec)
     : dap_store_{std::move(dap_store)}
     , search_peer_store_{std::move(search_peer_store)}
     , outbounds_{std::move(outbounds)}
@@ -231,37 +247,39 @@ public:
   }
 
   std::shared_ptr<FutureComplexType<std::shared_ptr<IdentifierSequence>>> execute(
-      std::shared_ptr<Branch> root, const fetch::oef::pb::SearchQuery &query) {
-    auto result = std::make_shared<FutureComplexType<std::shared_ptr<IdentifierSequence>>>();
+      std::shared_ptr<Branch> root, const fetch::oef::pb::SearchQuery &query)
+  {
+    auto result    = std::make_shared<FutureComplexType<std::shared_ptr<IdentifierSequence>>>();
     auto visit_res = VisitQueryTreeNetwork(root);
 
     auto identifier_sequence = std::make_shared<IdentifierSequence>();
     identifier_sequence->set_originator(true);
 
-    std::shared_ptr<DapManager> this_sp = shared_from_this();
-    double distance = 0.0;
+    std::shared_ptr<DapManager> this_sp  = shared_from_this();
+    double                      distance = 0.0;
     if (query.directed_search().has_distance())
     {
       distance = query.directed_search().distance().geo();
     }
 
-    visit_res->MakeNotification().Then([result, root, identifier_sequence, this_sp, distance]() mutable {
+    visit_res->MakeNotification().Then([result, root, identifier_sequence, this_sp,
+                                        distance]() mutable {
       FETCH_LOG_INFO(LOGGING_NAME, "--------------------- AFTER VISIT");
       root->Print();
       FETCH_LOG_INFO(LOGGING_NAME, "---------------------");
 
       auto execute_task =
-          NodeExecutorFactory(BranchExecutorTask::NodeDataType(root),
-                              identifier_sequence, this_sp);
+          NodeExecutorFactory(BranchExecutorTask::NodeDataType(root), identifier_sequence, this_sp);
 
-      execute_task->SetMessageHandler([result, distance](std::shared_ptr<IdentifierSequence> response) {
-        response->mutable_status()->set_success(true);
-        for(int i=0; i < response->identifiers_size();++i)
-        {
-          response->mutable_identifiers(i)->set_distance(distance);
-        }
-        result->set(std::move(response));
-      });
+      execute_task->SetMessageHandler(
+          [result, distance](std::shared_ptr<IdentifierSequence> response) {
+            response->mutable_status()->set_success(true);
+            for (int i = 0; i < response->identifiers_size(); ++i)
+            {
+              response->mutable_identifiers(i)->set_distance(distance);
+            }
+            result->set(std::move(response));
+          });
 
       execute_task->submit();
     });
@@ -269,7 +287,8 @@ public:
     return result;
   }
 
-  double SetQueryHeader(std::shared_ptr<Branch>& root, fetch::oef::pb::SearchQuery &query, std::function<void(fetch::oef::pb::SearchQuery&)> done)
+  double SetQueryHeader(std::shared_ptr<Branch> &root, fetch::oef::pb::SearchQuery &query,
+                        std::function<void(fetch::oef::pb::SearchQuery &)> done)
   {
     if (!query.has_directed_search() || !query.directed_search().has_target() ||
         !query.directed_search().target().has_geo())
@@ -277,7 +296,7 @@ public:
       FETCH_LOG_INFO(LOGGING_NAME,
                      "No location set in header, looking for location constraint in the query...");
       auto this_sp = this->shared_from_this();
-      auto v = std::make_shared<FindGeoLocationVisitor>(dap_store_);
+      auto v       = std::make_shared<FindGeoLocationVisitor>(dap_store_);
       v->SubmitVisitTask(root);
       v->MakeNotification().Then([this_sp, v, query, done]() mutable {
         auto loc_res = v->GetLocationRoot();
@@ -310,7 +329,7 @@ public:
     }
     else
     {
-      if (query.directed_search().has_distance() && query.directed_search().distance().geo()>0)
+      if (query.directed_search().has_distance() && query.directed_search().distance().geo() > 0)
       {
         double source_distance = query.directed_search().distance().geo();
 
@@ -326,7 +345,8 @@ public:
     return 0.0;
   }
 
-  std::shared_ptr<FutureComplexType<std::shared_ptr<IdentifierSequence>>> broadcast(const fetch::oef::pb::SearchQuery &query)
+  std::shared_ptr<FutureComplexType<std::shared_ptr<IdentifierSequence>>> broadcast(
+      const fetch::oef::pb::SearchQuery &query)
   {
     query_id_cache_->Add(query.id());
 
@@ -361,7 +381,6 @@ public:
     return result;
   }
 
-
   std::shared_ptr<FutureComplexType<std::pair<std::string, std::string>>> GetCoreInfo()
   {
     auto response = std::make_shared<FutureComplexType<std::pair<std::string, std::string>>>();
@@ -373,10 +392,12 @@ public:
     using OUT_PROTO = ConstructQueryConstraintObjectRequest;
 
     auto address_daps = dap_store_->GetDapsForAttributeType("address");
-    if (address_daps.empty() || address_daps.size()>1)
+    if (address_daps.empty() || address_daps.size() > 1)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Address registry not found or more then one (size=", address_daps.size(), ")");
-      response->set(std::make_pair("",""));
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Address registry not found or more then one (size=", address_daps.size(),
+                     ")");
+      response->set(std::make_pair("", ""));
       return response;
     }
 
@@ -392,19 +413,22 @@ public:
         if (proto->query_field_value().v_s_size() == 0)
         {
           FETCH_LOG_WARN(LOGGING_NAME, "No core address found in address registry!");
-          response->set(std::make_pair("",""));
+          response->set(std::make_pair("", ""));
         }
         else
         {
-          //TODO handle multiple core
+          // TODO handle multiple core
           auto core = proto->query_field_value().v_s(0);
           FETCH_LOG_INFO(LOGGING_NAME, "Got address response: ", proto->ShortDebugString());
-          Uri uri(core);
-          auto resp = std::make_pair(uri.proto, "tcp://"+uri.host+":"+std::to_string(uri.port));
+          Uri  uri(core);
+          auto resp =
+              std::make_pair(uri.proto, "tcp://" + uri.host + ":" + std::to_string(uri.port));
           response->set(std::move(resp));
-          if (proto->query_field_value().v_s_size()>1)
+          if (proto->query_field_value().v_s_size() > 1)
           {
-            FETCH_LOG_WARN(LOGGING_NAME, "Multiple core registered with the node! Using only the first! Proto: ", proto->DebugString());
+            FETCH_LOG_WARN(LOGGING_NAME,
+                           "Multiple core registered with the node! Using only the first! Proto: ",
+                           proto->DebugString());
           }
         }
       }
@@ -412,14 +436,14 @@ public:
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Got unexpected response for distance calculation call: ",
                        proto->DebugString());
-        response->set(std::make_pair("",""));
+        response->set(std::make_pair("", ""));
       }
     };
 
     convTask->errorHandler = [response](const std::string &dap_name, const std::string &path,
                                         const std::string &msg) {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to call ", dap_name, " with path: ", path, ": ", msg);
-      response->set(std::make_pair("",""));
+      response->set(std::make_pair("", ""));
     };
 
     return response;
@@ -552,11 +576,12 @@ protected:
     return true;
   }
 
-  inline void SetDistanceInHeader(fetch::oef::pb::SearchQuery &query, std::function<void(fetch::oef::pb::SearchQuery&)> done)
+  inline void SetDistanceInHeader(fetch::oef::pb::SearchQuery &                      query,
+                                  std::function<void(fetch::oef::pb::SearchQuery &)> done)
   {
     auto res = PlaneDistanceLookup(
         "geo", query.directed_search(),
-        [query, done](const double &/*source_distance*/, const double &distance) mutable {
+        [query, done](const double & /*source_distance*/, const double &distance) mutable {
           query.mutable_directed_search()->mutable_distance()->set_geo(distance);
           done(query);
         },

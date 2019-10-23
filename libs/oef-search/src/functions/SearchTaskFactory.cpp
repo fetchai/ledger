@@ -1,7 +1,25 @@
-#include "oef-search/functions/SearchTaskFactory.hpp"
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "oef-base/threading/Future.hpp"
 #include "oef-base/threading/FutureCombiner.hpp"
 #include "oef-search/functions/ReplyMethods.hpp"
+#include "oef-search/functions/SearchTaskFactory.hpp"
 
 void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharArrayBuffer &data)
 {
@@ -125,16 +143,16 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Can't handle path: ", current_uri.path);
     SendExceptionReply("UnknownPath", current_uri,
-                       std::runtime_error("Path " + current_uri.path + " not supported!"), endpoint);
+                       std::runtime_error("Path " + current_uri.path + " not supported!"),
+                       endpoint);
   }
 }
 
-void SearchTaskFactory::HandleQuery(fetch::oef::pb::SearchQuery &query,
-                                    const Uri &                        current_uri)
+void SearchTaskFactory::HandleQuery(fetch::oef::pb::SearchQuery &query, const Uri &current_uri)
 {
   auto                             this_sp = shared_from_this();
   std::weak_ptr<SearchTaskFactory> this_wp = this_sp;
-  auto root = std::make_shared<Branch>(query.query_v2());
+  auto                             root    = std::make_shared<Branch>(query.query_v2());
   if (root->GetOperator() != "result")
   {
     auto new_root = std::make_shared<Branch>();
@@ -145,7 +163,7 @@ void SearchTaskFactory::HandleQuery(fetch::oef::pb::SearchQuery &query,
 
   auto visit_future = dap_manager_->VisitQueryTreeLocal(root);
 
-  visit_future->MakeNotification().Then([root, this_wp, current_uri, query]() mutable{
+  visit_future->MakeNotification().Then([root, this_wp, current_uri, query]() mutable {
     FETCH_LOG_INFO(LOGGING_NAME, "--------------------- QUERY TREE");
     root->Print();
     FETCH_LOG_INFO(LOGGING_NAME, "---------------------");
@@ -153,9 +171,10 @@ void SearchTaskFactory::HandleQuery(fetch::oef::pb::SearchQuery &query,
     auto sp = this_wp.lock();
     if (sp)
     {
-      sp->dap_manager_->SetQueryHeader(root, query, [sp, root, current_uri](fetch::oef::pb::SearchQuery& query) mutable{
-        sp->ExecuteQuery(root, query, current_uri);
-      });
+      sp->dap_manager_->SetQueryHeader(
+          root, query, [sp, root, current_uri](fetch::oef::pb::SearchQuery &query) mutable {
+            sp->ExecuteQuery(root, query, current_uri);
+          });
     }
     else
     {
@@ -165,14 +184,15 @@ void SearchTaskFactory::HandleQuery(fetch::oef::pb::SearchQuery &query,
   });
 }
 
-void SearchTaskFactory::ExecuteQuery(std::shared_ptr<Branch>& root, const fetch::oef::pb::SearchQuery &query, const Uri &current_uri)
+void SearchTaskFactory::ExecuteQuery(std::shared_ptr<Branch> &          root,
+                                     const fetch::oef::pb::SearchQuery &query,
+                                     const Uri &                        current_uri)
 {
   auto                             this_sp = shared_from_this();
   std::weak_ptr<SearchTaskFactory> this_wp = this_sp;
 
-  auto result_future =
-      std::make_shared<FutureCombiner<FutureComplexType<std::shared_ptr<IdentifierSequence>>,
-          IdentifierSequence>>();
+  auto result_future = std::make_shared<
+      FutureCombiner<FutureComplexType<std::shared_ptr<IdentifierSequence>>, IdentifierSequence>>();
 
   result_future->SetResultMerger([](std::shared_ptr<IdentifierSequence> &      results,
                                     const std::shared_ptr<IdentifierSequence> &res) {

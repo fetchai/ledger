@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include <memory>
 #include <queue>
@@ -75,11 +92,12 @@ public:
   {
     if (!last_output || !protoPipeBuilder)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "No last output or pipe builder set! (id=", this->GetTaskId(), ")");
+      FETCH_LOG_ERROR(LOGGING_NAME, "No last output or pipe builder set! (id=", this->GetTaskId(),
+                      ")");
       wake();
       return StateResult(0, ERRORED);
     }
-    //spurious wakeup
+    // spurious wakeup
     if (!last_task_done.load())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Spurious wakeup. Sleeping (id=", this->GetTaskId(), ")");
@@ -111,7 +129,7 @@ public:
       return StateResult(0, ERRORED);
     }
     auto task_id = task->GetTaskId();
-    auto id = this->GetTaskId();
+    auto id      = this->GetTaskId();
 
     task->SetMessageHandler([this_wp, id, task_id](std::shared_ptr<OUT_PROTO> response) {
       auto sp = this_wp.lock();
@@ -129,30 +147,32 @@ public:
       }
       else
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainSerial(id=", id, ")! Called by task ", task_id);
+        FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainSerial(id=", id,
+                        ")! Called by task ", task_id);
       }
     });
 
-    task->SetErrorHandler(
-        [this_wp, task_id, id](const std::string &dap_name, const std::string &path, const std::string &msg) {
-          auto sp = this_wp.lock();
-          if (sp)
-          {
-            sp->last_task_done.store(true);
-            std::queue<PipeDataType> empty;
-            std::swap(sp->pipe_, empty);
-            sp->last_output = nullptr;
-            if (sp->errorHandler)
-            {
-              sp->errorHandler(dap_name, path, msg);
-              sp->wake();
-            }
-          }
-          else
-          {
-            FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainSerial(id=", id, ")! Called by task ", task_id);
-          }
-        });
+    task->SetErrorHandler([this_wp, task_id, id](const std::string &dap_name,
+                                                 const std::string &path, const std::string &msg) {
+      auto sp = this_wp.lock();
+      if (sp)
+      {
+        sp->last_task_done.store(true);
+        std::queue<PipeDataType> empty;
+        std::swap(sp->pipe_, empty);
+        sp->last_output = nullptr;
+        if (sp->errorHandler)
+        {
+          sp->errorHandler(dap_name, path, msg);
+          sp->wake();
+        }
+      }
+      else
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainSerial(id=", id,
+                        ")! Called by task ", task_id);
+      }
+    });
 
     last_task_done.store(false);
     task->submit();
@@ -169,11 +189,12 @@ public:
             })
             .Waiting())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), "), will be woken by ", task->GetTaskId());
+      FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), "), will be woken by ",
+                     task->GetTaskId());
       return StateResult(1, DEFER);
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping (id=",  this->GetTaskId(), ")");
+    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping (id=", this->GetTaskId(), ")");
     return StateResult(1, COMPLETE);
   }
 
@@ -199,5 +220,5 @@ protected:
   std::queue<PipeDataType>   pipe_{};
 
   std::vector<EntryPoint> entryPoint{};
-  std::atomic<bool> last_task_done{true};
+  std::atomic<bool>       last_task_done{true};
 };

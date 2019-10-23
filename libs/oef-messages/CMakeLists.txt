@@ -21,9 +21,18 @@ include_directories(${Protobuf_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Since protobuf has a lot of warning with it, we need to dial down the default fetch settings here
-string(REPLACE " -Wconversion" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-string(REPLACE " -Wextra" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-string(REPLACE " -Wpedantic" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+string(REPLACE " -Wconversion"
+               ""
+               CMAKE_CXX_FLAGS
+               "${CMAKE_CXX_FLAGS}")
+string(REPLACE " -Wextra"
+               ""
+               CMAKE_CXX_FLAGS
+               "${CMAKE_CXX_FLAGS}")
+string(REPLACE " -Wpedantic"
+               ""
+               CMAKE_CXX_FLAGS
+               "${CMAKE_CXX_FLAGS}")
 
 protobuf_generate_cpp(PROTO_SRCS
                       PROTO_HDRS

@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "oef-search/comms/OefSearchEndpoint.hpp"
 
 #include "oef-base/comms/Endianness.hpp"
@@ -14,8 +32,7 @@ static Gauge count("mt-search.network.OefSearchEndpoint");
 
 OefSearchEndpoint::OefSearchEndpoint(std::shared_ptr<ProtoEndpoint> endpoint)
   : Parent(std::move(endpoint))
-{
-}
+{}
 
 void OefSearchEndpoint::close(const std::string &reason)
 {
@@ -67,7 +84,8 @@ void OefSearchEndpoint::setup()
     {
       // myself_sp -> factory -> EndpointClosed();
       // myself_sp -> factory.reset();
-      FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (id=", myGroupId, ", ", endpoint_uri.ToString(), ") called OnErrorHandler!");
+      FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (id=", myGroupId, ", ", endpoint_uri.ToString(),
+                     ") called OnErrorHandler!");
       Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
     }
   });
@@ -77,21 +95,24 @@ void OefSearchEndpoint::setup()
     {
       // myself_sp -> factory -> EndpointClosed();
       // myself_sp -> factory.reset();
-      FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (id=", myGroupId, ", ", endpoint_uri.ToString(), ") called OnEofHandler!");
+      FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (id=", myGroupId, ", ", endpoint_uri.ToString(),
+                     ") called OnEofHandler!");
       Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
     }
   });
 
-  endpoint->SetOnProtoErrorHandler([myGroupId, myself_wp, endpoint_uri](const std::string &message) {
-    if (auto myself_sp = myself_wp.lock())
-    {
-      // myself_sp -> factory -> EndpointClosed();
-      // myself_sp -> factory.reset();
-      FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (id=", myGroupId, ", ", endpoint_uri.ToString(), ") called OnProtoErrorHandler!");
-      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
-    }
-    FETCH_LOG_INFO(LOGGING_NAME, "Proto error: ", message);
-  });
+  endpoint->SetOnProtoErrorHandler(
+      [myGroupId, myself_wp, endpoint_uri](const std::string &message) {
+        if (auto myself_sp = myself_wp.lock())
+        {
+          // myself_sp -> factory -> EndpointClosed();
+          // myself_sp -> factory.reset();
+          FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (id=", myGroupId, ", ", endpoint_uri.ToString(),
+                         ") called OnProtoErrorHandler!");
+          Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
+        }
+        FETCH_LOG_INFO(LOGGING_NAME, "Proto error: ", message);
+      });
 }
 
 void OefSearchEndpoint::SetFactory(std::shared_ptr<IOefTaskFactory<OefSearchEndpoint>> new_factory)
