@@ -27,6 +27,34 @@
 
 using namespace fetch::fixed_point;
 
+std::ostream &operator<<(std::ostream &s, fetch::fixed_point::FixedPoint<64, 64> const &n)
+{
+  std::ios_base::fmtflags f(s.flags());
+  s << std::setfill('0');
+  s << std::setw(16);
+  s << std::setprecision(20);
+  s << std::fixed;
+  if (fetch::fixed_point::FixedPoint<64, 64>::IsNaN(n))
+  {
+    s << "NaN";
+  }
+  else if (fetch::fixed_point::FixedPoint<64, 64>::IsPosInfinity(n))
+  {
+    s << "+∞";
+  }
+  else if (fetch::fixed_point::FixedPoint<64, 64>::IsNegInfinity(n))
+  {
+    s << "-∞";
+  }
+  else
+  {
+    s << double(n);
+  }
+  s << " (0x" << std::hex << static_cast<uint64_t>(n.Data() >> 64) << static_cast<uint64_t>(n.Data()) << ")";
+  s.flags(f);
+  return s;
+}
+
 TEST(FixedPointTest, Conversion_16_16)
 {
   // Positive
@@ -222,6 +250,119 @@ TEST(FixedPointTest, Conversion_32_32)
 
   EXPECT_EQ(fp64_t::TOLERANCE.Data(), 0x200);
   EXPECT_EQ(fp64_t::DECIMAL_DIGITS, 9);
+}
+
+TEST(FixedPointTest, Conversion_64_64)
+{
+  // Positive
+  FixedPoint<64, 64> one(1);
+  FixedPoint<64, 64> two(2);
+
+  EXPECT_EQ(static_cast<int>(one), 1);
+  EXPECT_EQ(static_cast<int>(two), 2);
+  EXPECT_EQ(static_cast<float>(one), 1.0f);
+  EXPECT_EQ(static_cast<float>(two), 2.0f);
+  EXPECT_EQ(static_cast<double>(one), 1.0);
+  EXPECT_EQ(static_cast<double>(two), 2.0);
+
+  // Negative
+  FixedPoint<64, 64> m_one(-1);
+  FixedPoint<64, 64> m_two(-2);
+
+  EXPECT_EQ(static_cast<int>(m_one), -1);
+  EXPECT_EQ(static_cast<int>(m_two), -2);
+  EXPECT_EQ(static_cast<float>(m_one), -1.0f);
+  EXPECT_EQ(static_cast<float>(m_two), -2.0f);
+  EXPECT_EQ(static_cast<double>(m_one), -1.0);
+  EXPECT_EQ(static_cast<double>(m_two), -2.0);
+
+  // _0
+  FixedPoint<64, 64> zero(0);
+  FixedPoint<64, 64> m_zero(-0);
+
+  EXPECT_EQ(static_cast<int>(zero), 0);
+  EXPECT_EQ(static_cast<int>(m_zero), 0);
+  EXPECT_EQ(static_cast<float>(zero), 0.0f);
+  EXPECT_EQ(static_cast<float>(m_zero), 0.0f);
+  EXPECT_EQ(static_cast<double>(zero), 0.0);
+  EXPECT_EQ(static_cast<double>(m_zero), 0.0);
+
+  // Get raw value
+  FixedPoint<64, 64> zero_point_five(0.5);
+  FixedPoint<64, 64> one_point_five(1.5);
+  FixedPoint<64, 64> two_point_five(2.5);
+  FixedPoint<64, 64> m_one_point_five(-1.5);
+
+  EXPECT_EQ(zero_point_five.Data(), static_cast<__int128_t>(0x8000000000000000));
+  EXPECT_EQ(one.Data(), static_cast<__int128_t>(1) << 64);
+  EXPECT_EQ(one_point_five.Data(), static_cast<__int128_t>(0x18) << 60);
+  EXPECT_EQ(two_point_five.Data(), static_cast<__int128_t>(0x28) << 60);
+
+  // Convert from raw value
+  FixedPoint<64, 64> two_point_five_raw(2, 0x8000000000000000);
+  FixedPoint<64, 64> m_two_point_five_raw(-2, 0x8000000000000000);
+  EXPECT_EQ(two_point_five, two_point_five_raw);
+  EXPECT_EQ(m_one_point_five, m_two_point_five_raw);
+
+  std::cout << "infinitesimal = " << fp128_t(0, fp128_t::SMALLEST_FRACTION) << std::endl;
+  std::cout << "almost_one = " << fp128_t(0, fp128_t::LARGEST_FRACTION) << std::endl;
+  // Extreme cases:
+  // smallest possible double representable to a FixedPoint
+  FixedPoint<64, 64> infinitesimal(0.00000000000000000009);
+  std::cout << "infinitesimal = " << infinitesimal << std::endl;
+  // Largest double fractional closest to one, representable to a FixedPoint
+  FixedPoint<64, 64> almost_one(0.999999999999999944);
+  std::cout << "almost_one = " << almost_one << std::endl;
+  // Largest fractional closest to one, representable to a FixedPoint
+  FixedPoint<64, 64> largest_int(std::numeric_limits<int64_t>::max(), 0);
+  std::cout << "largest_int = " << largest_int << std::endl;
+
+  // Smallest possible integer, increase by one, in order to allow for the fractional part.
+  FixedPoint<64, 64> smallest_int(std::numeric_limits<int64_t>::min(), 0);
+
+  // Largest possible Fixed Point number.
+  FixedPoint<64, 64> largest_fixed_point = largest_int + fp128_t(0, fp128_t::LARGEST_FRACTION);//almost_one;
+  std::cout << "largest_fixed_point = " << largest_fixed_point << std::endl;
+  std::cout << "largest_fixed_point = " << fp128_t::FP_MAX << std::endl;
+
+  // Smallest possible Fixed Point number.
+  FixedPoint<64, 64> smallest_fixed_point = smallest_int - fp128_t(0, fp128_t::LARGEST_FRACTION);//almost_one;
+  std::cout << "smallest_fixed_point = " << smallest_fixed_point << std::endl;
+  std::cout << "smallest_fixed_point = " << fp128_t::FP_MIN << std::endl;
+  
+  std::cout << "MAX_INT = " << fp128_t::FromBase(fp128_t::MAX_INT) << std::endl;
+  std::cout << "MIN_INT = " << fp128_t::FromBase(fp128_t::MIN_INT) << std::endl;
+  EXPECT_EQ(infinitesimal.Data(), fp128_t::SMALLEST_FRACTION);
+  EXPECT_EQ(almost_one.Data(), fp128_t::LARGEST_FRACTION);
+  std::cout << "largest_int = " << largest_int << std::endl;
+  std::cout << "largest_int = " << std::hex << static_cast<uint64_t>(fp128_t::MAX_INT >> 64) << static_cast<uint64_t>(fp128_t::MAX_INT) << std::endl;
+  EXPECT_EQ(largest_int.Data(), fp128_t::MAX_INT);
+  std::cout << "smallest_int = " << smallest_int << std::endl;
+  std::cout << "smallest_int = " << std::hex << static_cast<uint64_t>(fp128_t::MIN_INT >> 64) << static_cast<uint64_t>(fp128_t::MIN_INT) << std::endl;
+  EXPECT_EQ(smallest_int.Data(), fp128_t::MIN_INT);
+  EXPECT_EQ(largest_fixed_point.Data(), fp128_t::MAX);
+  EXPECT_EQ(smallest_fixed_point.Data(), fp128_t::MIN);
+  EXPECT_EQ(fp128_t::MIN, (static_cast<__uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
+  EXPECT_EQ(fp128_t::MAX, 0x7ffffffeffffffff);
+
+  // We cannot be smaller than the actual negative integer of the actual type
+  EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<__int128_t>::min());
+  // On the other hand we expect to be exactly the same as the largest positive integer of
+  EXPECT_TRUE(largest_fixed_point.Data() < std::numeric_limits<__int128_t>::max());
+
+  EXPECT_EQ(sizeof(one), 16);
+
+  EXPECT_EQ(static_cast<int>(one), 1);
+  EXPECT_EQ(static_cast<unsigned>(one), 1);
+  EXPECT_EQ(static_cast<int32_t>(one), 1);
+  EXPECT_EQ(static_cast<uint32_t>(one), 1);
+  EXPECT_EQ(static_cast<long>(one), 1);
+  EXPECT_EQ(static_cast<uint64_t>(one), 1);
+  EXPECT_EQ(static_cast<int64_t>(one), 1);
+  EXPECT_EQ(static_cast<uint64_t>(one), 1);
+
+  EXPECT_EQ(fp128_t::TOLERANCE.Data(), 0x200);
+  EXPECT_EQ(fp128_t::DECIMAL_DIGITS, 20);
 }
 
 TEST(FixedPointTest, Addition_16_16)
