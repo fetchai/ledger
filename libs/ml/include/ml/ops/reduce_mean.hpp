@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
@@ -37,7 +38,9 @@ public:
   using SPType        = OpReduceMeanSaveableParams<T>;
   using MyType        = ReduceMean<TensorType>;
 
-  ReduceMean() = default;
+  ReduceMean(SizeType axis)
+    : axis_(axis)
+  {}
 
   explicit ReduceMean(SPType const &sp)
     : Ops<T>(sp)
@@ -89,36 +92,28 @@ public:
     assert(inputs.size() == 1);
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
-    TensorType ret_error_signal(inputs.at(0)->shape());
-    ret_error_signal.Assign(error_signal);
+    TensorType ret_error_signal(this->ComputeOutputShape(inputs));
+
+    Broadcast(
+        [](DataType const &x, DataType const &y, DataType &z) {
+          FETCH_UNUSED(y);
+          z = x;
+        },
+        error_signal, error_signal, ret_error_signal);
+
+    // Average error signal along specified axis
+    fetch::math::Divide(ret_error_signal, static_cast<DataType>(inputs.at(0)->shape().at(axis_)),
+                        ret_error_signal);
 
     return {ret_error_signal};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-
     auto shape = inputs.front()->shape();
 
-    bool     not_found = true;
-    SizeType cur_dim   = shape.size() - 1;
-    while (not_found)
-    {
-      if (shape.at(cur_dim) == static_cast<SizeType>(1))
-      {
-        shape.erase(shape.begin() + static_cast<int32_t>(cur_dim));
-        not_found = false;
-      }
-      else
-      {
-        if (cur_dim == 0)
-        {
-          throw math::exceptions::InvalidReshape(
-              "cannot ReduceMean tensor, no dimensions of size 1");
-        }
-        --cur_dim;
-      }
-    }
+    shape.at(axis_) = static_cast<SizeType>(1);
+
     return shape;
   }
 
