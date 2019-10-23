@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/block_entropy.hpp"
 #include "beacon/notarisation_manager.hpp"
 #include "core/state_machine.hpp"
 #include "ledger/chain/block.hpp"
@@ -48,6 +49,13 @@ public:
     COMPLETE
   };
 
+  enum class NotarisationResult
+  {
+    CAN_NOT_VERIFY,
+    PASS_VERIFICATION,
+    FAIL_VERIFICATION
+  };
+
   struct SignedNotarisation
   {
     byte_array::ConstByteArray ecdsa_signature;
@@ -62,14 +70,16 @@ public:
 
   using ConstByteArray                = byte_array::ConstByteArray;
   using MuddleAddress                 = ConstByteArray;
-  using BeaconManager                 = dkg::BeaconManager;
+  using StateMachine                  = core::StateMachine<State>;
   using Block                         = ledger::Block;
   using BlockHash                     = Block::Hash;
-  using StateMachine                  = core::StateMachine<State>;
   using Identity                      = Block::Identity;
   using BlockBody                     = Block::Body;
   using BlockHeight                   = uint64_t;
   using BlockWeight                   = Block::Weight;
+  using BlockEntropy                  = beacon::BlockEntropy;
+  using BlockNotarisation             = BlockEntropy::AggregateSignature;
+  using BlockNotarisationKeys         = BlockEntropy::CabinetMemberDetails;
   using MuddleInterface               = muddle::MuddleInterface;
   using Endpoint                      = muddle::MuddleEndpoint;
   using Server                        = fetch::muddle::rpc::Server;
@@ -120,6 +130,14 @@ public:
   /// Helper function
   /// @{
   uint64_t BlockNumberCutoff() const;
+  /// @}
+
+  /// Verifying notarised blocks
+  /// @{
+  NotarisationResult Verify(BlockHeight const &height, BlockHash const &hash,
+                            BlockNotarisation const &notarisation) const;
+  bool               Verify(BlockHash const &hash, BlockNotarisation const &notarisation,
+                            BlockNotarisationKeys const &notarisation_keys);
   /// @}
 
   std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();

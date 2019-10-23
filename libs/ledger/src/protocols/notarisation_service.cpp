@@ -370,6 +370,83 @@ uint64_t NotarisationService::BlockNumberCutoff() const
   return notarised_chain_height_ - cutoff_;
 }
 
+NotarisationService::NotarisationResult NotarisationService::Verify(
+    BlockHeight const &height, BlockHash const &hash, BlockNotarisation const &notarisation) const
+{
+
+  // If block is within current aeon then notarise now
+  SharedAeonNotarisationUnit notarisation_unit;
+  if (active_notarisation_unit_ && height >= active_notarisation_unit_->round_start() &&
+      height < active_notarisation_unit_->round_end())
+  {
+    notarisation_unit = active_notarisation_unit_;
+  }
+
+  // If block is not in current aeon then check previous notarisation unit
+  if (previous_notarisation_unit_ && height >= previous_notarisation_unit_->round_start() &&
+      height < previous_notarisation_unit_->round_end())
+  {
+    notarisation_unit = previous_notarisation_unit_;
+  }
+
+  if (!notarisation_unit)
+  {
+    return NotarisationResult::CAN_NOT_VERIFY;
+  }
+
+  AggregateSignature aggregate_signature;
+  bool               check;
+  aggregate_signature.first.setStr(&check, std::string(notarisation.first).data());
+
+  if (!check && notarisation.second.size() == notarisation_unit->threshold())
+  {
+    for (auto const &elem : notarisation.second)
+    {
+      aggregate_signature.second.push_back(static_cast<bool>(elem));
+    }
+
+    if (notarisation_unit->VerifyAggregateSignature(hash, aggregate_signature))
+    {
+      return NotarisationResult::PASS_VERIFICATION;
+    }
+  }
+  return NotarisationResult::FAIL_VERIFICATION;
+}
+
+bool NotarisationService::Verify(BlockHash const &hash, BlockNotarisation const &notarisation,
+                                 BlockNotarisationKeys const &notarisation_key_str)
+{
+  std::vector<NotarisationManager::PublicKey> notarisation_keys;
+  for (auto const &key_str : notarisation_key_str)
+  {
+    crypto::mcl::PublicKey key;
+    bool                   check;
+    key.setStr(&check, std::string(key_str.second.first).data());
+    if (!check)
+    {
+      return false;
+    }
+    notarisation_keys.push_back(key);
+  }
+
+  AggregateSignature aggregate_signature;
+  bool               check;
+  aggregate_signature.first.setStr(&check, std::string(notarisation.first).data());
+
+  // TODO(JMW): Should threshold be in block?
+  if (!check /*&& notarisation.second.size() == threshold_*/)
+  {
+    for (auto const &elem : notarisation.second)
+    {
+      aggregate_signature.second.push_back(static_cast<bool>(elem));
+    }
+
+    return NotarisationManager::VerifyAggregateSignature(hash, aggregate_signature,
+                                                         notarisation_keys);
+  }
+  return false;
+}
+
 char const *StateToString(NotarisationService::State state)
 {
   char const *text = "unknown";

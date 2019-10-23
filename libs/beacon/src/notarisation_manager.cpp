@@ -63,7 +63,14 @@ NotarisationManager::AggregateSignature NotarisationManager::ComputeAggregateSig
 bool NotarisationManager::VerifyAggregateSignature(MessagePayload const &    message,
                                                    AggregateSignature const &aggregate_signature)
 {
-  return crypto::mcl::VerifyAggregateSignature(message, aggregate_signature, cabinet_public_keys_,
+  return VerifyAggregateSignature(message, aggregate_signature, cabinet_public_keys_);
+}
+
+bool NotarisationManager::VerifyAggregateSignature(MessagePayload const &    message,
+                                                   AggregateSignature const &aggregate_signature,
+                                                   std::vector<PublicKey> const &public_keys)
+{
+  return crypto::mcl::VerifyAggregateSignature(message, aggregate_signature, public_keys,
                                                generator_);
 }
 

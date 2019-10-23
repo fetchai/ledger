@@ -162,13 +162,13 @@ Block GetBlockPriorTo(Block const &current, MainChain const &chain)
   return *chain.GetBlock(current.body.previous_hash);
 }
 
-Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
+Block Consensus::GetBeginningOfAeon(Block const &current, MainChain const &chain)
 {
   Block ret = current;
 
   // Walk back the chain until we see a block specifying an aeon beginning (corner
   // case for true genesis)
-  while (!ret.body.block_entropy.IsAeonBeginning() && !(current.body.block_number == 0))
+  while (!ret.body.block_entropy.IsAeonBeginning() && current.body.block_number != 0)
   {
     ret = GetBlockPriorTo(ret, chain);
   }

@@ -62,6 +62,7 @@ public:
   void            SetDefaultStartTime(uint64_t default_start_time);
 
   static WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabinet, uint64_t entropy);
+  static Block        GetBeginningOfAeon(Block const &current, MainChain const &chain);
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;

@@ -52,8 +52,11 @@ public:
                             MuddleAddress const &member);
   AggregateSignature ComputeAggregateSignature(
       std::unordered_map<MuddleAddress, Signature> const &cabinet_signatures);
-  bool VerifyAggregateSignature(MessagePayload const &    message,
-                                AggregateSignature const &aggregate_signature);
+  bool        VerifyAggregateSignature(MessagePayload const &    message,
+                                       AggregateSignature const &aggregate_signature);
+  static bool VerifyAggregateSignature(MessagePayload const &        message,
+                                       AggregateSignature const &    aggregate_signature,
+                                       std::vector<PublicKey> const &public_keys);
   /// @}
 
   /// Helper functions

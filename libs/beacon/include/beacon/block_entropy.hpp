@@ -38,7 +38,7 @@ struct BlockEntropy : public BlockEntropyInterface
   using ECDSASignature        = byte_array::ConstByteArray;
   using Cabinet               = std::set<MuddleAddress>;
   using SignedNotarisationKey = std::pair<NotarisationKey, ECDSASignature>;
-  using CabinetMemberDetails  = std::unordered_map<MuddleAddress, SignedNotarisationKey>;
+  using CabinetMemberDetails  = std::map<MuddleAddress, SignedNotarisationKey>;
   using AggregateSignature    = std::pair<GroupSignature, std::vector<uint8_t>>;
 
   BlockEntropy();

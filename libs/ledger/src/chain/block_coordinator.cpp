@@ -614,7 +614,39 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     }
   }
 
-  // TODO(JMW): Check notarisation is correct
+  // Check notarisation in block is valid
+  if (notarisation_)
+  {
+    // Try to verify with notarisation units in notarisation_
+    auto result =
+        notarisation_->Verify(current_block_->body.block_number, current_block_->body.hash,
+                              current_block_->body.block_entropy.block_notarisation);
+    if (result == NotarisationResult::FAIL_VERIFICATION)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block notarisation failed verificiation",
+                     ToBase64(current_block_->body.hash), ")");
+      chain_.RemoveBlock(current_block_->body.hash);
+
+      return State::RESET;
+    }
+    if (result == NotarisationResult::CAN_NOT_VERIFY)
+    {
+      // If block is too old then get aeon beginning
+      auto aeon_block                = Consensus::GetBeginningOfAeon(*current_block_, chain_);
+      auto ordered_notarisation_keys = aeon_block.body.block_entropy.member_details;
+
+      if (!notarisation_->Verify(current_block_->body.hash,
+                                 current_block_->body.block_entropy.block_notarisation,
+                                 ordered_notarisation_keys))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Block notarisation failed verification",
+                       ToBase64(current_block_->body.hash), ")");
+        chain_.RemoveBlock(current_block_->body.hash);
+
+        return State::RESET;
+      }
+    }
+  }
 
   // reset the tx wait period
   tx_wait_periodic_.Reset();

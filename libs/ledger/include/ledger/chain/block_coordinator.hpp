@@ -274,6 +274,7 @@ private:
   using DeadlineTimer        = fetch::moment::DeadlineTimer;
   using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
   using SynExecStatus        = SynergeticExecutionManagerInterface::ExecStatus;
+  using NotarisationResult   = NotarisationService::NotarisationResult;
 
   /// @name Monitor State
   /// @{
