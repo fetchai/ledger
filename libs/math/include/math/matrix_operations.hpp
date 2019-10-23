@@ -936,7 +936,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
 
   if (axis == NO_AXIS)
   {  // Argmax over the full array
-    assert(ret.size() == SizeType(1));
+    assert(ret.size() == DefaultSizeType(1));
     DefaultSizeType position = 0;
     auto            it       = array.begin();
     Type            value    = numeric_lowest<Type>();
