@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/protocols/notarisation_manager.hpp"
+#include "beacon/notarisation_manager.hpp"
 
 namespace fetch {
 namespace ledger {

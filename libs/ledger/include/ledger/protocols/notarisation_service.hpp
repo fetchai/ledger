@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/notarisation_manager.hpp"
 #include "core/state_machine.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/protocols/notarisation_manager.hpp"
 #include "ledger/protocols/notarisation_protocol.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/server.hpp"

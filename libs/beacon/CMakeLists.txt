@@ -20,8 +20,7 @@ target_link_libraries(fetch-beacon
                              fetch-shards
                              fetch-crypto
                              fetch-network
-                             fetch-dkg
-                             fetch-ledger)
+                             fetch-dkg)
 
 if (_is_clang_compiler)
   target_compile_options(fetch-beacon PRIVATE -Wshadow)

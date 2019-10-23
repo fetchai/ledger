@@ -917,7 +917,6 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     }
 
     // Notify notarisation of new valid block
-    // TODO(JMW): Check block is within notarisation window and previous block is notarised?
     if (notarisation_)
     {
       notarisation_->NotariseBlock(current_block_->body);
@@ -1066,7 +1065,6 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
     next_block_->UpdateDigest();
 
     // Notify notarisation of new block
-    // TODO(JMW): Check block is within notarisation window and previous block is notarised?
     if (notarisation_)
     {
       notarisation_->NotariseBlock(current_block_->body);

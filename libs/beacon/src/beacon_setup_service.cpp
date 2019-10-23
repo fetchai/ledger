@@ -60,13 +60,12 @@ BeaconSetupService::ReliableChannelPtr BeaconSetupService::ReliableBroadcastFact
 
 BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
                                        ManifestCacheInterface &manifest_cache,
-                                       CertificatePtr certificate, NotarisationPtr notarisation)
+                                       CertificatePtr          certificate)
   : identity_{std::move(identity)}
   , manifest_cache_{manifest_cache}
   , muddle_{muddle}
   , endpoint_{muddle_.GetEndpoint()}
   , shares_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
-  , notarisation_{std::move(notarisation)}
   , certificate_{std::move(certificate)}
   , rbc_{ReliableBroadcastFactory()}
   , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
@@ -748,7 +747,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     // Current requirement: collect all signatures from qual.
     if (beacon_->block_entropy.confirmations.size() >= desired_signatures_min)
     {
-      if (notarisation_)
+      if (notarisation_callback_function_)
       {
         SetTimeToProceed(State::WAIT_FOR_NOTARISATION_KEYS);
         return State::WAIT_FOR_NOTARISATION_KEYS;
@@ -777,7 +776,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
   if (state_machine_->previous_state() != State::WAIT_FOR_NOTARISATION_KEYS)
   {
     assert(!notarisation_manager_);
-    notarisation_manager_ = std::make_shared<ledger::NotarisationManager>();
+    notarisation_manager_ = std::make_shared<NotarisationManager>();
     NotarisationManager::PublicKey notarisation_public_key = notarisation_manager_->GenerateKeys();
     ConstByteArray                 signature = certificate_->Sign(notarisation_public_key.getStr());
 
@@ -827,7 +826,10 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
   {
     callback_function_(beacon_);
   }
-  notarisation_->NewAeonNotarisationUnit(notarisation_manager_);
+  if (notarisation_callback_function_)
+  {
+    notarisation_callback_function_(notarisation_manager_);
+  }
 
   return State::IDLE;
 }
@@ -1420,6 +1422,12 @@ void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)
 {
   FETCH_LOCK(mutex_);
   callback_function_ = std::move(callback);
+}
+
+void BeaconSetupService::SetNotarisationCallback(NotarisationCallbackFunction callback)
+{
+  FETCH_LOCK(mutex_);
+  notarisation_callback_function_ = std::move(callback);
 }
 
 std::vector<std::weak_ptr<core::Runnable>> BeaconSetupService::GetWeakRunnables()

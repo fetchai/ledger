@@ -89,7 +89,7 @@ struct NotarisationNode
     , chain{false, ledger::MainChain::Mode::IN_MEMORY_DB}
     , notarisation_service{new NotarisationService{*muddle, chain, muddle_certificate}}
     , beacon_setup_service{*muddle, muddle_certificate->identity(), manifest_cache,
-                           muddle_certificate, notarisation_service}
+                           muddle_certificate}
   {
     network_manager.Start();
     muddle->Start({muddle_port});
@@ -98,6 +98,10 @@ struct NotarisationNode
       finished = true;
       output   = beacon->manager.GetDkgOutput();
     });
+    beacon_setup_service.SetNotarisationCallback(
+        [this](SharedAeonNotarisationUnit notarisation) -> void {
+          notarisation_service->NewAeonNotarisationUnit(notarisation);
+        });
   }
 
   ~NotarisationNode()
