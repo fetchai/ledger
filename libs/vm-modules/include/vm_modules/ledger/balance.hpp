@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/identifier.hpp"
 #include "vm/module.hpp"
 
 namespace fetch {
@@ -31,7 +30,7 @@ void BindBalanceFunction(vm::Module &module, Contract const &contract)
     decltype(auto) c = contract.context();
 
     c.token_contract->Attach(c);
-    c.state_adapter->PushContext(fetch::ledger::Identifier{"fetch.token"});
+    c.state_adapter->PushContext("fetch.token");
 
     auto const balance = c.token_contract->GetBalance(c.contract_address);
 

@@ -149,9 +149,9 @@ ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteAr
   return ResourceAddress{scope.full_name() + ".state." + key};
 }
 
-void StateAdapter::PushContext(Identifier const &scope)
+void StateAdapter::PushContext(byte_array::ConstByteArray const &scope)
 {
-  scope_.push_back(scope);
+  scope_.emplace_back(scope);
 }
 
 void StateAdapter::PopContext()

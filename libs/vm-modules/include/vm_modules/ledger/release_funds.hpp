@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/identifier.hpp"
 #include "vm/address.hpp"
 #include "vm/module.hpp"
 
@@ -34,7 +33,7 @@ void BindReleaseFundsFunction(vm::Module &module, Contract const &contract)
         decltype(auto) c = contract.context();
 
         c.token_contract->Attach(c);
-        c.state_adapter->PushContext(fetch::ledger::Identifier{"fetch.token"});
+        c.state_adapter->PushContext("fetch.token");
 
         auto const success = c.token_contract->SubtractTokens(c.contract_address, amount) &&
                              c.token_contract->AddTokens(target->address(), amount);
