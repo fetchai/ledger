@@ -75,13 +75,13 @@ int main(int argc, char **argv)
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients = 5;
+  SizeType number_of_clients = 2;
   SizeType number_of_rounds  = 1000;
-  SizeType number_of_peers   = 3;
+  SizeType number_of_peers   = 1;
   bool     synchronisation   = false;
   // have been processed in total by the clients
 
-  client_params.batch_size    = 10000;
+  client_params.batch_size    = 1000;
   client_params.learning_rate = static_cast<DataType>(.001f);
   client_params.max_updates   = 100;  //  Synchronization occurs after this number of batches
 
@@ -135,8 +135,6 @@ int main(int argc, char **argv)
         networkers[i]->GetPeerCount(), number_of_peers));
   }
 
-  std::vector<std::pair<std::vector<std::string>, fetch::byte_array::ConstByteArray>> vocabs;
-
   // Instantiate NUMBER_OF_CLIENTS clients
   for (SizeType i(0); i < number_of_clients; ++i)
   {
@@ -146,17 +144,6 @@ int main(int argc, char **argv)
         std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
 
     clients[i] = client;
-    vocabs.push_back(client->GetVocab());
-  }
-
-  for (const auto &client : clients)
-  {
-    auto cast_client = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(client);
-
-    for (const auto &vocab : vocabs)
-    {
-      cast_client->AddVocab(vocab);
-    }
   }
 
   for (SizeType i(0); i < number_of_clients; ++i)

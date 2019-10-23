@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "crypto/sha256.hpp"
 #include "math/base_types.hpp"
 
@@ -61,6 +62,9 @@ public:
   SizeType                   GetVocabCount() const;
   byte_array::ConstByteArray GetVocabHash();
 
+  template <typename X, typename D>
+  friend struct fetch::serializers::MapSerializer;
+
 private:
   void                            SetVocabHash();
   SizeType                        total_count = 0;
@@ -72,4 +76,43 @@ private:
 
 }  // namespace dataloaders
 }  // namespace ml
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<fetch::ml::dataloaders::Vocab, D>
+{
+public:
+  using Type       = fetch::ml::dataloaders::Vocab;
+  using DriverType = D;
+
+  static uint8_t const TOTAL_COUNT   = 1;
+  static uint8_t const VOCAB         = 2;
+  static uint8_t const REVERSE_VOCAB = 3;
+  static uint8_t const COUNTS        = 4;
+  static uint8_t const VOCAB_HASH    = 5;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &vocab)
+  {
+    auto map = map_constructor(5);
+    map.Append(TOTAL_COUNT, vocab.total_count);
+    map.Append(VOCAB, vocab.vocab);
+    map.Append(REVERSE_VOCAB, vocab.reverse_vocab);
+    map.Append(COUNTS, vocab.counts);
+    map.Append(VOCAB_HASH, vocab.vocab_hash);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &vocab)
+  {
+    map.ExpectKeyGetValue(TOTAL_COUNT, vocab.total_count);
+    map.ExpectKeyGetValue(VOCAB, vocab.vocab);
+    map.ExpectKeyGetValue(REVERSE_VOCAB, vocab.reverse_vocab);
+    map.ExpectKeyGetValue(COUNTS, vocab.counts);
+    map.ExpectKeyGetValue(VOCAB_HASH, vocab.vocab_hash);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

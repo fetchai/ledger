@@ -187,7 +187,8 @@ std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::Get
 {
   FETCH_LOCK(this->model_mutex_);
   return std::make_shared<GradientType>(this->g_ptr_->GetGradients(),
-                                        w2v_data_loader_ptr_->GetVocabHash());
+                                        w2v_data_loader_ptr_->GetVocabHash(),
+                                        w2v_data_loader_ptr_->GetVocab()->GetReverseVocab());
 }
 
 /**
@@ -221,6 +222,12 @@ Word2VecClient<TensorType>::TranslateGradients(
 {
   assert(new_gradients->GetGradients().size() ==
          2);  // Translation unit is only defined for word2vec
+
+  // Add vocab from update if doesn't exist
+  if (!translator_.VocabKnown(new_gradients->GetHash()))
+  {
+    translator_.AddVocab(new_gradients->GetHash(), new_gradients->GetReverseVocab());
+  }
 
   VectorTensorType ret;
   ret.push_back(

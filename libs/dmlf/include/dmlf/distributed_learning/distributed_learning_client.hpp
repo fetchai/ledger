@@ -379,7 +379,7 @@ template <class TensorType>
 std::shared_ptr<fetch::dmlf::Update<TensorType>> TrainingClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(model_mutex_);
-  return std::make_shared<GradientType>(g_ptr_->GetGradients(), byte_array::ConstByteArray());
+  return std::make_shared<GradientType>(g_ptr_->GetGradients());
 }
 
 /**
