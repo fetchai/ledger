@@ -138,7 +138,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
   module_->CreateFreeFunction("balance", [this](vm::VM *) -> uint64_t {
     decltype(auto) c = context();
 
-    c.token_contract->Attach(*c.state_adapter);
+    c.token_contract->Attach(c);
     c.state_adapter->PushContext(Identifier{"fetch.token"});
 
     auto const balance = c.token_contract->GetBalance(c.contract_address);
@@ -154,7 +154,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
       [this](vm::VM *, vm::Ptr<vm::Address> const &target, uint64_t amount) -> bool {
         decltype(auto) c = context();
 
-        c.token_contract->Attach(*c.state_adapter);
+        c.token_contract->Attach(c);
         c.state_adapter->PushContext(Identifier{"fetch.token"});
 
         auto const success = c.token_contract->SubtractTokens(c.contract_address, amount) &&

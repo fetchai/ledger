@@ -171,14 +171,9 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
   Result init_status;
   if (!on_init_function.empty())
   {
+    smart_contract.Attach({token_contract, tx.contract_address(), &state()});
     state().PushContext(scope);
-    smart_contract.Attach(state());
-
-    ContractContext ctx{token_contract, tx.contract_address(), &state()};
-    smart_contract.updateContractContext(ctx);
-
     init_status = smart_contract.DispatchInitialise(payable_address, tx, block_index);
-
     state().PopContext();
     smart_contract.Detach();
 

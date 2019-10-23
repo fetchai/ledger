@@ -23,6 +23,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
 #include "ledger/chaincode/token_contract.hpp"
@@ -113,7 +114,7 @@ SmartContract::SmartContract(std::string const &source)
   module_->CreateFreeFunction("balance", [this](vm::VM *) -> uint64_t {
     decltype(auto) c = context();
 
-    c.token_contract->Attach(*c.state_adapter);
+    c.token_contract->Attach(c);
     c.state_adapter->PushContext(Identifier{"fetch.token"});
 
     auto const balance = c.token_contract->GetBalance(c.contract_address);
@@ -129,7 +130,7 @@ SmartContract::SmartContract(std::string const &source)
       [this](vm::VM *, vm::Ptr<vm::Address> const &target, uint64_t amount) -> bool {
         decltype(auto) c = context();
 
-        c.token_contract->Attach(*c.state_adapter);
+        c.token_contract->Attach(c);
         c.state_adapter->PushContext(Identifier{"fetch.token"});
 
         auto const success = c.token_contract->SubtractTokens(c.contract_address, amount) &&

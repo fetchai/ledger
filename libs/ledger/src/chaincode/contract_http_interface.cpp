@@ -239,13 +239,9 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     // adapt the storage engine so that that get and sets are sandboxed for the contract
     StateAdapter storage_adapter{storage_, contract_id};
 
-    // attach, dispatch and detach
-    contract->Attach(storage_adapter);
-
     chain::Address address;
     chain::Address::Parse(contract_id.name(), address);
-    ContractContext ctx{&token_contract_, std::move(address), &storage_adapter};
-    contract->updateContractContext(ctx);
+    contract->Attach({&token_contract_, std::move(address), &storage_adapter});
     auto const status = contract->DispatchQuery(query, doc.root(), response);
     contract->Detach();
 

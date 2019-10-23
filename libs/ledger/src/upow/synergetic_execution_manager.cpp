@@ -18,6 +18,7 @@
 
 #include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"

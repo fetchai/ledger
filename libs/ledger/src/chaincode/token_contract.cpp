@@ -21,6 +21,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/chaincode/wallet_record.hpp"

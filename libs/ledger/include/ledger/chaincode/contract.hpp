@@ -20,7 +20,6 @@
 #include "chain/address.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -47,6 +46,7 @@ class Transaction;
 namespace ledger {
 
 class TokenContract;
+struct ContractContext;
 
 /**
  * Contract - Base class for all smart contract and chain code instances
@@ -84,14 +84,14 @@ public:
   using StorageInterface      = ledger::StorageInterface;
 
   // Construction / Destruction
-  Contract()                 = default;
+  Contract();
   Contract(Contract const &) = delete;
   Contract(Contract &&)      = delete;
-  virtual ~Contract()        = default;
+  virtual ~Contract();
 
   /// @name Contract Lifecycle Handlers
   /// @{
-  void Attach(ledger::StateAdapter &state);
+  void Attach(ContractContext const &context);
   void Detach();
 
   Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx,
@@ -115,8 +115,6 @@ public:
   // Operators
   Contract &operator=(Contract const &) = delete;
   Contract &operator=(Contract &&) = delete;
-
-  void updateContractContext(ContractContext context);
 
 protected:
   /// @name Initialise Handlers
@@ -158,7 +156,7 @@ protected:
   ContractContext const &context() const;
 
 private:
-  ContractContext context_{};
+  std::unique_ptr<ContractContext> context_{};
 
   static constexpr std::size_t DEFAULT_BUFFER_SIZE = 512;
 
@@ -172,11 +170,6 @@ private:
   /// @name Statistics
   CounterMap transaction_counters_{};
   CounterMap query_counters_{};
-  /// @}
-
-  /// @name State
-  /// @{
-  ledger::StateAdapter *state_ = nullptr;
   /// @}
 };
 

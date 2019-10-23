@@ -21,6 +21,7 @@
 #include "json/document.hpp"
 #include "json/exceptions.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -188,27 +189,24 @@ bool Contract::ParseAsJson(chain::Transaction const &tx, variant::Variant &outpu
  */
 ledger::StateAdapter &Contract::state()
 {
-  detailed_assert(state_ != nullptr);
-  return *state_;
+  detailed_assert(context_->state_adapter != nullptr);
+  return *context_->state_adapter;
 }
 
-/**
- * Attach the state interface to the contract instance
- *
- * @param state The reference
- */
-void Contract::Attach(ledger::StateAdapter &state)
+ContractContext const &Contract::context() const
 {
-  // TODO(WK) detailed_assert(state_ == nullptr);
-  state_ = &state;
+  return *context_;
 }
 
-/**
- * Detach the state interface from the contract instance
- */
+void Contract::Attach(ContractContext const &context)
+{
+  // TODO(WK) detailed_assert(context_ == nullptr);
+  context_ = std::make_unique<ContractContext>(context);
+}
+
 void Contract::Detach()
 {
-  state_ = nullptr;
+  context_.reset();
 }
 
 /**
@@ -231,15 +229,8 @@ Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
   return transaction_handlers_;
 }
 
-void Contract::updateContractContext(ContractContext context)
-{
-  context_ = std::move(context);
-}
-
-ContractContext const &Contract::context() const
-{
-  return context_;
-}
+Contract::Contract()  = default;
+Contract::~Contract() = default;
 
 }  // namespace ledger
 }  // namespace fetch
