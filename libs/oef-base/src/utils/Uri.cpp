@@ -31,41 +31,41 @@ void Uri::parse(const std::string &s)
     {
       switch (expectedpart)
       {
-      case ALL:
-        expectedpart = PROTO;
-        break;
-      case PROTO:
-        if (part.length() && part.str().back() == '/')
+        case ALL:
         {
-          proto        = part.str().substr(0, static_cast<unsigned long>(part.length()-3));
+          expectedpart = PROTO;
+          break;
+        }
+        case PROTO:
+        {
+          if (part.length() && part.str().back() == '/')
+          {
+            proto = part.str().substr(0, static_cast<unsigned long>(part.length() - 3));
+          }
           expectedpart = HOST;
           break;
         }
-        else if (part.length())
+        case HOST:
         {
-          host = part;
+          host         = part;
           expectedpart = PORT;
           break;
         }
-      case HOST:
-      {
-        host         = part;
-        expectedpart = PORT;
-        break;
-      }
-      case PORT:
-        if (part.length() && part.str().front() == ':')
+        case PORT:
         {
-          auto tmp     = part.str().substr(1);
-          port         = static_cast<uint16_t>(std::stoi(tmp));
+          if (part.length() && part.str().front() == ':')
+          {
+            auto tmp = part.str().substr(1);
+            port = static_cast<uint16_t>(std::stoi(tmp));
+          }
           expectedpart = PATH;
           break;
         }
-      case PATH:
-      {
-        path = part;
-        break;
-      }
+        case PATH:
+        {
+          path = part;
+          break;
+        }
       }
     }
     valid = true;
