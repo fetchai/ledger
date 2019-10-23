@@ -73,7 +73,10 @@ inline std::string RSAKey::to_string_base64() const
   BIO *b64f = BIO_new(BIO_f_base64());
   mem       = BIO_push(b64f, mem);
   BIO_set_flags(mem, BIO_FLAGS_BASE64_NO_NL);
-  BIO_set_close(mem, BIO_CLOSE);
+
+  auto const ret = BIO_set_close(mem, BIO_CLOSE);
+  (void)ret;
+
   if (!mem || !b64f)
   {
     FETCH_LOG_WARN(LOGGING_NAME_PK, " while creating bio mem buf");
