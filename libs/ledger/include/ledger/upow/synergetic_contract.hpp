@@ -85,7 +85,7 @@ public:
   void Attach(StorageInterface &storage);
   void Detach();
 
-  void                   updateContractContext(ContractContext context);
+  void                   updateContractContext(ContractContext const &context);
   ContractContext const &context() const;
 
   /// @name Actions to be taken on the synergetic contract
@@ -110,6 +110,8 @@ private:
   using ExecutablePtr = std::shared_ptr<vm::Executable>;
   using VariantPtr    = std::shared_ptr<vm::Variant>;
 
+  std::unique_ptr<ContractContext> context_{};
+
   Digest        digest_;
   ModulePtr     module_;
   CompilerPtr   compiler_;
@@ -124,7 +126,6 @@ private:
   StorageInterface *storage_{nullptr};
   VariantPtr        problem_;
   VariantPtr        solution_;
-  ContractContext   context_{};
 };
 
 char const *ToString(SynergeticContract::Status status);

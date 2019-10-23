@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
+#include "chain/transaction_layout.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -30,15 +31,15 @@ struct ContractContext
   ContractContext()                        = default;
   ContractContext(ContractContext const &) = default;
   ContractContext(ContractContext &&)      = default;
-  ContractContext &operator=(ContractContext const &) = default;
-  ContractContext &operator=(ContractContext &&) = default;
 
   ContractContext(TokenContract *token_contract_param, chain::Address address,
-                  StateAdapter *state_adapter_param);
+                  StateAdapter *                       state_adapter_param,
+                  chain::TransactionLayout::BlockIndex block_index_param);
 
-  TokenContract *token_contract{nullptr};
-  chain::Address contract_address{};
-  StateAdapter * state_adapter{nullptr};
+  TokenContract *const                       token_contract{nullptr};
+  chain::Address const                       contract_address{};
+  StateAdapter *const                        state_adapter{nullptr};
+  chain::TransactionLayout::BlockIndex const block_index{0};
 };
 
 }  // namespace ledger

@@ -198,7 +198,8 @@ void Executor::SettleFees(chain::Address const &miner, TokenAmount amount, uint3
     // attach the token contract to the storage engine
     StateSentinelAdapter storage_adapter{*storage_, Identifier{"fetch.token"}, shard};
 
-    token_contract_->Attach({token_contract_, current_tx_->contract_address(), &storage_adapter});
+    token_contract_->Attach(
+        {token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
     token_contract_->AddTokens(miner, amount);
     token_contract_->Detach();
   }
@@ -249,7 +250,8 @@ bool Executor::ValidationChecks(Result &result)
   // attach the token contract to the storage engine
   StateAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}};
 
-  token_contract_->Attach({token_contract_, current_tx_->contract_address(), &storage_adapter});
+  token_contract_->Attach(
+      {token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
   uint64_t const balance = token_contract_->GetBalance(current_tx_->from());
   token_contract_->Detach();
 
@@ -312,7 +314,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     // Dispatch the transaction to the contract
     FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", current_tx_->action());
 
-    contract->Attach({token_contract_, current_tx_->contract_address(), &storage_adapter});
+    contract->Attach({token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
     auto const contract_status =
         contract->DispatchTransaction(*current_tx_, block_, token_contract_);
     contract->Detach();
@@ -405,7 +407,8 @@ bool Executor::ProcessTransfers(Result &result)
     StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"},
                                          allowed_shards_};
 
-    token_contract_->Attach({token_contract_, current_tx_->contract_address(), &storage_adapter});
+    token_contract_->Attach(
+        {token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
     // only process transfers if the previous steps have been successful
     if (Status::SUCCESS == result.status)
     {
@@ -440,7 +443,8 @@ void Executor::DeductFees(Result &result)
 
   auto const &from = current_tx_->from();
 
-  token_contract_->Attach({token_contract_, current_tx_->contract_address(), &storage_adapter});
+  token_contract_->Attach(
+      {token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
   uint64_t const balance = token_contract_->GetBalance(from);
 
   // calculate the fee to deduct

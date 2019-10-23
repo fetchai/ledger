@@ -103,11 +103,9 @@ def run(options):
 
     assert contract.query(api, 'query_init_test') == 0
 
-    assert contract.query(api, 'query_clear_test') == -1
     api.sync(contract.action(api, 'action_test', 10000, [entity1]))
     assert contract.query(api, 'query_action_test') == 0
 
-    assert contract.query(api, 'query_clear_test') == -1
     submit_synergetic_data(api, contract, [100, 20, 3], entity1)
     assert contract.query(api, 'query_clear_test') == 0
 
@@ -117,6 +115,5 @@ def run(options):
     api.sync(contract.action(api, 'action_test', 10000, [entity1]))
     assert contract.query(api, 'query_action_test') == 1234
 
-    assert contract.query(api, 'query_clear_test') == -1
     submit_synergetic_data(api, contract, [100, 20, 3], entity1)
     assert contract.query(api, 'query_clear_test') == 1234

@@ -70,8 +70,7 @@ private:
   Result InvokeAction(std::string const &name, chain::Transaction const &tx, BlockIndex block_index,
                       TokenContract *token_contract);
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
-  Result InvokeInit(chain::Address const &owner, chain::Transaction const &tx,
-                    BlockIndex block_index);
+  Result InvokeInit(chain::Address const &owner, chain::Transaction const &tx);
 
   std::string                    source_;      ///< The source of the current contract
   ConstByteArray                 digest_;      ///< The digest of the current contract

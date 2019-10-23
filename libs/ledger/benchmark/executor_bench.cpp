@@ -79,7 +79,7 @@ void Executor_BasicBenchmark(benchmark::State &state)
   {
     StateSentinelAdapter adapter{*storage, Identifier{"fetch.token"}, shards};
 
-    tokens.Attach({&tokens, tx->contract_address(), &adapter});
+    tokens.Attach({&tokens, tx->contract_address(), &adapter, 0});
     tokens.AddTokens(tx->from(), 500000);
     tokens.Detach();
   }

@@ -404,14 +404,14 @@ char const *ToString(SynergeticContract::Status status)
   return text;
 }
 
-void SynergeticContract::updateContractContext(ContractContext context)
+void SynergeticContract::updateContractContext(ContractContext const &context)
 {
-  context_ = std::move(context);
+  context_ = std::make_unique<ContractContext>(context);
 }
 
 ContractContext const &SynergeticContract::context() const
 {
-  return context_;
+  return *context_;
 }
 
 }  // namespace ledger

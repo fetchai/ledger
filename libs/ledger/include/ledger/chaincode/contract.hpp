@@ -67,13 +67,13 @@ public:
     int64_t return_value{0};
   };
 
-  using BlockIndex        = chain::TransactionLayout::BlockIndex;
-  using Identity          = crypto::Identity;
-  using ConstByteArray    = byte_array::ConstByteArray;
-  using ContractName      = ConstByteArray;
-  using Query             = variant::Variant;
-  using InitialiseHandler = std::function<Result(
-      chain::Address const &, chain::Transaction const &tx, BlockIndex block_index)>;
+  using BlockIndex     = chain::TransactionLayout::BlockIndex;
+  using Identity       = crypto::Identity;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using ContractName   = ConstByteArray;
+  using Query          = variant::Variant;
+  using InitialiseHandler =
+      std::function<Result(chain::Address const &, chain::Transaction const &)>;
   using TransactionHandler =
       std::function<Result(chain::Transaction const &, BlockIndex, TokenContract *)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
@@ -94,8 +94,7 @@ public:
   void Attach(ContractContext const &context);
   void Detach();
 
-  Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx,
-                            BlockIndex block_index);
+  Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
   Result DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index,
                              TokenContract *token_contract);
@@ -123,8 +122,8 @@ protected:
   /// @{
   void OnInitialise(InitialiseHandler &&handler);
   template <typename C>
-  void OnInitialise(C *instance, Result (C::*func)(chain::Address const &,
-                                                   chain::Transaction const &, BlockIndex));
+  void OnInitialise(C *instance,
+                    Result (C::*func)(chain::Address const &, chain::Transaction const &));
   /// @}
 
   /// @name Transaction Handlers
@@ -181,12 +180,11 @@ private:
  * @param func The member function pointer
  */
 template <typename C>
-void Contract::OnInitialise(C *instance, Result (C::*func)(chain::Address const &,
-                                                           chain::Transaction const &, BlockIndex))
+void Contract::OnInitialise(C *instance,
+                            Result (C::*func)(chain::Address const &, chain::Transaction const &))
 {
-  OnInitialise([instance, func](chain::Address const &owner, chain::Transaction const &tx,
-                                BlockIndex block_index) {
-    return (instance->*func)(owner, tx, block_index);
+  OnInitialise([instance, func](chain::Address const &owner, chain::Transaction const &tx) {
+    return (instance->*func)(owner, tx);
   });
 }
 

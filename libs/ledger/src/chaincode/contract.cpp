@@ -33,13 +33,13 @@ namespace ledger {
  * @return The corresponding status result for the operation
  */
 Contract::Result Contract::DispatchInitialise(chain::Address const &    owner,
-                                              chain::Transaction const &tx, BlockIndex block_index)
+                                              chain::Transaction const &tx)
 {
   Result status{Status::OK};
 
   if (init_handler_)
   {
-    status = init_handler_(owner, tx, block_index);
+    status = init_handler_(owner, tx);
   }
 
   return status;
