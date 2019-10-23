@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wpedantic"
-#endif
+#include <iostream>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#pragma clang diagnostic ignored "-Wpedantic"
-#pragma clang diagnostic ignored "-Wshadow"
-#pragma clang diagnostic ignored "-Wreturn-std-move"
-#endif
-
-#include "asio.hpp"
-#include "asio/ssl.hpp"
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
-
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+int main()
+{
+  std::cout << "Hello world" << std::endl;
+  return 0;
+}

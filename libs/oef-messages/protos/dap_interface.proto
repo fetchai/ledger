@@ -1,0 +1,175 @@
+syntax = "proto3";
+
+
+
+message NoInputParameter {
+}
+
+message DapDescription
+{
+        message DapFieldDescription {
+                string name = 1;
+                string type = 2;
+                repeated string options = 3;
+        };
+        // Field Options:
+        //   plane -- this field represents a plane who can generate a proximity metric for use in targetting query broadcasts.
+
+        message DapTableDescription {
+                string name = 1;
+                repeated DapFieldDescription field = 3;
+        };
+
+        string name = 1;
+        repeated DapTableDescription table = 2;
+        repeated string options = 3;
+        // Dap Options:
+        //   early -- try and run this dap before others. Increases chances it will be an originator.
+        //   late -- try and run this dap before others. Increases chances it will be a filterer/decorator.
+        //   all-branches -- this dap should be asked about ALL branch nodes, even if it doesn't 'own' it.
+        //   all-nodes -- this dap should be asked about ALL branch and leafs, even if it doesn't 'own' it.
+        //   all-leaf -- this dap should be asked about ALL leafs, even if it doesn't 'own' it.
+}
+
+
+message DataModel {
+        message Attribute {
+                string typecode = 1;
+                string name = 2;
+                bool required = 3;
+                string description = 4;
+        }
+        string name = 1;
+        repeated Attribute attributes = 2;
+        string description = 3;
+}
+
+message Location {
+        string coordinate_system = 1; //e.g. latlon, latlonz
+        string unit = 2;
+        repeated double v = 3;
+}
+
+message Address {
+        string ip = 1;
+        uint32 port = 2;
+        bytes key = 3;
+        bytes signature = 4;
+}
+
+
+message ValueMessage
+{
+        string typecode = 1;
+
+        // LOCATION is encoded into the doubles
+        // EMBEDDING is encoded into the doubles
+
+        string s  = 2;
+        float f   = 3;
+        double d  = 4;
+        int32 i32 = 5;
+        int64 i64 = 6;
+        bool b    = 7;
+
+        DataModel dm = 8;
+        DataModel.Attribute a  = 9;
+        Location l   = 10;
+        Address addr = 11;
+
+        repeated string v_s   = 102;
+        repeated float v_f    = 103;
+        repeated double v_d   = 104;
+        repeated int32 v_i32  = 105;
+        repeated int64 v_i64  = 106;
+        repeated bool v_b     = 107;
+        repeated Location v_l = 110;
+}
+
+message ConstructQueryConstraintObjectRequest
+{
+        string operator = 1;
+        ValueMessage query_field_value = 2;
+        string query_field_type = 3;
+        string target_field_name = 4;
+        string target_field_type = 5;
+        string target_table_name = 6;
+        string dap_name = 7;
+        string node_name = 8;
+        string row_key = 9;
+}
+
+message Actions {
+        repeated ConstructQueryConstraintObjectRequest actions = 1;
+}
+
+message ConstructQueryObjectRequest
+{
+        string operator = 1;
+        repeated ConstructQueryConstraintObjectRequest constraints = 2;
+        repeated ConstructQueryObjectRequest children = 3;
+
+        // These two are used in internal representations.
+        string node_name = 4;
+        repeated string dap_names = 5;
+}
+
+message ConstructQueryMementoResponse
+{
+        bool success = 1;
+        bytes memento = 2;
+        string node_name = 3;
+}
+
+message Identifier
+{
+        bytes core = 1;
+        bytes agent = 2;
+        float score = 3;
+        string uri = 4;
+        double distance = 5;
+}
+
+message DapExecute {
+        ConstructQueryMementoResponse query_memento = 1;
+        IdentifierSequence input_idents = 2;
+}
+
+message Successfulness
+{
+        bool success = 1;
+        int32 errorcode = 2;
+        repeated string narrative = 3;
+}
+
+message IdentifierSequence
+{
+        bool originator = 1;
+        repeated Identifier identifiers = 2;
+        Successfulness status = 3;
+}
+
+
+message DapStatistics {
+        message CustomCounter {
+                string name = 1;
+                uint64 count = 2;
+        }
+
+        uint64 row_count = 1;
+        uint64 rows_added = 2;
+        uint64 rows_removed = 3;
+        uint64 row_add_fails = 4;
+        uint64 row_remove_fails = 5;
+        uint64 row_remove_not_found = 6;
+        uint64 prepare_constraint_count = 7;
+        uint64 prepare_count = 8;
+        uint64 execute_count = 9;
+        uint64 empty_execute_response = 10;
+        uint64 total_result_count = 11;
+        uint64 filter_inputs = 12; //originator=false number of input rows - result rows
+        uint64 originated_queries = 13;
+        uint64 num_originated_rows = 14;
+        uint64 row_add_duplicate = 15;
+        repeated CustomCounter custom_stats = 17;
+}

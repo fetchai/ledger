@@ -21,18 +21,21 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wnested-anon-types"
 #endif
 
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
 #pragma clang diagnostic ignored "-Wpedantic"
-#pragma clang diagnostic ignored "-Wshadow"
-#pragma clang diagnostic ignored "-Wreturn-std-move"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wnested-anon-types"
 #endif
 
-#include "asio.hpp"
-#include "asio/ssl.hpp"
+#include <google/protobuf/map.h>
+#include <google/protobuf/message.h>
+#include <google/protobuf/util/json_util.h>
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
