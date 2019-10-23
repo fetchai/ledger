@@ -19,10 +19,10 @@
 
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
 #include "dmlf/distributed_learning/translator.hpp"
+#include "dmlf/distributed_learning/word2vec_training_params.hpp"
 #include "math/clustering/knn.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
-#include "word2vec_training_params.hpp"
 
 namespace fetch {
 namespace ml {

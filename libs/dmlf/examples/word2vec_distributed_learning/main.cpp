@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/distributed_learning/word2vec_client.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
-#include "word2vec_client.hpp"
 
 #include <iostream>
 #include <mutex>
