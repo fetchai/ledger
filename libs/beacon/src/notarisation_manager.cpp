@@ -49,8 +49,7 @@ bool NotarisationManager::Verify(MessagePayload const &message, Signature const 
                                  generator_);
 }
 
-std::pair<NotarisationManager::Signature, std::vector<bool>>
-NotarisationManager::ComputeAggregateSignature(
+NotarisationManager::AggregateSignature NotarisationManager::ComputeAggregateSignature(
     std::unordered_map<MuddleAddress, Signature> const &cabinet_signatures)
 {
   std::unordered_map<uint32_t, Signature> signatures;
@@ -61,9 +60,8 @@ NotarisationManager::ComputeAggregateSignature(
   return crypto::mcl::ComputeAggregateSignature(signatures, cabinet_public_keys_);
 }
 
-bool NotarisationManager::VerifyAggregateSignature(
-    MessagePayload const &                         message,
-    std::pair<Signature, std::vector<bool>> const &aggregate_signature)
+bool NotarisationManager::VerifyAggregateSignature(MessagePayload const &    message,
+                                                   AggregateSignature const &aggregate_signature)
 {
   return crypto::mcl::VerifyAggregateSignature(message, aggregate_signature, cabinet_public_keys_,
                                                generator_);

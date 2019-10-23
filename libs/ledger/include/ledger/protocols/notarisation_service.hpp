@@ -77,7 +77,7 @@ public:
   using AeonNotarisationUnit          = ledger::NotarisationManager;
   using SharedAeonNotarisationUnit    = std::shared_ptr<AeonNotarisationUnit>;
   using Signature                     = NotarisationManager::Signature;
-  using AggregateSignature            = std::pair<Signature, std::vector<bool>>;
+  using AggregateSignature            = NotarisationManager::AggregateSignature;
   using Certificate                   = crypto::Prover;
   using CertificatePtr                = std::shared_ptr<Certificate>;
   using CallbackFunction              = std::function<void(BlockHash)>;

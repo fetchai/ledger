@@ -27,13 +27,14 @@ namespace ledger {
 class NotarisationManager
 {
 public:
-  using ConstByteArray = byte_array::ConstByteArray;
-  using MuddleAddress  = ConstByteArray;
-  using PublicKey      = crypto::mcl::PublicKey;
-  using PrivateKey     = crypto::mcl::PrivateKey;
-  using Signature      = crypto::mcl::Signature;
-  using Generator      = crypto::mcl::Generator;
-  using MessagePayload = crypto::mcl::MessagePayload;
+  using ConstByteArray     = byte_array::ConstByteArray;
+  using MuddleAddress      = ConstByteArray;
+  using PublicKey          = crypto::mcl::PublicKey;
+  using PrivateKey         = crypto::mcl::PrivateKey;
+  using Signature          = crypto::mcl::Signature;
+  using Generator          = crypto::mcl::Generator;
+  using MessagePayload     = crypto::mcl::MessagePayload;
+  using AggregateSignature = crypto::mcl::AggregateSignature;
 
   NotarisationManager();
 
@@ -46,13 +47,13 @@ public:
 
   /// Construction and verification of aggregate signatures
   /// @{
-  Signature Sign(MessagePayload const &message);
-  bool      Verify(MessagePayload const &message, Signature const &signature,
-                   MuddleAddress const &member);
-  std::pair<Signature, std::vector<bool>> ComputeAggregateSignature(
+  Signature          Sign(MessagePayload const &message);
+  bool               Verify(MessagePayload const &message, Signature const &signature,
+                            MuddleAddress const &member);
+  AggregateSignature ComputeAggregateSignature(
       std::unordered_map<MuddleAddress, Signature> const &cabinet_signatures);
-  bool VerifyAggregateSignature(MessagePayload const &                         message,
-                                std::pair<Signature, std::vector<bool>> const &aggregate_signature);
+  bool VerifyAggregateSignature(MessagePayload const &    message,
+                                AggregateSignature const &aggregate_signature);
   /// @}
 
   /// Helper functions

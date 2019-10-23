@@ -408,7 +408,7 @@ bn::Fr SignatureAggregationCoefficient(PublicKey const &             notarisatio
  * @return Pair consisting of aggregate signature and a vector indicating who's signatures were
  * aggregated
  */
-std::pair<Signature, std::vector<bool>> ComputeAggregateSignature(
+AggregateSignature ComputeAggregateSignature(
     std::unordered_map<uint32_t, Signature> const &signatures,
     std::vector<PublicKey> const &                 public_keys)
 {
@@ -472,10 +472,10 @@ PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
  * @param generator Generator of elliptic curve
  * @return Bool for whether the signature passed verification
  */
-bool VerifyAggregateSignature(MessagePayload const &                         message,
-                              std::pair<Signature, std::vector<bool>> const &aggregate_signature,
-                              std::vector<PublicKey> const &                 cabinet_public_keys,
-                              Generator const &                              generator)
+bool VerifyAggregateSignature(MessagePayload const &        message,
+                              AggregateSignature const &    aggregate_signature,
+                              std::vector<PublicKey> const &cabinet_public_keys,
+                              Generator const &             generator)
 {
   bn::Fp12 e1, e2;
 

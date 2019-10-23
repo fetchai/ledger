@@ -35,12 +35,13 @@ namespace fetch {
 namespace crypto {
 namespace mcl {
 
-using PrivateKey     = bn::Fr;
-using PublicKey      = bn::G2;
-using Signature      = bn::G1;
-using Generator      = bn::G2;
-using MessagePayload = byte_array::ConstByteArray;
-using CabinetIndex   = uint32_t;
+using PrivateKey         = bn::Fr;
+using PublicKey          = bn::G2;
+using Signature          = bn::G1;
+using Generator          = bn::G2;
+using MessagePayload     = byte_array::ConstByteArray;
+using CabinetIndex       = uint32_t;
+using AggregateSignature = std::pair<Signature, std::vector<bool>>;
 
 namespace details {
 struct MCLInitialiser
@@ -143,17 +144,17 @@ std::vector<DkgKeyInformation>   TrustedDealerGenerateKeys(uint32_t committee_si
 std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator);
 
 // For aggregate signatures
-bn::Fr SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
-                                       std::vector<PublicKey> const &cabinet_notarisation_keys);
-std::pair<Signature, std::vector<bool>> ComputeAggregateSignature(
+bn::Fr             SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
+                                                   std::vector<PublicKey> const &cabinet_notarisation_keys);
+AggregateSignature ComputeAggregateSignature(
     std::unordered_map<uint32_t, Signature> const &signatures,
     std::vector<PublicKey> const &                 public_keys);
 PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
                                     std::vector<PublicKey> const &cabinet_public_keys);
-bool      VerifyAggregateSignature(MessagePayload const &                         message,
-                                   std::pair<Signature, std::vector<bool>> const &aggregate_signature,
-                                   std::vector<PublicKey> const &                 cabinet_public_keys,
-                                   Generator const &                              generator);
+bool      VerifyAggregateSignature(MessagePayload const &        message,
+                                   AggregateSignature const &    aggregate_signature,
+                                   std::vector<PublicKey> const &cabinet_public_keys,
+                                   Generator const &             generator);
 
 }  // namespace mcl
 }  // namespace crypto

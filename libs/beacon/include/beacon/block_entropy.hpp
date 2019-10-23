@@ -39,6 +39,7 @@ struct BlockEntropy : public BlockEntropyInterface
   using Cabinet               = std::set<MuddleAddress>;
   using SignedNotarisationKey = std::pair<NotarisationKey, ECDSASignature>;
   using CabinetMemberDetails  = std::unordered_map<MuddleAddress, SignedNotarisationKey>;
+  using AggregateSignature    = std::pair<GroupSignature, std::vector<uint8_t>>;
 
   BlockEntropy();
   BlockEntropy(BlockEntropy const &rhs);
@@ -64,6 +65,9 @@ struct BlockEntropy : public BlockEntropyInterface
   // Signature of the previous entropy, used as the entropy
   GroupSignature group_signature{};
 
+  // Notarisation of block
+  AggregateSignature block_notarisation;
+
   Digest EntropyAsSHA256() const override;
 
   // This will always be safe so long as the entropy function is properly sha256-ing
@@ -83,17 +87,19 @@ public:
   using Type       = beacon::BlockEntropy;
   using DriverType = D;
 
-  static uint8_t const QUALIFIED        = 1;
-  static uint8_t const GROUP_PUBLIC_KEY = 2;
-  static uint8_t const BLOCK_NUMBER     = 3;
-  static uint8_t const CONFIRMATIONS    = 4;
-  static uint8_t const GROUP_SIGNATURE  = 5;
-  static uint8_t const MEMBER_DETAILS   = 6;
+  static uint8_t const QUALIFIED            = 1;
+  static uint8_t const GROUP_PUBLIC_KEY     = 2;
+  static uint8_t const BLOCK_NUMBER         = 3;
+  static uint8_t const CONFIRMATIONS        = 4;
+  static uint8_t const GROUP_SIGNATURE      = 5;
+  static uint8_t const MEMBER_DETAILS       = 6;
+  static uint8_t const NOTARISATION         = 7;
+  static uint8_t const NOTARISATION_MEMBERS = 8;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &member)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(8);
 
     map.Append(QUALIFIED, member.qualified);
     map.Append(GROUP_PUBLIC_KEY, member.group_public_key);
@@ -101,6 +107,8 @@ public:
     map.Append(CONFIRMATIONS, member.confirmations);
     map.Append(GROUP_SIGNATURE, member.group_signature);
     map.Append(MEMBER_DETAILS, member.member_details);
+    map.Append(NOTARISATION, member.block_notarisation.first);
+    map.Append(NOTARISATION_MEMBERS, member.block_notarisation.second);
   }
 
   template <typename MapDeserializer>
@@ -112,6 +120,8 @@ public:
     map.ExpectKeyGetValue(CONFIRMATIONS, member.confirmations);
     map.ExpectKeyGetValue(GROUP_SIGNATURE, member.group_signature);
     map.ExpectKeyGetValue(MEMBER_DETAILS, member.member_details);
+    map.ExpectKeyGetValue(NOTARISATION, member.block_notarisation.first);
+    map.ExpectKeyGetValue(NOTARISATION_MEMBERS, member.block_notarisation.second);
   }
 };
 }  // namespace serializers
