@@ -9,7 +9,7 @@ const char *what2str[] = {"*", "PROTO", "HOST", "PORT", "PATH"};
 
 void Uri::parse(const std::string &s)
 {
-  std::regex uri_regex("^([-_a-zA-Z0-9\\.]+:)?//([-_a-zA-Z0-9\\.]+)(:[0-9]+)?(/.*)?$",
+  std::regex uri_regex("^([-_a-zA-Z0-9\\.]+://)?([-_a-zA-Z0-9\\.]+)(:[0-9]+)?(/.*)?$",
                        std::regex_constants::icase);
 
   valid = false;
@@ -35,9 +35,9 @@ void Uri::parse(const std::string &s)
         expectedpart = PROTO;
         break;
       case PROTO:
-        if (part.length() && part.str().back() == ':')
+        if (part.length() && part.str().back() == '/')
         {
-          proto        = part.str().substr(0, static_cast<unsigned long>(part.length()-1));
+          proto        = part.str().substr(0, static_cast<unsigned long>(part.length()-3));
           expectedpart = HOST;
           break;
         }
