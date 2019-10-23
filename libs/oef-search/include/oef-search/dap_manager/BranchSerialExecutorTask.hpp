@@ -50,7 +50,11 @@ public:
 
     this->InitPipe(identifier_sequence);
   }
-  virtual ~BranchSerialExecutorTask()                             = default;
+  virtual ~BranchSerialExecutorTask()
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
+  }
+
   BranchSerialExecutorTask(const BranchSerialExecutorTask &other) = delete;
   BranchSerialExecutorTask &operator=(const BranchSerialExecutorTask &other) = delete;
 

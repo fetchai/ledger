@@ -31,12 +31,12 @@ public:
     , protocol_{std::move(protocol)}
 
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Task created.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Task created, id=", this->GetTaskId());
   }
 
   virtual ~DapSerialConversationTask()
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
   }
 
   DapSerialConversationTask(const DapSerialConversationTask &other) = delete;

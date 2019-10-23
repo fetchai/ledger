@@ -42,7 +42,7 @@ public:
     entryPoint.push_back(&SelfType::HandleResponse);
     this->entrypoints = entryPoint.data();
     this->state       = this->entrypoints[0];
-    FETCH_LOG_INFO(LOGGING_NAME, "DAP Conv task created: ", dap_name_);
+    FETCH_LOG_INFO(LOGGING_NAME, "DAP Conv task created: ", dap_name_, ", id=", this->GetTaskId());
     task_created =
         std::make_shared<Counter>("mt-search.dap." + dap_name_ + "." + path_ + ".created");
     task_errored =
@@ -65,14 +65,14 @@ public:
 
   virtual ~DapConversationTask()
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
   }
 
   StateResult CreateConversation(void)
   {
     try
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Start: ", protocol_, dap_name_, "/", path_);
+      FETCH_LOG_INFO(LOGGING_NAME, "Start: ", protocol_, dap_name_, "/", path_, ", id=", this->GetTaskId());
       Uri uri(protocol_ + dap_name_ + "/" + path_);
       if (!protocol_.empty())
       {
@@ -95,7 +95,7 @@ public:
               })
               .Waiting())
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (", uri.ToString(), ")");
+        FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), ", uri=", uri.ToString(), ")");
         return DapConversationTask::StateResult(1, DEFER);
       }
       FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping (", uri.ToString(), ")");

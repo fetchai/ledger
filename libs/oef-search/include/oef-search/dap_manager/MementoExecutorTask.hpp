@@ -28,9 +28,15 @@ public:
     , dap_manager_{std::move(dap_manager)}
     , conv_task_{nullptr}
     , identifier_sequence_{std::move(identifier_sequence)}
-  {}
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Task created, id=", this->GetTaskId());
+  }
 
-  virtual ~MementoExecutorTask()                        = default;
+  virtual ~MementoExecutorTask()
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
+  }
+
   MementoExecutorTask(const MementoExecutorTask &other) = delete;
   MementoExecutorTask &operator=(const MementoExecutorTask &other) = delete;
 
@@ -67,8 +73,10 @@ public:
 
       auto this_sp = this->template shared_from_base<MementoExecutorTask>();
       std::weak_ptr<MementoExecutorTask> this_wp = this_sp;
+      auto id = this->GetTaskId();
+      auto task_id = conv_task_->GetTaskId();
 
-      conv_task_->errorHandler = [this_wp](const std::string &dap_name, const std::string &path,
+      conv_task_->errorHandler = [this_wp, id, task_id](const std::string &dap_name, const std::string &path,
                                            const std::string &msg) {
         auto sp = this_wp.lock();
         if (sp && sp->errorHandler)
@@ -77,7 +85,7 @@ public:
         }
         else
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute memento chain, because call to dap ",
+          FETCH_LOG_WARN(LOGGING_NAME, "id=", id, ", task_id=", task_id, ";Failed to execute memento chain, because call to dap ",
                          dap_name, " failed! Message: ", msg);
         }
         if (sp)
@@ -86,7 +94,7 @@ public:
         }
       };
 
-      conv_task_->messageHandler = [this_wp](std::shared_ptr<IdentifierSequence> result) {
+      conv_task_->messageHandler = [this_wp, id, task_id](std::shared_ptr<IdentifierSequence> result) {
         auto sp = this_wp.lock();
         if (sp)
         {
@@ -96,13 +104,13 @@ public:
           }
           else
           {
-            FETCH_LOG_WARN(LOGGING_NAME, "No messageHandler, loosing output!");
+            FETCH_LOG_WARN(LOGGING_NAME, "id=", id, ", task_id=", task_id, "; No messageHandler, loosing output!");
           }
           sp->wake();
         }
         else
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Failed to set result, no shared_ptr!");
+          FETCH_LOG_WARN(LOGGING_NAME, "id=", id, ", task_id=", task_id, "; Failed to set result, no shared_ptr!");
         }
       };
 
@@ -118,7 +126,7 @@ public:
               })
               .Waiting())
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Sleeping");
+        FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), "), will be woken by conv task ", conv_task_->GetTaskId());
         return ExitState ::DEFER;
       }
     }

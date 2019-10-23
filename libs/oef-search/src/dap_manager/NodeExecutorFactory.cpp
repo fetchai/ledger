@@ -54,7 +54,6 @@ std::shared_ptr<NodeExecutorTask> NodeExecutorFactory(const BranchExecutorTask::
   auto &                        dap_store = dap_manager->GetDapStore();
   std::vector<Node::DapMemento> mementos{};
   std::vector<Node::DapMemento> late_mementos{};
-  FETCH_LOG_INFO(LOGGING_NAME, "Now at: ", node->ToString());
   try
   {
     for (auto &mem : node->GetMementos())
@@ -101,6 +100,7 @@ std::shared_ptr<NodeExecutorTask> NodeExecutorFactory(const BranchExecutorTask::
         {
           FETCH_LOG_WARN(
               LOGGING_NAME,
+              "Now at: ", node->ToString(), ". "
               "Trying to create not executor branch with originator IdentifierSequence: ",
               input->DebugString());
           return nullptr;
@@ -148,9 +148,10 @@ std::shared_ptr<NodeExecutorTask> NodeExecutorFactory(const BranchExecutorTask::
     }
     if (task == nullptr)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Task is nullptr!");
+      FETCH_LOG_WARN(LOGGING_NAME, "Now at: ", node->ToString(), "... But task is nullptr!");
       return nullptr;
     }
+    FETCH_LOG_INFO(LOGGING_NAME, "Now at: ", node->ToString(), ". Task id=", task->GetTaskId());
     if (!late_mementos.empty())
     {
       FETCH_LOG_INFO(LOGGING_NAME, node->ToString(),

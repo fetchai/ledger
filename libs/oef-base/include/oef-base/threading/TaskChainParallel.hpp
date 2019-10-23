@@ -33,12 +33,12 @@ public:
     this->entrypoints = entryPoint.data();
     this->state       = this->entrypoints[0];
     this->SetSubClass(this);
-    FETCH_LOG_INFO(LOGGING_NAME, "Task created.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Task created, id=", this->GetTaskId());
   }
 
   virtual ~TaskChainParallel()
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
   }
 
   TaskChainParallel(const TaskChainParallel &other) = delete;
@@ -63,18 +63,19 @@ public:
 
   StateResult progress()
   {
+    auto id = this->GetTaskId();
     {
       std::lock_guard<std::mutex> lock(result_mutex_);
       if ((results_.size() + errored_tasks_) == num_of_tasks_)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Task done!");
+        FETCH_LOG_INFO(LOGGING_NAME, "Task(", id, ") done!");
         if (messageHandler && outputMerger)
         {
           messageHandler(outputMerger(GetOutputs()));
         }
         else
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "No message handler!");
+          FETCH_LOG_INFO(LOGGING_NAME, "No message handler in task ", id, "!");
         }
         wake();
         if (errored_tasks_ == 0)
@@ -103,12 +104,14 @@ public:
 
       if (task == nullptr)
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to create task!");
+        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to create task (id=", id, ")!");
         wake();
         return StateResult(0, ERRORED);
       }
+      auto task_id = task->GetTaskId();
+      FETCH_LOG_INFO(LOGGING_NAME, "Added task ", task_id, " to ", id);
 
-      task->SetMessageHandler([this_wp](std::shared_ptr<OUT_PROTO> response) {
+      task->SetMessageHandler([this_wp, id, task_id](std::shared_ptr<OUT_PROTO> response) {
         auto sp = this_wp.lock();
         if (sp)
         {
@@ -117,12 +120,12 @@ public:
         }
         else
         {
-          FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainParallel");
+          FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainParallel(", id, "), Called by task ", task_id);
         }
       });
 
       task->SetErrorHandler(
-          [this_wp](const std::string &dap_name, const std::string &path, const std::string &msg) {
+          [this_wp, id, task_id](const std::string &dap_name, const std::string &path, const std::string &msg) {
             auto sp = this_wp.lock();
             if (sp)
             {
@@ -137,7 +140,7 @@ public:
             }
             else
             {
-              FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainParallel");
+              FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainParallel(", id, "), Called by task ", task_id);
             }
           });
 

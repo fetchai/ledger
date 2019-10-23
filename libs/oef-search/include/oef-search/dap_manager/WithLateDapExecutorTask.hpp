@@ -39,12 +39,12 @@ public:
     this->entrypoints = entryPoint.data();
     this->state       = this->entrypoints[0];
     this->SetSubClass(this);
-    FETCH_LOG_INFO(LOGGING_NAME, "Task created.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Task created, id=", this->GetTaskId());
   }
 
   virtual ~WithLateDapExecutorTask()
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
   }
 
   WithLateDapExecutorTask(const WithLateDapExecutorTask &other) = delete;
@@ -52,12 +52,13 @@ public:
   bool                     operator==(const WithLateDapExecutorTask &other) = delete;
   bool                     operator<(const WithLateDapExecutorTask &other)  = delete;
 
-  MessageHandler GetMessageHandler()
+  MessageHandler GetMessageHandler(std::size_t const &task_id)
   {
     auto this_sp = this->template shared_from_base<WithLateDapExecutorTask>();
     std::weak_ptr<WithLateDapExecutorTask> this_wp = this_sp;
+    auto id = this->GetTaskId();
 
-    return [this_wp](std::shared_ptr<IdentifierSequence> response) {
+    return [this_wp, id, task_id](std::shared_ptr<IdentifierSequence> response) {
       auto sp = this_wp.lock();
       if (sp)
       {
@@ -65,17 +66,18 @@ public:
       }
       else
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to WithLateDapExecutorTask");
+        FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to WithLateDapExecutorTask(", id, ")! Called from task ", task_id);
       }
     };
   }
 
-  ErrorHandler GetErrorHandler()
+  ErrorHandler GetErrorHandler(std::size_t const &task_id)
   {
     auto this_sp = this->template shared_from_base<WithLateDapExecutorTask>();
     std::weak_ptr<WithLateDapExecutorTask> this_wp = this_sp;
+    auto id = this->GetTaskId();
 
-    return [this_wp](const std::string &dap_name, const std::string &path, const std::string &msg) {
+    return [this_wp, id, task_id](const std::string &dap_name, const std::string &path, const std::string &msg) {
       auto sp = this_wp.lock();
       if (sp)
       {
@@ -88,15 +90,15 @@ public:
       }
       else
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to WithLateDapExecutorTask");
+        FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to WithLateDapExecutorTask(", id, ")! Called from task ", task_id);
       }
     };
   }
 
   StateResult Setup()
   {
-    main_task_->SetMessageHandler(GetMessageHandler());
-    main_task_->SetErrorHandler(GetErrorHandler());
+    main_task_->SetMessageHandler(GetMessageHandler(main_task_->GetTaskId()));
+    main_task_->SetErrorHandler(GetErrorHandler(main_task_->GetTaskId()));
     main_task_->submit();
 
     auto this_sp = this->template shared_from_base<WithLateDapExecutorTask>();
@@ -112,7 +114,7 @@ public:
             })
             .Waiting())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Sleeping");
+      FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), "), will be woken by task ", main_task_->GetTaskId());
       return StateResult(1, DEFER);
     }
 
@@ -124,16 +126,16 @@ public:
   {
     if (!last_output_)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "No last output set");
+      FETCH_LOG_ERROR(LOGGING_NAME, "No last output set (id=", this->GetTaskId(), ")");
       wake();
       return StateResult(0, ERRORED);
     }
 
     auto task = std::make_shared<MementoExecutorTask>(late_mementos_, last_output_, dap_manager_);
 
-    task->SetMessageHandler(GetMessageHandler());
+    task->SetMessageHandler(GetMessageHandler(task->GetTaskId()));
 
-    task->SetErrorHandler(GetErrorHandler());
+    task->SetErrorHandler(GetErrorHandler(task->GetTaskId()));
 
     task->submit();
 
@@ -150,7 +152,7 @@ public:
             })
             .Waiting())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Sleeping");
+      FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), ", do late mementos), will be woken by task ", task->GetTaskId());
       return StateResult(2, DEFER);
     }
 

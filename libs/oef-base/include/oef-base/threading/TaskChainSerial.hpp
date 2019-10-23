@@ -34,12 +34,12 @@ public:
     this->entrypoints = entryPoint.data();
     this->state       = this->entrypoints[0];
     this->SetSubClass(this);
-    FETCH_LOG_INFO(LOGGING_NAME, "Task created.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Task created, id=", this->GetTaskId());
   }
 
   virtual ~TaskChainSerial()
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
   }
 
   TaskChainSerial(const TaskChainSerial &other) = delete;
@@ -75,7 +75,7 @@ public:
   {
     if (!last_output || !protoPipeBuilder)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "No last output or pipe builder set");
+      FETCH_LOG_ERROR(LOGGING_NAME, "No last output or pipe builder set! (id=", this->GetTaskId(), ")");
       wake();
       return StateResult(0, ERRORED);
     }
@@ -100,12 +100,14 @@ public:
 
     if (task == nullptr)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to create task!");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to create task (id=", this->GetTaskId(), ")!");
       wake();
       return StateResult(0, ERRORED);
     }
+    auto task_id = task->GetTaskId();
+    auto id = this->GetTaskId();
 
-    task->SetMessageHandler([this_wp](std::shared_ptr<OUT_PROTO> response) {
+    task->SetMessageHandler([this_wp, id, task_id](std::shared_ptr<OUT_PROTO> response) {
       auto sp = this_wp.lock();
       if (sp)
       {
@@ -120,12 +122,12 @@ public:
       }
       else
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainSerial");
+        FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainSerial(id=", id, ")! Called by task ", task_id);
       }
     });
 
     task->SetErrorHandler(
-        [this_wp](const std::string &dap_name, const std::string &path, const std::string &msg) {
+        [this_wp, task_id, id](const std::string &dap_name, const std::string &path, const std::string &msg) {
           auto sp = this_wp.lock();
           if (sp)
           {
@@ -140,7 +142,7 @@ public:
           }
           else
           {
-            FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainSerial");
+            FETCH_LOG_ERROR(LOGGING_NAME, "No shared pointer to TaskChainSerial(id=", id, ")! Called by task ", task_id);
           }
         });
 
@@ -158,7 +160,7 @@ public:
             })
             .Waiting())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Sleeping");
+      FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), "), will be woken by ", task->GetTaskId());
       return StateResult(1, DEFER);
     }
 

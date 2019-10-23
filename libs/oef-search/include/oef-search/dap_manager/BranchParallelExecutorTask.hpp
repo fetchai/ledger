@@ -50,9 +50,14 @@ public:
     {
       this->Add(NodeDataType(branch));
     }
+    FETCH_LOG_INFO(LOGGING_NAME, "Task created, id=", this->GetTaskId());
   }
 
-  virtual ~BranchParallelExecutorTask()                               = default;
+  virtual ~BranchParallelExecutorTask()
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
+  }
+
   BranchParallelExecutorTask(const BranchParallelExecutorTask &other) = delete;
   BranchParallelExecutorTask &operator=(const BranchParallelExecutorTask &other) = delete;
 
