@@ -1,8 +1,8 @@
 #pragma once
-#include "agentapi/agentapi_protocol.hpp"
-#include "agentapi/mailbox.hpp"
-#include "agentapi/message.hpp"
 #include "core/service_ids.hpp"
+#include "messenger/mailbox.hpp"
+#include "messenger/message.hpp"
+#include "messenger/messenger_protocol.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -10,9 +10,9 @@
 #include "muddle/subscription.hpp"
 
 namespace fetch {
-namespace agent {
+namespace messenger {
 
-class AgentAPI
+class MessengerAPI
 {
 public:
   using ConstByteArray = fetch::byte_array::ConstByteArray;
@@ -30,28 +30,27 @@ public:
   using Endpoint        = muddle::MuddleEndpoint;
   using MuddleInterface = muddle::MuddleInterface;
 
-  AgentAPI(muddle::MuddlePtr &agent_muddle, MailboxInterface &mailbox)
-    : agent_endpoint_{agent_muddle->GetEndpoint()}
-    , agent_protocol_{this}
+  MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface &mailbox)
+    : messenger_endpoint_{messenger_muddle->GetEndpoint()}
+    , messenger_protocol_{this}
     , mailbox_{mailbox}
-  //    , oef_comms_{new OEFComms()}
   {
-    rpc_server_ = std::make_shared<Server>(agent_endpoint_, SERVICE_AGENT, CHANNEL_RPC);
-    rpc_server_->Add(RPC_AGENT_INTERFACE, &agent_protocol_);
+    rpc_server_ = std::make_shared<Server>(messenger_endpoint_, SERVICE_MESSENGER, CHANNEL_RPC);
+    rpc_server_->Add(RPC_MESSENGER_INTERFACE, &messenger_protocol_);
   }
 
-  /// Agent management
+  /// Messenger management
   /// @{
-  void RegisterAgent(service::CallContext const &call_context, bool setup_mailbox)
+  void RegisterMessenger(service::CallContext const &call_context, bool setup_mailbox)
   {
-    // Setting mailbox up if requested by the agent.
+    // Setting mailbox up if requested by the messenger.
     if (setup_mailbox)
     {
       mailbox_.RegisterMailbox(call_context.sender_address);
     }
   }
 
-  void UnregisterAgent(service::CallContext const &call_context)
+  void UnregisterMessenger(service::CallContext const &call_context)
   {
     mailbox_.UnregisterMailbox(call_context.sender_address);
   }
@@ -67,13 +66,14 @@ public:
 
   MessageList GetMessages(service::CallContext const &call_context)
   {
-    return mailbox_.GetMessages(call_context.sender_address);
+    auto ret = mailbox_.GetMessages(call_context.sender_address);
+    return ret;
   }
   /// @}
 
   /// Search interface
   /// @{
-  ResultList FindAgents(service::CallContext const & /*call_context*/)
+  ResultList FindMessengers(service::CallContext const & /*call_context*/)
   {
     return {"Hello world"};
   }
@@ -89,13 +89,13 @@ public:
   // TODO: Yet to be written
   /// @}
 private:
-  Endpoint &       agent_endpoint_;
-  ServerPtr        rpc_server_{nullptr};
-  SubscriptionPtr  message_subscription_;
-  AgentAPIProtocol agent_protocol_;
+  Endpoint &        messenger_endpoint_;
+  ServerPtr         rpc_server_{nullptr};
+  SubscriptionPtr   message_subscription_;
+  MessengerProtocol messenger_protocol_;
 
   MailboxInterface &mailbox_;
 };
 
-}  // namespace agent
+}  // namespace messenger
 }  // namespace fetch

@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "agentapi/agentapi.hpp"
 #include "crypto/ecdsa.hpp"
+#include "messenger/messenger_api.hpp"
 #include <iostream>
 #include <set>
 
 using namespace fetch::service;
 using namespace fetch::byte_array;
-using namespace fetch::agent;
+using namespace fetch::messenger;
 using namespace fetch;
 
 using Prover         = fetch::crypto::Prover;
@@ -55,8 +55,8 @@ int main()
   network_manager.Start();
   muddle->Start({static_cast<uint16_t>(1337)});
 
-  Mailbox  mailbox{muddle};
-  AgentAPI serv(muddle, mailbox);
+  Mailbox      mailbox{muddle};
+  MessengerAPI serv(muddle, mailbox);
 
   std::string search_for;
   std::cout << "Enter a string to search the AEAs for this string" << std::endl;

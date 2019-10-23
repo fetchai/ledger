@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "agentapi/agent_prototype.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/serializers/base_types.hpp"
 #include "crypto/ecdsa.hpp"
+#include "messenger/messenger_prototype.hpp"
 
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/client.hpp"
@@ -30,7 +30,7 @@
 using namespace fetch::commandline;
 using namespace fetch::service;
 using namespace fetch::byte_array;
-using namespace fetch::agent;
+using namespace fetch::messenger;
 using namespace fetch::network;
 using namespace fetch;
 
@@ -52,10 +52,10 @@ ProverPtr CreateNewCertificate()
   return certificate;
 }
 
-class SimpleAgent : public AgentPrototype
+class SimpleMessenger : public MessengerPrototype
 {
 public:
-  using AgentPrototype::AgentPrototype;
+  using MessengerPrototype::MessengerPrototype;
 };
 
 int main(int argc, char **argv)
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
   params.Parse(argc, argv);
 
   auto                    muddle_certificate = CreateNewCertificate();
-  network::NetworkManager network_manager{"AgentNetworkManager", 1};
+  network::NetworkManager network_manager{"MessengerNetworkManager", 1};
   muddle::MuddlePtr       muddle =
       muddle::CreateMuddle("AGEN", muddle_certificate, network_manager, "127.0.0.1");
   // TODO  core::Reactor reactor{"SearchReactor"};
@@ -79,22 +79,22 @@ int main(int argc, char **argv)
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
-  auto        agent_api_addresses = muddle->GetDirectlyConnectedPeers();
-  SimpleAgent agent(muddle, agent_api_addresses);
+  auto            messenger_api_addresses = muddle->GetDirectlyConnectedPeers();
+  SimpleMessenger messenger(muddle, messenger_api_addresses);
 
   std::string search_for;
-  std::cout << "Agent ready:" << std::endl;
+  std::cout << "Messenger ready:" << std::endl;
   while (!std::cin.eof())
   {
     std::cout << "> " << std::flush;
     std::getline(std::cin, search_for);
     if (search_for == "register")
     {
-      agent.Register();
+      messenger.Register();
     }
     else
     {
-      agent.FindAgents(search_for);
+      messenger.FindMessengers(search_for);
     }
   }
 

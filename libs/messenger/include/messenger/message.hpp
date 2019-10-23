@@ -6,18 +6,23 @@
 #include "muddle/address.hpp"
 
 namespace fetch {
-namespace agent {
+namespace messenger {
 
 struct NetworkLocation
 {
   using Address = muddle::Address;
 
   Address node;
-  Address agent;
+  Address messenger;
 
   bool operator==(NetworkLocation const &other) const
   {
-    return (node == other.node) && (agent == other.agent);
+    return (node == other.node) && (messenger == other.messenger);
+  }
+
+  bool operator<(NetworkLocation const &other) const
+  {
+    return messenger < other.messenger;
   }
 };
 
@@ -30,48 +35,54 @@ struct Message
 
   ConstByteArray protocol;
   ConstByteArray payload;
-  bool           operator==(Message const &other) const
+
+  bool operator==(Message const &other) const
   {
     return (from == other.from) && (to == other.to) && (protocol == other.protocol) &&
            (payload == other.payload);
   }
+
+  bool operator<(Message const &other) const
+  {
+    return from < other.from;
+  }
 };
 
-}  // namespace agent
+}  // namespace messenger
 
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<agent::NetworkLocation, D>
+struct MapSerializer<messenger::NetworkLocation, D>
 {
 public:
-  using Type       = agent::NetworkLocation;
+  using Type       = messenger::NetworkLocation;
   using DriverType = D;
 
-  static uint8_t const NODE  = 1;
-  static uint8_t const AGENT = 2;
+  static uint8_t const NODE      = 1;
+  static uint8_t const MESSENGER = 2;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &location)
   {
     auto map = map_constructor(2);
     map.Append(NODE, location.node);
-    map.Append(AGENT, location.agent);
+    map.Append(MESSENGER, location.messenger);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &location)
   {
     map.ExpectKeyGetValue(NODE, location.node);
-    map.ExpectKeyGetValue(AGENT, location.agent);
+    map.ExpectKeyGetValue(MESSENGER, location.messenger);
   }
 };
 
 template <typename D>
-struct MapSerializer<agent::Message, D>
+struct MapSerializer<messenger::Message, D>
 {
 public:
-  using Type       = agent::Message;
+  using Type       = messenger::Message;
   using DriverType = D;
 
   static uint8_t const FROM     = 1;

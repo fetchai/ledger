@@ -1,7 +1,7 @@
 #pragma once
 
-#include "agentapi/message.hpp"
 #include "core/mutex.hpp"
+#include "messenger/message.hpp"
 
 #include "core/service_ids.hpp"
 #include "muddle/muddle_endpoint.hpp"
@@ -10,21 +10,23 @@
 #include "muddle/rpc/server.hpp"
 #include "muddle/subscription.hpp"
 
+#include <deque>
 #include <unordered_map>
 
 namespace fetch {
-namespace agent {
+namespace messenger {
 
 class MailboxInterface
 {
 public:
-  using MessageList = std::vector<Message>;
+  using MessageList = std::deque<Message>;
   using Address     = muddle::Address;
 
-  virtual void        SendMessage(Message message)     = 0;
-  virtual MessageList GetMessages(Address agent)       = 0;
-  virtual void        RegisterMailbox(Address agent)   = 0;
-  virtual void        UnregisterMailbox(Address agent) = 0;
+  virtual void        SendMessage(Message message)                     = 0;
+  virtual MessageList GetMessages(Address messenger)                   = 0;
+  virtual void        ClearMessages(Address messenger, uint64_t count) = 0;
+  virtual void        RegisterMailbox(Address messenger)               = 0;
+  virtual void        UnregisterMailbox(Address messenger)             = 0;
 };
 
 class Mailbox : public MailboxInterface
@@ -38,7 +40,7 @@ public:
   Mailbox(muddle::MuddlePtr &muddle)
     : message_endpoint_{muddle->GetEndpoint()}
     , message_subscription_{
-          message_endpoint_.Subscribe(SERVICE_MESSAGING, CHANNEL_MESSAGING_MESSAGE)}
+          message_endpoint_.Subscribe(SERVICE_MSG_TRANSPORT, CHANNEL_MESSEGNER_TRANSPORT)}
   {}
 
   /// Mailbox interface
@@ -47,11 +49,23 @@ public:
   {
     FETCH_LOCK(mutex_);
 
+    // Setting the entry node
+    if (message.from.node.empty())
+    {
+      message.from.node = message_endpoint_.GetAddress();
+    }
+
+    // Setting to node
+    if (message.to.node.empty())
+    {
+      message.to.node = message_endpoint_.GetAddress();
+    }
+
     // If the message is sent to this node, then we deliver it right
     // away
     if (message.to.node == message_endpoint_.GetAddress())
     {
-      DeliverMessage(message);
+      DeliverMessageLockLess(message);
       return;
     }
 
@@ -59,49 +73,71 @@ public:
     serializers::MsgPackSerializer serializer;
     serializer << message;
 
-    message_endpoint_.Send(message.to.node, SERVICE_MESSAGING, CHANNEL_MESSAGING_MESSAGE,
+    message_endpoint_.Send(message.to.node, SERVICE_MSG_TRANSPORT, CHANNEL_MESSEGNER_TRANSPORT,
                            serializer.data());
   }
 
-  MessageList GetMessages(Address agent) override
+  MessageList GetMessages(Address messenger) override
   {
     FETCH_LOCK(mutex_);
 
     // Checking that the mailbox exists
-    auto it = inbox_.find(agent);
+    auto it = inbox_.find(messenger);
     if (it == inbox_.end())
     {
       return {};
     }
 
-    // Emptying mailbox
-    auto ret = it->second;
-    it->second.clear();
+    return it->second;
+  }
 
-    return ret;
+  void ClearMessages(Address messenger, uint64_t count) override
+  {
+    FETCH_LOCK(mutex_);
+
+    // Checking that the mailbox exists
+    auto it = inbox_.find(messenger);
+    if (it == inbox_.end())
+    {
+      return;
+    }
+
+    // Emptying mailbox
+    if (count >= it->second.size())
+    {
+      it->second.clear();
+    }
+    else
+    {
+      while (count != 0)
+      {
+        it->second.pop_front();
+        --count;
+      }
+    }
   }
   /// @}
 
   /// Mailbox initialisation
   /// @{
-  void RegisterMailbox(Address agent) override
+  void RegisterMailbox(Address messenger) override
   {
     FETCH_LOCK(mutex_);
 
-    if (inbox_.find(agent) != inbox_.end())
+    if (inbox_.find(messenger) != inbox_.end())
     {
       // Mailbox already exists
       return;
     }
 
     // Creating an empty mailbox
-    inbox_[agent] = MessageList();
+    inbox_[messenger] = MessageList();
   }
 
-  void UnregisterMailbox(Address agent) override
+  void UnregisterMailbox(Address messenger) override
   {
     FETCH_LOCK(mutex_);
-    auto it = inbox_.find(agent);
+    auto it = inbox_.find(messenger);
 
     // Checking if mailbox exists
     if (it == inbox_.end())
@@ -115,7 +151,7 @@ public:
   /// @}
 
 protected:
-  void DeliverMessage(Message const &message)
+  void DeliverMessageLockLess(Message const &message)
   {
     // Checking if we are delivering to the right node.
     if (message_endpoint_.GetAddress() != message.to.node)
@@ -123,8 +159,7 @@ protected:
       return;
     }
 
-    FETCH_LOCK(mutex_);
-    auto it = inbox_.find(message.to.agent);
+    auto it = inbox_.find(message.to.messenger);
     if (it == inbox_.end())
     {
       // Attempting to deliver directly
@@ -147,5 +182,5 @@ private:
   SubscriptionPtr message_subscription_;
 };
 
-}  // namespace agent
+}  // namespace messenger
 }  // namespace fetch

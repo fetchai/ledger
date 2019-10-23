@@ -1,8 +1,9 @@
 #pragma once
 
-#include "agentapi/agentapi_protocol.hpp"
-#include "agentapi/message.hpp"
 #include "core/service_ids.hpp"
+#include "messenger/mailbox.hpp"
+#include "messenger/message.hpp"
+#include "messenger/messenger_protocol.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -10,18 +11,19 @@
 #include "muddle/subscription.hpp"
 #include "network/management/network_manager.hpp"
 
+#include <chrono>
 #include <unordered_set>
 #include <vector>
 
 namespace fetch {
-namespace agent {
+namespace messenger {
 
-class AgentPrototype
+class MessengerPrototype
 {
 public:
   using ConstByteArray  = fetch::byte_array::ConstByteArray;
   using ResultList      = std::vector<ConstByteArray>;
-  using MessageList     = std::vector<Message>;
+  using MessageList     = MailboxInterface::MessageList;
   using NetworkManager  = fetch::network::NetworkManager;
   using ConnectionType  = std::shared_ptr<network::AbstractConnection>;
   using ServiceClient   = service::ServiceClient;
@@ -40,14 +42,14 @@ public:
   Client          rpc_client_;  // TODO: Move
   SubscriptionPtr message_subscription_;
 
-  AgentPrototype(muddle::MuddlePtr &muddle, Addresses node_addresses)
+  MessengerPrototype(muddle::MuddlePtr &muddle, Addresses node_addresses)
     : endpoint_{muddle->GetEndpoint()}
-    , rpc_client_{"Agent", endpoint_, SERVICE_AGENT, CHANNEL_RPC}
-    , message_subscription_{endpoint_.Subscribe(SERVICE_AGENT, CHANNEL_AGENT_MESSAGE)}
+    , rpc_client_{"Messenger", endpoint_, SERVICE_MESSENGER, CHANNEL_RPC}
+    , message_subscription_{endpoint_.Subscribe(SERVICE_MESSENGER, CHANNEL_MESSENGER_MESSAGE)}
     , node_addresses_{std::move(node_addresses)}
   {
-    //    rpc_server_ = std::make_shared<Server>(endpoint_, SERVICE_AGENT, CHANNEL_RPC);
-    //    rpc_server_->Add(RPC_NODE_TO_AGENT, &protocol_);
+    //    rpc_server_ = std::make_shared<Server>(endpoint_, SERVICE_MESSENGER, CHANNEL_RPC);
+    //    rpc_server_->Add(RPC_NODE_TO_MESSENGER, &protocol_);
   }
 
   /// @{
@@ -55,9 +57,8 @@ public:
   {
     for (auto &address : node_addresses_)
     {
-      std::cout << "Sending REGISTER" << std::endl;
-      rpc_client_.CallSpecificAddress(address, RPC_AGENT_INTERFACE,
-                                      AgentAPIProtocol::REGISTER_AGENT, require_mailbox);
+      rpc_client_.CallSpecificAddress(address, RPC_MESSENGER_INTERFACE,
+                                      MessengerProtocol::REGISTER_MESSENGER, require_mailbox);
     }
   }
 
@@ -65,8 +66,8 @@ public:
   {
     for (auto &address : node_addresses_)
     {
-      rpc_client_.CallSpecificAddress(address, RPC_AGENT_INTERFACE,
-                                      AgentAPIProtocol::UNREGISTER_AGENT);
+      rpc_client_.CallSpecificAddress(address, RPC_MESSENGER_INTERFACE,
+                                      MessengerProtocol::UNREGISTER_MESSENGER);
     }
   }
   /// @}
@@ -87,16 +88,16 @@ public:
     {
       if (msg.to.node == address)
       {
-        rpc_client_.CallSpecificAddress(address, RPC_AGENT_INTERFACE,
-                                        AgentAPIProtocol::SEND_MESSAGE, msg);
+        rpc_client_.CallSpecificAddress(address, RPC_MESSENGER_INTERFACE,
+                                        MessengerProtocol::SEND_MESSAGE, msg);
         return;
       }
     }
 
     // Sending to the first node in the list
     auto address = *node_addresses_.begin();
-    rpc_client_.CallSpecificAddress(address, RPC_AGENT_INTERFACE, AgentAPIProtocol::SEND_MESSAGE,
-                                    msg);
+    rpc_client_.CallSpecificAddress(address, RPC_MESSENGER_INTERFACE,
+                                    MessengerProtocol::SEND_MESSAGE, msg);
   }
 
   void PullMessages()
@@ -105,16 +106,49 @@ public:
     // such they can be realised later.
     for (auto &address : node_addresses_)
     {
-      auto promise = rpc_client_.CallSpecificAddress(address, RPC_AGENT_INTERFACE,
-                                                     AgentAPIProtocol::GET_MESSAGES);
+      auto promise = rpc_client_.CallSpecificAddress(address, RPC_MESSENGER_INTERFACE,
+                                                     MessengerProtocol::GET_MESSAGES);
       promises_.push_back(promise);
     }
   }
 
-  MessageList GetMessages()
+  void ResolveMessages()
+  {
+    PromiseList unresolved{};
+    for (auto &p : promises_)
+    {
+      switch (p->state())
+      {
+      case service::PromiseState::WAITING:
+        unresolved.push_back(p);
+        break;
+      case service::PromiseState::SUCCESS:
+        for (auto const &msg : p->As<MessageList>())
+        {
+          inbox_.push_back(msg);
+        }
+        break;
+      case service::PromiseState::FAILED:
+      case service::PromiseState::TIMEDOUT:
+        break;
+      }
+    }
+
+    promises_ = unresolved;
+  }
+
+  MessageList GetMessages(double wait = 0)
   {
     // Sending pull requests for messages
     PullMessages();
+
+    if (wait != 0.)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(wait));
+    }
+
+    // Realising promises
+    ResolveMessages();
 
     // Creating return value and emptying messages.
     auto ret = inbox_;
@@ -155,32 +189,16 @@ public:
 
   /// Search
   /// @{
-  ResultList FindAgents(ConstByteArray query)
+  ResultList FindMessengers(ConstByteArray query)
   {
-    std::cout << "Finding agents: " << query << std::endl;
     return {};
   }
   /// @}
-
-  /*
-  JSONDocument Query(ConstByteArray query)
-  {
-    std::cout << "Finding agents: " << query << std::endl;
-    return {};
-  }
-
-  JSONDocument SendTransaction(ConstByteArray query)
-  {
-    std::cout << "Finding agents: " << query << std::endl;
-    return {};
-  }
-
-  */
 private:
   MessageList inbox_;
   Addresses   node_addresses_;
   PromiseList promises_;
 };
 
-}  // namespace agent
+}  // namespace messenger
 }  // namespace fetch
