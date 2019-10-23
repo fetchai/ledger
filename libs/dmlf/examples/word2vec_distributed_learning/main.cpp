@@ -74,6 +74,11 @@ int main(int argc, char **argv)
 
   W2VTrainingParams<DataType> client_params;
 
+  // Command line parameters
+  std::string train_file            = argv[1];
+  client_params.analogies_test_file = argv[2];
+  std::string output_csv_file       = argv[3];
+
   // Distributed learning parameters:
   SizeType number_of_clients = 5;
   SizeType number_of_rounds  = 1000;
@@ -112,9 +117,6 @@ int main(int argc, char **argv)
 
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
   std::cout << "FETCH Distributed Word2vec Demo" << std::endl;
-
-  std::string train_file            = argv[1];
-  client_params.analogies_test_file = argv[2];
 
   std::vector<std::string> client_data = SplitTrainingData(train_file, number_of_clients);
 
@@ -168,7 +170,7 @@ int main(int argc, char **argv)
       t.join();
     }
 
-    std::ofstream lossfile(std::string(argv[3]), std::ofstream::out | std::ofstream::app);
+    std::ofstream lossfile(output_csv_file, std::ofstream::out | std::ofstream::app);
 
     std::cout << "Test losses:";
     lossfile << utilities::GetStrTimestamp();

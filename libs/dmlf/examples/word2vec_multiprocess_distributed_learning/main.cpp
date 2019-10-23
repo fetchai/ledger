@@ -51,11 +51,13 @@ int main(int argc, char **argv)
         << std::endl;
     return 1;
   }
+
   W2VTrainingParams<DataType> client_params;
 
   // Command line parameters
   std::string train_file            = argv[1];
   client_params.analogies_test_file = argv[2];
+  std::string output_csv_file       = argv[3];
   std::string config                = std::string(argv[4]);
   int         instance_number       = std::atoi(argv[5]);
 
@@ -120,7 +122,7 @@ int main(int argc, char **argv)
 
     client->Run();
 
-    std::ofstream lossfile(std::string(argv[3]), std::ofstream::out | std::ofstream::app);
+    std::ofstream lossfile(output_csv_file, std::ofstream::out | std::ofstream::app);
 
     std::cout << "Test losses:";
     lossfile << utilities::GetStrTimestamp();

@@ -214,12 +214,16 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  SizeType    seed          = strtoul(argv[3], nullptr, 10);
-  DataType    learning_rate = static_cast<DataType>(strtof(argv[4], nullptr));
-  std::string results_dir   = argv[5];
-
   ClientParams<DataType> client_params;
 
+  // Command line parameters
+  std::string images_filename = argv[1];
+  std::string labels_filename = argv[2];
+  SizeType    seed            = strtoul(argv[3], nullptr, 10);
+  DataType    learning_rate   = static_cast<DataType>(strtof(argv[4], nullptr));
+  std::string results_dir     = argv[5];
+
+  // Distributed learning parameters:
   SizeType number_of_clients                    = 6;
   SizeType number_of_rounds                     = 200;
   bool     synchronise                          = false;
@@ -231,8 +235,9 @@ int main(int argc, char **argv)
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   // Load data
-  TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(argv[1]).Transpose();
-  TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(argv[2]).Transpose();
+  TensorType data_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(images_filename).Transpose();
+  TensorType label_tensor =
+      fetch::ml::dataloaders::ReadCSV<TensorType>(labels_filename).Transpose();
 
   // Shuffle data
   Shuffle(data_tensor, label_tensor, seed);

@@ -89,6 +89,11 @@ int main(int ac, char **av)
 
   ClientParams<DataType> client_params;
 
+  // Command line parameters
+  std::string images_filename = av[1];
+  std::string labels_filename = av[2];
+
+  // Distributed learning parameters:
   SizeType number_of_clients                    = 10;
   SizeType number_of_rounds                     = 10;
   bool     synchronisation                      = false;
@@ -121,8 +126,8 @@ int main(int ac, char **av)
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = MakeClient(std::to_string(i), client_params, av[1], av[2], test_set_ratio,
-                            console_mutex_ptr);
+    clients[i] = MakeClient(std::to_string(i), client_params, images_filename, labels_filename,
+                            test_set_ratio, console_mutex_ptr);
   }
 
   for (SizeType i{0}; i < number_of_clients; ++i)

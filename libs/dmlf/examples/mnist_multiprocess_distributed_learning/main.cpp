@@ -97,6 +97,7 @@ int main(int ac, char **av)
   std::string config          = std::string(av[3]);
   int         instance_number = std::atoi(av[4]);
 
+  // Distributed learning parameters:
   SizeType number_of_rounds                     = 10;
   client_params.max_updates                     = 100;  // Round ends after this number of batches
   SizeType number_of_peers                      = 3;
