@@ -18,7 +18,8 @@
 
 #include "crypto/key_generator.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
-#include "ledger/shards/manifest.hpp"
+#include "shards/manifest.hpp"
+#include "shards/service_identifier.hpp"
 #include "network/peer.hpp"
 #include "constellation/constellation.hpp"
 
@@ -31,6 +32,7 @@ using namespace fetch::crypto;
 using namespace fetch::ledger;
 using namespace fetch::network;
 using namespace fetch::constellation;
+using namespace fetch::shards;
 
 static constexpr uint16_t HTTP_PORT_OFFSET    = 0;
 static constexpr uint16_t P2P_PORT_OFFSET     = 1;
@@ -42,7 +44,8 @@ static constexpr uint16_t NUM_LANES = 2;
 using fetch::network::Uri;
 using UriSet       = fetch::constellation::Constellation::UriSet;
 
-using Uris         = std::vector<Uri>;
+using Uris     = std::vector<Uri>;
+using Manifest = shards::Manifest;
 
 UriSet ToUriSet(Uris const &uris)
 {
@@ -109,7 +112,7 @@ Constellation::Config BuildConstellationConfig(std::string const &genesis_file_l
   cfg.proof_of_stake        = true;
   cfg.kademlia_routing      = true;
   cfg.aeon_period           = 10;
-  cfg.max_committee_size    = 200;
+  cfg.max_cabinet_size      = 200;
   cfg.disable_signing       = true;
   cfg.sign_broadcasts       = false;
   cfg.load_genesis_file     = true;
@@ -118,10 +121,24 @@ Constellation::Config BuildConstellationConfig(std::string const &genesis_file_l
   return cfg;
 }
 
+// A class to inherit from constellation so as to access private
+// members
+class ConstellationGetter final : public Constellation
+{
+public:
+
+  ConstellationGetter(CertificatePtr certificate, Config config) : Constellation(certificate, config) {};
+
+  MainChain &GetChain()
+  {
+    return chain_;
+  };
+};
+
 class FullConstellationTests : public ::testing::Test
 {
   using Certificates          = std::vector<std::shared_ptr<crypto::Prover>>;
-  using Constellations        = std::vector<std::unique_ptr<Constellation>>;
+  using Constellations        = std::vector<std::unique_ptr<ConstellationGetter>>;
   using RunThreads            = std::vector<std::unique_ptr<std::thread>>;
 protected:
 
@@ -152,8 +169,7 @@ protected:
     // Note they will be connected to every node with a lower port on start
     for (std::size_t i = 0; i < nodes; ++i)
     {
-      constellations_.emplace_back(std::make_unique<fetch::constellation::Constellation>(certificates_[i], BuildConstellationConfig(genesis_file_location_, uint16_t(8000 + (i * 100)))));
-      std::cerr << "startme!" << std::endl; // DELETEME_NH
+      constellations_.emplace_back(std::make_unique<ConstellationGetter>(certificates_[i], BuildConstellationConfig(genesis_file_location_, uint16_t(8000 + (i * 100)))));
     }
 
     // start the nodes with varying delays in separate threads to represent
@@ -174,7 +190,6 @@ protected:
           peers.emplace_back(Uri{peer});
         }
 
-        std::cerr << "Sleep random: " << random_milliseconds << std::endl; // DELETEME_NH
         std::this_thread::sleep_for(std::chrono::milliseconds(random_milliseconds));
         constellations[i]->Run(ToUriSet(peers));
       };
@@ -184,16 +199,24 @@ protected:
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
-    std::cerr << "\n\nsleeping." << std::endl; // DELETEME_NH
     std::this_thread::sleep_for(std::chrono::milliseconds(1000 * 60 * 20));
-    std::cerr << "destructing." << std::endl; // DELETEME_NH
+  }
+
+  void CheckIdenticalBlock(uint64_t /*block_number*/)
+  {
+//    for (std::size_t i = 0; i < constellations_.size(); ++i)
+//    {
+//      if(i == 0)
+//      {
+//
+//      }
+//    }
   }
 
   void CreateGenesisFile()
   {
     GenesisFileCreator::CreateFile(certificates_, genesis_file_location_, 5);
   }
-
 
 private:
   std::string const genesis_file_location_ = "genesis_file_unit_test.json";
@@ -206,10 +229,16 @@ private:
 // Check that the dag can consistently add nodes locally and advance the epochs
 TEST_F(FullConstellationTests, CheckBlockGeneration)
 {
+  // Start the nodes
   StartNodes(7, 7);
 
-  std::cerr << "thing" << std::endl; // DELETEME_NH
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  // Check all of them generate and settle on a blockchain
+  CheckIdenticalBlock(10);
+
+  // Shut them down
+  //ClearAll();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
   // This function has assertions
   //PopulateDAG();
 }

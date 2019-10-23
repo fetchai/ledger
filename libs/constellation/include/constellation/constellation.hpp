@@ -73,6 +73,7 @@ public:
   using FeatureFlags   = core::FeatureFlags;
   using ConstByteArray = byte_array::ConstByteArray;
   using ConsensusPtr   = std::shared_ptr<ledger::Consensus>;
+  using MainChain      = ledger::MainChain;
 
   static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
@@ -109,7 +110,7 @@ public:
   };
 
   Constellation(CertificatePtr certificate, Config config);
-  ~Constellation() override = default;
+  virtual ~Constellation() override = default;
 
   void Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor = {});
   void SignalStop();
@@ -124,7 +125,6 @@ private:
   using NetworkManager         = network::NetworkManager;
   using BlockPackingAlgorithm  = ledger::BasicMiner;
   using BlockCoordinator       = ledger::BlockCoordinator;
-  using MainChain              = ledger::MainChain;
   using MainChainRpcService    = ledger::MainChainRpcService;
   using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
   using LaneServices           = ledger::StorageUnitBundledService;
@@ -203,7 +203,9 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
+protected:
   MainChain             chain_;              ///< The main block chain component
+private:
   BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
   BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
   /// @}
