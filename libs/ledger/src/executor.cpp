@@ -307,7 +307,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     auto contract = is_token_contract ? token_contract_
                                       : chain_code_cache_.Lookup(contract_id, *storage_).get();
-    if (!contract)
+    if (!static_cast<bool>(contract))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id.full_name());
       result.status = Status::CONTRACT_LOOKUP_FAILURE;
