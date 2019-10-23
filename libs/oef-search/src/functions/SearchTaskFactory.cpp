@@ -27,7 +27,11 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
           if (handle_query_result->get())
           {
             FETCH_LOG_INFO(LOGGING_NAME, "Query accepted! Moving to handler function..");
-            sp->HandleQuery(query, current_uri);
+            auto root = std::make_shared<Branch>(query.query_v2());
+
+            sp->dap_manager_->SetQueryHeader(root, query, [sp, root, current_uri](fetch::oef::pb::SearchQuery& q){
+                sp->HandleQuery(root, q, current_uri);
+            });
           }
           else
           {
@@ -129,13 +133,12 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
   }
 }
 
-void SearchTaskFactory::HandleQuery(const fetch::oef::pb::SearchQuery &query,
+void SearchTaskFactory::HandleQuery(std::shared_ptr<Branch> root, const fetch::oef::pb::SearchQuery &query,
                                     const Uri &                        current_uri)
 {
   auto                             this_sp = shared_from_this();
   std::weak_ptr<SearchTaskFactory> this_wp = this_sp;
 
-  auto root = std::make_shared<Branch>(query.query_v2());
   if (root->GetOperator() != "result")
   {
     auto new_root = std::make_shared<Branch>();
@@ -166,8 +169,8 @@ void SearchTaskFactory::HandleQuery(const fetch::oef::pb::SearchQuery &query,
         }
       });
 
-      result_future->AddFuture(sp->dap_manager_->execute(root));
-      result_future->AddFuture(sp->dap_manager_->broadcast(root, query));
+      result_future->AddFuture(sp->dap_manager_->execute(root, query));
+      result_future->AddFuture(sp->dap_manager_->broadcast(query));
 
       result_future->MakeNotification().Then([result_future, this_wp, current_uri]() mutable {
         auto result = result_future->Get();

@@ -231,17 +231,21 @@ public:
   }
 
   std::shared_ptr<FutureComplexType<std::shared_ptr<IdentifierSequence>>> execute(
-      std::shared_ptr<Branch> root)
-  {
-    auto result    = std::make_shared<FutureComplexType<std::shared_ptr<IdentifierSequence>>>();
+      std::shared_ptr<Branch> root, const fetch::oef::pb::SearchQuery &query) {
+    auto result = std::make_shared<FutureComplexType<std::shared_ptr<IdentifierSequence>>>();
     auto visit_res = VisitQueryTreeNetwork(root);
 
     auto identifier_sequence = std::make_shared<IdentifierSequence>();
     identifier_sequence->set_originator(true);
 
     std::shared_ptr<DapManager> this_sp = shared_from_this();
+    double distance = 0.0;
+    if (query.directed_search().has_distance())
+    {
+      distance = query.directed_search().distance().geo();
+    }
 
-    visit_res->MakeNotification().Then([result, root, identifier_sequence, this_sp]() mutable {
+    visit_res->MakeNotification().Then([result, root, identifier_sequence, this_sp, distance]() mutable {
       FETCH_LOG_INFO(LOGGING_NAME, "--------------------- AFTER VISIT");
       root->Print();
       FETCH_LOG_INFO(LOGGING_NAME, "---------------------");
@@ -250,8 +254,12 @@ public:
           NodeExecutorFactory(BranchExecutorTask::NodeDataType(root),
                               identifier_sequence, this_sp);
 
-      execute_task->SetMessageHandler([result](std::shared_ptr<IdentifierSequence> response) {
+      execute_task->SetMessageHandler([result, distance](std::shared_ptr<IdentifierSequence> response) {
         response->mutable_status()->set_success(true);
+        for(int i=0; i < response->identifiers_size();++i)
+        {
+          response->mutable_identifiers(i)->set_distance(distance);
+        }
         result->set(std::move(response));
       });
 
@@ -261,31 +269,22 @@ public:
     return result;
   }
 
-  std::shared_ptr<FutureComplexType<std::shared_ptr<IdentifierSequence>>> broadcast(
-      std::shared_ptr<Branch> root, const fetch::oef::pb::SearchQuery &query)
+  double SetQueryHeader(std::shared_ptr<Branch>& root, fetch::oef::pb::SearchQuery &query, std::function<void(fetch::oef::pb::SearchQuery&)> done)
   {
-    query_id_cache_->Add(query.id());
-
-    auto result  = std::make_shared<FutureComplexType<std::shared_ptr<IdentifierSequence>>>();
-    auto this_sp = this->shared_from_this();
-    std::weak_ptr<DapManager> this_wp = this_sp;
-    FETCH_LOG_INFO(LOGGING_NAME, "Broadcast started");
-
     if (!query.has_directed_search() || !query.directed_search().has_target() ||
         !query.directed_search().target().has_geo())
     {
-      // location lookup
       FETCH_LOG_INFO(LOGGING_NAME,
                      "No location set in header, looking for location constraint in the query...");
+      auto this_sp = this->shared_from_this();
       auto v = std::make_shared<FindGeoLocationVisitor>(dap_store_);
       v->SubmitVisitTask(root);
-      v->MakeNotification().Then([v, query, result, this_wp]() mutable {
+      v->MakeNotification().Then([this_sp, v, query, done]() mutable {
         auto loc_res = v->GetLocationRoot();
         if (loc_res)
         {
           // set location
-          auto new_query = std::make_shared<fetch::oef::pb::SearchQuery>(query);
-          auto ds        = new_query->mutable_directed_search();
+          auto ds = query.mutable_directed_search();
 
           for (const auto &loc : loc_res->GetLeaves())
           {
@@ -300,31 +299,43 @@ public:
 
           ds->mutable_distance()->set_geo(0.0);
 
-          auto sp = this_wp.lock();
-          if (sp)
-          {
-            sp->HandleBroadcast(new_query, result);
-          }
-          else
-          {
-            FETCH_LOG_ERROR(LOGGING_NAME, "broadcast: lambda1: No shared pointer to DapManager");
-          }
+          this_sp->SetDistanceInHeader(query, done);
         }
         else
         {
-          FETCH_LOG_INFO(LOGGING_NAME,
-                         "No location constraint found in query! Skipping broadcast..");
-          auto idseq = std::make_shared<IdentifierSequence>();
-          result->set(idseq);
+          done(query);
         }
         v.reset();
       });
     }
     else
     {
-      auto new_query = std::make_shared<fetch::oef::pb::SearchQuery>(query);
-      HandleBroadcast(new_query, result);
+      if (query.directed_search().has_distance() && query.directed_search().distance().geo()>0)
+      {
+        double source_distance = query.directed_search().distance().geo();
+
+        SetDistanceInHeader(query, done);
+
+        return source_distance;
+      }
+      else
+      {
+        done(query);
+      }
     }
+    return 0.0;
+  }
+
+  std::shared_ptr<FutureComplexType<std::shared_ptr<IdentifierSequence>>> broadcast(const fetch::oef::pb::SearchQuery &query)
+  {
+    query_id_cache_->Add(query.id());
+
+    auto result  = std::make_shared<FutureComplexType<std::shared_ptr<IdentifierSequence>>>();
+    auto this_sp = this->shared_from_this();
+    std::weak_ptr<DapManager> this_wp = this_sp;
+    FETCH_LOG_INFO(LOGGING_NAME, "Broadcast started");
+    auto q = std::make_shared<fetch::oef::pb::SearchQuery>(query);
+    DoBroadcast(result, q);
 
     return result;
   }
@@ -541,6 +552,24 @@ protected:
     return true;
   }
 
+  inline void SetDistanceInHeader(fetch::oef::pb::SearchQuery &query, std::function<void(fetch::oef::pb::SearchQuery&)> done)
+  {
+    auto res = PlaneDistanceLookup(
+        "geo", query.directed_search(),
+        [query, done](const double &/*source_distance*/, const double &distance) mutable {
+          query.mutable_directed_search()->mutable_distance()->set_geo(distance);
+          done(query);
+        },
+        [query, done]() mutable {
+          FETCH_LOG_WARN(LOGGING_NAME, "Failed to get distance. Not setting header!");
+          done(query);
+        });
+    if (!res)
+    {
+      done(query);
+    }
+  }
+
   void DoBroadcast(std::shared_ptr<FutureComplexType<std::shared_ptr<IdentifierSequence>>> &future,
                    std::shared_ptr<fetch::oef::pb::SearchQuery>                             query)
   {
@@ -584,45 +613,6 @@ protected:
       }
       future->set(std::move(idseq));
     });
-  }
-
-  void HandleBroadcast(
-      std::shared_ptr<fetch::oef::pb::SearchQuery>                            query,
-      std::shared_ptr<FutureComplexType<std::shared_ptr<IdentifierSequence>>> future)
-  {
-    auto                      this_sp = this->shared_from_this();
-    std::weak_ptr<DapManager> this_wp = this_sp;
-    FETCH_LOG_INFO(LOGGING_NAME, "Handle broadcast, distance calculation started...");
-
-    auto res = PlaneDistanceLookup(
-        "geo", query->directed_search(),
-        [query, this_wp, future](const double &/*source_distance*/, const double &distance) mutable {
-          query->mutable_directed_search()->mutable_distance()->set_geo(distance);
-          auto sp = this_wp.lock();
-          if (sp)
-          {
-            sp->DoBroadcast(future, query);
-          }
-          else
-          {
-            FETCH_LOG_ERROR(LOGGING_NAME,
-                            "HandleBroadcast: lambda1: No shared pointer to DapManager");
-            auto idseq = std::make_shared<IdentifierSequence>();
-            future->set(std::move(idseq));
-          }
-        },
-        [future]() {
-          FETCH_LOG_WARN(LOGGING_NAME,
-                         "HandleBroadcast: lambda2: Failed to get distance. Skipping broadcast...");
-          auto idseq = std::make_shared<IdentifierSequence>();
-          future->set(std::move(idseq));
-        });
-    if (!res)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Stop broadcast, distance calculation failed..");
-      auto idseq = std::make_shared<IdentifierSequence>();
-      future->set(std::move(idseq));
-    }
   }
 
 protected:
