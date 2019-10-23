@@ -123,7 +123,7 @@ public:
    * When overloaded it needs to reset gradient flag if not frozen
    * @param inputs
    * @param error_signal
-   * @return 
+   * @return
    */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override
