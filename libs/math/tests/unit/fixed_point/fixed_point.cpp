@@ -85,16 +85,17 @@ TEST(FixedPointTest, Conversion_16_16)
   // Largest fractional closest to one, representable to a FixedPoint
   FixedPoint<16, 16> almost_one(0.99999);
   // Largest fractional closest to one, representable to a FixedPoint
-  FixedPoint<16, 16> largest_int(std::numeric_limits<int16_t>::max());
+  FixedPoint<16, 16> largest_int(std::numeric_limits<int16_t>::max() - 1);
 
-  // Smallest possible integer, increase by one, in order to allow for the fractional part.
-  FixedPoint<16, 16> smallest_int(std::numeric_limits<int16_t>::min());
+  // Smallest possible integer, increase by 2, in order to allow for the fractional part.
+  // (+1 is reserved for -inf value)
+  FixedPoint<16, 16> smallest_int(std::numeric_limits<int16_t>::min() + 2);
 
   // Largest possible Fixed Point number.
   FixedPoint<16, 16> largest_fixed_point = largest_int + almost_one;
 
   // Smallest possible Fixed Point number.
-  FixedPoint<16, 16> smallest_fixed_point = smallest_int + almost_one;
+  FixedPoint<16, 16> smallest_fixed_point = smallest_int - almost_one;
 
   EXPECT_EQ(infinitesimal.Data(), fp32_t::SMALLEST_FRACTION);
   EXPECT_EQ(almost_one.Data(), fp32_t::LARGEST_FRACTION);
@@ -103,13 +104,13 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(largest_fixed_point.Data(), fp32_t::MAX);
   EXPECT_EQ(smallest_fixed_point.Data(), fp32_t::MIN);
 
-  EXPECT_EQ(fp32_t::MIN, 0x8000ffff);
-  EXPECT_EQ(fp32_t::MAX, 0x7fffffff);
+  EXPECT_EQ(fp32_t::MIN, 0x80010001);
+  EXPECT_EQ(fp32_t::MAX, 0x7ffeffff);
 
   // We cannot be smaller than the actual negative integer of the actual type
   EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<int32_t>::min());
-  // On the other hand we expect to be exactly the same as the largest positive integer of int64_t
-  EXPECT_TRUE(largest_fixed_point.Data() == std::numeric_limits<int32_t>::max());
+  // On the other hand we expect to be less than the largest positive integer of int32_t
+  EXPECT_TRUE(largest_fixed_point.Data() < std::numeric_limits<int32_t>::max());
 
   EXPECT_EQ(sizeof(one), 4);
 
@@ -184,16 +185,17 @@ TEST(FixedPointTest, Conversion_32_32)
   // Largest fractional closest to one, representable to a FixedPoint
   FixedPoint<32, 32> almost_one(0.9999999998);
   // Largest fractional closest to one, representable to a FixedPoint
-  FixedPoint<32, 32> largest_int(std::numeric_limits<int32_t>::max());
+  FixedPoint<32, 32> largest_int(std::numeric_limits<int32_t>::max() - 1);
 
-  // Smallest possible integer, increase by one, in order to allow for the fractional part.
-  FixedPoint<32, 32> smallest_int(std::numeric_limits<int32_t>::min());
+  // Smallest possible integer, increase by 2, in order to allow for the fractional part.
+  // (+1 is reserved for -inf value)
+  FixedPoint<32, 32> smallest_int(std::numeric_limits<int32_t>::min() + 2);
 
   // Largest possible Fixed Point number.
   FixedPoint<32, 32> largest_fixed_point = largest_int + almost_one;
 
   // Smallest possible Fixed Point number.
-  FixedPoint<32, 32> smallest_fixed_point = smallest_int + almost_one;
+  FixedPoint<32, 32> smallest_fixed_point = smallest_int - almost_one;
 
   EXPECT_EQ(infinitesimal.Data(), fp64_t::SMALLEST_FRACTION);
   EXPECT_EQ(almost_one.Data(), fp64_t::LARGEST_FRACTION);
@@ -201,13 +203,13 @@ TEST(FixedPointTest, Conversion_32_32)
   EXPECT_EQ(smallest_int.Data(), fp64_t::MIN_INT);
   EXPECT_EQ(largest_fixed_point.Data(), fp64_t::MAX);
   EXPECT_EQ(smallest_fixed_point.Data(), fp64_t::MIN);
-  EXPECT_EQ(fp64_t::MIN, 0x80000000ffffffff);
-  EXPECT_EQ(fp64_t::MAX, 0x7fffffffffffffff);
+  EXPECT_EQ(fp64_t::MIN, 0x8000000100000001);
+  EXPECT_EQ(fp64_t::MAX, 0x7ffffffeffffffff);
 
   // We cannot be smaller than the actual negative integer of the actual type
   EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<int64_t>::min());
-  // On the other hand we expect to be exactly the same as the largest positive integer of int64_t
-  EXPECT_TRUE(largest_fixed_point.Data() == std::numeric_limits<int64_t>::max());
+  // On the other hand we expect to be less than the largest positive integer of int64_t
+  EXPECT_TRUE(largest_fixed_point.Data() < std::numeric_limits<int64_t>::max());
 
   EXPECT_EQ(sizeof(one), 8);
 
@@ -622,12 +624,12 @@ TEST(FixedPointTest, Comparison_16_16)
   EXPECT_TRUE(fp32_t::CONST_SQRT2 == 1.414213562373095048801688724209698079);
   EXPECT_TRUE(fp32_t::CONST_INV_SQRT2 == 0.707106781186547524400844362104849039);
 
-  EXPECT_EQ(fp32_t::MAX_INT, 0x7fff0000);
-  EXPECT_EQ(fp32_t::MIN_INT, 0x80000000);
-  EXPECT_EQ(fp32_t::MAX, 0x7fffffff);
-  EXPECT_EQ(fp32_t::MIN, 0x8000ffff);
-  EXPECT_EQ(fp32_t::MAX_EXP.Data(), 0x000a65b9);
-  EXPECT_EQ(fp32_t::MIN_EXP.Data(), 0xfff59a47);
+  EXPECT_EQ(fp32_t::MAX_INT, 0x7ffe0000);
+  EXPECT_EQ(fp32_t::MIN_INT, 0x80020000);
+  EXPECT_EQ(fp32_t::MAX, 0x7ffeffff);
+  EXPECT_EQ(fp32_t::MIN, 0x80010001);
+  EXPECT_EQ(fp32_t::MAX_EXP.Data(), 0x000a65adL);
+  EXPECT_EQ(static_cast<int32_t>(fp32_t::MIN_EXP.Data()), static_cast<int32_t>(0xfff59a53L));
 }
 
 TEST(FixedPointTest, Comparison_32_32)
@@ -738,12 +740,12 @@ TEST(FixedPointTest, Comparison_32_32)
   EXPECT_TRUE(fp64_t::CONST_SQRT2 == 1.414213562373095048801688724209698079);
   EXPECT_TRUE(fp64_t::CONST_INV_SQRT2 == 0.707106781186547524400844362104849039);
 
-  EXPECT_EQ(fp64_t::MAX_INT, 0x7fffffff00000000);
-  EXPECT_EQ(fp64_t::MIN_INT, 0x8000000000000000);
-  EXPECT_EQ(fp64_t::MAX, 0x7fffffffffffffff);
-  EXPECT_EQ(fp64_t::MIN, 0x80000000ffffffff);
-  EXPECT_EQ(fp64_t::MAX_EXP.Data(), 0x000000157cd0e714);
-  EXPECT_EQ(fp64_t::MIN_EXP.Data(), 0xffffffea832f18ec);
+  EXPECT_EQ(fp64_t::MAX_INT, 0x7ffffffe00000000);
+  EXPECT_EQ(fp64_t::MIN_INT, 0x8000000200000000);
+  EXPECT_EQ(fp64_t::MAX, 0x7ffffffeffffffff);
+  EXPECT_EQ(fp64_t::MIN, 0x8000000100000001);
+  EXPECT_EQ(fp64_t::MAX_EXP.Data(), 0x000000157cd0e6e8LL);
+  EXPECT_EQ(fp64_t::MIN_EXP.Data(), 0xffffffea832f1918LL);
 }
 
 TEST(FixedPointTest, Exponential_16_16)
