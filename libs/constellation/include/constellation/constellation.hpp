@@ -88,7 +88,7 @@ public:
     uint32_t     max_peers{0};
     uint32_t     transient_peers{0};
     uint32_t     block_interval_ms{0};
-    uint64_t     max_committee_size{0};
+    uint64_t     max_cabinet_size{0};
     uint64_t     stake_delay_period{0};
     uint64_t     aeon_period{0};
     uint32_t     block_difficulty{DEFAULT_BLOCK_DIFFICULTY};

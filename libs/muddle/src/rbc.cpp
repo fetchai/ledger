@@ -113,7 +113,7 @@ bool RBC::ResetCabinet(CabinetMembers const &cabinet)
   // Copying cabinet members
   current_cabinet_ = cabinet;
 
-  // Set threshold depending on size of committee
+  // Set threshold depending on size of cabinet
   if (current_cabinet_.size() % 3 == 0)
   {
     threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 3 - 1);

@@ -205,11 +205,11 @@ TEST(MclDkgTests, Signing)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
 
-  uint32_t committee_size = 200;
-  uint32_t threshold      = 101;
+  uint32_t cabinet_size = 200;
+  uint32_t threshold    = 101;
 
-  // outputs[i] is assigned to node with index i in the committee
-  auto outputs = TrustedDealerGenerateKeys(committee_size, threshold);
+  // outputs[i] is assigned to node with index i in the cabinet
+  auto outputs = TrustedDealerGenerateKeys(cabinet_size, threshold);
 
   Generator group_g;
   SetGenerator(group_g);
@@ -217,14 +217,14 @@ TEST(MclDkgTests, Signing)
   std::string                             message = "Hello";
   std::unordered_map<uint32_t, Signature> threshold_signatures;
 
-  // Generate random selection of committee members
+  // Generate random selection of cabinet members
   std::set<uint32_t> members;
   while (members.size() < threshold)
   {
-    members.insert(static_cast<uint32_t>(rand()) % committee_size);
+    members.insert(static_cast<uint32_t>(rand()) % cabinet_size);
   }
 
-  for (uint32_t i = 0; i < committee_size; ++i)
+  for (uint32_t i = 0; i < cabinet_size; ++i)
   {
     // Compute signature share and validate
     Signature sig = SignShare(message, outputs[i].private_key_share);
@@ -261,10 +261,10 @@ TEST(MclNotarisationTests, AggregateSigningVerification)
 
   Generator generator;
   SetGenerator(generator);
-  uint32_t               committee_size = 4;
+  uint32_t               cabinet_size = 4;
   std::vector<KeyPair>   keys;
   std::vector<PublicKey> all_public_keys;
-  for (uint32_t i = 0; i < committee_size; ++i)
+  for (uint32_t i = 0; i < cabinet_size; ++i)
   {
     auto new_keys = GenerateKeyPair(generator);
     keys.push_back(new_keys);
@@ -273,7 +273,7 @@ TEST(MclNotarisationTests, AggregateSigningVerification)
 
   MessagePayload                          message = "Hello";
   std::unordered_map<uint32_t, Signature> signatures;
-  for (uint32_t i = 0; i < committee_size; ++i)
+  for (uint32_t i = 0; i < cabinet_size; ++i)
   {
     if (i != 0u)
     {
