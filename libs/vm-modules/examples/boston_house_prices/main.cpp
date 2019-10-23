@@ -20,8 +20,8 @@
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/system.hpp"
-#include "vm_modules/ml/ml.hpp"
 #include "vm_modules/math/tensor.hpp"
+#include "vm_modules/ml/ml.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-using System = fetch::vm_modules::System;
+using System     = fetch::vm_modules::System;
 using DataType   = fetch::vm_modules::math::VMTensor::DataType;
 using TensorType = fetch::math::Tensor<DataType>;
 
