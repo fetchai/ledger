@@ -20,6 +20,8 @@
 #include "network/fetch_asio.hpp"
 #include <iostream>
 #include <vector>
+#include <mutex>
+#include <functional>
 
 class RingBuffer
 {

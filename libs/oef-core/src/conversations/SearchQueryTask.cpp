@@ -146,7 +146,7 @@ SearchQueryTask::StateResult SearchQueryTask::HandleResponse(void)
           aw_item->set_distance(pt->distance());
         }
 
-        agents_nbr += item.second.size();
+        agents_nbr += static_cast<int>(item.second.size());
         for (auto &a : item.second)
         {
           auto *aw = aw_item->add_agents();

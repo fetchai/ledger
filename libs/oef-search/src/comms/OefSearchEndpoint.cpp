@@ -28,6 +28,8 @@
 #include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/utils/Uri.hpp"
 
+#include <map>
+
 static Gauge count("mt-search.network.OefSearchEndpoint");
 
 OefSearchEndpoint::OefSearchEndpoint(std::shared_ptr<ProtoEndpoint> endpoint)

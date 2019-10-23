@@ -20,8 +20,8 @@
 namespace google {
 namespace protobuf {
 class Message;
-};
-};  // namespace google
+}
+}  // namespace google
 
 #include <map>
 #include <memory>

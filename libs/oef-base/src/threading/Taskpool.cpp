@@ -65,15 +65,12 @@ void Taskpool::run(std::size_t thread_idx)
       return;
     }
 
-    auto cv_status = std::cv_status::no_timeout;
-
     Timestamp now = Clock::now();
     {
       Lock lock(mutex);
       if (pending_tasks.empty())
       {
-        cv_status =
-            work_available.wait_until(lock, lockless_getNextWakeTime(now, Milliseconds(100)));
+        work_available.wait_until(lock, lockless_getNextWakeTime(now, Milliseconds(100)));
       }
     }
 

@@ -24,8 +24,8 @@
 namespace google {
 namespace protobuf {
 class Message;
-};
-};  // namespace google
+}
+}  // namespace google
 
 template <typename TXType>
 class IMessageWriter

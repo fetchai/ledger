@@ -20,6 +20,7 @@
 #include "logging/logging.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include <memory>
+#include <map>
 
 class Core;
 template <class OefEndpoint>

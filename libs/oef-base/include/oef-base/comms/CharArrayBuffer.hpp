@@ -38,7 +38,7 @@ public:
     size    = 0;
     for (auto &b : buffers)
     {
-      size += asio::buffer_size(b);
+      size += static_cast<int>(asio::buffer_size(b));
     }
   }
 

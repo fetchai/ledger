@@ -38,7 +38,7 @@ public:
     size    = 0;
     for (auto &b : buffers)
     {
-      size += asio::buffer_size(b);
+      size += static_cast<uint32_t>(asio::buffer_size(b));
     }
   }
 
@@ -230,7 +230,7 @@ public:
   void advance(std::size_t amount = 1)
   {
     // std::cout << "advance: cur=" << current << "  amount=" << amount << std::endl;
-    current += amount;
+    current += static_cast<uint32_t>(amount);
   }
 
   std::streamsize showmanyc()
@@ -250,13 +250,15 @@ public:
   }
 
   ConstCharArrayBuffer(const ConstCharArrayBuffer &other)
-    : buffers(other.buffers)
+    : std::streambuf(other)
+    , buffers(other.buffers)
     , current(other.current)
     , size(other.size)
   {}
 
   ConstCharArrayBuffer(const ConstCharArrayBuffer &other, uint32_t sizelimit)
-    : buffers(other.buffers)
+    : std::streambuf(other)
+    , buffers(other.buffers)
     , current(other.current)
     , size(sizelimit)
   {}
@@ -276,9 +278,4 @@ public:
     }
     return r;
   }
-
-private:
-  // copy ctor and assignment not implemented;
-  // copying not allowed
-  ConstCharArrayBuffer &operator=(const ConstCharArrayBuffer &);
 };

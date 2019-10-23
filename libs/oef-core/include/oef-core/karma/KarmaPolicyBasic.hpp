@@ -19,6 +19,7 @@
 
 #include <map>
 #include <vector>
+#include <atomic>
 
 #include "oef-base/utils/BucketsOf.hpp"
 #include "oef-core/karma/IKarmaPolicy.hpp"

@@ -28,8 +28,8 @@
 namespace google {
 namespace protobuf {
 class Message;
-};
-};  // namespace google
+}
+}  // namespace google
 
 class IOutboundConversationCreator
 {

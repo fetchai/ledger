@@ -21,6 +21,7 @@
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-core/karma/KarmaAccount.hpp"
 #include <memory>
+#include <map>
 
 class Core;
 template <class OefEndpoint>
