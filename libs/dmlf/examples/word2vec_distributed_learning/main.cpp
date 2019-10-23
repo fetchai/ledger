@@ -75,13 +75,13 @@ int main(int argc, char **argv)
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients = 2;
+  SizeType number_of_clients = 5;
   SizeType number_of_rounds  = 1000;
-  SizeType number_of_peers   = 1;
+  SizeType number_of_peers   = 3;
   bool     synchronisation   = false;
   // have been processed in total by the clients
 
-  client_params.batch_size    = 1000;
+  client_params.batch_size    = 10000;
   client_params.learning_rate = static_cast<DataType>(.001f);
   client_params.max_updates   = 100;  //  Synchronization occurs after this number of batches
 
