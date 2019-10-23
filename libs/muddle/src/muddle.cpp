@@ -233,6 +233,16 @@ Address const &Muddle::GetAddress() const
 }
 
 /**
+ * Get the external address of the muddle
+ *
+ * @return The external address of the node
+ */
+std::string const &Muddle::GetExternalAddress() const
+{
+  return external_address_;
+}
+
+/**
  * Get the set of ports that the server is currently listening on
  * @return The set of server ports
  */

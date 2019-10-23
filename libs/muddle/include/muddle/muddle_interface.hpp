@@ -127,6 +127,13 @@ public:
   virtual Address const &GetAddress() const = 0;
 
   /**
+   * Get the external address of the muddle
+   *
+   * @return The external address of the node
+   */
+  virtual std::string const &GetExternalAddress() const = 0;
+
+  /**
    * Get the set of ports that the server is currently listening on
    *
    * @return The set of server ports

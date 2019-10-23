@@ -158,6 +158,7 @@ public:
   /// @{
   NetworkId const &GetNetwork() const override;
   Address const &  GetAddress() const override;
+  std::string const &GetExternalAddress() const override;
   Ports            GetListeningPorts() const override;
   Addresses        GetDirectlyConnectedPeers() const override;
   Addresses        GetIncomingConnectedPeers() const override;
