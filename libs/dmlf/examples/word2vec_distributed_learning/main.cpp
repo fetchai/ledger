@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 
   client_params.batch_size    = 10000;
   client_params.learning_rate = static_cast<DataType>(.001f);
-  client_params.max_updates   = 100;  //  Synchronization occurs after this number of batches
+  client_params.max_updates   = 100;  // Round ends after this number of batches
 
   // Word2Vec parameters:
   client_params.vocab_file           = "/tmp/vocab.txt";

@@ -97,7 +97,7 @@ int main(int ac, char **av)
   int         instance_number = std::atoi(av[4]);
 
   SizeType number_of_rounds                     = 10;
-  client_params.max_updates                     = 100;
+  client_params.max_updates                     = 100;  // Round ends after this number of batches
   SizeType number_of_peers                      = 3;
   client_params.batch_size                      = 32;
   client_params.learning_rate                   = static_cast<DataType>(.001f);

@@ -141,39 +141,6 @@ void Shuffle(TensorType &data, TensorType &labels, SizeType const &seed = 54)
   labels = labels_out;
 }
 
-/**
- * Averages weights between all clients
- * @param clients
- */
-void SynchroniseWeights(std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients)
-{
-  VectorTensorType new_weights = clients[0]->GetWeights();
-
-  // Sum all weights
-  for (SizeType i{1}; i < clients.size(); ++i)
-  {
-    VectorTensorType other_weights = clients[i]->GetWeights();
-
-    for (SizeType j{0}; j < other_weights.size(); j++)
-    {
-      fetch::math::Add(new_weights.at(j), other_weights.at(j), new_weights.at(j));
-    }
-  }
-
-  // Divide weights by number of clients to calculate the average
-  for (SizeType j{0}; j < new_weights.size(); j++)
-  {
-    fetch::math::Divide(new_weights.at(j), static_cast<DataType>(clients.size()),
-                        new_weights.at(j));
-  }
-
-  // Update models of all clients by average model
-  for (auto &c : clients)
-  {
-    c->SetWeights(new_weights);
-  }
-}
-
 int main(int argc, char **argv)
 {
   if (argc != 8)
@@ -194,7 +161,7 @@ int main(int argc, char **argv)
 
   SizeType number_of_clients                    = 6;
   SizeType number_of_rounds                     = 200;
-  client_params.max_updates                     = 16;  // should be n_data / batch_size
+  client_params.max_updates                     = 16;  // Round ends after this number of batches
   SizeType number_of_peers                      = 3;
   client_params.batch_size                      = 32;
   client_params.learning_rate                   = learning_rate;

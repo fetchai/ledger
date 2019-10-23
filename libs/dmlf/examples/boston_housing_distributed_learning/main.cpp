@@ -223,7 +223,7 @@ int main(int argc, char **argv)
   SizeType number_of_clients                    = 6;
   SizeType number_of_rounds                     = 200;
   bool     synchronise                          = false;
-  client_params.max_updates                     = 16;  // should be n_data / batch_size
+  client_params.max_updates                     = 16;  // Round ends after this number of batches
   SizeType number_of_peers                      = 3;
   client_params.batch_size                      = 32;
   client_params.learning_rate                   = learning_rate;
