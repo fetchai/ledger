@@ -164,10 +164,6 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
 
     if (!Convertable(params[i], typeId))
     {
-      std::cout << "GOT TYPE INFO\n";
-      auto typeInfo = vm.GetTypeInfo(typeId);
-      std::cout << typeInfo.name << '\n';
-      std::cout << "END OF TYPE INFO\n";
       return EngineError(Error::Code::RUNTIME_ERROR, "Wrong parameter at " + std::to_string(i) +
                                                          " Expected " + vm.GetTypeName(typeId));
     }
@@ -245,7 +241,6 @@ bool BasicVmEngine::Convertable(LedgerVariant const &ledgerVariant, TypeId const
     return ledgerVariant.IsFixedPoint();
   }
   default:
-    std::cout << "Expected typeId " << typeId << '\n';
     return false;
   }
 }
@@ -279,7 +274,6 @@ BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const &ledgerVaria
     return VmVariant(ledgerVariant.As<fp64_t>(), typeId);
   }
   default:
-    std::cout << "Tried to convert typeId " << typeId << '\n';
     return VmVariant();
   }
 }

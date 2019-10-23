@@ -204,27 +204,276 @@ function compare(a : Bool) : Int32
 endfunction
 )";
 
-auto const AddArray = R"(
+//auto const AddArray = R"(
+//
+//function add(array : Array<Int32>) : Int32
+//  return array[0] + array[1];
+//endfunction
+//
+//)";
+//
+//auto const AddArrayThree = R"(
+//
+//function add(array : Array<Int32>) : Int32
+//  return array[0] + array[1] + array[2];
+//endfunction
+//
+//)";
+//
+//auto const Add3Array = R"(
+//
+//function add(array2 : Array<Array<Array<Int32>>>, array : Array<Int32>) : Int32
+//  return array[0] + array[1] + array2[0][1][2];
+//endfunction
+//
+//)";
 
-function add(array : Array<Int32>) : Int32
-  return array[0] + array[1];
+auto const AddMatrix = R"(
+
+persistent matrix : Array<Array<Int32>>;
+
+function init()
+
+  use matrix;
+  //var matrix = State<Array<Array<Int32>>>("matrix");
+  
+  var swa = Array<Array<Int32> >(2);
+  swa[0] = Array<Int32>(2);
+  swa[1] = Array<Int32>(2);
+  
+  swa[0][0] = 0;
+  swa[0][1] = 1;
+  swa[1][0] = 2;
+  swa[1][1] = 3;
+  
+  matrix.set(swa);
 endfunction
+
+function doAdd() : Int32
+
+  use matrix;
+  
+  var swa = matrix.get();
+  
+  return swa[0][0] + swa[0][1] +
+         swa[1][0] + swa[1][1]; 
+endfunction  
 
 )";
 
-auto const AddArrayThree = R"(
+auto const AddMatrix2 = R"(
 
-function add(array : Array<Int32>) : Int32
-  return array[0] + array[1] + array[2];
+persistent matrix : Array<Array<Int32>>;
+
+function init()
+
+  use matrix;
+  //var matrix = State<Array<Array<Int32>>>("matrix");
+  
+  var swa = Array<Array<Int32> >(2);
+  swa[0] = Array<Int32>(2);
+  swa[1] = Array<Int32>(2);
+  
+  swa[0][0] = 0;
+  swa[0][1] = 1;
+  swa[1][0] = 2;
+  swa[1][1] = 3;
+  
+  matrix.set(swa);
 endfunction
+
+function doAdd() : Int32
+
+  use matrix;
+  
+  var swa = matrix.get();
+  
+  return swa[0][0] + swa[0][1] +
+         swa[1][0] + swa[1][1]; 
+endfunction  
 
 )";
 
-auto const Add3Array = R"(
+auto const AddMatrixAltCode = R"(
 
-function add(array2 : Array<Array<Array<Int32>>>, array : Array<Int32>) : Int32
-  return array[0] + array[1] + array2[0][1][2];
+persistent matrix1 : Array<Array<Float32>>;
+persistent matrix2 : Array<Array<Int64>>;
+persistent matrix  : Array<Array<Int32>>;
+
+function init()
+
+  use matrix;
+  //var matrix = State<Array<Array<Int32>>>("matrix");
+  
+  var swa = Array<Array<Int32> >(2);
+  swa[0] = Array<Int32>(2);
+  swa[1] = Array<Int32>(2);
+  
+  swa[0][0] = 0;
+  swa[0][1] = 1;
+  swa[1][0] = 2;
+  swa[1][1] = 3;
+  
+  matrix.set(swa);
 endfunction
+
+function doAdd() : Int32
+
+  use matrix;
+  
+  var swa = matrix.get();
+  
+  return swa[0][0] + swa[0][1] +
+         swa[1][0] + swa[1][1]; 
+endfunction  
+
+)";
+
+auto const AddNMatrix = R"(
+
+persistent matrix  : Array<Array<Array<Int32>>>;
+
+function init()
+
+  use matrix;
+  
+  var swa = Array<Array<Array<Int32> > >(1);
+  swa[0] = Array<Array<Int32> >(2);
+	swa[0][0] = Array<Int32>(2);
+  swa[0][1] = Array<Int32>(2);
+  
+  swa[0][0][0] = 0;
+  swa[0][0][1] = 1;
+  swa[0][1][0] = 2;
+  swa[0][1][1] = 3;
+  
+  matrix.set(swa);
+endfunction
+
+function doAdd() : Int32
+
+  use matrix;
+  
+  var swa = matrix.get();
+  
+  return swa[0][0][0] + swa[0][0][1] +
+         swa[0][1][0] + swa[0][1][1]; 
+endfunction  
+
+)";
+
+auto const AddNMatrixAltCode = R"(
+
+persistent matrix1 : Array<Array<Array<Float32>>>;
+persistent matrix2 : Array<Array<Array<Int64>>>;
+persistent matrix  : Array<Array<Array<Int32>>>;
+
+function doSum1(swa : Array<Array<Array<Float32>>>) : Float32
+  return swa[0][0][0];
+endfunction
+function doSum2(swa : Array<Array<Array<Int64>>>) : Int64
+  return swa[0][0][0];
+endfunction
+
+function doSum(swa : Array<Array<Array<Int32>>>) : Int32
+  return swa[0][0][0] + swa[0][0][1] +
+         swa[0][1][0] + swa[0][1][1]; 
+endfunction
+
+function doAdd() : Int32
+  use matrix1;
+  use matrix2;
+
+	var helper1 = Array<Array<Array<Float32>>>(1);
+	helper1[0] = Array<Array<Float32>>(1);
+	helper1[0][0] = Array<Float32>(1);
+	helper1[0][0][0] = 6.0f;
+	matrix1.set(helper1);
+
+	var helper2 = Array<Array<Array<Int64>>>(1);
+	helper2[0] = Array<Array<Int64>>(1);
+	helper2[0][0] = Array<Int64>(1);
+	helper2[0][0][0] = 6i64;
+	matrix2.set(helper2);
+
+  use matrix;
+  var swa = matrix.get();
+
+	doSum1(helper1);
+	doSum2(helper2);
+
+	return doSum(swa);
+  
+endfunction  
+
+)";
+
+auto const AddNonPersistentMatrix = R"(
+
+function doSum1(swa : Array<Array<Array<Float32>>>) : Float32
+  return swa[0][0][0];
+endfunction
+function doSum2(swa : Array<Array<Array<Int64>>>) : Int64
+  return swa[0][0][0];
+endfunction
+
+function doSum(swa : Array<Array<Array<Int32>>>) : Int32
+  return swa[0][0][0] + swa[0][0][1] +
+         swa[0][1][0] + swa[0][1][1]; 
+endfunction
+
+function doAdd() : Int32
+
+	var helper1 = Array<Array<Array<Float32>>>(1);
+	helper1[0] = Array<Array<Float32>>(1);
+	helper1[0][0] = Array<Float32>(1);
+	helper1[0][0][0] = 6.0f;
+
+	var helper2 = Array<Array<Array<Int64>>>(1);
+	helper2[0] = Array<Array<Int64>>(1);
+	helper2[0][0] = Array<Int64>(1);
+	helper2[0][0][0] = 6i64;
+
+	doSum1(helper1);
+	doSum2(helper2);
+
+  var swa = Array<Array<Array<Int32> > >(1);
+  swa[0] = Array<Array<Int32> >(2);
+	swa[0][0] = Array<Int32>(2);
+  swa[0][1] = Array<Int32>(2);
+  
+  swa[0][0][0] = 0;
+  swa[0][0][1] = 1;
+  swa[0][1][0] = 2;
+  swa[0][1][1] = 3;
+
+	return doSum(swa);
+  
+endfunction  
+
+)";
+
+auto const AddNonPersistentMatrix2 = R"(
+function doSum(hola : Array<Array<Array<Int32>>>) : Int32
+  return hola[0][0][0] + hola[0][0][1] +
+         hola[0][1][0] + hola[0][1][1]; 
+endfunction
+
+function doAdd() : Int32
+
+  var swola = Array<Array<Array<Int32> > >(1);
+  swola[0] = Array<Array<Int32> >(2);
+	swola[0][0] = Array<Int32>(2);
+  swola[0][1] = Array<Int32>(2);
+  
+  swola[0][0][0] = 0;
+  swola[0][0][1] = 1;
+  swola[0][1][0] = 2;
+  swola[0][1][1] = 3;
+
+	return doSum(swola);
+  
+endfunction  
 
 )";
 
@@ -1104,53 +1353,209 @@ TEST(BasicVmEngineDmlfTests, WrongNumberOfParamsTrueIntToFloatCompare)
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
 }
 
-TEST(BasicVmEngineDmlfTests, AddArray)
+//TEST(BasicVmEngineDmlfTests, AddArray)
+//{
+//  BasicVmEngine engine;
+//
+//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddArray}});
+//  EXPECT_TRUE(createdProgram.succeeded());
+//
+//  ExecutionResult createdState = engine.CreateState("state");
+//  EXPECT_TRUE(createdState.succeeded());
+//
+//  ExecutionResult result = engine.Run(
+//      "add", "state", "add", Params{LedgerVariant()});
+//  //EXPECT_TRUE(result.succeeded());
+//  std::cout << result.error().message() << '\n';
+//  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
+//}
+//
+//TEST(BasicVmEngineDmlfTests, AddArrayThree)
+//{
+//  BasicVmEngine engine;
+//
+//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddArrayThree}});
+//  EXPECT_TRUE(createdProgram.succeeded());
+//
+//  ExecutionResult createdState = engine.CreateState("state");
+//  EXPECT_TRUE(createdState.succeeded());
+//
+//  ExecutionResult result = engine.Run(
+//      "add", "state", "add", Params{LedgerVariant()});
+//  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+//  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
+//}
+//
+//TEST(BasicVmEngineDmlfTests, Add3Array)
+//{
+//  BasicVmEngine engine;
+//
+//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", Add3Array}});
+//  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+//
+//  ExecutionResult createdState = engine.CreateState("state");
+//  EXPECT_TRUE(createdState.succeeded());
+//
+//  ExecutionResult result = engine.Run(
+//      "add", "state", "add", Params{LedgerVariant(), LedgerVariant()});
+//  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+//  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
+//}
+
+TEST(BasicVmEngineDmlfTests, AddMatrix)
 {
   BasicVmEngine engine;
 
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddArray}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = engine.Run(
-      "add", "state", "add", Params{LedgerVariant()});
-  //EXPECT_TRUE(result.succeeded());
-  std::cout << result.error().message() << '\n';
-  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
-}
-
-TEST(BasicVmEngineDmlfTests, AddArrayThree)
-{
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddArrayThree}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = engine.Run(
-      "add", "state", "add", Params{LedgerVariant()});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
-}
-
-TEST(BasicVmEngineDmlfTests, Add3Array)
-{
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", Add3Array}});
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddMatrix}});
   EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
 
   ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
+  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
   ExecutionResult result = engine.Run(
-      "add", "state", "add", Params{LedgerVariant(), LedgerVariant()});
+      "add", "state", "init", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
+
+  result = engine.Run(
+      "add", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
+
+  result = engine.Run(
+      "add", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
+}
+
+TEST(BasicVmEngineDmlfTests, AddMatrixSameCode)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddMatrix}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  createdProgram = engine.CreateExecutable("add2", {{"etch", AddMatrix}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "init", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+
+  result = engine.Run(
+      "add2", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
+
+  result = engine.Run(
+      "add", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
+}
+
+TEST(BasicVmEngineDmlfTests, AddMatrixEqualCode)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddMatrix}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  createdProgram = engine.CreateExecutable("add2", {{"etch", AddMatrix2}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "init", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+
+  result = engine.Run(
+      "add2", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
+
+  result = engine.Run(
+      "add", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
+}
+
+TEST(BasicVmEngineDmlfTests, AddMatrixAltCode)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddMatrix}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  createdProgram = engine.CreateExecutable("add2", {{"etch", AddMatrixAltCode}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "init", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+
+  result = engine.Run(
+      "add2", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
+
+  result = engine.Run(
+      "add", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
+}
+
+TEST(BasicVmEngineDmlfTests, AddNMatrixAltCode)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddNMatrix}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  createdProgram = engine.CreateExecutable("add2", {{"etch", AddNMatrixAltCode}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "init", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+
+  result = engine.Run(
+      "add2", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
+
+  result = engine.Run(
+      "add", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
+}
+
+TEST(BasicVmEngineDmlfTests, AddNonPersistentMatrix)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddNonPersistentMatrix}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  createdProgram = engine.CreateExecutable("add2", {{"etch", AddNonPersistentMatrix2}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+
+  ExecutionResult result = engine.Run(
+      "add2", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
+
+  result = engine.Run(
+      "add", "state", "doAdd", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 6);
 }
 
 }  // namespace
