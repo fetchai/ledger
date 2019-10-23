@@ -36,7 +36,8 @@ protected:
   virtual void EndpointClosed(void)
   {}
 
-  void HandleQuery(std::shared_ptr<Branch> root, const fetch::oef::pb::SearchQuery &query, const Uri &current_uri);
+  void HandleQuery(fetch::oef::pb::SearchQuery &query, const Uri &current_uri);
+  void ExecuteQuery(std::shared_ptr<Branch>& root, const fetch::oef::pb::SearchQuery &query, const Uri &current_uri);
 
 protected:
   std::shared_ptr<DapManager> dap_manager_;
