@@ -262,6 +262,12 @@ public:
     return true;
   }
 
+  bool Start(Uris const & /*peers*/, PortMapping const & /*port_mapping*/) override
+  {
+    FakeNetwork::Register(node_address_);
+    return true;
+  }
+
   bool Start(Ports const & /*ports*/) override
   {
     FakeNetwork::Register(node_address_);
