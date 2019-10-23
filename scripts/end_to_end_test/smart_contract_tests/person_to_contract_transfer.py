@@ -85,7 +85,9 @@ def run(options):
     contract1 = Contract(CONTRACT_TEXT, entity1)
 
     status = api.sync(api.contracts.create(entity1, contract1, 20000))
-    assert status[0].exit_code == 0  # ???explanation
+    assert status[0].exit_code == 0, \
+        'Expected @init to return 0; actually returned {}'.format(
+            status[0].exit_code)
 
     query_init_balance = contract1.query(api, 'get_initial_balance_state')
     assert query_init_balance == 0, \

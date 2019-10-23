@@ -63,8 +63,9 @@ std::shared_ptr<Transaction> CreateSampleTransaction()
 
 void Executor_BasicBenchmark(benchmark::State &state)
 {
-  auto     storage = std::make_shared<InMemoryStorageUnit>();
-  Executor executor{storage, nullptr};
+  auto          storage = std::make_shared<InMemoryStorageUnit>();
+  TokenContract tokens{};
+  Executor      executor{storage, nullptr, tokens};
 
   // create and add the transaction to storage
   auto tx = CreateSampleTransaction();
@@ -76,8 +77,6 @@ void Executor_BasicBenchmark(benchmark::State &state)
   // add funds to ensure the transaction passes
   {
     StateSentinelAdapter adapter{*storage, Identifier{"fetch.token"}, shards};
-
-    TokenContract tokens{};
 
     tokens.Attach(adapter);
     tokens.AddTokens(tx->from(), 500000);

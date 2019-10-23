@@ -18,6 +18,7 @@
 
 #include "core/bitvector.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 #include "logging/logging.hpp"
 
@@ -29,9 +30,10 @@ namespace ledger {
 
 constexpr char const *LOGGING_NAME = "SynergeticExecutor";
 
-SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
+SynergeticExecutor::SynergeticExecutor(StorageInterface &storage, TokenContract &token_contract)
   : storage_{storage}
   , factory_{storage}
+  , token_contract_{token_contract}
 {}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,

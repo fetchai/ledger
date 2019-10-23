@@ -23,11 +23,13 @@
 namespace fetch {
 namespace ledger {
 
+class TokenContract;
+
 class SynergeticExecutor : public SynergeticExecutorInterface
 {
 public:
   // Construction / Destruction
-  explicit SynergeticExecutor(StorageInterface &storage);
+  explicit SynergeticExecutor(StorageInterface &storage, TokenContract &token_contract);
   SynergeticExecutor(SynergeticExecutor const &) = delete;
   SynergeticExecutor(SynergeticExecutor &&)      = delete;
   ~SynergeticExecutor() override                 = default;
@@ -45,6 +47,7 @@ public:
 private:
   StorageInterface &        storage_;
   SynergeticContractFactory factory_;
+  TokenContract &           token_contract_;
 };
 
 }  // namespace ledger

@@ -94,10 +94,11 @@ bool IsCreateWealth(chain::Transaction const &tx)
  *
  * @param storage The storage unit to be used
  */
-Executor::Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates)
+Executor::Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates,
+                   TokenContract &token_contract)
   : stake_updates_{stake_updates}
   , storage_{std::move(storage)}
-  , token_contract_{std::make_shared<TokenContract>()}
+  , token_contract_{&token_contract}
   , overall_duration_{Registry::Instance().LookupMeasurement<Histogram>(
         "ledger_executor_overall_duration")}
   , tx_retrieve_duration_{Registry::Instance().LookupMeasurement<Histogram>(
@@ -303,8 +304,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
     // lookup or create the instance of the contract as is needed
     auto const is_token_contract = (contract_id.full_name() == "fetch.token");
 
-    auto contract =
-        is_token_contract ? token_contract_ : chain_code_cache_.Lookup(contract_id, *storage_);
+    auto contract = is_token_contract ? token_contract_
+                                      : chain_code_cache_.Lookup(contract_id, *storage_).get();
     if (!contract)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id.full_name());
@@ -317,11 +318,11 @@ bool Executor::ExecuteTransactionContract(Result &result)
     // Dispatch the transaction to the contract
     FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", current_tx_->action());
 
-    ContractContext ctx{token_contract_.get(), current_tx_->contract_address(), &storage_adapter};
+    ContractContext ctx{token_contract_, current_tx_->contract_address(), &storage_adapter};
     contract->updateContractContext(ctx);
 
     auto const contract_status =
-        contract->DispatchTransaction(*current_tx_, block_, token_contract_.get());
+        contract->DispatchTransaction(*current_tx_, block_, token_contract_);
 
     // detach the chain code from the current context
     contract->Detach();

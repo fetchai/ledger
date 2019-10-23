@@ -34,6 +34,8 @@
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
+#include "ledger/upow/synergetic_execution_manager.hpp"
+#include "ledger/upow/synergetic_executor.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
@@ -271,7 +273,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] {
-          return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
+          return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr,
+                                            token_contract_);
         },
         tx_status_cache_)}
   , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
@@ -287,7 +290,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        cfg_.num_lanes(),
                        cfg_.num_slices,
                        cfg_.block_difficulty,
-                       consensus_}
+                       consensus_,
+                       std::make_unique<ledger::SynergeticExecutionManager>(
+                           dag_, 1u,
+                           [this]() {
+                             return std::make_shared<ledger::SynergeticExecutor>(*storage_,
+                                                                                 token_contract_);
+                           })}
   , main_chain_service_{std::make_shared<MainChainRpcService>(muddle_->GetEndpoint(), chain_,
                                                               trust_, cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}

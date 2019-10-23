@@ -50,7 +50,8 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
 
   // Construction / Destruction
-  explicit Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates);
+  explicit Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates,
+                    TokenContract &token_contract);
   ~Executor() override = default;
 
   /// @name Executor Interface
@@ -62,7 +63,6 @@ public:
   /// @}
 
 private:
-  using TokenContractPtr        = std::shared_ptr<TokenContract>;
   using TransactionPtr          = std::shared_ptr<chain::Transaction>;
   using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
 
@@ -77,7 +77,7 @@ private:
   StakeUpdateInterface *stake_updates_{nullptr};
   StorageUnitPtr        storage_;             ///< The collection of resources
   ChainCodeCache        chain_code_cache_{};  ///< The factory to create new chain code instances
-  TokenContractPtr      token_contract_;
+  TokenContract *       token_contract_;
   /// @}
 
   /// @name Per Execution State
