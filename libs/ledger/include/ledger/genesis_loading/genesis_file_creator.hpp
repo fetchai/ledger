@@ -27,6 +27,10 @@ class Variant;
 }
 
 namespace ledger {
+class Consensus;
+}
+
+namespace ledger {
 
 class BlockCoordinator;
 class StorageUnitInterface;
@@ -34,7 +38,8 @@ class StorageUnitInterface;
 class GenesisFileCreator
 {
 public:
-  using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
+  using ConsensusPtr = std::shared_ptr<ledger::Consensus>;
+  using Certificates          = std::vector<std::shared_ptr<crypto::Prover>>;
 
   // Construction / Destruction
   GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
@@ -44,6 +49,7 @@ public:
   ~GenesisFileCreator()                          = default;
 
   void LoadFile(std::string const &name);
+  static void CreateFile(Certificates const &identities, std::string const &name, uint64_t time_from_now);
 
   // Operators
   GenesisFileCreator &operator=(GenesisFileCreator const &) = delete;

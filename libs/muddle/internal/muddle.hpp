@@ -159,7 +159,7 @@ public:
   NetworkId const &GetNetwork() const override;
   Address const &  GetAddress() const override;
   Ports            GetListeningPorts() const override;
-  Addresses        GetDirectlyConnectedPeers() const override;
+  Addresses        GetDirectlyConnectedPeers(bool print_debug = false) const override;
   Addresses        GetIncomingConnectedPeers() const override;
   Addresses        GetOutgoingConnectedPeers() const override;
 

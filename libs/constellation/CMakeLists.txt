@@ -30,4 +30,4 @@ target_link_libraries(fetch-constellation
                              fetch-beacon
                              vendor-msgpack)
 
-# TODO(HUT): Will do in subsequent PR add_test_target()
+add_test_target()

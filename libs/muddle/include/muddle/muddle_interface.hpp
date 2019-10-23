@@ -138,7 +138,7 @@ public:
    *
    * @return The set of addresses
    */
-  virtual Addresses GetDirectlyConnectedPeers() const = 0;
+  virtual Addresses GetDirectlyConnectedPeers(bool print_debug = false) const = 0;
 
   /**
    * Get the set of addresses of peers that are connected directly to this node

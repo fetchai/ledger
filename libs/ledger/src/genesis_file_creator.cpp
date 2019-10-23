@@ -34,6 +34,7 @@
 #include "storage/resource_mapper.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
+#include "core/filesystem/write_to_file.hpp"
 
 #include <cstddef>
 #include <fstream>
@@ -135,7 +136,7 @@ GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
 {}
 
 /**
- * Load a 'state file' with a given name
+ * Load a 'genesis file' with a given name
  *
  * @param name The path to the file to be loaded
  */
@@ -314,6 +315,53 @@ void GenesisFileCreator::LoadConsensus(Variant const &object)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "No consensus object!");
   }
+}
+
+/**
+ * Helper function to create a genesis file for a number of identities
+ *
+ * @param identities the identities of the initial wealth and stake holders
+ * @param name the path to the file to be created
+ */
+void GenesisFileCreator::CreateFile(Certificates const &identities, std::string const &name, uint64_t time_from_now)
+{
+  FETCH_UNUSED(identities);
+  FETCH_UNUSED(name);
+
+  // Example output:
+  //  {"version": 2,
+  //  "consensus": {"startTime": 1570981506, "committeeSize": 20, "threshold": 0.6,
+  //    "stakers": [{"identity": "3ArTLdbpoHFVqnJ/TzkMiD3G6lPNYwY/YrX0ZSYHvByaW3f7sWjBUdmOUP29A+99C6c87xvy/1/MTWn/nIno0A==", "amount": 5764987875000000}, ...]},
+  //    "accounts": [{"key": "GnNzUwtU7gIZTEhLj1thktWNOzFkx8fQhX1vnAd0ias=", "balance": 576498787500000000, "stake": 5764987875000000}, ...]}
+  //  }
+  //
+  //  Note: accounts will not be populated since it is unused for now and will likely change shortly
+
+  auto json_builder{Variant::Object()};
+  auto consensus_builder{Variant::Object()};
+  auto stakers{Variant::Array(identities.size())};
+
+  for (std::size_t i = 0; i < identities.size(); ++i)
+  {
+    auto staker{Variant::Object()};
+    std::cerr << "IDENTITYXX: " << identities[i]->identity().identifier().ToBase64() << std::endl; // DELETEME_NH
+    staker["identity"] = identities[i]->identity().identifier().ToBase64();
+    staker["amount"]   = 100;
+    stakers[i] = staker;
+  }
+
+  consensus_builder["startTime"]     = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + time_from_now;
+  consensus_builder["committeeSize"] = identities.size();
+  consensus_builder["threshold"]     = 0.6;
+  consensus_builder["stakers"]       = stakers;
+
+  json_builder["version"]   = VERSION;
+  json_builder["consensus"] = consensus_builder;
+
+  std::ostringstream oss;
+  oss << json_builder;
+
+  core::WriteToFile(name.c_str(), oss.str());
 }
 
 }  // namespace ledger

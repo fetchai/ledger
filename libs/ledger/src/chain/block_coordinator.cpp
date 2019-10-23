@@ -539,7 +539,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
   bool const is_genesis = current_block_->body.previous_hash == chain::GENESIS_DIGEST;
 
-  auto fail{[this](char const *reason) {
+  auto fail{[this](std::string const reason) {
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
                    ToBase64(current_block_->body.hash), ')');
 
@@ -576,11 +576,11 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       return fail("Block number mismatch");
     }
 
-    // Check: Ensure the number of lanes is correct
-    if (num_lanes_ != (1u << current_block_->body.log2_num_lanes))
-    {
-      return fail("Lane count mismatch");
-    }
+    //// Check: Ensure the number of lanes is correct
+    //if (num_lanes_ != (1u << current_block_->body.log2_num_lanes))
+    //{
+    //  return fail("Lane count mismatch. Num: " + std::to_string(num_lanes_) + " block had: " + std::to_string(1u << current_block_->body.log2_num_lanes));
+    //}
 
     // Check: Ensure the number of slices is correct
     if (num_slices_ != current_block_->body.slices.size())
@@ -931,6 +931,7 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 
   try
   {
+    std::cerr << "packing block with lanes: " << num_lanes_ << std::endl; // DELETEME_NH
     // call the block packer
     block_packer_.GenerateBlock(*next_block_, num_lanes_, num_slices_, chain_);
 

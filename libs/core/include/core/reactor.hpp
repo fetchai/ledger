@@ -36,7 +36,7 @@ public:
   explicit Reactor(std::string name);
   Reactor(Reactor const &) = delete;
   Reactor(Reactor &&)      = delete;
-  ~Reactor()               = default;
+  ~Reactor();
 
   bool Attach(WeakRunnable runnable);   // NOLINT
   bool Attach(WeakRunnables runnable);  // NOLINT
