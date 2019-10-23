@@ -24,12 +24,8 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "ml/optimisation/optimiser.hpp"
-#include "ml/utilities/word2vec_utilities.hpp"
+#include "ml/dataloaders/dataloader.hpp"
+#include "ml/utilities/utils.hpp"
 
 #include <condition_variable>
 #include <fstream>
