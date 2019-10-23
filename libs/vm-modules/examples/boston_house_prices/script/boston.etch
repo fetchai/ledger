@@ -1,0 +1,27 @@
+function main()
+
+// read in data
+if (System.Argc() != 3)
+  print("Usage: SCRIPT_FILE -- PATH/TO/BOSTON_DATA.CSV PATH/TO/BOSTON_LABELS.CSV");
+  return;
+endif
+
+var data = read_csv(System.Argv(1), true);
+var label = read_csv(System.Argv(2), true);
+
+// set up a model
+var hidden_layers = Array<UInt64>(3);
+hidden_layers[0] = 13u64;
+hidden_layers[1] = 10u64;
+hidden_layers[2] = 1u64;
+var model = Model("regressor");
+model.compile("adam", hidden_layers);
+
+// train the model
+var batch_size = 10u64;
+model.fit(data, label, batch_size);
+
+// make a prediction
+var loss = model.evaluate();
+
+endfunction
