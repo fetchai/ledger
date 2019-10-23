@@ -41,6 +41,12 @@ void Uri::parse(const std::string &s)
           expectedpart = HOST;
           break;
         }
+        else if (part.length())
+        {
+          host = part;
+          expectedpart = PORT;
+          break;
+        }
       case HOST:
       {
         host         = part;
