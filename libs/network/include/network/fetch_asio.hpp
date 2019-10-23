@@ -27,10 +27,11 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
 #pragma clang diagnostic ignored "-Wpedantic"
+#pragma clang diagnostic ignored "-Wshadow"
 #endif
 
-#include <asio.hpp>
-#include <asio/ssl.hpp>
+#include "asio.hpp"
+#include "asio/ssl.hpp"
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

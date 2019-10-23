@@ -32,7 +32,7 @@ VM::VM(Module *module)
   FunctionInfoArray function_info_array;
 
   module->GetDetails(type_info_array_, type_info_map_, registered_types_, function_info_array,
-                     deserialization_constructors_);
+                     deserialization_constructors_, cpp_copy_constructors_);
   auto num_types     = static_cast<uint16_t>(type_info_array_.size());
   auto num_functions = static_cast<uint16_t>(function_info_array.size());
   auto num_opcodes   = static_cast<uint16_t>(Opcodes::NumReserved + num_functions);
@@ -239,7 +239,7 @@ bool VM::Execute(std::string &error, Variant &output)
     charge_total_ += current_op_->static_charge;
 
     // check for charge limit being reached
-    if (charge_limit_ && (charge_total_ >= charge_limit_))
+    if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
     {
       RuntimeError("Charge limit exceeded");
       break;

@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "logging/logging.hpp"
 #include "network/management/client_manager.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
@@ -203,7 +203,7 @@ private:
       uint64_t magic;
       uint64_t length;
     } content;
-  } header_;
+  } header_{};
 
   void ReadHeader(StrongStrand const &strong_strand)
   {

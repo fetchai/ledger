@@ -20,7 +20,6 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/serializers/array_interface.hpp"
 #include "core/serializers/binary_interface.hpp"
 #include "core/serializers/container_constructor_interface.hpp"
@@ -46,6 +45,12 @@ namespace serializers {
 class LargeObjectSerializeHelper
 {
 public:
+  LargeObjectSerializeHelper() = default;
+
+  explicit LargeObjectSerializeHelper(fetch::byte_array::ConstByteArray buf)
+    : buffer{std::move(buf)}
+  {}
+
   template <typename T>
   void operator<<(T const &large_object)
   {
@@ -53,7 +58,7 @@ public:
   }
 
   template <typename T>
-  void operator>>(T const &large_object)
+  void operator>>(T &large_object)
   {
     Deserialize(large_object);
   }
@@ -94,13 +99,14 @@ void MsgPackSerializer::ReadPrimitive(FinalType &val)
 
 template <typename T>
 typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
-    T const &)
+    T const & /*unused*/)
 {
   return *this;
 }
 
 template <typename T>
-typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(T &)
+typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(
+    T & /*unused*/)
 {
   return *this;
 }

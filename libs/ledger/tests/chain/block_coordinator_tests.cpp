@@ -16,21 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter.hpp"
+#include "bloom_filter/bloom_filter.hpp"
+#include "chain/constants.hpp"
+#include "chain/transaction_layout.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/feature_flags.hpp"
 #include "crypto/ecdsa.hpp"
-#include "crypto/sha256.hpp"
 #include "fake_block_sink.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
-#include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/transaction_layout.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
-#include "ledger/transaction_status_cache.hpp"
 #include "mock_block_packer.hpp"
 #include "mock_execution_manager.hpp"
 #include "mock_storage_unit.hpp"
@@ -47,10 +44,10 @@
 namespace {
 
 using namespace fetch::ledger;
+using namespace fetch::chain;
 
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::core::FeatureFlags;
 
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -67,15 +64,15 @@ using BlockPtr            = std::shared_ptr<Block>;
 using ScheduleStatus      = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
 using State               = fetch::ledger::BlockCoordinator::State;
-using AddressPtr          = std::unique_ptr<Address>;
+using AddressPtr          = std::unique_ptr<fetch::chain::Address>;
 using DAGPtr              = BlockCoordinator::DAGPtr;
 using BeaconServicePtr    = std::shared_ptr<fetch::beacon::BeaconService>;
 using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManager>;
 using ConsensusPtr        = std::shared_ptr<fetch::ledger::Consensus>;
 
-Digest GENESIS_DIGEST =
+fetch::Digest GENESIS_DIGEST =
     fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-Digest GENESIS_MERKLE_ROOT =
+fetch::Digest GENESIS_MERKLE_ROOT =
     fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
 constexpr std::size_t NUM_LANES  = 1;
@@ -91,15 +88,15 @@ protected:
     // generate a public/private key pair
     auto signer = std::make_shared<ECDSASigner>();
 
-    address_           = std::make_unique<Address>(signer->identity());
+    address_           = std::make_unique<fetch::chain::Address>(signer->identity());
     main_chain_        = std::make_unique<MainChain>(false, MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<StrictMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<StrictMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
-        FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
+        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
+        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -215,22 +212,22 @@ protected:
 //  return stream;
 //}
 
-MATCHER(IsNewBlock, "")
+MATCHER(IsNewBlock, "")  // NOLINT
 {
   return arg.hash.empty();
 }
 
-MATCHER_P(IsBlock, block, "")
+MATCHER_P(IsBlock, block, "")  // NOLINT
 {
   return arg.hash == block->body.hash;
 }
 
-MATCHER_P(IsBlockFollowing, block, "")
+MATCHER_P(IsBlockFollowing, block, "")  // NOLINT
 {
   return arg.body.previous_hash == block->body.hash;
 }
 
-MATCHER_P(IsBlockBodyFollowing, block, "")
+MATCHER_P(IsBlockBodyFollowing, block, "")  // NOLINT
 {
   return arg.previous_hash == block->body.hash;
 }
@@ -289,7 +286,7 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
 
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -355,7 +352,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b3));
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   {
     InSequence s;
@@ -656,7 +653,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -744,7 +741,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -835,7 +832,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -932,7 +929,7 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::ledger::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -994,9 +991,10 @@ protected:
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
+
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
-        FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
+        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
+        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);

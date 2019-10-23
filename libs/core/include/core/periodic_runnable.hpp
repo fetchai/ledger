@@ -57,7 +57,7 @@ public:
 
 private:
   Timepoint last_executed_;
-  Duration  interval_;
+  Duration  interval_{};
 };
 
 template <typename R, typename P>

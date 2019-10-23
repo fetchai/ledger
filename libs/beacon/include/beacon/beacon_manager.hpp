@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/dkg_output.hpp"
 #include "crypto/mcl_dkg.hpp"
 #include "dkg/dkg_messages.hpp"
 
@@ -27,11 +28,7 @@ class BeaconManager
 {
 public:
   using MuddleAddress    = byte_array::ConstByteArray;
-  using Share            = DKGMessage::Share;
-  using Coefficient      = DKGMessage::Coefficient;
-  using ComplaintAnswer  = std::pair<MuddleAddress, std::pair<Share, Share>>;
-  using ExposedShare     = std::pair<MuddleAddress, std::pair<Share, Share>>;
-  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<Share, Share>>;
+  using DkgOutput        = beacon::DkgOutput;
   using Certificate      = crypto::Prover;
   using CertificatePtr   = std::shared_ptr<Certificate>;
   using Signature        = crypto::mcl::Signature;
@@ -40,6 +37,11 @@ public:
   using CabinetIndex     = crypto::mcl::CabinetIndex;
   using MessagePayload   = crypto::mcl::MessagePayload;
   using Identity         = crypto::Identity;
+  using Share            = DKGMessage::Share;
+  using Coefficient      = DKGMessage::Coefficient;
+  using ComplaintAnswer  = std::pair<MuddleAddress, std::pair<Share, Share>>;
+  using ExposedShare     = std::pair<MuddleAddress, std::pair<Share, Share>>;
+  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<Share, Share>>;
 
   enum class AddResult
   {
@@ -55,7 +57,7 @@ public:
     Identity  identity;
   };
 
-  explicit BeaconManager(CertificatePtr = nullptr);
+  explicit BeaconManager(CertificatePtr certificate = CertificatePtr{});
 
   BeaconManager(BeaconManager const &) = delete;
   BeaconManager &operator=(BeaconManager const &) = delete;
@@ -64,33 +66,33 @@ public:
 
   void                     GenerateCoefficients();
   std::vector<Coefficient> GetCoefficients();
-  std::pair<Share, Share>  GetOwnShares(MuddleAddress const &share_receiver);
-  std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &share_owner);
-  void AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
-  void AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
+  std::pair<Share, Share>  GetOwnShares(MuddleAddress const &receiver);
+  std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &owner);
+  bool AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  bool AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
   std::unordered_set<MuddleAddress> ComputeComplaints(
       std::set<MuddleAddress> const &coeff_received);
   bool VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer);
   void ComputeSecretShare();
   std::vector<Coefficient> GetQualCoefficients();
-  void AddQualCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  bool AddQualCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
   SharesExposedMap ComputeQualComplaints(std::set<MuddleAddress> const &coeff_received);
   MuddleAddress    VerifyQualComplaint(MuddleAddress const &from, ComplaintAnswer const &answer);
   void             ComputePublicKeys();
   void             AddReconstructionShare(MuddleAddress const &address);
-  void             AddReconstructionShare(MuddleAddress const &                  from,
-                                          std::pair<MuddleAddress, Share> const &share);
   void             VerifyReconstructionShare(MuddleAddress const &from, ExposedShare const &share);
   bool             RunReconstruction();
-  void             SetDkgOutput(PublicKey &public_key, PrivateKey &secret_share,
-                                std::vector<PublicKey> &public_key_shares, std::set<MuddleAddress> &qual);
+  DkgOutput        GetDkgOutput();
+  void             SetDkgOutput(DkgOutput const &output);
   void             SetQual(std::set<MuddleAddress> qual);
-  void             SetGroupPublicKey(PublicKey const &public_key);
-  void             Reset(std::set<Identity> const &cabinet, uint32_t threshold);
+  void             NewCabinet(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
+  void             Reset();
 
   AddResult     AddSignaturePart(Identity const &from, Signature const &signature);
   bool          Verify();
-  bool          Verify(Signature const &);
+  bool          Verify(Signature const &signature);
+  static bool   Verify(byte_array::ConstByteArray const &group_public_key,
+                       MessagePayload const &message, byte_array::ConstByteArray const &signature);
   Signature     GroupSignature() const;
   void          SetMessage(MessagePayload next_message);
   SignedMessage Sign();
@@ -112,7 +114,7 @@ private:
   static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
 
   CertificatePtr certificate_;
-  uint32_t       cabinet_size_;       ///< Size of committee
+  uint32_t       cabinet_size_;       ///< Size of cabinet
   uint32_t       polynomial_degree_;  ///< Degree of polynomial in DKG
   CabinetIndex   cabinet_index_;      ///< Index of our address in cabinet_
 
@@ -148,6 +150,9 @@ private:
   MessagePayload                              current_message_;
   Signature                                   group_signature_;
   /// }
+
+  void AddReconstructionShare(MuddleAddress const &                  from,
+                              std::pair<MuddleAddress, Share> const &share);
 };
 }  // namespace dkg
 
@@ -168,16 +173,14 @@ public:
   {
     auto map = map_constructor(2);
 
-    map.Append(SIGNATURE, member.signature.getStr());
+    map.Append(SIGNATURE, member.signature);
     map.Append(IDENTITY, member.identity);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &member)
   {
-    std::string sig_str;
-    map.ExpectKeyGetValue(SIGNATURE, sig_str);
-    member.signature.setStr(sig_str);
+    map.ExpectKeyGetValue(SIGNATURE, member.signature);
     map.ExpectKeyGetValue(IDENTITY, member.identity);
   }
 };

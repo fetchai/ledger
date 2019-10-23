@@ -26,9 +26,15 @@
 #include <thread>
 
 namespace fetch {
-namespace ledger {
+
+namespace chain {
 
 class Transaction;
+
+}  // namespace chain
+
+namespace ledger {
+
 class StorageUnitInterface;
 class BlockPackerInterface;
 class TransactionStatusCache;
@@ -54,8 +60,8 @@ public:
 
   /// @name Transaction Processing
   /// @{
-  void AddTransaction(TransactionPtr const &mtx);
-  void AddTransaction(TransactionPtr &&mtx);
+  void AddTransaction(TransactionPtr const &tx);
+  void AddTransaction(TransactionPtr &&tx);
   /// @}
 
   // Operators

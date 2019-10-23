@@ -145,14 +145,14 @@ ConstByteArray ToBin(ConstByteArray const &str)
   for (std::size_t i = 0; i < str.size(); ++i)
   {
     uint8_t c = data[i];
-    ret[j++]  = uint8_t(c & 0x80 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x40 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x20 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x10 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x08 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x04 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x02 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x01 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x80u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x40u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x20u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x10u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x08u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x04u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x02u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x01u) != 0 ? '1' : '0');
   }
   return {std::move(ret)};
 }
@@ -169,14 +169,14 @@ ConstByteArray ToBinReverse(ConstByteArray const &str)
   {
     uint8_t c = data[i];
     c         = Reverse(c);
-    ret[j++]  = uint8_t(c & 0x80 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x40 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x20 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x10 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x08 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x04 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x02 ? '1' : '0');
-    ret[j++]  = uint8_t(c & 0x01 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x80u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x40u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x20u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x10u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x08u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x04u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x02u) != 0 ? '1' : '0');
+    ret[j++]  = uint8_t((c & 0x01u) != 0 ? '1' : '0');
   }
   return {std::move(ret)};
 }

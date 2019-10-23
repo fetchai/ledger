@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 
 #include <atomic>
 #include <functional>

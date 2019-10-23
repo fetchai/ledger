@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_builder.hpp"
 #include "contract_test.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/json/document.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "ledger/chain/transaction_builder.hpp"
+#include "json/document.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "mock_storage_unit.hpp"
@@ -38,8 +38,8 @@ namespace {
 
 using ::testing::_;
 using fetch::variant::Variant;
-using fetch::ledger::TransactionBuilder;
-using fetch::ledger::Address;
+using fetch::chain::TransactionBuilder;
+using fetch::chain::Address;
 
 struct Entity
 {
@@ -58,7 +58,7 @@ protected:
   using Query              = Contract::Query;
   using TokenContractPtr   = std::unique_ptr<TokenContract>;
   using MockStorageUnitPtr = std::unique_ptr<MockStorageUnit>;
-  using Address            = fetch::ledger::Address;
+  using Address            = fetch::chain::Address;
 
   void SetUp() override
   {
@@ -77,7 +77,7 @@ protected:
     Variant v_data{Variant::Object()};
     v_data["address"] = address.display();
 
-    if (balance)
+    if (balance != nullptr)
     {
       v_data["balance"] = *balance;
     }

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -45,7 +45,7 @@ public:
     , name_(std::move(name))
     , threshold_(threshold)
   {
-    if (!threshold)
+    if (threshold == 0)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Starting millitimer for ", name_);
     }

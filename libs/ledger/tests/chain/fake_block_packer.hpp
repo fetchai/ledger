@@ -18,14 +18,15 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/block_packer_interface.hpp"
+#include "ledger/chain/block.hpp"
 
 class FakeBlockPacker : public fetch::ledger::BlockPackerInterface
 {
 public:
   /// @name Block Packer Interface
   /// @{
-  void EnqueueTransaction(fetch::ledger::Transaction const &tx) override;
-  void EnqueueTransaction(fetch::ledger::TransactionLayout const &layout) override;
+  void EnqueueTransaction(fetch::chain::Transaction const &tx) override;
+  void EnqueueTransaction(fetch::chain::TransactionLayout const &layout) override;
 
   void GenerateBlock(fetch::ledger::Block &block, std::size_t num_lanes, std::size_t num_slices,
                      fetch::ledger::MainChain const &chain) override;

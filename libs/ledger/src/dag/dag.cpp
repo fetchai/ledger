@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/dag/dag.hpp"
 #include "ledger/dag/dag_node.hpp"
 
@@ -171,7 +171,7 @@ std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
   return ret;
 }
 
-void DAG::AddTransaction(Transaction const &tx, DAGTypes type)
+void DAG::AddTransaction(chain::Transaction const &tx, DAGTypes type)
 {
   if (type != DAGTypes::DATA)
   {
@@ -185,8 +185,10 @@ void DAG::AddTransaction(Transaction const &tx, DAGTypes type)
 
   new_node->type = DAGNode::DATA;
   new_node->SetContents(tx);
-  new_node->contract_digest = tx.contract_digest().address();
-  new_node->contents        = tx.data();
+  new_node->contract_digest  = tx.contract_digest().address();
+  new_node->contract_address = tx.contract_address();
+  new_node->contents         = tx.data();
+
   SetReferencesInternal(new_node);
 
   new_node->identity = certificate_->identity();
@@ -207,10 +209,11 @@ void DAG::AddWork(Work const &solution)
   serializers::MsgPackSerializer buffer;
   buffer << solution;
 
-  new_node->type            = DAGNode::WORK;
-  new_node->contract_digest = solution.contract_digest();
-  new_node->identity        = solution.miner();
-  new_node->contents        = buffer.data();
+  new_node->type             = DAGNode::WORK;
+  new_node->contract_digest  = solution.contract_digest();
+  new_node->contract_address = solution.address();
+  new_node->identity         = solution.miner();
+  new_node->contents         = buffer.data();
 
   SetReferencesInternal(new_node);
 
@@ -303,18 +306,18 @@ void DAG::SetReferencesInternal(DAGNodePtr const &node)
 
     while (prevs.size() < PARAMETER_REFERENCES_TO_BE_TIP && !node_pool_copy.empty())
     {
-      auto &node = (node_pool_copy.begin())->second;
+      auto &node_ref = (node_pool_copy.begin())->second;
 
-      prevs.push_back(node->hash);
+      prevs.push_back(node_ref->hash);
 
-      if (wei <= node->weight)
+      if (wei <= node_ref->weight)
       {
-        wei = node->weight + 1;
+        wei = node_ref->weight + 1;
       }
 
-      if (oldest_epoch > node->oldest_epoch_referenced)
+      if (oldest_epoch > node_ref->oldest_epoch_referenced)
       {
-        oldest_epoch = node->oldest_epoch_referenced;
+        oldest_epoch = node_ref->oldest_epoch_referenced;
       }
 
       node_pool_copy.erase(node_pool_copy.begin());
@@ -427,11 +430,9 @@ bool DAG::GetDAGNode(ConstByteArray const &hash, DAGNode &node)
     FETCH_LOG_DEBUG(LOGGING_NAME, "DAG node hash: ", node.hash.ToBase64());
     return true;
   }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Request for dag node", hash.ToBase64(), " lose");
-    return false;
-  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Request for dag node", hash.ToBase64(), " lose");
+  return false;
 }
 
 bool DAG::GetWork(ConstByteArray const &hash, Work &work)
@@ -450,10 +451,8 @@ bool DAG::GetWork(ConstByteArray const &hash, Work &work)
 
       // add fields normally not serialised
       work.UpdateDigest(node.contract_digest);
+      work.UpdateAddress(node.contract_address);
       work.UpdateIdentity(node.identity);
-
-      // debug
-      // work.originating_node = hash;
 
       success = true;
     }
@@ -1066,10 +1065,9 @@ bool DAG::SatisfyEpoch(DAGEpoch const &epoch)
     return false;
   };
 
-  DAGNodePtr dag_node_to_add;
-  bool       success       = true;
-  uint64_t   missing_count = 0;
-  uint64_t   loose_count   = 0;
+  bool     success       = true;
+  uint64_t missing_count = 0;
+  uint64_t loose_count   = 0;
 
   for (auto const &node_hash : epoch.all_nodes)
   {
@@ -1103,7 +1101,7 @@ bool DAG::SatisfyEpoch(DAGEpoch const &epoch)
     }
   }
 
-  if (missing_count || loose_count)
+  if ((missing_count != 0u) || (loose_count != 0u))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "When satisfying, epoch ", epoch.block_number,
                    " AKA: ", epoch.hash.ToBase64(), " is missing : ", missing_count, " of ",
@@ -1243,7 +1241,7 @@ bool DAG::GetEpochFromStorage(std::string const &identifier, DAGEpoch &epoch)
   return all_stored_epochs_.Get(storage::ResourceID(getme), epoch);
 }
 
-bool DAG::SetEpochInStorage(std::string const &, DAGEpoch const &epoch, bool is_head)
+bool DAG::SetEpochInStorage(std::string const & /*unused*/, DAGEpoch const &epoch, bool is_head)
 {
   all_stored_epochs_.Set(storage::ResourceID(epoch.hash), epoch);  // Store of all epochs
   epochs_.Set(storage::ResourceAddress(std::to_string(epoch.block_number)),

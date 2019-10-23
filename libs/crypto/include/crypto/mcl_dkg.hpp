@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/fetch_mcl.hpp"
 
 #include <array>
@@ -37,36 +38,45 @@ namespace mcl {
 using PrivateKey     = bn::Fr;
 using PublicKey      = bn::G2;
 using Signature      = bn::G1;
-using Group          = bn::G2;
+using Generator      = bn::G2;
 using MessagePayload = byte_array::ConstByteArray;
 using CabinetIndex   = uint32_t;
 
-/**
- * Helper functions for computations used in the DKG
- */
-bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
-                  bn::Fr const &share2);
+namespace details {
+struct MCLInitialiser
+{
+  MCLInitialiser()
+  {
+    bool a{true};
+    a = was_initialised.exchange(a);
+    if (!a)
+    {
+      bn::initPairing();
+    }
+  }
+  static std::atomic<bool> was_initialised;
+};
+}  // namespace details
 
-bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2);
+struct DkgKeyInformation
+{
+  DkgKeyInformation()
+  {
+    details::MCLInitialiser();
+    group_public_key.clear();
+    private_key_share.clear();
+  }
+  DkgKeyInformation(PublicKey group_public_key1, std::vector<PublicKey> public_key_shares1,
+                    PrivateKey secret_key_shares1)  // NOLINT
+    : group_public_key{std::move(group_public_key1)}
+    , public_key_shares{std::move(public_key_shares1)}
+    , private_key_share{secret_key_shares1}
+  {}
 
-void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
-
-bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
-
-void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
-                   std::vector<bn::Fr> const &b_i, uint32_t rank);
-
-bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
-
-std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b);
-
-// For signatures
-Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
-
-bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
-                Group const &G);
-
-Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
+  PublicKey              group_public_key;
+  std::vector<PublicKey> public_key_shares{};
+  PrivateKey             private_key_share;
+};
 
 /**
  * Vector initialisation for mcl data structures
@@ -107,6 +117,145 @@ void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j)
   }
 }
 
+/**
+ * Helper functions for computations used in the DKG
+ */
+void   SetGenerator(Generator &group_g);
+void   SetGenerators(Generator &group_g, Generator &group_h);
+bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
+                  bn::Fr const &share2);
+
+bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2);
+
+void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
+
+bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
+
+void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
+                   std::vector<bn::Fr> const &b_i, uint32_t index);
+
+bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
+
+std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b);
+
+// For signatures
+Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
+
+bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
+                Generator const &G);
+
+bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign);
+
+Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
+
+std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t cabinet_size, uint32_t threshold);
+std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator);
+
+// For aggregate signatures
+bn::Fr SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
+                                       std::vector<PublicKey> const &cabinet_notarisation_keys);
+std::pair<Signature, std::vector<bool>> ComputeAggregateSignature(
+    std::unordered_map<uint32_t, Signature> const &signatures,
+    std::vector<PublicKey> const &                 public_keys);
+PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
+                                    std::vector<PublicKey> const &cabinet_public_keys);
+bool      VerifyAggregateSignature(MessagePayload const &                         message,
+                                   std::pair<Signature, std::vector<bool>> const &aggregate_signature,
+                                   std::vector<PublicKey> const &                 cabinet_public_keys,
+                                   Generator const &                              generator);
+
 }  // namespace mcl
 }  // namespace crypto
+
+namespace serializers {
+template <typename D>
+struct ArraySerializer<crypto::mcl::Signature, D>
+{
+
+public:
+  using Type       = crypto::mcl::Signature;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(1);
+    array.Append(b.getStr());
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    std::string sig_str;
+    array.GetNextValue(sig_str);
+    bool check;
+    b.setStr(&check, sig_str.data());
+    if (!check)
+    {
+      throw SerializableException(error::TYPE_ERROR,
+                                  std::string("String does not convert to MCL type"));
+    }
+  }
+};
+
+template <typename D>
+struct ArraySerializer<crypto::mcl::PrivateKey, D>
+{
+
+public:
+  using Type       = crypto::mcl::PrivateKey;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(1);
+    array.Append(b.getStr());
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    std::string sig_str;
+    array.GetNextValue(sig_str);
+    bool check;
+    b.setStr(&check, sig_str.data());
+    if (!check)
+    {
+      throw SerializableException(error::TYPE_ERROR,
+                                  std::string("String does not convert to MCL type"));
+    }
+  }
+};
+
+template <typename D>
+struct ArraySerializer<crypto::mcl::PublicKey, D>
+{
+
+public:
+  using Type       = crypto::mcl::PublicKey;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(1);
+    array.Append(b.getStr());
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    std::string sig_str;
+    array.GetNextValue(sig_str);
+    bool check;
+    b.setStr(&check, sig_str.data());
+    if (!check)
+    {
+      throw SerializableException(error::TYPE_ERROR,
+                                  std::string("String does not convert to MCL type"));
+    }
+  }
+};
+}  // namespace serializers
 }  // namespace fetch

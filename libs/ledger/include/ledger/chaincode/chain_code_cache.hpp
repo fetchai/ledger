@@ -63,10 +63,10 @@ private:
   static constexpr uint64_t CLEANUP_MASK   = CLEANUP_PERIOD - 1u;
 
   // Utils
-  ContractPtr FindInCache(Identifier const &name);
+  ContractPtr FindInCache(Identifier const &contract_id);
   void        RunMaintenance();
 
-  std::size_t      counter_;
+  std::size_t      counter_{};
   UnderlyingCache  cache_;
   ChainCodeFactory factory_;
 

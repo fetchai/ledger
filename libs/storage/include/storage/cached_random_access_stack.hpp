@@ -294,7 +294,7 @@ private:
     uint64_t reads   = 0;
     uint64_t writes  = 0;
     bool     updated = false;
-    type     data;
+    type     data{};
   };
 
   mutable std::map<uint64_t, CachedDataItem> data_;

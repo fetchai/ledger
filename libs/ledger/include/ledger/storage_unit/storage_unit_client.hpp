@@ -18,13 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/future_timepoint.hpp"
-#include "core/logging.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
+#include "ledger/storage_unit/object_store_protocol.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "logging/logging.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -32,7 +33,6 @@
 #include "network/generics/has_worker_thread.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_stack.hpp"
-#include "storage/object_store_protocol.hpp"
 
 #include <array>
 #include <cassert>
@@ -65,8 +65,8 @@ public:
 
   /// @name Storage Unit Interface
   /// @{
-  void      AddTransaction(Transaction const &tx) override;
-  bool      GetTransaction(ConstByteArray const &digest, Transaction &tx) override;
+  void      AddTransaction(chain::Transaction const &tx) override;
+  bool      GetTransaction(ConstByteArray const &digest, chain::Transaction &tx) override;
   bool      HasTransaction(ConstByteArray const &digest) override;
   void      IssueCallForMissingTxs(DigestSet const &tx_set) override;
   TxLayouts PollRecentTx(uint32_t max_to_poll) override;
@@ -75,14 +75,13 @@ public:
   Document Get(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
 
-  Keys KeyDump() const override;
   void Reset() override;
 
   // state hash functions
   byte_array::ConstByteArray CurrentHash() override;
   byte_array::ConstByteArray LastCommitHash() override;
   bool                       RevertToHash(Hash const &hash, uint64_t index) override;
-  byte_array::ConstByteArray Commit(uint64_t index) override;
+  byte_array::ConstByteArray Commit(uint64_t commit_index) override;
   bool                       HashExists(Hash const &hash, uint64_t index) override;
   bool                       Lock(ShardIndex index) override;
   bool                       Unlock(ShardIndex index) override;
@@ -98,9 +97,6 @@ private:
   using AddressList          = std::vector<muddle::Address>;
   using MerkleTree           = crypto::MerkleTree;
   using PermanentMerkleStack = fetch::storage::ObjectStack<crypto::MerkleTree>;
-
-  static constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
-  static constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
 
   Address const &LookupAddress(ShardIndex shard) const;
   Address const &LookupAddress(storage::ResourceID const &resource) const;

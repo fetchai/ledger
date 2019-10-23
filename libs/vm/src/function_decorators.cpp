@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "vm/function_decorators.hpp"
 #include "vm/generator.hpp"
 
@@ -32,7 +32,6 @@ FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
 
   FunctionDecoratorKind kind{FunctionDecoratorKind::NONE};
 
-  // loop through all the function annotations
   if (1u == fn.annotations.size())
   {
     // select the first annotation
@@ -49,6 +48,22 @@ FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
     else if (annotation.name == "@init")
     {
       kind = FunctionDecoratorKind::ON_INIT;
+    }
+    else if (annotation.name == "@work")
+    {
+      kind = FunctionDecoratorKind::WORK;
+    }
+    else if (annotation.name == "@objective")
+    {
+      kind = FunctionDecoratorKind::OBJECTIVE;
+    }
+    else if (annotation.name == "@problem")
+    {
+      kind = FunctionDecoratorKind::PROBLEM;
+    }
+    else if (annotation.name == "@clear")
+    {
+      kind = FunctionDecoratorKind::CLEAR;
     }
     else
     {

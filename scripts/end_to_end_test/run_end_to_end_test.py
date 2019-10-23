@@ -7,28 +7,24 @@
 # and test it can handle certain conditions (such as single or multiple
 # node failure)
 
-import sys
-import os
 import argparse
-import yaml
-import io
-import random
-import datetime
-import importlib
-import time
-import threading
-import glob
-import shutil
-import traceback
-import time
-import pickle
 import codecs
+import datetime
+import glob
+import importlib
+import os
+import pickle
+import shutil
 import subprocess
-from threading import Event
+import sys
+import threading
+import time
+import traceback
 from pathlib import Path
+from threading import Event
 
+import yaml
 from fetch.cluster.instance import ConstellationInstance
-
 from fetchai.ledger.api import LedgerApi
 from fetchai.ledger.crypto import Entity
 
@@ -117,14 +113,14 @@ class TestInstance():
             shutil.rmtree(f)
 
         # To avoid possible collisions, prepend output files with the date
-        self._random_identifer = '{0:%Y_%m_%d_%H_%M_%S}'.format(
+        self._random_identifier = '{0:%Y_%m_%d_%H_%M_%S}'.format(
             datetime.datetime.now())
 
-        self._random_identifer = "default"
+        self._random_identifier = "default"
 
         self._workspace = os.path.join(
             build_directory, 'end_to_end_test_{}'.format(
-                self._random_identifer))
+                self._random_identifier))
         self._build_directory = build_directory
         self._constellation_exe = os.path.abspath(constellation_exe)
         self._yaml_file = os.path.abspath(yaml_file)
@@ -163,14 +159,16 @@ class TestInstance():
             clear_path=False
         )
 
-        # Possibly soon to be depreciated functionality - set the block interval
-        instance._block_interval = self._block_interval
+        # Possibly soon to be deprecated functionality - set the block interval
+        instance.block_interval = self._block_interval
+        instance.feature_flags = ['synergetic']
 
         # configure the lanes and slices
         instance.lanes = self._lanes
         instance.slices = self._slices
 
-        assert len(self._nodes) == index, "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(
+        assert len(self._nodes) == index, \
+            "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(
             len(self._nodes), index)
 
         self._nodes.append(instance)
@@ -186,13 +184,13 @@ class TestInstance():
         self._nodes[index].start()
         print('Starting Node {}...complete'.format(index))
 
-        time.sleep(0.5)
+        time.sleep(1)
 
     def setup_pos_for_nodes(self):
 
         # Path to config files
         expected_ouptut_dir = os.path.abspath(
-            os.path.dirname(self._yaml_file)+"/input_files")
+            os.path.dirname(self._yaml_file) + "/input_files")
 
         # Create required files for this test
         file_gen = os.path.abspath(
@@ -200,7 +198,7 @@ class TestInstance():
         verify_file(file_gen)
         exit_code = subprocess.call([file_gen, str(self._number_of_nodes)])
 
-        infofile = expected_ouptut_dir+"/info.txt"
+        infofile = expected_ouptut_dir + "/info.txt"
 
         # Required files for this operation
         verify_file(infofile)
@@ -214,11 +212,11 @@ class TestInstance():
         for index in range(self._number_of_nodes):
 
             # max 200 mining nodes due to consensus requirements
-            assert(index <= 200)
+            assert index <= 200
 
             node = self._nodes[index]
 
-            if(node.mining):
+            if node.mining:
                 node_key = all_lines_in_file[index].strip().split()[-1]
 
                 print('Setting up POS for node {}...'.format(index))
@@ -226,18 +224,18 @@ class TestInstance():
 
                 nodes_mining_identities.append(node_key)
 
-                key_path = expected_ouptut_dir+"/{}.key".format(index)
+                key_path = expected_ouptut_dir + "/{}.key".format(index)
                 verify_file(key_path)
 
                 # Copy the keyfile from its location to the node's cwd
-                shutil.copy(key_path, node.root+"/p2p.key")
+                shutil.copy(key_path, node.root + "/p2p.key")
 
         stake_gen = os.path.abspath("./scripts/generate-genesis-file.py")
         verify_file(stake_gen)
 
         # Create a stake file into the logging directory for all nodes
         # Importantly, set the time to start
-        genesis_file_location = self._workspace+"/genesis_file.json"
+        genesis_file_location = self._workspace + "/genesis_file.json"
         cmd = [stake_gen, *nodes_mining_identities,
                "-o", genesis_file_location, "-w", "10"]
 
@@ -284,14 +282,14 @@ class TestInstance():
             self._nodes[miner_index].mining = True
 
         # In the case only one miner node, it runs in standalone mode
-        if(len(self._nodes) == 1 and len(self._nodes_are_mining) > 0):
+        if len(self._nodes) == 1 and len(self._nodes_are_mining) > 0:
             self._nodes[0].standalone = True
         else:
             for node in self._nodes:
                 node.private_network = True
 
         # Temporary special case for POS mode
-        if(self._pos_mode):
+        if self._pos_mode:
             self.setup_pos_for_nodes()
 
         # start all the nodes
@@ -302,7 +300,7 @@ class TestInstance():
 
         time.sleep(5)  # TODO(HUT): blocking http call to node for ready state
 
-        if(self._pos_mode):
+        if self._pos_mode:
             output("POS mode. sleep extra time.")
             time.sleep(5)
 
@@ -310,7 +308,7 @@ class TestInstance():
         if self._nodes:
             for n, node in enumerate(self._nodes):
                 print('Stopping Node {}...'.format(n))
-                if(node):
+                if node:
                     node.stop()
                 print('Stopping Node {}...complete'.format(n))
 
@@ -418,7 +416,6 @@ def setup_test(test_yaml, test_instance):
 
 
 def send_txs(parameters, test_instance):
-
     name = parameters["name"]
     amount = parameters["amount"]
     nodes = parameters["nodes"]
@@ -456,7 +453,6 @@ def send_txs(parameters, test_instance):
         tx_and_identity = []
 
         for index in range(amount):
-
             # get next identity
             identity = identities[index]
 
@@ -489,7 +485,6 @@ def run_python_test(parameters, test_instance):
 
 
 def verify_txs(parameters, test_instance):
-
     name = parameters["name"]
     nodes = parameters["nodes"]
     expect_mined = False
@@ -504,7 +499,6 @@ def verify_txs(parameters, test_instance):
 
     # Load these from file if specified
     if "load_from_file" in parameters and parameters["load_from_file"] == True:
-
         filename = "{}/identities_pickled/{}_meta.pickle".format(
             test_instance._test_files_dir, name)
 
@@ -521,25 +515,16 @@ def verify_txs(parameters, test_instance):
 
         # Verify TXs - will block until they have executed
         for tx, identity, balance in tx_and_identity:
-
             error_message = ""
 
             # Check TX has executed, unless we expect it should already have been mined
             while True:
-                status = api.tx.status(tx)
+                status = api.tx.status(tx).status
 
                 if status == "Executed" or expect_mined:
                     output("found executed TX")
                     error_message = ""
-
-                    # There is an unavoidable race that can cause you to see a balance of 0
-                    # since the TX hasn't changed the state yet
-                    if api.tokens.balance(identity) == 0 and balance is not 0:
-                        output(
-                            f"Note: found a balance of 0 when expecting {balance}. Retrying.")
-                        pass
-                    else:
-                        break
+                    break
 
                 tx_b64 = codecs.encode(codecs.decode(
                     tx, 'hex'), 'base64').decode()
@@ -553,12 +538,33 @@ def verify_txs(parameters, test_instance):
                     output(next_error_message)
                     error_message = next_error_message
 
-            seen_balance = api.tokens.balance(identity)
-            if balance != seen_balance:
-                output(
-                    "Balance mismatch found after sending to node. Found {} expected {}".format(
-                        seen_balance, balance))
-                test_instance._watchdog.trigger()
+            failed_to_find = 0
+
+            while True:
+                seen_balance = api.tokens.balance(identity)
+
+                # There is an unavoidable race that can cause you to see a balance of 0
+                # since the TX can be lost even after supposedly being executed.
+                if seen_balance == 0 and balance is not 0:
+                    output(
+                        f"Note: found a balance of 0 when expecting {balance}. Retrying.")
+
+                    time.sleep(1)
+
+                    failed_to_find = failed_to_find + 1
+
+                    if failed_to_find > 5:
+                        # Forces the resubmission of wealth TX to the chain (TX most likely was lost)
+                        api.tokens.wealth(identity, balance)
+                        failed_to_find = 0
+                else:
+                    # Non-zero balance at this point. Stop waiting.
+                    if balance != seen_balance:
+                        output(
+                            "Balance mismatch found after sending to node. Found {} expected {}".format(
+                                seen_balance, balance))
+                        test_instance._watchdog.trigger()
+                    break
 
             output("Verified a wealth of {}".format(seen_balance))
 
@@ -568,9 +574,9 @@ def verify_txs(parameters, test_instance):
 def get_nodes_private_key(test_instance, index):
     # Path to config files (should already be generated)
     expected_ouptut_dir = os.path.abspath(
-        os.path.dirname(test_instance._yaml_file)+"/input_files")
+        os.path.dirname(test_instance._yaml_file) + "/input_files")
 
-    key_path = expected_ouptut_dir+"/{}.key".format(index)
+    key_path = expected_ouptut_dir + "/{}.key".format(index)
     verify_file(key_path)
 
     private_key = open(key_path, "rb").read(32)
@@ -579,7 +585,6 @@ def get_nodes_private_key(test_instance, index):
 
 
 def destake(parameters, test_instance):
-
     nodes = parameters["nodes"]
 
     for node_index in nodes:
@@ -610,7 +615,6 @@ def destake(parameters, test_instance):
 
 
 def restart_nodes(parameters, test_instance):
-
     nodes = parameters["nodes"]
 
     for node_index in nodes:
@@ -620,7 +624,6 @@ def restart_nodes(parameters, test_instance):
 
 
 def add_node(parameters, test_instance):
-
     index = parameters["index"]
     node_connections = parameters["node_connections"]
 
@@ -671,7 +674,6 @@ def run_steps(test_yaml, test_instance):
 
 
 def run_test(build_directory, yaml_file, constellation_exe):
-
     # Read YAML file
     with open(yaml_file, 'r') as stream:
         try:
@@ -701,7 +703,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
 
                 test_instance.stop()
         except Exception as e:
-            print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
+            print('Failed to parse yaml or to run test! Error: "{}"'.format(e))
             traceback.print_exc()
             test_instance.stop()
             # test_instance.dump_debug()

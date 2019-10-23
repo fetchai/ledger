@@ -62,14 +62,13 @@ public:
   MOCK_METHOD1(Commit, Hash(uint64_t));
   MOCK_METHOD2(HashExists, bool(Hash const &, uint64_t));
 
-  MOCK_METHOD1(AddTransaction, void(fetch::ledger::Transaction const &));
-  MOCK_METHOD2(GetTransaction, bool(fetch::ledger::Digest const &, fetch::ledger::Transaction &));
+  MOCK_METHOD1(AddTransaction, void(fetch::chain::Transaction const &));
+  MOCK_METHOD2(GetTransaction, bool(fetch::Digest const &, fetch::chain::Transaction &));
   MOCK_METHOD1(HasTransaction, bool(fetch::byte_array::ConstByteArray const &));
-  MOCK_METHOD1(IssueCallForMissingTxs, void(fetch::ledger::DigestSet const &));
+  MOCK_METHOD1(IssueCallForMissingTxs, void(fetch::DigestSet const &));
 
   MOCK_METHOD1(PollRecentTx, TxLayouts(uint32_t));
 
-  MOCK_CONST_METHOD0(KeyDump, Keys());
   MOCK_METHOD0(Reset, void());
 
   FakeStorageUnit &GetFake()

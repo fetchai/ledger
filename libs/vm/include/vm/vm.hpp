@@ -118,12 +118,14 @@ class IR;
 class IoObserverInterface;
 class Module;
 
+class VM;
 class ParameterPack
 {
 public:
   // Construction / Destruction
-  explicit ParameterPack(RegisteredTypes const &registered_types)
+  explicit ParameterPack(RegisteredTypes const &registered_types, VM *vm = nullptr)
     : registered_types_{registered_types}
+    , vm_{vm}
   {}
 
   ParameterPack(ParameterPack const &) = delete;
@@ -182,6 +184,11 @@ public:
     return success;
   }
 
+  // Implementation is at the bottom of file
+  // due to dependency on VM
+  template <typename T>
+  IfIsExternal<T, bool> AddSingle(T val);
+
   bool Add()
   {
     return true;
@@ -213,6 +220,7 @@ private:
   bool AddInternal(Ptr<Object> const &value)
   {
     // add the value to the map
+    // TODO(tfr): Check ownership of Ptr.
     Variant v;
     v.Construct(value, value->GetTypeId());
     params_.emplace_back(std::move(v));
@@ -224,6 +232,7 @@ private:
 
   RegisteredTypes const &registered_types_;
   VariantArray           params_{};
+  VM *                   vm_;
 };
 
 class VM
@@ -248,7 +257,6 @@ public:
   template <typename... Ts>
   bool Execute(Executable const &executable, std::string const &name, std::string &error,
                Variant &output, Ts const &... parameters)
-
   {
     ParameterPack parameter_pack{registered_types_};
 
@@ -267,7 +275,7 @@ public:
     bool success{false};
 
     Executable::Function const *f = executable.FindFunction(name);
-    if (f)
+    if (f != nullptr)
     {
       auto const num_parameters = static_cast<std::size_t>(f->num_parameters);
 
@@ -282,8 +290,8 @@ public:
           if (parameter.type_id != f->variables[i].type_id)
           {
             error = "mismatched parameters: expected argument " + std::to_string(i);
-            error += "to be of type " + GetUniqueId(f->variables[i].type_id) + " but got ";
-            error += GetUniqueId(parameter.type_id);
+            error += "to be of type " + GetTypeName(f->variables[i].type_id) + " but got ";
+            error += GetTypeName(parameter.type_id);
             // clean up
             for (std::size_t j = 0; j < num_parameters; ++j)
             {
@@ -317,7 +325,7 @@ public:
     return success;
   }
 
-  std::string GetUniqueId(TypeId type_id) const
+  std::string GetTypeName(TypeId type_id) const
   {
     auto info = GetTypeInfo(type_id);
     return info.name;
@@ -481,6 +489,25 @@ public:
     return constructor(this, type_id);
   }
 
+  template <typename T>
+  bool HasCPPCopyConstructor()
+  {
+    auto type_index = TypeIndex(typeid(T));
+    return (cpp_copy_constructors_.find(type_index) != cpp_copy_constructors_.end());
+  }
+
+  template <typename T>
+  Ptr<Object> CPPCopyConstruct(T const &val)
+  {
+    auto it = cpp_copy_constructors_.find(TypeIndex(typeid(T)));
+    if (it == cpp_copy_constructors_.end())
+    {
+      return {};
+    }
+
+    return it->second(this, static_cast<void const *>(&val));
+  }
+
   struct OpcodeInfo
   {
     OpcodeInfo() = default;
@@ -493,7 +520,7 @@ public:
 
     std::string  name;
     Handler      handler;
-    ChargeAmount static_charge;
+    ChargeAmount static_charge{};
   };
 
   ChargeAmount GetChargeTotal() const;
@@ -501,7 +528,7 @@ public:
   ChargeAmount GetChargeLimit() const;
   void         SetChargeLimit(ChargeAmount limit);
 
-  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &);
+  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_charges);
 
 private:
   static const int FRAME_STACK_SIZE = 50;
@@ -553,28 +580,29 @@ private:
   OpcodeInfoArray                opcode_info_array_;
   OpcodeMap                      opcode_map_;
   Generator                      generator_;
-  Executable const *             executable_;
-  Executable::Function const *   function_;
+  Executable const *             executable_{};
+  Executable::Function const *   function_{};
   std::vector<Ptr<String>>       strings_;
-  Frame                          frame_stack_[FRAME_STACK_SIZE];
-  int                            frame_sp_;
-  int                            bsp_;
+  Frame                          frame_stack_[FRAME_STACK_SIZE]{};
+  int                            frame_sp_{};
+  int                            bsp_{};
   Variant                        stack_[STACK_SIZE];
-  int                            sp_;
-  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS];
-  int                            range_loop_sp_;
-  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS];
-  int                            live_object_sp_;
-  uint16_t                       pc_;
-  uint16_t                       instruction_pc_;
-  Executable::Instruction const *instruction_;
-  bool                           stop_;
+  int                            sp_{};
+  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS]{};
+  int                            range_loop_sp_{};
+  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};
+  int                            live_object_sp_{};
+  uint16_t                       pc_{};
+  uint16_t                       instruction_pc_{};
+  Executable::Instruction const *instruction_{};
+  bool                           stop_{};
   std::string                    error_;
   std::ostringstream             output_buffer_;
   IoObserverInterface *          io_observer_{nullptr};
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
+  CPPCopyConstructorMap          cpp_copy_constructors_;
   OpcodeInfo *                   current_op_{nullptr};
 
   /// @name Charges
@@ -1613,6 +1641,24 @@ private:
   friend class Module;
   friend class Generator;
 };
+
+template <typename T>
+IfIsExternal<T, bool> ParameterPack::AddSingle(T val)
+{
+  if (vm_ == nullptr)
+  {
+    throw std::runtime_error("Cannot copy construct C++-to-Etch objects without a VM instance.");
+  }
+  using DecayedType = typename std::decay<T>::type;
+
+  if (!vm_->HasCPPCopyConstructor<DecayedType>())
+  {
+    throw std::runtime_error("No C++-to-Etch copy constructor availble for type.");
+  }
+
+  AddInternal(vm_->CPPCopyConstruct<DecayedType>(val));
+  return true;
+}
 
 }  // namespace vm
 }  // namespace fetch

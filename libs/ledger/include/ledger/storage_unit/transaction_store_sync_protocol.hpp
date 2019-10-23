@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
+#include "ledger/storage_unit/transient_object_store.hpp"
 #include "ledger/transaction_verifier.hpp"
-#include "metrics/metrics.hpp"
+#include "logging/logging.hpp"
 #include "muddle/address.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/milli_timer.hpp"
@@ -30,7 +30,6 @@
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/resource_mapper.hpp"
-#include "storage/transient_object_store.hpp"
 #include "vectorise/platform.hpp"
 
 #include <chrono>
@@ -54,7 +53,7 @@ public:
     PULL_SPECIFIC_OBJECTS = 4
   };
 
-  using ObjectStore = storage::TransientObjectStore<Transaction>;
+  using ObjectStore = storage::TransientObjectStore<chain::Transaction>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreSyncProtocol";
 
@@ -64,7 +63,7 @@ public:
   TransactionStoreSyncProtocol(TransactionStoreSyncProtocol &&)      = delete;
   ~TransactionStoreSyncProtocol() override                           = default;
 
-  void OnNewTx(Transaction const &o);
+  void OnNewTx(chain::Transaction const &o);
   void TrimCache();
 
   // Operators
@@ -81,24 +80,27 @@ private:
     using Timepoint  = Clock::time_point;
     using AddressSet = std::unordered_set<muddle::Address>;
 
-    explicit CachedObject(Transaction value)
+    explicit CachedObject(chain::Transaction value)
       : data(std::move(value))
     {}
 
-    Transaction data;
-    AddressSet  delivered_to;
-    Timepoint   created{Clock::now()};
+    chain::Transaction data;
+    AddressSet         delivered_to;
+    Timepoint          created{Clock::now()};
   };
 
   using Self    = TransactionStoreSyncProtocol;
   using Cache   = std::vector<CachedObject>;
-  using TxArray = std::vector<Transaction>;
+  using TxArray = std::vector<chain::Transaction>;
 
   uint64_t ObjectCount();
   TxArray  PullObjects(service::CallContext const &call_context);
 
-  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
+  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count);
   TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
+
+  static telemetry::HistogramPtr CreateHistogram(char const *name, char const *description,
+                                                 int lane);
 
   ObjectStore *store_;  ///< The pointer to the object store
 
@@ -106,6 +108,10 @@ private:
   Cache cache_;
 
   int id_;
+
+  telemetry::HistogramPtr pull_objects_histogram_;
+  telemetry::HistogramPtr pull_subtree_histogram_;
+  telemetry::HistogramPtr pull_specific_histogram_;
 };
 
 }  // namespace ledger

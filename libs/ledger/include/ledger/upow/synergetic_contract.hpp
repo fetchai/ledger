@@ -17,8 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/address.hpp"
-#include "ledger/chain/digest.hpp"
+#include "chain/address.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "vm/analyser.hpp"
 #include "vm/common.hpp"
@@ -89,7 +88,7 @@ public:
   /// @{
   Status DefineProblem(ProblemData const &problem_data);
   Status Work(vectorise::UInt<256> const &nonce, WorkScore &score);
-  Status Complete(uint64_t block, BitVector const &shards);
+  Status Complete(chain::Address const &address, BitVector const &shards);
   /// @}
 
   /// @name Synergetic State Access

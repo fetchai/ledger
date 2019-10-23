@@ -23,7 +23,6 @@
 
 #include <iomanip>
 #include <iostream>
-#include <mutex>
 #include <type_traits>
 
 namespace fetch {
@@ -66,8 +65,6 @@ public:
   Gauge &operator=(Gauge &&) = delete;
 
 private:
-  using Mutex = std::mutex;
-
   mutable Mutex lock_{};
   ValueType     value_{0};
 

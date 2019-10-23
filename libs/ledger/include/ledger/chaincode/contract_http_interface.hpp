@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "http/module.hpp"
 #include "ledger/chaincode/chain_code_cache.hpp"
 
@@ -81,10 +82,10 @@ private:
 
   /// @name Transaction Handlers
   /// @{
-  http::HTTPResponse OnTransaction(http::HTTPRequest const &req,
+  http::HTTPResponse OnTransaction(http::HTTPRequest const &request,
                                    ConstByteArray const &   expected_contract);
-  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, TxHashes &txs);
-  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &req, TxHashes &txs);
+  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &request, TxHashes &txs);
+  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &request, TxHashes &txs);
   /// @}
 
   /// @name Access Log
@@ -96,11 +97,10 @@ private:
   void WriteToAccessLog(variant::Variant const &entry);
   /// @}
 
-  StorageInterface &    storage_;
-  TransactionProcessor &processor_;
-  ChainCodeCache        contract_cache_{};
-  Mutex                 access_log_lock_;
-  std::ofstream         access_log_;
+  StorageInterface &       storage_;
+  TransactionProcessor &   processor_;
+  ChainCodeCache           contract_cache_{};
+  Protected<std::ofstream> access_log_;
 };
 
 }  // namespace ledger

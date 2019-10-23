@@ -298,7 +298,7 @@ private:
   static constexpr std::size_t cache_line_ln2 = 13;  // Default cache lines 8192 * sizeof(T)
   std::size_t memory_limit_bytes_             = std::size_t(1ULL << 29);  // Default 500K memory
 
-  T dummy_;
+  T dummy_{};
 
   EventHandlerType on_file_loaded_;
   EventHandlerType on_before_flush_;
@@ -310,7 +310,7 @@ private:
   {
     uint64_t                              reads  = 0;
     uint64_t                              writes = 0;
-    std::array<type, 1 << cache_line_ln2> elements;
+    std::array<type, 1 << cache_line_ln2> elements{};
   };
 
   mutable std::map<uint64_t, CachedDataItem> data_;

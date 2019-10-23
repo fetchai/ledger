@@ -22,6 +22,7 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/exceptions/exceptions.hpp"
 
 #include <cassert>
 #include <fstream>
@@ -55,11 +56,17 @@ public:
   SizeType   Size() const override;
   bool       IsDone() const override;
   void       Reset() override;
+  bool       IsModeAvailable(DataLoaderMode mode) override;
 
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
 
   bool AddData(InputType const &data, LabelType const &label) override;
+
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::COMMODITY;
+  }
 
 private:
   bool      random_mode_ = false;
@@ -76,13 +83,13 @@ private:
   std::shared_ptr<SizeType> test_cursor_       = std::make_shared<SizeType>(0);
   std::shared_ptr<SizeType> validation_cursor_ = std::make_shared<SizeType>(0);
 
-  SizeType train_size_;
-  SizeType test_size_;
-  SizeType validation_size_;
+  SizeType train_size_{};
+  SizeType test_size_{};
+  SizeType validation_size_{};
 
-  SizeType total_size_;
-  SizeType test_offset_;
-  SizeType validation_offset_;
+  SizeType total_size_{};
+  SizeType test_offset_{};
+  SizeType validation_offset_{};
 
   float test_to_train_ratio_       = 0.0f;
   float validation_to_train_ratio_ = 0.0f;
@@ -132,11 +139,9 @@ CommodityDataLoader<LabelType, InputType>::GetNext()
     GetAtIndex(this->current_min_ + (static_cast<SizeType>(decltype(rand_)::generator()) % Size()));
     return buffer_;
   }
-  else
-  {
-    GetAtIndex((*this->current_cursor_)++);
-    return buffer_;
-  }
+
+  GetAtIndex((*this->current_cursor_)++);
+  return buffer_;
 }
 
 /**
@@ -169,14 +174,14 @@ template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::SetTestRatio(float new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
-  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::SetValidationRatio(float new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
-  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");
 }
 
 /**
@@ -216,7 +221,31 @@ void CommodityDataLoader<LabelType, InputType>::UpdateCursor()
   }
   else
   {
-    throw std::runtime_error("Unsupported dataloader mode.");
+    throw exceptions::InvalidMode("Unsupported dataloader mode.");
+  }
+}
+
+template <typename LabelType, typename InputType>
+bool CommodityDataLoader<LabelType, InputType>::IsModeAvailable(DataLoaderMode mode)
+{
+  switch (mode)
+  {
+  case DataLoaderMode::TRAIN:
+  {
+    return test_offset_ > 0;
+  }
+  case DataLoaderMode::TEST:
+  {
+    return test_offset_ < validation_offset_;
+  }
+  case DataLoaderMode::VALIDATE:
+  {
+    return validation_offset_ < total_size_;
+  }
+  default:
+  {
+    throw exceptions::InvalidMode("Unsupported dataloader mode.");
+  }
   }
 }
 
@@ -227,7 +256,7 @@ void CommodityDataLoader<LabelType, InputType>::UpdateRanges()
   float validation_percentage = test_percentage + test_to_train_ratio_;
 
   // Define where test set starts
-  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(size_));
+  test_offset_ = static_cast<uint32_t>(test_percentage * static_cast<float>(size_));
 
   if (test_offset_ == static_cast<SizeType>(0))
   {
@@ -235,8 +264,7 @@ void CommodityDataLoader<LabelType, InputType>::UpdateRanges()
   }
 
   // Define where validation set starts
-  validation_offset_ =
-      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(size_));
+  validation_offset_ = static_cast<uint32_t>(validation_percentage * static_cast<float>(size_));
 
   if (validation_offset_ <= test_offset_)
   {

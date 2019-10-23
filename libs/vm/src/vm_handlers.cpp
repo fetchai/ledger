@@ -39,8 +39,7 @@ void VM::Handler__VariableDeclare()
   }
   else
   {
-    Primitive p;
-    p.Zero();
+    Primitive p{0u};
     variable.Construct(p, instruction_->type_id);
   }
 }
@@ -223,7 +222,7 @@ void VM::Handler__Return()
 
 void VM::Handler__ForRangeInit()
 {
-  ForRangeLoop loop;
+  ForRangeLoop loop{};
   loop.variable_index = instruction_->index;
   Variant &variable   = GetVariable(loop.variable_index);
   variable.type_id    = instruction_->type_id;
@@ -397,7 +396,7 @@ void VM::Handler__InvokeUserDefinedFreeFunction()
   uint16_t const index = instruction_->index;
 
   // Note: the parameters are already on the stack
-  Frame frame;
+  Frame frame{};
   frame.function = function_;
   frame.bsp      = bsp_;
   frame.pc       = pc_;

@@ -25,11 +25,11 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/containers/set_intersection.hpp"
-#include "core/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fnv.hpp"
+#include "logging/logging.hpp"
 #include "muddle/packet.hpp"
 
 #include <algorithm>
@@ -79,7 +79,7 @@ std::size_t GenerateEchoId(Packet const &packet)
 
   std::size_t out = 0;
 
-  static_assert(sizeof(out) == hash.size_in_bytes,
+  static_assert(sizeof(out) == decltype(hash)::size_in_bytes,
                 "Output type has incorrect size to contain hash");
   hash.Final(reinterpret_cast<uint8_t *>(&out));
 
@@ -108,20 +108,6 @@ bool CompareAddress(uint8_t const *a, uint8_t const *b)
 bool operator==(Packet::RawAddress const &lhs, Packet::Address const &rhs)
 {
   return CompareAddress(lhs.data(), rhs.pointer());
-}
-
-/**
- * Convert a raw address into a byte array
- *
- * @param addr The reference to the address to convert
- * @return The converted (output) byte array
- */
-ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
-{
-  ByteArray buffer;
-  buffer.Resize(addr.size());
-  std::memcpy(buffer.pointer(), addr.data(), addr.size());
-  return {std::move(buffer)};
 }
 
 template <typename T>
@@ -249,7 +235,7 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispa
   , registrar_(network_id)
   , network_id_(network_id)
   , prover_(prover)
-  , sign_broadcasts_(prover && sign_broadcasts)
+  , sign_broadcasts_((prover != nullptr) && sign_broadcasts)
   , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
 {}
 
@@ -282,12 +268,12 @@ bool Router::Genuine(PacketPtr const &p) const
     return p->Verify();
   }
   // non-stamped packages are genuine in a trusted network
-  return !prover_;
+  return prover_ == nullptr;
 }
 
 Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
 {
-  if (prover_ && (sign_broadcasts_ || !p->IsBroadcast()))
+  if ((prover_ != nullptr) && (sign_broadcasts_ || !p->IsBroadcast()))
   {
     p->Sign(*prover_);
   }
@@ -332,7 +318,7 @@ void Router::Route(Handle handle, PacketPtr const &packet)
   {
     // update the routing table if required
     // TODO(KLL): this may not be the association we're looking for.
-    AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
+    AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false, packet->IsBroadcast());
 
     // if this message does not belong to us we must route it along the path
     RoutePacket(packet);
@@ -410,7 +396,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
       FormatPacket(address_, network_id_, service, channel, message_num, DEFAULT_TTL, payload);
   packet->SetTarget(address);
 
-  if (options & OPTION_EXCHANGE)
+  if ((options & OPTION_EXCHANGE) != 0u)
   {
     packet->SetExchange(true);
   }
@@ -548,7 +534,7 @@ Router::AddressSet Router::GetDirectlyConnectedPeerSet() const
  */
 Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                    handle,
                                                         Packet::RawAddress const &address,
-                                                        bool                      direct)
+                                                        bool direct, bool broadcast)
 {
   UpdateStatus status{UpdateStatus::NO_CHANGE};
 
@@ -557,6 +543,12 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
 
   // sanity check
   assert(handle);
+
+  if (broadcast)
+  {
+    FETCH_LOG_TRACE(logging_name_, "Ignoring routing messages from broadcast");
+    return status;
+  }
 
   bool display{false};
 
@@ -577,7 +569,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
     bool const is_downgrade         = (!is_empty) && routing_data.direct && !direct;
     bool const is_different =
         (is_connection_update && !is_duplicate_direct && !is_downgrade) || is_upgrade;
-    bool const is_update = (routing_data.handle && is_different);
+    bool const is_update = ((routing_data.handle != 0u) && is_different);
 
     // update the routing table if required
     if (is_duplicate_direct)
@@ -611,7 +603,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
   if (display)
   {
     FETCH_LOG_INFO(logging_name_, "Adding ", ((direct) ? "direct" : "normal"),
-                   " route for: ", ToBase64(ToConstByteArray(address)));
+                   " route for: ", ConvertAddress(address).ToBase64(), " (handle: ", handle, ")");
   }
 
   return status;
@@ -638,6 +630,9 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
       handle = routing_data.handle;
     }
   }
+
+  FETCH_LOG_TRACE(logging_name_, "Routing decision: ", ConvertAddress(address).ToBase64(), " -> ",
+                  handle);
 
   return handle;
 }
@@ -818,23 +813,28 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
   {
     // attempt to route to one of our direct peers
     Handle handle = LookupHandle(packet->GetTargetRaw());
-    if (handle)
+    if (handle != 0u)
     {
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
       return;
     }
 
+    // if kad routing is enabled we should use this to route packets
     if (kademlia_routing_)
     {
       handle = LookupKademliaClosestHandle(packet->GetTarget());
-      return;
+      if (handle != 0u)
+      {
+        SendToConnection(handle, packet);
+        return;
+      }
     }
 
     // if direct routing fails then randomly select a handle. In future a better routing scheme
     // should be implemented.
     handle = LookupRandomHandle(packet->GetTargetRaw());
-    if (handle)
+    if (handle != 0u)
     {
       FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", ToBase64(packet->GetTarget()));
       SendToConnection(handle, packet);

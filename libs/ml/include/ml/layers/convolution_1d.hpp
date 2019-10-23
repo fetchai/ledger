@@ -137,10 +137,10 @@ public:
   static constexpr char const *DESCRIPTOR = "Convolution1DLayer";
 
 private:
-  SizeType kernel_size_;
-  SizeType input_channels_;
-  SizeType output_channels_;
-  SizeType stride_size_;
+  SizeType kernel_size_{};
+  SizeType input_channels_{};
+  SizeType output_channels_{};
+  SizeType stride_size_{};
 };
 
 }  // namespace layers

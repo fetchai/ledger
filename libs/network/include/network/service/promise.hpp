@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "core/serializers/exception.hpp"
+#include "logging/logging.hpp"
 #include "network/service/types.hpp"
 
 #include <array>
@@ -81,6 +82,8 @@ public:
   /// @{
   ConstByteArray const &value() const;
   Counter               id() const;
+  Timepoint const &     created_at() const;
+  Timepoint const &     deadline() const;
   uint64_t              protocol() const;
   uint64_t              function() const;
   State                 state() const;
@@ -101,6 +104,7 @@ public:
   /// @{
   void Fulfill(ConstByteArray const &value);
   void Fail(serializers::SerializableException const &exception);
+  void Timeout();
   void Fail();
   /// @}
 

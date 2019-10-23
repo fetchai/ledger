@@ -1,32 +1,29 @@
 Checks: "-*,\
 bugprone-*,\
-cert-dcl21-cpp,\
-cert-dcl50-cpp,\
-cert-env33-c,\
--cert-err34-c,\
+cert-dcl*,\
+cert-env*,\
 cert-err52-cpp,\
--cert-err58-cpp,\
 cert-err60-cpp,\
--cert-flp30-c,\
--clang-analyzer-security.FloatLoopCounter,\
+cert-flp30-c,\
+clang-analyzer-security.FloatLoopCounter,\
+google-build-explicit-make-pair,\
 google-build-namespaces,\
 google-explicit-constructor,\
-google-readability-todo,\
+google-readability-*,\
 google-runtime-operator,\
-misc-new-delete-overloads,\
-misc-non-copyable-objects,\
-misc-static-assert,\
-misc-suspicious-*,\
-misc-throw-by-value-catch-by-reference,\
-misc-unused-*,\
-modernize-loop-convert,\
-modernize-make-shared,\
-modernize-make-unique,\
-modernize-pass-by-value,\
-modernize-use-*,\
+hicpp-exception-baseclass,\
+hicpp-explicit-conversions,\
+hicpp-use-*,\
+misc-*,\
+-misc-misplaced-widening-cast,\
+modernize-*,\
 performance-*,\
-readability-avoid-const-params-in-decls,\
-readability-braces-around-statements,\
-readability-container-size-empty,\
-readability-simplify-boolean-expr,\
-readability-static-definition-in-anonymous-namespace"
+readability-*,\
+-readability-identifier-naming"
+
+# TODO(WK):
+#   remove -* exclusion
+#   cert-*
+#   google-build-*
+#   hicpp-signed-bitwise
+#   hicpp-special-member-functions

@@ -195,11 +195,26 @@ Module::Module()
   CreateFreeFunction("toFixed32", &toFixed32);
   CreateFreeFunction("toFixed64", &toFixed64);
 
-  GetClassInterface<IMatrix>()
+  CreateTemplateType<IMatrix, AnyFloatingPoint>("Matrix")
       .CreateConstructor(&IMatrix::Constructor)
       .EnableIndexOperator(&IMatrix::GetIndexedValue, &IMatrix::SetIndexedValue)
       .CreateInstantiationType<Matrix<double>>()
-      .CreateInstantiationType<Matrix<float>>();
+      .CreateInstantiationType<Matrix<float>>()
+      .EnableOperator(Operator::Negate)
+      .EnableOperator(Operator::Add)
+      .EnableOperator(Operator::Subtract)
+      .EnableOperator(Operator::Multiply)
+      .EnableOperator(Operator::InplaceAdd)
+      .EnableOperator(Operator::InplaceSubtract)
+      .EnableLeftOperator(Operator::Multiply)
+      .EnableRightOperator(Operator::Add)
+      .EnableRightOperator(Operator::Subtract)
+      .EnableRightOperator(Operator::Multiply)
+      .EnableRightOperator(Operator::Divide)
+      .EnableRightOperator(Operator::InplaceAdd)
+      .EnableRightOperator(Operator::InplaceSubtract)
+      .EnableRightOperator(Operator::InplaceMultiply)
+      .EnableRightOperator(Operator::InplaceDivide);
 
   GetClassInterface<IArray>()
       .CreateConstructor(&IArray::Constructor)
@@ -226,6 +241,13 @@ Module::Module()
       .CreateInstantiationType<Array<uint64_t>>()
       .CreateInstantiationType<Array<float>>()
       .CreateInstantiationType<Array<double>>()
+      .CreateCPPCopyConstructor<std::vector<double>>(
+          [](VM *vm, TypeId, std::vector<double> const &arr) -> Ptr<IArray> {
+            auto ret = Ptr<Array<double>>(
+                new Array<double>(vm, vm->GetTypeId<Array<double>>(), vm->GetTypeId<double>(), 0));
+            ret->elements = arr;
+            return ret;
+          })
       .CreateInstantiationType<Array<fixed_point::fp32_t>>()
       .CreateInstantiationType<Array<fixed_point::fp64_t>>()
       .CreateInstantiationType<Array<Ptr<String>>>()
@@ -234,6 +256,10 @@ Module::Module()
   GetClassInterface<String>()
       .CreateSerializeDefaultConstructor(
           [](VM *vm, TypeId) -> Ptr<String> { return Ptr<String>{new String(vm, "")}; })
+      .CreateCPPCopyConstructor<std::string>(
+          [](VM *vm, TypeId, std::string const &s) -> Ptr<String> {
+            return Ptr<String>{new String(vm, s)};
+          })
       .CreateMemberFunction("find", &String::Find)
       .CreateMemberFunction("length", &String::Length)
       .CreateMemberFunction("sizeInBytes", &String::SizeInBytes)

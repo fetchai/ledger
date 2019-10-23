@@ -95,7 +95,7 @@ public:
     {
       return true;
     }
-    else if (identifier_ == right.identifier_)
+    if (identifier_ == right.identifier_)
     {
       return identity_parameters_ < right.identity_parameters_;
     }

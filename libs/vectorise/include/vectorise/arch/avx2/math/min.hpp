@@ -25,29 +25,31 @@ namespace vectorise {
 inline VectorRegister<int32_t, 128> Min(VectorRegister<int32_t, 128> const &a,
                                         VectorRegister<int32_t, 128> const &b)
 {
-  return VectorRegister<int32_t, 128>(_mm_min_epi32(a.data(), b.data()));
+  auto const ret = VectorRegister<int32_t, 128>(_mm_min_epi32(a.data(), b.data()));
+  return ret;
 }
 
 inline VectorRegister<int32_t, 256> Min(VectorRegister<int32_t, 256> const &a,
                                         VectorRegister<int32_t, 256> const &b)
 {
-  return VectorRegister<int32_t, 256>(_mm256_min_epi32(a.data(), b.data()));
+  auto const ret = VectorRegister<int32_t, 256>(_mm256_min_epi32(a.data(), b.data()));
+  return ret;
 }
 
 inline VectorRegister<int64_t, 128> Min(VectorRegister<int64_t, 128> const &a,
                                         VectorRegister<int64_t, 128> const &b)
 {
-  __m128i mask = (a > b).data();
-  __m128i ret  = _mm_blendv_epi8(a.data(), b.data(), mask);
-  return VectorRegister<int64_t, 128>(ret);
+  __m128i    mask = (a > b).data();
+  auto const ret  = VectorRegister<int64_t, 128>(_mm_blendv_epi8(a.data(), b.data(), mask));
+  return ret;
 }
 
 inline VectorRegister<int64_t, 256> Min(VectorRegister<int64_t, 256> const &a,
                                         VectorRegister<int64_t, 256> const &b)
 {
-  __m256i mask = (a > b).data();
-  __m256i ret  = _mm256_blendv_epi8(a.data(), b.data(), mask);
-  return VectorRegister<int64_t, 256>(ret);
+  __m256i    mask = (a > b).data();
+  auto const ret  = VectorRegister<int64_t, 256>(_mm256_blendv_epi8(a.data(), b.data(), mask));
+  return ret;
 }
 
 inline VectorRegister<fixed_point::fp32_t, 128> Min(
@@ -56,7 +58,8 @@ inline VectorRegister<fixed_point::fp32_t, 128> Min(
 {
   VectorRegister<int32_t, 128> min_int32 =
       Min(VectorRegister<int32_t, 128>(a.data()), VectorRegister<int32_t, 128>(b.data()));
-  return VectorRegister<fixed_point::fp32_t, 128>(min_int32.data());
+  auto const ret = VectorRegister<fixed_point::fp32_t, 128>(min_int32.data());
+  return ret;
 }
 
 inline VectorRegister<fixed_point::fp32_t, 256> Min(
@@ -65,7 +68,8 @@ inline VectorRegister<fixed_point::fp32_t, 256> Min(
 {
   VectorRegister<int32_t, 256> min_int32 =
       Min(VectorRegister<int32_t, 256>(a.data()), VectorRegister<int32_t, 256>(b.data()));
-  return VectorRegister<fixed_point::fp32_t, 256>(min_int32.data());
+  auto const ret = VectorRegister<fixed_point::fp32_t, 256>(min_int32.data());
+  return ret;
 }
 
 inline VectorRegister<fixed_point::fp64_t, 128> Min(
@@ -74,7 +78,8 @@ inline VectorRegister<fixed_point::fp64_t, 128> Min(
 {
   VectorRegister<int64_t, 128> min_int64 =
       Min(VectorRegister<int64_t, 128>(a.data()), VectorRegister<int64_t, 128>(b.data()));
-  return VectorRegister<fixed_point::fp64_t, 128>(min_int64.data());
+  auto const ret = VectorRegister<fixed_point::fp64_t, 128>(min_int64.data());
+  return ret;
 }
 
 inline VectorRegister<fixed_point::fp64_t, 256> Min(
@@ -83,31 +88,36 @@ inline VectorRegister<fixed_point::fp64_t, 256> Min(
 {
   VectorRegister<int64_t, 256> min_int64 =
       Min(VectorRegister<int64_t, 256>(a.data()), VectorRegister<int64_t, 256>(b.data()));
-  return VectorRegister<fixed_point::fp64_t, 256>(min_int64.data());
+  auto const ret = VectorRegister<fixed_point::fp64_t, 256>(min_int64.data());
+  return ret;
 }
 
 inline VectorRegister<float, 128> Min(VectorRegister<float, 128> const &a,
                                       VectorRegister<float, 128> const &b)
 {
-  return VectorRegister<float, 128>(_mm_min_ps(a.data(), b.data()));
+  auto const ret = VectorRegister<float, 128>(_mm_min_ps(a.data(), b.data()));
+  return ret;
 }
 
 inline VectorRegister<float, 256> Min(VectorRegister<float, 256> const &a,
                                       VectorRegister<float, 256> const &b)
 {
-  return VectorRegister<float, 256>(_mm256_min_ps(a.data(), b.data()));
+  auto const ret = VectorRegister<float, 256>(_mm256_min_ps(a.data(), b.data()));
+  return ret;
 }
 
 inline VectorRegister<double, 128> Min(VectorRegister<double, 128> const &a,
                                        VectorRegister<double, 128> const &b)
 {
-  return VectorRegister<double, 128>(_mm_min_pd(a.data(), b.data()));
+  auto const ret = VectorRegister<double, 128>(_mm_min_pd(a.data(), b.data()));
+  return ret;
 }
 
 inline VectorRegister<double, 256> Min(VectorRegister<double, 256> const &a,
                                        VectorRegister<double, 256> const &b)
 {
-  return VectorRegister<double, 256>(_mm256_min_pd(a.data(), b.data()));
+  auto const ret = VectorRegister<double, 256>(_mm256_min_pd(a.data(), b.data()));
+  return ret;
 }
 
 }  // namespace vectorise

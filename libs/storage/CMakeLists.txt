@@ -18,9 +18,14 @@ setup_library(fetch-storage)
 target_link_libraries(fetch-storage
                       PUBLIC fetch-core
                              fetch-crypto
-                             fetch-ledger
                              fetch-testing
+                             fetch-logging
+                             fetch-network
                              vendor-mio)
+
+if (_is_clang_compiler)
+  target_compile_options(fetch-storage PRIVATE -Wshadow)
+endif ()
 
 # ------------------------------------------------------------------------------
 # Test Targets

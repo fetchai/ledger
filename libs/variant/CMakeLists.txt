@@ -11,6 +11,14 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 setup_library(fetch-variant)
-target_link_libraries(fetch-variant PUBLIC fetch-core fetch-crypto fetch-meta)
+target_link_libraries(fetch-variant
+                      PUBLIC fetch-core
+                             fetch-crypto
+                             fetch-meta
+                             fetch-logging)
+
+if (_is_clang_compiler)
+  target_compile_options(fetch-variant PRIVATE -Wshadow)
+endif ()
 
 add_test_target()

@@ -51,9 +51,9 @@ Mutex                          PromiseImplementation::counter_lock_;
 
 std::chrono::seconds const PromiseImplementation::DEFAULT_TIMEOUT{30};
 
-PromiseImplementation::PromiseImplementation(uint64_t pro, uint64_t func)
-  : protocol_{pro}
-  , function_{func}
+PromiseImplementation::PromiseImplementation(uint64_t protocol, uint64_t function)
+  : protocol_{protocol}
+  , function_{function}
 {}
 
 ConstByteArray const &PromiseImplementation::value() const
@@ -64,6 +64,16 @@ ConstByteArray const &PromiseImplementation::value() const
 Counter PromiseImplementation::id() const
 {
   return id_;
+}
+
+PromiseImplementation::Timepoint const &PromiseImplementation::created_at() const
+{
+  return created_;
+}
+
+PromiseImplementation::Timepoint const &PromiseImplementation::deadline() const
+{
+  return deadline_;
 }
 
 uint64_t PromiseImplementation::protocol() const
@@ -125,6 +135,11 @@ void PromiseImplementation::Fail(SerializableException const &exception)
   UpdateState(State::FAILED);
 }
 
+void PromiseImplementation::Timeout()
+{
+  UpdateState(State::TIMEDOUT);
+}
+
 void PromiseImplementation::Fail()
 {
   UpdateState(State::FAILED);
@@ -132,26 +147,22 @@ void PromiseImplementation::Fail()
 
 bool PromiseImplementation::Wait(bool throw_exception) const
 {
-  State state_copy{state()};
-
   if (Clock::now() >= deadline_)
   {
     LogTimout(name_, id_);
     return false;
   }
-  else
+
+  std::unique_lock<std::mutex> lock(notify_lock_);
+  while (State::WAITING == state())
   {
-    std::unique_lock<std::mutex> lock(notify_lock_);
-    while (State::WAITING == state())
+    if (std::cv_status::timeout == notify_.wait_until(lock, deadline_))
     {
-      if (std::cv_status::timeout == notify_.wait_until(lock, deadline_))
-      {
-        LogTimout(name_, id_);
-        return false;
-      }
+      LogTimout(name_, id_);
+      return false;
     }
-    state_copy = state();
   }
+  State state_copy = state();
 
   if (State::FAILED == state_copy)
   {
@@ -228,7 +239,7 @@ void PromiseImplementation::DispatchCallbacks() const
   }
 
   // dispatch the event
-  if (handler && *handler)
+  if ((handler != nullptr) && *handler)
   {
     // call the success or failure handler
     (*handler)();

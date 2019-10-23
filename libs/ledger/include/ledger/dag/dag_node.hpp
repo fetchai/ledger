@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
+#include "chain/transaction_serializer.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
@@ -26,8 +28,6 @@
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/chain/transaction_serializer.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -66,6 +66,7 @@ struct DAGNode
   DigestList       previous;            ///< previous nodes.
   ConstByteArray   contents;            ///< payload to be deserialised.
   Digest           contract_digest;     ///< The contract which this node is associated with.
+  chain::Address   contract_address;    ///< The address of the associated contract
   crypto::Identity identity;            ///< identity of the creator
 
   /// Serialisable entries to verify state
@@ -78,18 +79,18 @@ struct DAGNode
   uint64_t oldest_epoch_referenced = std::numeric_limits<uint64_t>::max();
   uint64_t weight                  = 0;
 
-  bool SetContents(Transaction const &tx)
+  bool SetContents(chain::Transaction const &tx)
   {
-    ledger::TransactionSerializer ser{};
+    chain::TransactionSerializer ser{};
     ser.Serialize(tx);
     contents = ser.data();
 
     return true;
   }
 
-  bool GetContents(Transaction &tx)
+  bool GetContents(chain::Transaction &tx)
   {
-    ledger::TransactionSerializer ser{contents};
+    chain::TransactionSerializer ser{contents};
     ser.Deserialize(tx);
 
     return true;
@@ -102,8 +103,8 @@ struct DAGNode
   {
     serializers::MsgPackSerializer buf;
 
-    buf << type << previous << contents << contract_digest << identity << hash << signature
-        << oldest_epoch_referenced << weight;
+    buf << type << previous << contents << contract_digest << contract_address << identity << hash
+        << signature << oldest_epoch_referenced << weight;
 
     HasherType hasher;
     hasher.Reset();
@@ -170,20 +171,22 @@ public:
   static uint8_t const PREVIOUS                = 2;
   static uint8_t const CONTENTS                = 3;
   static uint8_t const CONTRACT_DIGEST         = 4;
-  static uint8_t const IDENTITY                = 5;
-  static uint8_t const HASH                    = 6;
-  static uint8_t const SIGNATURE               = 7;
-  static uint8_t const OLDEST_EPOCH_REFERENCED = 8;
-  static uint8_t const WEIGHT                  = 9;
+  static uint8_t const CONTRACT_ADDRESS        = 5;
+  static uint8_t const IDENTITY                = 6;
+  static uint8_t const HASH                    = 7;
+  static uint8_t const SIGNATURE               = 8;
+  static uint8_t const OLDEST_EPOCH_REFERENCED = 9;
+  static uint8_t const WEIGHT                  = 10;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &node)
   {
-    auto map = map_constructor(9);
+    auto map = map_constructor(10);
     map.Append(TYPE, node.type);
     map.Append(PREVIOUS, node.previous);
     map.Append(CONTENTS, node.contents);
     map.Append(CONTRACT_DIGEST, node.contract_digest);
+    map.Append(CONTRACT_ADDRESS, node.contract_address);
     map.Append(IDENTITY, node.identity);
     map.Append(HASH, node.hash);
     map.Append(SIGNATURE, node.signature);
@@ -198,6 +201,7 @@ public:
     map.ExpectKeyGetValue(PREVIOUS, node.previous);
     map.ExpectKeyGetValue(CONTENTS, node.contents);
     map.ExpectKeyGetValue(CONTRACT_DIGEST, node.contract_digest);
+    map.ExpectKeyGetValue(CONTRACT_ADDRESS, node.contract_address);
     map.ExpectKeyGetValue(IDENTITY, node.identity);
     map.ExpectKeyGetValue(HASH, node.hash);
     map.ExpectKeyGetValue(SIGNATURE, node.signature);

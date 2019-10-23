@@ -144,9 +144,9 @@ public:
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
 
-  RBCMessage(RBCMessage const &) = default;  // TODO(?): make protected
+  RBCMessage(RBCMessage const &) = default;  // TODO (troels): make protected
 
-  /// @{ // TODO: Mkae protected
+  /// @{
   SerialisedMessage const &message() const;
   HashDigest               hash() const;
   /// @}
@@ -156,10 +156,10 @@ protected:
 
 private:
   RBCMessageType    type_;
-  uint16_t          channel_;  ///< Channel Id of the broadcast channel
-  uint32_t          id_;       ///< Unique Id of the node
-  uint8_t           counter_;  ///< Counter for messages sent on RBC
-  SerialisedMessage payload_;  ///< Serialised message to be sent using RBC
+  uint16_t          channel_{};  ///< Channel Id of the broadcast channel
+  uint32_t          id_{};       ///< Unique Id of the node
+  uint8_t           counter_{};  ///< Counter for messages sent on RBC
+  SerialisedMessage payload_;    ///< Serialised message to be sent using RBC
 };
 
 class RHash : public RBCMessage
@@ -223,7 +223,7 @@ public:
     auto map = map_constructor(5);
     map.Append(TYPE, static_cast<uint8_t>(msg.type_));
     map.Append(CHANNEL, msg.channel_);
-    map.Append(ADDRESS, msg.id_);  // TODO(?): Remove and deduce from network connection
+    map.Append(ADDRESS, msg.id_);  // TODO (ed): Remove and deduce from network connection
     map.Append(COUNTER, msg.counter_);
     map.Append(PAYLOAD, msg.payload_);
   }
@@ -234,8 +234,8 @@ public:
     uint8_t type;
     map.ExpectKeyGetValue(TYPE, type);
     map.ExpectKeyGetValue(CHANNEL, msg.channel_);
-    // TODO(?): Remove and deduce from network connection
-    map.ExpectKeyGetValue(ADDRESS, msg.id_);
+    map.ExpectKeyGetValue(ADDRESS,
+                          msg.id_);  // TODO (ed): Remove and deduce from network connection
     map.ExpectKeyGetValue(COUNTER, msg.counter_);
     map.ExpectKeyGetValue(PAYLOAD, msg.payload_);
 
