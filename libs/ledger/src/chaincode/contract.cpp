@@ -28,7 +28,7 @@ namespace ledger {
 ContractContext::ContractContext(TokenContract *token_contract_param, chain::Address address,
                                  StateAdapter *state_adapter_param)
   : token_contract{token_contract_param}
-  , contract_address{std::move(address)}  //???remove field, use current tx?
+  , contract_address{std::move(address)}
   , state_adapter{state_adapter_param}
 {}
 

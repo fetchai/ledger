@@ -54,7 +54,29 @@ struct Variant;
 
 namespace ledger {
 
+class StateAdapter;
 class StorageInterface;
+class TokenContract;
+
+struct SynergeticContractContext
+{
+  SynergeticContractContext()                                  = default;
+  SynergeticContractContext(SynergeticContractContext const &) = default;
+  SynergeticContractContext(SynergeticContractContext &&)      = default;
+  SynergeticContractContext &operator=(SynergeticContractContext const &) = default;
+  SynergeticContractContext &operator=(SynergeticContractContext &&) = default;
+
+  SynergeticContractContext(TokenContract *token_contract_param, chain::Address address,
+                            StateAdapter *state_adapter_param)
+    : token_contract{token_contract_param}
+    , contract_address{std::move(address)}
+    , state_adapter{state_adapter_param}
+  {}  //???uninline
+
+  TokenContract *token_contract{nullptr};
+  chain::Address contract_address{};
+  StateAdapter * state_adapter{nullptr};
+};
 
 class SynergeticContract
 {
@@ -83,6 +105,16 @@ public:
   // Basic Contract Actions
   void Attach(StorageInterface &storage);
   void Detach();
+
+  void updateContractContext(SynergeticContractContext context)  //???uninline
+  {
+    context_ = std::move(context);
+  }
+
+  SynergeticContractContext const &context() const  //???uninline
+  {
+    return context_;
+  }
 
   /// @name Actions to be taken on the synergetic contract
   /// @{
@@ -117,9 +149,10 @@ private:
   std::string objective_function_;
   std::string clear_function_;
 
-  StorageInterface *storage_{nullptr};
-  VariantPtr        problem_;
-  VariantPtr        solution_;
+  StorageInterface *        storage_{nullptr};
+  VariantPtr                problem_;
+  VariantPtr                solution_;
+  SynergeticContractContext context_{};
 };
 
 char const *ToString(SynergeticContract::Status status);

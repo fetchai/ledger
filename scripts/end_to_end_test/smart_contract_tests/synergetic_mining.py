@@ -21,6 +21,8 @@ from fetchai.ledger.contract import Contract
 from fetchai.ledger.crypto import Entity
 
 CONTRACT_TEXT = """
+persistent clear_balance_state : UInt64;
+
 @init
 function init_test()
   var state = State<Int32>("init_test");
@@ -66,14 +68,25 @@ endfunction
 
 @clear
 function applyWork(problem : Int32, solution : Int32)
+  use clear_balance_state;
+
   var result = State<Int32>("solution");
   result.set(result.get(0) + solution);
+  clear_balance_state.set(balance());
 endfunction
 
 @query
 function query_result() : Int32
   var result = State<Int32>("solution");
   return result.get(-1);
+endfunction
+
+//???move to dedicated @clear test?
+@query
+function query_clear_balance_state() : UInt64
+  use clear_balance_state;
+
+  return clear_balance_state.get(9876u64);
 endfunction
 """
 
@@ -122,3 +135,8 @@ def run(options):
     action_result = contract.query(api, 'query_action_test')
     print('Action state: ', action_result)
     assert action_result == 456
+
+    print('Query clear balance state...')
+    clear_balance_result = contract.query(api, 'query_clear_balance_state')
+    print('Clear balance result: ', clear_balance_result)
+    assert clear_balance_result == 0

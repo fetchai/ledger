@@ -19,11 +19,13 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "json/document.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "logging/logging.hpp"
 #include "vectorise/uint/uint.hpp"
+#include "vm/address.hpp"
 #include "vm/array.hpp"
 #include "vm/compiler.hpp"
 #include "vm/function_decorators.hpp"
@@ -133,6 +135,39 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
   FETCH_LOG_DEBUG(LOGGING_NAME, "Synergetic contract source\n", source);
 
   // additional modules
+  module_->CreateFreeFunction("balance", [this](vm::VM *) -> uint64_t {
+    decltype(auto) c = context();
+
+    c.token_contract->Attach(*c.state_adapter);
+    c.state_adapter->PushContext(Identifier{"fetch.token"});
+
+    auto const balance = c.token_contract->GetBalance(c.contract_address);
+
+    c.state_adapter->PopContext();
+    c.token_contract->Detach();
+
+    return balance;
+  });
+
+  module_->CreateFreeFunction(
+      "releaseFunds",
+      [this](vm::VM *, vm::Ptr<vm::Address> const &target, uint64_t amount) -> bool {
+        decltype(auto) c = context();
+
+        c.token_contract->Attach(*c.state_adapter);
+        c.state_adapter->PushContext(Identifier{"fetch.token"});
+
+        auto const success = c.token_contract->SubtractTokens(c.contract_address, amount) &&
+                             c.token_contract->AddTokens(target->address(), amount);
+
+        c.state_adapter->PopContext();
+        c.token_contract->Detach();
+
+        return success;
+      });
+
+  //???  module_->CreateFreeFunction(
+  //      "getContext", [this](vm::VM *) -> vm_modules::ledger::ContextPtr { return context_; });
 
   // create the compiler and IR
   compiler_   = std::make_shared<vm::Compiler>(module_.get());
