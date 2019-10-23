@@ -90,6 +90,7 @@ public:
         }
         if (sp)
         {
+          sp->task_done.store(true);
           sp->wake();
         }
       };
@@ -98,6 +99,7 @@ public:
         auto sp = this_wp.lock();
         if (sp)
         {
+          sp->task_done.store(true);
           if (sp->messageHandler)
           {
             sp->messageHandler(std::move(result));
@@ -113,7 +115,7 @@ public:
           FETCH_LOG_WARN(LOGGING_NAME, "id=", id, ", task_id=", task_id, "; Failed to set result, no shared_ptr!");
         }
       };
-
+      task_done.store(false);
       conv_task_->submit();
 
       if (conv_task_->MakeNotification()
@@ -130,8 +132,13 @@ public:
         return ExitState ::DEFER;
       }
     }
-    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping");
-
+    if (!task_done.load())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Spurious wakeup. Sleeping (id=", this->GetTaskId(),
+                     "), will be woken by conv task ", conv_task_->GetTaskId());
+      return ExitState ::DEFER;
+    }
+    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping (id=",  this->GetTaskId(), ")");
     return ExitState ::COMPLETE;
   }
 
@@ -154,4 +161,5 @@ protected:
   std::shared_ptr<DapManager>         dap_manager_;
   std::shared_ptr<ConvTask>           conv_task_;
   std::shared_ptr<IdentifierSequence> identifier_sequence_;
+  std::atomic<bool> task_done{false};
 };

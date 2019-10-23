@@ -79,6 +79,12 @@ public:
       wake();
       return StateResult(0, ERRORED);
     }
+    //spurious wakeup
+    if (!last_task_done.load())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Spurious wakeup. Sleeping (id=", this->GetTaskId(), ")");
+      return StateResult(1, DEFER);
+    }
 
     if (pipe_.size() == 0)
     {
@@ -111,6 +117,7 @@ public:
       auto sp = this_wp.lock();
       if (sp)
       {
+        sp->last_task_done.store(true);
         if (sp->taskResultUpdate)
         {
           sp->last_output = sp->taskResultUpdate(sp, std::move(response));
@@ -131,6 +138,7 @@ public:
           auto sp = this_wp.lock();
           if (sp)
           {
+            sp->last_task_done.store(true);
             std::queue<PipeDataType> empty;
             std::swap(sp->pipe_, empty);
             sp->last_output = nullptr;
@@ -146,6 +154,7 @@ public:
           }
         });
 
+    last_task_done.store(false);
     task->submit();
 
     pipe_.pop();
@@ -164,7 +173,7 @@ public:
       return StateResult(1, DEFER);
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping");
+    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping (id=",  this->GetTaskId(), ")");
     return StateResult(1, COMPLETE);
   }
 
@@ -190,4 +199,5 @@ protected:
   std::queue<PipeDataType>   pipe_{};
 
   std::vector<EntryPoint> entryPoint{};
+  std::atomic<bool> last_task_done{true};
 };

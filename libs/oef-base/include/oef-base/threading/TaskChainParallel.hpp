@@ -161,12 +161,15 @@ public:
         ++counter;
       }
     }
-    if (counter > 0 || (results_.size() + errored_tasks_) < num_of_tasks_)
+    //spurious wakeup handled as well
+    if ((results_.size() + errored_tasks_) < num_of_tasks_)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), ")");
       return StateResult(1, DEFER);
     }
     else
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Done. (id=", this->GetTaskId(), ")");
       return StateResult(1, COMPLETE);
     }
   }

@@ -62,6 +62,7 @@ public:
       auto sp = this_wp.lock();
       if (sp)
       {
+        sp->task_done.store(true);
         sp->last_output_ = std::move(response);
       }
       else
@@ -81,6 +82,7 @@ public:
       auto sp = this_wp.lock();
       if (sp)
       {
+        sp->task_done.store(true);
         sp->last_output_ = nullptr;
         if (sp->errorHandler)
         {
@@ -99,6 +101,7 @@ public:
   {
     main_task_->SetMessageHandler(GetMessageHandler(main_task_->GetTaskId()));
     main_task_->SetErrorHandler(GetErrorHandler(main_task_->GetTaskId()));
+    task_done.store(false);
     main_task_->submit();
 
     auto this_sp = this->template shared_from_base<WithLateDapExecutorTask>();
@@ -118,12 +121,17 @@ public:
       return StateResult(1, DEFER);
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping");
+    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping id=(", this->GetTaskId(), ")");
     return StateResult(1, COMPLETE);
   }
 
   StateResult DoLateMementos()
   {
+    if (!task_done.load())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Spurious wakeup in DoLateMementos(). Sleeping (id=", this->GetTaskId(), ")");
+      return StateResult(1, DEFER);
+    }
     if (!last_output_)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "No last output set (id=", this->GetTaskId(), ")");
@@ -136,7 +144,7 @@ public:
     task->SetMessageHandler(GetMessageHandler(task->GetTaskId()));
 
     task->SetErrorHandler(GetErrorHandler(task->GetTaskId()));
-
+    task_done.store(false);
     task->submit();
 
     auto this_sp = this->template shared_from_base<WithLateDapExecutorTask>();
@@ -156,12 +164,17 @@ public:
       return StateResult(2, DEFER);
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping");
+    FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping id=(", this->GetTaskId(), ")");
     return StateResult(2, COMPLETE);
   }
 
   StateResult Done()
   {
+    if (!task_done.load())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Spurious wakeup in Done(). Sleeping (id=", this->GetTaskId(), ")");
+      return StateResult(2, DEFER);
+    }
     if (messageHandler)
     {
       messageHandler(last_output_);
@@ -189,6 +202,7 @@ protected:
   std::vector<Node::DapMemento>       late_mementos_;
   std::shared_ptr<IdentifierSequence> last_output_;
   std::shared_ptr<DapManager>         dap_manager_;
+  std::atomic<bool> task_done{false};
 
   std::vector<EntryPoint> entryPoint;
 };
