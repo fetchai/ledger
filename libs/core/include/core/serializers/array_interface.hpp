@@ -98,6 +98,7 @@ public:
                         " vs " + std::to_string(int(CODE_FIXED))));
       }
       size = static_cast<uint32_t>(opcode & TypeCodes::FIXED_VAL_MASK);
+      break;
     }
     size_ = static_cast<uint64_t>(size);
   }

@@ -35,7 +35,7 @@ public:
     , msg_(msg)
   {}
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     if (!(msg_.empty()))
     {
@@ -60,7 +60,7 @@ public:
     , msg_(msg)
   {}
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     if (!(msg_.empty()))
     {
@@ -85,7 +85,7 @@ public:
     , msg_(msg)
   {}
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     if (!(msg_.empty()))
     {
@@ -110,7 +110,7 @@ public:
     , msg_(msg)
   {}
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     if (!(msg_.empty()))
     {
@@ -135,7 +135,7 @@ public:
     , msg_(msg)
   {}
 
-  const char *what() const noexcept override
+  char const *what() const noexcept override
   {
     if (!(msg_.empty()))
     {

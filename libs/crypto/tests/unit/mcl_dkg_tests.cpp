@@ -205,11 +205,11 @@ TEST(MclDkgTests, Signing)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
 
-  uint32_t committee_size = 200;
-  uint32_t threshold      = 101;
+  uint32_t cabinet_size = 200;
+  uint32_t threshold    = 101;
 
-  // outputs[i] is assigned to node with index i in the committee
-  auto outputs = TrustedDealerGenerateKeys(committee_size, threshold);
+  // outputs[i] is assigned to node with index i in the cabinet
+  auto outputs = TrustedDealerGenerateKeys(cabinet_size, threshold);
 
   Generator group_g;
   SetGenerator(group_g);
@@ -217,14 +217,14 @@ TEST(MclDkgTests, Signing)
   std::string                             message = "Hello";
   std::unordered_map<uint32_t, Signature> threshold_signatures;
 
-  // Generate random selection of committee members
+  // Generate random selection of cabinet members
   std::set<uint32_t> members;
   while (members.size() < threshold)
   {
-    members.insert(static_cast<uint32_t>(rand()) % committee_size);
+    members.insert(static_cast<uint32_t>(rand()) % cabinet_size);
   }
 
-  for (uint32_t i = 0; i < committee_size; ++i)
+  for (uint32_t i = 0; i < cabinet_size; ++i)
   {
     // Compute signature share and validate
     Signature sig = SignShare(message, outputs[i].private_key_share);
@@ -240,4 +240,49 @@ TEST(MclDkgTests, Signing)
   // Compute group signature from combining signature shares and validate
   Signature group_signature = LagrangeInterpolation(threshold_signatures);
   EXPECT_TRUE(VerifySign(outputs[0].group_public_key, message, group_signature, group_g));
+}
+
+TEST(MclDkgTests, GenerateKeys)
+{
+  fetch::crypto::mcl::details::MCLInitialiser();
+  Generator generator;
+  SetGenerator(generator);
+
+  auto           keys      = GenerateKeyPair(generator);
+  MessagePayload message   = "hello";
+  Signature      signature = SignShare(message, keys.first);
+  EXPECT_TRUE(VerifySign(keys.second, message, signature, generator));
+}
+
+TEST(MclNotarisationTests, AggregateSigningVerification)
+{
+  fetch::crypto::mcl::details::MCLInitialiser();
+  using KeyPair = std::pair<PrivateKey, PublicKey>;
+
+  Generator generator;
+  SetGenerator(generator);
+  uint32_t               cabinet_size = 4;
+  std::vector<KeyPair>   keys;
+  std::vector<PublicKey> all_public_keys;
+  for (uint32_t i = 0; i < cabinet_size; ++i)
+  {
+    auto new_keys = GenerateKeyPair(generator);
+    keys.push_back(new_keys);
+    all_public_keys.push_back(new_keys.second);
+  }
+
+  MessagePayload                          message = "Hello";
+  std::unordered_map<uint32_t, Signature> signatures;
+  for (uint32_t i = 0; i < cabinet_size; ++i)
+  {
+    if (i != 0u)
+    {
+      Signature signature = SignShare(message, keys[i].first);
+      EXPECT_TRUE(VerifySign(keys[i].second, message, signature, generator));
+      signatures.insert({i, signature});
+    }
+  }
+
+  auto aggregate_signature = ComputeAggregateSignature(signatures, all_public_keys);
+  EXPECT_TRUE(VerifyAggregateSignature(message, aggregate_signature, all_public_keys, generator));
 }

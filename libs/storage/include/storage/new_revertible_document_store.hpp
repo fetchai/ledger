@@ -50,7 +50,6 @@ public:
   bool RevertToHash(Hash const &state);
   Hash CurrentHash();
   bool HashExists(Hash const &hash);
-  Keys KeyDump();
   void Reset();
 
   std::size_t size() const;

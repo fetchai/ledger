@@ -19,7 +19,6 @@
 
 #include "core/serializers/counter.hpp"
 #include "core/serializers/serializable_exception.hpp"
-#include "muddle/muddle_endpoint.hpp"
 #include "network/message.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/error_codes.hpp"

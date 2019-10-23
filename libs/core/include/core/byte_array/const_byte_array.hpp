@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/common.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "meta/value_util.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
@@ -595,3 +595,29 @@ ConstByteArray operator+(char const *a, ConstByteArray const &b);
 
 }  // namespace byte_array
 }  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::byte_array::ConstByteArray>
+{
+  std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const noexcept
+  {
+    uint64_t h = 2166136261U;
+    uint64_t i;
+
+    for (i = 0; i < value.size(); ++i)
+    {
+      h = (h * 16777619) ^ value[i];
+    }
+
+    return h;
+  }
+};
+
+template <>
+struct hash<fetch::byte_array::ByteArray> : public hash<fetch::byte_array::ConstByteArray>
+{
+};
+
+}  // namespace std

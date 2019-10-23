@@ -21,6 +21,7 @@
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "crypto/mcl_dkg.hpp"
 #include "muddle/rpc/client.hpp"
 
 #include <string>
@@ -42,8 +43,8 @@ class DKGMessage
 {
 public:
   using MuddleAddress = byte_array::ConstByteArray;
-  using Coefficient   = std::string;
-  using Share         = std::string;
+  using Coefficient   = crypto::mcl::PublicKey;
+  using Share         = crypto::mcl::PrivateKey;
   using CabinetId     = MuddleAddress;
 
   enum class MessageType : uint8_t
@@ -167,7 +168,7 @@ class SharesMessage : public DKGMessage
 {
   uint8_t phase_{};  ///< Phase of state machine that this message is for
   std::unordered_map<CabinetId, std::pair<Share, Share>>
-      shares_;  ///< Exposed secret shares for a particular committee member
+      shares_;  ///< Exposed secret shares for a particular cabinet member
 public:
   explicit SharesMessage(DKGSerializer &serialiser)
     : DKGMessage{MessageType::SHARE}
@@ -203,8 +204,7 @@ public:
 
 class ComplaintsMessage : public DKGMessage
 {
-  std::unordered_set<CabinetId>
-      complaints_;  ///< Committee members that you are complaining against
+  std::unordered_set<CabinetId> complaints_;  ///< Cabinet members that you are complaining against
 public:
   // Construction/Destruction
   explicit ComplaintsMessage(DKGSerializer &serialiser)

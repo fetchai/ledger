@@ -335,7 +335,7 @@ private:
       std::unordered_map<SizeType, SizeType> reverse_cluster_assignment_map{};
 
       // default value not used
-      DataType current_cluster_label = std::numeric_limits<int>::max();
+      DataType current_cluster_label = numeric_max<DataType>();
 
       // get the set of input labels, get the count for each label
       for (SizeType j = 0; j < n_points_; ++j)
@@ -449,10 +449,8 @@ private:
     fetch::core::Vector<ArrayType> cluster_distances(n_clusters_);
     SizeType                       assigned_cluster = 0;
 
-    fetch::core::Vector<typename ArrayType::Type> weights(
-        n_points_);  // weight for choosing each data point
-    fetch::core::Vector<typename ArrayType::Type> interval(
-        n_points_);  // interval for defining random distribution
+    fetch::core::Vector<DataType> weights(n_points_);   // weight for choosing each data point
+    fetch::core::Vector<DataType> interval(n_points_);  // interval for defining random distribution
     std::iota(std::begin(interval), std::end(interval), 0);  // fill interval with range
 
     for (SizeType cur_cluster = 1; cur_cluster < n_clusters_; ++cur_cluster)
@@ -478,7 +476,7 @@ private:
         if (std::find(assigned_data_points.begin(), assigned_data_points.end(), m) ==
             assigned_data_points.end())
         {
-          running_mean_ = numeric_max<typename ArrayType::Type>();
+          running_mean_ = numeric_max<DataType>();
           for (SizeType i = 0; i < (n_clusters_ - n_remaining_clusters); ++i)
           {
             if (cluster_distances[i][m] < running_mean_)
@@ -546,7 +544,7 @@ private:
 
     for (SizeType i = 0; i < n_points_; ++i)
     {
-      running_mean_ = numeric_max<typename ArrayType::Type>();
+      running_mean_ = numeric_max<DataType>();
       for (SizeType j = 0; j < n_clusters_; ++j)
       {
         if (k_euclids_[j][i] < running_mean_)
@@ -643,7 +641,7 @@ private:
     {
       for (SizeType i = 0; i < n_dimensions_; ++i)
       {
-        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<typename ArrayType::Type>(k_count_[m]));
+        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<DataType>(k_count_[m]));
       }
     }
   }
@@ -674,7 +672,7 @@ private:
     {
       for (SizeType i = 0; i < n_dimensions_; ++i)
       {
-        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<typename ArrayType::Type>(k_count_[m]));
+        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<DataType>(k_count_[m]));
       }
     }
   }
@@ -736,7 +734,7 @@ private:
   DataType assigned_k_                = numeric_max<DataType>();  // current cluster to assign
 
   // used to find the smallest distance out of K comparisons
-  typename ArrayType::Type running_mean_ = numeric_max<typename ArrayType::Type>();
+  DataType running_mean_ = numeric_max<DataType>();
 
   fetch::random::LaggedFibonacciGenerator<> lfg_;
 

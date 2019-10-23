@@ -193,23 +193,22 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<int64_t, 256> co
 
 inline VectorRegister<int64_t, 128> operator~(VectorRegister<int64_t, 128> const &x)
 {
-  return VectorRegister<int64_t, 128>(_mm_xor_si128(x.data(), _mm_cmpeq_epi64(x.data(), x.data())));
+  return {_mm_xor_si128(x.data(), _mm_cmpeq_epi64(x.data(), x.data()))};
 }
 
 inline VectorRegister<int64_t, 256> operator~(VectorRegister<int64_t, 256> const &x)
 {
-  return VectorRegister<int64_t, 256>(
-      _mm256_xor_si256(x.data(), _mm256_cmpeq_epi64(x.data(), x.data())));
+  return {_mm256_xor_si256(x.data(), _mm256_cmpeq_epi64(x.data(), x.data()))};
 }
 
 inline VectorRegister<int64_t, 128> operator-(VectorRegister<int64_t, 128> const &x)
 {
-  return VectorRegister<int64_t, 128>(_mm_sub_epi64(_mm_setzero_si128(), x.data()));
+  return {_mm_sub_epi64(_mm_setzero_si128(), x.data())};
 }
 
 inline VectorRegister<int64_t, 256> operator-(VectorRegister<int64_t, 256> const &x)
 {
-  return VectorRegister<int64_t, 256>(_mm256_sub_epi64(_mm256_setzero_si256(), x.data()));
+  return {_mm256_sub_epi64(_mm256_setzero_si256(), x.data())};
 }
 
 #define FETCH_ADD_OPERATOR(op, type, size, L, fnc)                                   \

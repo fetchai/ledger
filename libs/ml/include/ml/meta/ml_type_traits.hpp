@@ -42,6 +42,13 @@ enum class LoaderType : uint8_t
   C2V
 };
 
+enum class SliceType : uint8_t
+{
+  SINGLE_AXIS,
+  MULTI_AXIS,
+  RANGED
+};
+
 enum class OpKind : uint8_t
 {
   INVALID,
@@ -82,6 +89,8 @@ enum class OpType : uint16_t
   OP_MATRIX_MULTIPLY,
   OP_MAX_POOL_1D,
   OP_MAX_POOL_2D,
+  OP_AVG_POOL_1D,
+  OP_AVG_POOL_2D,
   OP_MAXIMUM,
   OP_MULTIPLY,
   OP_PLACEHOLDER,

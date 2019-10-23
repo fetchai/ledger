@@ -18,8 +18,8 @@
 
 #include "beacon/create_new_certificate.hpp"
 #include "core/reactor.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "shards/manifest_cache_interface.hpp"
 
 #include "muddle/create_muddle_fake.hpp"
 
@@ -39,13 +39,13 @@ using namespace fetch::crypto;
 using namespace fetch::beacon;
 
 // Dummy manifest cache - does nothing but is required for beacon service constructor
-class ManifestCacheInterfaceDummy : public fetch::ledger::ManifestCacheInterface
+class ManifestCacheInterfaceDummy : public fetch::shards::ManifestCacheInterface
 {
 public:
   ManifestCacheInterfaceDummy()           = default;
   ~ManifestCacheInterfaceDummy() override = default;
 
-  bool QueryManifest(Address const & /*address*/, fetch::ledger::Manifest & /*manifest*/) override
+  bool QueryManifest(Address const & /*address*/, fetch::shards::Manifest & /*manifest*/) override
   {
     return true;
   }
@@ -196,7 +196,7 @@ void EntropyGen(benchmark::State &state)
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
       {
-        fetch::beacon::EventCommitteeCompletedWork event;
+        fetch::beacon::EventCabinetCompletedWork event;
         if (nodes[*it]->event_manager->Poll(event))
         {
           it = pending_nodes.erase(it);
@@ -237,6 +237,6 @@ void CreateRanges(benchmark::internal::Benchmark *b)
 }
 
 // Benchmarks the time taken for 10 rounds of entropy generation with varying numbers of
-// committee members online ranging from threshold number and the whole cabinet being
+// cabinet members online ranging from threshold number and the whole cabinet being
 // online
 BENCHMARK(EntropyGen)->Apply(CreateRanges)->Unit(benchmark::kMillisecond);

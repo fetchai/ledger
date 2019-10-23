@@ -19,13 +19,13 @@
 #include "core/assert.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/set_thread_name.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "logging/logging.hpp"
 #include "moment/deadline_timer.hpp"
 #include "storage/resource_mapper.hpp"
 #include "telemetry/counter.hpp"
@@ -173,12 +173,12 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   }
 
   // update the last block hash
-  last_block_hash_  = block.hash;
-  last_block_miner_ = block.miner;
-  num_slices_       = block.slices.size();
-
-  // update the state otherwise there is a race between when the executor thread wakes up
-  state_.ApplyVoid([](auto &state) { state = State::ACTIVE; });
+  state_.ApplyVoid([&block](Summary &summary) {
+    summary.last_block_hash  = block.hash;
+    summary.last_block_miner = block.miner;
+    summary.state            = State::ACTIVE;
+  });
+  num_slices_ = block.slices.size();
 
   // trigger the monitor / dispatch thread
   {
@@ -342,19 +342,17 @@ void ExecutionManager::Stop()
 
 void ExecutionManager::SetLastProcessedBlock(Digest hash)
 {
-  // TODO(issue 33): thread safety
-  last_block_hash_ = hash;
+  state_.ApplyVoid([&hash](Summary &summary) { summary.last_block_hash = std::move(hash); });
 }
 
-Digest ExecutionManager::LastProcessedBlock()
+Digest ExecutionManager::LastProcessedBlock() const
 {
-  // TODO(issue 33): thread safety
-  return last_block_hash_;
+  return state_.Apply([](Summary const &summary) { return summary.last_block_hash; });
 }
 
 ExecutionManager::State ExecutionManager::GetState()
 {
-  return state_.Apply([](auto const &state) -> State { return state; });
+  return state_.Apply([](Summary const &summary) { return summary.state; });
 }
 
 bool ExecutionManager::Abort()
@@ -395,21 +393,21 @@ void ExecutionManager::MonitorThreadEntrypoint()
     case MonitorState::FAILED:
       FETCH_LOG_WARN(LOGGING_NAME, "Execution Engine experience fatal error");
 
-      state_.ApplyVoid([](auto &state) { state = State::EXECUTION_FAILED; });
+      state_.ApplyVoid([](Summary &summary) { summary.state = State::EXECUTION_FAILED; });
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::STALLED:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Stalled");
 
-      state_.ApplyVoid([](auto &state) { state = State::TRANSACTIONS_UNAVAILABLE; });
+      state_.ApplyVoid([](Summary &summary) { summary.state = State::TRANSACTIONS_UNAVAILABLE; });
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::COMPLETED:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Complete");
 
-      state_.ApplyVoid([](auto &state) { state = State::IDLE; });
+      state_.ApplyVoid([](Summary &summary) { summary.state = State::IDLE; });
       monitor_state = MonitorState::IDLE;
       break;
 
@@ -417,7 +415,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
     {
       blocks_completed_count_->increment();
 
-      state_.ApplyVoid([](auto &state) { state = State::IDLE; });
+      state_.ApplyVoid([](Summary &summary) { summary.state = State::IDLE; });
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Idle");
 
@@ -427,8 +425,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_wake_.wait(lock);
       }
 
-      state_.ApplyVoid([](auto &state) { state = State::ACTIVE; });
-      current_block = last_block_hash_;
+      current_block = state_.Apply([](Summary &summary) {
+        summary.state = State::ACTIVE;
+        return summary.last_block_hash;
+      });
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Active");
 
@@ -598,8 +598,12 @@ void ExecutionManager::MonitorThreadEntrypoint()
           FETCH_LOCK(idle_executors_lock_);
           if (!idle_executors_.empty())
           {
+            // lookup the last block miner
+            chain::Address const last_block_miner =
+                state_.Apply([](Summary const &summary) { return summary.last_block_miner; });
+
             // get the first one and settle the fees
-            idle_executors_.front()->SettleFees(last_block_miner_, aggregate_block_fees,
+            idle_executors_.front()->SettleFees(last_block_miner, aggregate_block_fees,
                                                 log2_num_lanes_);
             fees_settled_count_->increment();
             break;
