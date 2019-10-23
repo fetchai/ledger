@@ -18,6 +18,8 @@
 
 #include "ml/utilities/word2vec_utilities.hpp"
 
+#include <chrono>
+
 namespace fetch {
 namespace ml {
 namespace utilities {
