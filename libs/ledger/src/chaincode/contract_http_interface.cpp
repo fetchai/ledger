@@ -125,8 +125,10 @@ constexpr char const *LOGGING_NAME = "ContractHttpInterface";
  * @param processor The reference to the (input) transaction processor
  */
 ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
-                                             TransactionProcessor &processor)
-  : storage_{storage}
+                                             TransactionProcessor &processor,
+                                             TokenContract &       token_contract)
+  : token_contract_{token_contract}
+  , storage_{storage}
   , processor_{processor}
   , access_log_{"access.log"}
 {

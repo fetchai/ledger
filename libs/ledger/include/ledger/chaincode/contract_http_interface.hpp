@@ -42,7 +42,8 @@ class ContractHttpInterface : public http::HTTPModule
 {
 public:
   // Construction / Destruction
-  ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor);
+  ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor,
+                        TokenContract &token_contract);
   ContractHttpInterface(ContractHttpInterface const &) = delete;
   ContractHttpInterface(ContractHttpInterface &&)      = delete;
   ~ContractHttpInterface() override                    = default;
@@ -98,7 +99,7 @@ private:
   void WriteToAccessLog(variant::Variant const &entry);
   /// @}
 
-  TokenContract            token_contract_{};
+  TokenContract &          token_contract_;
   StorageInterface &       storage_;
   TransactionProcessor &   processor_;
   ChainCodeCache           contract_cache_{};
