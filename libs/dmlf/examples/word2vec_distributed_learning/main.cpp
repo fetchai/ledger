@@ -140,7 +140,8 @@ int main(int argc, char **argv)
   {
     W2VTrainingParams<DataType> cp = client_params;
     cp.data                        = {client_data[i]};
-    clients[i] =  std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
+    clients[i] =
+        std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
   }
 
   for (SizeType i(0); i < number_of_clients; ++i)
