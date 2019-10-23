@@ -223,7 +223,7 @@ Word2VecClient<TensorType>::TranslateGradients(
   assert(new_gradients->GetGradients().size() ==
          2);  // Translation unit is only defined for word2vec
 
-  // Add vocab from update if doesn't exist
+  // Add vocab from update if not known by translator
   if (!translator_.VocabKnown(new_gradients->GetHash()))
   {
     translator_.AddVocab(new_gradients->GetHash(), new_gradients->GetReverseVocab());
