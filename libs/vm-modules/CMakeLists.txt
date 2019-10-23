@@ -18,6 +18,7 @@ setup_library(fetch-vm-modules)
 target_link_libraries(fetch-vm-modules
                       PUBLIC fetch-vm
                              fetch-core
+                             fetch-ledger
                              fetch-math
                              fetch-ml
                              fetch-json

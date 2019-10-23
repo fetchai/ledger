@@ -101,6 +101,8 @@ public:
                              TokenContract *token_contract);
   /// @}
 
+  ContractContext const &context() const;
+
   /// @name Dispatch Maps Accessors
   /// @{
   QueryHandlerMap const &      query_handlers() const;
@@ -152,8 +154,6 @@ protected:
 
   ledger::StateAdapter &state();
   /// @}
-
-  ContractContext const &context() const;
 
 private:
   std::unique_ptr<ContractContext> context_{};

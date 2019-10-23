@@ -37,6 +37,8 @@
 #include "vm/function_decorators.hpp"
 #include "vm/module.hpp"
 #include "vm/string.hpp"
+#include "vm_modules/ledger/balance.hpp"
+#include "vm_modules/ledger/release_funds.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include <algorithm>
@@ -111,36 +113,8 @@ SmartContract::SmartContract(std::string const &source)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
 
-  module_->CreateFreeFunction("balance", [this](vm::VM *) -> uint64_t {
-    decltype(auto) c = context();
-
-    c.token_contract->Attach(c);
-    c.state_adapter->PushContext(Identifier{"fetch.token"});
-
-    auto const balance = c.token_contract->GetBalance(c.contract_address);
-
-    c.state_adapter->PopContext();
-    c.token_contract->Detach();
-
-    return balance;
-  });
-
-  module_->CreateFreeFunction(
-      "releaseFunds",
-      [this](vm::VM *, vm::Ptr<vm::Address> const &target, uint64_t amount) -> bool {
-        decltype(auto) c = context();
-
-        c.token_contract->Attach(c);
-        c.state_adapter->PushContext(Identifier{"fetch.token"});
-
-        auto const success = c.token_contract->SubtractTokens(c.contract_address, amount) &&
-                             c.token_contract->AddTokens(target->address(), amount);
-
-        c.state_adapter->PopContext();
-        c.token_contract->Detach();
-
-        return success;
-      });
+  vm_modules::ledger::BindBalanceFunction(*module_, *this);
+  vm_modules::ledger::BindReleaseFundsFunction(*module_, *this);
 
   module_->CreateFreeFunction(
       "getContext", [this](vm::VM *) -> vm_modules::ledger::ContextPtr { return context_; });

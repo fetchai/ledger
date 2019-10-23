@@ -31,6 +31,8 @@
 #include "vm/function_decorators.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/core/structured_data.hpp"
+#include "vm_modules/ledger/balance.hpp"
+#include "vm_modules/ledger/release_funds.hpp"
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/vm_factory.hpp"
 
@@ -134,37 +136,8 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Synergetic contract source\n", source);
 
-  //???deduplicate with smart contract
-  module_->CreateFreeFunction("balance", [this](vm::VM *) -> uint64_t {
-    decltype(auto) c = context();
-
-    c.token_contract->Attach(c);
-    c.state_adapter->PushContext(Identifier{"fetch.token"});
-
-    auto const balance = c.token_contract->GetBalance(c.contract_address);
-
-    c.state_adapter->PopContext();
-    c.token_contract->Detach();
-
-    return balance;
-  });
-
-  module_->CreateFreeFunction(
-      "releaseFunds",
-      [this](vm::VM *, vm::Ptr<vm::Address> const &target, uint64_t amount) -> bool {
-        decltype(auto) c = context();
-
-        c.token_contract->Attach(c);
-        c.state_adapter->PushContext(Identifier{"fetch.token"});
-
-        auto const success = c.token_contract->SubtractTokens(c.contract_address, amount) &&
-                             c.token_contract->AddTokens(target->address(), amount);
-
-        c.state_adapter->PopContext();
-        c.token_contract->Detach();
-
-        return success;
-      });
+  vm_modules::ledger::BindBalanceFunction(*module_, *this);
+  vm_modules::ledger::BindReleaseFundsFunction(*module_, *this);
 
   // create the compiler and IR
   compiler_   = std::make_shared<vm::Compiler>(module_.get());
