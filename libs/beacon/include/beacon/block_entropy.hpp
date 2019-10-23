@@ -93,7 +93,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &member)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(6);
 
     map.Append(QUALIFIED, member.qualified);
     map.Append(GROUP_PUBLIC_KEY, member.group_public_key);
