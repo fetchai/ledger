@@ -540,8 +540,8 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                   uint16_t                                                      setup_delay = 0)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
-  std::set<MuddleAddress>                                             cabinet;
-  std::vector<std::unique_ptr<DkgMember>>                             cabinet;
+  std::set<MuddleAddress>                                             cabinet_addresses;
+  std::vector<std::unique_ptr<DkgMember>>                             cabinet_members;
   std::set<RBC::MuddleAddress>                                        expected_qual;
   std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
   std::set<uint32_t>                                                  qual_index;
@@ -550,27 +550,27 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     auto port_number = static_cast<uint16_t>(9000 + ii);
     if (ii < failures.size() && !failures[ii].empty())
     {
-      cabinet.emplace_back(new FaultyDkgMember{port_number, ii, failures[ii]});
+      cabinet_members.emplace_back(new FaultyDkgMember{port_number, ii, failures[ii]});
     }
     else
     {
-      cabinet.emplace_back(new HonestDkgMember{port_number, ii});
+      cabinet_members.emplace_back(new HonestDkgMember{port_number, ii});
     }
     if (ii >= (cabinet_size - qual_size))
     {
-      expected_qual.insert(cabinet[ii]->muddle->GetAddress());
+      expected_qual.insert(cabinet_members[ii]->muddle->GetAddress());
       qual_index.insert(ii);
     }
-    peers_list.insert({cabinet[ii]->muddle_certificate->identity().identifier(),
+    peers_list.insert({cabinet_members[ii]->muddle_certificate->identity().identifier(),
                        fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(port_number)}});
-    cabinet.insert(cabinet[ii]->muddle_certificate->identity().identifier());
+    cabinet_addresses.insert(cabinet_members[ii]->muddle_certificate->identity().identifier());
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    cabinet[ii]->QueueCabinet(cabinet, threshold);
+    cabinet_members[ii]->QueueCabinet(cabinet_addresses, threshold);
   }
 
   // Start off some connections until everyone else has connected
@@ -578,19 +578,19 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   {
     for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
     {
-      cabinet[ii]->muddle->ConnectTo(cabinet[jj]->muddle->GetAddress(),
-                                     peers_list[cabinet[jj]->muddle->GetAddress()]);
+      cabinet_members[ii]->muddle->ConnectTo(cabinet_members[jj]->muddle->GetAddress(),
+                                             peers_list[cabinet_members[jj]->muddle->GetAddress()]);
     }
   }
 
   // Start at DKG
   {
-    for (auto &member : cabinet)
+    for (auto &member : cabinet_members)
     {
       member->reactor.Attach(member->GetWeakRunnables());
     }
 
-    for (auto &member : cabinet)
+    for (auto &member : cabinet_members)
     {
       member->reactor.Start();
       std::this_thread::sleep_for(std::chrono::milliseconds(setup_delay));
@@ -603,7 +603,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
       std::this_thread::sleep_for(std::chrono::seconds(1));
       for (auto qq = pp; qq < cabinet_size; ++qq)
       {
-        if (!cabinet[qq]->DkgFinished())
+        if (!cabinet_members[qq]->DkgFinished())
         {
           break;
         }
@@ -616,23 +616,23 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     uint32_t start_qual = cabinet_size - expected_completion_size;
     for (uint32_t nn = start_qual + 1; nn < cabinet_size; ++nn)
     {
-      EXPECT_EQ(cabinet[start_qual]->output.qual, expected_qual);
+      EXPECT_EQ(cabinet_members[start_qual]->output.qual, expected_qual);
     }
 
     // Check DKG is working correctly for everyone who completes the DKG successfully
     uint32_t start_complete = cabinet_size - expected_completion_size;
     for (uint32_t nn = start_complete + 1; nn < cabinet_size; ++nn)
     {
-      EXPECT_EQ(cabinet[start_complete]->output.group_public_key,
-                cabinet[nn]->output.group_public_key);
-      EXPECT_EQ(cabinet[start_complete]->output.public_key_shares,
-                cabinet[nn]->output.public_key_shares);
-      EXPECT_NE(cabinet[start_complete]->output.public_key_shares[start_complete],
-                cabinet[nn]->output.public_key_shares[nn]);
+      EXPECT_EQ(cabinet_members[start_complete]->output.group_public_key,
+                cabinet_members[nn]->output.group_public_key);
+      EXPECT_EQ(cabinet_members[start_complete]->output.public_key_shares,
+                cabinet_members[nn]->output.public_key_shares);
+      EXPECT_NE(cabinet_members[start_complete]->output.public_key_shares[start_complete],
+                cabinet_members[nn]->output.public_key_shares[nn]);
       for (uint32_t qq = nn + 1; qq < cabinet_size; ++qq)
       {
-        EXPECT_NE(cabinet[start_complete]->output.public_key_shares[nn],
-                  cabinet[start_complete]->output.public_key_shares[qq]);
+        EXPECT_NE(cabinet_members[start_complete]->output.public_key_shares[nn],
+                  cabinet_members[start_complete]->output.public_key_shares[qq]);
       }
     }
   }
