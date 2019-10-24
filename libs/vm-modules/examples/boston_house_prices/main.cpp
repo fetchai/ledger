@@ -84,8 +84,8 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::CreatePrint(*module);
 
-  module->CreateFreeFunction("read_csv", &read_csv);
-  module->CreateFreeFunction("read_csv", &read_csv_no_transpose);
+  module->CreateFreeFunction("readCSV", &read_csv);
+  module->CreateFreeFunction("readCSV", &read_csv_no_transpose);
 
   // Setting compiler up
   auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());
