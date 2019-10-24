@@ -37,13 +37,13 @@ class ReduceMeanTest : public ::testing::Test
 {
 };
 
-using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                   fetch::math::Tensor<fetch::fixed_point::fp64_t>,
-                                   fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+using MyTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>,
+                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 
-TYPED_TEST_CASE(ReduceMeanTest, BothTypes);
+TYPED_TEST_CASE(ReduceMeanTest, MyTypes);
 
-TYPED_TEST(ReduceMeanTest, forward_1_6_1_test)
+TYPED_TEST(ReduceMeanTest, forward_2_2_2_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -68,30 +68,17 @@ TYPED_TEST(ReduceMeanTest, forward_1_6_1_test)
                                   fetch::math::function_tolerance<DataType>()));
 }
 
-/*
-TYPED_TEST(ReduceMeanTest, forward_throw_test)
-{
-  using TensorType = TypeParam;
-
-  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000");
-  data.Reshape({6});
-
-  fetch::ml::ops::ReduceMean<TypeParam> op(1);
-
-  EXPECT_ANY_THROW(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  TypeParam prediction({6});
-  EXPECT_ANY_THROW(op.Forward({std::make_shared<const TensorType>(data)}, prediction));
-}
-
-TYPED_TEST(ReduceMeanTest, backward_1_5_1_test)
+TYPED_TEST(ReduceMeanTest, backward_2_2_2_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
 
-  TensorType data = TensorType::FromString("1, -2, 4, -10, 100");
-  data.Reshape({1, 5, 1});
-  TensorType error = TensorType::FromString("1, 1, 1, 2, 0");
-  error.Reshape({1, 5});
+  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
+  data.Reshape({2, 2, 2});
+  TensorType error = TensorType::FromString("1, -2, -1, 2");
+  error.Reshape({2, 1, 2});
+  TensorType gt_error = TensorType::FromString("0.5, -1, 0.5, -1, -0.5, 1, -0.5, 1");
+  gt_error.Reshape({2, 2, 2});
 
   auto shape = error.shape();
 
@@ -101,37 +88,11 @@ TYPED_TEST(ReduceMeanTest, backward_1_5_1_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   ASSERT_EQ(error_signal.at(0).shape().size(), 3);
-  ASSERT_EQ(error_signal.at(0).shape().at(0), 1);
-  ASSERT_EQ(error_signal.at(0).shape().at(1), 5);
-  ASSERT_EQ(error_signal.at(0).shape().at(2), 1);
+  ASSERT_EQ(error_signal.at(0).shape().at(0), 2);
+  ASSERT_EQ(error_signal.at(0).shape().at(1), 2);
+  ASSERT_EQ(error_signal.at(0).shape().at(2), 2);
 
-  ASSERT_TRUE(error_signal.at(0).AllClose(error, fetch::math::function_tolerance<DataType>(),
-                                          fetch::math::function_tolerance<DataType>()));
-  fetch::math::state_clear<DataType>();
-}
-
-TYPED_TEST(ReduceMeanTest, backward_1_5_test)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-
-  TensorType data = TensorType::FromString("1, -2, 4, -10, 100");
-  data.Reshape({1, 5});
-  TensorType error = TensorType::FromString("1, 1, 1, 2, 0");
-  error.Reshape({5});
-
-  auto shape = error.shape();
-
-  fetch::ml::ops::ReduceMean<TypeParam> op(1);
-
-  std::vector<TensorType> error_signal =
-      op.Backward({std::make_shared<const TensorType>(data)}, error);
-
-  ASSERT_EQ(error_signal.at(0).shape().size(), 2);
-  ASSERT_EQ(error_signal.at(0).shape().at(0), 1);
-  ASSERT_EQ(error_signal.at(0).shape().at(1), 5);
-
-  ASSERT_TRUE(error_signal.at(0).AllClose(error, fetch::math::function_tolerance<DataType>(),
+  ASSERT_TRUE(error_signal.at(0).AllClose(gt_error, fetch::math::function_tolerance<DataType>(),
                                           fetch::math::function_tolerance<DataType>()));
   fetch::math::state_clear<DataType>();
 }
@@ -144,8 +105,8 @@ TYPED_TEST(ReduceMeanTest, saveparams_test)
   using SPType        = typename fetch::ml::ops::ReduceMean<TensorType>::SPType;
   using OpType        = fetch::ml::ops::ReduceMean<TensorType>;
 
-  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000");
-  data.Reshape({6, 1});
+  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
+  data.Reshape({2, 2, 2});
 
   OpType op(1);
 
@@ -189,10 +150,10 @@ TYPED_TEST(ReduceMeanTest, saveparams_backward_test)
   using OpType     = fetch::ml::ops::ReduceMean<TensorType>;
   using SPType     = typename OpType::SPType;
 
-  TensorType data = TensorType::FromString("1, -2, 4, -10, 100");
-  data.Reshape({1, 5});
-  TensorType error = TensorType::FromString("1, 1, 1, 2, 0");
-  error.Reshape({5});
+  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
+  data.Reshape({2, 2, 2});
+  TensorType error = TensorType::FromString("1, -2, -1, 2");
+  error.Reshape({2, 1, 2});
 
   fetch::ml::ops::ReduceMean<TypeParam> op(1);
 
@@ -237,14 +198,14 @@ TYPED_TEST(ReduceMeanTest, ReduceMean_graph_serialization_test)
   using DataType   = typename TypeParam::Type;
   using SPType     = fetch::ml::GraphSaveableParams<TensorType>;
 
-  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000");
-  data.Reshape({6, 1});
+  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
+  data.Reshape({2, 2, 2});
 
   fetch::ml::Graph<TensorType> g;
 
   std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
   std::string output_name =
-      g.template AddNode<fetch::ml::ops::ReduceMean<TensorType>>("Output", {input_name});
+      g.template AddNode<fetch::ml::ops::ReduceMean<TensorType>>("Output", {input_name}, 1);
 
   g.SetInput(input_name, data);
   TypeParam output = g.Evaluate("Output");
@@ -272,4 +233,3 @@ TYPED_TEST(ReduceMeanTest, ReduceMean_graph_serialization_test)
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));
 }
-*/

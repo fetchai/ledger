@@ -92,14 +92,14 @@ public:
     assert(inputs.size() == 1);
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
-    TensorType ret_error_signal(this->ComputeOutputShape(inputs));
+    TensorType ret_error_signal(inputs.at(0)->shape());
 
     Broadcast(
         [](DataType const &x, DataType const &y, DataType &z) {
           FETCH_UNUSED(y);
           z = x;
         },
-        error_signal, error_signal, ret_error_signal);
+        error_signal, ret_error_signal, ret_error_signal);
 
     // Average error signal along specified axis
     fetch::math::Divide(ret_error_signal, static_cast<DataType>(inputs.at(0)->shape().at(axis_)),
