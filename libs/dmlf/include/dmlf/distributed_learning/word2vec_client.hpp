@@ -25,7 +25,7 @@
 #include "ml/utilities/word2vec_utilities.hpp"
 
 namespace fetch {
-namespace ml {
+namespace dmlf {
 namespace distributed_learning {
 
 template <class TensorType>
@@ -116,7 +116,7 @@ void Word2VecClient<TensorType>::Test()
   {
     // Lock model
     FETCH_LOCK(this->model_mutex_);
-    utilities::TestEmbeddings<TensorType>(
+    fetch::ml::utilities::TestEmbeddings<TensorType>(
         *this->g_ptr_, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1, tp_.word2, tp_.word3,
         tp_.k, tp_.analogies_test_file, false, "/tmp/w2v_client_" + this->id_);
   }
@@ -125,9 +125,10 @@ void Word2VecClient<TensorType>::Test()
 template <class TensorType>
 float Word2VecClient<TensorType>::ComputeAnalogyScore()
 {
-  TensorType const &weights = utilities::GetEmbeddings(*this->g_ptr_, skipgram_);
+  TensorType const &weights = fetch::ml::utilities::GetEmbeddings(*this->g_ptr_, skipgram_);
 
-  return utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights, tp_.analogies_test_file)
+  return fetch::ml::utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights,
+                                                 tp_.analogies_test_file)
       .second;
 }
 
@@ -252,5 +253,5 @@ float Word2VecClient<TensorType>::GetAnalogyScore()
 }
 
 }  // namespace distributed_learning
-}  // namespace ml
+}  // namespace dmlf
 }  // namespace fetch

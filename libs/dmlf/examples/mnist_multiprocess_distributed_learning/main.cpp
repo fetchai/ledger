@@ -17,7 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
-#include "dmlf/distributed_learning/distributed_learning_utilities.hpp"
+#include "dmlf/distributed_learning/utilities/distributed_learning_utilities.hpp"
+#include "dmlf/distributed_learning/utilities/mnist_client_utilities.hpp"
 #include "dmlf/networkers/muddle_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
@@ -25,7 +26,6 @@
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-#include "ml/utilities/mnist_client_utilities.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -38,7 +38,7 @@
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-using namespace fetch::ml::distributed_learning;
+using namespace fetch::dmlf::distributed_learning;
 
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
@@ -75,7 +75,7 @@ int main(int ac, char **av)
 
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 
-  auto client = fetch::ml::utilities::MakeMNISTClient<TensorType>(
+  auto client = fetch::dmlf::distributed_learning::utilities::MakeMNISTClient<TensorType>(
       std::to_string(instance_number), client_params, images_filename, labels_filename,
       test_set_ratio, console_mutex_ptr);
   auto networker = std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(config, instance_number);

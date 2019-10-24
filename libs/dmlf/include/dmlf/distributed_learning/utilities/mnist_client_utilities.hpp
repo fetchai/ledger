@@ -17,15 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/distributed_learning/distributed_learning_client.hpp"
+#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
+#include "ml/ops/activations/relu.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/placeholder.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
+
 namespace fetch {
-namespace ml {
+namespace dmlf {
+namespace distributed_learning {
 namespace utilities {
 
 template <typename TensorType>
-std::shared_ptr<fetch::ml::distributed_learning::TrainingClient<TensorType>> MakeBostonClient(
-    std::string                                                               id,
-    fetch::ml::distributed_learning::ClientParams<typename TensorType::Type> &client_params,
-    TensorType &data_tensor, TensorType &label_tensor, float test_set_ratio,
+std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>> MakeMNISTClient(
+    std::string const &                                                         id,
+    fetch::dmlf::distributed_learning::ClientParams<typename TensorType::Type> &client_params,
+    std::string const &images, std::string const &labels, float test_set_ratio,
     std::shared_ptr<std::mutex> console_mutex_ptr)
 {
   // Initialise model
@@ -34,25 +42,24 @@ std::shared_ptr<fetch::ml::distributed_learning::TrainingClient<TensorType>> Mak
 
   client_params.inputs_names = {
       g_ptr->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {})};
-  g_ptr->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC1", {"Input"}, 13u,
-                                                                         10u);
+  g_ptr->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC1", {"Input"},
+                                                                         28u * 28u, 10u);
   g_ptr->template AddNode<fetch::ml::ops::Relu<TensorType>>("Relu1", {"FC1"});
   g_ptr->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u,
                                                                          10u);
   g_ptr->template AddNode<fetch::ml::ops::Relu<TensorType>>("Relu2", {"FC2"});
-  g_ptr->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 1u);
+  g_ptr->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u,
+                                                                         10u);
+  g_ptr->template AddNode<fetch::ml::ops::Softmax<TensorType>>("Softmax", {"FC3"});
   client_params.label_name =
       g_ptr->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
-  client_params.error_name =
-      g_ptr->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>("Error",
-                                                                               {"FC3", "Label"});
+  client_params.error_name = g_ptr->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
+      "Error", {"Softmax", "Label"});
   g_ptr->Compile();
 
   // Initialise DataLoader
-  std::shared_ptr<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>> dataloader_ptr =
-      std::make_shared<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
-  dataloader_ptr->AddData(data_tensor, label_tensor);
-
+  std::shared_ptr<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>> dataloader_ptr =
+      std::make_shared<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>>(images, labels);
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);
   // Initialise Optimiser
@@ -61,10 +68,11 @@ std::shared_ptr<fetch::ml::distributed_learning::TrainingClient<TensorType>> Mak
           std::shared_ptr<fetch::ml::Graph<TensorType>>(g_ptr), client_params.inputs_names,
           client_params.label_name, client_params.error_name, client_params.learning_rate);
 
-  return std::make_shared<fetch::ml::distributed_learning::TrainingClient<TensorType>>(
+  return std::make_shared<fetch::dmlf::distributed_learning::TrainingClient<TensorType>>(
       id, g_ptr, dataloader_ptr, optimiser_ptr, client_params, console_mutex_ptr);
 }
 
 }  // namespace utilities
-}  // namespace ml
+}  // namespace distributed_learning
+}  // namespace dmlf
 }  // namespace fetch

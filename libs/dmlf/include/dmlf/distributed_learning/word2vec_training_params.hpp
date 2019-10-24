@@ -24,7 +24,7 @@
 ////////////////////////////////
 
 namespace fetch {
-namespace ml {
+namespace dmlf {
 namespace distributed_learning {
 
 template <class DataType>
@@ -77,5 +77,5 @@ struct W2VTrainingParams : public ClientParams<DataType>
 };
 
 }  // namespace distributed_learning
-}  // namespace ml
+}  // namespace dmlf
 }  // namespace fetch

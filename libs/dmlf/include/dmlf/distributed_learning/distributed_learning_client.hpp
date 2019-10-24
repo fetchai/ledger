@@ -37,7 +37,7 @@
 #include <vector>
 
 namespace fetch {
-namespace ml {
+namespace dmlf {
 namespace distributed_learning {
 
 template <typename DataType>
@@ -255,8 +255,9 @@ void TrainingClient<TensorType>::Run()
 
     if (lossfile)
     {
-      lossfile << utilities::GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
-               << static_cast<double>(test_loss_) << "\n";
+      lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
+               << static_cast<double>(train_loss_) << ", " << static_cast<double>(test_loss_)
+               << "\n";
     }
 
     if (print_loss_)
@@ -273,7 +274,7 @@ void TrainingClient<TensorType>::Run()
 
   if (lossfile)
   {
-    lossfile << utilities::GetStrTimestamp() << ", "
+    lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
              << "STOPPED"
              << "\n";
     lossfile.close();
@@ -404,8 +405,8 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
   auto weights_it = new_weights.cbegin();
   for (auto &trainable_lookup : g_ptr_->trainable_lookup_)
   {
-    auto trainable_ptr =
-        std::dynamic_pointer_cast<ops::Trainable<TensorType>>((trainable_lookup.second)->GetOp());
+    auto trainable_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<TensorType>>(
+        (trainable_lookup.second)->GetOp());
     trainable_ptr->SetWeights(*weights_it);
     ++weights_it;
   }
@@ -479,7 +480,7 @@ void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr
   auto grad_it = gradients.begin();
   for (auto &trainable : g_ptr->GetTrainables())
   {
-    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>(trainable);
+    auto weights_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(trainable);
     weights_ptr->AddToGradient(*grad_it);
     ++grad_it;
   }
@@ -492,5 +493,5 @@ std::shared_ptr<fetch::ml::Graph<TensorType>> TrainingClient<TensorType>::GetMod
 }
 
 }  // namespace distributed_learning
-}  // namespace ml
+}  // namespace dmlf
 }  // namespace fetch

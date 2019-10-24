@@ -17,17 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
-#include "dmlf/distributed_learning/distributed_learning_utilities.hpp"
+#include "dmlf/distributed_learning/utilities/boston_housing_client_utilities.hpp"
+#include "dmlf/distributed_learning/utilities/distributed_learning_utilities.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
-#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
-#include "ml/utilities/boston_housing_client_utilities.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -40,101 +37,12 @@
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-using namespace fetch::ml::distributed_learning;
+using namespace fetch::dmlf::distributed_learning;
 
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
-
-/**
- * Get loss of given model on given dataset
- * @param g_ptr model
- * @param data_tensor input
- * @param label_tensor label
- * @return
- */
-DataType Test(std::shared_ptr<fetch::ml::Graph<TensorType>> const &g_ptr,
-              TensorType const &data_tensor, TensorType const &label_tensor)
-{
-  g_ptr->SetInput("Input", data_tensor);
-  g_ptr->SetInput("Label", label_tensor);
-  return *(g_ptr->Evaluate("Error").begin());
-}
-
-/**
- * Split data to multiple parts
- * @param data input data
- * @param number_of_parts number of parts
- * @return vector of tensors
- */
-std::vector<TensorType> Split(TensorType &data, SizeType number_of_parts)
-{
-  SizeType axis      = data.shape().size() - 1;
-  SizeType data_size = data.shape().at(axis);
-
-  // Split data for each client
-  std::vector<SizeType> splitting_points;
-
-  SizeType client_data_size         = data_size / number_of_parts;
-  SizeType index                    = 0;
-  SizeType current_client_data_size = client_data_size;
-  for (SizeType i = 0; i < number_of_parts; i++)
-  {
-    if (i == number_of_parts - 1)
-    {
-      current_client_data_size = data_size - index;
-    }
-    splitting_points.push_back(current_client_data_size);
-    index += client_data_size;
-  }
-
-  return TensorType::Split(data, splitting_points, axis);
-}
-
-void Shuffle(TensorType &data, TensorType &labels, SizeType const &seed = 54)
-{
-  TensorType data_out   = data.Copy();
-  TensorType labels_out = labels.Copy();
-
-  std::vector<SizeType> indices;
-  SizeType              axis = data.shape().size() - 1;
-
-  for (SizeType i{0}; i < data.shape().at(axis); i++)
-  {
-    indices.push_back(i);
-  }
-
-  fetch::random::LaggedFibonacciGenerator<> lfg(seed);
-  fetch::random::Shuffle(lfg, indices, indices);
-
-  for (SizeType i{0}; i < data.shape().at(axis); i++)
-  {
-    auto data_it       = data.View(i).begin();
-    auto data_out_it   = data_out.View(indices.at(i)).begin();
-    auto labels_it     = labels.View(i).begin();
-    auto labels_out_it = labels_out.View(indices.at(i)).begin();
-
-    while (data_it.is_valid())
-    {
-      *data_out_it = *data_it;
-
-      ++data_it;
-      ++data_out_it;
-    }
-
-    while (labels_it.is_valid())
-    {
-      *labels_out_it = *labels_it;
-
-      ++labels_it;
-      ++labels_out_it;
-    }
-  }
-
-  data   = data_out;
-  labels = labels_out;
-}
 
 int main(int argc, char **argv)
 {
@@ -172,11 +80,11 @@ int main(int argc, char **argv)
       fetch::ml::dataloaders::ReadCSV<TensorType>(labels_filename).Transpose();
 
   // Shuffle data
-  Shuffle(data_tensor, label_tensor, seed);
+  utilities::Shuffle(data_tensor, label_tensor, seed);
 
   // Split data
-  std::vector<TensorType> data_tensors  = Split(data_tensor, number_of_clients);
-  std::vector<TensorType> label_tensors = Split(label_tensor, number_of_clients);
+  std::vector<TensorType> data_tensors  = utilities::Split(data_tensor, number_of_clients);
+  std::vector<TensorType> label_tensors = utilities::Split(label_tensor, number_of_clients);
 
   std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
 
@@ -198,8 +106,8 @@ int main(int argc, char **argv)
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = fetch::ml::utilities::MakeBostonClient<TensorType>(
-        i, client_params, data_tensors.at(i), label_tensors.at(i), test_set_ratio,
+    clients[i] = fetch::dmlf::distributed_learning::utilities::MakeBostonClient<TensorType>(
+        std::to_string(i), client_params, data_tensors.at(i), label_tensors.at(i), test_set_ratio,
         console_mutex_ptr);
   }
 
@@ -238,14 +146,16 @@ int main(int argc, char **argv)
     std::cout << it;
     for (auto &c : clients)
     {
-      std::cout << "\t" << static_cast<double>(Test(c->GetModel(), data_tensor, label_tensor));
+      std::cout << "\t"
+                << static_cast<double>(utilities::Test(c->GetModel(), data_tensor, label_tensor));
     }
     std::cout << std::endl;
 
     lossfile << it;
     for (auto &c : clients)
     {
-      lossfile << "," << static_cast<double>(Test(c->GetModel(), data_tensor, label_tensor));
+      lossfile << ","
+               << static_cast<double>(utilities::Test(c->GetModel(), data_tensor, label_tensor));
     }
     lossfile << std::endl;
 
@@ -253,7 +163,7 @@ int main(int argc, char **argv)
     if (synchronise)
     {
       std::cout << std::endl << "Synchronising weights" << std::endl;
-      SynchroniseWeights<TensorType>(clients);
+      fetch::dmlf::distributed_learning::utilities::SynchroniseWeights<TensorType>(clients);
     }
   }
 
