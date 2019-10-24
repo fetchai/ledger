@@ -234,6 +234,7 @@ auto const Add64 = R"(
 
 )";
 
+<<<<<<< HEAD
 auto const AddFloat        = R"(
 
 function add(a : Float64, b : Float64) : Float64
@@ -250,6 +251,9 @@ endfunction
 )";
 
 auto const AddFixed = R"(
+=======
+auto const AddFloat = R"(
+>>>>>>> 92848c82c7e1448cf6941fa6805e9b0c901f9ae6
 
 function add(a : Fixed64, b : Fixed32) : Fixed64
   return a + toFixed64(b);
