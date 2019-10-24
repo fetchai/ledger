@@ -206,7 +206,7 @@ public:
 
   /// Search
   /// @{
-  ResultList FindMessengers(ConstByteArray query)
+  ResultList FindMessengers(ConstByteArray /*query*/)
   {
     return {};
   }
