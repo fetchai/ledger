@@ -56,6 +56,10 @@ int main(int ac, char **av)
     return 1;
   }
 
+  /**
+   * Prepare configuration
+   */
+
   ClientParams<DataType> client_params;
 
   // Command line parameters
@@ -65,28 +69,40 @@ int main(int ac, char **av)
   int         instance_number = std::atoi(av[4]);
 
   // Distributed learning parameters:
-  SizeType number_of_rounds                     = 10;
-  client_params.max_updates                     = 100;  // Round ends after this number of batches
-  SizeType number_of_peers                      = 3;
-  client_params.batch_size                      = 32;
-  client_params.learning_rate                   = static_cast<DataType>(.001f);
-  float                       test_set_ratio    = 0.03f;
-  std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
+  SizeType number_of_rounds   = 10;
+  client_params.max_updates   = 100;  // Round ends after this number of batches
+  SizeType number_of_peers    = 3;
+  client_params.batch_size    = 32;
+  client_params.learning_rate = static_cast<DataType>(.001f);
+  float test_set_ratio        = 0.03f;
 
+  /**
+   * Prepare environment
+   */
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 
+  // Create console mutex
+  std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
+
+  // Create learning client
   auto client = fetch::dmlf::distributed_learning::utilities::MakeMNISTClient<TensorType>(
       std::to_string(instance_number), client_params, images_filename, labels_filename,
       test_set_ratio, console_mutex_ptr);
+
+  // Create networker and assign shuffle algorithm
   auto networker = std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(config, instance_number);
   networker->Initialize<fetch::dmlf::Update<TensorType>>();
 
   networker->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
       networker->GetPeerCount(), number_of_peers));
 
+  // Give client pointer to its networker
   client->SetNetworker(networker);
 
-  // Main loop
+  /**
+   * Main loop
+   */
+
   for (SizeType it{0}; it < number_of_rounds; ++it)
   {
     // Start all clients

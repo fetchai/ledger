@@ -54,6 +54,10 @@ int main(int ac, char **av)
     return 1;
   }
 
+  /**
+   * Prepare configuration
+   */
+
   ClientParams<DataType> client_params;
 
   // Command line parameters
@@ -61,27 +65,32 @@ int main(int ac, char **av)
   std::string labels_filename = av[2];
 
   // Distributed learning parameters:
-  SizeType number_of_clients                    = 10;
-  SizeType number_of_rounds                     = 10;
-  bool     synchronise                          = false;
-  client_params.max_updates                     = 100;  // Round ends after this number of batches
-  SizeType number_of_peers                      = 3;
-  client_params.batch_size                      = 32;
-  client_params.learning_rate                   = static_cast<DataType>(.001f);
-  float                       test_set_ratio    = 0.03f;
-  std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
+  SizeType number_of_clients  = 10;
+  SizeType number_of_rounds   = 10;
+  bool     synchronise        = false;
+  client_params.max_updates   = 100;  // Round ends after this number of batches
+  SizeType number_of_peers    = 3;
+  client_params.batch_size    = 32;
+  client_params.learning_rate = static_cast<DataType>(.001f);
+  float test_set_ratio        = 0.03f;
 
-  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
-
+  /**
+   * Prepare environment
+   */
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 
+  // Create console mutex
+  std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
+
   // Create networkers
+  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
     networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
   }
 
+  // Add peers to networkers and initialise shuffle algorithm
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     networkers[i]->AddPeers(networkers);
@@ -89,6 +98,7 @@ int main(int ac, char **av)
         networkers[i]->GetPeerCount(), number_of_peers));
   }
 
+  // Create training clients
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
@@ -98,13 +108,17 @@ int main(int ac, char **av)
         console_mutex_ptr);
   }
 
+  // Give each client pointer to its networker
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
-    // Give each client pointer to coordinator
+    // Give each client pointer to its networker
     clients[i]->SetNetworker(networkers[i]);
   }
 
-  // Main loop
+  /**
+   * Main loop
+   */
+
   for (SizeType it{0}; it < number_of_rounds; ++it)
   {
     // Start all clients

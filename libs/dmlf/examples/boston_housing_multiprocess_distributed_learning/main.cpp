@@ -57,6 +57,10 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  /**
+   * Prepare configuration
+   */
+
   ClientParams<DataType> client_params;
 
   // Command line parameters
@@ -69,13 +73,18 @@ int main(int argc, char **argv)
   int         instance_number = std::atoi(argv[7]);
 
   // Distributed learning parameters:
-  SizeType number_of_clients                    = 6;
-  SizeType number_of_rounds                     = 200;
-  client_params.max_updates                     = 16;  // Round ends after this number of batches
-  SizeType number_of_peers                      = 3;
-  client_params.batch_size                      = 32;
-  client_params.learning_rate                   = learning_rate;
-  float                       test_set_ratio    = 0.00f;
+  SizeType number_of_clients  = 6;
+  SizeType number_of_rounds   = 200;
+  client_params.max_updates   = 16;  // Round ends after this number of batches
+  SizeType number_of_peers    = 3;
+  client_params.batch_size    = 32;
+  client_params.learning_rate = learning_rate;
+  float test_set_ratio        = 0.00f;
+
+  /**
+   * Prepare environment
+   */
+
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   // Load data
@@ -86,18 +95,22 @@ int main(int argc, char **argv)
   // Shuffle data
   utilities::Shuffle(data_tensor, label_tensor, seed);
 
+  // Create learning client
   auto client = fetch::dmlf::distributed_learning::utilities::MakeBostonClient<TensorType>(
       std::to_string(instance_number), client_params, data_tensor, label_tensor, test_set_ratio,
       console_mutex_ptr);
 
+  // Create networker and assign shuffle algorithm
   auto networker = std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(config, instance_number);
   networker->Initialize<fetch::dmlf::Update<TensorType>>();
 
   networker->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
       networker->GetPeerCount(), number_of_peers));
 
+  // Give client pointer to its networker
   client->SetNetworker(networker);
 
+  // Create loss csv file
   std::string results_filename = results_dir + "/fetch_" + std::to_string(number_of_clients) +
                                  "_Adam_" + std::to_string(float(learning_rate)) + "_" +
                                  std::to_string(seed) + "_FC3.csv";
@@ -108,11 +121,18 @@ int main(int argc, char **argv)
     throw fetch::ml::exceptions::InvalidFile("Bad output file");
   }
 
-  // Main loop
+  /**
+   * Main loop
+   */
+
   for (SizeType it{0}; it < number_of_rounds; ++it)
   {
+    std::cout << "================= ROUND : " << it << " =================" << std::endl;
+
+    // Start client
     client->Run();
 
+    // Write statistic to csv
     std::cout << it << "\t"
               << static_cast<double>(utilities::Test(client->GetModel(), data_tensor, label_tensor))
               << std::endl;

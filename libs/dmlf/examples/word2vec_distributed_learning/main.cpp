@@ -171,6 +171,7 @@ int main(int argc, char **argv)
     networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
   }
 
+  // Add peers to networkers and initialise shuffle algorithm
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     networkers[i]->AddPeers(networkers);
@@ -185,11 +186,8 @@ int main(int argc, char **argv)
     cp.data                        = {client_data[i]};
     clients[i] =
         std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
-  }
 
-  for (SizeType i(0); i < number_of_clients; ++i)
-  {
-    // Give each client pointer to coordinator
+    // Give each client pointer to its networker
     clients[i]->SetNetworker(networkers[i]);
   }
 
@@ -198,7 +196,6 @@ int main(int argc, char **argv)
    */
   for (SizeType it(0); it < number_of_rounds; ++it)
   {
-
     // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
@@ -213,6 +210,7 @@ int main(int argc, char **argv)
       t.join();
     }
 
+    // Write statistic to csv
     std::ofstream lossfile(output_csv_file, std::ofstream::out | std::ofstream::app);
 
     std::cout << "Test losses:";
@@ -231,13 +229,12 @@ int main(int argc, char **argv)
 
     lossfile.close();
 
-    if (!synchronisation)
+    // Synchronize weights by giving all clients average of all client's weights
+    if (synchronisation)
     {
-      continue;
+      std::cout << std::endl << "Synchronising weights" << std::endl;
+      SynchroniseWeights(clients);
     }
-
-    std::cout << std::endl << "Synchronising weights" << std::endl;
-    SynchroniseWeights(clients);
   }
 
   return 0;

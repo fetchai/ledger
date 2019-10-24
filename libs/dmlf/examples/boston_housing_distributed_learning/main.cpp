@@ -54,6 +54,10 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  /**
+   * Prepare configuration
+   */
+
   ClientParams<DataType> client_params;
 
   // Command line parameters
@@ -64,14 +68,19 @@ int main(int argc, char **argv)
   std::string results_dir     = argv[5];
 
   // Distributed learning parameters:
-  SizeType number_of_clients                    = 6;
-  SizeType number_of_rounds                     = 200;
-  bool     synchronise                          = false;
-  client_params.max_updates                     = 16;  // Round ends after this number of batches
-  SizeType number_of_peers                      = 3;
-  client_params.batch_size                      = 32;
-  client_params.learning_rate                   = learning_rate;
-  float                       test_set_ratio    = 0.00f;
+  SizeType number_of_clients  = 6;
+  SizeType number_of_rounds   = 200;
+  bool     synchronise        = false;
+  client_params.max_updates   = 16;  // Round ends after this number of batches
+  SizeType number_of_peers    = 3;
+  client_params.batch_size    = 32;
+  client_params.learning_rate = learning_rate;
+  float test_set_ratio        = 0.00f;
+
+  /**
+   * Prepare environment
+   */
+
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   // Load data
@@ -86,15 +95,15 @@ int main(int argc, char **argv)
   std::vector<TensorType> data_tensors  = utilities::Split(data_tensor, number_of_clients);
   std::vector<TensorType> label_tensors = utilities::Split(label_tensor, number_of_clients);
 
-  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
-
   // Create networkers
+  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
     networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
   }
 
+  // Add peers to networkers and initialise shuffle algorithm
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     networkers[i]->AddPeers(networkers);
@@ -102,6 +111,7 @@ int main(int argc, char **argv)
         networkers[i]->GetPeerCount(), number_of_peers));
   }
 
+  // Create training clients
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
@@ -109,14 +119,12 @@ int main(int argc, char **argv)
     clients[i] = fetch::dmlf::distributed_learning::utilities::MakeBostonClient<TensorType>(
         std::to_string(i), client_params, data_tensors.at(i), label_tensors.at(i), test_set_ratio,
         console_mutex_ptr);
-  }
 
-  for (SizeType i{0}; i < number_of_clients; ++i)
-  {
     // Give each client pointer to its networker
     clients[i]->SetNetworker(networkers[i]);
   }
 
+  // Create loss csv file
   std::string results_filename = results_dir + "/fetch_" + std::to_string(number_of_clients) +
                                  "_Adam_" + std::to_string(float(learning_rate)) + "_" +
                                  std::to_string(seed) + "_FC3.csv";
@@ -127,10 +135,14 @@ int main(int argc, char **argv)
     throw fetch::ml::exceptions::InvalidFile("Bad output file");
   }
 
-  // Main loop
+  /**
+   * Main loop
+   */
+
   for (SizeType it{0}; it < number_of_rounds; ++it)
   {
     // Start all clients
+    std::cout << "================= ROUND : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
@@ -143,20 +155,17 @@ int main(int argc, char **argv)
       t.join();
     }
 
+    // Write statistic to csv
     std::cout << it;
+    lossfile << it;
     for (auto &c : clients)
     {
       std::cout << "\t"
                 << static_cast<double>(utilities::Test(c->GetModel(), data_tensor, label_tensor));
-    }
-    std::cout << std::endl;
-
-    lossfile << it;
-    for (auto &c : clients)
-    {
       lossfile << ","
                << static_cast<double>(utilities::Test(c->GetModel(), data_tensor, label_tensor));
     }
+    std::cout << std::endl;
     lossfile << std::endl;
 
     // Synchronize weights by giving all clients average of all client's weights

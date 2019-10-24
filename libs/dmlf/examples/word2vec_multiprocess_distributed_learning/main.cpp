@@ -90,28 +90,34 @@ int main(int argc, char **argv)
   W2VTrainingParams<DataType> cp = client_params;
   cp.data                        = {client_data};
 
-  auto client    = std::make_shared<Word2VecClient<TensorType>>(std::to_string(instance_number), cp,
+  // Create learning client
+  auto client = std::make_shared<Word2VecClient<TensorType>>(std::to_string(instance_number), cp,
                                                              console_mutex_ptr);
+
+  // Create networker and assign shuffle algorithm
   auto networker = std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(config, instance_number);
   networker->Initialize<fetch::dmlf::Update<TensorType>>();
 
   networker->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
       networker->GetPeerCount(), number_of_peers));
 
+  // Give client pointer to its networker
   client->SetNetworker(networker);
 
   /**
    * Main loop
    */
+
   for (SizeType it(0); it < number_of_rounds; ++it)
   {
-    // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
 
+    // Start client
     client->Run();
 
     std::ofstream lossfile(output_csv_file, std::ofstream::out | std::ofstream::app);
 
+    // Write statistic to csv
     std::cout << "Test losses:";
     lossfile << utilities::GetStrTimestamp();
     auto *w2v_client = dynamic_cast<Word2VecClient<TensorType> *>(client.get());
