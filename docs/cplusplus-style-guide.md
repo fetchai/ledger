@@ -6,7 +6,6 @@ This documents contains guidelines regarding:
 
 * File structure
 * Comments and documentation
-* Tests
 * Naming
 * Formatting
 * Typing
