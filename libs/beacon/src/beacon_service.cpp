@@ -242,6 +242,8 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   std::size_t random_member_index = random_number_++ % missing_signatures_from.size();
   auto        it = std::next(missing_signatures_from.begin(), long(random_member_index));
 
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Get Signature shares... (index: ", index, ")");
+
   qual_promise_identity_ = Identity(*it);
   sig_share_promise_ =
       rpc_client_.CallSpecificAddress(qual_promise_identity_.identifier(), RPC_BEACON,
