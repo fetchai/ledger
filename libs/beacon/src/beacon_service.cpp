@@ -161,7 +161,7 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 {
   FETCH_LOCK(mutex_);
 
-  // Checking whether the next committee is ready
+  // Checking whether the next cabinet is ready
   // to produce random numbers.
   if (!aeon_exe_queue_.empty())
   {
@@ -330,7 +330,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 }
 
 /**
- * Entropy has been successfully generated. Set up the next entropy gen or rotate committee
+ * Entropy has been successfully generated. Set up the next entropy gen or rotate cabinet
  */
 BeaconService::State BeaconService::OnCompleteState()
 {
@@ -343,6 +343,14 @@ BeaconService::State BeaconService::OnCompleteState()
   // Populate the block entropy structure appropriately
   block_entropy_being_created_->group_signature =
       active_exe_unit_->manager.GroupSignature().getStr();
+
+  // Check when in debug mode that the block entropy signing has gone correctly
+  if (!dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
+                                  block_entropy_previous_->EntropyAsSHA256(),
+                                  block_entropy_being_created_->group_signature))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify freshly signed entropy!");
+  }
 
   // Save it for querying
   completed_block_entropy_[index] = block_entropy_being_created_;
@@ -358,7 +366,7 @@ BeaconService::State BeaconService::OnCompleteState()
     return State::PREPARE_ENTROPY_GENERATION;
   }
 
-  EventCommitteeCompletedWork event;
+  EventCabinetCompletedWork event;
   event_manager_->Dispatch(event);
 
   return State::WAIT_FOR_SETUP_COMPLETION;
@@ -451,8 +459,8 @@ char const *ToString(BeaconService::State state)
   case BeaconService::State::COMPLETE:
     text = "Completion state";
     break;
-  case BeaconService::State::COMITEE_ROTATION:
-    text = "Decide on committee rotation";
+  case BeaconService::State::CABINET_ROTATION:
+    text = "Decide on cabinet rotation";
     break;
   case BeaconService::State::OBSERVE_ENTROPY_GENERATION:
     text = "Observe entropy generation";

@@ -31,8 +31,8 @@ def parse_commandline():
         '-o', '--output', default='genesis_file.json', help='Path to generated file')
     parser.add_argument('-t', '--threshold', type=float, default=0.6,
                         help='The required threshold')
-    parser.add_argument('-m', '--max-committee', type=int,
-                        help='The maximum committee size allowed')
+    parser.add_argument('-m', '--max-cabinet', type=int,
+                        help='The maximum cabinet size allowed')
     parser.add_argument('-n', '--no-formatting', dest='no_formatting', action='store_true',
                         help='Whether to format the output file for readability')
     parser.set_defaults(no_formatting=False)
@@ -77,12 +77,12 @@ def main():
     individual_stake = (min(args.stake_percentage, 100)
                         * individual_balance) // 100
 
-    max_committee = 0
+    max_cabinet = 0
 
-    if not args.max_committee:
-        max_committee = len(args.addresses)
+    if not args.max_cabinet:
+        max_cabinet = len(args.addresses)
     else:
-        max_committee = args.max_committee
+        max_cabinet = args.max_cabinet
 
     stakes = []
     state = []
@@ -119,7 +119,7 @@ def main():
         'version': 2,
         'consensus': {
             'startTime': start_time,
-            'committeeSize': max_committee,
+            'cabinetSize': max_cabinet,
             'threshold': float(args.threshold),
             'stakers': stakes,
         },

@@ -46,7 +46,7 @@ void ComplaintsManager::AddComplaintAgainst(MuddleAddress const &complaint_addre
 
 void ComplaintsManager::AddComplaintsFrom(MuddleAddress const &                    from,
                                           std::unordered_set<MuddleAddress> const &complaints,
-                                          std::set<MuddleAddress> const &          committee)
+                                          std::set<MuddleAddress> const &          cabinet)
 {
   FETCH_LOCK(mutex_);
   // Check if we have received a complaints message from this node before and if not log that we
@@ -63,7 +63,7 @@ void ComplaintsManager::AddComplaintsFrom(MuddleAddress const &                 
 
   for (auto const &bad_node : complaints)
   {
-    if (committee.find(bad_node) != committee.end())
+    if (cabinet.find(bad_node) != cabinet.end())
     {
       complaints_counter_[bad_node].insert(from);
       // If a node receives complaint against itself then store in complaints from
