@@ -57,18 +57,17 @@ void StakeManager::UpdateCurrentBlock(BlockIndex block_number)
   TrimToSize(stake_history_, HISTORY_LENGTH);
 }
 
-StakeManager::CommitteePtr StakeManager::BuildCommittee(Block const &current,
-                                                        uint64_t     committee_size)
+StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current, uint64_t cabinet_size)
 {
-  return BuildCommittee(current.body.block_number, current.body.block_entropy.EntropyAsU64(),
-                        committee_size);
+  return BuildCabinet(current.body.block_number, current.body.block_entropy.EntropyAsU64(),
+                        cabinet_size);
 }
 
-StakeManager::CommitteePtr StakeManager::BuildCommittee(uint64_t block_number, uint64_t entropy,
-                                                        uint64_t committee_size) const
+StakeManager::CabinetPtr StakeManager::BuildCabinet(uint64_t block_number, uint64_t entropy,
+                                                        uint64_t cabinet_size) const
 {
   auto snapshot = LookupStakeSnapshot(block_number);
-  return snapshot->BuildCommittee(entropy, committee_size);
+  return snapshot->BuildCabinet(entropy, cabinet_size);
 }
 
 bool StakeManager::Save(StorageInterface &storage)
@@ -116,29 +115,29 @@ bool StakeManager::Load(StorageInterface &storage)
   return success;
 }
 
-StakeManager::CommitteePtr StakeManager::Reset(StakeSnapshot const &snapshot, uint64_t committee_size)
+StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot const &snapshot, uint64_t cabinet_size)
 {
-  return ResetInternal(std::make_shared<StakeSnapshot>(snapshot), committee_size);
+  return ResetInternal(std::make_shared<StakeSnapshot>(snapshot), cabinet_size);
 }
 
-StakeManager::CommitteePtr StakeManager::Reset(StakeSnapshot &&snapshot, uint64_t committee_size)
+StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot &&snapshot, uint64_t cabinet_size)
 {
-  return ResetInternal(std::make_shared<StakeSnapshot>(std::move(snapshot)), committee_size);
+  return ResetInternal(std::make_shared<StakeSnapshot>(std::move(snapshot)), cabinet_size);
 }
 
-StakeManager::CommitteePtr StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot, uint64_t committee_size)
+StakeManager::CabinetPtr StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot, uint64_t cabinet_size)
 {
   // history
   stake_history_.clear();
   stake_history_[0] = snapshot;
 
-  CommitteePtr new_committee = snapshot->BuildCommittee(0, committee_size);
+  CabinetPtr new_cabinet = snapshot->BuildCabinet(0, cabinet_size);
 
   // current
   current_             = std::move(snapshot);
   current_block_index_ = 0;
 
-  return new_committee;
+  return new_cabinet;
 }
 
 StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex block) const

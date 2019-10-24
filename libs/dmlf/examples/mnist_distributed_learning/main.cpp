@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/distributed_learning/distributed_learning_client.hpp"
+#include "dmlf/networkers/local_learner_networker.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
-#include "ml/distributed_learning/coordinator.hpp"
-#include "ml/distributed_learning/distributed_learning_client.hpp"
+#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
@@ -85,23 +87,35 @@ int main(int ac, char **av)
     return 1;
   }
 
-  CoordinatorParams      coord_params{};
   ClientParams<DataType> client_params;
 
   SizeType number_of_clients                    = 10;
   SizeType number_of_rounds                     = 10;
-  coord_params.mode                             = CoordinatorMode::SEMI_SYNCHRONOUS;
-  coord_params.iterations_count                 = 100;
-  coord_params.number_of_peers                  = 3;
+  bool     synchronisation                      = false;
+  client_params.max_updates                     = 100;
+  SizeType number_of_peers                      = 3;
   client_params.batch_size                      = 32;
   client_params.learning_rate                   = static_cast<DataType>(.001f);
   float                       test_set_ratio    = 0.03f;
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
-  std::shared_ptr<Coordinator<TensorType>> coordinator =
-      std::make_shared<Coordinator<TensorType>>(coord_params);
+  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
 
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
+
+  // Create networkers
+  for (SizeType i(0); i < number_of_clients; ++i)
+  {
+    networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
+    networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
+  }
+
+  for (SizeType i(0); i < number_of_clients; ++i)
+  {
+    networkers[i]->AddPeers(networkers);
+    networkers[i]->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
+        networkers[i]->GetPeerCount(), number_of_peers));
+  }
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i{0}; i < number_of_clients; ++i)
@@ -111,20 +125,16 @@ int main(int ac, char **av)
                             console_mutex_ptr);
   }
 
-  // Give list of clients to coordinator
-  coordinator->SetClientsList(clients);
-
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
     // Give each client pointer to coordinator
-    clients[i]->SetCoordinator(coordinator);
+    clients[i]->SetNetworker(networkers[i]);
   }
 
   // Main loop
   for (SizeType it{0}; it < number_of_rounds; ++it)
   {
     // Start all clients
-    coordinator->Reset();
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
     for (auto &c : clients)
@@ -138,7 +148,7 @@ int main(int ac, char **av)
       t.join();
     }
 
-    if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
+    if (!synchronisation)
     {
       continue;
     }

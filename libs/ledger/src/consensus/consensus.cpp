@@ -93,7 +93,7 @@ T DeterministicShuffle(T &container, uint64_t entropy)
 
 Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
                      StorageInterface &storage, Identity mining_identity, uint64_t aeon_period,
-                     uint64_t committee_size, uint32_t block_interval_ms)
+                     uint64_t cabinet_size, uint32_t block_interval_ms)
   : storage_{storage}
   , stake_{std::move(stake)}
   , beacon_{std::move(beacon)}
@@ -101,61 +101,59 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain c
   , mining_identity_{std::move(mining_identity)}
   , mining_address_{chain::Address(mining_identity_)}
   , aeon_period_{aeon_period}
-  , committee_size_{committee_size}
+  , max_cabinet_size_{cabinet_size}
   , block_interval_ms_{block_interval_ms}
 {
   assert(stake_);
 }
 
 // TODO(HUT): probably this is not required any more.
-Consensus::CommitteePtr Consensus::GetCommittee(Block const &previous)
+Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous)
 {
   // Calculate the last relevant snapshot
   uint64_t const last_snapshot =
       previous.body.block_number - (previous.body.block_number % aeon_period_);
 
-  // Invalid to request a committee too far ahead in time
-  assert(committee_history_.find(last_snapshot) != committee_history_.end());
+  // Invalid to request a cabinet too far ahead in time
+  assert(cabinet_history_.find(last_snapshot) != cabinet_history_.end());
 
-  if (committee_history_.find(last_snapshot) == committee_history_.end())
+  if (cabinet_history_.find(last_snapshot) == cabinet_history_.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "No committee history found for block: ", previous.body.block_number, " AKA ",
-                   last_snapshot);
+    FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block: ", previous.body.block_number,
+                   " AKA ", last_snapshot);
     return nullptr;
   }
 
-  // If the last committee was the valid committee, return this. Otherwise, deterministically
-  // shuffle the committee using the random beacon
+  // If the last cabinet was the valid cabinet, return this. Otherwise, deterministically
+  // shuffle the cabinet using the random beacon
   if (last_snapshot == previous.body.block_number)
   {
-    return committee_history_.at(last_snapshot);
+    return cabinet_history_.at(last_snapshot);
   }
 
-  CommitteePtr committee_ptr = committee_history_[last_snapshot];
-  assert(!committee_ptr->empty());
+  CabinetPtr cabinet_ptr = cabinet_history_[last_snapshot];
+  assert(!cabinet_ptr->empty());
 
-  Committee committee_copy = *committee_ptr;
+  Cabinet cabinet_copy = *cabinet_ptr;
 
-  DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
+  DeterministicShuffle(cabinet_copy, previous.body.block_entropy.EntropyAsU64());
 
-  return std::make_shared<Committee>(committee_copy);
+  return std::make_shared<Cabinet>(cabinet_copy);
 }
 
 bool Consensus::ValidMinerForBlock(Block const &previous, chain::Address const &address)
 {
-  auto const committee = GetCommittee(previous);
+  auto const cabinet = GetCabinet(previous);
 
-  if (!committee || committee->empty())
+  if (!cabinet || cabinet->empty())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine committee for block validation");
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine cabinet for block validation");
     return false;
   }
 
-  return std::find_if((*committee).begin(), (*committee).end(),
-                      [&address](Identity const &identity) {
-                        return address == chain::Address(identity);
-                      }) != (*committee).end();
+  return std::find_if((*cabinet).begin(), (*cabinet).end(), [&address](Identity const &identity) {
+           return address == chain::Address(identity);
+         }) != (*cabinet).end();
 }
 
 Block GetBlockPriorTo(Block const &current, MainChain const &chain)
@@ -179,18 +177,18 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
 uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
 {
-  auto const committee = GetCommittee(previous);
+  auto const cabinet = GetCabinet(previous);
 
-  if (!committee)
+  if (!cabinet)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine block generation weight");
     return 0;
   }
 
-  std::size_t weight{committee->size()};
+  std::size_t weight{cabinet->size()};
 
-  // TODO(EJF): Depending on the committee sizes this would need to be improved
-  for (auto const &member : *committee)
+  // TODO(EJF): Depending on the cabinet sizes this would need to be improved
+  for (auto const &member : *cabinet)
   {
     if (address == chain::Address(member))
     {
@@ -200,7 +198,7 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Addre
     weight = SafeDecrement(weight, 1);
   }
 
-  // Note: weight must always be non zero (indicates failure/not in committee)
+  // Note: weight must always be non zero (indicates failure/not in cabinet)
   return weight;
 }
 
@@ -298,7 +296,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
 }
 
 /**
- * Whether the committee should be triggered
+ * Whether the cabinet should be triggered
  */
 bool ShouldTriggerAeon(uint64_t block_number, uint64_t aeon_period)
 {
@@ -306,18 +304,18 @@ bool ShouldTriggerAeon(uint64_t block_number, uint64_t aeon_period)
 }
 
 /**
- * Trigger a new committee on a trigger point, so long as the exact committee
- * wasn't already triggered. This will allow alternating committees to be triggered for the
+ * Trigger a new cabinet on a trigger point, so long as the exact cabinet
+ * wasn't already triggered. This will allow alternating cabinets to be triggered for the
  * same block height.
  *
  */
-bool Consensus::ShouldTriggerNewCommittee(Block const &block)
+bool Consensus::ShouldTriggerNewCabinet(Block const &block)
 {
   bool const trigger_point = ShouldTriggerAeon(block.body.block_number, aeon_period_);
 
-  if (last_triggered_committee_ != block.body.hash && trigger_point)
+  if (last_triggered_cabinet_ != block.body.hash && trigger_point)
   {
-    last_triggered_committee_ = block.body.hash;
+    last_triggered_cabinet_ = block.body.hash;
     return true;
   }
 
@@ -354,14 +352,14 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   // full trim will take place and the state DB will be updated.
   stake_->UpdateCurrentBlock(current_block_.body.block_number);
 
-  if (ShouldTriggerNewCommittee(current_block_))
+  if (ShouldTriggerNewCabinet(current_block_))
   {
     CabinetMemberList cabinet_member_list;
-    committee_history_[current.body.block_number] = stake_->BuildCommittee(current_block_, committee_size_);
+    cabinet_history_[current.body.block_number] = stake_->BuildCabinet(current_block_, max_cabinet_size_);
 
-    TrimToSize(committee_history_, HISTORY_LENGTH);
+    TrimToSize(cabinet_history_, HISTORY_LENGTH);
 
-    for (auto const &staker : *committee_history_[current.body.block_number])
+    for (auto const &staker : *cabinet_history_[current.body.block_number])
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
       cabinet_member_list.insert(staker.identifier());
@@ -539,11 +537,11 @@ Status Consensus::ValidBlock(Block const &current) const
 
 void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
 {
-  committee_history_[0] = stake_->Reset(snapshot, committee_size_);
+  cabinet_history_[0] = stake_->Reset(snapshot, max_cabinet_size_);
 
-  if (committee_history_.find(0) == committee_history_.end())
+  if (cabinet_history_.find(0) == cabinet_history_.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "No committee history found for block when resetting.");
+    FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block when resetting.");
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Resetting stake aggregate...");
@@ -570,9 +568,9 @@ void Consensus::SetThreshold(double threshold)
   FETCH_LOG_INFO(LOGGING_NAME, "Set threshold to ", threshold_);
 }
 
-void Consensus::SetCommitteeSize(uint64_t size)
+void Consensus::SetCabinetSize(uint64_t size)
 {
-  committee_size_ = size;
+  max_cabinet_size_ = size;
 }
 
 StakeManagerPtr Consensus::stake()
@@ -585,8 +583,8 @@ void Consensus::SetDefaultStartTime(uint64_t default_start_time)
   default_start_time_ = default_start_time;
 }
 
-void Consensus::AddCommitteeToHistory(uint64_t block_number, CommitteePtr const &committee)
+void Consensus::AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet)
 {
-  committee_history_[block_number] = committee;
-  TrimToSize(committee_history_, HISTORY_LENGTH);
+  cabinet_history_[block_number] = cabinet;
+  TrimToSize(cabinet_history_, HISTORY_LENGTH);
 }

@@ -50,7 +50,7 @@ public:
 
   Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
             StorageInterface &storage, Identity mining_identity, uint64_t aeon_period,
-            uint64_t max_committee_size, uint32_t block_interval_ms = 1000);
+            uint64_t max_cabinet_size, uint32_t block_interval_ms = 1000);
 
   void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
@@ -60,17 +60,17 @@ public:
 
   StakeManagerPtr stake();
   void            SetThreshold(double threshold);
-  void            SetCommitteeSize(uint64_t size);
+  void            SetCabinetSize(uint64_t size);
   void            SetDefaultStartTime(uint64_t default_start_time);
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
   static constexpr uint64_t    INVALID_BLOCK  = 0xFFFFFFFFFFFFFFFFllu;
 
-  using Committee        = StakeManager::Committee;
-  using CommitteePtr     = std::shared_ptr<Committee const>;
-  using BlockIndex       = uint64_t;
-  using CommitteeHistory = std::map<BlockIndex, CommitteePtr>;
+  using Cabinet        = StakeManager::Cabinet;
+  using CabinetPtr     = std::shared_ptr<Cabinet const>;
+  using BlockIndex     = uint64_t;
+  using CabinetHistory = std::map<BlockIndex, CabinetPtr>;
 
   StorageInterface &storage_;
   StakeManagerPtr  stake_;
@@ -80,27 +80,27 @@ private:
   chain::Address   mining_address_;
 
   // Global variables relating to consensus
-  uint64_t aeon_period_    = 0;
-  uint64_t committee_size_ = 0;
-  double   threshold_      = 1.0;
+  uint64_t aeon_period_      = 0;
+  uint64_t max_cabinet_size_ = 0;
+  double   threshold_        = 1.0;
 
   // Consensus' view on the heaviest block etc.
   Block  current_block_;
   Block  previous_block_;
   Block  beginning_of_aeon_;
-  Digest last_triggered_committee_;
+  Digest last_triggered_cabinet_;
 
-  uint64_t         default_start_time_ = 0;
-  CommitteeHistory committee_history_{};  ///< Cache of historical committees
-  uint32_t         block_interval_ms_{std::numeric_limits<uint32_t>::max()};
+  uint64_t       default_start_time_ = 0;
+  CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
+  uint32_t       block_interval_ms_{std::numeric_limits<uint32_t>::max()};
 
-  CommitteePtr GetCommittee(Block const &previous);
-  bool         ValidMinerForBlock(Block const &previous, chain::Address const &address);
-  uint64_t     GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
-  bool         ValidBlockTiming(Block const &previous, Block const &proposed) const;
-  bool         ShouldTriggerNewCommittee(Block const &block);
-  bool         EnoughQualSigned(BlockEntropy const &block_entropy) const;
-  void         AddCommitteeToHistory(uint64_t block_number, CommitteePtr const &committee);
+  CabinetPtr GetCabinet(Block const &previous);
+  bool       ValidMinerForBlock(Block const &previous, chain::Address const &address);
+  uint64_t   GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
+  bool       ValidBlockTiming(Block const &previous, Block const &proposed) const;
+  bool       ShouldTriggerNewCabinet(Block const &block);
+  bool       EnoughQualSigned(BlockEntropy const &block_entropy) const;
+  void       AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
 };
 
 }  // namespace ledger

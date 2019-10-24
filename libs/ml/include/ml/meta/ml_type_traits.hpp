@@ -42,6 +42,13 @@ enum class LoaderType : uint8_t
   C2V
 };
 
+enum class SliceType : uint8_t
+{
+  SINGLE_AXIS,
+  MULTI_AXIS,
+  RANGED
+};
+
 enum class OpKind : uint8_t
 {
   INVALID,
@@ -102,6 +109,7 @@ enum class OpType : uint16_t
   OP_WEIGHTS,
   OP_SLICE,
   OP_SQUEEZE,
+  OP_REDUCE_MEAN,
 
   // OpKind - LOSS
   LOSS_CROSS_ENTROPY,

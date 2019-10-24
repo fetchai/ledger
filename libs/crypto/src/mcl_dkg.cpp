@@ -334,14 +334,13 @@ Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> cons
 /**
  * Generates the group public key, public key shares and private key share for a number of
  * parties and a given signature threshold. Nodes must be allocated the outputs according
- * to their index in the committee.
+ * to their index in the cabinet.
  *
- * @param committee_size Number of parties for which private key shares are generated
+ * @param cabinet_size Number of parties for which private key shares are generated
  * @param threshold Number of parties required to generate a group signature
  * @return Vector of DkgOutputs containing the data to be given to each party
  */
-std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size,
-                                                         uint32_t threshold)
+std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t cabinet_size, uint32_t threshold)
 {
   std::vector<DkgKeyInformation> output;
   Generator                      generator;
@@ -357,8 +356,8 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size
 
   std::vector<PublicKey>  public_key_shares;
   std::vector<PrivateKey> private_key_shares;
-  Init(public_key_shares, committee_size);
-  Init(private_key_shares, committee_size);
+  Init(public_key_shares, cabinet_size);
+  Init(private_key_shares, cabinet_size);
 
   // Group secret key is polynomial evaluated at 0
   PublicKey group_public_key;
@@ -366,8 +365,8 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size
   PrivateKey group_private_key = vec_a[0];
   bn::G2::mul(group_public_key, generator, group_private_key);
 
-  // Generate committee public keys from their private key contributions
-  for (uint32_t i = 0; i < committee_size; ++i)
+  // Generate cabinet public keys from their private key contributions
+  for (uint32_t i = 0; i < cabinet_size; ++i)
   {
     PrivateKey pow;
     PrivateKey tmpF;
@@ -389,11 +388,153 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size
   }
 
   // Compute outputs for each member
-  for (uint32_t i = 0; i < committee_size; ++i)
+  for (uint32_t i = 0; i < cabinet_size; ++i)
   {
     output.emplace_back(group_public_key, public_key_shares, private_key_shares[i]);
   }
   return output;
+}
+
+/**
+ * Generates a private key and the corresponding public key
+ *
+ * @param generator Choice of generator on the elliptic curve
+ * @return Pair of private and public keys
+ */
+std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator)
+{
+  std::pair<PrivateKey, PublicKey> key_pair;
+  key_pair.first.setRand();
+  key_pair.second.clear();
+  bn::G2::mul(key_pair.second, generator, key_pair.first);
+  return key_pair;
+}
+
+/**
+ * Computes a deterministic hash to the finite prime field from one public key and the set
+ * of all eligible notarisation keys
+ *
+ * @param notarisation_key Particular public key of a cabinet member
+ * @param cabinet_notarisation_keys Public keys of all cabinet members
+ * @return Element of prime field
+ */
+bn::Fr SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
+                                       std::vector<PublicKey> const &cabinet_notarisation_keys)
+{
+  bn::Fr coefficient;
+  coefficient.clear();
+
+  // Reserve first 48 bytes for some fixed value for hygenic reuse of the
+  // hashing function
+  std::string concatenated_keys = "BLS Aggregation";
+  concatenated_keys.reserve(cabinet_notarisation_keys.size() * 310);
+  while (concatenated_keys.length() < 48)
+  {
+    concatenated_keys.push_back('0');
+  }
+
+  concatenated_keys += notarisation_key.getStr();
+  for (auto const &key : cabinet_notarisation_keys)
+  {
+    concatenated_keys += key.getStr();
+  }
+  coefficient.setHashOf(concatenated_keys);
+  return coefficient;
+}
+
+/**
+ * Computes aggregrate signature from signatures of a message
+ *
+ * @param signatures Map of the signer index and their signature of a message
+ * @param public_keys Public keys of all eligible signers
+ * @return Pair consisting of aggregate signature and a vector indicating who's signatures were
+ * aggregated
+ */
+std::pair<Signature, std::vector<bool>> ComputeAggregateSignature(
+    std::unordered_map<uint32_t, Signature> const &signatures,
+    std::vector<PublicKey> const &                 public_keys)
+{
+  Signature aggregate_signature;
+  aggregate_signature.clear();
+  std::vector<bool> signers;
+  signers.resize(public_keys.size(), false);
+
+  // Compute signature
+  for (auto const &sig : signatures)
+  {
+    uint32_t  index = sig.first;
+    Signature modified_sig;
+    modified_sig.clear();
+    bn::Fr aggregate_coefficient = SignatureAggregationCoefficient(public_keys[index], public_keys);
+    bn::G1::mul(modified_sig, sig.second, aggregate_coefficient);
+    bn::G1::add(aggregate_signature, aggregate_signature, modified_sig);
+    signers[index] = true;
+  }
+  return std::make_pair(aggregate_signature, signers);
+}
+
+/**
+ * Computes the aggregated public key from a set of parties who signed a particular message
+ *
+ * @param signers Vector of booleans indicated whether this member participated in the aggregate
+ * signature
+ * @param cabinet_public_keys Public keys of all eligible signers
+ * @return Aggregated public key
+ */
+PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
+                                    std::vector<PublicKey> const &cabinet_public_keys)
+{
+  PublicKey aggregate_key;
+  aggregate_key.clear();
+  assert(signers.size() == cabinet_public_keys.size());
+  for (size_t i = 0; i < cabinet_public_keys.size(); ++i)
+  {
+    if (signers[i])
+    {
+      // Compute public_key_i ^ coefficient_i
+      PublicKey modified_public_key;
+      modified_public_key.clear();
+      bn::Fr aggregate_coefficient =
+          SignatureAggregationCoefficient(cabinet_public_keys[i], cabinet_public_keys);
+      bn::G2::mul(modified_public_key, cabinet_public_keys[i], aggregate_coefficient);
+
+      bn::G2::add(aggregate_key, aggregate_key, modified_public_key);
+    }
+  }
+  return aggregate_key;
+}
+
+/**
+ * Verifies an aggregate signature
+ *
+ * @param message Message that was signed
+ * @param aggregate_signature Pair of signature and vector of booleans indicating who participated
+ * in the aggregate signature
+ * @param cabinet_public_keys Public keys of all eligible signers
+ * @param generator Generator of elliptic curve
+ * @return Bool for whether the signature passed verification
+ */
+bool VerifyAggregateSignature(MessagePayload const &                         message,
+                              std::pair<Signature, std::vector<bool>> const &aggregate_signature,
+                              std::vector<PublicKey> const &                 cabinet_public_keys,
+                              Generator const &                              generator)
+{
+  bn::Fp12 e1, e2;
+
+  // hash and map message to point on curve
+  bn::Fp Hm;
+  bn::G1 PH;
+  Hm.setHashOf(message.pointer(), message.size());
+  bn::mapToG1(PH, Hm);
+
+  // Compute aggregate  public key
+  PublicKey aggregate_key =
+      ComputeAggregatePublicKey(aggregate_signature.second, cabinet_public_keys);
+
+  bn::pairing(e1, aggregate_signature.first, generator);
+  bn::pairing(e2, PH, aggregate_key);
+
+  return e1 == e2;
 }
 
 }  // namespace mcl

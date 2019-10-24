@@ -105,7 +105,7 @@ GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
 /**
  * Load a 'state file' with a given name
  *
- * @param name THe path to the file to be loaded
+ * @param name The path to the file to be loaded
  */
 bool GenesisFileCreator::LoadFile(std::string const &name)
 {
@@ -232,9 +232,9 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object)
     double   parsed_value_double;
 
     // Optionally overwrite default parameters
-    if (variant::Extract(object, "committeeSize", parsed_value))
+    if (variant::Extract(object, "cabinetSize", parsed_value))
     {
-      consensus_->SetCommitteeSize(parsed_value);
+      consensus_->SetCabinetSize(parsed_value);
     }
 
     if (variant::Extract(object, "startTime", parsed_value))

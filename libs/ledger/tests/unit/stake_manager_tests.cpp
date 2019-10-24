@@ -40,7 +40,7 @@ using RNG             = fetch::random::LinearCongruentialGenerator;
 using StakeManagerPtr = std::unique_ptr<StakeManager>;
 using RoundStats      = std::unordered_map<Identity, std::size_t>;
 
-constexpr uint64_t MAX_COMMITTEE_SIZE = 1;
+constexpr uint64_t MAX_CABINET_SIZE = 1;
 
 constexpr char const *LOGGING_NAME = "StakeMgrTests";
 
@@ -59,9 +59,9 @@ protected:
   }
 
   void SimulateRounds(std::vector<Identity> const &identities, Block &block, std::size_t num_rounds,
-                      std::size_t committee_size, RoundStats &stats)
+                      std::size_t cabinet_size, RoundStats &stats)
   {
-    ASSERT_GT(committee_size, 0);
+    ASSERT_GT(cabinet_size, 0);
 
     // initialise the stats (create entries if they don't exist)
     for (auto const &identity : identities)
@@ -71,12 +71,12 @@ protected:
 
     for (std::size_t round = 0; round < num_rounds; ++round)
     {
-      auto const committee = stake_manager_->BuildCommittee(block, MAX_COMMITTEE_SIZE);
-      ASSERT_TRUE(static_cast<bool>(committee));
-      ASSERT_EQ(committee->size(), committee_size);
+      auto const cabinet = stake_manager_->BuildCabinet(block, MAX_CABINET_SIZE);
+      ASSERT_TRUE(static_cast<bool>(cabinet));
+      ASSERT_EQ(cabinet->size(), cabinet_size);
 
       // update the statistics
-      stats.at(committee->at(0)) += 1;
+      stats.at(cabinet->at(0)) += 1;
 
       // "forge" the next block
       block.body.previous_hash = block.body.hash;
@@ -107,7 +107,7 @@ TEST_F(StakeManagerTests, DISABLED_CheckBasicStakeChangeScenarios)
   }
 
   // configure the stake manager
-  stake_manager_->Reset(initial, MAX_COMMITTEE_SIZE);
+  stake_manager_->Reset(initial, MAX_CABINET_SIZE);
 
   // create the starting blocks (note block contains an address, not an identity)
   Block block;
@@ -116,7 +116,7 @@ TEST_F(StakeManagerTests, DISABLED_CheckBasicStakeChangeScenarios)
 
   // simulate a number of rounds
   RoundStats stats{};
-  SimulateRounds(identities, block, 100, MAX_COMMITTEE_SIZE, stats);
+  SimulateRounds(identities, block, 100, MAX_CABINET_SIZE, stats);
 
   for (auto const &identity : identities)
   {
@@ -131,7 +131,7 @@ TEST_F(StakeManagerTests, DISABLED_CheckBasicStakeChangeScenarios)
   stake_manager_->update_queue().AddStakeUpdate(150, identities.back(), 500);
 
   stats.clear();
-  SimulateRounds(identities, block, 100, MAX_COMMITTEE_SIZE, stats);
+  SimulateRounds(identities, block, 100, MAX_CABINET_SIZE, stats);
 
   for (auto const &identity : identities)
   {
@@ -145,7 +145,7 @@ TEST_F(StakeManagerTests, DISABLED_CheckBasicStakeChangeScenarios)
   }
 
   stats.clear();
-  SimulateRounds(identities, block, 100, MAX_COMMITTEE_SIZE, stats);
+  SimulateRounds(identities, block, 100, MAX_CABINET_SIZE, stats);
 
   for (auto const &identity : identities)
   {
@@ -153,7 +153,7 @@ TEST_F(StakeManagerTests, DISABLED_CheckBasicStakeChangeScenarios)
   }
 
   stats.clear();
-  SimulateRounds(identities, block, 100, MAX_COMMITTEE_SIZE, stats);
+  SimulateRounds(identities, block, 100, MAX_CABINET_SIZE, stats);
 
   std::size_t idx{0};
   for (auto const &identity : identities)

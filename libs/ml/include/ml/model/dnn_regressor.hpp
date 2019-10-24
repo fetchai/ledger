@@ -71,7 +71,7 @@ DNNRegressor<TensorType>::DNNRegressor(ModelConfig<DataType>        model_config
   }
   this->output_ = this->graph_ptr_->template AddNode<layers::FullyConnected<TensorType>>(
       "Output", {cur_input}, hidden_layers.at(hidden_layers.size() - 2),
-      hidden_layers.at(hidden_layers.size() - 1), fetch::ml::details::ActivationType::RELU);
+      hidden_layers.at(hidden_layers.size() - 1));
 
   this->label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
   this->error_ =

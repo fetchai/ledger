@@ -196,7 +196,7 @@ void EntropyGen(benchmark::State &state)
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
       {
-        fetch::beacon::EventCommitteeCompletedWork event;
+        fetch::beacon::EventCabinetCompletedWork event;
         if (nodes[*it]->event_manager->Poll(event))
         {
           it = pending_nodes.erase(it);
@@ -237,6 +237,6 @@ void CreateRanges(benchmark::internal::Benchmark *b)
 }
 
 // Benchmarks the time taken for 10 rounds of entropy generation with varying numbers of
-// committee members online ranging from threshold number and the whole cabinet being
+// cabinet members online ranging from threshold number and the whole cabinet being
 // online
 BENCHMARK(EntropyGen)->Apply(CreateRanges)->Unit(benchmark::kMillisecond);

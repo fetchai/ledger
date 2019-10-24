@@ -84,7 +84,7 @@ bool FromJsonTransaction(Variant const &src, Transaction &dst)
  * Convert a Transaction into a JSON object
  *
  * @param src The transaction to be encoded into JSON
- * @param dst THe destination variant object
+ * @param dst The destination variant object
  */
 bool ToJsonTransaction(Transaction const &src, Variant &dst, bool include_metadata)
 {

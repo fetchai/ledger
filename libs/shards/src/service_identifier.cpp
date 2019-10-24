@@ -59,7 +59,7 @@ std::string ServiceIdentifier::ToString() const
   std::ostringstream oss;
   oss << shards::ToString(type_);
 
-  if (instance_ != ServiceIdentifier::INVALID_SERVICE_IDENTIFIER)
+  if (instance_ != ServiceIdentifier::SINGLETON_SERVICE)
   {
     oss << '/' << instance_;
   }

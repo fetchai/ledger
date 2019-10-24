@@ -21,6 +21,7 @@ target_link_libraries(fetch-dmlf
                              fetch-muddle
                              fetch-crypto
                              fetch-math
+                             fetch-ml
                              fetch-vm
                              fetch-vm-modules)
 
@@ -30,3 +31,8 @@ endif ()
 
 # Test targets
 add_test_target()
+
+# ------------------------------------------------------------------------------
+# Example Targets
+# ------------------------------------------------------------------------------
+add_subdirectory(examples)

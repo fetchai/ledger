@@ -582,34 +582,6 @@ bool StorageUnitClient::Unlock(ShardIndex index)
   return success;
 }
 
-StorageUnitClient::Keys StorageUnitClient::KeyDump() const
-{
-  FETCH_LOG_INFO(LOGGING_NAME, "Dumping keys");
-  StorageUnitClient::Keys all_keys;
-
-  std::vector<service::Promise> promises;
-
-  for (uint32_t i = 0; i < num_lanes(); ++i)
-  {
-    auto promise = rpc_client_->CallSpecificAddress(LookupAddress(i), RPC_STATE,
-                                                    RevertibleDocumentStoreProtocol::KEY_DUMP);
-
-    promises.push_back(promise);
-  }
-
-  for (auto &p : promises)
-  {
-    StorageUnitClient::Keys keys = p->As<StorageUnitClient::Keys>();
-
-    for (auto const &key : keys)
-    {
-      all_keys.push_back(key);
-    }
-  }
-
-  return all_keys;
-}
-
 void StorageUnitClient::Reset()
 {
   // Reset all lanes

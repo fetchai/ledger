@@ -49,15 +49,15 @@ class StorageInterface;
  *
  * Blocks and stake updates passed to the stake manager are assumed to be valid, including
  * the entropy within the block. The entropy together with the maximum stakers allowed
- * can be used to deterministically build a committee.
+ * can be used to deterministically build a cabinet.
  *
  */
 class StakeManager final : public StakeManagerInterface
 {
 public:
-  using Identity     = crypto::Identity;
-  using Committee    = std::vector<Identity>;
-  using CommitteePtr = std::shared_ptr<Committee const>;
+  using Identity   = crypto::Identity;
+  using Cabinet    = std::vector<Identity>;
+  using CabinetPtr = std::shared_ptr<Cabinet const>;
 
   // Construction / Destruction
   StakeManager()                     = default;
@@ -71,8 +71,8 @@ public:
   /// @}
 
   /// @name Committee Generation
-  CommitteePtr BuildCommittee(Block const &current, uint64_t committee_size);
-  CommitteePtr BuildCommittee(uint64_t block_number, uint64_t entropy, uint64_t committee_size) const;
+  CabinetPtr BuildCabinet(Block const &current, uint64_t cabinet_size);
+  CabinetPtr BuildCabinet(uint64_t block_number, uint64_t entropy, uint64_t cabinet_size) const;
   /// @}
 
   /// @name Persistence
@@ -89,8 +89,8 @@ public:
 
   std::shared_ptr<StakeSnapshot const> GetCurrentStakeSnapshot() const;
 
-  StakeManager::CommitteePtr Reset(StakeSnapshot const &snapshot, uint64_t committee_size);
-  StakeManager::CommitteePtr Reset(StakeSnapshot &&snapshot, uint64_t committee_size);
+  StakeManager::CabinetPtr Reset(StakeSnapshot const &snapshot, uint64_t cabinet_size);
+  StakeManager::CabinetPtr Reset(StakeSnapshot &&snapshot, uint64_t cabinet_size);
 
   // Operators
   StakeManager &operator=(StakeManager const &) = delete;
@@ -104,8 +104,9 @@ private:
   using StakeHistory     = std::map<BlockIndex, StakeSnapshotPtr>;
 
   StakeSnapshotPtr           LookupStakeSnapshot(BlockIndex block) const;
-  StakeManager::CommitteePtr ResetInternal(StakeSnapshotPtr &&snapshot, uint64_t committee_size);
+  StakeManager::CabinetPtr ResetInternal(StakeSnapshotPtr &&snapshot, uint64_t cabinet_size);
 
+  uint64_t cabinet_size_{0};  ///< The "static" size of the committee
   StakeUpdateQueue update_queue_;            ///< The update queue of events
   StakeHistory     stake_history_{};         ///< Cache of historical snapshots
   StakeSnapshotPtr current_{};               ///< Most recent snapshot
@@ -114,16 +115,6 @@ private:
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
 };
-
-//inline uint64_t StakeManager::committee_size() const
-//{
-//  return committee_size_;
-//}
-//
-//inline void StakeManager::SetCommitteeSize(uint64_t size)
-//{
-//  committee_size_ = size;
-//}
 
 inline StakeUpdateQueue &StakeManager::update_queue()
 {
