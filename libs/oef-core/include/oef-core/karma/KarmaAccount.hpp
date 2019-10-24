@@ -45,7 +45,7 @@ public:
   {
     return compare(other) == -1;
   }
-  KarmaAccount(IKarmaPolicy *policy)
+  explicit KarmaAccount(IKarmaPolicy *policy)
   {
     this->id     = 0;
     this->policy = policy;
@@ -55,11 +55,10 @@ public:
   KarmaAccount()
   {
     this->id     = 0;
-    this->policy = 0;
+    this->policy = nullptr;
   }
 
-  virtual ~KarmaAccount()
-  {}
+  virtual ~KarmaAccount() = default;
 
   std::string GetBalance();
 
@@ -68,13 +67,13 @@ public:
   virtual bool perform(const std::string &action, bool force = false);
   virtual bool CouldPerform(const std::string &action);
 
-  friend void swap(KarmaAccount &a, KarmaAccount &b);
+  friend void swap(KarmaAccount &v1, KarmaAccount &v2);
   std::size_t operator*() const
   {
     return id;
   }
 
-  const std::string &GetName(void) const
+  const std::string &GetName() const
   {
     return name;
   }
@@ -93,9 +92,13 @@ protected:
       throw std::logic_error("KarmaAccounts are not comparable between policies.");
     }
     if (id > other.id)
+    {
       return 1;
+    }
     if (id < other.id)
+    {
       return -1;
+    }
     return 0;
   }
   void copy(const KarmaAccount &other)

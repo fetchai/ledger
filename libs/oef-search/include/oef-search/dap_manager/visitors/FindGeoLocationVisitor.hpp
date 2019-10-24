@@ -28,7 +28,7 @@ public:
   static constexpr char const *LOGGING_NAME = "FindGeoLocationVisitor";
   using VisitNodeExitStates                 = typename Visitor<Queue>::VisitNodeExitStates;
 
-  FindGeoLocationVisitor(const std::shared_ptr<DapStore> &dap_store)
+  explicit FindGeoLocationVisitor(std::shared_ptr<DapStore> const &dap_store)
     : geo_dap_{dap_store->GetGeoDap()}
     , location_root_{nullptr}
   {}

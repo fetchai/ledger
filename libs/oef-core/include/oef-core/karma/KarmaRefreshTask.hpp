@@ -36,14 +36,13 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "KarmaRefreshTask CREATED, interval=", interval);
     last_execute = std::chrono::high_resolution_clock::now();
   }
-  virtual ~KarmaRefreshTask()
-  {}
+  ~KarmaRefreshTask() override = default;
 
-  virtual bool IsRunnable(void) const
+  bool IsRunnable() const override
   {
     return true;
   }
-  virtual ExitState run(void);
+  ExitState run() override;
 
 protected:
   std::chrono::high_resolution_clock::time_point last_execute;

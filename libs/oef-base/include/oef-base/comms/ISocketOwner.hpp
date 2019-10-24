@@ -24,10 +24,8 @@ class ISocketOwner
 public:
   using Socket = asio::ip::tcp::socket;
 
-  ISocketOwner()
-  {}
-  virtual ~ISocketOwner()
-  {}
+  ISocketOwner()           = default;
+  virtual ~ISocketOwner()  = default;
   virtual Socket &socket() = 0;
   virtual void    go()     = 0;
 };

@@ -42,8 +42,8 @@ void Listener::start_accept()
       std::bind(&Listener::handle_accept, this, new_connection, std::placeholders::_1));
 }
 
-void Listener::handle_accept(std::shared_ptr<ISocketOwner> new_connection,
-                             std::error_code const &       error)
+void Listener::handle_accept(std::shared_ptr<ISocketOwner> const &new_connection,
+                             std::error_code const &                       error)
 {
   accepted++;
   if (!error)
@@ -57,6 +57,3 @@ void Listener::handle_accept(std::shared_ptr<ISocketOwner> new_connection,
     std::cout << "Listener::handle_accept " << error << std::endl;
   }
 }
-
-Listener::~Listener()
-{}

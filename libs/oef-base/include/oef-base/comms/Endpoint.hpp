@@ -49,17 +49,17 @@ public:
 
   Endpoint(Core &core, std::size_t sendBufferSize, std::size_t readBufferSize, ConfigMap configMap);
 
-  virtual ~Endpoint();
+  ~Endpoint() override;
 
-  virtual Socket &socket() override
+  Socket &socket() override
   {
     return sock;
   }
 
 protected:
-  virtual void async_read(const std::size_t &bytes_needed) override;
-  virtual void async_write() override;
-  virtual bool is_eof(std::error_code const &ec) const override;
+  void async_read(const std::size_t &bytes_needed) override;
+  void async_write() override;
+  bool is_eof(std::error_code const &ec) const override;
 
 protected:
   Socket sock;

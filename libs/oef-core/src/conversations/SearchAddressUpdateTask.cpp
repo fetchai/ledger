@@ -40,7 +40,7 @@ SearchAddressUpdateTask::~SearchAddressUpdateTask()
   FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
 }
 
-SearchAddressUpdateTask::StateResult SearchAddressUpdateTask::HandleResponse(void)
+SearchAddressUpdateTask::StateResult SearchAddressUpdateTask::HandleResponse()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
   FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());
@@ -69,7 +69,7 @@ SearchAddressUpdateTask::StateResult SearchAddressUpdateTask::HandleResponse(voi
 
   FETCH_LOG_INFO(LOGGING_NAME, "COMPLETE");
 
-  return SearchAddressUpdateTask::StateResult(0, COMPLETE);
+  return {0, COMPLETE};
 }
 
 std::shared_ptr<SearchAddressUpdateTask::REQUEST_PROTO>

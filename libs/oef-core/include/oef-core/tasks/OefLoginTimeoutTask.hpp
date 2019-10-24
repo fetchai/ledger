@@ -29,18 +29,17 @@ class OefLoginTimeoutTask : public Task
 public:
   static constexpr char const *LOGGING_NAME = "OefLoginTimeoutTask";
 
-  OefLoginTimeoutTask(std::shared_ptr<OefAgentEndpoint> ep)
+  explicit OefLoginTimeoutTask(const std::shared_ptr<OefAgentEndpoint> &ep)
   {
     this->ep = ep;
   }
-  virtual ~OefLoginTimeoutTask()
-  {}
+  ~OefLoginTimeoutTask() override = default;
 
-  virtual bool IsRunnable(void) const
+  bool IsRunnable() const override
   {
     return true;
   }
-  virtual ExitState run(void);
+  ExitState run() override;
 
 protected:
   std::weak_ptr<OefAgentEndpoint> ep;

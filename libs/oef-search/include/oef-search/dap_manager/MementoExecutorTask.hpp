@@ -40,8 +40,7 @@ public:
   MementoExecutorTask(std::vector<Node::DapMemento>       mementos,
                       std::shared_ptr<IdentifierSequence> identifier_sequence,
                       std::shared_ptr<DapManager>         dap_manager)
-    : NodeExecutorTask()
-    , mementos_{std::move(mementos)}
+    : mementos_{std::move(mementos)}
     , dap_manager_{std::move(dap_manager)}
     , conv_task_{nullptr}
     , identifier_sequence_{std::move(identifier_sequence)}
@@ -49,7 +48,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Task created, id=", this->GetTaskId());
   }
 
-  virtual ~MementoExecutorTask()
+  ~MementoExecutorTask() override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
   }
@@ -60,12 +59,12 @@ public:
   bool operator==(const MementoExecutorTask &other) = delete;
   bool operator<(const MementoExecutorTask &other)  = delete;
 
-  virtual bool IsRunnable() const override
+  bool IsRunnable() const override
   {
     return true;
   }
 
-  virtual ExitState run(void) override
+  ExitState run() override
   {
     if (conv_task_ == nullptr)
     {
@@ -165,12 +164,12 @@ public:
     return ExitState ::COMPLETE;
   }
 
-  virtual void SetMessageHandler(MessageHandler mH) override
+  void SetMessageHandler(MessageHandler mH) override
   {
     messageHandler = std::move(mH);
   }
 
-  virtual void SetErrorHandler(ErrorHandler eH) override
+  void SetErrorHandler(ErrorHandler eH) override
   {
     errorHandler = std::move(eH);
   }

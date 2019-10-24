@@ -25,22 +25,19 @@
 #include <mutex>
 #include <vector>
 
-Monitoring::MonitoringInner *Monitoring::inner = 0;
+Monitoring::MonitoringInner *Monitoring::inner = nullptr;
 
 Monitoring::Monitoring()
 {
-  if (!inner)
+  if (inner == nullptr)
   {
     inner = new MonitoringInner;
   }
 }
 
-Monitoring::~Monitoring()
-{}
-
-Monitoring::IdType Monitoring::find(const NameType &name)
+Monitoring::IdType Monitoring::find(NameType const &name)
 {
-  if (!inner)
+  if (inner == nullptr)
   {
     inner = new MonitoringInner;
   }
@@ -62,7 +59,7 @@ void Monitoring::sub(IdType id, CountType delta)
   inner->access(id) -= delta;
 }
 
-void Monitoring::report(ReportFunc func)
+void Monitoring::report(ReportFunc const &func)
 {
   for (const auto &name2id : inner->GetNames())
   {
@@ -75,7 +72,9 @@ void Monitoring::max(IdType id, CountType value)
   inner->access(id) = std::max(inner->access(id).load(), value);
   auto prev_value   = inner->access(id).load();
   while (prev_value < value && !inner->access(id).compare_exchange_weak(prev_value, value))
+  {
     ;
+  }
 }
 
 Monitoring::CountType Monitoring::get(IdType id)

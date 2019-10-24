@@ -25,16 +25,14 @@ class MonitoringTask : public Task
 public:
   static constexpr char const *LOGGING_NAME = "MonitoringTask";
 
-  MonitoringTask()
-  {}
-  virtual ~MonitoringTask()
-  {}
+  MonitoringTask()           = default;
+  ~MonitoringTask() override = default;
 
-  virtual bool IsRunnable(void) const
+  bool IsRunnable() const override
   {
     return true;
   }
-  virtual ExitState run(void);
+  ExitState run() override;
 
 protected:
 private:

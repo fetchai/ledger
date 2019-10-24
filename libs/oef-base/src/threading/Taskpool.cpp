@@ -48,9 +48,6 @@ void Taskpool::SetDefault()
   gDefaultTaskPool = shared_from_this();
 }
 
-Taskpool::~Taskpool()
-{}
-
 std::weak_ptr<Taskpool> Taskpool::GetDefaultTaskpool()
 {
   return gDefaultTaskPool;
@@ -94,7 +91,7 @@ void Taskpool::run(std::size_t thread_idx)
       if (!pending_tasks.empty())
       {
         mytask       = pending_tasks.front();
-        mytask->pool = 0;
+        mytask->pool = nullptr;
         pending_tasks.pop_front();
         Counter("mt-core.tasks.popped-for-run")++;
         Counter("mt-core.immediate-tasks.popped-for-run")++;
@@ -274,7 +271,7 @@ void Taskpool::UpdateStatus() const
   gauge_future    = future_tasks.size();
 }
 
-void Taskpool::stop(void)
+void Taskpool::stop()
 {
   Lock lock(mutex);
   quit = true;
@@ -366,7 +363,7 @@ Taskpool::TaskP Taskpool::lockless_getNextFutureWork(const Timestamp &current_ti
     if (!(r->IsCancelled()))
     {
       result       = r;
-      result->pool = 0;
+      result->pool = nullptr;
       Counter("mt-core.tasks.popped-for-run")++;
       Counter("mt-core.future-tasks.popped-for-run")++;
       break;
@@ -419,7 +416,7 @@ void Taskpool::CancelTaskGroup(std::size_t group_id)
     }
   }
 
-  for (auto t : tasks)
+  for (auto const &t : tasks)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "CancelTaskGroup ", group_id, " (P) task ", t->task_id);
     t->cancel();

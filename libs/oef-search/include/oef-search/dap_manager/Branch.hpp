@@ -31,24 +31,20 @@ public:
   static constexpr char const *LOGGING_NAME = "Branch";
   using Node::dap_names_;
 
-  Branch(const ConstructQueryObjectRequest &proto)
+  Branch() = default;
+  explicit Branch(ConstructQueryObjectRequest const &proto)
     : proto_{std::make_shared<ConstructQueryObjectRequest>(proto)}
   {
     buildTree();
   }
-
-  Branch()
-    : proto_{std::make_shared<ConstructQueryObjectRequest>()}
-  {}
-
-  virtual ~Branch()           = default;
+  ~Branch() override          = default;
   Branch(const Branch &other) = delete;
   Branch &operator=(const Branch &other) = delete;
 
   bool operator==(const Branch &other) = delete;
   bool operator<(const Branch &other)  = delete;
 
-  virtual std::string GetNodeType() override
+  std::string GetNodeType() override
   {
     return "branch";
   }
@@ -63,7 +59,7 @@ public:
     subnodes_.push_back(std::move(branch));
   }
 
-  virtual std::string ToString() override
+  std::string ToString() override
   {
     std::string s = "Branch " + proto_->node_name() + " -- ";
     s += "\"" + proto_->operator_() + "\" over daps(";
@@ -166,7 +162,7 @@ public:
       {
         node->ClearDapNames();
       }
-      std::string table_name{""};
+      std::string table_name;
       for (auto &leaf : leaves_)
       {
         leaf->ClearDapNames();

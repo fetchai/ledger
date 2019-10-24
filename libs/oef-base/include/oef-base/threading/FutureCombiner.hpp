@@ -36,8 +36,7 @@ public:
     , completed_{0}
   {}
 
-  virtual ~FutureCombiner()
-  {}
+  ~FutureCombiner() override = default;
 
   void AddFuture(std::shared_ptr<T> future)
   {

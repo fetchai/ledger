@@ -50,11 +50,12 @@ class Listener
 public:
   using CONN_CREATOR = std::function<std::shared_ptr<ISocketOwner>(Core &core)>;
 
-  Listener(Core &core, unsigned short int port);
-  virtual ~Listener();
+  Listener(Core &thecore, unsigned short int port);
+  ~Listener() = default;
 
   void start_accept();
-  void handle_accept(std::shared_ptr<ISocketOwner> new_connection, std::error_code const &error);
+  void handle_accept(std::shared_ptr<ISocketOwner> const &new_connection,
+                     std::error_code const &              error);
 
   std::shared_ptr<tcp::acceptor> acceptor;
   CONN_CREATOR                   creator;

@@ -23,7 +23,7 @@
 
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 
-ExitState OefLoginTimeoutTask::run(void)
+ExitState OefLoginTimeoutTask::run()
 {
   auto sp = ep.lock();
   if (sp)

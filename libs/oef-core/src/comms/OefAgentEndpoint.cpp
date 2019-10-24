@@ -16,6 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
+#include <utility>
+
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 
 #include "logging/logging.hpp"
@@ -143,7 +147,7 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
   });
 }
 
-void OefAgentEndpoint::SetFactory(std::shared_ptr<IOefTaskFactory<OefAgentEndpoint>> new_factory)
+void OefAgentEndpoint::SetFactory(std::shared_ptr<IOefTaskFactory<OefAgentEndpoint>> const &new_factory)
 {
   if (factory)
   {
@@ -193,7 +197,7 @@ void OefAgentEndpoint::heartbeat()
   }
 }
 
-void OefAgentEndpoint::heartbeat_recvd(void)
+void OefAgentEndpoint::heartbeat_recvd()
 {
   hb_recvd++;
   FETCH_LOG_DEBUG(LOGGING_NAME, "id=", GetIdentifier(), " HB:", GetIdentifier(),

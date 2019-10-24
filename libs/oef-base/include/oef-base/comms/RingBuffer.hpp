@@ -45,10 +45,10 @@ public:
   bool        operator==(const RingBuffer &other) = delete;
   bool        operator<(const RingBuffer &other)  = delete;
 
-  RingBuffer(size_t size)
+  explicit RingBuffer(size_t size)
   {
     this->size = size;
-    store      = (byte *)malloc(size);
+    store      = static_cast<byte *>(malloc(size));
     clear();
   }
 
@@ -57,14 +57,14 @@ public:
     free(store);
   }
 
-  void clear(void)
+  void clear()
   {
     this->freeSpace = this->size;
     this->writep    = 0;
     this->readp     = 0;
   }
 
-  bool empty(void) const
+  bool empty() const
   {
     return GetFreeSpace() == size;
   }
@@ -73,7 +73,9 @@ public:
   {
     Lock lock(mut);
     if (GetFreeSpace() == 0)
-      return mutable_buffer(0, 0);
+    {
+      return {nullptr, 0};
+    }
     return mutable_buffer(AddressOf(writep % size),
                           std::min(writep + LocklessGetFreeSpace(), size) - writep);
   }
@@ -82,7 +84,9 @@ public:
   {
     Lock lock(mut);
     if (GetFreeSpace() == size)
-      return buffer(0, 0);
+    {
+      return {nullptr, 0};
+    }
     return buffer(AddressOf(readp % size),
                   std::min(readp + LocklessGetDataAvailable(), size) - readp);
   }
@@ -95,10 +99,10 @@ public:
     {
       size_t buffer1size = std::min(writep + LocklessGetFreeSpace(), size) - writep;
       size_t buffer2size = LocklessGetFreeSpace() - buffer1size;
-      r.push_back(mutable_buffer(AddressOf(writep), buffer1size));
-      if (buffer2size)
+      r.emplace_back(AddressOf(writep), buffer1size);
+      if (buffer2size != 0u)
       {
-        r.push_back(mutable_buffer(AddressOf(0), buffer2size));
+        r.emplace_back(AddressOf(0), buffer2size);
       }
     }
     return r;
@@ -112,10 +116,10 @@ public:
     {
       size_t buffer1size = std::min(readp + LocklessGetDataAvailable(), size) - readp;
       size_t buffer2size = LocklessGetDataAvailable() - buffer1size;
-      r.push_back(buffer(AddressOf(readp), buffer1size));
-      if (buffer2size)
+      r.emplace_back(AddressOf(readp), buffer1size);
+      if (buffer2size != 0u)
       {
-        r.push_back(buffer(AddressOf(0), buffer2size));
+        r.emplace_back(AddressOf(0), buffer2size);
       }
     }
     return r;
@@ -131,7 +135,7 @@ public:
       prevAvail = LocklessGetDataAvailable();
       freeSpace -= amount;
     }
-    if (!prevAvail)
+    if (prevAvail == 0u)
     {
       signalDataReady();
     }
@@ -147,7 +151,7 @@ public:
       prevSpace = LocklessGetFreeSpace();
       freeSpace += amount;
     }
-    if (!prevSpace)
+    if (prevSpace == 0u)
     {
       signalSpaceReady();
     }
@@ -155,11 +159,11 @@ public:
 
   const void *AddressOf(size_t index) const
   {
-    return (byte *)store + index;
+    return store + index;
   }
   void *AddressOf(size_t index)
   {
-    return (byte *)store + index;
+    return store + index;
   }
 
   size_t GetFreeSpace() const

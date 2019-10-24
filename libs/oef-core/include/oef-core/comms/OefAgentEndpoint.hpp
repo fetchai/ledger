@@ -43,13 +43,13 @@ public:
   using Mutex  = std::mutex;
   using Lock   = std::lock_guard<Mutex>;
 
-  OefAgentEndpoint(std::shared_ptr<ProtoMessageEndpoint<TXType>> endpoint);
-  virtual ~OefAgentEndpoint();
+  explicit OefAgentEndpoint(std::shared_ptr<ProtoMessageEndpoint<TXType>> endpoint);
+  ~OefAgentEndpoint() override;
 
-  void SetFactory(std::shared_ptr<IOefTaskFactory<OefAgentEndpoint>> new_factory);
+  void SetFactory(std::shared_ptr<IOefTaskFactory<OefAgentEndpoint>> const &new_factory);
   void setup(IKarmaPolicy *karmaPolicy);
 
-  virtual void go(void) override
+  void go() override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "------------------> OefAgentEndpoint::go");
 
@@ -69,14 +69,14 @@ public:
     bool will_heartbeat;
   } capabilities;
 
-  void heartbeat(void);
-  void heartbeat_recvd(void);
+  void heartbeat();
+  void heartbeat_recvd();
 
   void close(const std::string &reason);
   void SetState(const std::string &stateName, bool value);
   bool GetState(const std::string &stateName) const;
 
-  void AddGoFunction(std::function<void(SELF_P)> func)
+  void AddGoFunction(std::function<void(SELF_P)> const & func)
   {
     go_functions.push_back(func);
   }

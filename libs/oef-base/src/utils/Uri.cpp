@@ -56,7 +56,7 @@ void Uri::parse(const std::string &s)
       }
       case PROTO:
       {
-        if (part.length() && part.str().back() == '/')
+        if ((part.length() != 0) && part.str().back() == '/')
         {
           proto = part.str().substr(0, static_cast<unsigned long>(part.length() - 3));
         }
@@ -71,7 +71,7 @@ void Uri::parse(const std::string &s)
       }
       case PORT:
       {
-        if (part.length() && part.str().front() == ':')
+        if ((part.length() != 0) && part.str().front() == ':')
         {
           auto tmp = part.str().substr(1);
           port     = static_cast<uint16_t>(std::stoi(tmp));

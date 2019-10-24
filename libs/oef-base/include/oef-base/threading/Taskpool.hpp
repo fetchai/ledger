@@ -54,9 +54,9 @@ public:
   virtual void suspend(TaskP task);
   virtual void after(TaskP task, const Milliseconds &delay);
 
-  virtual void run(std::size_t thread_number);
+  virtual void run(std::size_t thread_idx);
   virtual void SetDefault();
-  virtual void stop(void);
+  virtual void stop();
 
   static std::weak_ptr<Taskpool> GetDefaultTaskpool();
 
@@ -104,10 +104,8 @@ private:
       {
         return false;
       }
-      else
-      {
-        return true;
-      }
+
+      return true;
     }
   };
 

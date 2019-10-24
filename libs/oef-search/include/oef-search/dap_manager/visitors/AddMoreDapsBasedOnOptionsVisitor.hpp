@@ -28,12 +28,11 @@ public:
   static constexpr char const *LOGGING_NAME = "AddMoreDapsBasedOnOptionsVisitor";
   using VisitNodeExitStates                 = typename Visitor<Stack>::VisitNodeExitStates;
 
-  AddMoreDapsBasedOnOptionsVisitor(std::shared_ptr<DapStore> dap_store)
+  explicit AddMoreDapsBasedOnOptionsVisitor(std::shared_ptr<DapStore> dap_store)
     : dap_store_{std::move(dap_store)}
   {}
 
-  virtual ~AddMoreDapsBasedOnOptionsVisitor()
-  {}
+  virtual ~AddMoreDapsBasedOnOptionsVisitor() = default;
 
   virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t /*depth*/)
   {

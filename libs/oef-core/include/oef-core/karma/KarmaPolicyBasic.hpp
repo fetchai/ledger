@@ -29,20 +29,19 @@
 class KarmaPolicyBasic : public IKarmaPolicy
 {
 public:
-  KarmaPolicyBasic(const google::protobuf::Map<std::string, std::string> &config);
-  virtual ~KarmaPolicyBasic();
+  explicit KarmaPolicyBasic(const google::protobuf::Map<std::string, std::string> &config);
+  ~KarmaPolicyBasic() override;
 
-  virtual KarmaAccount GetAccount(const std::string &pubkey = "",
-                                  const std::string &ip     = "") override;
+  KarmaAccount GetAccount(const std::string &pubkey = "", const std::string &ip = "") override;
   void                 upgrade(KarmaAccount &account, const std::string &pubkey = "",
                                const std::string &ip = "") override;
 
-  virtual bool perform(const KarmaAccount &identifier, const std::string &action,
-                       bool force = false) override;
-  virtual bool CouldPerform(const KarmaAccount &identifier, const std::string &action) override;
-  virtual std::string GetBalance(const KarmaAccount &identifier) override;
+  bool        perform(const KarmaAccount &identifier, const std::string &event,
+                      bool force = false) override;
+  bool        CouldPerform(const KarmaAccount &identifier, const std::string &action) override;
+  std::string GetBalance(const KarmaAccount &identifier) override;
 
-  virtual void RefreshCycle(const std::chrono::milliseconds delta) override;
+  void RefreshCycle(std::chrono::milliseconds delta) override;
 
 protected:
 private:

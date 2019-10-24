@@ -47,7 +47,7 @@ public:
   using Lock  = std::lock_guard<Mutex>;
 
   TNonBlockingWorkerTask()          = default;
-  virtual ~TNonBlockingWorkerTask() = default;
+  ~TNonBlockingWorkerTask() override = default;
 
   Notification::NotificationBuilder post(WorkloadP workload)
   {
@@ -70,19 +70,19 @@ public:
 
   virtual WorkloadProcessed process(WorkloadP workload, WorkloadState state) = 0;
 
-  virtual bool IsRunnable(void) const
+  bool IsRunnable() const override
   {
     Lock lock(mutex);
     return !queue.empty();
   }
 
-  bool HasCurrentTask(void) const
+  bool HasCurrentTask() const
   {
     Lock lock(mutex);
     return bool(current.first);
   }
 
-  virtual ExitState run(void)
+  ExitState run() override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Run task ", GetTaskId());
     WorkloadState state;

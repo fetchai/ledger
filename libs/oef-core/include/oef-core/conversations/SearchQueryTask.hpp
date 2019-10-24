@@ -48,7 +48,7 @@ public:
     return shared_from_this();
   }
 
-  StateResult                    HandleResponse(void) override;
+  StateResult                    HandleResponse() override;
   std::shared_ptr<REQUEST_PROTO> make_request_proto() override;
 
 protected:

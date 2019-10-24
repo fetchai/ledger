@@ -64,9 +64,9 @@ public:
 
   virtual ~URI() = default;
 
-  std::string ToString()
+  std::string ToString() const
   {
-    std::string nspaces = "";
+    std::string nspaces;
     if (!namespaces.empty())
     {
       for (const std::string &nspace : namespaces)
@@ -75,7 +75,7 @@ public:
       }
       nspaces = nspaces.substr(0, nspaces.size() - 1);
     }
-    std::string uri{""};
+    std::string uri;
     uri += protocol + "://" += coreURI + "/" += CoreKey + "/" += nspaces + "/" += AgentKey + "/" +=
         AgentAlias;
     return uri;
@@ -83,7 +83,7 @@ public:
 
   std::string AgentPartAsString()
   {
-    return AgentKey + (AgentAlias.size() > 0 ? ("/" + AgentAlias) : "");
+    return AgentKey + (!AgentAlias.empty() ? ("/" + AgentAlias) : "");
   }
 
   void parse(const std::string &uri)
@@ -153,13 +153,13 @@ class Builder
 public:
   using BuilderPtr = std::shared_ptr<Builder>;
 
-  static BuilderPtr create(URI uri = URI())
+  static BuilderPtr create(URI const &uri = URI())
   {
-    return std::make_shared<Builder>(std::move(uri));
+    return std::make_shared<Builder>(uri);
   }
 
-  Builder(URI uri)
-    : uri_(std::move(uri))
+  explicit Builder(URI const &uri)
+    : uri_(uri)
   {}
 
   virtual ~Builder() = default;
@@ -191,7 +191,7 @@ public:
 
   Builder *AddNamespace(std::string nspace)
   {
-    uri_.namespaces.push_back(std::move(nspace));
+    uri_.namespaces.emplace_back(std::move(nspace));
     return this;
   }
 
@@ -203,7 +203,7 @@ public:
 
   URI build()
   {
-    return std::move(uri_);
+    return uri_;
   }
 
 private:

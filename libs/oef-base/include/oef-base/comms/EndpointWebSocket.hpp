@@ -47,7 +47,7 @@ public:
   explicit EndpointWebSocket(asio::io_context &io_context, std::size_t sendBufferSize,
                              std::size_t readBufferSize, ConfigMap configMap);
 
-  virtual ~EndpointWebSocket();
+  ~EndpointWebSocket() override;
 
   EndpointWebSocket(const EndpointWebSocket &other) = delete;
   EndpointWebSocket &operator=(const EndpointWebSocket &other)  = delete;
@@ -61,13 +61,13 @@ public:
   }
 */
 
-  virtual void close() override;
-  virtual void go() override;
+  void close() override;
+  void go() override;
 
 protected:
-  virtual void async_read(const std::size_t &bytes_needed) override;
-  virtual void async_write() override;
-  virtual bool is_eof(std::error_code const &ec) const override;
+  void async_read(const std::size_t &bytes_needed) override;
+  void async_write() override;
+  bool is_eof(std::error_code const &ec) const override;
 
   void async_read_at_least(const std::size_t &bytes_needed, std::size_t bytes_read,
                            std::vector<RingBuffer::mutable_buffer> &space,

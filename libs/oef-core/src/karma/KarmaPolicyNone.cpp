@@ -28,9 +28,6 @@ KarmaPolicyNone::KarmaPolicyNone()
   sleep(2);  // TODO: Is this supposed to be there?
 }
 
-KarmaPolicyNone::~KarmaPolicyNone()
-{}
-
 KarmaAccount KarmaPolicyNone::GetAccount(const std::string & /*pubkey*/, const std::string & /*ip*/)
 {
   return mkAccount(0, "NO_KARMA_POLICY");

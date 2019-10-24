@@ -50,7 +50,7 @@ SearchUpdateTask::~SearchUpdateTask()
   FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
 }
 
-SearchUpdateTask::StateResult SearchUpdateTask::HandleResponse(void)
+SearchUpdateTask::StateResult SearchUpdateTask::HandleResponse()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
   FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());

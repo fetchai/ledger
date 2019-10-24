@@ -28,7 +28,7 @@ void swap(KarmaAccount &v1, KarmaAccount &v2)
 
 bool KarmaAccount::perform(const std::string &action, bool /*force*/)
 {
-  if (!policy)
+  if (policy == nullptr)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Denying karma for '", action, "' because account is VOID");
     return false;
@@ -41,9 +41,9 @@ bool KarmaAccount::perform(const std::string &action, bool /*force*/)
   return r;
 }
 
-bool KarmaAccount::CouldPerform(const std::string &action)
+bool KarmaAccount::CouldPerform(std::string const &action)
 {
-  if (!policy)
+  if (policy == nullptr)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Karma for '", action,
                    "' would be denied because account is VOID");

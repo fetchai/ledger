@@ -25,7 +25,7 @@
 #include "oef-search/comms/Oefv1Listener.hpp"
 
 template <template <typename> class EndpointType>
-ExitState OefListenerStarterTask<EndpointType>::run(void)
+ExitState OefListenerStarterTask<EndpointType>::run()
 {
   // open port here.
   auto result = std::make_shared<Oefv1Listener<EndpointType>>(core, p, endpointConfig);

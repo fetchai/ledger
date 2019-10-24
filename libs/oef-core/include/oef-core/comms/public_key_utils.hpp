@@ -38,15 +38,17 @@ class X509CertP
 {
 public:
   explicit X509CertP(SSL *conn)
-    : cert_{NULL}
+    : cert_{nullptr}
   {
     ERR_load_crypto_strings();  // TOFIX
     cert_ = SSL_get_peer_certificate(conn);
-    if (!cert_)
-      throw std::runtime_error(ERR_error_string(ERR_get_error(), NULL));
+    if (cert_ == nullptr)
+    {
+      throw std::runtime_error(ERR_error_string(ERR_get_error(), nullptr));
+    }
   }
 
-  operator X509 *() const
+  explicit operator X509 *() const
   {
     return cert_;
   }
@@ -77,7 +79,7 @@ class RSAKey
 public:
   explicit RSAKey(const EvpPublicKey &evp_pk);
 
-  operator RSA *() const
+  explicit operator RSA *() const
   {
     return rsa_;
   }
@@ -111,30 +113,36 @@ class EvpPublicKey
 {
 public:
   explicit EvpPublicKey(X509CertP &cert)
-    : evp_pk_{NULL}
+    : evp_pk_{nullptr}
   {
     ERR_load_crypto_strings();
     evp_pk_ = X509_get_pubkey(cert.native_handle());
-    if (!evp_pk_)
-      throw std::runtime_error(ERR_error_string(ERR_get_error(), NULL));
+    if (evp_pk_ == nullptr)
+    {
+      throw std::runtime_error(ERR_error_string(ERR_get_error(), nullptr));
+    }
   }
 
-  explicit EvpPublicKey(std::string pem_file_path)
-    : evp_pk_{NULL}
+  explicit EvpPublicKey(const std::string &pem_file_path)
+    : evp_pk_{nullptr}
   {
     FILE *fp = fopen(pem_file_path.c_str(), "r");
-    if (!fp)
+    if (fp == nullptr)
+    {
       throw std::runtime_error(strerror(errno));
+    }
     ERR_load_crypto_strings();
-    evp_pk_ = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
+    evp_pk_ = PEM_read_PUBKEY(fp, nullptr, nullptr, nullptr);
     fclose(fp);
-    if (!evp_pk_)
-      throw std::runtime_error(ERR_error_string(ERR_get_error(), NULL));
+    if (evp_pk_ == nullptr)
+    {
+      throw std::runtime_error(ERR_error_string(ERR_get_error(), nullptr));
+    }
   }
 
   bool operator==(const EvpPublicKey &other) const
   {
-    return EVP_PKEY_cmp(evp_pk_, other) == 1;
+    return EVP_PKEY_cmp(evp_pk_, static_cast<EVP_PKEY const *>(other)) == 1;
   }
 
   bool operator<(const EvpPublicKey &other) const
@@ -144,7 +152,7 @@ public:
     // return !(*this == other); // TOFIX
   }
 
-  operator EVP_PKEY *() const
+  explicit operator EVP_PKEY const *() const
   {
     return evp_pk_;
   }
@@ -222,7 +230,7 @@ public:
     return out;
   }
 
-  operator std::string() const
+  explicit operator std::string() const
   {
     return to_string();
   }
@@ -232,30 +240,38 @@ public:
   EvpPublicKey(const EvpPublicKey &original)
   {
     evp_pk_ = original.evp_pk_;
-    if (!EVP_PKEY_up_ref(evp_pk_))
-      throw std::runtime_error(ERR_error_string(ERR_get_error(), NULL));
+    if (EVP_PKEY_up_ref(evp_pk_) == 0)
+    {
+      throw std::runtime_error(ERR_error_string(ERR_get_error(), nullptr));
+    }
   }
 
   EvpPublicKey(const EvpPublicKey &&original)
   {
     evp_pk_ = original.evp_pk_;
-    if (!EVP_PKEY_up_ref(evp_pk_))
-      throw std::runtime_error(ERR_error_string(ERR_get_error(), NULL));
+    if (EVP_PKEY_up_ref(evp_pk_) == 0)
+    {
+      throw std::runtime_error(ERR_error_string(ERR_get_error(), nullptr));
+    }
   }
 
   EvpPublicKey &operator=(const EvpPublicKey &original)
   {
     evp_pk_ = original.evp_pk_;
-    if (!EVP_PKEY_up_ref(evp_pk_))
-      throw std::runtime_error(ERR_error_string(ERR_get_error(), NULL));
+    if (EVP_PKEY_up_ref(evp_pk_) == 0)
+    {
+      throw std::runtime_error(ERR_error_string(ERR_get_error(), nullptr));
+    }
     return *this;
   }
 
   EvpPublicKey &operator=(const EvpPublicKey &&original)
   {
     evp_pk_ = original.evp_pk_;
-    if (!EVP_PKEY_up_ref(evp_pk_))
-      throw std::runtime_error(ERR_error_string(ERR_get_error(), NULL));
+    if (EVP_PKEY_up_ref(evp_pk_) == 0)
+    {
+      throw std::runtime_error(ERR_error_string(ERR_get_error(), nullptr));
+    }
     return *this;
   }
 

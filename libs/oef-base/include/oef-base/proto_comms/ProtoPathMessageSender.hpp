@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "logging/logging.hpp"
@@ -54,17 +55,17 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ProtoPathMessageSender";
 
-  ProtoPathMessageSender(std::weak_ptr<EndpointType> endpoint)
+  explicit ProtoPathMessageSender(std::weak_ptr<EndpointType> endpoint)
   {
-    this->endpoint = endpoint;
+    this->endpoint = std::move(endpoint);
   }
-  virtual ~ProtoPathMessageSender()
-  {}
+  ~ProtoPathMessageSender() override = default;
 
   void SetEndianness(Endianness /*newstate*/)
   {}
 
-  virtual consumed_needed_pair CheckForSpace(const mutable_buffers &data, IMessageWriter::TXQ &txq);
+  consumed_needed_pair CheckForSpace(const mutable_buffers &data,
+                                     IMessageWriter::TXQ &  txq) override;
 
 protected:
 private:

@@ -27,7 +27,7 @@ class StateMachineTask : virtual public Task
 {
 public:
   using Result     = std::pair<int, ExitState>;
-  using EntryPoint = Result (SUBCLASS::*)(void);
+  using EntryPoint = Result (SUBCLASS::*)();
 
   StateMachineTask(SUBCLASS *ptr, const EntryPoint *const entrypoints)
     : Task()
@@ -46,13 +46,12 @@ public:
     , ptr{nullptr}
   {}
 
-  virtual ~StateMachineTask()
-  {}
+  ~StateMachineTask() override = default;
 
   EntryPoint const *           entrypoints;
   static constexpr char const *LOGGING_NAME = "StateMachineTask";
 
-  virtual bool IsRunnable(void) const
+  bool IsRunnable() const override
   {
     return runnable;
   }
@@ -63,7 +62,7 @@ public:
     runnable  = true;
   }
 
-  virtual ExitState run(void)
+  ExitState run() override
   {
     try
     {
@@ -73,7 +72,7 @@ public:
         FETCH_LOG_INFO(LOGGING_NAME, "Call state function");
         Result result = (ptr->*state)();
 
-        if (result.first)
+        if (result.first != 0)
         {
           state = entrypoints[result.first];
         }

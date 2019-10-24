@@ -41,16 +41,15 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ProtoMessageSender";
 
-  ProtoMessageSender(
+  explicit ProtoMessageSender(
       std::weak_ptr<ProtoMessageEndpoint<TXType, ProtoMessageReader, ProtoMessageSender>> &endpoint)
   {
     this->endpoint = endpoint;
   }
-  virtual ~ProtoMessageSender()
-  {}
+  ~ProtoMessageSender() override = default;
 
-  virtual consumed_needed_pair CheckForSpace(const mutable_buffers &      data,
-                                             IMessageWriter<TXType>::TXQ &txq);
+  consumed_needed_pair         CheckForSpace(const mutable_buffers &      data,
+                                             IMessageWriter<TXType>::TXQ &txq) override;
   void                         SetEndianness(Endianness newstate)
   {
     endianness = newstate;

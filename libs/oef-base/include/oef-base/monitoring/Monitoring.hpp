@@ -47,7 +47,7 @@ public:
   static void      max(IdType id, CountType value);
   static CountType get(IdType id);
 
-  void report(ReportFunc);
+  void report(ReportFunc const &func);
 
   static MonitoringInner *inner;
 

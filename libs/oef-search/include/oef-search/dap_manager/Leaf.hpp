@@ -28,22 +28,18 @@ public:
   static constexpr char const *LOGGING_NAME = "Leaf";
   using Node::dap_names_;
 
-  Leaf(const ConstructQueryConstraintObjectRequest &proto)
+  Leaf() = default;
+  explicit Leaf(ConstructQueryConstraintObjectRequest const &proto)
     : proto_{std::make_shared<ConstructQueryConstraintObjectRequest>(proto)}
   {}
-
-  Leaf()
-    : proto_{std::make_shared<ConstructQueryConstraintObjectRequest>()}
-  {}
-
-  virtual ~Leaf()         = default;
+  ~Leaf() override        = default;
   Leaf(const Leaf &other) = delete;
   Leaf &operator=(const Leaf &other) = delete;
 
   bool operator==(const Leaf &other) = delete;
   bool operator<(const Leaf &other)  = delete;
 
-  virtual std::string GetNodeType() override
+  std::string GetNodeType() override
   {
     return "leaf";
   }
@@ -90,7 +86,7 @@ public:
     return pt;
   }
 
-  virtual std::string ToString() override
+  std::string ToString() override
   {
     std::string s = "Leaf " + proto_->node_name() + " -- ";
     s += proto_->target_field_name() + " " + proto_->operator_() + " ";

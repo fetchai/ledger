@@ -39,7 +39,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "AgentToAgentMessageTask";
 
-  AgentToAgentMessageTask(AgentP sourceAgent, int32_t message_id, ProtoP pb, AgentsP agents)
+  AgentToAgentMessageTask(AgentP const &sourceAgent, int32_t message_id, ProtoP pb, AgentsP const &agents)
     : pb_{std::move(pb)}
   {
     OEFURI::URI uri;
@@ -53,7 +53,7 @@ public:
     }
     else
     {
-      create_message(message_id, std::move(uri), sourceAgent->getPublicKey());
+      create_message(message_id, uri, sourceAgent->getPublicKey());
     }
 
     source_key_ = sourceAgent->getPublicKey();
@@ -62,10 +62,9 @@ public:
                    message_pb_->DebugString());
   }
 
-  virtual ~AgentToAgentMessageTask()
-  {}
+  ~AgentToAgentMessageTask() override = default;
 
-  void create_message(int32_t message_id, OEFURI::URI uri, const std::string &public_key)
+  void create_message(int32_t message_id, OEFURI::URI const &uri, std::string const &public_key)
   {
     message_pb_ = std::make_shared<Message>();
     int32_t did = pb_->dialogue_id();
@@ -98,12 +97,12 @@ public:
     error->set_origin(pb_->destination());
   }
 
-  virtual bool IsRunnable(void) const
+  bool IsRunnable() const override
   {
     return true;
   }
 
-  virtual ExitState run(void)
+  ExitState run() override
   {
     // TODO(kll): it's possible there's a race hazard here. Need to think about this.
     if (agent_->send(message_pb_).Then([this]() { this->MakeRunnable(); }).Waiting())

@@ -22,12 +22,11 @@
 class Gauge
 {
 public:
-  Gauge(const char *name)
+  explicit Gauge(const char *name)
   {
     id = Monitoring::find(name);
   }
-  virtual ~Gauge()
-  {}
+  virtual ~Gauge() = default;
   Gauge(const Gauge &other)
   {
     copy(other);
@@ -85,7 +84,7 @@ public:
     Monitoring::add(id, 1);
     return *this;
   }
-  Gauge operator++(int)
+  const Gauge operator++(int)
   {
     Monitoring::add(id, 1);
     return *this;
@@ -95,7 +94,7 @@ public:
     Monitoring::sub(id, 1);
     return *this;
   }
-  Gauge operator--(int)
+  const Gauge operator--(int)
   {
     Monitoring::sub(id, 1);
     return *this;

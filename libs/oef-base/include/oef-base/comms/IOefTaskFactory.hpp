@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "network/fetch_asio.hpp"
@@ -36,13 +37,13 @@ public:
   using buffer  = asio::const_buffer;
   using buffers = std::vector<buffer>;
 
-  IOefTaskFactory(std::shared_ptr<OefEndpoint>           the_endpoint,
+  IOefTaskFactory(std::shared_ptr<OefEndpoint> the_endpoint,
                   std::shared_ptr<OutboundConversations> outbounds)
-    : outbounds(outbounds)
+    : outbounds(std::move(outbounds))
     , endpoint(the_endpoint)
   {}
-  IOefTaskFactory(std::shared_ptr<OutboundConversations> outbounds)
-    : outbounds(outbounds)
+  explicit IOefTaskFactory(std::shared_ptr<OutboundConversations> outbounds)
+    : outbounds(std::move(outbounds))
   {}
   virtual ~IOefTaskFactory()                    = default;
   IOefTaskFactory(const IOefTaskFactory &other) = delete;
@@ -114,7 +115,7 @@ protected:
   {
     return endpoint;
   }
-  virtual void EndpointClosed(void) = 0;
+  virtual void EndpointClosed() = 0;
 
 protected:
   std::shared_ptr<OefEndpoint> endpoint;

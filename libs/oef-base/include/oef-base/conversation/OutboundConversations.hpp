@@ -36,8 +36,8 @@ class OutboundConversations
 public:
   static constexpr char const *LOGGING_NAME = "OutboundConversations";
 
-  OutboundConversations();
-  virtual ~OutboundConversations();
+  OutboundConversations() = default;
+  ~OutboundConversations() = default;
 
   // This is used to configure the system.
   void AddConversationCreator(const Uri &                                   target,
@@ -45,7 +45,7 @@ public:
   void DeleteConversationCreator(const Uri &target);
 
   std::shared_ptr<OutboundConversation> startConversation(
-      const Uri &target, std::shared_ptr<google::protobuf::Message> initiator);
+      Uri const &target_path, std::shared_ptr<google::protobuf::Message> const &initiator);
 
 protected:
   std::map<std::string, std::shared_ptr<IOutboundConversationCreator>> creators;

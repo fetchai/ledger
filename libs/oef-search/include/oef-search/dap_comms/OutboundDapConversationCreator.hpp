@@ -38,9 +38,9 @@ public:
   using IOutboundConversationCreator::ident2conversation_;
 
   OutboundDapConversationCreator(const Uri &dap_uri, Core &core, const std::string &dap_name);
-  virtual ~OutboundDapConversationCreator();
-  virtual std::shared_ptr<OutboundConversation> start(
-      const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator);
+  ~OutboundDapConversationCreator() override;
+  std::shared_ptr<OutboundConversation> start(
+      const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator) override;
 
 protected:
 private:

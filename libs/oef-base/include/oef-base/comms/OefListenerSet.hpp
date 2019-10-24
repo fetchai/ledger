@@ -34,10 +34,8 @@ public:
   using Mutex      = std::mutex;
   using Lock       = std::lock_guard<Mutex>;
 
-  OefListenerSet()
-  {}
-  virtual ~OefListenerSet()
-  {}
+  OefListenerSet()          = default;
+  virtual ~OefListenerSet() = default;
 
   bool has(const ListenerId &id) const
   {

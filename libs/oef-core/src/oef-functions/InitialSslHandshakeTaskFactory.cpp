@@ -48,7 +48,7 @@ void InitialSslHandshakeTaskFactory::ProcessMessage(ConstCharArrayBuffer &data)
           ->get_peer_ssl_key();
   public_key_ = RSA_Modulus_short(*ssl_public_key_);
 
-  auto iter = white_list_->find(*ssl_public_key_);
+  auto iter = white_list_->find(ssl_public_key_->to_string());
   if (iter != white_list_->end() || !white_list_enabled_)
   {
     // send success

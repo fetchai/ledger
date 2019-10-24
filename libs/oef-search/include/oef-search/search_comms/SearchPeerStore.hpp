@@ -46,7 +46,7 @@ public:
     store_.insert(peer);
   }
 
-  void ForAllPeer(ForBody func)
+  void ForAllPeer(ForBody const &func)
   {
     Lock lock(mutex_);
     for (const auto &peer : store_)

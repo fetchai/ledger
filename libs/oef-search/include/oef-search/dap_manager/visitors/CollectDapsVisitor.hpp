@@ -28,11 +28,9 @@ public:
   static constexpr char const *LOGGING_NAME = "CollectDapsVisitor";
   using VisitNodeExitStates                 = typename Visitor<Stack>::VisitNodeExitStates;
 
-  CollectDapsVisitor()
-  {}
+  CollectDapsVisitor() = default;
 
-  virtual ~CollectDapsVisitor()
-  {}
+  virtual ~CollectDapsVisitor() = default;
 
   virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t /*depth*/)
   {

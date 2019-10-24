@@ -55,7 +55,7 @@ SearchQueryTask::~SearchQueryTask()
   tasks_resolved++;
 }
 
-SearchQueryTask::StateResult SearchQueryTask::HandleResponse(void)
+SearchQueryTask::StateResult SearchQueryTask::HandleResponse()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
   FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());

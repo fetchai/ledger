@@ -96,7 +96,7 @@ mem_usage_result run_get_dynamic_proc_info(pid_t pid)
                          &count, &object_name);
     if (error == KERN_SUCCESS)
     {
-      if (b_info.reserved && size == (SHARED_TEXT_REGION_SIZE) &&
+      if ((b_info.reserved != 0u) && size == (SHARED_TEXT_REGION_SIZE) &&
           ti.virtual_size > (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE))
       {
         ti.virtual_size -= (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE);
@@ -110,7 +110,7 @@ mem_usage_result run_get_dynamic_proc_info(pid_t pid)
 }
 #endif
 
-mem_usage_result process_mem_usage(const std::string /*filename*/)
+mem_usage_result process_mem_usage(std::string const &/*filename*/)
 {
   using std::ifstream;
   using std::ios_base;
@@ -153,7 +153,7 @@ mem_usage_result process_mem_usage(const std::string /*filename*/)
   return r;
 }
 
-ExitState MonitoringTask::run(void)
+ExitState MonitoringTask::run()
 {
 
   mem_usage_result r_self;

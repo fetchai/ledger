@@ -69,9 +69,6 @@ KarmaPolicyBasic::KarmaPolicyBasic(const google::protobuf::Map<std::string, std:
   }
 }
 
-KarmaPolicyBasic::~KarmaPolicyBasic()
-{}
-
 void KarmaPolicyBasic::RefreshCycle(const std::chrono::milliseconds /*delta*/)
 {
   auto policies = getPolicies("refresh");
@@ -144,11 +141,11 @@ std::vector<std::string> KarmaPolicyBasic::getPolicies(const std::string &action
   tokenise(action, actions, ',');
   if (actions.empty())
   {
-    actions.push_back("*");
+    actions.emplace_back("*");
   }
 
   std::vector<std::string> policies;
-  for (const auto &action : actions)
+  for (auto const &action : actions)
   {
     policies.push_back(getPolicy(action));
   }

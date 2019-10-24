@@ -24,7 +24,7 @@ class Message;
 }  // namespace google
 
 #include <memory>
-
+#include <utility>
 #include "oef-base/threading/Waitable.hpp"
 #include "oef-base/utils/Uri.hpp"
 
@@ -35,16 +35,14 @@ class Task;
 class OutboundConversation : public Waitable
 {
 protected:
-  OutboundConversation()
-  {}
+  OutboundConversation() = default;
 
 public:
   using ProtoP = std::shared_ptr<google::protobuf::Message>;
 
   friend class OutboundConversationWorkerTask;
 
-  virtual ~OutboundConversation()
-  {}
+  ~OutboundConversation() override = default;
 
   virtual void        HandleMessage(ConstCharArrayBuffer buffer)                       = 0;
   virtual void        HandleError(int status_code, const std::string &message)         = 0;
@@ -61,7 +59,7 @@ public:
 
   virtual void SetProto(ProtoP proto)
   {
-    proto_ = proto;
+    proto_ = std::move(proto);
   }
 
   virtual void SetIdentifier(unsigned long ident)

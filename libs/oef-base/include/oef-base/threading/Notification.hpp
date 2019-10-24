@@ -22,7 +22,7 @@
 #include <condition_variable>
 #include <functional>
 #include <mutex>
-
+#include <utility>
 namespace Notification {
 
 class NotificationBuilder;
@@ -97,12 +97,11 @@ public:
   using Callback = NotificationImplementation::Callback;
 
   explicit NotificationBuilder(Notification notification, bool execute_now = false)
-    : notification_(notification)
+    : notification_(std::move(notification))
     , execute_now_{execute_now}
   {}
 
-  explicit NotificationBuilder()
-  {}
+  explicit NotificationBuilder() = default;
 
   ~NotificationBuilder()
   {

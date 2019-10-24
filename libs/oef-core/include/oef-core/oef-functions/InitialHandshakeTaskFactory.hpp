@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "logging/logging.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
@@ -30,20 +32,19 @@ public:
   InitialHandshakeTaskFactory(std::string core_key, std::shared_ptr<OefAgentEndpoint> the_endpoint,
                               std::shared_ptr<OutboundConversations> outbounds,
                               std::shared_ptr<Agents>                agents)
-    : IOefTaskFactory(the_endpoint, outbounds)
+    : IOefTaskFactory(std::move(the_endpoint), std::move(outbounds))
     , agents_{std::move(agents)}
     , public_key_{""}
     , core_key_{std::move(core_key)}
   {
     state = WAITING_FOR_Agent_Server_ID;
   }
-  virtual ~InitialHandshakeTaskFactory()
-  {}
+  ~InitialHandshakeTaskFactory() override = default;
 
-  virtual void ProcessMessage(ConstCharArrayBuffer &data);
+  void ProcessMessage(ConstCharArrayBuffer &data) override;
   // Process the message, throw exceptions if they're bad.
 
-  virtual void EndpointClosed(void)
+  void EndpointClosed() override
   {}
 
 protected:

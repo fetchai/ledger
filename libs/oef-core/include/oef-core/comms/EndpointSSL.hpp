@@ -59,33 +59,41 @@ public:
   EndpointSSL(Core &core, std::size_t sendBufferSize, std::size_t readBufferSize,
               ConfigMap configMap);
 
-  virtual ~EndpointSSL();
+  ~EndpointSSL() override;
 
-  virtual Socket &socket() override
+  Socket &socket() override
   {
     if (ssl_setup)
+    {
       return ssl_sock_p->next_layer();
+    }
     else
+    {
       return sock;
+    }
   }
 
-  virtual void close() override;
-  virtual void go() override;
+  void close() override;
+  void go() override;
 
   std::string agent_key()
   {
     if (*state == this->RUNNING_ENDPOINT)
+    {
       return agent_key_;
+    }
     else
+    {
       return "";
+    }
   }
 
   std::shared_ptr<EvpPublicKey> get_peer_ssl_key();
 
 protected:
-  virtual void async_read(const std::size_t &bytes_needed) override;
-  virtual void async_write() override;
-  virtual bool is_eof(const std::error_code &ec) const override;
+  void async_read(const std::size_t &bytes_needed) override;
+  void async_write() override;
+  bool is_eof(const std::error_code &ec) const override;
 
 private:
   SocketSSL * ssl_sock_p;
@@ -101,4 +109,4 @@ private:
   std::string agent_ssl_key_;
 };
 
-bool verify_agent_certificate(bool, asio::ssl::verify_context &);
+bool verify_agent_certificate(bool /*preverified*/, asio::ssl::verify_context & /*ctx*/);

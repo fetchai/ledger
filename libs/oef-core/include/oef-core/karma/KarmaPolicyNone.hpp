@@ -26,14 +26,14 @@ class KarmaPolicyNone : public IKarmaPolicy
 public:
   static constexpr char const *LOGGING_NAME = "KarmaPolicyNone";
   KarmaPolicyNone();
-  virtual ~KarmaPolicyNone();
+  ~KarmaPolicyNone() override;
 
-  virtual KarmaAccount GetAccount(const std::string &pubkey = "", const std::string &ip = "");
+  KarmaAccount GetAccount(const std::string &pubkey = "", const std::string &ip = "") override;
 
-  virtual bool        perform(const KarmaAccount &identifier, const std::string &action,
-                              bool force = false);
-  virtual bool        CouldPerform(const KarmaAccount &identifier, const std::string &action);
-  virtual std::string GetBalance(const KarmaAccount & /*identifier*/)
+  bool        perform(const KarmaAccount &identifier, const std::string &action,
+                      bool force = false) override;
+  bool        CouldPerform(const KarmaAccount &identifier, const std::string &action) override;
+  std::string GetBalance(const KarmaAccount & /*identifier*/) override
   {
     return "ACCEPT ALL";
   }

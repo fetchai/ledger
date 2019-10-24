@@ -81,7 +81,7 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::CheckForMes
       break;
     }
 
-    std::size_t remaining_size = static_cast<std::size_t>(chars.RemainingData());
+    auto remaining_size = static_cast<std::size_t>(chars.RemainingData());
     if (remaining_size < body_size)
     {
       needed = static_cast<std::size_t>(body_size - remaining_size);
@@ -108,7 +108,7 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::CheckForMes
 
     if (!leader.status().success())
     {
-      std::string msg{""};
+      std::string msg;
       for (auto &n : leader.status().narrative())
       {
         msg += n;

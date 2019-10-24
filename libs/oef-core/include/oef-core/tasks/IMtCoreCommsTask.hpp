@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "oef-base/comms/EndpointBase.hpp"
 #include "oef-core/tasks-base/IMtCoreTask.hpp"
 #include "oef-messages/fetch_protobuf.hpp"
@@ -24,12 +26,11 @@
 class IMtCoreCommsTask : public IMtCoreTask
 {
 public:
-  IMtCoreCommsTask(std::shared_ptr<EndpointBase<google::protobuf::Message>> endpoint)
-    : IMtCoreTask()
+  explicit IMtCoreCommsTask(std::shared_ptr<EndpointBase<google::protobuf::Message>> endpoint)
+    : endpoint{std::move(endpoint)}
   {
-    this->endpoint = endpoint;
   }
-  virtual ~IMtCoreCommsTask() = default;
+  ~IMtCoreCommsTask() override = default;
 
 protected:
   std::shared_ptr<EndpointBase<google::protobuf::Message>> endpoint;

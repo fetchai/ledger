@@ -22,12 +22,6 @@
 #include "oef-base/proto_comms/ProtoMessageSender.hpp"
 #include "oef-base/utils/Uri.hpp"
 
-OutboundConversations::OutboundConversations()
-{}
-
-OutboundConversations::~OutboundConversations()
-{}
-
 void OutboundConversations::DeleteConversationCreator(const Uri &target)
 {
   creators.erase(target.GetSocketAddress());
@@ -40,7 +34,7 @@ void OutboundConversations::AddConversationCreator(
 }
 
 std::shared_ptr<OutboundConversation> OutboundConversations::startConversation(
-    const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator)
+    Uri const &target_path, std::shared_ptr<google::protobuf::Message> const &initiator)
 {
   auto iter = creators.find(target_path.GetSocketAddress());
   if (iter != creators.end())

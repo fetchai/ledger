@@ -32,8 +32,7 @@ public:
     : endpoint(std::move(endpoint))
   {}
 
-  virtual ~EndpointPipe()
-  {}
+  ~EndpointPipe() override = default;
 
   virtual Notification::NotificationBuilder send(SendType s)
   {
@@ -50,12 +49,12 @@ public:
     return endpoint->connected();
   }
 
-  virtual void go() override
+  void go() override
   {
     endpoint->go();
   }
 
-  virtual ISocketOwner::Socket &socket() override
+  ISocketOwner::Socket &socket() override
   {
     return endpoint->socket();
   }
@@ -75,12 +74,12 @@ public:
     endpoint->wake();
   }
 
-  std::size_t GetIdentifier(void) const
+  std::size_t GetIdentifier() const
   {
     return endpoint->GetIdentifier();
   }
 
-  virtual const std::string &GetRemoteId(void) const
+  virtual const std::string &GetRemoteId() const
   {
     return endpoint->GetRemoteId();
   }

@@ -26,7 +26,7 @@ class Uri
 public:
   static constexpr char const *LOGGING_NAME = "Uri";
 
-  Uri(const std::string &s)
+  explicit Uri(const std::string &s)
   {
     this->s = s;
     parse(s);
@@ -44,15 +44,14 @@ public:
     return *this;
   }
 
-  virtual ~Uri()
-  {}
+  virtual ~Uri() = default;
 
   std::string s;
   std::string proto;
   std::string host;
   std::string path;
-  uint32_t    port;
-  bool        valid;
+  uint32_t    port{0};
+  bool        valid{false};
 
   void diagnostic() const
   {

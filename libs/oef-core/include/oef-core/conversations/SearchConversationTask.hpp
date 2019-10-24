@@ -61,7 +61,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
   }
 
-  StateResult CreateConversation(void)
+  StateResult CreateConversation()
   {
     auto                this_sp = get_shared();
     std::weak_ptr<Task> this_wp = this_sp;
@@ -87,7 +87,7 @@ public:
     return SearchConversationTask::StateResult(1, COMPLETE);
   }
 
-  virtual StateResult                    HandleResponse(void) = 0;
+  virtual StateResult                    HandleResponse()     = 0;
   virtual std::shared_ptr<Task>          get_shared()         = 0;
   virtual std::shared_ptr<REQUEST_PROTO> make_request_proto() = 0;
 

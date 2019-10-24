@@ -117,7 +117,7 @@ void OefSearchEndpoint::setup()
       });
 }
 
-void OefSearchEndpoint::SetFactory(std::shared_ptr<IOefTaskFactory<OefSearchEndpoint>> new_factory)
+void OefSearchEndpoint::SetFactory(std::shared_ptr<IOefTaskFactory<OefSearchEndpoint>> const &new_factory)
 {
   if (factory)
   {

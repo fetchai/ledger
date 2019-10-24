@@ -39,15 +39,13 @@ public:
 
   static constexpr char const *LOGGING_NAME = "IOutboundConversationCreator";
 
-  IOutboundConversationCreator()
-    : ident2conversation_{}
-  {}
+  IOutboundConversationCreator() = default;
   virtual ~IOutboundConversationCreator() = default;
 
   virtual std::shared_ptr<OutboundConversation> start(
       const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator) = 0;
 
-  virtual void HandleMessage(unsigned long id, const Uri &uri, ConstCharArrayBuffer buffer) const
+  virtual void HandleMessage(unsigned long id, const Uri &uri, ConstCharArrayBuffer const &buffer) const
   {
     std::shared_ptr<OutboundConversation> conv = nullptr;
 
@@ -68,7 +66,7 @@ public:
     if (conv)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "wakeup (uri=", uri.ToString(), ")!!");
-      conv->HandleMessage(std::move(buffer));
+      conv->HandleMessage(buffer);
     }
   }
 

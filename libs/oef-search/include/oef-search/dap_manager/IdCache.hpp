@@ -37,7 +37,7 @@ public:
     , cleaner_pool_period_(cleaner_pool_period_sec * 1000)
     , active_(true)
   {}
-  virtual ~IdCache()            = default;
+  ~IdCache() override           = default;
   IdCache(const IdCache &other) = delete;
   IdCache &operator=(const IdCache &other) = delete;
 
@@ -73,7 +73,7 @@ public:
     active_.store(false);
   }
 
-  bool IsRunnable(void) const override
+  bool IsRunnable() const override
   {
     return true;
   }

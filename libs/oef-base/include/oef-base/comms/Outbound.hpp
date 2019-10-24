@@ -39,11 +39,10 @@ public:
   {
     this->uri = uri;
   }
-  virtual ~Outbound()
-  {}
+  ~Outbound() override = default;
 
   // run this in a thread.
-  bool run(void);
+  bool run();
 
 protected:
   Uri   uri;

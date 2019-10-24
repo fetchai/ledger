@@ -39,10 +39,10 @@ public:
   BranchParallelExecutorTask(std::shared_ptr<Branch>             root,
                              std::shared_ptr<IdentifierSequence> identifier_sequence,
                              std::shared_ptr<DapManager>         dap_manager)
-    : BranchExecutorTask::Parent()
-    , BranchExecutorTask(std::move(root))
-    , BaseTask ::Parent()
-    , BaseTask()
+    //: BranchExecutorTask::Parent()
+    : BranchExecutorTask(std::move(root))
+    //, BaseTask::Parent()
+    //, BaseTask()
     , dap_manager_{std::move(dap_manager)}
   {
     this->SetGlobalInput(identifier_sequence);
@@ -70,7 +70,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Task created, id=", this->GetTaskId());
   }
 
-  virtual ~BranchParallelExecutorTask()
+  ~BranchParallelExecutorTask() override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
   }
@@ -81,25 +81,25 @@ public:
   bool operator==(const BranchParallelExecutorTask &other) = delete;
   bool operator<(const BranchParallelExecutorTask &other)  = delete;
 
-  virtual std::shared_ptr<NodeExecutorTask> CreateTask(
+  std::shared_ptr<NodeExecutorTask> CreateTask(
       const BranchExecutorTask::NodeDataType &data,
       std::shared_ptr<IdentifierSequence>     input) override
   {
     return NodeExecutorFactory(data, input, dap_manager_);
   }
 
-  virtual std::shared_ptr<IdentifierSequence> GetInputProto(
-      const BranchExecutorTask::NodeDataType &) override
+  std::shared_ptr<IdentifierSequence> GetInputProto(
+      const BranchExecutorTask::NodeDataType & /*unused*/) override
   {
     return nullptr;
   }
 
-  virtual void SetMessageHandler(MessageHandler mH) override
+  void SetMessageHandler(MessageHandler mH) override
   {
     this->messageHandler = std::move(mH);
   }
 
-  virtual void SetErrorHandler(ErrorHandler eH) override
+  void SetErrorHandler(ErrorHandler eH) override
   {
     this->errorHandler = std::move(eH);
   }

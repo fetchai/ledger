@@ -34,10 +34,9 @@ public:
   using ErrorHandler =
       std::function<void(const std::string &, const std::string &, const std::string &)>;
 
-  NodeExecutorTask()
-  {}
+  NodeExecutorTask() = default;
 
-  virtual ~NodeExecutorTask()                     = default;
+  ~NodeExecutorTask() override                    = default;
   NodeExecutorTask(const NodeExecutorTask &other) = delete;
   NodeExecutorTask &operator=(const NodeExecutorTask &other) = delete;
 

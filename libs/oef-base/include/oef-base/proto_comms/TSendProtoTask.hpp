@@ -29,19 +29,19 @@ public:
     , pb{std::move(pb)}
   {}
 
-  virtual ~TSendProtoTask()                   = default;
+  ~TSendProtoTask() override                  = default;
   TSendProtoTask(const TSendProtoTask &other) = delete;
   TSendProtoTask &operator=(const TSendProtoTask &other) = delete;
 
   bool operator==(const TSendProtoTask &other) = delete;
   bool operator<(const TSendProtoTask &other)  = delete;
 
-  virtual bool IsRunnable(void) const
+  bool IsRunnable() const override
   {
     return true;
   }
 
-  virtual ExitState run(void)
+  ExitState run() override
   {
     // TODO(kll): it's possible there's a race hazard here. Need to think about this.
     if (endpoint->send(pb).Then([this]() { this->MakeRunnable(); }).Waiting())

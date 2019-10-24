@@ -37,7 +37,7 @@ void Notification::NotificationImplementation::DispatchCallbacks()
   }
 
   // dispatch the event
-  if (handler && *handler)
+  if ((handler == nullptr) && *handler)
   {
     // call the success or failure handler
     (*handler)();

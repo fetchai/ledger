@@ -54,7 +54,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Task created, id=", this->GetTaskId());
   }
 
-  virtual ~TaskChainSerial()
+  ~TaskChainSerial() override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
   }

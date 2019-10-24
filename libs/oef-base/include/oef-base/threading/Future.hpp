@@ -28,8 +28,7 @@ public:
     : Waitable()
   {}
 
-  virtual ~Future()
-  {}
+  ~Future() override = default;
 
   void set(const T &value)
   {
@@ -60,8 +59,7 @@ public:
     : Waitable()
   {}
 
-  virtual ~FutureComplexType()
-  {}
+  ~FutureComplexType() override = default;
 
   void set(const T &value)
   {

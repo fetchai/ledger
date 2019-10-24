@@ -34,6 +34,7 @@
 #include "oef-messages/search_update.hpp"
 
 #include <google/protobuf/message.h>
+#include <utility>
 
 // ------------------------------------------------------------------------------------------
 
@@ -42,18 +43,17 @@ class OutboundSearchConversationWorkerTask : public OutboundConversationWorkerTa
 public:
   static constexpr char const *LOGGING_NAME = "OutboundSearchConversationWorkerTask";
 
-  OutboundSearchConversationWorkerTask(Core &core, const std::string &core_key, const Uri &core_uri,
-                                       const Uri &                            search_uri,
+  OutboundSearchConversationWorkerTask(Core &core, std::string core_key, Uri const &core_uri,
+                                       Uri const &                            search_uri,
                                        std::shared_ptr<OutboundConversations> outbounds,
-                                       const IOutboundConversationCreator &   conversationCreator)
+                                       IOutboundConversationCreator const &conversationCreator)
     : OutboundConversationWorkerTask(core, search_uri, conversationCreator)
     , outbounds_(std::move(outbounds))
     , core_uri(core_uri)
-    , core_key(core_key)
+    , core_key(std::move(core_key))
   {}
 
-  virtual ~OutboundSearchConversationWorkerTask()
-  {}
+  ~OutboundSearchConversationWorkerTask() override = default;
 
   friend class OutboundSearchConversationCreator;
 
@@ -75,7 +75,7 @@ protected:
     convTask->submit();
   }
 
-  virtual bool connect() override
+  bool connect() override
   {
     if (OutboundConversationWorkerTask::connect())
     {

@@ -30,7 +30,7 @@
 #include "oef-search/comms/OefSearchEndpoint.hpp"
 
 template <template <typename> class EndpointType>
-Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> core, unsigned short int port,
+Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> const &core, unsigned short int port,
                                            ConfigMap endpointConfig)
   : listener(*core, port)
 {
@@ -54,7 +54,7 @@ Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> core, unsigned 
 }
 
 template <template <typename> class EndpointType>
-void Oefv1Listener<EndpointType>::start(void)
+void Oefv1Listener<EndpointType>::start()
 {
   listener.start_accept();
 }

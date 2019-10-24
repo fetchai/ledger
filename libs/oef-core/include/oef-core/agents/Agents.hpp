@@ -36,10 +36,8 @@ public:
   using EndpointSP = std::shared_ptr<OefAgentEndpoint>;
   using Store      = std::map<Key, AgentSP>;
 
-  Agents()
-  {}
-  virtual ~Agents()
-  {}
+  Agents()          = default;
+  virtual ~Agents() = default;
 
   void add(const std::string &key, std::shared_ptr<OefAgentEndpoint> endpoint);
   void remove(const std::string &key);

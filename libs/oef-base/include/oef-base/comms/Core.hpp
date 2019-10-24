@@ -30,14 +30,14 @@ public:
   Core();
   virtual ~Core();
 
-  void run(void);
-  void stop(void);
+  void run();
+  void stop();
 
-  operator asio::io_context *()
+  explicit operator asio::io_context *()
   {
     return context.get();
   }
-  operator asio::io_context &()
+  explicit operator asio::io_context &()
   {
     return *context;
   }

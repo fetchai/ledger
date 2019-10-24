@@ -66,11 +66,11 @@ public:
   bool          operator<(const EndpointBase &other)  = delete;
 
   EndpointBase(std::size_t sendBufferSize, std::size_t readBufferSize, ConfigMap configMap);
-  virtual ~EndpointBase();
+  ~EndpointBase() override;
 
-  virtual Socket &socket() = 0;
+  Socket &socket() override = 0;
 
-  virtual void go();
+  void go() override;
 
   std::shared_ptr<IMessageReader>         reader;
   std::shared_ptr<IMessageWriter<TXType>> writer;
@@ -107,7 +107,7 @@ public:
     return *state == RUNNING_ENDPOINT;
   }
 
-  std::size_t GetIdentifier(void) const
+  std::size_t GetIdentifier() const
   {
     return ident;
   }
@@ -119,25 +119,25 @@ public:
     ON_PROTOERROR = 4,
   } CallbackSet;
 
-  void DoCallbacks(CallbackSet callbacks, std::string msg = "",
+  void DoCallbacks(CallbackSet callbacks, std::string const &msg = "",
                    std::error_code ec = std::error_code())
   {
     if ((callbacks & ON_ERROR) && onError)
     {
       auto foo = onError;
-      onError  = 0;
+      onError  = nullptr;
       foo(ec);
     }
     if ((callbacks & ON_ERROR) && onProtoError)
     {
       auto foo     = onProtoError;
-      onProtoError = 0;
+      onProtoError = nullptr;
       foo(msg);
     }
     if ((callbacks & ON_EOF) && onEof)
     {
       auto foo = onEof;
-      onEof    = 0;
+      onEof    = nullptr;
       foo();
     }
   }

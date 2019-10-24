@@ -23,9 +23,8 @@
 
 #include "oef-core/karma/IKarmaPolicy.hpp"
 
-ExitState KarmaRefreshTask::run(void)
+ExitState KarmaRefreshTask::run()
 {
-
   std::chrono::high_resolution_clock::time_point this_execute =
       std::chrono::high_resolution_clock::now();
   std::chrono::milliseconds d =

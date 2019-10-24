@@ -58,10 +58,9 @@ public:
     , connect_failures_{0}
   {}
 
-  virtual ~OutboundConversationWorkerTask()
-  {}
+  ~OutboundConversationWorkerTask() override = default;
 
-  virtual WorkloadProcessed process(WorkloadP workload, WorkloadState state) override;
+  WorkloadProcessed process(WorkloadP workload, WorkloadState state) override;
 
 protected:
   virtual bool connect();

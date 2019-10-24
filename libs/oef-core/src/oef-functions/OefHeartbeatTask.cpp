@@ -25,7 +25,7 @@
 #include "oef-base/proto_comms/TSendProtoTask.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 
-ExitState OefHeartbeatTask::run(void)
+ExitState OefHeartbeatTask::run()
 {
   if (IsCancelled())
   {

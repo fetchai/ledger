@@ -19,7 +19,7 @@
 
 #include "network/fetch_asio.hpp"
 
-#include <ctype.h>
+#include <cctype>
 #include <iostream>
 #include <list>
 #include <vector>
@@ -31,7 +31,7 @@ public:
   int                                      current;
   int                                      size;
 
-  CharArrayBuffer(const std::vector<asio::mutable_buffer> &thebuffers)
+  explicit CharArrayBuffer(std::vector<asio::mutable_buffer> const & thebuffers)
     : buffers(thebuffers)
   {
     current = 0;
@@ -86,10 +86,10 @@ public:
       uint8_t  c[4];
     } buffer;
 
-    buffer.c[0] = (uint8_t)uflow();
-    buffer.c[1] = (uint8_t)uflow();
-    buffer.c[2] = (uint8_t)uflow();
-    buffer.c[3] = (uint8_t)uflow();
+    buffer.c[0] = static_cast<uint8_t>(uflow());
+    buffer.c[1] = static_cast<uint8_t>(uflow());
+    buffer.c[2] = static_cast<uint8_t>(uflow());
+    buffer.c[3] = static_cast<uint8_t>(uflow());
     i           = ntohl(buffer.i);
     // i = buffer.i;
 
@@ -122,10 +122,10 @@ public:
       uint8_t c[4];
     } buffer;
 
-    buffer.c[0] = (uint8_t)uflow();
-    buffer.c[1] = (uint8_t)uflow();
-    buffer.c[2] = (uint8_t)uflow();
-    buffer.c[3] = (uint8_t)uflow();
+    buffer.c[0] = static_cast<uint8_t>(uflow());
+    buffer.c[1] = static_cast<uint8_t>(uflow());
+    buffer.c[2] = static_cast<uint8_t>(uflow());
+    buffer.c[3] = static_cast<uint8_t>(uflow());
     i           = static_cast<int32_t>(ntohl(static_cast<uint32_t>(buffer.i)));
     // i = buffer.i;
 
@@ -144,9 +144,9 @@ public:
   CharArrayBuffer &read(std::string &s, uint32_t length)
   {
     std::string output(length, ' ');
-    for (uint32_t i = 0; i < output.size(); i++)
+    for (char &i : output)
     {
-      output[i] = traits_type::to_char_type(uflow());
+      i = traits_type::to_char_type(uflow());
     }
 
     uflow();  // discard the zero terminator.
@@ -158,7 +158,7 @@ public:
   {
     for (uint32_t i = 0; i < sz; i++)
     {
-      char c = ((char *)(p))[i];
+      char c = (static_cast<char *>(p))[i];
 
       switch (c)
       {
@@ -166,13 +166,13 @@ public:
         std::cout << "\\n";
         break;
       default:
-        if (::isprint(c))
+        if (::isprint(c) != 0)
         {
           std::cout << c;
         }
         else
         {
-          int cc = (unsigned char)c;
+          int cc = static_cast<unsigned char>(c);
           std::cout << "\\x";
           for (int j = 0; j < 2; j++)
           {
@@ -200,13 +200,13 @@ public:
         std::cout << "\\t";
         break;
       default:
-        if (::isprint(c))
+        if (::isprint(c) != 0)
         {
           std::cout << c;
         }
         else
         {
-          int cc = (unsigned char)c;
+          int cc = static_cast<unsigned char>(c);
           std::cout << "\\x";
           for (int j = 0; j < 2; j++)
           {
@@ -227,7 +227,7 @@ public:
     }
     for (auto &b : buffers)
     {
-      int c = static_cast<int>(asio::buffer_size(b));
+      auto c = static_cast<int>(asio::buffer_size(b));
       if (pos >= c)
       {
         pos -= c;
@@ -253,7 +253,7 @@ public:
 
     for (auto &b : buffers)
     {
-      int c = static_cast<int>(asio::buffer_size(b));
+      auto c = static_cast<int>(asio::buffer_size(b));
       if (pos >= c)
       {
         pos -= c;
@@ -273,7 +273,7 @@ public:
     return size - current;
   }
 
-  std::streamsize xsputn(const char_type *s, std::streamsize n)
+  std::streamsize xsputn(const char_type *s, std::streamsize n) override
   {
     // std::cout << "xsputn:" << s << std::endl;
     for (int i = 0; i < n; i++)
@@ -308,14 +308,14 @@ public:
     return c;
   }
 
-  CharArrayBuffer::int_type overflow(CharArrayBuffer::int_type ch)
+  CharArrayBuffer::int_type overflow(CharArrayBuffer::int_type ch) override
   {
     // std::cout << "overflow" << std::endl;
     put_char_at(current, traits_type::to_char_type(ch));
     return 1;
   }
 
-  CharArrayBuffer::int_type underflow()
+  CharArrayBuffer::int_type underflow() override
   {
     // std::cout << "underflow" << std::endl;
     if (current >= size)
@@ -325,7 +325,7 @@ public:
     return traits_type::to_int_type(get_char_at(current));
   }
 
-  CharArrayBuffer::int_type uflow()
+  CharArrayBuffer::int_type uflow() override
   {
     // std::cout << "uflow" << std::endl;
     if (current >= size)
@@ -343,12 +343,12 @@ public:
     current += amount;
   }
 
-  std::streamsize showmanyc()
+  std::streamsize showmanyc() override
   {
     // std::cout << "showmanyc" << std::endl;
-    return (std::streamsize)size;
+    return static_cast<std::streamsize>(size);
   }
-  int_type pbackfail(int_type ch)
+  int_type pbackfail(int_type ch) override
   {
     // std::cout << "pbackfail" << std::endl;
     if ((current == 0) || (ch != traits_type::eof() && ch != get_char_at(current - 1)))
@@ -362,6 +362,6 @@ public:
 private:
   // copy ctor and assignment not implemented;
   // copying not allowed
-  CharArrayBuffer(const CharArrayBuffer &);
-  CharArrayBuffer &operator=(const CharArrayBuffer &);
+  CharArrayBuffer(const CharArrayBuffer &) = delete;
+  CharArrayBuffer &operator=(const CharArrayBuffer &) = delete;
 };

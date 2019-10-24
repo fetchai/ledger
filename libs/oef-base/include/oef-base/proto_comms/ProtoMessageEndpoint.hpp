@@ -46,10 +46,9 @@ public:
   using typename EndpointPipe<EndpointBase<TXType>>::message_type;
   using EndpointPipe<EndpointBase<TXType>>::endpoint;
 
-  ProtoMessageEndpoint(std::shared_ptr<EndpointType> endpoint);
+  explicit ProtoMessageEndpoint(std::shared_ptr<EndpointType> endpoint);
 
-  virtual ~ProtoMessageEndpoint()
-  {}
+  ~ProtoMessageEndpoint() override = default;
 
   void SetEndianness(Endianness newstate);
 

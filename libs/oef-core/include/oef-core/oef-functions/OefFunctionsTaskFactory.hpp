@@ -21,7 +21,7 @@
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-core/agents/Agents.hpp"
 #include <random>
-
+#include <utility>
 #include "oef-messages/agent.hpp"
 
 namespace google {
@@ -38,24 +38,24 @@ public:
   using RandomEngine        = std::mt19937_64;
   using QueryIdDistribution = std::uniform_int_distribution<uint64_t>;
 
-  OefFunctionsTaskFactory(const std::string &core_key, std::shared_ptr<Agents> agents,
-                          std::string                            agent_public_key,
+  OefFunctionsTaskFactory(std::string        core_key,  std::shared_ptr<Agents> agents,
+                          std::string agent_public_key,
                           std::shared_ptr<OutboundConversations> outbounds)
-    : IOefTaskFactory(outbounds)
+    : IOefTaskFactory(std::move(outbounds))
     , agents_{std::move(agents)}
     , agent_public_key_{std::move(agent_public_key)}
-    , core_key_{core_key}
+    , core_key_{std::move(core_key)}
     , query_id_distribution_()
   {
     std::random_device rnd;
     random_engine_.seed(rnd());
   }
-  virtual ~OefFunctionsTaskFactory() = default;
+  ~OefFunctionsTaskFactory() override = default;
 
-  virtual void ProcessMessage(ConstCharArrayBuffer &data);
+  void ProcessMessage(ConstCharArrayBuffer &data) override;
   // Process the message, throw exceptions if they're bad.
 
-  virtual void EndpointClosed(void);
+  void EndpointClosed() override;
 
 protected:
 private:

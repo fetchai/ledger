@@ -18,7 +18,7 @@
 
 #include "oef-base/threading/Waitable.hpp"
 
-Notification::NotificationBuilder Waitable::MakeNotification(void)
+Notification::NotificationBuilder Waitable::MakeNotification()
 {
   Lock lock(mutex);
   auto n = Notification::create();
@@ -26,7 +26,7 @@ Notification::NotificationBuilder Waitable::MakeNotification(void)
   return Notification::NotificationBuilder(n, woken_.load());
 }
 
-void Waitable::wake(void)
+void Waitable::wake()
 {
   Waiting waiting_local;
   {
@@ -46,7 +46,7 @@ void swap(Waitable &v1, Waitable &v2)
   v1.swap(v2);
 }
 
-void Waitable::cancel(void)
+void Waitable::cancel()
 {
   Waiting waiting_local;
   {

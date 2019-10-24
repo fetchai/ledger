@@ -30,10 +30,8 @@ public:
   using Mutex = std::mutex;
   using Lock  = std::lock_guard<Mutex>;
 
-  BucketsOf()
-  {}
-  virtual ~BucketsOf()
-  {}
+  BucketsOf()          = default;
+  virtual ~BucketsOf() = default;
 
   IDENT_TYPE get(const NAME_TYPE &name)
   {

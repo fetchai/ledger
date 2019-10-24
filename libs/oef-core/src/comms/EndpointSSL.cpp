@@ -38,7 +38,7 @@ template <typename TXType>
 EndpointSSL<TXType>::EndpointSSL(Core &core, std::size_t sendBufferSize, std::size_t readBufferSize,
                                  ConfigMap configMap)
   : EndpointBase<TXType>(sendBufferSize, readBufferSize, configMap)
-  , sock(core)
+  , sock(static_cast<asio::io_context &>(core))
 {
   ep_count++;
   ssl_setup = false;
@@ -70,7 +70,9 @@ template <typename TXType>
 void EndpointSSL<TXType>::close()
 {
   if (!ssl_setup)
+  {
     return;
+  }
 
   Lock lock(this->mutex);
   *state |= this->CLOSED_ENDPOINT;

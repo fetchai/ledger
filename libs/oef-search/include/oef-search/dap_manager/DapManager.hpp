@@ -337,10 +337,8 @@ public:
 
         return source_distance;
       }
-      else
-      {
-        done(query);
-      }
+
+      done(query);
     }
     return 0.0;
   }

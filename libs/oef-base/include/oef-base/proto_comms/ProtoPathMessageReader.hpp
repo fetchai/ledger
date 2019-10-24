@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "logging/logging.hpp"
 #include "oef-base/comms/ConstCharArrayBuffer.hpp"
 #include "oef-base/comms/Endianness.hpp"
@@ -47,18 +49,17 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ProtoPathMessageReader";
 
-  ProtoPathMessageReader(std::weak_ptr<EndpointType> endpoint)
+  explicit ProtoPathMessageReader(std::weak_ptr<EndpointType> endpoint)
   {
-    this->endpoint = endpoint;
+    this->endpoint = std::move(endpoint);
   }
-  virtual ~ProtoPathMessageReader()
-  {}
+  ~ProtoPathMessageReader() override = default;
 
   void SetEndianness(Endianness /*newstate*/)
   {}
 
-  consumed_needed_pair initial();
-  consumed_needed_pair CheckForMessage(const buffers &data);
+  consumed_needed_pair initial() override;
+  consumed_needed_pair CheckForMessage(const buffers &data) override;
 
   CompleteNotification onComplete;
   ErrorNotification    onError;

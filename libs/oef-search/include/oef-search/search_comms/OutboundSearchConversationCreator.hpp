@@ -38,9 +38,9 @@ public:
   using IOutboundConversationCreator::ident2conversation_;
 
   OutboundSearchConversationCreator(const Uri &search_uri, Core &core);
-  virtual ~OutboundSearchConversationCreator();
-  virtual std::shared_ptr<OutboundConversation> start(
-      const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator);
+  ~OutboundSearchConversationCreator() override;
+  std::shared_ptr<OutboundConversation> start(
+      const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator) override;
 
 protected:
 private:

@@ -43,10 +43,10 @@ public:
 
   static constexpr char const *LOGGING_NAME = "DapConversationTask";
 
-  DapConversationTask(std::string dap_name, std::string path, uint32_t msg_id,
-                      std::shared_ptr<IN_PROTO>              initiator,
+  DapConversationTask(std::string const &dap_name, std::string const &path, uint32_t msg_id,
+                      std::shared_ptr<IN_PROTO> initiator,
                       std::shared_ptr<OutboundConversations> outbounds,
-                      std::string                            protocol = "dap")
+                      std::string const &protocol = "dap")
     : StateMachineTask<SelfType>(this, nullptr)
     , initiator(std::move(initiator))
     , outbounds(std::move(outbounds))
@@ -80,12 +80,12 @@ public:
     }
   }
 
-  virtual ~DapConversationTask()
+  ~DapConversationTask() override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
   }
 
-  StateResult CreateConversation(void)
+  StateResult CreateConversation()
   {
     try
     {
@@ -135,7 +135,7 @@ public:
     }
   }
 
-  virtual StateResult HandleResponse(void)
+  virtual StateResult HandleResponse()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Woken (", dap_name_, ")");
     FETCH_LOG_INFO(LOGGING_NAME, "Response from ", dap_name_, ": ",

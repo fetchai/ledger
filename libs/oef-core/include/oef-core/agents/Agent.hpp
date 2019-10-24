@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "oef-base/threading/Notification.hpp"
 
@@ -33,13 +34,13 @@ class OefAgentEndpoint;
 class Agent
 {
 public:
-  Agent(const std::string &key, std::shared_ptr<OefAgentEndpoint> endpoint)
+  Agent(std::string key, std::shared_ptr<OefAgentEndpoint> endpoint)
   {
-    this->key      = key;
-    this->endpoint = endpoint;
+    this->key      = std::move(key);
+    this->endpoint = std::move(endpoint);
   }
-  virtual ~Agent()
-  {}
+
+  ~Agent() = default;
 
   Notification::NotificationBuilder send(std::shared_ptr<google::protobuf::Message> s);
 

@@ -27,10 +27,8 @@ public:
   using buffers              = std::vector<buffer>;
   using consumed_needed_pair = std::pair<std::size_t, std::size_t>;
 
-  IMessageReader()
-  {}
-  virtual ~IMessageReader()
-  {}
+  IMessageReader()          = default;
+  virtual ~IMessageReader() = default;
 
   virtual consumed_needed_pair initial()
   {

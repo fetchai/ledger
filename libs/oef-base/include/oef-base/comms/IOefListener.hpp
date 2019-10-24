@@ -27,10 +27,8 @@ public:
   using FactoryCreator =
       std::function<std::shared_ptr<IOefTaskFactory>(std::shared_ptr<OefEndpoint>)>;
 
-  IOefListener()
-  {}
-  virtual ~IOefListener()
-  {}
+  IOefListener()          = default;
+  virtual ~IOefListener() = default;
 
   FactoryCreator factoryCreator;
 

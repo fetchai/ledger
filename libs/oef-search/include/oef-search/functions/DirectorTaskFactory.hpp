@@ -50,14 +50,13 @@ public:
     , peers_{std::move(peers)}
   {}
 
-  virtual ~DirectorTaskFactory()
-  {}
+  virtual ~DirectorTaskFactory() = default;
 
   virtual void ProcessMessageWithUri(const Uri &current_uri, ConstCharArrayBuffer &data);
   // Process the message, throw exceptions if they're bad.
 
 protected:
-  virtual void EndpointClosed(void)
+  virtual void EndpointClosed()
   {}
 
 protected:

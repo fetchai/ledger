@@ -37,13 +37,13 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Oefv1Listener";
 
-  Oefv1Listener(std::shared_ptr<Core> core, unsigned short int port, ConfigMap endpointConfig);
+  Oefv1Listener(std::shared_ptr<Core> const &core, unsigned short int port, ConfigMap endpointConfig);
   virtual ~Oefv1Listener()
   {
     std::cout << "Listener on " << port << " GONE" << std::endl;
   }
 
-  void start(void);
+  void start();
 
 protected:
 private:

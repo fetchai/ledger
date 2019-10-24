@@ -53,7 +53,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Task created, id=", this->GetTaskId());
   }
 
-  virtual ~TaskChainParallel()
+  ~TaskChainParallel() override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
   }
@@ -99,10 +99,8 @@ public:
         {
           return StateResult(0, COMPLETE);
         }
-        else
-        {
-          return StateResult(0, ERRORED);
-        }
+
+        return StateResult(0, ERRORED);
       }
     }
     auto                             this_sp = this->template shared_from_base<TaskChainParallel>();
@@ -187,11 +185,9 @@ public:
       FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), ")");
       return StateResult(1, DEFER);
     }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Done. (id=", this->GetTaskId(), ")");
-      return StateResult(1, COMPLETE);
-    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Done. (id=", this->GetTaskId(), ")");
+    return StateResult(1, COMPLETE);
   }
 
   std::vector<std::shared_ptr<OUT_PROTO>> &GetOutputs()

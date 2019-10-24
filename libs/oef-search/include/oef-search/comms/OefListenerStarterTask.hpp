@@ -51,14 +51,13 @@ public:
     this->initialFactoryCreator = initialFactoryCreator;
     this->endpointConfig        = std::move(endpointConfig);
   }
-  virtual ~OefListenerStarterTask()
-  {}
+  ~OefListenerStarterTask() override = default;
 
-  virtual bool IsRunnable(void) const
+  bool IsRunnable() const override
   {
     return true;
   }
-  virtual ExitState run(void);
+  ExitState run() override;
 
 protected:
 private:

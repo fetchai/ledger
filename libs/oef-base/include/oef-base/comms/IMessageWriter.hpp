@@ -36,10 +36,8 @@ public:
   using consumed_needed_pair = std::pair<std::size_t, std::size_t>;
   using TXQ                  = std::list<TXType>;
 
-  IMessageWriter()
-  {}
-  virtual ~IMessageWriter()
-  {}
+  IMessageWriter()          = default;
+  virtual ~IMessageWriter() = default;
 
   virtual consumed_needed_pair initial()
   {

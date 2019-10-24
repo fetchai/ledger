@@ -26,7 +26,7 @@
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 
 template <template <typename> class EndpointType>
-Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> core, unsigned short port,
+Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> const &core, unsigned short port,
                                            IKarmaPolicy *karmaPolicy, ConfigMap endpointConfig)
   : listener(*core, port)
 {
@@ -48,7 +48,7 @@ Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> core, unsigned 
 }
 
 template <template <typename> class EndpointType>
-void Oefv1Listener<EndpointType>::start(void)
+void Oefv1Listener<EndpointType>::start()
 {
   listener.start_accept();
 }

@@ -49,12 +49,11 @@ public:
     {}
   };
 
-  BranchExecutorTask(std::shared_ptr<Branch> root)
-    : Parent()
-    , root_{std::move(root)}
+  explicit BranchExecutorTask(std::shared_ptr<Branch> root)
+    : root_{std::move(root)}
   {}
 
-  virtual ~BranchExecutorTask() = default;
+  ~BranchExecutorTask() override = default;
 
   BranchExecutorTask(const BranchExecutorTask &other) = delete;
 

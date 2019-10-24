@@ -19,7 +19,7 @@
 
 #include "network/fetch_asio.hpp"
 
-#include <ctype.h>
+#include <cctype>
 #include <iostream>
 #include <list>
 #include <vector>
@@ -31,7 +31,7 @@ public:
   uint32_t                               current;
   uint32_t                               size;
 
-  ConstCharArrayBuffer(const std::vector<asio::const_buffer> &thebuffers)
+  explicit ConstCharArrayBuffer(std::vector<asio::const_buffer> const & thebuffers)
     : buffers(thebuffers)
   {
     current = 0;
@@ -50,10 +50,10 @@ public:
       uint8_t  c[4];
     } buffer;
 
-    buffer.c[0] = (uint8_t)uflow();
-    buffer.c[1] = (uint8_t)uflow();
-    buffer.c[2] = (uint8_t)uflow();
-    buffer.c[3] = (uint8_t)uflow();
+    buffer.c[0] = static_cast<uint8_t>(uflow());
+    buffer.c[1] = static_cast<uint8_t>(uflow());
+    buffer.c[2] = static_cast<uint8_t>(uflow());
+    buffer.c[3] = static_cast<uint8_t>(uflow());
     i           = ntohl(buffer.i);
     // i = buffer.i;
 
@@ -68,10 +68,10 @@ public:
       uint8_t  c[4];
     } buffer;
 
-    buffer.c[3] = (uint8_t)uflow();
-    buffer.c[2] = (uint8_t)uflow();
-    buffer.c[1] = (uint8_t)uflow();
-    buffer.c[0] = (uint8_t)uflow();
+    buffer.c[3] = static_cast<uint8_t>(uflow());
+    buffer.c[2] = static_cast<uint8_t>(uflow());
+    buffer.c[1] = static_cast<uint8_t>(uflow());
+    buffer.c[0] = static_cast<uint8_t>(uflow());
     i           = ntohl(buffer.i);
     // i = buffer.i;
 
@@ -86,10 +86,10 @@ public:
       uint8_t c[4];
     } buffer;
 
-    buffer.c[0] = (uint8_t)uflow();
-    buffer.c[1] = (uint8_t)uflow();
-    buffer.c[2] = (uint8_t)uflow();
-    buffer.c[3] = (uint8_t)uflow();
+    buffer.c[0] = static_cast<uint8_t>(uflow());
+    buffer.c[1] = static_cast<uint8_t>(uflow());
+    buffer.c[2] = static_cast<uint8_t>(uflow());
+    buffer.c[3] = static_cast<uint8_t>(uflow());
     i           = static_cast<int32_t>(ntohl(static_cast<uint32_t>(buffer.i)));
     // i = buffer.i;
 
@@ -99,9 +99,9 @@ public:
   ConstCharArrayBuffer &read(std::string &s, uint32_t length)
   {
     std::string output(length, ' ');
-    for (uint32_t i = 0; i < output.size(); i++)
+    for (char &i : output)
     {
-      output[i] = traits_type::to_char_type(uflow());
+      i = traits_type::to_char_type(uflow());
     }
 
     uflow();  // discard the zero terminator.
@@ -113,7 +113,7 @@ public:
   {
     for (uint32_t i = 0; i < sz; i++)
     {
-      char c = ((char *)(p))[i];
+      char c = (static_cast<char *>(p))[i];
 
       switch (c)
       {
@@ -121,13 +121,13 @@ public:
         std::cout << "\\n";
         break;
       default:
-        if (::isprint(c))
+        if (::isprint(c) != 0)
         {
           std::cout << c;
         }
         else
         {
-          int cc = (unsigned char)c;
+          int cc = static_cast<unsigned char>(c);
           std::cout << "\\x";
           for (int j = 0; j < 2; j++)
           {
@@ -155,13 +155,13 @@ public:
         std::cout << "\\t";
         break;
       default:
-        if (::isprint(c))
+        if (::isprint(c) != 0)
         {
           std::cout << c;
         }
         else
         {
-          int cc = (unsigned char)c;
+          int cc = static_cast<unsigned char>(c);
           std::cout << "\\x";
           for (int j = 0; j < 2; j++)
           {
@@ -205,7 +205,7 @@ public:
     return size - current;
   }
 
-  ConstCharArrayBuffer::int_type underflow()
+  ConstCharArrayBuffer::int_type underflow() override
   {
     // std::cout << "underflow" << std::endl;
     if (current >= size)
@@ -215,7 +215,7 @@ public:
     return traits_type::to_int_type(get_char_at(current));
   }
 
-  ConstCharArrayBuffer::int_type uflow()
+  ConstCharArrayBuffer::int_type uflow() override
   {
     // std::cout << "uflow" << std::endl;
     if (current >= size)
@@ -233,12 +233,12 @@ public:
     current += static_cast<uint32_t>(amount);
   }
 
-  std::streamsize showmanyc()
+  std::streamsize showmanyc() override
   {
     // std::cout << "showmanyc" << std::endl;
-    return (std::streamsize)size;
+    return static_cast<std::streamsize>(size);
   }
-  int_type pbackfail(int_type ch)
+  int_type pbackfail(int_type ch) override
   {
     // std::cout << "pbackfail" << std::endl;
     if ((current == 0) || (ch != traits_type::eof() && ch != get_char_at(current - 1)))
@@ -249,12 +249,7 @@ public:
     return traits_type::to_int_type(get_char_at(current));
   }
 
-  ConstCharArrayBuffer(const ConstCharArrayBuffer &other)
-    : std::streambuf(other)
-    , buffers(other.buffers)
-    , current(other.current)
-    , size(other.size)
-  {}
+  ConstCharArrayBuffer(const ConstCharArrayBuffer &other) = default;
 
   ConstCharArrayBuffer(const ConstCharArrayBuffer &other, uint32_t sizelimit)
     : std::streambuf(other)
@@ -271,7 +266,7 @@ public:
   std::string CopyOut()
   {
     std::cout << "CopyOut" << current << "," << size << std::endl;
-    std::string r = "";
+    std::string r;
     while (current < size)
     {
       r += get_char_at(current++);

@@ -38,15 +38,14 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ProtoMessageReader";
 
-  ProtoMessageReader(
+  explicit ProtoMessageReader(
       std::weak_ptr<ProtoMessageEndpoint<TXType, ProtoMessageReader, ProtoMessageSender>> &endpoint)
     : endpoint(endpoint)
   {}
-  virtual ~ProtoMessageReader()
-  {}
+  ~ProtoMessageReader() override = default;
 
-  consumed_needed_pair initial();
-  consumed_needed_pair CheckForMessage(const buffers &data);
+  consumed_needed_pair initial() override;
+  consumed_needed_pair CheckForMessage(const buffers &data) override;
 
   CompleteNotification onComplete;
   ErrorNotification    onError;

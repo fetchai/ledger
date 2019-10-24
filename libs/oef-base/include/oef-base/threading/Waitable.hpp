@@ -35,8 +35,8 @@ public:
   {}
   virtual ~Waitable() = default;
 
-  Notification::NotificationBuilder MakeNotification(void);
-  void                              wake(void);
+  Notification::NotificationBuilder MakeNotification();
+  void                              wake();
 
   void swap(Waitable &other)
   {
@@ -46,9 +46,9 @@ public:
     std::swap(cancelled, other.cancelled);
   }
 
-  void cancel(void);
+  void cancel();
 
-  bool IsCancelled(void) const
+  bool IsCancelled() const
   {
     Lock lock(mutex);
     return cancelled;

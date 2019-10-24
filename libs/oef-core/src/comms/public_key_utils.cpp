@@ -21,12 +21,14 @@
 // static constexpr char const *LOGGING_NAME_PK = "PublicKeyUtils";
 
 RSAKey::RSAKey(const EvpPublicKey &evp_pk)
-  : rsa_{NULL}
+  : rsa_{nullptr}
 {
   ERR_load_crypto_strings();
   rsa_ = EVP_PKEY_get1_RSA(evp_pk.native_handle());
-  if (!rsa_)
+  if (rsa_ != nullptr)
+  {
     std::runtime_error(ERR_error_string(ERR_get_error(), NULL));
+  }
 }
 
 inline std::string RSAKey::to_string() const
@@ -35,13 +37,13 @@ inline std::string RSAKey::to_string() const
 
   ERR_load_crypto_strings();
   BIO *mem = BIO_new(BIO_s_mem());
-  if (!mem)
+  if (mem != nullptr)
   {
     FETCH_LOG_WARN(LOGGING_NAME_PK, " while creating bio mem buf");
     return out;
   }
   int status = RSA_print(mem, rsa_, 0);
-  if (!status)
+  if (status != 0)
   {
     FETCH_LOG_WARN(LOGGING_NAME_PK, " while printing RSA key to bio");
     BIO_free(mem);
@@ -49,7 +51,7 @@ inline std::string RSAKey::to_string() const
   }
   char *        pk_ptr = nullptr;
   unsigned long len    = static_cast<unsigned long>(BIO_get_mem_data(mem, &pk_ptr));
-  if (!len)
+  if (len != 0)
   {
     FETCH_LOG_WARN(LOGGING_NAME_PK, " while getting bio char pointer");
     BIO_free(mem);
@@ -77,21 +79,21 @@ inline std::string RSAKey::to_string_base64() const
   auto const ret = BIO_set_close(mem, BIO_CLOSE);
   (void)ret;
 
-  if (!mem || !b64f)
+  if ((mem == nullptr) || (b64f == nullptr))
   {
     FETCH_LOG_WARN(LOGGING_NAME_PK, " while creating bio mem buf");
     return out;
   }
   int status = RSA_print(mem, rsa_, 0);
-  if (!status)
+  if (status == 0)
   {
     FETCH_LOG_WARN(LOGGING_NAME_PK, " while printing RSA key to bio");
     BIO_free(mem);
     return out;
   }
   char *        pk_ptr = nullptr;
-  unsigned long len    = static_cast<unsigned long>(BIO_get_mem_data(mem, &pk_ptr));
-  if (!len)
+  auto          len    = static_cast<unsigned long>(BIO_get_mem_data(mem, &pk_ptr));
+  if (len == 0u)
   {
     FETCH_LOG_WARN(LOGGING_NAME_PK, " while getting bio char pointer");
     BIO_free(mem);
@@ -112,7 +114,9 @@ std::string RSA_Modulus(const EvpPublicKey &evp_pk)
   const unsigned int SUFFIX  = 28;
   std::string        rsa_str = evp_pk.to_string();
   if (rsa_str.size() < PREFIX + SUFFIX)
+  {
     return std::string{};
+  }
   return std::string{rsa_str.c_str() + PREFIX, rsa_str.size() - PREFIX - SUFFIX};  // parse Modulus
 }
 
@@ -122,7 +126,9 @@ std::string RSA_Modulus_short(const EvpPublicKey &evp_pk)
   const unsigned int NBYTES      = 23;  // equiv to ?bytes
   std::string        rsa_str_mod = RSA_Modulus(evp_pk);
   if (rsa_str_mod.size() < PREFIX + NBYTES)
+  {
     return std::string{};
+  }
   return std::string{rsa_str_mod.c_str() + PREFIX, NBYTES};
 }
 

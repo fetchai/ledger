@@ -38,8 +38,7 @@ public:
     SetupFilters();
   }
 
-  virtual ~DapStore()
-  {}
+  virtual ~DapStore() = default;
 
   void AddDap(const std::string &name)
   {
@@ -65,7 +64,7 @@ public:
     return false;
   }
 
-  void ConfigureDap(const std::string &dap_name, const DapDescription &config)
+  void ConfigureDap(const std::string &dap_name, DapDescription const &config)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Configure: ", dap_name);
     std::lock_guard<std::mutex>                                                 lock(mutex_);
@@ -218,7 +217,8 @@ public:
     return value;
   }
 
-  std::vector<std::string> GetDapNamesByOptions(const std::vector<std::string> &attributes) const
+  std::vector<std::string> GetDapNamesByOptions(
+       std::vector<std::string> const & attributes) const
   {
     std::vector<std::string> daps{};
     for (const auto &e : dap_options_)

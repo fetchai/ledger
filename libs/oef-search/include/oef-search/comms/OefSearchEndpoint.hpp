@@ -45,12 +45,12 @@ public:
   using Parent::endpoint;
 
   explicit OefSearchEndpoint(std::shared_ptr<ProtoEndpoint> endpoint);
-  virtual ~OefSearchEndpoint();
+  ~OefSearchEndpoint() override;
 
-  void SetFactory(std::shared_ptr<IOefTaskFactory<OefSearchEndpoint>> new_factory);
+  void SetFactory(std::shared_ptr<IOefTaskFactory<OefSearchEndpoint>> const &new_factory);
   void setup();
 
-  virtual void go(void) override
+  void go() override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "------------------> OefSearchEndpoint::go");
 
@@ -68,7 +68,7 @@ public:
   void SetState(const std::string &stateName, bool value);
   bool GetState(const std::string &stateName) const;
 
-  void AddGoFunction(std::function<void(SELF_P)> func)
+  void AddGoFunction(std::function<void(SELF_P)> const & func)
   {
     go_functions.push_back(func);
   }

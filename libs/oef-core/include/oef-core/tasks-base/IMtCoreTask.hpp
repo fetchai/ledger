@@ -24,10 +24,8 @@
 class IMtCoreTask : public Task
 {
 public:
-  IMtCoreTask()
-  {}
-  virtual ~IMtCoreTask()
-  {}
+  IMtCoreTask()           = default;
+  ~IMtCoreTask() override = default;
 
 protected:
 private:

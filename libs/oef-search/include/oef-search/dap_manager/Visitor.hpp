@@ -54,7 +54,7 @@ public:
     : runnable_{false}
   {}
 
-  virtual ~Visitor()            = default;
+  ~Visitor() override           = default;
   Visitor(const Visitor &other) = delete;
   Visitor &operator=(const Visitor &other) = delete;
 
@@ -64,12 +64,12 @@ public:
   virtual VisitNodeExitStates VisitNode(Branch &node, uint32_t depth) = 0;
   virtual VisitNodeExitStates VisitLeaf(Leaf &leaf, uint32_t depth)   = 0;
 
-  virtual bool IsRunnable(void) const override
+  bool IsRunnable() const override
   {
     return runnable_.load();
   }
 
-  virtual ExitState run(void) override
+  ExitState run() override
   {
     if (tree_.empty())
     {
@@ -129,7 +129,7 @@ public:
     return ExitState ::COMPLETE;
   }
 
-  virtual void SubmitVisitTask(std::shared_ptr<Branch> root)
+  virtual void SubmitVisitTask(std::shared_ptr<Branch> const &root)
   {
     runnable_.store(true);
 
@@ -140,7 +140,7 @@ public:
   }
 
 protected:
-  void TreeBuilder(std::shared_ptr<Branch> root, uint32_t depth = 0)
+  void TreeBuilder(std::shared_ptr<Branch> const &root, uint32_t depth = 0)
   {
     tree_.push(std::make_pair(depth, root));
     for (auto &leaf : root->GetLeaves())

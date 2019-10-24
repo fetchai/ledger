@@ -40,12 +40,12 @@ public:
     DONE,
   };
 
-  virtual bool      IsRunnable(void) const = 0;
-  virtual ExitState RunThunk(void);
-  virtual ExitState run(void) = 0;
-  virtual void      cancel(void);
+  virtual bool      IsRunnable() const = 0;
+  virtual ExitState RunThunk();
+  virtual ExitState run() = 0;
+  virtual void      cancel();
 
-  bool IsCancelled(void) const
+  bool IsCancelled() const
   {
     return cancelled;
   }
@@ -53,9 +53,9 @@ public:
   Task();
   virtual ~Task();
 
-  bool submit(std::shared_ptr<Taskpool> pool, const std::chrono::milliseconds &delay);
-  bool submit(const std::chrono::milliseconds &delay);
-  bool submit(std::shared_ptr<Taskpool> pool);
+  bool submit(std::shared_ptr<Taskpool> const &pool, std::chrono::milliseconds const &delay);
+  bool submit(std::chrono::milliseconds const &delay);
+  bool submit(std::shared_ptr<Taskpool> const &pool);
   bool submit();
 
   virtual bool MakeRunnable();

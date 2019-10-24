@@ -27,35 +27,36 @@
 
 #include <set>
 #include <string>
+#include <utility>
 
 class InitialSslHandshakeTaskFactory : public IOefTaskFactory<OefAgentEndpoint>
 {
 public:
   static constexpr char const *LOGGING_NAME = "InitialSslHandshakeTaskFactory";
 
-  InitialSslHandshakeTaskFactory(std::string                            core_key,
+  InitialSslHandshakeTaskFactory(std::string const &                    core_key,
                                  std::shared_ptr<OefAgentEndpoint>      the_endpoint,
                                  std::shared_ptr<OutboundConversations> outbounds,
-                                 std::shared_ptr<Agents>                agents,
-                                 std::shared_ptr<std::set<PublicKey>>   white_list,
-                                 bool                                   white_list_enabled)
-    : IOefTaskFactory(the_endpoint, outbounds)
+                                 std::shared_ptr<Agents> agents,
+                                 std::shared_ptr<std::set<PublicKey>> white_list,
+                                 bool white_list_enabled)
+    : IOefTaskFactory(std::move(the_endpoint), std::move(outbounds))
     , agents_{std::move(agents)}
     , public_key_{""}
-    , core_key_{std::move(core_key)}
+    , core_key_{core_key}
     , white_list_{std::move(white_list)}
     , white_list_enabled_{white_list_enabled}
   {}
 
-  virtual ~InitialSslHandshakeTaskFactory()
+  ~InitialSslHandshakeTaskFactory() override
   {
     FETCH_LOG_WARN(LOGGING_NAME, "~InitialSslHandshakeTaskFactory");
   }
 
-  virtual void ProcessMessage(ConstCharArrayBuffer &data);
+  void ProcessMessage(ConstCharArrayBuffer &data) override;
   // Process the message, throw exceptions if they're bad.
 
-  virtual void EndpointClosed(void)
+  void EndpointClosed() override
   {}
 
 protected:

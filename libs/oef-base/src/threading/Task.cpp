@@ -40,7 +40,7 @@ Task::Task()
   // Counter(std::string("mt-core.taskgroup.")+std::to_string(group_id)+".created")++;
 }
 
-void Task::cancel(void)  // try and cancel running task.
+void Task::cancel()  // try and cancel running task.
 {
   cancelled = true;
   if (this->pool)
@@ -66,7 +66,7 @@ void Task::SetThreadGroupId(std::size_t new_group_id)
   thread_group_id = new_group_id;
 }
 
-ExitState Task::RunThunk(void)
+ExitState Task::RunThunk()
 {
   thread_group_id = group_id;
   return run();
@@ -79,7 +79,7 @@ Task::~Task()
   // Counter(std::string("mt-core.taskgroup.")+std::to_string(group_id)+".destroyed")++;
 }
 
-bool Task::submit(std::shared_ptr<Taskpool> pool)
+bool Task::submit(std::shared_ptr<Taskpool> const &pool)
 {
   if (this->pool == pool)
   {
@@ -109,10 +109,8 @@ bool Task::submit()
   {
     return this->submit(x);
   }
-  else
-  {
-    Counter("mt-core.tasks.submit().not-submitted.no-default-taskpool")++;
-  }
+
+  Counter("mt-core.tasks.submit().not-submitted.no-default-taskpool")++;
   return false;
 }
 
@@ -131,7 +129,7 @@ bool Task::MakeRunnable()
   return status;
 }
 
-bool Task::submit(std::shared_ptr<Taskpool> pool, const std::chrono::milliseconds &delay)
+bool Task::submit(std::shared_ptr<Taskpool> const &pool, std::chrono::milliseconds const &delay)
 {
   if (this->pool == pool)
   {

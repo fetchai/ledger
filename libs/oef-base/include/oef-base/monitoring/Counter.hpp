@@ -24,16 +24,15 @@
 class Counter
 {
 public:
-  Counter(const char *name)
+  explicit Counter(char const *name)
   {
     id = Monitoring::find(name);
   }
-  Counter(const std::string &name)
+  explicit Counter(std::string const &name)
   {
-    id = Monitoring::find(name.c_str());
+    id = Monitoring::find(name);
   }
-  virtual ~Counter()
-  {}
+  virtual ~Counter() = default;
   Counter(const Counter &other)
   {
     copy(other);
@@ -64,7 +63,7 @@ public:
     Monitoring::add(id, 1);
     return *this;
   }
-  Counter operator++(int)
+  const Counter operator++(int)
   {
     Monitoring::add(id, 1);
     return *this;

@@ -59,7 +59,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Task created, id=", this->GetTaskId());
   }
 
-  virtual ~WithLateDapExecutorTask()
+  ~WithLateDapExecutorTask() override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Task gone, id=", this->GetTaskId());
   }
@@ -207,12 +207,12 @@ public:
     return StateResult(0, COMPLETE);
   }
 
-  virtual void SetMessageHandler(MessageHandler msgHandler)
+  void SetMessageHandler(MessageHandler msgHandler) override
   {
     messageHandler = std::move(msgHandler);
   }
 
-  virtual void SetErrorHandler(ErrorHandler errHandler)
+  void SetErrorHandler(ErrorHandler errHandler) override
   {
     errorHandler = std::move(errHandler);
   }

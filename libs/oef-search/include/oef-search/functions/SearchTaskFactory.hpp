@@ -43,14 +43,13 @@ public:
     , dap_manager_{std::move(dap_manager)}
   {}
 
-  virtual ~SearchTaskFactory()
-  {}
+  virtual ~SearchTaskFactory() = default;
 
   virtual void ProcessMessageWithUri(const Uri &current_uri, ConstCharArrayBuffer &data);
   // Process the message, throw exceptions if they're bad.
 
 protected:
-  virtual void EndpointClosed(void)
+  virtual void EndpointClosed()
   {}
 
   void HandleQuery(fetch::oef::pb::SearchQuery &query, const Uri &current_uri);
