@@ -29,6 +29,8 @@
 #include <chrono>
 #include <iterator>
 
+using namespace std::chrono_literals;
+
 using fetch::generics::MilliTimer;
 
 namespace fetch {
@@ -100,9 +102,25 @@ BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, Bloc
 
   FETCH_LOCK(mutex_);
 
-  if (completed_block_entropy_.find(block_number) != completed_block_entropy_.end())
+  auto it = completed_block_entropy_.find(block_number);
+  if (it != completed_block_entropy_.end())
   {
-    entropy = *completed_block_entropy_[block_number];
+    entropy = *(it->second);
+
+    // trim down the entropy cache
+    it = completed_block_entropy_.begin();
+    while (it != completed_block_entropy_.end())
+    {
+      if (it->first < block_number)
+      {
+        it = completed_block_entropy_.erase(it);
+      }
+      else
+      {
+        ++it;
+      }
+    }
+
     return Status::OK;
   }
 
@@ -197,7 +215,6 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
-
   FETCH_LOCK(mutex_);
 
   uint64_t const index = block_entropy_being_created_->block_number;
@@ -339,23 +356,37 @@ BeaconService::State BeaconService::OnCompleteState()
   FETCH_LOCK(mutex_);
 
   uint64_t const index = block_entropy_being_created_->block_number;
-  beacon_entropy_last_generated_->set(index);
-  beacon_entropy_generated_total_->add(1);
 
-  // Populate the block entropy structure appropriately
-  block_entropy_being_created_->group_signature =
-      active_exe_unit_->manager.GroupSignature().getStr();
-
-  // Check when in debug mode that the block entropy signing has gone correctly
-  if (!dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
-                                  block_entropy_previous_->EntropyAsSHA256(),
-                                  block_entropy_being_created_->group_signature))
+  if (completed_block_entropy_.find(index) == completed_block_entropy_.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify freshly signed entropy!");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Adding new entropy value to set");
+
+    beacon_entropy_last_generated_->set(index);
+    beacon_entropy_generated_total_->add(1);
+
+    // Populate the block entropy structure appropriately
+    block_entropy_being_created_->group_signature =
+        active_exe_unit_->manager.GroupSignature().getStr();
+
+    // Check when in debug mode that the block entropy signing has gone correctly
+    if (!dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
+                                    block_entropy_previous_->EntropyAsSHA256(),
+                                    block_entropy_being_created_->group_signature))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify freshly signed entropy!");
+    }
+
+    // Save it for querying
+    completed_block_entropy_[index] = block_entropy_being_created_;
   }
 
-  // Save it for querying
-  completed_block_entropy_[index] = block_entropy_being_created_;
+  if (completed_block_entropy_.size() >= 2)
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Waiting until next block interval");
+
+    state_machine_->Delay(50ms);
+    return State::COMPLETE;
+  }
 
   // If there is still entropy left to generate, set up and go around the loop
   if (block_entropy_being_created_->block_number < active_exe_unit_->aeon.round_end)

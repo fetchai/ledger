@@ -280,19 +280,14 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
 
   assert(!qualified_cabinet_weighted.empty());
 
-  // First qual member can always produce
-  if (*qualified_cabinet_weighted.begin() == identity)
-  {
-    return true;
-  }
-
   // Until the time slot has elapsed, others can not produce
-  if (last_block_timestamp_ms + block_interval_ms_ < time_now_ms)
+  if ((last_block_timestamp_ms + block_interval_ms_) > time_now_ms)
   {
-    return true;
+    return false;
   }
 
-  return false;
+  // First qual member can always produce
+  return (*qualified_cabinet_weighted.begin() == identity);
 }
 
 /**
