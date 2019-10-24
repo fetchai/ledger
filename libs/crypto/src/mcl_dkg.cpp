@@ -56,7 +56,7 @@ void SetGenerators(Generator &generator_g, Generator &generator_h, std::string s
   }
   if (string_to_hash2.empty())
   {
-    string_to_hash2 = "Fetch.ai Elliptic Curve Generator h";
+    string_to_hash2 = "Fetch.ai Elliptic Curve Generator H";
   }
   bn::hashAndMapToG2(generator_g, string_to_hash);
   bn::hashAndMapToG2(generator_h, string_to_hash2);

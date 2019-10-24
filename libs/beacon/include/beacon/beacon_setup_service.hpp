@@ -216,8 +216,8 @@ private:
   uint64_t      seconds_for_state_     = 0;
   uint64_t      expected_dkg_timespan_ = 0;
   bool          condition_to_proceed_  = false;
-  static std::map<BeaconSetupService::State, uint64_t> time_slot_map_;
-  static uint64_t                                      time_slots_in_dkg_;
+  std::map<BeaconSetupService::State, uint64_t> time_slot_map_;
+  uint64_t                                      time_slots_in_dkg_;
 
   uint16_t failures_{0};
 
@@ -239,14 +239,14 @@ private:
 
   /// @name Helper methods
   /// @{
-  static void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
-                             uint64_t &time_slot_for_state);
-  bool        BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
-  void        CheckComplaintAnswers();
-  bool        BuildQual();
-  void        CheckQualComplaints();
-  uint64_t    PreDKGThreshold();
-  uint32_t    QualSize();
+  void     SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
+                          uint64_t &time_slot_for_state);
+  bool     BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
+  void     CheckComplaintAnswers();
+  bool     BuildQual();
+  void     CheckQualComplaints();
+  uint64_t PreDKGThreshold();
+  uint32_t QualSize();
   /// @}
 };
 }  // namespace beacon

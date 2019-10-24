@@ -37,9 +37,7 @@ namespace beacon {
 
 using shards::ServiceIdentifier;
 
-char const *                                  ToString(BeaconSetupService::State state);
-std::map<BeaconSetupService::State, uint64_t> BeaconSetupService::time_slot_map_;
-uint64_t                                      BeaconSetupService::time_slots_in_dkg_;
+char const *ToString(BeaconSetupService::State state);
 
 // Convenience factory to set up the RBC/PBC
 BeaconSetupService::ReliableChannelPtr BeaconSetupService::ReliableBroadcastFactory()
@@ -110,25 +108,22 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   shares_subscription_->SetMessageHandler(this, &BeaconSetupService::OnNewSharesPacket);
 
   // Set time slots for each state
-  static std::once_flag flag;
-  std::call_once(flag, []() {
-    time_slot_map_[BeaconSetupService::State::RESET]                          = 0;
-    time_slot_map_[BeaconSetupService::State::CONNECT_TO_ALL]                 = 10;
-    time_slot_map_[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 10;
-    time_slot_map_[BeaconSetupService::State::WAIT_FOR_SHARES]                = 10;
-    time_slot_map_[BeaconSetupService::State::WAIT_FOR_COMPLAINTS]            = 10;
-    time_slot_map_[BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS]     = 10;
-    time_slot_map_[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
-    time_slot_map_[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
-    time_slot_map_[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
-    time_slot_map_[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
-    time_slot_map_[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
+  time_slot_map_[BeaconSetupService::State::RESET]                          = 0;
+  time_slot_map_[BeaconSetupService::State::CONNECT_TO_ALL]                 = 10;
+  time_slot_map_[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 10;
+  time_slot_map_[BeaconSetupService::State::WAIT_FOR_SHARES]                = 10;
+  time_slot_map_[BeaconSetupService::State::WAIT_FOR_COMPLAINTS]            = 10;
+  time_slot_map_[BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS]     = 10;
+  time_slot_map_[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
+  time_slot_map_[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
+  time_slot_map_[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
+  time_slot_map_[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
+  time_slot_map_[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
 
-    for (auto &slot : time_slot_map_)
-    {
-      time_slots_in_dkg_ += slot.second;
-    }
-  });
+  for (auto &slot : time_slot_map_)
+  {
+    time_slots_in_dkg_ += slot.second;
+  }
 }
 
 BeaconSetupService::State BeaconSetupService::OnIdle()
