@@ -69,8 +69,7 @@ public:
   }
 
   /**
-   * ReduceMean removes the first size 1 dimension encountered starting at the trailing edge.
-   * If no dimensions are size 1, it will throw.
+   * ReduceMean averages values along specific axis.
    * @param inputs vector containing one tensor which is the input tensor to ReduceMean
    * @return
    */
@@ -83,8 +82,8 @@ public:
   }
 
   /**
-   * Just re-assign error to different shaped array:
-   * f'(input0)= error_signal
+   * Backward pass is calculated by broadcasting error signal along specified axis and dividing it
+   * by the size of that axis f'(input0)= error_signal/(size along specified axis)
    */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override
