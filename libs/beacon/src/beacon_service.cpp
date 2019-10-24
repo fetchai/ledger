@@ -459,7 +459,7 @@ char const *ToString(BeaconService::State state)
   case BeaconService::State::COMPLETE:
     text = "Completion state";
     break;
-  case BeaconService::State::COMITEE_ROTATION:
+  case BeaconService::State::CABINET_ROTATION:
     text = "Decide on cabinet rotation";
     break;
   case BeaconService::State::OBSERVE_ENTROPY_GENERATION:
