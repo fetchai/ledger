@@ -98,7 +98,7 @@ int main(int argc, char **argv)
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
   std::cout << "FETCH Distributed Word2vec Demo" << std::endl;
 
-  std::string client_data = ReadFile(train_file);
+  std::string client_data = fetch::ml::utilities::ReadFile(train_file);
 
   W2VTrainingParams<DataType> cp = client_params;
   cp.data                        = {client_data};
@@ -116,7 +116,6 @@ int main(int argc, char **argv)
   // Main loop
   for (SizeType it(0); it < number_of_rounds; ++it)
   {
-
     // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
 
@@ -129,9 +128,9 @@ int main(int argc, char **argv)
     auto *w2v_client = dynamic_cast<Word2VecClient<TensorType> *>(client.get());
 
     std::cout << "\t" << static_cast<double>(client->GetLossAverage()) << "\t"
-              << w2v_client->analogy_score_;
+              << w2v_client->GetAnalogyScore();
     lossfile << "\t" << static_cast<double>(client->GetLossAverage()) << "\t"
-             << w2v_client->analogy_score_;
+             << w2v_client->GetAnalogyScore();
 
     std::cout << std::endl;
     lossfile << std::endl;

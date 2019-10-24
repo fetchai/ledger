@@ -28,17 +28,6 @@ namespace fetch {
 namespace ml {
 namespace distributed_learning {
 
-inline std::string ReadFile(std::string const &path)
-{
-  std::ifstream t(path);
-  if (t.fail())
-  {
-    throw ml::exceptions::InvalidFile("Cannot open file " + path);
-  }
-
-  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-}
-
 template <class TensorType>
 class Word2VecClient : public TrainingClient<TensorType>
 {
@@ -51,12 +40,6 @@ public:
   Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
                  std::shared_ptr<std::mutex> console_mutex_ptr);
 
-  void PrepareModel();
-
-  void PrepareDataLoader();
-
-  void PrepareOptimiser();
-
   void Run() override;
 
   void Test() override;
@@ -64,8 +47,6 @@ public:
   float GetAnalogyScore();
 
   std::shared_ptr<GradientType> GetGradients() override;
-
-  VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients) override;
 
   std::pair<std::vector<std::string>, byte_array::ConstByteArray> GetVocab();
   void AddVocab(const std::pair<std::vector<std::string>, byte_array::ConstByteArray> &vocab_info);
@@ -79,6 +60,16 @@ private:
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<TensorType>> w2v_data_loader_ptr_;
   float                                                               analogy_score_ = 0.0f;
   Translator                                                          translator_;
+
+  void PrepareModel();
+
+  void PrepareDataLoader();
+
+  void PrepareOptimiser();
+
+  VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients) override;
+
+  float ComputeAnalogyScore();
 };
 
 template <class TensorType>
@@ -104,46 +95,6 @@ Word2VecClient<TensorType>::Word2VecClient(std::string const &                id
   translator_.SetMyVocab(w2v_data_loader_ptr_->GetVocab());
 }
 
-template <class TensorType>
-void Word2VecClient<TensorType>::PrepareModel()
-{
-  this->g_ptr_ = std::make_shared<fetch::ml::Graph<TensorType>>();
-
-  std::string input_name =
-      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  std::string context_name =
-      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
-  this->label_name_ =
-      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
-  skipgram_ = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
-      "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
-      w2v_data_loader_ptr_->vocab_size());
-
-  this->error_name_ = this->g_ptr_->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
-      "Error", {skipgram_, this->label_name_});
-
-  this->inputs_names_ = {input_name, context_name};
-}
-
-template <class TensorType>
-void Word2VecClient<TensorType>::PrepareDataLoader()
-{
-  w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<TensorType>>(
-      tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
-  w2v_data_loader_ptr_->BuildVocabAndData({tp_.data}, tp_.min_count);
-
-  this->dataloader_ptr_ = w2v_data_loader_ptr_;
-}
-
-template <class TensorType>
-void Word2VecClient<TensorType>::PrepareOptimiser()
-{
-  // Initialise Optimiser
-  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
-      this->g_ptr_, this->inputs_names_, this->label_name_, this->error_name_,
-      tp_.learning_rate_param);
-}
-
 /**
  * Main loop that runs in thread
  */
@@ -151,7 +102,7 @@ template <class TensorType>
 void Word2VecClient<TensorType>::Run()
 {
   TrainingClient<TensorType>::Run();
-  analogy_score_ = GetAnalogyScore();
+  analogy_score_ = ComputeAnalogyScore();
 }
 
 /**
@@ -172,7 +123,7 @@ void Word2VecClient<TensorType>::Test()
 }
 
 template <class TensorType>
-float Word2VecClient<TensorType>::GetAnalogyScore()
+float Word2VecClient<TensorType>::ComputeAnalogyScore()
 {
   TensorType const &weights = utilities::GetEmbeddings(*this->g_ptr_, skipgram_);
 
@@ -217,6 +168,58 @@ void Word2VecClient<TensorType>::AddVocab(
 }
 
 template <class TensorType>
+std::pair<TensorType, TensorType> Word2VecClient<TensorType>::TranslateWeights(
+    TensorType &new_weights, const byte_array::ConstByteArray &vocab_hash)
+{
+  std::pair<TensorType, TensorType> ret =
+      translator_.Translate<TensorType>(new_weights, vocab_hash);
+
+  return ret;
+}
+
+// private
+
+template <class TensorType>
+void Word2VecClient<TensorType>::PrepareModel()
+{
+  this->g_ptr_ = std::make_shared<fetch::ml::Graph<TensorType>>();
+
+  std::string input_name =
+      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string context_name =
+      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
+  this->label_name_ =
+      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+  skipgram_ = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
+      "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
+      w2v_data_loader_ptr_->vocab_size());
+
+  this->error_name_ = this->g_ptr_->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
+      "Error", {skipgram_, this->label_name_});
+
+  this->inputs_names_ = {input_name, context_name};
+}
+
+template <class TensorType>
+void Word2VecClient<TensorType>::PrepareDataLoader()
+{
+  w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<TensorType>>(
+      tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
+  w2v_data_loader_ptr_->BuildVocabAndData({tp_.data}, tp_.min_count);
+
+  this->dataloader_ptr_ = w2v_data_loader_ptr_;
+}
+
+template <class TensorType>
+void Word2VecClient<TensorType>::PrepareOptimiser()
+{
+  // Initialise Optimiser
+  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
+      this->g_ptr_, this->inputs_names_, this->label_name_, this->error_name_,
+      tp_.learning_rate_param);
+}
+
+template <class TensorType>
 typename Word2VecClient<TensorType>::VectorTensorType
 Word2VecClient<TensorType>::TranslateGradients(
     std::shared_ptr<Word2VecClient::GradientType> &new_gradients)
@@ -243,13 +246,9 @@ Word2VecClient<TensorType>::TranslateGradients(
 }
 
 template <class TensorType>
-std::pair<TensorType, TensorType> Word2VecClient<TensorType>::TranslateWeights(
-    TensorType &new_weights, const byte_array::ConstByteArray &vocab_hash)
+float Word2VecClient<TensorType>::GetAnalogyScore()
 {
-  std::pair<TensorType, TensorType> ret =
-      translator_.Translate<TensorType>(new_weights, vocab_hash);
-
-  return ret;
+  return analogy_score_;
 }
 
 }  // namespace distributed_learning

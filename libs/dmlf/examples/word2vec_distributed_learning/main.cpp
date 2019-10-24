@@ -46,7 +46,7 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file,
 {
   // split train file into number_of_clients parts
   std::vector<std::string> client_data;
-  auto                     input_data = ReadFile(train_file);
+  auto                     input_data = fetch::ml::utilities::ReadFile(train_file);
   auto     chars_per_client = static_cast<SizeType>(input_data.size() / number_of_clients);
   SizeType pos{0};
   SizeType old_pos{0};
@@ -179,9 +179,9 @@ int main(int argc, char **argv)
       auto *w2v_client = dynamic_cast<Word2VecClient<TensorType> *>(c.get());
 
       std::cout << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
-                << w2v_client->analogy_score_;
+                << w2v_client->GetAnalogyScore();
       lossfile << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
-               << w2v_client->analogy_score_;
+               << w2v_client->GetAnalogyScore();
     }
     std::cout << std::endl;
     lossfile << std::endl;
