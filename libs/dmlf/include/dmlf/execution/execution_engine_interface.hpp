@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
 #include "dmlf/execution/execution_interface.hpp"
 #include "dmlf/execution/execution_result.hpp"
 
@@ -31,6 +32,7 @@ public:
   using Target      = ExecutionInterface::Target;
   using Variant     = ExecutionInterface::Variant;
   using Params      = std::vector<Variant>;
+  using SerializedParams = fetch::byte_array::ConstByteArray;
 
   ExecutionEngineInterface()          = default;
   virtual ~ExecutionEngineInterface() = default;
@@ -44,6 +46,8 @@ public:
 
   virtual ExecutionResult Run(Name const &execName, Name const &stateName,
                               std::string const &entrypoint, Params params) = 0;
+  virtual ExecutionResult Run(Name const &execName, Name const &stateName,
+                              std::string const &entrypoint, SerializedParams const &params) = 0;
 };
 
 }  // namespace dmlf

@@ -32,6 +32,7 @@ namespace dmlf {
 // This must match the type as defined in variant::variant.hpp
 using fp64_t = fetch::fixed_point::fp64_t;
 using fp32_t = fetch::fixed_point::fp32_t;
+using MsgPackSerializer = fetch::vm::MsgPackSerializer;
 
 ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFiles const &sources)
 {
@@ -189,6 +190,96 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
                          console.str()};
 }
 
+ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
+                                   std::string const &entrypoint, SerializedParams const &params)
+{
+  if (!HasExecutable(execName))
+  {
+    return EngineError(Error::Code::BAD_EXECUTABLE, "No executable " + execName);
+  }
+  if (!HasState(stateName))
+  {
+    return EngineError(Error::Code::BAD_STATE, "No state " + stateName);
+  }
+
+  auto &             exec  = executables_[execName];
+  auto &             state = states_[stateName];
+  std::ostringstream console{};
+
+  // We create a a VM for each execution. It might be better to create a single VM and reuse it, but
+  // (currently) if you create a VM before compiling the VM is badly formed and crashes on execution
+  VM vm{module_.get()};
+  vm.SetIOObserver(*state);
+  vm.AttachOutputDevice(fetch::vm::VM::STDOUT, console);
+
+  // Convert and check function signature
+  auto const *func = exec->FindFunction(entrypoint);
+
+  if (func == nullptr)
+  {
+    return EngineError(Error::Code::RUNTIME_ERROR, entrypoint + " does not exist");
+  }
+
+  auto const numParameters = static_cast<std::size_t>(func->num_parameters);
+
+  // Preparing serializer and return value.
+  MsgPackSerializer serializer{params};
+
+  fetch::vm::ParameterPack parameterPack(vm.registered_types());
+  for (std::size_t i = 0; i < numParameters; ++i)
+  {
+    auto type_id = func->variables[i].type_id;
+    if (type_id <= vm::TypeIds::PrimitiveMaxId)
+    {
+      VmVariant param;
+
+      serializer >> param.primitive.i64;
+      param.type_id = type_id;
+
+      parameterPack.AddSingle(param);
+    }
+    else
+    {
+      // Checking if we can construct the object
+      if (!vm.IsDefaultSerializeConstructable(type_id))
+      {
+        return EngineError(Error::Code::RUNTIME_ERROR, "Could not construct parameter " + std::to_string(i)); 
+      }
+
+      // Creating the object
+      vm::Ptr<vm::Object> object  = vm.DefaultSerializeConstruct(type_id);
+      auto                success = object->DeserializeFrom(serializer);
+
+      // If deserialization failed we return
+      if (!success)
+      {
+        return EngineError(Error::Code::RUNTIME_ERROR, "Could not deserialize parameter " + std::to_string(i));
+      }
+
+      // Adding the parameter to the parameter pack
+      parameterPack.AddSingle(object);
+    }
+  }
+
+  // Run
+  std::string runTimeError;
+  VmVariant   vmOutput;
+
+  bool allOK = vm.Execute(*exec, entrypoint, runTimeError, vmOutput, parameterPack);
+  if (!allOK || !runTimeError.empty())
+  {
+    return ExecutionResult{
+        LedgerVariant{},
+        Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)},
+        console.str()};
+  }
+
+  return ExecutionResult{Convert(vmOutput),
+                         Error{Error::Stage::RUNNING, Error::Code::SUCCESS,
+                               "Ran " + execName + " with state " + stateName},
+                         console.str()};
+}
+
 ExecutionResult BasicVmEngine::EngineError(Error::Code code, std::string errorMessage) const
 {
   return ExecutionResult{LedgerVariant(),
@@ -264,6 +355,9 @@ BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const &ledgerVaria
     return VmVariant(ledgerVariant.As<int>(), typeId);
   }
   case fetch::vm::TypeIds::Float32:
+  {
+    return VmVariant(ledgerVariant.As<float>(), typeId);
+  }
   case fetch::vm::TypeIds::Float64:
   {
     return VmVariant(ledgerVariant.As<double>(), typeId);

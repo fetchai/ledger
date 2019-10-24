@@ -59,6 +59,8 @@ public:
 
   ExecutionResult Run(Name const &execName, Name const &stateName, std::string const &entrypoint,
                       Params params) override;
+  ExecutionResult Run(Name const &execName, Name const &stateName, std::string const &entrypoint,
+                      SerializedParams const &params) override;
 
 private:
   bool HasExecutable(std::string const &name) const;

@@ -26,6 +26,17 @@
 
 #include <limits>
 
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "core/commandline/parameter_parser.hpp"
+#include "vm/module.hpp"
+#include "vm/object.hpp"
+#include "vm/string.hpp"
+#include "vm/variant.hpp"
+#include "vm/vm.hpp"
+#include "vm_modules/vm_factory.hpp"
+
 namespace {
 
 namespace {
@@ -41,6 +52,55 @@ using Params        = BasicVmEngine::Params;
 
 using fp64_t = fetch::fixed_point::fp64_t;
 using fp32_t = fetch::fixed_point::fp32_t;
+
+using fetch::byte_array::ConstByteArray;
+template <typename... Args>
+ConstByteArray SerializeParameters(Args... args)
+{
+  using namespace fetch::vm;
+  using namespace fetch;
+  using fetch::vm_modules::VMFactory;
+  
+  ConstByteArray storage;
+
+  // Creating module for packing parameters. This is needed to generate
+  // the unique type identifiers.
+  auto module = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
+
+  auto compiler = std::make_shared<Compiler>(module.get());
+
+  // ParameterPack params{module->registered_types()};
+  auto          vm = std::make_unique<VM>(module.get());
+  ParameterPack params{vm->registered_types(), vm.get()};
+
+  // Adding parameters
+  if (!params.Add(args...))
+  {
+    throw std::runtime_error("Could not pack parameters.");
+  }
+
+  // Serializing the parameters
+  MsgPackSerializer serializer;
+  for (std::size_t i = 0; i < params.size(); ++i)
+  {
+    auto &param = params[i];
+    if (param.type_id <= vm::TypeIds::PrimitiveMaxId)
+    {
+      serializer << param.primitive.i64;
+    }
+    else
+    {
+      param.object->SerializeTo(serializer);
+    }
+  }
+
+  // Storing the result
+  storage = serializer.data();
+
+  return storage;
+}
+
+
 
 auto const helloWorld = R"(
 
@@ -178,11 +238,27 @@ auto const Add64 = R"(
 
 auto const AddFloat = R"(
 
+function add(a : Float64, b : Float64) : Float64
+  return a + b;
+endfunction
+
+)";
+auto const AddFloatComplex = R"(
+
+function add(a : Float64, b : Float32) : Float64
+  return a + toFloat64(b);
+endfunction
+
+)";
+
+auto const AddFixed = R"(
+
 function add(a : Fixed64, b : Fixed32) : Fixed64
   return a + toFixed64(b);
 endfunction
 
 )";
+
 
 auto const IntToFloatCompare = R"(
 function compare(a : Int32, b: Float64) : Int32
@@ -204,14 +280,33 @@ function compare(a : Bool) : Int32
 endfunction
 )";
 
-//auto const AddArray = R"(
-//
-//function add(array : Array<Int32>) : Int32
-//  return array[0] + array[1];
-//endfunction
-//
-//)";
-//
+/*
+auto const AddArray = R"(
+
+function add(array : Array<Int32>) : Int32
+  return array[0] + array[1];
+endfunction
+
+)";
+*/
+
+auto const AddFloat64Array = R"(
+
+function add(array : Array<Float64>) : Float64
+  return array[0] + array[1];
+endfunction
+
+)";
+
+/*
+auto const AddFloat2Array = R"(
+
+function add(array : Array<Array<Float64>>) : Float64
+  return array[0][0] + array[0][1];
+endfunction
+)";
+*/
+
 //auto const AddArrayThree = R"(
 //
 //function add(array : Array<Int32>) : Int32
@@ -1243,6 +1338,43 @@ TEST(BasicVmEngineDmlfTests, AddFloat)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
+  double a = 4.5;
+  float b = 3.5;
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "add", Params{LedgerVariant(a), LedgerVariant(b)});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_NEAR(result.output().As<float>(), 8.0, 0.001);
+}
+TEST(BasicVmEngineDmlfTests, AddFloatComplex)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloatComplex}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  double a = 4.5;
+  float b = 3.3f;
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "add", Params{LedgerVariant(a), LedgerVariant(b)});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_NEAR(result.output().As<double>(), 7.8, 0.001);
+}
+
+TEST(BasicVmEngineDmlfTests, AddFixed)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFixed}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
   ExecutionResult result = engine.Run(
       "add", "state", "add", Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
   EXPECT_TRUE(result.succeeded());
@@ -1557,5 +1689,198 @@ TEST(BasicVmEngineDmlfTests, AddNonPersistentMatrix)
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
+
+TEST(BasicVmEngineDmlfTests, ByteAdd)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", add}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result =
+      engine.Run("add", "state", "add", SerializeParameters(3, 2));
+  EXPECT_TRUE(result.succeeded());
+  // std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 5);
+}
+
+TEST(BasicVmEngineDmlfTests, ByteAdd8)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", Add8}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result =
+      engine.Run("add", "state", "add", SerializeParameters(3, 4));
+  EXPECT_TRUE(result.succeeded());
+  // std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 7);
+}
+
+TEST(BasicVmEngineDmlfTests, ByteAdd64)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", Add64}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result =
+      engine.Run("add", "state", "add", SerializeParameters(3, 5));
+  EXPECT_TRUE(result.succeeded());
+  // std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 8);
+}
+
+TEST(BasicVmEngineDmlfTests, ByteAddFloat)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloat}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  auto params = SerializeParameters(3.3, 5.6);
+
+  ExecutionResult result =
+      engine.Run("add", "state", "add", params);
+  EXPECT_TRUE(result.succeeded());
+  // std::cout << result.error().message() << '\n';
+  EXPECT_NEAR(result.output().As<double>(), 8.9, 0.0000000001);
+}
+
+TEST(BasicVmEngineDmlfTests, ByteAddComplexFloat)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloatComplex}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  double a = 3.2;
+  float  b = 5.6f;
+
+  auto params = SerializeParameters(a,b);
+
+  ExecutionResult result =
+      engine.Run("add", "state", "add", params);
+  EXPECT_TRUE(result.succeeded());
+  // std::cout << result.error().message() << '\n';
+  EXPECT_NEAR(result.output().As<double>(), 8.8, 0.001);
+}
+
+TEST(BasicVmEngineDmlfTests, ByteAddFixed)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFixed}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "add", SerializeParameters(fp64_t(4.5), fp32_t(5.5)));
+  EXPECT_TRUE(result.succeeded());
+  // std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
+}
+
+TEST(BasicVmEngineDmlfTests, ByteTrueBoolCompare)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", BoolCompare}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run("compare", "state", "compare", SerializeParameters(true));
+  EXPECT_TRUE(result.succeeded());
+  // std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 1);
+}
+
+TEST(BasicVmEngineDmlfTests, ByteFalseBoolCompare)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", BoolCompare}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run("compare", "state", "compare", SerializeParameters(false));
+  EXPECT_TRUE(result.succeeded());
+  // std::cout << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 0);
+}
+
+/*
+TEST(BasicVmEngineDmlfTests, ByteAddArray)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddArray}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "add", SerializeParameters(std::vector<int>{1,2}));
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<int>(), 3);
+}
+*/
+
+TEST(BasicVmEngineDmlfTests, ByteAddFloat64Array)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloat64Array}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "add", SerializeParameters(std::vector<double>{1.2,2.7}));
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_NEAR(result.output().As<double>(), 3.9, 0.0001);
+}
+
+/*
+TEST(BasicVmEngineDmlfTests, ByteAddFloat2Array)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloat2Array}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run(
+      "add", "state", "add", SerializeParameters(std::vector<std::vector<double>>{{1.2,2.7}}));
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_NEAR(result.output().As<double>(), 3.9, 0.0001);
+}
+*/
 
 }  // namespace
