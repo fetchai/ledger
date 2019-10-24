@@ -61,11 +61,11 @@ public:
 
   /// Helper functions
   /// @{
-  uint32_t                       Index(MuddleAddress const &member) const;
-  uint64_t                       round_start() const;
-  uint64_t                       round_end() const;
-  uint32_t                       threshold() const;
-  std::set<MuddleAddress> const &notarisation_members() const;
+  uint32_t                      Index(MuddleAddress const &member) const;
+  uint64_t                      round_start() const;
+  uint64_t                      round_end() const;
+  uint32_t                      threshold() const;
+  std::set<MuddleAddress> const notarisation_members() const;
   /// @}
 
 private:

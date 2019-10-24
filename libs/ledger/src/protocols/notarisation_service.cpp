@@ -96,7 +96,7 @@ NotarisationService::State NotarisationService::OnCollectNotarisations()
   FETCH_LOCK(mutex_);
 
   // Randomly select someone from qual to query
-  auto &      members             = active_notarisation_unit_->notarisation_members();
+  auto        members             = active_notarisation_unit_->notarisation_members();
   std::size_t random_member_index = static_cast<size_t>(rand()) % members.size();
   auto        it                  = std::next(members.begin(), long(random_member_index));
 

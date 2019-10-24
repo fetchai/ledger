@@ -127,8 +127,7 @@ uint32_t NotarisationManager::threshold() const
 {
   return threshold_;
 }
-std::set<NotarisationManager::MuddleAddress> const &NotarisationManager::notarisation_members()
-    const
+std::set<NotarisationManager::MuddleAddress> const NotarisationManager::notarisation_members() const
 {
   return notarisation_members_;
 }
