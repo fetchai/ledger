@@ -286,7 +286,7 @@ public:
     // ...
   }
 };
-``` 
+```
 
 
 ## Error handling
