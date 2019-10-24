@@ -115,7 +115,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number,
-                 " (complete)");
+                  " (complete)");
 
   // Step 3. Update the final queue
   {
