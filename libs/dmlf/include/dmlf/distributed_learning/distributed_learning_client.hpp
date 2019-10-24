@@ -17,18 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "coordinator.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
+#include "dmlf/networkers/abstract_learner_networker.hpp"
+#include "dmlf/update.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "ml/optimisation/optimiser.hpp"
-#include "ml/utilities/word2vec_utilities.hpp"
+#include "ml/dataloaders/dataloader.hpp"
+#include "ml/utilities/utils.hpp"
 
 #include <condition_variable>
 #include <fstream>
@@ -49,45 +46,13 @@ struct ClientParams
   using SizeType = fetch::math::SizeType;
 
   SizeType batch_size{};
+  SizeType max_updates;
   DataType learning_rate;
   bool     print_loss = false;
 
   std::vector<std::string> inputs_names = {"Input"};
   std::string              label_name   = "Label";
   std::string              error_name   = "Error";
-};
-
-enum class UpdateType : uint16_t
-{
-  GRADIENTS,
-  WEIGHTS,
-};
-
-/** Struct to store updates and information about the update
- *
- * @tparam TensorType
- */
-template <typename TensorType>
-struct Update
-{
-  using VectorTensorType = std::vector<TensorType>;
-  using TimestampType    = int64_t;
-  VectorTensorType           data;
-  UpdateType                 update_type = UpdateType::GRADIENTS;
-  TimestampType              timestamp{};
-  std::string                client_id;
-  byte_array::ConstByteArray hash;
-
-  Update(VectorTensorType grad, TimestampType second, std::string client_id,
-         byte_array::ConstByteArray hash, UpdateType uptype = UpdateType::GRADIENTS)
-    : data{std::move(grad)}
-    , update_type{uptype}
-    , timestamp{second}
-    , client_id{std::move(client_id)}
-    , hash{std::move(hash)}
-  {}
-
-  Update() = default;
 };
 
 template <class TensorType>
@@ -97,7 +62,7 @@ class TrainingClient
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
-  using GradientType     = Update<TensorType>;
+  using GradientType     = fetch::dmlf::Update<TensorType>;
   using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
 
 public:
@@ -110,13 +75,9 @@ public:
       std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
       ClientParams<DataType> const &client_params, std::shared_ptr<std::mutex> console_mutex_ptr);
 
-  virtual ~TrainingClient()
-  {
-    export_stopped_ = true;
-    export_buffer_cv_.notify_all();
-  }
+  virtual ~TrainingClient() = default;
 
-  void SetCoordinator(std::shared_ptr<Coordinator<TensorType>> coordinator_ptr);
+  void SetNetworker(std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> i_learner_ptr);
 
   virtual void Run();
 
@@ -124,20 +85,13 @@ public:
 
   virtual void Test();
 
-  virtual GradientType GetGradients();
+  virtual std::shared_ptr<GradientType> GetGradients();
 
   VectorTensorType GetWeights() const;
-
-  void AddExportGradient(GradientType &gradient);
 
   void SetWeights(VectorTensorType const &new_weights);
 
   void SetParams(ClientParams<DataType> const &new_params);
-
-  void SetMaxUpdates(SizeType max_updates)
-  {
-    max_updates_ = max_updates;
-  }
 
   GraphPtrType GetModel();
 
@@ -182,20 +136,8 @@ protected:
   // Connection to other nodes
   std::vector<std::shared_ptr<TrainingClient>> peers_;
 
-  // Access to coordinator
-  std::shared_ptr<Coordinator<TensorType>> coordinator_ptr_;
-
-  // Gradient queue access and mutex to protect it
-  std::queue<GradientType> gradient_queue_;
-  mutable std::mutex       queue_mutex_;
-
-  // Export buffer logic
-  std::queue<GradientType>     export_buffer_;
-  mutable std::mutex           export_buffer_mutex_;
-  std::condition_variable      export_buffer_cv_;
-  mutable std::mutex           export_buffer_cv_mutex_;
-  std::shared_ptr<std::thread> export_buffer_thread_;
-  bool                         export_stopped_ = false;
+  // Pointer to client's own iLearnerNetworker
+  std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> i_learner_ptr_;
 
   // Console mutex pointer
   std::shared_ptr<std::mutex> console_mutex_ptr_;
@@ -209,31 +151,20 @@ protected:
   SizeType update_counter_ = 0;
   SizeType max_updates_    = 0;
 
-  GradientType GetNewGradients();
-
-  virtual VectorTensorType TranslateGradients(GradientType &new_gradients)
+  virtual VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients)
   {
-    return new_gradients.data;
+    return new_gradients->GetGradients();
   }
   // Print to console flag
   bool print_loss_;
 
   TimestampType GetTimestamp();
 
-  void TrainOnce();
-
-  void TrainWithCoordinator();
-
   void DoBatch();
 
   void ClearLossFile();
 
-  void ExportBufferLoop();
-
-  void Initialise();
-
 private:
-  void QueueAddGradient(GradientType &gradient);
   void GraphAddGradients(GraphPtrType g_ptr, VectorTensorType const &gradients);
 };
 
@@ -251,7 +182,6 @@ TrainingClient<TensorType>::TrainingClient(
 {
   SetParams(client_params);
   ClearLossFile();
-  Initialise();
 }
 
 template <class TensorType>
@@ -263,7 +193,6 @@ TrainingClient<TensorType>::TrainingClient(std::string                   id,
 {
   SetParams(client_params);
   ClearLossFile();
-  Initialise();
 }
 
 template <class TensorType>
@@ -283,13 +212,14 @@ void TrainingClient<TensorType>::SetParams(
   batch_size_    = new_params.batch_size;
   learning_rate_ = new_params.learning_rate;
   print_loss_    = new_params.print_loss;
+  max_updates_   = new_params.max_updates;
 }
 
 template <class TensorType>
-void TrainingClient<TensorType>::SetCoordinator(
-    std::shared_ptr<Coordinator<TensorType>> coordinator_ptr)
+void TrainingClient<TensorType>::SetNetworker(
+    std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> i_learner_ptr)
 {
-  coordinator_ptr_ = coordinator_ptr;
+  i_learner_ptr_ = i_learner_ptr;
 }
 
 template <class TensorType>
@@ -305,15 +235,51 @@ template <class TensorType>
 void TrainingClient<TensorType>::Run()
 {
   ResetLossCnt();
-  if (coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
+
+  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
+
+  update_counter_ = 0;
+  while (update_counter_ < max_updates_)
   {
-    // Do one batch and end
-    TrainOnce();
+    DoBatch();
+
+    // Validate loss for logging purpose
+    Test();
+
+    // Save loss variation data
+    // Upload to https://plot.ly/create/#/ for visualisation
+
+    if (lossfile)
+    {
+      lossfile << utilities::GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
+               << static_cast<double>(test_loss_) << "\n";
+    }
+
+    if (print_loss_)
+    {
+      // Lock console
+      FETCH_LOCK(*console_mutex_ptr_);
+      std::cout << "Client " << id_ << "\tTraining loss: " << static_cast<double>(train_loss_)
+                << "\tTest loss: " << static_cast<double>(test_loss_) << std::endl;
+    }
   }
-  else
+
+  opti_ptr_->IncrementEpochCounter();
+  opti_ptr_->UpdateLearningRate();
+
+  if (lossfile)
   {
-    // Train batches until coordinator will tell clients to stop
-    TrainWithCoordinator();
+    lossfile << utilities::GetStrTimestamp() << ", "
+             << "STOPPED"
+             << "\n";
+    lossfile.close();
+  }
+
+  if (print_loss_)
+  {
+    // Lock console
+    FETCH_LOCK(*console_mutex_ptr_);
+    std::cout << "Client " << id_ << " STOPPED" << std::endl;
   }
 }
 
@@ -406,11 +372,10 @@ void TrainingClient<TensorType>::Test()
  * @return vector of gradient update values
  */
 template <class TensorType>
-typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetGradients()
+std::shared_ptr<fetch::dmlf::Update<TensorType>> TrainingClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(model_mutex_);
-  return GradientType(g_ptr_->GetGradients(), GetTimestamp(), id_, byte_array::ConstByteArray(),
-                      UpdateType::GRADIENTS);
+  return std::make_shared<GradientType>(g_ptr_->GetGradients(), byte_array::ConstByteArray());
 }
 
 /**
@@ -421,21 +386,6 @@ std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 {
   FETCH_LOCK(model_mutex_);
   return g_ptr_->GetWeightsReferences();
-}
-
-/**
- * Adds gradient to export queue
- * @param gradient
- */
-template <class TensorType>
-void TrainingClient<TensorType>::AddExportGradient(GradientType &gradient)
-{
-  std::unique_lock<std::mutex> lock(export_buffer_cv_mutex_);
-  {
-    FETCH_LOCK(export_buffer_mutex_);
-    export_buffer_.push(gradient);
-  }
-  export_buffer_cv_.notify_all();
 }
 
 /**
@@ -457,15 +407,6 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
   }
 }
 
-template <class TensorType>
-typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetNewGradients()
-{
-  FETCH_LOCK(queue_mutex_);
-  GradientType new_gradients = gradient_queue_.front();
-  gradient_queue_.pop();
-  return new_gradients;
-}
-
 // Timestamp for gradient queue
 template <class TensorType>
 int64_t TrainingClient<TensorType>::GetTimestamp()
@@ -473,107 +414,6 @@ int64_t TrainingClient<TensorType>::GetTimestamp()
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::system_clock::now().time_since_epoch())
       .count();
-}
-
-/**
- * Do one batch training, run model on test set and write loss to csv file
- */
-template <class TensorType>
-void TrainingClient<TensorType>::TrainOnce()
-{
-  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
-
-  DoBatch();
-
-  // Validate loss for logging purpose
-  Test();
-
-  // Save loss variation data
-  // Upload to https://plot.ly/create/#/ for visualisation
-  if (lossfile)
-  {
-    lossfile << utilities::GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
-             << static_cast<double>(test_loss_) << "\n";
-  }
-
-  if (print_loss_)
-  {
-    // Lock console
-    FETCH_LOCK(*console_mutex_ptr_);
-    std::cout << "Client " << id_ << "\tTraining loss: " << static_cast<double>(train_loss_)
-              << "\tTest loss: " << static_cast<double>(test_loss_) << std::endl;
-  }
-
-  opti_ptr_->IncrementEpochCounter();
-  opti_ptr_->UpdateLearningRate();
-
-  if (lossfile)
-  {
-    lossfile << utilities::GetStrTimestamp() << ", "
-             << "STOPPED"
-             << "\n";
-    lossfile.close();
-  }
-
-  if (print_loss_)
-  {
-    // Lock console
-    FETCH_LOCK(*console_mutex_ptr_);
-    std::cout << "Client " << id_ << " STOPPED" << std::endl;
-  }
-}
-
-/**
- * Do batch training repeatedly while coordinator state is set to RUN
- */
-template <class TensorType>
-void TrainingClient<TensorType>::TrainWithCoordinator()
-{
-  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
-
-  update_counter_ = 0;
-  while (update_counter_ < max_updates_)
-  {
-    DoBatch();
-
-    // Validate loss for logging purpose
-    Test();
-
-    // Save loss variation data
-    // Upload to https://plot.ly/create/#/ for visualisation
-
-    if (lossfile)
-    {
-      lossfile << utilities::GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
-               << static_cast<double>(test_loss_) << "\n";
-    }
-
-    if (print_loss_)
-    {
-      // Lock console
-      FETCH_LOCK(*console_mutex_ptr_);
-      std::cout << "Client " << id_ << "\tTraining loss: " << static_cast<double>(train_loss_)
-                << "\tTest loss: " << static_cast<double>(test_loss_) << std::endl;
-    }
-  }
-
-  opti_ptr_->IncrementEpochCounter();
-  opti_ptr_->UpdateLearningRate();
-
-  if (lossfile)
-  {
-    lossfile << utilities::GetStrTimestamp() << ", "
-             << "STOPPED"
-             << "\n";
-    lossfile.close();
-  }
-
-  if (print_loss_)
-  {
-    // Lock console
-    FETCH_LOCK(*console_mutex_ptr_);
-    std::cout << "Client " << id_ << " STOPPED" << std::endl;
-  }
 }
 
 /**
@@ -585,24 +425,21 @@ void TrainingClient<TensorType>::DoBatch()
   // Train one batch to create own gradient
   Train();
 
-  // Interaction with peers is skipped in synchronous mode
-  if (coordinator_ptr_->GetMode() != CoordinatorMode::SYNCHRONOUS)
+  // Push own gradient to iLearner
+  auto update = GetGradients();
+  i_learner_ptr_->PushUpdate(update);
+
+  SizeType ucnt = 0;
+
+  // Sum all gradient from iLearner
+  while (i_learner_ptr_->GetUpdateCount() > 0)
   {
-    peers_ = coordinator_ptr_->NextPeersList(id_);
+    ucnt++;
+    auto             new_update    = i_learner_ptr_->GetUpdate<fetch::dmlf::Update<TensorType>>();
+    VectorTensorType new_gradients = TranslateGradients(new_update);
 
-    GradientType current_gradient = GetGradients();
-
-    // Add gradient to export queue
-    AddExportGradient(current_gradient);
-
-    // Sum all gradient in queue
-    while (!gradient_queue_.empty())
-    {
-      GradientType     gt            = GetNewGradients();
-      VectorTensorType new_gradients = TranslateGradients(gt);
-      GraphAddGradients(g_ptr_, new_gradients);
-      update_counter_++;
-    }
+    GraphAddGradients(g_ptr_, new_gradients);
+    update_counter_++;
   }
 
   // Apply sum of all gradients from queue along with own gradient
@@ -615,58 +452,9 @@ void TrainingClient<TensorType>::DoBatch()
   batch_counter_++;
 }
 
-template <class TensorType>
-void TrainingClient<TensorType>::ExportBufferLoop()
-{
-  GradientType                 gradient;
-  std::unique_lock<std::mutex> l(export_buffer_cv_mutex_);
-
-  while (!export_stopped_)
-  {
-    export_buffer_cv_.wait(l);
-    if (export_stopped_)
-    {
-      break;
-    }
-
-    if (!export_buffer_.empty())
-    {
-      FETCH_LOCK(export_buffer_mutex_);
-      {
-        gradient = export_buffer_.front();
-        export_buffer_.pop();
-      }
-
-      // Give gradients to peers
-      for (SizeType i{0}; i < peers_.size(); ++i)
-      {
-        peers_[i]->QueueAddGradient(gradient);
-      }
-    }
-  }
-}
-
-template <class TensorType>
-void TrainingClient<TensorType>::Initialise()
-{
-  // Start export buffer thread
-  export_buffer_thread_ = std::make_shared<std::thread>(&TrainingClient::ExportBufferLoop, this);
-}
-
 ///////////////////////
 /// private methods ///
 ///////////////////////
-
-/**
- * Adds gradient to own gradient queue
- * @param gradient
- */
-template <class TensorType>
-void TrainingClient<TensorType>::QueueAddGradient(GradientType &gradient)
-{
-  FETCH_LOCK(queue_mutex_);
-  gradient_queue_.push(gradient);
-}
 
 /**
  * Adds a vector of Tensors to the gradient accumulation of all the trainable pointers in the graph.

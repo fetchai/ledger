@@ -301,10 +301,12 @@ struct OpSliceSaveableParams : public OpsSaveableParams
 {
   using SizeType = typename TensorType::SizeType;
 
-  std::vector<SizeType> axes;
-  std::vector<SizeType> indices;
-  SizeType              axis{};
-  SizeType              index{};
+  std::pair<SizeType, SizeType> start_end_slice;
+  std::vector<SizeType>         axes;
+  std::vector<SizeType>         indices;
+  SizeType                      axis{};
+  SizeType                      index{};
+  uint8_t                       slice_type;
 
   fetch::ml::OpType op_type = OpType::OP_SLICE;
 };
@@ -319,6 +321,19 @@ struct OpSqueezeSaveableParams : public OpsSaveableParams
   using SizeType = typename TensorType::SizeType;
 
   fetch::ml::OpType op_type = OpType::OP_SQUEEZE;
+};
+
+/**
+ * Saveable parameters for Squeeze op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpReduceMeanSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+  SizeType axis{};
+
+  fetch::ml::OpType op_type = OpType::OP_REDUCE_MEAN;
 };
 
 /**

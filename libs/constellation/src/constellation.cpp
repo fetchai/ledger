@@ -191,7 +191,7 @@ StakeManagerPtr CreateStakeManager(constellation::Constellation::Config const &c
 
   if (cfg.proof_of_stake)
   {
-    mgr = std::make_shared<ledger::StakeManager>(cfg.max_committee_size);
+    mgr = std::make_shared<ledger::StakeManager>(cfg.max_cabinet_size);
   }
 
   return mgr;
@@ -206,7 +206,7 @@ ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, St
   if (stake)
   {
     consensus = std::make_shared<ledger::Consensus>(stake, beacon, chain, identity, cfg.aeon_period,
-                                                    cfg.max_committee_size, cfg.block_interval_ms);
+                                                    cfg.max_cabinet_size, cfg.block_interval_ms);
   }
 
   return consensus;

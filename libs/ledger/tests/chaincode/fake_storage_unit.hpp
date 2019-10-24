@@ -175,18 +175,6 @@ public:
     return {};
   }
 
-  Keys KeyDump() const override
-  {
-    Keys keys;
-
-    for (auto const &it : state_)
-    {
-      keys.push_back(ResourceID(it.first));
-    }
-
-    return keys;
-  }
-
   void Reset() override
   {
     state_.clear();

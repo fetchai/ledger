@@ -72,7 +72,7 @@ public:
   };
 
   /**
-   * Internal enumeation for validity query responses
+   * Internal enumeration for validity query responses
    */
   enum class Validity
   {
