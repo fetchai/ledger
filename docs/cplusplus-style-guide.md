@@ -350,7 +350,7 @@ Example of using smart pointer with **exclusive** ownership:
   * Network connections.
   * Database sessions.
 
-* A destructor must **NEVER** throw an exception. The reason for this is that when the destructor is called automatically because an exception is thrown, if said destructor throws another one, the C++ runtime will call `std::terminate` of the process (as per the [C++ standard definition](http://en.cppreference.com/w/cpp/language/destructor#Exceptions").
+* A destructor must **NEVER** throw an exception. The reason for this is that when the destructor is called automatically because an exception is thrown, if said destructor throws another one, the C++ runtime will call `std::terminate` of the process (as per the [C++ standard definition](http://en.cppreference.com/w/cpp/language/destructor#Exceptions)).
 
 * Use locking guards provided in C++ `std` namespace, such as `std::unique_lock` and `std::lock_guard`.
 * Prefer implementations of mutex in the `fetch::mutex` namespace (which conform to a `std` locking API contract) over a plain `std::mutex`. These are `fetch::mutex::DebugMutex` and `fetch::mutex::ProductionMutex`.
