@@ -119,6 +119,9 @@ void SynchroniseWeights(std::vector<std::shared_ptr<TrainingClient<TensorType>>>
 
 int main(int argc, char **argv)
 {
+  // This example will create multiple local distributed clients with CBOW Word2Vec model and trains
+  // word embeddings based on input text file
+
   if (argc != 4)
   {
     std::cout << "Usage : " << argv[0] << " PATH/TO/text8 analogies_test_file output_csv_file"

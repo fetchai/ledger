@@ -46,6 +46,9 @@ using SizeType         = fetch::math::SizeType;
 
 int main(int argc, char **argv)
 {
+  // This example will create multiple local distributed clients with simple regression neural net
+  // and learns how to predict prices from Boston Housing dataset
+
   if (argc != 6)
   {
     std::cout << "Args: boston_data.csv boston_label.csv random_seed(int) learning_rate(float) "

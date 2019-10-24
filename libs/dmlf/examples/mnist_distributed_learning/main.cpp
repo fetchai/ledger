@@ -47,6 +47,9 @@ using SizeType         = fetch::math::SizeType;
 
 int main(int ac, char **av)
 {
+  // This example will create multiple local distributed clients with simple classification neural
+  // net and learns how to predict hand written digits from MNIST dataset
+
   if (ac < 3)
   {
     std::cout << "Usage : " << av[0]

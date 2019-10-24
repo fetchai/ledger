@@ -43,6 +43,9 @@ using SizeType         = typename TensorType::SizeType;
 
 int main(int argc, char **argv)
 {
+  // This example will create muddle networking distributed client with CBOW Word2Vec model and
+  // trains word embeddings based on input text file
+
   if (argc != 6)
   {
     std::cout
