@@ -46,7 +46,7 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
                                                   ToString)}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , event_manager_{std::move(event_manager)}
-  , cabinet_creator_{muddle, identity_, manifest_cache, certificate_}
+  , cabinet_creator_{muddle, manifest_cache, certificate_}
   , beacon_protocol_{*this}
   , beacon_entropy_generated_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_entropy_generated_total", "The total number of times entropy has been generated")}

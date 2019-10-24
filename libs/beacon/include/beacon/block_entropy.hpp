@@ -43,7 +43,7 @@ struct BlockEntropy : public BlockEntropyInterface
 
   BlockEntropy();
   BlockEntropy(BlockEntropy const &rhs);
-  
+
   // When new committee, block contains muddle address of those who suceeded the DKG and
   // are qualified to produce blocks, and notarisation key (signed)
   Cabinet              qualified;

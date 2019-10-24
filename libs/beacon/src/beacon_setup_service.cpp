@@ -56,10 +56,10 @@ BeaconSetupService::ReliableChannelPtr BeaconSetupService::ReliableBroadcastFact
                                        CHANNEL_RBC_BROADCAST, false);
 }
 
-BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
+BeaconSetupService::BeaconSetupService(MuddleInterface &       muddle,
                                        ManifestCacheInterface &manifest_cache,
                                        CertificatePtr          certificate)
-  : identity_{std::move(identity)}
+  : identity_{certificate->identity()}
   , manifest_cache_{manifest_cache}
   , muddle_{muddle}
   , endpoint_{muddle_.GetEndpoint()}

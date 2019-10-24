@@ -57,7 +57,7 @@ class HonestSetupService : public BeaconSetupService
 public:
   HonestSetupService(MuddleInterface &endpoint, const ProverPtr &prover,
                      ManifestCacheInterface &manifest_cache)
-    : BeaconSetupService{endpoint, prover->identity(), manifest_cache, prover}
+    : BeaconSetupService{endpoint, manifest_cache, prover}
   {}
 };
 
@@ -81,7 +81,7 @@ public:
   FaultySetupService(MuddleInterface &endpoint, const ProverPtr &prover,
                      ManifestCacheInterface &     manifest_cache,
                      const std::vector<Failures> &failures = {})
-    : BeaconSetupService{endpoint, prover->identity(), manifest_cache, prover}
+    : BeaconSetupService{endpoint, manifest_cache, prover}
   {
     for (auto f : failures)
     {
