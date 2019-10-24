@@ -217,7 +217,7 @@ private:
   uint64_t      expected_dkg_timespan_ = 0;
   bool          condition_to_proceed_  = false;
   std::map<BeaconSetupService::State, uint64_t> time_slot_map_;
-  uint64_t                                      time_slots_in_dkg_;
+  uint64_t                                      time_slots_in_dkg_ = 0;
 
   uint16_t failures_{0};
 
