@@ -88,7 +88,7 @@ public:
   DmlfEtchNode(DmlfEtchNode &&other)      = delete;
   DmlfEtchNode &operator=(DmlfEtchNode const &other) = delete;
 
-  bool Configure(std::string config)
+  bool Configure(std::string const &config)
   {
     try
     {

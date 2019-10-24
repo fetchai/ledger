@@ -75,7 +75,7 @@ CertificatePtr create_identity(std::string const &key)
   return signer;
 }
 
-std::vector<ExecutionResult> WaitAll(std::vector<PromiseOfResult> promises)
+std::vector<ExecutionResult> WaitAll(std::vector<PromiseOfResult> const &promises)
 {
   std::vector<ExecutionResult> results{};
   for (auto &promise : promises)
@@ -106,7 +106,7 @@ public:
   DmlfEtchClient(DmlfEtchClient &&other)      = delete;
   DmlfEtchClient &operator=(DmlfEtchClient const &other) = delete;
 
-  bool Configure(std::string config)
+  bool Configure(std::string const &config)
   {
     try
     {
@@ -147,7 +147,7 @@ public:
     }
   }
 
-  std::vector<PromiseOfResult> Execute(std::string etch)
+  std::vector<PromiseOfResult> Execute(std::string const &etch)
   {
     if (!running_)
     {
@@ -204,7 +204,7 @@ private:
     running_ = true;
   }
 
-  PromiseOfResult execute_on_one_(std::string etch)
+  PromiseOfResult execute_on_one_(std::string const &etch)
   {
     size_t      node_index   = random(0, nodes_pubs_.size() - 1);
     std::string node         = nodes_pubs_[node_index];
@@ -212,7 +212,7 @@ private:
     return exec_promise;
   }
 
-  std::vector<PromiseOfResult> execute_on_all_(std::string etch)
+  std::vector<PromiseOfResult> execute_on_all_(std::string const &etch)
   {
     std::vector<PromiseOfResult> promises;
     for (auto &node : nodes_pubs_)
@@ -223,7 +223,7 @@ private:
     return promises;
   }
 
-  PromiseOfResult execute_on_(std::string node, std::string etch)
+  PromiseOfResult execute_on_(std::string const &node, std::string const &etch)
   {
     std::string call_id = generate_unique_id_();
 
@@ -247,12 +247,12 @@ private:
     return execute_prom;
   }
 
-  PromiseOfResult register_state_(std::string node, std::string state_name)
+  PromiseOfResult register_state_(std::string const &node, std::string const &state_name)
   {
     return client_->CreateState(node, state_name);
   }
 
-  PromiseOfResult delete_state_(std::string node, std::string state_name)
+  PromiseOfResult delete_state_(std::string const &node, std::string const &state_name)
   {
     return client_->DeleteState(node, state_name);
   }
