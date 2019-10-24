@@ -1,0 +1,38 @@
+function main()
+
+// read in training and test data
+if (System.Argc() != 5)
+  print("Usage: SCRIPT_FILE -- path/to/boston_data.csv path/to/boston_label.csv random_seed(int) learning_rate(float) path/to/results/dir");
+  return;
+endif
+
+var data = readCSV(System.Argv(1), true);
+var label = readCSV(System.Argv(2), true);
+
+var seed = System.Argv(3);
+var lr = System.Argv(4);
+var results_dir = System.Argv(5);
+
+
+
+
+// set up a model architecture
+var model = Model("sequential");
+model.add("dense", 13u64, 10u64, "relu");
+model.add("dense", 10u64, 10u64, "relu");
+model.add("dense", 10u64, 1u64);
+model.compile("mse", "adam");
+
+// train the model
+var batch_size = 10u64;
+model.fit(data, label, batch_size);
+
+// evaluate performance
+var loss = model.evaluate();
+print(loss);
+
+// make predictions on all test data
+var predictions = model.predict(test_data);
+print(predictions.at(0u64, 0u64));
+
+endfunction
