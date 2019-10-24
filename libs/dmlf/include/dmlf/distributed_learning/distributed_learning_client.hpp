@@ -97,16 +97,9 @@ public:
 
   std::string GetId() const;
 
-  void ResetLossCnt()
-  {
-    train_loss_sum_ = static_cast<DataType>(0);
-    train_loss_cnt_ = 0;
-  }
+  void ResetLossCnt();
 
-  DataType GetLossAverage()
-  {
-    return train_loss_sum_ / static_cast<DataType>(train_loss_cnt_);
-  }
+  DataType GetLossAverage() const;
 
 protected:
   // Client id (identification name)
@@ -151,12 +144,10 @@ protected:
   SizeType update_counter_ = 0;
   SizeType max_updates_    = 0;
 
-  virtual VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients)
-  {
-    return new_gradients->GetGradients();
-  }
   // Print to console flag
   bool print_loss_;
+
+  virtual VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients);
 
   TimestampType GetTimestamp();
 
@@ -226,6 +217,19 @@ template <class TensorType>
 std::string TrainingClient<TensorType>::GetId() const
 {
   return id_;
+}
+
+template <class TensorType>
+void TrainingClient<TensorType>::ResetLossCnt()
+{
+  train_loss_sum_ = static_cast<DataType>(0);
+  train_loss_cnt_ = 0;
+}
+
+template <class TensorType>
+typename TensorType::Type TrainingClient<TensorType>::GetLossAverage() const
+{
+  return train_loss_sum_ / static_cast<DataType>(train_loss_cnt_);
 }
 
 /**
@@ -405,6 +409,13 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
     trainable_ptr->SetWeights(*weights_it);
     ++weights_it;
   }
+}
+
+template <class TensorType>
+std::vector<TensorType> TrainingClient<TensorType>::TranslateGradients(
+    std::shared_ptr<GradientType> &new_gradients)
+{
+  return new_gradients->GetGradients();
 }
 
 // Timestamp for gradient queue

@@ -61,15 +61,7 @@ public:
 
   void Test() override;
 
-  float analogy_score_ = 0.0f;
-
-  float GetAnalogyScore()
-  {
-    TensorType const &weights = utilities::GetEmbeddings(*this->g_ptr_, skipgram_);
-
-    return utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights, tp_.analogies_test_file)
-        .second;
-  }
+  float GetAnalogyScore();
 
   std::shared_ptr<GradientType> GetGradients() override;
 
@@ -85,8 +77,8 @@ private:
   W2VTrainingParams<DataType>                                         tp_;
   std::string                                                         skipgram_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<TensorType>> w2v_data_loader_ptr_;
-
-  Translator translator_;
+  float                                                               analogy_score_ = 0.0f;
+  Translator                                                          translator_;
 };
 
 template <class TensorType>
@@ -177,6 +169,15 @@ void Word2VecClient<TensorType>::Test()
         *this->g_ptr_, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1, tp_.word2, tp_.word3,
         tp_.k, tp_.analogies_test_file, false, "/tmp/w2v_client_" + this->id_);
   }
+}
+
+template <class TensorType>
+float Word2VecClient<TensorType>::GetAnalogyScore()
+{
+  TensorType const &weights = utilities::GetEmbeddings(*this->g_ptr_, skipgram_);
+
+  return utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights, tp_.analogies_test_file)
+      .second;
 }
 
 /**
