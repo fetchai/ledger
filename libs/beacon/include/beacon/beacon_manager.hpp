@@ -100,6 +100,7 @@ public:
 
   /// Property methods
   /// @{
+  bool                           InQual(MuddleAddress const &address) const;
   std::set<MuddleAddress> const &qual() const;
   uint32_t                       polynomial_degree() const;
   CabinetIndex                   cabinet_index() const;

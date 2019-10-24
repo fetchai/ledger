@@ -642,6 +642,11 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   return smsg;
 }
 
+bool BeaconManager::InQual(MuddleAddress const &address) const
+{
+  return qual_.find(address) != qual_.end();
+}
+
 std::set<BeaconManager::MuddleAddress> const &BeaconManager::qual() const
 {
   return qual_;

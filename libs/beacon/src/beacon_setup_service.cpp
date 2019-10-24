@@ -626,8 +626,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
     for (auto const &share : reconstruction_shares_received_)
     {
       MuddleAddress from = share.first;
-      if (qual_complaints_manager_.FindComplaint(from) ||
-          beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
+      if (qual_complaints_manager_.FindComplaint(from) || !beacon_->manager.InQual(from))
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                        " received message from invalid sender. Discarding.");
@@ -636,7 +635,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
       for (auto const &elem : share.second)
       {
         // Check person who's shares are being exposed is a member of qual
-        if (beacon_->manager.qual().find(elem.first) != beacon_->manager.qual().end())
+        if (beacon_->manager.InQual(elem.first))
         {
           beacon_->manager.VerifyReconstructionShare(from, elem);
         }
@@ -1037,7 +1036,7 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &              from,
     auto ptr = std::dynamic_pointer_cast<FinalStateMessage>(msg_ptr);
     if (ptr != nullptr)
     {
-      if (beacon_->manager.qual().find(from) != beacon_->manager.qual().end() &&
+      if (beacon_->manager.InQual(from) &&
           final_state_payload_.find(from) == final_state_payload_.end())
       {
         final_state_payload_.insert({from, ptr->payload_});
@@ -1261,8 +1260,7 @@ void BeaconSetupService::OnNotarisationKey(NotarisationKeyMessage const &key_msg
                                            MuddleAddress const &         from)
 {
   auto iter = notarisation_keys_received_.find(from);
-  if (beacon_->manager.qual().find(from) != beacon_->manager.qual().end() &&
-      iter == notarisation_keys_received_.end() &&
+  if (beacon_->manager.InQual(from) && iter == notarisation_keys_received_.end() &&
       crypto::Verifier::Verify(Identity(from), key_msg.PublicKey(), key_msg.Signature()))
   {
     NotarisationManager::PublicKey notarisation_key;
