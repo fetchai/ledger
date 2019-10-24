@@ -109,6 +109,11 @@ public:
   {
     return ExecutionResult::MakeIntegerResult(4);
   }
+  ExecutionResult Run(Name const & /*execName*/, Name const & /*stateName*/,
+                      std::string const & /*entrypoint*/, SerializedParams const&/*pams*/) override
+  {
+    return ExecutionResult::MakeIntegerResult(4);
+  }
 };
 
 class ServerHalf
