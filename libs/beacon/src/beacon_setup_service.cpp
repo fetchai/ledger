@@ -120,6 +120,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &       muddle,
   time_slot_map_[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
   time_slot_map_[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
   time_slot_map_[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
+  time_slot_map_[BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS]     = 10;
 
   for (auto &slot : time_slot_map_)
   {
