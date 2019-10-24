@@ -45,7 +45,6 @@ class Transaction;
 
 namespace ledger {
 
-class TokenContract;
 struct ContractContext;
 
 /**

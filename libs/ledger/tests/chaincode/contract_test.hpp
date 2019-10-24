@@ -195,7 +195,7 @@ protected:
     // adapt the storage engine for queries
     StateAdapter storage_adapter{*storage_, *contract_name_};
 
-    // attach, dispatch and detach again
+    // Current block index does not apply to queries - set to 0
     contract_->Attach({nullptr, fetch::chain::Address{}, &storage_adapter, 0});
     auto const status = contract_->DispatchQuery(query, request, response);
     contract_->Detach();

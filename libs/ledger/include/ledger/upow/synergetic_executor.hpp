@@ -17,19 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/upow/synergetic_contract_factory.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class TokenContract;
-
 class SynergeticExecutor : public SynergeticExecutorInterface
 {
 public:
   // Construction / Destruction
-  explicit SynergeticExecutor(StorageInterface &storage, TokenContract &token_contract);
+  explicit SynergeticExecutor(StorageInterface &storage);
   SynergeticExecutor(SynergeticExecutor const &) = delete;
   SynergeticExecutor(SynergeticExecutor &&)      = delete;
   ~SynergeticExecutor() override                 = default;
@@ -47,7 +46,7 @@ public:
 private:
   StorageInterface &        storage_;
   SynergeticContractFactory factory_;
-  TokenContract &           token_contract_;
+  TokenContract             token_contract_{};
 };
 
 }  // namespace ledger

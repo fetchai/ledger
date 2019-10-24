@@ -26,7 +26,6 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
@@ -196,8 +195,6 @@ private:
   StakeManagerPtr  stake_;  ///< The stake system
   ConsensusPtr     consensus_;
   /// @}
-
-  ledger::TokenContract token_contract_{};
 
   /// @name Block Processing
   /// @{

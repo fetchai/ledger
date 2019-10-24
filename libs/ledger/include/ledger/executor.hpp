@@ -20,6 +20,7 @@
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chaincode/chain_code_cache.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "telemetry/telemetry.hpp"
@@ -35,7 +36,6 @@ class Address;
 }  // namespace chain
 namespace ledger {
 
-class TokenContract;
 class CachedStorageAdapter;
 class StateSentinelAdapter;
 class StakeUpdateInterface;
@@ -50,8 +50,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
 
   // Construction / Destruction
-  explicit Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates,
-                    TokenContract &token_contract);
+  explicit Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates);
   ~Executor() override = default;
 
   /// @name Executor Interface
@@ -77,7 +76,7 @@ private:
   StakeUpdateInterface *stake_updates_{nullptr};
   StorageUnitPtr        storage_;             ///< The collection of resources
   ChainCodeCache        chain_code_cache_{};  ///< The factory to create new chain code instances
-  TokenContract *       token_contract_;
+  TokenContract         token_contract_{};
   /// @}
 
   /// @name Per Execution State

@@ -21,6 +21,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "core/set_thread_name.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/state_adapter.hpp"

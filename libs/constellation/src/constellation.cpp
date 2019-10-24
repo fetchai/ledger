@@ -273,8 +273,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] {
-          return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr,
-                                            token_contract_);
+          return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
         },
         tx_status_cache_)}
   , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
@@ -294,8 +293,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        std::make_unique<ledger::SynergeticExecutionManager>(
                            dag_, 1u,
                            [this]() {
-                             return std::make_shared<ledger::SynergeticExecutor>(*storage_,
-                                                                                 token_contract_);
+                             return std::make_shared<ledger::SynergeticExecutor>(*storage_);
                            })}
   , main_chain_service_{std::make_shared<MainChainRpcService>(muddle_->GetEndpoint(), chain_,
                                                               trust_, cfg_.network_mode)}
@@ -310,8 +308,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                           block_coordinator_.GetWeakStateMachine()}),
                   std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
                   std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
-                  std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_,
-                                                                  token_contract_),
+                  std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
                   std::make_shared<LoggingHttpModule>(),
                   std::make_shared<TelemetryHttpModule>(),
                   std::make_shared<MuddleStatusModule>(),

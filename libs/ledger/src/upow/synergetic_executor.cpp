@@ -32,10 +32,9 @@ namespace ledger {
 
 constexpr char const *LOGGING_NAME = "SynergeticExecutor";
 
-SynergeticExecutor::SynergeticExecutor(StorageInterface &storage, TokenContract &token_contract)
+SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
   : storage_{storage}
   , factory_{storage}
-  , token_contract_{token_contract}
 {}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
@@ -99,7 +98,6 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
                        " Reason: ", ToString(status));
         return;
       }
-
       break;
     }
 
