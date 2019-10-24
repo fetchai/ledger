@@ -81,6 +81,8 @@ public:
 
   DataType Evaluate();
 
+  vm::Ptr<VMTensor> Predict(vm::Ptr<VMTensor> const &data);
+
   static void Bind(fetch::vm::Module &module);
 
 private:

@@ -114,7 +114,7 @@ private:
   static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
 
   CertificatePtr certificate_;
-  uint32_t       cabinet_size_;       ///< Size of committee
+  uint32_t       cabinet_size_;       ///< Size of cabinet
   uint32_t       polynomial_degree_;  ///< Degree of polynomial in DKG
   CabinetIndex   cabinet_index_;      ///< Index of our address in cabinet_
 
