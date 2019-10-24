@@ -99,7 +99,7 @@ Variant ToVariant(Digest const &digest, TransactionStatusCache::TxStatus const &
 {
   auto retval{Variant::Object()};
 
-  retval["tx"]        = "0x" + digest.ToHex();
+  retval["tx"]        = digest.ToHex();
   retval["status"]    = ToString(Convert(tx_status.status, tx_status.contract_exec_result.status));
   retval["exit_code"] = tx_status.contract_exec_result.return_value;
   retval["charge"]    = tx_status.contract_exec_result.charge;
