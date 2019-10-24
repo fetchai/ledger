@@ -103,6 +103,20 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
   return (num_lanes * THREADS_PER_LANE) + OTHER_THREADS;
 }
 
+uint16_t LookupRemotePort(Manifest const &manifest, ServiceIdentifier::Type service,
+                          uint32_t instance = ServiceIdentifier::SINGLETON_SERVICE)
+{
+  ServiceIdentifier const identifier{service, instance};
+
+  auto it = manifest.FindService(identifier);
+  if (it == manifest.end())
+  {
+    throw std::runtime_error("Unable to lookup requested service from the manifest");
+  }
+
+  return it->second.uri().GetTcpPeer().port();
+}
+
 uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type service,
                          uint32_t instance = ServiceIdentifier::SINGLETON_SERVICE)
 {
@@ -423,7 +437,12 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   http_open_api_module_->Reset(&http_);
   network_manager_.Start();
   http_network_manager_.Start();
-  muddle_->Start(initial_peers, {p2p_port_});
+
+  // always use mapping based ports
+  muddle::MuddleInterface::PortMapping port_mapping{};
+  port_mapping[p2p_port_] = LookupRemotePort(cfg_.manifest, ServiceIdentifier::Type::CORE);
+
+  muddle_->Start(initial_peers, port_mapping);
 
   /// LANE / SHARD SERVERS
 

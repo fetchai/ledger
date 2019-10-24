@@ -56,6 +56,7 @@ public:
   using Peers         = std::unordered_set<std::string>;
   using Uris          = std::unordered_set<network::Uri>;
   using Ports         = std::vector<uint16_t>;
+  using PortMapping   = std::unordered_map<uint16_t, uint16_t>;
   using Addresses     = std::unordered_set<Address>;
   using ConfidenceMap = std::unordered_map<Address, Confidence>;
   using AddressHints  = std::unordered_map<Address, network::Uri>;
@@ -86,6 +87,16 @@ public:
    * @return true if successful, otherwise false
    */
   virtual bool Start(Uris const &peers, Ports const &ports) = 0;
+
+  /**
+   * Start the muddle instance connecting to the initial set of peers and listing on the specified
+   * set of ports
+   *
+   * @param peers The initial set of peers that muddle should connect to
+   * @param port_mapping The maps
+   * @return true if successful, otherwise false
+   */
+  virtual bool Start(Uris const &peers, PortMapping const &port_mapping) = 0;
 
   /**
    * Start the muddle instance listing on the specified set of ports
@@ -125,6 +136,13 @@ public:
    * @return The address of the node
    */
   virtual Address const &GetAddress() const = 0;
+
+  /**
+   * Get the external address of the muddle
+   *
+   * @return The external address of the node
+   */
+  virtual std::string const &GetExternalAddress() const = 0;
 
   /**
    * Get the set of ports that the server is currently listening on

@@ -254,25 +254,35 @@ public:
   {
     FakeNetwork::Register(node_address_);
     return true;
-  };
+  }
+
   bool Start(Uris const & /*peers*/, Ports const & /*ports*/) override
   {
     FakeNetwork::Register(node_address_);
     return true;
-  };
+  }
+
+  bool Start(Uris const & /*peers*/, PortMapping const & /*port_mapping*/) override
+  {
+    FakeNetwork::Register(node_address_);
+    return true;
+  }
+
   bool Start(Ports const & /*ports*/) override
   {
     FakeNetwork::Register(node_address_);
     return true;
-  };
+  }
+
   void Stop() override
   {
     FakeNetwork::Deregister(node_address_);
-  };
+  }
+
   MuddleEndpoint &GetEndpoint() override
   {
     return fake_muddle_endpoint_;
-  };
+  }
   /// @}
 
   /// @name Muddle Status
@@ -280,40 +290,51 @@ public:
   NetworkId const &GetNetwork() const override
   {
     return network_id_;
-  };
+  }
+
   Address const &GetAddress() const override
   {
     return node_address_;
-  };
+  }
+
+  std::string const &GetExternalAddress() const override
+  {
+    return external_address_;
+  }
+
   Ports GetListeningPorts() const override
   {
     throw std::runtime_error("Get listening ports functionality not implemented");
     return {};
-  };
+  }
+
   Addresses GetDirectlyConnectedPeers() const override
   {
     return FakeNetwork::GetConnections(node_address_);
-  };
+  }
+
   Addresses GetIncomingConnectedPeers() const override
   {
     throw std::runtime_error("GetIncomingConnectedPeers functionality not implemented");
     return {};
-  };
+  }
+
   Addresses GetOutgoingConnectedPeers() const override
   {
     throw std::runtime_error("GetOutgoingConnectedPeers functionality not implemented");
     return {};
-  };
+  }
 
   std::size_t GetNumDirectlyConnectedPeers() const override
   {
     return GetDirectlyConnectedPeers().size();
-  };
+  }
+
   bool IsDirectlyConnected(Address const & /*address*/) const override
   {
     throw std::runtime_error("IsDirectlyConnected functionality not implemented");
     return {};
-  };
+  }
   /// @}
 
   /// @name Peer Control
@@ -322,54 +343,65 @@ public:
   {
     throw std::runtime_error("GetPeerSelectionMode functionality not implemented");
     return {};
-  };
+  }
+
   void SetPeerSelectionMode(PeerSelectionMode /*mode*/) override
   {
     throw std::runtime_error("SetPeerSelectionMode functionality not implemented");
-  };
+  }
+
   Addresses GetRequestedPeers() const override
   {
     return FakeNetwork::GetConnections(node_address_);
-  };
+  }
+
   void ConnectTo(Address const &address) override
   {
     FakeNetwork::Connect(node_address_, address);
-  };
+  }
+
   void ConnectTo(Addresses const & /*addresses*/) override
   {
     throw std::runtime_error("ConnectTo x functionality not implemented");
-  };
+  }
+
   void ConnectTo(Address const &address, network::Uri const & /*uri_hint*/) override
   {
     FakeNetwork::Connect(node_address_, address);
-  };
+  }
+
   void ConnectTo(AddressHints const & /*address_hints*/) override
   {
     throw std::runtime_error("ConnectTo y functionality not implemented");
-  };
+  }
+
   void DisconnectFrom(Address const &address) override
   {
     FakeNetwork::Disconnect(node_address_, address);
-  };
+  }
+
   void DisconnectFrom(Addresses const &addresses) override
   {
     for (auto const &address : addresses)
     {
       FakeNetwork::Disconnect(node_address_, address);
     }
-  };
+  }
+
   void SetConfidence(Address const & /*address*/, Confidence /*confidence*/) override
   {
     throw std::runtime_error("SetConfidence x functionality not implemented");
-  };
+  }
+
   void SetConfidence(Addresses const & /*addresses*/, Confidence /*confidence*/) override
   {
     throw std::runtime_error("SetConfidence y functionality not implemented");
-  };
+  }
+
   void SetConfidence(ConfidenceMap const & /*map*/) override
   {
     throw std::runtime_error("SetConfidence z functionality not implemented");
-  };
+  }
   /// @}
 
 private:
