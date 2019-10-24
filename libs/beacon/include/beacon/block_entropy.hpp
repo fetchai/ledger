@@ -39,7 +39,7 @@ struct BlockEntropy : public BlockEntropyInterface
   using Cabinet               = std::set<MuddleAddress>;
   using SignedNotarisationKey = std::pair<NotarisationKey, ECDSASignature>;
   using CabinetMemberDetails  = std::map<MuddleAddress, SignedNotarisationKey>;
-  using AggregateSignature    = std::pair<GroupSignature, std::vector<bool>>;
+  using AggregateSignature    = std::pair<GroupSignature, std::vector<uint8_t>>;
 
   BlockEntropy();
   BlockEntropy(BlockEntropy const &rhs);
@@ -108,7 +108,7 @@ public:
     map.Append(GROUP_SIGNATURE, member.group_signature);
     map.Append(MEMBER_DETAILS, member.member_details);
     map.Append(NOTARISATION, member.block_notarisation.first);
-    // map.Append(NOTARISATION_MEMBERS, member.block_notarisation.second);
+    map.Append(NOTARISATION_MEMBERS, member.block_notarisation.second);
   }
 
   template <typename MapDeserializer>
@@ -121,7 +121,7 @@ public:
     map.ExpectKeyGetValue(GROUP_SIGNATURE, member.group_signature);
     map.ExpectKeyGetValue(MEMBER_DETAILS, member.member_details);
     map.ExpectKeyGetValue(NOTARISATION, member.block_notarisation.first);
-    // map.ExpectKeyGetValue(NOTARISATION_MEMBERS, member.block_notarisation.second);
+    map.ExpectKeyGetValue(NOTARISATION_MEMBERS, member.block_notarisation.second);
   }
 };
 }  // namespace serializers

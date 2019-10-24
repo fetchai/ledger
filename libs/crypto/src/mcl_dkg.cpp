@@ -413,8 +413,8 @@ AggregateSignature ComputeAggregateSignature(
 {
   Signature aggregate_signature;
   aggregate_signature.clear();
-  std::vector<bool> signers;
-  signers.resize(public_keys.size(), false);
+  SignerRecord signers;
+  signers.resize(public_keys.size(), 0);
 
   // Compute signature
   for (auto const &sig : signatures)
@@ -425,7 +425,7 @@ AggregateSignature ComputeAggregateSignature(
     bn::Fr aggregate_coefficient = SignatureAggregationCoefficient(public_keys[index], public_keys);
     bn::G1::mul(modified_sig, sig.second, aggregate_coefficient);
     bn::G1::add(aggregate_signature, aggregate_signature, modified_sig);
-    signers[index] = true;
+    signers[index] = 1;
   }
   return std::make_pair(aggregate_signature, signers);
 }
@@ -438,7 +438,7 @@ AggregateSignature ComputeAggregateSignature(
  * @param cabinet_public_keys Public keys of all eligible signers
  * @return Aggregated public key
  */
-PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
+PublicKey ComputeAggregatePublicKey(SignerRecord const &     signers,
                                     std::vector<PublicKey> const &cabinet_public_keys)
 {
   PublicKey aggregate_key;
