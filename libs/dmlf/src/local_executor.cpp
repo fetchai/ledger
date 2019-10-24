@@ -25,7 +25,7 @@
 namespace fetch {
 namespace dmlf {
 
-LocalExecutor::LocalExecutor(ExecutionEnginePtr &exec_engine)
+LocalExecutor::LocalExecutor(ExecutionEnginePtr exec_engine)
   : exec_engine_{exec_engine}
 {}
 
