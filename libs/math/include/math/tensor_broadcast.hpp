@@ -172,5 +172,43 @@ bool Broadcast(F function, const Tensor<T, C> &a, const Tensor<T, C> &b, Tensor<
   return true;
 }
 
+template <typename F, typename T, typename C>
+bool Broadcast(F function, const Tensor<T, C> &a, Tensor<T, C> &ret)
+{
+  SizeVector ret_shape;
+
+  ShapeFromBroadcast(a.shape(), ret.shape(), ret_shape);
+  ret.Reshape(ret_shape);
+
+  std::vector<SizeVector> a_range, ret_range;
+  for (auto &i : a.shape())
+  {
+    a_range.push_back({0, i});
+  }
+
+  for (auto &i : ret.shape())
+  {
+    ret_range.push_back({0, i});
+  }
+
+  ConstTensorSliceIterator<T, C> it_a(a, a_range);
+  TensorSliceIterator<T, C>      it_ret(ret, ret_range);
+
+  if (!UpgradeIteratorFromBroadcast<ConstTensorSliceIterator<T, C>>(ret_shape, it_a))
+  {
+    return false;
+  }
+
+  while (it_ret)
+  {
+    function(*it_a, *it_ret);
+
+    ++it_a;
+    ++it_ret;
+  }
+
+  return true;
+}
+
 }  // namespace math
 }  // namespace fetch

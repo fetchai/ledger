@@ -83,7 +83,8 @@ public:
 
   /**
    * Backward pass is calculated by broadcasting error signal along specified axis and dividing it
-   * by the size of that axis f'(input0)= error_signal/(size along specified axis)
+   * by the size of that axis
+   * f'(input0)= error_signal/(size along specified axis)
    */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override
@@ -93,16 +94,10 @@ public:
 
     TensorType ret_error_signal(inputs.at(0)->shape());
 
-    Broadcast(
-        [](DataType const &x, DataType const &y, DataType &z) {
-          FETCH_UNUSED(y);
-          z = x;
-        },
-        error_signal, ret_error_signal, ret_error_signal);
+    DataType size = static_cast<DataType>(inputs.at(0)->shape().at(axis_));
 
-    // Average error signal along specified axis
-    fetch::math::Divide(ret_error_signal, static_cast<DataType>(inputs.at(0)->shape().at(axis_)),
-                        ret_error_signal);
+    Broadcast([size](DataType const &x, DataType &z) { z = x / size; }, error_signal,
+              ret_error_signal);
 
     return {ret_error_signal};
   }
