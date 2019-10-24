@@ -52,6 +52,10 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  /**
+   * Prepare configuration
+   */
+
   W2VTrainingParams<DataType> client_params;
 
   // Command line parameters
@@ -71,29 +75,12 @@ int main(int argc, char **argv)
   client_params.max_updates   = 100;  // Round ends after this number of batches
 
   // Word2Vec parameters:
-  client_params.vocab_file           = "/tmp/vocab.txt";
-  client_params.negative_sample_size = 5;  // number of negative sample per word-context pair
-  client_params.window_size          = 5;  // window size for context sampling
-  client_params.freq_thresh          = DataType{0.001f};  // frequency threshold for subsampling
-  client_params.min_count            = 5;                 // infrequent word removal threshold
-  client_params.embedding_size       = 100;               // dimension of embedding vec
-  client_params.starting_learning_rate_per_sample =
-      DataType{0.0025f};  // these are the learning rates we have for each sample
+  client_params.vocab_file     = "/tmp/vocab.txt";
   client_params.test_frequency = 1000;
 
-  client_params.k     = 20;       // how many nearest neighbours to compare against
-  client_params.word0 = "three";  // test word to consider
-  client_params.word1 = "king";
-  client_params.word2 = "queen";
-  client_params.word3 = "father";
-
-  // calc the true starting learning rate
-  client_params.starting_learning_rate = static_cast<DataType>(client_params.batch_size) *
-                                         client_params.starting_learning_rate_per_sample;
-  client_params.ending_learning_rate = static_cast<DataType>(client_params.batch_size) *
-                                       client_params.ending_learning_rate_per_sample;
-  client_params.learning_rate_param.starting_learning_rate = client_params.starting_learning_rate;
-  client_params.learning_rate_param.ending_learning_rate   = client_params.ending_learning_rate;
+  /**
+   * Prepare environment
+   */
 
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
   std::cout << "FETCH Distributed Word2vec Demo" << std::endl;
@@ -113,7 +100,9 @@ int main(int argc, char **argv)
 
   client->SetNetworker(networker);
 
-  // Main loop
+  /**
+   * Main loop
+   */
   for (SizeType it(0); it < number_of_rounds; ++it)
   {
     // Start all clients

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
+#include "dmlf/distributed_learning/distributed_learning_utilities.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
@@ -26,6 +27,7 @@
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/utilities/boston_housing_client_utilities.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -44,42 +46,6 @@ using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
-
-std::shared_ptr<TrainingClient<TensorType>> MakeClient(
-    SizeType id, ClientParams<DataType> &client_params, TensorType &data_tensor,
-    TensorType &label_tensor, float test_set_ratio, std::shared_ptr<std::mutex> console_mutex_ptr)
-{
-  // Initialise model
-  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr =
-      std::make_shared<fetch::ml::Graph<TensorType>>();
-
-  client_params.inputs_names = {g_ptr->template AddNode<PlaceHolder<TensorType>>("Input", {})};
-  g_ptr->template AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 13u, 10u);
-  g_ptr->template AddNode<Relu<TensorType>>("Relu1", {"FC1"});
-  g_ptr->template AddNode<FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u, 10u);
-  g_ptr->template AddNode<Relu<TensorType>>("Relu2", {"FC2"});
-  g_ptr->template AddNode<FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 1u);
-  client_params.label_name = g_ptr->template AddNode<PlaceHolder<TensorType>>("Label", {});
-  client_params.error_name =
-      g_ptr->template AddNode<MeanSquareErrorLoss<TensorType>>("Error", {"FC3", "Label"});
-  g_ptr->Compile();
-
-  // Initialise DataLoader
-  std::shared_ptr<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>> dataloader_ptr =
-      std::make_shared<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
-  dataloader_ptr->AddData(data_tensor, label_tensor);
-
-  dataloader_ptr->SetTestRatio(test_set_ratio);
-  dataloader_ptr->SetRandomMode(true);
-  // Initialise Optimiser
-  std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> optimiser_ptr =
-      std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
-          std::shared_ptr<fetch::ml::Graph<TensorType>>(g_ptr), client_params.inputs_names,
-          client_params.label_name, client_params.error_name, client_params.learning_rate);
-
-  return std::make_shared<TrainingClient<TensorType>>(
-      std::to_string(id), g_ptr, dataloader_ptr, optimiser_ptr, client_params, console_mutex_ptr);
-}
 
 /**
  * Get loss of given model on given dataset
@@ -170,39 +136,6 @@ void Shuffle(TensorType &data, TensorType &labels, SizeType const &seed = 54)
   labels = labels_out;
 }
 
-/**
- * Averages weights between all clients
- * @param clients
- */
-void SynchroniseWeights(std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients)
-{
-  VectorTensorType new_weights = clients[0]->GetWeights();
-
-  // Sum all weights
-  for (SizeType i{1}; i < clients.size(); ++i)
-  {
-    VectorTensorType other_weights = clients[i]->GetWeights();
-
-    for (SizeType j{0}; j < other_weights.size(); j++)
-    {
-      fetch::math::Add(new_weights.at(j), other_weights.at(j), new_weights.at(j));
-    }
-  }
-
-  // Divide weights by number of clients to calculate the average
-  for (SizeType j{0}; j < new_weights.size(); j++)
-  {
-    fetch::math::Divide(new_weights.at(j), static_cast<DataType>(clients.size()),
-                        new_weights.at(j));
-  }
-
-  // Update models of all clients by average model
-  for (auto &c : clients)
-  {
-    c->SetWeights(new_weights);
-  }
-}
-
 int main(int argc, char **argv)
 {
   if (argc != 6)
@@ -265,8 +198,9 @@ int main(int argc, char **argv)
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = MakeClient(i, client_params, data_tensors.at(i), label_tensors.at(i),
-                            test_set_ratio, console_mutex_ptr);
+    clients[i] = fetch::ml::utilities::MakeBostonClient<TensorType>(
+        i, client_params, data_tensors.at(i), label_tensors.at(i), test_set_ratio,
+        console_mutex_ptr);
   }
 
   for (SizeType i{0}; i < number_of_clients; ++i)
@@ -318,7 +252,8 @@ int main(int argc, char **argv)
     // Synchronize weights by giving all clients average of all client's weights
     if (synchronise)
     {
-      SynchroniseWeights(clients);
+      std::cout << std::endl << "Synchronising weights" << std::endl;
+      SynchroniseWeights<TensorType>(clients);
     }
   }
 
