@@ -267,6 +267,9 @@ def filter_compile_commands(project_root, input_location, target_files, output_l
             if relative_file_path.startswith('vendor'):
                 continue
 
+            if relative_file_path.startswith('libs/oef-'):
+                continue
+
             if relative_file_path == 'libs/vm/src/tokeniser.cpp':
                 continue
 
