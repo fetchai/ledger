@@ -365,3 +365,23 @@ TYPED_TEST(CrossEntropyTest, saveparams_one_dimensional_backward_test)
                                fetch::math::function_tolerance<typename TypeParam::Type>()) *
       4);
 }
+
+TYPED_TEST(CrossEntropyTest, throw_on_bad_backprop)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+
+  // data <=0 or >= 1 causes assertion fail in backprop
+  TensorType data  = TensorType::FromString("0.0, 0.0, 1.0").Transpose();
+  TensorType label = TensorType::FromString("0, 1, 0").Transpose();
+
+  TypeParam error_signal({1, 1});
+  error_signal(0, 0) = DataType{1};
+
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
+
+  EXPECT_DEATH(
+      std::vector<TypeParam> gradients = op.Backward(
+          {std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(label)}, error_signal),
+      "Assertion .* failed");
+}
