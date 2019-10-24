@@ -25,10 +25,10 @@ namespace vm_modules {
 namespace ledger {
 
 template <typename Contract>
-void BindReleaseFundsFunction(vm::Module &module, Contract const &contract)
+void BindTransferFunction(vm::Module &module, Contract const &contract)
 {
   module.CreateFreeFunction(
-      "releaseFunds",
+      "transfer",
       [&contract](vm::VM *, vm::Ptr<vm::Address> const &target, uint64_t amount) -> bool {
         decltype(auto) c = contract.context();
 

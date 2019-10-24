@@ -32,7 +32,7 @@
 #include "vm/vm.hpp"
 #include "vm_modules/core/structured_data.hpp"
 #include "vm_modules/ledger/balance.hpp"
-#include "vm_modules/ledger/release_funds.hpp"
+#include "vm_modules/ledger/transfer_function.hpp"
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/vm_factory.hpp"
 
@@ -137,7 +137,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
   FETCH_LOG_DEBUG(LOGGING_NAME, "Synergetic contract source\n", source);
 
   vm_modules::ledger::BindBalanceFunction(*module_, *this);
-  vm_modules::ledger::BindReleaseFundsFunction(*module_, *this);
+  vm_modules::ledger::BindTransferFunction(*module_, *this);
 
   // create the compiler and IR
   compiler_   = std::make_shared<vm::Compiler>(module_.get());

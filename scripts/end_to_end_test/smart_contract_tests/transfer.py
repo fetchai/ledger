@@ -38,15 +38,15 @@ function query_balance_state() : UInt64
 endfunction
 
 @action
-function release_funds2(target : Address, amount : UInt64)
-  releaseFunds(target, amount);
+function transfer_funds2(target : Address, amount : UInt64)
+  transfer(target, amount);
 endfunction
 """
 
 TRANSFER_CONTRACT_TEXT = """
 @action
-function release_funds1(target : Address, amount : UInt64)
-  releaseFunds(target, amount);
+function transfer_funds1(target : Address, amount : UInt64)
+  transfer(target, amount);
 endfunction
 """
 
@@ -126,14 +126,14 @@ def run(options):
     call_transfer_action_and_verify_balances(
         api,
         contract1,
-        'release_funds1',
+        'transfer_funds1',
         [entity1],
         contract2.address,
         1345)
     call_transfer_action_and_verify_balances(
         api,
         contract2,
-        'release_funds2',
+        'transfer_funds2',
         [entity1],
         Address(entity1),
         1000)

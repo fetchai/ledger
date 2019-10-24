@@ -38,7 +38,7 @@
 #include "vm/module.hpp"
 #include "vm/string.hpp"
 #include "vm_modules/ledger/balance.hpp"
-#include "vm_modules/ledger/release_funds.hpp"
+#include "vm_modules/ledger/transfer_function.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include <algorithm>
@@ -114,7 +114,7 @@ SmartContract::SmartContract(std::string const &source)
   FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
 
   vm_modules::ledger::BindBalanceFunction(*module_, *this);
-  vm_modules::ledger::BindReleaseFundsFunction(*module_, *this);
+  vm_modules::ledger::BindTransferFunction(*module_, *this);
 
   module_->CreateFreeFunction(
       "getContext", [this](vm::VM *) -> vm_modules::ledger::ContextPtr { return context_; });
