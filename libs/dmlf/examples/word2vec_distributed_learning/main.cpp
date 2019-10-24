@@ -84,8 +84,8 @@ int main(int argc, char **argv)
   SizeType number_of_rounds  = 1000;
   SizeType number_of_peers   = 3;
   bool     synchronisation   = false;
-  // have been processed in total by the clients
 
+  // Base clients parameters:
   client_params.batch_size    = 10000;
   client_params.learning_rate = static_cast<DataType>(.001f);
   client_params.max_updates   = 100;  // Round ends after this number of batches

@@ -26,7 +26,6 @@
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-#include "ml/optimisation/sgd_optimiser.hpp"
 
 #include <algorithm>
 #include <chrono>
