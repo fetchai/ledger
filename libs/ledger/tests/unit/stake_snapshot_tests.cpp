@@ -100,14 +100,14 @@ TEST_F(StakeSnapshotTests, CheckStakeGenerate)
   EXPECT_EQ(aggregate_stake, snapshot_->total_stake());
 
   // make a reference sample
-  auto const reference = snapshot_->BuildCommittee(42, 4);
+  auto const reference = snapshot_->BuildCabinet(42, 4);
   ASSERT_TRUE(static_cast<bool>(reference));
   ASSERT_EQ(4, reference->size());
 
   // basic check to see if it is deterministic
   for (std::size_t i = 0; i < 5; ++i)
   {
-    auto const other = snapshot_->BuildCommittee(42, 4);
+    auto const other = snapshot_->BuildCabinet(42, 4);
 
     ASSERT_TRUE(static_cast<bool>(other));
     EXPECT_EQ(*reference, *other);
@@ -160,7 +160,7 @@ TEST_F(StakeSnapshotTests, CheckStateModifications)
 TEST_F(StakeSnapshotTests, TooSmallSampleSize)
 {
   auto const pool   = GenerateRandomStakePool(3);
-  auto const sample = snapshot_->BuildCommittee(200, 10);
+  auto const sample = snapshot_->BuildCabinet(200, 10);
 
   ASSERT_TRUE(static_cast<bool>(sample));
   ASSERT_EQ(pool.size(), sample->size());

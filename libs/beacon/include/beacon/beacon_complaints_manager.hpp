@@ -61,7 +61,7 @@ public:
   void AddComplaintAgainst(MuddleAddress const &complaint_address);
   void AddComplaintsFrom(MuddleAddress const &                    from,
                          std::unordered_set<MuddleAddress> const &complaints,
-                         std::set<MuddleAddress> const &          committee);
+                         std::set<MuddleAddress> const &          cabinet);
   void Finish(std::set<MuddleAddress> const &cabinet);
 
   uint32_t                NumComplaintsReceived() const;

@@ -18,20 +18,11 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace beacon {
+namespace ml {
+namespace utilities {
 
-struct EventCabinetCompletedWork
-{
-  Aeon aeon;
-};
+std::string GetStrTimestamp();
 
-struct EventInvalidSignature
-{
-};
-
-struct EventSignatureFromNonMember
-{
-};
-
-}  // namespace beacon
+}  // namespace utilities
+}  // namespace ml
 }  // namespace fetch
