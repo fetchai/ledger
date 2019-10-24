@@ -20,8 +20,8 @@
 
 #include "gtest/gtest.h"
 
-#include <memory>
 #include <algorithm>
+#include <memory>
 
 namespace {
 
@@ -32,7 +32,6 @@ using Buffer     = fetch::core::HistoryBuffer<Value, 5>;
 class HistoryBufferTests : public ::testing::Test
 {
 protected:
-
   Buffer buffer_;
 };
 
@@ -123,4 +122,4 @@ TEST_F(HistoryBufferTests, IteratorAccessTests)
   ASSERT_EQ(ToValueList(buffer_), ValueArray{1});
 }
 
-} // namespace
+}  // namespace

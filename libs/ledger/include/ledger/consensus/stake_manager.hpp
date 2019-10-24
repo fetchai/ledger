@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
-#include "core/serializers/base_types.hpp"
 #include "chain/address.hpp"
-#include "ledger/consensus/stake_snapshot.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
 
 #include <vector>
@@ -84,8 +84,8 @@ public:
   // Accessors for the executor
   StakeUpdateQueue &      update_queue();
   StakeUpdateQueue const &update_queue() const;
-//  uint64_t                committee_size() const;
-//  void                    SetCommitteeSize(uint64_t size);
+  //  uint64_t                committee_size() const;
+  //  void                    SetCommitteeSize(uint64_t size);
 
   std::shared_ptr<StakeSnapshot const> GetCurrentStakeSnapshot() const;
 
@@ -103,10 +103,10 @@ private:
   using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
   using StakeHistory     = std::map<BlockIndex, StakeSnapshotPtr>;
 
-  StakeSnapshotPtr           LookupStakeSnapshot(BlockIndex block) const;
+  StakeSnapshotPtr         LookupStakeSnapshot(BlockIndex block) const;
   StakeManager::CabinetPtr ResetInternal(StakeSnapshotPtr &&snapshot, uint64_t cabinet_size);
 
-  uint64_t cabinet_size_{0};  ///< The "static" size of the committee
+  uint64_t         cabinet_size_{0};         ///< The "static" size of the committee
   StakeUpdateQueue update_queue_;            ///< The update queue of events
   StakeHistory     stake_history_{};         ///< Cache of historical snapshots
   StakeSnapshotPtr current_{};               ///< Most recent snapshot
@@ -169,7 +169,7 @@ public:
   static void Serialize(Constructor &map_constructor, Type const &stake_manager)
   {
     auto map = map_constructor(5);
-//    map.Append(COMITTEE_SIZE, stake_manager.committee_size_);
+    //    map.Append(COMITTEE_SIZE, stake_manager.committee_size_);
     map.Append(UPDATE_QUQUE, stake_manager.update_queue_);
     map.Append(STAKE_HISTORY, stake_manager.stake_history_);
     map.Append(CURRENT_SNAPSHOT, stake_manager.current_);
@@ -179,7 +179,7 @@ public:
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &stake_manager)
   {
-//    map.ExpectKeyGetValue(COMITTEE_SIZE, stake_manager.committee_size_);
+    //    map.ExpectKeyGetValue(COMITTEE_SIZE, stake_manager.committee_size_);
     map.ExpectKeyGetValue(UPDATE_QUQUE, stake_manager.update_queue_);
     map.ExpectKeyGetValue(STAKE_HISTORY, stake_manager.stake_history_);
     map.ExpectKeyGetValue(CURRENT_SNAPSHOT, stake_manager.current_);
@@ -187,6 +187,6 @@ public:
   }
 };
 
-} // namespace serializers
+}  // namespace serializers
 
 }  // namespace fetch

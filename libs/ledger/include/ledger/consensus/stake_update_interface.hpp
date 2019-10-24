@@ -24,8 +24,6 @@ namespace ledger {
 
 class StakeSnapshot;
 
-
-
 class StakeUpdateInterface
 {
 public:

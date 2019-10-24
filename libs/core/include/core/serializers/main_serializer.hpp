@@ -50,7 +50,7 @@ public:
   explicit LargeObjectSerializeHelper(fetch::byte_array::ConstByteArray buf)
     : buffer{std::move(buf)}
   {}
-  LargeObjectSerializeHelper(LargeObjectSerializeHelper const &) = delete;
+  LargeObjectSerializeHelper(LargeObjectSerializeHelper const &)     = delete;
   LargeObjectSerializeHelper(LargeObjectSerializeHelper &&) noexcept = delete;
 
   template <typename T>
@@ -95,7 +95,6 @@ public:
   LargeObjectSerializeHelper &operator=(LargeObjectSerializeHelper &&) = delete;
 
 private:
-
   MsgPackSerializer buffer{};
   SizeCounter       counter{};
 };

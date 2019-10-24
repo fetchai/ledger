@@ -36,7 +36,6 @@ namespace ledger {
 class TokenContract : public Contract
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "TokenContract";
   static constexpr char const *NAME         = "fetch.token";
 

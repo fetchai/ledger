@@ -77,7 +77,6 @@ public:
   StakeSnapshot &operator=(StakeSnapshot &&) = default;
 
 private:
-
   using RecordPtr     = std::shared_ptr<Record>;
   using IdentityIndex = std::unordered_map<Identity, RecordPtr>;
   using StakeIndex    = std::vector<RecordPtr>;
@@ -130,7 +129,7 @@ void StakeSnapshot::IterateOver(Functor &&functor) const
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<ledger::StakeSnapshot::Record , D>
+struct MapSerializer<ledger::StakeSnapshot::Record, D>
 {
 public:
   using Type       = ledger::StakeSnapshot::Record;
@@ -156,7 +155,7 @@ public:
 };
 
 template <typename D>
-struct MapSerializer<ledger::StakeSnapshot , D>
+struct MapSerializer<ledger::StakeSnapshot, D>
 {
 public:
   using Type       = ledger::StakeSnapshot;
@@ -184,7 +183,6 @@ public:
   }
 };
 
-
-} // namespace serializers
+}  // namespace serializers
 
 }  // namespace fetch

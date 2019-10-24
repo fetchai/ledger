@@ -21,8 +21,8 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "core/set_thread_name.hpp"
-#include "ledger/execution_manager.hpp"
 #include "ledger/consensus/stake_update_event.hpp"
+#include "ledger/execution_manager.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_status_cache.hpp"
@@ -384,8 +384,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
   MonitorState monitor_state = MonitorState::COMPLETED;
 
-  std::size_t current_slice        = 0;
-  uint64_t    aggregate_block_fees = 0;
+  std::size_t       current_slice        = 0;
+  uint64_t          aggregate_block_fees = 0;
   StakeUpdateEvents aggregated_stake_events{};
 
   Digest current_block;
@@ -608,7 +608,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
           {
             // lookup the last block miner
             chain::Address last_block_miner;
-            BlockIndex last_block_number{0};
+            BlockIndex     last_block_number{0};
 
             // extract the information from the summary structure
             state_.ApplyVoid([&last_block_miner, &last_block_number](Summary const &summary) {
@@ -617,8 +617,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
             });
 
             // get the first one and settle the fees
-            idle_executors_.front()->SettleFees(last_block_miner, last_block_number, aggregate_block_fees,
-                                                log2_num_lanes_, aggregated_stake_events);
+            idle_executors_.front()->SettleFees(last_block_miner, last_block_number,
+                                                aggregate_block_fees, log2_num_lanes_,
+                                                aggregated_stake_events);
             fees_settled_count_->increment();
             break;
           }

@@ -31,8 +31,8 @@
 class FakeExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
-  using Digest    = fetch::Digest;
-  using Address   = fetch::chain::Address;
+  using Digest            = fetch::Digest;
+  using Address           = fetch::chain::Address;
   using BitVector         = fetch::BitVector;
   using StakeUpdateEvents = fetch::ledger::StakeUpdateEvents;
   using Clock             = std::chrono::high_resolution_clock;
@@ -64,8 +64,8 @@ public:
     return {Status::SUCCESS};
   }
 
-  void SettleFees(Address const &miner, BlockIndex block, TokenAmount amount, uint32_t log2_num_lanes,
-                  StakeUpdateEvents const &stake_updates) override
+  void SettleFees(Address const &miner, BlockIndex block, TokenAmount amount,
+                  uint32_t log2_num_lanes, StakeUpdateEvents const &stake_updates) override
   {
     FETCH_UNUSED(miner);
     FETCH_UNUSED(block);

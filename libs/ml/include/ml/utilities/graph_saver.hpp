@@ -54,8 +54,7 @@ void SaveGraph(GraphType &g, std::string const &save_location)
 
   if (outFile)
   {
-    outFile.write(serializer.data().char_pointer(),
-                  std::streamsize(serializer.size()));
+    outFile.write(serializer.data().char_pointer(), std::streamsize(serializer.size()));
     outFile.close();
     std::cout << "Buffer size " << serializer.size() << std::endl;
     std::cout << "Finish writing to file " << save_location << std::endl;

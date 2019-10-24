@@ -25,8 +25,8 @@
 class MockExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
-  using Digest    = fetch::Digest;
-  using Address   = fetch::chain::Address;
+  using Digest            = fetch::Digest;
+  using Address           = fetch::chain::Address;
   using StakeUpdateEvents = fetch::ledger::StakeUpdateEvents;
   using BitVector         = fetch::BitVector;
 
@@ -36,11 +36,13 @@ public:
     using ::testing::Invoke;
 
     ON_CALL(*this, Execute(_, _, _, _)).WillByDefault(Invoke(&fake_, &FakeExecutor::Execute));
-    ON_CALL(*this, SettleFees(_, _, _, _, _)).WillByDefault(Invoke(&fake_, &FakeExecutor::SettleFees));
+    ON_CALL(*this, SettleFees(_, _, _, _, _))
+        .WillByDefault(Invoke(&fake_, &FakeExecutor::SettleFees));
   }
 
   MOCK_METHOD4(Execute, Result(Digest const &, BlockIndex, SliceIndex, BitVector const &));
-  MOCK_METHOD5(SettleFees, void(Address const &, BlockIndex, TokenAmount, uint32_t, StakeUpdateEvents const &));
+  MOCK_METHOD5(SettleFees,
+               void(Address const &, BlockIndex, TokenAmount, uint32_t, StakeUpdateEvents const &));
 
 private:
   FakeExecutor fake_;

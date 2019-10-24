@@ -23,8 +23,8 @@
 #include "core/mutex.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/token_contract.hpp"
-#include "ledger/consensus/stake_update_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
+#include "ledger/consensus/stake_update_interface.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
@@ -180,8 +180,8 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
   return result;
 }
 
-void Executor::SettleFees(chain::Address const &miner, BlockIndex block, TokenAmount amount, uint32_t log2_num_lanes,
-                          StakeUpdateEvents const &stake_updates)
+void Executor::SettleFees(chain::Address const &miner, BlockIndex block, TokenAmount amount,
+                          uint32_t log2_num_lanes, StakeUpdateEvents const &stake_updates)
 {
   telemetry::FunctionTimer const timer{*settle_fees_duration_};
 
@@ -211,7 +211,7 @@ void Executor::SettleFees(chain::Address const &miner, BlockIndex block, TokenAm
     StakeManager stake_manager{};
     if (stake_manager.Load(*storage_))
     {
-      auto & update_queue = stake_manager.update_queue();
+      auto &update_queue = stake_manager.update_queue();
 
       for (auto const &update : stake_updates)
       {

@@ -355,7 +355,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   if (ShouldTriggerNewCabinet(current_block_))
   {
     CabinetMemberList cabinet_member_list;
-    cabinet_history_[current.body.block_number] = stake_->BuildCabinet(current_block_, max_cabinet_size_);
+    cabinet_history_[current.body.block_number] =
+        stake_->BuildCabinet(current_block_, max_cabinet_size_);
 
     TrimToSize(cabinet_history_, HISTORY_LENGTH);
 

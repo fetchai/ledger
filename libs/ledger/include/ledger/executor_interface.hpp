@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/stake_update_event.hpp"
 #include "core/digest.hpp"
+#include "ledger/consensus/stake_update_event.hpp"
 #include "ledger/execution_result.hpp"
 
 namespace fetch {
@@ -50,9 +50,9 @@ public:
   /// @name Executor Interface
   /// @{
   virtual Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
-                         BitVector const &shards)                   = 0;
-  virtual void   SettleFees(chain::Address const &miner, BlockIndex block, TokenAmount amount, uint32_t log2_num_lanes,
-                            StakeUpdateEvents const &stake_updates) = 0;
+                         BitVector const &shards)                                            = 0;
+  virtual void   SettleFees(chain::Address const &miner, BlockIndex block, TokenAmount amount,
+                            uint32_t log2_num_lanes, StakeUpdateEvents const &stake_updates) = 0;
   /// @}
 };
 

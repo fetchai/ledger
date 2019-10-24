@@ -73,11 +73,11 @@ private:
   using CabinetHistory = std::map<BlockIndex, CabinetPtr>;
 
   StorageInterface &storage_;
-  StakeManagerPtr  stake_;
-  BeaconServicePtr beacon_;
-  MainChain const &chain_;
-  Identity         mining_identity_;
-  chain::Address   mining_address_;
+  StakeManagerPtr   stake_;
+  BeaconServicePtr  beacon_;
+  MainChain const & chain_;
+  Identity          mining_identity_;
+  chain::Address    mining_address_;
 
   // Global variables relating to consensus
   uint64_t aeon_period_      = 0;

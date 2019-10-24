@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/stake_manager.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
-#include "logging/logging.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "logging/logging.hpp"
 #include "storage/resource_mapper.hpp"
 
 #include <algorithm>
@@ -35,7 +35,7 @@ constexpr char const *LOGGING_NAME = "StakeMgr";
 
 storage::ResourceAddress const STORAGE_ADDRESS{"fetch.token.state.aggregation.stake"};
 
-} // namespace
+}  // namespace
 
 void StakeManager::UpdateCurrentBlock(BlockIndex block_number)
 {
@@ -60,11 +60,11 @@ void StakeManager::UpdateCurrentBlock(BlockIndex block_number)
 StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current, uint64_t cabinet_size)
 {
   return BuildCabinet(current.body.block_number, current.body.block_entropy.EntropyAsU64(),
-                        cabinet_size);
+                      cabinet_size);
 }
 
 StakeManager::CabinetPtr StakeManager::BuildCabinet(uint64_t block_number, uint64_t entropy,
-                                                        uint64_t cabinet_size) const
+                                                    uint64_t cabinet_size) const
 {
   auto snapshot = LookupStakeSnapshot(block_number);
   return snapshot->BuildCabinet(entropy, cabinet_size);
@@ -125,7 +125,8 @@ StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot &&snapshot, uint64_t 
   return ResetInternal(std::make_shared<StakeSnapshot>(std::move(snapshot)), cabinet_size);
 }
 
-StakeManager::CabinetPtr StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot, uint64_t cabinet_size)
+StakeManager::CabinetPtr StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot,
+                                                     uint64_t           cabinet_size)
 {
   // history
   stake_history_.clear();

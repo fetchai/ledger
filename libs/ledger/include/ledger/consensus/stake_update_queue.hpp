@@ -104,20 +104,18 @@ public:
   static void Serialize(Constructor &map_constructor, Type const &stake_manager)
   {
     auto map = map_constructor(1);
-    stake_manager.updates_.ApplyVoid([&map](Type::BlockUpdates const &updates) {
-      map.Append(BLOCK_UPDATES, updates);
-    });
+    stake_manager.updates_.ApplyVoid(
+        [&map](Type::BlockUpdates const &updates) { map.Append(BLOCK_UPDATES, updates); });
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &stake_manager)
   {
-    stake_manager.updates_.ApplyVoid([&map](Type::BlockUpdates &updates) {
-      map.ExpectKeyGetValue(BLOCK_UPDATES, updates);
-    });
+    stake_manager.updates_.ApplyVoid(
+        [&map](Type::BlockUpdates &updates) { map.ExpectKeyGetValue(BLOCK_UPDATES, updates); });
   }
 };
 
-} // namespace serializers
+}  // namespace serializers
 
 }  // namespace fetch

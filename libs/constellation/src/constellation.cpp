@@ -193,7 +193,8 @@ ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, St
   if (stake)
   {
     consensus = std::make_shared<ledger::Consensus>(stake, beacon, chain, storage, identity,
-                                                    cfg.aeon_period, cfg.max_cabinet_size, cfg.block_interval_ms);
+                                                    cfg.aeon_period, cfg.max_cabinet_size,
+                                                    cfg.block_interval_ms);
   }
 
   return consensus;
@@ -271,10 +272,7 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   , consensus_{CreateConsensus(cfg_, stake_, beacon_, chain_, *storage_, certificate->identity())}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
-        [this] {
-          return std::make_shared<Executor>(storage_);
-        },
-        tx_status_cache_)}
+        [this] { return std::make_shared<Executor>(storage_); }, tx_status_cache_)}
   , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}

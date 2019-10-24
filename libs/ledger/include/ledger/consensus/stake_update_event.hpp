@@ -37,5 +37,5 @@ struct StakeUpdateEvent
 
 using StakeUpdateEvents = std::vector<StakeUpdateEvent>;
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
