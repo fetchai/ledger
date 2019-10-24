@@ -486,6 +486,10 @@ bool VerifyAggregateSignature(MessagePayload const &        message,
   bn::mapToG1(PH, Hm);
 
   // Compute aggregate  public key
+  if (aggregate_signature.second.size() != cabinet_public_keys.size())
+  {
+    return false;
+  }
   PublicKey aggregate_key =
       ComputeAggregatePublicKey(aggregate_signature.second, cabinet_public_keys);
 

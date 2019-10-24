@@ -263,7 +263,7 @@ TEST(notarisation, notarise_blocks)
         {
           if (nodes[*it]
                   ->notarisation_service
-                  ->HighestWeightNotarisedBlock(blocks_to_sign[i]->body.block_number)
+                  ->HeaviestNotarisedBlock(blocks_to_sign[i]->body.block_number)
                   .first == blocks_to_sign[i]->body.hash)
           {
             it = pending_nodes.erase(it);

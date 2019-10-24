@@ -488,6 +488,18 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   }
   if (mining_ && mining_enabled_ && ((Clock::now() >= next_block_time_) || consensus_))
   {
+    // TODO(JMW): Work out how this interplays with consensus. Consensus should determine whether we
+    //  should mine the next block
+    if (notarisation_)
+    {
+      auto block_number                = current_block_->body.block_number;
+      auto heaviest_notarisation_block = notarisation_->HeaviestNotarisedBlock(block_number);
+      next_block_->body.previous_hash  = heaviest_notarisation_block.first;
+      next_block_->body.block_number   = block_number + 1;
+      next_block_->body.block_entropy.block_notarisation = heaviest_notarisation_block.second;
+      next_block_->body.miner                            = mining_address_;
+    }
+
     if (consensus_)
     {
       consensus_->UpdateCurrentBlock(*current_block_);
@@ -506,6 +518,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
       return State::SYNCHRONISED;
     }
 
+    // TODO(JMW): Should this be here? Overwrites what is set by consensus_
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = mining_address_;

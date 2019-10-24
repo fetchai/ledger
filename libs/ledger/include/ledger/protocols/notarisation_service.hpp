@@ -75,7 +75,7 @@ public:
   using BlockHash                     = Block::Hash;
   using Identity                      = Block::Identity;
   using BlockBody                     = Block::Body;
-  using BlockHeight                   = uint64_t;
+  using BlockNumber                   = uint64_t;
   using BlockWeight                   = Block::Weight;
   using BlockEntropy                  = beacon::BlockEntropy;
   using BlockNotarisation             = BlockEntropy::AggregateSignature;
@@ -93,9 +93,9 @@ public:
   using CallbackFunction              = std::function<void(BlockHash)>;
   using NotarisationShares            = std::unordered_map<MuddleAddress, SignedNotarisation>;
   using BlockNotarisationShares       = std::unordered_map<BlockHash, NotarisationShares>;
-  using BlockHeightNotarisationShares = std::map<BlockHeight, BlockNotarisationShares>;
+  using BlockHeightNotarisationShares = std::map<BlockNumber, BlockNotarisationShares>;
   using BlockHeightGroupNotarisations =
-      std::map<BlockHeight, std::unordered_map<BlockHash, AggregateSignature>>;
+      std::map<BlockNumber, std::unordered_map<BlockHash, AggregateSignature>>;
 
   NotarisationService()                            = delete;
   NotarisationService(NotarisationService const &) = delete;
@@ -113,7 +113,7 @@ public:
 
   /// Protocol endpoints
   /// @{
-  BlockNotarisationShares GetNotarisations(BlockHeight const &height);
+  BlockNotarisationShares GetNotarisations(BlockNumber const &block_number);
   /// @}
 
   /// Setup management
@@ -123,26 +123,26 @@ public:
 
   /// Calls from other services
   /// @{
-  void                                     NotariseBlock(BlockBody const &block);
-  std::pair<BlockHash, AggregateSignature> HighestWeightNotarisedBlock(BlockHeight const &height);
-  /// @}
-
-  /// Helper function
-  /// @{
-  uint64_t BlockNumberCutoff() const;
+  void                                    NotariseBlock(BlockBody const &block);
+  std::pair<BlockHash, BlockNotarisation> HeaviestNotarisedBlock(BlockNumber const &block_number);
   /// @}
 
   /// Verifying notarised blocks
   /// @{
-  NotarisationResult Verify(BlockHeight const &height, BlockHash const &hash,
-                            BlockNotarisation const &notarisation) const;
-  bool               Verify(BlockHash const &hash, BlockNotarisation const &notarisation,
+  NotarisationResult Verify(BlockNumber const &block_number, BlockHash const &block_hash,
+                            BlockNotarisation const &notarisation);
+  static bool        Verify(BlockHash const &block_hash, BlockNotarisation const &notarisation,
                             BlockNotarisationKeys const &notarisation_keys);
   /// @}
 
   std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
 
 private:
+  /// Helper function
+  /// @{
+  uint64_t BlockNumberCutoff() const;
+  /// @}
+
   /// @{Networking
   Endpoint &                  endpoint_;
   ServerPtr                   rpc_server_{nullptr};
@@ -165,13 +165,13 @@ private:
 
   /// @{Notarisations
   BlockHeightNotarisationShares
-      notarisations_being_built_;  ///< Signature shares for blocks at a particular height
+      notarisations_being_built_;  ///< Signature shares for blocks at a particular block number
   BlockHeightGroupNotarisations
-      notarisations_built_;  ///< Group signatures for blocks at a particular height
-  std::unordered_map<BlockHeight, uint32_t>
-           previous_notarisation_rank_;  ///< Highest rank notarised at a particular block height
-  uint64_t notarised_chain_height_{0};   ///< Current highest notarised block height in chain
-  uint64_t notarisation_collection_height_{0};  // Block height current collecting signatures for
+      notarisations_built_;  ///< Group signatures for blocks at a particular block number
+  std::unordered_map<BlockNumber, uint32_t>
+           previous_notarisation_rank_;  ///< Highest rank notarised at a particular block number
+  uint64_t notarised_chain_height_{0};   ///< Current highest notarised block number in chain
+  uint64_t notarisation_collection_height_{0};  // Block number current collecting signatures for
   static const uint32_t cutoff_ = 2;            ///< Number of blocks behind
   /// @}
 };

@@ -225,7 +225,7 @@ NotarisationService::State NotarisationService::OnComplete()
   // TODO(JMW): Clear old signature shares
 
   // If chain has moved ahead faster while notarisations were being collected then reset
-  // the collection height
+  // the block number collection is working on
   if (notarised_chain_height_ + 1 > notarisation_collection_height_)
   {
     notarisation_collection_height_ = notarised_chain_height_ + 1;
@@ -245,14 +245,14 @@ NotarisationService::State NotarisationService::OnComplete()
 }
 
 NotarisationService::BlockNotarisationShares NotarisationService::GetNotarisations(
-    BlockHeight const &height)
+    BlockNumber const &block_number)
 {
   FETCH_LOCK(mutex_);
-  if (notarisations_being_built_.find(height) == notarisations_being_built_.end())
+  if (notarisations_being_built_.find(block_number) == notarisations_being_built_.end())
   {
     return {};
   }
-  return notarisations_being_built_.at(height);
+  return notarisations_being_built_.at(block_number);
 }
 
 void NotarisationService::NotariseBlock(BlockBody const &block)
@@ -302,7 +302,7 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
   auto miner_rank =
       static_cast<uint32_t>(std::distance(entropy_ranked_cabinet.begin(), miner_position));
 
-  // Check if we have previously signed a higher ranked block at the same height
+  // Check if we have previously signed a higher ranked block at the same block number
   if (previous_notarisation_rank_.find(block.block_number) != previous_notarisation_rank_.end())
   {
     if (previous_notarisation_rank_.at(block.block_number) > miner_rank)
@@ -321,32 +321,37 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
   notarisations_being_built_[block.block_number][block.hash].insert(
       {endpoint_.GetAddress(), SignedNotarisation(ecdsa_sig, notarisation)});
 
-  // Set highest notarised block rank for this block height
+  // Set heaviest notarised block rank for this block number
   previous_notarisation_rank_[block.block_number] = miner_rank;
 
-  // If height of previous block is greater than the highest notarised block observed so far
-  // then reset to the height of previous block
+  // If block number of previous block is greater than the heaviets notarised block observed so far
+  // then reset to the block number of previous block
   if (block.block_number > notarised_chain_height_ + 1)
   {
     notarised_chain_height_ = block.block_number - 1;
   }
 }
 
-std::pair<NotarisationService::BlockHash, NotarisationService::AggregateSignature>
-NotarisationService::HighestWeightNotarisedBlock(BlockHeight const &height)
+std::pair<NotarisationService::BlockHash, NotarisationService::BlockNotarisation>
+NotarisationService::HeaviestNotarisedBlock(BlockNumber const &block_number)
 {
-  std::pair<BlockHash, AggregateSignature> highest_weight_block{};
-  BlockWeight                              weight = 1;
-  for (auto const &notarisation : notarisations_built_[height])
+  FETCH_LOCK(mutex_);
+  std::pair<BlockHash, BlockNotarisation> heaviest_block;
+  BlockWeight                             weight = 1;
+  for (auto const &notarisation : notarisations_built_[block_number])
   {
     auto block = chain_.GetBlock(notarisation.first);
     if (block->total_weight > weight)
     {
       weight               = block->total_weight;
-      highest_weight_block = notarisation;
+      heaviest_block.first = notarisation.first;
+      BlockNotarisation notarisation_str;
+      notarisation_str.first  = notarisation.second.first.getStr();
+      notarisation_str.second = notarisation.second.second;
+      heaviest_block.second   = notarisation_str;
     }
   }
-  return highest_weight_block;
+  return heaviest_block;
 }
 
 std::vector<std::weak_ptr<core::Runnable>> NotarisationService::GetWeakRunnables()
@@ -357,6 +362,7 @@ std::vector<std::weak_ptr<core::Runnable>> NotarisationService::GetWeakRunnables
 void NotarisationService::NewAeonNotarisationUnit(
     SharedAeonNotarisationUnit const &notarisation_manager)
 {
+  FETCH_LOCK(mutex_);
   aeon_notarisation_queue_.push_back(notarisation_manager);
   new_keys = true;
 }
@@ -371,20 +377,22 @@ uint64_t NotarisationService::BlockNumberCutoff() const
 }
 
 NotarisationService::NotarisationResult NotarisationService::Verify(
-    BlockHeight const &height, BlockHash const &hash, BlockNotarisation const &notarisation) const
+    BlockNumber const &block_number, BlockHash const &block_hash,
+    BlockNotarisation const &notarisation)
 {
+  FETCH_LOCK(mutex_);
 
   // If block is within current aeon then notarise now
   SharedAeonNotarisationUnit notarisation_unit;
-  if (active_notarisation_unit_ && height >= active_notarisation_unit_->round_start() &&
-      height < active_notarisation_unit_->round_end())
+  if (active_notarisation_unit_ && block_number >= active_notarisation_unit_->round_start() &&
+      block_number < active_notarisation_unit_->round_end())
   {
     notarisation_unit = active_notarisation_unit_;
   }
 
   // If block is not in current aeon then check previous notarisation unit
-  if (previous_notarisation_unit_ && height >= previous_notarisation_unit_->round_start() &&
-      height < previous_notarisation_unit_->round_end())
+  if (previous_notarisation_unit_ && block_number >= previous_notarisation_unit_->round_start() &&
+      block_number < previous_notarisation_unit_->round_end())
   {
     notarisation_unit = previous_notarisation_unit_;
   }
@@ -398,14 +406,13 @@ NotarisationService::NotarisationResult NotarisationService::Verify(
   bool               check;
   aggregate_signature.first.setStr(&check, std::string(notarisation.first).data());
 
-  if (!check && notarisation.second.size() == notarisation_unit->threshold())
+  // Check signature deserialises and that the signature was created with the correct number of
+  // signers
+  if (check && count(notarisation.second.begin(), notarisation.second.end(), true) ==
+                   notarisation_unit->threshold())
   {
-    for (auto const &elem : notarisation.second)
-    {
-      aggregate_signature.second.push_back(static_cast<bool>(elem));
-    }
-
-    if (notarisation_unit->VerifyAggregateSignature(hash, aggregate_signature))
+    aggregate_signature.second = notarisation.second;
+    if (notarisation_unit->VerifyAggregateSignature(block_hash, aggregate_signature))
     {
       return NotarisationResult::PASS_VERIFICATION;
     }
@@ -413,7 +420,7 @@ NotarisationService::NotarisationResult NotarisationService::Verify(
   return NotarisationResult::FAIL_VERIFICATION;
 }
 
-bool NotarisationService::Verify(BlockHash const &hash, BlockNotarisation const &notarisation,
+bool NotarisationService::Verify(BlockHash const &block_hash, BlockNotarisation const &notarisation,
                                  BlockNotarisationKeys const &notarisation_key_str)
 {
   std::vector<NotarisationManager::PublicKey> notarisation_keys;
@@ -434,14 +441,10 @@ bool NotarisationService::Verify(BlockHash const &hash, BlockNotarisation const 
   aggregate_signature.first.setStr(&check, std::string(notarisation.first).data());
 
   // TODO(JMW): Should threshold be in block?
-  if (!check /*&& notarisation.second.size() == threshold_*/)
+  if (check /*&& count(notarisation.second.begin(), notarisation.second.end(), true) == threshold_*/)
   {
-    for (auto const &elem : notarisation.second)
-    {
-      aggregate_signature.second.push_back(static_cast<bool>(elem));
-    }
-
-    return NotarisationManager::VerifyAggregateSignature(hash, aggregate_signature,
+    aggregate_signature.second = notarisation.second;
+    return NotarisationManager::VerifyAggregateSignature(block_hash, aggregate_signature,
                                                          notarisation_keys);
   }
   return false;
