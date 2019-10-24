@@ -27,11 +27,11 @@ namespace dmlf {
 class ExecutionEngineInterface
 {
 public:
-  using Name        = ExecutionInterface::Name;
-  using SourceFiles = ExecutionInterface::SourceFiles;
-  using Target      = ExecutionInterface::Target;
-  using Variant     = ExecutionInterface::Variant;
-  using Params      = std::vector<Variant>;
+  using Name             = ExecutionInterface::Name;
+  using SourceFiles      = ExecutionInterface::SourceFiles;
+  using Target           = ExecutionInterface::Target;
+  using Variant          = ExecutionInterface::Variant;
+  using Params           = std::vector<Variant>;
   using SerializedParams = fetch::byte_array::ConstByteArray;
 
   ExecutionEngineInterface()          = default;
@@ -45,7 +45,7 @@ public:
   virtual ExecutionResult DeleteState(Name const &stateName)                  = 0;
 
   virtual ExecutionResult Run(Name const &execName, Name const &stateName,
-                              std::string const &entrypoint, Params params) = 0;
+                              std::string const &entrypoint, Params params)                  = 0;
   virtual ExecutionResult Run(Name const &execName, Name const &stateName,
                               std::string const &entrypoint, SerializedParams const &params) = 0;
 };

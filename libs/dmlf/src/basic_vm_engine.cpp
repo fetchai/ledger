@@ -30,8 +30,8 @@ namespace fetch {
 namespace dmlf {
 
 // This must match the type as defined in variant::variant.hpp
-using fp64_t = fetch::fixed_point::fp64_t;
-using fp32_t = fetch::fixed_point::fp32_t;
+using fp64_t            = fetch::fixed_point::fp64_t;
+using fp32_t            = fetch::fixed_point::fp32_t;
 using MsgPackSerializer = fetch::vm::MsgPackSerializer;
 
 ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFiles const &sources)
@@ -243,7 +243,8 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
       // Checking if we can construct the object
       if (!vm.IsDefaultSerializeConstructable(type_id))
       {
-        return EngineError(Error::Code::RUNTIME_ERROR, "Could not construct parameter " + std::to_string(i)); 
+        return EngineError(Error::Code::RUNTIME_ERROR,
+                           "Could not construct parameter " + std::to_string(i));
       }
 
       // Creating the object
@@ -253,7 +254,8 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
       // If deserialization failed we return
       if (!success)
       {
-        return EngineError(Error::Code::RUNTIME_ERROR, "Could not deserialize parameter " + std::to_string(i));
+        return EngineError(Error::Code::RUNTIME_ERROR,
+                           "Could not deserialize parameter " + std::to_string(i));
       }
 
       // Adding the parameter to the parameter pack

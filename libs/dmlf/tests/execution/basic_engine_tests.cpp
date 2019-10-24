@@ -60,7 +60,7 @@ ConstByteArray SerializeParameters(Args... args)
   using namespace fetch::vm;
   using namespace fetch;
   using fetch::vm_modules::VMFactory;
-  
+
   ConstByteArray storage;
 
   // Creating module for packing parameters. This is needed to generate
@@ -99,8 +99,6 @@ ConstByteArray SerializeParameters(Args... args)
 
   return storage;
 }
-
-
 
 auto const helloWorld = R"(
 
@@ -236,7 +234,7 @@ auto const Add64 = R"(
 
 )";
 
-auto const AddFloat = R"(
+auto const AddFloat        = R"(
 
 function add(a : Float64, b : Float64) : Float64
   return a + b;
@@ -258,7 +256,6 @@ function add(a : Fixed64, b : Fixed32) : Fixed64
 endfunction
 
 )";
-
 
 auto const IntToFloatCompare = R"(
 function compare(a : Int32, b: Float64) : Int32
@@ -307,19 +304,19 @@ endfunction
 )";
 */
 
-//auto const AddArrayThree = R"(
+// auto const AddArrayThree = R"(
 //
-//function add(array : Array<Int32>) : Int32
+// function add(array : Array<Int32>) : Int32
 //  return array[0] + array[1] + array[2];
-//endfunction
+// endfunction
 //
 //)";
 //
-//auto const Add3Array = R"(
+// auto const Add3Array = R"(
 //
-//function add(array2 : Array<Array<Array<Int32>>>, array : Array<Int32>) : Int32
+// function add(array2 : Array<Array<Array<Int32>>>, array : Array<Int32>) : Int32
 //  return array[0] + array[1] + array2[0][1][2];
-//endfunction
+// endfunction
 //
 //)";
 
@@ -331,28 +328,28 @@ function init()
 
   use matrix;
   //var matrix = State<Array<Array<Int32>>>("matrix");
-  
+
   var swa = Array<Array<Int32> >(2);
   swa[0] = Array<Int32>(2);
   swa[1] = Array<Int32>(2);
-  
+
   swa[0][0] = 0;
   swa[0][1] = 1;
   swa[1][0] = 2;
   swa[1][1] = 3;
-  
+
   matrix.set(swa);
 endfunction
 
 function doAdd() : Int32
 
   use matrix;
-  
+
   var swa = matrix.get();
-  
+
   return swa[0][0] + swa[0][1] +
-         swa[1][0] + swa[1][1]; 
-endfunction  
+         swa[1][0] + swa[1][1];
+endfunction
 
 )";
 
@@ -364,28 +361,28 @@ function init()
 
   use matrix;
   //var matrix = State<Array<Array<Int32>>>("matrix");
-  
+
   var swa = Array<Array<Int32> >(2);
   swa[0] = Array<Int32>(2);
   swa[1] = Array<Int32>(2);
-  
+
   swa[0][0] = 0;
   swa[0][1] = 1;
   swa[1][0] = 2;
   swa[1][1] = 3;
-  
+
   matrix.set(swa);
 endfunction
 
 function doAdd() : Int32
 
   use matrix;
-  
+
   var swa = matrix.get();
-  
+
   return swa[0][0] + swa[0][1] +
-         swa[1][0] + swa[1][1]; 
-endfunction  
+         swa[1][0] + swa[1][1];
+endfunction
 
 )";
 
@@ -399,28 +396,28 @@ function init()
 
   use matrix;
   //var matrix = State<Array<Array<Int32>>>("matrix");
-  
+
   var swa = Array<Array<Int32> >(2);
   swa[0] = Array<Int32>(2);
   swa[1] = Array<Int32>(2);
-  
+
   swa[0][0] = 0;
   swa[0][1] = 1;
   swa[1][0] = 2;
   swa[1][1] = 3;
-  
+
   matrix.set(swa);
 endfunction
 
 function doAdd() : Int32
 
   use matrix;
-  
+
   var swa = matrix.get();
-  
+
   return swa[0][0] + swa[0][1] +
-         swa[1][0] + swa[1][1]; 
-endfunction  
+         swa[1][0] + swa[1][1];
+endfunction
 
 )";
 
@@ -431,29 +428,29 @@ persistent matrix  : Array<Array<Array<Int32>>>;
 function init()
 
   use matrix;
-  
+
   var swa = Array<Array<Array<Int32> > >(1);
   swa[0] = Array<Array<Int32> >(2);
 	swa[0][0] = Array<Int32>(2);
   swa[0][1] = Array<Int32>(2);
-  
+
   swa[0][0][0] = 0;
   swa[0][0][1] = 1;
   swa[0][1][0] = 2;
   swa[0][1][1] = 3;
-  
+
   matrix.set(swa);
 endfunction
 
 function doAdd() : Int32
 
   use matrix;
-  
+
   var swa = matrix.get();
-  
+
   return swa[0][0][0] + swa[0][0][1] +
-         swa[0][1][0] + swa[0][1][1]; 
-endfunction  
+         swa[0][1][0] + swa[0][1][1];
+endfunction
 
 )";
 
@@ -472,7 +469,7 @@ endfunction
 
 function doSum(swa : Array<Array<Array<Int32>>>) : Int32
   return swa[0][0][0] + swa[0][0][1] +
-         swa[0][1][0] + swa[0][1][1]; 
+         swa[0][1][0] + swa[0][1][1];
 endfunction
 
 function doAdd() : Int32
@@ -498,8 +495,8 @@ function doAdd() : Int32
 	doSum2(helper2);
 
 	return doSum(swa);
-  
-endfunction  
+
+endfunction
 
 )";
 
@@ -514,7 +511,7 @@ endfunction
 
 function doSum(swa : Array<Array<Array<Int32>>>) : Int32
   return swa[0][0][0] + swa[0][0][1] +
-         swa[0][1][0] + swa[0][1][1]; 
+         swa[0][1][0] + swa[0][1][1];
 endfunction
 
 function doAdd() : Int32
@@ -536,22 +533,22 @@ function doAdd() : Int32
   swa[0] = Array<Array<Int32> >(2);
 	swa[0][0] = Array<Int32>(2);
   swa[0][1] = Array<Int32>(2);
-  
+
   swa[0][0][0] = 0;
   swa[0][0][1] = 1;
   swa[0][1][0] = 2;
   swa[0][1][1] = 3;
 
 	return doSum(swa);
-  
-endfunction  
+
+endfunction
 
 )";
 
 auto const AddNonPersistentMatrix2 = R"(
 function doSum(hola : Array<Array<Array<Int32>>>) : Int32
   return hola[0][0][0] + hola[0][0][1] +
-         hola[0][1][0] + hola[0][1][1]; 
+         hola[0][1][0] + hola[0][1][1];
 endfunction
 
 function doAdd() : Int32
@@ -560,15 +557,15 @@ function doAdd() : Int32
   swola[0] = Array<Array<Int32> >(2);
 	swola[0][0] = Array<Int32>(2);
   swola[0][1] = Array<Int32>(2);
-  
+
   swola[0][0][0] = 0;
   swola[0][0][1] = 1;
   swola[0][1][0] = 2;
   swola[0][1][1] = 3;
 
 	return doSum(swola);
-  
-endfunction  
+
+endfunction
 
 )";
 
@@ -1339,10 +1336,10 @@ TEST(BasicVmEngineDmlfTests, AddFloat)
   EXPECT_TRUE(createdState.succeeded());
 
   double a = 4.5;
-  float b = 3.5;
+  float  b = 3.5;
 
-  ExecutionResult result = engine.Run(
-      "add", "state", "add", Params{LedgerVariant(a), LedgerVariant(b)});
+  ExecutionResult result =
+      engine.Run("add", "state", "add", Params{LedgerVariant(a), LedgerVariant(b)});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<float>(), 8.0, 0.001);
 }
@@ -1357,10 +1354,10 @@ TEST(BasicVmEngineDmlfTests, AddFloatComplex)
   EXPECT_TRUE(createdState.succeeded());
 
   double a = 4.5;
-  float b = 3.3f;
+  float  b = 3.3f;
 
-  ExecutionResult result = engine.Run(
-      "add", "state", "add", Params{LedgerVariant(a), LedgerVariant(b)});
+  ExecutionResult result =
+      engine.Run("add", "state", "add", Params{LedgerVariant(a), LedgerVariant(b)});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<double>(), 7.8, 0.001);
 }
@@ -1485,7 +1482,7 @@ TEST(BasicVmEngineDmlfTests, WrongNumberOfParamsTrueIntToFloatCompare)
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
 }
 
-//TEST(BasicVmEngineDmlfTests, AddArray)
+// TEST(BasicVmEngineDmlfTests, AddArray)
 //{
 //  BasicVmEngine engine;
 //
@@ -1502,7 +1499,7 @@ TEST(BasicVmEngineDmlfTests, WrongNumberOfParamsTrueIntToFloatCompare)
 //  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
 //}
 //
-//TEST(BasicVmEngineDmlfTests, AddArrayThree)
+// TEST(BasicVmEngineDmlfTests, AddArrayThree)
 //{
 //  BasicVmEngine engine;
 //
@@ -1518,7 +1515,7 @@ TEST(BasicVmEngineDmlfTests, WrongNumberOfParamsTrueIntToFloatCompare)
 //  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
 //}
 //
-//TEST(BasicVmEngineDmlfTests, Add3Array)
+// TEST(BasicVmEngineDmlfTests, Add3Array)
 //{
 //  BasicVmEngine engine;
 //
@@ -1544,17 +1541,14 @@ TEST(BasicVmEngineDmlfTests, AddMatrix)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
-  ExecutionResult result = engine.Run(
-      "add", "state", "init", Params{});
+  ExecutionResult result = engine.Run("add", "state", "init", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
-  result = engine.Run(
-      "add", "state", "doAdd", Params{});
+  result = engine.Run("add", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
-  result = engine.Run(
-      "add", "state", "doAdd", Params{});
+  result = engine.Run("add", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
@@ -1571,17 +1565,14 @@ TEST(BasicVmEngineDmlfTests, AddMatrixSameCode)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
-  ExecutionResult result = engine.Run(
-      "add", "state", "init", Params{});
+  ExecutionResult result = engine.Run("add", "state", "init", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
-  result = engine.Run(
-      "add2", "state", "doAdd", Params{});
+  result = engine.Run("add2", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
-  result = engine.Run(
-      "add", "state", "doAdd", Params{});
+  result = engine.Run("add", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
@@ -1598,17 +1589,14 @@ TEST(BasicVmEngineDmlfTests, AddMatrixEqualCode)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
-  ExecutionResult result = engine.Run(
-      "add", "state", "init", Params{});
+  ExecutionResult result = engine.Run("add", "state", "init", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
-  result = engine.Run(
-      "add2", "state", "doAdd", Params{});
+  result = engine.Run("add2", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
-  result = engine.Run(
-      "add", "state", "doAdd", Params{});
+  result = engine.Run("add", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
@@ -1625,17 +1613,14 @@ TEST(BasicVmEngineDmlfTests, AddMatrixAltCode)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
-  ExecutionResult result = engine.Run(
-      "add", "state", "init", Params{});
+  ExecutionResult result = engine.Run("add", "state", "init", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
-  result = engine.Run(
-      "add2", "state", "doAdd", Params{});
+  result = engine.Run("add2", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
-  result = engine.Run(
-      "add", "state", "doAdd", Params{});
+  result = engine.Run("add", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
@@ -1652,17 +1637,14 @@ TEST(BasicVmEngineDmlfTests, AddNMatrixAltCode)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
-  ExecutionResult result = engine.Run(
-      "add", "state", "init", Params{});
+  ExecutionResult result = engine.Run("add", "state", "init", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
-  result = engine.Run(
-      "add2", "state", "doAdd", Params{});
+  result = engine.Run("add2", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
-  result = engine.Run(
-      "add", "state", "doAdd", Params{});
+  result = engine.Run("add", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
@@ -1671,7 +1653,8 @@ TEST(BasicVmEngineDmlfTests, AddNonPersistentMatrix)
 {
   BasicVmEngine engine;
 
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddNonPersistentMatrix}});
+  ExecutionResult createdProgram =
+      engine.CreateExecutable("add", {{"etch", AddNonPersistentMatrix}});
   EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
   createdProgram = engine.CreateExecutable("add2", {{"etch", AddNonPersistentMatrix2}});
   EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
@@ -1679,13 +1662,11 @@ TEST(BasicVmEngineDmlfTests, AddNonPersistentMatrix)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
-  ExecutionResult result = engine.Run(
-      "add2", "state", "doAdd", Params{});
+  ExecutionResult result = engine.Run("add2", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
-  result = engine.Run(
-      "add", "state", "doAdd", Params{});
+  result = engine.Run("add", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
@@ -1700,8 +1681,7 @@ TEST(BasicVmEngineDmlfTests, ByteAdd)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result =
-      engine.Run("add", "state", "add", SerializeParameters(3, 2));
+  ExecutionResult result = engine.Run("add", "state", "add", SerializeParameters(3, 2));
   EXPECT_TRUE(result.succeeded());
   // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 5);
@@ -1717,8 +1697,7 @@ TEST(BasicVmEngineDmlfTests, ByteAdd8)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result =
-      engine.Run("add", "state", "add", SerializeParameters(3, 4));
+  ExecutionResult result = engine.Run("add", "state", "add", SerializeParameters(3, 4));
   EXPECT_TRUE(result.succeeded());
   // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 7);
@@ -1734,8 +1713,7 @@ TEST(BasicVmEngineDmlfTests, ByteAdd64)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result =
-      engine.Run("add", "state", "add", SerializeParameters(3, 5));
+  ExecutionResult result = engine.Run("add", "state", "add", SerializeParameters(3, 5));
   EXPECT_TRUE(result.succeeded());
   // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 8);
@@ -1753,8 +1731,7 @@ TEST(BasicVmEngineDmlfTests, ByteAddFloat)
 
   auto params = SerializeParameters(3.3, 5.6);
 
-  ExecutionResult result =
-      engine.Run("add", "state", "add", params);
+  ExecutionResult result = engine.Run("add", "state", "add", params);
   EXPECT_TRUE(result.succeeded());
   // std::cout << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<double>(), 8.9, 0.0000000001);
@@ -1773,10 +1750,9 @@ TEST(BasicVmEngineDmlfTests, ByteAddComplexFloat)
   double a = 3.2;
   float  b = 5.6f;
 
-  auto params = SerializeParameters(a,b);
+  auto params = SerializeParameters(a, b);
 
-  ExecutionResult result =
-      engine.Run("add", "state", "add", params);
+  ExecutionResult result = engine.Run("add", "state", "add", params);
   EXPECT_TRUE(result.succeeded());
   // std::cout << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<double>(), 8.8, 0.001);
@@ -1792,8 +1768,8 @@ TEST(BasicVmEngineDmlfTests, ByteAddFixed)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.Run(
-      "add", "state", "add", SerializeParameters(fp64_t(4.5), fp32_t(5.5)));
+  ExecutionResult result =
+      engine.Run("add", "state", "add", SerializeParameters(fp64_t(4.5), fp32_t(5.5)));
   EXPECT_TRUE(result.succeeded());
   // std::cout << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
@@ -1859,8 +1835,8 @@ TEST(BasicVmEngineDmlfTests, ByteAddFloat64Array)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.Run(
-      "add", "state", "add", SerializeParameters(std::vector<double>{1.2,2.7}));
+  ExecutionResult result =
+      engine.Run("add", "state", "add", SerializeParameters(std::vector<double>{1.2, 2.7}));
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<double>(), 3.9, 0.0001);
 }
