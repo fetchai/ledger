@@ -1,0 +1,41 @@
+#include "semanticsearch/module/builtin_query_function.hpp"
+
+namespace fetch {
+namespace semanticsearch {
+
+bool BuiltinQueryFunction::ValidateSignature(std::type_index const &             ret,
+                                             std::vector<std::type_index> const &args)
+{
+  bool val = (ret == return_type_);
+  val      = val && ((args.size() == arguments_.size()));
+
+  if (!val)
+  {
+    return false;
+  }
+
+  for (std::size_t i = 0; i < args.size(); ++i)
+  {
+    val = val && (args[i] == arguments_[i]);
+  }
+
+  return val;
+}
+
+QueryVariant BuiltinQueryFunction::operator()(std::vector<void const *> &args)
+{
+  if (caller_)
+  {
+    return caller_(args);
+  }
+
+  return nullptr;
+}
+
+std::type_index BuiltinQueryFunction::return_type() const
+{
+  return return_type_;
+}
+
+}  // namespace semanticsearch
+}  // namespace fetch

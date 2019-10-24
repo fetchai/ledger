@@ -1,0 +1,165 @@
+#include "semanticsearch/query/query_compiler.hpp"
+#include "semanticsearch/query/query_executor.hpp"
+
+#include <core/random/lfg.hpp>
+#include <exception>
+#include <iostream>
+
+#include <chrono>
+#include <fstream>
+#include <memory>
+#include <set>
+#include <typeindex>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+using namespace fetch::semanticsearch;
+
+int main(int argc, char **argv)
+{
+  if (argc < 2)
+  {
+    std::cout << "specify file" << std::endl;
+    exit(-1);
+  }
+
+  std::string   filename = argv[1];
+  std::ifstream t(filename);
+  if (!t)
+  {
+    std::cerr << "Could not load file" << std::endl;
+    exit(-1);
+  }
+
+  std::string source((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+
+  // Creating a query
+  ErrorTracker  error_tracker;
+  QueryCompiler compiler(error_tracker);
+  auto          query = compiler(source, filename);
+  if (error_tracker)
+  {
+    std::cout << "Errors during compilation" << std::endl;
+    error_tracker.Print();
+    return -1;
+  }
+
+  // Executing the query
+  auto adv = std::make_shared<AdvertisementRegister>();
+
+  using Int        = int;
+  using Float      = double;
+  using String     = std::string;
+  using ModelField = QueryExecutor::ModelField;
+
+  auto semantic_search_module = SematicSearchModule::New(adv);
+  semantic_search_module->RegisterType<Int>("Int");
+  semantic_search_module->RegisterType<Float>("Float");
+  semantic_search_module->RegisterType<String>("String");
+  semantic_search_module->RegisterType<ModelField>("ModelField", true);
+  semantic_search_module->RegisterFunction<ModelField, Int, Int>(
+      "BoundedInteger", [](Int from, Int to) -> ModelField {
+        uint64_t        span = static_cast<uint64_t>(to - from);
+        SemanticReducer cdr;
+        cdr.SetReducer<Int>(1, [span, from](Int x) {
+          SemanticPosition ret;
+          uint64_t         multiplier = uint64_t(-1) / span;
+          ret.push_back(static_cast<uint64_t>(x + from) * multiplier);
+
+          return ret;
+        });
+
+        cdr.SetValidator<Int>([from, to](Int x) { return (from <= x) && (x <= to); });
+
+        auto instance = DataToSubspaceMap<Int>::New();
+        instance->SetSemanticReducer(std::move(cdr));
+
+        return instance;
+      });
+
+  semantic_search_module->RegisterFunction<ModelField, Float, Float>(
+      "BoundedFloat", [](Float from, Float to) -> ModelField {
+        Float           span = static_cast<Float>(to - from);
+        SemanticReducer cdr;
+        cdr.SetReducer<Float>(1, [span, from](Float x) {
+          SemanticPosition ret;
+
+          Float multiplier = static_cast<Float>(uint64_t(-1)) / span;
+          ret.push_back(static_cast<uint64_t>((x + from) * multiplier));
+
+          return ret;
+        });
+
+        cdr.SetValidator<Float>([from, to](Float x) { return (from <= x) && (x <= to); });
+
+        auto instance = DataToSubspaceMap<Float>::New();
+        instance->SetSemanticReducer(std::move(cdr));
+
+        return instance;
+      });
+
+  semantic_search_module->RegisterAgent("agent1");
+  semantic_search_module->RegisterAgent("agent2");
+  semantic_search_module->RegisterAgent("agent3");
+
+  QueryExecutor exe(semantic_search_module,
+                    error_tracker);  // TODO: Need to pass collection, not single instance
+
+  // Executing query on behalf of agent2
+  auto agent = semantic_search_module->GetAgent("agent2");
+  exe.Execute(query, agent);
+
+  if (error_tracker)
+  {
+    std::cout << "Errors during execution" << std::endl;
+    error_tracker.Print();
+    return -1;
+  }
+
+  return 0;
+
+  // Getting stuff out of the execution engine
+  auto model = adv->GetModel("Advanced");
+  assert(model != nullptr);
+
+  auto instance = exe.GetInstance("x");
+  assert(instance != nullptr);
+
+  std::cout << "Validating: " << model->Validate(instance) << " " << model->rank() << std::endl;
+  std::cout << "Reduce: ";
+  for (auto &v : model->Reduce(instance))
+  {
+    std::cout << v << ", ";
+  }
+  std::cout << std::endl;
+
+  auto z = exe.GetInstance("z");
+  assert(z != nullptr);
+
+  model = adv->GetModel("IntPair");
+  assert(model != nullptr);
+  std::cout << "Validating: " << model->Validate(z) << " " << model->rank() << std::endl;
+
+  for (auto v : model->Reduce(z))
+  {
+    std::cout << v << ", ";
+  }
+  std::cout << std::endl;
+  /*
+    using Vocabulary = std::shared_ptr< VocabularyInstance >;
+    instance->Walk([](std::string name, Vocabulary){
+      std::cout << name << std::endl;
+    });
+    */
+  auto agents = adv->FindAgents("IntPair", z, 8);
+  if (agents)
+  {
+    std::cout << "X: " << agents->size() << std::endl;
+  }
+  else
+  {
+    std::cout << "No results" << std::endl;
+  }
+  return 0;
+}

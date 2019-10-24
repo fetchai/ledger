@@ -1,0 +1,24 @@
+model GeoLocation {
+  lat: BoundedFloat(0., 90.),
+  lng: BoundedFloat(0., 180.)
+};
+
+model CarAgent {
+  location: GeoLocation, 
+  type: BoundedInteger(0, 10)
+};
+
+model CarAgent {
+  location: GeoLocation, 
+  type: Int
+};
+
+var car : CarAgent = {
+  location: {
+    lat: 9.52,
+    lng: 12.12
+  },
+  type: 0
+};
+
+// var query : CarAgent = { location: { lat: 9.52, lng: 12.12 }, type: 0 }; find var;

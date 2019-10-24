@@ -137,12 +137,12 @@ public:
     promises_ = unresolved;
   }
 
-  MessageList GetMessages(double wait = 0)
+  MessageList GetMessages(uint64_t wait = 0)
   {
     // Sending pull requests for messages
     PullMessages();
 
-    if (wait != 0.)
+    if (wait != 0ull)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(wait));
     }
