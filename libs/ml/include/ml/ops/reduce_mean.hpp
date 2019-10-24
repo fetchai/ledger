@@ -38,7 +38,7 @@ public:
   using SPType        = OpReduceMeanSaveableParams<T>;
   using MyType        = ReduceMean<TensorType>;
 
-  ReduceMean(SizeType axis)
+  explicit ReduceMean(SizeType axis)
     : axis_(axis)
   {}
 
@@ -94,7 +94,7 @@ public:
 
     TensorType ret_error_signal(inputs.at(0)->shape());
 
-    DataType size = static_cast<DataType>(inputs.at(0)->shape().at(axis_));
+    auto size = static_cast<DataType>(inputs.at(0)->shape().at(axis_));
 
     Broadcast([size](DataType const &x, DataType &z) { z = x / size; }, error_signal,
               ret_error_signal);
