@@ -18,6 +18,7 @@
 
 #include "core/digest.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "ledger/chaincode/smart_contract_factory.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/problem_id.hpp"
@@ -41,14 +42,14 @@ using serializers::MsgPackSerializer;
 
 using DagNodes = NaiveSynergeticMiner::DagNodes;
 
-void ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work)
+void ExecuteWork(SynergeticContract &contract, WorkPtr const &work)
 {
   WorkScore score{0};
 
   // execute the work
   auto const nonce_work = work->CreateHashedNonce();
 
-  auto const status = contract->Work(nonce_work, score);
+  auto const status = contract.Work(nonce_work, score);
 
   if (SynergeticContract::Status::SUCCESS != status)
   {
@@ -162,48 +163,17 @@ void NaiveSynergeticMiner::EnableMining(bool enable)
   is_mining_ = enable;
 }
 
-SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_digest)
-{
-  SynergeticContractPtr contract{};
-
-  // attempt to retrieve the document stored in the database
-  auto const resource_document =
-      storage_.Get(SmartContractManager::CreateAddressForContract(contract_digest.ToHex()));
-
-  if (!resource_document.failed)
-  {
-    try
-    {
-      // create and decode the document buffer
-      MsgPackSerializer buffer{resource_document.document};
-
-      // parse the contents of the document
-      ConstByteArray document{};
-      buffer >> document;
-
-      // create the instance of the synergetic contract
-      contract = std::make_shared<SynergeticContract>(document);
-    }
-    catch (std::exception const &ex)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Error creating contract: ", ex.what());
-    }
-  }
-
-  return contract;
-}
-
 WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest,
                                            chain::Address const &contract_address,
                                            ProblemData const &   problem_data)
 {
-  // create the synergetic contract
-  auto contract = LoadContract(contract_digest);
+  auto contract = CreateSmartContract<SynergeticContract>(contract_digest, storage_);
 
   // if no contract can be loaded then simple return
   if (!contract)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up contract: 0x", contract_digest.ToHex());
+
     return {};
   }
 
@@ -215,6 +185,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
   if (SynergeticContract::Status::SUCCESS != status)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to define the problem. Reason: ", ToString(status));
+
     return {};
   }
 
@@ -231,7 +202,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
     ++nonce;
 
     // execute the work
-    ExecuteWork(contract, work);
+    ExecuteWork(*contract, work);
 
     // update the cached work if this one is better than previous solutions
     if (!(best_work && best_work->score() >= work->score()))

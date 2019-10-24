@@ -131,11 +131,11 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
   , access_log_{"access.log"}
 {
   // create all the contracts
-  auto const &contracts = contract_cache_.factory().GetChainCodeContracts();
+  auto const &contracts = contract_cache_.factory().GetChainCodeContracts();  //???se cache?
   for (auto const &contract_name : contracts)
   {
     // create the contract
-    auto contract = contract_cache_.factory().Create(Identifier{contract_name}, storage_);
+    auto contract = contract_cache_.factory().CreateChainCode(contract_name);
 
     ByteArray contract_path{contract_name};
     contract_path.Replace(static_cast<char const &>(CONTRACT_NAME_SEPARATOR[0]),

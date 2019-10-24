@@ -31,6 +31,7 @@
 
 namespace fetch {
 namespace ledger {
+
 namespace {
 
 using fetch::byte_array::ConstByteArray;
@@ -69,54 +70,20 @@ ContractNameSet const global_contract_set = CreateContractSet(global_registry);
 
 }  // namespace
 
-ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contract_id,
-                                                       StorageInterface &storage) const
+ChainCodeFactory::ContractPtr ChainCodeFactory::CreateChainCode(
+    ConstByteArray const &contract_name) const
 {
-  ContractPtr contract{};
-
-  // determine based on the identifier is the requested contract a VM-based
-  // smart contract or is it referencing a hard coded "chain code"
-  if (Identifier::Type::SMART_OR_SYNERGETIC_CONTRACT == contract_id.type())
+  auto it = global_registry.find(contract_name);
+  if (it != global_registry.end())
   {
-    auto const digest = contract_id.qualifier();
-    // create the resource address for the contract
-    auto const resource = SmartContractManager::CreateAddressForContract(digest);
-
-    // query the contents of the address
-    auto const result = storage.Get(resource);
-
-    if (!result.failed)
-    {
-      ConstByteArray contract_source;
-
-      // deserialise the contract source
-      serializers::MsgPackSerializer adapter{result.document};
-      adapter >> contract_source;
-
-      // attempt to construct the smart contract in question
-      contract = std::make_shared<SmartContract>(std::string{contract_source});
-    }
-  }
-  else  // invalid or chain code
-  {
-    // attempt to lookup the chain code instance
-    auto it = global_registry.find(contract_id.full_name());
-    if (it != global_registry.end())
-    {
-      // execute the factory to create the chain code instance
-      contract = it->second();
-    }
+    // execute the factory to create the chain code instance
+    return it->second();
   }
 
-  // finally throw an exception if the contract in question cannot be found
-  if (!contract)
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME,
-                    "Unable to construct requested chain code: ", contract_id.full_name());
-    throw std::runtime_error("Unable to create required chain code");
-  }
+  FETCH_LOG_ERROR(LOGGING_NAME, "Unable to construct requested chain code: ", contract_name);
 
-  return contract;
+  throw std::runtime_error(std::string{"Unable to create requested chain code "} +
+                           std::string(contract_name));
 }
 
 ContractNameSet const &ChainCodeFactory::GetChainCodeContracts() const

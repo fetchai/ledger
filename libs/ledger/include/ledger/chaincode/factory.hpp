@@ -37,8 +37,7 @@ public:
   using ContractPtr     = std::shared_ptr<Contract>;
   using ContractNameSet = std::unordered_set<ConstByteArray>;
 
-  ContractPtr Create(Identifier const &contract_id, StorageInterface &storage) const;
-
+  ContractPtr            CreateChainCode(ConstByteArray const &contract_name) const;
   ContractNameSet const &GetChainCodeContracts() const;
 };
 
