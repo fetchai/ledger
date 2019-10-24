@@ -239,7 +239,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
 {
   ExecutorPtr executor;
 
-  // lookup a free executor
+  // look up a free executor
   {
     FETCH_LOCK(idle_executors_lock_);
     if (!idle_executors_.empty())
@@ -599,7 +599,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
           FETCH_LOCK(idle_executors_lock_);
           if (!idle_executors_.empty())
           {
-            // lookup the last block miner
+            // look up the last block miner
             chain::Address const last_block_miner =
                 state_.Apply([](Summary const &summary) { return summary.last_block_miner; });
 
