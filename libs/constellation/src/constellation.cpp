@@ -493,7 +493,12 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   // beacon network
   if (beacon_network_)
   {
-    beacon_network_->Start({LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::DKG)});
+    uint16_t const beacon_bind_port = LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::DKG);
+    uint16_t const beacon_ext_port = LookupRemotePort(cfg_.manifest, ServiceIdentifier::Type::DKG);
+
+    muddle::MuddleInterface::PortMapping const beacon_port_mapping{{beacon_bind_port, beacon_ext_port}};
+
+    beacon_network_->Start({}, beacon_port_mapping);
   }
 
   // BEFORE the block coordinator starts its state set up special genesis
