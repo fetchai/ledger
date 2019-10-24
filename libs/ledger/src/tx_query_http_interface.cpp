@@ -59,7 +59,7 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
         // convert the digest back to binary
         auto const digest = FromHex(params["digest"]);
 
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Querying tx: ", digest.ToBase64());
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Querying tx: 0x", digest.ToHex());
 
         // attempt to lookup the transaction
         Transaction tx;
@@ -94,7 +94,7 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
         case Transaction::ContractMode::NOT_PRESENT:
           break;
         case Transaction::ContractMode::PRESENT:
-          tx_obj["contractDigest"]  = tx.contract_digest().address().ToHex();
+          tx_obj["contractDigest"]  = "0x" + tx.contract_digest().address().ToHex();
           tx_obj["contractAddress"] = tx.contract_address().display();
           tx_obj["action"]          = tx.action();
           tx_obj["data"]            = tx.data().ToBase64();
@@ -105,7 +105,7 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
           tx_obj["data"]      = tx.data().ToBase64();
           break;
         case Transaction::ContractMode::SYNERGETIC:
-          tx_obj["contractDigest"] = tx.contract_digest().address().ToHex();
+          tx_obj["contractDigest"] = "0x" + tx.contract_digest().address().ToHex();
           tx_obj["action"]         = tx.action();
           tx_obj["data"]           = tx.data().ToBase64();
           break;

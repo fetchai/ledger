@@ -315,7 +315,7 @@ def run_sccache_server(sccache_path):
         'SCCACHE_START_SERVER': '1',
         'SCCACHE_NO_DAEMON': '1',
         'SCCACHE_IDLE_TIMEOUT': '0',
-        'RUST_LOG': 'debug',
+        'RUST_LOG': 'info',
     }
 
     # pull in local sccache configuration

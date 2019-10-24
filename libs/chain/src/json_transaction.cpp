@@ -105,7 +105,7 @@ bool ToJsonTransaction(Transaction const &src, Variant &dst, bool include_metada
       // build update the metadata object
       auto &metadata = dst["metadata"] = Variant::Object();
 
-      metadata["digest"] = src.digest().ToHex();
+      metadata["digest"] = "0x" + src.digest().ToHex();
     }
 
     // signal success

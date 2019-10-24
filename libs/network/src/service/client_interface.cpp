@@ -51,7 +51,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::MessageType const &ms
   ServiceClassificationType type;
   params >> type;
 
-  FETCH_LOG_TRACE(LOGGING_NAME, "ProcessServerMessage: type: ", type, " msg: ", msg.ToHex());
+  FETCH_LOG_TRACE(LOGGING_NAME, "ProcessServerMessage: type: ", type, " msg: 0x", msg.ToHex());
 
   if (type == SERVICE_RESULT)
   {
