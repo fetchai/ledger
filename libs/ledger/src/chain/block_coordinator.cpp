@@ -1109,12 +1109,6 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
     // update the digest
     next_block_->UpdateDigest();
 
-    // Notify notarisation of new block
-    if (notarisation_)
-    {
-      notarisation_->NotariseBlock(current_block_->body);
-    }
-
     FETCH_LOG_DEBUG(LOGGING_NAME, "New Block Hash: 0x", next_block_->body.hash.ToHex());
 
     // this step is needed because the execution manager is actually unaware of the actual last

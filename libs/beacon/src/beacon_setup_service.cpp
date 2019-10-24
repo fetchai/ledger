@@ -775,7 +775,6 @@ BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
 
   if (state_machine_->previous_state() != State::WAIT_FOR_NOTARISATION_KEYS)
   {
-    assert(!notarisation_manager_);
     notarisation_manager_ = std::make_shared<NotarisationManager>();
     NotarisationManager::PublicKey notarisation_public_key = notarisation_manager_->GenerateKeys();
     ConstByteArray                 signature = certificate_->Sign(notarisation_public_key.getStr());
