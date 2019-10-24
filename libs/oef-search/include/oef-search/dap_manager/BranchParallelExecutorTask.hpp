@@ -81,9 +81,8 @@ public:
   bool operator==(const BranchParallelExecutorTask &other) = delete;
   bool operator<(const BranchParallelExecutorTask &other)  = delete;
 
-  std::shared_ptr<NodeExecutorTask> CreateTask(
-      const BranchExecutorTask::NodeDataType &data,
-      std::shared_ptr<IdentifierSequence>     input) override
+  std::shared_ptr<NodeExecutorTask> CreateTask(const BranchExecutorTask::NodeDataType &data,
+                                               std::shared_ptr<IdentifierSequence> input) override
   {
     return NodeExecutorFactory(data, input, dap_manager_);
   }

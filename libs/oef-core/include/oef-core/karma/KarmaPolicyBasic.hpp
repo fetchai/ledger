@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <atomic>
 #include <map>
 #include <vector>
-#include <atomic>
 
 #include "oef-base/utils/BucketsOf.hpp"
 #include "oef-core/karma/IKarmaPolicy.hpp"
@@ -33,8 +33,8 @@ public:
   ~KarmaPolicyBasic() override;
 
   KarmaAccount GetAccount(const std::string &pubkey = "", const std::string &ip = "") override;
-  void                 upgrade(KarmaAccount &account, const std::string &pubkey = "",
-                               const std::string &ip = "") override;
+  void         upgrade(KarmaAccount &account, const std::string &pubkey = "",
+                       const std::string &ip = "") override;
 
   bool        perform(const KarmaAccount &identifier, const std::string &event,
                       bool force = false) override;

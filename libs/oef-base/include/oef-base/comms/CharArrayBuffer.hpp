@@ -31,7 +31,7 @@ public:
   int                                      current;
   int                                      size;
 
-  explicit CharArrayBuffer(std::vector<asio::mutable_buffer> const & thebuffers)
+  explicit CharArrayBuffer(std::vector<asio::mutable_buffer> const &thebuffers)
     : buffers(thebuffers)
   {
     current = 0;

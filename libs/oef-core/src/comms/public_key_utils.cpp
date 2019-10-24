@@ -91,8 +91,8 @@ inline std::string RSAKey::to_string_base64() const
     BIO_free(mem);
     return out;
   }
-  char *        pk_ptr = nullptr;
-  auto          len    = static_cast<unsigned long>(BIO_get_mem_data(mem, &pk_ptr));
+  char *pk_ptr = nullptr;
+  auto  len    = static_cast<unsigned long>(BIO_get_mem_data(mem, &pk_ptr));
   if (len == 0u)
   {
     FETCH_LOG_WARN(LOGGING_NAME_PK, " while getting bio char pointer");

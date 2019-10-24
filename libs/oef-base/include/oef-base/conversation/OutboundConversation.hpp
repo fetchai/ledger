@@ -23,10 +23,10 @@ class Message;
 }
 }  // namespace google
 
-#include <memory>
-#include <utility>
 #include "oef-base/threading/Waitable.hpp"
 #include "oef-base/utils/Uri.hpp"
+#include <memory>
+#include <utility>
 
 class ConstCharArrayBuffer;
 

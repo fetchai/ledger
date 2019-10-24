@@ -20,9 +20,9 @@
 #include "logging/logging.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-core/agents/Agents.hpp"
+#include "oef-messages/agent.hpp"
 #include <random>
 #include <utility>
-#include "oef-messages/agent.hpp"
 
 namespace google {
 namespace protobuf {
@@ -38,8 +38,8 @@ public:
   using RandomEngine        = std::mt19937_64;
   using QueryIdDistribution = std::uniform_int_distribution<uint64_t>;
 
-  OefFunctionsTaskFactory(std::string        core_key,  std::shared_ptr<Agents> agents,
-                          std::string agent_public_key,
+  OefFunctionsTaskFactory(std::string core_key, std::shared_ptr<Agents> agents,
+                          std::string                            agent_public_key,
                           std::shared_ptr<OutboundConversations> outbounds)
     : IOefTaskFactory(std::move(outbounds))
     , agents_{std::move(agents)}

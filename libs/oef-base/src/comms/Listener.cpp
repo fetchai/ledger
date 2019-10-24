@@ -43,7 +43,7 @@ void Listener::start_accept()
 }
 
 void Listener::handle_accept(std::shared_ptr<ISocketOwner> const &new_connection,
-                             std::error_code const &                       error)
+                             std::error_code const &              error)
 {
   accepted++;
   if (!error)

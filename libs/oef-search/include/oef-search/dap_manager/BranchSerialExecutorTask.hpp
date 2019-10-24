@@ -43,10 +43,10 @@ public:
   BranchSerialExecutorTask(std::shared_ptr<Branch>             root,
                            std::shared_ptr<IdentifierSequence> identifier_sequence,
                            std::shared_ptr<DapManager>         dap_manager)
-//    : BranchExecutorTask::Parent()
+    //    : BranchExecutorTask::Parent()
     : BranchExecutorTask(std::move(root))
-//    , BaseTask ::Parent()
-//    , BaseTask()
+    //    , BaseTask ::Parent()
+    //    , BaseTask()
     , dap_manager_{std::move(dap_manager)}
   {
     for (auto &leaf : root_->GetLeaves())
@@ -78,9 +78,8 @@ public:
   bool operator==(const BranchSerialExecutorTask &other) = delete;
   bool operator<(const BranchSerialExecutorTask &other)  = delete;
 
-  std::shared_ptr<NodeExecutorTask> CreateTask(
-      const BranchExecutorTask::NodeDataType &data,
-      std::shared_ptr<IdentifierSequence>     input) override
+  std::shared_ptr<NodeExecutorTask> CreateTask(const BranchExecutorTask::NodeDataType &data,
+                                               std::shared_ptr<IdentifierSequence> input) override
   {
     return NodeExecutorFactory(data, input, dap_manager_);
   }

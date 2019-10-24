@@ -110,7 +110,7 @@ mem_usage_result run_get_dynamic_proc_info(pid_t pid)
 }
 #endif
 
-mem_usage_result process_mem_usage(std::string const &/*filename*/)
+mem_usage_result process_mem_usage(std::string const & /*filename*/)
 {
   using std::ifstream;
   using std::ios_base;

@@ -31,7 +31,7 @@ public:
   uint32_t                               current;
   uint32_t                               size;
 
-  explicit ConstCharArrayBuffer(std::vector<asio::const_buffer> const & thebuffers)
+  explicit ConstCharArrayBuffer(std::vector<asio::const_buffer> const &thebuffers)
     : buffers(thebuffers)
   {
     current = 0;

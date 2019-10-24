@@ -44,9 +44,9 @@ public:
   static constexpr char const *LOGGING_NAME = "DapConversationTask";
 
   DapConversationTask(std::string const &dap_name, std::string const &path, uint32_t msg_id,
-                      std::shared_ptr<IN_PROTO> initiator,
+                      std::shared_ptr<IN_PROTO>              initiator,
                       std::shared_ptr<OutboundConversations> outbounds,
-                      std::string const &protocol = "dap")
+                      std::string const &                    protocol = "dap")
     : StateMachineTask<SelfType>(this, nullptr)
     , initiator(std::move(initiator))
     , outbounds(std::move(outbounds))

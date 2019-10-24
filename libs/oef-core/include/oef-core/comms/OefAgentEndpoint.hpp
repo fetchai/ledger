@@ -20,8 +20,8 @@
 #include "logging/logging.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-core/karma/KarmaAccount.hpp"
-#include <memory>
 #include <map>
+#include <memory>
 
 class Core;
 template <class OefEndpoint>
@@ -76,7 +76,7 @@ public:
   void SetState(const std::string &stateName, bool value);
   bool GetState(const std::string &stateName) const;
 
-  void AddGoFunction(std::function<void(SELF_P)> const & func)
+  void AddGoFunction(std::function<void(SELF_P)> const &func)
   {
     go_functions.push_back(func);
   }

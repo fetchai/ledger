@@ -147,7 +147,8 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
   });
 }
 
-void OefAgentEndpoint::SetFactory(std::shared_ptr<IOefTaskFactory<OefAgentEndpoint>> const &new_factory)
+void OefAgentEndpoint::SetFactory(
+    std::shared_ptr<IOefTaskFactory<OefAgentEndpoint>> const &new_factory)
 {
   if (factory)
   {

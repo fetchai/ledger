@@ -36,7 +36,7 @@ class OutboundConversations
 public:
   static constexpr char const *LOGGING_NAME = "OutboundConversations";
 
-  OutboundConversations() = default;
+  OutboundConversations()  = default;
   ~OutboundConversations() = default;
 
   // This is used to configure the system.

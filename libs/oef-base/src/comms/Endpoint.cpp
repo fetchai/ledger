@@ -28,7 +28,7 @@ template <typename TXType>
 Endpoint<TXType>::Endpoint(Core &core, std::size_t sendBufferSize, std::size_t readBufferSize,
                            ConfigMap configMap)
   : EndpointBase<TXType>(sendBufferSize, readBufferSize, configMap)
-  , sock(static_cast<asio::io_context&>(core))
+  , sock(static_cast<asio::io_context &>(core))
 {
   ep_count++;
 }

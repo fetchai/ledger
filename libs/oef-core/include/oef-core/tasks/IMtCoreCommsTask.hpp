@@ -28,8 +28,7 @@ class IMtCoreCommsTask : public IMtCoreTask
 public:
   explicit IMtCoreCommsTask(std::shared_ptr<EndpointBase<google::protobuf::Message>> endpoint)
     : endpoint{std::move(endpoint)}
-  {
-  }
+  {}
   ~IMtCoreCommsTask() override = default;
 
 protected:

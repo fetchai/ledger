@@ -46,7 +46,7 @@ public:
   using Mutex = std::mutex;
   using Lock  = std::lock_guard<Mutex>;
 
-  TNonBlockingWorkerTask()          = default;
+  TNonBlockingWorkerTask()           = default;
   ~TNonBlockingWorkerTask() override = default;
 
   Notification::NotificationBuilder post(WorkloadP workload)

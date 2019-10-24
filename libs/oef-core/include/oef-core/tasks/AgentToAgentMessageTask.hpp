@@ -39,7 +39,8 @@ public:
 
   static constexpr char const *LOGGING_NAME = "AgentToAgentMessageTask";
 
-  AgentToAgentMessageTask(AgentP const &sourceAgent, int32_t message_id, ProtoP pb, AgentsP const &agents)
+  AgentToAgentMessageTask(AgentP const &sourceAgent, int32_t message_id, ProtoP pb,
+                          AgentsP const &agents)
     : pb_{std::move(pb)}
   {
     OEFURI::URI uri;

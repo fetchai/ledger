@@ -46,7 +46,7 @@ public:
   OutboundSearchConversationWorkerTask(Core &core, std::string core_key, Uri const &core_uri,
                                        Uri const &                            search_uri,
                                        std::shared_ptr<OutboundConversations> outbounds,
-                                       IOutboundConversationCreator const &conversationCreator)
+                                       IOutboundConversationCreator const &   conversationCreator)
     : OutboundConversationWorkerTask(core, search_uri, conversationCreator)
     , outbounds_(std::move(outbounds))
     , core_uri(core_uri)

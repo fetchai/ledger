@@ -217,8 +217,7 @@ public:
     return value;
   }
 
-  std::vector<std::string> GetDapNamesByOptions(
-       std::vector<std::string> const & attributes) const
+  std::vector<std::string> GetDapNamesByOptions(std::vector<std::string> const &attributes) const
   {
     std::vector<std::string> daps{};
     for (const auto &e : dap_options_)

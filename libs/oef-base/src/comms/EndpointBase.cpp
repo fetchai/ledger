@@ -28,7 +28,7 @@ static std::atomic<std::size_t> endpoint_ident(1000);
 template <typename TXType>
 bool EndpointBase<TXType>::connect(const Uri &uri, Core &core)
 {
-  asio::ip::tcp::resolver        resolver(static_cast<asio::io_context&>(core));
+  asio::ip::tcp::resolver        resolver(static_cast<asio::io_context &>(core));
   asio::ip::tcp::resolver::query query(uri.host, std::to_string(uri.port));
   auto                           results = resolver.resolve(query);
   std::error_code                ec;
