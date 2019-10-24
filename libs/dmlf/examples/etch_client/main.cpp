@@ -42,13 +42,12 @@ using namespace std::chrono_literals;
 namespace {
 
 using fetch::network::NetworkManager;
-using fetch::network::Uri;
 using fetch::muddle::rpc::Server;
 using fetch::muddle::MuddlePtr;
 using fetch::json::JSONDocument;
 using fetch::crypto::ECDSASigner;
-using fetch::crypto::ECDSAVerifier;
-using fetch::crypto::Identity;
+//using fetch::crypto::ECDSAVerifier;
+//using fetch::crypto::Identity;
 using fetch::dmlf::RemoteExecutionClient;
 using fetch::dmlf::RemoteExecutionProtocol;
 using fetch::dmlf::BasicVmEngine;
@@ -78,6 +77,7 @@ CertificatePtr create_identity(std::string const &key)
 std::vector<ExecutionResult> WaitAll(std::vector<PromiseOfResult> const &promises)
 {
   std::vector<ExecutionResult> results{};
+  results.reserve(promises.size());
   for (auto &promise : promises)
   {
     results.push_back(promise.Get());
