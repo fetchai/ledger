@@ -22,6 +22,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "http/json_response.hpp"
 #include "json/document.hpp"
+#include "ledger/chaincode/chain_code_factory.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"
@@ -131,11 +132,11 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
   , access_log_{"access.log"}
 {
   // create all the contracts
-  auto const &contracts = contract_cache_.factory().GetChainCodeContracts();  //???se cache?
+  auto const &contracts = GetChainCodeContracts();
   for (auto const &contract_name : contracts)
   {
     // create the contract
-    auto contract = contract_cache_.factory().CreateChainCode(contract_name);
+    auto contract = CreateChainCode(contract_name);
 
     ByteArray contract_path{contract_name};
     contract_path.Replace(static_cast<char const &>(CONTRACT_NAME_SEPARATOR[0]),

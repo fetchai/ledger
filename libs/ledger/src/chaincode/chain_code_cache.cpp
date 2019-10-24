@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/chain_code_cache.hpp"
+#include "ledger/chaincode/chain_code_factory.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_factory.hpp"
-#include "meta/log2.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -38,17 +38,15 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(Identifier const &contract_id
   // if this fails create the contract
   if (!contract)
   {
-    // ??? it is expected that the create function will throw on errors
     if (contract_id.type() == Identifier::Type::SMART_OR_SYNERGETIC_CONTRACT)
     {
-      // ??? from hex - shouldn't need to?
       auto const contract_digest = contract_id.qualifier().FromHex();
       contract                   = CreateSmartContract<SmartContract>(contract_digest, storage);
     }
     else
     {
       auto const &contract_name = contract_id.full_name();
-      contract                  = factory_.CreateChainCode(contract_name);
+      contract                  = CreateChainCode(contract_name);
     }
 
     assert(static_cast<bool>(contract));

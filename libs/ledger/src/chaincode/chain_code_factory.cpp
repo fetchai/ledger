@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "ledger/chaincode/factory.hpp"
+#include "ledger/chaincode/chain_code_factory.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/chaincode/token_contract.hpp"
@@ -36,8 +36,8 @@ namespace {
 
 using fetch::byte_array::ConstByteArray;
 
-using ContractPtr     = ChainCodeFactory::ContractPtr;
-using ContractNameSet = ChainCodeFactory::ContractNameSet;
+using ContractPtr     = std::shared_ptr<Contract>;
+using ContractNameSet = std::unordered_set<ConstByteArray>;
 using FactoryCallable = std::function<ContractPtr()>;
 using FactoryRegistry = std::unordered_map<ConstByteArray, FactoryCallable>;
 
@@ -70,8 +70,7 @@ ContractNameSet const global_contract_set = CreateContractSet(global_registry);
 
 }  // namespace
 
-ChainCodeFactory::ContractPtr ChainCodeFactory::CreateChainCode(
-    ConstByteArray const &contract_name) const
+ContractPtr CreateChainCode(ConstByteArray const &contract_name)
 {
   auto it = global_registry.find(contract_name);
   if (it != global_registry.end())
@@ -86,7 +85,7 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::CreateChainCode(
                            std::string(contract_name));
 }
 
-ContractNameSet const &ChainCodeFactory::GetChainCodeContracts() const
+ContractNameSet const &GetChainCodeContracts()
 {
   return global_contract_set;
 }
