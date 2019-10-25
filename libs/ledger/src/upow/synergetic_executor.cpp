@@ -17,8 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/bitvector.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/chaincode/token_contract.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
+#include "logging/logging.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -77,8 +81,14 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       BitVector shard_mask{num_lanes};
       shard_mask.SetAllOne();
 
+      Identifier contract_id(solution->contract_digest() + "." + solution->address().display());
+
+      StateSentinelAdapter storage_adapter{storage_, contract_id, shard_mask};
+
       // complete the work and resolve the work queue
       contract->Attach(storage_);
+      ContractContext ctx(&token_contract_, solution->address(), &storage_adapter, 0);
+      contract->UpdateContractContext(ctx);
       status = contract->Complete(solution->address(), shard_mask);
       contract->Detach();
 
@@ -88,7 +98,6 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
                        " Reason: ", ToString(status));
         return;
       }
-
       break;
     }
 

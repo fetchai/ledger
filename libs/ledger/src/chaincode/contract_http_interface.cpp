@@ -16,17 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/json_transaction.hpp"
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
-#include "core/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "http/json_response.hpp"
-#include "ledger/chain/json_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "json/document.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 
 #include <ctime>
@@ -42,7 +43,7 @@ namespace {
 
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
-using fetch::ledger::FromJsonTransaction;
+using fetch::chain::FromJsonTransaction;
 using fetch::variant::Variant;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
@@ -84,9 +85,9 @@ std::string GenerateTimestamp()
 bool CreateTxFromJson(Variant const &tx_obj, std::vector<ConstByteArray> &txs,
                       TransactionProcessor &processor)
 {
-  auto tx = std::make_shared<Transaction>();
+  auto tx = std::make_shared<chain::Transaction>();
 
-  if (FromJsonTransaction(tx_obj, *tx))
+  if (chain::FromJsonTransaction(tx_obj, *tx))
   {
     txs.emplace_back(tx->digest());
     processor.AddTransaction(std::move(tx));
@@ -100,9 +101,9 @@ bool CreateTxFromJson(Variant const &tx_obj, std::vector<ConstByteArray> &txs,
 bool CreateTxFromBuffer(ConstByteArray const &encoded_tx, std::vector<ConstByteArray> &txs,
                         TransactionProcessor &processor)
 {
-  auto tx = std::make_shared<Transaction>();
+  auto tx = std::make_shared<chain::Transaction>();
 
-  TransactionSerializer tx_serializer{encoded_tx};
+  chain::TransactionSerializer tx_serializer{encoded_tx};
   if (tx_serializer.Deserialize(*tx))
   {
     txs.emplace_back(tx->digest());
@@ -236,8 +237,10 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     // adapt the storage engine so that that get and sets are sandboxed for the contract
     StateAdapter storage_adapter{storage_, contract_id};
 
-    // attach, dispatch and detach
-    contract->Attach(storage_adapter);
+    chain::Address address;
+    chain::Address::Parse(contract_id.name(), address);
+    // Current block index does not apply to queries - set to 0
+    contract->Attach({&token_contract_, std::move(address), &storage_adapter, 0});
     auto const status = contract->DispatchQuery(query, doc.root(), response);
     contract->Detach();
 

@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
+#include "chain/transaction.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
 #include "core/macros.hpp"
@@ -25,9 +27,8 @@
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
-#include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -70,11 +71,6 @@ const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
 
-SynergeticExecMgrPtr CreateSynergeticExecutor(DAGPtr dag, StorageUnitInterface &storage_unit)
-{
-  return std::make_unique<SynergeticExecutionManager>(
-      dag, 1u, [&storage_unit]() { return std::make_shared<SynergeticExecutor>(storage_unit); });
-}
 }  // namespace
 
 /**
@@ -88,7 +84,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &block_sink, ProverPtr prover,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty, ConsensusPtr consensus)
+                                   std::size_t block_difficulty, ConsensusPtr consensus,
+                                   SynergeticExecMgrPtr synergetic_exec_manager)
   : chain_{chain}
   , dag_{std::move(dag)}
   , consensus_{std::move(consensus)}
@@ -98,7 +95,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , block_sink_{block_sink}
   , periodic_print_{STATE_NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
-  , last_executed_block_{GENESIS_DIGEST}
+  , last_executed_block_{chain::GENESIS_DIGEST}
   , certificate_{std::move(prover)}
   , mining_address_{certificate_->identity()}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
@@ -109,7 +106,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
-  , synergetic_exec_mgr_{CreateSynergeticExecutor(dag_, storage_unit_)}
+  , synergetic_exec_mgr_{std::move(synergetic_exec_manager)}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reload_state_total",
         "The total number of times in the reload state")}
@@ -246,7 +243,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
   // of a fresh node, or a long series of errors prevents us from reloading previous state. In
   // either case we transition to the restarting the coordination
   assert(static_cast<bool>(current_block_));
-  if (GENESIS_DIGEST != current_block_->body.previous_hash)
+  if (chain::GENESIS_DIGEST != current_block_->body.previous_hash)
   {
     // normal case we have found a block from which point we want to revert. Attempt to revert to it
     bool const revert_success = storage_unit_.RevertToHash(current_block_->body.merkle_hash,
@@ -322,11 +319,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   FETCH_UNUSED(current_dag_epoch);
 
   // initial condition, the last processed block is empty
-  if (GENESIS_DIGEST == last_processed_block)
+  if (chain::GENESIS_DIGEST == last_processed_block)
   {
     // start up - we need to work out which of the blocks has been executed previously
 
-    if (GENESIS_DIGEST == previous_hash)
+    if (chain::GENESIS_DIGEST == previous_hash)
     {
       // once we have got back to genesis then we need to start executing from the beginning
       return State::PRE_EXEC_BLOCK_VALIDATION;
@@ -403,13 +400,13 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     if (!storage_unit_.HashExists(common_parent->body.merkle_hash,
                                   common_parent->body.block_number))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
+      FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's merkle hash cannot be retrieved! block: 0x",
                       current_hash.ToHex(), " number: ", common_parent->body.block_number,
                       " merkle hash: ", common_parent->body.merkle_hash.ToHex());
 
       // this is a bad situation so the easiest solution is to revert back to genesis
-      execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
-      if (!storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT, 0))
+      execution_manager_.SetLastProcessedBlock(chain::GENESIS_DIGEST);
+      if (!storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0))
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
       }
@@ -537,7 +534,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 {
   pre_valid_state_count_->increment();
 
-  bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
+  bool const is_genesis = current_block_->body.previous_hash == chain::GENESIS_DIGEST;
 
   auto fail{[this](char const *reason) {
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
@@ -623,7 +620,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 {
   syn_exec_state_count_->count();
 
-  bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
+  bool const is_genesis = current_block_->body.previous_hash == chain::GENESIS_DIGEST;
 
   // Executing synergetic work
   if ((!is_genesis) && synergetic_exec_mgr_)
@@ -840,7 +837,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   auto const state_hash = storage_unit_.CurrentHash();
 
   bool invalid_block{false};
-  if (GENESIS_DIGEST != current_block_->body.previous_hash)
+  if (chain::GENESIS_DIGEST != current_block_->body.previous_hash)
   {
     if (state_hash != current_block_->body.merkle_hash)
     {
@@ -894,8 +891,8 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
       {
         dag_->RevertToEpoch(0);
       }
-      storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT, 0);
-      execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
+      storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0);
+      execution_manager_.SetLastProcessedBlock(chain::GENESIS_DIGEST);
     }
 
     // finally mark the block as invalid and purge it from the chain
@@ -1321,8 +1318,8 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
 
 void BlockCoordinator::Reset()
 {
-  last_executed_block_.ApplyVoid([](auto &digest) { digest = GENESIS_DIGEST; });
-  execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
+  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GENESIS_DIGEST; });
+  execution_manager_.SetLastProcessedBlock(chain::GENESIS_DIGEST);
   chain_.Reset();
 }
 

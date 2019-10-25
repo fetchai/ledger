@@ -18,11 +18,11 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "http/json_response.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "ledger/tx_status_http_interface.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 
 #include <utility>
@@ -43,7 +43,7 @@ constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_
   switch (tx_processing_pipeline_status)
   {
   case TransactionStatus::UNKNOWN:
-    return PublicTxStatus::UNKNOWN;
+    break;
 
   case TransactionStatus::PENDING:
     return PublicTxStatus::PENDING;
@@ -85,7 +85,7 @@ constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_
     case ContractExecutionStatus::RESOURCE_FAILURE:
     case ContractExecutionStatus::TX_LOOKUP_FAILURE:
     case ContractExecutionStatus::INEXPLICABLE_FAILURE:
-      return PublicTxStatus::FATAL_ERROR;
+      break;
     }
     return PublicTxStatus::FATAL_ERROR;
 

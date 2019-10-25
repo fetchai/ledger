@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "entropy/entropy_generator_interface.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/consensus/entropy_generator_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "logging/logging.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -29,8 +30,8 @@ namespace fetch {
 namespace ledger {
 constexpr char const *LOGGING_NAME = "StakeMgr";
 
-StakeManager::StakeManager(uint64_t committee_size)
-  : committee_size_{committee_size}
+StakeManager::StakeManager(uint64_t cabinet_size)
+  : cabinet_size_{cabinet_size}
 {}
 
 void StakeManager::UpdateCurrentBlock(Block const &current)
@@ -56,35 +57,35 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
   TrimToSize(stake_history_, HISTORY_LENGTH);
 }
 
-StakeManager::CommitteePtr StakeManager::BuildCommittee(Block const &current)
+StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current)
 {
   auto snapshot = LookupStakeSnapshot(current.body.block_number);
-  return snapshot->BuildCommittee(current.body.block_entropy.EntropyAsU64(), committee_size_);
+  return snapshot->BuildCabinet(current.body.block_entropy.EntropyAsU64(), cabinet_size_);
 }
 
-StakeManager::CommitteePtr StakeManager::Reset(StakeSnapshot const &snapshot)
+StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot const &snapshot)
 {
   return ResetInternal(std::make_shared<StakeSnapshot>(snapshot));
 }
 
-StakeManager::CommitteePtr StakeManager::Reset(StakeSnapshot &&snapshot)
+StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot &&snapshot)
 {
   return ResetInternal(std::make_shared<StakeSnapshot>(std::move(snapshot)));
 }
 
-StakeManager::CommitteePtr StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot)
+StakeManager::CabinetPtr StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot)
 {
   // history
   stake_history_.clear();
   stake_history_[0] = snapshot;
 
-  CommitteePtr new_committee = snapshot->BuildCommittee(0, committee_size_);
+  CabinetPtr new_cabinet = snapshot->BuildCabinet(0, cabinet_size_);
 
   // current
   current_             = std::move(snapshot);
   current_block_index_ = 0;
 
-  return new_committee;
+  return new_cabinet;
 }
 
 StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex block)

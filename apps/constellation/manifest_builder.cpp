@@ -20,10 +20,10 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/filesystem/read_file_contents.hpp"
-#include "ledger/shards/manifest.hpp"
 #include "manifest_builder.hpp"
 #include "network/peer.hpp"
 #include "settings.hpp"
+#include "shards/manifest.hpp"
 
 #include <cstdint>
 #include <string>
@@ -33,9 +33,9 @@ namespace {
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
-using fetch::ledger::Manifest;
-using fetch::ledger::ManifestEntry;
-using fetch::ledger::ServiceIdentifier;
+using fetch::shards::Manifest;
+using fetch::shards::ManifestEntry;
+using fetch::shards::ServiceIdentifier;
 using fetch::network::Peer;
 
 /**
@@ -121,7 +121,7 @@ bool LoadManifestFromEnvironment(Manifest &manifest)
  * @param manifest The output manifest to be populated
  * @return true is successful, otherwise false
  */
-bool BuildManifest(Settings const &settings, ledger::Manifest &manifest)
+bool BuildManifest(Settings const &settings, shards::Manifest &manifest)
 {
   bool success{false};
 

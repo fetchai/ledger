@@ -45,8 +45,6 @@ struct QuestionStruct
   using SyncTable        = std::map<MuddleAddress, AnswerAndSeen>;
   using ConfirmedAnswers = std::vector<std::pair<MuddleAddress, Answer>>;
 
-  static constexpr const char *LOGGING_NAME = "QuestionStruct";
-
   enum : int
   {
     ANSW = 0,  // Our answer

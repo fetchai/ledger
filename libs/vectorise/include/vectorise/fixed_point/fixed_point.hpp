@@ -68,30 +68,30 @@ struct TypeFromSize<128>
 template <>
 struct TypeFromSize<64>
 {
-  static constexpr bool     is_valid   = true;
-  static constexpr uint16_t size       = 64;
-  using ValueType                      = int64_t;
-  using UnsignedType                   = uint64_t;
-  using SignedType                     = int64_t;
-  using NextSize                       = TypeFromSize<128>;
-  static constexpr uint16_t  decimals  = 9;
-  static constexpr ValueType tolerance = 0x200;                 // 0.00000012
-  static constexpr ValueType max_exp   = 0x000000157cd0e714LL;  // 21.48756260
+  static constexpr bool          is_valid  = true;
+  static constexpr std::uint16_t size      = 64;
+  using ValueType                          = int64_t;
+  using UnsignedType                       = uint64_t;
+  using SignedType                         = int64_t;
+  using NextSize                           = TypeFromSize<128>;
+  static constexpr std::uint16_t decimals  = 9;
+  static constexpr ValueType     tolerance = 0x200;                 // 0.00000012
+  static constexpr ValueType     max_exp   = 0x000000157cd0e6e8LL;  // 21.48756259
 };
 
 // 32 bit implementation
 template <>
 struct TypeFromSize<32>
 {
-  static constexpr bool     is_valid   = true;
-  static constexpr uint16_t size       = 32;
-  using ValueType                      = int32_t;
-  using UnsignedType                   = uint32_t;
-  using SignedType                     = int32_t;
-  using NextSize                       = TypeFromSize<64>;
-  static constexpr uint16_t  decimals  = 4;
-  static constexpr ValueType tolerance = 0x15;         // 0.0003
-  static constexpr ValueType max_exp   = 0x000a65b9L;  // 10.3974
+  static constexpr bool          is_valid  = true;
+  static constexpr std::uint16_t size      = 32;
+  using ValueType                          = int32_t;
+  using UnsignedType                       = uint32_t;
+  using SignedType                         = int32_t;
+  using NextSize                           = TypeFromSize<64>;
+  static constexpr std::uint16_t decimals  = 4;
+  static constexpr ValueType     tolerance = 0x15;         // 0.0003
+  static constexpr ValueType     max_exp   = 0x000a65adL;  // 10.3971
 };
 
 // 16 bit implementation
@@ -150,13 +150,13 @@ public:
   /// Constants/Limits ///
   ////////////////////////
 
-  static constexpr Type     SMALLEST_FRACTION{1};
-  static constexpr Type     LARGEST_FRACTION{FRACTIONAL_MASK};
-  static constexpr Type     MAX_INT{Type(FRACTIONAL_MASK >> 1) << FRACTIONAL_BITS};
-  static constexpr Type     MIN_INT{INTEGER_MASK & ((Type(1) << (TOTAL_BITS - 1)))};
-  static constexpr Type     MAX{MAX_INT | LARGEST_FRACTION};
-  static constexpr Type     MIN{MIN_INT | LARGEST_FRACTION};
-  static constexpr uint16_t DECIMAL_DIGITS{BaseTypeInfo::decimals};
+  static constexpr Type          SMALLEST_FRACTION{1};
+  static constexpr Type          LARGEST_FRACTION{FRACTIONAL_MASK};
+  static constexpr Type          MAX_INT{((Type(FRACTIONAL_MASK >> 1) - 1) << FRACTIONAL_BITS)};
+  static constexpr Type          MIN_INT{-MAX_INT};
+  static constexpr Type          MAX{MAX_INT | LARGEST_FRACTION};
+  static constexpr Type          MIN{MIN_INT - LARGEST_FRACTION};
+  static constexpr std::uint16_t DECIMAL_DIGITS{BaseTypeInfo::decimals};
 
   static FixedPoint const TOLERANCE;
   static FixedPoint const _0; /* 0 */
@@ -365,6 +365,7 @@ public:
   /////////////////////
 
   constexpr Type        Data() const;
+  constexpr Type &      Data();
   constexpr void        SetData(Type n) const;
   constexpr Type const *pointer() const;
   constexpr Type *      pointer();
@@ -397,6 +398,28 @@ public:
   static constexpr FixedPoint ACosH(FixedPoint const &x);
   static constexpr FixedPoint ATanH(FixedPoint const &x);
 
+  /**
+   * helper function that checks there is no overflow
+   * @tparam T the input original type
+   * @param n the value of the datum
+   * @return true if there is no overflow, false otherwise
+   */
+  static constexpr bool CheckOverflow(NextType x)
+  {
+    return (x > NextType(MAX));
+  }
+
+  /**
+   * helper function that checks there is no underflow
+   * @tparam T the input original type
+   * @param n the value of the datum
+   * @return true if there is no overflow, false otherwise
+   */
+  static constexpr bool CheckUnderflow(NextType x)
+  {
+    return (x < NextType(MIN));
+  }
+
 private:
   Type data_{0};  // the value to be stored
 
@@ -412,17 +435,6 @@ private:
   constexpr FixedPoint(Type n, const NoScale & /*unused*/)
     : data_(n)
   {}
-
-  /**
-   * helper function that checks no bit overflow when shifting
-   * @tparam T the input original type
-   * @param n the value of the datum
-   * @return true if there is no overflow, false otherwise
-   */
-  static constexpr bool CheckOverflow(NextType x)
-  {
-    return (x < NextType(MIN)) || (x > NextType(MAX));
-  }
 
   /**
    * helper function that checks no rounding error when casting
@@ -559,21 +571,15 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::FP_MAX{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MAX)};
 template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::FP_MIN{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN)};
-template <uint16_t I, uint16_t F>
+template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::NaN{
-    FixedPoint<I, F>::FromBase(static_cast<typename FixedPoint<I, F>::Type>(1)
-                                   << static_cast<uint32_t>(FixedPoint<I, F>::TOTAL_BITS - 1) |
-                               static_cast<typename FixedPoint<I, F>::Type>(1))};
-template <uint16_t I, uint16_t F>
+    FixedPoint<I, F>::FromBase(Type(1) << (TOTAL_BITS - 1) | FRACTIONAL_MASK)};
+template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::POSITIVE_INFINITY{
-    FixedPoint<I, F>::NaN |
-    FixedPoint<I, F>::FromBase(static_cast<typename FixedPoint<I, F>::Type>(1)
-                               << static_cast<uint32_t>(FixedPoint<I, F>::FRACTIONAL_BITS - 1))};
-template <uint16_t I, uint16_t F>
+    FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MAX + FixedPoint<I, F>::ONE_MASK)};
+template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::NEGATIVE_INFINITY{
-    FixedPoint<I, F>::NaN |
-    FixedPoint<I, F>::FromBase(static_cast<typename FixedPoint<I, F>::Type>(3)
-                               << static_cast<uint32_t>(FixedPoint<I, F>::FRACTIONAL_BITS - 2))};
+    FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN - FixedPoint<I, F>::ONE_MASK)};
 
 template <uint16_t I, uint16_t F>
 std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
@@ -665,11 +671,20 @@ constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsInteger<T> * /*unused*/)
   if (CheckOverflow(static_cast<NextType>(n)))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
   }
-  Type s    = (data_ < 0) - (data_ > 0);
-  Type abs_ = s * data_;
-  abs_ <<= FRACTIONAL_BITS;
-  data_ = s * abs_;
+  else if (CheckUnderflow(static_cast<NextType>(n)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+  else
+  {
+    Type s    = (data_ < 0) - (data_ > 0);
+    Type abs_ = s * data_;
+    abs_ <<= FRACTIONAL_BITS;
+    data_ = s * abs_;
+  }
 }
 
 /**
@@ -685,6 +700,12 @@ constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsFloat<T> * /*unused*/)
   if (CheckOverflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
   }
 }
 
@@ -847,10 +868,19 @@ template <uint16_t I, uint16_t F>  // NOLINT
 template <typename T>
 constexpr meta::IfIsInteger<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T const &n)  // NOLINT
 {
-  data_ = {static_cast<Type>(n) << static_cast<Type>(FRACTIONAL_BITS)};
   if (CheckOverflow(static_cast<NextType>(n)))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(n)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+  else
+  {
+    data_ = {static_cast<Type>(n) << static_cast<Type>(FRACTIONAL_BITS)};
   }
   return *this;
 }
@@ -864,10 +894,19 @@ template <uint16_t I, uint16_t F>  // NOLINT
 template <typename T>
 constexpr meta::IfIsFloat<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T const &n)  // NOLINT
 {
-  data_ = static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK);
   if (CheckOverflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+  else
+  {
+    data_ = static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK);
   }
   return *this;
 }
@@ -1115,8 +1154,17 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator++()
   if (CheckOverflow(static_cast<NextType>(data_) + static_cast<NextType>(_1.Data())))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
   }
-  data_ += ONE_MASK;
+  else if (CheckUnderflow(static_cast<NextType>(data_) + static_cast<NextType>(_1.Data())))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+  else
+  {
+    data_ += ONE_MASK;
+  }
   return *this;
 }
 
@@ -1130,8 +1178,17 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator--()
   if (CheckOverflow(static_cast<NextType>(data_) - static_cast<NextType>(_1.Data())))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
   }
-  data_ -= ONE_MASK;
+  else if (CheckUnderflow(static_cast<NextType>(data_) - static_cast<NextType>(_1.Data())))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+  else
+  {
+    data_ -= ONE_MASK;
+  }
   return *this;
 }
 
@@ -1273,12 +1330,31 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator+=(FixedPoint<I, F> const 
   }
   else
   {
-    if (CheckOverflow(static_cast<NextType>(data_) + static_cast<NextType>(n.Data())))
+    if (IsNegInfinity(n))
+    {
+      fp_state |= STATE_INFINITY;
+      *this = NEGATIVE_INFINITY;
+    }
+    else if (IsPosInfinity(n))
+    {
+      fp_state |= STATE_INFINITY;
+      *this = POSITIVE_INFINITY;
+    }
+    else if (CheckOverflow(static_cast<NextType>(data_) + static_cast<NextType>(n.Data())))
     {
       fp_state |= STATE_OVERFLOW;
+      data_ = MAX;
     }
-    Type fp = data_ + n.Data();
-    *this   = FromBase(fp);
+    else if (CheckUnderflow(static_cast<NextType>(data_) + static_cast<NextType>(n.Data())))
+    {
+      fp_state |= STATE_OVERFLOW;
+      data_ = MIN;
+    }
+    else
+    {
+      Type fp = data_ + n.Data();
+      *this   = FromBase(fp);
+    }
   }
   return *this;
 }
@@ -1337,12 +1413,31 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator-=(FixedPoint<I, F> const 
   }
   else
   {
-    if (CheckOverflow(static_cast<NextType>(data_) - static_cast<NextType>(n.Data())))
+    if (IsNegInfinity(n))
+    {
+      fp_state |= STATE_INFINITY;
+      *this = POSITIVE_INFINITY;
+    }
+    else if (IsPosInfinity(n))
+    {
+      fp_state |= STATE_INFINITY;
+      *this = NEGATIVE_INFINITY;
+    }
+    else if (CheckOverflow(static_cast<NextType>(data_) - static_cast<NextType>(n.Data())))
     {
       fp_state |= STATE_OVERFLOW;
+      data_ = MAX;
     }
-    Type fp = data_ - n.Data();
-    *this   = FromBase(fp);
+    else if (CheckUnderflow(static_cast<NextType>(data_) - static_cast<NextType>(n.Data())))
+    {
+      fp_state |= STATE_OVERFLOW;
+      data_ = MIN;
+    }
+    else
+    {
+      Type fp = data_ - n.Data();
+      *this   = FromBase(fp);
+    }
   }
   return *this;
 }
@@ -1378,7 +1473,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
     {
       // Normal number, return +/-∞ depending on the sign of n
       fp_state |= STATE_INFINITY;
-      *this = infinity(n > _0);
+      *this = infinity((IsPosInfinity(*this) && n > _0) || (IsNegInfinity(*this) && n < _0));
     }
   }
   else if (IsInfinity(n))
@@ -1393,7 +1488,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
     {
       // Normal number, return +/-∞ depending on the sign of *this
       fp_state |= STATE_INFINITY;
-      *this = infinity(*this > _0);
+      *this = infinity((*this > _0 && IsPosInfinity(n)) || (*this < _0 && IsNegInfinity(n)));
     }
   }
   else
@@ -1402,9 +1497,18 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
     if (CheckOverflow(static_cast<NextType>(prod >> FRACTIONAL_BITS)))
     {
       fp_state |= STATE_OVERFLOW;
+      data_ = MAX;
     }
-    auto fp = Type(prod >> FRACTIONAL_BITS);
-    *this   = FromBase(fp);
+    else if (CheckUnderflow(static_cast<NextType>(prod >> FRACTIONAL_BITS)))
+    {
+      fp_state |= STATE_OVERFLOW;
+      data_ = MIN;
+    }
+    else
+    {
+      auto fp = Type(prod >> FRACTIONAL_BITS);
+      *this   = FromBase(fp);
+    }
   }
   return *this;
 }
@@ -1725,6 +1829,16 @@ constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::Data() const
 }
 
 /**
+ * Return the contents of the FixedPoint object
+ * @return the contents of the FixedPoint object
+ */
+template <std::uint16_t I, std::uint16_t F>
+constexpr typename FixedPoint<I, F>::Type &FixedPoint<I, F>::Data()
+{
+  return data_;
+}
+
+/**
  * Set the contents of the FixedPoint object
  * @param the new contents
  */
@@ -1998,7 +2112,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log2(FixedPoint<I, F> const &x)
     y = _1 / x;
   }
   Type       k = platform::HighestSetBit(y.Data()) - Type(FRACTIONAL_BITS);
-  FixedPoint k_shifted{Type(1) << k};
+  FixedPoint k_shifted{FixedPoint::FromBase((_1.Data()) << k)};
   FixedPoint r = y / k_shifted;
 
   FixedPoint P00{137};

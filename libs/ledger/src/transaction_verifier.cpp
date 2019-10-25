@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "chain/transaction.hpp"
 #include "core/set_thread_name.hpp"
 #include "core/string/to_lower.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
+#include "logging/logging.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"

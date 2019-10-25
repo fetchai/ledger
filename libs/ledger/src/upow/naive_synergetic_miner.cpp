@@ -18,11 +18,13 @@
 
 #include "core/digest.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/work.hpp"
+#include "logging/logging.hpp"
 #include "vm_modules/math/bignumber.hpp"
 
 #include <random>
@@ -192,9 +194,9 @@ SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_
   return contract;
 }
 
-WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &     contract_digest,
-                                           Address const &    contract_address,
-                                           ProblemData const &problem_data)
+WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest,
+                                           chain::Address const &contract_address,
+                                           ProblemData const &   problem_data)
 {
   // create the synergetic contract
   auto contract = LoadContract(contract_digest);
