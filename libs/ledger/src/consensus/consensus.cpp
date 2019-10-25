@@ -142,7 +142,7 @@ Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous)
 
 uint32_t Consensus::GetThreshold(Block const &block)
 {
-  auto cabinet_size = GetCabinet(block)->size();
+  auto cabinet_size = static_cast<double>(GetCabinet(block)->size());
   return static_cast<uint32_t>(std::floor(cabinet_size * threshold_)) + 1;
 }
 
@@ -346,7 +346,9 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       cabinet_member_list.insert(staker.identifier());
     }
 
-    auto threshold = static_cast<uint32_t>(std::floor(cabinet_member_list.size()) * threshold_) + 1;
+    auto threshold = static_cast<uint32_t>(
+                         std::floor(static_cast<double>(cabinet_member_list.size())) * threshold_) +
+                     1;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_.body.block_number,
                    " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,

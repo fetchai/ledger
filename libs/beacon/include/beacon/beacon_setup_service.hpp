@@ -68,6 +68,7 @@ public:
     RESET,
     CONNECT_TO_ALL,
     WAIT_FOR_READY_CONNECTIONS,
+    WAIT_FOR_NOTARISATION_KEYS,
     WAIT_FOR_SHARES,
     WAIT_FOR_COMPLAINTS,
     WAIT_FOR_COMPLAINT_ANSWERS,
@@ -76,7 +77,6 @@ public:
     WAIT_FOR_RECONSTRUCTION_SHARES,
     COMPUTE_PUBLIC_SIGNATURE,
     DRY_RUN_SIGNING,
-    WAIT_FOR_NOTARISATION_KEYS,
     BEACON_READY
   };
 
@@ -133,6 +133,7 @@ public:
   State OnReset();
   State OnConnectToAll();
   State OnWaitForReadyConnections();
+  State OnWaitForNotarisationKeys();
   State OnWaitForShares();
   State OnWaitForComplaints();
   State OnWaitForComplaintAnswers();
@@ -141,13 +142,11 @@ public:
   State OnWaitForReconstructionShares();
   State OnComputePublicSignature();
   State OnDryRun();
-  State OnWaitForNotarisationKeys();
   State OnBeaconReady();
   /// @}
 
   /// Setup management
   /// @{
-
   void QueueSetup(const SharedAeonExecutionUnit &beacon);
   void Abort(uint64_t abort_below);
   void SetBeaconReadyCallback(CallbackFunction callback);
@@ -175,15 +174,16 @@ protected:
   QualComplaintsManager   qual_complaints_manager_;
 
   // Counters for types of messages received
-  std::set<MuddleAddress>                                 shares_received_;
-  std::set<MuddleAddress>                                 coefficients_received_;
-  std::set<MuddleAddress>                                 qual_coefficients_received_;
-  std::map<MuddleAddress, SharesExposedMap>               reconstruction_shares_received_;
-  std::map<MuddleAddress, NotarisationManager::PublicKey> notarisation_keys_received_;
+  std::set<MuddleAddress>                               shares_received_;
+  std::set<MuddleAddress>                               coefficients_received_;
+  std::set<MuddleAddress>                               qual_coefficients_received_;
+  std::map<MuddleAddress, SharesExposedMap>             reconstruction_shares_received_;
+  std::map<MuddleAddress, const NotarisationKeyMessage> notarisation_keys_received_;
 
   /// @name Methods to send messages
   /// @{
   void         SendBroadcast(DKGEnvelope const &env);
+  void         BroadcastNotarisationKeys();
   virtual void BroadcastShares();
   virtual void BroadcastComplaints();
   virtual void BroadcastComplaintAnswers();
