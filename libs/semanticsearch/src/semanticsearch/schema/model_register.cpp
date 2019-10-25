@@ -18,6 +18,8 @@
 
 #include "semanticsearch/schema/model_register.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace semanticsearch {
 

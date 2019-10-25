@@ -18,6 +18,8 @@
 
 #include "semanticsearch/index/in_memory_db_index.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace semanticsearch {
 

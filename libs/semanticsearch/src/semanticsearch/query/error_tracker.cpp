@@ -18,6 +18,8 @@
 
 #include "semanticsearch/query/error_tracker.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace semanticsearch {
 

@@ -18,6 +18,8 @@
 
 #include "semanticsearch/module/builtin_query_function.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace semanticsearch {
 

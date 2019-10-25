@@ -19,7 +19,8 @@ target_link_libraries(fetch-messenger
                       PUBLIC fetch-core
                              fetch-network
                              fetch-semanticsearch
-                             fetch-muddle)
+                             fetch-muddle
+                             fetch-http)
 
 add_test_target()
 

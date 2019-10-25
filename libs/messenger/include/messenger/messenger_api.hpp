@@ -86,6 +86,7 @@ public:
   /// @{
   // TODO: Yet to be written
   /// @}
+
 private:
   /// Networking
   /// @{

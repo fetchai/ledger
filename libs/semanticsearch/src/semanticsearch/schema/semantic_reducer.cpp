@@ -18,6 +18,8 @@
 
 #include "semanticsearch/schema/semantic_reducer.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace semanticsearch {
 

@@ -18,6 +18,8 @@
 
 #include "semanticsearch/index/subscription_group.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace semanticsearch {
 

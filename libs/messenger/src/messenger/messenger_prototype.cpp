@@ -18,6 +18,8 @@
 
 #include "messenger/messenger_prototype.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace messenger {
 

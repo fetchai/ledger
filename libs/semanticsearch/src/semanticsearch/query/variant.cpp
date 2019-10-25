@@ -18,6 +18,8 @@
 
 #include "semanticsearch/query/variant.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace semanticsearch {
 

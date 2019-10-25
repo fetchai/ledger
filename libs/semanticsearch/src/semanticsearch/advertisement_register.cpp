@@ -18,6 +18,8 @@
 
 #include "semanticsearch/advertisement_register.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace semanticsearch {
 

@@ -18,6 +18,8 @@
 
 #include "semanticsearch/agent_directory.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace semanticsearch {
 

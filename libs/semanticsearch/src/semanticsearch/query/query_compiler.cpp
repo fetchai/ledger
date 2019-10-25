@@ -18,6 +18,8 @@
 
 #include "semanticsearch/query/query_compiler.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace semanticsearch {
 
