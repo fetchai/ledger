@@ -93,7 +93,7 @@ T DeterministicShuffle(T &container, uint64_t entropy)
 
 Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
                      StorageInterface &storage, Identity mining_identity, uint64_t aeon_period,
-                     uint64_t cabinet_size, uint32_t block_interval_ms)
+                     uint64_t max_cabinet_size, uint32_t block_interval_ms)
   : storage_{storage}
   , stake_{std::move(stake)}
   , beacon_{std::move(beacon)}
@@ -101,7 +101,7 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain c
   , mining_identity_{std::move(mining_identity)}
   , mining_address_{chain::Address(mining_identity_)}
   , aeon_period_{aeon_period}
-  , max_cabinet_size_{cabinet_size}
+  , max_cabinet_size_{max_cabinet_size}
   , block_interval_ms_{block_interval_ms}
 {
   assert(stake_);

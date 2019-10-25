@@ -37,21 +37,21 @@ storage::ResourceAddress const STORAGE_ADDRESS{"fetch.token.state.aggregation.st
 
 }  // namespace
 
-void StakeManager::UpdateCurrentBlock(BlockIndex block_number)
+void StakeManager::UpdateCurrentBlock(BlockIndex block_index)
 {
   // this should never be called for the genesis block
-  assert(block_number != 0);
+  assert(block_index != 0);
 
   // need to evaluate any of the updates from the update queue
   StakeSnapshotPtr next{};
-  if (update_queue_.ApplyUpdates(block_number, current_, next))
+  if (update_queue_.ApplyUpdates(block_index, current_, next))
   {
     // update the entry in the history
-    stake_history_[block_number] = next;
+    stake_history_[block_index] = next;
 
     // the current stake snapshot has been replaced
     current_             = std::move(next);
-    current_block_index_ = block_number;
+    current_block_index_ = block_index;
   }
 
   TrimToSize(stake_history_, HISTORY_LENGTH);

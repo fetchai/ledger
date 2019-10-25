@@ -46,7 +46,6 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::json::JSONDocument;
 using fetch::storage::ResourceAddress;

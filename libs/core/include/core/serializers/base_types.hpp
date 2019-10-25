@@ -836,7 +836,8 @@ public:
     {
       throw SerializableException(std::string("std::shared_ptr should have 0 or 1 elements"));
     }
-    else if (array.size() == 1)
+
+    if (array.size() == 1)
     {
       output = std::make_shared<V>();
       array.GetNextValue(*output);
@@ -876,7 +877,8 @@ public:
     {
       throw SerializableException(std::string("std::unique_ptr should have 0 or 1 elements"));
     }
-    else if (array.size() == 1)
+
+    if (array.size() == 1)
     {
       output = std::make_shared<V>();
       array.GetNextValue(*output);

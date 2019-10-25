@@ -47,10 +47,8 @@ public:
     {
       return static_cast<uint64_t>(std::chrono::duration_cast<Duration>(deadline_ - now).count());
     }
-    else
-    {
-      return 0;
-    }
+
+    return 0;
   }
 
   // Operators

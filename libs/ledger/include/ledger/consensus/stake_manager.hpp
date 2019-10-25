@@ -84,8 +84,6 @@ public:
   // Accessors for the executor
   StakeUpdateQueue &      update_queue();
   StakeUpdateQueue const &update_queue() const;
-  //  uint64_t                committee_size() const;
-  //  void                    SetCommitteeSize(uint64_t size);
 
   std::shared_ptr<StakeSnapshot const> GetCurrentStakeSnapshot() const;
 
