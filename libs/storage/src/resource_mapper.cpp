@@ -18,12 +18,12 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/resource_mapper.hpp"
-#include "core/logging.hpp"
 
 #include <limits>
 #include <type_traits>

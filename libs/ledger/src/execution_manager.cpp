@@ -42,9 +42,6 @@ static constexpr char const *LOGGING_NAME              = "ExecutionManager";
 static constexpr std::size_t MAX_STARTUP_ITERATIONS    = 20;
 static constexpr std::size_t STARTUP_ITERATION_TIME_MS = 100;
 
-#define DELETE_LATER(...) __VA_ARGS__
-#define LWARN(...) FETCH_LOG_WARN(LOGGING_NAME, __func__, ": ", __VA_ARGS__)
-#define HEX(...) (__VA_ARGS__).ToHex().SubArray(0, 8)
 namespace fetch {
 namespace ledger {
 
@@ -207,11 +204,9 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
   execution_plan_.clear();
   execution_plan_.resize(block.slices.size());
 
-  DELETE_LATER(LWARN("Block slices size: ", block.slices.size()));
   uint64_t slice_index = 0;
   for (auto const &slice : block.slices)
   {
-	  DELETE_LATER(LWARN("slice of ", slice.size(), " transactions"));
     auto &slice_plan = execution_plan_[slice_index];
 
     // process the transactions
@@ -394,7 +389,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
   while (running_)
   {
     monitor_ready_ = true;
-    DELETE_LATER(LWARN("Monitor running, state ", static_cast<int>(monitor_state)));
 
     switch (monitor_state)
     {
@@ -487,7 +481,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::RUNNING:
     {
-	    DELETE_LATER(LWARN("Monitor running"));
       // wait for the execution to complete
       bool const finished =
           counters_.Wait([](auto const &counters) -> bool { return counters.remaining == 0; },
@@ -495,27 +488,23 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
       if (!finished)
       {
-	      DELETE_LATER(LWARN("Non-finished"));
         counters_.ApplyVoid([](auto const &counters) {
           FETCH_LOG_WARN(LOGGING_NAME, "### Extra long execution: remaining: ", counters.remaining);
         });
       }
       else
       {
-	      DELETE_LATER(LWARN("Finished"));
         // evaluate the status of the executions
         std::size_t num_complete{0};
         std::size_t num_stalls{0};
         std::size_t num_errors{0};
         std::size_t num_fatal_errors{0};
 
-	DELETE_LATER(LWARN("execution plan size: ", execution_plan_.size(), "; current slice: ", current_slice, "; items in slice: ", execution_plan_[current_slice].size()));
         // look through all execution items and determine if it was successful
         for (auto const &item : execution_plan_[current_slice])
         {
           assert(item);
 
-	  DELETE_LATER(LWARN("Item status: ", ToString(item->result().status)));
           switch (item->result().status)
           {
           case ExecutionItem::Status::SUCCESS:
@@ -542,10 +531,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
           // update aggregate fees
           aggregate_block_fees += item->fee();
 
-	  DELETE_LATER(LWARN("Do we have a cache: ", bool(tx_status_cache_)));
           if (tx_status_cache_)
           {
-		  DELETE_LATER(LWARN("Updating item digest"));
             tx_status_cache_->Update(item->digest(), item->result());
           }
         }

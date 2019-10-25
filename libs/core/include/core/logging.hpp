@@ -154,7 +154,8 @@ void LogCriticalV2(char const *name, Args &&... args)
 }
 
 template <class F, class... Args>
-inline decltype(auto) TraceCall(char const *name, std::string const &message, F &&f, Args &&...args)
+inline decltype(auto) TraceCall(char const *name, std::string const &message, F &&f,
+                                Args &&... args)
 {
   Log(LogLevel::DEBUG, name, message);
   return std::forward<F>(f)(std::forward<Args>(args)...);

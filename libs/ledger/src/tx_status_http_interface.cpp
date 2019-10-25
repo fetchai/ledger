@@ -111,12 +111,10 @@ Variant ToVariant(Digest const &digest, TransactionStatusCache::TxStatus const &
 }
 }  // namespace
 
-#define DELETE_LATER(...) FETCH_LOG_DEBUG(LOGGING_NAME, __VA_ARGS__)
 TxStatusHttpInterface::TxStatusHttpInterface(TxStatusCachePtr status_cache)
   : status_cache_{std::move(status_cache)}
 {
   assert(status_cache_);
-  DELETE_LATER("Creating tx st hppt ix");
 
   Get("/api/status/tx/(digest=[a-fA-F0-9]{64})", "Retrieves a transaction status.",
       {
@@ -125,7 +123,6 @@ TxStatusHttpInterface::TxStatusHttpInterface(TxStatusCachePtr status_cache)
       [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
         FETCH_UNUSED(request);
 
-	DELETE_LATER("Processing a request");
         if (params.Has("digest"))
         {
           // convert the digest back to binary
@@ -138,7 +135,6 @@ TxStatusHttpInterface::TxStatusHttpInterface(TxStatusCachePtr status_cache)
 
           return http::CreateJsonResponse(response);
         }
-	DELETE_LATER("Returning bad request");
 
         return http::CreateJsonResponse("{}", http::Status::CLIENT_ERROR_BAD_REQUEST);
       });

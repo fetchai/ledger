@@ -48,7 +48,6 @@ using fetch::generics::MilliTimer;
 namespace fetch {
 namespace ledger {
 
-#define DELETE_LATER(...) FETCH_LOG_WARN(LOGGING_NAME, __func__, ": ", __VA_ARGS__)
 /**
  * Constructs the main chain
  *
@@ -96,7 +95,7 @@ void MainChain::Reset()
 {
   FETCH_LOCK(lock_);
 
-  value_util::ClearAll(tips_, loose_blocks_, block_chain_, references_, heaviest_);
+  value_util::ClearAll(tips_, loose_blocks_, block_chain_, references_, referred_, heaviest_);
 
   if (block_store_)
   {
@@ -148,13 +147,27 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
   assert(static_cast<bool>(block));
 
   auto const &hash{block->body.hash};
-  auto ret_val{block_chain_.emplace(hash, block)};
+  auto        ret_val{block_chain_.emplace(hash, block)};
   // under all circumstances, it _should_ be a fresh block
   ASSERT(ret_val.second);
   // keep parent-child reference
   if (!block->IsGenesis())
   {
-    references_.emplace(block->body.previous_hash, std::move(hash));
+    if (!referred_.count(hash))
+    {
+      references_.emplace(block->body.previous_hash, hash);
+      referred_.insert(std::move(hash));
+    }
+#ifndef NDEBUG
+    else
+    {
+      auto siblings{references_.equal_range(block->body.previous_hash)};
+      assert(block->IsGenesis() ||
+             std::find_if(siblings.first, siblings.second, [&hash](auto &&sibling) {
+               return sibling.second == hash;
+             }) != siblings.second);
+    }
+#endif
   }
 }
 
@@ -203,12 +216,11 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   // detect if any of this block's children has somehow made it to the store already
   // TODO(bipll): is this needed?
   auto forward_refs{references_.equal_range(hash)};
-  for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
+  for (auto child_itr{forward_refs.first}; child_itr != forward_refs.second; ++child_itr)
   {
-    BlockHash const &child{ref_it->second};
-    if (block_store_->Has(storage::ResourceID(child)))
+    if (block_store_->Has(storage::ResourceID(child_itr->second)))
     {
-      record.next_hash = child;
+      record.next_hash = child_itr->second;
       break;
     }
   }
@@ -237,8 +249,22 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
 
     if (!record.next_hash.empty())
     {
-      // What you hear is not a tip.
-      references_.emplace(hash, record.next_hash);
+      if (!referred_.count(hash))
+      {
+        // What you hear is not a tip.
+        references_.emplace(hash, record.next_hash);
+        referred_.insert(hash);
+      }
+#ifndef NDEBUG
+      else
+      {
+        auto siblings{references_.equal_range(block.body.previous_hash)};
+        assert(block.IsGenesis() ||
+               std::find_if(siblings.first, siblings.second, [&hash](auto &&sibling) {
+                 return sibling.second == hash;
+               }) != siblings.second);
+      }
+#endif
     }
 
     if (next_hash != nullptr)
@@ -288,19 +314,20 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
 {
   // check if the block is actually found in this chain
   IntBlockPtr root;
-  bool        retVal{LookupBlock(removed_hash, root)};
-  if (retVal)
+  bool        ret_val{LookupBlock(removed_hash, root)};
+  if (ret_val)
   {
     // forget the forward ref to this block from its parent
     auto siblings{references_.equal_range(root->body.previous_hash)};
-    for (auto sibling{siblings.first}; sibling != siblings.second; ++sibling)
+    for (auto sibling_itr{siblings.first}; sibling_itr != siblings.second; ++sibling_itr)
     {
-      if (sibling->second == removed_hash)
+      if (sibling_itr->second == removed_hash)
       {
-        references_.erase(sibling);
+        references_.erase(sibling_itr);
         break;
       }
     }
+    referred_.erase(removed_hash);
   }
 
   for (BlockHashes next_gen{removed_hash}; !next_gen.empty();)
@@ -324,12 +351,16 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
       // next, remove the block record from the cache, if found
       if (block_chain_.erase(hash) != 0u)
       {
-        retVal = true;
+        ret_val = true;
+      }
+      for (auto &&unreferred : next_gen)
+      {
+        referred_.erase(unreferred);
       }
     }
   }
 
-  return retVal;
+  return ret_val;
 }
 
 /**
@@ -464,7 +495,8 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limi
     // Travel back in time.
     auto lim = static_cast<uint64_t>(-limit);
     // An empty starting hash designates starting from the very tip.
-    auto ret_blocks = current_hash.empty()? GetHeaviestChain(lim) : GetChainPreceding(std::move(current_hash), lim);
+    auto ret_blocks = current_hash.empty() ? GetHeaviestChain(lim)
+                                           : GetChainPreceding(std::move(current_hash), lim);
     if (ret_blocks.empty())
     {
       return {Blocks{}, BlockHash{}, false};
@@ -507,13 +539,14 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limi
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to lookup block");
     }
-    DELETE_LATER("block slices: ", block->body.slices.size());
-    for(std::size_t i{}; i < block->body.slices.size(); ++i) if(!block->body.slices[i].empty()) DELETE_LATER("Slice no. ", i, " contains ", block->body.slices[i].size(), " transactions");
-    if(!block->body.slices.empty()) DELETE_LATER("first slice of ", block->body.slices.front().size(), " transactions");
     // update the results
     result.push_back(std::move(block));
     // walk the stack
     current_hash = std::move(next_hash);
+  }
+  if (current_hash.empty() && (result.empty() || result.back() != GetHeaviestBlock()))
+  {
+    proceed_in_this_direction = false;
   }
 
   return {std::move(result), std::move(current_hash), proceed_in_this_direction};
@@ -870,7 +903,7 @@ void MainChain::WriteToFile()
   {
     return;
   }
-  
+
   MilliTimer myTimer("MainChain::WriteToFile", 500);
 
   // Add confirmed blocks to file, minus finality
@@ -893,8 +926,7 @@ void MainChain::WriteToFile()
 
   if (failed)
   {
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Failed to walk back the chain when writing to file! Block head: ",
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to walk back the chain when writing to file! Block head: ",
                    block_chain_.at(heaviest_.hash)->body.block_number);
     return;
   }
@@ -903,14 +935,14 @@ void MainChain::WriteToFile()
   // Corner case - block is genesis
   if (block->IsGenesis())
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis.");
 
     KeepBlock(block);
     SetHeadHash(block->body.hash);
   }
   else
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Writing block. ", block->body.block_number);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Writing block: ", block->body.block_number);
 
     // Recover the current head block from the file
     IntBlockPtr current_file_head = std::make_shared<Block>();
@@ -939,8 +971,7 @@ void MainChain::WriteToFile()
 
       // Continue to push previous into file
       LookupBlock(block->body.previous_hash, block);
-    }
-    while (!block->IsGenesis());
+    } while (!block->IsGenesis());
 
     // Success - we kept a copy of the new head to write
     SetHeadHash(block_head->body.hash);
@@ -1171,7 +1202,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     // First check if block already exists (not checking in object store)
     if (IsBlockInCache(block->body.hash))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Attempting to add already seen block");
       FETCH_LOG_DEBUG(LOGGING_NAME, "Attempting to add already seen block");
       return BlockStatus::DUPLICATE;
     }
@@ -1193,7 +1223,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
         // since we are connecting to loose block, by definition this block is also loose
         block->is_loose = true;
 
-        FETCH_LOG_WARN(LOGGING_NAME, "Block connects to loose block");
         FETCH_LOG_DEBUG(LOGGING_NAME, "Block connects to loose block");
       }
     }
@@ -1202,8 +1231,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
       // This is the normal case where we do not have a previous hash
       block->is_loose = true;
 
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Previous block not found: ", byte_array::ToBase64(block->body.previous_hash));
       FETCH_LOG_DEBUG(LOGGING_NAME, "Previous block not found: ",
                       byte_array::ToBase64(block->body.previous_hash));
     }
@@ -1223,7 +1250,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 
   if (block->is_loose)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Is loose");
     // record the block as loose
     RecordLooseBlock(block);
     return BlockStatus::LOOSE;
@@ -1264,6 +1290,31 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 }
 
 /**
+ * Lookup next_hash for a block in-memory.
+ * This procedure may fail in which case next_hash should either be looked for in storage,
+ * or recovered via descent from tip.
+ *
+ * @param hash Hash of the current block
+ * @param[out] next_hash Hash of unique block grown from this
+ * @return true iff a single forward reference is found in cache
+ */
+bool MainChain::LookupNextHash(BlockHash const &hash, BlockHash &next_hash) const
+{
+  switch (references_.count(hash))
+  {
+  case 0:
+    next_hash = BlockHash{};
+    return true;
+  case 1:
+    next_hash = references_.find(hash)->second;
+    return true;
+  default:
+    // ambiguous forward references need to be resolved from tip
+    return false;
+  }
+}
+
+/**
  * Attempt to lookup a block.
  *
  * The search is performed initially on the in memory cache and then if this fails the persistent
@@ -1278,26 +1329,20 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
 {
   if (LookupBlockFromCache(hash, block))
   {
-    // Check if forward reference is requested.
-    if (next_hash == nullptr)
+    if (!next_hash || LookupNextHash(hash, *next_hash))
     {
       return true;
-    }
-    // We'll need to check if there is a unique block next to this one.
-    switch (references_.count(hash))
-    {
-    case 0:
-      *next_hash = BlockHash{};
-      return true;
-    case 1:
-      *next_hash = references_.find(hash)->second;
-      return true;
-    default:
-      // ambiguous forward references need to be resolved from storage
-      break;
     }
   }
-  return LookupBlockFromStorage(hash, block, next_hash);
+  if (LookupBlockFromStorage(hash, block, next_hash))
+  {
+    if (next_hash && next_hash->empty())
+    {
+      return LookupNextHash(hash, *next_hash);
+    }
+    return true;
+  }
+  return false;
 }
 
 /**

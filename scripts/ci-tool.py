@@ -300,7 +300,8 @@ def test_end_to_end(project_root, build_root, names_filter=None):
 
     clean_files(build_root)
 
-    run_end_to_end_test.run_test(build_root, yaml_file, constellation_exe, names_filter)
+    run_end_to_end_test.run_test(
+        build_root, yaml_file, constellation_exe, names_filter)
 
 
 def test_language(build_root):

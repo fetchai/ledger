@@ -180,18 +180,19 @@ public:
   MainChain &operator=(MainChain &&rhs) = delete;
 
 private:
-  using DbRecord      = BlockDbRecord;
-  using IntBlockPtr   = std::shared_ptr<Block>;
-  using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
-  using References    = std::unordered_multimap<BlockHash, BlockHash>;
-  using Proof         = Block::Proof;
-  using TipsMap       = std::unordered_map<BlockHash, Tip>;
-  using BlockHashList = std::list<BlockHash>;
-  using LooseBlockMap = std::unordered_map<BlockHash, BlockHashList>;
-  using BlockStore    = fetch::storage::ObjectStore<DbRecord>;
-  using BlockStorePtr = std::unique_ptr<BlockStore>;
-  using RMutex        = std::recursive_mutex;
-  using RLock         = std::unique_lock<RMutex>;
+  using DbRecord       = BlockDbRecord;
+  using IntBlockPtr    = std::shared_ptr<Block>;
+  using BlockMap       = std::unordered_map<BlockHash, IntBlockPtr>;
+  using References     = std::unordered_multimap<BlockHash, BlockHash>;
+  using ReferredBlocks = std::unordered_set<BlockHash>;
+  using Proof          = Block::Proof;
+  using TipsMap        = std::unordered_map<BlockHash, Tip>;
+  using BlockHashList  = std::list<BlockHash>;
+  using LooseBlockMap  = std::unordered_map<BlockHash, BlockHashList>;
+  using BlockStore     = fetch::storage::ObjectStore<DbRecord>;
+  using BlockStorePtr  = std::unique_ptr<BlockStore>;
+  using RMutex         = std::recursive_mutex;
+  using RLock          = std::unique_lock<RMutex>;
 
   struct HeaviestTip
   {
@@ -225,6 +226,7 @@ private:
   bool IsBlockInCache(BlockHash const &hash) const;
   void AddBlockToCache(IntBlockPtr const &block) const;
   void AddBlockToBloomFilter(Block const &block) const;
+  bool LookupNextHash(BlockHash const &hash, BlockHash &next_hash) const;
   /// @}
 
   /// @name Low-level storage interface
@@ -256,6 +258,7 @@ private:
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
   // The whole tree of previous-next relations among cached blocks
   mutable References                references_;
+  mutable ReferredBlocks            referred_;      ///< Blocks known to be mapped in this tree
   TipsMap                           tips_;          ///< Keep track of the tips
   HeaviestTip                       heaviest_;      ///< Heaviest block/tip
   LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks

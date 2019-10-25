@@ -22,9 +22,6 @@
 #include <unordered_set>
 #include <utility>
 
-#define DELETE_LATER(...) __VA_ARGS__
-#define LWARN(...) FETCH_LOG_WARN("TransactionLayoutQueue", __func__, ": ", __VA_ARGS__)
-#define HEX(...) (__VA_ARGS__).ToHex().SubArray(0, 8)
 namespace fetch {
 namespace miner {
 

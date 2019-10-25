@@ -223,7 +223,7 @@ bool Executor::RetrieveTransaction(Digest const &digest)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Exception caught when retrieving tx from store: ", ex.what());
   }
-  
+
   return false;
 }
 

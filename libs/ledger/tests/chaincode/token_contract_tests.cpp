@@ -350,7 +350,7 @@ TEST_F(TokenContractTests, CheckDeedAmend)
 
 TEST_F(TokenContractTests, DISABLED_CheckDeedDeletion)
 {
-  uint64_t const original_wealth  = 1000;
+  uint64_t const original_wealth = 1000;
   uint64_t const transfer_amount = 400;
 
   Entities entities(4);

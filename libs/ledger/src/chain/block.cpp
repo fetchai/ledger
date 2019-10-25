@@ -62,7 +62,7 @@ void Block::UpdateDigest()
   else
   {
     crypto::MerkleTree tx_merkle_tree{GetTransactionCount()};
-  
+
     // Populate the merkle tree
     std::size_t index{0};
     for (auto const &slice : body.slices)
@@ -72,15 +72,15 @@ void Block::UpdateDigest()
         tx_merkle_tree[index++] = tx.digest();
       }
     }
-  
+
     // Calculate the root
     tx_merkle_tree.CalculateRoot();
-  
+
     // Generate hash stream
     serializers::MsgPackSerializer buf;
     buf << body.previous_hash << body.merkle_hash << body.block_number << body.miner
         << body.log2_num_lanes << body.timestamp << tx_merkle_tree.root() << nonce;
-  
+
     // Generate the hash
     crypto::SHA256 hash;
     hash.Update(buf.data());

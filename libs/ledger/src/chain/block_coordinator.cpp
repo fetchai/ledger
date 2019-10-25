@@ -71,10 +71,6 @@ const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
 
-#define DELETE_LATER(...) __VA_ARGS__
-#define LWARN(...) FETCH_LOG_WARN(LOGGING_NAME, __func__, ": ", __VA_ARGS__)
-#define HEX(...) (__VA_ARGS__).ToHex().SubArray(0, 8)
-
 SynergeticExecMgrPtr CreateSynergeticExecutor(DAGPtr dag, StorageUnitInterface &storage_unit)
 {
   return std::make_unique<SynergeticExecutionManager>(
@@ -282,7 +278,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   // ensure that we have a current block that we are executing
   if (!current_block_)
   {
-	  DELETE_LATER(LWARN("Taking heaviest block"));
     current_block_ = chain_.GetHeaviestBlock();
   }
 
@@ -296,7 +291,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
   // update the current block telemetry
   current_block_num_->set(current_block_->body.block_number);
-  DELETE_LATER(LWARN("Current block num: ", current_block_num_));
 
   // determine if extra debug is wanted or needed
   bool const extra_debug = syncing_periodic_.Poll();
@@ -330,12 +324,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   // initial condition, the last processed block is empty
   if (last_processed_block.empty())
   {
-	  DELETE_LATER(LWARN("Last processed empty"));
     // start up - we need to work out which of the blocks has been executed previously
 
     if (current_block_->IsGenesis())
     {
-	    DELETE_LATER(LWARN("Current is genesis, on to pre exec"));
       // once we have got back to genesis then we need to start executing from the beginning
       return State::PRE_EXEC_BLOCK_VALIDATION;
     }
@@ -344,7 +336,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     auto previous_block = chain_.GetBlock(previous_hash);
     if (!previous_block)
     {
-	    DELETE_LATER(LWARN("No block with prev hash ", previous_hash.ToHex(), " on our chain"));
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
       return State::RESET;
     }
@@ -354,13 +345,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   }
   else if (current_hash == last_processed_block)
   {
-	  DELETE_LATER(LWARN("On to synchronised"));
     // the block coordinator has now successfully synced with the chain of blocks.
     return State::SYNCHRONISED;
   }
   else
   {
-	  DELETE_LATER(LWARN("Normal case"));
     // normal case - we have processed at least one block
 
     // find the path to ancestor - retain this path if it is long for efficiency reasons.
@@ -368,17 +357,14 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     if (blocks_to_common_ancestor_.empty())
     {
-	    DELETE_LATER(LWARN("No blocks to common ancestor"));
       lookup_success = chain_.GetPathToCommonAncestor(
           blocks_to_common_ancestor_, current_hash, last_processed_block,
           COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT, MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT);
-      DELETE_LATER(LWARN("Lookup success: ", lookup_success));
     }
     else
     {
       lookup_success = true;
     }
-      DELETE_LATER(LWARN("Lookup success: ", lookup_success));
 
     if (!lookup_success)
     {
@@ -396,7 +382,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     // update the telemetry
     next_block_num_->set(next_block->body.block_number);
-    DELETE_LATER(LWARN("Next block num: ", next_block_num_));
 
     if (extra_debug)
     {
@@ -462,7 +447,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
       return State::RESET;
     }
 
-    DELETE_LATER(LWARN("Ok, now we're here"));
     // update the current block and begin scheduling
     current_block_ = next_block;
 
@@ -470,7 +454,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     if (blocks_to_common_ancestor_.size() < THRESHOLD_FOR_FAST_SYNCING)
     {
-	    DELETE_LATER(LWARN("Blocks below threshold"));
       blocks_to_common_ancestor_.clear();
     }
 
@@ -1129,7 +1112,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   {
     block = next_block_.get();
   }
-  else if(current_block_)
+  else if (current_block_)
   {
     block = current_block_.get();
   }
@@ -1148,7 +1131,6 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   if (consensus_)
   {
-	  DELETE_LATER(LWARN("There's consensus"));
     consensus_->UpdateCurrentBlock(*block);
     consensus_->Refresh();
   }
@@ -1168,7 +1150,6 @@ bool BlockCoordinator::ScheduleCurrentBlock()
   // sanity check - ensure there is a block to execute
   if (current_block_)
   {
-	  DELETE_LATER(LWARN("Current block hash ", HEX(current_block_->body.hash)));
     success = ScheduleBlock(*current_block_);
   }
   else
@@ -1185,7 +1166,6 @@ bool BlockCoordinator::ScheduleNextBlock()
 
   if (next_block_)
   {
-	  DELETE_LATER(LWARN("Next block hash ", HEX(next_block_->body.hash)));
     success = ScheduleBlock(*next_block_);
   }
   else
@@ -1200,7 +1180,6 @@ bool BlockCoordinator::ScheduleBlock(Block const &block)
 {
   bool success{false};
 
-  DELETE_LATER(LWARN("Attempting exec on block: 0x", block.body.hash.ToHex()));
   // instruct the execution manager to execute the current block
   auto const execution_status = execution_manager_.Execute(block.body);
 

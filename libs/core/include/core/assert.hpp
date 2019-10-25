@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
+#include "meta/value_util.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -26,40 +27,33 @@
 namespace fetch {
 namespace assert {
 namespace details {
-struct Printer
-{
-  template <typename T, typename... Args>
-  static void Print(T const &next, Args... args)
-  {
-    std::cerr << next;
-    Print(args...);
-  }
 
-  template <typename T>
-  static void Print(T const &next)
-  {
-    std::cerr << next;
-  }
-};
+template <typename... Args>
+constexpr void Print(Args &&... args)
+{
+  value_util::ForEach([](auto &&arg) { std::cerr << std::forward<decltype(arg)>(arg); },
+                      std::forward<Args>(args)...);
+}
+
 }  // namespace details
 }  // namespace assert
 }  // namespace fetch
 
 #ifndef FETCH_DISABLE_TODO_COUT
 
-#define TODO_FAIL(...)                                                        \
-  fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
-  FETCH_LOG_ERROR("TODO_FAIL", "About to fail.");                             \
-  std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; \
-  throw std::runtime_error("Dependence on non-existing functionality!");
+#define TODO_FAIL(...)                                              \
+  fetch::assert::details::Print(__VA_ARGS__);                       \
+  FETCH_LOG_ERROR("TODO_FAIL", "About to fail.");                   \
+  std::cerr << '\n' << __FILE__ << " at line " << __LINE__ << '\n'; \
+  throw std::runtime_error("Dependence on non-existing functionality!")
 
-#define TODO(...)                                      \
-  fetch::assert::details::Printer::Print(__VA_ARGS__); \
-  std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl;
+#define TODO(...)                             \
+  fetch::assert::details::Print(__VA_ARGS__); \
+  std::cerr << '\n' << __FILE__ << " at line " << __LINE__ << '\n'
 
 #else
 
-#define TODO_FAIL(...) throw std::runtime_error("Dependence on non-existing functionality!");
+#define TODO_FAIL(...) throw std::runtime_error("Dependence on non-existing functionality!")
 #define TODO(...)
 
 #endif

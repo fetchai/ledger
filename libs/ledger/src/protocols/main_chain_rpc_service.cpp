@@ -45,7 +45,6 @@ constexpr char const *MainChainRpcService::LOGGING_NAME;
 
 namespace {
 
-#define DELETE_LATER(...) FETCH_LOG_WARN(LOGGING_NAME, __VA_ARGS__)
 using fetch::muddle::Packet;
 using fetch::byte_array::ToBase64;
 
@@ -212,7 +211,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Recv Ref TX: ", ToBase64(tx.digest()));
     }
   }
-#endif  // FETCH_LOG_INFO_ENABLED
+#endif  // FETCH_LOG_DEBUG_ENABLED
 
   if (IsBlockValid(block))
   {
@@ -277,12 +276,9 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 
   for (auto &block : block_list)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Adding a block ", block.body.hash.ToHex(), "  <--  ",
-                   block.body.previous_hash.ToHex(), "  (", block.body.block_number);
     // skip the genesis block
     if (block.IsGenesis())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Looks like genesis block");
       if (block.body.hash != GENESIS_DIGEST)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Genesis hash mismatch: actual 0x", block.body.hash.ToHex(),
@@ -292,8 +288,6 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
       continue;
     }
 
-    DELETE_LATER("block slices: ", block.body.slices.size());
-    for(std::size_t i{}; i < block.body.slices.size(); ++i) if(!block.body.slices[i].empty()) DELETE_LATER("Slice no. ", i, " contains ", block.body.slices[i].size(), " transactions");
     // recompute the digest
     block.UpdateDigest();
 
@@ -357,14 +351,12 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
 
 MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "Waiting for heaviest chain");
   state_wait_heaviest_->increment();
 
   State next_state{State::WAIT_FOR_HEAVIEST_CHAIN};
 
   if (!current_request_)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Missing current request");
     // something went wrong we should attempt to request the chain again
     next_state = State::REQUEST_HEAVIEST_CHAIN;
   }
@@ -377,29 +369,18 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
     {
       if (PromiseState::SUCCESS == status)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Status of success (success gives you a status)");
         // The request was successful, simply hand off the blocks to be added to the chain.
         // Quite likely, we'll need more main chain blocks so preset the state.
         next_state = State::REQUEST_HEAVIEST_CHAIN;
 
         auto peer_response = current_request_->As<MainChainProtocol::Travelogue>();
-        FETCH_LOG_WARN(LOGGING_NAME, "Received ", peer_response.blocks.size(),
-                       " blocks, next hash of ", peer_response.next_hash.ToHex());
-        for (auto const &b : peer_response.blocks)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Received a block ", b.body.hash.ToHex(), "  <--  ",
-                         b.body.previous_hash.ToHex(), "  (", b.body.block_number);
-        }
         if (HandleChainResponse(current_peer_address_, std::move(peer_response.blocks)))
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Now what");
-	  if (peer_response.proceed)
+          if (peer_response.proceed)
           {
-            FETCH_LOG_WARN(LOGGING_NAME, "Next hash full");
             next_hash_requested_ = std::move(peer_response.next_hash);
             if (next_hash_requested_.empty())
             {
-              FETCH_LOG_WARN(LOGGING_NAME, "Next hash empty");
               // Empty next hash to retrieve indicates the whole chain has been received.
               next_state = State::SYNCHRONISING;
               // clear the state
@@ -408,7 +389,6 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
           }
           else
           {
-            FETCH_LOG_WARN(LOGGING_NAME, "Stop here");
             // The remote chain could not resolve forward reference unambiguously.
             next_state           = State::REQUEST_FROM_TIP;
             next_hash_requested_ = Digest{};
@@ -429,7 +409,6 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
     }
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME, "And I go back to ", ToString(next_state));
   return next_state;
 }
 
@@ -456,15 +435,18 @@ MainChainRpcService::State MainChainRpcService::OnRequestFromTip()
       assert(right_edge_->body.block_number > left_edge_->body.block_number + 1);
       // There's known right edge, which designates that we have already started back travel
       // from the tip and need to go further, to close the gap.
-      auto gap_size = -static_cast<int64_t>(right_edge_->body.block_number - left_edge_->body.block_number - 1);
+      auto gap_size =
+          -static_cast<int64_t>(right_edge_->body.block_number - left_edge_->body.block_number - 1);
       current_request_ = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-          MainChainProtocol::TIME_TRAVEL, right_edge_->body.previous_hash, gap_size);
+                                                         MainChainProtocol::TIME_TRAVEL,
+                                                         right_edge_->body.previous_hash, gap_size);
     }
     else
     {
       // This is the very first descent, should be run from tip.
-      current_request_ = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-          MainChainProtocol::HEAVIEST_CHAIN, left_edge_->body.block_number, MAX_CHAIN_REQUEST_SIZE);
+      current_request_ = rpc_client_.CallSpecificAddress(
+          current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN,
+          left_edge_->body.block_number, MAX_CHAIN_REQUEST_SIZE);
     }
 
     next_state = State::WAIT_FROM_TIP;
@@ -476,62 +458,61 @@ MainChainRpcService::State MainChainRpcService::OnRequestFromTip()
 
 MainChainRpcService::State MainChainRpcService::OnWaitFromTip()
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "state_wait_heaviest_->increment();"); state_wait_heaviest_->increment();  // we're still retrieving the heaviest chain
+  state_wait_heaviest_->increment();  // we're still retrieving the heaviest chain
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "State next_state{State::WAIT_FROM_TIP};"); State next_state{State::WAIT_FROM_TIP};
+  State next_state{State::WAIT_FROM_TIP};
 
   if (!current_request_)
   {
     // Something went wrong; we should attempt to request this subchain again.
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "next_state = retrieval_phase_;"); next_state = retrieval_phase_;
+    next_state = retrieval_phase_;
   }
   else
   {
     // Determine the status of the request that is in flight.
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "auto const status = current_request_->state();"); auto const status = current_request_->state();
+    auto const status = current_request_->state();
 
     if (PromiseState::SUCCESS == status)
     {
       // The request was successful, simply hand off the blocks to be added to the chain.
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "BlockList blocks;"); BlockList blocks;
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "Digest next_hash;"); Digest next_hash;
+      BlockList blocks;
+      Digest    next_hash;
       if (right_edge_)
       {
         // It's not the first back travel request in this sync.
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "auto peer_response = current_request_->As<MainChainProtocol::Travelogue>();"); auto peer_response = current_request_->As<MainChainProtocol::Travelogue>();
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "blocks = std::move(peer_response.blocks);"); blocks = std::move(peer_response.blocks);
-	FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "next_hash = std::move(peer_response.next_hash);"); next_hash = std::move(peer_response.next_hash);
+        auto peer_response = current_request_->As<MainChainProtocol::Travelogue>();
+        blocks             = std::move(peer_response.blocks);
+        next_hash          = std::move(peer_response.next_hash);
       }
       else
       {
         // GetHeaviestChain() simply returns an array of blocks.
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "blocks = current_request_->As<BlockList>();"); blocks = current_request_->As<BlockList>();
-	if (!blocks.empty())
-	{
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "next_hash = blocks.front().body.previous_hash;"); next_hash = blocks.front().body.previous_hash;
-	}
+        blocks = current_request_->As<BlockList>();
+        if (!blocks.empty())
+        {
+          next_hash = blocks.front().body.previous_hash;
+        }
       }
       if (blocks.empty())
       {
-	      // In this state handler, it indicates an error occured.
-	      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "return retrieval_phase_;"); return retrieval_phase_;
+        // In this state handler, it indicates an error occured.
+        return retrieval_phase_;
       }
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "auto const &expected_body{right_edge_->body};"); auto const &expected_body{right_edge_->body};
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "auto const &actual_body{blocks.back().body};"); auto const &actual_body{blocks.back().body};
+      auto const &expected_body{right_edge_->body};
+      auto const &actual_body{blocks.back().body};
       if (expected_body.block_number != actual_body.block_number + 1 ||
           expected_body.previous_hash != actual_body.hash)
       {
-        FETCH_LOG_ERROR(LOGGING_NAME,
-                        "Error: remote subchain does not end at the block expected.");
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "return retrieval_phase_;"); return retrieval_phase_;
+        FETCH_LOG_ERROR(LOGGING_NAME, "Error: remote subchain does not end at the block expected.");
+        return retrieval_phase_;
       }
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "auto const &earliest_body{blocks.front().body};"); auto const &earliest_body{blocks.front().body};
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "auto const &left_edge_body{left_edge_->body};"); auto const &left_edge_body{left_edge_->body};
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "assert(earliest_body.block_number > left_edge_body.block_number);"); assert(earliest_body.block_number > left_edge_body.block_number);
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "assert(blocks.size() == 1 || earliest_body.block_number < blocks.back().body.block_number);"); assert(blocks.size() == 1 || earliest_body.block_number < blocks.back().body.block_number);
+      auto const &earliest_body{blocks.front().body};
+      auto const &left_edge_body{left_edge_->body};
+      assert(earliest_body.block_number > left_edge_body.block_number);
+      assert(blocks.size() == 1 || earliest_body.block_number < blocks.back().body.block_number);
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "const bool gap_closed{earliest_body.block_number == left_edge_body.block_number + 1};"); const bool gap_closed{earliest_body.block_number == left_edge_body.block_number + 1};
+      const bool gap_closed{earliest_body.block_number == left_edge_body.block_number + 1};
       if (gap_closed)
       {
         if (earliest_body.previous_hash != left_edge_body.hash)
@@ -541,14 +522,14 @@ MainChainRpcService::State MainChainRpcService::OnWaitFromTip()
                           earliest_body.block_number, ": actual 0x",
                           earliest_body.previous_hash.ToHex(), ", expected 0x",
                           left_edge_body.hash.ToHex());
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "return retrieval_phase_;"); return retrieval_phase_;
+          return retrieval_phase_;
         }
       }
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "BlockHash earliest_hash;"); BlockHash earliest_hash;
+      BlockHash earliest_hash;
       if (!gap_closed)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "earliest_hash = earliest_body.hash;"); earliest_hash = earliest_body.hash;
+        earliest_hash = earliest_body.hash;
       }
 
       if (HandleChainResponse(current_peer_address_, std::move(blocks)))
@@ -556,24 +537,24 @@ MainChainRpcService::State MainChainRpcService::OnWaitFromTip()
         if (gap_closed)
         {
           // Blocks fit together and there are no more unretrieved blocks left.
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "next_state = State::SYNCHRONISING;"); next_state = State::SYNCHRONISING;
+          next_state = State::SYNCHRONISING;
           // clear the state
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "value_util::ZeroAll(current_peer_address_, current_missing_block_, right_edge_);"); value_util::ZeroAll(current_peer_address_, current_missing_block_, right_edge_);
+          value_util::ZeroAll(current_peer_address_, current_missing_block_, right_edge_);
         }
         else
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "right_edge_ = chain_.GetBlock(earliest_hash);"); right_edge_ = chain_.GetBlock(earliest_hash);
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "assert(right_edge_);"); assert(right_edge_);
+          right_edge_ = chain_.GetBlock(earliest_hash);
+          assert(right_edge_);
 
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "next_hash_requested_ = std::move(next_hash);"); next_hash_requested_ = std::move(next_hash);
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "assert(right_edge_->body.previous_hash == next_hash_requested_);"); assert(right_edge_->body.previous_hash == next_hash_requested_);
+          next_hash_requested_ = std::move(next_hash);
+          assert(right_edge_->body.previous_hash == next_hash_requested_);
 
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "next_state = State::FURTHER_FROM_TIP;"); next_state = State::FURTHER_FROM_TIP;
+          next_state = State::FURTHER_FROM_TIP;
         }
       }
       else
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "next_state = retrieval_phase_;"); next_state = retrieval_phase_;
+        next_state = retrieval_phase_;
       }
     }
     else if (status != PromiseState::WAITING)
@@ -583,11 +564,11 @@ MainChainRpcService::State MainChainRpcService::OnWaitFromTip()
 
       // since we want to sync at least with one chain before proceeding we restart the state
       // machine back to the requesting
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "next_state = retrieval_phase_;"); next_state = retrieval_phase_;
+      next_state = retrieval_phase_;
     }
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Line ", __LINE__, "    ", "return next_state;"); return next_state;
+  return next_state;
 }
 
 MainChainRpcService::State MainChainRpcService::OnFurtherFromTip()

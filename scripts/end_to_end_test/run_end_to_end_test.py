@@ -676,6 +676,7 @@ def run_steps(test_yaml, test_instance):
 def extract_test_name(setup_conditions):
     return extract(setup_conditions, 'test_name', expected=True, expect_type=str)
 
+
 def run_test(build_directory, yaml_file, constellation_exe, name_filter=None):
 
     # Read YAML file

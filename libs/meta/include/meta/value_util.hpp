@@ -109,7 +109,7 @@ class NonClearable
   template <class U>
   static constexpr auto Can(U &&u) -> decltype(u.Clear(), Yes{});
 
-  static constexpr No   Can(...);
+  static constexpr No Can(...);
 
 public:
   enum : bool
@@ -129,7 +129,7 @@ class NonResettable
   template <class U>
   static constexpr auto Can(U &&u) -> decltype(u.Resett(), Yes{});
 
-  static constexpr No   Can(...);
+  static constexpr No Can(...);
 
 public:
   enum : bool
