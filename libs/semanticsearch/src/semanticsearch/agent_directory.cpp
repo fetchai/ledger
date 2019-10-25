@@ -23,11 +23,15 @@ namespace semanticsearch {
 
 AgentDirectory::AgentId AgentDirectory::RegisterAgent(ConstByteArray const &pk)
 {
-  if (pk_to_id_.find(pk) != pk_to_id_.end())
+  // Checking whether the agent exists.
+  auto it = pk_to_id_.find(pk);
+  if (it != pk_to_id_.end())
   {
-    throw std::runtime_error("Agent already registered.");
+    // If so, we just return its id.
+    return it->second;
   }
 
+  // Otherwise we create a new agent id for the pk.
   AgentId id    = counter_;
   agents_[id]   = AgentProfile::New(id);
   pk_to_id_[pk] = id;
@@ -38,29 +42,58 @@ AgentDirectory::AgentId AgentDirectory::RegisterAgent(ConstByteArray const &pk)
 
 AgentDirectory::Agent AgentDirectory::GetAgent(ConstByteArray const &pk)
 {
+  // Checking agent existance
   if (pk_to_id_.find(pk) == pk_to_id_.end())
   {
     return nullptr;
   }
+
+  // Returning the agent details.
   auto id = pk_to_id_[pk];
   return agents_[id];
 }
 
-void AgentDirectory::UnregisterAgent(ConstByteArray const &pk)
+bool AgentDirectory::UnregisterAgent(ConstByteArray const &pk)
 {
-  // TODO(tfr): Implement unregister
-  throw std::runtime_error("Unregister not implemented yet.");
+  // We treat non-register agent as successful unregisters
+  auto it = pk_to_id_.find(pk);
+  if (it == pk_to_id_.end())
+  {
+    return true;
+  }
+
+  auto id  = it->second;
+  auto ait = agents_.find(id);
+
+  // Checking that the agent entry also exists
+  if (ait != agents_.end())
+  {
+    // We can only unregister of all vocabulary locations
+    // have been unregistered.
+    // TODO(tfr): do check
+
+    // Deleting the entry
+    agents_.erase(ait);
+  }
+
+  // Finally, we delete the agent from the register
+  //  agents_.erase(it);
+
+  pk_to_id_.erase(it);
+  return true;
 }
 
 bool AgentDirectory::RegisterVocabularyLocation(AgentId id, std::string model,
-                                                SemanticPosition vector)
+                                                SemanticPosition position)
 {
+  // We can only register a vocabulary location for existing agents
   if (agents_.find(id) == agents_.end())
   {
     return false;
   }
 
-  agents_[id]->RegisterVocabularyLocation(std::move(model), std::move(vector));
+  // The model and position is added to the agents register.
+  agents_[id]->RegisterVocabularyLocation(std::move(model), std::move(position));
 
   return true;
 }

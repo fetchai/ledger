@@ -180,7 +180,7 @@ public:
     return agent_directory_.RegisterAgent(pk);
   }
 
-  void UnregisterAgent(ConstByteArray const &pk)
+  bool UnregisterAgent(ConstByteArray const &pk)
   {
     return agent_directory_.UnregisterAgent(pk);
   }

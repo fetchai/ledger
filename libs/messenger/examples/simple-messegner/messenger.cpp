@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     }
     else
     {
-      messenger.FindAgents(search_for);
+      messenger.FindAgents("semantic", search_for);
     }
   }
 

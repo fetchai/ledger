@@ -34,7 +34,7 @@ public:
 
   AgentId RegisterAgent(ConstByteArray const &pk);
   Agent   GetAgent(ConstByteArray const &pk);
-  void    UnregisterAgent(ConstByteArray const &pk);
+  bool    UnregisterAgent(ConstByteArray const &pk);
   bool    RegisterVocabularyLocation(AgentId id, std::string model, SemanticPosition vector);
 
 private:
