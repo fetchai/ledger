@@ -125,6 +125,7 @@ public:
   /// @{
   void                                    NotariseBlock(BlockBody const &block);
   std::pair<BlockHash, BlockNotarisation> HeaviestNotarisedBlock(BlockNumber const &block_number);
+  BlockNotarisation                       GetNotarisation(BlockBody const &block);
   /// @}
 
   /// Verifying notarised blocks

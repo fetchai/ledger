@@ -354,6 +354,19 @@ NotarisationService::HeaviestNotarisedBlock(BlockNumber const &block_number)
   return heaviest_block;
 }
 
+NotarisationService::BlockNotarisation NotarisationService::GetNotarisation(BlockBody const &block)
+{
+  FETCH_LOCK(mutex_);
+  BlockNotarisation notarisation;
+  auto              all_notarisations = notarisations_built_[block.block_number];
+  if (all_notarisations.find(block.hash) != all_notarisations.end())
+  {
+    notarisation.first  = all_notarisations.at(block.hash).first.getStr();
+    notarisation.second = all_notarisations.at(block.hash).second;
+  }
+  return notarisation;
+}
+
 std::vector<std::weak_ptr<core::Runnable>> NotarisationService::GetWeakRunnables()
 {
   return {state_machine_};
