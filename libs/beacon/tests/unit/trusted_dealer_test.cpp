@@ -189,7 +189,7 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
       {
-        fetch::beacon::EventCommitteeCompletedWork event;
+        fetch::beacon::EventCabinetCompletedWork event;
         if (cabinet[*it]->event_manager->Poll(event))
         {
           it = pending_nodes.erase(it);

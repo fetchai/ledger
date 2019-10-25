@@ -65,7 +65,7 @@ bool PunishmentBroadcastChannel::ResetCabinet(CabinetMembers const &cabinet)
   FETCH_LOCK(lock_);
   current_cabinet_ = cabinet;
 
-  // Set threshold depending on size of committee
+  // Set threshold depending on size of cabinet
   if (current_cabinet_.size() % 3 == 0)
   {
     threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 3 - 1);

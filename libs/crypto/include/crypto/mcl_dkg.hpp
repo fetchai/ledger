@@ -148,8 +148,7 @@ bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature con
 
 Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
 
-std::vector<DkgKeyInformation>   TrustedDealerGenerateKeys(uint32_t committee_size,
-                                                           uint32_t threshold);
+std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t cabinet_size, uint32_t threshold);
 std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator);
 
 // For aggregate signatures
