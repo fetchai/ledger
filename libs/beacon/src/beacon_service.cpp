@@ -288,10 +288,6 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     return State::VERIFY_SIGNATURES;
   }
 
-  // Note: this delay is effectively how long we wait for the network event to resolve
-  state_machine_->Delay(std::chrono::milliseconds(50));
-
-
   try
   {
     // Attempt to resolve the promise and add it
