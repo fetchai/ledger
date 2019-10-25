@@ -36,10 +36,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
-using UInt256 = vectorise::UInt<256>;
-using byte_array::ConstByteArray;
-using serializers::MsgPackSerializer;
-
+using UInt256  = vectorise::UInt<256>;
 using DagNodes = NaiveSynergeticMiner::DagNodes;
 
 void ExecuteWork(SynergeticContract &contract, WorkPtr const &work)
