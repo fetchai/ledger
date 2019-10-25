@@ -21,69 +21,65 @@ from fetchai.ledger.contract import Contract
 from fetchai.ledger.crypto import Entity
 
 CONTRACT_TEXT = """
-persistent solution : Int32;
-persistent init_test : Int32;
-persistent action_test : Int32;
+persistent init_test : Int64;
+persistent action_test : Int64;
+persistent clear_test : Int64;
 
 @init
 function init_test()
   use init_test;
 
-  init_test.set(123);
+  init_test.set(toInt64(balance()));
 endfunction
 
 @query
-function query_init_test() : Int32
+function query_init_test() : Int64
   use init_test;
 
-  return init_test.get(-1);
+  return init_test.get(-1i64);
 endfunction
 
 @action
 function action_test()
   use action_test;
 
-  action_test.set(456);
+  action_test.set(toInt64(balance()));
 endfunction
 
 @query
-function query_action_test() : Int32
+function query_action_test() : Int64
   use action_test;
 
-  return action_test.get(-1);
+  return action_test.get(-1i64);
+endfunction
+
+@clear
+function clear_test(problem : Int32, new_solution : Int32)
+  use clear_test;
+
+  clear_test.set(toInt64(balance()));
+endfunction
+
+@query
+function query_clear_test() : Int64
+  use clear_test;
+
+  return clear_test.get(-1i64);
 endfunction
 
 @problem
 function createProblem(data : Array<StructuredData>) : Int32
-  var value = 0;
-  for (i in 0:data.count())
-    value += data[i].getInt32("value");
-  endfor
-  return value;
+  return 0;
 endfunction
 
 @objective
 function evaluateWork(problem : Int32, solution : Int32 ) : Int64
-  return abs(toInt64(problem));
+  return 1i64;
 endfunction
 
 @work
-function doWork(problem : Int32, nonce : UInt256) :  Int32
+function doWork(problem : Int32, nonce : UInt256) : Int32
   return problem;
-endfunction
-
-@clear
-function applyWork(problem : Int32, new_solution : Int32)
-  use solution;
-
-  solution.set(solution.get(0) + new_solution);
-endfunction
-
-@query
-function query_result() : Int32
-  use solution;
-
-  return solution.get(-1);
 endfunction
 """
 
@@ -96,39 +92,28 @@ def submit_synergetic_data(api, contract, data, entity):
     print('Waiting...')
     api.wait_for_blocks(10)
 
-    result = contract.query(api, 'query_result')
-    print('Result:', result)
-    assert result == sum(data), \
-        'Expected {}, found {}'.format(sum(data), result)
-
 
 def run(options):
     entity1 = Entity()
-
-    # build the ledger API
     api = LedgerApi(options['host'], options['port'])
-
-    # create wealth so that we have the funds to be able to create contracts on the network
-    print('Create wealth...')
     api.sync(api.tokens.wealth(entity1, 100000000))
-
     contract = Contract(CONTRACT_TEXT, entity1)
 
-    # deploy the contract to the network
-    print('Create contract...')
     api.sync(api.contracts.create(entity1, contract, 10000))
 
-    submit_synergetic_data(api, contract, [100, 20, 3], entity1)
+    assert contract.query(api, 'query_init_test') == 0
 
-    print('Query init state...')
-    init_result = contract.query(api, 'query_init_test')
-    print('Init state: ', init_result)
-    assert init_result == 123
-
-    print('Execute action...')
     api.sync(contract.action(api, 'action_test', 10000, [entity1]))
+    assert contract.query(api, 'query_action_test') == 0
 
-    print('Query action state...')
-    action_result = contract.query(api, 'query_action_test')
-    print('Action state: ', action_result)
-    assert action_result == 456
+    submit_synergetic_data(api, contract, [100, 20, 3], entity1)
+    assert contract.query(api, 'query_clear_test') == 0
+
+    # Provide the contract with funds
+    api.tokens.transfer(entity1, contract.address, 1234, 200)
+
+    api.sync(contract.action(api, 'action_test', 10000, [entity1]))
+    assert contract.query(api, 'query_action_test') == 1234
+
+    submit_synergetic_data(api, contract, [100, 20, 3], entity1)
+    assert contract.query(api, 'query_clear_test') == 1234
