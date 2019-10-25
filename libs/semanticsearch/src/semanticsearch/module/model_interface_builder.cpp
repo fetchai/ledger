@@ -25,17 +25,17 @@
 namespace fetch {
 namespace semanticsearch {
 
-ModelIntefaceBuilder::ModelIntefaceBuilder(VocabularySchema model, SemanticSearchModule *factory)
+ModelInterfaceBuilder::ModelInterfaceBuilder(VocabularySchema model, SemanticSearchModule *factory)
   : model_{std::move(model)}
   , factory_(factory)
 {}
 
-ModelIntefaceBuilder::operator bool() const
+ModelInterfaceBuilder::operator bool() const
 {
   return model_ != nullptr;
 }
 
-ModelIntefaceBuilder &ModelIntefaceBuilder::Field(std::string name, std::string type)
+ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string name, std::string type)
 {
   assert(factory_);
   auto field_model = factory_->GetField(type);
@@ -43,26 +43,26 @@ ModelIntefaceBuilder &ModelIntefaceBuilder::Field(std::string name, std::string 
   return *this;
 }
 
-ModelIntefaceBuilder &ModelIntefaceBuilder::Field(std::string name, ModelIntefaceBuilder proxy)
+ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string name, ModelInterfaceBuilder proxy)
 {
   assert(proxy.model_ != nullptr);
   model_->Insert(name, proxy.model_);
   return *this;
 }
 
-ModelIntefaceBuilder &ModelIntefaceBuilder::Field(std::string name, ModelField model)
+ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string name, ModelField model)
 {
   assert(model != nullptr);
   model_->Insert(name, model);
   return *this;
 }
 
-ModelIntefaceBuilder ModelIntefaceBuilder::Vocabulary(std::string name)
+ModelInterfaceBuilder ModelInterfaceBuilder::Vocabulary(std::string name)
 {
   auto new_model = PropertiesToSubspace::New();
   model_->Insert(name, new_model);
 
-  return ModelIntefaceBuilder(new_model, factory_);
+  return ModelInterfaceBuilder(new_model, factory_);
 }
 
 }  // namespace semanticsearch

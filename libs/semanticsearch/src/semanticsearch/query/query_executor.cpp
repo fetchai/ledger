@@ -309,9 +309,9 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
   std::size_t i = 1;
 
   stack_.clear();
-  std::vector<ModelIntefaceBuilder> scope_models;
-  ModelIntefaceBuilder              last;
-  int                               scope_depth = 0;
+  std::vector<ModelInterfaceBuilder> scope_models;
+  ModelInterfaceBuilder              last;
+  int                                scope_depth = 0;
 
   using Type = QueryInstruction::Type;
 

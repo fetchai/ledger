@@ -27,19 +27,19 @@ namespace semanticsearch {
 
 class SemanticSearchModule;
 
-class ModelIntefaceBuilder
+class ModelInterfaceBuilder
 {
 public:
   using ModelField       = std::shared_ptr<VocabularyToSubspaceMapInterface>;
   using VocabularySchema = std::shared_ptr<PropertiesToSubspace>;
 
-  ModelIntefaceBuilder(VocabularySchema model = nullptr, SemanticSearchModule *factory = nullptr);
-                        operator bool() const;
-  ModelIntefaceBuilder &Field(std::string name, std::string type);
-  ModelIntefaceBuilder &Field(std::string name, ModelIntefaceBuilder proxy);
-  ModelIntefaceBuilder &Field(std::string name, ModelField model);
+  ModelInterfaceBuilder(VocabularySchema model = nullptr, SemanticSearchModule *factory = nullptr);
+                         operator bool() const;
+  ModelInterfaceBuilder &Field(std::string name, std::string type);
+  ModelInterfaceBuilder &Field(std::string name, ModelInterfaceBuilder proxy);
+  ModelInterfaceBuilder &Field(std::string name, ModelField model);
 
-  ModelIntefaceBuilder Vocabulary(std::string name);
+  ModelInterfaceBuilder Vocabulary(std::string name);
 
   VocabularySchema model()
   {

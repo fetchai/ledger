@@ -73,15 +73,15 @@ public:
     return agent_directory_.GetAgent(pk);
   }
 
-  ModelIntefaceBuilder NewModel(std::string name)
+  ModelInterfaceBuilder NewModel(std::string name)
   {
     auto model = PropertiesToSubspace::New();
     advertisement_register_->AddModel(name, model);
     types_[name] = model;
-    return ModelIntefaceBuilder{model, this};
+    return ModelInterfaceBuilder{model, this};
   }
 
-  ModelIntefaceBuilder NewModel(std::string name, ModelIntefaceBuilder proxy)
+  ModelInterfaceBuilder NewModel(std::string name, ModelInterfaceBuilder proxy)
   {
     advertisement_register_->AddModel(name, proxy.model());
     types_[name] = proxy.model();
@@ -94,10 +94,10 @@ public:
     types_[name] = object;
   }
 
-  ModelIntefaceBuilder NewProxy()
+  ModelInterfaceBuilder NewProxy()
   {
     auto model = PropertiesToSubspace::New();
-    return ModelIntefaceBuilder{model, this};
+    return ModelInterfaceBuilder{model, this};
   }
 
   bool HasModel(std::string name)

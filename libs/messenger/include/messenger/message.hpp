@@ -70,7 +70,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &message)
   {
-    auto map = map_constructor(4);
+    auto map = map_constructor(5);
     map.Append(FROM, message.from);
     map.Append(TO, message.to);
     map.Append(PROTOCOL, message.protocol);
