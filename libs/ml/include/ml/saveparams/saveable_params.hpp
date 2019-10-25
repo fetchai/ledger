@@ -431,6 +431,14 @@ struct OpMaxPool2DSaveableParams : public OpsSaveableParams
 };
 
 template <typename TensorType>
+struct OpMaxPoolSaveableParams : public OpsSaveableParams
+{
+  fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type     = OpType::OP_MAX_POOL;
+};
+
+template <typename TensorType>
 struct OpAvgPool1DSaveableParams : public OpsSaveableParams
 {
   fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
