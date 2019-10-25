@@ -16,7 +16,7 @@ if os.path.exists(opcode_list_file):
 
 # number of benchmark repetitions
 run_benchmarks = True
-num_reps = 100
+num_reps = 2
 
 # run benchmarks
 if run_benchmarks:
@@ -55,7 +55,7 @@ stddevs = [float(row[3]) for row in rows if 'stddev' in row[0]]
 
 # make table out of net benchmark times, standard errors, and (net) opcodes
 table = []
-for bm in range(0,num_benchmarks):
+for bm in range(0,num_benchmarks-2):
   base_bm = bm_inds[baselines[bm_names[bm]]]
   
   # net stats
@@ -76,3 +76,4 @@ print('\n')
 print(tabulate(table, headers = ['Benchmark (' + str(num_reps) + ' reps)'
                                  ,'Mean (ns)','Std error (ns)','Opcodes',
                                  'Baseline','Net opcodes'], floatfmt=".2f"))
+
