@@ -92,6 +92,7 @@ public:
   using SharedEventManager      = EventManager::SharedEventManager;
   using BeaconSetupService      = beacon::BeaconSetupService;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
+  using DeadlineTimer    = fetch::moment::DeadlineTimer;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
