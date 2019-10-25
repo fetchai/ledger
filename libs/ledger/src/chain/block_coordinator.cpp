@@ -1117,6 +1117,12 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
     // block that is executed because the merkle hash was not known at this point.
     execution_manager_.SetLastProcessedBlock(next_block_->body.hash);
 
+    // Notify notarisation of new valid block
+    if (notarisation_)
+    {
+      notarisation_->NotariseBlock(next_block_->body);
+    }
+
     // the block is now fully formed it can be sent across the network
     next_state = State::TRANSMIT_BLOCK;
   }
