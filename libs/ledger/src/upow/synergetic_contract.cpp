@@ -19,16 +19,21 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "json/document.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "logging/logging.hpp"
 #include "vectorise/uint/uint.hpp"
+#include "vm/address.hpp"
 #include "vm/array.hpp"
 #include "vm/compiler.hpp"
 #include "vm/function_decorators.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/core/structured_data.hpp"
+#include "vm_modules/ledger/balance.hpp"
+#include "vm_modules/ledger/transfer_function.hpp"
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/vm_factory.hpp"
 
@@ -132,7 +137,8 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Synergetic contract source\n", source);
 
-  // additional modules
+  vm_modules::ledger::BindBalanceFunction(*module_, *this);
+  vm_modules::ledger::BindTransferFunction(*module_, *this);
 
   // create the compiler and IR
   compiler_   = std::make_shared<vm::Compiler>(module_.get());
@@ -397,6 +403,16 @@ char const *ToString(SynergeticContract::Status status)
   }
 
   return text;
+}
+
+void SynergeticContract::UpdateContractContext(ContractContext const &context)
+{
+  context_ = std::make_unique<ContractContext>(context);
+}
+
+ContractContext const &SynergeticContract::context() const
+{
+  return *context_;
 }
 
 }  // namespace ledger

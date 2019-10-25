@@ -21,6 +21,7 @@
 #include "core/bitvector.hpp"
 #include "crypto/ecdsa.hpp"
 #include "in_memory_storage.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/identifier.hpp"
@@ -79,7 +80,7 @@ void Executor_BasicBenchmark(benchmark::State &state)
 
     TokenContract tokens{};
 
-    tokens.Attach(adapter);
+    tokens.Attach({&tokens, tx->contract_address(), &adapter, 0});
     tokens.AddTokens(tx->from(), 500000);
     tokens.Detach();
   }
