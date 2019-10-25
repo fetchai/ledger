@@ -29,23 +29,23 @@ public:
   using ConstByteArray = fetch::byte_array::ConstByteArray;
   using Vocabulary     = std::shared_ptr<VocabularyInstance>;
 
-  Vocabulary Get(std::string name)
+  Vocabulary Get(std::string const &name)
   {
-    return context_[std::move(name)];
+    return context_[name];
   }
 
-  void Set(std::string name, Vocabulary object, std::string type)
+  void Set(std::string const &name, Vocabulary object, std::string type)
   {
-    models_[name]             = std::move(type);
-    context_[std::move(name)] = std::move(object);
+    models_[name]  = std::move(type);
+    context_[name] = std::move(object);
   }
 
-  bool Has(std::string name)
+  bool Has(std::string const &name)
   {
     return context_.find(name) != context_.end();
   }
 
-  std::string GetModelName(std::string name)
+  std::string GetModelName(std::string const &name)
   {
     return models_[name];
   }

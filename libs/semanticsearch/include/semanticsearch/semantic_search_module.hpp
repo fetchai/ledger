@@ -56,7 +56,8 @@ public:
   using Reducer = std::function<SemanticPosition(T const &)>;
 
   template <typename T>
-  void RegisterType(std::string name, bool hidden = false, SemanticReducer cdr = SemanticReducer{})
+  void RegisterType(std::string const &name, bool hidden = false,
+                    SemanticReducer cdr = SemanticReducer{})
   {
     if (!hidden)
     {
@@ -73,7 +74,7 @@ public:
     return agent_directory_.GetAgent(pk);
   }
 
-  ModelInterfaceBuilder NewModel(std::string name)
+  ModelInterfaceBuilder NewModel(std::string const &name)
   {
     auto model = PropertiesToSubspace::New();
     advertisement_register_->AddModel(name, model);
@@ -81,14 +82,14 @@ public:
     return ModelInterfaceBuilder{model, this};
   }
 
-  ModelInterfaceBuilder NewModel(std::string name, ModelInterfaceBuilder proxy)
+  ModelInterfaceBuilder NewModel(std::string const &name, ModelInterfaceBuilder const &proxy)
   {
     advertisement_register_->AddModel(name, proxy.model());
     types_[name] = proxy.model();
     return proxy;
   }
 
-  void AddModel(std::string name, VocabularySchema object)
+  void AddModel(std::string const &name, VocabularySchema const &object)
   {
     advertisement_register_->AddModel(name, object);
     types_[name] = object;
@@ -100,22 +101,22 @@ public:
     return ModelInterfaceBuilder{model, this};
   }
 
-  bool HasModel(std::string name)
+  bool HasModel(std::string const &name)
   {
     return advertisement_register_->HasModel(name);
   }
 
-  bool HasField(std::string name)
+  bool HasField(std::string const &name)
   {
     return types_.find(name) != types_.end();
   }
 
-  ModelField GetField(std::string name)
+  ModelField GetField(std::string const &name)
   {
     return types_[name];
   }
 
-  VocabularySchema GetModel(std::string name)
+  VocabularySchema GetModel(std::string const &name)
   {
     return advertisement_register_->GetModel(name);
   }
@@ -129,7 +130,7 @@ public:
     {
       return idx.name();
     }
-    return idx_to_name_[std::move(idx)];
+    return idx_to_name_[idx];
   }
 
   std::string GetName(std::type_index idx)
@@ -139,33 +140,33 @@ public:
     {
       return idx.name();
     }
-    return idx_to_name_[std::move(idx)];
+    return idx_to_name_[idx];
   }
 
   template <typename R, typename... Args>
-  void RegisterFunction(std::string name, std::function<R(Args...)> function)
+  void RegisterFunction(std::string const &name, std::function<R(Args...)> function)
   {
     auto sig         = BuiltinQueryFunction::New<R, Args...>(function);
     functions_[name] = std::move(sig);
   }
 
   template <typename R, typename... Args, typename F>
-  void RegisterFunction(std::string name, F &&lambda)
+  void RegisterFunction(std::string const &name, F &&lambda)
   {
     RegisterFunction(name, std::function<R(Args...)>(lambda));
   }
 
-  BuiltinQueryFunction &operator[](std::string name)
+  BuiltinQueryFunction &operator[](std::string const &name)
   {
-    return *functions_[std::move(name)];
+    return *functions_[name];
   }
 
   QueryVariant Call(std::string name, std::vector<void const *> &args)
   {
-    return (*functions_[std::move(name)])(args);
+    return (*functions_[name])(args);
   }
 
-  bool HasFunction(std::string name)
+  bool HasFunction(std::string const &name)
   {
     return functions_.find(name) != functions_.end();
   }
@@ -186,7 +187,7 @@ public:
   }
 
 private:
-  SemanticSearchModule(SharedAdvertisementRegister advertisement_register)
+  explicit SemanticSearchModule(SharedAdvertisementRegister advertisement_register)
     : advertisement_register_(std::move(advertisement_register))
   {}
 

@@ -43,7 +43,7 @@ public:
   std::type_index type_index() const;
 
   template <typename T>
-  operator T() const
+  explicit operator T() const
   {
     if (std::type_index(typeid(T)) != type_index_)
     {
@@ -75,13 +75,13 @@ public:
   friend class SpecialisedQueryVariant;
 
 private:
-  AbstractQueryVariant(int type, Token token, std::type_index type_index)
-    : type_{std::move(type)}
+  AbstractQueryVariant(int32_t type, Token token, std::type_index type_index)
+    : type_{type}
     , token_{std::move(token)}
     , type_index_{std::move(type_index)}
   {}
 
-  int             type_;
+  int32_t         type_;
   Token           token_;
   std::type_index type_index_;
 };
@@ -95,8 +95,8 @@ public:
 
   static QueryVariant New(T value, int type = 0, Token token = static_cast<Token>(""))
   {
-    return QueryVariant(new SpecialisedQueryVariant<T>(
-        std::move(value), std::move(type), std::move(token), std::type_index(typeid(T))));
+    return QueryVariant(new SpecialisedQueryVariant<T>(std::move(value), type, std::move(token),
+                                                       std::type_index(typeid(T))));
   }
 
   void const *data() const override

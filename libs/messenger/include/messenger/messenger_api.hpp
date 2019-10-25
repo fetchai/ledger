@@ -77,14 +77,14 @@ public:
   /// Search interface
   /// @{
   ResultList FindAgents(service::CallContext const & /*call_context*/,
-                        ConstByteArray /*query_type*/, ConstByteArray /*query*/);
+                        ConstByteArray const & /*query_type*/, ConstByteArray const & /*query*/);
 
   void Advertise(service::CallContext const & /*call_context*/);
   /// @}
 
   /// Ledger interface
   /// @{
-  // TODO: Yet to be written
+  // TODO(tfr): Yet to be written
   /// @}
 
 private:

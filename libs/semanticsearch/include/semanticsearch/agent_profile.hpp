@@ -53,8 +53,8 @@ struct AgentProfile
   std::set<VocabularyLocation> locations;
 
 private:
-  AgentProfile(AgentId i)
-    : id(std::move(i))
+  explicit AgentProfile(AgentId i)
+    : id(i)
   {}
 };
 

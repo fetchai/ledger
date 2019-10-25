@@ -35,7 +35,7 @@ public:
     ADVERTISE            = 6
   };
 
-  MessengerProtocol(MessengerAPI *api);
+  explicit MessengerProtocol(MessengerAPI *api);
 };
 
 }  // namespace messenger

@@ -78,7 +78,7 @@ int main(int argc, char **argv)
   semantic_search_module->RegisterType<ModelField>("ModelField", true);
   semantic_search_module->RegisterFunction<ModelField, Int, Int>(
       "BoundedInteger", [](Int from, Int to) -> ModelField {
-        uint64_t        span = static_cast<uint64_t>(to - from);
+        auto            span = static_cast<uint64_t>(to - from);
         SemanticReducer cdr;
         cdr.SetReducer<Int>(1, [span, from](Int x) {
           SemanticPosition ret;
@@ -91,14 +91,14 @@ int main(int argc, char **argv)
         cdr.SetValidator<Int>([from, to](Int x) { return (from <= x) && (x <= to); });
 
         auto instance = DataToSubspaceMap<Int>::New();
-        instance->SetSemanticReducer(std::move(cdr));
+        instance->SetSemanticReducer(cdr);
 
         return instance;
       });
 
   semantic_search_module->RegisterFunction<ModelField, Float, Float>(
       "BoundedFloat", [](Float from, Float to) -> ModelField {
-        Float           span = static_cast<Float>(to - from);
+        auto            span = static_cast<Float>(to - from);
         SemanticReducer cdr;
         cdr.SetReducer<Float>(1, [span, from](Float x) {
           SemanticPosition ret;
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
         cdr.SetValidator<Float>([from, to](Float x) { return (from <= x) && (x <= to); });
 
         auto instance = DataToSubspaceMap<Float>::New();
-        instance->SetSemanticReducer(std::move(cdr));
+        instance->SetSemanticReducer(cdr);
 
         return instance;
       });

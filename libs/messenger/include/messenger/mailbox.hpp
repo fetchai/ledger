@@ -41,7 +41,7 @@ public:
   using MuddleInterface = muddle::MuddleInterface;
   using SubscriptionPtr = muddle::MuddleEndpoint::SubscriptionPtr;
 
-  Mailbox(muddle::MuddlePtr &muddle);
+  explicit Mailbox(muddle::MuddlePtr &muddle);
 
   /// Mailbox interface
   /// @{

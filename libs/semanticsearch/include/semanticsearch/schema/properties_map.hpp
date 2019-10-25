@@ -156,7 +156,7 @@ public:
     return true;
   }
 
-  void Insert(std::string name, ModelInterface model)
+  void Insert(std::string const &name, ModelInterface const &model)
   {
     array_[name] = model;
     rank_ += model->rank();
@@ -164,7 +164,7 @@ public:
 
   std::type_index type() const override
   {
-    return std::type_index(typeid(Type));
+    return {typeid(Type)};
   }
 
   bool IsSame(ModelInterface const &optr) const override
@@ -201,7 +201,7 @@ public:
   }
 
 private:
-  PropertiesToSubspace(ModelMap m)
+  explicit PropertiesToSubspace(ModelMap m)
     : array_(std::move(m))
   {
     rank_ = 0;

@@ -64,7 +64,7 @@ void QueryExecutor::Execute(Query const &query, Agent agent)
   }
 }
 
-QueryExecutor::Vocabulary QueryExecutor::GetInstance(std::string name)
+QueryExecutor::Vocabulary QueryExecutor::GetInstance(std::string const &name)
 {
   assert(context_.Has(name));
   return context_.Get(name);
@@ -439,7 +439,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
     }
     case Type::EXECUTE_CALL:
     {
-      if (stack_.size() == 0)
+      if (stack_.empty())
       {
         std::cerr << "INTERNAL ERROR!" << std::endl;  // TODO(tfr): Handle this
         exit(-1);

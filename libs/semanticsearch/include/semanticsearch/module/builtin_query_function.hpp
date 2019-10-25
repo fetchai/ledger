@@ -54,7 +54,7 @@ public:
   std::type_index return_type() const;
 
 private:
-  BuiltinQueryFunction(std::type_index return_type)
+  explicit BuiltinQueryFunction(std::type_index return_type)
     : return_type_(std::move(return_type))
   {}
 

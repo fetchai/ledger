@@ -36,7 +36,7 @@ public:
   DataToSubspaceMap()                          = delete;
   DataToSubspaceMap(DataToSubspaceMap const &) = delete;
   DataToSubspaceMap &operator=(DataToSubspaceMap const &) = delete;
-  ~DataToSubspaceMap()                                    = default;
+  ~DataToSubspaceMap() override                           = default;
 
   static FieldModel New()
   {
@@ -76,14 +76,8 @@ public:
 
   bool IsSame(ModelInterface const &optr) const override
   {
-    if (type() != optr->type())
-    {
-      return false;
-    }
-
+    return (type() == optr->type());
     // TODO(tfr): Check reducers and validators - they are currently ignored.
-
-    return true;
   }
 
   bool VisitSubmodelsWithVocabulary(
@@ -105,7 +99,7 @@ public:
 
 private:
   DataToSubspaceMap(std::type_index type)
-    : type_{std::move(type)}
+    : type_{type}
   {}
 
   SemanticReducer constrained_data_reducer_;

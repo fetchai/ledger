@@ -35,7 +35,7 @@ public:
   using AgentId          = uint64_t;
   using AgentIdSet       = std::shared_ptr<std::set<AgentId>>;
 
-  VocabularyAdvertisement(VocabularySchema object_model)
+  explicit VocabularyAdvertisement(VocabularySchema object_model)
     : object_model_(std::move(object_model))
   {}
 
@@ -43,14 +43,14 @@ public:
   {
     SemanticSubscription rel;
     rel.position = std::move(position);
-    rel.index    = aid;  // TODO: Change to agent id
+    rel.index    = aid;  // TODO(tfr): Change to agent id
 
     index_.AddRelation(rel);
   }
 
   AgentIdSet FindAgents(SemanticPosition position, SemanticCoordinateType granularity)
   {
-    return index_.Find(std::move(granularity), std::move(position));
+    return index_.Find(granularity, std::move(position));
   }
 
   VocabularySchema model() const

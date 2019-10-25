@@ -36,7 +36,10 @@ public:
   static Vocabulary New(T data)
   {
     // TODO(tfr): add destructor
-    return Vocabulary(new VocabularyInstance(std::type_index(typeid(T)), new T(data)));
+    Vocabulary ret;
+    ret.reset(new VocabularyInstance(std::type_index(typeid(T)), new T(data)));
+
+    return ret;
   }
 
   VocabularyInstance()                                = delete;
@@ -53,7 +56,7 @@ public:
 
 private:
   VocabularyInstance(std::type_index type, void *data)
-    : type_(std::move(type))
+    : type_(type)
     , data_(std::move(data))
   {}
 

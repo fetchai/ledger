@@ -40,7 +40,7 @@ public:
 
   QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &error_tracker);
   void       Execute(Query const &query, Agent agent);
-  Vocabulary GetInstance(std::string name);
+  Vocabulary GetInstance(std::string const &name);
 
 private:
   using PropertyMap = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
@@ -64,7 +64,7 @@ private:
   void ExecuteDefine(CompiledStatement const &stmt);
 
   template <typename T>
-  bool TypeMismatch(QueryVariant var, Token token)
+  bool TypeMismatch(QueryVariant const &var, Token token)
   {
     if (!var->IsType<T>())
     {

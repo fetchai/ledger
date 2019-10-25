@@ -128,7 +128,7 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
       next.properties = QueryInstruction::PROP_IS_OPERATOR;
       break;
     case OP_ATTRIBUTE:
-      if (main_stack.size() == 0)
+      if (main_stack.empty())
       {
         error_tracker_.RaiseSyntaxError(
             "Expected identifier before attribute indicator, but found nothing.", token);
@@ -142,7 +142,7 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
         return {};
       }
 
-      // TODO: Chek that back is identifier or throw
+      // TODO(tfr): Chek that back is identifier or throw
       main_stack.back().type = Type::OBJECT_KEY;
       next.type              = Type::ATTRIBUTE;
       next.properties        = QueryInstruction::PROP_IS_OPERATOR;
@@ -224,7 +224,7 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
       break;
     }
 
-    if (next.properties & QueryInstruction::PROP_IS_OPERATOR)
+    if ((next.properties & QueryInstruction::PROP_IS_OPERATOR) != 0)
     {
       while ((op_stack.size() > 0) && (next.type > op_stack.back().type) &&
              (op_stack.back().properties & QueryInstruction::PROP_IS_OPERATOR))
@@ -236,7 +236,7 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
 
       op_stack.push_back(next);
     }
-    else if (next.properties & QueryInstruction::PROP_IS_GROUP)
+    else if ((next.properties & QueryInstruction::PROP_IS_GROUP) != 0)
     {
       if (next.properties & QueryInstruction::PROP_IS_GROUP_OPEN)
       {

@@ -41,9 +41,9 @@ public:
   SemanticReducer &operator=(SemanticReducer const &other) = default;
 
   template <typename T>
-  void SetReducer(int rank, Reducer<T> reducer)
+  void SetReducer(int32_t rank, Reducer<T> reducer)
   {
-    rank_    = std::move(rank);
+    rank_    = rank;
     reducer_ = [reducer](void *data) { return reducer(*reinterpret_cast<T *>(data)); };
     if (reducer_ == nullptr)
     {
@@ -61,13 +61,13 @@ public:
 
   bool             Validate(void *data);
   SemanticPosition Reduce(void *data);
-  int              rank() const;
+  int32_t          rank() const;
 
 private:
   using InternalReducer   = std::function<SemanticPosition(void *)>;
   using InternalValidator = std::function<bool(void *)>;
 
-  int               rank_{0};
+  int32_t           rank_{0};
   InternalReducer   reducer_{nullptr};
   InternalValidator constraints_validation_{nullptr};
 };

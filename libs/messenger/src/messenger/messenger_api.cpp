@@ -46,7 +46,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
   semantic_search_module_->RegisterType<ModelField>("ModelField", true);
   semantic_search_module_->RegisterFunction<ModelField, Int, Int>(
       "BoundedInteger", [](Int from, Int to) -> ModelField {
-        uint64_t        span = static_cast<uint64_t>(to - from);
+        auto            span = static_cast<uint64_t>(to - from);
         SemanticReducer cdr;
         cdr.SetReducer<Int>(1, [span, from](Int x) {
           SemanticPosition ret;
@@ -59,14 +59,14 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
         cdr.SetValidator<Int>([from, to](Int x) { return (from <= x) && (x <= to); });
 
         auto instance = DataToSubspaceMap<Int>::New();
-        instance->SetSemanticReducer(std::move(cdr));
+        instance->SetSemanticReducer(cdr);
 
         return instance;
       });
 
   semantic_search_module_->RegisterFunction<ModelField, Float, Float>(
       "BoundedFloat", [](Float from, Float to) -> ModelField {
-        Float           span = static_cast<Float>(to - from);
+        auto            span = static_cast<Float>(to - from);
         SemanticReducer cdr;
         cdr.SetReducer<Float>(1, [span, from](Float x) {
           SemanticPosition ret;
@@ -80,7 +80,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
         cdr.SetValidator<Float>([from, to](Float x) { return (from <= x) && (x <= to); });
 
         auto instance = DataToSubspaceMap<Float>::New();
-        instance->SetSemanticReducer(std::move(cdr));
+        instance->SetSemanticReducer(cdr);
 
         return instance;
       });
@@ -120,8 +120,8 @@ MessengerAPI::MessageList MessengerAPI::GetMessages(service::CallContext const &
 }
 
 MessengerAPI::ResultList MessengerAPI::FindAgents(service::CallContext const & /*call_context*/,
-                                                  ConstByteArray /*query_type*/,
-                                                  ConstByteArray /*query*/)
+                                                  ConstByteArray const & /*query_type*/,
+                                                  ConstByteArray const & /*query*/)
 {
 
   return {"Hello world"};
