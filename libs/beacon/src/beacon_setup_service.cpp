@@ -1444,7 +1444,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   }
   else
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                     " #### Proceeding to next state \"", ToString(state), "\", to last ",
                     state_deadline_ - current_time, " seconds (deadline: ", state_deadline_, ")");
     timer_to_proceed_.Restart(std::chrono::seconds{state_deadline_ - current_time});
