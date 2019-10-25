@@ -46,9 +46,6 @@ public:
 protected:
 private:
   bool Convert(fetch::serializers::MsgPackSerializer &os, const variant::Variant &source, const std::string &format);
-  std::string GetTypeRepFor(const variant::Variant &source);
-
-  bool IsUniform(const variant::Variant &source);
 };
 
 }

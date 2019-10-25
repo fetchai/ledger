@@ -55,7 +55,6 @@ ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFile
         Error{Error::Stage::COMPILE, Error::Code::COMPILATION_ERROR, errorString.str()},
         std::string{}};
   }
-
   executables_.emplace(execName, std::move(newExecutable));
 
   return ExecutionResult{
@@ -263,7 +262,7 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
           console.str()};
     }
   }
-  
+
   // Run
   std::string runTimeError;
   VmVariant   vmOutput;
