@@ -174,7 +174,7 @@ public:
       return false;
     }
 
-    PropertiesToSubspace const &other = *reinterpret_cast<PropertiesToSubspace *const>(optr.get());
+    PropertiesToSubspace const &other = *reinterpret_cast<PropertiesToSubspace const *>(optr.get());
 
     if (array_.size() != other.array_.size())
     {
