@@ -64,6 +64,8 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
         "beacon_entropy_last_generated", "The last entropy value able to be generated")}
   , beacon_entropy_current_round_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_entropy_current_round", "The current round attempting to generate for.")}
+  , beacon_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_state_gauge", "State the beacon is in as integer")}
 {
 
   // Attaching beacon ready callback handler
@@ -177,6 +179,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
 
 BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 {
+  beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
   // Checking whether the next cabinet is ready
@@ -203,6 +206,7 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 
 BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 {
+  beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
   // Set the manager up to generate the signature
@@ -215,6 +219,7 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
+  beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
   uint64_t const index = block_entropy_being_created_->block_number;
@@ -274,6 +279,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 
 BeaconService::State BeaconService::OnVerifySignaturesState()
 {
+  beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   SignatureInformation ret;
 
   try
@@ -353,6 +359,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
  */
 BeaconService::State BeaconService::OnCompleteState()
 {
+  beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
   uint64_t const index = block_entropy_being_created_->block_number;

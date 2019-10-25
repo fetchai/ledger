@@ -195,6 +195,7 @@ private:
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_generated_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_current_round_;
+  telemetry::GaugePtr<uint64_t> beacon_state_gauge_;
 };
 
 }  // namespace beacon
