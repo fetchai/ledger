@@ -263,6 +263,12 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
     SerializeImplementation<TensorType, D, ml::OpSliceSaveableParams<TensorType>>(map, code, op);
     break;
   }
+  case ml::OpType::OP_REDUCE_MEAN:
+  {
+    SerializeImplementation<TensorType, D, ml::OpReduceMeanSaveableParams<TensorType>>(map, code,
+                                                                                       op);
+    break;
+  }
   case ml::OpType::LOSS_SOFTMAX_CROSS_ENTROPY:
   {
     SerializeImplementation<TensorType, D, ml::OpSoftmaxCrossEntropySaveableParams<TensorType>>(
@@ -612,6 +618,12 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   case ml::OpType::OP_SLICE:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpSliceSaveableParams<TensorType>>(map, code);
+    break;
+  }
+  case ml::OpType::OP_REDUCE_MEAN:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::OpReduceMeanSaveableParams<TensorType>>(map,
+                                                                                              code);
     break;
   }
   case ml::OpType::OP_TANH:
@@ -2371,6 +2383,42 @@ struct MapSerializer<ml::OpSqueezeSaveableParams<TensorType>, D>
     auto ops_pointer = static_cast<ml::OpsSaveableParams *>(&sp);
     map.ExpectKeyGetValue(BASE_OPS, (*ops_pointer));
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for OpReduceMeanaveableParams
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::OpReduceMeanSaveableParams<TensorType>, D>
+{
+  using Type       = ml::OpReduceMeanSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const BASE_OPS = 1;
+  static uint8_t const OP_CODE  = 2;
+  static uint8_t const AXIS     = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(3);
+
+    // serialize parent class first
+    auto ops_pointer = static_cast<ml::OpsSaveableParams const *>(&sp);
+    map.Append(BASE_OPS, *(ops_pointer));
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(AXIS, sp.axis);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto ops_pointer = static_cast<ml::OpsSaveableParams *>(&sp);
+    map.ExpectKeyGetValue(BASE_OPS, (*ops_pointer));
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(AXIS, sp.axis);
   }
 };
 
