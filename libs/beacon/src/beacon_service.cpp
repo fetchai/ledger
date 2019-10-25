@@ -284,7 +284,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 
 BeaconService::State BeaconService::OnVerifySignaturesState()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "state 3");
+  FETCH_LOG_INFO(LOGGING_NAME, "state 3!");
 
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   SignatureInformation ret;
