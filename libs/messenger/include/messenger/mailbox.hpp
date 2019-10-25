@@ -41,146 +41,29 @@ public:
   using MuddleInterface = muddle::MuddleInterface;
   using SubscriptionPtr = muddle::MuddleEndpoint::SubscriptionPtr;
 
-  Mailbox(muddle::MuddlePtr &muddle)
-    : message_endpoint_{muddle->GetEndpoint()}
-    , message_subscription_{
-          message_endpoint_.Subscribe(SERVICE_MSG_TRANSPORT, CHANNEL_MESSEGNER_TRANSPORT)}
-  {}
+  Mailbox(muddle::MuddlePtr &muddle);
 
   /// Mailbox interface
   /// @{
-  void SendMessage(Message message) override
-  {
-    FETCH_LOCK(mutex_);
-
-    // Setting the entry node
-    if (message.from.node.empty())
-    {
-      message.from.node = message_endpoint_.GetAddress();
-    }
-
-    // Setting to node
-    if (message.to.node.empty())
-    {
-      message.to.node = message_endpoint_.GetAddress();
-    }
-
-    // If the message is sent to this node, then we deliver it right
-    // away
-    if (message.to.node == message_endpoint_.GetAddress())
-    {
-      DeliverMessageLockLess(message);
-      return;
-    }
-
-    // Else we pass it to the muddle for delivery
-    serializers::MsgPackSerializer serializer;
-    serializer << message;
-
-    message_endpoint_.Send(message.to.node, SERVICE_MSG_TRANSPORT, CHANNEL_MESSEGNER_TRANSPORT,
-                           serializer.data());
-  }
-
-  MessageList GetMessages(Address messenger) override
-  {
-    FETCH_LOCK(mutex_);
-
-    // Checking that the mailbox exists
-    auto it = inbox_.find(messenger);
-    if (it == inbox_.end())
-    {
-      return {};
-    }
-
-    return it->second;
-  }
-
-  void ClearMessages(Address messenger, uint64_t count) override
-  {
-    FETCH_LOCK(mutex_);
-
-    // Checking that the mailbox exists
-    auto it = inbox_.find(messenger);
-    if (it == inbox_.end())
-    {
-      return;
-    }
-
-    // Emptying mailbox
-    if (count >= it->second.size())
-    {
-      it->second.clear();
-    }
-    else
-    {
-      while (count != 0)
-      {
-        it->second.pop_front();
-        --count;
-      }
-    }
-  }
+  void        SendMessage(Message message) override;
+  MessageList GetMessages(Address messenger) override;
+  void        ClearMessages(Address messenger, uint64_t count) override;
   /// @}
 
   /// Mailbox initialisation
   /// @{
-  void RegisterMailbox(Address messenger) override
-  {
-    FETCH_LOCK(mutex_);
-
-    if (inbox_.find(messenger) != inbox_.end())
-    {
-      // Mailbox already exists
-      return;
-    }
-
-    // Creating an empty mailbox
-    inbox_[messenger] = MessageList();
-  }
-
-  void UnregisterMailbox(Address messenger) override
-  {
-    FETCH_LOCK(mutex_);
-    auto it = inbox_.find(messenger);
-
-    // Checking if mailbox exists
-    if (it == inbox_.end())
-    {
-      return;
-    }
-
-    // Deleting mailbox
-    inbox_.erase(it);
-  }
+  void RegisterMailbox(Address messenger) override;
+  void UnregisterMailbox(Address messenger) override;
   /// @}
 
 protected:
-  void DeliverMessageLockLess(Message const &message)
-  {
-    // Checking if we are delivering to the right node.
-    if (message_endpoint_.GetAddress() != message.to.node)
-    {
-      return;
-    }
-
-    auto it = inbox_.find(message.to.messenger);
-    if (it == inbox_.end())
-    {
-      // Attempting to deliver directly
-      // TODO(tfr): Attempt direct delivery
-      return;
-    }
-
-    // Adding message to mailbox
-    it->second.push_back(message);
-  }
+  void DeliverMessageLockLess(Message const &message);
 
   // TODO(tfr): Add state logic to trim inboxes
   //
-
 private:
   Mutex                                    mutex_{};
-  std::unordered_map<Address, MessageList> inbox_{};
+  std::unordered_map<Address, MessageList> inboxes_{};
 
   Endpoint &      message_endpoint_;
   SubscriptionPtr message_subscription_;

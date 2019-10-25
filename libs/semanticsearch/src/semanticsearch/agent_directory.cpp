@@ -70,7 +70,7 @@ bool AgentDirectory::UnregisterAgent(ConstByteArray const &pk)
   {
     // We can only unregister of all vocabulary locations
     // have been unregistered.
-    // TODO(tfr): do check
+    // TODO(tfr): do check on number of registered locations
 
     // Deleting the entry
     agents_.erase(ait);

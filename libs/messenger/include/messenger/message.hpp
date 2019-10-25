@@ -21,28 +21,11 @@
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "messenger/network_location.hpp"
 #include "muddle/address.hpp"
 
 namespace fetch {
 namespace messenger {
-
-struct NetworkLocation
-{
-  using Address = muddle::Address;
-
-  Address node;
-  Address messenger;
-
-  bool operator==(NetworkLocation const &other) const
-  {
-    return (node == other.node) && (messenger == other.messenger);
-  }
-
-  bool operator<(NetworkLocation const &other) const
-  {
-    return messenger < other.messenger;
-  }
-};
 
 struct Message
 {
@@ -52,6 +35,7 @@ struct Message
   NetworkLocation to;
 
   ConstByteArray protocol;
+  ConstByteArray context;
   ConstByteArray payload;
 
   bool operator==(Message const &other) const
@@ -71,32 +55,6 @@ struct Message
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<messenger::NetworkLocation, D>
-{
-public:
-  using Type       = messenger::NetworkLocation;
-  using DriverType = D;
-
-  static uint8_t const NODE      = 1;
-  static uint8_t const MESSENGER = 2;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &location)
-  {
-    auto map = map_constructor(2);
-    map.Append(NODE, location.node);
-    map.Append(MESSENGER, location.messenger);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &location)
-  {
-    map.ExpectKeyGetValue(NODE, location.node);
-    map.ExpectKeyGetValue(MESSENGER, location.messenger);
-  }
-};
-
-template <typename D>
 struct MapSerializer<messenger::Message, D>
 {
 public:
@@ -106,7 +64,8 @@ public:
   static uint8_t const FROM     = 1;
   static uint8_t const TO       = 2;
   static uint8_t const PROTOCOL = 3;
-  static uint8_t const PAYLOAD  = 4;
+  static uint8_t const CONTEXT  = 4;
+  static uint8_t const PAYLOAD  = 5;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &message)
@@ -115,6 +74,7 @@ public:
     map.Append(FROM, message.from);
     map.Append(TO, message.to);
     map.Append(PROTOCOL, message.protocol);
+    map.Append(CONTEXT, message.context);
     map.Append(PAYLOAD, message.payload);
   }
 
@@ -124,6 +84,7 @@ public:
     map.ExpectKeyGetValue(FROM, message.from);
     map.ExpectKeyGetValue(TO, message.to);
     map.ExpectKeyGetValue(PROTOCOL, message.protocol);
+    map.ExpectKeyGetValue(CONTEXT, message.context);
     map.ExpectKeyGetValue(PAYLOAD, message.payload);
   }
 };
