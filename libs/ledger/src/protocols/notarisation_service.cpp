@@ -408,7 +408,7 @@ NotarisationService::NotarisationResult NotarisationService::Verify(
 
   // Check signature deserialises and that the signature was created with the correct number of
   // signers
-  if (check && count(notarisation.second.begin(), notarisation.second.end(), true) ==
+  if (check && count(notarisation.second.begin(), notarisation.second.end(), 1) ==
                    notarisation_unit->threshold())
   {
     aggregate_signature.second = notarisation.second;
@@ -421,7 +421,8 @@ NotarisationService::NotarisationResult NotarisationService::Verify(
 }
 
 bool NotarisationService::Verify(BlockHash const &block_hash, BlockNotarisation const &notarisation,
-                                 BlockNotarisationKeys const &notarisation_key_str)
+                                 BlockNotarisationKeys const &notarisation_key_str,
+                                 uint32_t                     threshold)
 {
   std::vector<NotarisationManager::PublicKey> notarisation_keys;
   for (auto const &key_str : notarisation_key_str)
@@ -440,8 +441,7 @@ bool NotarisationService::Verify(BlockHash const &block_hash, BlockNotarisation 
   bool               check;
   aggregate_signature.first.setStr(&check, std::string(notarisation.first).data());
 
-  // TODO(JMW): Should threshold be in block?
-  if (check /*&& count(notarisation.second.begin(), notarisation.second.end(), true) == threshold_*/)
+  if (check && count(notarisation.second.begin(), notarisation.second.end(), 1) == threshold)
   {
     aggregate_signature.second = notarisation.second;
     return NotarisationManager::VerifyAggregateSignature(block_hash, aggregate_signature,

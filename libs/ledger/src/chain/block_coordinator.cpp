@@ -646,11 +646,12 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     {
       // If block is too old then get aeon beginning
       auto aeon_block                = Consensus::GetBeginningOfAeon(*current_block_, chain_);
+      auto threshold                 = consensus_->GetThreshold(*current_block_);
       auto ordered_notarisation_keys = aeon_block.body.block_entropy.member_details;
 
       if (!notarisation_->Verify(current_block_->body.hash,
                                  current_block_->body.block_entropy.block_notarisation,
-                                 ordered_notarisation_keys))
+                                 ordered_notarisation_keys, threshold))
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Block notarisation failed verification",
                        ToBase64(current_block_->body.hash), ")");

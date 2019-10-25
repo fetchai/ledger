@@ -41,7 +41,7 @@ using Signature          = bn::G1;
 using Generator          = bn::G2;
 using MessagePayload     = byte_array::ConstByteArray;
 using CabinetIndex       = uint32_t;
-using SignerRecord = std::vector<uint8_t>;
+using SignerRecord       = std::vector<uint8_t>;
 using AggregateSignature = std::pair<Signature, SignerRecord>;
 
 namespace details {

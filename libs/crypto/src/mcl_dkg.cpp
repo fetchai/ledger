@@ -438,7 +438,7 @@ AggregateSignature ComputeAggregateSignature(
  * @param cabinet_public_keys Public keys of all eligible signers
  * @return Aggregated public key
  */
-PublicKey ComputeAggregatePublicKey(SignerRecord const &     signers,
+PublicKey ComputeAggregatePublicKey(SignerRecord const &          signers,
                                     std::vector<PublicKey> const &cabinet_public_keys)
 {
   PublicKey aggregate_key;

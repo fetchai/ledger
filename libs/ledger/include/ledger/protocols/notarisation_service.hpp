@@ -132,7 +132,7 @@ public:
   NotarisationResult Verify(BlockNumber const &block_number, BlockHash const &block_hash,
                             BlockNotarisation const &notarisation);
   static bool        Verify(BlockHash const &block_hash, BlockNotarisation const &notarisation,
-                            BlockNotarisationKeys const &notarisation_keys);
+                            BlockNotarisationKeys const &notarisation_keys, uint32_t threshold);
   /// @}
 
   std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();

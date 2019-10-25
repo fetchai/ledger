@@ -60,6 +60,7 @@ public:
   void            SetThreshold(double threshold);
   void            SetCabinetSize(uint64_t size);
   void            SetDefaultStartTime(uint64_t default_start_time);
+  uint32_t        GetThreshold(Block const &block);
 
   static WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabinet, uint64_t entropy);
   static Block        GetBeginningOfAeon(Block const &current, MainChain const &chain);
@@ -94,7 +95,6 @@ private:
   uint32_t       block_interval_ms_{std::numeric_limits<uint32_t>::max()};
 
   CabinetPtr GetCabinet(Block const &previous);
-  bool       ValidMinerForBlock(Block const &previous, chain::Address const &address);
   uint64_t   GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
   bool       ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool       ShouldTriggerNewCabinet(Block const &block);

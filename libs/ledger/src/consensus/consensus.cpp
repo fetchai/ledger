@@ -140,19 +140,10 @@ Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous)
   return std::make_shared<Cabinet>(cabinet_copy);
 }
 
-bool Consensus::ValidMinerForBlock(Block const &previous, chain::Address const &address)
+uint32_t Consensus::GetThreshold(Block const &block)
 {
-  auto const cabinet = GetCabinet(previous);
-
-  if (!cabinet || cabinet->empty())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine cabinet for block validation");
-    return false;
-  }
-
-  return std::find_if((*cabinet).begin(), (*cabinet).end(), [&address](Identity const &identity) {
-           return address == chain::Address(identity);
-         }) != (*cabinet).end();
+  auto cabinet_size = GetCabinet(block)->size();
+  return static_cast<uint32_t>(std::floor(cabinet_size * threshold_)) + 1;
 }
 
 Block GetBlockPriorTo(Block const &current, MainChain const &chain)
@@ -176,18 +167,13 @@ Block Consensus::GetBeginningOfAeon(Block const &current, MainChain const &chain
 
 uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
 {
-  auto const cabinet = GetCabinet(previous);
+  auto beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
+  auto cabinet           = beginning_of_aeon.body.block_entropy.qualified;
 
-  if (!cabinet)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine block generation weight");
-    return 0;
-  }
-
-  std::size_t weight{cabinet->size()};
+  std::size_t weight{cabinet.size()};
 
   // TODO(EJF): Depending on the cabinet sizes this would need to be improved
-  for (auto const &member : *cabinet)
+  for (auto const &member : cabinet)
   {
     if (address == chain::Address(member))
     {
@@ -360,8 +346,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       cabinet_member_list.insert(staker.identifier());
     }
 
-    auto threshold = static_cast<uint32_t>(
-        std::ceil(static_cast<double>(cabinet_member_list.size()) * threshold_));
+    auto threshold = static_cast<uint32_t>(std::floor(cabinet_member_list.size()) * threshold_) + 1;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_.body.block_number,
                    " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
