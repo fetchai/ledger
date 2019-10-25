@@ -65,7 +65,7 @@ bool Packet::ToBuffer(Packet const &packet, void *buffer, std::size_t length)
  *
  * @param packet The packet to be populated
  * @param buffer The pointer to the input buffer
- * @param length THe length in bytes of the input buffer
+ * @param length The length in bytes of the input buffer
  * @return true if successful, otherwise false
  */
 bool Packet::FromBuffer(Packet &packet, void const *buffer, std::size_t length)
@@ -95,7 +95,7 @@ bool Packet::FromBuffer(Packet &packet, void const *buffer, std::size_t length)
   // read in the payload
   ByteArray payload{};
 
-  if (payload_length)
+  if (payload_length != 0u)
   {
     payload.Resize(payload_length);
     std::memcpy(payload.pointer(), raw + payload_offset, payload_length);

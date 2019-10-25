@@ -18,6 +18,7 @@
 
 #include "core/containers/set_difference.hpp"
 #include "core/containers/set_intersection.hpp"
+#include "core/containers/set_join.hpp"
 #include "core/mutex.hpp"
 #include "core/reactor.hpp"
 #include "core/service_ids.hpp"
@@ -35,26 +36,26 @@
 namespace fetch {
 namespace muddle {
 
+namespace {
+
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-static constexpr auto        MIN_ANNOUNCEMENT_INTERVAL = 15min;
-static constexpr auto        MAX_ANNOUNCEMENT_INTERVAL = 30min;
-static constexpr std::size_t MINIMUM_PEERS             = 3;
-static constexpr char const *BASE_NAME                 = "PeerSelector";
-static constexpr std::size_t MAX_CACHE_KAD_NODES       = 20;
-static constexpr std::size_t MAX_CONNECTED_KAD_NODES   = 3;
+constexpr auto        MIN_ANNOUNCEMENT_INTERVAL = 15min;
+constexpr auto        MAX_ANNOUNCEMENT_INTERVAL = 30min;
+constexpr std::size_t MINIMUM_PEERS             = 3;
+constexpr char const *BASE_NAME                 = "PeerSelector";
+constexpr std::size_t MAX_CACHE_KAD_NODES       = 20;
+constexpr std::size_t MAX_CONNECTED_KAD_NODES   = 3;
+constexpr std::size_t MAX_LOG2_BACKOFF          = 11;  // 2048
 
-static std::unordered_set<Address> operator+(std::unordered_set<Address>        input,
-                                             std::unordered_set<Address> const &other)
+PromiseTask::Duration CalculatePromiseTimeout(std::size_t consecutive_failures)
 {
-  for (auto const &address : other)
-  {
-    input.emplace(address);
-  }
-
-  return input;
+  std::size_t const log2_backoff_secs = std::min(consecutive_failures, MAX_LOG2_BACKOFF);
+  return duration_cast<PromiseTask::Duration>(seconds{1 << log2_backoff_secs});
 }
+
+}  // namespace
 
 PeerSelector::PeerSelector(NetworkId const &network, Duration const &interval,
                            core::Reactor &reactor, MuddleRegister const &reg,
@@ -226,17 +227,33 @@ void PeerSelector::Periodically()
 void PeerSelector::ResolveAddresses(Addresses const &addresses)
 {
   // generate the set of addresses which have not been resolved yet
-  auto const unresolved_addresses = (addresses - peers_info_) - pending_resolutions_;
+  auto unresolved_addresses = addresses - pending_resolutions_;
+
+  // additionally filter the unresolved addresses by the peers which we don't have information for
+  for (auto const &peer : peers_info_)
+  {
+    if (unresolved_addresses.find(peer.first) != unresolved_addresses.end())
+    {
+      if (!peer.second.peer_data.empty())
+      {
+        unresolved_addresses.erase(peer.first);
+      }
+    }
+  }
 
   for (auto const &address : unresolved_addresses)
   {
+    FETCH_LOG_TRACE(logging_name_, "Requesting connection info from: ", address.ToBase64());
+
     // make the call to the remote service
     auto promise = rpc_client_.CallSpecificAddress(address, RPC_MUDDLE_DISCOVERY,
                                                    DiscoveryService::CONNECTION_INFORMATION);
+    // lookup the peer information
+    auto const &peer_data = peers_info_[address];
 
     // wrap the promise is a task
     auto task = std::make_shared<PromiseTask>(
-        std::move(promise),
+        promise, CalculatePromiseTimeout(peer_data.consecutive_failures),
         [this, address](service::Promise const &promise) { OnResolvedAddress(address, promise); });
 
     // add the task to the reactor
@@ -271,6 +288,10 @@ void PeerSelector::OnResolvedAddress(Address const &address, service::Promise co
   {
     FETCH_LOG_WARN(logging_name_, "Unable to resolve address for: ", address.ToBase64(),
                    " code: ", int(promise->state()));
+
+    // update the failure
+    auto &peer_data = peers_info_[address];
+    peer_data.consecutive_failures++;
   }
 
   // remove the entry from the pending list
@@ -360,10 +381,8 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
       {
         return a.address < b.address;
       }
-      else
-      {
-        return distance_a < distance_b;
-      }
+
+      return distance_a < distance_b;
     });
 
     // trim the kademlia cache nodes
@@ -392,6 +411,16 @@ void PeerSelector::MakeAnnouncement()
 {
   if (announcement_interval_.HasExpired())
   {
+    if (endpoint_.GetDirectlyConnectedPeerSet().empty())
+    {
+      announcement_interval_.Restart(1000);
+
+      FETCH_LOG_TRACE(logging_name_, "Aborting kad announcement");
+      return;
+    }
+
+    FETCH_LOG_TRACE(logging_name_, "Making kad announcement");
+
     // send out the announcement
     endpoint_.Broadcast(SERVICE_MUDDLE, CHANNEL_ANNOUNCEMENT, {});
 

@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chain/address.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -37,10 +37,15 @@ namespace fetch {
 namespace variant {
 class Variant;
 }
-namespace ledger {
+
+namespace chain {
 
 class Transaction;
 class Address;
+
+}  // namespace chain
+
+namespace ledger {
 
 /**
  * Contract - Base class for all smart contract and chain code instances
@@ -61,21 +66,20 @@ public:
     int64_t return_value{0};
   };
 
-  using BlockIndex            = TransactionLayout::BlockIndex;
+  using BlockIndex            = chain::TransactionLayout::BlockIndex;
   using Identity              = crypto::Identity;
   using ConstByteArray        = byte_array::ConstByteArray;
   using ContractName          = ConstByteArray;
   using Query                 = variant::Variant;
-  using InitialiseHandler     = std::function<Result(Address const &)>;
-  using TransactionHandler    = std::function<Result(Transaction const &, BlockIndex)>;
+  using InitialiseHandler     = std::function<Result(
+      chain::Address const &, chain::Transaction const &tx, BlockIndex block_index)>;
+  using TransactionHandler    = std::function<Result(chain::Transaction const &, BlockIndex)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
   using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
   using Counter               = std::atomic<std::size_t>;
   using CounterMap            = std::unordered_map<ContractName, Counter>;
   using StorageInterface      = ledger::StorageInterface;
-
-  static constexpr char const *LOGGING_NAME = "Contract";
 
   // Construction / Destruction
   Contract()                 = default;
@@ -88,10 +92,10 @@ public:
   void Attach(ledger::StateAdapter &state);
   void Detach();
 
-  Result DispatchInitialise(Address const &owner);
+  Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx,
+                            BlockIndex block_index);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Result DispatchTransaction(ConstByteArray const &name, Transaction const &tx,
-                             TransactionLayout::BlockIndex index);
+  Result DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index);
   /// @}
 
   /// @name Dispatch Maps Accessors
@@ -114,7 +118,8 @@ protected:
   /// @{
   void OnInitialise(InitialiseHandler &&handler);
   template <typename C>
-  void OnInitialise(C *instance, Result (C::*func)(Address const &));
+  void OnInitialise(C *instance, Result (C::*func)(chain::Address const &,
+                                                   chain::Transaction const &, BlockIndex));
   /// @}
 
   /// @name Transaction Handlers
@@ -122,7 +127,7 @@ protected:
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
   void OnTransaction(std::string const &name, C *instance,
-                     Result (C::*func)(Transaction const &, BlockIndex));
+                     Result (C::*func)(chain::Transaction const &, BlockIndex));
   /// @}
 
   /// @name Query Handler Registration
@@ -134,7 +139,7 @@ protected:
 
   /// @name Chain Code State Utils
   /// @{
-  bool ParseAsJson(Transaction const &tx, variant::Variant &output);
+  bool ParseAsJson(chain::Transaction const &tx, variant::Variant &output);
 
   template <typename T>
   bool GetStateRecord(T &record, ConstByteArray const &key);
@@ -173,9 +178,13 @@ private:
  * @param func The member function pointer
  */
 template <typename C>
-void Contract::OnInitialise(C *instance, Result (C::*func)(Address const &))
+void Contract::OnInitialise(C *instance, Result (C::*func)(chain::Address const &,
+                                                           chain::Transaction const &, BlockIndex))
 {
-  OnInitialise([instance, func](Address const &owner) { return (instance->*func)(owner); });
+  OnInitialise([instance, func](chain::Address const &owner, chain::Transaction const &tx,
+                                BlockIndex block_index) {
+    return (instance->*func)(owner, tx, block_index);
+  });
 }
 
 /**
@@ -188,10 +197,10 @@ void Contract::OnInitialise(C *instance, Result (C::*func)(Address const &))
  */
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
-                             Result (C::*func)(Transaction const &, BlockIndex))
+                             Result (C::*func)(chain::Transaction const &, BlockIndex))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name, [instance, func](Transaction const &tx, BlockIndex block_index) {
+  OnTransaction(name, [instance, func](chain::Transaction const &tx, BlockIndex block_index) {
     return (instance->*func)(tx, block_index);
   });
 }
@@ -200,9 +209,9 @@ void Contract::OnTransaction(std::string const &name, C *instance,
  * Register class member query handler
  *
  * @tparam C The class type
- * @param name THe query name
+ * @param name The query name
  * @param instance The pointer to the class instance
- * @param func THe member function pointer
+ * @param func The member function pointer
  */
 template <typename C>
 void Contract::OnQuery(std::string const &name, C *instance,

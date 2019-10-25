@@ -20,7 +20,6 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
@@ -33,7 +32,6 @@ namespace serializers {
 
 class MsgPackSerializer
 {
-  static char const *const LOGGING_NAME;
 
 public:
   using ByteArray = byte_array::ByteArray;
@@ -86,10 +84,10 @@ public:
   void SkipBytes(uint64_t const &size);
 
   template <typename T>
-  typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &);
+  typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const & /*unused*/);
 
   template <typename T>
-  typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator>>(T &);
+  typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator>>(T & /*unused*/);
 
   template <typename T>
   typename ForwardSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);

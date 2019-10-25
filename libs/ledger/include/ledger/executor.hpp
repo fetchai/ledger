@@ -28,9 +28,13 @@
 #include <memory>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Address;
+
+}  // namespace chain
+namespace ledger {
+
 class TokenContract;
 class CachedStorageAdapter;
 class StateSentinelAdapter;
@@ -53,12 +57,13 @@ public:
   /// @{
   Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
                  BitVector const &shards) override;
-  void   SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
+  void   SettleFees(chain::Address const &miner, TokenAmount amount,
+                    uint32_t log2_num_lanes) override;
   /// @}
 
 private:
   using TokenContractPtr        = std::shared_ptr<TokenContract>;
-  using TransactionPtr          = std::shared_ptr<Transaction>;
+  using TransactionPtr          = std::shared_ptr<chain::Transaction>;
   using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
 
   bool RetrieveTransaction(Digest const &digest);
@@ -71,14 +76,14 @@ private:
   /// @{
   StakeUpdateInterface *stake_updates_{nullptr};
   StorageUnitPtr        storage_;             ///< The collection of resources
-  ChainCodeCache        chain_code_cache_{};  //< The factory to create new chain code instances
+  ChainCodeCache        chain_code_cache_{};  ///< The factory to create new chain code instances
   TokenContractPtr      token_contract_;
   /// @}
 
   /// @name Per Execution State
   /// @{
-  BlockIndex              block_;
-  SliceIndex              slice_;
+  BlockIndex              block_{};
+  SliceIndex              slice_{};
   BitVector               allowed_shards_{};
   LaneIndex               log2_num_lanes_{0};
   TransactionPtr          current_tx_{};

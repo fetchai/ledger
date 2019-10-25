@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/digest.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/synergetic_contract_factory.hpp"
+#include "logging/logging.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -39,7 +40,7 @@ SynergeticContractPtr SynergeticContractFactory::Create(Digest const &digest)
 
   // attempt to retrieve the document stored in the database
   auto const resource =
-      storage_.Get(SmartContractManager::CreateAddressForSynergeticContract(digest));
+      storage_.Get(SmartContractManager::CreateAddressForContract(digest.ToHex()));
 
   if (!resource.failed)
   {

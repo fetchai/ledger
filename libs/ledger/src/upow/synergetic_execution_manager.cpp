@@ -19,8 +19,10 @@
 #include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
+#include "logging/logging.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -50,7 +52,7 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
 
 ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Block const &previous)
 {
-  using WorkMap = std::unordered_map<Digest, WorkItemPtr, DigestHashAdapter>;
+  using WorkMap = std::unordered_map<ProblemId, WorkItemPtr>;
 
   auto const &current_epoch  = current.body.dag_epoch;
   auto const &previous_epoch = previous.body.dag_epoch;
@@ -65,12 +67,13 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     auto work = std::make_shared<Work>();
     if (!dag_->GetWork(digest, *work))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to get work from DAG. Node: 0x", digest.ToHex());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to get work from DAG Node: 0x", digest.ToHex());
       continue;
     }
 
     // lookup (or create) the solution queue
-    auto &work_item = work_map[work->contract_digest()];
+    auto &work_item = work_map[{work->address(), work->contract_digest()}];
+
     if (!work_item)
     {
       work_item = std::make_shared<WorkItem>();
@@ -80,7 +83,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     work_item->work_queue.push(std::move(work));
   }
 
-  // Step 2. Loop through previous epochs data in order form the problem data
+  // Step 2. Loop through previous epochs data in order to form the problem data
   DAGNode node{};
   for (auto const &digest : previous_epoch.data_nodes)
   {
@@ -99,11 +102,11 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     }
 
     // attempt to lookup the contract being referenced
-    auto it = work_map.find(node.contract_digest);
+    auto it = work_map.find({node.contract_address, node.contract_digest});
     if (it == work_map.end())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup references contract: 0x",
-                     node.contract_digest.ToHex());
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup references contract: address ",
+                     node.contract_address.display(), " digest 0x", node.contract_digest.ToHex());
       continue;
     }
 
@@ -129,7 +132,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   return SUCCESS;
 }
 
-bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std::size_t num_lanes)
+bool SynergeticExecutionManager::ValidateWorkAndUpdateState(std::size_t num_lanes)
 {
   // get the current solution stack
   WorkQueueStack solution_stack;
@@ -146,8 +149,8 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std:
     solution_stack.pop_back();
 
     // dispatch the work
-    threads_.Dispatch([this, work_item, block, num_lanes] {
-      ExecuteItem(work_item->work_queue, work_item->problem_data, block, num_lanes);
+    threads_.Dispatch([this, work_item, num_lanes] {
+      ExecuteItem(work_item->work_queue, work_item->problem_data, num_lanes);
     });
   }
 
@@ -158,7 +161,7 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std:
 }
 
 void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const &problem_data,
-                                             uint64_t block, std::size_t num_lanes)
+                                             std::size_t num_lanes)
 {
   ExecutorPtr executor;
 
@@ -170,7 +173,7 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
   }
 
   assert(static_cast<bool>(executor));
-  executor->Verify(queue, problem_data, block, num_lanes);
+  executor->Verify(queue, problem_data, num_lanes);
 
   // return the executor to the stack
   FETCH_LOCK(lock_);

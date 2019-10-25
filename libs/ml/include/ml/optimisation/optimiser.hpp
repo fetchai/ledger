@@ -21,6 +21,7 @@
 #include "math/statistics/mean.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
@@ -57,6 +58,11 @@ public:
 
   virtual ~Optimiser() = default;
 
+  void SetGraph(std::shared_ptr<Graph<T>> graph)
+  {
+    graph_ = graph;
+  }
+
   /// DATA RUN INTERFACES ///
   DataType Run(std::vector<TensorType> const &data, TensorType const &labels,
                SizeType batch_size = SIZE_NOT_SET);
@@ -79,6 +85,7 @@ public:
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
+  virtual OptimiserType OptimiserCode() = 0;
 
 protected:
   std::shared_ptr<Graph<T>> graph_;
@@ -91,16 +98,16 @@ protected:
   SizeType                                                            epoch_ = SIZE_NOT_SET;
 
 private:
-  DataType                                       loss_;
-  DataType                                       loss_sum_;
-  SizeType                                       step_;
+  DataType                                       loss_{};
+  DataType                                       loss_sum_{};
+  SizeType                                       step_{};
   SizeType                                       cumulative_step_ = 0;
   std::pair<TensorType, std::vector<TensorType>> input_;
   TensorType                                     cur_label_;
   TensorType                                     pred_label_;
   std::chrono::high_resolution_clock::time_point cur_time_;
   std::chrono::high_resolution_clock::time_point start_time_;
-  std::chrono::duration<double>                  time_span_;
+  std::chrono::duration<double>                  time_span_{};
   std::string                                    stat_string_;
   std::vector<TensorType>                        batch_data_;
   TensorType                                     batch_labels_;
@@ -123,9 +130,11 @@ void Optimiser<T>::Init()
   graph_->Compile();
 
   graph_trainables_ = graph_->GetTrainables();
+
+  gradients_.clear();
   for (auto &train : graph_trainables_)
   {
-    gradients_.emplace_back(TensorType(train->get_weights().shape()));
+    gradients_.emplace_back(TensorType(train->GetWeights().shape()));
   }
 }
 
@@ -236,12 +245,12 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
     auto name_it = input_node_names_.begin();
     for (auto &input : batch_data_)
     {
-      graph_->SetInput(*name_it, input);
+      graph_->SetInputReference(*name_it, input);
       ++name_it;
     }
 
     // Set Label
-    graph_->SetInput(label_node_name_, batch_labels_);
+    graph_->SetInputReference(label_node_name_, batch_labels_);
 
     auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());
@@ -339,12 +348,12 @@ typename T::Type Optimiser<T>::RunImplementation(
     auto name_it = input_node_names_.begin();
     for (auto &cur_input : input.second)
     {
-      graph_->SetInput(*name_it, cur_input);
+      graph_->SetInputReference(*name_it, cur_input);
       ++name_it;
     }
 
     // Set Label
-    graph_->SetInput(label_node_name_, input.first);
+    graph_->SetInputReference(label_node_name_, input.first);
 
     auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());
@@ -438,7 +447,7 @@ void Optimiser<T>::UpdateLearningRate()
   }
   default:
   {
-    throw std::runtime_error("Please specify learning rate schedule method");
+    throw exceptions::InvalidMode("Please specify learning rate schedule method");
   }
   }
 }

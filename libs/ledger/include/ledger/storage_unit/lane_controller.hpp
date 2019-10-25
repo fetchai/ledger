@@ -47,7 +47,7 @@ public:
 
   /// Internal controls
   /// @{
-  void UseThesePeers(AddressMap const &uris);
+  void UseThesePeers(AddressMap const &addresses);
   /// @}
 
   // Operators

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "storage/storage_exception.hpp"
 
 #include <exception>

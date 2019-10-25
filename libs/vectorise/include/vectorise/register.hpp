@@ -80,7 +80,7 @@ struct UnrollSet<T, 0>
   FUNCTION(-)                         \
   FUNCTION(&)                         \
   FUNCTION(|)                         \
-  FUNCTION (^)
+  FUNCTION(^)
 // clang-format on
 
 template <typename T, std::size_t N = 8 * sizeof(T)>
@@ -116,7 +116,7 @@ public:
     return data_;
   }
 
-  type const data() const
+  type data() const
   {
     return data_;
   }
@@ -130,7 +130,7 @@ public:
   {                                                             \
     return VectorRegister(type(data_ OP other.data_));          \
   }
-  APPLY_OPERATOR_LIST(FETCH_ADD_OPERATOR);
+  APPLY_OPERATOR_LIST(FETCH_ADD_OPERATOR);  // NOLINT
 #undef FETCH_ADD_OPERATOR
 
   void Store(type *ptr) const

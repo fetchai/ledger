@@ -20,7 +20,6 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/serializers/array_interface.hpp"
 #include "core/serializers/binary_interface.hpp"
@@ -93,12 +92,12 @@ public:
     };
   }
 
-  void WriteByte(uint8_t)
+  void WriteByte(uint8_t /*unused*/)
   {
     ++pos_;
   }
 
-  void WriteBytes(uint8_t const *, std::size_t size)
+  void WriteBytes(uint8_t const * /*unused*/, std::size_t size)
   {
     pos_ += size;
   }
@@ -109,10 +108,10 @@ public:
   }
 
   template <typename T>
-  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator<<(T const &);
+  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator<<(T const & /*unused*/);
 
   template <typename T>
-  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator>>(T &);
+  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator>>(T & /*unused*/);
 
   template <typename T>
   typename ForwardSerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
@@ -222,13 +221,14 @@ private:
 };
 
 template <typename T>
-typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &)
+typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(
+    T const & /*unused*/)
 {
   return *this;
 }
 
 template <typename T>
-typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &)
+typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T & /*unused*/)
 {
   return *this;
 }

@@ -19,6 +19,8 @@
 
 #include "ml/meta/ml_type_traits.hpp"
 
+#include <unordered_map>
+
 namespace fetch {
 namespace ml {
 
@@ -70,7 +72,7 @@ struct GraphSaveableParams
   std::vector<std::pair<std::string, std::vector<std::string>>>                    connections;
   std::unordered_map<std::string, std::shared_ptr<NodeSaveableParams<TensorType>>> nodes;
 
-  uint8_t graph_state;
+  uint8_t graph_state{};
 };
 
 template <typename TensorType>
@@ -186,7 +188,7 @@ struct OpEluSaveableParams : public OpsSaveableParams
 {
   fetch::ml::OpType op_type = OpType::OP_ELU;
   using DataType            = typename TensorType::Type;
-  DataType a;
+  DataType a{};
 };
 
 /**
@@ -241,10 +243,10 @@ struct LayerConvolution1DSaveableParams : SubGraphSaveableParams<TensorType>
 
   using SizeType = typename TensorType::SizeType;
 
-  SizeType kernel_size;
-  SizeType input_channels;
-  SizeType output_channels;
-  SizeType stride_size;
+  SizeType kernel_size{};
+  SizeType input_channels{};
+  SizeType output_channels{};
+  SizeType stride_size{};
 };
 
 template <typename TensorType>
@@ -254,10 +256,10 @@ struct LayerConvolution2DSaveableParams : SubGraphSaveableParams<TensorType>
 
   using SizeType = typename TensorType::SizeType;
 
-  SizeType kernel_size;
-  SizeType input_channels;
-  SizeType output_channels;
-  SizeType stride_size;
+  SizeType kernel_size{};
+  SizeType input_channels{};
+  SizeType output_channels{};
+  SizeType stride_size{};
 };
 
 /**
@@ -286,8 +288,8 @@ struct OpLayerNormSaveableParams : public OpsSaveableParams
 
   fetch::ml::OpType op_type = OpType::OP_LAYER_NORM;
 
-  DataType epsilon;
-  SizeType axis;
+  DataType epsilon{};
+  SizeType axis{};
 };
 
 /**
@@ -299,12 +301,39 @@ struct OpSliceSaveableParams : public OpsSaveableParams
 {
   using SizeType = typename TensorType::SizeType;
 
-  std::vector<SizeType> axes;
-  std::vector<SizeType> indices;
-  SizeType              axis;
-  SizeType              index;
+  std::pair<SizeType, SizeType> start_end_slice;
+  std::vector<SizeType>         axes;
+  std::vector<SizeType>         indices;
+  SizeType                      axis{};
+  SizeType                      index{};
+  uint8_t                       slice_type;
 
   fetch::ml::OpType op_type = OpType::OP_SLICE;
+};
+
+/**
+ * Saveable parameters for Squeeze op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpSqueezeSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+
+  fetch::ml::OpType op_type = OpType::OP_SQUEEZE;
+};
+
+/**
+ * Saveable parameters for Squeeze op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpReduceMeanSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+  SizeType axis{};
+
+  fetch::ml::OpType op_type = OpType::OP_REDUCE_MEAN;
 };
 
 /**
@@ -315,7 +344,7 @@ template <typename TensorType>
 struct OpLeakyReluSaveableParams : public OpsSaveableParams
 {
   using DataType = typename TensorType::Type;
-  DataType          a;
+  DataType          a{};
   fetch::ml::OpType op_type = OpType::OP_LEAKY_RELU;
 };
 
@@ -324,11 +353,11 @@ struct OpLeakyReluSaveableParams : public OpsSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType>
-struct OpLeakyReluOpSaveableParams : public OpsSaveableParams
+struct OpPReluOpSaveableParams : public OpsSaveableParams
 {
   using DataType = typename TensorType::Type;
-  DataType          a;
-  fetch::ml::OpType op_type = OpType::OP_LEAKY_RELU_OP;
+  DataType          a{};
+  fetch::ml::OpType op_type = OpType::OP_PRELU_OP;
 };
 
 /**
@@ -350,7 +379,7 @@ template <typename TensorType>
 struct OpLogSigmoidSaveableParams : public OpsSaveableParams
 {
   using DataType = typename TensorType::Type;
-  DataType          a;
+  DataType          a{};
   fetch::ml::OpType op_type = OpType::OP_LOGSIGMOID;
 };
 
@@ -401,6 +430,22 @@ struct OpMaxPool2DSaveableParams : public OpsSaveableParams
   fetch::ml::OpType     op_type     = OpType::OP_MAX_POOL_2D;
 };
 
+template <typename TensorType>
+struct OpAvgPool1DSaveableParams : public OpsSaveableParams
+{
+  fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type     = OpType::OP_AVG_POOL_1D;
+};
+
+template <typename TensorType>
+struct OpAvgPool2DSaveableParams : public OpsSaveableParams
+{
+  fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type     = OpType::OP_AVG_POOL_2D;
+};
+
 /**
  * Saveable parameters for MSE op
  * @tparam TensorType
@@ -448,8 +493,8 @@ struct LayerLayerNormSaveableParams : SubGraphSaveableParams<TensorType>
   fetch::ml::OpType op_type = OpType::LAYER_LAYER_NORM;
 
   std::vector<SizeType> data_shape;
-  SizeType              axis;
-  DataType              epsilon;
+  SizeType              axis{};
+  DataType              epsilon{};
 };
 
 /**
@@ -464,11 +509,11 @@ struct LayerMultiHeadSaveableParams : public SubGraphSaveableParams<TensorType>
 
   fetch::ml::OpType op_type = OpType::LAYER_MULTI_HEAD_ATTENTION;
 
-  SizeType value_dim;
-  SizeType key_dim;
-  SizeType n_heads;
-  SizeType model_dim;
-  DataType dropout;
+  SizeType value_dim{};
+  SizeType key_dim{};
+  SizeType n_heads{};
+  SizeType model_dim{};
+  DataType dropout{};
 };
 
 template <typename TensorType>

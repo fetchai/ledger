@@ -24,9 +24,9 @@
 class MockStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
-  using Transaction = fetch::ledger::Transaction;
-  using Digest      = fetch::ledger::Digest;
-  using DigestSet   = fetch::ledger::DigestSet;
+  using Transaction = fetch::chain::Transaction;
+  using Digest      = fetch::Digest;
+  using DigestSet   = fetch::DigestSet;
 
   MockStorageUnit()
   {
@@ -74,7 +74,6 @@ public:
   MOCK_METHOD1(Commit, Hash(uint64_t));
   MOCK_METHOD2(HashExists, bool(Hash const &, uint64_t));
 
-  MOCK_CONST_METHOD0(KeyDump, Keys());
   MOCK_METHOD0(Reset, void());
 
   FakeStorageUnit fake;

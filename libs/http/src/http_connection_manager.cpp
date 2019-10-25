@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
 #include "http/http_connection_manager.hpp"
 #include "http/request.hpp"
+#include "logging/logging.hpp"
 
 #include <utility>
 
@@ -30,12 +30,11 @@ namespace http {
 
 HTTPConnectionManager::HTTPConnectionManager(AbstractHTTPServer &server)
   : server_(server)
-  , clients_mutex_{}
 {}
 
 HTTPConnectionManager::HandleType HTTPConnectionManager::Join(ConnectionType client)
 {
-  HandleType handle = server_.next_handle();
+  HandleType handle = AbstractHTTPServer::next_handle();
   FETCH_LOG_DEBUG(LOGGING_NAME, "Client joining with handle ", handle);
 
   FETCH_LOCK(clients_mutex_);

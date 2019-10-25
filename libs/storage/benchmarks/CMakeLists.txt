@@ -10,5 +10,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_gbench(stack_benchmarks fetch-storage ./stack_benchmarks)
-add_fetch_gbench(transaction_throughput fetch-storage ./transaction_throughput)
+# TODO: Disabled due to dependency on ledger add_fetch_gbench(stack_benchmarks fetch-storage
+# ./stack_benchmarks) TODO: Disabled due to dependency on ledger
+# add_fetch_gbench(transaction_throughput fetch-storage ./transaction_throughput)

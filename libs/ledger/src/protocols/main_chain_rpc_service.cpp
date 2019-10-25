@@ -16,16 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
-#include "metrics/metrics.hpp"
+#include "logging/logging.hpp"
 #include "muddle/packet.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
@@ -180,16 +179,12 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
 #endif  // FETCH_LOG_INFO_ENABLED
 
-  FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
-
   if (IsBlockValid(block))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: 0x", block.body.hash.ToHex(),
                    " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
 
     trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
-
-    FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
     // add the new block to the chain
     auto const status = chain_.AddBlock(block);
@@ -253,7 +248,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
     // skip the genesis block
-    if (it->body.previous_hash == GENESIS_DIGEST)
+    if (it->body.previous_hash == chain::GENESIS_DIGEST)
     {
       continue;
     }
@@ -298,7 +293,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     }
   }
 
-  if (invalid)
+  if (invalid != 0u)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Synced Summary: Invalid: ", invalid, " Added: ", added,
                    " Loose: ", loose, " Duplicate: ", duplicate, " from: muddle://",

@@ -34,7 +34,7 @@ public:
 
   /// @name Executor Interface
   /// @{
-  virtual void Verify(WorkQueue &solutions, ProblemData const &problem_data, uint64_t block,
+  virtual void Verify(WorkQueue &solutions, ProblemData const &problem_data,
                       std::size_t num_lanes) = 0;
   /// @}
 };

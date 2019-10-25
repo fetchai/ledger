@@ -175,7 +175,7 @@ void Generator::CreateFunctions(IRBlockNodePtr const &block_node)
           ConvertToIRExpressionNodePtr(function_definition_node->children[1]);
       IRFunctionPtr        f              = identifier_node->function;
       std::string const &  name           = f->name;
-      auto const           num_parameters = (int)f->parameter_variables.size();
+      auto const           num_parameters = static_cast<int>(f->parameter_variables.size());
       uint16_t const       return_type_id = f->return_type->resolved_id;
       Executable::Function function(name, annotations, num_parameters, return_type_id);
       for (IRVariablePtr const &variable : f->parameter_variables)
@@ -436,8 +436,10 @@ void Generator::HandleWhileStatement(IRBlockNodePtr const &block_node)
   Executable::Instruction jump_instruction(Opcodes::Jump);
 
   jump_instruction.index = condition_pc;
-  uint16_t jump_pc       = function_->AddInstruction(jump_instruction);
-  AddLineNumber(block_node->block_terminator_line, jump_pc);
+  {
+    uint16_t jump_pc = function_->AddInstruction(jump_instruction);
+    AddLineNumber(block_node->block_terminator_line, jump_pc);
+  }
 
   auto const endwhile_pc               = uint16_t(function_->instructions.size());
   function_->instructions[jf_pc].index = endwhile_pc;
@@ -508,8 +510,10 @@ void Generator::HandleForStatement(IRBlockNodePtr const &block_node)
 
   Executable::Instruction jump_instruction(Opcodes::Jump);
   jump_instruction.index = iterate_pc;
-  uint16_t jump_pc       = function_->AddInstruction(jump_instruction);
-  AddLineNumber(block_node->block_terminator_line, jump_pc);
+  {
+    uint16_t jump_pc = function_->AddInstruction(jump_instruction);
+    AddLineNumber(block_node->block_terminator_line, jump_pc);
+  }
 
   Executable::Instruction terminate_instruction(Opcodes::ForRangeTerminate);
   terminate_instruction.type_id = type_id;
@@ -1490,11 +1494,9 @@ Generator::Chain Generator::HandleConditionExpression(IRBlockNodePtr const &    
   {
     return HandleShortCircuitOp(block_node, node);
   }
-  else
-  {
-    HandleExpression(node);
-    return Chain();
-  }
+
+  HandleExpression(node);
+  return Chain();
 }
 
 Generator::Chain Generator::HandleShortCircuitOp(IRNodePtr const &          parent,

@@ -21,8 +21,9 @@
 #include "settings.hpp"
 #include "vectorise/platform.hpp"
 
+using namespace fetch::constellation;
+
 namespace fetch {
-namespace {
 
 /**
  * Determine the network mode based on the settings configuration
@@ -46,8 +47,6 @@ Constellation::NetworkMode GetNetworkMode(Settings const &settings)
   return mode;
 }
 
-}  // namespace
-
 /**
  * Build the Constellation's configuration based on the settings based in.
  *
@@ -69,7 +68,7 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
   cfg.transient_peers       = settings.transient_peers.value();
   cfg.block_interval_ms     = settings.block_interval.value();
   cfg.aeon_period           = settings.aeon_period.value();
-  cfg.max_committee_size    = settings.max_committee_size.value();
+  cfg.max_cabinet_size      = settings.max_cabinet_size.value();
   cfg.stake_delay_period    = settings.stake_delay_period.value();
   cfg.peers_update_cycle_ms = settings.peer_update_interval.value();
   cfg.disable_signing       = settings.disable_signing.value();

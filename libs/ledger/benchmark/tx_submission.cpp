@@ -16,28 +16,27 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_builder.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction_builder.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
-#include "storage/transient_object_store.hpp"
+#include "ledger/storage_unit/transient_object_store.hpp"
 
 #include "benchmark/benchmark.h"
+
+#include "tx_generation.hpp"
 
 #include <vector>
 
 namespace {
 
-using fetch::byte_array::ByteArray;
 using fetch::storage::ResourceID;
-using fetch::ledger::Transaction;
-using fetch::ledger::TransactionBuilder;
-using fetch::ledger::Address;
+using fetch::chain::Transaction;
+using fetch::chain::TransactionBuilder;
 using fetch::crypto::ECDSASigner;
-using fetch::random::LinearCongruentialGenerator;
 
 using TransientStore   = fetch::storage::TransientObjectStore<Transaction>;
 using TransactionStore = fetch::storage::ObjectStore<Transaction>;
@@ -45,60 +44,15 @@ using TransactionList  = std::vector<TransactionBuilder::TransactionPtr>;
 
 constexpr uint32_t LOG2_NUM_LANES = 2;
 
-TransactionList GenerateTransactions(std::size_t count, bool large_packets)
-{
-  static constexpr std::size_t TX_SIZE      = 2048;
-  static constexpr std::size_t TX_WORD_SIZE = TX_SIZE / sizeof(uint64_t);
-
-  static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a multiple of 64bits");
-
-  static LinearCongruentialGenerator rng;
-
-  ECDSASigner const signer;
-  Address const     signer_address{signer.identity()};
-
-  TransactionList list;
-  list.reserve(count);
-
-  for (std::size_t i = 0; i < count; ++i)
-  {
-    TransactionBuilder builder;
-    builder.From(signer_address);
-    builder.TargetChainCode("fetch.dummy", fetch::BitVector{});
-    builder.Action("foobar");
-    builder.Signer(signer.identity());
-
-    if (large_packets)
-    {
-      ByteArray tx_data(TX_SIZE);
-      auto *    tx_data_raw = reinterpret_cast<uint64_t *>(tx_data.pointer());
-
-      for (std::size_t j = 0; j < TX_WORD_SIZE; ++j)
-      {
-        *tx_data_raw++ = rng();
-      }
-
-      builder.Data(tx_data);
-    }
-    else
-    {
-      builder.Data(std::to_string(i));
-    }
-
-    list.emplace_back(builder.Seal().Sign(signer).Build());
-  }
-
-  return list;
-}
-
 void TxSubmitFixedLarge(benchmark::State &state)
 {
+  ECDSASigner const signer;
   // create the transaction store
   TransactionStore tx_store;
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   // create a whole series of transaction
-  TransactionList transactions = GenerateTransactions(50000, true);
+  TransactionList transactions = GenerateTransactions(50000, signer, true);
 
   for (auto _ : state)
   {
@@ -111,12 +65,14 @@ void TxSubmitFixedLarge(benchmark::State &state)
 
 void TxSubmitFixedSmall(benchmark::State &state)
 {
+  ECDSASigner const signer;
+
   // create the transaction store
   TransactionStore tx_store;
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   // create a whole series of transaction
-  TransactionList transactions = GenerateTransactions(50000, false);
+  TransactionList transactions = GenerateTransactions(50000, signer, false);
 
   for (auto _ : state)
   {
@@ -129,12 +85,14 @@ void TxSubmitFixedSmall(benchmark::State &state)
 
 void TxSubmitSingleLarge(benchmark::State &state)
 {
+  ECDSASigner const signer;
+
   // create the transaction store
   TransactionStore tx_store;
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   // create a whole series of transaction
-  TransactionList transactions = GenerateTransactions(state.max_iterations, true);
+  TransactionList transactions = GenerateTransactions(state.max_iterations, signer, true);
 
   std::size_t tx_index{0};
   for (auto _ : state)
@@ -146,12 +104,14 @@ void TxSubmitSingleLarge(benchmark::State &state)
 
 void TxSubmitSingleSmall(benchmark::State &state)
 {
+  ECDSASigner const signer;
+
   // create the transaction store
   TransactionStore tx_store;
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   // create a whole series of transaction
-  TransactionList transactions = GenerateTransactions(state.max_iterations, false);
+  TransactionList transactions = GenerateTransactions(state.max_iterations, signer, false);
 
   std::size_t tx_index{0};
   for (auto _ : state)
@@ -163,12 +123,14 @@ void TxSubmitSingleSmall(benchmark::State &state)
 
 void TxSubmitSingleSmallAlt(benchmark::State &state)
 {
+  ECDSASigner const signer;
+
   // create the transaction store
   TransientStore tx_store{LOG2_NUM_LANES};
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   // create a whole series of transaction
-  TransactionList transactions = GenerateTransactions(state.max_iterations, false);
+  TransactionList transactions = GenerateTransactions(state.max_iterations, signer, false);
 
   std::size_t tx_index{0};
   for (auto _ : state)
@@ -180,6 +142,8 @@ void TxSubmitSingleSmallAlt(benchmark::State &state)
 
 void TransientStoreExpectedOperation(benchmark::State &state)
 {
+  ECDSASigner const signer;
+
   // create the transient store
   TransientStore tx_store{LOG2_NUM_LANES};
   tx_store.New("transaction.db", "transaction_index.db", true);
@@ -190,7 +154,7 @@ void TransientStoreExpectedOperation(benchmark::State &state)
   {
     state.PauseTiming();
     // Number of Tx to send is state arg
-    TransactionList transactions = GenerateTransactions(std::size_t(state.range(0)), true);
+    TransactionList transactions = GenerateTransactions(std::size_t(state.range(0)), signer, true);
     state.ResumeTiming();
 
     for (auto const &tx : transactions)

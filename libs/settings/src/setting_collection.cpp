@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/commandline/parameter_parser.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "settings/setting_base.hpp"
 #include "settings/setting_collection.hpp"
 
@@ -45,7 +45,7 @@ std::string GetEnvironmentVariableName(char const *prefix, std::string const &na
   std::string env_name{name};
 
   std::transform(env_name.begin(), env_name.end(), env_name.begin(), [](char c) {
-    if (std::isalnum(c))
+    if (std::isalnum(c) != 0)
     {
       c = static_cast<char>(std::toupper(c));
     }
@@ -146,7 +146,7 @@ void SettingCollection::UpdateFromEnv(char const *prefix, detail::EnvironmentInt
     assert(setting);
 
     auto const *env_value = GetEnvironmentVariable(prefix, setting->name(), env);
-    if (env_value)
+    if (env_value != nullptr)
     {
       std::istringstream iss{env_value};
       iss >> *setting;
