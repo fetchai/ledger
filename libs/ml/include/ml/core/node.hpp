@@ -217,10 +217,20 @@ std::shared_ptr<TensorType> Node<TensorType>::Evaluate(bool is_training)
     op_ptr_->Forward(inputs, cached_output_);
     cached_output_status_ = CachedOutputState::VALID_CACHE;
 
-    assert(!math::state_division_by_zero<DataType>());
+    if (math::state_division_by_zero<DataType>())
+    {
+      throw std::runtime_error("Division by zero encountered in Node::Evaluate");
+    }
+    if (math::state_infinity<DataType>())
+    {
+      throw std::runtime_error("Infinity encountered in Node::Evaluate");
+    }
+    if (math::state_nan<DataType>())
+    {
+      throw std::runtime_error("NaN encountered in Node::Evaluate");
+    }
+
     assert(!math::state_overflow<DataType>());
-    assert(!math::state_infinity<DataType>());
-    assert(!math::state_nan<DataType>());
   }
 
   return std::make_shared<TensorType>(cached_output_);
@@ -260,6 +270,20 @@ typename Node<TensorType>::NodeErrorMapType Node<TensorType>::BackPropagate(
     }
   }
 
+  if (math::state_division_by_zero<DataType>())
+  {
+    throw std::runtime_error("Division by zero encountered in Node::BackPropagate");
+  }
+  if (math::state_infinity<DataType>())
+  {
+    throw std::runtime_error("Infinity encountered in Node::BackPropagate");
+  }
+  if (math::state_nan<DataType>())
+  {
+    throw std::runtime_error("NaN encountered in Node::BackPropagate");
+  }
+
+  assert(!math::state_overflow<DataType>());
   return ret;
 }
 /**
