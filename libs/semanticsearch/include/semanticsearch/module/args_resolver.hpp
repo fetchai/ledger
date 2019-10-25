@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <functional>
 #include <typeindex>
 #include <vector>
 
