@@ -23,8 +23,7 @@
 #include "dmlf/update.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
-#include "ml/core/graph.hpp"
-#include "ml/dataloaders/dataloader.hpp"
+#include "ml/model/sequential.hpp"
 #include "ml/utilities/utils.hpp"
 
 #include <condition_variable>
@@ -63,17 +62,15 @@ class TrainingClient
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
   using GradientType     = fetch::dmlf::Update<TensorType>;
-  using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
+  using ModelPtrType     = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
 
 public:
   TrainingClient(std::string id, ClientParams<DataType> const &client_params,
                  std::shared_ptr<std::mutex> console_mutex_ptr);
 
-  TrainingClient(
-      std::string id, GraphPtrType graph_ptr,
-      std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
-      std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
-      ClientParams<DataType> const &client_params, std::shared_ptr<std::mutex> console_mutex_ptr);
+  TrainingClient(std::string id, ModelPtrType model_ptr,
+                 ClientParams<DataType> const &client_params,
+                 std::shared_ptr<std::mutex>   console_mutex_ptr);
 
   virtual ~TrainingClient() = default;
 
@@ -93,7 +90,7 @@ public:
 
   void SetParams(ClientParams<DataType> const &new_params);
 
-  GraphPtrType GetModel();
+  ModelPtrType GetModel();
 
   std::string GetId() const;
 
@@ -119,15 +116,13 @@ protected:
   DataType train_loss_sum_ = static_cast<DataType>(0);
   SizeType train_loss_cnt_ = 0;
 
-  // Client's own graph and mutex to protect its weights
-  GraphPtrType       g_ptr_;
+  // Client's own model and mutex to protect its weights
+  ModelPtrType       model_ptr_;
   mutable std::mutex model_mutex_;
 
-  // Client's own dataloader
-  std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> dataloader_ptr_;
-
-  // Client's own optimiser
-  std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> opti_ptr_;
+  // Client's dataloader and optimiser ptrs
+  fetch::ml::dataloaders::DataLoader<TensorType, TensorType> *dataloader_ptr_;
+  fetch::ml::optimisers::Optimiser<TensorType> *              opti_ptr_;
 
   std::vector<std::string> inputs_names_;
   std::string              label_name_;
@@ -165,21 +160,19 @@ protected:
   void ClearLossFile();
 
 private:
-  void GraphAddGradients(GraphPtrType g_ptr, VectorTensorType const &gradients);
+  void GraphAddGradients(ModelPtrType g_ptr, VectorTensorType const &gradients);
 };
 
 template <class TensorType>
-TrainingClient<TensorType>::TrainingClient(
-    std::string id, GraphPtrType graph_ptr,
-    std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
-    std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
-    ClientParams<DataType> const &client_params, std::shared_ptr<std::mutex> console_mutex_ptr)
+TrainingClient<TensorType>::TrainingClient(std::string id, ModelPtrType model_ptr,
+                                           ClientParams<DataType> const &client_params,
+                                           std::shared_ptr<std::mutex>   console_mutex_ptr)
   : id_(std::move(id))
-  , g_ptr_(std::move(graph_ptr))
-  , dataloader_ptr_(std::move(loader_ptr))
-  , opti_ptr_(std::move(optimiser_ptr))
+  , model_ptr_(std::move(model_ptr))
   , console_mutex_ptr_(std::move(console_mutex_ptr))
 {
+  dataloader_ptr_ = model_ptr->GetDataloader();
+  opti_ptr_       = model_ptr->GetOptimiser();
   SetParams(client_params);
   ClearLossFile();
 }
@@ -306,19 +299,19 @@ void TrainingClient<TensorType>::Train()
 
     while (input_name_it != inputs_names_.end())
     {
-      g_ptr_->SetInput(*input_name_it, *input_data_it);
+      model_ptr_->SetInput(*input_name_it, *input_data_it);
       ++input_name_it;
       ++input_data_it;
     }
-    g_ptr_->SetInput(label_name_, input.first);
+    model_ptr_->SetInput(label_name_, input.first);
 
-    TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
+    TensorType loss_tensor = model_ptr_->ForwardPropagate(error_name_);
     train_loss_            = *(loss_tensor.begin());
 
     train_loss_sum_ += train_loss_;
     train_loss_cnt_++;
 
-    g_ptr_->BackPropagate(error_name_);
+    model_ptr_->BackPropagate(error_name_);
   }
   update_counter_++;
 }
@@ -357,13 +350,13 @@ void TrainingClient<TensorType>::Test()
 
     while (input_name_it != inputs_names_.end())
     {
-      g_ptr_->SetInput(*input_name_it, *input_data_it);
+      model_ptr_->SetInput(*input_name_it, *input_data_it);
       ++input_name_it;
       ++input_data_it;
     }
-    g_ptr_->SetInput(label_name_, test_pair.first);
+    model_ptr_->SetInput(label_name_, test_pair.first);
 
-    test_loss_ = *(g_ptr_->Evaluate(error_name_).begin());
+    test_loss_ = *(model_ptr_->Evaluate(error_name_).begin());
   }
   dataloader_ptr_->Reset();
 }
@@ -375,7 +368,7 @@ template <class TensorType>
 std::shared_ptr<fetch::dmlf::Update<TensorType>> TrainingClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(model_mutex_);
-  return std::make_shared<GradientType>(g_ptr_->GetGradients(), byte_array::ConstByteArray());
+  return std::make_shared<GradientType>(model_ptr_->GetGradients(), byte_array::ConstByteArray());
 }
 
 /**
@@ -385,7 +378,7 @@ template <class TensorType>
 std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 {
   FETCH_LOCK(model_mutex_);
-  return g_ptr_->GetWeightsReferences();
+  return model_ptr_->GetWeightsReferences();
 }
 
 /**
@@ -398,7 +391,7 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
   FETCH_LOCK(model_mutex_);
 
   auto weights_it = new_weights.cbegin();
-  for (auto &trainable_lookup : g_ptr_->trainable_lookup_)
+  for (auto &trainable_lookup : model_ptr_->trainable_lookup_)
   {
     auto trainable_ptr =
         std::dynamic_pointer_cast<ops::Trainable<TensorType>>((trainable_lookup.second)->GetOp());
@@ -438,7 +431,7 @@ void TrainingClient<TensorType>::DoBatch()
     auto             new_update    = i_learner_ptr_->GetUpdate<fetch::dmlf::Update<TensorType>>();
     VectorTensorType new_gradients = TranslateGradients(new_update);
 
-    GraphAddGradients(g_ptr_, new_gradients);
+    GraphAddGradients(model_ptr_, new_gradients);
     update_counter_++;
   }
 
@@ -461,7 +454,7 @@ void TrainingClient<TensorType>::DoBatch()
  * @param gradient
  */
 template <class TensorType>
-void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr,
+void TrainingClient<TensorType>::GraphAddGradients(ModelPtrType            g_ptr,
                                                    VectorTensorType const &gradients)
 {
   assert(gradients.size() == g_ptr->GetTrainables().size());
@@ -475,9 +468,9 @@ void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr
 }
 
 template <class TensorType>
-std::shared_ptr<fetch::ml::Graph<TensorType>> TrainingClient<TensorType>::GetModel()
+typename TrainingClient<TensorType>::ModelPtrType TrainingClient<TensorType>::GetModel()
 {
-  return g_ptr_;
+  return model_ptr_;
 }
 
 }  // namespace distributed_learning

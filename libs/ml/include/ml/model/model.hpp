@@ -43,13 +43,14 @@ template <typename TensorType>
 class Model
 {
 public:
-  using DataType          = typename TensorType::Type;
-  using SizeType          = fetch::math::SizeType;
-  using GraphType         = Graph<TensorType>;
-  using DataLoaderType    = dataloaders::DataLoader<TensorType, TensorType>;
-  using GraphPtrType      = typename std::shared_ptr<GraphType>;
-  using DataLoaderPtrType = typename std::unique_ptr<DataLoaderType>;
-  using OptimiserPtrType  = typename std::unique_ptr<optimisers::Optimiser<TensorType>>;
+  using DataType           = typename TensorType::Type;
+  using SizeType           = fetch::math::SizeType;
+  using GraphType          = Graph<TensorType>;
+  using DataLoaderType     = dataloaders::DataLoader<TensorType, TensorType>;
+  using ModelOptimiserType = optimisers::Optimiser<TensorType>;
+  using GraphPtrType       = typename std::shared_ptr<GraphType>;
+  using DataLoaderPtrType  = typename std::unique_ptr<DataLoaderType>;
+  using OptimiserPtrType   = typename std::unique_ptr<ModelOptimiserType>;
 
   explicit Model(ModelConfig<DataType> model_config = ModelConfig<DataType>())
     : model_config_(std::move(model_config))
@@ -74,6 +75,15 @@ public:
   DataType Evaluate(std::vector<MetricType> const &metrics = std::vector<MetricType>());
 
   void UpdateConfig(ModelConfig<DataType> &model_config);
+
+  /// FUNCTIONS THAT EXPOSE THE INTERNALS ///
+  std::string InputName();
+  std::string LabelName();
+  std::string OutputName();
+  std::string ErrorName();
+
+  DataLoaderType *    GetDataloader();
+  ModelOptimiserType *GetOptimiser();
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
@@ -254,6 +264,42 @@ template <typename TensorType>
 void Model<TensorType>::UpdateConfig(ModelConfig<DataType> &model_config)
 {
   model_config_ = model_config;
+}
+
+template <typename TensorType>
+std::string Model<TensorType>::InputName()
+{
+  return input_;
+}
+
+template <typename TensorType>
+std::string Model<TensorType>::LabelName()
+{
+  return label_;
+}
+
+template <typename TensorType>
+std::string Model<TensorType>::OutputName()
+{
+  return output_;
+}
+
+template <typename TensorType>
+std::string Model<TensorType>::ErrorName()
+{
+  return error_;
+}
+
+template <typename TensorType>
+typename Model<TensorType>::DataLoaderType *Model<TensorType>::GetDataloader()
+{
+  return dataloader_ptr_.get();
+}
+
+template <typename TensorType>
+typename Model<TensorType>::ModelOptimiserType *Model<TensorType>::GetOptimiser()
+{
+  return optimiser_ptr_.get();
 }
 
 template <typename TensorType>
