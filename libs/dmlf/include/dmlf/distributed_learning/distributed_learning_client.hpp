@@ -123,6 +123,7 @@ protected:
   // Client's dataloader and optimiser ptrs
   fetch::ml::dataloaders::DataLoader<TensorType, TensorType> *dataloader_ptr_;
   fetch::ml::optimisers::Optimiser<TensorType> *              opti_ptr_;
+  fetch::ml::Graph<TensorType> *                              graph_ptr_;
 
   std::vector<std::string> inputs_names_;
   std::string              label_name_;
@@ -173,6 +174,7 @@ TrainingClient<TensorType>::TrainingClient(std::string id, ModelPtrType model_pt
 {
   dataloader_ptr_ = model_ptr->GetDataloader();
   opti_ptr_       = model_ptr->GetOptimiser();
+  graph_ptr_       = model_ptr->GetGraph();
   SetParams(client_params);
   ClearLossFile();
 }
@@ -350,11 +352,11 @@ void TrainingClient<TensorType>::Test()
 
     while (input_name_it != inputs_names_.end())
     {
-      model_ptr_->SetInput(*input_name_it, *input_data_it);
+      graph_ptr_->SetInput(*input_name_it, *input_data_it);
       ++input_name_it;
       ++input_data_it;
     }
-    model_ptr_->SetInput(label_name_, test_pair.first);
+    graph_ptr_->SetInput(label_name_, test_pair.first);
 
     test_loss_ = *(model_ptr_->Evaluate(error_name_).begin());
   }

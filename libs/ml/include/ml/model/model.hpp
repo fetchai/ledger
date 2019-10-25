@@ -84,6 +84,7 @@ public:
 
   DataLoaderType *    GetDataloader();
   ModelOptimiserType *GetOptimiser();
+  GraphType *GetGraph();
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
@@ -300,6 +301,12 @@ template <typename TensorType>
 typename Model<TensorType>::ModelOptimiserType *Model<TensorType>::GetOptimiser()
 {
   return optimiser_ptr_.get();
+}
+
+template <typename TensorType>
+typename Model<TensorType>::GraphType *Model<TensorType>::GetGraph()
+{
+  return graph_ptr_.get();
 }
 
 template <typename TensorType>
