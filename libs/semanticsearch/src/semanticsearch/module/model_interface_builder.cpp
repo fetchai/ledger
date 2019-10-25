@@ -23,7 +23,7 @@
 namespace fetch {
 namespace semanticsearch {
 
-ModelIntefaceBuilder::ModelIntefaceBuilder(VocabularySchema model, SematicSearchModule *factory)
+ModelIntefaceBuilder::ModelIntefaceBuilder(VocabularySchema model, SemanticSearchModule *factory)
   : model_{std::move(model)}
   , factory_(factory)
 {}

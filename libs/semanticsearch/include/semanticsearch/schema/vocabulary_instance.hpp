@@ -34,7 +34,7 @@ public:
   template <typename T>
   static Vocabulary New(T data)
   {
-    // TODO: add destructor
+    // TODO(tfr): add destructor
     return Vocabulary(new VocabularyInstance(std::type_index(typeid(T)), new T(data)));
   }
 

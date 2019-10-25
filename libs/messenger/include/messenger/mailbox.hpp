@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "messenger/message.hpp"
-
 #include "core/service_ids.hpp"
+#include "messenger/mailbox_interface.hpp"
+#include "messenger/message.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -32,19 +32,6 @@
 
 namespace fetch {
 namespace messenger {
-
-class MailboxInterface
-{
-public:
-  using MessageList = std::deque<Message>;
-  using Address     = muddle::Address;
-
-  virtual void        SendMessage(Message message)                     = 0;
-  virtual MessageList GetMessages(Address messenger)                   = 0;
-  virtual void        ClearMessages(Address messenger, uint64_t count) = 0;
-  virtual void        RegisterMailbox(Address messenger)               = 0;
-  virtual void        UnregisterMailbox(Address messenger)             = 0;
-};
 
 class Mailbox : public MailboxInterface
 {
@@ -180,7 +167,7 @@ protected:
     if (it == inbox_.end())
     {
       // Attempting to deliver directly
-      // TODO: Attempt direct delivery
+      // TODO(tfr): Attempt direct delivery
       return;
     }
 
@@ -188,7 +175,7 @@ protected:
     it->second.push_back(message);
   }
 
-  // TODO: Add state logic to trim inboxes
+  // TODO(tfr): Add state logic to trim inboxes
   //
 
 private:

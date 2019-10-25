@@ -17,40 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/index/base_types.hpp"
+#include "messenger/message.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/muddle_interface.hpp"
 
-#include <memory>
-#include <string>
+#include <deque>
+#include <unordered_map>
 
 namespace fetch {
-namespace semanticsearch {
+namespace messenger {
 
-struct VocabularyLocation
+class MailboxInterface
 {
-  std::string      model;
-  SemanticPosition position;
-  bool             operator<(VocabularyLocation const &other) const
-  {
+public:
+  using MessageList = std::deque<Message>;
+  using Address     = muddle::Address;
 
-    if (model == other.model)
-    {
-      std::size_t i = 0, n = std::min(position.size(), other.position.size());
-      while ((i < n) && (position[i] == other.position[i]))
-      {
-        ++i;
-      }
-
-      if (i >= n)
-      {
-        return false;
-      }
-
-      return position[i] < other.position[i];
-    }
-
-    return model < other.model;
-  }
+  virtual void        SendMessage(Message message)                     = 0;
+  virtual MessageList GetMessages(Address messenger)                   = 0;
+  virtual void        ClearMessages(Address messenger, uint64_t count) = 0;
+  virtual void        RegisterMailbox(Address messenger)               = 0;
+  virtual void        UnregisterMailbox(Address messenger)             = 0;
 };
 
-}  // namespace semanticsearch
+}  // namespace messenger
 }  // namespace fetch

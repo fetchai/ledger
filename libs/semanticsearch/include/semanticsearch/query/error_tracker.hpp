@@ -37,9 +37,9 @@ public:
 
   ErrorTracker() = default;
 
-  operator bool()
+  explicit operator bool()
   {
-    return errors_.size() != 0;
+    return !errors_.empty();
   }
 
   void Print();

@@ -37,8 +37,8 @@ public:
   using ByteArray      = fetch::byte_array::ByteArray;
   using Token          = fetch::byte_array::Token;
 
-  QueryCompiler(ErrorTracker &error_tracker);
-  Query operator()(ByteArray doc, ConstByteArray filename = "(internal)");
+  explicit QueryCompiler(ErrorTracker &error_tracker);
+  Query operator()(ByteArray doc, ConstByteArray const &filename = "(internal)");
 
 private:
   struct Statement

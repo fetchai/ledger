@@ -60,7 +60,7 @@ QueryCompiler::QueryCompiler(ErrorTracker &error_tracker)
   : error_tracker_(error_tracker)
 {}
 
-Query QueryCompiler::operator()(ByteArray doc, ConstByteArray filename)
+Query QueryCompiler::operator()(ByteArray doc, ConstByteArray const &filename)
 {
   document_ = std::move(doc);
   statements_.clear();

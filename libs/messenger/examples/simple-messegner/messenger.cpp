@@ -68,13 +68,13 @@ int main(int argc, char **argv)
   network::NetworkManager network_manager{"MessengerNetworkManager", 1};
   muddle::MuddlePtr       muddle =
       muddle::CreateMuddle("AGEN", muddle_certificate, network_manager, "127.0.0.1");
-  // TODO  core::Reactor reactor{"SearchReactor"};
+  // TODO(tfr):  core::Reactor reactor{"SearchReactor"};
 
   network_manager.Start();
   muddle->Start({"tcp://127.0.0.1:1337"}, {static_cast<uint16_t>(1338)});
 
   // Waiting until connection
-  while (muddle->GetDirectlyConnectedPeers().size() < 1)
+  while (muddle->GetDirectlyConnectedPeers().empty())
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     }
     else
     {
-      messenger.FindMessengers(search_for);
+      messenger.FindAgents(search_for);
     }
   }
 

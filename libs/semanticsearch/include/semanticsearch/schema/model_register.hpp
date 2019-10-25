@@ -34,11 +34,11 @@ public:
   ModelRegister()          = default;
   virtual ~ModelRegister() = default;
 
-  void             AddModel(std::string name, VocabularySchema object);
-  VocabularySchema GetModel(std::string name);
-  bool             HasModel(std::string name);
+  void             AddModel(std::string const &name, VocabularySchema const &object);
+  VocabularySchema GetModel(std::string const &name);
+  bool             HasModel(std::string const &name);
 
-  virtual void OnAddModel(std::string name, VocabularySchema object) = 0;
+  virtual void OnAddModel(std::string const &name, VocabularySchema const &object) = 0;
 
 private:
   std::unordered_map<std::string, VocabularySchema> models_;

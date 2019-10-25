@@ -46,19 +46,21 @@ AgentDirectory::Agent AgentDirectory::GetAgent(ConstByteArray const &pk)
   return agents_[id];
 }
 
-void AgentDirectory::UnregisterAgent(AgentId /*id*/)
+void AgentDirectory::UnregisterAgent(ConstByteArray const &pk)
 {
+  // TODO(tfr): Implement unregister
   throw std::runtime_error("Unregister not implemented yet.");
 }
 
-bool AgentDirectory::RegisterLocation(AgentId id, std::string model, SemanticPosition vector)
+bool AgentDirectory::RegisterVocabularyLocation(AgentId id, std::string model,
+                                                SemanticPosition vector)
 {
   if (agents_.find(id) == agents_.end())
   {
     return false;
   }
 
-  agents_[id]->RegisterLocation(std::move(model), std::move(vector));
+  agents_[id]->RegisterVocabularyLocation(std::move(model), std::move(vector));
 
   return true;
 }

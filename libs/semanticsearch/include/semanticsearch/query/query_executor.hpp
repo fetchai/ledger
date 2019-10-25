@@ -28,17 +28,17 @@ namespace semanticsearch {
 class QueryExecutor
 {
 public:
-  using VocabularySchema    = SematicSearchModule::VocabularySchema;
-  using ModelField          = SematicSearchModule::ModelField;
+  using VocabularySchema    = SemanticSearchModule::VocabularySchema;
+  using ModelField          = SemanticSearchModule::ModelField;
   using Token               = fetch::byte_array::Token;
   using Vocabulary          = std::shared_ptr<VocabularyInstance>;
   using SharedModelRegister = ModelRegister::SharedModelRegister;
 
-  using Int    = int;  // TODO: Get rid of these
+  using Int    = int;  // TODO(tfr): Get rid of these
   using Float  = double;
   using String = std::string;
 
-  QueryExecutor(SharedSematicSearchModule instance, ErrorTracker &error_tracker);
+  QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &error_tracker);
   void       Execute(Query const &query, Agent agent);
   Vocabulary GetInstance(std::string name);
 
@@ -58,7 +58,7 @@ private:
     TYPE_FUNCTION_NAME
   };
 
-  // TODO: combine these three into a single execute statement.
+  // TODO(tfr): combine these three into a single execute statement.
   void ExecuteStore(CompiledStatement const &stmt);
   void ExecuteSet(CompiledStatement const &stmt);
   void ExecuteDefine(CompiledStatement const &stmt);
@@ -77,11 +77,11 @@ private:
     return false;
   }
 
-  ErrorTracker &            error_tracker_;
-  std::vector<QueryVariant> stack_;
-  ExecutionContext          context_;
-  SharedSematicSearchModule semantic_search_module_;
-  Agent                     agent_{nullptr};
+  ErrorTracker &             error_tracker_;
+  std::vector<QueryVariant>  stack_;
+  ExecutionContext           context_;
+  SharedSemanticSearchModule semantic_search_module_;
+  Agent                      agent_{nullptr};
 };
 
 }  // namespace semanticsearch

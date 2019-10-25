@@ -34,8 +34,8 @@ public:
 
   AgentId RegisterAgent(ConstByteArray const &pk);
   Agent   GetAgent(ConstByteArray const &pk);
-  void    UnregisterAgent(AgentId id);
-  bool    RegisterLocation(AgentId id, std::string model, SemanticPosition vector);
+  void    UnregisterAgent(ConstByteArray const &pk);
+  bool    RegisterVocabularyLocation(AgentId id, std::string model, SemanticPosition vector);
 
 private:
   AgentId                                     counter_{0};

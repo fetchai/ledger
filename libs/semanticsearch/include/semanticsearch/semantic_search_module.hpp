@@ -33,18 +33,18 @@
 namespace fetch {
 namespace semanticsearch {
 
-// TODO: Work out which methods are friends of Executor
+// TODO(tfr): Work out which methods are friends of Executor
 
-class SematicSearchModule
+class SemanticSearchModule
 {
 public:
-  using SharedSematicSearchModule   = std::shared_ptr<SematicSearchModule>;
+  using SharedSemanticSearchModule  = std::shared_ptr<SemanticSearchModule>;
   using SharedAdvertisementRegister = std::shared_ptr<AdvertisementRegister>;
   using ConstByteArray              = fetch::byte_array::ConstByteArray;
 
-  static SharedSematicSearchModule New(SharedAdvertisementRegister advertisement_register)
+  static SharedSemanticSearchModule New(SharedAdvertisementRegister advertisement_register)
   {
-    return SharedSematicSearchModule(new SematicSearchModule(std::move(advertisement_register)));
+    return SharedSemanticSearchModule(new SemanticSearchModule(std::move(advertisement_register)));
   }
 
   using ModelField       = std::shared_ptr<VocabularyToSubspaceMapInterface>;
@@ -180,8 +180,13 @@ public:
     return agent_directory_.RegisterAgent(pk);
   }
 
+  void UnregisterAgent(ConstByteArray const &pk)
+  {
+    return agent_directory_.UnregisterAgent(pk);
+  }
+
 private:
-  SematicSearchModule(SharedAdvertisementRegister advertisement_register)
+  SemanticSearchModule(SharedAdvertisementRegister advertisement_register)
     : advertisement_register_(std::move(advertisement_register))
   {}
 
@@ -192,7 +197,7 @@ private:
   AgentDirectory                                                  agent_directory_;
 };
 
-using SharedSematicSearchModule = SematicSearchModule::SharedSematicSearchModule;
+using SharedSemanticSearchModule = SemanticSearchModule::SharedSemanticSearchModule;
 
 }  // namespace semanticsearch
 }  // namespace fetch

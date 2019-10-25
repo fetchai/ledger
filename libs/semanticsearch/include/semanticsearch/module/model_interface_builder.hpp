@@ -25,7 +25,7 @@
 namespace fetch {
 namespace semanticsearch {
 
-class SematicSearchModule;
+class SemanticSearchModule;
 
 class ModelIntefaceBuilder
 {
@@ -33,7 +33,7 @@ public:
   using ModelField       = std::shared_ptr<VocabularyToSubspaceMapInterface>;
   using VocabularySchema = std::shared_ptr<PropertiesToSubspace>;
 
-  ModelIntefaceBuilder(VocabularySchema model = nullptr, SematicSearchModule *factory = nullptr);
+  ModelIntefaceBuilder(VocabularySchema model = nullptr, SemanticSearchModule *factory = nullptr);
                         operator bool() const;
   ModelIntefaceBuilder &Field(std::string name, std::string type);
   ModelIntefaceBuilder &Field(std::string name, ModelIntefaceBuilder proxy);
@@ -47,8 +47,8 @@ public:
   }
 
 private:
-  VocabularySchema     model_;
-  SematicSearchModule *factory_;
+  VocabularySchema      model_;
+  SemanticSearchModule *factory_;
 };
 
 }  // namespace semanticsearch

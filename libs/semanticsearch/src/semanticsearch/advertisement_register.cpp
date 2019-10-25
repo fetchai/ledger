@@ -60,7 +60,7 @@ AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(
   return ad_model->FindAgents(position, granularity);
 }
 
-void AdvertisementRegister::OnAddModel(std::string name, VocabularySchema object)
+void AdvertisementRegister::OnAddModel(std::string const &name, VocabularySchema const &object)
 {
   CreateModelInternal(std::move(name), std::move(object));
 }

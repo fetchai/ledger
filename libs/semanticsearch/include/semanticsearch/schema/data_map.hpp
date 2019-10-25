@@ -81,7 +81,7 @@ public:
       return false;
     }
 
-    // TODO: Check reducers and validators - they are currently ignored.
+    // TODO(tfr): Check reducers and validators - they are currently ignored.
 
     return true;
   }

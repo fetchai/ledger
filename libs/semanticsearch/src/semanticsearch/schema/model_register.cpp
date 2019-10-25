@@ -21,7 +21,7 @@
 namespace fetch {
 namespace semanticsearch {
 
-void ModelRegister::AddModel(std::string name, VocabularySchema object)
+void ModelRegister::AddModel(std::string const &name, VocabularySchema const &object)
 {
   if (models_.find(name) != models_.end())
   {
@@ -38,7 +38,7 @@ void ModelRegister::AddModel(std::string name, VocabularySchema object)
   OnAddModel(name, object);
 }
 
-ModelRegister::VocabularySchema ModelRegister::GetModel(std::string name)
+ModelRegister::VocabularySchema ModelRegister::GetModel(std::string const &name)
 {
   if (models_.find(name) == models_.end())
   {
@@ -47,7 +47,7 @@ ModelRegister::VocabularySchema ModelRegister::GetModel(std::string name)
   return models_[name];
 }
 
-bool ModelRegister::HasModel(std::string name)
+bool ModelRegister::HasModel(std::string const &name)
 {
   return models_.find(name) != models_.end();
 }

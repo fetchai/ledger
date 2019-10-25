@@ -15,7 +15,11 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-messenger)
-target_link_libraries(fetch-messenger PUBLIC fetch-core fetch-network fetch-muddle)
+target_link_libraries(fetch-messenger
+                      PUBLIC fetch-core
+                             fetch-network
+                             fetch-semanticsearch
+                             fetch-muddle)
 
 add_test_target()
 

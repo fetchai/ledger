@@ -50,7 +50,7 @@ public:
     , source_(std::move(source))
     , message_(std::move(message))
     , token_(std::move(token))
-    , type_(std::move(type))
+    , type_(type)
   {}
 
   ConstByteArray filename() const

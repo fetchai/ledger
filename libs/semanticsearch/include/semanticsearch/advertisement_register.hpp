@@ -42,7 +42,7 @@ public:
                          SemanticCoordinateType granularity);
   AgentIdSet  FindAgents(std::string name, Vocabulary object, SemanticCoordinateType granularity);
 
-  void OnAddModel(std::string name, VocabularySchema object) override;
+  void OnAddModel(std::string const &name, VocabularySchema const &object) override;
 
 private:
   bool CreateModelInternal(std::string name, VocabularySchema object);

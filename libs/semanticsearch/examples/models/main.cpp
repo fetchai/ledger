@@ -71,7 +71,7 @@ int main(int argc, char **argv)
   using String     = std::string;
   using ModelField = QueryExecutor::ModelField;
 
-  auto semantic_search_module = SematicSearchModule::New(adv);
+  auto semantic_search_module = SemanticSearchModule::New(adv);
   semantic_search_module->RegisterType<Int>("Int");
   semantic_search_module->RegisterType<Float>("Float");
   semantic_search_module->RegisterType<String>("String");
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
   semantic_search_module->RegisterAgent("agent3");
 
   QueryExecutor exe(semantic_search_module,
-                    error_tracker);  // TODO: Need to pass collection, not single instance
+                    error_tracker);  // TODO(tfr): Need to pass collection, not single instance
 
   // Executing query on behalf of agent2
   auto agent = semantic_search_module->GetAgent("agent2");
