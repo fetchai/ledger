@@ -464,6 +464,9 @@ public:
     return registered_types_;
   }
 
+  const TypeInfoArray &GetTypeInfoArray() const { return type_info_array_; }
+  const DeserializeConstructorMap &GetDeserializationConstructors() const { return deserialization_constructors_; }
+
 private:
   template <typename Estimator, typename Callable>
   void InternalCreateFreeFunction(std::string const &name, Callable callable,

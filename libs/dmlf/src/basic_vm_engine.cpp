@@ -17,10 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/execution/basic_vm_engine.hpp"
+#include "dmlf/var_converter.hpp"
+#include "core/byte_array/byte_array.hpp"
 
 #include "vm/common.hpp"
 #include "vm/vm.hpp"
+#include "vm/module.hpp"
 #include "vm_modules/vm_factory.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include <memory>
 #include <sstream>
@@ -53,6 +57,7 @@ ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFile
   }
 
   executables_.emplace(execName, std::move(newExecutable));
+
   return ExecutionResult{
       LedgerVariant(),
       Error{Error::Stage::COMPILE, Error::Code::SUCCESS, "Created executable " + execName},
@@ -145,26 +150,120 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
 
   auto const numParameters = static_cast<std::size_t>(func->num_parameters);
 
-  if (numParameters != params.size())
-  {
-    return EngineError(Error::Code::RUNTIME_ERROR,
-                       "Wrong number of parameters expected " + std::to_string(numParameters) +
-                           " recieved " + std::to_string(params.size()));
-  }
-
   fetch::vm::ParameterPack parameterPack(vm.registered_types());
-  for (std::size_t i = 0; i < numParameters; ++i)
+  for (std::size_t parameter_number = 0; parameter_number < numParameters; ++parameter_number)
   {
-    auto const &typeId = func->variables[i].type_id;
-
-    if (!Convertable(params[i], typeId))
+    try
     {
-      return EngineError(Error::Code::RUNTIME_ERROR, "Wrong parameter at " + std::to_string(i) +
-                                                         " Expected " + vm.GetTypeName(typeId));
-    }
-    parameterPack.AddSingle(Convert(params[i], typeId));
-  }
+      auto type_id = func->variables[parameter_number].type_id;
+      //std::size_t const x_local_type_count = exec->types.size();
+      std::size_t const m_local_type_count = module_ -> GetTypeInfoArray().size();
+      /*
+        This is some code for displaying the state of things.
 
+        std::cout << "TYPE ID = " << type_id << std::endl;
+      std::cout << "PrimitiveMaxId = " << vm::TypeIds::PrimitiveMaxId << std::endl;
+
+      for (std::size_t i = 0; i < x_local_type_count; ++i)
+      {
+        auto const &type_info = exec->types[i];
+        std::cout << "X TYPE:" << i << ":" << type_info.name << "(templ=" << type_info.template_type_id << ")" << std::endl;
+      }
+
+      for (std::size_t i = 0; i < m_local_type_count; ++i)
+      {
+        auto const &type_info = module_ -> type_info_array_[i];
+        std::cout << "M TYPE:" << i << ":" << type_info.name << "(templ=" << type_info.template_type_id << ")" << std::endl;
+      }
+
+      for (const auto &foo : module_ -> type_info_map_)
+      {
+        std::cout << "M(map):" << foo.first << " -> " << foo.second << std::endl;
+      }
+
+      for (const auto &foo : module_ -> GetDeserializationConstructors())
+      {
+      //std::cout << "M(dc map):" << foo.first << " -> " << foo.second << std::endl;
+      }
+
+      */
+
+      std::string working_type_name = "";
+      byte_array::ByteArray ba;
+      VarConverter vc;
+
+      const vm::TypeInfo *working_type_info = 0;
+
+      if (type_id < m_local_type_count)
+      {
+        working_type_info = &(module_ -> GetTypeInfoArray()[type_id]);
+        working_type_name = working_type_info -> name;
+      }
+      else
+      {
+        working_type_info = &(exec->types[type_id - m_local_type_count]);
+        working_type_name = working_type_info -> name;
+      }
+
+      auto r = vc.Convert(ba, params[parameter_number], working_type_name);
+      /* vc.Dump(ba); */
+      serializers::MsgPackSerializer serializer{ba};
+
+      if (!r)
+      {
+        return EngineError(Error::Code::RUNTIME_ERROR, "no serialisation for parameter " + std::to_string(parameter_number));
+      }
+
+      if (!ba.size())
+      {
+        return EngineError(Error::Code::RUNTIME_ERROR, "no serialised data for parameter " + std::to_string(parameter_number));
+      }
+
+      if (type_id <= vm::TypeIds::PrimitiveMaxId)
+      {
+        vm::Variant param;
+        serializer >> param.primitive.i64;
+        param.type_id = type_id;
+        parameterPack.AddSingle(param);
+      }
+      else
+      {
+        // Checking if we can construct the object
+        if (!vm.IsDefaultSerializeConstructable(type_id))
+        {
+          return EngineError(Error::Code::RUNTIME_ERROR, "expected input type is not DefaultSerializeConstructable param number " + std::to_string(parameter_number));
+        }
+
+        // Creating the object
+        vm::Ptr<vm::Object> object  = vm.DefaultSerializeConstruct(type_id);
+        auto                success = object->DeserializeFrom(serializer);
+
+        // If deserialization failed we return
+        if (!success)
+        {
+          return EngineError(Error::Code::RUNTIME_ERROR, "deserialisation failed for parameter " + std::to_string(parameter_number));
+        }
+
+        // Adding the parameter to the parameter pack
+        parameterPack.AddSingle(object);
+      }
+    }
+    catch(std::exception &ex)
+    {
+      return ExecutionResult{
+        LedgerVariant{},
+        Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, ex.what()},
+          console.str()};
+    }
+    catch(...)
+    {
+      return ExecutionResult{
+        LedgerVariant{},
+        Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, "no details"},
+          console.str()};
+    }
+  }
+  
   // Run
   std::string runTimeError;
   VmVariant   vmOutput;
