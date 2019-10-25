@@ -87,6 +87,18 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &       muddle,
         "beacon_dkg_aborts_total", "The total number of DKG forced aborts")}
   , beacon_dkg_successes_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_successes_total", "The total number of DKG successes")}
+  , time_slot_map_{{BeaconSetupService::State::RESET, 0},
+                   {BeaconSetupService::State::CONNECT_TO_ALL, 10},
+                   {BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS, 10},
+                   {BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS, 10},
+                   {BeaconSetupService::State::WAIT_FOR_SHARES, 10},
+                   {BeaconSetupService::State::WAIT_FOR_COMPLAINTS, 10},
+                   {BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS, 10},
+                   {BeaconSetupService::State::WAIT_FOR_QUAL_SHARES, 10},
+                   {BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS, 10},
+                   {BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES, 10},
+                   {BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE, 10},
+                   {BeaconSetupService::State::DRY_RUN_SIGNING, 10}}
 {
   // clang-format off
   state_machine_->RegisterHandler(State::IDLE, this, &BeaconSetupService::OnIdle);
@@ -107,20 +119,6 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &       muddle,
 
   // Set subscription for receiving shares
   shares_subscription_->SetMessageHandler(this, &BeaconSetupService::OnNewSharesPacket);
-
-  // Set time slots for each state
-  time_slot_map_[BeaconSetupService::State::RESET]                          = 0;
-  time_slot_map_[BeaconSetupService::State::CONNECT_TO_ALL]                 = 10;
-  time_slot_map_[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 10;
-  time_slot_map_[BeaconSetupService::State::WAIT_FOR_SHARES]                = 10;
-  time_slot_map_[BeaconSetupService::State::WAIT_FOR_COMPLAINTS]            = 10;
-  time_slot_map_[BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS]     = 10;
-  time_slot_map_[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
-  time_slot_map_[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
-  time_slot_map_[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
-  time_slot_map_[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
-  time_slot_map_[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
-  time_slot_map_[BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS]     = 10;
 
   for (auto &slot : time_slot_map_)
   {
@@ -1475,11 +1473,12 @@ double TimePerSlot(uint64_t cabinet_size)
 void BeaconSetupService::SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
                                         uint64_t &time_slot_for_state)
 {
-  time_slot_for_state = time_slot_map_[state];
+  assert(time_slot_map_.find(state) != time_slot_map_.end());
+  time_slot_for_state = time_slot_map_.at(state);
 
   while (state != BeaconSetupService::State::RESET)
   {
-    time_slots_total += time_slot_map_[state];
+    time_slots_total += time_slot_map_.at(state);
     state = BeaconSetupService::State(static_cast<uint8_t>(state) - 1);
   }
 }
