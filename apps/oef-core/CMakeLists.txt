@@ -7,10 +7,8 @@ project(fetch-oef-core)
 setup_compiler()
 
 add_executable(oef-core
-        main.hpp
-        main.cpp
-        MtCore.hpp
-        MtCore.cpp)
-target_link_libraries(oef-core
-                      PRIVATE fetch-oef-core
-                              fetch-oef-messages)
+               MtCore.cpp
+               MtCore.hpp
+               main.cpp
+               main.hpp)
+target_link_libraries(oef-core PRIVATE fetch-oef-core fetch-oef-messages)
