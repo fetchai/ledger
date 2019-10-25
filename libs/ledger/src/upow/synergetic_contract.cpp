@@ -404,7 +404,7 @@ char const *ToString(SynergeticContract::Status status)
   return text;
 }
 
-void SynergeticContract::updateContractContext(ContractContext const &context)
+void SynergeticContract::UpdateContractContext(ContractContext const &context)
 {
   context_ = std::make_unique<ContractContext>(context);
 }

@@ -85,7 +85,7 @@ public:
   void Attach(StorageInterface &storage);
   void Detach();
 
-  void                   updateContractContext(ContractContext const &context);
+  void                   UpdateContractContext(ContractContext const &context);
   ContractContext const &context() const;
 
   /// @name Actions to be taken on the synergetic contract
