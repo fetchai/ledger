@@ -17,34 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/digest.hpp"
-#include "ledger/chaincode/contract.hpp"
+#include "chain/address.hpp"
+#include "chain/transaction_layout.hpp"
 
 namespace fetch {
-namespace chain {
-
-class Address;
-
-}  // namespace chain
 namespace ledger {
 
-class Identifier;
+class TokenContract;
+class StateAdapter;
 
-class SmartContractManager : public Contract
+struct ContractContext
 {
-public:
-  static constexpr char const *NAME = "fetch.contract";
+  ContractContext()                        = default;
+  ContractContext(ContractContext const &) = default;
+  ContractContext(ContractContext &&)      = default;
 
-  static storage::ResourceAddress CreateAddressForContract(Digest const &digest);
+  ContractContext(TokenContract *token_contract_param, chain::Address address,
+                  StateAdapter *                       state_adapter_param,
+                  chain::TransactionLayout::BlockIndex block_index_param);
 
-  SmartContractManager();
-  ~SmartContractManager() override = default;
-
-private:
-  /// @name Transaction Handlers
-  /// @{
-  Result OnCreate(chain::Transaction const &tx);
-  /// @}
+  TokenContract *const                       token_contract{nullptr};
+  chain::Address const                       contract_address{};
+  StateAdapter *const                        state_adapter{nullptr};
+  chain::TransactionLayout::BlockIndex const block_index{0};
 };
 
 }  // namespace ledger

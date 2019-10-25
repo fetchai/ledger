@@ -68,7 +68,7 @@ private:
 
   std::size_t      counter_{};
   UnderlyingCache  cache_;
-  ChainCodeFactory factory_;
+  ChainCodeFactory factory_{};
 
   static_assert(meta::IsLog2(CLEANUP_PERIOD), "Clean up period must be a valid power of 2");
 };

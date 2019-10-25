@@ -145,3 +145,33 @@ steps:
   - sleep: 5
   - run_python_test: { "script": ".smart_contract_tests.synergetic_mining" }
 ...
+
+---
+test_description: >
+  Test ability of contracts to check their balance
+
+setup_conditions:
+  test_name: "contracts_checking_balance"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.balance" }
+...
+
+---
+test_description: >
+  Test ability of contracts to hold and release funds
+
+setup_conditions:
+  test_name: "transfers_between_contracts_and_people"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.transfer" }
+...
