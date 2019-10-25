@@ -38,7 +38,7 @@ struct ManifestItem
   ManifestEntry     entry{};
 };
 
-static ManifestItem CreateEntry(std::string const &uri, ServiceIdentifier::Type type)
+ManifestItem CreateEntry(std::string const &uri, ServiceIdentifier::Type type)
 {
   ManifestItem item{ServiceIdentifier{type}, ManifestEntry{Uri{uri}}};
 
