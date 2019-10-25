@@ -152,6 +152,7 @@ private:
   Identity        identity_;
   Endpoint &      endpoint_;
   StateMachinePtr state_machine_;
+  DeadlineTimer   timer_to_proceed_{"beacon:main"};
 
   /// General configuration
   /// @{
