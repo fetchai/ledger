@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/event_manager.hpp"
 #include "bloom_filter/bloom_filter.hpp"
 #include "constellation/constellation.hpp"
 #include "constellation/health_check_http_module.hpp"
@@ -27,6 +30,7 @@
 #include "http/middleware/telemetry.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
@@ -43,10 +47,6 @@
 #include "network/uri.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
-
-#include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/event_manager.hpp"
 
 #include <chrono>
 #include <cstddef>

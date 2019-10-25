@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
-#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "vm/analyser.hpp"
 #include "vm/common.hpp"
@@ -56,6 +55,7 @@ struct Variant;
 namespace ledger {
 
 class StorageInterface;
+struct ContractContext;
 
 class SynergeticContract
 {

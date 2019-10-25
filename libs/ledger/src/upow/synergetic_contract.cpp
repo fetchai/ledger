@@ -19,6 +19,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "json/document.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"

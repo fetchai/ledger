@@ -82,10 +82,10 @@ public:
   using StorageInterface      = ledger::StorageInterface;
 
   // Construction / Destruction
-  Contract();
+  Contract()                 = default;
   Contract(Contract const &) = delete;
   Contract(Contract &&)      = delete;
-  virtual ~Contract();
+  virtual ~Contract()        = default;
 
   /// @name Contract Lifecycle Handlers
   /// @{

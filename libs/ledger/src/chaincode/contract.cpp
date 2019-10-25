@@ -228,8 +228,5 @@ Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
   return transaction_handlers_;
 }
 
-Contract::Contract()  = default;
-Contract::~Contract() = default;
-
 }  // namespace ledger
 }  // namespace fetch

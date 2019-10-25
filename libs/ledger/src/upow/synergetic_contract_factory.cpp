@@ -18,6 +18,7 @@
 
 #include "core/digest.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/synergetic_contract_factory.hpp"
 #include "logging/logging.hpp"
