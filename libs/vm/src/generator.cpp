@@ -121,9 +121,9 @@ void Generator::ResolveTypes(IR const &ir)
       {
         template_parameter_type_ids.push_back(template_parameter_type->resolved_id);
       }
-      uint16_t num_local_types = static_cast<uint16_t>(executable_.types.size());
-      uint16_t type_id         = uint16_t(num_system_types_ + num_local_types);
-      type->resolved_id        = type_id;
+      auto num_local_types = static_cast<uint16_t>(executable_.types.size());
+      auto type_id         = uint16_t(num_system_types_ + num_local_types);
+      type->resolved_id    = type_id;
       TypeInfo type_info(type->type_kind, type->name, type_id, template_type_id,
                          template_parameter_type_ids);
       executable_.AddTypeInfo(std::move(type_info));
