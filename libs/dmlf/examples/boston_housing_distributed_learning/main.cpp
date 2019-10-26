@@ -147,18 +147,20 @@ int main(int argc, char **argv)
       t.join();
     }
 
-    // Write statistic to csv
-    std::cout << it;
-    lossfile << it;
-    for (auto &c : clients)
-    {
-      std::cout << "\t"
-                << static_cast<double>(utilities::Test(c->GetModel(), data_tensor, label_tensor));
-      lossfile << ","
-               << static_cast<double>(utilities::Test(c->GetModel(), data_tensor, label_tensor));
-    }
-    std::cout << std::endl;
-    lossfile << std::endl;
+    //    // Write statistic to csv
+    //    std::cout << it;
+    //    lossfile << it;
+    //    for (auto &c : clients)
+    //    {
+    //      std::cout << "\t"
+    //                << static_cast<double>(utilities::Test(c->GetModel(), data_tensor,
+    //                label_tensor));
+    //      lossfile << ","
+    //               << static_cast<double>(utilities::Test(c->GetModel(), data_tensor,
+    //               label_tensor));
+    //    }
+    //    std::cout << std::endl;
+    //    lossfile << std::endl;
 
     // Synchronize weights by giving all clients average of all client's weights
     if (synchronise)
