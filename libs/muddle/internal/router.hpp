@@ -66,6 +66,9 @@ public:
   };
 
   using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
+  using Clock        = std::chrono::steady_clock;
+  using Timepoint    = Clock::time_point;
+  using EchoCache    = std::unordered_map<std::size_t, Timepoint>;
 
   // Helper functions
   static Packet::RawAddress ConvertAddress(Packet::Address const &address);
@@ -117,7 +120,6 @@ public:
   AddressList GetDirectlyConnectedPeers() const override;
 
   AddressSet GetDirectlyConnectedPeerSet() const override;
-
   /// @}
 
   void Cleanup();
@@ -135,15 +137,14 @@ public:
 
   void SetKademliaRouting(bool enable = true);
 
+  RoutingTable routing_table() const;
+  EchoCache echo_cache() const;
+
   // Operators
   Router &operator=(Router const &) = delete;
   Router &operator=(Router &&) = delete;
 
 private:
-  using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Clock      = std::chrono::steady_clock;
-  using Timepoint  = Clock::time_point;
-  using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
   using RawAddress = Packet::RawAddress;
   using BlackList  = fetch::muddle::Blacklist;
 

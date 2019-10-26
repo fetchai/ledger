@@ -29,6 +29,8 @@ namespace fetch {
 namespace muddle {
 namespace {
 
+using byte_array::ConstByteArray;
+
 /**
  * For a given set of peer selector address, build the JSON representation
  *
@@ -144,13 +146,42 @@ void BuildConnectionList(MuddleRegister const &reg, variant::Variant &output)
   }
 }
 
+void BuildRoutingTable(Router::RoutingTable const &routing_table, variant::Variant &output)
+{
+  output = variant::Variant::Object();
+
+  for (auto const &element : routing_table)
+  {
+    ConstByteArray const address{element.first.data(), element.first.size()};
+
+    auto &entry = output[address.ToBase64()] = variant::Variant::Object();
+
+    entry["direct"] = element.second.direct;
+    entry["handle"] = element.second.handle;
+  }
+}
+
+void BuildEchoCache(Router::EchoCache const &echo_cache, variant::Variant &output)
+{
+  output = variant::Variant::Array(echo_cache.size());
+
+  std::size_t idx{0};
+  for (auto const &element : echo_cache)
+  {
+    auto &entry = output[idx++] = variant::Variant::Object();
+
+    entry["id"]        = element.first;
+    entry["timestamp"] = element.second.time_since_epoch().count();
+  }
+}
+
 /**
  * Build the JSON representation for the status of a given muddle
  *
  * @param muddle The muddle to evaluate
  * @param output The output variant object
  */
-void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output)
+void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output, bool extended)
 {
   output                    = variant::Variant::Object();
   output["network"]         = muddle.GetNetwork().ToString();
@@ -167,6 +198,12 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output)
   BuildConnectionList(muddle.connection_register(), output["connections"]);
   BuildPeerLists(muddle.connection_list(), output["peers"]);
   BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
+  BuildRoutingTable(muddle.router().routing_table(), output["routingTable"]);
+
+  if (extended)
+  {
+    BuildEchoCache(muddle.router().echo_cache(), output["echoCache"]);
+  }
 }
 
 /**
@@ -234,7 +271,7 @@ variant::Variant GetStatusSummary(std::string const &network)
     auto muddle = element.second.lock();
     if (muddle)
     {
-      BuildMuddleStatus(*muddle, output[index]);
+      BuildMuddleStatus(*muddle, output[index], false);
     }
     else
     {
