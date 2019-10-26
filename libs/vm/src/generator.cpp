@@ -116,14 +116,17 @@ void Generator::ResolveTypes(IR const &ir)
     if (type->type_kind == TypeKind::UserDefinedInstantiation)
     {
       TypeId      template_type_id = type->template_type->resolved_id;
-      TypeIdArray parameter_type_ids;
-      for (auto const &parameter_type : type->parameter_types)
+      TypeIdArray template_parameter_type_ids;
+      for (auto const &template_parameter_type : type->parameter_types)
       {
-        parameter_type_ids.push_back(parameter_type->resolved_id);
+        template_parameter_type_ids.push_back(template_parameter_type->resolved_id);
       }
-      uint16_t index = executable_.AddType(
-          TypeInfo(type->type_kind, type->name, template_type_id, parameter_type_ids));
-      type->resolved_id = uint16_t(num_system_types_ + index);
+      uint16_t num_local_types = static_cast<uint16_t>(executable_.types.size());
+      uint16_t type_id         = uint16_t(num_system_types_ + num_local_types);
+      type->resolved_id        = type_id;
+      TypeInfo type_info(type->type_kind, type->name, type_id, template_type_id,
+                         template_parameter_type_ids);
+      executable_.AddTypeInfo(std::move(type_info));
       continue;
     }
     uint16_t type_id = vm_->FindType(type->name);
