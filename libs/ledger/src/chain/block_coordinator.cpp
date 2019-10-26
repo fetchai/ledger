@@ -500,6 +500,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 
     if (!next_block_)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Not ready to make a block now");
+
       state_machine_->Delay(std::chrono::milliseconds{100});
       return State::SYNCHRONISED;
     }
@@ -525,6 +527,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 
     // trigger packing state
     return State::NEW_SYNERGETIC_EXECUTION;
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Mining not enabled yet: ", mining_, " - ", mining_enabled_);
   }
 
   // delay the invocation of this state machine
