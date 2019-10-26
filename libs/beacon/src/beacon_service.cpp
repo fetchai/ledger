@@ -373,8 +373,6 @@ BeaconService::State BeaconService::OnCompleteState()
 
   if (completed_block_entropy_.find(index) == completed_block_entropy_.end())
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Adding new entropy value to set");
-
     beacon_entropy_last_generated_->set(index);
     beacon_entropy_generated_total_->add(1);
 
@@ -389,16 +387,39 @@ BeaconService::State BeaconService::OnCompleteState()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify freshly signed entropy!");
     }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Completed beacon round ", index);
+    }
 
     // Save it for querying
     completed_block_entropy_[index] = block_entropy_being_created_;
   }
 
+#define BEACON_DEBUG
+#ifdef BEACON_DEBUG
+  static uint64_t count = 0;
+#endif
   if (completed_block_entropy_.size() >= 2)
   {
+#ifdef BEACON_DEBUG
+
+    if ((count & 0x1fu) == 0u)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting to trigger next entropy sequence. (completed: ", completed_block_entropy_.size(), ")");
+    }
+
+    ++count;
+#endif
+
     state_machine_->Delay(200ms);
     return State::COMPLETE;
   }
+
+#ifdef BEACON_DEBUG
+  count = 0;
+#endif
+#undef BEACON_DEBUG
 
   // If there is still entropy left to generate, set up and go around the loop
   if (block_entropy_being_created_->block_number < active_exe_unit_->aeon.round_end)
