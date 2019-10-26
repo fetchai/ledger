@@ -84,7 +84,7 @@ public:
 
   DataLoaderType *    GetDataloader();
   ModelOptimiserType *GetOptimiser();
-  GraphType *GetGraph();
+  GraphType *         GetGraph();
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
