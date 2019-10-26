@@ -402,9 +402,9 @@ BeaconService::State BeaconService::OnCompleteState()
 
   if (completed_block_entropy_.size() >= 2)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Waiting until next block interval");
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting until next block interval. Completed: ", completed_block_entropy_.size());
 
-    state_machine_->Delay(50ms);
+    state_machine_->Delay(200ms);
     return State::COMPLETE;
   }
 
