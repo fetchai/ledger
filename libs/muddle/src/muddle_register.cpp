@@ -289,7 +289,7 @@ void MuddleRegister::Leave(ConnectionHandle handle)
 {
   std::unique_lock<std::mutex> lock(lock_);
 
-  FETCH_LOG_TRACE(logging_name_, "### Connection ", handle, " ended");
+  FETCH_LOG_INFO(logging_name_, "### Connection ", handle, " ended");
 
   auto it = handle_index_.find(handle);
   if (it != handle_index_.end())
@@ -323,6 +323,10 @@ void MuddleRegister::Leave(ConnectionHandle handle)
   if (callback_copy)
   {
     callback_copy(handle);
+  }
+  else
+  {
+    FETCH_LOG_INFO(logging_name_, "### Connection ", handle, " ended (empty callback)");
   }
 }
 
