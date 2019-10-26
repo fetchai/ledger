@@ -820,6 +820,26 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       return;
     }
 
+    // this should never be necessary, but in the case where the routing table is not correctly
+    // updated by the peer is directly connected, then we should always use that peer
+    auto const address_index = register_.GetAddressIndex();
+    auto const index_it = address_index.find(packet->GetTarget());
+    if (index_it != address_index.end())
+    {
+      // extract the handle from the index
+      handle = (index_it->second) ? index_it->second->handle : 0u;
+
+      if (handle != 0u)
+      {
+        FETCH_LOG_WARN(logging_name_, "Informed routing to peer: ", packet->GetTarget().ToBase64());
+
+        SendToConnection(handle, packet);
+        return;
+      }
+
+      FETCH_LOG_ERROR(logging_name_, "Informed routing; Invalid handle");
+    }
+
     // if kad routing is enabled we should use this to route packets
     if (kademlia_routing_)
     {
@@ -836,9 +856,12 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     handle = LookupRandomHandle(packet->GetTargetRaw());
     if (handle != 0u)
     {
-      FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", ToBase64(packet->GetTarget()));
+      FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", packet->GetTarget().ToBase64());
       SendToConnection(handle, packet);
+      return;
     }
+
+    FETCH_LOG_ERROR(logging_name_, "Unable to route packet to: ", packet->GetTarget().ToBase64());
   }
 }
 
