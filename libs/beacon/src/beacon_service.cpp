@@ -207,8 +207,6 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 
 BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "state 1");
-
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
@@ -222,8 +220,6 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "state 2");
-
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
@@ -284,8 +280,6 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 
 BeaconService::State BeaconService::OnVerifySignaturesState()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "state 3!");
-
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   SignatureInformation ret;
 
@@ -402,8 +396,6 @@ BeaconService::State BeaconService::OnCompleteState()
 
   if (completed_block_entropy_.size() >= 2)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Waiting until next block interval. Completed: ", completed_block_entropy_.size());
-
     state_machine_->Delay(200ms);
     return State::COMPLETE;
   }
