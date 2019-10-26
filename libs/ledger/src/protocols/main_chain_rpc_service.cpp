@@ -16,16 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
+#include "logging/logging.hpp"
 #include "meta/value_util.hpp"
 #include "muddle/packet.hpp"
 #include "telemetry/counter.hpp"
@@ -279,10 +281,11 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     // skip the genesis block
     if (block.IsGenesis())
     {
-      if (block.body.hash != GENESIS_DIGEST)
+      if (block.body.hash != chain::GENESIS_DIGEST)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Genesis hash mismatch: actual 0x", block.body.hash.ToHex(),
-                       ", expected 0x", GENESIS_DIGEST.ToHex(), ", skipping the whole alien chain");
+                       ", expected 0x", chain::GENESIS_DIGEST.ToHex(),
+		       ", skipping the whole alien chain");
         return false;
       }
       continue;

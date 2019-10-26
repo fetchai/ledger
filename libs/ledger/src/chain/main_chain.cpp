@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "bloom_filter/bloom_filter.hpp"
+#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/assert.hpp"
-#include "core/bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
@@ -25,7 +26,7 @@
 #include "ledger/chain/block_db_record.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/time_travelogue.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
+#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "meta/value_util.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
@@ -515,7 +516,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limi
   if (current_hash.empty())
   {
     // The very beginning of the chain is requested, we need to start with the genesis block.
-    current_hash = GENESIS_DIGEST;
+    current_hash = chain::GENESIS_DIGEST;
   }
 
   bool proceed_in_this_direction{true};
@@ -899,7 +900,7 @@ void MainChain::WriteToFile()
   IntBlockPtr block = block_chain_.at(heaviest_.hash);
 
   // skip if the block store is not persistent
-  if (!block_store_ || block->body.block_number < FINALITY_PERIOD)
+  if (!block_store_ || block->body.block_number < chain::FINALITY_PERIOD)
   {
     return;
   }
@@ -910,7 +911,7 @@ void MainChain::WriteToFile()
 
   // Find the block N back from our heaviest
   bool failed = false;
-  for (std::size_t i = 0; i < FINALITY_PERIOD; ++i)
+  for (std::size_t i = 0; i < chain::FINALITY_PERIOD; ++i)
   {
     if (block->IsGenesis())
     {
@@ -994,7 +995,7 @@ void MainChain::WriteToFile()
  */
 void MainChain::TrimCache()
 {
-  static const uint64_t CACHE_TRIM_THRESHOLD = 2 * FINALITY_PERIOD;
+  static const uint64_t CACHE_TRIM_THRESHOLD = 2 * chain::FINALITY_PERIOD;
   assert(static_cast<bool>(block_store_));
 
   MilliTimer myTimer("MainChain::TrimCache");
@@ -1536,9 +1537,9 @@ bool MainChain::ReindexTips()
 MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 {
   auto genesis              = std::make_shared<Block>();
-  genesis->body.hash        = GENESIS_DIGEST;
-  genesis->body.merkle_hash = GENESIS_MERKLE_ROOT;
-  genesis->body.miner       = Address{crypto::Hash<crypto::SHA256>("")};
+  genesis->body.hash        = chain::GENESIS_DIGEST;
+  genesis->body.merkle_hash = chain::GENESIS_MERKLE_ROOT;
+  genesis->body.miner       = chain::Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose         = false;
 
   return genesis;

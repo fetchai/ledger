@@ -41,6 +41,8 @@
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/avg_pool_1d.hpp"
+#include "ml/ops/avg_pool_2d.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/convolution_1d.hpp"
 #include "ml/ops/convolution_2d.hpp"
@@ -57,6 +59,7 @@
 #include "ml/ops/maximum.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/ops/reduce_mean.hpp"
 #include "ml/ops/reshape.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/ops/sqrt.hpp"
@@ -313,6 +316,20 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
+  case ops::AvgPool1D<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::AvgPool1D<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::AvgPool2D<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::AvgPool2D<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
   case ops::Maximum<T>::OpCode():
   {
     op_ptr = GetOp<ops::Maximum<T>>(nsp.op_save_params);
@@ -365,6 +382,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case ops::Slice<T>::OpCode():
   {
     op_ptr = GetOp<ops::Slice<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::ReduceMean<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::ReduceMean<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;

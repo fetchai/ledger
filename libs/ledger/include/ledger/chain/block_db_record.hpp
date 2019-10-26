@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/base_types.hpp"
+#include "chain/constants.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/constants.hpp"
 
 namespace fetch {
 namespace ledger {

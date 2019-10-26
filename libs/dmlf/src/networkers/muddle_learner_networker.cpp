@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
 #include "core/service_ids.hpp"
 #include "dmlf/networkers/muddle_learner_networker.hpp"
 #include "dmlf/update_interface.hpp"
+#include "json/document.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -52,14 +52,13 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
 {
   json::JSONDocument doc{cloud_config};
 
-  FETCH_LOG_INFO("MuddleLearnerNetworker", "here 1");
   if (netm)
   {
     netm_ = netm;
   }
   else
   {
-    netm_ = std::make_shared<NetworkManager>("NetMgrA", 4);
+    netm_ = std::make_shared<NetworkManager>("LrnrNet", 4);
   }
   netm_->Start();
 

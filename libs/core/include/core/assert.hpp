@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "meta/value_util.hpp"
 
 #include <cassert>
@@ -43,7 +43,6 @@ constexpr void Print(Args &&... args)
 
 #define TODO_FAIL(...)                                              \
   fetch::assert::details::Print(__VA_ARGS__);                       \
-  FETCH_LOG_ERROR("TODO_FAIL", "About to fail.");                   \
   std::cerr << '\n' << __FILE__ << " at line " << __LINE__ << '\n'; \
   throw std::runtime_error("Dependence on non-existing functionality!")
 

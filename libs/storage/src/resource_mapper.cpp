@@ -18,11 +18,11 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "logging/logging.hpp"
 #include "storage/resource_mapper.hpp"
 
 #include <limits>
@@ -56,7 +56,7 @@ byte_array::ConstByteArray ResourceID::id() const
 /**
  * Gets the resource group value.
  *
- * @return THe resource group value
+ * @return The resource group value
  */
 ResourceID::Group ResourceID::resource_group() const
 {

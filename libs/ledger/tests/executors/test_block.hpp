@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/constants.hpp"
+#include "chain/constants.hpp"
 #include "ledger/execution_manager.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -104,7 +104,7 @@ struct TestBlock
 
             // create the transaction summary
             current_slice.emplace_back(
-                fetch::ledger::TransactionLayout{GenerateHash(rng), mask, 1, 0, 100});
+                fetch::chain::TransactionLayout{GenerateHash(rng), mask, 1, 0, 100});
 
             ++num_transactions;
           }

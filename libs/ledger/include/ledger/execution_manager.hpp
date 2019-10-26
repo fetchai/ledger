@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
+#include "chain/constants.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "core/synchronisation/protected.hpp"
 #include "core/synchronisation/waitable.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/chain/constants.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"
@@ -64,7 +64,7 @@ public:
   /// @{
   ScheduleStatus Execute(Block::Body const &block) override;
   void           SetLastProcessedBlock(Digest hash) override;
-  Digest         LastProcessedBlock() override;
+  Digest         LastProcessedBlock() const override;
   State          GetState() override;
   bool           Abort() override;
   /// @}
@@ -103,20 +103,24 @@ private:
   using CounterPtr        = telemetry::CounterPtr;
   using HistogramPtr      = telemetry::HistogramPtr;
 
+  struct Summary
+  {
+    State          state{State::IDLE};
+    Digest         last_block_hash{chain::GENESIS_DIGEST};
+    chain::Address last_block_miner{};
+  };
+
   uint32_t const log2_num_lanes_;
 
   Flag running_{false};
   Flag monitor_ready_{false};
 
-  Protected<State> state_{State::IDLE};
+  Protected<Summary> state_{};
 
   StorageUnitPtr storage_;
 
   Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
   ExecutionPlan execution_plan_;
-
-  Digest  last_block_hash_;
-  Address last_block_miner_;
 
   Mutex     monitor_lock_;
   Condition monitor_wake_;

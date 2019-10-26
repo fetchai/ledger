@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/constants.hpp"
 #include "moment/clocks.hpp"
 
 #include <cstddef>
@@ -57,7 +57,7 @@ void Block::UpdateDigest()
   if (body.previous_hash.empty())
   {
     // can only happen to genesis
-    body.hash = GENESIS_DIGEST;
+    body.hash = chain::GENESIS_DIGEST;
   }
   else
   {
@@ -100,7 +100,7 @@ void Block::UpdateTimestamp()
 
 bool Block::IsGenesis() const
 {
-  return body.hash == GENESIS_DIGEST;
+  return body.hash == chain::GENESIS_DIGEST;
 }
 
 }  // namespace ledger

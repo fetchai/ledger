@@ -42,15 +42,15 @@ struct BlockEntropy : public BlockEntropyInterface
   BlockEntropy &operator=(BlockEntropy &&that) = default;
   BlockEntropy &operator                       =(BlockEntropy const &that);
 
-  // The members who succeeded DKG and are qualified to produce blocks (when new committee)
+  // The members who succeeded DKG and are qualified to produce blocks (when new cabinet)
   Cabinet qualified;
 
-  // The group public key (when new committee)
+  // The group public key (when new cabinet)
   GroupPublicKey group_public_key;
 
   // The block this is relevant to
   uint64_t block_number = 0;
-  // The hash of the above (when new committee) note, this could be implicit. Is not
+  // The hash of the above (when new cabinet) note, this could be implicit. Is not
   // serialized.
   Digest digest;
 

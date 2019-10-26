@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
-#include "core/json/exceptions.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "json/document.hpp"
+#include "json/exceptions.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -31,13 +32,14 @@ namespace ledger {
  * @param tx The reference to the originating transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result Contract::DispatchInitialise(Address const &owner)
+Contract::Result Contract::DispatchInitialise(chain::Address const &    owner,
+                                              chain::Transaction const &tx)
 {
   Result status{Status::OK};
 
   if (init_handler_)
   {
-    status = init_handler_(owner);
+    status = init_handler_(owner, tx);
   }
 
   return status;
@@ -73,16 +75,16 @@ Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
-                                               Transaction const &tx, BlockIndex block_index)
+Contract::Result Contract::DispatchTransaction(chain::Transaction const &tx)
 {
-  Result status{Status::NOT_FOUND};
+  Result      status{Status::NOT_FOUND};
+  auto const &name = tx.action();
 
   auto it = transaction_handlers_.find(name);
   if (it != transaction_handlers_.end())
   {
     // dispatch the contract
-    status = it->second(tx, block_index);
+    status = it->second(tx);
     ++transaction_counters_[name];
   }
 
@@ -152,10 +154,10 @@ void Contract::OnQuery(std::string const &name, QueryHandler &&handler)
  * Utility: Parse the contents of the transaction payload as a JSON object
  *
  * @param tx The input transaction to be processed
- * @param output THe output JSON object to be populated
+ * @param output The output JSON object to be populated
  * @return true if successful, otherwise falses
  */
-bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
+bool Contract::ParseAsJson(chain::Transaction const &tx, variant::Variant &output)
 {
   bool success{false};
 
@@ -186,26 +188,24 @@ bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
  */
 ledger::StateAdapter &Contract::state()
 {
-  detailed_assert(state_ != nullptr);
-  return *state_;
+  detailed_assert(context_->state_adapter != nullptr);
+  return *context_->state_adapter;
 }
 
-/**
- * Attach the state interface to the contract instance
- *
- * @param state The reference
- */
-void Contract::Attach(ledger::StateAdapter &state)
+ContractContext const &Contract::context() const
 {
-  state_ = &state;
+  return *context_;
 }
 
-/**
- * Detach the state interface from the contract instance
- */
+void Contract::Attach(ContractContext const &context)
+{
+  // TODO(WK) detailed_assert(context_ == nullptr);
+  context_ = std::make_unique<ContractContext>(context);
+}
+
 void Contract::Detach()
 {
-  state_ = nullptr;
+  context_.reset();
 }
 
 /**

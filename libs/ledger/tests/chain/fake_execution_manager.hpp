@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/constants.hpp"
+#include "chain/constants.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -35,7 +35,7 @@ public:
   /// @name Execution Manager Interface
   /// @{
   ScheduleStatus Execute(Block::Body const &block) override;
-  Digest         LastProcessedBlock() override;
+  Digest         LastProcessedBlock() const override;
   void           SetLastProcessedBlock(Digest hash) override;
   State          GetState() override;
   bool           Abort() override;

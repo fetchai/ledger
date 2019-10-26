@@ -19,6 +19,8 @@
 
 #include "ml/meta/ml_type_traits.hpp"
 
+#include <unordered_map>
+
 namespace fetch {
 namespace ml {
 
@@ -299,10 +301,12 @@ struct OpSliceSaveableParams : public OpsSaveableParams
 {
   using SizeType = typename TensorType::SizeType;
 
-  std::vector<SizeType> axes;
-  std::vector<SizeType> indices;
-  SizeType              axis{};
-  SizeType              index{};
+  std::pair<SizeType, SizeType> start_end_slice;
+  std::vector<SizeType>         axes;
+  std::vector<SizeType>         indices;
+  SizeType                      axis{};
+  SizeType                      index{};
+  uint8_t                       slice_type;
 
   fetch::ml::OpType op_type = OpType::OP_SLICE;
 };
@@ -317,6 +321,19 @@ struct OpSqueezeSaveableParams : public OpsSaveableParams
   using SizeType = typename TensorType::SizeType;
 
   fetch::ml::OpType op_type = OpType::OP_SQUEEZE;
+};
+
+/**
+ * Saveable parameters for Squeeze op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpReduceMeanSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+  SizeType axis{};
+
+  fetch::ml::OpType op_type = OpType::OP_REDUCE_MEAN;
 };
 
 /**
@@ -411,6 +428,22 @@ struct OpMaxPool2DSaveableParams : public OpsSaveableParams
   fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::ml::OpType     op_type     = OpType::OP_MAX_POOL_2D;
+};
+
+template <typename TensorType>
+struct OpAvgPool1DSaveableParams : public OpsSaveableParams
+{
+  fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type     = OpType::OP_AVG_POOL_1D;
+};
+
+template <typename TensorType>
+struct OpAvgPool2DSaveableParams : public OpsSaveableParams
+{
+  fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type     = OpType::OP_AVG_POOL_2D;
 };
 
 /**

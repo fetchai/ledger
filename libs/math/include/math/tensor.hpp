@@ -42,6 +42,7 @@
 #include <memory>
 #include <numeric>
 #include <random>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -988,7 +989,7 @@ template <typename T, typename C>
 void Tensor<T, C>::Assign(TensorSlice const &other)
 {
   auto it1 = begin();
-  auto it2 = other.begin();
+  auto it2 = other.cbegin();
   assert(it1.size() == it2.size());
   while (it1.is_valid())
   {
@@ -1010,7 +1011,7 @@ void Tensor<T, C>::Assign(Tensor const &other)
   if (this->size() == other.size())
   {
     auto it1 = begin();
-    auto it2 = other.begin();
+    auto it2 = other.cbegin();
 
     while (it1.is_valid())
     {

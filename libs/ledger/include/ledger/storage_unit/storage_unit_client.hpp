@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/future_timepoint.hpp"
-#include "core/logging.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "ledger/shard_config.hpp"
@@ -26,6 +25,7 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/object_store_protocol.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "logging/logging.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -65,8 +65,8 @@ public:
 
   /// @name Storage Unit Interface
   /// @{
-  void      AddTransaction(Transaction const &tx) override;
-  bool      GetTransaction(ConstByteArray const &digest, Transaction &tx) override;
+  void      AddTransaction(chain::Transaction const &tx) override;
+  bool      GetTransaction(ConstByteArray const &digest, chain::Transaction &tx) override;
   bool      HasTransaction(ConstByteArray const &digest) override;
   void      IssueCallForMissingTxs(DigestSet const &tx_set) override;
   TxLayouts PollRecentTx(uint32_t max_to_poll) override;
@@ -75,7 +75,6 @@ public:
   Document Get(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
 
-  Keys KeyDump() const override;
   void Reset() override;
 
   // state hash functions
