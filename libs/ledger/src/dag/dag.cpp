@@ -685,8 +685,8 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 // TODO(HUT): const this.
 bool DAG::CommitEpoch(DAGEpoch new_epoch)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Committing epoch: ", new_epoch.block_number,
-                 " Nodes: ", new_epoch.all_nodes.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Committing epoch: ", new_epoch.block_number,
+                  " Nodes: ", new_epoch.all_nodes.size());
   FETCH_LOCK(mutex_);
 
   if (new_epoch.block_number == 0)

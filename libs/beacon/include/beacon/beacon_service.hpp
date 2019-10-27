@@ -92,6 +92,7 @@ public:
   using SharedEventManager      = EventManager::SharedEventManager;
   using BeaconSetupService      = beacon::BeaconSetupService;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
+  using DeadlineTimer    = fetch::moment::DeadlineTimer;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
@@ -152,6 +153,7 @@ private:
   Identity        identity_;
   Endpoint &      endpoint_;
   StateMachinePtr state_machine_;
+  DeadlineTimer   timer_to_proceed_{"beacon:main"};
 
   /// General configuration
   /// @{
@@ -195,6 +197,7 @@ private:
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_generated_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_current_round_;
+  telemetry::GaugePtr<uint64_t> beacon_state_gauge_;
 };
 
 }  // namespace beacon

@@ -329,8 +329,7 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
  */
 void BeaconManager::ComputePublicKeys()
 {
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys begin.");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys begin.");
   generics::MilliTimer myTimer("BeaconManager::ComputePublicKeys");
 
   // For all parties in $QUAL$, set $y_i = A_{i0} = g^{z_i} \bmod p$.
@@ -358,7 +357,7 @@ void BeaconManager::ComputePublicKeys()
     }
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys end.");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys end.");
 }
 
 void BeaconManager::AddReconstructionShare(MuddleAddress const &address)

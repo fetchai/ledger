@@ -247,8 +247,8 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
       rpc_client_.CallSpecificAddress(qual_promise_identity_.identifier(), RPC_BEACON,
                                       BeaconServiceProtocol::GET_SIGNATURE_SHARES, index);
 
-  // Note: this delay is effectively how long we wait for the network event to resolve
-  state_machine_->Delay(std::chrono::milliseconds(50));
+  // Timer to wait maximally for network events
+  timer_to_proceed_.Restart(std::chrono::seconds{1});
 
   return State::VERIFY_SIGNATURES;
 }
@@ -256,6 +256,12 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 BeaconService::State BeaconService::OnVerifySignaturesState()
 {
   SignatureInformation ret;
+
+  // Block for up to half a second waiting for the promise to resolve
+  if(!timer_to_proceed_.HasExpired() && !sig_share_promise_->IsSuccessful())
+  {
+    return State::VERIFY_SIGNATURES;
+  }
 
   try
   {

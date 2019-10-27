@@ -430,7 +430,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     if (!storage_unit_.RevertToHash(common_parent->body.merkle_hash,
                                     common_parent->body.block_number))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block", ToBase64(current_hash));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block: ", current_hash.ToHex());
 
       // delay the state machine in these error cases, to allow the network to catch up if the issue
       // is network related and if nothing else restrict logs being spammed
