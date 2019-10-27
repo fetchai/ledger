@@ -152,10 +152,10 @@ void BuildConnectionList(MuddleRegister const &reg, variant::Variant &output)
  */
 void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output)
 {
-  output                    = variant::Variant::Object();
-  output["network"]         = muddle.GetNetwork().ToString();
-  output["address"]         = muddle.GetAddress().ToBase64();
-  //output["externalAddress"] = muddle.GetExternalAddress(); // TODO(HUT): reenable
+  output            = variant::Variant::Object();
+  output["network"] = muddle.GetNetwork().ToString();
+  output["address"] = muddle.GetAddress().ToBase64();
+  // output["externalAddress"] = muddle.GetExternalAddress(); // TODO(HUT): reenable
 
   auto const &listening_ports = muddle.GetListeningPorts();
   auto &port_list = output["listeningPorts"] = variant::Variant::Array(listening_ports.size());
