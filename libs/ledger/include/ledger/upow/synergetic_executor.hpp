@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/upow/synergetic_contract_factory.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
 
@@ -45,6 +46,7 @@ public:
 private:
   StorageInterface &        storage_;
   SynergeticContractFactory factory_;
+  TokenContract             token_contract_{};
 };
 
 }  // namespace ledger

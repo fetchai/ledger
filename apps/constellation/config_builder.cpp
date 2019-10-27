@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "config_builder.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "manifest_builder.hpp"
 #include "settings.hpp"
 #include "vectorise/platform.hpp"
