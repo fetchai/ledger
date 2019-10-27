@@ -574,7 +574,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
     // update the routing table if required
     if (is_duplicate_direct)
     {
-      FETCH_LOG_INFO(logging_name_, "Duplicate direct (detected)");
+      FETCH_LOG_INFO(logging_name_, "Duplicate direct (detected) conn: ", handle);
 
       // we do not overwrite the routing table for additional direct connections
       status = UpdateStatus::DUPLICATE_DIRECT;
