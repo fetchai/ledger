@@ -46,13 +46,11 @@ int main(int argc, char **argv)
   // This example will create multiple local distributed clients with simple classification neural
   // net and learns how to predict hand written digits from MNIST dataset
 
-
   if (argc != 2)
   {
     std::cout << "Usage : " << argv[0] << "config_file.json" << std::endl;
     return 1;
   }
-
 
   fetch::json::JSONDocument                                 doc;
   fetch::dmlf::distributed_learning::ClientParams<DataType> client_params =
@@ -70,27 +68,7 @@ int main(int argc, char **argv)
 
   std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(n_clients);
 
-  // Command line parameters
-  std::string images_filename = av[1];
-  std::string labels_filename = av[2];
-
-  // Distributed learning parameters:
-  SizeType number_of_clients  = 10;
-  SizeType number_of_rounds   = 10;
-  bool     synchronise        = false;
-  client_params.max_updates   = 100;  // Round ends after this number of batches
-  SizeType number_of_peers    = 3;
-  client_params.batch_size    = 32;
-  client_params.learning_rate = static_cast<DataType>(.001f);
-  float test_set_ratio        = 0.03f;
-
-  /**
-   * Prepare environment
-   */
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
-
-  // Create console mutex
-  std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   // Create networkers
 
@@ -99,7 +77,6 @@ int main(int argc, char **argv)
     networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
     networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
   }
-
 
   for (SizeType i(0); i < n_clients; ++i)
   {
@@ -130,7 +107,6 @@ int main(int argc, char **argv)
   /**
    * Main loop
    */
-
 
   for (SizeType it{0}; it < n_rounds; ++it)
   {

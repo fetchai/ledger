@@ -138,11 +138,7 @@ template <class TensorType>
 std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(this->model_mutex_);
-<<<<<<< HEAD:libs/dmlf/include/dmlf/distributed_learning/word2vec_client.hpp
   return std::make_shared<GradientType>(this->graph_ptr_->GetGradients(),
-=======
-  return std::make_shared<GradientType>(this->g_ptr_->GetGradients(),
->>>>>>> 1f750f0a08bae1a0c4c0460d187e099a82b84f58:libs/dmlf/include/dmlf/distributed_learning/word2vec_client.hpp
                                         w2v_data_loader_ptr_->GetVocabHash(),
                                         w2v_data_loader_ptr_->GetVocab()->GetReverseVocab());
 }
@@ -184,7 +180,6 @@ std::pair<TensorType, TensorType> Word2VecClient<TensorType>::TranslateWeights(
 // private
 
 template <class TensorType>
-<<<<<<< HEAD:libs/dmlf/include/dmlf/distributed_learning/word2vec_client.hpp
 void Word2VecClient<TensorType>::PrepareDataLoader()
 {
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<TensorType>>(
@@ -223,45 +218,6 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
       tp_.learning_rate_param);
 
   this->opti_ptr_ = optimiser_ptr_.get();
-=======
-void Word2VecClient<TensorType>::PrepareModel()
-{
-  this->g_ptr_ = std::make_shared<fetch::ml::Graph<TensorType>>();
-
-  std::string input_name =
-      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  std::string context_name =
-      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
-  this->label_name_ =
-      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
-  skipgram_ = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
-      "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
-      w2v_data_loader_ptr_->vocab_size());
-
-  this->error_name_ = this->g_ptr_->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
-      "Error", {skipgram_, this->label_name_});
-
-  this->inputs_names_ = {input_name, context_name};
-}
-
-template <class TensorType>
-void Word2VecClient<TensorType>::PrepareDataLoader()
-{
-  w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<TensorType>>(
-      tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
-  w2v_data_loader_ptr_->BuildVocabAndData({tp_.data}, tp_.min_count);
-
-  this->dataloader_ptr_ = w2v_data_loader_ptr_;
-}
-
-template <class TensorType>
-void Word2VecClient<TensorType>::PrepareOptimiser()
-{
-  // Initialise Optimiser
-  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
-      this->g_ptr_, this->inputs_names_, this->label_name_, this->error_name_,
-      tp_.learning_rate_param);
->>>>>>> 1f750f0a08bae1a0c4c0460d187e099a82b84f58:libs/dmlf/include/dmlf/distributed_learning/word2vec_client.hpp
 }
 
 template <class TensorType>

@@ -46,7 +46,6 @@ int main(int argc, char **argv)
   // This example will create muddle networking distributed client with simple regression neural net
   // and learns how to predict prices from Boston Housing dataset
 
-
   if (argc != 4)
   {
     std::cout << "learner_config.json networker_config instance_number" << std::endl;
@@ -116,7 +115,6 @@ int main(int argc, char **argv)
   /**
    * Main loop
    */
-
 
   for (SizeType it{0}; it < n_rounds; ++it)
   {
