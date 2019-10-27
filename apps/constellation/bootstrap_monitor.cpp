@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 #include "version/fetch_version.hpp"
