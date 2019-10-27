@@ -26,7 +26,6 @@
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
-
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -46,6 +45,7 @@ int main(int argc, char **argv)
 {
   // This example will create muddle networking distributed client with simple regression neural net
   // and learns how to predict prices from Boston Housing dataset
+
 
   if (argc != 4)
   {
@@ -77,6 +77,7 @@ int main(int argc, char **argv)
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   // Load data
+
   TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(data_file).Transpose();
   TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(labels_file).Transpose();
 
@@ -89,6 +90,7 @@ int main(int argc, char **argv)
       console_mutex_ptr);
 
   // Create networker and assign shuffle algorithm
+
   auto networker =
       std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(networker_config, instance_number);
   networker->Initialize<fetch::dmlf::Update<TensorType>>();
@@ -100,6 +102,7 @@ int main(int argc, char **argv)
   client->SetNetworker(networker);
 
   // Create loss csv file
+
   std::string results_filename = results_dir + "/fetch_" + std::to_string(n_clients) + "_Adam_" +
                                  std::to_string(float(client_params.learning_rate)) + "_" +
                                  std::to_string(seed) + "_FC3.csv";
@@ -113,6 +116,7 @@ int main(int argc, char **argv)
   /**
    * Main loop
    */
+
 
   for (SizeType it{0}; it < n_rounds; ++it)
   {

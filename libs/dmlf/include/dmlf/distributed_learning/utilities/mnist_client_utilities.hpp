@@ -36,7 +36,6 @@ std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>> M
     std::string const &images, std::string const &labels, float test_set_ratio,
     std::shared_ptr<std::mutex> console_mutex_ptr)
 {
-
   // Initialise model
   auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
 

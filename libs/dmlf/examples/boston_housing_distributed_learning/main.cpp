@@ -18,6 +18,7 @@
 
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
 #include "dmlf/distributed_learning/utilities/boston_housing_client_utilities.hpp"
+
 #include "dmlf/distributed_learning/utilities/utilities.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
@@ -100,6 +101,7 @@ int main(int argc, char **argv)
   for (SizeType i{0}; i < n_clients; ++i)
   {
     // Instantiate n_clients clients
+
     clients[i] = fetch::dmlf::distributed_learning::utilities::MakeBostonClient<TensorType>(
         std::to_string(i), client_params, data_tensors.at(i), label_tensors.at(i), test_set_ratio,
         console_mutex_ptr);
