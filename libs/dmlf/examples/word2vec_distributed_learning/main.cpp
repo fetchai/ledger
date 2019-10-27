@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/distributed_learning/utilities/utilities.hpp"
 #include "dmlf/distributed_learning/word2vec_client.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
-#include "math/matrix_operations.hpp"
+#include "json/document.hpp"
 #include "math/tensor.hpp"
-#include "ml/core/graph.hpp"
-#include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 
 #include <iostream>
 #include <mutex>
@@ -41,17 +40,16 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;
 
-std::vector<std::string> SplitTrainingData(std::string const &train_file,
-                                           SizeType           number_of_clients)
+std::vector<std::string> SplitTrainingData(std::string const &train_file, SizeType n_clients)
 {
-  // split train file into number_of_clients parts
+  // split train file into n_clients parts
   std::vector<std::string> client_data;
-  auto                     input_data = fetch::ml::utilities::ReadFile(train_file);
-  auto     chars_per_client = static_cast<SizeType>(input_data.size() / number_of_clients);
-  SizeType pos{0};
-  SizeType old_pos{0};
+  auto                     input_data       = fetch::ml::utilities::ReadFile(train_file);
+  auto                     chars_per_client = static_cast<SizeType>(input_data.size() / n_clients);
+  SizeType                 pos{0};
+  SizeType                 old_pos{0};
 
-  for (SizeType i(0); i < number_of_clients; ++i)
+  for (SizeType i(0); i < n_clients; ++i)
   {
     old_pos = pos;
     pos     = (i + 1) * chars_per_client;
@@ -119,13 +117,12 @@ void SynchroniseWeights(std::vector<std::shared_ptr<TrainingClient<TensorType>>>
 
 int main(int argc, char **argv)
 {
-  // This example will create multiple local distributed clients with CBOW Word2Vec model and trains
+  // This example will create multiple local distributed clients with Word2Vec model and trains
   // word embeddings based on input text file
 
-  if (argc != 4)
+  if (argc != 2)
   {
-    std::cout << "Usage : " << argv[0] << " PATH/TO/text8 analogies_test_file output_csv_file"
-              << std::endl;
+    std::cout << "Usage : " << argv[0] << "config_file.json" << std::endl;
     return 1;
   }
 
@@ -133,27 +130,23 @@ int main(int argc, char **argv)
    * Prepare configuration
    */
 
-  W2VTrainingParams<DataType> client_params;
+  fetch::json::JSONDocument doc;
+  ClientParams<DataType>    client_params =
+      fetch::dmlf::distributed_learning::utilities::ClientParamsFromJson<TensorType>(
+          std::string(argv[1]), doc);
+  auto word2vec_client_params = std::make_shared<Word2VecTrainingParams<DataType>>(client_params);
 
-  // Command line parameters
-  std::string train_file            = argv[1];
-  client_params.analogies_test_file = argv[2];
-  std::string output_csv_file       = argv[3];
+  auto data_file                              = doc["data"].As<std::string>();
+  word2vec_client_params->analogies_test_file = doc["analogies_test_file"].As<std::string>();
+  word2vec_client_params->vocab_file          = doc["vocab_file"].As<std::string>();
+  word2vec_client_params->test_frequency      = doc["test_frequency"].As<SizeType>();
 
   // Distributed learning parameters:
-  SizeType number_of_clients = 5;
-  SizeType number_of_rounds  = 1000;
-  SizeType number_of_peers   = 3;
-  bool     synchronisation   = false;
-
-  // Base clients parameters:
-  client_params.batch_size    = 10000;
-  client_params.learning_rate = static_cast<DataType>(.001f);
-  client_params.max_updates   = 100;  // Round ends after this number of batches
-
-  // Word2Vec parameters:
-  client_params.vocab_file     = "/tmp/vocab.txt";
-  client_params.test_frequency = 1000;
+  auto        n_clients       = doc["n_clients"].As<SizeType>();
+  auto        n_peers         = doc["n_peers"].As<SizeType>();
+  auto        n_rounds        = doc["n_rounds"].As<SizeType>();
+  auto        synchronise     = doc["synchronise"].As<bool>();
+  std::string output_csv_file = doc["results"].As<std::string>();
 
   /**
    * Prepare environment
@@ -162,31 +155,31 @@ int main(int argc, char **argv)
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
   std::cout << "FETCH Distributed Word2vec Demo" << std::endl;
 
-  std::vector<std::string> client_data = SplitTrainingData(train_file, number_of_clients);
+  std::vector<std::string> client_data = SplitTrainingData(data_file, n_clients);
 
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>>         clients(number_of_clients);
-  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>>         clients(n_clients);
+  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(n_clients);
 
   // Create networkers
-  for (SizeType i(0); i < number_of_clients; ++i)
+  for (SizeType i(0); i < n_clients; ++i)
   {
     networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
     networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
   }
 
   // Add peers to networkers and initialise shuffle algorithm
-  for (SizeType i(0); i < number_of_clients; ++i)
+  for (SizeType i(0); i < n_clients; ++i)
   {
     networkers[i]->AddPeers(networkers);
     networkers[i]->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
-        networkers[i]->GetPeerCount(), number_of_peers));
+        networkers[i]->GetPeerCount(), n_peers));
   }
 
-  // Instantiate NUMBER_OF_CLIENTS clients
-  for (SizeType i(0); i < number_of_clients; ++i)
+  // Instantiate n_clients clients
+  for (SizeType i(0); i < n_clients; ++i)
   {
-    W2VTrainingParams<DataType> cp = client_params;
-    cp.data                        = {client_data[i]};
+    Word2VecTrainingParams<DataType> cp(*word2vec_client_params);
+    cp.data = {client_data[i]};
     clients[i] =
         std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
 
@@ -197,7 +190,7 @@ int main(int argc, char **argv)
   /**
    * Main loop
    */
-  for (SizeType it(0); it < number_of_rounds; ++it)
+  for (SizeType it(0); it < n_rounds; ++it)
   {
     // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
@@ -217,7 +210,7 @@ int main(int argc, char **argv)
     std::ofstream lossfile(output_csv_file, std::ofstream::out | std::ofstream::app);
 
     std::cout << "Test losses:";
-    lossfile << utilities::GetStrTimestamp();
+    lossfile << fetch::ml::utilities::GetStrTimestamp();
     for (auto &c : clients)
     {
       auto *w2v_client = dynamic_cast<Word2VecClient<TensorType> *>(c.get());
@@ -233,7 +226,7 @@ int main(int argc, char **argv)
     lossfile.close();
 
     // Synchronize weights by giving all clients average of all client's weights
-    if (synchronisation)
+    if (synchronise)
     {
       std::cout << std::endl << "Synchronising weights" << std::endl;
       SynchroniseWeights(clients);

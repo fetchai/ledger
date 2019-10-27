@@ -17,7 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/distributed_learning/client_params.hpp"
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
+#include "json/document.hpp"
+#include "math/base_types.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -154,6 +157,59 @@ void Shuffle(TensorType &data, TensorType &labels, typename TensorType::SizeType
 
   data   = data_out;
   labels = labels_out;
+}
+
+template <typename TensorType>
+fetch::dmlf::distributed_learning::ClientParams<typename TensorType::Type> ClientParamsFromJson(
+    std::string const &fname, fetch::json::JSONDocument &doc)
+{
+  using DataType = typename TensorType::Type;
+  using SizeType = fetch::math::SizeType;
+
+  std::ifstream config_file(fname);
+  std::string text((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
+  doc.Parse(text.c_str());
+
+  auto client_params = fetch::dmlf::distributed_learning::ClientParams<DataType>();
+
+  // try to extract each parameter
+  // none are mandatory so it's fine if they're missing
+
+  if (!doc["batch_size"].IsUndefined())
+  {
+    client_params.batch_size = doc["batch_size"].As<SizeType>();
+  }
+  if (!doc["max_updates"].IsUndefined())
+  {
+    client_params.max_updates = doc["max_updates"].As<SizeType>();
+  }
+  if (!doc["learning_rate"].IsUndefined())
+  {
+    client_params.learning_rate = static_cast<DataType>(doc["learning_rate"].As<float>());
+  }
+  if (!(doc["print_loss"].IsUndefined()))
+  {
+    client_params.print_loss = doc["print_loss"].As<bool>();
+  }
+  if (!doc["inputs_names"].IsUndefined())
+  {
+    auto const &inputs_names   = doc["inputs_names"];
+    client_params.inputs_names = std::vector<std::string>(inputs_names.size());
+    for (std::size_t i = 0; i < inputs_names.size(); ++i)
+    {
+      client_params.inputs_names.at(i) = inputs_names[i].As<std::string>();
+    }
+  }
+  if (!doc["label_name"].IsUndefined())
+  {
+    client_params.label_name = doc["label_name"].As<std::string>();
+  }
+  if (!doc["error_name"].IsUndefined())
+  {
+    client_params.error_name = doc["error_name"].As<std::string>();
+  }
+
+  return client_params;
 }
 
 }  // namespace utilities

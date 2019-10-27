@@ -37,7 +37,7 @@ class Word2VecClient : public TrainingClient<TensorType>
   using GradientType     = fetch::dmlf::Update<TensorType>;
 
 public:
-  Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
+  Word2VecClient(std::string const &id, Word2VecTrainingParams<DataType> const &tp,
                  std::shared_ptr<std::mutex> console_mutex_ptr);
 
   void Run() override;
@@ -55,7 +55,7 @@ public:
                                                      const byte_array::ConstByteArray &vocab_hash);
 
 private:
-  W2VTrainingParams<DataType>                                         tp_;
+  Word2VecTrainingParams<DataType>                                    tp_;
   std::string                                                         skipgram_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<TensorType>> w2v_data_loader_ptr_;
   float                                                               analogy_score_ = 0.0f;
@@ -73,9 +73,9 @@ private:
 };
 
 template <class TensorType>
-Word2VecClient<TensorType>::Word2VecClient(std::string const &                id,
-                                           W2VTrainingParams<DataType> const &tp,
-                                           std::shared_ptr<std::mutex>        console_mutex_ptr)
+Word2VecClient<TensorType>::Word2VecClient(std::string const &                     id,
+                                           Word2VecTrainingParams<DataType> const &tp,
+                                           std::shared_ptr<std::mutex> console_mutex_ptr)
   : TrainingClient<TensorType>(id, tp, console_mutex_ptr)
   , tp_(tp)
 {
@@ -217,7 +217,7 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
       graph_ptr, this->inputs_names_, this->label_name_, this->error_name_,
       tp_.learning_rate_param);
 
-  this->opti_ptr_  = optimiser_ptr_.get();
+  this->opti_ptr_ = optimiser_ptr_.get();
 }
 
 template <class TensorType>

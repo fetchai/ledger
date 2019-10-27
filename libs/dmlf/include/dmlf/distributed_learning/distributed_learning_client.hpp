@@ -19,6 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
+#include "dmlf/distributed_learning/client_params.hpp"
 #include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "dmlf/update.hpp"
 #include "math/matrix_operations.hpp"
@@ -38,21 +39,6 @@
 namespace fetch {
 namespace dmlf {
 namespace distributed_learning {
-
-template <typename DataType>
-struct ClientParams
-{
-  using SizeType = fetch::math::SizeType;
-
-  SizeType batch_size{};
-  SizeType max_updates;
-  DataType learning_rate;
-  bool     print_loss = false;
-
-  std::vector<std::string> inputs_names = {"Input"};
-  std::string              label_name   = "Label";
-  std::string              error_name   = "Error";
-};
 
 template <class TensorType>
 class TrainingClient

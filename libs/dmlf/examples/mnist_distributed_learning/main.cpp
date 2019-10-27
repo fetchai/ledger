@@ -17,25 +17,18 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
-#include "dmlf/distributed_learning/utilities/distributed_learning_utilities.hpp"
 #include "dmlf/distributed_learning/utilities/mnist_client_utilities.hpp"
+#include "dmlf/distributed_learning/utilities/utilities.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
-#include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
 
 #include <algorithm>
-#include <chrono>
-#include <ctime>
 #include <iostream>
 #include <string>
 #include <thread>
-#include <utility>
 #include <vector>
 
 using namespace fetch::ml::ops;
@@ -47,33 +40,27 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
   // This example will create multiple local distributed clients with simple classification neural
   // net and learns how to predict hand written digits from MNIST dataset
 
-  if (ac != 2)
+  if (argc != 2)
   {
-    std::cout << "Usage : " << av[0] << "config_file.json" << std::endl;
+    std::cout << "Usage : " << argv[0] << "config_file.json" << std::endl;
     return 1;
   }
-  fetch::json::JSONDocument doc;
-  std::ifstream             config_file(av[1]);
-  std::string text((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
-  doc.Parse(text.c_str());
 
-  ClientParams<DataType> client_params;
-  auto                   data_file   = doc["data"].As<std::string>();
-  auto                   labels_file = doc["labels"].As<std::string>();
-  //  auto                   results_dir = doc["results"].As<std::string>();
-  auto n_clients              = doc["n_clients"].As<SizeType>();
-  auto n_peers                = doc["n_peers"].As<SizeType>();
-  auto n_rounds               = doc["n_rounds"].As<SizeType>();
-  auto synchronise            = doc["synchronise"].As<bool>();
-  client_params.max_updates   = doc["max_updates"].As<SizeType>();
-  client_params.batch_size    = doc["batch_size"].As<SizeType>();
-  client_params.learning_rate = static_cast<DataType>(doc["learning_rate"].As<float>());
-  //  auto seed                          = doc["random_seed"].As<SizeType>();
+  fetch::json::JSONDocument                                 doc;
+  fetch::dmlf::distributed_learning::ClientParams<DataType> client_params =
+      fetch::dmlf::distributed_learning::utilities::ClientParamsFromJson<TensorType>(
+          std::string(argv[1]), doc);
+  auto data_file      = doc["data"].As<std::string>();
+  auto labels_file    = doc["labels"].As<std::string>();
+  auto n_clients      = doc["n_clients"].As<SizeType>();
+  auto n_peers        = doc["n_peers"].As<SizeType>();
+  auto n_rounds       = doc["n_rounds"].As<SizeType>();
+  auto synchronise    = doc["synchronise"].As<bool>();
   auto test_set_ratio = doc["test_set_ratio"].As<float>();
 
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
