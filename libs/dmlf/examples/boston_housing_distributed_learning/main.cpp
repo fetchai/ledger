@@ -133,7 +133,6 @@ int main(int argc, char **argv)
     throw fetch::ml::exceptions::InvalidFile("Bad output file");
   }
 
-
   /**
    * Main loop
    */
