@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,35 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/token_contract.hpp"
-#include "ledger/upow/synergetic_executor_interface.hpp"
+#include "chain/address.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class SynergeticExecutor : public SynergeticExecutorInterface
-{
-public:
-  // Construction / Destruction
-  explicit SynergeticExecutor(StorageInterface &storage);
-  SynergeticExecutor(SynergeticExecutor const &) = delete;
-  SynergeticExecutor(SynergeticExecutor &&)      = delete;
-  ~SynergeticExecutor() override                 = default;
-
-  /// @name Synergetic Executor Interface
-  /// @{
-  void Verify(WorkQueue &solutions, ProblemData const &problem_data,
-              std::size_t num_lanes) override;
-  /// @}
-
-  // Operators
-  SynergeticExecutor &operator=(SynergeticExecutor const &) = delete;
-  SynergeticExecutor &operator=(SynergeticExecutor &&) = delete;
-
-private:
-  StorageInterface &storage_;
-  TokenContract     token_contract_{};
-};
+ContractContext::ContractContext(TokenContract *token_contract_param, chain::Address address,
+                                 StateAdapter *                             state_adapter_param,
+                                 chain::TransactionLayout::BlockIndex const block_index_param)
+  : token_contract{token_contract_param}
+  , contract_address{std::move(address)}
+  , state_adapter{state_adapter_param}
+  , block_index{block_index_param}
+{}
 
 }  // namespace ledger
 }  // namespace fetch

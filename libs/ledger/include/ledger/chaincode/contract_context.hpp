@@ -17,34 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/token_contract.hpp"
-#include "ledger/upow/synergetic_executor_interface.hpp"
+#include "chain/address.hpp"
+#include "chain/transaction_layout.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class SynergeticExecutor : public SynergeticExecutorInterface
+class TokenContract;
+class StateAdapter;
+
+struct ContractContext
 {
-public:
-  // Construction / Destruction
-  explicit SynergeticExecutor(StorageInterface &storage);
-  SynergeticExecutor(SynergeticExecutor const &) = delete;
-  SynergeticExecutor(SynergeticExecutor &&)      = delete;
-  ~SynergeticExecutor() override                 = default;
+  ContractContext()                        = default;
+  ContractContext(ContractContext const &) = default;
+  ContractContext(ContractContext &&)      = default;
 
-  /// @name Synergetic Executor Interface
-  /// @{
-  void Verify(WorkQueue &solutions, ProblemData const &problem_data,
-              std::size_t num_lanes) override;
-  /// @}
+  ContractContext(TokenContract *token_contract_param, chain::Address address,
+                  StateAdapter *                       state_adapter_param,
+                  chain::TransactionLayout::BlockIndex block_index_param);
 
-  // Operators
-  SynergeticExecutor &operator=(SynergeticExecutor const &) = delete;
-  SynergeticExecutor &operator=(SynergeticExecutor &&) = delete;
-
-private:
-  StorageInterface &storage_;
-  TokenContract     token_contract_{};
+  TokenContract *const                       token_contract{nullptr};
+  chain::Address const                       contract_address{};
+  StateAdapter *const                        state_adapter{nullptr};
+  chain::TransactionLayout::BlockIndex const block_index{0};
 };
 
 }  // namespace ledger

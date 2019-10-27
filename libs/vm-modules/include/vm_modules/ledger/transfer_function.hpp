@@ -17,35 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/token_contract.hpp"
-#include "ledger/upow/synergetic_executor_interface.hpp"
+#include "vm/address.hpp"
+#include "vm/module.hpp"
 
 namespace fetch {
+namespace vm_modules {
 namespace ledger {
 
-class SynergeticExecutor : public SynergeticExecutorInterface
+template <typename Contract>
+void BindTransferFunction(vm::Module &module, Contract const &contract)
 {
-public:
-  // Construction / Destruction
-  explicit SynergeticExecutor(StorageInterface &storage);
-  SynergeticExecutor(SynergeticExecutor const &) = delete;
-  SynergeticExecutor(SynergeticExecutor &&)      = delete;
-  ~SynergeticExecutor() override                 = default;
+  module.CreateFreeFunction(
+      "transfer",
+      [&contract](vm::VM *, vm::Ptr<vm::Address> const &target, uint64_t amount) -> bool {
+        decltype(auto) c = contract.context();
 
-  /// @name Synergetic Executor Interface
-  /// @{
-  void Verify(WorkQueue &solutions, ProblemData const &problem_data,
-              std::size_t num_lanes) override;
-  /// @}
+        c.token_contract->Attach(c);
+        c.state_adapter->PushContext("fetch.token");
 
-  // Operators
-  SynergeticExecutor &operator=(SynergeticExecutor const &) = delete;
-  SynergeticExecutor &operator=(SynergeticExecutor &&) = delete;
+        auto const success = c.token_contract->SubtractTokens(c.contract_address, amount) &&
+                             c.token_contract->AddTokens(target->address(), amount);
 
-private:
-  StorageInterface &storage_;
-  TokenContract     token_contract_{};
-};
+        c.state_adapter->PopContext();
+        c.token_contract->Detach();
+
+        return success;
+      });
+}
 
 }  // namespace ledger
+}  // namespace vm_modules
 }  // namespace fetch

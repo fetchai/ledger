@@ -17,35 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/token_contract.hpp"
-#include "ledger/upow/synergetic_executor_interface.hpp"
+#include "vm/module.hpp"
 
 namespace fetch {
+namespace vm_modules {
 namespace ledger {
 
-class SynergeticExecutor : public SynergeticExecutorInterface
+template <typename Contract>
+void BindBalanceFunction(vm::Module &module, Contract const &contract)
 {
-public:
-  // Construction / Destruction
-  explicit SynergeticExecutor(StorageInterface &storage);
-  SynergeticExecutor(SynergeticExecutor const &) = delete;
-  SynergeticExecutor(SynergeticExecutor &&)      = delete;
-  ~SynergeticExecutor() override                 = default;
+  module.CreateFreeFunction("balance", [&contract](vm::VM *) -> uint64_t {
+    decltype(auto) c = contract.context();
 
-  /// @name Synergetic Executor Interface
-  /// @{
-  void Verify(WorkQueue &solutions, ProblemData const &problem_data,
-              std::size_t num_lanes) override;
-  /// @}
+    c.token_contract->Attach(c);
+    c.state_adapter->PushContext("fetch.token");
 
-  // Operators
-  SynergeticExecutor &operator=(SynergeticExecutor const &) = delete;
-  SynergeticExecutor &operator=(SynergeticExecutor &&) = delete;
+    auto const balance = c.token_contract->GetBalance(c.contract_address);
 
-private:
-  StorageInterface &storage_;
-  TokenContract     token_contract_{};
-};
+    c.state_adapter->PopContext();
+    c.token_contract->Detach();
+
+    return balance;
+  });
+}
 
 }  // namespace ledger
+}  // namespace vm_modules
 }  // namespace fetch
