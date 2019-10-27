@@ -18,6 +18,7 @@
 
 #include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/chaincode/chain_code_factory.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_factory.hpp"
 
