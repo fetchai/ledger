@@ -161,7 +161,7 @@ public:
     return *functions_[name];
   }
 
-  QueryVariant Call(std::string name, std::vector<void const *> &args)
+  QueryVariant Call(std::string const &name, std::vector<void const *> &args)
   {
     return (*functions_[name])(args);
   }

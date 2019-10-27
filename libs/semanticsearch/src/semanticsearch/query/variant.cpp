@@ -25,7 +25,7 @@ namespace semanticsearch {
 
 void AbstractQueryVariant::SetType(int type)
 {
-  type_ = std::move(type);
+  type_ = type;
 }
 
 int AbstractQueryVariant::type() const

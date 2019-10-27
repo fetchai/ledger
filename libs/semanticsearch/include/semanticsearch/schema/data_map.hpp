@@ -98,7 +98,7 @@ public:
   }
 
 private:
-  DataToSubspaceMap(std::type_index type)
+  explicit DataToSubspaceMap(std::type_index type)
     : type_{type}
   {}
 

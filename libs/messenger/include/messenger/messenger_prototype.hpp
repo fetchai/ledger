@@ -75,7 +75,7 @@ public:
 
   /// Search
   /// @{
-  ResultList FindAgents(ConstByteArray /*type*/, ConstByteArray /*query*/);
+  ResultList FindAgents(ConstByteArray const & /*type*/, ConstByteArray const & /*query*/);
   /// @}
 private:
   /// Network components

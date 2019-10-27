@@ -54,7 +54,7 @@ void MessengerPrototype::Unregister()
 void MessengerPrototype::SendMessage(Message const &msg)
 {
   // Checking if any node connectivity exists
-  if (node_addresses_.size() == 0)
+  if (node_addresses_.empty())
   {
     throw std::runtime_error("Not connected to any nodes.");
   }
@@ -169,8 +169,8 @@ MessengerPrototype::MessageList MessengerPrototype::GetMessages(uint64_t wait)
   return ret;
 }
 
-MessengerPrototype::ResultList MessengerPrototype::FindAgents(ConstByteArray /*type*/,
-                                                              ConstByteArray /*query*/)
+MessengerPrototype::ResultList MessengerPrototype::FindAgents(ConstByteArray const & /*type*/,
+                                                              ConstByteArray const & /*query*/)
 {
   return {};
 }

@@ -39,7 +39,8 @@ AdvertisementRegister::SharedModel AdvertisementRegister::GetAdvertisementModel(
   return model_advertisement_[std::move(name)];
 }
 
-void AdvertisementRegister::AdvertiseAgent(AgentId aid, std::string name, SemanticPosition position)
+void AdvertisementRegister::AdvertiseAgent(AgentId aid, std::string const &name,
+                                           SemanticPosition const &position)
 {
   assert(HasModel(name));
   auto ad_model = GetAdvertisementModel(std::move(name));
@@ -47,16 +48,16 @@ void AdvertisementRegister::AdvertiseAgent(AgentId aid, std::string name, Semant
 }
 
 AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(
-    std::string name, SemanticPosition position, SemanticCoordinateType granularity)
+    std::string const &name, SemanticPosition const &position, SemanticCoordinateType granularity)
 {
-  auto ad_model = GetAdvertisementModel(std::move(name));
+  auto ad_model = GetAdvertisementModel(name);
   return ad_model->FindAgents(position, granularity);
 }
 
 AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(
-    std::string name, Vocabulary object, SemanticCoordinateType granularity)
+    std::string const &name, Vocabulary const &object, SemanticCoordinateType granularity)
 {
-  auto ad_model = GetAdvertisementModel(std::move(name));
+  auto ad_model = GetAdvertisementModel(name);
   auto position = ad_model->model()->Reduce(object);
 
   return ad_model->FindAgents(position, granularity);

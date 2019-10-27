@@ -61,7 +61,7 @@ void ErrorTracker::ClearErrors()
 
 bool ErrorTracker::HasErrors() const
 {
-  return errors_.size() != 0;
+  return !errors_.empty();
 }
 
 void ErrorTracker::PrintLine(int line, uint64_t character, uint64_t char_end) const

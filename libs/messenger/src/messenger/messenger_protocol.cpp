@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "messenger/messenger_api.hpp"
 #include "messenger/messenger_protocol.hpp"
+#include "messenger/messenger_api.hpp"
 
 #include <cassert>
 
@@ -25,7 +25,6 @@ namespace fetch {
 namespace messenger {
 
 MessengerProtocol::MessengerProtocol(MessengerAPI *api)
-  : Protocol()
 {
   this->ExposeWithClientContext(REGISTER_MESSENGER, api, &MessengerAPI::RegisterMessenger);
   this->ExposeWithClientContext(UNREGISTER_MESSENGER, api, &MessengerAPI::UnregisterMessenger);

@@ -55,7 +55,7 @@ public:
 
 private:
   explicit BuiltinQueryFunction(std::type_index return_type)
-    : return_type_(std::move(return_type))
+    : return_type_(return_type)
   {}
 
   std::vector<std::type_index> arguments_;

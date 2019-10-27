@@ -78,7 +78,7 @@ private:
   AbstractQueryVariant(int32_t type, Token token, std::type_index type_index)
     : type_{type}
     , token_{std::move(token)}
-    , type_index_{std::move(type_index)}
+    , type_index_{type_index}
   {}
 
   int32_t         type_;
@@ -93,7 +93,7 @@ public:
   using Token        = fetch::byte_array::Token;
   using QueryVariant = std::shared_ptr<AbstractQueryVariant>;
 
-  static QueryVariant New(T value, int type = 0, Token token = static_cast<Token>(""))
+  static QueryVariant New(T value, int32_t type = 0, Token token = static_cast<Token>(""))
   {
     return QueryVariant(new SpecialisedQueryVariant<T>(std::move(value), type, std::move(token),
                                                        std::type_index(typeid(T))));
@@ -105,8 +105,8 @@ public:
   }
 
 private:
-  SpecialisedQueryVariant(T value, int type, Token token, std::type_index type_index)
-    : AbstractQueryVariant(std::move(type), std::move(token), std::move(type_index))
+  SpecialisedQueryVariant(T value, int32_t type, Token token, std::type_index type_index)
+    : AbstractQueryVariant(type, std::move(token), type_index)
     , value_{std::move(value)}
   {}
 
@@ -120,7 +120,7 @@ QueryVariant NewQueryVariant(
     T val, int type = 0,
     AbstractQueryVariant::Token token = static_cast<AbstractQueryVariant::Token>(""))
 {
-  return SpecialisedQueryVariant<T>::New(std::move(val), std::move(type), std::move(token));
+  return SpecialisedQueryVariant<T>::New(std::move(val), type, std::move(token));
 }
 
 }  // namespace semanticsearch

@@ -24,7 +24,7 @@ namespace fetch {
 namespace semanticsearch {
 
 SubscriptionGroup::SubscriptionGroup(SemanticCoordinateType g, SemanticPosition position)
-  : width_parameter(std::move(g))
+  : width_parameter(g)
 {
   auto cs = DBIndexListPtrSize(width_parameter);
   for (auto const &p : position)

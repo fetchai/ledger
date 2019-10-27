@@ -57,7 +57,7 @@ public:
 private:
   VocabularyInstance(std::type_index type, void *data)
     : type_(type)
-    , data_(std::move(data))
+    , data_(data)
   {}
 
   std::type_index type_;

@@ -37,10 +37,11 @@ public:
 
   bool        CreateModel(std::string name, VocabularySchema object);
   SharedModel GetAdvertisementModel(std::string name);
-  void        AdvertiseAgent(AgentId aid, std::string name, SemanticPosition position);
-  AgentIdSet  FindAgents(std::string name, SemanticPosition position,
-                         SemanticCoordinateType granularity);
-  AgentIdSet  FindAgents(std::string name, Vocabulary object, SemanticCoordinateType granularity);
+  void       AdvertiseAgent(AgentId aid, std::string const &name, SemanticPosition const &position);
+  AgentIdSet FindAgents(std::string const &name, SemanticPosition const &position,
+                        SemanticCoordinateType granularity);
+  AgentIdSet FindAgents(std::string const &name, Vocabulary const &object,
+                        SemanticCoordinateType granularity);
 
   void OnAddModel(std::string const &name, VocabularySchema const &object) override;
 
