@@ -88,8 +88,10 @@ int main(int argc, char **argv)
   utilities::Shuffle(data_tensor, label_tensor, seed);
 
   // Split data
-  std::vector<TensorType> data_tensors  = fetch::dmlf::distributed_learning::utilities::Split(data_tensor, n_clients);
-  std::vector<TensorType> label_tensors = fetch::dmlf::distributed_learning::utilities::Split(label_tensor, n_clients);
+  std::vector<TensorType> data_tensors =
+      fetch::dmlf::distributed_learning::utilities::Split(data_tensor, n_clients);
+  std::vector<TensorType> label_tensors =
+      fetch::dmlf::distributed_learning::utilities::Split(label_tensor, n_clients);
 
   // Create networkers
   std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(n_clients);
@@ -112,8 +114,9 @@ int main(int argc, char **argv)
   for (SizeType i{0}; i < n_clients; ++i)
   {
     // Instantiate n_clients clients
-    clients[i] = fetch::dmlf::distributed_learning::utilities::MakeBostonClient(std::to_string(i), client_params, data_tensors.at(i), label_tensors.at(i),
-                            test_set_ratio, console_mutex_ptr);
+    clients[i] = fetch::dmlf::distributed_learning::utilities::MakeBostonClient(
+        std::to_string(i), client_params, data_tensors.at(i), label_tensors.at(i), test_set_ratio,
+        console_mutex_ptr);
   }
 
   for (SizeType i{0}; i < n_clients; ++i)
