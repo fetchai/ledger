@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
 #include "chain/constants.hpp"
+#include "core/serializers/base_types.hpp"
 #include "ledger/chain/block.hpp"
 
 namespace fetch {

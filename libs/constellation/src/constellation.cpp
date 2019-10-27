@@ -175,43 +175,37 @@ ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
 
 StakeManagerPtr CreateStakeManager(constellation::Constellation::Config const &cfg)
 {
-  StakeManagerPtr mgr{};
-
   if (cfg.proof_of_stake)
   {
-    mgr = std::make_shared<ledger::StakeManager>(cfg.max_cabinet_size);
+    return std::make_shared<ledger::StakeManager>(cfg.max_cabinet_size);
   }
 
-  return mgr;
+  return {};
 }
 
 ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, StakeManagerPtr stake,
                              BeaconServicePtr beacon, MainChain const &chain,
                              Identity const &identity)
 {
-  ConsensusPtr consensus{};
-
   if (stake)
   {
-    consensus = std::make_shared<ledger::Consensus>(stake, beacon, chain, identity, cfg.aeon_period,
-                                                    cfg.max_cabinet_size, cfg.block_interval_ms);
+    return std::make_shared<ledger::Consensus>(stake, beacon, chain, identity, cfg.aeon_period,
+                                               cfg.max_cabinet_size, cfg.block_interval_ms);
   }
 
-  return consensus;
+  return {};
 }
 
 muddle::MuddlePtr CreateBeaconNetwork(Config const &cfg, CertificatePtr certificate,
                                       NetworkManager const &nm)
 {
-  muddle::MuddlePtr network;
-
   if (cfg.proof_of_stake)
   {
-    network = muddle::CreateMuddle("DKGN", std::move(certificate), nm,
-                                   cfg.manifest.FindExternalAddress(ServiceIdentifier::Type::DKG));
+    return muddle::CreateMuddle("DKGN", std::move(certificate), nm,
+                                cfg.manifest.FindExternalAddress(ServiceIdentifier::Type::DKG));
   }
 
-  return network;
+  return {};
 }
 
 BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const &cfg,
@@ -219,16 +213,13 @@ BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const 
                                      shards::ShardManagementService &            manifest_cache,
                                      CertificatePtr                              certificate)
 {
-  BeaconServicePtr                         beacon{};
-  beacon::EventManager::SharedEventManager event_manager = beacon::EventManager::New();
-
   if (cfg.proof_of_stake)
   {
-    beacon = std::make_unique<fetch::beacon::BeaconService>(muddle, manifest_cache, certificate,
-                                                            event_manager);
+    return std::make_unique<fetch::beacon::BeaconService>(muddle, manifest_cache, certificate,
+                                                          beacon::EventManager::New());
   }
 
-  return beacon;
+  return {};
 }
 
 /**

@@ -24,7 +24,6 @@
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "logging/logging.hpp"
@@ -285,7 +284,7 @@ bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Genesis hash mismatch: actual 0x", block.body.hash.ToHex(),
                        ", expected 0x", chain::GENESIS_DIGEST.ToHex(),
-		       ", skipping the whole alien chain");
+                       ", skipping the whole alien chain");
         return false;
       }
       continue;
