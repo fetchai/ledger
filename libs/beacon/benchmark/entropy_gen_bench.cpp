@@ -23,6 +23,9 @@
 
 #include "muddle/create_muddle_fake.hpp"
 
+#include "beacon/events.hpp"
+#include "beacon/event_manager.hpp"
+#include "beacon/beacon_service.hpp"
 #include "beacon/trusted_dealer.hpp"
 #include "beacon/trusted_dealer_beacon_service.hpp"
 
@@ -58,9 +61,10 @@ struct BeaconSelfContained
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = byte_array::ConstByteArray;
   using MessageType    = byte_array::ConstByteArray;
+  using SharedEventManager = std::shared_ptr<fetch::beacon::EventManager>;
 
   ManifestCacheInterfaceDummy       dummy_manifest_cache;
-  BeaconService::SharedEventManager event_manager = fetch::beacon::EventManager::New();
+  SharedEventManager event_manager = fetch::beacon::EventManager::New();
 
   BeaconSelfContained(uint16_t port_number, uint16_t index)
     : muddle_port{port_number}
@@ -68,13 +72,15 @@ struct BeaconSelfContained
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , beacon_service{*muddle.get(), dummy_manifest_cache, muddle_certificate, event_manager}
+    , beacon_setup{*muddle.get(), dummy_manifest_cache, muddle_certificate}
+    , beacon_service{*muddle.get(), muddle_certificate, beacon_setup, event_manager}
   {}
 
   void Start()
   {
     muddle->Start({muddle_port});
-    reactor.Attach(beacon_service.GetWeakRunnables());
+    reactor.Attach(beacon_setup.GetWeakRunnables());
+    reactor.Attach(beacon_service.GetWeakRunnable());
     reactor.Start();
   }
 
@@ -84,11 +90,11 @@ struct BeaconSelfContained
     muddle->Stop();
   }
 
-  void ResetCabinet(BeaconService::CabinetMemberList /*unused*/ const &cabinet,
+  void ResetCabinet(BeaconSetupService::CabinetMemberList /*unused*/ const &cabinet,
                     uint32_t round_start, uint32_t round_end, BlockEntropy const &entropy,
                     DkgOutput const &output)
   {
-    beacon_service.StartNewCabinet(
+    beacon_setup.StartNewCabinet(
         cabinet, static_cast<uint32_t>(cabinet.size() / 2 + 1), round_start, round_end,
         GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)), entropy,
         output);
@@ -111,7 +117,8 @@ struct BeaconSelfContained
   Muddle                     muddle;
   std::mutex                 mutex;
   bool                       muddle_is_fake{true};
-  TrustedDealerBeaconService beacon_service;
+  TrustedDealerSetupService beacon_setup;
+  BeaconService              beacon_service;
 };
 
 void EntropyGen(benchmark::State &state)
@@ -124,7 +131,7 @@ void EntropyGen(benchmark::State &state)
   uint32_t entropy_rounds = 10;
 
   std::vector<std::unique_ptr<BeaconSelfContained>> nodes;
-  BeaconService::CabinetMemberList                  cabinet;
+  BeaconSetupService::CabinetMemberList                  cabinet;
   auto nodes_in_test = static_cast<uint64_t>(state.range(0));
   auto nodes_online  = static_cast<uint64_t>(state.range(1));
 
