@@ -105,7 +105,7 @@ ArrayType OneHot(ArrayType const &indices, typename ArrayType::SizeType depth, S
   }
   else
   {
-    ret_shape.insert(ret_shape.begin() + axis, depth);
+    ret_shape.insert(ret_shape.begin() + static_cast<PtrDiffType>(axis), depth);
   }
 
   ArrayType ret(ret_shape);
