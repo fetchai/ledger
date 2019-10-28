@@ -213,12 +213,7 @@ private:
 
   void BroadcastComplaints() override
   {
-    std::set<MuddleAddress> complaints_local =
-        beacon_->manager.ComputeComplaints(coefficients_received_);
-    for (auto const &cab : complaints_local)
-    {
-      complaints_manager_.AddComplaintAgainst(cab);
-    }
+    std::set<MuddleAddress> complaints_local = ComputeComplaints();
     if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
     {
       complaints_local.insert("Unknown sender");

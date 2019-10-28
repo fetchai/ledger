@@ -905,32 +905,7 @@ void BeaconSetupService::BroadcastShares()
  */
 void BeaconSetupService::BroadcastComplaints()
 {
-  std::set<MuddleAddress> complaints_local;
-
-  // Add nodes who did not send both coefficients and shares to complaints
-  for (auto const &member : valid_dkg_members_)
-  {
-    if (member == identity_.identifier())
-    {
-      continue;
-    }
-    if (coefficients_received_.find(member) == coefficients_received_.end() ||
-        shares_received_.find(member) == shares_received_.end())
-    {
-      complaints_local.insert(member);
-    }
-  }
-
-  // Add nodes whos coefficients and shares failed verification to complaints
-  auto verification_fail = beacon_->manager.ComputeComplaints(
-      coefficients_received_ & shares_received_ & valid_dkg_members_);
-  complaints_local.insert(verification_fail.begin(), verification_fail.end());
-
-  for (auto const &cab : complaints_local)
-  {
-    complaints_manager_.AddComplaintAgainst(cab);
-  }
-
+  std::set<MuddleAddress> complaints_local = ComputeComplaints();
   FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                   " broadcasts complaints size ", complaints_local.size());
   SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
@@ -1298,6 +1273,42 @@ void BeaconSetupService::OnNotarisationKey(NotarisationKeyMessage const &key_msg
       valid_dkg_members_.insert(from);
     }
   }
+}
+
+/**
+ * Computes the set of nodes who did not send both shares and coefficients, or sent
+ * values failing verification
+ *
+ * @return Set of muddle address of nodes which misbehaved
+ */
+std::set<BeaconSetupService::MuddleAddress> BeaconSetupService::ComputeComplaints()
+{
+  std::set<MuddleAddress> complaints_local;
+
+  // Add nodes who did not send both coefficients and shares to complaints
+  for (auto const &member : valid_dkg_members_)
+  {
+    if (member == identity_.identifier())
+    {
+      continue;
+    }
+    if (coefficients_received_.find(member) == coefficients_received_.end() ||
+        shares_received_.find(member) == shares_received_.end())
+    {
+      complaints_local.insert(member);
+    }
+  }
+
+  // Add nodes whos coefficients and shares failed verification to complaints
+  auto verification_fail = beacon_->manager.ComputeComplaints(
+      coefficients_received_ & shares_received_ & valid_dkg_members_);
+  complaints_local.insert(verification_fail.begin(), verification_fail.end());
+
+  for (auto const &cab : complaints_local)
+  {
+    complaints_manager_.AddComplaintAgainst(cab);
+  }
+  return complaints_local;
 }
 
 /**

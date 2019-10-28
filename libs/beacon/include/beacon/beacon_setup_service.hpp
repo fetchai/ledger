@@ -192,6 +192,11 @@ protected:
   virtual void BroadcastReconstructionShares();
   /// @}
 
+  /// @name Helper function
+  /// @{
+  std::set<MuddleAddress> ComputeComplaints();
+  /// @}
+
   // Telemetry
   telemetry::GaugePtr<uint64_t> beacon_dkg_state_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_connections_gauge_;
