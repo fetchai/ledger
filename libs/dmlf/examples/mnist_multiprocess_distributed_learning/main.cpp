@@ -19,7 +19,7 @@
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
 #include "dmlf/distributed_learning/utilities/distributed_learning_utilities.hpp"
 #include "dmlf/distributed_learning/utilities/mnist_client_utilities.hpp"
-#include "dmlf/networkers/local_learner_networker.hpp"
+#include "dmlf/networkers/muddle_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
@@ -47,13 +47,15 @@ using SizeType         = fetch::math::SizeType;
 
 int main(int ac, char **av)
 {
-  // This example will create multiple local distributed clients with simple classification neural
+  // This example will create muddle networking distributed client with simple classification neural
   // net and learns how to predict hand written digits from MNIST dataset
 
   if (ac < 3)
   {
     std::cout << "Usage : " << av[0]
-              << " PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte" << std::endl;
+              << " PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte "
+                 "networker_config instance_number"
+              << std::endl;
     return 1;
   }
 
@@ -66,11 +68,11 @@ int main(int ac, char **av)
   // Command line parameters
   std::string images_filename = av[1];
   std::string labels_filename = av[2];
+  std::string config          = std::string(av[3]);
+  int         instance_number = std::atoi(av[4]);
 
   // Distributed learning parameters:
-  SizeType number_of_clients  = 10;
   SizeType number_of_rounds   = 10;
-  bool     synchronise        = false;
   client_params.max_updates   = 100;  // Round ends after this number of batches
   SizeType number_of_peers    = 3;
   client_params.batch_size    = 32;
@@ -85,38 +87,20 @@ int main(int ac, char **av)
   // Create console mutex
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
-  // Create networkers
-  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
-  for (SizeType i(0); i < number_of_clients; ++i)
-  {
-    networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-    networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
-  }
+  // Create learning client
+  auto client = fetch::dmlf::distributed_learning::utilities::MakeMNISTClient<TensorType>(
+      std::to_string(instance_number), client_params, images_filename, labels_filename,
+      test_set_ratio, console_mutex_ptr);
 
-  // Add peers to networkers and initialise shuffle algorithm
-  for (SizeType i(0); i < number_of_clients; ++i)
-  {
-    networkers[i]->AddPeers(networkers);
-    networkers[i]->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
-        networkers[i]->GetPeerCount(), number_of_peers));
-  }
+  // Create networker and assign shuffle algorithm
+  auto networker = std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(config, instance_number);
+  networker->Initialize<fetch::dmlf::Update<TensorType>>();
 
-  // Create training clients
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
-  for (SizeType i{0}; i < number_of_clients; ++i)
-  {
-    // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = fetch::dmlf::distributed_learning::utilities::MakeMNISTClient<TensorType>(
-        std::to_string(i), client_params, images_filename, labels_filename, test_set_ratio,
-        console_mutex_ptr);
-  }
+  networker->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
+      networker->GetPeerCount(), number_of_peers));
 
-  // Give each client pointer to its networker
-  for (SizeType i{0}; i < number_of_clients; ++i)
-  {
-    // Give each client pointer to its networker
-    clients[i]->SetNetworker(networkers[i]);
-  }
+  // Give client pointer to its networker
+  client->SetNetworker(networker);
 
   /**
    * Main loop
@@ -126,24 +110,8 @@ int main(int ac, char **av)
   {
     // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
-    std::list<std::thread> threads;
-    for (auto &c : clients)
-    {
-      threads.emplace_back([&c] { c->Run(); });
-    }
 
-    // Wait for everyone to finish
-    for (auto &t : threads)
-    {
-      t.join();
-    }
-
-    // Synchronize weights by giving all clients average of all client's weights
-    if (synchronise)
-    {
-      std::cout << std::endl << "Synchronising weights" << std::endl;
-      fetch::dmlf::distributed_learning::utilities::SynchroniseWeights<TensorType>(clients);
-    }
+    client->Run();
   }
 
   return 0;

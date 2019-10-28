@@ -199,11 +199,9 @@ struct Executable
     return index;
   }
 
-  uint16_t AddType(TypeInfo type_info)
+  void AddTypeInfo(TypeInfo type_info)
   {
-    auto const index = static_cast<uint16_t>(types.size());
     types.push_back(std::move(type_info));
-    return index;
   }
 
   Function const *FindFunction(std::string const &fn_name) const
