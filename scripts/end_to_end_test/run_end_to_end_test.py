@@ -20,11 +20,14 @@ import sys
 import threading
 import time
 import traceback
+import json
+import yaml
+from threading import Event
 from pathlib import Path
 from threading import Event
 
-import yaml
-from fetch.cluster.instance import ConstellationInstance
+from fetch.cluster.instance import ConstellationInstance, DmlfEtchInstance
+
 from fetchai.ledger.api import LedgerApi
 from fetchai.ledger.crypto import Entity
 
@@ -103,10 +106,12 @@ class TestInstance():
         self._watchdog = None
         self._creation_time = time.perf_counter()
         self._block_interval = 1000
+        self._instance_type = "ConstellationInstance"
 
         # Variables related to temporary pos mode
         self._pos_mode = False
         self._nodes_pubkeys = []
+        self._nodes_keys = []
 
         # Default to removing old tests
         for f in glob.glob(build_directory + "/end_to_end_test_*"):
@@ -131,8 +136,17 @@ class TestInstance():
 
         # Ensure that build/end_to_end_output_XXX/ exists for the test output
         os.makedirs(self._workspace, exist_ok=True)
-
+    
     def append_node(self, index, load_directory=None):
+        if self._instance_type == "ConstellationInstance":
+           self.append_node_constellation(index, load_directory)
+        if self._instance_type == "DmlfEtchInstance":
+           self.append_node_dmlf_etch(index, load_directory)
+        else:
+          raise ValueError("Unkown instance type '{}'".format(self._instance_type))
+          
+
+    def append_node_constellation(self, index, load_directory=None):
         # Create a folder for the node to write logs to etc.
         root = os.path.abspath(os.path.join(
             self._workspace, 'node{}'.format(index)))
@@ -172,6 +186,91 @@ class TestInstance():
             len(self._nodes), index)
 
         self._nodes.append(instance)
+    
+    def append_node_dmlf_etch(self, index, load_directory=None):
+        # Create a folder for the node to write logs to etc.
+        root = os.path.abspath(os.path.join(
+            self._workspace, 'node{}'.format(index)))
+
+        # ensure the workspace folder exits
+        os.makedirs(root, exist_ok=True)
+
+        if load_directory and index in load_directory:
+            load_from = self._test_files_dir + \
+                "/nodes_saved/" + load_directory[index]
+            files = os.listdir(load_from)
+
+            for f in files:
+                shutil.copy(load_from + f, root)
+
+        port = self._port_start_range + (self._port_range * index)
+        key  = self._nodes_keys[index] 
+        pub  = self._nodes_pubkeys[index]
+
+        # Create an instance of the constellation - note we don't clear path since
+        # it should be clear unless load_directory is used
+        instance = DmlfEtchInstance(
+            self._constellation_exe,
+            port,
+            key,
+            pub,
+            root,
+            clear_path=False
+        )
+
+        # Possibly soon to be deprecated functionality - set the block interval
+        instance.block_interval = self._block_interval
+        instance.feature_flags = ['synergetic']
+
+        # configure the lanes and slices
+        instance.lanes = self._lanes
+        instance.slices = self._slices
+
+        assert len(self._nodes) == index, "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(
+            len(self._nodes), index)
+
+        self._nodes.append(instance)
+
+    def setup_nodes_keys(self):
+
+        # Path to config files
+        expected_ouptut_dir = os.path.abspath(
+            os.path.dirname(self._yaml_file)+"/input_files")
+
+        # Create required files for this test
+        file_gen = os.path.abspath(
+            "./scripts/end_to_end_test/input_files/create-input-files.py")
+        verify_file(file_gen)
+        exit_code = subprocess.call([file_gen, str(self._number_of_nodes)])
+
+        infofile = expected_ouptut_dir+"/info.txt"
+
+        # Required files for this operation
+        verify_file(infofile)
+
+        # infofile specifies the address of each numbered key
+        all_lines_in_file = open(infofile, "r").readlines()
+
+        # Give each node a unique identity
+        for index in range(self._number_of_nodes):
+
+            node_key = all_lines_in_file[index].strip().split()[-1]
+
+            print('Setting up key for node {}...'.format(index))
+            print('Giving node the identity: {}'.format(node_key))
+
+            self._nodes_pubkeys.append(node_key)
+
+            key_path = expected_ouptut_dir+"/{}.key".format(index)
+            verify_file(key_path)
+            
+            with open(key_path, 'rb') as f:
+                key_b64 = Entity(f.read()).private_key
+                print('Giving node key: {}'.format(key_b64))
+                self._nodes_keys.append(key_b64)
+
+            # Copy the keyfile from its location to the node's cwd
+            #shutil.copy(key_path, node.root+"/p2p.key")
 
     def connect_nodes(self, node_connections):
         for connect_from, connect_to in node_connections:
@@ -268,6 +367,14 @@ class TestInstance():
             time.perf_counter() - self._creation_time))
 
     def run(self):
+        if self._instance_type == "ConstellationInstance":
+           self.run_constellation()
+        if self._instance_type == "DmlfEtchInstance":
+           self.run_dmlf_etch()
+        else:
+          raise ValueError("Unkown instance type '{}'".format(self._instance_type))
+
+    def run_constellation(self):
 
         # build up all the node instances
         for index in range(self._number_of_nodes):
@@ -303,6 +410,25 @@ class TestInstance():
         if self._pos_mode:
             output("POS mode. sleep extra time.")
             time.sleep(5)
+
+    def run_dmlf_etch(self):
+
+        # setup node keys
+        self.setup_nodes_keys() 
+
+        # build up all the node instances
+        for index in range(self._number_of_nodes):
+            self.append_node(index, self._node_load_directory)
+
+        # Now connect the nodes as specified
+        if self._node_connections:
+            self.connect_nodes(self._node_connections)
+
+        # start all the nodes
+        for index in range(self._number_of_nodes):
+            self.start_node(index)
+
+        time.sleep(5)  # TODO(HUT): blocking http call to node for ready state
 
     def stop(self):
         if self._nodes:
@@ -373,6 +499,7 @@ def setup_test(test_yaml, test_instance):
     output("Setting up test: {}".format(test_yaml))
 
     test_name = extract(test_yaml, 'test_name', expected=True, expect_type=str)
+    instance_type = extract(test_yaml, 'instance_type', expected=False, expect_type=str)
     number_of_nodes = extract(
         test_yaml, 'number_of_nodes', expected=True, expect_type=int)
     node_load_directory = extract(
@@ -392,6 +519,7 @@ def setup_test(test_yaml, test_instance):
     test_instance._nodes_are_mining = mining_nodes
     test_instance._max_test_time = max_test_time
     test_instance._pos_mode = pos_mode
+    test_instance._instance_type = instance_type
 
     # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
     # necessary to preserve output logs etc.
@@ -475,7 +603,8 @@ def send_txs(parameters, test_instance):
 def run_python_test(parameters, test_instance):
     host = parameters.get('host', 'localhost')
     port = parameters.get('port', test_instance._nodes[0]._port_start)
-
+    
+    sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), "../"))
     test_script = importlib.import_module(
         parameters['script'], 'end_to_end_test')
     test_script.run({
@@ -483,6 +612,52 @@ def run_python_test(parameters, test_instance):
         'port': port
     })
 
+def run_dmlf_etch_client(parameters, test_instance):
+    indexes = parameters["nodes"]
+    dmlf_etch_nodes = []
+    for index in indexes:
+      dmlf_etch_nodes.append(test_instance._nodes[index])
+    
+    input_files_client = os.path.dirname(test_instance._constellation_exe)
+
+    # get dmlf etch client executable
+    expected_client_dir = input_files_client
+    client_exe = expected_client_dir+"/example-dmlf-etch-client"
+    verify_file(client_exe)
+    
+    # get etch file
+    expected_etch_dir = input_files_client
+    etch_file = expected_etch_dir+"/main.etch"
+    #verify_file(etch_file)
+
+    # generate config file
+    config_path = input_files_client+"/e2e_config_client.json"
+    nodes = [
+      {
+        "uri" : node.uri,
+        "pub" : node.public_key
+      }
+      for node in dmlf_etch_nodes
+    ]
+
+    key = Entity()
+    config = {
+      "client" : { 
+        "key" : key.private_key
+      },
+      "nodes" : nodes
+    }
+    
+    with open(config_path, 'w') as f:
+        json.dump(config, f)
+   
+    # generate client command
+    cmd = [client_exe, config_path, etch_file]
+    
+    # run client
+    logfile_path = test_instance._build_directory+"/dmlf_etch_client.log"
+    logfile = open(logfile_path, 'w')
+    subprocess.check_call(cmd, cwd=test_instance._build_directory, stdout=logfile, stderr=subprocess.STDOUT)
 
 def verify_txs(parameters, test_instance):
     name = parameters["name"]
@@ -666,6 +841,8 @@ def run_steps(test_yaml, test_instance):
             restart_nodes(parameters, test_instance)
         elif command == 'destake':
             destake(parameters, test_instance)
+        elif command == 'run_dmlf_etch_client':
+            run_dmlf_etch_client(parameters, test_instance)
         else:
             output(
                 "Found unknown command when running steps: '{}'".format(
