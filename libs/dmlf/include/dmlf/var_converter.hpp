@@ -22,9 +22,8 @@
 
 namespace fetch {
 
-namespace serializers
-{
-  class MsgPackSerializer;
+namespace serializers {
+class MsgPackSerializer;
 }
 
 namespace dmlf {
@@ -32,21 +31,24 @@ namespace dmlf {
 class VarConverter
 {
 public:
-  VarConverter() = default;
+  VarConverter()          = default;
   virtual ~VarConverter() = default;
 
-  bool Convert(byte_array::ByteArray &target, const variant::Variant &source, const std::string &format);
+  bool Convert(byte_array::ByteArray &target, const variant::Variant &source,
+               const std::string &format);
 
   VarConverter(VarConverter const &other) = delete;
-  VarConverter &operator=(VarConverter const &other) = delete;
-  bool operator==(VarConverter const &other) = delete;
-  bool operator<(VarConverter const &other) = delete;
+  VarConverter &operator=(VarConverter const &other)  = delete;
+  bool          operator==(VarConverter const &other) = delete;
+  bool          operator<(VarConverter const &other)  = delete;
 
   void Dump(byte_array::ByteArray &ba);
+
 protected:
 private:
-  bool Convert(fetch::serializers::MsgPackSerializer &os, const variant::Variant &source, const std::string &format);
+  bool Convert(fetch::serializers::MsgPackSerializer &os, const variant::Variant &source,
+               const std::string &format);
 };
 
-}
-}
+}  // namespace dmlf
+}  // namespace fetch

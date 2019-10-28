@@ -1,55 +1,74 @@
-#include "dmlf/var_converter.hpp"
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/container_constructor_interface.hpp"
 #include "core/serializers/array_interface.hpp"
+#include "core/serializers/container_constructor_interface.hpp"
+#include "dmlf/var_converter.hpp"
 
 namespace fetch {
 namespace dmlf {
 
-  std::string describe(const variant::Variant &x)
-  {
-    if (x.IsUndefined())
-    {
-      return "undef";
-    }
-    if (x.IsInteger())
-    {
-      return "integer";
-    }
-    if (x.IsFloatingPoint())
-    {
-      return "float(" + std::to_string(x.As<double>()) + ")";
-    }
-    if (x.IsFixedPoint())
-    {
-      return "fp";
-    }
-    if (x.IsBoolean())
-    {
-      return "bool(" + std::to_string(x.As<bool>()) + ")";
-    }
-    if (x.IsString())
-    {
-      return "string(" + x.As<std::string>() + ")";
-    }
-    if (x.IsNull())
-    {
-      return "null";
-    }
-    if (x.IsArray())
-    {
-      return "array[" + std::to_string(x.size()) + "]";
-    }
-    if (x.IsObject())
-    {
-      return "object{" + std::to_string(x.size()) + "}";
-    }
-    return "unknown";
-  }
-
-bool VarConverter::Convert(byte_array::ByteArray &target, const variant::Variant &source, const std::string &format)
+std::string describe(const variant::Variant &x)
 {
-  //std::cout << "START VarConverter::Convert(" << format << ")" << std::endl;
+  if (x.IsUndefined())
+  {
+    return "undef";
+  }
+  if (x.IsInteger())
+  {
+    return "integer";
+  }
+  if (x.IsFloatingPoint())
+  {
+    return "float(" + std::to_string(x.As<double>()) + ")";
+  }
+  if (x.IsFixedPoint())
+  {
+    return "fp";
+  }
+  if (x.IsBoolean())
+  {
+    return "bool(" + std::to_string(x.As<bool>()) + ")";
+  }
+  if (x.IsString())
+  {
+    return "string(" + x.As<std::string>() + ")";
+  }
+  if (x.IsNull())
+  {
+    return "null";
+  }
+  if (x.IsArray())
+  {
+    return "array[" + std::to_string(x.size()) + "]";
+  }
+  if (x.IsObject())
+  {
+    return "object{" + std::to_string(x.size()) + "}";
+  }
+  return "unknown";
+}
+
+bool VarConverter::Convert(byte_array::ByteArray &target, const variant::Variant &source,
+                           const std::string &format)
+{
+  // std::cout << "START VarConverter::Convert(" << format << ")" << std::endl;
   fetch::serializers::MsgPackSerializer ss;
 
   if (Convert(ss, source, format))
@@ -59,17 +78,19 @@ bool VarConverter::Convert(byte_array::ByteArray &target, const variant::Variant
     target.Reserve(size);
     target.Resize(size);
     target.WriteBytes(data, size);
-    //std::cout << "start VarConverter::Convert() OK!!" << std::endl;
+    // std::cout << "start VarConverter::Convert() OK!!" << std::endl;
     return true;
   }
 
-  //std::cout << "start VarConverter::Convert() **FAIL**" << std::endl;
+  // std::cout << "start VarConverter::Convert() **FAIL**" << std::endl;
   return false;
 }
 
-bool VarConverter::Convert(fetch::serializers::MsgPackSerializer &os, const variant::Variant &source, const std::string &format)
+bool VarConverter::Convert(fetch::serializers::MsgPackSerializer &os,
+                           const variant::Variant &source, const std::string &format)
 {
-  //std::cout << "VarConverter::Convert(" << describe(source) << " => " << format << ")" << std::endl;
+  // std::cout << "VarConverter::Convert(" << describe(source) << " => " << format << ")" <<
+  // std::endl;
   if (format == "Int64")
   {
     if (!source.IsInteger())
@@ -92,7 +113,7 @@ bool VarConverter::Convert(fetch::serializers::MsgPackSerializer &os, const vari
     return true;
   }
 
-  if (format.substr(0,6) == "Array<")
+  if (format.substr(0, 6) == "Array<")
   {
     if (!source.IsArray())
     {
@@ -103,8 +124,8 @@ bool VarConverter::Convert(fetch::serializers::MsgPackSerializer &os, const vari
     os << format;
     os << uint32_t(source.size());
 
-    auto subformat=format.substr(6, format.size() - 7);
-    //std::cout << "array of.... " << subformat << std::endl;
+    auto subformat = format.substr(6, format.size() - 7);
+    // std::cout << "array of.... " << subformat << std::endl;
     bool r = true;
     for (std::size_t i = 0; i < source.size(); i++)
     {
@@ -155,36 +176,34 @@ void VarConverter::Dump(byte_array::ByteArray &ba)
 {
   std::size_t width = 40;
 
-    for(std::size_t orig = 0; orig<ba.size(); orig+=width)
+  for (std::size_t orig = 0; orig < ba.size(); orig += width)
+  {
+    for (std::size_t offs = 0; offs < width && orig + offs < ba.size(); offs++)
     {
-      for(std::size_t offs = 0; offs < width && orig+offs < ba.size(); offs++)
-      {
-        auto byte = ba[orig+offs];
-        std::cout << "  " << std::hex << std::setw(2) << int(byte);
-      }
-      std::cout << std::endl;
-      for(std::size_t offs = 0; offs < width && orig+offs < ba.size(); offs++)
-      {
-        auto byte = ba[orig+offs];
-        std::cout << " " << std::dec << std::setw(3) << int(byte);
-      }
-      std::cout << std::endl;
-      for(std::size_t offs = 0; offs < width && orig+offs < ba.size(); offs++)
-      {
-        auto byte = ba[orig+offs];
-        auto c = static_cast<char>(byte);
-        if (byte < 32 || byte>=127)
-        {
-          c = '.';
-        }
-        std::cout << "   " << std::dec << c;
-      }
-      std::cout << std::endl;
-      std::cout << std::endl;
+      auto byte = ba[orig + offs];
+      std::cout << "  " << std::hex << std::setw(2) << int(byte);
     }
+    std::cout << std::endl;
+    for (std::size_t offs = 0; offs < width && orig + offs < ba.size(); offs++)
+    {
+      auto byte = ba[orig + offs];
+      std::cout << " " << std::dec << std::setw(3) << int(byte);
+    }
+    std::cout << std::endl;
+    for (std::size_t offs = 0; offs < width && orig + offs < ba.size(); offs++)
+    {
+      auto byte = ba[orig + offs];
+      auto c    = static_cast<char>(byte);
+      if (byte < 32 || byte >= 127)
+      {
+        c = '.';
+      }
+      std::cout << "   " << std::dec << c;
+    }
+    std::cout << std::endl;
+    std::cout << std::endl;
+  }
 }
 
-
-
-}
-}
+}  // namespace dmlf
+}  // namespace fetch

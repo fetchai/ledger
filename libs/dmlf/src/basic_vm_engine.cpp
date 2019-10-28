@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
 #include "dmlf/execution/basic_vm_engine.hpp"
 #include "dmlf/var_converter.hpp"
-#include "core/byte_array/byte_array.hpp"
 
-#include "vm/common.hpp"
-#include "vm/vm.hpp"
-#include "vm/module.hpp"
-#include "vm_modules/vm_factory.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "vm/common.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
+#include "vm_modules/vm_factory.hpp"
 
 #include <memory>
 #include <sstream>
@@ -188,8 +188,10 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
                          console.str()};
 }
 
-ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &execName, Name const &stateName,
-                                   std::string const &entrypoint, Params params)
+ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &       execName,
+                                                             Name const &       stateName,
+                                                             std::string const &entrypoint,
+                                                             Params             params)
 {
   if (!HasExecutable(execName))
   {
@@ -226,8 +228,8 @@ ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &execNam
     try
     {
       auto type_id = func->variables[parameter_number].type_id;
-      //std::size_t const x_local_type_count = exec->types.size();
-      std::size_t const m_local_type_count = module_ -> GetTypeInfoArray().size();
+      // std::size_t const x_local_type_count = exec->types.size();
+      std::size_t const m_local_type_count = module_->GetTypeInfoArray().size();
       /*
         This is some code for displaying the state of things.
 
@@ -237,13 +239,15 @@ ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &execNam
       for (std::size_t i = 0; i < x_local_type_count; ++i)
       {
         auto const &type_info = exec->types[i];
-        std::cout << "X TYPE:" << i << ":" << type_info.name << "(templ=" << type_info.template_type_id << ")" << std::endl;
+        std::cout << "X TYPE:" << i << ":" << type_info.name << "(templ=" <<
+      type_info.template_type_id << ")" << std::endl;
       }
 
       for (std::size_t i = 0; i < m_local_type_count; ++i)
       {
         auto const &type_info = module_ -> type_info_array_[i];
-        std::cout << "M TYPE:" << i << ":" << type_info.name << "(templ=" << type_info.template_type_id << ")" << std::endl;
+        std::cout << "M TYPE:" << i << ":" << type_info.name << "(templ=" <<
+      type_info.template_type_id << ")" << std::endl;
       }
 
       for (const auto &foo : module_ -> type_info_map_)
@@ -258,21 +262,21 @@ ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &execNam
 
       */
 
-      std::string working_type_name = "";
+      std::string           working_type_name = "";
       byte_array::ByteArray ba;
-      VarConverter vc;
+      VarConverter          vc;
 
       const vm::TypeInfo *working_type_info = 0;
 
       if (type_id < m_local_type_count)
       {
-        working_type_info = &(module_ -> GetTypeInfoArray()[type_id]);
-        working_type_name = working_type_info -> name;
+        working_type_info = &(module_->GetTypeInfoArray()[type_id]);
+        working_type_name = working_type_info->name;
       }
       else
       {
         working_type_info = &(exec->types[type_id - m_local_type_count]);
-        working_type_name = working_type_info -> name;
+        working_type_name = working_type_info->name;
       }
 
       auto r = vc.Convert(ba, params[parameter_number], working_type_name);
@@ -281,12 +285,14 @@ ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &execNam
 
       if (!r)
       {
-        return EngineError(Error::Code::RUNTIME_ERROR, "no serialisation for parameter " + std::to_string(parameter_number));
+        return EngineError(Error::Code::RUNTIME_ERROR,
+                           "no serialisation for parameter " + std::to_string(parameter_number));
       }
 
       if (!ba.size())
       {
-        return EngineError(Error::Code::RUNTIME_ERROR, "no serialised data for parameter " + std::to_string(parameter_number));
+        return EngineError(Error::Code::RUNTIME_ERROR,
+                           "no serialised data for parameter " + std::to_string(parameter_number));
       }
 
       if (type_id <= vm::TypeIds::PrimitiveMaxId)
@@ -302,7 +308,9 @@ ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &execNam
         if (!vm.IsDefaultSerializeConstructable(type_id))
         {
           return EngineError(Error::Code::RUNTIME_ERROR,
-                             "expected input type " + working_type_name + " is not DefaultSerializeConstructable param number " + std::to_string(parameter_number));
+                             "expected input type " + working_type_name +
+                                 " is not DefaultSerializeConstructable param number " +
+                                 std::to_string(parameter_number));
         }
 
         // Creating the object
@@ -312,26 +320,25 @@ ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &execNam
         // If deserialization failed we return
         if (!success)
         {
-          return EngineError(Error::Code::RUNTIME_ERROR, "deserialisation failed for parameter " + std::to_string(parameter_number));
+          return EngineError(Error::Code::RUNTIME_ERROR, "deserialisation failed for parameter " +
+                                                             std::to_string(parameter_number));
         }
 
         // Adding the parameter to the parameter pack
         parameterPack.AddSingle(object);
       }
     }
-    catch(std::exception &ex)
+    catch (std::exception &ex)
     {
-      return ExecutionResult{
-        LedgerVariant{},
-        Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, ex.what()},
-          console.str()};
+      return ExecutionResult{LedgerVariant{},
+                             Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, ex.what()},
+                             console.str()};
     }
-    catch(...)
+    catch (...)
     {
-      return ExecutionResult{
-        LedgerVariant{},
-        Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, "no details"},
-          console.str()};
+      return ExecutionResult{LedgerVariant{},
+                             Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, "no details"},
+                             console.str()};
     }
   }
 

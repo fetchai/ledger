@@ -57,8 +57,8 @@ public:
   ExecutionResult CopyState(Name const &srcName, Name const &newName) override;
   ExecutionResult DeleteState(Name const &stateName) override;
 
-ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
-                                   std::string const &entrypoint, Params params);
+  ExecutionResult Run(Name const &execName, Name const &stateName,
+                      std::string const &entrypoint, Params params) override;
 
   // This is a test function for developing non-primitive type passing.
   ExecutionResult RunSerialisedParameterPassing(Name const &execName, Name const &stateName, std::string const &entrypoint,
