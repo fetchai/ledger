@@ -117,7 +117,7 @@ ExecutionResult BasicVmEngine::DeleteState(Name const &stateName)
   return EngineSuccess("Deleted state " + stateName);
 }
 
-ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
+ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &execName, Name const &stateName,
                                    std::string const &entrypoint, Params params)
 {
   if (!HasExecutable(execName))
@@ -230,7 +230,8 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
         // Checking if we can construct the object
         if (!vm.IsDefaultSerializeConstructable(type_id))
         {
-          return EngineError(Error::Code::RUNTIME_ERROR, "expected input type is not DefaultSerializeConstructable param number " + std::to_string(parameter_number));
+          return EngineError(Error::Code::RUNTIME_ERROR,
+                             "expected input type " + working_type_name + " is not DefaultSerializeConstructable param number " + std::to_string(parameter_number));
         }
 
         // Creating the object
