@@ -17,28 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-
-#include <cassert>
-
 namespace fetch {
 namespace math {
 
 /**
- * One hot function
+ * One hot function based on tf.one_hot
  * @tparam ArrayType
- * @param ret
- * @param indices
- * @param depth
- * @param on_value
- * @param off_value
+ * @param ret output tensor
+ * @param indices input tensorSizeType
+ * @param depth number of classes
+ * @param on_value TRUE value
+ * @param off_value FALSE value
  * @param axis
  */
 template <typename ArrayType>
 void OneHot(ArrayType &ret, ArrayType const &indices, typename ArrayType::SizeType depth,
-            typename ArrayType::Type on_value  = typename ArrayType::Type{1.0},
-            typename ArrayType::Type off_value = typename ArrayType::Type{0.0}, SizeType axis = 0)
+            SizeType axis = 0, typename ArrayType::Type on_value = typename ArrayType::Type{1.0},
+            typename ArrayType::Type off_value = typename ArrayType::Type{0.0})
 {
+  using SizeType = typename ArrayType::SizeType;
+
+  assert((indices.shape().size() + 1) == ret.shape().size());
+  assert(axis <= indices.size());
+  assert(depth == ret.shape().at(axis));
+
   auto ind_it = indices.begin();
   auto ret_it = ret.Slice().begin();
 
@@ -51,15 +53,21 @@ void OneHot(ArrayType &ret, ArrayType const &indices, typename ArrayType::SizeTy
 
   while (ind_it.is_valid())
   {
+    // Check if class is no out of range
+    assert(static_cast<SizeType>(*ind_it) < depth);
+
+    // Iterate over FALSE values before one TRUE value
     for (SizeType i{0}; i < (static_cast<SizeType>(*ind_it)); i++)
     {
       *ret_it = off_value;
       ++ret_it;
     }
 
+    // Set one TRUE value
     *ret_it = on_value;
     ++ret_it;
 
+    // Iterate over rest of FALSE values after one TRUE value
     for (SizeType i{1}; i < depth - (static_cast<SizeType>(*ind_it)); i++)
     {
       *ret_it = off_value;
@@ -71,22 +79,23 @@ void OneHot(ArrayType &ret, ArrayType const &indices, typename ArrayType::SizeTy
 }
 
 /**
- * One hot function
+ * One hot function based on tf.one_hot
  * @tparam ArrayType
- * @param indices
- * @param depth
- * @param on_value
- * @param off_value
+ * @param indices input tensor
+ * @param depth number of classes
+ * @param on_value TRUE value
+ * @param off_value FALSE value
  * @param axis
  * @return
  */
 template <typename ArrayType>
-ArrayType OneHot(ArrayType const &indices, typename ArrayType::SizeType depth,
+ArrayType OneHot(ArrayType const &indices, typename ArrayType::SizeType depth, SizeType axis = 0,
                  typename ArrayType::Type on_value  = typename ArrayType::Type{1.0},
-                 typename ArrayType::Type off_value = typename ArrayType::Type{0.0},
-                 SizeType                 axis      = 0)
+                 typename ArrayType::Type off_value = typename ArrayType::Type{0.0})
 {
   using SizeType = typename ArrayType::SizeType;
+
+  assert(axis <= indices.size());
 
   std::vector<SizeType> ret_shape = indices.shape();
 
@@ -101,7 +110,7 @@ ArrayType OneHot(ArrayType const &indices, typename ArrayType::SizeType depth,
 
   ArrayType ret(ret_shape);
 
-  OneHot(ret, indices, depth, on_value, off_value, axis);
+  OneHot(ret, indices, depth, axis, on_value, off_value);
   return ret;
 }
 

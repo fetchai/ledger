@@ -49,7 +49,7 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_0)
   DataType on_value  = DataType{5.0f};
   DataType off_value = DataType{-1.0f};
 
-  ArrayType ret = OneHot(data, depth, on_value, off_value, 0);
+  ArrayType ret = OneHot(data, depth, 0, on_value, off_value);
 
   ASSERT_TRUE(ret.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                            fetch::math::function_tolerance<DataType>()));
@@ -70,7 +70,7 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_1)
   DataType on_value  = DataType{5.0f};
   DataType off_value = DataType{-1.0f};
 
-  ArrayType ret = OneHot(data, depth, on_value, off_value, 1);
+  ArrayType ret = OneHot(data, depth, 1, on_value, off_value);
 
   ASSERT_TRUE(ret.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                            fetch::math::function_tolerance<DataType>()));
@@ -91,7 +91,7 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_3)
   DataType on_value  = DataType{5.0f};
   DataType off_value = DataType{-1.0f};
 
-  ArrayType ret = OneHot(data, depth, on_value, off_value, 3);
+  ArrayType ret = OneHot(data, depth, 3, on_value, off_value);
 
   ASSERT_TRUE(ret.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                            fetch::math::function_tolerance<DataType>()));
