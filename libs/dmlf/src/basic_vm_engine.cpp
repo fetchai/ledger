@@ -266,7 +266,7 @@ ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &       
       byte_array::ByteArray ba;
       VarConverter          vc;
 
-      const vm::TypeInfo *working_type_info = 0;
+      const vm::TypeInfo *working_type_info = nullptr;
 
       if (type_id < m_local_type_count)
       {
