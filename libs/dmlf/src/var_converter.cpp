@@ -44,7 +44,7 @@ std::string describe(const variant::Variant &x)
   }
   if (x.IsBoolean())
   {
-    return "bool(" + std::to_string(x.As<bool>()) + ")";
+    return "bool(" + ( std::to_string(x.As<bool>()) ? "true" : "false" ) + ")";
   }
   if (x.IsString())
   {

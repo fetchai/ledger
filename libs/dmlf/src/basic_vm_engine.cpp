@@ -262,7 +262,7 @@ ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &       
 
       */
 
-      std::string           working_type_name = "";
+      std::string           working_type_name;
       byte_array::ByteArray ba;
       VarConverter          vc;
 
@@ -289,7 +289,7 @@ ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &       
                            "no serialisation for parameter " + std::to_string(parameter_number));
       }
 
-      if (!ba.size())
+      if (ba.empty())
       {
         return EngineError(Error::Code::RUNTIME_ERROR,
                            "no serialised data for parameter " + std::to_string(parameter_number));
