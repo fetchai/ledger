@@ -116,6 +116,7 @@ BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, Bloc
         oss << ',';
       }
       oss << element.first;
+      initial_loop = false;
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Have entropy for: ", oss.str());
