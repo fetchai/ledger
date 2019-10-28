@@ -525,7 +525,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   }
 
   // delay the invocation of this state machine
-  state_machine_->Delay(std::chrono::milliseconds{100});
+  state_machine_->Delay(std::chrono::milliseconds{2000});
 
   return State::SYNCHRONISED;
 }

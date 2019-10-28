@@ -226,7 +226,7 @@ Consensus::WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabin
  */
 bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) const
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
+  FETCH_LOG_INFO(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
   Identity const &identity = proposed.body.miner_id;
 
@@ -281,13 +281,24 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   assert(!qualified_cabinet_weighted.empty());
 
   // Until the time slot has elapsed, others can not produce
-  if ((last_block_timestamp_ms + block_interval_ms_) > time_now_ms)
+  uint64_t const target_block_time_ms = (last_block_timestamp_ms + block_interval_ms_);
+  if (target_block_time_ms > time_now_ms)
   {
+    auto const delta_ms = target_block_time_ms - time_now_ms;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Not ready to start next block. Delta: ", delta_ms, " now: ", time_now_ms, " target: ", target_block_time_ms);
     return false;
   }
 
   // First qual member can always produce
-  return (*qualified_cabinet_weighted.begin() == identity);
+  bool const is_first = (*qualified_cabinet_weighted.begin() == identity);
+
+  if (!is_first)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Not first cabinet member");
+  }
+
+  return is_first;
 }
 
 /**
@@ -407,19 +418,36 @@ NextBlockPtr Consensus::GenerateNextBlock()
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
   ret->weight = GetBlockGenerationWeight(current_block_, mining_address_);
 
+#if 1
+  static uint64_t counter = 0;
+  bool const should_debug = (counter & 0x1f) == 0;
+#endif
+
   // Try to get entropy for the block we are generating - is allowed to fail if we request too
   // early
   if (EntropyGeneratorInterface::Status::OK !=
       beacon_->GenerateEntropy(block_number, ret->body.block_entropy))
   {
+    if (should_debug)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Entropy generator not ready");
+    }
     return {};
   }
 
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
   {
+    if (should_debug)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Not ready for next block");
+    }
     return {};
   }
+
+#if 1
+  counter = 0;
+#endif
 
   return ret;
 }
