@@ -18,7 +18,6 @@
 
 #include "core/service_ids.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/consensus/consensus.hpp"
 #include "ledger/protocols/notarisation_service.hpp"
 
 #include <memory>
@@ -293,24 +292,6 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
     return;
   }
 
-  // Determine rank of miner in qual
-  auto entropy_ranked_cabinet = Consensus::QualWeightedByEntropy(
-      notarisation_unit->notarisation_members(), block.block_entropy.EntropyAsU64());
-  auto miner_position =
-      std::find(entropy_ranked_cabinet.begin(), entropy_ranked_cabinet.end(), block.miner_id);
-  assert(miner_position != entropy_ranked_cabinet.end());
-  auto miner_rank =
-      static_cast<uint32_t>(std::distance(entropy_ranked_cabinet.begin(), miner_position));
-
-  // Check if we have previously signed a higher ranked block at the same block number
-  if (previous_notarisation_rank_.find(block.block_number) != previous_notarisation_rank_.end())
-  {
-    if (previous_notarisation_rank_.at(block.block_number) > miner_rank)
-    {
-      return;
-    }
-  }
-
   // Sign and verify own notarisation and then save for peers to query
   auto notarisation = notarisation_unit->Sign(block.hash);
   assert(notarisation_unit->Verify(block.hash, notarisation, endpoint_.GetAddress()));
@@ -320,9 +301,6 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
       certificate_->Sign((serializers::MsgPackSerializer() << block.hash << notarisation).data());
   notarisations_being_built_[block.block_number][block.hash].insert(
       {endpoint_.GetAddress(), SignedNotarisation(ecdsa_sig, notarisation)});
-
-  // Set heaviest notarised block rank for this block number
-  previous_notarisation_rank_[block.block_number] = miner_rank;
 
   // If block number of previous block is greater than the heaviets notarised block observed so far
   // then reset to the block number of previous block

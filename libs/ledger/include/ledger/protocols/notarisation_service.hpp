@@ -168,10 +168,8 @@ private:
   BlockHeightNotarisationShares
       notarisations_being_built_;  ///< Signature shares for blocks at a particular block number
   BlockHeightGroupNotarisations
-      notarisations_built_;  ///< Group signatures for blocks at a particular block number
-  std::unordered_map<BlockNumber, uint32_t>
-           previous_notarisation_rank_;  ///< Highest rank notarised at a particular block number
-  uint64_t notarised_chain_height_{0};   ///< Current highest notarised block number in chain
+           notarisations_built_;  ///< Group signatures for blocks at a particular block number
+  uint64_t notarised_chain_height_{0};          ///< Current highest notarised block number in chain
   uint64_t notarisation_collection_height_{0};  // Block number current collecting signatures for
   static const uint32_t cutoff_ = 2;            ///< Number of blocks behind
   /// @}

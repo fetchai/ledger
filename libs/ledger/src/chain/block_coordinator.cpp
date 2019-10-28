@@ -85,12 +85,10 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    BlockSinkInterface &block_sink, ProverPtr prover,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty, ConsensusPtr consensus,
-                                   SynergeticExecMgrPtr synergetic_exec_manager,
-                                   NotarisationPtr      notarisation)
+                                   SynergeticExecMgrPtr synergetic_exec_manager)
   : chain_{chain}
   , dag_{std::move(dag)}
   , consensus_{std::move(consensus)}
-  , notarisation_{std::move(notarisation)}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}
@@ -507,19 +505,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = mining_address_;
 
-    // Add notarisation to block
-    if (notarisation_)
-    {
-      auto notarisation = notarisation_->GetNotarisation(current_block_->body);
-      if (notarisation.first.empty())
-      {
-        // Notarisation for head of chain is not ready yet so wait
-        state_machine_->Delay(std::chrono::milliseconds{100});
-        return State::SYNCHRONISED;
-      }
-      next_block_->body.block_entropy.block_notarisation = notarisation;
-    }
-
     FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->body.block_number,
                    " beacon: ", next_block_->body.block_entropy.EntropyAsU64());
 
@@ -621,41 +606,6 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       chain_.RemoveBlock(current_block_->body.hash);
 
       return State::RESET;
-    }
-  }
-
-  // Check notarisation in block is valid
-  if (notarisation_)
-  {
-    // Try to verify with notarisation units in notarisation_
-    auto result =
-        notarisation_->Verify(current_block_->body.block_number, current_block_->body.hash,
-                              current_block_->body.block_entropy.block_notarisation);
-    if (result == NotarisationResult::FAIL_VERIFICATION)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block notarisation failed verificiation",
-                     ToBase64(current_block_->body.hash), ")");
-      chain_.RemoveBlock(current_block_->body.hash);
-
-      return State::RESET;
-    }
-    if (result == NotarisationResult::CAN_NOT_VERIFY)
-    {
-      // If block is too old then get aeon beginning
-      auto aeon_block                = Consensus::GetBeginningOfAeon(*current_block_, chain_);
-      auto threshold                 = consensus_->GetThreshold(*current_block_);
-      auto ordered_notarisation_keys = aeon_block.body.block_entropy.member_details;
-
-      if (!notarisation_->Verify(current_block_->body.hash,
-                                 current_block_->body.block_entropy.block_notarisation,
-                                 ordered_notarisation_keys, threshold))
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Block notarisation failed verification",
-                       ToBase64(current_block_->body.hash), ")");
-        chain_.RemoveBlock(current_block_->body.hash);
-
-        return State::RESET;
-      }
     }
   }
 
@@ -959,12 +909,6 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
       dag_->CommitEpoch(current_block_->body.dag_epoch);
     }
 
-    // Notify notarisation of new valid block
-    if (notarisation_)
-    {
-      notarisation_->NotariseBlock(current_block_->body);
-    }
-
     // signal the last block that has been executed
     last_executed_block_.ApplyVoid([this](auto &digest) { digest = current_block_->body.hash; });
 
@@ -1112,12 +1056,6 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
     // this step is needed because the execution manager is actually unaware of the actual last
     // block that is executed because the merkle hash was not known at this point.
     execution_manager_.SetLastProcessedBlock(next_block_->body.hash);
-
-    // Notify notarisation of new valid block
-    if (notarisation_)
-    {
-      notarisation_->NotariseBlock(next_block_->body);
-    }
 
     // the block is now fully formed it can be sent across the network
     next_state = State::TRANSMIT_BLOCK;
