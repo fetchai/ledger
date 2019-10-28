@@ -99,10 +99,28 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
 
 BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, BlockEntropy &entropy)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
+  FETCH_LOG_INFO(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
   beacon_entropy_last_requested_->set(block_number);
 
   FETCH_LOCK(mutex_);
+
+#if 1
+  {
+    std::ostringstream oss;
+
+    bool initial_loop{true};
+    for (auto const &element : completed_block_entropy_)
+    {
+      if (!initial_loop)
+      {
+        oss << ',';
+      }
+      oss << element.first;
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Have entropy for: ", oss.str());
+  }
+#endif
 
   auto it = completed_block_entropy_.find(block_number);
   if (it != completed_block_entropy_.end())
