@@ -99,13 +99,14 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
 
 BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, BlockEntropy &entropy)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
+  FETCH_LOG_TRACE(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
   beacon_entropy_last_requested_->set(block_number);
 
   FETCH_LOCK(mutex_);
 
 #if 1
   {
+    static std::string last_have{};
     std::ostringstream oss;
 
     bool initial_loop{true};
@@ -119,7 +120,13 @@ BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, Bloc
       initial_loop = false;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Have entropy for: ", oss.str());
+    std::string now_have = oss.str();
+
+    if (now_have != last_have)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Have entropy for: ", oss.str());
+      last_have = std::move(now_have);
+    }
   }
 #endif
 

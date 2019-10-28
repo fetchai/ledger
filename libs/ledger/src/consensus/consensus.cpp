@@ -420,7 +420,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
 
 #if 1
   static uint64_t counter = 0;
-  bool const should_debug = (counter++ & 0xfu) == 0u;
+  bool const should_debug = (counter++ & 0x3fu) == 0u;
 #endif
 
   // Try to get entropy for the block we are generating - is allowed to fail if we request too
@@ -446,6 +446,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   }
 
 #if 1
+  // reset the counter
   counter = 0;
 #endif
 
