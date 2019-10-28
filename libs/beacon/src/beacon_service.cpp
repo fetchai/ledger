@@ -426,7 +426,7 @@ BeaconService::State BeaconService::OnCompleteState()
 #ifdef BEACON_DEBUG
   static uint64_t count = 0;
 #endif
-  if (completed_block_entropy_.size() >= 2)
+  if (completed_block_entropy_.size() >= 3)
   {
 #ifdef BEACON_DEBUG
 
