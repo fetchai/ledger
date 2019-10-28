@@ -226,7 +226,7 @@ Consensus::WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabin
  */
 bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) const
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
+  FETCH_LOG_TRACE(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
   Identity const &identity = proposed.body.miner_id;
 
@@ -286,7 +286,8 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   {
     auto const delta_ms = target_block_time_ms - time_now_ms;
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Not ready to start next block. Delta: ", delta_ms, " now: ", time_now_ms, " target: ", target_block_time_ms);
+    FETCH_LOG_TRACE(LOGGING_NAME, "Not ready to start next block. Delta: ", delta_ms, " now: ", time_now_ms, " target: ", target_block_time_ms);
+    FETCH_LOG_VARIABLE(delta_ms);
     return false;
   }
 
@@ -295,7 +296,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
 
   if (!is_first)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Not first cabinet member");
+    FETCH_LOG_TRACE(LOGGING_NAME, "Not first cabinet member");
   }
 
   return is_first;
@@ -430,7 +431,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   {
     if (should_debug)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Entropy generator not ready");
+      FETCH_LOG_TRACE(LOGGING_NAME, "Entropy generator not ready");
     }
     return {};
   }
@@ -440,7 +441,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   {
     if (should_debug)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Not ready for next block");
+      FETCH_LOG_TRACE(LOGGING_NAME, "Not ready for next block");
     }
     return {};
   }
