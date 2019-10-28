@@ -33,6 +33,7 @@
 #include "crypto/identity.hpp"
 #include "crypto/key_generator.hpp"
 #include "crypto/prover.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "logging/logging.hpp"
 #include "network/adapters.hpp"
 #include "network/peer.hpp"

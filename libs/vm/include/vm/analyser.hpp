@@ -52,7 +52,7 @@ public:
                           TypeIndexArray const &allowed_types_index_array);
 
   void CreateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
-                               TypeIndexArray const &parameter_type_index_array);
+                               TypeIndexArray const &template_parameter_type_index_array);
 
   void CreateFreeFunction(std::string const &name, TypeIndexArray const &parameter_type_index_array,
                           TypeIndex return_type_index, Handler const &handler, ChargeAmount charge);
@@ -298,11 +298,12 @@ private:
   void        CreateTemplateType(std::string const &type_name, TypeIndex type_index,
                                  TypePtrArray const &allowed_types, TypeId type_id, TypePtr &type);
   void        CreateInstantiationType(TypeIndex type_index, TypePtr const &template_type,
-                                      TypePtrArray const &parameter_types, TypeId type_id, TypePtr &type);
+                                      TypePtrArray const &template_parameter_types, TypeId type_id,
+                                      TypePtr &type);
   void        CreateGroupType(std::string const &type_name, TypeIndex type_index,
                               TypePtrArray const &allowed_types, TypeId type_id, TypePtr &type);
   TypePtr     InternalCreateInstantiationType(TypeKind type_kind, TypePtr const &template_type,
-                                              TypePtrArray const &parameter_types);
+                                              TypePtrArray const &template_parameter_types);
   void        CreateFreeFunction(std::string const &name, TypePtrArray const &parameter_types,
                                  TypePtr const &return_type, Handler const &handler, ChargeAmount charge);
   void        CreateConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
@@ -322,7 +323,9 @@ private:
                                   TypePtr const &output_type, Handler const &get_handler,
                                   Handler const &set_handler, ChargeAmount get_charge,
                                   ChargeAmount set_charge);
-  void        AddTypeInfo(TypeInfo const &info, TypeId type_id, TypePtr const &type);
+  void        AddTypeInfo(TypeKind type_kind, std::string const &type_name, TypeId type_id,
+                          TypeId template_type_id, TypeIdArray const &template_parameter_type_ids,
+                          TypePtr const &type);
   void        AddFunctionInfo(FunctionPtr const &function, Handler const &handler,
                               ChargeAmount static_charge);
   std::string BuildUniqueId(TypePtr const &type, std::string const &function_name,

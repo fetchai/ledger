@@ -61,11 +61,6 @@ struct Tip
 {
   uint64_t total_weight{0};
   uint64_t weight{0};
-
-  Tip(uint64_t total_weight1, uint64_t weight1)
-    : total_weight{total_weight1}
-    , weight{weight1}
-  {}
 };
 
 enum class BlockStatus

@@ -26,7 +26,7 @@
 #include <vector>
 
 namespace fetch {
-namespace ml {
+namespace dmlf {
 namespace distributed_learning {
 
 /** Handles translation of weights and gradients from one vocabulary to another
@@ -77,7 +77,7 @@ struct Translator
       std::string word             = other_vocab[i];
       SizeType    translated_index = my_vocab->IndexFromWord(word);
 
-      if (translated_index != dataloaders::Vocab::UNKNOWN_WORD)
+      if (translated_index != fetch::ml::dataloaders::Vocab::UNKNOWN_WORD)
       {
         if (first_dim_embedding)
         {
@@ -99,7 +99,7 @@ struct Translator
     return std::make_pair(translated_gradient_update, mask);
   }
 
-  void SetMyVocab(std::shared_ptr<dataloaders::Vocab> vocab_ptr)
+  void SetMyVocab(std::shared_ptr<fetch::ml::dataloaders::Vocab> vocab_ptr)
   {
     my_vocab = std::move(vocab_ptr);
   }
@@ -125,9 +125,9 @@ struct Translator
   }
 
 private:
-  fetch::DigestMap<std::vector<std::string>> known_vocabs{};
-  std::shared_ptr<dataloaders::Vocab>        my_vocab;
+  fetch::DigestMap<std::vector<std::string>>     known_vocabs{};
+  std::shared_ptr<fetch::ml::dataloaders::Vocab> my_vocab;
 };
 }  // namespace distributed_learning
-}  // namespace ml
+}  // namespace dmlf
 }  // namespace fetch

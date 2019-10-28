@@ -28,6 +28,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -70,11 +71,6 @@ const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
 
-SynergeticExecMgrPtr CreateSynergeticExecutor(DAGPtr dag, StorageUnitInterface &storage_unit)
-{
-  return std::make_unique<SynergeticExecutionManager>(
-      dag, 1u, [&storage_unit]() { return std::make_shared<SynergeticExecutor>(storage_unit); });
-}
 }  // namespace
 
 /**
@@ -89,7 +85,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    BlockSinkInterface &block_sink, ProverPtr prover,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty, ConsensusPtr consensus,
-                                   NotarisationPtr notarisation)
+                                   SynergeticExecMgrPtr synergetic_exec_manager,
+                                   NotarisationPtr      notarisation)
   : chain_{chain}
   , dag_{std::move(dag)}
   , consensus_{std::move(consensus)}
@@ -111,7 +108,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
-  , synergetic_exec_mgr_{CreateSynergeticExecutor(dag_, storage_unit_)}
+  , synergetic_exec_mgr_{std::move(synergetic_exec_manager)}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reload_state_total",
         "The total number of times in the reload state")}

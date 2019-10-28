@@ -25,6 +25,7 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
@@ -96,7 +97,7 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
-        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
+        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -994,7 +995,7 @@ protected:
 
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
-        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
+        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
