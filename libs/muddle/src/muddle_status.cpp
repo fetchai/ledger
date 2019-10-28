@@ -153,11 +153,21 @@ void BuildRoutingTable(Router::RoutingTable const &routing_table, variant::Varia
   for (auto const &element : routing_table)
   {
     ConstByteArray const address{element.first.data(), element.first.size()};
+    auto const &handles = element.second.handles;
 
     auto &entry = output[address.ToBase64()] = variant::Variant::Object();
 
     entry["direct"] = element.second.direct;
-    entry["handle"] = element.second.handle;
+
+    // create the array for all the handles
+    auto &handles_entry = entry["handle"] = variant::Variant::Array(handles.size());
+
+    // list out all the handles
+    std::size_t idx{0};
+    for (auto const &handle : handles)
+    {
+      handles_entry[idx++] = handle;
+    }
   }
 }
 

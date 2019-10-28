@@ -58,11 +58,12 @@ public:
   using HandleDirectAddrMap  = std::unordered_map<Handle, Address>;
   using Prover               = crypto::Prover;
   using DirectMessageHandler = std::function<void(Handle, PacketPtr)>;
+  using Handles              = std::vector<Handle>;
 
   struct RoutingData
   {
-    bool   direct = false;
-    Handle handle = 0;
+    bool    direct = false;
+    Handles handles{};
   };
 
   using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;

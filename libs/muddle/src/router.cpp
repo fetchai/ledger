@@ -332,12 +332,30 @@ void Router::ConnectionDropped(Handle handle)
   FETCH_LOCK(routing_table_lock_);
   for (auto it = routing_table_.begin(); it != routing_table_.end();)
   {
-    if (it->second.handle == handle)
+    auto &handles = it->second.handles;
+
+    for (auto entry_it = handles.begin(); entry_it != handles.end();)
     {
+      if (*entry_it == handle)
+      {
+        // remove the handle from the vector
+        entry_it = handles.erase(entry_it);
+      }
+      else
+      {
+        // move along handle in the connection list
+        ++entry_it;
+      }
+    }
+
+    if (handles.empty())
+    {
+      // this address no longer has any handles associated with it, therefore it should be removed
       it = routing_table_.erase(it);
     }
     else
     {
+      // move along to the next entry in the routing table
       ++it;
     }
   }
@@ -550,54 +568,60 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
     return status;
   }
 
+  // never allow the current node address to be added to the routing table
+  if (address == address_raw_)
+  {
+    return status;
+  }
+
   bool display{false};
 
-  // never allow the current node address to be added to the routing table
-  if (address != address_raw_)
+
+  FETCH_LOCK(routing_table_lock_);
+
+  // lookup (or create) the routing table entry
+  auto &routing_data = routing_table_[address];
+
+  bool const is_empty = (routing_data.handles.empty());
+
+  // cache the previous handle
+  Handle const current_handle = (is_empty) ? 0 : routing_data.handles.front();
+
+  // an update is only valid when the connection is direct.
+  bool const is_connection_update = (current_handle != handle);
+  bool const is_duplicate_direct  = direct && routing_data.direct && is_connection_update;
+  bool const is_upgrade           = (!is_empty) && (!routing_data.direct) && direct;
+  bool const is_downgrade         = (!is_empty) && routing_data.direct && !direct;
+  bool const is_different =
+      (is_connection_update && !is_duplicate_direct && !is_downgrade) || is_upgrade;
+  bool const is_update = ((!is_empty) && is_different);
+
+  // update the routing table if required
+  if (is_duplicate_direct)
   {
-    FETCH_LOCK(routing_table_lock_);
+    FETCH_LOG_INFO(logging_name_, "Duplicate direct (detected) conn: ", handle);
 
-    // lookup (or create) the routing table entry
-    auto &routing_data = routing_table_[address];
+    // add the handle to the list of available
+    routing_data.handles.emplace_back(handle);
 
-    bool const is_empty = (routing_data.handle == 0);
+    // we do not overwrite the routing table for additional direct connections
+    status = UpdateStatus::DUPLICATE_DIRECT;
+  }
+  else if (is_empty || is_update)
+  {
+    // update the table
+    routing_data.handles.assign(1, handle);
+    routing_data.direct = direct;
 
-    // an update is only valid when the connection is direct.
-    bool const is_connection_update = (routing_data.handle != handle);
-    bool const is_duplicate_direct  = direct && routing_data.direct && is_connection_update;
-    bool const is_upgrade           = (!is_empty) && (!routing_data.direct) && direct;
-    bool const is_downgrade         = (!is_empty) && routing_data.direct && !direct;
-    bool const is_different =
-        (is_connection_update && !is_duplicate_direct && !is_downgrade) || is_upgrade;
-    bool const is_update = ((routing_data.handle != 0u) && is_different);
+    // signal an update was made to the table
+    status  = UpdateStatus::UPDATED;
+    display = is_empty || is_upgrade;
 
-    // update the routing table if required
-    if (is_duplicate_direct)
-    {
-      FETCH_LOG_INFO(logging_name_, "Duplicate direct (detected) conn: ", handle);
-
-      // we do not overwrite the routing table for additional direct connections
-      status = UpdateStatus::DUPLICATE_DIRECT;
-    }
-    else if (is_empty || is_update)
-    {
-      // replacing an existing entry
-      Handle prev_handle = routing_data.handle;
-
-      // update the table
-      routing_data.handle = handle;
-      routing_data.direct = direct;
-
-      // signal an update was made to the table
-      status  = UpdateStatus::UPDATED;
-      display = is_empty || is_upgrade;
-
-      FETCH_LOG_TRACE(logging_name_, is_connection_update, "-", is_duplicate_direct, "-",
-                      is_upgrade, "-", is_different, "-", is_update);
-      FETCH_LOG_TRACE(logging_name_, "Handle was: ", prev_handle, " now: ", handle,
-                      " direct: ", direct, "-", routing_data.direct);
-      FETCH_LOG_VARIABLE(prev_handle);
-    }
+    FETCH_LOG_TRACE(logging_name_, is_connection_update, "-", is_duplicate_direct, "-",
+                    is_upgrade, "-", is_different, "-", is_update);
+    FETCH_LOG_TRACE(logging_name_, "Handle was: ", current_handle, " now: ", handle,
+                    " direct: ", direct, "-", routing_data.direct);
+    FETCH_LOG_VARIABLE(current_handle);
   }
 
   if (display)
@@ -627,7 +651,10 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
     {
       auto const &routing_data = address_it->second;
 
-      handle = routing_data.handle;
+      if (!routing_data.handles.empty())
+      {
+        handle = routing_data.handles.front();
+      }
     }
   }
 
@@ -657,16 +684,24 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
 
     if (!routing_table_.empty())
     {
+      using Distribution = std::uniform_int_distribution<std::size_t>;
+
       // decide the random index to access
-      std::uniform_int_distribution<decltype(routing_table_)::size_type> distro(
-          0, routing_table_.size() - 1);
-      std::size_t const element = distro(rng);
+      Distribution table_dist{0, routing_table_.size() - 1};
+      std::size_t const element = table_dist(rng);
 
       // advance the iterator to the correct offset
       auto it = routing_table_.cbegin();
       std::advance(it, static_cast<std::ptrdiff_t>(element));
 
-      return it->second.handle;
+
+      auto const &handles = it->second.handles;
+
+      if (!handles.empty())
+      {
+        Distribution handle_dist{0, handles.size() - 1};
+        return handles[handle_dist(rng)];
+      }
     }
   }
 
