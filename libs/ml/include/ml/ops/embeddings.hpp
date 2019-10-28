@@ -56,8 +56,6 @@ public:
   explicit Embeddings(SPType const &sp)
     : Weights<T>(sp)
   {
-    updated_rows_ =
-        std::set<typename TensorType::SizeType>(sp.updated_rows.begin(), sp.updated_rows.begin());
     trailing_indices1_ = sp.trailing_indices1;
     trailing_indices2_ = sp.trailing_indices2;
   }
@@ -72,7 +70,6 @@ public:
     auto cast_sp = std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(sp);
     *cast_sp     = *(std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(w_sp));
 
-    std::copy(updated_rows_.begin(), updated_rows_.end(), std::back_inserter(sp->updated_rows));
     sp->trailing_indices1 = trailing_indices1_;
     sp->trailing_indices2 = trailing_indices2_;
 
@@ -131,8 +128,7 @@ public:
           trailing_indices1_.at(1) = n;
           auto error_view          = error_signal.View(trailing_indices1_);
           trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
-          updated_rows_.insert(static_cast<SizeType>(*e_it));
-          auto gradient_view = this->gradient_accumulation_->View(trailing_indices2_);
+          auto gradient_view       = this->gradient_accumulation_->View(trailing_indices2_);
 
           auto error_view_it    = error_view.cbegin();
           auto gradient_view_it = gradient_view.begin();
@@ -165,9 +161,8 @@ public:
   static constexpr char const *DESCRIPTOR = "Embedding";
 
 private:
-  std::set<typename TensorType::SizeType> updated_rows_;
-  std::vector<SizeType>                   trailing_indices1_ = {0, 0};
-  std::vector<SizeType>                   trailing_indices2_ = {0};
+  std::vector<SizeType> trailing_indices1_ = {0, 0};
+  std::vector<SizeType> trailing_indices2_ = {0};
 };
 
 }  // namespace ops
