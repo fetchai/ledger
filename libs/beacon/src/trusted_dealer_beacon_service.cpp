@@ -21,17 +21,18 @@
 namespace fetch {
 namespace beacon {
 
-TrustedDealerBeaconService::TrustedDealerBeaconService(
-    MuddleInterface &muddle, shards::ManifestCacheInterface &manifest_cache,
-    const CertificatePtr &certificate, SharedEventManager event_manager)
-  : BeaconService{muddle, manifest_cache, certificate, std::move(event_manager)}
+TrustedDealerSetupService::TrustedDealerSetupService(MuddleInterface &       muddle,
+                                                     ManifestCacheInterface &manifest_cache,
+                                                     CertificatePtr          certificate)
+  : BeaconSetupService{muddle, manifest_cache, certificate}
+  , certificate_{certificate}
 {}
 
-void TrustedDealerBeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
-                                                 uint64_t round_start, uint64_t round_end,
-                                                 uint64_t            start_time,
-                                                 BlockEntropy const &prev_entropy,
-                                                 const DkgOutput &   output)
+void TrustedDealerSetupService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
+                                                uint64_t round_start, uint64_t round_end,
+                                                uint64_t            start_time,
+                                                BlockEntropy const &prev_entropy,
+                                                const DkgOutput &   output)
 {
   auto diff_time =
       int64_t(GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))) -
@@ -77,7 +78,10 @@ void TrustedDealerBeaconService::StartNewCabinet(CabinetMemberList members, uint
   beacon->block_entropy.block_number     = beacon->aeon.round_start;
   beacon->block_entropy.HashSelf();
 
-  aeon_exe_queue_.push_back(beacon);
+  if (callback_function_)
+  {
+    callback_function_(beacon);
+  }
 }
 }  // namespace beacon
 }  // namespace fetch

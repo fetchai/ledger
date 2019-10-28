@@ -28,7 +28,8 @@ namespace ledger {
 char const *StateToString(NotarisationService::State state);
 
 NotarisationService::NotarisationService(MuddleInterface &muddle, MainChain &main_chain,
-                                         CertificatePtr certificate)
+                                         CertificatePtr      certificate,
+                                         BeaconSetupService &beacon_setup)
   : endpoint_{muddle.GetEndpoint()}
   , rpc_client_{"NotarisationService", endpoint_, SERVICE_MAIN_CHAIN, CHANNEL_RPC}
   , notarisation_protocol_{*this}
@@ -37,6 +38,14 @@ NotarisationService::NotarisationService(MuddleInterface &muddle, MainChain &mai
                                                   StateToString)}
   , chain_{main_chain}
 {
+  // Attaching notarisation ready callback handler
+  beacon_setup.SetNotarisationCallback([this](SharedAeonNotarisationUnit notarisation_manager) {
+    FETCH_LOCK(mutex_);
+    assert(notarisation_manager);
+    aeon_notarisation_queue_.push_back(notarisation_manager);
+    new_keys = true;
+  });
+
   // Attaching the protocol
   rpc_server_ = std::make_shared<Server>(endpoint_, SERVICE_MAIN_CHAIN, CHANNEL_RPC);
   rpc_server_->Add(RPC_NOTARISATION, &notarisation_protocol_);
@@ -345,18 +354,9 @@ NotarisationService::BlockNotarisation NotarisationService::GetNotarisation(Bloc
   return notarisation;
 }
 
-std::vector<std::weak_ptr<core::Runnable>> NotarisationService::GetWeakRunnables()
+std::weak_ptr<core::Runnable> NotarisationService::GetWeakRunnable()
 {
-  return {state_machine_};
-}
-
-void NotarisationService::NewAeonNotarisationUnit(
-    SharedAeonNotarisationUnit const &notarisation_manager)
-{
-  FETCH_LOCK(mutex_);
-  assert(notarisation_manager);
-  aeon_notarisation_queue_.push_back(notarisation_manager);
-  new_keys = true;
+  return state_machine_;
 }
 
 uint64_t NotarisationService::BlockNumberCutoff() const

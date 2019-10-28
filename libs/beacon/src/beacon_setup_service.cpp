@@ -637,9 +637,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
   FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES));
 
-  MuddleAddresses complaints_list = qual_complaints_manager_.Complaints();
-  MuddleAddresses remaining_honest;
-  MuddleAddresses qual{beacon_->manager.qual()};
+  auto                    complaints_list = qual_complaints_manager_.Complaints();
+  auto                    qual            = beacon_->manager.qual();
+  std::set<MuddleAddress> remaining_honest;
   std::set_difference(qual.begin(), qual.end(), complaints_list.begin(), complaints_list.end(),
                       std::inserter(remaining_honest, remaining_honest.begin()));
 
@@ -1436,10 +1436,45 @@ bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
   return true;
 }
 
-void BeaconSetupService::QueueSetup(const SharedAeonExecutionUnit &beacon)
+void BeaconSetupService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
+                                         uint64_t round_start, uint64_t round_end,
+                                         uint64_t start_time, BlockEntropy const &prev_entropy)
 {
+  auto diff_time =
+      int64_t(GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))) -
+      int64_t(start_time);
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
+                 " at time: ", start_time, " (diff): ", diff_time);
+
+  // Check threshold meets the requirements for the RBC
+  uint32_t rbc_threshold{0};
+  if (members.size() % 3 == 0)
+  {
+    rbc_threshold = static_cast<uint32_t>(members.size() / 3 - 1);
+  }
+  else
+  {
+    rbc_threshold = static_cast<uint32_t>(members.size() / 3);
+  }
+  if (threshold < rbc_threshold)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Threshold is below RBC threshold. Reset to rbc threshold");
+    threshold = rbc_threshold;
+  }
+
   FETCH_LOCK(mutex_);
-  assert(beacon != nullptr);
+
+  SharedAeonExecutionUnit beacon = std::make_shared<beacon::AeonExecutionUnit>();
+
+  beacon->manager.SetCertificate(certificate_);
+  beacon->manager.NewCabinet(members, threshold);
+
+  // Setting the aeon details
+  beacon->aeon.round_start               = round_start;
+  beacon->aeon.round_end                 = round_end;
+  beacon->aeon.members                   = std::move(members);
+  beacon->aeon.start_reference_timepoint = start_time;
+  beacon->aeon.block_entropy_previous    = prev_entropy;
 
   aeon_exe_queue_.push_back(beacon);
 }

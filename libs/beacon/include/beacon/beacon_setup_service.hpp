@@ -87,9 +87,10 @@ public:
   using Identity        = crypto::Identity;
 
   using CabinetMembers          = std::set<Identity>;
-  using MuddleAddresses         = std::set<MuddleAddress>;
+  using CabinetMemberList       = std::set<MuddleAddress>;
   using MuddleEndpoint          = muddle::MuddleEndpoint;
   using MuddleInterface         = muddle::MuddleInterface;
+  using ManifestCacheInterface  = shards::ManifestCacheInterface;
   using RBC                     = muddle::RBC;
   using ReliableChannel         = muddle::BroadcastChannelInterface;
   using ReliableChannelPtr      = std::unique_ptr<ReliableChannel>;
@@ -99,6 +100,7 @@ public:
   using ComplaintsManager       = beacon::ComplaintsManager;
   using ComplaintAnswersManager = beacon::ComplaintAnswersManager;
   using QualComplaintsManager   = beacon::QualComplaintsManager;
+  using BeaconManager           = dkg::BeaconManager;
   using DKGMessage              = dkg::DKGMessage;
   using DKGEnvelope             = dkg::DKGEnvelope;
   using ComplaintsMessage       = dkg::ComplaintsMessage;
@@ -110,14 +112,12 @@ public:
   using DKGSerializer           = dkg::DKGSerializer;
   using MessageCoefficient      = DKGMessage::Coefficient;
   using MessageShare            = DKGMessage::Share;
-  using ManifestCacheInterface  = shards::ManifestCacheInterface;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
-  using DeadlineTimer    = fetch::moment::DeadlineTimer;
+  using DeadlineTimer    = moment::DeadlineTimer;
+  using Clock            = moment::ClockPtr;
   using SignatureShare   = AeonExecutionUnit::SignatureShare;
-  using BeaconManager    = dkg::BeaconManager;
   using GroupPubKeyPlusSigShare      = std::pair<std::string, SignatureShare>;
   using CertificatePtr               = std::shared_ptr<dkg::BeaconManager::Certificate>;
-  using Clock                        = moment::ClockPtr;
   using NotarisationManager          = ledger::NotarisationManager;
   using SharedNotarisationManager    = std::shared_ptr<NotarisationManager>;
   using NotarisationCallbackFunction = std::function<void(SharedNotarisationManager)>;
@@ -126,6 +126,7 @@ public:
                      CertificatePtr certificate);
   BeaconSetupService(BeaconSetupService const &) = delete;
   BeaconSetupService(BeaconSetupService &&)      = delete;
+  virtual ~BeaconSetupService()                  = default;
 
   /// State functions
   /// @{
@@ -147,7 +148,8 @@ public:
 
   /// Setup management
   /// @{
-  void QueueSetup(const SharedAeonExecutionUnit &beacon);
+  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
+                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy);
   void Abort(uint64_t abort_below);
   void SetBeaconReadyCallback(CallbackFunction callback);
   void SetNotarisationCallback(NotarisationCallbackFunction callback);

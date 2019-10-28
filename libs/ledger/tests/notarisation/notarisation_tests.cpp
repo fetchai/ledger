@@ -16,20 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/reactor.hpp"
-
-#include "ledger/chain/main_chain.hpp"
-#include "ledger/protocols/notarisation_service.hpp"
-#include "ledger/testing/block_generator.hpp"
-
-#include "muddle/create_muddle_fake.hpp"
-#include "muddle/muddle_interface.hpp"
-#include "shards/manifest_cache_interface.hpp"
-
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/create_new_certificate.hpp"
 #include "beacon/trusted_dealer.hpp"
+#include "core/reactor.hpp"
 #include "crypto/mcl_dkg.hpp"
+#include "ledger/chain/main_chain.hpp"
+#include "ledger/protocols/notarisation_service.hpp"
+#include "ledger/testing/block_generator.hpp"
+#include "muddle/create_muddle_fake.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "shards/manifest_cache_interface.hpp"
 
 #include "gtest/gtest.h"
 
@@ -67,18 +64,18 @@ using SharedAeonExecutionUnit    = BeaconSetupService::SharedAeonExecutionUnit;
 
 struct NotarisationNode
 {
-  uint16_t                             muddle_port;
-  network::NetworkManager              network_manager;
-  core::Reactor                        reactor;
-  ProverPtr                            muddle_certificate;
-  Muddle                               muddle;
-  DummyManifestCache                   manifest_cache;
-  MainChain                            chain;
-  std::shared_ptr<NotarisationService> notarisation_service;
-  BeaconSetupService                   beacon_setup_service;
-  std::unordered_set<BlockHash>        notarised_blocks;
-  std::atomic<bool>                    finished;
-  DkgOutput                            output;
+  uint16_t                      muddle_port;
+  network::NetworkManager       network_manager;
+  core::Reactor                 reactor;
+  ProverPtr                     muddle_certificate;
+  Muddle                        muddle;
+  DummyManifestCache            manifest_cache;
+  MainChain                     chain;
+  BeaconSetupService            beacon_setup_service;
+  NotarisationService           notarisation_service;
+  std::unordered_set<BlockHash> notarised_blocks;
+  std::atomic<bool>             finished;
+  DkgOutput                     output;
 
   NotarisationNode(uint16_t port_number, uint16_t index)
     : muddle_port{port_number}
@@ -87,8 +84,8 @@ struct NotarisationNode
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
     , chain{false, ledger::MainChain::Mode::IN_MEMORY_DB}
-    , notarisation_service{new NotarisationService{*muddle, chain, muddle_certificate}}
     , beacon_setup_service{*muddle, manifest_cache, muddle_certificate}
+    , notarisation_service{*muddle, chain, muddle_certificate, beacon_setup_service}
   {
     network_manager.Start();
     muddle->Start({muddle_port});
@@ -97,10 +94,6 @@ struct NotarisationNode
       finished = true;
       output   = beacon->manager.GetDkgOutput();
     });
-    beacon_setup_service.SetNotarisationCallback(
-        [this](SharedAeonNotarisationUnit notarisation) -> void {
-          notarisation_service->NewAeonNotarisationUnit(notarisation);
-        });
   }
 
   ~NotarisationNode()
@@ -108,25 +101,6 @@ struct NotarisationNode
     reactor.Stop();
     muddle->Stop();
     network_manager.Stop();
-  }
-
-  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold, uint64_t round_start,
-                    uint64_t round_end)
-  {
-    SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
-
-    beacon->manager.SetCertificate(muddle_certificate);
-    beacon->manager.NewCabinet(cabinet, threshold);
-
-    // Setting the aeon details
-    beacon->aeon.round_start = round_start;
-    beacon->aeon.round_end   = round_end;
-    beacon->aeon.members     = std::move(cabinet);
-    // Plus 5 so tests pass on first DKG attempt
-    beacon->aeon.start_reference_timepoint =
-        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
-
-    beacon_setup_service.QueueSetup(beacon);
   }
 
   MuddleAddress address()
@@ -189,7 +163,7 @@ TEST(notarisation, notarise_blocks)
   for (auto &node : nodes)
   {
     node->reactor.Attach(node->beacon_setup_service.GetWeakRunnables());
-    node->reactor.Attach(node->notarisation_service->GetWeakRunnables());
+    node->reactor.Attach(node->notarisation_service.GetWeakRunnable());
   }
 
   // Start reactor
@@ -198,6 +172,10 @@ TEST(notarisation, notarise_blocks)
     node->reactor.Start();
   }
 
+  // Create previous entropy
+  BlockEntropy prev_entropy;
+  prev_entropy.group_signature = "Hello";
+
   uint64_t round_length = 5;
   for (uint8_t round = 0; round < 2; ++round)
   {
@@ -205,7 +183,10 @@ TEST(notarisation, notarise_blocks)
     uint64_t round_start = round * round_length;
     for (auto &node : nodes)
     {
-      node->QueueCabinet(cabinet, threshold, round_start, round_start + round_length);
+      node->beacon_setup_service.StartNewCabinet(
+          cabinet, threshold, round_start, round_start + round_length,
+          GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5,
+          prev_entropy);
     }
 
     // Loop until everyone we expect to finish completes the DKG
@@ -246,9 +227,9 @@ TEST(notarisation, notarise_blocks)
       for (auto &node : nodes)
       {
         node->chain.AddBlock(*blocks_to_sign[i]);
-        node->notarisation_service->NotariseBlock(blocks_to_sign[i]->body);
+        node->notarisation_service.NotariseBlock(blocks_to_sign[i]->body);
         EXPECT_TRUE(
-            !node->notarisation_service->GetNotarisations(blocks_to_sign[i]->body.block_number)
+            !node->notarisation_service.GetNotarisations(blocks_to_sign[i]->body.block_number)
                  .empty());
       }
 
@@ -262,7 +243,7 @@ TEST(notarisation, notarise_blocks)
         {
           if (nodes[*it]
                   ->notarisation_service
-                  ->HeaviestNotarisedBlock(blocks_to_sign[i]->body.block_number)
+                  .HeaviestNotarisedBlock(blocks_to_sign[i]->body.block_number)
                   .first == blocks_to_sign[i]->body.hash)
           {
             it = pending_nodes.erase(it);

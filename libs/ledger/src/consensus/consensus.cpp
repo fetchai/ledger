@@ -90,10 +90,12 @@ T DeterministicShuffle(T &container, uint64_t entropy)
 
 }  // namespace
 
-Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
-                     Identity mining_identity, uint64_t aeon_period, uint64_t max_cabinet_size,
-                     uint32_t block_interval_ms, NotarisationPtr notarisation)
+Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
+                     BeaconServicePtr beacon, MainChain const &chain, Identity mining_identity,
+                     uint64_t aeon_period, uint64_t max_cabinet_size, uint32_t block_interval_ms,
+                     NotarisationPtr notarisation)
   : stake_{std::move(stake)}
+  , cabinet_creator_{std::move(beacon_setup)}
   , beacon_{std::move(beacon)}
   , chain_{chain}
   , mining_identity_{std::move(mining_identity)}
@@ -402,12 +404,13 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     uint64_t block_interval = 1;
 
     // Safe to call this multiple times
-    beacon_->StartNewCabinet(cabinet_member_list, threshold, current_block_.body.block_number + 1,
-                             current_block_.body.block_number + aeon_period_,
-                             last_block_time + block_interval, current.body.block_entropy);
+    cabinet_creator_->StartNewCabinet(cabinet_member_list, threshold,
+                                      current_block_.body.block_number + 1,
+                                      current_block_.body.block_number + aeon_period_,
+                                      last_block_time + block_interval, current.body.block_entropy);
   }
 
-  beacon_->AbortCabinet(current_block_.body.block_number);
+  cabinet_creator_->Abort(current_block_.body.block_number);
 }
 
 // TODO(HUT): put block number confirmation/check here (?)

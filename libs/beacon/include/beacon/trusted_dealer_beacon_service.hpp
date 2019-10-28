@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_service.hpp"
 
 namespace fetch {
 namespace beacon {
@@ -26,16 +26,26 @@ namespace beacon {
  * Class which allows the beacon service to take in pre-computed DKG public and private keys from a
  * trusted dealer, thereby circumventing the running of the DKG inorder to generate entropy
  */
-class TrustedDealerBeaconService : public BeaconService
+class TrustedDealerSetupService : public BeaconSetupService
 {
 public:
-  TrustedDealerBeaconService(MuddleInterface &               muddle,
-                             shards::ManifestCacheInterface &manifest_cache,
-                             const CertificatePtr &certificate, SharedEventManager event_manager);
+  static constexpr char const *LOGGING_NAME = "TrustedDealerSetupService";
+
+  using CertificatePtr    = BeaconSetupService::CertificatePtr;
+  using CabinetMemberList = BeaconSetupService::CabinetMemberList;
+  using CallbackFunction  = BeaconSetupService::CallbackFunction;
+
+  TrustedDealerSetupService(MuddleInterface &muddle, ManifestCacheInterface &manifest_cache,
+                            CertificatePtr certificate);
 
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
                        uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy,
                        const DkgOutput &output);
+
+private:
+  using SharedAeonExecutionUnit = BeaconSetupService::SharedAeonExecutionUnit;
+
+  CertificatePtr certificate_;
 };
 }  // namespace beacon
 }  // namespace fetch

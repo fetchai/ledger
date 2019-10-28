@@ -39,19 +39,21 @@ namespace ledger {
 class Consensus final : public ConsensusInterface
 {
 public:
-  using StakeManagerPtr    = std::shared_ptr<ledger::StakeManager>;
-  using BeaconServicePtr   = std::shared_ptr<fetch::beacon::BeaconService>;
-  using CabinetMemberList  = beacon::BeaconService::CabinetMemberList;
-  using Identity           = crypto::Identity;
-  using WeightedQual       = std::vector<Identity>;
-  using MainChain          = ledger::MainChain;
-  using BlockEntropy       = ledger::Block::BlockEntropy;
-  using NotarisationPtr    = std::shared_ptr<ledger::NotarisationService>;
-  using NotarisationResult = NotarisationService::NotarisationResult;
+  using StakeManagerPtr       = std::shared_ptr<ledger::StakeManager>;
+  using BeaconSetupServicePtr = std::shared_ptr<beacon::BeaconSetupService>;
+  using BeaconServicePtr      = std::shared_ptr<fetch::beacon::BeaconService>;
+  using CabinetMemberList     = beacon::BeaconSetupService::CabinetMemberList;
+  using Identity              = crypto::Identity;
+  using WeightedQual          = std::vector<Identity>;
+  using MainChain             = ledger::MainChain;
+  using BlockEntropy          = ledger::Block::BlockEntropy;
+  using NotarisationPtr       = std::shared_ptr<ledger::NotarisationService>;
+  using NotarisationResult    = NotarisationService::NotarisationResult;
 
-  Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
-            Identity mining_identity, uint64_t aeon_period, uint64_t max_cabinet_size,
-            uint32_t block_interval_ms = 1000, NotarisationPtr notarisation = nullptr);
+  Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,
+            MainChain const &chain, Identity mining_identity, uint64_t aeon_period,
+            uint64_t max_cabinet_size, uint32_t block_interval_ms = 1000,
+            NotarisationPtr notarisation = nullptr);
 
   void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
@@ -72,11 +74,12 @@ private:
   using BlockIndex     = uint64_t;
   using CabinetHistory = std::map<BlockIndex, CabinetPtr>;
 
-  StakeManagerPtr  stake_;
-  BeaconServicePtr beacon_;
-  MainChain const &chain_;
-  Identity         mining_identity_;
-  chain::Address   mining_address_;
+  StakeManagerPtr       stake_;
+  BeaconSetupServicePtr cabinet_creator_;
+  BeaconServicePtr      beacon_;
+  MainChain const &     chain_;
+  Identity              mining_identity_;
+  chain::Address        mining_address_;
 
   // Global variables relating to consensus
   uint64_t aeon_period_      = 0;

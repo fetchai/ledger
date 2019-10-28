@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_service.hpp"
 #include "beacon/create_new_certificate.hpp"
+#include "beacon/trusted_dealer.hpp"
+#include "beacon/trusted_dealer_beacon_service.hpp"
 #include "core/reactor.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "shards/manifest_cache_interface.hpp"
-
-#include "beacon/trusted_dealer.hpp"
-#include "beacon/trusted_dealer_beacon_service.hpp"
 
 #include "gtest/gtest.h"
 
@@ -66,7 +66,8 @@ struct TrustedDealerCabinetNode
   ProverPtr                        muddle_certificate;
   Muddle                           muddle;
   DummyManifestCache               manifest_cache;
-  TrustedDealerBeaconService       beacon_service;
+  TrustedDealerSetupService        setup_service;
+  BeaconService                    beacon_service;
   crypto::Identity                 identity;
 
   TrustedDealerCabinetNode(uint16_t port_number, uint16_t index)
@@ -76,7 +77,8 @@ struct TrustedDealerCabinetNode
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
+    , setup_service{*muddle, manifest_cache, muddle_certificate}
+    , beacon_service{*muddle, muddle_certificate, setup_service, event_manager}
     , identity{muddle_certificate->identity()}
   {
     network_manager.Start();
@@ -151,7 +153,7 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
   // Attaching the cabinet logic
   for (auto &member : cabinet)
   {
-    member->reactor.Attach(member->beacon_service.GetWeakRunnables());
+    member->reactor.Attach(member->beacon_service.GetWeakRunnable());
   }
 
   // Starting the beacon
@@ -172,7 +174,7 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
     TrustedDealer dealer(cabinet_addresses, threshold);
     for (auto &member : cabinet)
     {
-      member->beacon_service.StartNewCabinet(
+      member->setup_service.StartNewCabinet(
           cabinet_addresses, threshold, i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
           GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)),
           prev_entropy, dealer.GetKeys(member->identity.identifier()));

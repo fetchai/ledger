@@ -393,7 +393,7 @@ private:
 
 struct DkgMember
 {
-  const static uint16_t CHANNEL_SHARES = 3;
+  using CabinetMemberList = BeaconSetupService::CabinetMemberList;
 
   uint16_t             muddle_port;
   NetworkManager       network_manager;
@@ -423,9 +423,11 @@ struct DkgMember
     network_manager.Stop();
   }
 
-  virtual void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) = 0;
-  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables()          = 0;
-  virtual bool                                       DkgFinished()               = 0;
+  virtual void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
+                               uint64_t round_end, uint64_t start_time,
+                               BlockEntropy const &prev_entropy)        = 0;
+  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables() = 0;
+  virtual bool                                       DkgFinished()      = 0;
 };
 
 struct FaultyDkgMember : DkgMember
@@ -450,22 +452,11 @@ struct FaultyDkgMember : DkgMember
     reactor.Stop();
   }
 
-  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
+  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
+                       uint64_t round_end, uint64_t start_time,
+                       BlockEntropy const &prev_entropy) override
   {
-    SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
-
-    beacon->manager.SetCertificate(muddle_certificate);
-    beacon->manager.NewCabinet(cabinet, threshold);
-
-    // Setting the aeon details
-    beacon->aeon.round_start = 0;
-    beacon->aeon.round_end   = 10;
-    beacon->aeon.members     = std::move(cabinet);
-    // Plus 5 so tests pass on first DKG attempt
-    beacon->aeon.start_reference_timepoint =
-        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
-
-    dkg.QueueSetup(beacon);
+    dkg.StartNewCabinet(members, threshold, round_start, round_end, start_time, prev_entropy);
   }
 
   std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables() override
@@ -499,22 +490,11 @@ struct HonestDkgMember : DkgMember
     reactor.Stop();
   }
 
-  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
+  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
+                       uint64_t round_end, uint64_t start_time,
+                       BlockEntropy const &prev_entropy) override
   {
-    SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
-
-    beacon->manager.SetCertificate(muddle_certificate);
-    beacon->manager.NewCabinet(cabinet, threshold);
-
-    // Setting the aeon details
-    beacon->aeon.round_start = 0;
-    beacon->aeon.round_end   = 10;
-    beacon->aeon.members     = std::move(cabinet);
-    // Plus 5 so tests pass on first DKG attempt
-    beacon->aeon.start_reference_timepoint =
-        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
-
-    dkg.QueueSetup(beacon);
+    dkg.StartNewCabinet(members, threshold, round_start, round_end, start_time, prev_entropy);
   }
 
   std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables() override
@@ -559,11 +539,18 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     cabinet_addresses.insert(cabinet_members[ii]->muddle_certificate->identity().identifier());
   }
 
+  // Create previous entropy
+  BlockEntropy prev_entropy;
+  prev_entropy.group_signature = "Hello";
+
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    cabinet_members[ii]->QueueCabinet(cabinet_addresses, threshold);
+    cabinet_members[ii]->StartNewCabinet(
+        cabinet_addresses, threshold, 0, 10,
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5,
+        prev_entropy);
   }
 
   // Start off some connections until everyone else has connected

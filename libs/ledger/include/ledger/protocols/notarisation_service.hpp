@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_setup_service.hpp"
 #include "beacon/block_entropy.hpp"
 #include "beacon/notarisation_manager.hpp"
 #include "core/state_machine.hpp"
@@ -80,9 +81,10 @@ public:
   using BlockEntropy                  = beacon::BlockEntropy;
   using BlockNotarisation             = BlockEntropy::AggregateSignature;
   using BlockNotarisationKeys         = BlockEntropy::CabinetMemberDetails;
+  using BeaconSetupService            = beacon::BeaconSetupService;
   using MuddleInterface               = muddle::MuddleInterface;
   using Endpoint                      = muddle::MuddleEndpoint;
-  using Server                        = fetch::muddle::rpc::Server;
+  using Server                        = muddle::rpc::Server;
   using ServerPtr                     = std::shared_ptr<Server>;
   using AeonNotarisationUnit          = ledger::NotarisationManager;
   using SharedAeonNotarisationUnit    = std::shared_ptr<AeonNotarisationUnit>;
@@ -100,7 +102,8 @@ public:
   NotarisationService()                            = delete;
   NotarisationService(NotarisationService const &) = delete;
 
-  NotarisationService(MuddleInterface &muddle, MainChain &main_chain, CertificatePtr certificate);
+  NotarisationService(MuddleInterface &muddle, MainChain &main_chain, CertificatePtr certificate,
+                      BeaconSetupService &beacon_setup);
 
   /// State methods
   /// @{
@@ -114,11 +117,6 @@ public:
   /// Protocol endpoints
   /// @{
   BlockNotarisationShares GetNotarisations(BlockNumber const &block_number);
-  /// @}
-
-  /// Setup management
-  /// @{
-  void NewAeonNotarisationUnit(SharedAeonNotarisationUnit const &notarisation_manager);
   /// @}
 
   /// Calls from other services
@@ -136,7 +134,7 @@ public:
                             BlockNotarisationKeys const &notarisation_key_str, uint32_t threshold);
   /// @}
 
-  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
+  std::weak_ptr<core::Runnable> GetWeakRunnable();
 
 private:
   /// Helper function
