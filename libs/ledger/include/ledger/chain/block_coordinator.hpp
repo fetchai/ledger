@@ -180,7 +180,8 @@ public:
     // Main loop
     RESET  ///< Cycle complete
   };
-  using StateMachine = core::StateMachine<State>;
+  using StateMachine         = core::StateMachine<State>;
+  using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
 
   static char const *ToString(State state);
 
@@ -188,7 +189,8 @@ public:
   BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, ProverPtr prover, std::size_t num_lanes,
-                   std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus);
+                   std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus,
+                   SynergeticExecMgrPtr synergetic_exec_manager);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -255,22 +257,21 @@ private:
 
   static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 5000;
 
-  using BlockPtr             = MainChain::BlockPtr;
-  using NextBlockPtr         = std::unique_ptr<Block>;
-  using PendingBlocks        = std::deque<BlockPtr>;
-  using PendingStack         = std::vector<BlockPtr>;
-  using Flag                 = std::atomic<bool>;
-  using BlockPeriod          = std::chrono::milliseconds;
-  using Clock                = std::chrono::system_clock;
-  using Timepoint            = Clock::time_point;
-  using StateMachinePtr      = std::shared_ptr<StateMachine>;
-  using MinerPtr             = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxDigestSetPtr       = std::unique_ptr<DigestSet>;
-  using LastExecutedBlock    = Protected<ConstByteArray>;
-  using FutureTimepoint      = fetch::core::FutureTimepoint;
-  using DeadlineTimer        = fetch::moment::DeadlineTimer;
-  using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
-  using SynExecStatus        = SynergeticExecutionManagerInterface::ExecStatus;
+  using BlockPtr          = MainChain::BlockPtr;
+  using NextBlockPtr      = std::unique_ptr<Block>;
+  using PendingBlocks     = std::deque<BlockPtr>;
+  using PendingStack      = std::vector<BlockPtr>;
+  using Flag              = std::atomic<bool>;
+  using BlockPeriod       = std::chrono::milliseconds;
+  using Clock             = std::chrono::system_clock;
+  using Timepoint         = Clock::time_point;
+  using StateMachinePtr   = std::shared_ptr<StateMachine>;
+  using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
+  using TxDigestSetPtr    = std::unique_ptr<DigestSet>;
+  using LastExecutedBlock = Protected<ConstByteArray>;
+  using FutureTimepoint   = fetch::core::FutureTimepoint;
+  using DeadlineTimer     = fetch::moment::DeadlineTimer;
+  using SynExecStatus     = SynergeticExecutionManagerInterface::ExecStatus;
 
   /// @name Monitor State
   /// @{
