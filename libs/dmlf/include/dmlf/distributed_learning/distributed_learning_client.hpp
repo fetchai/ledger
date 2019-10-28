@@ -37,7 +37,7 @@
 #include <vector>
 
 namespace fetch {
-namespace ml {
+namespace dmlf {
 namespace distributed_learning {
 
 template <typename DataType>
@@ -97,16 +97,9 @@ public:
 
   std::string GetId() const;
 
-  void ResetLossCnt()
-  {
-    train_loss_sum_ = static_cast<DataType>(0);
-    train_loss_cnt_ = 0;
-  }
+  void ResetLossCnt();
 
-  DataType GetLossAverage()
-  {
-    return train_loss_sum_ / static_cast<DataType>(train_loss_cnt_);
-  }
+  DataType GetLossAverage() const;
 
 protected:
   // Client id (identification name)
@@ -151,12 +144,10 @@ protected:
   SizeType update_counter_ = 0;
   SizeType max_updates_    = 0;
 
-  virtual VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients)
-  {
-    return new_gradients->GetGradients();
-  }
   // Print to console flag
   bool print_loss_;
+
+  virtual VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients);
 
   TimestampType GetTimestamp();
 
@@ -228,6 +219,19 @@ std::string TrainingClient<TensorType>::GetId() const
   return id_;
 }
 
+template <class TensorType>
+void TrainingClient<TensorType>::ResetLossCnt()
+{
+  train_loss_sum_ = static_cast<DataType>(0);
+  train_loss_cnt_ = 0;
+}
+
+template <class TensorType>
+typename TensorType::Type TrainingClient<TensorType>::GetLossAverage() const
+{
+  return train_loss_sum_ / static_cast<DataType>(train_loss_cnt_);
+}
+
 /**
  * Main loop that runs in thread
  */
@@ -251,8 +255,9 @@ void TrainingClient<TensorType>::Run()
 
     if (lossfile)
     {
-      lossfile << utilities::GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
-               << static_cast<double>(test_loss_) << "\n";
+      lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
+               << static_cast<double>(train_loss_) << ", " << static_cast<double>(test_loss_)
+               << "\n";
     }
 
     if (print_loss_)
@@ -269,7 +274,7 @@ void TrainingClient<TensorType>::Run()
 
   if (lossfile)
   {
-    lossfile << utilities::GetStrTimestamp() << ", "
+    lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
              << "STOPPED"
              << "\n";
     lossfile.close();
@@ -375,7 +380,7 @@ template <class TensorType>
 std::shared_ptr<fetch::dmlf::Update<TensorType>> TrainingClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(model_mutex_);
-  return std::make_shared<GradientType>(g_ptr_->GetGradients(), byte_array::ConstByteArray());
+  return std::make_shared<GradientType>(g_ptr_->GetGradients());
 }
 
 /**
@@ -400,11 +405,18 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
   auto weights_it = new_weights.cbegin();
   for (auto &trainable_lookup : g_ptr_->trainable_lookup_)
   {
-    auto trainable_ptr =
-        std::dynamic_pointer_cast<ops::Trainable<TensorType>>((trainable_lookup.second)->GetOp());
+    auto trainable_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<TensorType>>(
+        (trainable_lookup.second)->GetOp());
     trainable_ptr->SetWeights(*weights_it);
     ++weights_it;
   }
+}
+
+template <class TensorType>
+std::vector<TensorType> TrainingClient<TensorType>::TranslateGradients(
+    std::shared_ptr<GradientType> &new_gradients)
+{
+  return new_gradients->GetGradients();
 }
 
 // Timestamp for gradient queue
@@ -468,7 +480,7 @@ void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr
   auto grad_it = gradients.begin();
   for (auto &trainable : g_ptr->GetTrainables())
   {
-    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>(trainable);
+    auto weights_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(trainable);
     weights_ptr->AddToGradient(*grad_it);
     ++grad_it;
   }
@@ -481,5 +493,5 @@ std::shared_ptr<fetch::ml::Graph<TensorType>> TrainingClient<TensorType>::GetMod
 }
 
 }  // namespace distributed_learning
-}  // namespace ml
+}  // namespace dmlf
 }  // namespace fetch

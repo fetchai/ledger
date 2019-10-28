@@ -17,35 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/digest.hpp"
-#include "ledger/chaincode/contract.hpp"
+#include "vm/address.hpp"
+#include "vm/module.hpp"
 
 namespace fetch {
-namespace chain {
-
-class Address;
-
-}  // namespace chain
+namespace vm_modules {
 namespace ledger {
 
-class Identifier;
-
-class SmartContractManager : public Contract
+template <typename Contract>
+void BindTransferFunction(vm::Module &module, Contract const &contract)
 {
-public:
-  static constexpr char const *NAME = "fetch.contract";
+  module.CreateFreeFunction(
+      "transfer",
+      [&contract](vm::VM *, vm::Ptr<vm::Address> const &target, uint64_t amount) -> bool {
+        decltype(auto) c = contract.context();
 
-  static storage::ResourceAddress CreateAddressForContract(Digest const &digest);
+        c.token_contract->Attach(c);
+        c.state_adapter->PushContext("fetch.token");
 
-  SmartContractManager();
-  ~SmartContractManager() override = default;
+        auto const success = c.token_contract->SubtractTokens(c.contract_address, amount) &&
+                             c.token_contract->AddTokens(target->address(), amount);
 
-private:
-  /// @name Transaction Handlers
-  /// @{
-  Result OnCreate(chain::Transaction const &tx);
-  /// @}
-};
+        c.state_adapter->PopContext();
+        c.token_contract->Detach();
+
+        return success;
+      });
+}
 
 }  // namespace ledger
+}  // namespace vm_modules
 }  // namespace fetch

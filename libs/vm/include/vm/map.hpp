@@ -197,8 +197,8 @@ struct Map : public IMap
   bool DeserializeFrom(MsgPackSerializer &buffer) override
   {
     TypeInfo const &type_info     = vm_->GetTypeInfo(GetTypeId());
-    TypeId const    key_type_id   = type_info.parameter_type_ids[0];
-    TypeId const    value_type_id = type_info.parameter_type_ids[1];
+    TypeId const    key_type_id   = type_info.template_parameter_type_ids[0];
+    TypeId const    value_type_id = type_info.template_parameter_type_ids[1];
     uint64_t        size;
     std::string     type_name;
     buffer >> type_name >> size;
@@ -412,8 +412,8 @@ inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId 
 inline Ptr<IMap> IMap::Constructor(VM *vm, TypeId type_id)
 {
   TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
-  TypeId const    key_type_id   = type_info.parameter_type_ids[0];
-  TypeId const    value_type_id = type_info.parameter_type_ids[1];
+  TypeId const    key_type_id   = type_info.template_parameter_type_ids[0];
+  TypeId const    value_type_id = type_info.template_parameter_type_ids[1];
   return outer(key_type_id, value_type_id, vm, type_id);
 }
 

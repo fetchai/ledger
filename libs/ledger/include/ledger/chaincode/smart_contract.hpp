@@ -67,13 +67,12 @@ private:
   using ModulePtr = std::shared_ptr<vm::Module>;
 
   // Transaction /
-  Result InvokeAction(std::string const &name, chain::Transaction const &tx, BlockIndex index);
+  Result InvokeAction(std::string const &name, chain::Transaction const &tx);
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
-  Result InvokeInit(chain::Address const &owner, chain::Transaction const &tx, BlockIndex index);
+  Result InvokeInit(chain::Address const &owner, chain::Transaction const &tx);
 
-  BlockIndex                     block_index_{};  ///< The index current contract's block
-  std::string                    source_;         ///< The source of the current contract
-  ConstByteArray                 digest_;         ///< The digest of the current contract
+  std::string                    source_;      ///< The source of the current contract
+  ConstByteArray                 digest_;      ///< The digest of the current contract
   ExecutablePtr                  executable_;  ///< The internal script object of the parsed source
   ModulePtr                      module_;      ///< The internal module instance for the contract
   std::string                    init_fn_name_;
