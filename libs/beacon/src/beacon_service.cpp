@@ -284,7 +284,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   SignatureInformation ret;
 
   // Block for up to half a second waiting for the promise to resolve
-  if(!timer_to_proceed_.HasExpired() && !sig_share_promise_->IsSuccessful())
+  if (!timer_to_proceed_.HasExpired() && !sig_share_promise_->IsSuccessful())
   {
     return State::VERIFY_SIGNATURES;
   }

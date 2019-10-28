@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/event_manager.hpp"
 #include "bloom_filter/bloom_filter.hpp"
 #include "constellation/constellation.hpp"
 #include "constellation/health_check_http_module.hpp"
@@ -27,6 +30,7 @@
 #include "http/middleware/telemetry.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
@@ -34,6 +38,8 @@
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
+#include "ledger/upow/synergetic_execution_manager.hpp"
+#include "ledger/upow/synergetic_executor.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
@@ -41,10 +47,6 @@
 #include "network/uri.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
-
-#include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/event_manager.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -301,7 +303,12 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        cfg_.num_lanes(),
                        cfg_.num_slices,
                        cfg_.block_difficulty,
-                       consensus_}
+                       consensus_,
+                       std::make_unique<ledger::SynergeticExecutionManager>(
+                           dag_, 1u,
+                           [this]() {
+                             return std::make_shared<ledger::SynergeticExecutor>(*storage_);
+                           })}
   , main_chain_service_{std::make_shared<MainChainRpcService>(muddle_->GetEndpoint(), chain_,
                                                               trust_, cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}

@@ -23,6 +23,7 @@
 #include "core/service_ids.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "logging/logging.hpp"
 #include "muddle/packet.hpp"

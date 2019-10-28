@@ -174,7 +174,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   if (counts.pending > 0)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still waiting for ", counts.pending,
-                   " object count promises...");
+                    " object count promises...");
 
     if (!promise_wait_timeout_.IsDue())
     {
