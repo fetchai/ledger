@@ -174,11 +174,11 @@ protected:
   QualComplaintsManager   qual_complaints_manager_;
 
   // Counters for types of messages received
-  std::set<MuddleAddress>                               shares_received_;
-  std::set<MuddleAddress>                               coefficients_received_;
-  std::set<MuddleAddress>                               qual_coefficients_received_;
-  std::map<MuddleAddress, SharesExposedMap>             reconstruction_shares_received_;
-  std::map<MuddleAddress, const NotarisationKeyMessage> notarisation_keys_received_;
+  std::set<MuddleAddress>                   shares_received_;
+  std::set<MuddleAddress>                   coefficients_received_;
+  std::set<MuddleAddress>                   qual_coefficients_received_;
+  std::map<MuddleAddress, SharesExposedMap> reconstruction_shares_received_;
+  std::set<MuddleAddress>                   valid_dkg_members_;
 
   /// @name Methods to send messages
   /// @{
@@ -213,6 +213,7 @@ protected:
   SharedAeonExecutionUnit                                    beacon_;
   SharedNotarisationManager                                  notarisation_manager_;
   std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
+  std::map<MuddleAddress, const NotarisationKeyMessage>      notarisation_key_msgs_;
 
   std::map<MuddleAddress, ConstByteArray> final_state_payload_;
 

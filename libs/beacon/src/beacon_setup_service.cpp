@@ -193,7 +193,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   coefficients_received_.clear();
   qual_coefficients_received_.clear();
   reconstruction_shares_received_.clear();
-  notarisation_keys_received_.clear();
+  valid_dkg_members_.clear();
+  notarisation_key_msgs_.clear();
   complaints_manager_.ResetCabinet(identity_.identifier(),
                                    beacon_->manager.polynomial_degree() + 1);
   complaint_answers_manager_.ResetCabinet();
@@ -407,12 +408,10 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
       SetTimeToProceed(State::WAIT_FOR_NOTARISATION_KEYS);
       return State::WAIT_FOR_NOTARISATION_KEYS;
     }
-    else
-    {
-      BroadcastShares();
-      SetTimeToProceed(State::WAIT_FOR_SHARES);
-      return State::WAIT_FOR_SHARES;
-    }
+    valid_dkg_members_ = beacon_->aeon.members;
+    BroadcastShares();
+    SetTimeToProceed(State::WAIT_FOR_SHARES);
+    return State::WAIT_FOR_SHARES;
   }
 
   if (!condition_to_proceed_)
@@ -432,7 +431,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
   FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_NOTARISATION_KEYS));
 
-  if (!condition_to_proceed_ && notarisation_keys_received_.size() == beacon_->aeon.members.size())
+  if (!condition_to_proceed_ && valid_dkg_members_.size() == beacon_->aeon.members.size())
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
@@ -442,7 +441,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
 
   if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
-    if (notarisation_keys_received_.size() >= PreDKGThreshold())
+    if (valid_dkg_members_.size() >= PreDKGThreshold())
     {
       BroadcastShares();
       SetTimeToProceed(State::WAIT_FOR_SHARES);
@@ -450,8 +449,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
     }
 
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                   " failed to receive all notarisations keys ", notarisation_keys_received_.size(),
-                   " of ", beacon_->aeon.members.size());
+                   " failed to receive all notarisations keys ", valid_dkg_members_.size(), " of ",
+                   beacon_->aeon.members.size());
 
     SetTimeToProceed(State::RESET);
     beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
@@ -472,8 +471,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
   FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_SHARES));
 
-  auto intersection = (coefficients_received_ & shares_received_);
-  if (!condition_to_proceed_ && intersection.size() == beacon_->aeon.members.size() - 1)
+  auto intersection = (coefficients_received_ & shares_received_ & valid_dkg_members_);
+  if (!condition_to_proceed_ && intersection.size() == valid_dkg_members_.size() - 1)
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
@@ -497,8 +496,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
   FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_COMPLAINTS));
 
-  if (!condition_to_proceed_ &&
-      complaints_manager_.NumComplaintsReceived() == beacon_->aeon.members.size() - 1)
+  if (!condition_to_proceed_ && complaints_manager_.NumComplaintsReceived(valid_dkg_members_) ==
+                                    valid_dkg_members_.size() - 1)
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
@@ -508,7 +507,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 
   if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
-    complaints_manager_.Finish(beacon_->aeon.members);
+    complaints_manager_.Finish(valid_dkg_members_);
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " complaints size ",
                     complaints_manager_.Complaints().size());
@@ -528,8 +527,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
   FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS));
 
-  if (!condition_to_proceed_ &&
-      complaint_answers_manager_.NumComplaintAnswersReceived() == beacon_->aeon.members.size() - 1)
+  if (!condition_to_proceed_ && complaint_answers_manager_.NumComplaintAnswersReceived(
+                                    valid_dkg_members_) == valid_dkg_members_.size() - 1)
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
@@ -539,7 +538,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 
   if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
-    complaint_answers_manager_.Finish(beacon_->aeon.members, identity_.identifier());
+    complaint_answers_manager_.Finish(valid_dkg_members_, identity_.identifier());
     CheckComplaintAnswers();
     if (BuildQual())
     {
@@ -809,8 +808,8 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
     std::map<MuddleAddress, NotarisationManager::PublicKey> qual_notarisation_keys;
     for (auto const &member : beacon_->manager.qual())
     {
-      assert(notarisation_keys_received_.find(member) != notarisation_keys_received_.end());
-      auto notarisation_msg = notarisation_keys_received_.at(member);
+      assert(notarisation_key_msgs_.find(member) != notarisation_key_msgs_.end());
+      auto notarisation_msg = notarisation_key_msgs_.at(member);
       beacon_->block_entropy.member_details.insert(
           {member, std::make_pair(notarisation_msg.PublicKey(), notarisation_msg.Signature())});
       NotarisationManager::PublicKey notarisation_key;
@@ -864,7 +863,8 @@ void BeaconSetupService::BroadcastNotarisationKeys()
   // Insert own signed notarisation key into entropy cabinet details
   auto notarisation_msg =
       NotarisationKeyMessage{std::make_pair(notarisation_public_key.getStr(), signature)};
-  notarisation_keys_received_.insert({certificate_->identity().identifier(), notarisation_msg});
+  notarisation_key_msgs_.insert({certificate_->identity().identifier(), notarisation_msg});
+  valid_dkg_members_.insert(certificate_->identity().identifier());
   SendBroadcast(DKGEnvelope{notarisation_msg});
 }
 
@@ -877,7 +877,7 @@ void BeaconSetupService::BroadcastShares()
   beacon_->manager.GenerateCoefficients();
   SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
                                                 beacon_->manager.GetCoefficients()}});
-  for (auto &cab_i : beacon_->aeon.members)
+  for (auto &cab_i : valid_dkg_members_)
   {
     if (cab_i == identity_.identifier())
     {
@@ -905,10 +905,10 @@ void BeaconSetupService::BroadcastShares()
  */
 void BeaconSetupService::BroadcastComplaints()
 {
-  std::unordered_set<MuddleAddress> complaints_local;
+  std::set<MuddleAddress> complaints_local;
 
   // Add nodes who did not send both coefficients and shares to complaints
-  for (auto const &member : beacon_->aeon.members)
+  for (auto const &member : valid_dkg_members_)
   {
     if (member == identity_.identifier())
     {
@@ -922,8 +922,8 @@ void BeaconSetupService::BroadcastComplaints()
   }
 
   // Add nodes whos coefficients and shares failed verification to complaints
-  auto verification_fail =
-      beacon_->manager.ComputeComplaints(coefficients_received_ & shares_received_);
+  auto verification_fail = beacon_->manager.ComputeComplaints(
+      coefficients_received_ & shares_received_ & valid_dkg_members_);
   complaints_local.insert(verification_fail.begin(), verification_fail.end());
 
   for (auto const &cab : complaints_local)
@@ -1283,8 +1283,8 @@ void BeaconSetupService::OnReconstructionShares(SharesMessage const &shares_msg,
 void BeaconSetupService::OnNotarisationKey(NotarisationKeyMessage const &key_msg,
                                            MuddleAddress const &         from)
 {
-  auto iter = notarisation_keys_received_.find(from);
-  if (iter == notarisation_keys_received_.end() &&
+  auto iter = valid_dkg_members_.find(from);
+  if (iter == valid_dkg_members_.end() &&
       crypto::Verifier::Verify(Identity(from), key_msg.PublicKey(), key_msg.Signature()))
   {
     // Check the notarisation key deserialises correctly
@@ -1294,7 +1294,8 @@ void BeaconSetupService::OnNotarisationKey(NotarisationKeyMessage const &key_msg
     notarisation_key.setStr(&check, std::string(key_msg.PublicKey()).data());
     if (check)
     {
-      notarisation_keys_received_.insert({from, key_msg});
+      notarisation_key_msgs_.insert({from, key_msg});
+      valid_dkg_members_.insert(from);
     }
   }
 }
@@ -1312,7 +1313,8 @@ void BeaconSetupService::CheckComplaintAnswers()
   auto answer_messages = complaint_answers_manager_.ComplaintAnswersReceived();
   for (auto const &sender_answers : answer_messages)
   {
-    MuddleAddress                     from = sender_answers.first;
+    MuddleAddress from = sender_answers.first;
+    assert(valid_dkg_members_.find(from) != valid_dkg_members_.end());
     std::unordered_set<MuddleAddress> answered_complaints;
     for (auto const &share : sender_answers.second)
     {
@@ -1345,14 +1347,15 @@ void BeaconSetupService::CheckComplaintAnswers()
  */
 bool BeaconSetupService::BuildQual()
 {
-  // Create set of muddle addresses
-  std::set<MuddleAddress> cabinet;
-  for (auto &member : beacon_->aeon.members)
-  {
-    cabinet.insert(member);
-  }
-  beacon_->manager.SetQual(complaint_answers_manager_.BuildQual(cabinet));
+  beacon_->manager.SetQual(complaint_answers_manager_.BuildQual(valid_dkg_members_));
   std::set<MuddleAddress> qual = beacon_->manager.qual();
+
+  // Check there are no members in qual that are not in valid_dkg_members
+  std::set<MuddleAddress> diff;
+  std::set_difference(qual.begin(), qual.end(), valid_dkg_members_.begin(),
+                      valid_dkg_members_.end(), std::inserter(diff, diff.begin()));
+  assert(diff.empty());
+
   if (qual.find(identity_.identifier()) == qual.end())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),

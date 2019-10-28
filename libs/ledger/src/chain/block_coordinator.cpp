@@ -506,7 +506,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
       return State::SYNCHRONISED;
     }
 
-    // TODO(JMW): Should this be here? Overwrites what is set by consensus_
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = mining_address_;

@@ -71,8 +71,7 @@ public:
   std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &owner);
   void AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
   void AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
-  std::unordered_set<MuddleAddress> ComputeComplaints(
-      std::set<MuddleAddress> const &coeff_received);
+  std::set<MuddleAddress> ComputeComplaints(std::set<MuddleAddress> const &coeff_received);
   bool VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer);
   void ComputeSecretShare();
   std::vector<Coefficient> GetQualCoefficients();

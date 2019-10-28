@@ -446,7 +446,7 @@ PublicKey ComputeAggregatePublicKey(SignerRecord const &          signers,
   assert(signers.size() == cabinet_public_keys.size());
   for (size_t i = 0; i < cabinet_public_keys.size(); ++i)
   {
-    if (signers[i])
+    if (signers[i] == 1)
     {
       // Compute public_key_i ^ coefficient_i
       PublicKey modified_public_key;

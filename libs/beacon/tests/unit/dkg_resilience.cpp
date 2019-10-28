@@ -213,7 +213,7 @@ private:
 
   void BroadcastComplaints() override
   {
-    std::unordered_set<MuddleAddress> complaints_local =
+    std::set<MuddleAddress> complaints_local =
         beacon_->manager.ComputeComplaints(coefficients_received_);
     for (auto const &cab : complaints_local)
     {

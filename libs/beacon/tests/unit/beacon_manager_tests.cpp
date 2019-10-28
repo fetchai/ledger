@@ -155,7 +155,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   coeff_received.insert(malicious);
   auto complaints = beacon_managers[0]->ComputeComplaints(coeff_received);
 
-  std::unordered_set<MuddleAddress> complaints_expected = {malicious};
+  std::set<MuddleAddress> complaints_expected = {malicious};
   EXPECT_EQ(complaints, complaints_expected);
 
   // Submit false complaints answer

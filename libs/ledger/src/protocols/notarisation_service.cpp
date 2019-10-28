@@ -376,6 +376,7 @@ void NotarisationService::NewAeonNotarisationUnit(
     SharedAeonNotarisationUnit const &notarisation_manager)
 {
   FETCH_LOCK(mutex_);
+  assert(notarisation_manager);
   aeon_notarisation_queue_.push_back(notarisation_manager);
   new_keys = true;
 }

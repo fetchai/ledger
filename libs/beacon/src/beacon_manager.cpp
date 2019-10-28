@@ -138,10 +138,10 @@ void BeaconManager::AddShares(MuddleAddress const &from, std::pair<Share, Share>
  *
  * @return Set of muddle addresses of nodes we complain against
  */
-std::unordered_set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaints(
+std::set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaints(
     std::set<MuddleAddress> const &coeff_received)
 {
-  std::unordered_set<MuddleAddress> complaints_local;
+  std::set<MuddleAddress> complaints_local;
   for (auto &cab : coeff_received)
   {
     CabinetIndex i = identity_to_index_[cab];

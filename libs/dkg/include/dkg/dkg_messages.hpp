@@ -205,7 +205,8 @@ public:
 
 class ComplaintsMessage : public DKGMessage
 {
-  std::unordered_set<CabinetId> complaints_;  ///< Cabinet members that you are complaining against
+  using ComplaintsList = std::set<CabinetId>;
+  ComplaintsList complaints_;  ///< Cabinet members that you are complaining against
 public:
   // Construction/Destruction
   explicit ComplaintsMessage(DKGSerializer &serialiser)
@@ -213,7 +214,7 @@ public:
   {
     serialiser >> complaints_;
   }
-  explicit ComplaintsMessage(std::unordered_set<CabinetId> complaints)
+  explicit ComplaintsMessage(ComplaintsList complaints)
     : DKGMessage{MessageType::COMPLAINT}
     , complaints_{std::move(complaints)}
   {}
@@ -228,7 +229,7 @@ public:
 
   /// @name Getter functions
   /// @{
-  std::unordered_set<CabinetId> const &complaints() const
+  ComplaintsList const &complaints() const
   {
     return complaints_;
   }
