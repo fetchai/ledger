@@ -57,12 +57,12 @@ public:
   ExecutionResult CopyState(Name const &srcName, Name const &newName) override;
   ExecutionResult DeleteState(Name const &stateName) override;
 
-  ExecutionResult Run(Name const &execName, Name const &stateName,
-                      std::string const &entrypoint, Params params) override;
+  ExecutionResult Run(Name const &execName, Name const &stateName, std::string const &entrypoint,
+                      Params params) override;
 
   // This is a test function for developing non-primitive type passing.
-  ExecutionResult RunSerialisedParameterPassing(Name const &execName, Name const &stateName, std::string const &entrypoint,
-                      Params params);
+  ExecutionResult RunSerialisedParameterPassing(Name const &execName, Name const &stateName,
+                                                std::string const &entrypoint, Params params);
 
 private:
   bool HasExecutable(std::string const &name) const;
