@@ -46,8 +46,8 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_0)
   gt.Reshape({3, 4});
 
   SizeType depth     = 3;
-  DataType on_value  = DataType{5.0f};
-  DataType off_value = DataType{-1.0f};
+  auto     on_value  = DataType{5.0f};
+  auto     off_value = DataType{-1.0f};
 
   ArrayType ret = OneHot(data, depth, 0, on_value, off_value);
 
@@ -67,8 +67,8 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_1)
   gt.Reshape({3, 4});
 
   SizeType depth     = 3;
-  DataType on_value  = DataType{5.0f};
-  DataType off_value = DataType{-1.0f};
+  auto     on_value  = DataType{5.0f};
+  auto     off_value = DataType{-1.0f};
 
   ArrayType ret = OneHot(data, depth, 1, on_value, off_value);
 
@@ -88,8 +88,8 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_3)
   gt.Reshape({2, 2, 1, 3});
 
   SizeType depth     = 3;
-  DataType on_value  = DataType{5.0f};
-  DataType off_value = DataType{-1.0f};
+  auto     on_value  = DataType{5.0f};
+  auto     off_value = DataType{-1.0f};
 
   ArrayType ret = OneHot(data, depth, 3, on_value, off_value);
 
