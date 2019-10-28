@@ -211,11 +211,11 @@ void Analyser::CreateTemplateType(std::string const &name, TypeIndex type_index,
 }
 
 void Analyser::CreateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
-                                       TypeIndexArray const &parameter_type_index_array)
+                                       TypeIndexArray const &template_parameter_type_index_array)
 {
   TypePtr type;
   CreateInstantiationType(type_index, GetType(template_type_index),
-                          GetTypes(parameter_type_index_array), TypeIds::Unknown, type);
+                          GetTypes(template_parameter_type_index_array), TypeIds::Unknown, type);
 }
 
 void Analyser::CreateFreeFunction(std::string const &   name,
@@ -2361,7 +2361,7 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
     {
       return nullptr;
     }
-    TypePtrArray parameter_types;
+    TypePtrArray template_parameter_types;
     for (std::size_t i = 1; i <= num_expected_parameter_types; ++i)
     {
       ExpressionNodePtr parameter_type_node = ConvertToExpressionNodePtr(node->children[i]);
@@ -2377,10 +2377,10 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
       }
       // Need to check here that parameter_type does in fact support any operator(s)
       // required by the template_type's i'th type parameter...
-      parameter_types.push_back(std::move(parameter_type));
+      template_parameter_types.push_back(std::move(parameter_type));
     }
     TypePtr type = InternalCreateInstantiationType(TypeKind::UserDefinedInstantiation,
-                                                   template_type, parameter_types);
+                                                   template_type, template_parameter_types);
     root_->symbols->Add(type);
     return type;
   }
@@ -2476,7 +2476,7 @@ void Analyser::CreatePrimitiveType(std::string const &type_name, TypeIndex type_
   }
   type = CreateType(TypeKind::Primitive, type_name);
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Primitive, type_name, TypeIds::Unknown, {}), type_id, type);
+  AddTypeInfo(TypeKind::Primitive, type_name, type_id, TypeIds::Unknown, {}, type);
   registered_types_.Add(type_index, type->id);
   if (add_to_symbol_table)
   {
@@ -2494,7 +2494,7 @@ void Analyser::CreateMetaType(std::string const &type_name, TypeIndex type_index
   }
   type = CreateType(TypeKind::Meta, type_name);
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Meta, type_name, TypeIds::Unknown, {}), type_id, type);
+  AddTypeInfo(TypeKind::Meta, type_name, type_id, TypeIds::Unknown, {}, type);
   registered_types_.Add(type_index, type->id);
 }
 
@@ -2509,7 +2509,7 @@ void Analyser::CreateClassType(std::string const &type_name, TypeIndex type_inde
   type          = CreateType(TypeKind::Class, type_name);
   type->symbols = CreateSymbolTable();
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Class, type_name, TypeIds::Unknown, {}), type_id, type);
+  AddTypeInfo(TypeKind::Class, type_name, type_id, TypeIds::Unknown, {}, type);
   registered_types_.Add(type_index, type->id);
   symbols_->Add(type);
 }
@@ -2526,29 +2526,30 @@ void Analyser::CreateTemplateType(std::string const &type_name, TypeIndex type_i
   type->symbols = CreateSymbolTable();
   type->types   = allowed_types;
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Template, type_name, TypeIds::Unknown, {}), type_id, type);
+  AddTypeInfo(TypeKind::Template, type_name, type_id, TypeIds::Unknown, {}, type);
   registered_types_.Add(type_index, type->id);
   symbols_->Add(type);
 }
 
 void Analyser::CreateInstantiationType(TypeIndex type_index, TypePtr const &template_type,
-                                       TypePtrArray const &parameter_types, TypeId type_id,
+                                       TypePtrArray const &template_parameter_types, TypeId type_id,
                                        TypePtr &type)
 {
-  type = InternalCreateInstantiationType(TypeKind::Instantiation, template_type, parameter_types);
+  type = InternalCreateInstantiationType(TypeKind::Instantiation, template_type,
+                                         template_parameter_types);
   if (CheckType(type->name, type_index))
   {
     // Already created
     return;
   }
-  TypeIdArray parameter_type_ids;
-  for (auto const &parameter_type : parameter_types)
+  TypeIdArray template_parameter_type_ids;
+  for (auto const &template_parameter_type : template_parameter_types)
   {
-    parameter_type_ids.push_back(parameter_type->id);
+    template_parameter_type_ids.push_back(template_parameter_type->id);
   }
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Instantiation, type->name, template_type->id, parameter_type_ids),
-              type_id, type);
+  AddTypeInfo(TypeKind::Instantiation, type->name, type_id, template_type->id,
+              template_parameter_type_ids, type);
   registered_types_.Add(type_index, type->id);
   symbols_->Add(type);
 }
@@ -2564,19 +2565,19 @@ void Analyser::CreateGroupType(std::string const &type_name, TypeIndex type_inde
   type        = CreateType(TypeKind::Group, type_name);
   type->types = allowed_types;
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Group, type_name, TypeIds::Unknown, {}), type_id, type);
+  AddTypeInfo(TypeKind::Group, type_name, type_id, TypeIds::Unknown, {}, type);
   registered_types_.Add(type_index, type->id);
 }
 
 TypePtr Analyser::InternalCreateInstantiationType(TypeKind type_kind, TypePtr const &template_type,
-                                                  TypePtrArray const &parameter_types)
+                                                  TypePtrArray const &template_parameter_types)
 {
   std::stringstream stream;
   stream << template_type->name + "<";
-  std::size_t const count = parameter_types.size();
+  std::size_t const count = template_parameter_types.size();
   for (std::size_t i = 0; i < count; ++i)
   {
-    stream << parameter_types[i]->name;
+    stream << template_parameter_types[i]->name;
     if (i + 1 < count)
     {
       stream << ",";
@@ -2586,7 +2587,7 @@ TypePtr Analyser::InternalCreateInstantiationType(TypeKind type_kind, TypePtr co
   std::string name    = stream.str();
   TypePtr     type    = CreateType(type_kind, name);
   type->template_type = template_type;
-  type->types         = parameter_types;
+  type->types         = template_parameter_types;
   return type;
 }
 
@@ -2699,17 +2700,21 @@ void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &inpu
   function_map_.Add(s_unique_id, sf);
 }
 
-void Analyser::AddTypeInfo(TypeInfo const &info, TypeId type_id, TypePtr const &type)
+void Analyser::AddTypeInfo(TypeKind type_kind, std::string const &type_name, TypeId type_id,
+                           TypeId template_type_id, TypeIdArray const &template_parameter_type_ids,
+                           TypePtr const &type)
 {
   TypeId id;
   if (type_id == TypeIds::Unknown)
   {
     id = TypeId(type_info_array_.size());
-    type_info_array_.push_back(info);
+    TypeInfo info(type_kind, type_name, id, template_type_id, template_parameter_type_ids);
+    type_info_array_.push_back(std::move(info));
   }
   else
   {
-    id                   = type_id;
+    id = type_id;
+    TypeInfo info(type_kind, type_name, id, template_type_id, template_parameter_type_ids);
     type_info_array_[id] = info;
   }
   type->id                   = id;
