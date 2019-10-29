@@ -27,7 +27,7 @@ class IKarmaPolicy
 public:
   static constexpr char const *LOGGING_NAME = "IKarmaPolicy";
 
-  IKarmaPolicy() = default;
+  IKarmaPolicy()          = default;
   virtual ~IKarmaPolicy() = default;
 
   virtual KarmaAccount GetAccount(const std::string &pubkey = "", const std::string &ip = "") = 0;
