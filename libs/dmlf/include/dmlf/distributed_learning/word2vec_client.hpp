@@ -116,7 +116,7 @@ void Word2VecClient<TensorType>::Test()
     // Lock model
     FETCH_LOCK(this->model_mutex_);
     fetch::ml::utilities::TestEmbeddings<TensorType>(
-        *this->model_ptr_->graph_ptr__, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1,
+        *this->model_ptr_->graph_ptr_, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1,
         tp_.word2, tp_.word3, tp_.k, tp_.analogies_test_file, false,
         "/tmp/w2v_client_" + this->id_);
   }
@@ -126,7 +126,7 @@ template <class TensorType>
 float Word2VecClient<TensorType>::ComputeAnalogyScore()
 {
   TensorType const &weights =
-      fetch::ml::utilities::GetEmbeddings(*this->model_ptr_->graph_ptr__, skipgram_);
+      fetch::ml::utilities::GetEmbeddings(*this->model_ptr_->graph_ptr_, skipgram_);
 
   return fetch::ml::utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights,
                                                  tp_.analogies_test_file)
@@ -140,7 +140,7 @@ template <class TensorType>
 std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(this->model_mutex_);
-  return std::make_shared<GradientType>(this->model_ptr_->graph_ptr__->GetGradients(),
+  return std::make_shared<GradientType>(this->model_ptr_->graph_ptr_->GetGradients(),
                                         w2v_data_loader_ptr_->GetVocabHash(),
                                         w2v_data_loader_ptr_->GetVocab()->GetReverseVocab());
 }
@@ -196,24 +196,24 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 {
   // set up the graph first
   auto graph_ptr                = std::make_shared<fetch::ml::Graph<TensorType>>();
-  this->model_ptr_->graph_ptr__ = graph_ptr.get();
+  this->model_ptr_->graph_ptr_ = graph_ptr.get();
 
   std::string input_name =
-      this->model_ptr_->graph_ptr__->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(
+      this->model_ptr_->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(
           "Input", {});
   std::string context_name =
-      this->model_ptr_->graph_ptr__->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(
+      this->model_ptr_->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(
           "Context", {});
   this->label_name_ =
-      this->model_ptr_->graph_ptr__->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(
+      this->model_ptr_->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(
           "Label", {});
   skipgram_ =
-      this->model_ptr_->graph_ptr__->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
+      this->model_ptr_->graph_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
           "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
           w2v_data_loader_ptr_->vocab_size());
 
   this->error_name_ =
-      this->model_ptr_->graph_ptr__->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
+      this->model_ptr_->graph_ptr_->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
           "Error", {skipgram_, this->label_name_});
 
   this->inputs_names_ = {input_name, context_name};
