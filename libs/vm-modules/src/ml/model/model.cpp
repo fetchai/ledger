@@ -283,7 +283,7 @@ typename VMModel::ModelPtrType &VMModel::GetModel()
 bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
   buffer << static_cast<uint8_t>(model_category_);
-  //  buffer << model_config_;
+  buffer << model_config_;
   buffer << *model_;
   return true;
 }
@@ -295,8 +295,8 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   buffer >> model_category_int;
   ModelCategory model_category = static_cast<ModelCategory>(model_category_int);
 
-  //  // deserialise the model config
-  //  buffer >> model_config_;
+  // deserialise the model config
+  buffer >> model_config_;
 
   // deserialise the model
   auto model_ptr = std::make_shared<fetch::ml::model::Model<TensorType>>();
@@ -331,14 +331,15 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   }
   }
 
+  // assign deserialised model category
   Ptr<fetch::vm::String> model_category_str_ptr;
   model_category_str_ptr->str = model_category_str;
   VMModel vm_model(this->vm_, this->type_id_, model_category_str_ptr);
-
-  // assign deserialised model category
   vm_model.model_category_ = model_category;
+
   // assign deserialised model config
-  //  vm_model.model_config_ = model_config;
+  vm_model.model_config_ = model_config;
+
   // assign deserialised model
   vm_model.GetModel() = model_ptr;
 
