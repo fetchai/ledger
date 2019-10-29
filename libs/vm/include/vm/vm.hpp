@@ -437,18 +437,52 @@ public:
   {
     return !error_.empty();
   }
+
+  void LoadExecutable(Executable *executable)
+  {
+    executable_                   = executable;
+    std::size_t const num_strings = executable_->strings.size();
+    strings_                      = std::vector<Ptr<String>>(num_strings);
+    for (std::size_t i = 0; i < num_strings; ++i)
+    {
+      std::string const &str = executable_->strings[i];
+      strings_[i]            = Ptr<String>(new String(this, str, true));
+    }
+
+    std::size_t const num_local_types = executable_->types.size();
+    for (std::size_t i = 0; i < num_local_types; ++i)
+    {
+      TypeInfo const &type_info = executable_->types[i];
+      type_info_array_.push_back(type_info);
+    }
+  }
+
+  void UnloadExecutable()
+  {
+    strings_.clear();
+
+    std::size_t const num_local_types = executable_->types.size();
+    for (std::size_t i = 0; i < num_local_types; ++i)
+    {
+      type_info_array_.pop_back();
+    }
+
+    executable_ = nullptr;
+  }
+
   TypeInfo const &GetTypeInfo(TypeId type_id) const
   {
     return type_info_array_[type_id];
   }
 
-  bool IsDefaultSerializeConstructable(TypeId type_id) const
+  bool IsDefaultSerializeConstructable(TypeId type_id)
   {
     TypeIndex idx = registered_types_.GetTypeIndex(type_id);
     auto      it  = deserialization_constructors_.find(idx);
 
     if (it == deserialization_constructors_.end())
     {
+
       TypeInfo tinfo = GetTypeInfo(type_id);
       if (tinfo.template_type_id == TypeIds::Unknown)
       {
@@ -457,8 +491,10 @@ public:
 
       idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
       it  = deserialization_constructors_.find(idx);
+
       return (it != deserialization_constructors_.end());
     }
+
     return true;
   }
 
@@ -486,7 +522,9 @@ public:
     }
 
     auto &constructor = it->second;
-    return constructor(this, type_id);
+    auto  ret         = constructor(this, type_id);
+
+    return ret;
   }
 
   template <typename T>

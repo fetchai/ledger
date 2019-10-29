@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "vectorise/platform.hpp"
 
 #include <type_traits>
@@ -68,6 +68,26 @@ void MsgPackSerializer::Resize(uint64_t const &size, ResizeParadigm const &resiz
     }
     break;
   };
+}
+
+MsgPackSerializer::ArrayConstructor MsgPackSerializer::NewArrayConstructor()
+{
+  return ArrayConstructor(*this);
+}
+
+MsgPackSerializer::ArrayDeserializer MsgPackSerializer::NewArrayDeserializer()
+{
+  return ArrayDeserializer(*this);
+}
+
+MsgPackSerializer::MapConstructor MsgPackSerializer::NewMapConstructor()
+{
+  return MapConstructor(*this);
+}
+
+MsgPackSerializer::MapDeserializer MsgPackSerializer::NewMapDeserializer()
+{
+  return MapDeserializer(*this);
 }
 
 void MsgPackSerializer::Reserve(uint64_t const &size, ResizeParadigm const &resize_paradigm,

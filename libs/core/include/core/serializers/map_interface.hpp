@@ -33,19 +33,20 @@ public:
     : serializer_{serializer}
     , size_{size}
   {}
-
-  template <typename V>
-  void Append(uint8_t key, V const &val)
-  {
-    ++pos_;
-    if (pos_ > size_)
+  /*
+    template <typename V>
+    void Append(uint8_t key, V const &val)
     {
-      throw SerializableException(
-          std::string("exceeded number of allocated elements in map serialization"));
+      ++pos_;
+      if (pos_ > size_)
+      {
+        throw SerializableException(
+            std::string("exceeded number of allocated elements in map serialization"));
+      }
+      serializer_ << key;
+      serializer_ << val;
     }
-    serializer_ << key;
-    serializer_ << val;
-  }
+  */
 
   template <typename V>
   void Append(char const *key, V const &val)
@@ -54,7 +55,7 @@ public:
   }
 
   template <typename K, typename V>
-  void Append(K const &key, V const &val)
+  void Append(K key, V const &val)
   {
     ++pos_;
     if (pos_ > size_)
@@ -64,6 +65,24 @@ public:
     }
     serializer_ << key;
     serializer_ << val;
+  }
+
+  bool AppendUsingFunction(std::function<bool(Driver &)> key_serialize,
+                           std::function<bool(Driver &)> value_serialize)
+  {
+    ++pos_;
+    if (pos_ > size_)
+    {
+      throw SerializableException(
+          std::string("exceded number of allocated elements in array serialization"));
+    }
+
+    if (!key_serialize(serializer_))
+    {
+      return false;
+    }
+
+    return value_serialize(serializer_);
   }
 
   Driver &serializer()
@@ -132,6 +151,29 @@ public:
           std::string("tried to deserialise more fields in map than there exists."));
     }
     serializer_ >> key >> value;
+  }
+
+  bool GetNextKeyPairUsingFunction(std::function<bool(Driver &)> key_deserialize,
+                                   std::function<bool(Driver &)> value_deserialize)
+  {
+    if (state_ != State::KEY_VALUE_NEXT)
+    {
+      throw SerializableException(std::string("Next entry is not a key-value pair."));
+    }
+
+    ++pos_;
+    if (pos_ > size_)
+    {
+      throw SerializableException(
+          std::string("tried to deserialise more fields in map than there exists."));
+    }
+
+    if (!key_deserialize(serializer_))
+    {
+      return false;
+    }
+
+    return value_deserialize(serializer_);
   }
 
   template <typename V>
