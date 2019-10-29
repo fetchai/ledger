@@ -56,4 +56,5 @@ def run(options):
     saved_address = contract.query(api, 'query_owner_address')
 
     assert str(Address(entity1)) == saved_address, \
-        'Expected owner address {} but found {}'.format(Address(entity1), saved_address)
+        'Expected owner address {} but found {}'.format(
+            Address(entity1), saved_address)
