@@ -53,7 +53,7 @@ using Params        = BasicVmEngine::Params;
 using fp64_t = fetch::fixed_point::fp64_t;
 using fp32_t = fetch::fixed_point::fp32_t;
 
-auto const helloWorld = R"(
+auto const return1 = R"(
 
 function main() : Int32
 
@@ -198,6 +198,13 @@ auto const AddFloatComplex = R"(
 
 function add(a : Float64, b : Float32) : Float64
   return a + toFloat64(b);
+endfunction
+
+)";
+auto const AddFloat32        = R"(
+
+function add(a : Float32, b : Float32) : Float32
+  return a + b;
 endfunction
 
 )";
@@ -596,51 +603,51 @@ endfunction
 
 }  // namespace
 
-TEST(BasicVmEngineDmlfTests, HelloWorld)
+TEST(BasicVmEngineDmlfTests, Return1)
 {
   BasicVmEngine engine;
 
-  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+  ExecutionResult createdProgram = engine.CreateExecutable("return1", {{"etch", return1}});
   EXPECT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.Run("helloWorld", "state", "main", Params{});
+  ExecutionResult result = engine.Run("return1", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
-TEST(BasicVmEngineDmlfTests, DoubleHelloWorld)
+TEST(BasicVmEngineDmlfTests, DoubleReturn1)
 {
   BasicVmEngine engine;
 
-  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+  ExecutionResult createdProgram = engine.CreateExecutable("return1", {{"etch", return1}});
   EXPECT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.Run("helloWorld", "state", "main", Params{});
+  ExecutionResult result = engine.Run("return1", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().As<int>(), 1);
 
-  result = engine.Run("helloWorld", "state", "main", Params{});
+  result = engine.Run("return1", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
-TEST(BasicVmEngineDmlfTests, repeated_HelloWorld)
+TEST(BasicVmEngineDmlfTests, repeated_Return1)
 {
   BasicVmEngine engine;
 
-  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+  ExecutionResult createdProgram = engine.CreateExecutable("return1", {{"etch", return1}});
   EXPECT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+  createdProgram = engine.CreateExecutable("return1", {{"etch", return1}});
   createdState   = engine.CreateState("state");
 
   EXPECT_FALSE(createdProgram.succeeded());
@@ -650,7 +657,7 @@ TEST(BasicVmEngineDmlfTests, repeated_HelloWorld)
   EXPECT_EQ(createdState.error().stage(), Stage::ENGINE);
   EXPECT_EQ(createdState.error().code(), Code::BAD_STATE);
 
-  ExecutionResult result = engine.Run("helloWorld", "state", "main", Params{});
+  ExecutionResult result = engine.Run("return1", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().As<int>(), 1);
 }
@@ -695,14 +702,14 @@ TEST(BasicVmEngineDmlfTests, Tick_2States)
 //{
 //
 //
-//  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+//  ExecutionResult createdProgram = engine.CreateExecutable("return1", {{"etch", return1}});
 //  EXPECT_TRUE(createdProgram.succeeded());
 //
 //
 //  ExecutionResult createdState = engine.CreateState("state");
 //  EXPECT_TRUE(createdState.succeeded());
 //
-//  ExecutionResult result = engine.Run("helloWorld",  "state", "main", Params{});
+//  ExecutionResult result = engine.Run("return1",  "state", "main", Params{});
 //  EXPECT_TRUE(result.succeeded());
 //
 //  //EXPECT_EQ(output.str(), "Hello world!!\n");
@@ -712,7 +719,7 @@ TEST(BasicVmEngineDmlfTests, Tick_2States)
 //{
 //  BasicVmEngine engine;
 //
-//  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+//  ExecutionResult createdProgram = engine.CreateExecutable("return1", {{"etch", return1}});
 //  EXPECT_TRUE(createdProgram.succeeded());
 //
 //  std::stringstream badOutput;
@@ -720,7 +727,7 @@ TEST(BasicVmEngineDmlfTests, Tick_2States)
 //  ExecutionResult createdState = engine.CreateState("state");
 //  EXPECT_TRUE(createdState.succeeded());
 //
-//  ExecutionResult result = engine.Run("helloWorld",  "state", "main", Params{});
+//  ExecutionResult result = engine.Run("return1",  "state", "main", Params{});
 //  EXPECT_TRUE(result.succeeded());
 //  EXPECT_EQ(result.output().As<int>(), 1);
 //}
@@ -1101,13 +1108,13 @@ TEST(BasicVmEngineDmlfTests, DeleteExecutable)
 {
   BasicVmEngine engine;
 
-  ExecutionResult createdProgram = engine.CreateExecutable("helloWorld", {{"etch", helloWorld}});
+  ExecutionResult createdProgram = engine.CreateExecutable("return1", {{"etch", return1}});
   EXPECT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.Run("helloWorld", "state", "main", Params{});
+  ExecutionResult result = engine.Run("return1", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().As<int>(), 1);
 
@@ -1115,13 +1122,13 @@ TEST(BasicVmEngineDmlfTests, DeleteExecutable)
   EXPECT_FALSE(deleteResult.succeeded());
   EXPECT_EQ(deleteResult.error().stage(), Stage::ENGINE);
   EXPECT_EQ(deleteResult.error().code(), Code::BAD_EXECUTABLE);
-  result = engine.Run("helloWorld", "state", "main", Params{});
+  result = engine.Run("return1", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().As<int>(), 1);
 
-  deleteResult = engine.DeleteExecutable("helloWorld");
+  deleteResult = engine.DeleteExecutable("return1");
   EXPECT_TRUE(deleteResult.succeeded());
-  result = engine.Run("helloWorld", "state", "main", Params{});
+  result = engine.Run("return1", "state", "main", Params{});
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
   EXPECT_EQ(result.error().code(), Code::BAD_EXECUTABLE);
@@ -1368,6 +1375,25 @@ TEST(BasicVmEngineDmlfTests, AddFloat)
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<float>(), 8.0, 0.001);
 }
+TEST(BasicVmEngineDmlfTests, AddFloat32)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloat32}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  float  a = 4.6f;
+  float  b = 3.5f;
+
+  ExecutionResult result =
+      engine.Run("add", "state", "add", Params{LedgerVariant(a), LedgerVariant(b)});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_NEAR(result.output().As<float>(), 8.1, 0.001);
+}
+
 TEST(BasicVmEngineDmlfTests, AddFloatComplex)
 {
   BasicVmEngine engine;
