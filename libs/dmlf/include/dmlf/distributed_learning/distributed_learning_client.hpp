@@ -129,6 +129,13 @@ protected:
 
   void ClearLossFile();
 
+protected:
+  fetch::ml::Graph<TensorType> &GetGraph();
+
+  void SetDataloader(fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &optimiser);
+
+  void SetOptimiser(fetch::ml::optimisers::Optimiser<TensorType> &optimiser);
+
 private:
   void GraphAddGradients(VectorTensorType const &gradients);
 };
@@ -161,6 +168,26 @@ void TrainingClient<TensorType>::ClearLossFile()
 {
   std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
+}
+
+template <typename TensorType>
+fetch::ml::Graph<TensorType> &GetGraph()
+{
+  return model_ptr_->graph_ptr_.get();
+}
+
+template <typename TensorType>
+void TrainingClient<TensorType>::SetDataloader(
+    fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &dataloader)
+{
+  model_ptr_->dataloader_ptr_.Reset(dataloader);
+}
+
+template <typename TensorType>
+void TrainingClient<TensorType>::SetOptimiser(
+    fetch::ml::optimisers::Optimiser<TensorType> &optimiser)
+{
+  model_ptr_->optimiser_ptr_.Reset(optimiser);
 }
 
 template <class TensorType>
