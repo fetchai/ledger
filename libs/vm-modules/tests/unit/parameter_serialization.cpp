@@ -123,13 +123,13 @@ function myFunction(arr: Array< Array< Float64 > >, msg: String, i: Int64, mymap
   var hello = mymap["hello"];
   assert(hello.count() == 2);
   assert(hello[2i64] == 3i64);
-  assert(hello[4i64] == 6i64);  
+  assert(hello[4i64] == 6i64);
 
   var world = mymap["world"];
   assert(world.count() == 3);
   assert(world[3i64] == 33i64);
-  assert(world[6i64] == 66i64);  
-  assert(world[9i64] == 99i64);  
+  assert(world[6i64] == 66i64);
+  assert(world[9i64] == 99i64);
 
 endfunction
   )";
