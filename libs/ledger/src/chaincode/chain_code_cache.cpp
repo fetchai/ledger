@@ -58,7 +58,7 @@ ChainCodeCache::ContractPtr ChainCodeCache::FindInCache(Identifier const &contra
 {
   ContractPtr contract;
 
-  // attempt to lookup the contract in the cache
+  // attempt to look up the contract in the cache
   auto it = cache_.find(contract_id.qualifier());
   if (it != cache_.end())
   {
