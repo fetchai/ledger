@@ -4,7 +4,7 @@
 # header only or static library.
 function (setup_library name)
 
-  # lookup the files for the library
+  # look up the files for the library
   file(GLOB_RECURSE headers include/*.hpp)
   file(GLOB_RECURSE srcs src/*.cpp)
   list(LENGTH headers headers_length)

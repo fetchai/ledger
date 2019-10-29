@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
+#include "dmlf/distributed_learning/utilities/distributed_learning_utilities.hpp"
+#include "dmlf/distributed_learning/utilities/mnist_client_utilities.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
@@ -36,50 +38,18 @@
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-using namespace fetch::ml::distributed_learning;
+using namespace fetch::dmlf::distributed_learning;
 
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
-std::shared_ptr<TrainingClient<TensorType>> MakeClient(
-    std::string const &id, ClientParams<DataType> &client_params, std::string const &images,
-    std::string const &labels, float test_set_ratio, std::shared_ptr<std::mutex> console_mutex_ptr)
-{
-  // Initialise model
-  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr =
-      std::make_shared<fetch::ml::Graph<TensorType>>();
-
-  client_params.inputs_names = {g_ptr->template AddNode<PlaceHolder<TensorType>>("Input", {})};
-  g_ptr->template AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
-  g_ptr->template AddNode<Relu<TensorType>>("Relu1", {"FC1"});
-  g_ptr->template AddNode<FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u, 10u);
-  g_ptr->template AddNode<Relu<TensorType>>("Relu2", {"FC2"});
-  g_ptr->template AddNode<FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 10u);
-  g_ptr->template AddNode<Softmax<TensorType>>("Softmax", {"FC3"});
-  client_params.label_name = g_ptr->template AddNode<PlaceHolder<TensorType>>("Label", {});
-  client_params.error_name =
-      g_ptr->template AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
-  g_ptr->Compile();
-
-  // Initialise DataLoader
-  std::shared_ptr<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>> dataloader_ptr =
-      std::make_shared<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>>(images, labels);
-  dataloader_ptr->SetTestRatio(test_set_ratio);
-  dataloader_ptr->SetRandomMode(true);
-  // Initialise Optimiser
-  std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> optimiser_ptr =
-      std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
-          std::shared_ptr<fetch::ml::Graph<TensorType>>(g_ptr), client_params.inputs_names,
-          client_params.label_name, client_params.error_name, client_params.learning_rate);
-
-  return std::make_shared<TrainingClient<TensorType>>(id, g_ptr, dataloader_ptr, optimiser_ptr,
-                                                      client_params, console_mutex_ptr);
-}
-
 int main(int ac, char **av)
 {
+  // This example will create multiple local distributed clients with simple classification neural
+  // net and learns how to predict hand written digits from MNIST dataset
+
   if (ac < 3)
   {
     std::cout << "Usage : " << av[0]
@@ -87,29 +57,43 @@ int main(int ac, char **av)
     return 1;
   }
 
+  /**
+   * Prepare configuration
+   */
+
   ClientParams<DataType> client_params;
 
-  SizeType number_of_clients                    = 10;
-  SizeType number_of_rounds                     = 10;
-  bool     synchronisation                      = false;
-  client_params.max_updates                     = 100;
-  SizeType number_of_peers                      = 3;
-  client_params.batch_size                      = 32;
-  client_params.learning_rate                   = static_cast<DataType>(.001f);
-  float                       test_set_ratio    = 0.03f;
-  std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
+  // Command line parameters
+  std::string images_filename = av[1];
+  std::string labels_filename = av[2];
 
-  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
+  // Distributed learning parameters:
+  SizeType number_of_clients  = 10;
+  SizeType number_of_rounds   = 10;
+  bool     synchronise        = false;
+  client_params.max_updates   = 100;  // Round ends after this number of batches
+  SizeType number_of_peers    = 3;
+  client_params.batch_size    = 32;
+  client_params.learning_rate = static_cast<DataType>(.001f);
+  float test_set_ratio        = 0.03f;
 
+  /**
+   * Prepare environment
+   */
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 
+  // Create console mutex
+  std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
+
   // Create networkers
+  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
     networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
   }
 
+  // Add peers to networkers and initialise shuffle algorithm
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     networkers[i]->AddPeers(networkers);
@@ -117,21 +101,27 @@ int main(int ac, char **av)
         networkers[i]->GetPeerCount(), number_of_peers));
   }
 
+  // Create training clients
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = MakeClient(std::to_string(i), client_params, av[1], av[2], test_set_ratio,
-                            console_mutex_ptr);
+    clients[i] = fetch::dmlf::distributed_learning::utilities::MakeMNISTClient<TensorType>(
+        std::to_string(i), client_params, images_filename, labels_filename, test_set_ratio,
+        console_mutex_ptr);
   }
 
+  // Give each client pointer to its networker
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
-    // Give each client pointer to coordinator
+    // Give each client pointer to its networker
     clients[i]->SetNetworker(networkers[i]);
   }
 
-  // Main loop
+  /**
+   * Main loop
+   */
+
   for (SizeType it{0}; it < number_of_rounds; ++it)
   {
     // Start all clients
@@ -148,36 +138,11 @@ int main(int ac, char **av)
       t.join();
     }
 
-    if (!synchronisation)
-    {
-      continue;
-    }
-
     // Synchronize weights by giving all clients average of all client's weights
-    VectorTensorType new_weights = clients[0]->GetWeights();
-
-    // Sum all weights
-    for (SizeType i{1}; i < number_of_clients; ++i)
+    if (synchronise)
     {
-      VectorTensorType other_weights = clients[i]->GetWeights();
-
-      for (SizeType j{0}; j < other_weights.size(); j++)
-      {
-        fetch::math::Add(new_weights.at(j), other_weights.at(j), new_weights.at(j));
-      }
-    }
-
-    // Divide weights by number of clients to calculate the average
-    for (SizeType j{0}; j < new_weights.size(); j++)
-    {
-      fetch::math::Divide(new_weights.at(j), static_cast<DataType>(number_of_clients),
-                          new_weights.at(j));
-    }
-
-    // Update models of all clients by average model
-    for (uint32_t i(0); i < number_of_clients; ++i)
-    {
-      clients[i]->SetWeights(new_weights);
+      std::cout << std::endl << "Synchronising weights" << std::endl;
+      fetch::dmlf::distributed_learning::utilities::SynchroniseWeights<TensorType>(clients);
     }
   }
 

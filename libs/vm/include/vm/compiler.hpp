@@ -51,9 +51,10 @@ private:
   }
 
   void CreateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
-                               TypeIndexArray const &parameter_type_index_array)
+                               TypeIndexArray const &template_parameter_type_index_array)
   {
-    analyser_.CreateInstantiationType(type_index, template_type_index, parameter_type_index_array);
+    analyser_.CreateInstantiationType(type_index, template_type_index,
+                                      template_parameter_type_index_array);
   }
 
   void CreateFreeFunction(std::string const &name, TypeIndexArray const &parameter_type_index_array,

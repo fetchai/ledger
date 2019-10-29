@@ -113,7 +113,7 @@ void NaiveSynergeticMiner::Mine()
   {
     if (DAGNode::DATA == node.type)
     {
-      // lookup the problem data
+      // look up the problem data
       auto &problem_data = problem_spaces[{node.contract_address, node.contract_digest}];
 
       problem_data.emplace_back(node.contents);
