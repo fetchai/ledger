@@ -44,8 +44,8 @@ class MtSearch : public IAddSearchPeer, public std::enable_shared_from_this<MtSe
 public:
   static constexpr char const *LOGGING_NAME = "MtSearch";
 
-  MtSearch()          = default;
-  virtual ~MtSearch() = default;
+  MtSearch()           = default;
+  ~MtSearch() override = default;
 
   bool configure(const std::string &config_file = "", const std::string &config_json = "");
   int  run();
