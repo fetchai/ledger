@@ -305,11 +305,19 @@ public:
           stack_[i].Assign(parameter, parameter.type_id);
         }
 
-        executable_ = &executable;
-        function_   = f;
+        if (executable_ != nullptr)
+        {
+          error = "Executable already loaded. Please unload first.";
+        }
+        else
+        {
+          LoadExecutable(&executable);
+          function_ = f;
 
-        // execute the function
-        success = Execute(error, output);
+          // execute the function
+          success = Execute(error, output);
+          UnloadExecutable();
+        }
       }
       else
       {
@@ -363,7 +371,7 @@ public:
   {
     if (output_devices_.find(name) == output_devices_.end())
     {
-      RuntimeError("output device " + name + " does not exist.");
+      RuntimeError("Output device " + name + " does not exist.");
       return std::cout;
     }
     return *output_devices_[name];
@@ -373,7 +381,7 @@ public:
   {
     if (input_devices_.find(name) == input_devices_.end())
     {
-      RuntimeError("input device " + name + " does not exist.");
+      RuntimeError("Input device " + name + " does not exist.");
       return std::cin;
     }
     return *input_devices_[name];
@@ -419,7 +427,7 @@ public:
   {
     if (output_devices_.find(name) != output_devices_.end())
     {
-      throw std::runtime_error("output device already exists.");
+      throw std::runtime_error("Output device already exists.");
     }
 
     output_devices_.insert({std::move(name), &device});
@@ -438,7 +446,7 @@ public:
     return !error_.empty();
   }
 
-  void LoadExecutable(Executable *executable)
+  void LoadExecutable(Executable const *executable)
   {
     executable_                   = executable;
     std::size_t const num_strings = executable_->strings.size();

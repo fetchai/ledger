@@ -33,20 +33,6 @@ public:
     : serializer_{serializer}
     , size_{size}
   {}
-  /*
-    template <typename V>
-    void Append(uint8_t key, V const &val)
-    {
-      ++pos_;
-      if (pos_ > size_)
-      {
-        throw SerializableException(
-            std::string("exceeded number of allocated elements in map serialization"));
-      }
-      serializer_ << key;
-      serializer_ << val;
-    }
-  */
 
   template <typename V>
   void Append(char const *key, V const &val)
