@@ -41,10 +41,10 @@ class MtCore
 public:
   static constexpr char const *LOGGING_NAME = "MtCore";
 
-  MtCore()                    = default;
+  MtCore()               = default;
   MtCore(MtCore const &) = delete;
-  MtCore(MtCore &&) = delete;
-  ~MtCore()                   = default;
+  MtCore(MtCore &&)      = delete;
+  ~MtCore()              = default;
 
   bool configure(const std::string &config_file = "", const std::string &config_json = "");
   int  run();
