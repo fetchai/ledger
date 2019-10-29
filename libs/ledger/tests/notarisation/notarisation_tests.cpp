@@ -188,7 +188,7 @@ TEST(notarisation, notarise_blocks)
 
   // Stake setup
   StakeSnapshot snapshot;
-  for (auto node : nodes)
+  for (auto const &node : nodes)
   {
     snapshot.UpdateStake(node->muddle_certificate->identity(), 10);
     node->consensus.SetCabinetSize(committee_size);
