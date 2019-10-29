@@ -73,6 +73,7 @@ public:
 
   void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
   void SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr);
+  void SetOptimiser(OptimiserPtrType optimiser_ptr);
 
   void     Train();
   void     Train(SizeType n_rounds);
@@ -191,6 +192,12 @@ template <typename TensorType>
 void Model<TensorType>::SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr)
 {
   dataloader_ptr_ = std::move(dataloader_ptr);
+}
+
+template <typename TensorType>
+void Model<TensorType>::SetOptimiser(OptimiserPtrType optimiser_ptr)
+{
+  optimiser_ptr = std::move(optimiser_ptr);
 }
 
 /**

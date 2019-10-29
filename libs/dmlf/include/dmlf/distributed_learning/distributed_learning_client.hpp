@@ -132,9 +132,11 @@ protected:
 protected:
   fetch::ml::Graph<TensorType> &GetGraph();
 
-  void SetDataloader(fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &optimiser);
+  template <typename DataLoaderType>
+  void SetDataloader(DataLoaderType &optimiser);
 
-  void SetOptimiser(fetch::ml::optimisers::Optimiser<TensorType> &optimiser);
+  template <typename OptimiserType>
+  void SetOptimiser(OptimiserType &optimiser);
 
 private:
   void GraphAddGradients(VectorTensorType const &gradients);
@@ -171,23 +173,23 @@ void TrainingClient<TensorType>::ClearLossFile()
 }
 
 template <typename TensorType>
-fetch::ml::Graph<TensorType> &GetGraph()
+fetch::ml::Graph<TensorType> &TrainingClient<TensorType>::GetGraph()
 {
-  return model_ptr_->graph_ptr_.get();
+  return *model_ptr_->graph_ptr_;
 }
 
 template <typename TensorType>
-void TrainingClient<TensorType>::SetDataloader(
-    fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &dataloader)
+template <typename DataLoaderType>
+void TrainingClient<TensorType>::SetDataloader(DataLoaderType &dataloader)
 {
-  model_ptr_->dataloader_ptr_.Reset(dataloader);
+  model_ptr_->SetDataloader(std::make_unique<DataLoaderType>(dataloader));
 }
 
 template <typename TensorType>
-void TrainingClient<TensorType>::SetOptimiser(
-    fetch::ml::optimisers::Optimiser<TensorType> &optimiser)
+template <typename OptimiserType>
+void TrainingClient<TensorType>::SetOptimiser(OptimiserType &optimiser)
 {
-  model_ptr_->optimiser_ptr_.Reset(optimiser);
+  model_ptr_->SetOptimiser(std::make_unique<OptimiserType>(optimiser));
 }
 
 template <class TensorType>

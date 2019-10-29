@@ -114,7 +114,7 @@ void Word2VecClient<TensorType>::Test()
     // Lock model
     FETCH_LOCK(this->model_mutex_);
 
-    auto graph = this->model_ptr->GetGraph();
+    auto graph = this->GetGraph();
 
     fetch::ml::utilities::TestEmbeddings<TensorType>(
         graph, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k,
@@ -125,8 +125,7 @@ void Word2VecClient<TensorType>::Test()
 template <class TensorType>
 float Word2VecClient<TensorType>::ComputeAnalogyScore()
 {
-  TensorType const &weights =
-      fetch::ml::utilities::GetEmbeddings(this->model_ptr_->GetGraph(), skipgram_);
+  TensorType const &weights = fetch::ml::utilities::GetEmbeddings(this->GetGraph(), skipgram_);
 
   return fetch::ml::utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights,
                                                  tp_.analogies_test_file)
@@ -140,7 +139,7 @@ template <class TensorType>
 std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(this->model_mutex_);
-  return std::make_shared<GradientType>(this->model_ptr_->GetGraph()->GetGradients(),
+  return std::make_shared<GradientType>(this->GetGraph().GetGradients(),
                                         w2v_data_loader_ptr_->GetVocabHash(),
                                         w2v_data_loader_ptr_->GetVocab()->GetReverseVocab());
 }
@@ -188,7 +187,7 @@ void Word2VecClient<TensorType>::PrepareDataLoader()
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
   w2v_data_loader_ptr_->BuildVocabAndData({tp_.data}, tp_.min_count);
 
-  this->model_ptr_->SetDataloader(w2v_data_loader_ptr_.get());
+  this->SetDataloader(*w2v_data_loader_ptr_);
 }
 
 template <class TensorType>
@@ -212,13 +211,14 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 
   this->inputs_names_ = {input_name, context_name};
 
-  auto model_graph = this->model_ptr_->GetGraph();
-  model_graph      = graph_ptr.get();
+  auto model_graph = this->GetGraph();
+  model_graph      = *graph_ptr;
 
   // Initialise Optimiser
-  this->model_ptr_->SetOptimiser(fetch::ml::optimisers::AdamOptimiser<TensorType>(
+  auto optimiser = fetch::ml::optimisers::AdamOptimiser<TensorType>(
       graph_ptr, this->inputs_names_, this->label_name_, this->error_name_,
-      tp_.learning_rate_param));
+      tp_.learning_rate_param);
+  this->SetOptimiser(optimiser);
 }
 
 template <class TensorType>
