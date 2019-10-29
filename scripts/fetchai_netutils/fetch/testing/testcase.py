@@ -11,10 +11,11 @@ from fetch.cluster.utils import output, verify_file
 
 from fetchai.ledger.crypto import Entity
 
+
 class TestCase(object):
     """
     """
-    
+
     def append_node(self, index, load_directory=None):
         pass
 
@@ -25,6 +26,9 @@ class TestCase(object):
         pass
 
     def restart_node(self, index):
+        pass
+
+    def setup_input_files(self):
         pass
 
     def run(self):
@@ -79,7 +83,7 @@ class DmlfEtchTestCase(TestCase):
 
         # Ensure that build/end_to_end_output_XXX/ exists for the test output
         os.makedirs(self._workspace, exist_ok=True)
-    
+
     def append_node(self, index, load_directory=None):
         # Create a folder for the node to write logs to etc.
         root = os.path.abspath(os.path.join(
@@ -97,8 +101,8 @@ class DmlfEtchTestCase(TestCase):
                 shutil.copy(load_from + f, root)
 
         port = self._port_start_range + (self._port_range * index)
-        key  = self._nodes_keys[index] 
-        pub  = self._nodes_pubkeys[index]
+        key = self._nodes_keys[index]
+        pub = self._nodes_pubkeys[index]
 
         # Create an instance of the constellation - note we don't clear path since
         # it should be clear unless load_directory is used
@@ -118,44 +122,18 @@ class DmlfEtchTestCase(TestCase):
 
     def setup_nodes_keys(self):
 
-        # Path to config files
-        expected_ouptut_dir = os.path.abspath(
-            os.path.dirname(self._yaml_file)+"/input_files")
-
-        # Create required files for this test
-        file_gen = os.path.abspath(
-            "./scripts/end_to_end_test/input_files/create-input-files.py")
-        verify_file(file_gen)
-        exit_code = subprocess.call([file_gen, str(self._number_of_nodes)])
-
-        infofile = expected_ouptut_dir+"/info.txt"
-
-        # Required files for this operation
-        verify_file(infofile)
-
-        # infofile specifies the address of each numbered key
-        all_lines_in_file = open(infofile, "r").readlines()
-
         # Give each node a unique identity
         for index in range(self._number_of_nodes):
-
-            node_key = all_lines_in_file[index].strip().split()[-1]
+            entity = Entity()
+            pub64 = entity.public_key
+            key64 = entity.private_key
 
             print('Setting up key for node {}...'.format(index))
-            print('Giving node the identity: {}'.format(node_key))
+            print('Giving node the identity: {}'.format(pub64))
+            self._nodes_pubkeys.append(pub64)
 
-            self._nodes_pubkeys.append(node_key)
-
-            key_path = expected_ouptut_dir+"/{}.key".format(index)
-            verify_file(key_path)
-            
-            with open(key_path, 'rb') as f:
-                key_b64 = Entity(f.read()).private_key
-                print('Giving node key: {}'.format(key_b64))
-                self._nodes_keys.append(key_b64)
-
-            # Copy the keyfile from its location to the node's cwd
-            #shutil.copy(key_path, node.root+"/p2p.key")
+            print('Giving node key: {}'.format(key64))
+            self._nodes_keys.append(key64)
 
     def connect_nodes(self, node_connections):
         for connect_from, connect_to in node_connections:
@@ -193,7 +171,7 @@ class DmlfEtchTestCase(TestCase):
     def run(self):
 
         # setup node keys
-        self.setup_nodes_keys() 
+        self.setup_nodes_keys()
 
         # build up all the node instances
         for index in range(self._number_of_nodes):
@@ -293,7 +271,6 @@ class ConstellationTestCase(TestCase):
 
         # Ensure that build/end_to_end_output_XXX/ exists for the test output
         os.makedirs(self._workspace, exist_ok=True)
-          
 
     def append_node(self, index, load_directory=None):
         # Create a folder for the node to write logs to etc.
@@ -498,4 +475,3 @@ class ConstellationTestCase(TestCase):
                     data = Path(node_log_path).read_bytes()
                     sys.stdout.buffer.write(data)
                     sys.stdout.flush()
-          

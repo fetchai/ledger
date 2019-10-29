@@ -1,6 +1,7 @@
 import os
 import sys
 
+
 def output(*args):
     text = ' '.join(map(str, args))
     if text != '':
@@ -13,6 +14,7 @@ def verify_file(filename):
     if not os.path.isfile(filename):
         output("Couldn't find expected file: {}".format(filename))
         sys.exit(1)
+
 
 def yaml_extract(test, key, expected=True, expect_type=None, default=None):
     """

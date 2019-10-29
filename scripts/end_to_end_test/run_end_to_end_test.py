@@ -78,24 +78,26 @@ class TimerWatchdog():
 
 
 def create_test(setup_conditions, build_directory, node_exe, yaml_file):
-    test_type = yaml_extract(setup_conditions, 'test_type', expected=False, expect_type=str)
-    
+    test_type = yaml_extract(
+        setup_conditions, 'test_type', expected=False, expect_type=str)
+
     # default case
     if test_type is None:
-       return ConstellationTestCase(build_directory, node_exe, yaml_file)
-    
+        return ConstellationTestCase(build_directory, node_exe, yaml_file)
+
     if test_type == "Constellation":
-       return ConstellationTestCase(build_directory, node_exe, yaml_file)
+        return ConstellationTestCase(build_directory, node_exe, yaml_file)
     elif test_type == "DmlfEtch":
-       return DmlfEtchTestCase(build_directory, node_exe, yaml_file)
+        return DmlfEtchTestCase(build_directory, node_exe, yaml_file)
     else:
-       raise ValueError("Unkown test type: {}".format(test_type))
+        raise ValueError("Unkown test type: {}".format(test_type))
 
 
 def setup_test(test_yaml, test_instance):
     output("Setting up test: {}".format(test_yaml))
 
-    test_name = yaml_extract(test_yaml, 'test_name', expected=True, expect_type=str)
+    test_name = yaml_extract(test_yaml, 'test_name',
+                             expected=True, expect_type=str)
     number_of_nodes = yaml_extract(
         test_yaml, 'number_of_nodes', expected=True, expect_type=int)
     node_load_directory = yaml_extract(
@@ -103,11 +105,11 @@ def setup_test(test_yaml, test_instance):
     node_connections = yaml_extract(
         test_yaml, 'node_connections', expected=False, expect_type=list)
     mining_nodes = yaml_extract(test_yaml, 'mining_nodes',
-                           expected=False, expect_type=list, default=[])
+                                expected=False, expect_type=list, default=[])
     max_test_time = yaml_extract(test_yaml, 'max_test_time',
-                            expected=False, expect_type=int, default=10)
+                                 expected=False, expect_type=int, default=10)
     pos_mode = yaml_extract(test_yaml, 'pos_mode', expected=False,
-                       expect_type=bool, default=False)
+                            expect_type=bool, default=False)
 
     test_instance._number_of_nodes = number_of_nodes
     test_instance._node_load_directory = node_load_directory
@@ -198,8 +200,9 @@ def send_txs(parameters, test_instance):
 def run_python_test(parameters, test_instance):
     host = parameters.get('host', 'localhost')
     port = parameters.get('port', test_instance._nodes[0]._port_start)
-    
-    sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), "../"))
+
+    sys.path.append(os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "../"))
     test_script = importlib.import_module(
         parameters['script'], 'end_to_end_test')
     test_script.run({
@@ -207,52 +210,60 @@ def run_python_test(parameters, test_instance):
         'port': port
     })
 
+
 def run_dmlf_etch_client(parameters, test_instance):
     indexes = parameters["nodes"]
+    client_exe = parameters["exe"]
+    etch_file = parameters["etch"]
+
     dmlf_etch_nodes = []
     for index in indexes:
-      dmlf_etch_nodes.append(test_instance._nodes[index])
-    
-    input_files_client = os.path.dirname(test_instance._node_exe)
+        dmlf_etch_nodes.append(test_instance._nodes[index])
+
+    build_directory = os.path.abspath(test_instance._build_directory)
 
     # get dmlf etch client executable
-    expected_client_dir = input_files_client
-    client_exe = expected_client_dir+"/example-dmlf-etch-client"
+    client_exe = os.path.abspath(os.path.join(build_directory, client_exe))
     verify_file(client_exe)
-    
+
     # get etch file
-    expected_etch_dir = input_files_client
-    etch_file = expected_etch_dir+"/main.etch"
-    #verify_file(etch_file)
+    etch_file = os.path.abspath(os.path.join(build_directory, etch_file))
+    verify_file(etch_file)
+
+    client_output_dir = os.path.abspath(
+        os.path.join(test_instance._workspace, "steps/"))
+    os.makedirs(client_output_dir, exist_ok=True)
 
     # generate config file
-    config_path = input_files_client+"/e2e_config_client.json"
+    config_path = os.path.join(client_output_dir, "e2e_config_client.json")
     nodes = [
-      {
-        "uri" : node.uri,
-        "pub" : node.public_key
-      }
-      for node in dmlf_etch_nodes
+        {
+            "uri": node.uri,
+            "pub": node.public_key
+        }
+        for node in dmlf_etch_nodes
     ]
 
     key = Entity()
     config = {
-      "client" : { 
-        "key" : key.private_key
-      },
-      "nodes" : nodes
+        "client": {
+            "key": key.private_key
+        },
+        "nodes": nodes
     }
-    
+
     with open(config_path, 'w') as f:
         json.dump(config, f)
-   
+
     # generate client command
     cmd = [client_exe, config_path, etch_file]
-    
+
     # run client
-    logfile_path = test_instance._build_directory+"/dmlf_etch_client.log"
+    logfile_path = os.path.join(client_output_dir, "dmlf_etch_client.log")
     logfile = open(logfile_path, 'w')
-    subprocess.check_call(cmd, cwd=test_instance._build_directory, stdout=logfile, stderr=subprocess.STDOUT)
+    subprocess.check_call(cmd, cwd=build_directory,
+                          stdout=logfile, stderr=subprocess.STDOUT)
+
 
 def verify_txs(parameters, test_instance):
     name = parameters["name"]
@@ -463,10 +474,10 @@ def run_test(build_directory, yaml_file, node_exe):
                 if "DISABLED" in description:
                     output("Skipping disabled test")
                     continue
-                
+
                 # Get test setup conditions
                 setup_conditions = yaml_extract(test, 'setup_conditions')
-                
+
                 # Create a test instance
                 test_instance = create_test(
                     setup_conditions, build_directory, node_exe, yaml_file)
