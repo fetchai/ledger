@@ -374,7 +374,7 @@ template <typename... Args>
 Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
 {
   TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
-  TypeId const    element_type_id = type_info.parameter_type_ids[0];
+  TypeId const    element_type_id = type_info.template_parameter_type_ids[0];
   switch (element_type_id)
   {
   case TypeIds::Bool:
