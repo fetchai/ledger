@@ -58,6 +58,7 @@
 #include "ml/ops/max_pool_2d.hpp"
 #include "ml/ops/maximum.hpp"
 #include "ml/ops/multiply.hpp"
+#include "ml/ops/one_hot.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/reduce_mean.hpp"
 #include "ml/ops/reshape.hpp"
@@ -438,6 +439,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case ops::Transpose<T>::OpCode():
   {
     op_ptr = GetOp<ops::Transpose<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::OneHot<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::OneHot<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;

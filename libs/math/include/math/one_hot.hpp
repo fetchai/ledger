@@ -95,11 +95,11 @@ ArrayType OneHot(ArrayType const &indices, typename ArrayType::SizeType depth, S
 {
   using SizeType = typename ArrayType::SizeType;
 
-  assert(axis <= indices.size());
+  assert(axis <= indices.shape().size());
 
   std::vector<SizeType> ret_shape = indices.shape();
 
-  if (axis == indices.size())
+  if (axis == indices.shape().size())
   {
     ret_shape.emplace_back(depth);
   }

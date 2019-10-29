@@ -105,6 +105,7 @@ enum class OpType : uint16_t
   OP_SWITCH,
   OP_TANH,
   OP_TRANSPOSE,
+  OP_ONE_HOT,
   OP_VARIABLE,
   OP_WEIGHTS,
   OP_SLICE,

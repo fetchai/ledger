@@ -706,5 +706,17 @@ struct OpTransposeSaveableParams : public OpsSaveableParams
   fetch::ml::OpType                  op_type = OpType::OP_TRANSPOSE;
 };
 
+template <typename TensorType>
+struct OpOneHotSaveableParams : public OpsSaveableParams
+{
+  using DataType = typename TensorType::Type;
+
+  fetch::math::SizeType depth;
+  fetch::math::SizeType axis;
+  DataType              on_value;
+  DataType              off_value;
+  fetch::ml::OpType     op_type = OpType::OP_ONE_HOT;
+};
+
 }  // namespace ml
 }  // namespace fetch
