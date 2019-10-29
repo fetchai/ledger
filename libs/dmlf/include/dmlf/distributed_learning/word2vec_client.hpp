@@ -115,6 +115,11 @@ void Word2VecClient<TensorType>::Test()
   {
     // Lock model
     FETCH_LOCK(this->model_mutex_);
+
+    // TODO - this is not friend of graph, dataloader etc.
+    // therefore either implement GetGraphPtr accessor in distributed client, or in model
+//    auto graph_ptr = this->GetGraphPtr();
+
     fetch::ml::utilities::TestEmbeddings<TensorType>(
         *this->model_ptr_->graph_ptr_, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1,
         tp_.word2, tp_.word3, tp_.k, tp_.analogies_test_file, false,
