@@ -297,7 +297,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     // create the cache and state sentinel (lock and unlock resources as well as sandbox)
     StateSentinelAdapter storage_adapter{*storage_cache_, contract_id, allowed_shards_};
 
-    // lookup or create the instance of the contract as is needed
+    // look up or create the instance of the contract as is needed
     auto const is_token_contract = (contract_id.full_name() == "fetch.token");
 
     auto contract = is_token_contract ? &token_contract_

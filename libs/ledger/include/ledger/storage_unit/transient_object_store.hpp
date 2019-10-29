@@ -469,7 +469,7 @@ bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
 }
 
 /**
- * Internal: Lookup an element from the cache
+ * Internal: Look up an element from the cache
  *
  * Note: Not thread safe. Always lock cache_mutex_ before
  * calling this function.
