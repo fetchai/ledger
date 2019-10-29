@@ -227,7 +227,7 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
   {
     std::unique_ptr<network::Uri> hint{};
 
-    // lookup the manifest for the desired address
+    // look up the manifest for the desired address
     if (manifest_cache_.QueryManifest(address, manifest))
     {
       // attempt to find the service entry

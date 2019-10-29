@@ -152,8 +152,8 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
   if (numParameters != params.size())
   {
     return EngineError(Error::Code::RUNTIME_ERROR,
-                       "Wrong number of parameters expected " + std::to_string(numParameters) +
-                           " recieved " + std::to_string(params.size()));
+                       "Wrong number of parameters: expected " + std::to_string(numParameters) +
+                           "; received " + std::to_string(params.size()));
   }
 
   fetch::vm::ParameterPack parameterPack(vm.registered_types());

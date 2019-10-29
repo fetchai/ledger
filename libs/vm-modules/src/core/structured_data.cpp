@@ -218,7 +218,7 @@ Ptr<String> StructuredData::GetString(Ptr<String> const &s)
     // check that the value exists
     if (!Has(s))
     {
-      vm_->RuntimeError("Unable to lookup item: " + s->str);
+      vm_->RuntimeError("Unable to look up item: " + s->str);
     }
     else
     {
@@ -244,7 +244,7 @@ T StructuredData::GetPrimitive(Ptr<String> const &s)
     // check that the value exists
     if (!Has(s))
     {
-      vm_->RuntimeError("Unable to lookup item: " + s->str);
+      vm_->RuntimeError("Unable to look up item: " + s->str);
     }
     else
     {
@@ -268,7 +268,7 @@ Ptr<Array<T>> StructuredData::GetArray(Ptr<String> const &s)
   {
     if (!Has(s))
     {
-      vm_->RuntimeError("Unable to lookup item: " + s->str);
+      vm_->RuntimeError("Unable to look up item: " + s->str);
     }
     else
     {
