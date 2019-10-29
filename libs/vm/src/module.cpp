@@ -256,13 +256,13 @@ Module::Module()
             auto ret = Ptr<Array<Ptr<Array<double>>>>(
                 new Array<Ptr<Array<double>>>(vm, outerid, innerid, 0));
 
-            for (std::size_t i = 0; i < arr.size(); ++i)
+            for (auto &element : arr)
             {
               auto a = Ptr<Array<double>>(new Array<double>(vm, vm->GetTypeId<Array<double>>(),
                                                             vm->GetTypeId<double>(), 0));
 
-              a->elements = arr[i];
-              ret->elements.push_back(a);
+              a->elements = element;
+              ret->elements.emplace_back(a);
             }
 
             return ret;

@@ -35,7 +35,7 @@
 
 #include <stdexcept>
 namespace {
-using fetch::byte_array::ConstByteArray;
+
 using namespace fetch::vm;
 using namespace fetch;
 using fetch::vm::ExecutionTask;
@@ -89,8 +89,6 @@ void CreateVMAndRunScript(std::string script, ExecutionTask const &task)
 
   // if there is any console output print it
   EXPECT_TRUE(success_exe) << error << std::endl;
-
-  return;
 }
 
 TEST(ParameterSerialization, NativeCPPTypes)
