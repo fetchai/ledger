@@ -136,7 +136,7 @@ Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous) const
   auto cabinet_ptr = cabinet_history_.find(last_snapshot);
   assert(cabinet_ptr != cabinet_history_.end());
 
-  Cabinet cabinet_copy = *cabinet_history_.at(last_snapshot);
+  Cabinet cabinet_copy = *(cabinet_ptr->second);
 
   DeterministicShuffle(cabinet_copy, previous.body.block_entropy.EntropyAsU64());
 

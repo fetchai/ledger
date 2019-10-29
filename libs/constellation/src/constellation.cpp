@@ -232,7 +232,7 @@ BeaconSetupServicePtr CreateBeaconSetupService(constellation::Constellation::Con
 
 BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const &cfg,
                                      MuddleInterface &muddle, CertificatePtr certificate,
-                                     BeaconSetupServicePtr beacon_setup)
+                                     BeaconSetupServicePtr const &beacon_setup)
 {
   BeaconServicePtr                         beacon{};
   beacon::EventManager::SharedEventManager event_manager = beacon::EventManager::New();

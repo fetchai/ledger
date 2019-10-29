@@ -23,7 +23,7 @@ namespace beacon {
 
 TrustedDealerSetupService::TrustedDealerSetupService(MuddleInterface &       muddle,
                                                      ManifestCacheInterface &manifest_cache,
-                                                     CertificatePtr          certificate)
+                                                     CertificatePtr const &  certificate)
   : BeaconSetupService{muddle, manifest_cache, certificate}
   , certificate_{certificate}
 {}
@@ -32,7 +32,7 @@ void TrustedDealerSetupService::StartNewCabinet(CabinetMemberList members, uint3
                                                 uint64_t round_start, uint64_t round_end,
                                                 uint64_t            start_time,
                                                 BlockEntropy const &prev_entropy,
-                                                const DkgOutput &   output)
+                                                DkgOutput const &   output)
 {
   auto diff_time =
       int64_t(GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))) -

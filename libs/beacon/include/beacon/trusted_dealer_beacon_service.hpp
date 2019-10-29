@@ -36,11 +36,11 @@ public:
   using CallbackFunction  = BeaconSetupService::CallbackFunction;
 
   TrustedDealerSetupService(MuddleInterface &muddle, ManifestCacheInterface &manifest_cache,
-                            CertificatePtr certificate);
+                            CertificatePtr const &certificate);
 
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
                        uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy,
-                       const DkgOutput &output);
+                       DkgOutput const &output);
 
 private:
   using SharedAeonExecutionUnit = BeaconSetupService::SharedAeonExecutionUnit;
