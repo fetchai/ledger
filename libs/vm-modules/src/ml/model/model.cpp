@@ -38,23 +38,27 @@ namespace model {
 using SizeType    = fetch::math::SizeType;
 using VMPtrString = Ptr<String>;
 
-VMModel::VMModel(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &model_type)
+VMModel::VMModel(VM *vm, TypeId type_id)
+  : Object(vm, type_id)
+{}
+
+VMModel::VMModel(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &model_category)
   : Object(vm, type_id)
 {
   model_config_ = std::make_shared<ModelConfigType>();
 
-  if (model_type->str == "sequential")
+  if (model_category->str == "sequential")
   {
-    model_      = std::make_shared<fetch::ml::model::Sequential<TensorType>>(*model_config_);
-    model_type_ = fetch::vm_modules::ml::model::ModelType::SEQUENTIAL;
+    model_          = std::make_shared<fetch::ml::model::Sequential<TensorType>>(*model_config_);
+    model_category_ = ModelCategory::SEQUENTIAL;
   }
-  else if (model_type->str == "regressor")
+  else if (model_category->str == "regressor")
   {
-    model_type_ = fetch::vm_modules::ml::model::ModelType::REGRESSOR;
+    model_category_ = ModelCategory::REGRESSOR;
   }
-  else if (model_type->str == "classifier")
+  else if (model_category->str == "classifier")
   {
-    model_type_ = fetch::vm_modules::ml::model::ModelType::CLASSIFIER;
+    model_category_ = ModelCategory::CLASSIFIER;
   }
   else
   {
@@ -63,15 +67,15 @@ VMModel::VMModel(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const
 }
 
 Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
-                                  fetch::vm::Ptr<fetch::vm::String> const &model_type)
+                                  fetch::vm::Ptr<fetch::vm::String> const &model_category)
 {
-  return Ptr<VMModel>{new VMModel(vm, type_id, model_type)};
+  return Ptr<VMModel>{new VMModel(vm, type_id, model_category)};
 }
 
 void VMModel::LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
                        math::SizeType const &hidden_nodes)
 {
-  if (model_type_ == fetch::vm_modules::ml::model::ModelType::SEQUENTIAL)
+  if (model_category_ == ModelCategory::SEQUENTIAL)
   {
     LayerAddImplementation(layer->str, inputs, hidden_nodes,
                            fetch::ml::details::ActivationType::NOTHING);
@@ -86,7 +90,7 @@ void VMModel::LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                  math::SizeType const &inputs, math::SizeType const &hidden_nodes,
                                  fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
-  if (model_type_ == fetch::vm_modules::ml::model::ModelType::SEQUENTIAL)
+  if (model_category_ == ModelCategory::SEQUENTIAL)
   {
     fetch::ml::details::ActivationType activation_type =
         fetch::ml::details::ActivationType::NOTHING;
@@ -110,7 +114,7 @@ void VMModel::LayerAddImplementation(std::string const &layer, math::SizeType co
                                      math::SizeType const &                    hidden_nodes,
                                      fetch::ml::details::ActivationType const &activation)
 {
-  if (model_type_ == fetch::vm_modules::ml::model::ModelType::SEQUENTIAL)
+  if (model_category_ == ModelCategory::SEQUENTIAL)
   {
     // dense / fully connected layer
     if (layer == "dense")
@@ -140,15 +144,39 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
   {
     loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
   }
+  else if (loss->str == "cel")
+  {
+    loss_type = fetch::ml::ops::LossType::CROSS_ENTROPY;
+  }
+  else if (loss->str == "scel")
+  {
+    loss_type = fetch::ml::ops::LossType::SOFTMAX_CROSS_ENTROPY;
+  }
   else
   {
     throw std::runtime_error("invalid loss function");
   }
 
   // dense / fully connected layer
-  if (optimiser->str == "adam")
+  if (optimiser->str == "adagrad")
+  {
+    optimiser_type = fetch::ml::OptimiserType::ADAGRAD;
+  }
+  else if (optimiser->str == "adam")
   {
     optimiser_type = fetch::ml::OptimiserType::ADAM;
+  }
+  else if (optimiser->str == "momentum")
+  {
+    optimiser_type = fetch::ml::OptimiserType::MOMENTUM;
+  }
+  else if (optimiser->str == "rmsprop")
+  {
+    optimiser_type = fetch::ml::OptimiserType::RMSPROP;
+  }
+  else if (optimiser->str == "sgd")
+  {
+    optimiser_type = fetch::ml::OptimiserType::SGD;
   }
   else
   {
@@ -169,14 +197,14 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
     layers.at(i) = in_layers->elements.at(i);
   }
 
-  switch (model_type_)
+  switch (model_category_)
   {
-  case (vm_modules::ml::model::ModelType::REGRESSOR):
+  case (ModelCategory::REGRESSOR):
   {
     model_ = std::make_shared<fetch::ml::model::DNNRegressor<TensorType>>(*model_config_, layers);
     break;
   }
-  case (vm_modules::ml::model::ModelType::CLASSIFIER):
+  case (ModelCategory::CLASSIFIER):
   {
     model_ = std::make_shared<fetch::ml::model::DNNClassifier<TensorType>>(*model_config_, layers);
     break;
@@ -204,10 +232,10 @@ void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels
                   fetch::math::SizeType const &batch_size)
 {
   // prepare dataloader
-  dl_ = std::make_unique<TensorDataloader>();
-  dl_->SetRandomMode(true);
-  dl_->AddData(data->GetTensor(), labels->GetTensor());
-  model_->SetDataloader(std::move(dl_));
+  auto dl = std::make_unique<TensorDataloader>();
+  dl->SetRandomMode(true);
+  dl->AddData(data->GetTensor(), labels->GetTensor());
+  model_->SetDataloader(std::move(dl));
 
   // set batch size
   model_config_->batch_size = batch_size;
@@ -233,14 +261,114 @@ void VMModel::Bind(Module &module)
 {
   module.CreateClassType<VMModel>("Model")
       .CreateConstructor(&VMModel::Constructor)
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
+        return Ptr<VMModel>{new VMModel(vm, type_id)};
+      })
       .CreateMemberFunction("add", &VMModel::LayerAdd)
       .CreateMemberFunction("add", &VMModel::LayerAddActivation)
       .CreateMemberFunction("compile", &VMModel::CompileSequential)
       .CreateMemberFunction("compile", &VMModel::CompileSimple)
       .CreateMemberFunction("fit", &VMModel::Fit)
       .CreateMemberFunction("evaluate", &VMModel::Evaluate)
+      .CreateMemberFunction("predict", &VMModel::Predict)
+      .CreateMemberFunction("evaluate", &VMModel::Evaluate)
       .CreateMemberFunction("predict", &VMModel::Predict);
 }
+
+typename VMModel::ModelPtrType &VMModel::GetModel()
+{
+  return model_;
+}
+
+bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
+{
+  buffer << static_cast<uint8_t>(model_category_);
+  //  buffer << model_config_;
+  buffer << *model_;
+  return true;
+}
+
+bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+{
+  // deserialise the model category
+  uint8_t model_category_int;
+  buffer >> model_category_int;
+  ModelCategory model_category = static_cast<ModelCategory>(model_category_int);
+
+  //  // deserialise the model config
+  //  buffer >> model_config_;
+
+  // deserialise the model
+  auto model_ptr = std::make_shared<fetch::ml::model::Model<TensorType>>();
+  buffer >> (*model_ptr);
+
+  std::string model_category_str;
+  switch (model_category)
+  {
+  case (ModelCategory::CLASSIFIER):
+  {
+    model_category_str = "classifier";
+    break;
+  }
+  case (ModelCategory::REGRESSOR):
+  {
+    model_category_str = "regressor";
+    break;
+  }
+  case (ModelCategory::SEQUENTIAL):
+  {
+    model_category_str = "sequential";
+    break;
+  }
+  case (ModelCategory::NONE):
+  {
+    model_category_str = "none";
+    break;
+  }
+  default:
+  {
+    throw std::runtime_error("cannot deserialise from unspecified model type");
+  }
+  }
+
+  Ptr<fetch::vm::String> model_category_str_ptr;
+  model_category_str_ptr->str = model_category_str;
+  VMModel vm_model(this->vm_, this->type_id_, model_category_str_ptr);
+
+  // assign deserialised model category
+  vm_model.model_category_ = model_category;
+  // assign deserialised model config
+  //  vm_model.model_config_ = model_config;
+  // assign deserialised model
+  vm_model.GetModel() = model_ptr;
+
+  // point this object pointer at the deserialised model
+  *this = vm_model;
+
+  return true;
+}
+
+// fetch::vm::Ptr<fetch::vm::String> VMModel::SerializeToString()
+//{
+//  serializers::MsgPackSerializer b;
+//  SerializeTo(b);
+//  auto byte_array_data = b.data().ToBase64();
+//  return Ptr<String>{new fetch::vm::String(vm_, static_cast<std::string>(byte_array_data))};
+//}
+//
+// fetch::vm::Ptr<VMModel> VMModel::DeserializeFromString(
+//    fetch::vm::Ptr<fetch::vm::String> const &model_string)
+//{
+//  byte_array::ConstByteArray b(graph_string->str);
+//  b = byte_array::FromBase64(b);
+//  MsgPackSerializer buffer(b);
+//  DeserializeFrom(buffer);
+//
+//  auto vm_graph        = fetch::vm::Ptr<VMGraph>(new VMGraph(vm_, type_id_));
+//  vm_graph->GetGraph() = graph_;
+//
+//  return vm_graph;
+//}
 
 }  // namespace model
 }  // namespace ml

@@ -460,6 +460,63 @@ TEST_F(MLTests, serialisation_several_components_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
+TEST_F(MLTests, serialisation_model)
+{
+  static char const *model_serialise_src = R"(
+      function main()
+
+        // set up data and labels
+        var data_shape = Array<UInt64>(2);
+        data_shape[0] = 10u64;
+        data_shape[1] = 1000u64;
+        var label_shape = Array<UInt64>(2);
+        label_shape[0] = 1u64;
+        label_shape[1] = 1000u64;
+        var data = Tensor(data_shape);
+        var label = Tensor(label_shape);
+
+        // set up a model
+        var model = Model("sequential");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 1u64);
+        model.compile("mse", "sgd");
+
+        // train the model
+        model.fit(data, label, 32u64);
+
+        // evaluate performance
+        var loss = model.evaluate();
+
+        // make a prediction
+        var prediction = model.predict(data);
+
+        // serialise model
+        var model_state = State<Model>("model");
+        model_state.set(model);
+
+      endfunction
+    )";
+
+  std::string const model_name{"model"};
+
+  ASSERT_TRUE(toolkit.Compile(model_serialise_src));
+  EXPECT_CALL(toolkit.observer(), Write(model_name, _, _));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *model_deserialise_src = R"(
+      function main()
+        var model_state = State<Model>("model");
+        var model = model_state.get();
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(model_deserialise_src));
+  EXPECT_CALL(toolkit.observer(), Exists(model_name));
+  EXPECT_CALL(toolkit.observer(), Read(model_name, _, _)).Times(::testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run());
+}
+
 TEST_F(MLTests, optimiser_set_graph_test)
 {
   static char const *several_serialise_src = R"(
