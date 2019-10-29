@@ -48,7 +48,7 @@ public:
   using Milliseconds = std::chrono::milliseconds;
 
   Taskpool();
-  virtual ~Taskpool();
+  virtual ~Taskpool() = default;
 
   virtual void submit(TaskP task);
   virtual void suspend(TaskP task);

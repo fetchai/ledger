@@ -38,7 +38,7 @@ public:
   using ReportFunc = std::function<void(const std::string &name, std::size_t value)>;
 
   Monitoring();
-  virtual ~Monitoring();
+  virtual ~Monitoring() = default;
 
   static IdType    find(const NameType &name);
   static void      add(IdType id, CountType delta);

@@ -26,7 +26,7 @@ class KarmaPolicyNone : public IKarmaPolicy
 public:
   static constexpr char const *LOGGING_NAME = "KarmaPolicyNone";
   KarmaPolicyNone();
-  ~KarmaPolicyNone() override;
+  ~KarmaPolicyNone() override = default;
 
   KarmaAccount GetAccount(const std::string &pubkey = "", const std::string &ip = "") override;
 

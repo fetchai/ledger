@@ -30,7 +30,7 @@ class KarmaPolicyBasic : public IKarmaPolicy
 {
 public:
   explicit KarmaPolicyBasic(const google::protobuf::Map<std::string, std::string> &config);
-  ~KarmaPolicyBasic() override;
+  ~KarmaPolicyBasic() override = default;
 
   KarmaAccount GetAccount(const std::string &pubkey = "", const std::string &ip = "") override;
   void         upgrade(KarmaAccount &account, const std::string &pubkey = "",

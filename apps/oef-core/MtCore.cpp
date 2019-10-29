@@ -407,7 +407,7 @@ bool MtCore::load_ssl_pub_keys(std::string white_list_file)
       {
         EvpPublicKey pub_key{line};
         FETCH_LOG_INFO(LOGGING_NAME, "inserting in white list : ", pub_key);
-        white_list_->insert(pub_key);
+        white_list_->insert(pub_key.to_string());
       }
       catch (std::exception &e)
       {
