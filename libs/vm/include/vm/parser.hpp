@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,24 +19,28 @@
 
 #include "vm/node.hpp"
 
+#include <cstddef>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 
 class Parser
 {
 public:
-  Parser()
-  {}
-  ~Parser()
-  {}
-  BlockNodePtr Parse(const std::string &source, std::vector<std::string> &errors);
+  Parser();
+  ~Parser() = default;
+  void         AddTemplateName(std::string const &name);
+  BlockNodePtr Parse(SourceFiles const &files, std::vector<std::string> &errors);
 
 private:
   enum class State
   {
     // [group opener, prefix op or operand] is required
     PreOperand,
-    // [postfix op, binary op, group separator or group closer] is optional
+    // [postfix op, binary op, comma or group closer] is optional
     PostOperand
   };
 
@@ -48,8 +52,7 @@ private:
 
   struct OpInfo
   {
-    OpInfo()
-    {}
+    OpInfo() = default;
     OpInfo(int precedence__, Association association__, int arity__)
     {
       precedence  = precedence__;
@@ -63,30 +66,41 @@ private:
 
   struct Expr
   {
-    bool              is_operator;
+    bool              is_operator{};
     ExpressionNodePtr node;
-    OpInfo            op_info;
-    int               count;
+    OpInfo            op_info{};
+    Token::Kind       closer_token_kind;
+    std::string       closer_token_text;
+    int               num_members{};
   };
 
+  using StringSet = std::unordered_set<std::string>;
+
+  StringSet                template_names_;
+  std::string              filename_;
   std::vector<Token>       tokens_;
-  int                      index_;
-  Token *                  token_;
+  int                      index_{};
+  Token *                  token_{};
   std::vector<std::string> errors_;
-  std::vector<Node::Kind>  blocks_;
+  std::vector<NodeKind>    blocks_;
   State                    state_;
-  bool                     found_expression_terminator_;
-  std::vector<int>         groups_;
+  bool                     found_expression_terminator_{};
+  std::vector<std::size_t> groups_;
   std::vector<Expr>        operators_;
   std::vector<Expr>        rpn_;
   std::vector<Expr>        infix_stack_;
 
-  void              Tokenise(const std::string &source);
+  void              Tokenise(std::string const &source);
   bool              ParseBlock(BlockNode &node);
+  NodePtr           ParsePersistentStatement();
   BlockNodePtr      ParseFunctionDefinition();
+  NodePtr           ParseAnnotations();
+  NodePtr           ParseAnnotation();
+  ExpressionNodePtr ParseAnnotationLiteral();
   BlockNodePtr      ParseWhileStatement();
   BlockNodePtr      ParseForStatement();
   NodePtr           ParseIfStatement();
+  NodePtr           ParseUseStatement();
   NodePtr           ParseVarStatement();
   NodePtr           ParseReturnStatement();
   NodePtr           ParseBreakStatement();
@@ -94,40 +108,43 @@ private:
   ExpressionNodePtr ParseExpressionStatement();
   void              GoToNextStatement();
   void              SkipFunctionDefinition();
+  bool              IsTemplateName(std::string const &name) const;
   ExpressionNodePtr ParseType();
   ExpressionNodePtr ParseConditionalExpression();
-  ExpressionNodePtr ParseExpression(const bool is_conditional_expression = false);
+  ExpressionNodePtr ParseExpression(bool is_conditional_expression = false);
   bool              HandleIdentifier();
   bool              ParseExpressionIdentifier(std::string &name);
-  bool              HandleLiteral(const Node::Kind kind);
+  bool              HandleLiteral(NodeKind kind);
   void              HandlePlus();
   void              HandleMinus();
-  bool              HandleBinaryOp(const Node::Kind kind, const OpInfo &op_info);
+  bool              HandleBinaryOp(NodeKind kind, OpInfo const &op_info);
   void              HandleNot();
-  void              HandleIncDec(const Node::Kind prefix_kind, const OpInfo &prefix_op_info,
-                                 const Node::Kind postfix_kind, const OpInfo &postfix_op_info);
+  void              HandlePrefixPostfix(NodeKind prefix_kind, OpInfo const &prefix_op_info,
+                                        NodeKind postfix_kind, OpInfo const &postfix_op_info);
   bool              HandleDot();
-  void              HandleOpener(const Node::Kind prefix_kind, const Node::Kind postfix_kind);
-  bool              HandleCloser(const bool is_conditional_expression);
-  bool              HandleComma();
-  void              HandleOp(const Node::Kind kind, const OpInfo &op_info);
-  void              AddGroup(const Node::Kind kind, const int initial_arity);
-  void              AddOp(const Node::Kind kind, const OpInfo &op_info);
-  void              AddOperand(const Node::Kind kind);
-  void              AddError(const std::string &message);
+  bool HandleOpener(NodeKind prefix_kind, NodeKind postfix_kind, Token::Kind closer_token_kind,
+                    std::string const &closer_token_text);
+  bool HandleCloser(bool is_conditional_expression);
+  bool HandleComma();
+  void HandleOp(NodeKind kind, OpInfo const &op_info);
+  void AddGroup(NodeKind kind, int arity, Token::Kind closer_token_kind,
+                std::string const &closer_token_text);
+  void AddOp(NodeKind kind, OpInfo const &op_info);
+  void AddOperand(NodeKind kind);
+  void AddError(std::string const &message);
 
-  void IncrementNodeCount()
+  void IncrementGroupMembers()
   {
-    if (groups_.size())
+    if (!groups_.empty())
     {
-      Expr &group = operators_[std::size_t(groups_.back())];
-      ++(group.count);
+      Expr &groupop = operators_[groups_.back()];
+      ++(groupop.num_members);
     }
   }
 
   void Next()
   {
-    if (index_ < (int)tokens_.size() - 1)
+    if (index_ < static_cast<int>(tokens_.size()) - 1)
     {
       token_ = &tokens_[std::size_t(++index_)];
     }

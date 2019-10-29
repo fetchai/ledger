@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,14 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction_layout.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/digest.hpp"
 #include "storage/document.hpp"
 #include "storage/resource_mapper.hpp"
 
 #include <vector>
 
 namespace fetch {
+
+namespace chain {
+
+class Transaction;
+
+}  // namespace chain
+
 namespace ledger {
 
 class StorageInterface
@@ -33,50 +41,52 @@ public:
   using Document        = storage::Document;
   using ResourceAddress = storage::ResourceAddress;
   using StateValue      = byte_array::ConstByteArray;
+  using ShardIndex      = uint32_t;
+  using Keys            = std::vector<storage::ResourceID>;
+
+  // Construction / Destruction
+  StorageInterface()          = default;
+  virtual ~StorageInterface() = default;
 
   /// @name State Interface
   /// @{
   virtual Document Get(ResourceAddress const &key)                          = 0;
   virtual Document GetOrCreate(ResourceAddress const &key)                  = 0;
   virtual void     Set(ResourceAddress const &key, StateValue const &value) = 0;
-  virtual bool     Lock(ResourceAddress const &key)                         = 0;
-  virtual bool     Unlock(ResourceAddress const &key)                       = 0;
+  virtual bool     Lock(ShardIndex shard)                                   = 0;
+  virtual bool     Unlock(ShardIndex shard)                                 = 0;
+  virtual void     Reset()                                                  = 0;
   /// @}
 };
 
 class StorageUnitInterface : public StorageInterface
 {
 public:
-  using hash_type     = byte_array::ConstByteArray;
-  using bookmark_type = uint64_t;  // TODO(issue 33): From keyvalue index
-
-  using Transaction     = chain::Transaction;
-  using TransactionList = std::vector<Transaction>;
-  using ConstByteArray  = byte_array::ConstByteArray;
+  using Hash           = byte_array::ConstByteArray;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using TxLayouts      = std::vector<chain::TransactionLayout>;
 
   // Construction / Destruction
-  StorageUnitInterface()          = default;
-  virtual ~StorageUnitInterface() = default;
+  StorageUnitInterface()           = default;
+  ~StorageUnitInterface() override = default;
 
   /// @name Transaction Interface
   /// @{
-  virtual void AddTransaction(Transaction const &tx)                         = 0;
-  virtual bool GetTransaction(ConstByteArray const &digest, Transaction &tx) = 0;
-
-  virtual void AddTransactions(TransactionList const &txs)
-  {
-    for (auto const &tx : txs)
-    {
-      AddTransaction(tx);
-    }
-  }
+  virtual void AddTransaction(chain::Transaction const &tx)                 = 0;
+  virtual bool GetTransaction(Digest const &digest, chain::Transaction &tx) = 0;
+  virtual bool HasTransaction(Digest const &digest)                         = 0;
+  virtual void IssueCallForMissingTxs(DigestSet const &tx_set)              = 0;
   /// @}
+
+  virtual TxLayouts PollRecentTx(uint32_t) = 0;
 
   /// @name Revertible Document Store Interface
   /// @{
-  virtual hash_type Hash()                                = 0;
-  virtual void      Commit(bookmark_type const &bookmark) = 0;
-  virtual void      Revert(bookmark_type const &bookmark) = 0;
+  virtual Hash CurrentHash()                                  = 0;
+  virtual Hash LastCommitHash()                               = 0;
+  virtual bool RevertToHash(Hash const &hash, uint64_t index) = 0;
+  virtual Hash Commit(uint64_t index)                         = 0;
+  virtual bool HashExists(Hash const &hash, uint64_t index)   = 0;
   /// @}
 };
 

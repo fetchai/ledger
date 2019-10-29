@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@
 #include <regex>
 #include <stdexcept>
 
-#include <iostream>
-
 static const std::regex ADDRESS_FORMAT("^(.*):(\\d+)$");
 static const std::regex URI_ADDRESS_FORMAT("^tcp://(.*):(\\d+)$");
 
@@ -41,7 +39,7 @@ bool Peer::Parse(std::string const &address)
 {
   std::smatch matches;
 
-  if (address == "")
+  if (address.empty())
   {
     Update("", 0);
     return true;

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
+#include "core/bitvector.hpp"
 #include "ledger/executor_interface.hpp"
+#include "logging/logging.hpp"
 
+#include <atomic>
 #include <cstdint>
 #include <future>
 #include <memory>
@@ -31,36 +33,87 @@ namespace ledger {
 class ExecutionItem
 {
 public:
-  using LaneIndex = uint32_t;
-  using TxDigest  = chain::Transaction::TxDigest;
-  using LaneSet   = std::unordered_set<LaneIndex>;
+  using LaneIndex  = uint32_t;
+  using BlockIndex = ExecutorInterface::BlockIndex;
+  using SliceIndex = ExecutorInterface::SliceIndex;
+  using Status     = ExecutorInterface::Status;
+  using Result     = ExecutorInterface::Result;
 
-  ExecutionItem(TxDigest hash, std::size_t slice)
-    : hash_(std::move(hash))
-    , slice_(slice)
-  {}
+  static constexpr char const *LOGGING_NAME = "ExecutionItem";
 
-  ExecutionItem(TxDigest hash, LaneIndex lane, std::size_t slice)
-    : hash_(std::move(hash))
-    , lanes_{lane}
-    , slice_(slice)
-  {}
+  // Construction / Destruction
+  ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice, BitVector const &shards);
+  ExecutionItem(ExecutionItem const &) = delete;
+  ExecutionItem(ExecutionItem &&)      = delete;
+  ~ExecutionItem()                     = default;
 
-  ExecutorInterface::Status Execute(ExecutorInterface &executor)
-  {
-    return executor.Execute(hash_, slice_, lanes_);
-  }
+  /// @name Accessors
+  /// @{
+  Digest const &   digest() const;
+  BitVector const &shards() const;
+  Result const &   result() const;
+  TokenAmount      fee() const;
+  /// @}
 
-  void AddLane(LaneIndex lane)
-  {
-    lanes_.insert(lane);
-  }
+  void Execute(ExecutorInterface &executor);
+
+  // Operators
+  ExecutionItem &operator=(ExecutionItem const &) = delete;
+  ExecutionItem &operator=(ExecutionItem &&) = delete;
 
 private:
-  TxDigest    hash_;
-  LaneSet     lanes_;
-  std::size_t slice_;
+  using AtomicFee = std::atomic<uint64_t>;
+
+  Digest      digest_;
+  BlockIndex  block_{0};
+  SliceIndex  slice_{0};
+  BitVector   shards_;
+  Result      result_;
+  TokenAmount fee_{0};
 };
+
+inline ExecutionItem::ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice,
+                                    BitVector const &shards)
+  : digest_(std::move(digest))
+  , block_{block}
+  , slice_{slice}
+  , shards_(shards)
+{}
+
+inline Digest const &ExecutionItem::digest() const
+{
+  return digest_;
+}
+
+inline BitVector const &ExecutionItem::shards() const
+{
+  return shards_;
+}
+
+inline ExecutionItem::Result const &ExecutionItem::result() const
+{
+  return result_;
+}
+
+inline uint64_t ExecutionItem::fee() const
+{
+  return fee_;
+}
+
+inline void ExecutionItem::Execute(ExecutorInterface &executor)
+{
+  try
+  {
+    result_ = executor.Execute(digest_, block_, slice_, shards_);
+    fee_ += result_.fee;
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception thrown while executing transaction: ", ex.what());
+
+    result_ = {ContractExecutionStatus::RESOURCE_FAILURE};
+  }
+}
 
 }  // namespace ledger
 }  // namespace fetch

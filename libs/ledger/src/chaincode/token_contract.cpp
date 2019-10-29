@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,159 +16,453 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/token_contract.hpp"
+#include "chain/constants.hpp"
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
+#include "crypto/identity.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/deed.hpp"
+#include "ledger/chaincode/token_contract.hpp"
+#include "ledger/chaincode/wallet_record.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
-#include <stdexcept>
-
-static constexpr char const *LOGGING_NAME = "TokenContract";
-
-using fetch::variant::Variant;
-using fetch::variant::Extract;
-using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::FromBase64;
+#include <memory>
+#include <unordered_map>
 
 namespace fetch {
 namespace ledger {
 namespace {
 
-/* Implements a record to store wallet contents. */
-struct WalletRecord
+using fetch::byte_array::ConstByteArray;
+using fetch::variant::Variant;
+
+bool IsOperationValid(WalletRecord const &record, chain::Transaction const &tx,
+                      ConstByteArray const &operation)
 {
-  uint64_t balance{0};
-
-  template <typename T>
-  friend void Serialize(T &serializer, WalletRecord const &b)
+  // perform validation checks
+  if (record.deed)
   {
-    serializer << b.balance;
+    // There is current deed in effect.
+
+    // Verify that current transaction possesses authority to perform the transfer
+    if (!record.deed->Verify(tx, operation))
+    {
+      return false;
+    }
+  }
+  else
+  {
+    // There is NO deed associated with the SOURCE address.
+
+    // NECESSARY & SUFFICIENT CONDITION to perform transfer: Signature of the
+    // SOURCE address MUST be present when NO preceding deed exists.
+    if (!tx.IsSignedByFromAddress())
+    {
+      return false;
+    }
   }
 
-  template <typename T>
-  friend void Deserialize(T &serializer, WalletRecord &b)
-  {
-    serializer >> b.balance;
-  }
-};
+  return true;
+}
+
+constexpr uint64_t MAX_TOKENS = 0xFFFFFFFFFFFFFFFFull;
 
 }  // namespace
 
 TokenContract::TokenContract()
-  : Contract("fetch.token")
 {
   // TODO(tfr): I think the function CreateWealth should be OnInit?
+  OnTransaction("deed", this, &TokenContract::Deed);
   OnTransaction("wealth", this, &TokenContract::CreateWealth);
   OnTransaction("transfer", this, &TokenContract::Transfer);
+  OnTransaction("addStake", this, &TokenContract::AddStake);
+  OnTransaction("deStake", this, &TokenContract::DeStake);
+  OnTransaction("collectStake", this, &TokenContract::CollectStake);
   OnQuery("balance", this, &TokenContract::Balance);
+  OnQuery("stake", this, &TokenContract::Stake);
+  OnQuery("cooldownStake", this, &TokenContract::CooldownStake);
 }
 
-Contract::Status TokenContract::CreateWealth(Transaction const &tx)
+uint64_t TokenContract::GetBalance(chain::Address const &address)
 {
-  Variant data;
-  if (!ParseAsJson(tx, data))
+  WalletRecord record{};
+  GetStateRecord(record, address.display());
+
+  return record.balance;
+}
+
+bool TokenContract::AddTokens(chain::Address const &address, uint64_t amount)
+{
+  WalletRecord record{};
+  GetStateRecord(record, address.display());
+
+  if (amount > (MAX_TOKENS - record.balance))
   {
-    return Status::FAILED;
+    return false;
   }
 
-  ConstByteArray address;
-  uint64_t       amount{0};
+  record.balance += amount;
 
-  if (Extract(data, "address", address) && Extract(data, "amount", amount))
+  auto const status = SetStateRecord(record, address.display());
+
+  return status == StateAdapter::Status::OK;
+}
+
+bool TokenContract::SubtractTokens(chain::Address const &address, uint64_t amount)
+{
+  WalletRecord record{};
+  GetStateRecord(record, address.display());
+
+  if (amount > record.balance)
   {
-    address = FromBase64(address);  //  the address needs to be converted
+    return false;
+  }
 
-    // retrieve the record (if it exists)
-    WalletRecord record{};
-    GetOrCreateStateRecord(record, address);
+  record.balance -= amount;
 
-    // update the balance
-    record.balance += amount;
+  auto const status = SetStateRecord(record, address.display());
 
-    SetStateRecord(record, address);
+  return status == StateAdapter::Status::OK;
+}
+
+bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address const &to,
+                                   uint64_t amount)
+{
+  // look up the state record (to see if there is a deed associated with this address)
+  WalletRecord from_record{};
+  if (!GetStateRecord(from_record, tx.from().display()))
+  {
+    return false;
+  }
+
+  // perform validation checks
+  if (from_record.deed)
+  {
+    // There is current deed in effect.
+
+    // Verify that current transaction possesses authority to perform the transfer
+    if (!from_record.deed->Verify(tx, TRANSFER_NAME))
+    {
+      return false;
+    }
   }
   else
   {
-    return Status::FAILED;
+    // There is NO deed associated with the SOURCE address.
+
+    // NECESSARY & SUFFICIENT CONDITION to perform transfer: Signature of the
+    // SOURCE address MUST be present when NO preceding deed exists.
+    if (!tx.IsSignedByFromAddress())
+    {
+      return false;
+    }
   }
 
-  return Status::OK;
+  return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
 }
 
-Contract::Status TokenContract::Transfer(Transaction const &tx)
+Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx)
+{
+  // parse the payload as JSON
+  Variant data;
+  if (ParseAsJson(tx, data))
+  {
+    // attempt to extract the amount field
+    uint64_t amount{0};
+    if (Extract(data, AMOUNT_NAME, amount))
+    {
+      // mint new tokens
+      if (AddTokens(tx.from(), amount))
+      {
+        return {Contract::Status::OK};
+      }
+    }
+  }
+
+  return {Contract::Status::FAILED};
+}
+
+/**
+ * Handles transaction related to DEED operation (create, amend, delete).
+ *
+ * @details The transaction shall carry deed JSON structure in it's data member.
+ * The data must have expected JSON structure to make deed valid, please see the
+ * examples in deed.cpp
+ *
+ * @param Transaction carrying deed JSON structure in it's data member.
+ *
+ * @return Status::OK if deed has been incorporated successfully.
+ */
+Contract::Result TokenContract::Deed(chain::Transaction const &tx)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
   {
-    return Status::FAILED;
+    return {Status::FAILED};
   }
 
-  ConstByteArray to_address;
-  ConstByteArray from_address;
-  uint64_t       amount{0};
-  if (Extract(data, "from", from_address) && Extract(data, "to", to_address) &&
-      Extract(data, "amount", amount))
+  // retrieve the record (if it exists)
+  WalletRecord record{};
+  GetStateRecord(record, tx.from().display());
+
+  if (record.deed)
   {
-    to_address   = byte_array::FromBase64(to_address);    //  the address needs to be converted
-    from_address = byte_array::FromBase64(from_address);  //  the address needs to be converted
+    // This is AMEND request(there is current deed in effect).
 
-    WalletRecord to_record{};
-    WalletRecord from_record{};
-
-    if (!GetStateRecord(from_record, from_address))
+    // Verify that current transaction has authority to AMEND the deed
+    // currently in effect.
+    if (!record.deed->Verify(tx, AMEND_NAME))
     {
-      return Status::FAILED;
+      return {Status::FAILED};
     }
 
-    // check the balance here to limit further reads if required
-    if (from_record.balance < amount)
+    // Amend (replace) previous deed with new one.
+    if (!record.CreateDeed(data))
     {
-      return Status::FAILED;
+      return {Status::FAILED};
+    }
+  }
+  else
+  {
+    // This is CREATION (there is NO deed associated with the address yet).
+
+    // NECESSARY & SUFFICIENT CONDITION: Signature of the DESTINATION address
+    // MUST be present when NO preceding deed exists.
+    if (!tx.IsSignedByFromAddress())
+    {
+      return {Status::FAILED};
     }
 
-    if (!GetOrCreateStateRecord(to_record, to_address))
+    if (!record.CreateDeed(data))
     {
-      return Status::FAILED;
+      return {Status::FAILED};
     }
-
-    // update the records
-    from_record.balance -= amount;
-    to_record.balance += amount;
-
-    // write the records back to the state database
-    SetStateRecord(from_record, from_address);
-    SetStateRecord(to_record, to_address);
   }
 
-  return Status::OK;
+  auto const status = SetStateRecord(record, tx.from().display());
+  if (status != StateAdapter::Status::OK)
+  {
+    return {Status::FAILED};
+  }
+
+  return {Status::OK};
+}
+
+Contract::Result TokenContract::Transfer(chain::Transaction const &tx)
+{
+  FETCH_UNUSED(tx);
+  return {Status::FAILED};
+}
+
+Contract::Result TokenContract::AddStake(chain::Transaction const &tx)
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Adding stake!");
+
+  // parse the payload as JSON
+  Variant data;
+  if (ParseAsJson(tx, data))
+  {
+    // attempt to extract the amount field
+    uint64_t       amount{0};
+    ConstByteArray input;
+
+    if (Extract(data, AMOUNT_NAME, amount) && Extract(data, ADDRESS_NAME, input))
+    {
+      // look up the state record (to see if there is a deed associated with this address)
+      WalletRecord record{};
+      if (GetStateRecord(record, tx.from().display()))
+      {
+        // ensure the transaction has authority over this deed
+        if (IsOperationValid(record, tx, STAKE_NAME))
+        {
+          // stake the amount
+          if (record.balance >= amount)
+          {
+            record.balance -= amount;
+            record.stake += amount;
+
+            FETCH_LOG_INFO(LOGGING_NAME, "Stake updates are happening");
+
+            // record the stake update event
+            stake_updates_.emplace_back(
+                StakeUpdate{crypto::Identity(input.FromBase64()),
+                            context().block_index + chain::STAKE_WARM_UP_PERIOD, amount});
+
+            // save the state
+            auto const status = SetStateRecord(record, tx.from().display());
+            if (status == StateAdapter::Status::OK)
+            {
+              return {Status::OK};
+            }
+          }
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Attempted staking operation was invalid!");
+        }
+      }
+    }
+  }
+
+  return {Status::FAILED};
+}
+
+Contract::Result TokenContract::DeStake(chain::Transaction const &tx)
+{
+  // parse the payload as JSON
+  Variant data;
+  if (ParseAsJson(tx, data))
+  {
+    // attempt to extract the amount field
+    uint64_t amount{0};
+    if (Extract(data, AMOUNT_NAME, amount))
+    {
+      // look up the state record (to see if there is a deed associated with this address)
+      WalletRecord record{};
+      if (GetStateRecord(record, tx.from().display()))
+      {
+        // ensure the transaction has authority over this deed
+        if (IsOperationValid(record, tx, STAKE_NAME))
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "Destaking! : ", amount, " of ", record.stake);
+          // destake the amount
+          if (record.stake >= amount)
+          {
+            record.stake -= amount;
+
+            // Put it in a cooldown state
+            record.cooldown_stake[context().block_index + chain::STAKE_COOL_DOWN_PERIOD] += amount;
+
+            // save the state
+            auto const status = SetStateRecord(record, tx.from().display());
+            if (status == StateAdapter::Status::OK)
+            {
+              return {Status::OK};
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return {Status::FAILED};
+}
+
+Contract::Result TokenContract::CollectStake(chain::Transaction const &tx)
+{
+  WalletRecord record{};
+
+  if (GetStateRecord(record, tx.from().display()))
+  {
+    // ensure the transaction has authority over this deed
+    if (IsOperationValid(record, tx, STAKE_NAME))
+    {
+      // Collect all cooled down stakes and put them back into the account
+      record.CollectStake(context().block_index);
+
+      auto const status = SetStateRecord(record, tx.from().display());
+      if (status == StateAdapter::Status::OK)
+      {
+        return {Status::OK};
+      }
+    }
+  }
+
+  return {Status::FAILED};
 }
 
 Contract::Status TokenContract::Balance(Query const &query, Query &response)
 {
-  Status status = Status::FAILED;
-
-  ConstByteArray address;
-  if (Extract(query, "address", address))
+  ConstByteArray input;
+  if (Extract(query, ADDRESS_NAME, input))
   {
-    address = FromBase64(address);
+    // attempt to parse the input address
+    chain::Address address{};
+    if (chain::Address::Parse(input, address))
+    {
+      // look up the record
+      WalletRecord record{};
+      GetStateRecord(record, address.display());
 
-    // lookup the record
-    WalletRecord record{};
-    GetStateRecord(record, address);
+      // formulate the response
+      response            = Variant::Object();
+      response["balance"] = record.balance;
 
-    // formulate the response
-    response            = Variant::Object();
-    response["balance"] = record.balance;
-
-    status = Status::OK;
+      return Status::OK;
+    }
   }
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to balance query");
   }
 
-  return status;
+  return Status::FAILED;
+}
+
+Contract::Status TokenContract::Stake(Query const &query, Query &response)
+{
+  ConstByteArray input;
+  if (Extract(query, ADDRESS_NAME, input))
+  {
+    // attempt to parse the input address
+    chain::Address address{};
+    if (chain::Address::Parse(input, address))
+    {
+      // look up the record
+      WalletRecord record{};
+      GetStateRecord(record, address.display());
+
+      // formulate the response
+      response          = Variant::Object();
+      response["stake"] = record.stake;
+
+      return Status::OK;
+    }
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to stake query");
+  }
+
+  return Status::FAILED;
+}
+
+Contract::Status TokenContract::CooldownStake(Query const &query, Query &response)
+{
+  ConstByteArray input;
+  if (Extract(query, ADDRESS_NAME, input))
+  {
+    // attempt to parse the input address
+    chain::Address address{};
+    if (chain::Address::Parse(input, address))
+    {
+      // look up the record
+      WalletRecord record{};
+      GetStateRecord(record, address.display());
+
+      // formulate the response
+      response  = Variant::Object();
+      auto keys = Variant::Object();
+
+      for (auto const &it : record.cooldown_stake)
+      {
+        keys[std::to_string(it.first)] = it.second;
+      }
+
+      response["cooldownStake"] = keys;
+
+      return Status::OK;
+    }
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to cooldown stake query");
+  }
+
+  return Status::FAILED;
 }
 
 }  // namespace ledger

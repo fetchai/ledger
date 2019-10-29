@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
 
-#include <benchmark/benchmark.h>
+#include "benchmark/benchmark.h"
+
 #include <stdexcept>
 
 using fetch::crypto::ECDSASigner;
@@ -39,7 +40,7 @@ RNG rng;
 template <std::size_t LENGTH>
 ConstByteArray GenerateRandomData()
 {
-  static constexpr std::size_t RNG_WORD_SIZE = sizeof(RNG::random_type);
+  static constexpr std::size_t RNG_WORD_SIZE = sizeof(RNG::RandomType);
   static constexpr std::size_t NUM_WORDS     = LENGTH / RNG_WORD_SIZE;
 
   static_assert((LENGTH % RNG_WORD_SIZE) == 0, "Size must be a multiple of random type");
@@ -47,7 +48,7 @@ ConstByteArray GenerateRandomData()
   ByteArray buffer;
   buffer.Resize(LENGTH);
 
-  RNG::random_type *words = reinterpret_cast<RNG::random_type *>(buffer.pointer());
+  auto *words = reinterpret_cast<RNG::RandomType *>(buffer.pointer());
   for (std::size_t i = 0; i < NUM_WORDS; ++i)
   {
     *words++ = rng();
@@ -66,13 +67,11 @@ void VerifySignature(benchmark::State &state)
   ECDSAVerifier verifier(signer.identity());
 
   // create the signed data
-  if (!signer.Sign(msg))
+  auto const signature = signer.Sign(msg);
+  if (signature.empty())
   {
     throw std::runtime_error("Unable to sign the message");
   }
-
-  // extract the signature
-  ConstByteArray signature = signer.signature();
 
   for (auto _ : state)
   {

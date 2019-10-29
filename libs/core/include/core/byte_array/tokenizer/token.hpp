@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,26 +25,24 @@ namespace byte_array {
 class Token : public ConstByteArray
 {
 public:
-  Token()
-    : ConstByteArray()
-  {}
+  Token() = default;
 
-  Token(char const *str)
+  explicit Token(char const *str)
     : ConstByteArray(str)
   {}
 
-  Token(std::string const &str)
+  explicit Token(std::string const &str)
     : ConstByteArray(str.c_str())
   {}
 
-  Token(ConstByteArray const &other)
+  explicit Token(ConstByteArray const &other)
     : ConstByteArray(other)
   {}
-  Token(ConstByteArray &&other)
+  explicit Token(ConstByteArray &&other)
     : ConstByteArray(other)
   {}
 
-  Token(ConstByteArray const &other, std::size_t const &start, std::size_t const &length)
+  Token(ConstByteArray const &other, std::size_t start, std::size_t length)
     : ConstByteArray(other, start, length)
   {}
 
@@ -66,7 +64,7 @@ public:
   {
     line_ = l;
   }
-  void SetChar(std::size_t const &c)
+  void SetChar(std::size_t c)
   {
     char_ = c;
   }

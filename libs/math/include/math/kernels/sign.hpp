@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,20 +18,22 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
+namespace math {
 namespace kernels {
 
-template <typename vector_register_type>
+template <typename VectorRegisterType>
 struct Sign
 {
-  void operator()(vector_register_type const &x, vector_register_type &y) const
+  void operator()(VectorRegisterType const &x, VectorRegisterType &y) const
   {
-    const vector_register_type zero(typename vector_register_type::type(0));
-    const vector_register_type one(typename vector_register_type::type(1));
-    const vector_register_type min_one(typename vector_register_type::type(-1));
+    const VectorRegisterType zero(typename VectorRegisterType::type(0));
+    const VectorRegisterType one(typename VectorRegisterType::type(1));
+    const VectorRegisterType min_one(typename VectorRegisterType::type(-1));
 
     y = ((x == zero) * (zero)) + ((x > zero) * (one)) + ((x < zero) * (min_one));
   }
 };
 
 }  // namespace kernels
+}  // namespace math
 }  // namespace fetch

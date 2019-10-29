@@ -1,0 +1,7 @@
+function main()
+
+   var uint256 = UInt256(100u64);
+
+   assert(toString(uint256) == "6400000000000000000000000000000000000000000000000000000000000000");
+
+endfunction

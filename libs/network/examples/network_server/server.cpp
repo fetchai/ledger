@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,23 +17,28 @@
 //------------------------------------------------------------------------------
 
 #include "network/tcp/tcp_server.hpp"
+
+#include <chrono>
+#include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <iostream>
+#include <string>
+#include <thread>
+
 using namespace fetch::network;
 
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t p, NetworkManager tmanager)
+  Server(uint16_t p, NetworkManager const &tmanager)
     : TCPServer(p, tmanager)
   {}
 
-  void PushRequest(connection_handle_type client, message_type const &msg) override
+  void PushRequest(ConnectionHandleType /*client*/, MessageType const &msg) override
   {
     std::cout << "Message: " << msg << std::endl;
   }
-
-private:
 };
 
 int main(int argc, char *argv[])
@@ -47,7 +52,7 @@ int main(int argc, char *argv[])
       return 1;
     }
 
-    NetworkManager tmanager;
+    NetworkManager tmanager{"NetMgr", 1};
 
     Server s(uint16_t(std::atoi(argv[1])), tmanager);
     tmanager.Start();
@@ -63,7 +68,7 @@ int main(int argc, char *argv[])
     s.Stop();
     tmanager.Stop();
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     std::cerr << "Exception: " << e.what() << "\n";
   }

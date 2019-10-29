@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,15 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "http/request.hpp"
+
+#include <algorithm>
+#include <iostream>
 
 namespace fetch {
 namespace http {
 
 bool HTTPRequest::ParseBody(asio::streambuf &buffer)
 {
-  LOG_STACK_TRACE_POINT;
-
   // TODO(issue 35): Handle encoding
   body_data_ = byte_array::ByteArray();
   body_data_.Resize(content_length());
@@ -45,10 +47,8 @@ bool HTTPRequest::ParseBody(asio::streambuf &buffer)
   return true;
 }
 
-bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
+bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t end)
 {
-  LOG_STACK_TRACE_POINT;
-
   header_data_ = byte_array::ByteArray();
   header_data_.Resize(end);
 
@@ -73,7 +73,7 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
 
     header_data_[i] = uint8_t(c);
 
-    // find either the header seperator ':' (in the case of KEY: VALUE header) to the new line
+    // find either the header separator ':' (in the case of KEY: VALUE header) to the new line
     // which indicated the value is complete
     switch (c)
     {
@@ -107,7 +107,7 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
           // convert to lowercase
           for (std::size_t t = 0; t < key.size(); ++t)
           {
-            char &cc = reinterpret_cast<char &>(key[t]);
+            auto &cc = reinterpret_cast<char &>(key[t]);
             if (('A' <= cc) && (cc <= 'Z'))
             {
               cc = char(cc + 'a' - 'A');
@@ -125,6 +125,15 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
             content_length_ = uint64_t(value.AsInt());
           }
 
+          // TODO(issue 413): Compliance to HTTP Standard - `value` can be structured.
+          if (key == "content-type")
+          {
+            auto const pos = value.Find(';', 0);
+            if (pos != byte_array::ConstByteArray::NPOS)
+            {
+              value = value.SubArray(0, pos);
+            }
+          }
           // update header map
           header_.Add(key, value);
         }
@@ -141,9 +150,14 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
   }
 
   // since the start line if different this must be parse differently
-  ParseStartLine(start_line);
+  bool success{false};
+  if (!start_line.empty())
+  {
+    // attempt to parse the start line
+    success = ParseStartLine(start_line);
+  }
 
-  return true;
+  return success;
 }
 
 bool HTTPRequest::ToStream(asio::streambuf &buffer, std::string const &host, uint16_t port) const
@@ -166,7 +180,7 @@ bool HTTPRequest::ToStream(asio::streambuf &buffer, std::string const &host, uin
     stream << element.first << ": " << element.second << NEW_LINE;
   }
 
-  if (body_data_.size() && (!header_.Has("content-length")))
+  if (!body_data_.empty() && (!header_.Has("content-length")))
   {
     stream << "content-length: " << body_data_.size() << NEW_LINE;
   }
@@ -178,20 +192,18 @@ bool HTTPRequest::ToStream(asio::streambuf &buffer, std::string const &host, uin
   return true;
 }
 
-void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
+bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
 {
-  LOG_STACK_TRACE_POINT;
-
   std::size_t i = 0;
   while (line[i] != ' ')
   {
     if (i >= line.size())
     {
       is_valid_ = false;
-      return;
+      return false;
     }
 
-    char &cc = reinterpret_cast<char &>(line[i]);
+    auto &cc = reinterpret_cast<char &>(line[i]);
     if (('A' <= cc) && (cc <= 'Z'))
     {
       cc = char(cc + 'a' - 'A');
@@ -199,7 +211,7 @@ void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     ++i;
   }
 
-  byte_array_type method = line.SubArray(0, i);
+  byte_array::ConstByteArray method = line.SubArray(0, i);
   FromString(method, method_);
 
   ++i;
@@ -210,7 +222,7 @@ void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     if (i >= line.size())
     {
       is_valid_ = false;
-      return;
+      return false;
     }
 
     ++i;
@@ -244,7 +256,7 @@ void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     case '&':
       equal = std::min(k, equal);
       key   = line.SubArray(last, equal - last);
-      equal += (equal < k);
+      equal += static_cast<std::size_t>(equal < k);
       value = line.SubArray(equal, k - equal);
 
       query_.Add(key, value);
@@ -257,7 +269,7 @@ void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
 
   equal = std::min(k, equal);
   key   = line.SubArray(last, equal - last);
-  equal += (equal < k);
+  equal += static_cast<std::size_t>(equal < k);
   value = line.SubArray(equal, k - equal);
   query_.Add(key, value);
 
@@ -266,19 +278,21 @@ void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     if (i >= line.size())
     {
       is_valid_ = false;
-      return;
+      return false;
     }
     ++i;
   }
   protocol_ = line.SubArray(i, line.size() - i);
   for (std::size_t t = i; t < line.size(); ++t)
   {
-    char &cc = reinterpret_cast<char &>(line[t]);
+    auto &cc = reinterpret_cast<char &>(line[t]);
     if (('A' <= cc) && (cc <= 'Z'))
     {
       cc = char(cc + 'a' - 'A');
     }
   }
+
+  return true;
 }
 
 }  // namespace http

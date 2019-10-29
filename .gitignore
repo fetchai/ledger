@@ -1,21 +1,38 @@
 # Build Output
-*build*/
+/*build*/
 *.pyc
+*.egg-info/
+*.key
+info.txt
 *.db
 CMakeCache.txt
+
+/docs/build
 
 # Merge Outputs
 *.orig
 
 nodes/
+.ipynb_checkpoints/
+/docker-images/
+docker_ccache/
+
+# Bazel Files
+bazel-*
 
 # Legacy Editors
 \#*#
 .\#*
 *~
 *.swp
+*.swo
+*.swn
 .idea/
+*.osm
+tags
 
 *.gz
 *.so
-.ipynb*
+
+*.DS_Store
+*.ipynb_checkpoints/

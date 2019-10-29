@@ -1,7 +1,7 @@
-################################################################################
+#
 # F E T C H   H T T P   L I B R A R Y
-################################################################################
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+#
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-http)
 
 # CMake configuration
@@ -10,12 +10,16 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Main Library Target
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 setup_library(fetch-http)
-target_link_libraries(fetch-http PUBLIC fetch-network)
+target_link_libraries(fetch-http PUBLIC fetch-network fetch-logging fetch-telemetry)
+
+if (_is_clang_compiler)
+  target_compile_options(fetch-http PRIVATE -Wshadow)
+endif ()
 
 add_subdirectory(examples)
 add_subdirectory(tests)

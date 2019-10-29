@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,18 +18,20 @@
 
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
+
 #include <chrono>
+#include <cstddef>
+#include <cstdlib>
 #include <iostream>
-#include <vector>
 
 using type        = double;
 using array_type  = fetch::memory::SharedArray<type>;
-using vector_type = typename array_type::vector_register_type;
+using vector_type = typename array_type::VectorRegisterType;
 
 void SlicedOperations(array_type const &A, array_type &C)
 {
   auto aslice = A.slice(8, 6);
-  C.slice(2, 6).in_parallel().Apply([](vector_type const &a, vector_type &c) { c = a; }, aslice);
+  C.slice(4, 6).in_parallel().Apply([](auto const &a, auto &c) { c = a; }, aslice);
 }
 
 int main(int argc, char const **argv)
@@ -42,8 +44,8 @@ int main(int argc, char const **argv)
     return 0;
   }
 
-  std::size_t N = std::size_t(atoi(argv[1]));
-  array_type  A(N), C(N);
+  auto       N = std::size_t(std::atoi(argv[1]));
+  array_type A(N), C(N);
 
   for (std::size_t i = 0; i < N; ++i)
   {

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,22 +17,38 @@
 //
 //------------------------------------------------------------------------------
 
+/* The class defined in this file implements the equivalent of
+ * following Python code:
+ *
+ * import numpy as np
+ * import copy
+ *
+ * def gemm_nt_vector(alpha, A, B, beta, C):
+ *   C = alpha * np.dot(A, B.T) + beta * C
+ *
+ *   return C
+ *
+ * Authors:
+ */
+
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
+#include "math/tensor_view.hpp"
 
 namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename S, typename MATRIX>
-class Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
-           Computes(_C = _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
+template <typename S>
+class Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
+           Computes(_C <= _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
 {
 public:
-  using type = S;
+  using Type               = S;
+  using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
 
-  void operator()(type const &alpha, MATRIX const &a, MATRIX const &b, type const &beta,
-                  MATRIX &c) const;
+  void operator()(Type alpha, TensorView<Type> a, TensorView<Type> b, Type beta,
+                  TensorView<Type> c) const;
 };
 
 }  // namespace linalg

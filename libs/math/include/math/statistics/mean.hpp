@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,25 +18,29 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "vectorise/memory/range.hpp"
-
-#include <cmath>
 
 namespace fetch {
 namespace math {
 namespace statistics {
 
-template <typename A>
-inline typename A::Type Mean(A const &a)
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Mean(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  using vector_register_type = typename A::vector_register_type;
-  using type                 = typename A::Type;
+  ret = typename ArrayType::Type(0);
+  for (auto &val : array)
+  {
+    ret += val;
+  }
+  ret /= static_cast<typename ArrayType::Type>(array.size());
+}
 
-  type ret = a.data().in_parallel().Reduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &a, vector_register_type const &b) { return a + b; });
-  ret /= static_cast<type>(a.size());
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Mean(ArrayType const &array)
+{
+  typename ArrayType::Type ret;
+  Mean(array, ret);
 
   return ret;
 }

@@ -1,6 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<namespace id="fetch::math::linalg" name="linalg" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <classtemplate name="Matrix" ref="fetch::math::linalg::Matrix#fetch::math::linalg::Matrix">
-    <templatetypeparameter id="fetch::math::linalg::Matrix::T" name="T" />
-  </classtemplate>
-</namespace>

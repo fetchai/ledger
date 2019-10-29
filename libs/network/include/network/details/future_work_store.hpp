@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,9 +20,14 @@
 #include "core/mutex.hpp"
 
 #include <algorithm>
-#include <iostream>
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <functional>
+#include <mutex>
 #include <queue>
 #include <string>
+#include <utility>
 
 namespace fetch {
 namespace network {
@@ -42,7 +47,7 @@ public:
 
   // Construction / Destruction
   FutureWorkStore()                           = default;
-  FutureWorkStore(const FutureWorkStore &rhs) = delete;
+  FutureWorkStore(FutureWorkStore const &rhs) = delete;
   FutureWorkStore(FutureWorkStore &&rhs)      = delete;
   ~FutureWorkStore()
   {
@@ -84,25 +89,24 @@ public:
 
     Timestamp const now = Clock::now();
 
-    // allow early exit
-    std::unique_lock<Mutex> lock(queue_mutex_, std::try_to_lock);
-    if (lock.owns_lock())
-    {
-      WorkItem item;
+    WorkItem item;
 
-      // empty loop condition
-      if (!queue_.empty())
+    {
+      // allow early exit
+      std::unique_lock<Mutex> lock(queue_mutex_, std::try_to_lock);
+      if (lock.owns_lock())
       {
-        Element const &next = queue_.top();
-        if (next.due <= now)
+        // empty loop condition
+        if (!queue_.empty())
         {
-          item = next.item;
-          queue_.pop();
+          Element const &next = queue_.top();
+          if (next.due <= now)
+          {
+            item = next.item;
+            queue_.pop();
+          }
         }
       }
-
-      // release the queue
-      lock.unlock();
 
       // dispatch all the work items
       if (item)
@@ -162,10 +166,8 @@ public:
         {
           return duration_cast<milliseconds>(element.due - now);
         }
-        else
-        {
-          return milliseconds::zero();
-        }
+
+        return milliseconds::zero();
       }
     }
 
@@ -173,7 +175,7 @@ public:
   }
 
   // Operators
-  FutureWorkStore operator=(const FutureWorkStore &rhs) = delete;
+  FutureWorkStore operator=(FutureWorkStore const &rhs) = delete;
   FutureWorkStore operator=(FutureWorkStore &&rhs) = delete;
 
 private:
@@ -197,11 +199,10 @@ private:
   };
 
   using Queue = std::priority_queue<Element>;
-  using Mutex = fetch::mutex::Mutex;
   using Flag  = std::atomic<bool>;
 
-  mutable Mutex queue_mutex_{__LINE__, __FILE__};  ///< Mutex protecting `queue_`
-  Queue         queue_;                            ///< Ordered queue of work items
+  mutable Mutex queue_mutex_;  ///< Mutex protecting `queue_`
+  Queue         queue_;        ///< Ordered queue of work items
 
   // Shutdown flag this is designed to only ever be set to true. User will have to recreate the
   // whole thread pool with current implementation.

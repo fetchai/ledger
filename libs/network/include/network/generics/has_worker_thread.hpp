@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/set_thread_name.hpp"
 #include "network/generics/resolvable.hpp"
 #include "network/service/promise.hpp"
 
@@ -46,9 +47,10 @@ private:
 public:
   static constexpr char const *LOGGING_NAME = "HasWorkerThread";
 
-  HasWorkerThread(Target *target, std::function<void()> workcycle)
+  HasWorkerThread(Target *target, std::string name, std::function<void()> workcycle)
     : target_(target)
     , workcycle_(std::move(workcycle))
+    , name_{std::move(name)}
   {
     thread_ = std::make_shared<std::thread>([this]() { this->Run(); });
   }
@@ -68,9 +70,16 @@ public:
     thread_.reset();
   }
 
+  void ChangeWaitTime(std::chrono::milliseconds wait_time)
+  {
+    wait_time_ = wait_time;
+  }
+
 protected:
   void Run()
   {
+    SetThreadName(name_);
+
     if (!target_)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "No target configured, stopping thread.");
@@ -78,7 +87,7 @@ protected:
     }
     while (!shutdown_)
     {
-      target_->Wait(100);
+      target_->Wait(wait_time_);
       if (shutdown_)
       {
         return;
@@ -88,13 +97,14 @@ protected:
   }
 
   using ShutdownFlag = std::atomic<bool>;
-  using Thread       = std::thread;
-  using ThreadPtr    = std::shared_ptr<Thread>;
+  using ThreadPtr    = std::shared_ptr<std::thread>;
 
-  Target *     target_{nullptr};
-  ThreadPtr    thread_;
-  ShutdownFlag shutdown_{false};
-  WorkFunc     workcycle_;
+  Target *                  target_{nullptr};
+  ThreadPtr                 thread_;
+  ShutdownFlag              shutdown_{false};
+  WorkFunc                  workcycle_;
+  std::string               name_;
+  std::chrono::milliseconds wait_time_{100};
 };
 
 }  // namespace network

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,8 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/memory/shared_array.hpp"
+
 #include <chrono>
 #include <cmath>
+#include <cstddef>
+#include <cstdlib>
 #include <iostream>
 #include <vector>
 
@@ -46,7 +49,7 @@ int main(int argc, char const **argv)
     return 0;
   }
 
-  std::size_t N = std::size_t(atoi(argv[1]));
+  auto N = std::size_t(std::atoi(argv[1]));
   A.resize(N);
 
   C.resize(N);

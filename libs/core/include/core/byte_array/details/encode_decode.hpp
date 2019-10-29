@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstddef>
 #include <cstdint>
 
 namespace fetch {
@@ -25,10 +24,10 @@ namespace byte_array {
 namespace details {
 // After
 // https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
-extern char const          base64chars[];
-extern char const          base64pad;
-extern char const          hexChars[];
-extern unsigned char const base64decode[];
+extern char const    base64chars[];
+extern char const    base64pad;
+extern char const    hexChars[];
+extern uint8_t const base64decode[];
 
 enum
 {

@@ -1,7 +1,7 @@
-################################################################################
+#
 # F E T C H   M L   L I B R A R Y
-################################################################################
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+#
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-ml)
 
 # CMake Configuration
@@ -10,15 +10,31 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Main Library Target
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 setup_library(fetch-ml)
-target_link_libraries(fetch-ml INTERFACE fetch-math)
+target_link_libraries(fetch-ml PUBLIC fetch-core fetch-crypto fetch-math)
+
+if (_is_clang_compiler)
+  target_compile_options(fetch-ml PRIVATE -Wshadow)
+endif ()
+
+# ------------------------------------------------------------------------------
+# Example Targets
+# ------------------------------------------------------------------------------
+
+add_subdirectory(examples)
+
+# ------------------------------------------------------------------------------
+# Test Targets
+# ------------------------------------------------------------------------------
 
 add_test_target()
 
-add_subdirectory(benchmark)
-#add_subdirectory(examples)
+# ------------------------------------------------------------------------------
+# Benchmark Targets
+# ------------------------------------------------------------------------------
 
+add_subdirectory(benchmark)

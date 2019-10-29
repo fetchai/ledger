@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,13 +21,14 @@
 #include <cstdint>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 template <typename T, std::size_t>
 struct VectorInfo
 {
-  using naitve_type   = T;
-  using register_type = T;
+  using NativeType   = T;
+  using RegisterType = T;
 };
-}  // namespace vectorize
+
+}  // namespace vectorise
 }  // namespace fetch

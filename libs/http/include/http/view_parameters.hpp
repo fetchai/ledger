@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,5 +23,6 @@ namespace fetch {
 namespace http {
 
 using ViewParameters = KeyValueSet;
-}
+
+}  // namespace http
 }  // namespace fetch

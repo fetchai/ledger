@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,1963 +17,974 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
-#include "defs.hpp"
-
 #include "math/arithmetic/comparison.hpp"
-#include "math/free_functions/free_functions.hpp"
-#include "math/linalg/matrix.hpp"
+#include "vm/common.hpp"
+#include "vm/generator.hpp"
+#include "vm/object.hpp"
+#include "vm/opcodes.hpp"
+#include "vm/string.hpp"
+#include "vm/variant.hpp"
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <iostream>
+#include <limits>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
+#include <typeinfo>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace vm {
 
-struct String : public Object
-{
-  std::string str;
-  bool        is_literal;
-  String()
-  {}
-  String(VM *vm, std::string str__, const bool is_literal__)
-    : Object(TypeId::String, vm)
-    , str(std::move(str__))
-    , is_literal(is_literal__)
-  {}
-  virtual ~String()
-  {}
-};
+template <typename T, typename = void>
+struct Getter;
 
 template <typename T>
-struct Matrix : public Object
+struct Getter<T, IfIsPrimitive<T>>
 {
-  fetch::math::linalg::Matrix<T, fetch::memory::Array<T>> matrix;
-  Matrix(const TypeId type_id, VM *vm, const size_t rows, const size_t columns)
-    : Object(type_id, vm)
-    , matrix(rows, columns)
-  {}
-  Matrix(const TypeId type_id, VM *vm,
-         fetch::math::linalg::Matrix<T, fetch::memory::Array<T>> &&matrix__)
-    : Object(type_id, vm)
-    , matrix(matrix__)
-  {}
-  virtual ~Matrix()
-  {}
-};
-using MatrixFloat32 = Matrix<float>;
-using MatrixFloat64 = Matrix<double>;
-
-template <typename T>
-struct Array : public Object
-{
-  std::vector<T> elements;
-  Array(const TypeId type_id, VM *vm, const size_t size)
-    : Object(type_id, vm)
-    , elements(size, T(0))
-  {}
-  template <typename U, typename std::enable_if<std::is_pointer<U>::value>::type * = nullptr>
-  void Release()
+  static TypeId GetTypeId(RegisteredTypes const &types, T const & /* parameter */)
   {
-    for (int i = 0; i < (int)elements.size(); ++i)
+    return types.GetTypeId(TypeIndex(typeid(T)));
+  }
+};
+template <typename T>
+struct Getter<T, IfIsPtr<T>>
+{
+  static TypeId GetTypeId(RegisteredTypes const &types, T const & /* parameter */)
+  {
+    using ManagedType = GetManagedType<std::decay_t<T>>;
+    return types.GetTypeId(TypeIndex(typeid(ManagedType)));
+  }
+};
+template <typename T>
+struct Getter<T, std::enable_if_t<IsVariant<T>::value>>
+{
+  static TypeId GetTypeId(RegisteredTypes const & /* types */, T const &parameter)
+  {
+    return parameter.type_id;
+  }
+};
+
+template <int POSITION, typename... Ts>
+struct AssignParameters;
+
+template <int POSITION, typename T, typename... Ts>
+struct AssignParameters<POSITION, T, Ts...>
+{
+  // Invoked on non-final parameter
+  static void Assign(Variant *stack, RegisteredTypes const &types, T const &parameter,
+                     Ts const &... parameters)
+  {
+    TypeId type_id = Getter<T>::GetTypeId(types, parameter);
+    if (type_id != TypeIds::Unknown)
     {
-      Object *object = elements[std::size_t(i)];
-      if (object)
-      {
-        object->Release();
-      }
+      Variant &v = stack[POSITION];
+      v.Assign(parameter, type_id);
+      AssignParameters<POSITION + 1, Ts...>::Assign(stack, types, parameters...);
     }
   }
-  template <typename U, typename std::enable_if<!std::is_pointer<U>::value>::type * = nullptr>
-  void Release()
-  {}
-  virtual ~Array()
+};
+template <int POSITION, typename T>
+struct AssignParameters<POSITION, T>
+{
+  // Invoked on final parameter
+  static void Assign(Variant *stack, RegisteredTypes const &types, T const &parameter)
   {
-    Release<T>();
+    TypeId type_id = Getter<T>::GetTypeId(types, parameter);
+    if (type_id != TypeIds::Unknown)
+    {
+      Variant &v = stack[POSITION];
+      v.Assign(parameter, type_id);
+    }
   }
 };
-
-template <typename T>
-struct IsMatrix : public std::false_type
+template <int POSITION>
+struct AssignParameters<POSITION>
 {
-};
-template <>
-struct IsMatrix<MatrixFloat32> : public std::true_type
-{
-};
-template <>
-struct IsMatrix<MatrixFloat64> : public std::true_type
-{
+  // Invoked on zero parameters
+  static void Assign(Variant * /* stack */, RegisteredTypes const & /* types */)
+  {}
 };
 
-/// Forward declaration for class and function export
-/// @{
+// Forward declarations
+class IR;
+class IoObserverInterface;
 class Module;
 
-namespace details {
-template <typename T>
-struct LoaderClass;
+class VM;
+class ParameterPack
+{
+public:
+  // Construction / Destruction
+  explicit ParameterPack(RegisteredTypes const &registered_types, VM *vm = nullptr)
+    : registered_types_{registered_types}
+    , vm_{vm}
+  {}
 
-template <typename T, int N>
-struct StorerClass;
+  ParameterPack(ParameterPack const &) = delete;
+  ParameterPack(ParameterPack &&)      = delete;
+  ~ParameterPack()                     = default;
 
-template <int N>
-struct Resetter;
-}  // namespace details
-/// }
+  Variant const &operator[](std::size_t index) const
+  {
+#ifndef NDEBUG
+    return params_.at(index);
+#else
+    return params_[index];
+#endif
+  }
+
+  std::size_t size() const
+  {
+    return params_.size();
+  }
+
+  template <typename T, typename... Args>
+  bool Add(T &&parameter, Args &&... args)
+  {
+    bool success{true};
+
+    success &= AddSingle(std::forward<T>(parameter));
+    success &= Add(std::forward<Args>(args)...);
+
+    return success;
+  }
+
+  bool AddSingle(Variant parameter)
+  {
+    // TODO(1669): Probably should make a deep copy
+
+    params_.push_back(std::move(parameter));
+    return true;
+  }
+
+  template <typename T>
+  IfIsPrimitive<T, bool> AddSingle(T &&parameter)
+  {
+    return AddInternal(std::forward<T>(parameter));
+  }
+
+  template <typename T>
+  IfIsPtr<T, bool> AddSingle(T &&obj)
+  {
+    bool success{false};
+
+    if (obj)
+    {
+      success = AddInternal(std::forward<T>(obj));
+    }
+
+    return success;
+  }
+
+  // Implementation is at the bottom of file
+  // due to dependency on VM
+  template <typename T>
+  IfIsExternal<T, bool> AddSingle(T val);
+
+  bool Add()
+  {
+    return true;
+  }
+
+  // Operators
+  ParameterPack &operator=(ParameterPack const &) = delete;
+  ParameterPack &operator=(ParameterPack &&) = delete;
+
+private:
+  template <typename T>
+  bool AddInternal(T const &value)
+  {
+    bool         success{false};
+    TypeId const type_id = Getter<T>::GetTypeId(registered_types_, value);
+
+    if (TypeIds::Unknown != type_id)
+    {
+      // add the value to the map
+      params_.emplace_back(value, type_id);
+
+      // signal great success
+      success = true;
+    }
+
+    return success;
+  }
+
+  bool AddInternal(Ptr<Object> const &value)
+  {
+    // add the value to the map
+    // TODO(tfr): Check ownership of Ptr.
+    Variant v;
+    v.Construct(value, value->GetTypeId());
+    params_.emplace_back(std::move(v));
+
+    return true;
+  }
+
+  using VariantArray = std::vector<Variant>;
+
+  RegisteredTypes const &registered_types_;
+  VariantArray           params_{};
+  VM *                   vm_;
+};
 
 class VM
 {
 public:
-  VM(Module *module = nullptr)
-    : module_(module)
-  {}
-  ~VM()
-  {}
-  bool        Execute(const Script &script, const std::string &name);
-  std::string error() const
+  using InputDeviceMap  = std::unordered_map<std::string, std::istream *>;
+  using OutputDeviceMap = std::unordered_map<std::string, std::ostream *>;
+
+  explicit VM(Module *module);
+  ~VM() = default;
+
+  static constexpr char const *const STDOUT = "stdout";
+
+  RegisteredTypes const &registered_types() const
   {
-    return error_;
+    return registered_types_;
   }
-  std::size_t error_line() const
+
+  bool GenerateExecutable(IR const &ir, std::string const &name, Executable &executable,
+                          std::vector<std::string> &errors);
+
+  template <typename... Ts>
+  bool Execute(Executable const &executable, std::string const &name, std::string &error,
+               Variant &output, Ts const &... parameters)
   {
-    return error_line_;
+    ParameterPack parameter_pack{registered_types_};
+
+    if (!parameter_pack.Add(parameters...))
+    {
+      error = "Unable to generate parameter pack";
+      return false;
+    }
+
+    return Execute(executable, name, error, output, parameter_pack);
   }
+
+  bool Execute(Executable const &executable, std::string const &name, std::string &error,
+               Variant &output, ParameterPack const &parameters)
+  {
+    bool success{false};
+
+    Executable::Function const *f = executable.FindFunction(name);
+    if (f != nullptr)
+    {
+      auto const num_parameters = static_cast<std::size_t>(f->num_parameters);
+
+      if (parameters.size() == num_parameters)
+      {
+        // loop through the parameters, type check and populate the stack
+        for (std::size_t i = 0; i < num_parameters; ++i)
+        {
+          Variant const &parameter = parameters[i];
+
+          // type check
+          if (parameter.type_id != f->variables[i].type_id)
+          {
+            error = "mismatched parameters: expected argument " + std::to_string(i);
+            error += "to be of type " + GetTypeName(f->variables[i].type_id) + " but got ";
+            error += GetTypeName(parameter.type_id);
+            // clean up
+            for (std::size_t j = 0; j < num_parameters; ++j)
+            {
+              stack_[j].Reset();
+            }
+
+            return false;
+          }
+
+          // assign
+          stack_[i].Assign(parameter, parameter.type_id);
+        }
+
+        executable_ = &executable;
+        function_   = f;
+
+        // execute the function
+        success = Execute(error, output);
+      }
+      else
+      {
+        error = "mismatched parameters: expected " + std::to_string(num_parameters) + " arguments";
+        error += ", but got " + std::to_string(parameters.size());
+      }
+    }
+    else
+    {
+      error = "unable to find function '" + name + "'";
+    }
+
+    return success;
+  }
+
+  std::string GetTypeName(TypeId type_id) const
+  {
+    auto info = GetTypeInfo(type_id);
+    return info.name;
+  }
+
+  template <typename T>
+  TypeId GetTypeId()
+  {
+    return registered_types_.GetTypeId(TypeIndex(typeid(T)));
+  }
+
+  template <typename T, typename... Ts>
+  Ptr<T> CreateNewObject(Ts &&... args)
+  {
+    return Ptr<T>{new T(this, GetTypeId<T>(), std::forward<Ts>(args)...)};
+  }
+
+  void SetIOObserver(IoObserverInterface &observer)
+  {
+    io_observer_ = &observer;
+  }
+
+  bool HasIoObserver() const
+  {
+    return io_observer_ != nullptr;
+  }
+
+  IoObserverInterface &GetIOObserver()
+  {
+    assert(io_observer_ != nullptr);
+    return *io_observer_;
+  }
+
+  std::ostream &GetOutputDevice(std::string const &name)
+  {
+    if (output_devices_.find(name) == output_devices_.end())
+    {
+      RuntimeError("output device " + name + " does not exist.");
+      return std::cout;
+    }
+    return *output_devices_[name];
+  }
+
+  std::istream &GetInputDevice(std::string const &name)
+  {
+    if (input_devices_.find(name) == input_devices_.end())
+    {
+      RuntimeError("input device " + name + " does not exist.");
+      return std::cin;
+    }
+    return *input_devices_[name];
+  }
+
+  void DetachInputDevice(std::string const &name)
+  {
+    auto it = input_devices_.find(name);
+    if (it != input_devices_.end())
+    {
+      input_devices_.erase(it);
+    }
+    else
+    {
+      throw std::runtime_error("Input device does not exists.");
+    }
+  }
+
+  void AttachInputDevice(std::string name, std::istream &device)
+  {
+    if (input_devices_.find(name) != input_devices_.end())
+    {
+      throw std::runtime_error("Input device already exists.");
+    }
+
+    input_devices_.insert({std::move(name), &device});
+  }
+
+  void DetachOutputDevice(std::string const &name)
+  {
+    auto it = output_devices_.find(name);
+    if (it != output_devices_.end())
+    {
+      output_devices_.erase(it);
+    }
+    else
+    {
+      throw std::runtime_error("Output device does not exists.");
+    }
+  }
+
+  void AttachOutputDevice(std::string name, std::ostream &device)
+  {
+    if (output_devices_.find(name) != output_devices_.end())
+    {
+      throw std::runtime_error("output device already exists.");
+    }
+
+    output_devices_.insert({std::move(name), &device});
+  }
+
+  void AddOutputLine(std::string const &line)
+  {
+    output_buffer_ << line << '\n';
+  }
+
+  // These two are public for the benefit of the static Constructor() functions in
+  // each of the Object-derived classes
+  void RuntimeError(std::string const &message);
+  bool HasError() const
+  {
+    return !error_.empty();
+  }
+  TypeInfo const &GetTypeInfo(TypeId type_id) const
+  {
+    return type_info_array_[type_id];
+  }
+
+  bool IsDefaultSerializeConstructable(TypeId type_id) const
+  {
+    TypeIndex idx = registered_types_.GetTypeIndex(type_id);
+    auto      it  = deserialization_constructors_.find(idx);
+
+    if (it == deserialization_constructors_.end())
+    {
+      TypeInfo tinfo = GetTypeInfo(type_id);
+      if (tinfo.template_type_id == TypeIds::Unknown)
+      {
+        return false;
+      }
+
+      idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
+      it  = deserialization_constructors_.find(idx);
+      return (it != deserialization_constructors_.end());
+    }
+    return true;
+  }
+
+  Ptr<Object> DefaultSerializeConstruct(TypeId type_id)
+  {
+    // Resolving constructor
+    TypeIndex idx = registered_types_.GetTypeIndex(type_id);
+    auto      it  = deserialization_constructors_.find(idx);
+
+    if (it == deserialization_constructors_.end())
+    {
+      // Testing if there is an interface constructor
+      TypeInfo tinfo = GetTypeInfo(type_id);
+      if (tinfo.template_type_id != TypeIds::Unknown)
+      {
+        idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
+        it  = deserialization_constructors_.find(idx);
+      }
+    }
+
+    if (it == deserialization_constructors_.end())
+    {
+      RuntimeError("object is not default constructible.");
+      return {};
+    }
+
+    auto &constructor = it->second;
+    return constructor(this, type_id);
+  }
+
+  template <typename T>
+  bool HasCPPCopyConstructor()
+  {
+    auto type_index = TypeIndex(typeid(T));
+    return (cpp_copy_constructors_.find(type_index) != cpp_copy_constructors_.end());
+  }
+
+  template <typename T>
+  Ptr<Object> CPPCopyConstruct(T const &val)
+  {
+    auto it = cpp_copy_constructors_.find(TypeIndex(typeid(T)));
+    if (it == cpp_copy_constructors_.end())
+    {
+      return {};
+    }
+
+    return it->second(this, static_cast<void const *>(&val));
+  }
+
+  struct OpcodeInfo
+  {
+    OpcodeInfo() = default;
+
+    OpcodeInfo(std::string name__, Handler handler__, ChargeAmount charge)
+      : name(std::move(name__))
+      , handler(std::move(handler__))
+      , static_charge{charge}
+    {}
+
+    std::string  name;
+    Handler      handler;
+    ChargeAmount static_charge{};
+  };
+
+  ChargeAmount GetChargeTotal() const;
+  void         IncreaseChargeTotal(ChargeAmount amount);
+  ChargeAmount GetChargeLimit() const;
+  void         SetChargeLimit(ChargeAmount limit);
+
+  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_charges);
 
 private:
-  friend struct Object;
-
-  /// Friends and objects that allow dynamic module export
-  /// @{
-  Module *module_ = nullptr;
-
-  template <typename T>
-  friend class ClassInterface;
-  friend class Module;
-  friend class BaseModule;
-
-  template <int N>
-  friend struct details::Resetter;
-  template <typename T>
-  friend struct details::LoaderClass;
-
-  template <typename T, int N>
-  friend struct details::StorerClass;
-  /// }
-
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
   static const int MAX_LIVE_OBJECTS = 200;
   static const int MAX_RANGE_LOOPS  = 50;
 
+  using OpcodeInfoArray = std::vector<OpcodeInfo>;
+  using OpcodeMap       = std::unordered_map<std::string, uint16_t>;
+
   struct Frame
   {
-    const Script::Function *function;
-    int                     bsp;
-    int                     pc;
+    Executable::Function const *function;
+    int                         bsp;
+    uint16_t                    pc;
   };
 
   struct ForRangeLoop
   {
-    Index   variable_index;
-    Variant current;
-    Variant target;
-    Variant delta;
+    uint16_t  variable_index;
+    Primitive current;
+    Primitive target;
+    Primitive delta;
   };
 
   struct LiveObjectInfo
   {
-    int   frame_sp;
-    Index variable_index;
-    int   scope_number;
+    int      frame_sp;
+    uint16_t variable_index;
+    uint16_t scope_number;
   };
 
-  const Script *             script_;
-  const Script::Function *   function_;
-  std::vector<String>        pool_;
-  std::vector<String *>      strings_;
-  Frame                      frame_stack_[FRAME_STACK_SIZE];
-  int                        frame_sp_;
-  int                        bsp_;
-  Value                      stack_[STACK_SIZE];
-  int                        sp_;
-  ForRangeLoop               range_loop_stack_[MAX_RANGE_LOOPS];
-  int                        range_loop_sp_;
-  LiveObjectInfo             live_object_stack_[MAX_LIVE_OBJECTS];
-  int                        live_object_sp_;
-  int                        pc_;
-  const Script::Instruction *instruction_;
-  bool                       stop_;
-  std::string                error_;
-  std::size_t                error_line_;
+  template <typename T>
+  friend struct StackGetter;
+  template <typename T>
+  friend struct StackSetter;
+  template <typename T, typename S>
+  friend struct TypeGetter;
+  template <typename T, typename S>
+  friend struct ParameterTypeGetter;
+  template <int, typename, typename, typename>
+  friend struct VmFreeFunctionInvoker;
+  template <int, typename, typename, typename>
+  friend struct VmMemberFunctionInvoker;
 
-  Value &GetVariable(const Index variable_index)
+  TypeInfoArray                  type_info_array_;
+  TypeInfoMap                    type_info_map_;
+  RegisteredTypes                registered_types_;
+  OpcodeInfoArray                opcode_info_array_;
+  OpcodeMap                      opcode_map_;
+  Generator                      generator_;
+  Executable const *             executable_{};
+  Executable::Function const *   function_{};
+  std::vector<Ptr<String>>       strings_;
+  Frame                          frame_stack_[FRAME_STACK_SIZE]{};
+  int                            frame_sp_{};
+  int                            bsp_{};
+  Variant                        stack_[STACK_SIZE];
+  int                            sp_{};
+  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS]{};
+  int                            range_loop_sp_{};
+  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};
+  int                            live_object_sp_{};
+  uint16_t                       pc_{};
+  uint16_t                       instruction_pc_{};
+  Executable::Instruction const *instruction_{};
+  bool                           stop_{};
+  std::string                    error_;
+  std::ostringstream             output_buffer_;
+  IoObserverInterface *          io_observer_{nullptr};
+  OutputDeviceMap                output_devices_;
+  InputDeviceMap                 input_devices_;
+  DeserializeConstructorMap      deserialization_constructors_;
+  CPPCopyConstructorMap          cpp_copy_constructors_;
+  OpcodeInfo *                   current_op_{nullptr};
+
+  /// @name Charges
+  /// @{
+  ChargeAmount charge_limit_{std::numeric_limits<ChargeAmount>::max()};
+  ChargeAmount charge_total_{0};
+  /// @}
+
+  void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler,
+                     ChargeAmount static_charge = 1)
+  {
+    opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler), static_charge);
+  }
+
+  bool Execute(std::string &error, Variant &output);
+  void Destruct(uint16_t scope_number);
+
+  TypeId FindType(std::string const &name) const
+  {
+    auto it = type_info_map_.find(name);
+    if (it != type_info_map_.end())
+    {
+      return it->second;
+    }
+    return TypeIds::Unknown;
+  }
+
+  uint16_t FindOpcode(std::string const &name) const
+  {
+    auto it = opcode_map_.find(name);
+    if (it != opcode_map_.end())
+    {
+      return it->second;
+    }
+    return Opcodes::Unknown;
+  }
+
+  Variant &Push()
+  {
+    return stack_[++sp_];
+  }
+
+  Variant &Pop()
+  {
+    return stack_[sp_--];
+  }
+
+  Variant &Top()
+  {
+    return stack_[sp_];
+  }
+
+  Variant &GetVariable(uint16_t variable_index)
   {
     return stack_[bsp_ + variable_index];
   }
 
-  void Destruct(const int scope_number)
-  {
-    // Destruct all live objects in the current frame and with scope >= scope_number
-    while (live_object_sp_ >= 0)
-    {
-      const LiveObjectInfo &info = live_object_stack_[live_object_sp_];
-      if ((info.frame_sp != frame_sp_) || (info.scope_number < scope_number))
-      {
-        break;
-      }
-      Value &variable = GetVariable(info.variable_index);
-      variable.Reset();
-      --live_object_sp_;
-    }
-  }
-
-  void InvokeUserFunction(const Index index)
-  {
-    // Note: the parameters are already on the stack
-    Frame frame;
-    frame.function = function_;
-    frame.bsp      = bsp_;
-    frame.pc       = pc_;
-    if (frame_sp_ >= FRAME_STACK_SIZE - 1)
-    {
-      RuntimeError("frame stack overflow");
-      return;
-    }
-    frame_stack_[++frame_sp_] = frame;
-    function_                 = &(script_->functions[index]);
-    bsp_                      = sp_ - function_->num_parameters + 1;  // first parameter
-    pc_                       = 0;
-    const int num_locals      = function_->num_variables - function_->num_parameters;
-    sp_ += num_locals;
-  }
-
-  void ReleaseObject(Object *object, const TypeId type_id)
-  {
-    delete object;
-  }
-
-  void RuntimeError(const std::string &message);
-  void AcquireMatrix(const size_t rows, const size_t columns, MatrixFloat32 *&m);
-  void AcquireMatrix(const size_t rows, const size_t columns, MatrixFloat64 *&m);
-  void ForRangeInit();
-  void ForRangeIterate();
-  void CreateMatrix();
-  void CreateArray();
-
-  //
-  // Casting
-  //
-
-  template <typename From, typename To>
-  void Cast(From &from, To &to)
-  {
-    to = static_cast<To>(from);
-  }
-
-  template <typename To>
-  void HandleCast(Value &value, const TypeId to_type_id, To &to)
-  {
-    const TypeId from_type_id = value.type_id;
-    value.type_id             = to_type_id;
-    switch (from_type_id)
-    {
-    case TypeId::Int8:
-    {
-      Cast(value.variant.i8, to);
-      break;
-    }
-    case TypeId::Byte:
-    {
-      Cast(value.variant.ui8, to);
-      break;
-    }
-    case TypeId::Int16:
-    {
-      Cast(value.variant.i16, to);
-      break;
-    }
-    case TypeId::UInt16:
-    {
-      Cast(value.variant.ui16, to);
-      break;
-    }
-    case TypeId::Int32:
-    {
-      Cast(value.variant.i32, to);
-      break;
-    }
-    case TypeId::UInt32:
-    {
-      Cast(value.variant.ui32, to);
-      break;
-    }
-    case TypeId::Int64:
-    {
-      Cast(value.variant.i64, to);
-      break;
-    }
-    case TypeId::UInt64:
-    {
-      Cast(value.variant.ui64, to);
-      break;
-    }
-    case TypeId::Float32:
-    {
-      Cast(value.variant.f32, to);
-      break;
-    }
-    case TypeId::Float64:
-    {
-      Cast(value.variant.f64, to);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }
-  }
-
-  //
-  // Equality operators
-  //
-
-  template <typename Op>
-  void HandleEqualityOp(const TypeId type_id, Value &lhsv, Value &rhsv)
-  {
-    switch (type_id)
-    {
-    case TypeId::Bool:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui8, rhsv.variant.ui8);
-      break;
-    }
-    case TypeId::Int8:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i8, rhsv.variant.i8);
-      break;
-    }
-    case TypeId::Byte:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui8, rhsv.variant.ui8);
-      break;
-    }
-    case TypeId::Int16:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i16, rhsv.variant.i16);
-      break;
-    }
-    case TypeId::UInt16:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui16, rhsv.variant.ui16);
-      break;
-    }
-    case TypeId::Int32:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i32, rhsv.variant.i32);
-      break;
-    }
-    case TypeId::UInt32:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui32, rhsv.variant.ui32);
-      break;
-    }
-    case TypeId::Int64:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i64, rhsv.variant.i64);
-      break;
-    }
-    case TypeId::UInt64:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui64, rhsv.variant.ui64);
-      break;
-    }
-    case TypeId::Float32:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.f32, rhsv.variant.f32);
-      break;
-    }
-    case TypeId::Float64:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.f64, rhsv.variant.f64);
-      break;
-    }
-    case TypeId::String:
-    {
-      String *lhs = static_cast<String *>(lhsv.variant.object);
-      String *rhs = static_cast<String *>(rhsv.variant.object);
-      if (lhs && rhs)
-      {
-        Op::Apply(this, lhsv, rhsv, lhs, rhs);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    default:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.object, rhsv.variant.object);
-      break;
-    }
-    }
-  }
-
-  //
-  // Relational operators
-  //
-
-  template <typename Op>
-  void HandleRelationalOp(const TypeId type_id, Value &lhsv, Value &rhsv)
-  {
-    switch (type_id)
-    {
-    case TypeId::Int8:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i8, rhsv.variant.i8);
-      break;
-    }
-    case TypeId::Byte:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui8, rhsv.variant.ui8);
-      break;
-    }
-    case TypeId::Int16:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i16, rhsv.variant.i16);
-      break;
-    }
-    case TypeId::UInt16:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui16, rhsv.variant.ui16);
-      break;
-    }
-    case TypeId::Int32:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i32, rhsv.variant.i32);
-      break;
-    }
-    case TypeId::UInt32:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui32, rhsv.variant.ui32);
-      break;
-    }
-    case TypeId::Int64:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i64, rhsv.variant.i64);
-      break;
-    }
-    case TypeId::UInt64:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui64, rhsv.variant.ui64);
-      break;
-    }
-    case TypeId::Float32:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.f32, rhsv.variant.f32);
-      break;
-    }
-    case TypeId::Float64:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.f64, rhsv.variant.f64);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }
-  }
-
-  //
-  // Arithmetic operators
-  //
-
-  template <typename Op>
-  void HandleArithmeticOp(const TypeId type_id, Value &lhsv, Value &rhsv)
-  {
-    switch (type_id)
-    {
-    case TypeId::Int8:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i8, rhsv.variant.i8);
-      break;
-    }
-    case TypeId::Byte:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui8, rhsv.variant.ui8);
-      break;
-    }
-    case TypeId::Int16:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i16, rhsv.variant.i16);
-      break;
-    }
-    case TypeId::UInt16:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui16, rhsv.variant.ui16);
-      break;
-    }
-    case TypeId::Int32:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i32, rhsv.variant.i32);
-      break;
-    }
-    case TypeId::UInt32:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui32, rhsv.variant.ui32);
-      break;
-    }
-    case TypeId::Int64:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.i64, rhsv.variant.i64);
-      break;
-    }
-    case TypeId::UInt64:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.ui64, rhsv.variant.ui64);
-      break;
-    }
-    case TypeId::Float32:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.f32, rhsv.variant.f32);
-      break;
-    }
-    case TypeId::Float64:
-    {
-      Op::Apply(this, lhsv, rhsv, lhsv.variant.f64, rhsv.variant.f64);
-      break;
-    }
-    case TypeId::String:
-    {
-      String *lhs = static_cast<String *>(lhsv.variant.object);
-      String *rhs = static_cast<String *>(rhsv.variant.object);
-      if (lhs && rhs)
-      {
-        Op::Apply(this, lhsv, rhsv, lhs, rhs);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    case TypeId::Matrix_Float32:
-    {
-      MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
-      MatrixFloat32 *rhs = static_cast<MatrixFloat32 *>(rhsv.variant.object);
-      if (lhs && rhs)
-      {
-        Op::Apply(this, lhsv, rhsv, lhs, rhs);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    case TypeId::Matrix_Float64:
-    {
-      MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
-      MatrixFloat64 *rhs = static_cast<MatrixFloat64 *>(rhsv.variant.object);
-      if (lhs && rhs)
-      {
-        Op::Apply(this, lhsv, rhsv, lhs, rhs);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    case TypeId::Matrix_Float32__Float32:
-    {
-      MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
-      if (lhs)
-      {
-        Op::Apply(this, lhsv, rhsv, lhs, rhsv.variant.f32);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    case TypeId::Matrix_Float64__Float64:
-    {
-      MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
-      if (lhs)
-      {
-        Op::Apply(this, lhsv, rhsv, lhs, rhsv.variant.f64);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    case TypeId::Float32__Matrix_Float32:
-    {
-      MatrixFloat32 *rhs = static_cast<MatrixFloat32 *>(rhsv.variant.object);
-      if (rhs)
-      {
-        Op::Apply(this, lhsv, rhsv, lhsv.variant.f32, rhs);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    case TypeId::Float64__Matrix_Float64:
-    {
-      MatrixFloat64 *rhs = static_cast<MatrixFloat64 *>(rhsv.variant.object);
-      if (rhs)
-      {
-        Op::Apply(this, lhsv, rhsv, lhsv.variant.f64, rhs);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }
-  }
-
-  //
-  // Arithmetic assignment operators
-  //
-
-  template <typename Op>
-  void HandleArithmeticAssignmentOp(const TypeId type_id, Value &lhsv, Value &rhsv)
-  {
-    switch (type_id)
-    {
-    case TypeId::Int8:
-    {
-      Op::Apply(this, lhsv.variant.i8, rhsv.variant.i8);
-      break;
-    }
-    case TypeId::Byte:
-    {
-      Op::Apply(this, lhsv.variant.ui8, rhsv.variant.ui8);
-      break;
-    }
-    case TypeId::Int16:
-    {
-      Op::Apply(this, lhsv.variant.i16, rhsv.variant.i16);
-      break;
-    }
-    case TypeId::UInt16:
-    {
-      Op::Apply(this, lhsv.variant.ui16, rhsv.variant.ui16);
-      break;
-    }
-    case TypeId::Int32:
-    {
-      Op::Apply(this, lhsv.variant.i32, rhsv.variant.i32);
-      break;
-    }
-    case TypeId::UInt32:
-    {
-      Op::Apply(this, lhsv.variant.ui32, rhsv.variant.ui32);
-      break;
-    }
-    case TypeId::Int64:
-    {
-      Op::Apply(this, lhsv.variant.i64, rhsv.variant.i64);
-      break;
-    }
-    case TypeId::UInt64:
-    {
-      Op::Apply(this, lhsv.variant.ui64, rhsv.variant.ui64);
-      break;
-    }
-    case TypeId::Float32:
-    {
-      Op::Apply(this, lhsv.variant.f32, rhsv.variant.f32);
-      break;
-    }
-    case TypeId::Float64:
-    {
-      Op::Apply(this, lhsv.variant.f64, rhsv.variant.f64);
-      break;
-    }
-    case TypeId::Matrix_Float32:
-    {
-      MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
-      MatrixFloat32 *rhs = static_cast<MatrixFloat32 *>(rhsv.variant.object);
-      if (lhs && rhs)
-      {
-        Op::Apply(this, lhs, rhs);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    case TypeId::Matrix_Float64:
-    {
-      MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
-      MatrixFloat64 *rhs = static_cast<MatrixFloat64 *>(rhsv.variant.object);
-      if (lhs && rhs)
-      {
-        Op::Apply(this, lhs, rhs);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    case TypeId::Matrix_Float32__Float32:
-    {
-      MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
-      if (lhs)
-      {
-        Op::Apply(this, lhs, rhsv.variant.f32);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    case TypeId::Matrix_Float64__Float64:
-    {
-      MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
-      if (lhs)
-      {
-        Op::Apply(this, lhs, rhsv.variant.f64);
-      }
-      else
-      {
-        RuntimeError("null reference");
-      }
-      break;
-    }
-    default:
-      break;
-    }
-  }
-
-  //
-  // Indexed assignment
-  //
-
-  void HandleIndexedAssignment(const TypeId type_id)
-  {
-    switch (type_id)
-    {
-    case TypeId::Matrix_Float32:
-    {
-      HandleMatrixIndexedAssignment<float>(TypeId::Float32);
-      break;
-    }
-    case TypeId::Matrix_Float64:
-    {
-      HandleMatrixIndexedAssignment<double>(TypeId::Float64);
-      break;
-    }
-    case TypeId::Array_Bool:
-    {
-      HandlePrimitiveArrayIndexedAssignment<uint8_t>(TypeId::Bool);
-      break;
-    }
-    case TypeId::Array_Int8:
-    {
-      HandlePrimitiveArrayIndexedAssignment<int8_t>(TypeId::Int8);
-      break;
-    }
-    case TypeId::Array_Byte:
-    {
-      HandlePrimitiveArrayIndexedAssignment<uint8_t>(TypeId::Byte);
-      break;
-    }
-    case TypeId::Array_Int16:
-    {
-      HandlePrimitiveArrayIndexedAssignment<int16_t>(TypeId::Int16);
-      break;
-    }
-    case TypeId::Array_UInt16:
-    {
-      HandlePrimitiveArrayIndexedAssignment<uint16_t>(TypeId::UInt16);
-      break;
-    }
-    case TypeId::Array_Int32:
-    {
-      HandlePrimitiveArrayIndexedAssignment<int32_t>(TypeId::Int32);
-      break;
-    }
-    case TypeId::Array_UInt32:
-    {
-      HandlePrimitiveArrayIndexedAssignment<uint32_t>(TypeId::UInt32);
-      break;
-    }
-    case TypeId::Array_Int64:
-    {
-      HandlePrimitiveArrayIndexedAssignment<int64_t>(TypeId::Int64);
-      break;
-    }
-    case TypeId::Array_UInt64:
-    {
-      HandlePrimitiveArrayIndexedAssignment<uint64_t>(TypeId::UInt64);
-      break;
-    }
-    case TypeId::Array_Float32:
-    {
-      HandlePrimitiveArrayIndexedAssignment<float>(TypeId::Float32);
-      break;
-    }
-    case TypeId::Array_Float64:
-    {
-      HandlePrimitiveArrayIndexedAssignment<double>(TypeId::Float64);
-      break;
-    }
-    case TypeId::Array_String:
-    {
-      HandleObjectArrayIndexedAssignment(TypeId::String);
-      break;
-    }
-    case TypeId::Array_Matrix_Float32:
-    {
-      HandleObjectArrayIndexedAssignment(TypeId::Matrix_Float32);
-      break;
-    }
-    case TypeId::Array_Matrix_Float64:
-    {
-      HandleObjectArrayIndexedAssignment(TypeId::Matrix_Float64);
-      break;
-    }
-    case TypeId::Array:
-    {
-      HandleObjectArrayIndexedAssignment(TypeId::Array);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }
-  }
-
-  template <typename ElementType>
-  void HandleMatrixIndexedAssignment(const TypeId type_id)
-  {
-    ElementType *ptr;
-    if (GetMatrixElement(ptr) == false)
-    {
-      return;
-    }
-    Value &matrixv = stack_[sp_--];
-    Value &rhsv    = stack_[sp_--];
-    rhsv.variant.Get(*ptr);
-    matrixv.Reset();
-    rhsv.PrimitiveReset();
-  }
-
-  template <typename ElementType>
-  void HandlePrimitiveArrayIndexedAssignment(const TypeId type_id)
-  {
-    ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false)
-    {
-      return;
-    }
-    Value &arrayv = stack_[sp_--];
-    Value &rhsv   = stack_[sp_--];
-    rhsv.variant.Get(*ptr);
-    arrayv.Reset();
-    rhsv.PrimitiveReset();
-  }
-
-  // Move RHS to LHS
-  void Move(Object *&lhs, Object *&rhs)
-  {
-    if (lhs != rhs)
-    {
-      if (lhs)
-      {
-        lhs->Release();
-      }
-      lhs = rhs;
-    }
-  }
-
-  void HandleObjectArrayIndexedAssignment(const TypeId type_id)
-  {
-    Object **ptr;
-    if (GetArrayElement<Object *>(ptr) == false)
-    {
-      return;
-    }
-    Value & arrayv = stack_[sp_--];
-    Value & rhsv   = stack_[sp_--];
-    Object *rhs;
-    rhsv.variant.Get(rhs);
-    Move(*ptr, rhs);
-    arrayv.Reset();
-    rhsv.type_id = TypeId::Unknown;
-    rhsv.variant.Zero();
-  }
-
-  //
-  // Index
-  //
-
-  void HandleIndexOp(const TypeId type_id)
-  {
-    switch (type_id)
-    {
-    case TypeId::Matrix_Float32:
-    {
-      HandleMatrixIndexOp<float>(TypeId::Float32);
-      break;
-    }
-    case TypeId::Matrix_Float64:
-    {
-      HandleMatrixIndexOp<double>(TypeId::Float64);
-      break;
-    }
-    case TypeId::Array_Bool:
-    {
-      HandlePrimitiveArrayIndexOp<uint8_t>(TypeId::Bool);
-      break;
-    }
-    case TypeId::Array_Int8:
-    {
-      HandlePrimitiveArrayIndexOp<int8_t>(TypeId::Int8);
-      break;
-    }
-    case TypeId::Array_Byte:
-    {
-      HandlePrimitiveArrayIndexOp<uint8_t>(TypeId::Byte);
-      break;
-    }
-    case TypeId::Array_Int16:
-    {
-      HandlePrimitiveArrayIndexOp<int16_t>(TypeId::Int16);
-      break;
-    }
-    case TypeId::Array_UInt16:
-    {
-      HandlePrimitiveArrayIndexOp<uint16_t>(TypeId::UInt16);
-      break;
-    }
-    case TypeId::Array_Int32:
-    {
-      HandlePrimitiveArrayIndexOp<int32_t>(TypeId::Int32);
-      break;
-    }
-    case TypeId::Array_UInt32:
-    {
-      HandlePrimitiveArrayIndexOp<uint32_t>(TypeId::UInt32);
-      break;
-    }
-    case TypeId::Array_Int64:
-    {
-      HandlePrimitiveArrayIndexOp<int64_t>(TypeId::Int64);
-      break;
-    }
-    case TypeId::Array_UInt64:
-    {
-      HandlePrimitiveArrayIndexOp<uint64_t>(TypeId::UInt64);
-      break;
-    }
-    case TypeId::Array_Float32:
-    {
-      HandlePrimitiveArrayIndexOp<float>(TypeId::Float32);
-      break;
-    }
-    case TypeId::Array_Float64:
-    {
-      HandlePrimitiveArrayIndexOp<double>(TypeId::Float64);
-      break;
-    }
-    case TypeId::Array_String:
-    {
-      HandleObjectArrayIndexOp(TypeId::Array_String);
-      break;
-    }
-    case TypeId::Array_Matrix_Float32:
-    {
-      HandleObjectArrayIndexOp(TypeId::Matrix_Float32);
-      break;
-    }
-    case TypeId::Array_Matrix_Float64:
-    {
-      HandleObjectArrayIndexOp(TypeId::Matrix_Float64);
-      break;
-    }
-    case TypeId::Array:
-    {
-      HandleObjectArrayIndexOp(TypeId::Array);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }
-  }
-
-  template <typename ElementType>
-  void HandleMatrixIndexOp(const TypeId type_id)
-  {
-    ElementType *ptr;
-    if (GetMatrixElement(ptr) == false)
-    {
-      return;
-    }
-    ElementType element = *ptr;
-    Value &     matrixv = stack_[sp_];
-    matrixv.Release();
-    matrixv.type_id = type_id;
-    matrixv.variant.Set(element);
-  }
-
-  template <typename ElementType>
-  void HandlePrimitiveArrayIndexOp(const TypeId type_id)
-  {
-    ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false)
-    {
-      return;
-    }
-    ElementType element = *ptr;
-    Value &     arrayv  = stack_[sp_];
-    arrayv.Release();
-    arrayv.type_id = type_id;
-    arrayv.variant.Set(element);
-  }
-
-  void HandleObjectArrayIndexOp(const TypeId type_id)
-  {
-    Object **ptr;
-    if (GetArrayElement<Object *>(ptr) == false)
-    {
-      return;
-    }
-    Object *object = *ptr;
-    if (object)
-    {
-      object->AddRef();
-    }
-    Value &arrayv = stack_[sp_];
-    arrayv.Release();
-    arrayv.type_id        = type_id;
-    arrayv.variant.object = object;
-  }
-
-  //
-  // Indexed arithmetic assignment
-  //
-
-  // matrix[i, j] += number
-  // intarray[i] += number
-  // matrixarray[i] += matrix
-  // matrixarray[i] += number
-  template <typename Op>
-  void HandleIndexedArithmeticAssignmentOp(const TypeId type_id)
-  {
-    switch (type_id)
-    {
-    case TypeId::Matrix_Float32:
-    {
-      HandleMatrixIndexedArithmeticAssignmentOp<Op, float>();
-      break;
-    }
-    case TypeId::Matrix_Float64:
-    {
-      HandleMatrixIndexedArithmeticAssignmentOp<Op, double>();
-      break;
-    }
-    case TypeId::Array_Int8:
-    {
-      HandlePrimitiveArrayIndexedArithmeticAssignmentOp<Op, int8_t>();
-      break;
-    }
-    case TypeId::Array_Byte:
-    {
-      HandlePrimitiveArrayIndexedArithmeticAssignmentOp<Op, uint8_t>();
-      break;
-    }
-    case TypeId::Array_Int16:
-    {
-      HandlePrimitiveArrayIndexedArithmeticAssignmentOp<Op, int16_t>();
-      break;
-    }
-    case TypeId::Array_UInt16:
-    {
-      HandlePrimitiveArrayIndexedArithmeticAssignmentOp<Op, uint16_t>();
-      break;
-    }
-    case TypeId::Array_Int32:
-    {
-      HandlePrimitiveArrayIndexedArithmeticAssignmentOp<Op, int32_t>();
-      break;
-    }
-    case TypeId::Array_UInt32:
-    {
-      HandlePrimitiveArrayIndexedArithmeticAssignmentOp<Op, uint32_t>();
-      break;
-    }
-    case TypeId::Array_Int64:
-    {
-      HandlePrimitiveArrayIndexedArithmeticAssignmentOp<Op, int64_t>();
-      break;
-    }
-    case TypeId::Array_UInt64:
-    {
-      HandlePrimitiveArrayIndexedArithmeticAssignmentOp<Op, uint64_t>();
-      break;
-    }
-    case TypeId::Array_Float32:
-    {
-      HandlePrimitiveArrayIndexedArithmeticAssignmentOp<Op, float>();
-      break;
-    }
-    case TypeId::Array_Float64:
-    {
-      HandlePrimitiveArrayIndexedArithmeticAssignmentOp<Op, double>();
-      break;
-    }
-    case TypeId::Array_Matrix_Float32:
-    {
-      HandleObjectArrayIndexedArithmeticAssignmentOp<Op, MatrixFloat32 *, Object *,
-                                                     MatrixFloat32 *>();
-      break;
-    }
-    case TypeId::Array_Matrix_Float64:
-    {
-      HandleObjectArrayIndexedArithmeticAssignmentOp<Op, MatrixFloat64 *, Object *,
-                                                     MatrixFloat64 *>();
-      break;
-    }
-    case TypeId::Array_Matrix_Float32__Float32:
-    {
-      HandleObjectArrayIndexedArithmeticAssignmentOp<Op, MatrixFloat32 *, float, float>();
-      break;
-    }
-    case TypeId::Array_Matrix_Float64__Float64:
-    {
-      HandleObjectArrayIndexedArithmeticAssignmentOp<Op, MatrixFloat64 *, double, double>();
-      break;
-    }
-    default:
-      break;
-    }
-  }
-
-  template <typename Op, typename ElementType>
-  void HandleMatrixIndexedArithmeticAssignmentOp()
-  {
-    ElementType *ptr;
-    if (GetMatrixElement(ptr) == false)
-    {
-      return;
-    }
-    Value &     matrixv = stack_[sp_--];
-    Value &     rhsv    = stack_[sp_--];
-    ElementType rhs;
-    rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);
-    matrixv.Reset();
-    rhsv.Reset();
-  }
-
-  template <typename Op, typename ElementType>
-  void HandlePrimitiveArrayIndexedArithmeticAssignmentOp()
-  {
-    ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false)
-    {
-      return;
-    }
-    Value &     arrayv = stack_[sp_--];
-    Value &     rhsv   = stack_[sp_--];
-    ElementType rhs;
-    rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);
-    arrayv.Reset();
-    rhsv.Reset();
-  }
-
-  template <typename Op, typename ElementType, typename RHSVariantType, typename RHSElementType>
-  void HandleObjectArrayIndexedArithmeticAssignmentOp()
-  {
-    ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false)
-    {
-      return;
-    }
-    Value &        arrayv = stack_[sp_--];
-    Value &        rhsv   = stack_[sp_--];
-    RHSVariantType xx;
-    rhsv.variant.Get(xx);
-    RHSElementType rhs = static_cast<RHSElementType>(xx);
-    Op::Apply(this, *ptr, rhs);
-    arrayv.Reset();
-    rhsv.Reset();
-  }
-
-  //
-  // Prefix/postfix index operations
-  //
-
-  template <typename Op>
-  void HandleIndexedPrefixPostfixOp(const TypeId type_id)
-  {
-    switch (type_id)
-    {
-    case TypeId::Array_Int8:
-    {
-      HandleIndexedPrefixPostfixOpHelper<Op, int8_t>(TypeId::Int8);
-      break;
-    }
-    case TypeId::Array_Byte:
-    {
-      HandleIndexedPrefixPostfixOpHelper<Op, uint8_t>(TypeId::Byte);
-      break;
-    }
-    case TypeId::Array_Int16:
-    {
-      HandleIndexedPrefixPostfixOpHelper<Op, int16_t>(TypeId::Int16);
-      break;
-    }
-    case TypeId::Array_UInt16:
-    {
-      HandleIndexedPrefixPostfixOpHelper<Op, uint16_t>(TypeId::UInt16);
-      break;
-    }
-    case TypeId::Array_Int32:
-    {
-      HandleIndexedPrefixPostfixOpHelper<Op, int32_t>(TypeId::Int32);
-      break;
-    }
-    case TypeId::Array_UInt32:
-    {
-      HandleIndexedPrefixPostfixOpHelper<Op, uint32_t>(TypeId::UInt32);
-      break;
-    }
-    case TypeId::Array_Int64:
-    {
-      HandleIndexedPrefixPostfixOpHelper<Op, int64_t>(TypeId::Int64);
-      break;
-    }
-    case TypeId::Array_UInt64:
-    {
-      HandleIndexedPrefixPostfixOpHelper<Op, uint64_t>(TypeId::UInt64);
-      break;
-    }
-    default:
-      break;
-    }
-  }
-
-  template <typename Op, typename ElementType>
-  void HandleIndexedPrefixPostfixOpHelper(const TypeId type_id)
-  {
-    ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false)
-    {
-      return;
-    }
-    ElementType element;
-    Op::Apply(this, element, *ptr);  // what if fails?
-    Value &arrayv = stack_[sp_];
-    arrayv.Release();
-    arrayv.type_id = type_id;
-    arrayv.variant.Set(element);
-  }
-
-  //
-  // Indexing helpers
-  //
-
-  bool GetIndex(const Value &value, uint64_t &index)
-  {
-    bool ok = true;
-    switch (value.type_id)
-    {
-    case TypeId::Int8:
-    {
-      index = uint64_t(value.variant.i8);
-      ok    = value.variant.i8 >= 0;
-      break;
-    }
-    case TypeId::Byte:
-    {
-      index = uint64_t(value.variant.ui8);
-      break;
-    }
-    case TypeId::Int16:
-    {
-      index = uint64_t(value.variant.i16);
-      ok    = value.variant.i16 >= 0;
-      break;
-    }
-    case TypeId::UInt16:
-    {
-      index = uint64_t(value.variant.ui16);
-      break;
-    }
-    case TypeId::Int32:
-    {
-      index = uint64_t(value.variant.i32);
-      ok    = value.variant.i32 >= 0;
-      break;
-    }
-    case TypeId::UInt32:
-    {
-      index = uint64_t(value.variant.ui32);
-      break;
-    }
-    case TypeId::Int64:
-    {
-      index = uint64_t(value.variant.i64);
-      ok    = value.variant.i64 >= 0;
-      break;
-    }
-    case TypeId::UInt64:
-    {
-      index = value.variant.ui64;
-      break;
-    }
-    default:
-    {
-      ok = false;
-      break;
-    }
-    }
-    return ok;
-  }
-
-  template <typename ElementType>
-  bool GetMatrixElement(ElementType *&ptr)
-  {
-    Value &  columnv = stack_[sp_--];
-    uint64_t column;
-    if (GetIndex(columnv, column) == false)
-    {
-      RuntimeError("negative index");
-      return false;
-    }
-    columnv.PrimitiveReset();
-    Value &  rowv = stack_[sp_--];
-    uint64_t row;
-    if (GetIndex(rowv, row) == false)
-    {
-      RuntimeError("negative index");
-      return false;
-    }
-    rowv.PrimitiveReset();
-    Value &              matrixv = stack_[sp_];
-    Matrix<ElementType> *m       = static_cast<Matrix<ElementType> *>(matrixv.variant.object);
-    if (m == nullptr)
-    {
-      RuntimeError("null reference");
-      return false;
-    }
-    const uint64_t rows    = m->matrix.height();
-    const uint64_t columns = m->matrix.width();
-    if ((row >= rows) || (column >= columns))
-    {
-      RuntimeError("index out of bounds");
-      return false;
-    }
-    ptr = &(m->matrix.At(row, column));
-    return true;
-  }
-
-  template <typename ElementType>
-  bool GetArrayElement(ElementType *&ptr)
-  {
-    Value &  positionv = stack_[sp_--];
-    uint64_t position;
-    if (GetIndex(positionv, position) == false)
-    {
-      RuntimeError("negative index");
-      return false;
-    }
-    positionv.PrimitiveReset();
-    Value &             arrayv = stack_[sp_];
-    Array<ElementType> *array  = static_cast<Array<ElementType> *>(arrayv.variant.object);
-    if (array == nullptr)
-    {
-      RuntimeError("null reference");
-      return false;
-    }
-    if (position >= array->elements.size())
-    {
-      RuntimeError("index out of bounds");
-      return false;
-    }
-    ptr = static_cast<ElementType *>(&array->elements[position]);
-    return true;
-  }
-
-  //
-  // Matrix operations
-  //
-
-  template <typename M>
-  void MatrixMatrixAdd(Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-  {
-    const size_t lhs_rows                 = lhs->matrix.height();
-    const size_t lhs_columns              = lhs->matrix.width();
-    const bool   lhs_matrix_is_modifiable = lhs->count == 1;
-    const size_t rhs_rows                 = rhs->matrix.height();
-    const size_t rhs_columns              = rhs->matrix.width();
-    const bool   rhs_matrix_is_modifiable = rhs->count == 1;
-    if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
-    {
-      RuntimeError("invalid operation");
-      return;
-    }
-    if (lhs_matrix_is_modifiable)
-    {
-      lhs->matrix.InlineAdd(rhs->matrix);
-      return;
-    }
-    if (rhs_matrix_is_modifiable)
-    {
-      rhs->matrix.InlineAdd(lhs->matrix);
-      lhsv = std::move(rhsv);
-      return;
-    }
-    M *m;
-    AcquireMatrix(lhs_rows, lhs_columns, m);
-    Add(lhs->matrix, rhs->matrix, m->matrix);
-    lhsv.SetObject(m, lhsv.type_id);
-  }
-
-  template <typename M, typename T>
-  void MatrixNumberAdd(Value &lhsv, M *lhs, T rhs)
-  {
-    const size_t lhs_rows                 = lhs->matrix.height();
-    const size_t lhs_columns              = lhs->matrix.width();
-    const bool   lhs_matrix_is_modifiable = lhs->count == 1;
-    if (lhs_matrix_is_modifiable)
-    {
-      lhs->matrix.InlineAdd(rhs);
-      return;
-    }
-    M *m;
-    AcquireMatrix(lhs_rows, lhs_columns, m);
-    Add(lhs->matrix, rhs, m->matrix);
-    lhsv.SetObject(m, lhsv.type_id);
-  }
-
-  template <typename M>
-  void MatrixMatrixSubtract(Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-  {
-    const size_t lhs_rows                 = lhs->matrix.height();
-    const size_t lhs_columns              = lhs->matrix.width();
-    const bool   lhs_matrix_is_modifiable = lhs->count == 1;
-    const size_t rhs_rows                 = rhs->matrix.height();
-    const size_t rhs_columns              = rhs->matrix.width();
-    const bool   rhs_matrix_is_modifiable = rhs->count == 1;
-    if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
-    {
-      RuntimeError("invalid operation");
-      return;
-    }
-    if (lhs_matrix_is_modifiable)
-    {
-      lhs->matrix.InlineSubtract(rhs->matrix);
-      return;
-    }
-    if (rhs_matrix_is_modifiable)
-    {
-      rhs->matrix.InlineReverseSubtract(lhs->matrix);
-      lhsv = std::move(rhsv);
-      return;
-    }
-    M *m;
-    AcquireMatrix(lhs_rows, lhs_columns, m);
-    Subtract(lhs->matrix, rhs->matrix, m->matrix);
-    lhsv.SetObject(m, lhsv.type_id);
-  }
-
-  template <typename M, typename T>
-  void MatrixNumberSubtract(Value &lhsv, M *lhs, T rhs)
-  {
-    const size_t lhs_rows                 = lhs->matrix.height();
-    const size_t lhs_columns              = lhs->matrix.width();
-    const bool   lhs_matrix_is_modifiable = lhs->count == 1;
-    if (lhs_matrix_is_modifiable)
-    {
-      lhs->matrix.InlineSubtract(rhs);
-      return;
-    }
-    M *m;
-    AcquireMatrix(lhs_rows, lhs_columns, m);
-    Subtract(lhs->matrix, rhs, m->matrix);
-    lhsv.SetObject(m, lhsv.type_id);
-  }
-
-  template <typename M>
-  void MatrixMatrixMultiply(Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-  {
-    const size_t lhs_rows    = lhs->matrix.height();
-    const size_t lhs_columns = lhs->matrix.width();
-    const size_t rhs_rows    = rhs->matrix.height();
-    const size_t rhs_columns = rhs->matrix.width();
-    if (lhs_columns != rhs_rows)
-    {
-      RuntimeError("invalid operation");
-      return;
-    }
-    M *m;
-    AcquireMatrix(lhs_rows, rhs_columns, m);
-    // TODO(tfr): use blas
-    TODO_FAIL("Use BLAS TODO");
-    lhsv.SetObject(m, lhsv.type_id);
-  }
-
-  template <typename M, typename T>
-  void MatrixNumberMultiply(Value &lhsv, M *lhs, T rhs)
-  {
-    const size_t lhs_rows                 = lhs->matrix.height();
-    const size_t lhs_columns              = lhs->matrix.width();
-    const bool   lhs_matrix_is_modifiable = lhs->count == 1;
-    if (lhs_matrix_is_modifiable)
-    {
-      lhs->matrix.InlineMultiply(rhs);
-      return;
-    }
-    M *m;
-    AcquireMatrix(lhs_rows, lhs_columns, m);
-    Multiply(lhs->matrix, rhs, m->matrix);
-    lhsv.SetObject(m, lhsv.type_id);
-  }
-
-  template <typename T, typename M>
-  void NumberMatrixMultiply(Value &lhsv, Value &rhsv, T lhs, M *rhs)
-  {
-    const size_t rhs_rows                 = rhs->matrix.height();
-    const size_t rhs_columns              = rhs->matrix.width();
-    const bool   rhs_matrix_is_modifiable = rhs->count == 1;
-    if (rhs_matrix_is_modifiable)
-    {
-      rhs->matrix.InlineMultiply(lhs);
-      lhsv = std::move(rhsv);
-      return;
-    }
-    M *m;
-    AcquireMatrix(rhs_rows, rhs_columns, m);
-    Multiply(rhs->matrix, lhs, m->matrix);
-    lhsv.SetObject(m, rhsv.type_id);
-  }
-
-  template <typename M, typename T>
-  void MatrixNumberDivide(Value &lhsv, M *lhs, T rhs)
-  {
-    if (math::IsZero(rhs))
-    {
-      RuntimeError("division by zero");
-      return;
-    }
-    const size_t lhs_rows                 = lhs->matrix.height();
-    const size_t lhs_columns              = lhs->matrix.width();
-    const bool   lhs_matrix_is_modifiable = lhs->count == 1;
-    if (lhs_matrix_is_modifiable)
-    {
-      lhs->matrix.InlineDivide(rhs);
-      return;
-    }
-    M *m;
-    AcquireMatrix(lhs_rows, lhs_columns, m);
-    Divide(lhs->matrix, rhs, m->matrix);
-    lhsv.SetObject(m, lhsv.type_id);
-  }
-
-  template <typename M, typename T>
-  void MatrixUnaryMinus(Value &lhsv, M *lhs)
-  {
-    const size_t lhs_rows                 = lhs->matrix.height();
-    const size_t lhs_columns              = lhs->matrix.width();
-    const bool   lhs_matrix_is_modifiable = lhs->count == 1;
-    if (lhs_matrix_is_modifiable)
-    {
-      // TODO(tfr): implement unary minus
-      // is there an inplace op for this?
-      lhs->matrix.InlineMultiply(T(-1));
-      return;
-    }
-    M *m;
-    AcquireMatrix(lhs_rows, lhs_columns, m);
-    // is there a call for this?
-    Multiply(lhs->matrix, T(-1), m->matrix);
-    lhsv.SetObject(m, lhsv.type_id);
-  }
-
-  template <typename M>
-  void MatrixMatrixAddAssign(M *lhs, M *rhs)
-  {
-    const size_t lhs_rows    = lhs->matrix.height();
-    const size_t lhs_columns = lhs->matrix.width();
-    const size_t rhs_rows    = rhs->matrix.height();
-    const size_t rhs_columns = rhs->matrix.width();
-    if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
-    {
-      RuntimeError("invalid operation");
-      return;
-    }
-    lhs->matrix.InlineAdd(rhs->matrix);
-  }
-
-  template <typename M, typename T>
-  void MatrixNumberAddAssign(M *lhs, T rhs)
-  {
-    lhs->matrix.InlineAdd(rhs);
-  }
-
-  template <typename M>
-  void MatrixMatrixSubtractAssign(M *lhs, M *rhs)
-  {
-    const size_t lhs_rows    = lhs->matrix.height();
-    const size_t lhs_columns = lhs->matrix.width();
-    const size_t rhs_rows    = rhs->matrix.height();
-    const size_t rhs_columns = rhs->matrix.width();
-    if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
-    {
-      RuntimeError("invalid operation");
-      return;
-    }
-    lhs->matrix.InlineSubtract(rhs->matrix);
-  }
-
-  template <typename M, typename T>
-  void MatrixNumberSubtractAssign(M *lhs, T rhs)
-  {
-    lhs->matrix.InlineSubtract(rhs);
-  }
-
-  template <typename M>
-  void MatrixMatrixMultiplyAssign(M *lhs, M *rhs)
-  {
-    const size_t lhs_rows    = lhs->matrix.height();
-    const size_t lhs_columns = lhs->matrix.width();
-    const size_t rhs_rows    = rhs->matrix.height();
-    const size_t rhs_columns = rhs->matrix.width();
-    if (lhs_columns != rhs_rows)
-    {
-      RuntimeError("invalid operation");
-      return;
-    }
-    M *m;
-    AcquireMatrix(lhs_rows, rhs_columns, m);
-    // TODO(tfr): Use blas
-    TODO_FAIL("Use BLAS");
-    lhs->Release();
-    lhs = m;
-  }
-
-  template <typename M, typename T>
-  void MatrixNumberMultiplyAssign(M *lhs, T rhs)
-  {
-    lhs->matrix.InlineMultiply(rhs);
-  }
-
-  template <typename M, typename T>
-  void MatrixNumberDivideAssign(M *lhs, T rhs)
-  {
-    if (math::IsNonZero(rhs))
-    {
-      lhs->matrix.InlineDivide(rhs);
-      return;
-    }
-    RuntimeError("division by zero");
-  }
-
-  //
-  // Ops
-  //
-
-  struct EqualOp
+  struct PrimitiveEqual
   {
     template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
     {
-      lhsv.SetPrimitive(uint8_t(math::IsEqual(lhs, rhs)), TypeId::Bool);
-    }
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
-    {
-      const uint8_t value = uint8_t(lhs->str == rhs->str);
-      lhsv.SetPrimitive(value, TypeId::Bool);
+      lhsv.Assign(math::IsEqual(lhs, rhs), TypeIds::Bool);
     }
   };
 
-  struct NotEqualOp
+  struct PrimitiveNotEqual
   {
     template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
     {
-      lhsv.SetPrimitive(uint8_t(math::IsNotEqual(lhs, rhs)), TypeId::Bool);
-    }
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
-    {
-      const uint8_t value = uint8_t(lhs->str != rhs->str);
-      lhsv.SetPrimitive(value, TypeId::Bool);
+      lhsv.Assign(math::IsNotEqual(lhs, rhs), TypeIds::Bool);
     }
   };
 
-  struct LessThanOp
+  bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
   {
-    template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    if (lhso)
     {
-      lhsv.SetPrimitive(uint8_t(math::IsLessThan(lhs, rhs)), TypeId::Bool);
-    }
-  };
-
-  struct LessThanOrEqualOp
-  {
-    template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
-    {
-      lhsv.SetPrimitive(uint8_t(math::IsLessThanOrEqual(lhs, rhs)), TypeId::Bool);
-    }
-  };
-
-  struct GreaterThanOp
-  {
-    template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
-    {
-      lhsv.SetPrimitive(uint8_t(math::IsGreaterThan(lhs, rhs)), TypeId::Bool);
-    }
-  };
-
-  struct GreaterThanOrEqualOp
-  {
-    template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
-    {
-      lhsv.SetPrimitive(uint8_t(math::IsGreaterThanOrEqual(lhs, rhs)), TypeId::Bool);
-    }
-  };
-
-  struct AddOp
-  {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
-    {
-      lhs = T(lhs + rhs);
-    }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-    {
-      vm->MatrixMatrixAdd(lhsv, rhsv, lhs, rhs);
-    }
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
-    {
-      vm->MatrixNumberAdd(lhsv, lhs, rhs);
-    }
-    template <typename T, typename M,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
-              typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
-    {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
-    {
-      if (lhs->count == 1)
+      if (rhso)
       {
-        lhs->str += rhs->str;
+        return lhso->IsEqual(lhso, rhso);
       }
-      else
+      return false;
+    }
+    return (rhso == nullptr);
+  }
+
+  bool IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
+  {
+    if (lhso)
+    {
+      if (rhso)
       {
-        String *s = new String(vm, lhs->str + rhs->str, false);
-        lhs->Release();
-        lhsv.variant.object = s;
+        return lhso->IsNotEqual(lhso, rhso);
       }
+      return true;
+    }
+    return (rhso != nullptr);
+  }
+
+  struct PrimitiveLessThan
+  {
+    template <typename T>
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
+    {
+      lhsv.Assign(math::IsLessThan(lhs, rhs), TypeIds::Bool);
     }
   };
 
-  struct SubtractOp
+  struct ObjectLessThan
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
-      lhs = T(lhs - rhs);
+      lhsv.Assign(lhsv.object->IsLessThan(lhsv.object, rhsv.object), TypeIds::Bool);
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-    {
-      vm->MatrixMatrixSubtract(lhsv, rhsv, lhs, rhs);
-    }
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
-    {
-      vm->MatrixNumberSubtract(lhsv, lhs, rhs);
-    }
-    template <typename T, typename M,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
-              typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
-    {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
-    {}
   };
 
-  struct MultiplyOp
+  struct PrimitiveLessThanOrEqual
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    template <typename T>
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
     {
-      lhs = T(lhs * rhs);
+      lhsv.Assign(math::IsLessThanOrEqual(lhs, rhs), TypeIds::Bool);
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-    {
-      vm->MatrixMatrixMultiply(lhsv, rhsv, lhs, rhs);
-    }
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
-    {
-      vm->MatrixNumberMultiply(lhsv, lhs, rhs);
-    }
-    template <typename T, typename M,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
-              typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
-    {
-      vm->NumberMatrixMultiply(lhsv, rhsv, lhs, rhs);
-    }
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
-    {}
   };
 
-  struct DivideOp
+  struct ObjectLessThanOrEqual
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
-      if (math::IsNonZero(rhs))
-      {
-        lhs = T(lhs / rhs);
-        return;
-      }
-      vm->RuntimeError("division by zero");
+      lhsv.Assign(lhsv.object->IsLessThanOrEqual(lhsv.object, rhsv.object), TypeIds::Bool);
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-    {}
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
-    {
-      vm->MatrixNumberDivide(lhsv, lhs, rhs);
-    }
-    template <typename T, typename M,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
-              typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
-    {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
-    {}
   };
 
-  struct UnaryMinusOp
+  struct PrimitiveGreaterThan
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    template <typename T>
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
+    {
+      lhsv.Assign(math::IsGreaterThan(lhs, rhs), TypeIds::Bool);
+    }
+  };
+
+  struct ObjectGreaterThan
+  {
+    static void Apply(Variant &lhsv, Variant &rhsv)
+    {
+      lhsv.Assign(lhsv.object->IsGreaterThan(lhsv.object, rhsv.object), TypeIds::Bool);
+    }
+  };
+
+  struct PrimitiveGreaterThanOrEqual
+  {
+    template <typename T>
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
+    {
+      lhsv.Assign(math::IsGreaterThanOrEqual(lhs, rhs), TypeIds::Bool);
+    }
+  };
+
+  struct ObjectGreaterThanOrEqual
+  {
+    static void Apply(Variant &lhsv, Variant &rhsv)
+    {
+      lhsv.Assign(lhsv.object->IsGreaterThanOrEqual(lhsv.object, rhsv.object), TypeIds::Bool);
+    }
+  };
+
+  struct PrefixInc
+  {
+    template <typename T>
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
+    {
+      rhs = ++lhs;
+    }
+  };
+
+  struct PrefixDec
+  {
+    template <typename T>
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
+    {
+      rhs = --lhs;
+    }
+  };
+
+  struct PostfixInc
+  {
+    template <typename T>
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
+    {
+      rhs = lhs++;
+    }
+  };
+
+  struct PostfixDec
+  {
+    template <typename T>
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
+    {
+      rhs = lhs--;
+    }
+  };
+
+  struct Inc
+  {
+    template <typename T>
+    static void Apply(VM * /* vm */, T &lhs, T & /* rhs */)
+    {
+      ++lhs;
+    }
+  };
+
+  struct Dec
+  {
+    template <typename T>
+    static void Apply(VM * /* vm */, T &lhs, T & /* rhs */)
+    {
+      --lhs;
+    }
+  };
+
+  struct PrimitiveNegate
+  {
+    template <typename T>
+    static void Apply(VM * /* vm */, T &lhs, T & /* rhs */)
     {
       lhs = T(-lhs);
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-    {}
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
-    {
-      vm->MatrixUnaryMinus<M, T>(lhsv, lhs);
-    }
-    template <typename T, typename M,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
-              typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
-    {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
-    {}
   };
 
-  struct AddAssignOp
+  struct PrimitiveAdd
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    template <typename T>
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
     {
       lhs = T(lhs + rhs);
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
+  };
+
+  struct ObjectAdd
+  {
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
-      vm->MatrixMatrixAddAssign(lhs, rhs);
-    }
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
-    {
-      vm->MatrixNumberAddAssign(lhs, rhs);
+      lhso->Add(lhso, rhso);
     }
   };
 
-  struct SubtractAssignOp
+  struct ObjectLeftAdd
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, Variant &rhsv)
+    {
+      rhsv.object->LeftAdd(lhsv, rhsv);
+    }
+  };
+
+  struct ObjectRightAdd
+  {
+    static void Apply(Variant &lhsv, Variant &rhsv)
+    {
+      lhsv.object->RightAdd(lhsv, rhsv);
+    }
+  };
+
+  struct ObjectInplaceAdd
+  {
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
+    {
+      lhso->InplaceAdd(lhso, rhso);
+    }
+  };
+
+  struct ObjectInplaceRightAdd
+  {
+    static void Apply(Ptr<Object> &lhso, Variant &rhsv)
+    {
+      lhso->InplaceRightAdd(lhso, rhsv);
+    }
+  };
+
+  struct PrimitiveSubtract
+  {
+    template <typename T>
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
     {
       lhs = T(lhs - rhs);
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
+  };
+
+  struct ObjectSubtract
+  {
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
-      vm->MatrixMatrixSubtractAssign(lhs, rhs);
-    }
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
-    {
-      vm->MatrixNumberSubtractAssign(lhs, rhs);
+      lhso->Subtract(lhso, rhso);
     }
   };
 
-  struct MultiplyAssignOp
+  struct ObjectLeftSubtract
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, Variant &rhsv)
+    {
+      rhsv.object->LeftSubtract(lhsv, rhsv);
+    }
+  };
+
+  struct ObjectRightSubtract
+  {
+    static void Apply(Variant &lhsv, Variant &rhsv)
+    {
+      lhsv.object->RightSubtract(lhsv, rhsv);
+    }
+  };
+
+  struct ObjectInplaceSubtract
+  {
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
+    {
+      lhso->InplaceSubtract(lhso, rhso);
+    }
+  };
+
+  struct ObjectInplaceRightSubtract
+  {
+    static void Apply(Ptr<Object> &lhso, Variant &rhsv)
+    {
+      lhso->InplaceRightSubtract(lhso, rhsv);
+    }
+  };
+
+  struct PrimitiveMultiply
+  {
+    template <typename T>
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
     {
       lhs = T(lhs * rhs);
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
+  };
+
+  struct ObjectMultiply
+  {
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
-      vm->MatrixMatrixMultiplyAssign(lhs, rhs);
-    }
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
-    {
-      vm->MatrixNumberMultiplyAssign(lhs, rhs);
+      lhso->Multiply(lhso, rhso);
     }
   };
 
-  struct DivideAssignOp
+  struct ObjectLeftMultiply
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
+    static void Apply(Variant &lhsv, Variant &rhsv)
+    {
+      rhsv.object->LeftMultiply(lhsv, rhsv);
+    }
+  };
+
+  struct ObjectRightMultiply
+  {
+    static void Apply(Variant &lhsv, Variant &rhsv)
+    {
+      lhsv.object->RightMultiply(lhsv, rhsv);
+    }
+  };
+
+  struct ObjectInplaceMultiply
+  {
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
+    {
+      lhso->InplaceMultiply(lhso, rhso);
+    }
+  };
+
+  struct ObjectInplaceRightMultiply
+  {
+    static void Apply(Ptr<Object> &lhso, Variant &rhsv)
+    {
+      lhso->InplaceRightMultiply(lhso, rhsv);
+    }
+  };
+
+  struct PrimitiveDivide
+  {
+    template <typename T>
     static void Apply(VM *vm, T &lhs, T &rhs)
     {
       if (math::IsNonZero(rhs))
@@ -1983,81 +994,671 @@ private:
       }
       vm->RuntimeError("division by zero");
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
-    {}
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
+  };
+
+  struct ObjectDivide
+  {
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
-      vm->MatrixNumberDivideAssign(lhs, rhs);
+      lhso->Divide(lhso, rhso);
     }
   };
 
-  struct PrefixIncOp
+  struct ObjectLeftDivide
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
-      lhs = ++rhs;
+      rhsv.object->LeftDivide(lhsv, rhsv);
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
-    {}
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
-    {}
   };
 
-  struct PrefixDecOp
+  struct ObjectRightDivide
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
-      lhs = --rhs;
+      lhsv.object->RightDivide(lhsv, rhsv);
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
-    {}
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
-    {}
   };
 
-  struct PostfixIncOp
+  struct ObjectInplaceDivide
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
-      lhs = rhs++;
+      lhso->InplaceDivide(lhso, rhso);
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
-    {}
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
-    {}
   };
 
-  struct PostfixDecOp
+  struct ObjectInplaceRightDivide
   {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
+    static void Apply(Ptr<Object> &lhso, Variant &rhsv)
+    {
+      lhso->InplaceRightDivide(lhso, rhsv);
+    }
+  };
+
+  struct PrimitiveModulo
+  {
+    template <typename T>
     static void Apply(VM *vm, T &lhs, T &rhs)
     {
-      lhs = rhs--;
+      if (rhs != 0)
+      {
+        lhs = T(lhs % rhs);
+        return;
+      }
+      vm->RuntimeError("division by zero");
     }
-    template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
-    {}
-    template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
-    {}
   };
+
+  template <typename Op>
+  void ExecutePrimitiveRelationalOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
+  {
+    switch (type_id)
+    {
+    case TypeIds::Bool:
+    {
+      Op::Apply(lhsv, lhsv.primitive.ui8, rhsv.primitive.ui8);
+      break;
+    }
+    case TypeIds::Int8:
+    {
+      Op::Apply(lhsv, lhsv.primitive.i8, rhsv.primitive.i8);
+      break;
+    }
+    case TypeIds::UInt8:
+    {
+      Op::Apply(lhsv, lhsv.primitive.ui8, rhsv.primitive.ui8);
+      break;
+    }
+    case TypeIds::Int16:
+    {
+      Op::Apply(lhsv, lhsv.primitive.i16, rhsv.primitive.i16);
+      break;
+    }
+    case TypeIds::UInt16:
+    {
+      Op::Apply(lhsv, lhsv.primitive.ui16, rhsv.primitive.ui16);
+      break;
+    }
+    case TypeIds::Int32:
+    {
+      Op::Apply(lhsv, lhsv.primitive.i32, rhsv.primitive.i32);
+      break;
+    }
+    case TypeIds::UInt32:
+    {
+      Op::Apply(lhsv, lhsv.primitive.ui32, rhsv.primitive.ui32);
+      break;
+    }
+    case TypeIds::Int64:
+    {
+      Op::Apply(lhsv, lhsv.primitive.i64, rhsv.primitive.i64);
+      break;
+    }
+    case TypeIds::UInt64:
+    {
+      Op::Apply(lhsv, lhsv.primitive.ui64, rhsv.primitive.ui64);
+      break;
+    }
+    case TypeIds::Float32:
+    {
+      Op::Apply(lhsv, lhsv.primitive.f32, rhsv.primitive.f32);
+      break;
+    }
+    case TypeIds::Float64:
+    {
+      Op::Apply(lhsv, lhsv.primitive.f64, rhsv.primitive.f64);
+      break;
+    }
+    case TypeIds::Fixed32:
+    {
+      fixed_point::fp32_t lhsv_fp32 = fixed_point::fp32_t::FromBase(lhsv.primitive.i32);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      Op::Apply(lhsv, lhsv_fp32, rhsv_fp32);
+      break;
+    }
+    case TypeIds::Fixed64:
+    {
+      fixed_point::fp64_t lhsv_fp64 = fixed_point::fp64_t::FromBase(lhsv.primitive.i64);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      Op::Apply(lhsv, lhsv_fp64, rhsv_fp64);
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }  // switch
+  }
+
+  template <typename Op>
+  void ExecuteIntegralOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
+  {
+    switch (type_id)
+    {
+    case TypeIds::Int8:
+    {
+      Op::Apply(this, lhsv.primitive.i8, rhsv.primitive.i8);
+      break;
+    }
+    case TypeIds::UInt8:
+    {
+      Op::Apply(this, lhsv.primitive.ui8, rhsv.primitive.ui8);
+      break;
+    }
+    case TypeIds::Int16:
+    {
+      Op::Apply(this, lhsv.primitive.i16, rhsv.primitive.i16);
+      break;
+    }
+    case TypeIds::UInt16:
+    {
+      Op::Apply(this, lhsv.primitive.ui16, rhsv.primitive.ui16);
+      break;
+    }
+    case TypeIds::Int32:
+    {
+      Op::Apply(this, lhsv.primitive.i32, rhsv.primitive.i32);
+      break;
+    }
+    case TypeIds::UInt32:
+    {
+      Op::Apply(this, lhsv.primitive.ui32, rhsv.primitive.ui32);
+      break;
+    }
+    case TypeIds::Int64:
+    {
+      Op::Apply(this, lhsv.primitive.i64, rhsv.primitive.i64);
+      break;
+    }
+    case TypeIds::UInt64:
+    {
+      Op::Apply(this, lhsv.primitive.ui64, rhsv.primitive.ui64);
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }  // switch
+  }
+
+  template <typename Op>
+  void ExecuteNumericOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
+  {
+    switch (type_id)
+    {
+    case TypeIds::Int8:
+    {
+      Op::Apply(this, lhsv.primitive.i8, rhsv.primitive.i8);
+      break;
+    }
+    case TypeIds::UInt8:
+    {
+      Op::Apply(this, lhsv.primitive.ui8, rhsv.primitive.ui8);
+      break;
+    }
+    case TypeIds::Int16:
+    {
+      Op::Apply(this, lhsv.primitive.i16, rhsv.primitive.i16);
+      break;
+    }
+    case TypeIds::UInt16:
+    {
+      Op::Apply(this, lhsv.primitive.ui16, rhsv.primitive.ui16);
+      break;
+    }
+    case TypeIds::Int32:
+    {
+      Op::Apply(this, lhsv.primitive.i32, rhsv.primitive.i32);
+      break;
+    }
+    case TypeIds::UInt32:
+    {
+      Op::Apply(this, lhsv.primitive.ui32, rhsv.primitive.ui32);
+      break;
+    }
+    case TypeIds::Int64:
+    {
+      Op::Apply(this, lhsv.primitive.i64, rhsv.primitive.i64);
+      break;
+    }
+    case TypeIds::UInt64:
+    {
+      Op::Apply(this, lhsv.primitive.ui64, rhsv.primitive.ui64);
+      break;
+    }
+    case TypeIds::Float32:
+    {
+      Op::Apply(this, lhsv.primitive.f32, rhsv.primitive.f32);
+      break;
+    }
+    case TypeIds::Float64:
+    {
+      Op::Apply(this, lhsv.primitive.f64, rhsv.primitive.f64);
+      break;
+    }
+    case TypeIds::Fixed32:
+    {
+      auto *              lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      Op::Apply(this, *lhsv_fp32, rhsv_fp32);
+      break;
+    }
+    case TypeIds::Fixed64:
+    {
+      auto *              lhsv_fp64 = reinterpret_cast<fixed_point::fp64_t *>(&lhsv);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      Op::Apply(this, *lhsv_fp64, rhsv_fp64);
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }  // switch
+  }
+
+  template <typename Op>
+  void ExecuteIntegralInplaceOp(TypeId type_id, void *lhs, Variant &rhsv)
+  {
+    switch (type_id)
+    {
+    case TypeIds::Int8:
+    {
+      Op::Apply(this, *static_cast<int8_t *>(lhs), rhsv.primitive.i8);
+      break;
+    }
+    case TypeIds::UInt8:
+    {
+      Op::Apply(this, *static_cast<uint8_t *>(lhs), rhsv.primitive.ui8);
+      break;
+    }
+    case TypeIds::Int16:
+    {
+      Op::Apply(this, *static_cast<int16_t *>(lhs), rhsv.primitive.i16);
+      break;
+    }
+    case TypeIds::UInt16:
+    {
+      Op::Apply(this, *static_cast<uint16_t *>(lhs), rhsv.primitive.ui16);
+      break;
+    }
+    case TypeIds::Int32:
+    {
+      Op::Apply(this, *static_cast<int32_t *>(lhs), rhsv.primitive.i32);
+      break;
+    }
+    case TypeIds::UInt32:
+    {
+      Op::Apply(this, *static_cast<uint32_t *>(lhs), rhsv.primitive.ui32);
+      break;
+    }
+    case TypeIds::Int64:
+    {
+      Op::Apply(this, *static_cast<int64_t *>(lhs), rhsv.primitive.i64);
+      break;
+    }
+    case TypeIds::UInt64:
+    {
+      Op::Apply(this, *static_cast<uint64_t *>(lhs), rhsv.primitive.ui64);
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }  // switch
+  }
+
+  template <typename Op>
+  void ExecuteNumericInplaceOp(TypeId type_id, void *lhs, Variant &rhsv)
+  {
+    switch (type_id)
+    {
+    case TypeIds::Int8:
+    {
+      Op::Apply(this, *static_cast<int8_t *>(lhs), rhsv.primitive.i8);
+      break;
+    }
+    case TypeIds::UInt8:
+    {
+      Op::Apply(this, *static_cast<uint8_t *>(lhs), rhsv.primitive.ui8);
+      break;
+    }
+    case TypeIds::Int16:
+    {
+      Op::Apply(this, *static_cast<int16_t *>(lhs), rhsv.primitive.i16);
+      break;
+    }
+    case TypeIds::UInt16:
+    {
+      Op::Apply(this, *static_cast<uint16_t *>(lhs), rhsv.primitive.ui16);
+      break;
+    }
+    case TypeIds::Int32:
+    {
+      Op::Apply(this, *static_cast<int32_t *>(lhs), rhsv.primitive.i32);
+      break;
+    }
+    case TypeIds::UInt32:
+    {
+      Op::Apply(this, *static_cast<uint32_t *>(lhs), rhsv.primitive.ui32);
+      break;
+    }
+    case TypeIds::Int64:
+    {
+      Op::Apply(this, *static_cast<int64_t *>(lhs), rhsv.primitive.i64);
+      break;
+    }
+    case TypeIds::UInt64:
+    {
+      Op::Apply(this, *static_cast<uint64_t *>(lhs), rhsv.primitive.ui64);
+      break;
+    }
+    case TypeIds::Float32:
+    {
+      Op::Apply(this, *static_cast<float *>(lhs), rhsv.primitive.f32);
+      break;
+    }
+    case TypeIds::Float64:
+    {
+      Op::Apply(this, *static_cast<double *>(lhs), rhsv.primitive.f64);
+      break;
+    }
+    case TypeIds::Fixed32:
+    {
+      auto *              lhs_fp32  = reinterpret_cast<fixed_point::fp32_t *>(lhs);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      Op::Apply(this, *lhs_fp32, rhsv_fp32);
+      break;
+    }
+    case TypeIds::Fixed64:
+    {
+      auto *              lhs_fp64  = reinterpret_cast<fixed_point::fp64_t *>(lhs);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      Op::Apply(this, *lhs_fp64, rhsv_fp64);
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }  // switch
+  }
+
+  template <typename Op>
+  void DoPrimitiveRelationalOp()
+  {
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
+    ExecutePrimitiveRelationalOp<Op>(instruction_->type_id, lhsv, rhsv);
+    rhsv.Reset();
+  }
+
+  template <typename Op>
+  void DoObjectRelationalOp()
+  {
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
+    if (lhsv.object && rhsv.object)
+    {
+      Op::Apply(lhsv, rhsv);
+      rhsv.Reset();
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoPrefixPostfixOp(TypeId type_id, void *lhs)
+  {
+    Variant &rhsv = Push();
+    ExecuteIntegralInplaceOp<Op>(type_id, lhs, rhsv);
+    rhsv.type_id = instruction_->type_id;
+  }
+
+  template <typename Op>
+  void DoVariablePrefixPostfixOp()
+  {
+    Variant &variable = GetVariable(instruction_->index);
+    DoPrefixPostfixOp<Op>(instruction_->type_id, &variable.primitive);
+  }
+
+  template <typename Op>
+  void DoIntegralOp()
+  {
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
+    ExecuteIntegralOp<Op>(instruction_->type_id, lhsv, rhsv);
+    rhsv.Reset();
+  }
+
+  template <typename Op>
+  void DoNumericOp()
+  {
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
+    ExecuteNumericOp<Op>(instruction_->type_id, lhsv, rhsv);
+    rhsv.Reset();
+  }
+
+  template <typename Op>
+  void DoObjectOp()
+  {
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
+    if (lhsv.object && rhsv.object)
+    {
+      Op::Apply(lhsv.object, rhsv.object);
+      rhsv.Reset();
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoObjectLeftOp()
+  {
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
+    if (rhsv.object)
+    {
+      Op::Apply(lhsv, rhsv);
+      rhsv.Reset();
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoObjectRightOp()
+  {
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
+    if (lhsv.object)
+    {
+      Op::Apply(lhsv, rhsv);
+      rhsv.Reset();
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoIntegralInplaceOp(TypeId type_id, void *lhs)
+  {
+    Variant &rhsv = Pop();
+    ExecuteIntegralInplaceOp<Op>(type_id, lhs, rhsv);
+    rhsv.Reset();
+  }
+
+  template <typename Op>
+  void DoNumericInplaceOp(TypeId type_id, void *lhs)
+  {
+    Variant &rhsv = Pop();
+    ExecuteNumericInplaceOp<Op>(type_id, lhs, rhsv);
+    rhsv.Reset();
+  }
+
+  template <typename Op>
+  void DoObjectInplaceOp(Ptr<Object> &lhso)
+  {
+    Variant &rhsv = Pop();
+    if (lhso && rhsv.object)
+    {
+      Op::Apply(lhso, rhsv.object);
+      rhsv.Reset();
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoObjectInplaceRightOp(Ptr<Object> &lhso)
+  {
+    Variant &rhsv = Pop();
+    if (lhso)
+    {
+      Op::Apply(lhso, rhsv);
+      rhsv.Reset();
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoVariableIntegralInplaceOp()
+  {
+    Variant &variable = GetVariable(instruction_->index);
+    DoIntegralInplaceOp<Op>(instruction_->type_id, &variable.primitive);
+  }
+
+  template <typename Op>
+  void DoVariableNumericInplaceOp()
+  {
+    Variant &variable = GetVariable(instruction_->index);
+    DoNumericInplaceOp<Op>(instruction_->type_id, &variable.primitive);
+  }
+
+  template <typename Op>
+  void DoVariableObjectInplaceOp()
+  {
+    Variant &variable = GetVariable(instruction_->index);
+    DoObjectInplaceOp<Op>(variable.object);
+  }
+
+  template <typename Op>
+  void DoVariableObjectInplaceRightOp()
+  {
+    Variant &variable = GetVariable(instruction_->index);
+    DoObjectInplaceRightOp<Op>(variable.object);
+  }
+
+  //
+  // Opcode handler prototypes
+  //
+
+  void Handler__VariableDeclare();
+  void Handler__VariableDeclareAssign();
+  void Handler__PushNull();
+  void Handler__PushFalse();
+  void Handler__PushTrue();
+  void Handler__PushString();
+  void Handler__PushConstant();
+  void Handler__PushVariable();
+  void Handler__PopToVariable();
+  void Handler__Inc();
+  void Handler__Dec();
+  void Handler__Duplicate();
+  void Handler__DuplicateInsert();
+  void Handler__Discard();
+  void Handler__Destruct();
+  void Handler__Break();
+  void Handler__Continue();
+  void Handler__Jump();
+  void Handler__JumpIfFalse();
+  void Handler__JumpIfTrue();
+  void Handler__Return();
+  void Handler__ForRangeInit();
+  void Handler__ForRangeIterate();
+  void Handler__ForRangeTerminate();
+  void Handler__InvokeUserDefinedFreeFunction();
+  void Handler__VariablePrefixInc();
+  void Handler__VariablePrefixDec();
+  void Handler__VariablePostfixInc();
+  void Handler__VariablePostfixDec();
+  void Handler__JumpIfFalseOrPop();
+  void Handler__JumpIfTrueOrPop();
+  void Handler__Not();
+  void Handler__PrimitiveEqual();
+  void Handler__ObjectEqual();
+  void Handler__PrimitiveNotEqual();
+  void Handler__ObjectNotEqual();
+  void Handler__PrimitiveLessThan();
+  void Handler__ObjectLessThan();
+  void Handler__PrimitiveLessThanOrEqual();
+  void Handler__ObjectLessThanOrEqual();
+  void Handler__PrimitiveGreaterThan();
+  void Handler__ObjectGreaterThan();
+  void Handler__PrimitiveGreaterThanOrEqual();
+  void Handler__ObjectGreaterThanOrEqual();
+  void Handler__PrimitiveNegate();
+  void Handler__ObjectNegate();
+  void Handler__PrimitiveAdd();
+  void Handler__ObjectAdd();
+  void Handler__ObjectLeftAdd();
+  void Handler__ObjectRightAdd();
+  void Handler__VariablePrimitiveInplaceAdd();
+  void Handler__VariableObjectInplaceAdd();
+  void Handler__VariableObjectInplaceRightAdd();
+  void Handler__PrimitiveSubtract();
+  void Handler__ObjectSubtract();
+  void Handler__ObjectLeftSubtract();
+  void Handler__ObjectRightSubtract();
+  void Handler__VariablePrimitiveInplaceSubtract();
+  void Handler__VariableObjectInplaceSubtract();
+  void Handler__VariableObjectInplaceRightSubtract();
+  void Handler__PrimitiveMultiply();
+  void Handler__ObjectMultiply();
+  void Handler__ObjectLeftMultiply();
+  void Handler__ObjectRightMultiply();
+  void Handler__VariablePrimitiveInplaceMultiply();
+  void Handler__VariableObjectInplaceMultiply();
+  void Handler__VariableObjectInplaceRightMultiply();
+  void Handler__PrimitiveDivide();
+  void Handler__ObjectDivide();
+  void Handler__ObjectLeftDivide();
+  void Handler__ObjectRightDivide();
+  void Handler__VariablePrimitiveInplaceDivide();
+  void Handler__VariableObjectInplaceDivide();
+  void Handler__VariableObjectInplaceRightDivide();
+  void Handler__PrimitiveModulo();
+  void Handler__VariablePrimitiveInplaceModulo();
+  void Handler__InitialiseArray();
+
+  friend class Object;
+  friend class Module;
+  friend class Generator;
 };
+
+template <typename T>
+IfIsExternal<T, bool> ParameterPack::AddSingle(T val)
+{
+  if (vm_ == nullptr)
+  {
+    throw std::runtime_error("Cannot copy construct C++-to-Etch objects without a VM instance.");
+  }
+  using DecayedType = typename std::decay<T>::type;
+
+  if (!vm_->HasCPPCopyConstructor<DecayedType>())
+  {
+    throw std::runtime_error("No C++-to-Etch copy constructor availble for type.");
+  }
+
+  AddInternal(vm_->CPPCopyConstruct<DecayedType>(val));
+  return true;
+}
 
 }  // namespace vm
 }  // namespace fetch

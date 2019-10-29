@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,51 +17,70 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/log2.hpp"
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
-#include "vectorise/meta/log2.hpp"
 #include "vectorise/platform.hpp"
 
+#include <algorithm>
 #include <cstring>
 
 namespace fetch {
 namespace memory {
 
+template <class T, bool = meta::IsPOD<T>>
+struct ZeroMem
+{
+  static constexpr void Call(T *buf, std::size_t size)
+  {
+    std::fill(buf, buf + size, T{});
+  }
+};
+
+template <class T>
+struct ZeroMem<T, true>
+{
+  static constexpr void Call(T *buf, std::size_t size)
+  {
+    std::memset(static_cast<void *>(buf), 0, size * sizeof(T));
+  }
+};
+
 template <typename T, std::size_t type_size = sizeof(T)>
 class VectorSlice
 {
 public:
-  using size_type                      = std::size_t;
-  using pointer_type                   = T *;
-  using const_pointer_type             = T const *;
-  using Type                           = T;
-  using vector_slice_type              = VectorSlice;
-  using iterator                       = ForwardIterator<T>;
-  using reverse_iterator               = BackwardIterator<T>;
-  using const_parallel_dispatcher_type = ConstParallelDispatcher<Type>;
-  using parallel_dispatcher_type       = ParallelDispatcher<Type>;
-  using vector_register_type           = typename parallel_dispatcher_type::vector_register_type;
-  using vector_register_iterator_type =
-      typename parallel_dispatcher_type::vector_register_iterator_type;
+  using SizeType                    = std::size_t;
+  using PointerType                 = T *;
+  using ConstPointerType            = T const *;
+  using Type                        = T;
+  using VectorSliceType             = VectorSlice;
+  using Iterator                    = ForwardIterator<T>;
+  using ReverseIterator             = BackwardIterator<T>;
+  using ConstParallelDispatcherType = ConstParallelDispatcher<Type>;
+  using ParallelDispatcherType      = ParallelDispatcher<Type>;
+  using VectorRegisterType          = typename ParallelDispatcherType::VectorRegisterType;
+  using VectorRegisterIteratorType  = typename ParallelDispatcherType::VectorRegisterIteratorType;
 
   enum
   {
     E_TYPE_SIZE     = type_size,
-    E_SIMD_SIZE     = (platform::VectorRegisterSize<Type>::value >> 3),
+    E_SIMD_SIZE     = (vectorise::VectorRegisterSize<Type>::value >> 3u),
     E_SIMD_COUNT_IM = E_SIMD_SIZE / type_size,
-    E_SIMD_COUNT =
-        (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM
-                             : 1),  // Note that if a type is too big to fit, we pretend it can
-    E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value,
+    // Note that if a type is too big to fit, we pretend it can
+    E_SIMD_COUNT     = (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM : 1),
+    E_LOG_SIMD_COUNT = meta::Log2(E_SIMD_COUNT),
     IS_SHARED        = 0
   };
 
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT), "type does not fit in SIMD");
 
-  VectorSlice(pointer_type ptr = nullptr, std::size_t const &n = 0)
+  explicit constexpr VectorSlice(PointerType ptr = nullptr, std::size_t n = 0) noexcept
     : pointer_(ptr)
     , size_(n)
-  {}
+  {
+    assert(ptrdiff_t(ptr) % E_SIMD_SIZE == 0);
+  }
 
   ConstParallelDispatcher<Type> in_parallel() const
   {
@@ -72,56 +91,57 @@ public:
     return ParallelDispatcher<Type>(pointer(), size());
   }
 
-  iterator begin()
+  constexpr Iterator begin() noexcept
   {
-    return iterator(pointer_, pointer_ + size());
+    return Iterator{pointer_, pointer_ + size()};
   }
-  iterator end()
+  constexpr Iterator end() noexcept
   {
-    return iterator(pointer_ + size(), pointer_ + size());
+    return Iterator{pointer_ + size(), pointer_ + size()};
   }
-  reverse_iterator rbegin()
+  constexpr ReverseIterator rbegin() noexcept
   {
-    return reverse_iterator(pointer_ + size() - 1, pointer_ - 1);
+    return ReverseIterator(pointer_ + size() - 1, pointer_ - 1);
   }
-  reverse_iterator rend()
+  constexpr ReverseIterator rend() noexcept
   {
-    return reverse_iterator(pointer_ - 1, pointer_ - 1);
+    return ReverseIterator(pointer_ - 1, pointer_ - 1);
   }
 
-  template <typename R = T>
-  typename std::enable_if<std::is_pod<R>::value>::type SetAllZero()
+  // TODO(private 860): ensure trivial type
+  void SetAllZero()
   {
-    assert(pointer_ != nullptr);
     if (pointer_)
     {
-      std::memset(pointer_, 0, padded_size() * sizeof(Type));
+      ZeroMem<T>::Call(pointer_, padded_size());
     }
   }
 
-  template <typename R = T>
-  typename std::enable_if<std::is_pod<R>::value>::type SetPaddedZero()
+  void SetPaddedZero()
   {
-    assert(pointer_ != nullptr);
-
-    std::memset(pointer_ + size(), 0, (padded_size() - size()) * sizeof(Type));
+    if (pointer_)
+    {
+      ZeroMem<T>::Call(pointer_ + size(), padded_size() - size());
+    }
   }
 
-  template <typename R = T>
-  typename std::enable_if<std::is_pod<R>::value>::type SetZeroAfter(std::size_t const &n)
+  void SetZeroAfter(std::size_t n)
   {
-    std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(Type));
+    if (pointer_)
+    {
+      ZeroMem<T>::Call(pointer_ + n, padded_size() - n);
+    }
   }
 
-  vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const
+  constexpr VectorSliceType slice(std::size_t offset, std::size_t length) const noexcept
   {
     assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
     assert((length + offset) <= padded_size());
-    return vector_slice_type(pointer_ + offset, length);
+    return VectorSliceType(pointer_ + offset, length);
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, T>::type &operator[](S const &n)
+  constexpr std::enable_if_t<std::is_integral<S>::value, T> &operator[](S const &n) noexcept
   {
     assert(pointer_ != nullptr);
     assert(std::size_t(n) < padded_size());
@@ -129,7 +149,8 @@ public:
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, T>::type const &operator[](S const &n) const
+  constexpr std::enable_if_t<std::is_integral<S>::value, T> const &operator[](S const &n) const
+      noexcept
   {
     assert(pointer_ != nullptr);
 
@@ -138,7 +159,7 @@ public:
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, T>::type &At(S const &n)
+  constexpr std::enable_if_t<std::is_integral<S>::value, T> &At(S const &n) noexcept
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
@@ -146,7 +167,7 @@ public:
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, T>::type const &At(S const &n) const
+  constexpr std::enable_if_t<std::is_integral<S>::value, T> const &At(S const &n) const noexcept
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
@@ -154,7 +175,8 @@ public:
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, T>::type const &Set(S const &n, T const &v)
+  constexpr std::enable_if_t<std::is_integral<S>::value, T> const &Set(S const &n,
+                                                                       T const &v) noexcept
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
@@ -162,41 +184,44 @@ public:
     return v;
   }
 
-  std::size_t simd_size() const
+  constexpr SizeType simd_size() const noexcept
   {
     return (size_) >> E_LOG_SIMD_COUNT;
   }
-  std::size_t size() const
+
+  constexpr SizeType const &size() const noexcept
   {
     return size_;
   }
 
-  std::size_t padded_size() const
+  constexpr SizeType padded_size() const noexcept
   {
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT) << E_LOG_SIMD_COUNT;
     if (padded < size_)
     {
-      padded += E_SIMD_COUNT;
+      padded += E_SIMD_SIZE;
     }
     return padded;
   }
 
-  pointer_type pointer()
+  constexpr PointerType pointer() noexcept
   {
     return pointer_;
   }
-  const_pointer_type pointer() const
+
+  constexpr ConstPointerType pointer() const noexcept
   {
     return pointer_;
   }
-  size_type size()
+
+  constexpr SizeType const &size() noexcept
   {
     return size_;
   }
 
 protected:
-  pointer_type pointer_;
-  size_type    size_;
+  PointerType pointer_{nullptr};
+  SizeType    size_{0};
 };
 
 }  // namespace memory

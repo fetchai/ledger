@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <ctime>
-#include <iostream>
-#include <map>
 #include <random>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace fetch {
@@ -55,14 +55,13 @@ public:
     this->min   = min;
     this->max   = max;
   }
-  double delta, min, max;
+  double delta, min{}, max{};
 
-  ~TrustModifier2()
-  {}
+  ~TrustModifier2() = default;
 };
 
-using trust_modifiers_type = std::array<std::array<TrustModifier, 4>, 3>;
-extern const trust_modifiers_type trust_modifiers_;
+using TrustModifiersType = std::array<std::array<TrustModifier, 4>, 3>;
+extern const TrustModifiersType trust_modifiers_;
 
 inline TrustModifier const &LookupTrustModifier(TrustSubject subject, TrustQuality quality)
 {
@@ -76,17 +75,17 @@ class P2PTrust : public P2PTrustInterface<IDENTITY>
 protected:
   struct PeerTrustRating
   {
-    IDENTITY peer_identity;
-    double   trust;
-    time_t   last_modified;
+    IDENTITY    peer_identity;
+    double      trust;
+    std::time_t last_modified;
 
-    double ComputeCurrentTrust(time_t current_time) const
+    double ComputeCurrentTrust(std::time_t current_time) const
     {
-      double const time_delta = double(std::max(0L, last_modified + 100 - current_time)) / 100.0;
+      double const time_delta = double(std::max(0L, last_modified + 100 - current_time)) / 300.0;
       return trust * time_delta;
     }
 
-    void SetCurrentTrust(time_t current_time)
+    void SetCurrentTrust(std::time_t current_time)
     {
       trust         = ComputeCurrentTrust(current_time);
       last_modified = current_time;
@@ -94,27 +93,31 @@ protected:
   };
 
   using TrustStore   = std::vector<PeerTrustRating>;
-  using RankingStore = std::unordered_map<IDENTITY, size_t>;
-  using Mutex        = mutex::Mutex;
+  using RankingStore = std::unordered_map<IDENTITY, std::size_t>;
+  using PeerTrusts   = typename P2PTrustInterface<IDENTITY>::PeerTrusts;
 
 public:
   using ConstByteArray = byte_array::ConstByteArray;
   using IdentitySet    = typename P2PTrustInterface<IDENTITY>::IdentitySet;
+  using PeerTrust      = typename P2PTrustInterface<IDENTITY>::PeerTrust;
 
   static constexpr char const *LOGGING_NAME = "Trust";
 
   // Construction / Destruction
   P2PTrust()                    = default;
-  P2PTrust(const P2PTrust &rhs) = delete;
+  P2PTrust(P2PTrust const &rhs) = delete;
   P2PTrust(P2PTrust &&rhs)      = delete;
   ~P2PTrust() override          = default;
+
+  void Debug() const override
+  {}
 
   void AddFeedback(IDENTITY const &peer_ident, TrustSubject subject, TrustQuality quality) override
   {
     AddFeedback(peer_ident, ConstByteArray{}, subject, quality);
   }
 
-  void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const &object_ident,
+  void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const & /*object_ident*/,
                    TrustSubject subject, TrustQuality quality) override
   {
     FETCH_LOCK(mutex_);
@@ -122,7 +125,7 @@ public:
     auto ranking      = ranking_store_.find(peer_ident);
     auto current_time = GetCurrentTime();
 
-    size_t pos;
+    std::size_t pos;
     if (ranking == ranking_store_.end())
     {
       PeerTrustRating new_record{peer_ident, 0.0, current_time};
@@ -167,7 +170,7 @@ public:
     {
       FETCH_LOCK(mutex_);
 
-      for (size_t pos = 0; pos < trust_store_.size(); pos++)
+      for (std::size_t pos = 0; pos < trust_store_.size(); pos++)
       {
         if (trust_store_[pos].trust < minimum_trust)
         {
@@ -179,6 +182,24 @@ public:
     }
 
     return result;
+  }
+
+  PeerTrusts GetPeersAndTrusts() const override
+  {
+    FETCH_LOCK(mutex_);
+
+    PeerTrusts trust_list;
+
+    for (std::size_t pos = 0, end = trust_store_.size(); pos < end; ++pos)
+    {
+      PeerTrust pt;
+      pt.address = trust_store_[pos].peer_identity;
+      pt.name    = std::string(byte_array::ToBase64(pt.address));
+      pt.trust   = trust_store_[pos].trust;
+      trust_list.push_back(pt);
+    }
+
+    return trust_list;
   }
 
   IdentitySet GetBestPeers(std::size_t maximum) const override
@@ -212,10 +233,8 @@ public:
     {
       return trust_store_.size() + 1;
     }
-    else
-    {
-      return ranking_it->second;
-    }
+
+    return ranking_it->second;
   }
 
   double GetTrustRatingOfPeer(IDENTITY const &peer_ident) const override
@@ -242,11 +261,11 @@ public:
   }
 
   // Operators
-  P2PTrust operator=(const P2PTrust &rhs) = delete;
+  P2PTrust operator=(P2PTrust const &rhs) = delete;
   P2PTrust operator=(P2PTrust &&rhs) = delete;
 
 protected:
-  void SortIfNeeded()
+  void SortIfNeeded() const
   {
     auto const current_time = GetCurrentTime();
 
@@ -256,13 +275,13 @@ protected:
     }
     dirty_ = false;
 
-    for (size_t pos = 0; pos < trust_store_.size(); pos++)
+    for (std::size_t pos = 0; pos < trust_store_.size(); pos++)
     {
       trust_store_[pos].SetCurrentTrust(current_time);
     }
 
     std::sort(trust_store_.begin(), trust_store_.end(),
-              [](const PeerTrustRating &a, const PeerTrustRating &b) {
+              [](PeerTrustRating const &a, PeerTrustRating const &b) {
                 if (a.trust < b.trust)
                 {
                   return true;
@@ -281,16 +300,16 @@ protected:
     }
   }
 
-  static time_t GetCurrentTime()
+  static std::time_t GetCurrentTime()
   {
     return std::time(nullptr);
   }
 
 private:
-  bool          dirty_ = false;
-  mutable Mutex mutex_{__LINE__, __FILE__};
-  TrustStore    trust_store_;
-  RankingStore  ranking_store_;
+  mutable bool         dirty_ = false;
+  mutable Mutex        mutex_;
+  mutable TrustStore   trust_store_;
+  mutable RankingStore ranking_store_;
 };
 
 }  // namespace p2p

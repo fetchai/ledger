@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,18 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <algorithm>
-#include <cstring>
 #include <string>
 
 namespace fetch {
 namespace string {
 
-inline void ToLower(std::string &text)
-{
-  std::transform(text.begin(), text.end(), text.begin(),
-                 [](char c) -> char { return static_cast<char>(std::tolower(c)); });
-}
+void ToLower(std::string &text);
 
 }  // namespace string
 }  // namespace fetch

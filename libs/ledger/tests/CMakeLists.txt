@@ -1,7 +1,7 @@
-################################################################################
+#
 # F E T C H   L E D G E R   T E S T S
-################################################################################
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+#
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-ledger)
 
 # CMake configuration
@@ -10,11 +10,12 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
+fetch_add_test(ledger-chaincode-tests fetch-ledger chaincode)
+fetch_add_test(ledger-consensus-tests fetch-ledger consensus)
+fetch_add_test(ledger-chain-tests fetch-ledger chain)
+fetch_add_test(ledger-unit-tests fetch-ledger unit/)
 
-add_fetch_test(ledger_identifier_test fetch-ledger identifier_test.cpp)
-add_fetch_gtest(chaincode_test fetch-ledger chaincode)
-add_fetch_gtest(executors_test fetch-ledger executors)
-target_include_directories(executors_test PRIVATE chaincode)
-add_fetch_test(transaction_types_test fetch-ledger transaction_types.cpp)
+fetch_add_slow_test(ledger-executor-tests fetch-ledger executors)
+target_include_directories(ledger-executor-tests PRIVATE chaincode)
 
-add_fetch_gtest(ledger_main_chain_gtest fetch-ledger consensus/gtest/)
+fetch_add_slow_test(ledger-dag-tests fetch-ledger dag)

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,9 +19,12 @@
 
 #include "core/mutex.hpp"
 
-#include <algorithm>
-#include <iostream>
-#include <string>
+#include <atomic>
+#include <chrono>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 namespace fetch {
 namespace network {
@@ -34,12 +37,10 @@ namespace details {
 class IdleWorkStore
 {
 public:
-  using WorkItem   = std::function<void()>;
-  using mutex_type = fetch::mutex::Mutex;
-  using lock_type  = std::unique_lock<mutex_type>;
+  using WorkItem = std::function<void()>;
 
   IdleWorkStore()                         = default;
-  IdleWorkStore(const IdleWorkStore &rhs) = delete;
+  IdleWorkStore(IdleWorkStore const &rhs) = delete;
   IdleWorkStore(IdleWorkStore &&rhs)      = delete;
 
   ~IdleWorkStore()
@@ -89,7 +90,13 @@ public:
 
     if (mutex_.try_lock())
     {
-      is_due = Clock::now() >= (last_run_ + interval_);
+      try
+      {
+        is_due = Clock::now() >= (last_run_ + interval_);
+      }
+      catch (...)
+      {
+      }
 
       mutex_.unlock();
     }
@@ -122,10 +129,8 @@ public:
     {
       return duration_cast<milliseconds>(next_run - now);
     }
-    else
-    {
-      return std::chrono::milliseconds::zero();
-    }
+
+    return std::chrono::milliseconds::zero();
   }
 
   /**
@@ -141,6 +146,8 @@ public:
   {
     std::size_t num_processed = 0;
 
+    static_assert(noexcept(visitor(std::declval<WorkItem>())),
+                  "To ensure mutex release, callback must be noexcept");
     if (mutex_.try_lock())
     {
       for (auto const &work : store_)
@@ -181,17 +188,16 @@ public:
     store_.emplace_back(std::move(item));
   }
 
-  IdleWorkStore operator=(const IdleWorkStore &rhs) = delete;
+  IdleWorkStore operator=(IdleWorkStore const &rhs) = delete;
   IdleWorkStore operator=(IdleWorkStore &&rhs) = delete;
 
 private:
   using Clock     = std::chrono::system_clock;
   using Timestamp = Clock::time_point;
   using Flag      = std::atomic<bool>;
-  using Mutex     = fetch::mutex::Mutex;
   using Store     = std::vector<WorkItem>;
 
-  mutable Mutex             mutex_{__LINE__, __FILE__};
+  mutable Mutex             mutex_;
   Store                     store_;
   Flag                      shutdown_{false};
   std::chrono::milliseconds interval_{0};

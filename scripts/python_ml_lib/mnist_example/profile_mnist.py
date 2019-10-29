@@ -35,6 +35,8 @@ from line_profiler import LineProfiler
 #         return inner
 
 # @do_profile()
+
+
 def run_mnist():
 
     mlearner = MLearner()

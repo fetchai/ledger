@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<struct id="fetch::rpc::ServiceServer::PendingMessage" name="PendingMessage" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <field id="fetch::rpc::ServiceServer::PendingMessage::client" name="client">
-    <type name="network::NetworkServer::handle_type" />
-  </field>
-  <field id="fetch::rpc::ServiceServer::PendingMessage::message" name="message">
-    <type name="network::message_type" />
-  </field>
-</struct>

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,9 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/assert.hpp"
 #include "core/byte_array/details/encode_decode.hpp"
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <stdexcept>
+#include <utility>
 
 namespace fetch {
 namespace byte_array {
@@ -35,7 +41,7 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
   }
 
   ByteArray ret;
-  ret.Resize(((3 * str.size()) >> 2) - pad);
+  ret.Resize(((3u * str.size()) >> 2u) - pad);
 
   std::size_t j   = 0;
   uint32_t    buf = 0;
@@ -50,7 +56,7 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
       --i;
       break;
     }
-    else if (c == details::INVALID)
+    if (c == details::INVALID)
     {
       return ConstByteArray();
     }
@@ -77,12 +83,13 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
     break;
   }
 
-  return ret;
+  return {std::move(ret)};
 }
 
+// TODO(issue 1262): Caller can't unambiguously detect whether the conversion failed or not
 ConstByteArray FromHex(ConstByteArray const &str) noexcept
 {
-  char const *data = reinterpret_cast<char const *>(str.pointer());
+  auto const *data = reinterpret_cast<char const *>(str.pointer());
   ByteArray   ret;
   ret.Resize(str.size() >> 1);
 
@@ -93,10 +100,10 @@ ConstByteArray FromHex(ConstByteArray const &str) noexcept
 
     for (std::size_t i = 0; i < n; i += 2)
     {
-      uint8_t next = uint8_t(details::DecodeHexChar(data[i]));
+      auto next = static_cast<uint8_t>(details::DecodeHexChar(data[i]));
       if (i + 1 < n)
       {
-        next = uint8_t(next << 4);
+        next = uint8_t(next << 4u);
         next = uint8_t(next | details::DecodeHexChar(data[i + 1]));
       }
       ret[j++] = next;
@@ -107,7 +114,7 @@ ConstByteArray FromHex(ConstByteArray const &str) noexcept
     return ConstByteArray();
   }
 
-  return ret;
+  return {std::move(ret)};
 }
 
 }  // namespace byte_array

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -70,9 +70,9 @@ template <typename T, typename B = uint64_t, typename S = RandomAccessStack<T, B
 class VersionedRandomAccessStack
 {
 private:
-  using stack_type        = S;
-  using header_extra_type = B;
-  using header_type       = BookmarkHeader<B>;
+  using StackType       = S;
+  using HeaderExtraType = B;
+  using HeaderType      = BookmarkHeader<B>;
 
   static constexpr char const *LOGGING_NAME = "VersionedRandomAccessStack";
 
@@ -85,10 +85,13 @@ private:
   {
     HistoryBookmark()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
-    HistoryBookmark(B const &val)
+
+    explicit HistoryBookmark(B const &val)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
       bookmark = val;
     }
@@ -97,6 +100,7 @@ private:
     {
       value = 0
     };
+
     B bookmark = 0;
   };
 
@@ -109,12 +113,15 @@ private:
   {
     HistorySwap()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistorySwap(uint64_t const &i_, uint64_t const &j_)
+    HistorySwap(uint64_t i_, uint64_t j_)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+
       i = i_;
       j = j_;
     }
@@ -123,6 +130,7 @@ private:
     {
       value = 1
     };
+
     uint64_t i = 0;
     uint64_t j = 0;
   };
@@ -136,12 +144,15 @@ private:
   {
     HistoryPop()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistoryPop(T const &d)
+    explicit HistoryPop(T const &d)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+
       data = d;
     }
 
@@ -149,7 +160,8 @@ private:
     {
       value = 2
     };
-    T data;
+
+    T data{};
   };
 
   /**
@@ -162,6 +174,7 @@ private:
   {
     HistoryPush()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
 
@@ -184,12 +197,15 @@ private:
   {
     HistorySet()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistorySet(uint64_t const &i_, T const &d)
+    HistorySet(uint64_t i_, T const &d)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+
       i    = i_;
       data = d;
     }
@@ -198,6 +214,7 @@ private:
     {
       value = 4
     };
+
     uint64_t i = 0;
     T        data;
   };
@@ -210,12 +227,15 @@ private:
   {
     HistoryHeader()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistoryHeader(B const &d)
+    explicit HistoryHeader(B const &d)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+
       data = d;
     }
 
@@ -223,13 +243,14 @@ private:
     {
       value = 5
     };
-    B data;
+
+    B data = 0;
   };
 
 public:
-  using type               = T;
-  using bookmark_type      = B;
-  using event_handler_type = std::function<void()>;
+  using type             = T;
+  using BookmarkType     = B;
+  using EventHandlerType = std::function<void()>;
 
   VersionedRandomAccessStack()
   {
@@ -248,12 +269,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -281,7 +302,7 @@ public:
    */
   static constexpr bool DirectWrite()
   {
-    return stack_type::DirectWrite();
+    return StackType::DirectWrite();
   }
 
   void Load(std::string const &filename, std::string const &history,
@@ -307,19 +328,19 @@ public:
     bookmark_ = stack_.header_extra().bookmark;
   }
 
-  type Get(std::size_t const &i) const
+  type Get(std::size_t i) const
   {
     type object;
     stack_.Get(i, object);
     return object;
   }
 
-  void Get(std::size_t const &i, type &object) const
+  void Get(std::size_t i, type &object) const
   {
     stack_.Get(i, object);
   }
 
-  void Set(std::size_t const &i, type const &object)
+  void Set(std::size_t i, type const &object)
   {
     type old_data;
     stack_.Get(i, old_data);
@@ -345,7 +366,7 @@ public:
     return stack_.Top();
   }
 
-  void Swap(std::size_t const &i, std::size_t const &j)
+  void Swap(std::size_t i, std::size_t j)
   {
     history_.Push(HistorySwap{i, j}, HistorySwap::value);
     stack_.Swap(i, j);
@@ -358,7 +379,7 @@ public:
    * @param: b The bookmark to revert to
    *
    */
-  void Revert(bookmark_type const &b)
+  void Revert(BookmarkType const &b)
   {
     while ((!empty()) && (b != bookmark_))
     {
@@ -406,48 +427,53 @@ public:
       }
     }
 
-    header_type h = stack_.header_extra();
-    h.bookmark    = bookmark_;
+    HeaderType h = stack_.header_extra();
+    h.bookmark   = bookmark_;
     stack_.SetExtraHeader(h);
 
     NextBookmark();
   }
 
-  void SetExtraHeader(header_extra_type const &b)
+  void SetExtraHeader(HeaderExtraType const &b)
   {
-    header_type h = stack_.header_extra();
+    HeaderType h = stack_.header_extra();
     history_.Push(HistoryHeader{h.header}, HistoryHeader::value);
 
     h.header = b;
     stack_.SetExtraHeader(h);
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return stack_.header_extra().header;
   }
 
-  bookmark_type Commit()
+  BookmarkType Commit()
   {
-    bookmark_type b = bookmark_;
+    BookmarkType b = bookmark_;
 
     return Commit(b);
   }
 
-  bookmark_type Commit(bookmark_type const &b)
+  BookmarkType Commit(BookmarkType const &b)
   {
+    // The flush here is vitally important since we must ensure the all flush handlers successfully
+    // execute. Failure to do this results in an incorrectly ordered difference / history stack
+    // which in turn means that the state can not be reverted
+    Flush(false);
+
     history_.Push(HistoryBookmark{b}, HistoryBookmark::value);
 
-    header_type h = stack_.header_extra();
+    HeaderType h = stack_.header_extra();
     h.bookmark = bookmark_ = b;
     stack_.SetExtraHeader(h);
     NextBookmark();
     return b;
   }
 
-  void Flush()
+  void Flush(bool lazy = true)
   {
-    stack_.Flush();
+    stack_.Flush(lazy);
   }
 
   void ResetBookmark()
@@ -481,13 +507,13 @@ public:
   }
 
 private:
-  VariantStack  history_;
-  bookmark_type bookmark_;
+  VariantStack history_;
+  BookmarkType bookmark_;
 
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
+  EventHandlerType on_file_loaded_;
+  EventHandlerType on_before_flush_;
 
-  stack_type stack_;
+  StackType stack_;
 
   void RevertBookmark()
   {
@@ -530,7 +556,7 @@ private:
     HistoryHeader header;
     history_.Top(header);
 
-    header_type h = stack_.header_extra();
+    HeaderType h = stack_.header_extra();
 
     h.header = header.data;
     stack_.SetExtraHeader(h);

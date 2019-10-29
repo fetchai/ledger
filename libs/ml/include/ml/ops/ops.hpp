@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,66 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
-#include "ml/ops/activation_functions.hpp"
-#include "ml/ops/loss_functions.hpp"
-#include "ml/ops/utils.hpp"
+#include "core/assert.hpp"
+#include "math/tensor.hpp"
+#include "ml/saveparams/saveable_params.hpp"
+
+#include <functional>
+#include <memory>
+#include <vector>
+
+namespace fetch {
+namespace ml {
+namespace ops {
+
+/*
+ * Abstract Ops interface
+ */
+template <class T>
+class Ops
+{
+public:
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
+
+  virtual ~Ops() = default;
+
+  virtual void                    Forward(VecTensorType const &inputs, TensorType &output) = 0;
+  virtual std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                           TensorType const &   error_signal)                 = 0;
+  /*
+   * ComputeOutputShape is usually expensive function and should be used only for initialisation or
+   * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
+   */
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
+
+  virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() = 0;
+
+  Ops() = default;
+
+  explicit Ops(OpsSaveableParams const &sp)
+  {
+    is_training_ = sp.is_training;
+  }
+
+  virtual std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) = 0;
+
+  void SetTraining(bool is_training)
+  {
+    is_training_ = is_training;
+  }
+
+  bool IsTraining()
+  {
+    return is_training_;
+  }
+
+protected:
+  bool is_training_ = true;
+};
+
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch

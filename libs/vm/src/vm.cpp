@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,825 +16,333 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/vm.hpp"
 #include "vm/module.hpp"
-#include <sstream>
+#include "vm/vm.hpp"
+
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace vm {
 
-void Object::Release()
+VM::VM(Module *module)
 {
-  if (--count == 0)
+  FunctionInfoArray function_info_array;
+
+  module->GetDetails(type_info_array_, type_info_map_, registered_types_, function_info_array,
+                     deserialization_constructors_, cpp_copy_constructors_);
+  auto num_types     = static_cast<uint16_t>(type_info_array_.size());
+  auto num_functions = static_cast<uint16_t>(function_info_array.size());
+  auto num_opcodes   = static_cast<uint16_t>(Opcodes::NumReserved + num_functions);
+
+  opcode_info_array_ = OpcodeInfoArray(num_opcodes);
+
+  AddOpcodeInfo(Opcodes::VariableDeclare, "VariableDeclare",
+                [](VM *vm) { vm->Handler__VariableDeclare(); });
+  AddOpcodeInfo(Opcodes::VariableDeclareAssign, "VariableDeclareAssign",
+                [](VM *vm) { vm->Handler__VariableDeclareAssign(); });
+  AddOpcodeInfo(Opcodes::PushNull, "PushNull", [](VM *vm) { vm->Handler__PushNull(); });
+  AddOpcodeInfo(Opcodes::PushFalse, "PushFalse", [](VM *vm) { vm->Handler__PushFalse(); });
+  AddOpcodeInfo(Opcodes::PushTrue, "PushTrue", [](VM *vm) { vm->Handler__PushTrue(); });
+  AddOpcodeInfo(Opcodes::PushString, "PushString", [](VM *vm) { vm->Handler__PushString(); });
+  AddOpcodeInfo(Opcodes::PushConstant, "PushConstant", [](VM *vm) { vm->Handler__PushConstant(); });
+  AddOpcodeInfo(Opcodes::PushVariable, "PushVariable", [](VM *vm) { vm->Handler__PushVariable(); });
+  AddOpcodeInfo(Opcodes::PopToVariable, "PopToVariable",
+                [](VM *vm) { vm->Handler__PopToVariable(); });
+  AddOpcodeInfo(Opcodes::Inc, "Inc", [](VM *vm) { vm->Handler__Inc(); });
+  AddOpcodeInfo(Opcodes::Dec, "Dec", [](VM *vm) { vm->Handler__Dec(); });
+  AddOpcodeInfo(Opcodes::Duplicate, "Duplicate", [](VM *vm) { vm->Handler__Duplicate(); });
+  AddOpcodeInfo(Opcodes::DuplicateInsert, "DuplicateInsert",
+                [](VM *vm) { vm->Handler__DuplicateInsert(); });
+  AddOpcodeInfo(Opcodes::Discard, "Discard", [](VM *vm) { vm->Handler__Discard(); });
+  AddOpcodeInfo(Opcodes::Destruct, "Destruct", [](VM *vm) { vm->Handler__Destruct(); });
+  AddOpcodeInfo(Opcodes::Break, "Break", [](VM *vm) { vm->Handler__Break(); });
+  AddOpcodeInfo(Opcodes::Continue, "Continue", [](VM *vm) { vm->Handler__Continue(); });
+  AddOpcodeInfo(Opcodes::Jump, "Jump", [](VM *vm) { vm->Handler__Jump(); });
+  AddOpcodeInfo(Opcodes::JumpIfFalse, "JumpIfFalse", [](VM *vm) { vm->Handler__JumpIfFalse(); });
+  AddOpcodeInfo(Opcodes::JumpIfTrue, "JumpIfTrue", [](VM *vm) { vm->Handler__JumpIfTrue(); });
+  AddOpcodeInfo(Opcodes::Return, "Return", [](VM *vm) { vm->Handler__Return(); });
+  AddOpcodeInfo(Opcodes::ReturnValue, "ReturnValue", [](VM *vm) { vm->Handler__Return(); });
+  AddOpcodeInfo(Opcodes::ForRangeInit, "ForRangeInit", [](VM *vm) { vm->Handler__ForRangeInit(); });
+  AddOpcodeInfo(Opcodes::ForRangeIterate, "ForRangeIterate",
+                [](VM *vm) { vm->Handler__ForRangeIterate(); });
+  AddOpcodeInfo(Opcodes::ForRangeTerminate, "ForRangeTerminate",
+                [](VM *vm) { vm->Handler__ForRangeTerminate(); });
+  AddOpcodeInfo(Opcodes::InvokeUserDefinedFreeFunction, "InvokeUserDefinedFreeFunction",
+                [](VM *vm) { vm->Handler__InvokeUserDefinedFreeFunction(); });
+  AddOpcodeInfo(Opcodes::VariablePrefixInc, "VariablePrefixInc",
+                [](VM *vm) { vm->Handler__VariablePrefixInc(); });
+  AddOpcodeInfo(Opcodes::VariablePrefixDec, "VariablePrefixDec",
+                [](VM *vm) { vm->Handler__VariablePrefixDec(); });
+  AddOpcodeInfo(Opcodes::VariablePostfixInc, "VariablePostfixInc",
+                [](VM *vm) { vm->Handler__VariablePostfixInc(); });
+  AddOpcodeInfo(Opcodes::VariablePostfixDec, "VariablePostfixDec",
+                [](VM *vm) { vm->Handler__VariablePostfixDec(); });
+  AddOpcodeInfo(Opcodes::JumpIfFalseOrPop, "JumpIfFalseOrPop",
+                [](VM *vm) { vm->Handler__JumpIfFalseOrPop(); });
+  AddOpcodeInfo(Opcodes::JumpIfTrueOrPop, "JumpIfTrueOrPop",
+                [](VM *vm) { vm->Handler__JumpIfTrueOrPop(); });
+  AddOpcodeInfo(Opcodes::Not, "Not", [](VM *vm) { vm->Handler__Not(); });
+  AddOpcodeInfo(Opcodes::PrimitiveEqual, "PrimitiveEqual",
+                [](VM *vm) { vm->Handler__PrimitiveEqual(); });
+  AddOpcodeInfo(Opcodes::ObjectEqual, "ObjectEqual", [](VM *vm) { vm->Handler__ObjectEqual(); });
+  AddOpcodeInfo(Opcodes::PrimitiveNotEqual, "PrimitiveNotEqual",
+                [](VM *vm) { vm->Handler__PrimitiveNotEqual(); });
+  AddOpcodeInfo(Opcodes::ObjectNotEqual, "ObjectNotEqual",
+                [](VM *vm) { vm->Handler__ObjectNotEqual(); });
+  AddOpcodeInfo(Opcodes::PrimitiveLessThan, "PrimitiveLessThan",
+                [](VM *vm) { vm->Handler__PrimitiveLessThan(); });
+  AddOpcodeInfo(Opcodes::ObjectLessThan, "ObjectLessThan",
+                [](VM *vm) { vm->Handler__ObjectLessThan(); });
+  AddOpcodeInfo(Opcodes::PrimitiveLessThanOrEqual, "PrimitiveLessThanOrEqual",
+                [](VM *vm) { vm->Handler__PrimitiveLessThanOrEqual(); });
+  AddOpcodeInfo(Opcodes::ObjectLessThanOrEqual, "ObjectLessThanOrEqual",
+                [](VM *vm) { vm->Handler__ObjectLessThanOrEqual(); });
+  AddOpcodeInfo(Opcodes::PrimitiveGreaterThan, "PrimitiveGreaterThan",
+                [](VM *vm) { vm->Handler__PrimitiveGreaterThan(); });
+  AddOpcodeInfo(Opcodes::ObjectGreaterThan, "ObjectGreaterThan",
+                [](VM *vm) { vm->Handler__ObjectGreaterThan(); });
+  AddOpcodeInfo(Opcodes::PrimitiveGreaterThanOrEqual, "PrimitiveGreaterThanOrEqual",
+                [](VM *vm) { vm->Handler__PrimitiveGreaterThanOrEqual(); });
+  AddOpcodeInfo(Opcodes::ObjectGreaterThanOrEqual, "ObjectGreaterThanOrEqual",
+                [](VM *vm) { vm->Handler__ObjectGreaterThanOrEqual(); });
+  AddOpcodeInfo(Opcodes::PrimitiveNegate, "PrimitiveNegate",
+                [](VM *vm) { vm->Handler__PrimitiveNegate(); });
+  AddOpcodeInfo(Opcodes::ObjectNegate, "ObjectNegate", [](VM *vm) { vm->Handler__ObjectNegate(); });
+  AddOpcodeInfo(Opcodes::PrimitiveAdd, "PrimitiveAdd", [](VM *vm) { vm->Handler__PrimitiveAdd(); });
+  AddOpcodeInfo(Opcodes::ObjectAdd, "ObjectAdd", [](VM *vm) { vm->Handler__ObjectAdd(); });
+  AddOpcodeInfo(Opcodes::ObjectLeftAdd, "ObjectLeftAdd",
+                [](VM *vm) { vm->Handler__ObjectLeftAdd(); });
+  AddOpcodeInfo(Opcodes::ObjectRightAdd, "ObjectRightAdd",
+                [](VM *vm) { vm->Handler__ObjectRightAdd(); });
+  AddOpcodeInfo(Opcodes::VariablePrimitiveInplaceAdd, "VariablePrimitiveInplaceAdd",
+                [](VM *vm) { vm->Handler__VariablePrimitiveInplaceAdd(); });
+  AddOpcodeInfo(Opcodes::VariableObjectInplaceAdd, "VariableObjectInplaceAdd",
+                [](VM *vm) { vm->Handler__VariableObjectInplaceAdd(); });
+  AddOpcodeInfo(Opcodes::VariableObjectInplaceRightAdd, "VariableObjectInplaceRightAdd",
+                [](VM *vm) { vm->Handler__VariableObjectInplaceRightAdd(); });
+  AddOpcodeInfo(Opcodes::PrimitiveSubtract, "PrimitiveSubtract",
+                [](VM *vm) { vm->Handler__PrimitiveSubtract(); });
+  AddOpcodeInfo(Opcodes::ObjectSubtract, "ObjectSubtract",
+                [](VM *vm) { vm->Handler__ObjectSubtract(); });
+  AddOpcodeInfo(Opcodes::ObjectLeftSubtract, "ObjectLeftSubtract",
+                [](VM *vm) { vm->Handler__ObjectLeftSubtract(); });
+  AddOpcodeInfo(Opcodes::ObjectRightSubtract, "ObjectRightSubtract",
+                [](VM *vm) { vm->Handler__ObjectRightSubtract(); });
+  AddOpcodeInfo(Opcodes::VariablePrimitiveInplaceSubtract, "VariablePrimitiveInplaceSubtract",
+                [](VM *vm) { vm->Handler__VariablePrimitiveInplaceSubtract(); });
+  AddOpcodeInfo(Opcodes::VariableObjectInplaceSubtract, "VariableObjectInplaceSubtract",
+                [](VM *vm) { vm->Handler__VariableObjectInplaceSubtract(); });
+  AddOpcodeInfo(Opcodes::VariableObjectInplaceRightSubtract, "VariableObjectInplaceRightSubtract",
+                [](VM *vm) { vm->Handler__VariableObjectInplaceRightSubtract(); });
+  AddOpcodeInfo(Opcodes::PrimitiveMultiply, "PrimitiveMultiply",
+                [](VM *vm) { vm->Handler__PrimitiveMultiply(); });
+  AddOpcodeInfo(Opcodes::ObjectMultiply, "ObjectMultiply",
+                [](VM *vm) { vm->Handler__ObjectMultiply(); });
+  AddOpcodeInfo(Opcodes::ObjectLeftMultiply, "ObjectLeftMultiply",
+                [](VM *vm) { vm->Handler__ObjectLeftMultiply(); });
+  AddOpcodeInfo(Opcodes::ObjectRightMultiply, "ObjectRightMultiply",
+                [](VM *vm) { vm->Handler__ObjectRightMultiply(); });
+  AddOpcodeInfo(Opcodes::VariablePrimitiveInplaceMultiply, "VariablePrimitiveInplaceMultiply",
+                [](VM *vm) { vm->Handler__VariablePrimitiveInplaceMultiply(); });
+  AddOpcodeInfo(Opcodes::VariableObjectInplaceMultiply, "VariableObjectInplaceMultiply",
+                [](VM *vm) { vm->Handler__VariableObjectInplaceMultiply(); });
+  AddOpcodeInfo(Opcodes::VariableObjectInplaceRightMultiply, "VariableObjectInplaceRightMultiply",
+                [](VM *vm) { vm->Handler__VariableObjectInplaceRightMultiply(); });
+  AddOpcodeInfo(Opcodes::PrimitiveDivide, "PrimitiveDivide",
+                [](VM *vm) { vm->Handler__PrimitiveDivide(); });
+  AddOpcodeInfo(Opcodes::ObjectDivide, "ObjectDivide", [](VM *vm) { vm->Handler__ObjectDivide(); });
+  AddOpcodeInfo(Opcodes::ObjectLeftDivide, "ObjectLeftDivide",
+                [](VM *vm) { vm->Handler__ObjectLeftDivide(); });
+  AddOpcodeInfo(Opcodes::ObjectRightDivide, "ObjectRightDivide",
+                [](VM *vm) { vm->Handler__ObjectRightDivide(); });
+  AddOpcodeInfo(Opcodes::VariablePrimitiveInplaceDivide, "VariablePrimitiveInplaceDivide",
+                [](VM *vm) { vm->Handler__VariablePrimitiveInplaceDivide(); });
+  AddOpcodeInfo(Opcodes::VariableObjectInplaceDivide, "VariableObjectInplaceDivide",
+                [](VM *vm) { vm->Handler__VariableObjectInplaceDivide(); });
+  AddOpcodeInfo(Opcodes::VariableObjectInplaceRightDivide, "VariableObjectInplaceRightDivide",
+                [](VM *vm) { vm->Handler__VariableObjectInplaceRightDivide(); });
+  AddOpcodeInfo(Opcodes::PrimitiveModulo, "PrimitiveModulo",
+                [](VM *vm) { vm->Handler__PrimitiveModulo(); });
+  AddOpcodeInfo(Opcodes::VariablePrimitiveInplaceModulo, "VariablePrimitiveInplaceModulo",
+                [](VM *vm) { vm->Handler__VariablePrimitiveInplaceModulo(); });
+  AddOpcodeInfo(Opcodes::InitialiseArray, "InitialiseArray",
+                [](VM *vm) { vm->Handler__InitialiseArray(); });
+
+  opcode_map_.clear();
+  for (uint16_t i = 0; i < num_functions; ++i)
   {
-    vm->ReleaseObject(this, type_id);
+    auto        opcode = static_cast<uint16_t>(Opcodes::NumReserved + i);
+    auto const &info   = function_info_array[i];
+    AddOpcodeInfo(opcode, info.unique_id, info.handler, info.static_charge);
+    opcode_map_[info.unique_id] = opcode;
   }
+
+  generator_.Initialise(this, num_types);
 }
 
-void VM::RuntimeError(const std::string &message)
+bool VM::GenerateExecutable(IR const &ir, std::string const &name, Executable &executable,
+                            std::vector<std::string> &errors)
 {
-  std::stringstream stream;
-  stream << "runtime error: " << message;
-  error_      = stream.str();
-  error_line_ = std::size_t(instruction_->line);
-  stop_       = true;
+  return generator_.GenerateExecutable(ir, name, executable, errors);
 }
 
-void VM::AcquireMatrix(const size_t rows, const size_t columns, MatrixFloat32 *&m)
+bool VM::Execute(std::string &error, Variant &output)
 {
-  m = new MatrixFloat32(TypeId::Matrix_Float32, this, rows, columns);
-}
-
-void VM::AcquireMatrix(const size_t rows, const size_t columns, MatrixFloat64 *&m)
-{
-  m = new MatrixFloat64(TypeId::Matrix_Float64, this, rows, columns);
-}
-
-void VM::ForRangeInit()
-{
-  ForRangeLoop loop;
-  loop.variable_index = instruction_->index;
-  Value &variable     = GetVariable(loop.variable_index);
-  variable.type_id    = instruction_->type_id;
-  if (instruction_->variant.i32 == 2)
-  {
-    Value &targetv = stack_[sp_--];
-    Value &startv  = stack_[sp_--];
-    loop.current   = startv.variant;
-    loop.target    = targetv.variant;
-    targetv.PrimitiveReset();
-    startv.PrimitiveReset();
-  }
-  else
-  {
-    Value &deltav  = stack_[sp_--];
-    Value &targetv = stack_[sp_--];
-    Value &startv  = stack_[sp_--];
-    loop.current   = startv.variant;
-    loop.target    = targetv.variant;
-    loop.delta     = deltav.variant;
-    deltav.PrimitiveReset();
-    targetv.PrimitiveReset();
-    startv.PrimitiveReset();
-  }
-  range_loop_stack_[++range_loop_sp_] = loop;
-}
-
-void VM::ForRangeIterate()
-{
-  ForRangeLoop &loop     = range_loop_stack_[range_loop_sp_];
-  Value &       variable = GetVariable(loop.variable_index);
-  bool          finished = true;
-  if (instruction_->variant.i32 == 2)
-  {
-    switch (variable.type_id)
-    {
-    case TypeId::Int8:
-    {
-      variable.variant.i8 = loop.current.i8++;
-      finished            = variable.variant.i8 > loop.target.i8;
-      break;
-    }
-    case TypeId::Byte:
-    {
-      variable.variant.ui8 = loop.current.ui8++;
-      finished             = variable.variant.ui8 > loop.target.ui8;
-      break;
-    }
-    case TypeId::Int16:
-    {
-      variable.variant.i16 = loop.current.i16++;
-      finished             = variable.variant.i16 > loop.target.i16;
-      break;
-    }
-    case TypeId::UInt16:
-    {
-      variable.variant.ui16 = loop.current.ui16++;
-      finished              = variable.variant.ui16 > loop.target.ui16;
-      break;
-    }
-    case TypeId::Int32:
-    {
-      variable.variant.i32 = loop.current.i32++;
-      finished             = variable.variant.i32 > loop.target.i32;
-      break;
-    }
-    case TypeId::UInt32:
-    {
-      variable.variant.ui32 = loop.current.ui32++;
-      finished              = variable.variant.ui32 > loop.target.ui32;
-      break;
-    }
-    case TypeId::Int64:
-    {
-      variable.variant.i64 = loop.current.i64++;
-      finished             = variable.variant.i64 > loop.target.i64;
-      break;
-    }
-    case TypeId::UInt64:
-    {
-      variable.variant.ui64 = loop.current.ui64++;
-      finished              = variable.variant.ui64 > loop.target.ui64;
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }
-  }
-  else
-  {
-    switch (variable.type_id)
-    {
-    case TypeId::Int8:
-    {
-      variable.variant.i8 = loop.current.i8;
-      loop.current.i8     = int8_t(loop.current.i8 + loop.delta.i8);
-      finished            = (loop.delta.i8 >= 0) ? variable.variant.i8 > loop.target.i8
-                                      : variable.variant.i8 < loop.target.i8;
-      break;
-    }
-    case TypeId::Byte:
-    {
-      variable.variant.ui8 = loop.current.ui8;
-      loop.current.ui8     = uint8_t(loop.current.ui8 + loop.delta.ui8);
-      finished             = variable.variant.ui8 > loop.target.ui8;
-      break;
-    }
-    case TypeId::Int16:
-    {
-      variable.variant.i16 = loop.current.i16;
-      loop.current.i16     = int16_t(loop.current.i16 + loop.delta.i16);
-      finished             = (loop.delta.i16 >= 0) ? variable.variant.i16 > loop.target.i16
-                                       : variable.variant.i16 < loop.target.i16;
-      break;
-    }
-    case TypeId::UInt16:
-    {
-      variable.variant.ui16 = loop.current.ui16;
-      loop.current.ui16     = uint16_t(loop.current.ui16 + loop.delta.ui16);
-      finished              = variable.variant.ui16 > loop.target.ui16;
-
-      break;
-    }
-    case TypeId::Int32:
-    {
-      variable.variant.i32 = loop.current.i32;
-      loop.current.i32 += loop.delta.i32;
-      finished = (loop.delta.i32 >= 0) ? variable.variant.i32 > loop.target.i32
-                                       : variable.variant.i32 < loop.target.i32;
-      break;
-    }
-    case TypeId::UInt32:
-    {
-      variable.variant.ui32 = loop.current.ui32;
-      loop.current.ui32 += loop.delta.ui32;
-      finished = variable.variant.ui32 > loop.target.ui32;
-      break;
-    }
-    case TypeId::Int64:
-    {
-      variable.variant.i64 = loop.current.i64;
-      loop.current.i64 += loop.delta.i64;
-      finished = (loop.delta.i64 >= 0) ? variable.variant.i64 > loop.target.i64
-                                       : variable.variant.i64 < loop.target.i64;
-      break;
-    }
-    case TypeId::UInt64:
-    {
-      variable.variant.ui64 = loop.current.ui64;
-      loop.current.ui64 += loop.delta.ui64;
-      finished = variable.variant.ui64 > loop.target.ui64;
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }
-  }
-  if (finished)
-  {
-    pc_ = instruction_->index;
-  }
-}
-
-void VM::CreateMatrix()
-{
-  Value &w = stack_[sp_--];
-  Value &h = stack_[sp_];
-  if ((w.variant.i32 < 0) || (h.variant.i32 < 0))
-  {
-    RuntimeError("negative size");
-    return;
-  }
-  const uint64_t columns = uint64_t(w.variant.i32);
-  const uint64_t rows    = uint64_t(h.variant.i32);
-  w.Reset();
-  const TypeId type_id = instruction_->type_id;
-  if (type_id == TypeId::Matrix_Float32)
-  {
-    MatrixFloat32 *m;
-    AcquireMatrix(rows, columns, m);
-    h.SetObject(m, type_id);
-  }
-  else
-  {
-    MatrixFloat64 *m;
-    AcquireMatrix(rows, columns, m);
-    h.SetObject(m, type_id);
-  }
-}
-
-void VM::CreateArray()
-{
-  Value &top = stack_[sp_];
-  if (top.variant.i32 < 0)
-  {
-    RuntimeError("negative size");
-    return;
-  }
-  const uint64_t size    = uint64_t(top.variant.i32);
-  const TypeId   type_id = instruction_->type_id;
-  Object *       object  = nullptr;
-  switch (type_id)
-  {
-  case TypeId::Array_Int8:
-  {
-    object = new Array<int8_t>(type_id, this, size);
-    break;
-  }
-  case TypeId::Array_Bool:
-  case TypeId::Array_Byte:
-  {
-    object = new Array<uint8_t>(type_id, this, size);
-    break;
-  }
-  case TypeId::Array_Int16:
-  {
-    object = new Array<int16_t>(type_id, this, size);
-    break;
-  }
-  case TypeId::Array_UInt16:
-  {
-    object = new Array<uint16_t>(type_id, this, size);
-    break;
-  }
-  case TypeId::Array_Int32:
-  {
-    object = new Array<int32_t>(type_id, this, size);
-    break;
-  }
-  case TypeId::Array_UInt32:
-  {
-    object = new Array<uint32_t>(type_id, this, size);
-    break;
-  }
-  case TypeId::Array_Int64:
-  {
-    object = new Array<int64_t>(type_id, this, size);
-    break;
-  }
-  case TypeId::Array_UInt64:
-  {
-    object = new Array<uint64_t>(type_id, this, size);
-    break;
-  }
-  case TypeId::Array_Float32:
-  {
-    object = new Array<float>(type_id, this, size);
-    break;
-  }
-  case TypeId::Array_Float64:
-  {
-    object = new Array<double>(type_id, this, size);
-    break;
-  }
-  case TypeId::Array_Matrix_Float32:
-  case TypeId::Array_Matrix_Float64:
-  case TypeId::Array_String:
-  case TypeId::Array:
-  {
-    object = new Array<Object *>(type_id, this, size);
-    break;
-  }
-  default:
-    break;
-  }
-  top.SetObject(object, type_id);
-}
-
-bool VM::Execute(const Script &script, const std::string &name)
-{
-  const Script::Function *f = script.FindFunction(name);
-  if (f == nullptr)
-  {
-    return false;
-  }
-  script_                       = &script;
-  function_                     = f;
-  const std::size_t num_strings = script_->strings.size();
-  pool_                         = std::vector<String>(num_strings);
-  strings_                      = std::vector<String *>(num_strings);
+  std::size_t const num_strings = executable_->strings.size();
+  strings_                      = std::vector<Ptr<String>>(num_strings);
   for (std::size_t i = 0; i < num_strings; ++i)
   {
-    const std::string &str = script_->strings[i];
-    pool_[i]               = String(this, str, true);
-    strings_[i]            = &pool_[i];
+    std::string const &str = executable_->strings[i];
+    strings_[i]            = Ptr<String>(new String(this, str, true));
   }
+
+  std::size_t const num_local_types = executable_->types.size();
+  for (std::size_t i = 0; i < num_local_types; ++i)
+  {
+    TypeInfo const &type_info = executable_->types[i];
+    type_info_array_.push_back(type_info);
+  }
+
   frame_sp_       = -1;
   bsp_            = 0;
   sp_             = function_->num_variables - 1;
   range_loop_sp_  = -1;
   live_object_sp_ = -1;
   pc_             = 0;
+  instruction_pc_ = 0;
   instruction_    = nullptr;
   stop_           = false;
   error_.clear();
+  error.clear();
 
   do
   {
-    instruction_ = &function_->instructions[std::size_t(pc_)];
-    ++pc_;
+    instruction_pc_ = pc_;
+    instruction_    = &function_->instructions[pc_++];
 
-    switch (instruction_->opcode)
+    current_op_ = &opcode_info_array_[instruction_->opcode];
+
+    assert(instruction_->opcode < opcode_info_array_.size());
+
+    if (!current_op_->handler)
     {
-    case Opcode::Jump:
-    {
-      pc_ = instruction_->index;
-      break;
-    }
-    case Opcode::JumpIfFalse:
-    {
-      Value &value = stack_[sp_--];
-      if (value.variant.ui8 == 0)
-      {
-        pc_ = instruction_->index;
-      }
-      value.PrimitiveReset();
-      break;
-    }
-    case Opcode::PushString:
-    {
-      Value &value         = stack_[++sp_];
-      value.type_id        = TypeId::String;
-      value.variant.object = strings_[instruction_->index];
-      value.variant.object->AddRef();
-      break;
-    }
-    case Opcode::PushConstant:
-    {
-      Value &value  = stack_[++sp_];
-      value.type_id = instruction_->type_id;
-      value.variant = instruction_->variant;
-      break;
-    }
-    case Opcode::PushVariable:
-    {
-      const Value &variable = GetVariable(instruction_->index);
-      stack_[++sp_].Copy(variable);
-      break;
-    }
-    case Opcode::VarDeclare:
-    {
-      Value &variable  = GetVariable(instruction_->index);
-      variable.type_id = instruction_->type_id;
-      variable.variant.Zero();
-      if (instruction_->variant.i32 != -1)
-      {
-        LiveObjectInfo &info = live_object_stack_[++live_object_sp_];
-        info.frame_sp        = frame_sp_;
-        info.variable_index  = instruction_->index;
-        info.scope_number    = instruction_->variant.i32;
-      }
-      break;
-    }
-    case Opcode::VarDeclareAssign:
-    {
-      Value &variable = GetVariable(instruction_->index);
-      variable        = std::move(stack_[sp_--]);
-      if (instruction_->variant.i32 != -1)
-      {
-        LiveObjectInfo &info = live_object_stack_[++live_object_sp_];
-        info.frame_sp        = frame_sp_;
-        info.variable_index  = instruction_->index;
-        info.scope_number    = instruction_->variant.i32;
-      }
-      break;
-    }
-    case Opcode::Assign:
-    {
-      Value &variable = GetVariable(instruction_->index);
-      variable        = std::move(stack_[sp_--]);
-      break;
-    }
-    case Opcode::Discard:
-    {
-      stack_[sp_--].Reset();
-      break;
-    }
-    case Opcode::Destruct:
-    {
-      Destruct(instruction_->variant.i32);
-      break;
-    }
-    case Opcode::InvokeUserFunction:
-    {
-      InvokeUserFunction(instruction_->index);
-      break;
-    }
-    case Opcode::ForRangeInit:
-    {
-      ForRangeInit();
-      break;
-    }
-    case Opcode::ForRangeIterate:
-    {
-      ForRangeIterate();
-      break;
-    }
-    case Opcode::ForRangeTerminate:
-    {
-      --range_loop_sp_;
-      break;
-    }
-    case Opcode::Break:
-    case Opcode::Continue:
-    {
-      Destruct(instruction_->variant.i32);
-      pc_ = instruction_->index;
-      break;
-    }
-    case Opcode::Return:
-    case Opcode::ReturnValue:
-    {
-      Destruct(instruction_->variant.i32);
-      if (instruction_->opcode == Opcode::ReturnValue)
-      {
-        for (int i = bsp_ + 1; i < bsp_ + function_->num_parameters; ++i)
-        {
-          stack_[i].Reset();
-        }
-        if (sp_ != bsp_)
-        {
-          stack_[bsp_] = std::move(stack_[sp_]);
-        }
-        sp_ = bsp_;
-      }
-      else
-      {
-        for (int i = bsp_; i < bsp_ + function_->num_parameters; ++i)
-        {
-          stack_[i].Reset();
-        }
-        sp_ = bsp_ - 1;
-      }
-      if (frame_sp_ != -1)
-      {
-        const Frame &frame = frame_stack_[frame_sp_];
-        function_          = frame.function;
-        bsp_               = frame.bsp;
-        pc_                = frame.pc;
-        --frame_sp_;
-      }
-      else
-      {
-        // We've finished executing
-        if (sp_ == 0)
-        {
-          // Reset the return value, if there was one, of the executed function
-          stack_[sp_--].Reset();
-        }
-        stop_ = true;
-      }
-      break;
-    }
-    case Opcode::ToInt8:
-    {
-      Value &value = stack_[sp_];
-      HandleCast(value, TypeId::Int8, value.variant.i8);
-      break;
-    }
-    case Opcode::ToByte:
-    {
-      Value &value = stack_[sp_];
-      HandleCast(value, TypeId::Byte, value.variant.ui8);
-      break;
-    }
-    case Opcode::ToInt16:
-    {
-      Value &value = stack_[sp_];
-      HandleCast(value, TypeId::Int16, value.variant.i16);
-      break;
-    }
-    case Opcode::ToUInt16:
-    {
-      Value &value = stack_[sp_];
-      HandleCast(value, TypeId::UInt16, value.variant.ui16);
-      break;
-    }
-    case Opcode::ToInt32:
-    {
-      Value &value = stack_[sp_];
-      HandleCast(value, TypeId::Int32, value.variant.i32);
-      break;
-    }
-    case Opcode::ToUInt32:
-    {
-      Value &value = stack_[sp_];
-      HandleCast(value, TypeId::UInt32, value.variant.ui32);
-      break;
-    }
-    case Opcode::ToInt64:
-    {
-      Value &value = stack_[sp_];
-      HandleCast(value, TypeId::Int64, value.variant.i64);
-      break;
-    }
-    case Opcode::ToUInt64:
-    {
-      Value &value = stack_[sp_];
-      HandleCast(value, TypeId::UInt64, value.variant.ui64);
-      break;
-    }
-    case Opcode::ToFloat32:
-    {
-      Value &value = stack_[sp_];
-      HandleCast(value, TypeId::Float32, value.variant.f32);
-      break;
-    }
-    case Opcode::ToFloat64:
-    {
-      Value &value = stack_[sp_];
-      HandleCast(value, TypeId::Float64, value.variant.f64);
-      break;
-    }
-    case Opcode::EqualOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      HandleEqualityOp<EqualOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::NotEqualOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      HandleEqualityOp<NotEqualOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::LessThanOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      HandleRelationalOp<LessThanOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::LessThanOrEqualOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      HandleRelationalOp<LessThanOrEqualOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::GreaterThanOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      HandleRelationalOp<GreaterThanOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::GreaterThanOrEqualOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      HandleRelationalOp<GreaterThanOrEqualOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::AndOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      lhsv.variant.ui8 &= rhsv.variant.ui8;
-      rhsv.PrimitiveReset();
-      break;
-    }
-    case Opcode::OrOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      lhsv.variant.ui8 |= rhsv.variant.ui8;
-      rhsv.PrimitiveReset();
-      break;
-    }
-    case Opcode::NotOp:
-    {
-      Value &value      = stack_[sp_];
-      value.variant.ui8 = value.variant.ui8 == 0 ? 1 : 0;
-      break;
-    }
-    case Opcode::AddOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      HandleArithmeticOp<AddOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::SubtractOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      HandleArithmeticOp<SubtractOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::MultiplyOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      HandleArithmeticOp<MultiplyOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::DivideOp:
-    {
-      Value &rhsv = stack_[sp_--];
-      Value &lhsv = stack_[sp_];
-      HandleArithmeticOp<DivideOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::UnaryMinusOp:
-    {
-      Value &value = stack_[sp_];
-      HandleArithmeticOp<UnaryMinusOp>(instruction_->type_id, value, value);
-      break;
-    }
-    case Opcode::AddAssignOp:
-    {
-      Value &lhsv = GetVariable(instruction_->index);
-      Value &rhsv = stack_[sp_--];
-      HandleArithmeticAssignmentOp<AddAssignOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::SubtractAssignOp:
-    {
-      Value &lhsv = GetVariable(instruction_->index);
-      Value &rhsv = stack_[sp_--];
-      HandleArithmeticAssignmentOp<SubtractAssignOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::MultiplyAssignOp:
-    {
-      Value &lhsv = GetVariable(instruction_->index);
-      Value &rhsv = stack_[sp_--];
-      HandleArithmeticAssignmentOp<MultiplyAssignOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::DivideAssignOp:
-    {
-      Value &lhsv = GetVariable(instruction_->index);
-      Value &rhsv = stack_[sp_--];
-      HandleArithmeticAssignmentOp<DivideAssignOp>(instruction_->type_id, lhsv, rhsv);
-      rhsv.Reset();
-      break;
-    }
-    case Opcode::PrefixIncOp:
-    {
-      Value &lhsv = stack_[++sp_];
-      Value &rhsv = GetVariable(instruction_->index);
-      HandleArithmeticAssignmentOp<PrefixIncOp>(instruction_->type_id, lhsv, rhsv);
-      lhsv.type_id = instruction_->type_id;
-      break;
-    }
-    case Opcode::PrefixDecOp:
-    {
-      Value &lhsv = stack_[++sp_];
-      Value &rhsv = GetVariable(instruction_->index);
-      HandleArithmeticAssignmentOp<PrefixDecOp>(instruction_->type_id, lhsv, rhsv);
-      lhsv.type_id = instruction_->type_id;
-      break;
-    }
-    case Opcode::PostfixIncOp:
-    {
-      Value &lhsv = stack_[++sp_];
-      Value &rhsv = GetVariable(instruction_->index);
-      HandleArithmeticAssignmentOp<PostfixIncOp>(instruction_->type_id, lhsv, rhsv);
-      lhsv.type_id = instruction_->type_id;
-      break;
-    }
-    case Opcode::PostfixDecOp:
-    {
-      Value &lhsv = stack_[++sp_];
-      Value &rhsv = GetVariable(instruction_->index);
-      HandleArithmeticAssignmentOp<PostfixDecOp>(instruction_->type_id, lhsv, rhsv);
-      lhsv.type_id = instruction_->type_id;
-      break;
-    }
-    case Opcode::IndexedAssign:
-    {
-      HandleIndexedAssignment(instruction_->type_id);
-      break;
-    }
-    case Opcode::IndexOp:
-    {
-      HandleIndexOp(instruction_->type_id);
-      break;
-    }
-    case Opcode::IndexedAddAssignOp:
-    {
-      HandleIndexedArithmeticAssignmentOp<AddAssignOp>(instruction_->type_id);
-      break;
-    }
-    case Opcode::IndexedSubtractAssignOp:
-    {
-      HandleIndexedArithmeticAssignmentOp<SubtractAssignOp>(instruction_->type_id);
-      break;
-    }
-    case Opcode::IndexedMultiplyAssignOp:
-    {
-      HandleIndexedArithmeticAssignmentOp<MultiplyAssignOp>(instruction_->type_id);
-      break;
-    }
-    case Opcode::IndexedDivideAssignOp:
-    {
-      HandleIndexedArithmeticAssignmentOp<DivideAssignOp>(instruction_->type_id);
-      break;
-    }
-    case Opcode::IndexedPrefixIncOp:
-    {
-      HandleIndexedPrefixPostfixOp<PrefixIncOp>(instruction_->type_id);
-      break;
-    }
-    case Opcode::IndexedPrefixDecOp:
-    {
-      HandleIndexedPrefixPostfixOp<PrefixDecOp>(instruction_->type_id);
-      break;
-    }
-    case Opcode::IndexedPostfixIncOp:
-    {
-      HandleIndexedPrefixPostfixOp<PostfixIncOp>(instruction_->type_id);
-      break;
-    }
-    case Opcode::IndexedPostfixDecOp:
-    {
-      HandleIndexedPrefixPostfixOp<PostfixDecOp>(instruction_->type_id);
-      break;
-    }
-    case Opcode::CreateMatrix:
-    {
-      CreateMatrix();
-      break;
-    }
-    case Opcode::CreateArray:
-    {
-      CreateArray();
+      RuntimeError("unknown opcode");
       break;
     }
 
-    default:
+    assert(static_cast<bool>(current_op_->handler));
+
+    // update the charge total
+    charge_total_ += current_op_->static_charge;
+
+    // check for charge limit being reached
+    if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
     {
-      // If the operation does not match any of the builtin operations
-      // try to match them against operations defined in the module
-      if (module_ != nullptr)
-      {
-        if (!module_->ExecuteUserOpcode(this, instruction_->opcode))
-        {
-          RuntimeError("unknown opcode");
-        }
-      }
-      else
-      {
-        RuntimeError("unknown opcode");
-      }
+      RuntimeError("Charge limit exceeded");
       break;
     }
-    }
-  } while (stop_ == false);
 
-  if (error_.empty())
+    // execute the handler for the op code
+    current_op_->handler(this);
+
+  } while (!stop_);
+
+  bool const ok = !HasError();
+
+  // Remove the executable's strings
+  strings_.clear();
+
+  // Remove the executable's local types
+  for (std::size_t i = 0; i < num_local_types; ++i)
   {
+    type_info_array_.pop_back();
+  }
+
+  if (ok)
+  {
+    if (sp_ == 0)
+    {
+      // The executed function returned a value, so transfer it to the output
+      Variant &result = stack_[sp_--];
+      output          = std::move(result);
+    }
+    // Success
     return true;
   }
 
   // We've got a runtime error
-  // Reset all variables on the current stack
-  for (int i = 0; i <= sp_; ++i)
+  // Reset all variables
+  for (auto &variable : stack_)
   {
-    stack_[i].Reset();
+    variable.Reset();
   }
+  error = error_;
   return false;
+}
+
+void VM::RuntimeError(std::string const &message)
+{
+  uint16_t const    line = function_->FindLineNumber(instruction_pc_);
+  std::stringstream stream;
+  stream << "runtime error: line " << line << ": " << message;
+  error_ = stream.str();
+  stop_  = true;
+}
+
+void VM::Destruct(uint16_t scope_number)
+{
+  // Destruct all live objects in the current frame and with scope >= scope_number
+  while (live_object_sp_ >= 0)
+  {
+    LiveObjectInfo const &info = live_object_stack_[live_object_sp_];
+    if ((info.frame_sp != frame_sp_) || (info.scope_number < scope_number))
+    {
+      break;
+    }
+    Variant &variable = GetVariable(info.variable_index);
+    variable.Reset();
+    --live_object_sp_;
+  }
+}
+
+ChargeAmount VM::GetChargeTotal() const
+{
+  return charge_total_;
+}
+
+void VM::IncreaseChargeTotal(ChargeAmount const amount)
+{
+  charge_total_ += amount;
+}
+
+ChargeAmount VM::GetChargeLimit() const
+{
+  return charge_limit_;
+}
+
+void VM::SetChargeLimit(ChargeAmount limit)
+{
+  charge_limit_ = limit;
+}
+
+void VM::UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_charges)
+{
+  for (auto const &entry : opcode_charges)
+  {
+    auto const &unique_id = entry.first;
+
+    auto opcode_to_update =
+        std::find_if(opcode_info_array_.begin(), opcode_info_array_.end(),
+                     [&unique_id](OpcodeInfo &info) { return info.name == unique_id; });
+
+    if (opcode_to_update != opcode_info_array_.end())
+    {
+      opcode_to_update->static_charge = entry.second;
+    }
+  }
 }
 
 }  // namespace vm

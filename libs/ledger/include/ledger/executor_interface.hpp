@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,49 +17,100 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
+#include "core/digest.hpp"
+#include "ledger/execution_result.hpp"
 
 namespace fetch {
+
+class BitVector;
+
+namespace chain {
+
+class Address;
+
+}  // namespace chain
+
 namespace ledger {
 
 class ExecutorInterface
 {
 public:
-  using TxDigest  = chain::Transaction::TxDigest;
-  using LaneIndex = uint32_t;
-  using LaneSet   = std::unordered_set<LaneIndex>;
+  using BlockIndex  = uint64_t;
+  using SliceIndex  = uint64_t;
+  using LaneIndex   = uint32_t;
+  using TokenAmount = uint64_t;
+  using Status      = ContractExecutionStatus;
+  using Result      = ContractExecutionResult;
 
-  enum class Status
-  {
-    SUCCESS = 0,
-    TX_LOOKUP_FAILURE,
-    RESOURCE_FAILURE,
-    CHAIN_CODE_LOOKUP_FAILURE,
-    CHAIN_CODE_EXEC_FAILURE
-  };
+  // Construction / Destruction
+  ExecutorInterface()          = default;
+  virtual ~ExecutorInterface() = default;
 
   /// @name Executor Interface
   /// @{
-  virtual Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) = 0;
+  virtual Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
+                         BitVector const &shards)    = 0;
+  virtual void   SettleFees(chain::Address const &miner, TokenAmount amount,
+                            uint32_t log2_num_lanes) = 0;
   /// @}
-
-  virtual ~ExecutorInterface()
-  {}
 };
 
-template <typename T>
-void Serialize(T &stream, ExecutorInterface::Status const &status)
-{
-  stream << static_cast<int>(status);
-}
-
-template <typename T>
-void Deserialize(T &stream, ExecutorInterface::Status &status)
-{
-  int raw_status{0};
-  stream >> raw_status;
-  status = static_cast<ExecutorInterface::Status>(raw_status);
-}
-
 }  // namespace ledger
+
+namespace serializers {
+
+template <typename D>
+struct ForwardSerializer<ledger::ExecutorInterface::Status, D>
+{
+public:
+  using Type       = ledger::ExecutorInterface::Status;
+  using DriverType = D;
+
+  template <typename Serializer>
+  static void Serialize(Serializer &s, Type const &status)
+  {
+    s << static_cast<int32_t>(status);
+  }
+
+  template <typename Serializer>
+  static void Deserialize(Serializer &s, Type &status)
+  {
+    int32_t raw_status{0};
+    s >> raw_status;
+    status = static_cast<ledger::ExecutorInterface::Status>(raw_status);
+  }
+};
+
+template <typename D>
+struct MapSerializer<ledger::ExecutorInterface::Result, D>
+{
+public:
+  using Type       = ledger::ExecutorInterface::Result;
+  using DriverType = D;
+
+  static uint8_t const STATUS      = 1;
+  static uint8_t const CHARGE      = 2;
+  static uint8_t const CHARGE_RATE = 3;
+  static uint8_t const FEE         = 4;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &result)
+  {
+    auto map = map_constructor(4);
+    map.Append(STATUS, result.status);
+    map.Append(CHARGE, result.charge);
+    map.Append(CHARGE_RATE, result.charge_rate);
+    map.Append(FEE, result.fee);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &result)
+  {
+    map.ExpectKeyGetValue(STATUS, result.status);
+    map.ExpectKeyGetValue(CHARGE, result.charge);
+    map.ExpectKeyGetValue(CHARGE_RATE, result.charge_rate);
+    map.ExpectKeyGetValue(FEE, result.fee);
+  }
+};
+}  // namespace serializers
 }  // namespace fetch

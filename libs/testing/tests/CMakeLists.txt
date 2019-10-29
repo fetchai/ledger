@@ -1,0 +1,13 @@
+#
+# F E T C H   T E S T I N G   T E S T S
+#
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+project(fetch-testing)
+
+# CMake configuration
+include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
+
+# Compiler Configuration
+setup_compiler()
+
+fetch_add_test(testing-unit-tests fetch-testing unit/)

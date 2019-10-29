@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<struct id="fetch::network::NetworkServer::Request" name="Request" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <field id="fetch::network::NetworkServer::Request::handle" name="handle">
-    <type name="handle_type" ref="fetch::network::NetworkServer#fetch::network::NetworkServer::handle_type" />
-  </field>
-  <field id="fetch::network::NetworkServer::Request::meesage" name="meesage">
-    <type name="message_type" ref="fetch::network#fetch::network::message_type" />
-  </field>
-</struct>

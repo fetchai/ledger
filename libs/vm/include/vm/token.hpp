@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include <cstdint>
-#include <functional>
 #include <string>
 
 namespace fetch {
@@ -29,12 +28,19 @@ struct Token
   enum class Kind : uint16_t
   {
     EndOfInput = 0,
+    Unknown,
+    Integer8,
+    UnsignedInteger8,
+    Integer16,
+    UnsignedInteger16,
     Integer32,
     UnsignedInteger32,
     Integer64,
     UnsignedInteger64,
-    SinglePrecisionNumber,
-    DoublePrecisionNumber,
+    Float32,
+    Float64,
+    Fixed32,
+    Fixed64,
     String,
     BadString,
     True,
@@ -56,23 +62,28 @@ struct Token
     Break,
     Continue,
     Identifier,
+    AnnotationIdentifier,
     Comma,
     Dot,
     Colon,
     SemiColon,
-    LeftRoundBracket,
-    RightRoundBracket,
+    LeftParenthesis,
+    RightParenthesis,
     LeftSquareBracket,
     RightSquareBracket,
+    LeftBrace,
+    RightBrace,
     Plus,
     Minus,
     Multiply,
     Divide,
-    AddAssign,
-    SubtractAssign,
-    MultiplyAssign,
-    DivideAssign,
+    Modulo,
     Assign,
+    InplaceAdd,
+    InplaceSubtract,
+    InplaceMultiply,
+    InplaceDivide,
+    InplaceModulo,
     Equal,
     NotEqual,
     LessThan,
@@ -84,20 +95,14 @@ struct Token
     Not,
     Inc,
     Dec,
-    Unknown
-  };
-  class Hasher
-  {
-  public:
-    size_t operator()(const Kind &key) const
-    {
-      return std::hash<uint16_t>{}((uint16_t)key);
-    }
+    Persistent,
+    Use,
+    As
   };
   Kind        kind;
-  uint32_t    offset;
-  uint16_t    line;
-  uint16_t    length;
+  uint32_t    offset{};
+  uint16_t    line{};
+  uint16_t    length{};
   std::string text;
 };
 

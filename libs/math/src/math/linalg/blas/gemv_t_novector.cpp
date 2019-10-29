@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,27 +18,33 @@
 
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemv_t.hpp"
-#include "math/linalg/matrix.hpp"
 #include "math/linalg/prototype.hpp"
+#include "math/tensor_view.hpp"
+
 namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename S, typename MATRIX, uint64_t V>
-void Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-          Computes(_y = _alpha * T(_A) * _x + _beta * _y), V>::
-     operator()(type const &alpha, MATRIX const &a, ShapeLessArray<type> const &x, int const &incx,
-           type const &beta, ShapeLessArray<type> &y, int const &incy) const
+template <typename S, uint64_t V>
+void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+          Computes(_y <= _alpha * T(_A) * _x + _beta * _y), V>::operator()(Type const alpha,
+                                                                           TensorView<Type> const a,
+                                                                           TensorView<Type> const x,
+                                                                           int const        incx,
+                                                                           Type const       beta,
+                                                                           TensorView<Type> y,
+                                                                           int const incy) const
 {
-  int  jy;
-  type temp;
-  int  kx;
-  int  j;
+  Type temp;
   int  i;
+  int  j;
+  int  jy;
+  int  kx;
   int  ky;
-  int  leny;
   int  lenx;
-  if ((int(a.height()) == 0) || ((int(a.width()) == 0) || ((alpha == 0.0) && (beta == 1.0))))
+  int  leny;
+  if ((int(a.height()) == 0) || ((int(a.width()) == 0) || ((alpha == static_cast<Type>(0.0)) &&
+                                                           (beta == static_cast<Type>(1.0)))))
   {
     return;
   }
@@ -63,15 +69,15 @@ void Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     ky = 1 + (-(-1 + leny) * incy);
   }
 
-  if (beta != 1.0)
+  if (beta != static_cast<Type>(1.0))
   {
     if (incy == 1)
     {
-      if (beta == 0.0)
+      if (beta == static_cast<Type>(0.0))
       {
         for (i = 0; i < leny; ++i)
         {
-          y[i] = 0.0;
+          y[i] = static_cast<Type>(0.0);
         }
       }
       else
@@ -86,11 +92,11 @@ void Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     {
       int iy;
       iy = -1 + ky;
-      if (beta == 0.0)
+      if (beta == static_cast<Type>(0.0))
       {
         for (i = 0; i < leny; ++i)
         {
-          y[iy] = 0.0;
+          y[iy] = static_cast<Type>(0.0);
           iy    = iy + incy;
         }
       }
@@ -105,7 +111,7 @@ void Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     }
   }
 
-  if (alpha == 0.0)
+  if (alpha == static_cast<Type>(0.0))
   {
     return;
   }
@@ -115,7 +121,7 @@ void Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
   {
     for (j = 0; j < int(a.width()); ++j)
     {
-      temp = 0.0;
+      temp = static_cast<Type>(0.0);
       for (i = 0; i < int(a.height()); ++i)
       {
         temp = temp + a(i, j) * x[i];
@@ -130,7 +136,7 @@ void Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     for (j = 0; j < int(a.width()); ++j)
     {
       int ix;
-      temp = 0.0;
+      temp = static_cast<Type>(0.0);
       ix   = -1 + kx;
       for (i = 0; i < int(a.height()); ++i)
       {
@@ -142,34 +148,20 @@ void Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
       jy    = jy + incy;
     }
   }
-
-  return;
 }
 
-template class Blas<
-    double,
-    Matrix<double, fetch::memory::SharedArray<double>,
-           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
-    Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-    Computes(_y = _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>;
-template class Blas<
-    float,
-    Matrix<float, fetch::memory::SharedArray<float>,
-           fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
-    Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-    Computes(_y = _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>;
-template class Blas<
-    double,
-    Matrix<double, fetch::memory::SharedArray<double>,
-           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
-    Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-    Computes(_y = _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::THREADING>;
-template class Blas<
-    float,
-    Matrix<float, fetch::memory::SharedArray<float>,
-           fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
-    Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-    Computes(_y = _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::THREADING>;
+template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+                    Computes(_y <= _alpha * T(_A) * _x + _beta * _y),
+                    platform::Parallelisation::NOT_PARALLEL>;
+template class Blas<float, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+                    Computes(_y <= _alpha * T(_A) * _x + _beta * _y),
+                    platform::Parallelisation::NOT_PARALLEL>;
+template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+                    Computes(_y <= _alpha * T(_A) * _x + _beta * _y),
+                    platform::Parallelisation::THREADING>;
+template class Blas<float, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+                    Computes(_y <= _alpha * T(_A) * _x + _beta * _y),
+                    platform::Parallelisation::THREADING>;
 
 }  // namespace linalg
 }  // namespace math

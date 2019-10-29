@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "crypto/ecdsa_signature.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
 
-#include <core/assert.hpp>
+#include <utility>
 
 namespace fetch {
 namespace crypto {
@@ -32,20 +34,35 @@ class ECDSAVerifier : public Verifier
   using Signature = openssl::ECDSASignature<>;
 
 public:
-  ECDSAVerifier(Identity ident)
+  explicit ECDSAVerifier(Identity ident)
     : identity_{std::move(ident)}
-    , public_key_{identity_.identifier()}
+    , public_key_{identity_ ? PublicKey(identity_.identifier()) : PublicKey()}
   {}
 
-  bool Verify(byte_array_type const &data, byte_array_type const &signature) override
+  bool Verify(ConstByteArray const &data, ConstByteArray const &signature) override
   {
+    if (!identity_)
+    {
+      return false;
+    }
+
+    if (signature.empty())
+    {
+      return false;
+    }
+
     Signature sig{signature};
     return sig.Verify(public_key_, data);
   }
 
-  Identity identity() override
+  Identity identity() const override
   {
     return identity_;
+  }
+
+  explicit operator bool() const
+  {
+    return static_cast<bool>(identity_);
   }
 
 private:
@@ -59,59 +76,45 @@ public:
   using PrivateKey = openssl::ECDSAPrivateKey<>;
   using Signature  = openssl::ECDSASignature<>;
 
-  void Load(byte_array_type const &private_key) override
-  {
-    SetPrivateKey(private_key);
-  }
+  template <typename... Args>
+  explicit ECDSASigner(Args &&... args)
+    : private_key_{std::forward<Args>(args)...}
+  {}
 
-  void SetPrivateKey(byte_array_type const &private_key)
+  void Load(ConstByteArray const &private_key) override
   {
-    private_key_ = PrivateKey(private_key);
+    private_key_.ApplyVoid([&private_key](auto &key) { key = PrivateKey{private_key}; });
   }
 
   void GenerateKeys()
   {
-    private_key_ = PrivateKey();
+    private_key_.ApplyVoid([](auto &key) { key = PrivateKey{}; });
   }
 
-  bool Sign(byte_array_type const &text) final override
+  ConstByteArray Sign(ConstByteArray const &text) const final
   {
-    signature_ = Signature::Sign(private_key_, text);
-    return true;
+    // sign the message in a thread safe way
+    return private_key_.Apply(
+        [&text](PrivateKey const &key) { return Signature::Sign(key, text).signature(); });
   }
 
-  Identity identity() const final override
+  Identity identity() const final
   {
-    return Identity(PrivateKey::ecdsa_curve_type::sn, public_key());
+    return Identity(PrivateKey::EcdsaCurveType::sn, public_key());
   }
 
-  byte_array_type document_hash() final override
+  ConstByteArray public_key() const
   {
-    return signature_.hash();
+    return private_key_.Apply([](PrivateKey const &key) { return key.PublicKey().KeyAsBin(); });
   }
 
-  byte_array_type signature() final override
+  ConstByteArray private_key() const
   {
-    return signature_.signature();
-  }
-  byte_array_type public_key() const
-  {
-    return private_key_.publicKey().keyAsBin();
-  }
-
-  byte_array_type private_key()
-  {
-    return private_key_.KeyAsBin();
-  }
-
-  PrivateKey const &underlying_private_key()
-  {
-    return private_key_;
+    return private_key_.Apply([](PrivateKey const &key) { return key.KeyAsBin(); });
   }
 
 private:
-  PrivateKey private_key_;
-  Signature  signature_;
+  Protected<PrivateKey> private_key_;
 };
 
 }  // namespace crypto

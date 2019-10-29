@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/set_thread_name.hpp"
 #include "network/details/network_manager_implementation.hpp"
+#include "network/fetch_asio.hpp"
+
+#include <chrono>
+#include <memory>
+#include <mutex>
+#include <thread>
 
 namespace fetch {
 namespace network {
@@ -25,15 +32,20 @@ namespace details {
 void NetworkManagerImplementation::Start()
 {
   FETCH_LOCK(thread_mutex_);
+  running_ = true;
 
-  if (threads_.size() == 0)
+  if (threads_.empty())
   {
     owning_thread_ = std::this_thread::get_id();
     shared_work_   = std::make_shared<asio::io_service::work>(*io_service_);
 
     for (std::size_t i = 0; i < number_of_threads_; ++i)
     {
-      auto thread = std::make_shared<std::thread>([this]() { this->Work(); });
+      auto thread = std::make_shared<std::thread>([this, i]() {
+        SetThreadName(name_, i);
+
+        this->Work();
+      });
       threads_.push_back(thread);
     }
   }
@@ -46,7 +58,8 @@ void NetworkManagerImplementation::Work()
 
 void NetworkManagerImplementation::Stop()
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
+  FETCH_LOCK(thread_mutex_);
+  running_ = false;
 
   if (threads_.empty())
   {
@@ -77,6 +90,11 @@ void NetworkManagerImplementation::Stop()
 
   threads_.clear();
   io_service_ = std::make_unique<asio::io_service>();
+}
+
+bool NetworkManagerImplementation::Running()
+{
+  return running_;
 }
 
 }  // namespace details

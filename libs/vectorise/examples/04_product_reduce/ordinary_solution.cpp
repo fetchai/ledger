@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,29 +16,31 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
 #include <iostream>
 #include <vector>
 
-using array_type = std::vector<float>;
+using array_type = std::vector<double>;
 
-float InnerProduct(array_type const &A, array_type const &B)
+double InnerProduct(array_type const &A, array_type const &B)
 {
-  float ret = 0;
+  double ret = 0.0;
 
   for (std::size_t i = 0; i < A.size(); ++i)
   {
-    float d = A[i] - B[i];
+    double d = A[i] - B[i];
     ret += d * d;
   }
 
   return ret;
 }
 
-int main(int argc, char **argv)
+int main(int /*argc*/, char ** /*argv*/)
 {
-  std::vector<float> A, B;
+  std::vector<double> A, B;
 
-  InnerProduct(A, B);
+  double product = InnerProduct(A, B);
+  std::cout << "product = " << product << std::endl;
 
   return 0;
 }

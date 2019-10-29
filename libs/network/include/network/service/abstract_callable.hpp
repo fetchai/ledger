@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,22 +18,29 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/serializers/type_register.hpp"
+#include "logging/logging.hpp"
 #include "network/service/types.hpp"
+
+#include <cstdint>
+#include <string>
+#include <type_traits>
+#include <typeinfo>
+
 namespace fetch {
 namespace service {
 
 namespace details {
 
 template <typename T>
-using base_type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+using BaseType = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template <typename R, typename F, typename... Args>
 struct ArgsToString
 {
   static std::string Value()
   {
-    return serializers::TypeRegister<base_type<F>>::name() + std::string(", ") +
+    return serializers::TypeRegister<BaseType<F>>::name() + std::string(", ") +
            ArgsToString<R, Args...>::Value();
   }
 };
@@ -43,7 +50,7 @@ struct ArgsToString<R, F>
 {
   static std::string Value()
   {
-    return serializers::TypeRegister<base_type<F>>::name();
+    return serializers::TypeRegister<BaseType<F>>::name();
   }
 };
 
@@ -61,8 +68,8 @@ struct SignatureToString
 {
   static std::string Signature()
   {
-    return std::string(serializers::TypeRegister<base_type<R>>::name()) + std::string(" ") +
-           std::string(serializers::TypeRegister<base_type<C>>::name()) +
+    return std::string(serializers::TypeRegister<BaseType<R>>::name()) + std::string(" ") +
+           std::string(serializers::TypeRegister<BaseType<C>>::name()) +
            std::string("::function_pointer") + std::string("(") +
            ArgsToString<R, Args...>::Value() + std::string(")");
   }
@@ -129,12 +136,9 @@ struct Packer<T>
  * The serializer is is always left at position 0.
  */
 template <typename S, typename... arguments>
-void PackCall(S &serializer, protocol_handler_type const &protocol,
-              function_handler_type const &function, arguments &&... args)
+void PackCall(S &serializer, ProtocolHandlerType const &protocol,
+              FunctionHandlerType const &function, arguments &&... args)
 {
-
-  LOG_STACK_TRACE_POINT;
-
   serializer << protocol;
   serializer << function;
 
@@ -150,11 +154,9 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
  * serializer is is always left at position 0.
  */
 template <typename S>
-void PackCall(S &serializer, protocol_handler_type const &protocol,
-              function_handler_type const &function)
+void PackCall(S &serializer, ProtocolHandlerType const &protocol,
+              FunctionHandlerType const &function)
 {
-  LOG_STACK_TRACE_POINT;
-
   serializer << protocol;
   serializer << function;
   serializer.seek(0);
@@ -172,12 +174,10 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
  * The serializer is left at position 0.
  */
 template <typename S>
-void PackCallWithPackedArguments(S &serializer, protocol_handler_type const &protocol,
-                                 function_handler_type const &function,
+void PackCallWithPackedArguments(S &serializer, ProtocolHandlerType const &protocol,
+                                 FunctionHandlerType const &  function,
                                  byte_array::ByteArray const &args)
 {
-  LOG_STACK_TRACE_POINT;
-
   serializer << protocol;
   serializer << function;
 
@@ -207,14 +207,12 @@ void PackArgs(S &serializer, arguments &&... args)
 template <typename S>
 void PackArgs(S &serializer)
 {
-  LOG_STACK_TRACE_POINT;
-
   serializer.seek(0);
 }
 
 enum Callable
 {
-  CLIENT_ID_ARG = 1ull
+  CLIENT_CONTEXT_ARG = 2ull,
 };
 
 struct CallableArgumentType
@@ -229,14 +227,15 @@ public:
   template <typename T>
   void PushArgument(T *value)
   {
-    std::vector<CallableArgumentType>::push_back(CallableArgumentType{typeid(T), (void *)value});
+    std::vector<CallableArgumentType>::push_back(
+        CallableArgumentType{typeid(T), (void *)value});  // NOLINT
   }
 
-  CallableArgumentType const &operator[](std::size_t const &n) const
+  CallableArgumentType const &operator[](std::size_t n) const
   {
     return std::vector<CallableArgumentType>::operator[](n);
   }
-  CallableArgumentType &operator[](std::size_t const &n)
+  CallableArgumentType &operator[](std::size_t n)
   {
     return std::vector<CallableArgumentType>::operator[](n);
   }
@@ -249,21 +248,21 @@ public:
 class AbstractCallable
 {
 public:
-  AbstractCallable(uint64_t meta_data = 0)
+  explicit AbstractCallable(uint64_t meta_data = 0)
     : meta_data_(meta_data)
   {}
 
-  virtual ~AbstractCallable(){};
+  virtual ~AbstractCallable() = default;
 
   /* Call operator that implements deserialization and invocation of function.
    * @result is a serializer used to serialize the result.
    * @params is a serializer that is used to deserialize the arguments.
    */
-  virtual void operator()(serializer_type &result, serializer_type &params) = 0;
-  virtual void operator()(serializer_type &result, CallableArgumentList const &additional_args,
-                          serializer_type &params)                          = 0;
+  virtual void operator()(SerializerType &result, SerializerType &params) = 0;
+  virtual void operator()(SerializerType &result, CallableArgumentList const &additional_args,
+                          SerializerType &params)                         = 0;
 
-  uint64_t const &meta_data() const
+  uint64_t meta_data() const
   {
     return meta_data_;
   }

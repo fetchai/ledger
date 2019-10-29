@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,32 +16,19 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//---
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "crypto/fnv.hpp"
 #include "network/peer.hpp"
 
+#include <cassert>
+#include <cstddef>
 #include <functional>
+#include <iosfwd>
+#include <stdexcept>
+#include <string>
 
 namespace fetch {
 namespace network {
@@ -63,12 +50,14 @@ public:
   // Construction / Destruction
   Uri() = default;
   explicit Uri(Peer const &peer);
-  Uri(ConstByteArray const &uri);
-  Uri(Uri const &) = default;
-  Uri(Uri &&)      = default;
-  ~Uri()           = default;
+  explicit Uri(ConstByteArray const &uri);
+  Uri(Uri const &)     = default;
+  Uri(Uri &&) noexcept = default;
+  ~Uri()               = default;
 
+  bool Parse(char const *uri);
   bool Parse(ConstByteArray const &uri);
+  bool Parse(std::string const &uri);
 
   /// @name Basic Accessors
   /// @{
@@ -79,8 +68,11 @@ public:
 
   /// @name Type based Accessors
   /// @{
-  Peer const &          AsPeer() const;
-  ConstByteArray const &AsIdentity() const;
+  bool IsTcpPeer() const;
+  bool IsMuddleAddress() const;
+
+  Peer const &          GetTcpPeer() const;
+  ConstByteArray const &GetMuddleAddress() const;
   /// @}
 
   // Operators
@@ -91,14 +83,11 @@ public:
 
   std::string ToString() const;
 
-  template <typename T>
-  friend void Serialize(T &serializer, Uri const &x);
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 
-  template <typename T>
-  friend void Deserialize(T &serializer, Uri &x);
-
-  static Uri  FromIdentity(ConstByteArray const &identity);
-  static bool IsUri(const std::string &possible_uri);
+  friend std::ostream &operator<<(std::ostream &stream, Uri const &uri);
+  friend std::istream &operator>>(std::istream &stream, Uri &uri);
 
 private:
   ConstByteArray uri_;
@@ -122,18 +111,6 @@ inline Uri::ConstByteArray const &Uri::authority() const
   return authority_;
 }
 
-inline Peer const &Uri::AsPeer() const
-{
-  assert(scheme_ == Scheme::Tcp);
-  return tcp_;
-}
-
-inline Uri::ConstByteArray const &Uri::AsIdentity() const
-{
-  assert(scheme_ == Scheme::Muddle);
-  return authority_;
-}
-
 inline bool Uri::operator==(Uri const &other) const
 {
   return uri_ == other.uri_;
@@ -144,30 +121,40 @@ inline bool Uri::operator!=(Uri const &other) const
   return !(*this == other);
 }
 
-template <typename T>
-void Serialize(T &serializer, Uri const &x)
-{
-  serializer << x.uri_;
-}
-
-template <typename T>
-void Deserialize(T &serializer, Uri &x)
-{
-  byte_array::ConstByteArray uri;
-  serializer >> uri;
-
-  if (!x.Parse(uri))
-  {
-    throw std::runtime_error("Failed to deserialize uri");
-  }
-}
-
-inline Uri Uri::FromIdentity(ConstByteArray const &identity)
-{
-  return Uri{"muddle://" + byte_array::ToBase64(identity)};
-}
-
 }  // namespace network
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<network::Uri, D>  // TODO(issue 1423): Change to forward serializer
+{
+public:
+  using DriverType = D;
+  using Type       = network::Uri;
+
+  static const uint8_t URI = 1;
+
+  template <typename T>
+  static void Serialize(T &map_constructor, Type const &x)
+  {
+    auto map = map_constructor(1);
+    map.Append(URI, x.uri_);
+  }
+
+  template <typename T>
+  static void Deserialize(T &map, Type &x)
+  {
+    byte_array::ConstByteArray uri;
+    map.ExpectKeyGetValue(URI, uri);
+
+    if (!x.Parse(uri))
+    {
+      throw std::runtime_error("Failed to deserialize uri");
+    }
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch
 
 template <>

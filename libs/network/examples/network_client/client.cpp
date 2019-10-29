@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,24 +16,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
 #include "network/tcp/tcp_client.hpp"
-#include <cstdlib>
+
+#include <chrono>
+#include <cstring>
+#include <exception>
 #include <iostream>
+#include <string>
+#include <thread>
+#include <utility>
+
 using namespace fetch::network;
 
 class Client : public TCPClient
 {
 public:
   Client(std::string const &host, std::string const &port, NetworkManager tmanager)
-    : TCPClient(tmanager)
+    : TCPClient(tmanager)  // NOLINT
   {
     Connect(host, port);
-    this->OnMessage([](message_type const &value) { std::cout << value << std::endl; });
+    this->OnMessage([](MessageType const &value) { std::cout << value << std::endl; });
     this->OnConnectionFailed([]() { std::cerr << "Connection failed" << std::endl; });
   }
-
-private:
 };
 
 int main(int argc, char *argv[])
@@ -45,7 +50,7 @@ int main(int argc, char *argv[])
       std::cerr << "Usage: client <host> <port>\n";
       return 1;
     }
-    NetworkManager tmanager;
+    NetworkManager tmanager{"NetMgr", 1};
     tmanager.Start();
 
     // Attempt to break the connection
@@ -56,11 +61,12 @@ int main(int argc, char *argv[])
       while (!client.is_alive())
       {
         std::cout << "Waiting for client to connect" << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
       fetch::byte_array::ByteArray msg0("Testing rapid string pushing");
       client.Send(msg0.Copy());
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     Client                       client(argv[1], argv[2], tmanager);
@@ -76,7 +82,7 @@ int main(int argc, char *argv[])
 
     tmanager.Stop();
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     std::cerr << "Exception: " << e.what() << "\n";
   }

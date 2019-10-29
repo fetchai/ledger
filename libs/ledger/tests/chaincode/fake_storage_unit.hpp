@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
+#include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -27,24 +29,23 @@
 #include <unordered_set>
 #include <vector>
 
-class FakeStorageUnit : public fetch::ledger::StorageUnitInterface
+class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
-  using transaction_store_type =
+  using TransactionStoreType =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::chain::Transaction>;
-  using state_store_type =
+  using StateStoreType =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
-  using state_archive_type = std::unordered_map<bookmark_type, state_store_type>;
-  using lock_store_type    = std::unordered_set<fetch::byte_array::ConstByteArray>;
-  using mutex_type         = std::mutex;
-  using lock_guard_type    = std::lock_guard<mutex_type>;
-
-  static constexpr char const *LOGGING_NAME = "FakeStorageUnit";
+  using LockStoreType = std::unordered_set<ShardIndex>;
+  using MutexType     = std::mutex;
+  using HashType      = fetch::byte_array::ConstByteArray;
+  using ResourceID    = fetch::storage::ResourceID;
 
   Document GetOrCreate(ResourceAddress const &key) override
   {
-    lock_guard_type lock(mutex_);
-    Document        doc;
+    FETCH_LOCK(mutex_);
+
+    Document doc;
 
     auto it = state_.find(key.id());
     if (it != state_.end())
@@ -61,8 +62,8 @@ public:
 
   Document Get(ResourceAddress const &key) override
   {
-    lock_guard_type lock(mutex_);
-    Document        doc;
+    FETCH_LOCK(mutex_);
+    Document doc;
 
     auto it = state_.find(key.id());
     if (it != state_.end())
@@ -79,34 +80,37 @@ public:
 
   void Set(ResourceAddress const &key, StateValue const &value) override
   {
-    lock_guard_type lock(mutex_);
+    FETCH_LOCK(mutex_);
+
     state_[key.id()] = value;
   }
 
-  bool Lock(ResourceAddress const &key) override
+  bool Lock(ShardIndex shard) override
   {
-    lock_guard_type lock(mutex_);
-    bool            success = false;
+    FETCH_LOCK(mutex_);
 
-    bool const already_locked = locks_.find(key.id()) != locks_.end();
+    bool success = false;
+
+    bool const already_locked = locks_.find(shard) != locks_.end();
     if (!already_locked)
     {
-      locks_.insert(key.id());
+      locks_.insert(shard);
       success = true;
     }
 
     return success;
   }
 
-  bool Unlock(ResourceAddress const &key) override
+  bool Unlock(ShardIndex shard) override
   {
-    lock_guard_type lock(mutex_);
-    bool            success = false;
+    FETCH_LOCK(mutex_);
 
-    bool const already_locked = locks_.find(key.id()) != locks_.end();
+    bool success = false;
+
+    bool const already_locked = locks_.find(shard) != locks_.end();
     if (already_locked)
     {
-      locks_.erase(key.id());
+      locks_.erase(shard);
       success = true;
     }
 
@@ -115,15 +119,15 @@ public:
 
   void AddTransaction(fetch::chain::Transaction const &tx) override
   {
-    lock_guard_type lock(mutex_);
+    FETCH_LOCK(mutex_);
     transactions_[tx.digest()] = tx;
   }
 
   bool GetTransaction(fetch::byte_array::ConstByteArray const &digest,
                       fetch::chain::Transaction &              tx) override
   {
-    lock_guard_type lock(mutex_);
-    bool            success = false;
+    FETCH_LOCK(mutex_);
+    bool success = false;
 
     auto it = transactions_.find(digest);
     if (it != transactions_.end())
@@ -135,55 +139,51 @@ public:
     return success;
   }
 
-  hash_type Hash() override
+  bool HasTransaction(ConstByteArray const &digest) override
   {
-    lock_guard_type       lock(mutex_);
-    fetch::crypto::SHA256 hasher{};
-
-    std::vector<fetch::byte_array::ConstByteArray> keys;
-    for (auto const &elem : state_)
-    {
-      keys.emplace_back(elem.first);
-    }
-
-    std::sort(keys.begin(), keys.end());
-
-    hasher.Reset();
-    for (auto const &key : keys)
-    {
-      hasher.Update(key);
-      hasher.Update(state_[key]);
-    }
-
-    return hasher.Final();
+    FETCH_LOCK(mutex_);
+    return transactions_.find(digest) != transactions_.end();
   }
 
-  void Commit(bookmark_type const &bookmark) override
+  void IssueCallForMissingTxs(fetch::DigestSet const & /*tx_set*/) override
+  {}
+
+  Hash CurrentHash() override
   {
-    lock_guard_type lock(mutex_);
-    state_archive_[bookmark] = state_;
+    return "";
+  };
+  Hash LastCommitHash() override
+  {
+    return "";
+  };
+  bool RevertToHash(Hash const & /*hash*/, uint64_t /*index*/) override
+  {
+    return true;
+  };
+  Hash Commit(uint64_t /*index*/) override
+  {
+    return "";
+  };
+  bool HashExists(Hash const & /*hash*/, uint64_t /*index*/) override
+  {
+    return true;
+  };
+
+  // Does nothing
+  TxLayouts PollRecentTx(uint32_t /*unused*/) override
+  {
+    return {};
   }
 
-  void Revert(bookmark_type const &bookmark) override
+  void Reset() override
   {
-    lock_guard_type lock(mutex_);
-    auto            it = state_archive_.find(bookmark);
-    if (it != state_archive_.end())
-    {
-      state_ = it->second;
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Reverting to clean state: ", bookmark);
-
-      state_.clear();
-    }
+    state_.clear();
+    transactions_.clear();
   }
 
 private:
-  mutex_type             mutex_;
-  transaction_store_type transactions_;
-  state_store_type       state_;
-  lock_store_type        locks_;
-  state_archive_type     state_archive_;
+  MutexType            mutex_;
+  TransactionStoreType transactions_;
+  StateStoreType       state_;
+  LockStoreType        locks_;
 };

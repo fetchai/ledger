@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/log2.hpp"
+#include "vectorise/fixed_point/type_traits.hpp"
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/memory/vector_slice.hpp"
-#include "vectorise/meta/log2.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -40,22 +41,20 @@ class Array : public VectorSlice<T, type_size>
 {
 public:
   static_assert(sizeof(T) >= type_size, "Invalid object size");
-  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
+  static_assert(fetch::math::meta::IsPodOrFixedPoint<T>, "can only be used with POD or FixedPoint");
+  using SizeType  = std::size_t;
+  using DataType  = std::shared_ptr<T>;
+  using SuperType = VectorSlice<T, type_size>;
+  using SelfType  = Array<T, type_size>;
+  using type      = T;
 
-  using size_type  = std::size_t;
-  using data_type  = std::shared_ptr<T>;
-  using super_type = VectorSlice<T, type_size>;
-  using self_type  = Array<T, type_size>;
-  using type       = T;
-
-  Array(std::size_t const &n)
+  explicit Array(std::size_t n)
   {
-
     this->size_ = n;
 
     if (n > 0)
     {
-      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 16);
+      this->pointer_ = reinterpret_cast<type *>(_mm_malloc(this->padded_size() * sizeof(type), 32));
     }
   }
 
@@ -69,27 +68,27 @@ public:
 
   Array() = default;
 
-  Array(Array &&other)
+  Array(Array &&other) noexcept
   {
     std::swap(this->size_, other.size_);
     std::swap(this->pointer_, other.pointer_);
   }
 
-  Array &operator=(Array &&other)
+  Array &operator=(Array &&other) noexcept
   {
     std::swap(this->size_, other.size_);
-
     std::swap(this->pointer_, other.pointer_);
+
     return *this;
   }
 
   Array(Array const &other)
-    : super_type()
+    : SuperType()
   {
     this->operator=(other);
   }
 
-  self_type &operator=(Array const &other)
+  SelfType &operator=(Array const &other)  // NOLINT
   {
     if (this->pointer_ != nullptr)
     {
@@ -99,7 +98,7 @@ public:
 
     if (this->size_ > 0)
     {
-      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 16);
+      this->pointer_ = reinterpret_cast<type *>(_mm_malloc(this->padded_size() * sizeof(type), 32));
     }
 
     for (std::size_t i = 0; i < this->size_; ++i)
@@ -109,9 +108,9 @@ public:
     return *this;
   }
 
-  self_type Copy() const
+  SelfType Copy() const
   {
-    self_type ret = *this;
+    SelfType ret = *this;
     return ret;
   }
 };

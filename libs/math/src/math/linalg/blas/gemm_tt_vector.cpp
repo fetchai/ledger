@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,59 +17,59 @@
 //------------------------------------------------------------------------------
 
 #include "math/linalg/blas/gemm_tt_vector.hpp"
+
 #include "math/linalg/blas/base.hpp"
-#include "math/linalg/matrix.hpp"
 #include "math/linalg/prototype.hpp"
+#include "math/tensor_view.hpp"
+
 namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename S, typename MATRIX>
-void Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
-          Computes(_C = _alpha * T(_A) * T(_B) + _beta * _C),
-          platform::Parallelisation::VECTORISE>::operator()(type const &alpha, MATRIX const &a,
-                                                            MATRIX const &b, type const &beta,
-                                                            MATRIX &c) const
+template <typename S>
+void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
+          Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
+          platform::Parallelisation::VECTORISE>::operator()(Type const             alpha,
+                                                            TensorView<Type> const a,
+                                                            TensorView<Type> const b,
+                                                            Type const             beta,
+                                                            TensorView<Type>       c) const
 {
-  std::size_t j;
   std::size_t i;
+  std::size_t j;
   if ((c.height() == 0) ||
-      ((c.width() == 0) || (((alpha == 0.0) || (a.height() == 0)) && (beta == 1.0))))
+      ((c.width() == 0) || (((alpha == static_cast<Type>(0.0)) || (a.height() == 0)) &&
+                            (beta == static_cast<Type>(1.0)))))
   {
     return;
   }
 
-  if (alpha == 0.0)
+  if (alpha == static_cast<Type>(0.0))
   {
-    if (beta == 0.0)
+    if (beta == static_cast<Type>(0.0))
     {
       for (j = 0; j < c.width(); ++j)
       {
+        Type zero{0.0};
 
-        typename MATRIX::vector_register_type vec_zero(0.0);
-
-        auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
-        memory::TrivialRange range(0, c.height());
-        ret_slice.in_parallel().Apply(
-            range,
-            [vec_zero](typename MATRIX::vector_register_type &vw_c_j) { vw_c_j = vec_zero; });
+        auto          ret_slice = c.data().slice(c.padded_height() * j, c.height());
+        memory::Range range(std::size_t(0), std::size_t(c.height()));
+        ret_slice.in_parallel().RangedApply(range, [zero](auto &&vw_c_j) {
+          vw_c_j = static_cast<std::remove_reference_t<decltype(vw_c_j)>>(zero);
+        });
       }
     }
     else
     {
       for (j = 0; j < c.width(); ++j)
       {
-
-        typename MATRIX::vector_register_type vec_beta(beta);
-
-        auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
-        auto                 slice_c_j = c.data().slice(c.padded_height() * j, c.height());
-        memory::TrivialRange range(0, c.height());
-        ret_slice.in_parallel().Apply(
+        auto ret_slice = c.data().slice(c.padded_height() * j, c.height());
+        auto slice_c_j = c.data().slice(c.padded_height() * std::size_t(j), c.padded_height());
+        memory::Range range(std::size_t(0), std::size_t(c.height()));
+        ret_slice.in_parallel().RangedApplyMultiple(
             range,
-            [vec_beta](typename MATRIX::vector_register_type const &vr_c_j,
-                       typename MATRIX::vector_register_type &      vw_c_j) {
-              vw_c_j = vec_beta * vr_c_j;
+            [beta](auto const &vr_c_j, auto &vw_c_j) {
+              vw_c_j = static_cast<std::remove_reference_t<decltype(vw_c_j)>>(beta) * vr_c_j;
             },
             slice_c_j);
       }
@@ -82,15 +82,15 @@ void Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
   {
     for (i = 0; i < c.height(); ++i)
     {
-      type        temp;
+      Type        temp;
       std::size_t l;
-      temp = 0.0;
+      temp = static_cast<Type>(0.0);
       for (l = 0; l < a.height(); ++l)
       {
         temp = temp + a(l, i) * b(j, l);
       }
 
-      if (beta == 0.0)
+      if (beta == static_cast<Type>(0.0))
       {
         c(i, j) = alpha * temp;
       }
@@ -100,22 +100,15 @@ void Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
       }
     }
   }
-  return;
 }
 
-template class Blas<
-    double,
-    Matrix<double, fetch::memory::SharedArray<double>,
-           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
-    Signature(_C <= _alpha, _A, _B, _beta, _C), Computes(_C = _alpha * T(_A) * T(_B) + _beta * _C),
-    platform::Parallelisation::VECTORISE>;
+template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
+                    platform::Parallelisation::VECTORISE>;
 
-template class Blas<
-    float,
-    Matrix<float, fetch::memory::SharedArray<float>,
-           fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
-    Signature(_C <= _alpha, _A, _B, _beta, _C), Computes(_C = _alpha * T(_A) * T(_B) + _beta * _C),
-    platform::Parallelisation::VECTORISE>;
+template class Blas<float, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
+                    platform::Parallelisation::VECTORISE>;
 
 }  // namespace linalg
 }  // namespace math

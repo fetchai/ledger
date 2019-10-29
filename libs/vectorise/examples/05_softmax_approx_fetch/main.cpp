@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,33 +16,34 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/math/standard_functions.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
+
 #include <chrono>
 #include <cmath>
+#include <cstddef>
+#include <cstdlib>
 #include <iostream>
-#include <vector>
 
 using type        = float;
 using array_type  = fetch::memory::SharedArray<type>;
-using vector_type = typename array_type::vector_register_type;
+using vector_type = typename array_type::VectorRegisterType;
 
 void SoftMax(array_type const &A, array_type &B)
 {
-  vector_type sum(type(0));
+  type sum{0};
 
-  auto kernel1 = [&sum](vector_type const &a, vector_type &b) {
-    vector_type e = approx_exp(a);
-    sum           = sum + e;
-    b             = e;
-  };
+  B.in_parallel().Apply(
+      [&sum](auto const &a, auto &b) {
+        decltype(a) e = approx_exp(a);
+        sum           = sum + reduce(e);
+        b             = e;
+      },
+      A);
 
-  B.in_parallel().Apply(kernel1, A);
-
-  vector_type scale(type(1. / reduce(sum)));
-  auto        kernel2 = [scale](vector_type const &a, vector_type &b) { b = a * scale; };
-
-  B.in_parallel().Apply(kernel2, B);
+  auto scale(type(1.0 / sum));
+  B.in_parallel().Apply([scale](auto const &a, auto &b) { b = a * decltype(a)(scale); }, B);
 }
 
 int main(int argc, char const **argv)
@@ -54,7 +55,7 @@ int main(int argc, char const **argv)
     std::cout << std::endl;
     return 0;
   }
-  std::size_t N = std::size_t(atoi(argv[1]));
+  auto N = std::size_t(std::atoi(argv[1]));
 
   array_type A(N), B(N);
 

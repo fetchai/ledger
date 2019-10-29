@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,38 +16,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include <benchmark/benchmark.h>
-#include <gtest/gtest.h>
-#include <stack>
-
 #include "core/random/lfg.hpp"
 #include "storage/random_access_stack.hpp"
+
+#include "benchmark/benchmark.h"
+#include "gtest/gtest.h"
 
 using fetch::storage::RandomAccessStack;
 
 class RandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
-  void SetUp(const ::benchmark::State &st) override
+  void SetUp(::benchmark::State const & /*st*/) override
   {
     stack_.New("RAS_bench.db");
 
     EXPECT_TRUE(stack_.is_open());
-    EXPECT_TRUE(stack_.DirectWrite() == true) << "Expected random access stack to be direct write";
+    EXPECT_TRUE(stack_.DirectWrite()) << "Expected random access stack to be direct write";
   }
-
-  void TearDown(const ::benchmark::State &) override
-  {}
 
   RandomAccessStack<uint64_t>               stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 
-BENCHMARK_F(RandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
+BENCHMARK_F(RandomAccessStackBench, WritingIntToStack)(benchmark::State &st)  // NOLINT
 {
+  uint64_t random;
   for (auto _ : st)
   {
-    uint64_t random = lfg_();
+    st.PauseTiming();
+    random = lfg_();
+    st.ResumeTiming();
     stack_.Push(random);
   }
 }

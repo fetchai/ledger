@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,29 +17,43 @@
 //------------------------------------------------------------------------------
 
 #include "vm/compiler.hpp"
-#include <sstream>
+#include "vm/module.hpp"
+
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace vm {
 
-bool Compiler::Compile(const std::string &source, const std::string &name, Script &script,
+Compiler::Compiler(Module *module)
+{
+  analyser_.Initialise();
+  module->CompilerSetup(this);
+}
+
+Compiler::~Compiler()
+{
+  analyser_.UnInitialise();
+}
+
+bool Compiler::Compile(SourceFiles const &files, std::string const &ir_name, IR &ir,
                        std::vector<std::string> &errors)
 {
-  BlockNodePtr root = parser_.Parse(source, errors);
-  if (root == nullptr)
+  BlockNodePtr root = parser_.Parse(files, errors);
+  if (!root)
   {
     return false;
   }
 
-  bool analysed = analyser_.Analyse(root, errors);
-  if (analysed == false)
+  bool success = analyser_.Analyse(root, errors);
+  if (success)
   {
-    return false;
+    builder_.Build(ir_name, root, ir);
   }
 
-  generator_.Generate(root, name, script);
+  root->Reset();
 
-  return true;
+  return success;
 }
 
 }  // namespace vm

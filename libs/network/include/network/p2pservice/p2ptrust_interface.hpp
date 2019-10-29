@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "variant/variant.hpp"
 
-#include <iostream>
+#include <list>
 #include <string>
 #include <unordered_set>
 
@@ -38,22 +39,33 @@ enum class TrustQuality
   LIED            = 0,
   BAD_CONNECTION  = 1,
   DUPLICATE       = 2,
-  NEW_INFORMATION = 3
+  NEW_INFORMATION = 3,
+  NEW_PEER        = 4,
 };
 
 template <typename IDENTITY>
 class P2PTrustInterface
 {
 public:
-  using IdentitySet    = typename std::unordered_set<IDENTITY>;
+  struct PeerTrust
+  {
+    IDENTITY    address;
+    std::string name;
+    double      trust{};
+    bool        has_transacted{};
+    bool        active{};
+  };
+  using PeerTrusts = std::vector<PeerTrust>;
+
+  using IdentitySet    = std::unordered_set<IDENTITY>;
   using ConstByteArray = byte_array::ConstByteArray;
 
-  P2PTrustInterface(const P2PTrustInterface &rhs) = delete;
+  P2PTrustInterface(P2PTrustInterface const &rhs) = delete;
   P2PTrustInterface(P2PTrustInterface &&rhs)      = delete;
-  P2PTrustInterface &operator=(const P2PTrustInterface &rhs) = delete;
+  P2PTrustInterface &operator=(P2PTrustInterface const &rhs) = delete;
   P2PTrustInterface &operator=(P2PTrustInterface &&rhs)             = delete;
-  bool               operator==(const P2PTrustInterface &rhs) const = delete;
-  bool               operator<(const P2PTrustInterface &rhs) const  = delete;
+  bool               operator==(P2PTrustInterface const &rhs) const = delete;
+  bool               operator<(P2PTrustInterface const &rhs) const  = delete;
 
   P2PTrustInterface()          = default;
   virtual ~P2PTrustInterface() = default;
@@ -64,14 +76,17 @@ public:
   virtual void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const &object_ident,
                            TrustSubject subject, TrustQuality quality) = 0;
 
-  virtual IdentitySet GetBestPeers(size_t maximum) const = 0;
+  virtual IdentitySet GetBestPeers(std::size_t maximum) const = 0;
+  virtual PeerTrusts  GetPeersAndTrusts() const               = 0;
 
-  virtual IdentitySet GetRandomPeers(size_t maximum_count, double minimum_trust) const = 0;
+  virtual IdentitySet GetRandomPeers(std::size_t maximum_count, double minimum_trust) const = 0;
 
   virtual std::size_t GetRankOfPeer(IDENTITY const &peer_ident) const        = 0;
   virtual double      GetTrustRatingOfPeer(IDENTITY const &peer_ident) const = 0;
   virtual bool        IsPeerTrusted(IDENTITY const &peer_ident) const        = 0;
   virtual bool        IsPeerKnown(IDENTITY const &peer_ident) const          = 0;
+
+  virtual void Debug() const = 0;
 };
 
 inline char const *ToString(TrustSubject subject)
@@ -101,6 +116,8 @@ inline char const *ToString(TrustQuality quality)
     return "Duplicate";
   case TrustQuality::NEW_INFORMATION:
     return "New Information";
+  case TrustQuality::NEW_PEER:
+    return "New Peer";
   default:
     return "Unknown";
   }

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,25 +17,75 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 
+#include <cstdint>
+#include <vector>
+
 namespace fetch {
+namespace chain {
+
+class Address;
+class Transaction;
+
+}  // namespace chain
 namespace ledger {
 
 class TokenContract : public Contract
 {
 public:
-  TokenContract();
-  ~TokenContract() = default;
+  struct StakeUpdate
+  {
+    Identity identity;  ///< The identity of the staker
+    uint64_t from;      ///< The block index from which the stake becomes active
+    uint64_t amount;    ///< The amount being staked
+  };
 
-private:
+  using StakeUpdates = std::vector<StakeUpdate>;
+
+  static constexpr char const *LOGGING_NAME = "TokenContract";
+  static constexpr char const *NAME         = "fetch.token";
+
+  // Construction / Destruction
+  TokenContract();
+  ~TokenContract() override = default;
+
+  // library functions
+  uint64_t GetBalance(chain::Address const &address);
+  bool     AddTokens(chain::Address const &address, uint64_t amount);
+  bool     SubtractTokens(chain::Address const &address, uint64_t amount);
+  bool     TransferTokens(chain::Transaction const &tx, chain::Address const &to, uint64_t amount);
+
   // transaction handlers
-  Status CreateWealth(Transaction const &tx);
-  Status Transfer(Transaction const &tx);
+  Result CreateWealth(chain::Transaction const &tx);
+  Result Deed(chain::Transaction const &tx);
+  Result Transfer(chain::Transaction const &tx);
+  Result AddStake(chain::Transaction const &tx);
+  Result DeStake(chain::Transaction const &tx);
+  Result CollectStake(chain::Transaction const &tx);
 
   // queries
   Status Balance(Query const &query, Query &response);
+  Status Stake(Query const &query, Query &response);
+  Status CooldownStake(Query const &query, Query &response);
+
+  void         ClearStakeUpdates();
+  StakeUpdates stake_updates() const;
+
+private:
+  StakeUpdates stake_updates_;
 };
+
+inline void TokenContract::ClearStakeUpdates()
+{
+  stake_updates_.clear();
+}
+
+inline TokenContract::StakeUpdates TokenContract::stake_updates() const
+{
+  return stake_updates_;
+}
 
 }  // namespace ledger
 }  // namespace fetch

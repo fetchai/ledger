@@ -1,13 +1,16 @@
 # coding: utf-8
 
-import os                                           # checking for already existing files
-import gzip                                         # downloading/extracting mnist data
+# checking for already existing files
+import os
+# downloading/extracting mnist data
+import gzip
 import random                                       # normal distirbution sampling
 from tqdm import tqdm                               # visualising progress
 import numpy as np                                  # loading data from buffer
 
 from fetch.math.linalg import MatrixDouble          # our matrices
 from utils import *                                 # activation functions
+
 
 class MnistLearner():
 
@@ -19,7 +22,6 @@ class MnistLearner():
         self.y_tr_filename = 'train-labels-idx1-ubyte.gz'
         self.x_te_filename = 't10k-images-idx3-ubyte.gz'
         self.y_te_filename = 't10k-labels-idx1-ubyte.gz'
-
 
         self.training_size = 10000
         self.validation_size = 10000
@@ -45,28 +47,37 @@ class MnistLearner():
         self.net.append(self.mnist_output_size)
 
         # instantiate the network weights once
-        self.weights = [self.make_new_layer(self.mnist_input_size, self.net[0])]
+        self.weights = [self.make_new_layer(
+            self.mnist_input_size, self.net[0])]
         if len(self.net) > 2:
             for i in range(len(self.net) - 2):
-                self.weights.append(self.make_new_layer(self.net[i], self.net[i + 1]))
+                self.weights.append(self.make_new_layer(
+                    self.net[i], self.net[i + 1]))
         self.weights.append(self.make_new_layer(self.net[-2], self.net[-1]))
 
-        # instantiate the gradients container once (and a temporary storage for updates
+        # instantiate the gradients container once (and a temporary storage for
+        # updates
         self.grads = []
         for i in range(len(self.weights)):
-            self.grads.append(MatrixDouble(self.weights[i].height(), self.weights[i].width()))
+            self.grads.append(MatrixDouble(
+                self.weights[i].height(), self.weights[i].width()))
         self.temp_grads = []
         for i in range(len(self.weights)):
-            self.temp_grads.append(MatrixDouble(self.weights[i].height(), self.weights[i].width()))
+            self.temp_grads.append(MatrixDouble(
+                self.weights[i].height(), self.weights[i].width()))
 
         # pre-instantiate constant set of zeroed matrices for relu comparisons
 
         self.const_zeros = []
         for idx in range(len(self.weights)):
             if idx == 0:
-                self.const_zeros.append(MatrixDouble.Zeros(self.batch_size, self.weights[idx].width()))
+                self.const_zeros.append(MatrixDouble.Zeros(
+                    self.batch_size, self.weights[idx].width()))
             else:
-                self.const_zeros.append(MatrixDouble.Zeros(self.const_zeros[idx - 1].height(), self.weights[idx].width()))
+                self.const_zeros.append(
+                    MatrixDouble.Zeros(
+                        self.const_zeros[idx - 1].height(),
+                        self.weights[idx].width()))
 
         return
 
@@ -81,11 +92,11 @@ class MnistLearner():
         denom = np.sqrt(in_size)
         layer = MatrixDouble(in_size, out_size)
         for i in range(layer.size()):
-            if mode == 'constant': # constant values - for debugging
+            if mode == 'constant':  # constant values - for debugging
                 layer[i] = 1.0 / denom
-            if mode == 'uniform': # random uniform - our library
+            if mode == 'uniform':  # random uniform - our library
                 layer[i] = (random.uniform(-1.0, 1.0)) / denom
-            if mode == 'normal': # random normal distribution
+            if mode == 'normal':  # random normal distribution
                 layer[i] = np.random.normal(0, 1) / denom
         return layer
 
@@ -96,8 +107,10 @@ class MnistLearner():
         y_te = self.load_labels(self.y_te_filename, self.validation_size)
 
         if one_hot:
-            y_tr_onehot = MatrixDouble.Zeros(y_tr.height(), self.mnist_output_size)
-            y_te_onehot = MatrixDouble.Zeros(y_te.height(), self.mnist_output_size)
+            y_tr_onehot = MatrixDouble.Zeros(
+                y_tr.height(), self.mnist_output_size)
+            y_te_onehot = MatrixDouble.Zeros(
+                y_te.height(), self.mnist_output_size)
 
             for i in range(len(y_tr)):
                 y_tr_onehot[i, int(y_tr[i])] = 1
@@ -152,10 +165,12 @@ class MnistLearner():
             temp = MatrixDouble(a[-1].height(), self.weights[idx].width())
             temp = temp.Dot(a[-1], self.weights[idx])
             if self.activation_fn == 'relu':
-                if ((self.const_zeros[idx].height() == temp.height()) and (self.const_zeros[idx].width() == temp.width())):
+                if ((self.const_zeros[idx].height() == temp.height()) and (
+                        self.const_zeros[idx].width() == temp.width())):
                     temp = relu(temp, self.const_zeros[idx])
                 else:
-                    temp = relu(temp, MatrixDouble.Zeros(temp.height(), temp.width()))
+                    temp = relu(temp, MatrixDouble.Zeros(
+                        temp.height(), temp.width()))
 
             elif self.activation_fn == 'sigmoid':
                 temp = sigmoid(temp)
@@ -164,7 +179,6 @@ class MnistLearner():
                 raise ValueError()
             a.append(temp)
         return a
-
 
     # get the gradients of the network
     def update_weights(self, X, Y):
@@ -176,8 +190,10 @@ class MnistLearner():
         # calculate grads
         self.grads[-1] = self.grads[-1].TransposeDot(a[-2], last_delta)
         for i in range(len(a) - 2, 0, -1):
-            # TODO: This dotTranspose gives a different answer from numpy; probably because of Array Major Order
-            new_delta = MatrixDouble(last_delta.height(), self.weights[i].height())
+            # TODO: This dotTranspose gives a different answer from numpy;
+            # probably because of Array Major Order
+            new_delta = MatrixDouble(
+                last_delta.height(), self.weights[i].height())
             new_delta.DotTranspose(last_delta, self.weights[i])
             if self.activation_fn == 'sigmoid':
                 new_delta *= d_sigmoid(a[i])
@@ -185,11 +201,10 @@ class MnistLearner():
                 new_delta *= (a[i] >= self.const_zeros[i - 1])
             else:
                 raise ValueError()
-            self.grads[i - 1] = self.grads[i - 1].TransposeDot(a[i - 1], new_delta)
+            self.grads[i - 1] = self.grads[i -
+                                           1].TransposeDot(a[i - 1], new_delta)
 
             last_delta = new_delta
-
-
 
         # divide grads by batch size
         for i in range(len(self.grads)):
@@ -207,14 +222,15 @@ class MnistLearner():
 
         # epochs
         for i in range(self.n_epochs):
-            print("epoch ", i , ": ")
+            print("epoch ", i, ": ")
 
             # training batches
-            for j in tqdm(range(0, self.x_tr.height() - self.batch_size, self.batch_size)):
+            for j in tqdm(range(0, self.x_tr.height() -
+                                self.batch_size, self.batch_size)):
 
                 # assign X batch
                 for k in range(self.batch_size):
-                    for l in range(28*28):
+                    for l in range(28 * 28):
                         X[k, l] = self.x_tr[j + k, l]
 
                 # assign Y batch
@@ -256,7 +272,6 @@ def run_mnist():
 
     # being training
     mlearner.train()
-
 
 
 # import cProfile

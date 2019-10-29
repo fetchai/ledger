@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #include <iostream>
 
 using array_type  = fetch::memory::SharedArray<type>;
-using vector_type = typename array_type::vector_register_type;
+using vector_type = typename array_type::VectorRegisterType;
 
 template <typename D>
 using _S = fetch::memory::SharedArray<D>;
@@ -36,9 +36,8 @@ void Dot(array_type const &mA, array_type const &mB, array_type &mC)
     {
 
       auto B   = mB.slice(j * mB.padded_width(), mA.padded_height());
-      type ele = A.in_parallel()
-                     .SumReduce([](vector_type const &a, vector_type const &b) { return a * b; }, B)
-                         mC.Set(i, j, ele);
+      type ele = A.in_parallel().SumReduce([](auto const &a, auto const &b) { return a * b; }, B)
+                     mC.Set(i, j, ele);
     }
   }
 }

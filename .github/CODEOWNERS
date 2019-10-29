@@ -1,0 +1,48 @@
+# Default catch all
+*                   @fetchai/ledger
+
+# External dependencies
+vendor/             @ejfitzgerald @n-hutton
+
+# CI / CD
+cmake/              @ejfitzgerald @n-hutton
+.clang-tidy         @ejfitzgerald @n-hutton
+.clang-format       @ejfitzgerald @n-hutton
+.gitmodules         @ejfitzgerald @n-hutton
+Jenkinsfile         @ejfitzgerald @n-hutton @wkaluza
+
+# Core Libraries
+apps/               @fetchai/ledger-core
+
+libs/crypto/        @fetchai/ledger-core
+libs/http/          @fetchai/ledger-core
+libs/ledger/        @fetchai/ledger-core
+libs/meta/          @fetchai/ledger-core
+libs/metrics/       @fetchai/ledger-core
+libs/miner/         @fetchai/ledger-core
+libs/network/       @fetchai/ledger-core
+libs/storage/       @fetchai/ledger-core
+libs/settings/      @fetchai/ledger-core
+libs/testing/       @fetchai/ledger-core
+libs/variant/       @fetchai/ledger-core
+libs/telemetry/     @fetchai/ledger-core
+libs/version/       @fetchai/ledger-core
+
+# Consensus
+libs/beacon/        @n-hutton @jinmannwong
+libs/dkg/           @n-hutton @jinmannwong
+
+# Common Libraries
+libs/core/          @fetchai/ledger
+libs/vm/            @fetchai/ledger
+libs/vm_modules/    @fetchai/ledger
+libs/vectorise/     @fetchai/ledger
+
+# VM + ML Libraries
+libs/ml/            @fetchai/ledger-vm
+libs/python/        @fetchai/ledger-vm
+libs/math/          @fetchai/ledger-vm
+
+# DMLF
+libs/dmlf/          @fetchai/ledger-dmlf
+

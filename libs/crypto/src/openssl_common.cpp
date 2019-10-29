@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/openssl_common.hpp"
+#include "crypto/signature_register.hpp"
 
 namespace fetch {
 namespace crypto {
 namespace openssl {
 
 template <>
-char const *const ECDSACurve<NID_secp256k1>::sn = SN_secp256k1;
+uint8_t const ECDSACurve<NID_secp256k1>::sn = SECP256K1_UNCOMPRESSED;
 template <>
 std::size_t const ECDSACurve<NID_secp256k1>::privateKeySize = 32;
 template <>

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/log2.hpp"
 #include "vectorise/memory/iterator.hpp"
-#include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/memory/vector_slice.hpp"
-#include "vectorise/meta/log2.hpp"
+
+#include <mm_malloc.h>
 
 #include <algorithm>
 #include <atomic>
@@ -29,8 +30,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
-#include <mm_malloc.h>
-#include <type_traits>
+#include <utility>
+
 namespace fetch {
 namespace memory {
 
@@ -39,42 +40,50 @@ class SharedArray : public VectorSlice<T, type_size>
 {
 public:
   static_assert(sizeof(T) >= type_size, "Invalid object size");
-  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
 
-  using size_type  = std::size_t;
-  using data_type  = std::shared_ptr<T>;
-  using super_type = VectorSlice<T, type_size>;
-  using self_type  = SharedArray<T, type_size>;
-  using type       = T;
+  // TODO(check IfIsPodOrFixedPoint memory safe)
+  //  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
+  //  static_assert(meta::IfIsPodOrFixedPoint<T>::value, "can only be used with POD or FixedPoint");
+  using size_type = std::size_t;
+  using DataType  = std::shared_ptr<T>;
+  using SuperType = VectorSlice<T, type_size>;
+  using SelfType  = SharedArray<T, type_size>;
+  using type      = T;
 
-  SharedArray(std::size_t const &n)
-    : super_type()
+  explicit SharedArray(std::size_t n)
+    : SuperType()
   {
     this->size_ = n;
 
     if (n > 0)
     {
       data_ = std::shared_ptr<T>(
-          reinterpret_cast<type *>(_mm_malloc(this->padded_size() * sizeof(type), 16)), _mm_free);
+          static_cast<T *>(_mm_malloc(this->padded_size() * sizeof(type), 64)), _mm_free);
 
       this->pointer_ = data_.get();
     }
   }
 
-  SharedArray() = default;
-  SharedArray(SharedArray const &other)
-    : super_type(other.data_.get(), other.size())
+  constexpr SharedArray() = default;
+
+  SharedArray(SharedArray const &other) noexcept
+    : SuperType(other.pointer_, other.size())
     , data_(other.data_)
   {}
 
-  SharedArray(SharedArray &&other)
+  SharedArray(SharedArray const &other, uint64_t offset, uint64_t size) noexcept
+    : SuperType(other.data_.get() + offset, size)
+    , data_(other.data_)
+  {}
+
+  SharedArray(SharedArray &&other) noexcept
   {
     std::swap(this->size_, other.size_);
     std::swap(this->data_, other.data_);
     std::swap(this->pointer_, other.pointer_);
   }
 
-  SharedArray &operator=(SharedArray &&other)
+  SharedArray &operator=(SharedArray &&other) noexcept
   {
     std::swap(this->size_, other.size_);
     std::swap(this->data_, other.data_);
@@ -82,7 +91,7 @@ public:
     return *this;
   }
 
-  self_type &operator=(SharedArray const &other)
+  SelfType &operator=(SharedArray const &other) noexcept  // NOLINT
   {
     if (&other == this)
     {
@@ -93,23 +102,24 @@ public:
 
     if (other.data_)
     {
-      this->data_ = other.data_;
+      this->data_    = other.data_;
+      this->pointer_ = other.pointer_;
     }
     else
     {
       this->data_.reset();
+      this->pointer_ = nullptr;
     }
 
-    this->pointer_ = other.pointer_;
     return *this;
   }
 
   ~SharedArray() = default;
 
-  self_type Copy() const
+  SelfType Copy() const
   {
     // TODO(issue 2): Use memcopy
-    self_type ret(this->size_);
+    SelfType ret(this->size_);
     for (std::size_t i = 0; i < this->size_; ++i)
     {
       ret[i] = this->At(i);
@@ -130,7 +140,7 @@ public:
   }
 
 private:
-  data_type data_ = nullptr;
+  DataType data_ = nullptr;
 };
 
 }  // namespace memory

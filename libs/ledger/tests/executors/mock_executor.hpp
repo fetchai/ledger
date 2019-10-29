@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,20 +20,26 @@
 #include "fake_executor.hpp"
 #include "ledger/executor_interface.hpp"
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
 
 class MockExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
+  using Digest    = fetch::Digest;
+  using Address   = fetch::chain::Address;
+  using BitVector = fetch::BitVector;
+
   MockExecutor()
   {
     using ::testing::_;
     using ::testing::Invoke;
 
-    ON_CALL(*this, Execute(_, _, _)).WillByDefault(Invoke(&fake_, &FakeExecutor::Execute));
+    ON_CALL(*this, Execute(_, _, _, _)).WillByDefault(Invoke(&fake_, &FakeExecutor::Execute));
+    ON_CALL(*this, SettleFees(_, _, _)).WillByDefault(Invoke(&fake_, &FakeExecutor::SettleFees));
   }
 
-  MOCK_METHOD3(Execute, Status(TxDigest const &, std::size_t, LaneSet const &));
+  MOCK_METHOD4(Execute, Result(Digest const &, BlockIndex, SliceIndex, BitVector const &));
+  MOCK_METHOD3(SettleFees, void(Address const &, TokenAmount, uint32_t));
 
 private:
   FakeExecutor fake_;

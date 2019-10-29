@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
+#include "core/set_thread_name.hpp"
+#include "logging/logging.hpp"
 #include "network/details/thread_pool.hpp"
+
+#include <algorithm>
+#include <chrono>
+#include <exception>
+#include <memory>
+#include <mutex>
+#include <stdexcept>
+#include <utility>
 
 namespace fetch {
 namespace network {
@@ -26,23 +37,13 @@ using std::chrono::milliseconds;
 using std::this_thread::sleep_for;
 
 /**
- * Create a thread pool instance with a specified number
- *
- * @param threads The maximum number of threads
- * @return
- */
-ThreadPoolImplementation::ThreadPoolPtr ThreadPoolImplementation::Create(std::size_t threads)
-{
-  return std::make_shared<ThreadPoolImplementation>(threads);
-}
-
-/**
  * Construct the thread pool implementation
  *
  * @param threads The maximum number of threads
  */
-ThreadPoolImplementation::ThreadPoolImplementation(std::size_t threads)
+ThreadPoolImplementation::ThreadPoolImplementation(std::size_t threads, std::string name)
   : max_threads_(threads)
+  , name_(std::move(name))
 {}
 
 /**
@@ -132,26 +133,19 @@ void ThreadPoolImplementation::Start()
   static constexpr std::size_t MAX_START_LOOPS     = 30;
   static constexpr std::size_t START_LOOP_INTERVAL = 100;
 
-  if (shutdown_)
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Thread pool may not be restarted after it has been shutdown");
-    return;
-  }
+  detailed_assert(!shutdown_);
 
   // start all the threads
   {
-    FETCH_LOCK(threads_mutex_);
+    threads_.ApplyVoid([this](auto &threads) {
+      detailed_assert(threads.empty());
 
-    if (!threads_.empty())
-    {
-      throw std::runtime_error("Attempting to start the thread pool multiple times");
-    }
-
-    for (std::size_t thread_idx = 0; thread_idx < max_threads_; ++thread_idx)
-    {
-      threads_.emplace_back(
-          std::make_shared<std::thread>([this, thread_idx]() { this->ProcessLoop(thread_idx); }));
-    }
+      for (std::size_t thread_idx = 0; thread_idx < max_threads_; ++thread_idx)
+      {
+        threads.emplace_back(
+            std::make_shared<std::thread>([this, thread_idx]() { this->ProcessLoop(thread_idx); }));
+      }
+    });
   }
 
   // wait for the threads to start
@@ -181,50 +175,50 @@ void ThreadPoolImplementation::Start()
  */
 void ThreadPoolImplementation::Stop()
 {
-  FETCH_LOCK(threads_mutex_);
-
-  // We have made the design decision that we will not allow pooled work to stop the thread pool.
-  // While strictly not necessary, this has been done as a guard against desired behaviour. If this
-  // assumption should prove to be invalid in the future removing this check here should result in
-  // full functioning code
-  for (auto &thread : threads_)
-  {
-    if (std::this_thread::get_id() == thread->get_id())
+  threads_.ApplyVoid([this](auto &threads) {
+    // We have made the design decision that we will not allow pooled work to stop the thread pool.
+    // While strictly not necessary, this has been done as a guard against desired behaviour. If
+    // this assumption should prove to be invalid in the future removing this check here should
+    // result in full functioning code
+    for (auto &thread : threads)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Thread pools must not be killed by a thread they own.");
-      return;
+      if (std::this_thread::get_id() == thread->get_id())
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Thread pools must not be killed by a thread they own.");
+        return;
+      }
     }
-  }
 
-  // signal to all the working threads that they should immediately stop all further work
-  shutdown_ = true;
-  future_work_.Abort();
-  idle_work_.Abort();
-  work_.Abort();
+    // signal to all the working threads that they should immediately stop all further work
+    shutdown_ = true;
+    future_work_.Abort();
+    idle_work_.Abort();
+    work_.Abort();
 
-  {
-    // kick all the threads to start wake and
-    FETCH_LOCK(idle_mutex_);
-    work_available_.notify_all();
-  }
-
-  // wait for all the threads to conclude
-  for (auto &thread : threads_)
-  {
-    // do not join ourselves
-    if (std::this_thread::get_id() != thread->get_id())
     {
-      thread->join();
+      // kick all the threads to start wake and
+      FETCH_LOCK(idle_mutex_);
+      work_available_.notify_all();
     }
-  }
 
-  // delete all the thread instances
-  threads_.clear();
+    // wait for all the threads to conclude
+    for (auto &thread : threads)
+    {
+      // do not join ourselves
+      if (std::this_thread::get_id() != thread->get_id())
+      {
+        thread->join();
+      }
+    }
 
-  // clear all the work items inside the respective queues
-  future_work_.Clear();
-  idle_work_.Clear();
-  work_.Clear();
+    // delete all the thread instances
+    threads.clear();
+
+    // clear all the work items inside the respective queues
+    future_work_.Clear();
+    idle_work_.Clear();
+    work_.Clear();
+  });
 }
 
 /**
@@ -235,6 +229,8 @@ void ThreadPoolImplementation::Stop()
  */
 void ThreadPoolImplementation::ProcessLoop(std::size_t index)
 {
+  SetThreadName("TP:" + name_, index);
+
   FETCH_LOG_DEBUG(LOGGING_NAME, "Creating thread pool worker (thread: ", index, ')');
 
   try
@@ -245,10 +241,15 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
       {
         std::unique_lock<std::mutex> lock(idle_mutex_);
 
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Entering idle state (thread: ", index, ')');
+        // double check the emptiness of the queue because there is a race here
+        if (!work_.IsEmpty())
+        {
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Restarting the inactive thread (thread: ", index,
+                          " queue: ", name_, ')');
+          continue;
+        }
 
-        // snooze for a while or until more work arrives
-        LOG_STACK_TRACE_POINT;
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Entering idle state (thread: ", index, ')');
 
         // calculate the maximum time to wait. If the two queues are empty then this will be zero
         auto const next_future_item = future_work_.TimeUntilNextItem();
@@ -277,10 +278,16 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
       }
     }
   }
+  catch (std::exception const &e)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    name_ + ": Thread_pool ProcessLoop is exiting, because: ", e.what());
+    TODO_FAIL(name_ + ": ThreadPool: Should not get here!");
+  }
   catch (...)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Thread_pool ProcessLoop is exiting.");
-    throw;
+    FETCH_LOG_ERROR(LOGGING_NAME, name_ + ": Thread_pool ProcessLoop is exiting.");
+    TODO_FAIL(name_ + ": ThreadPool: Should not get here!");
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Destroying thread pool worker (thread: ", index, ')');
@@ -316,7 +323,7 @@ bool ThreadPoolImplementation::Poll()
   // trigger any required idle work (if it is time to do so)
   if (idle_work_.IsDue())
   {
-    count += idle_work_.Visit([this](WorkItem const &item) { ExecuteWorkload(item); });
+    count += idle_work_.Visit([this](WorkItem const &item) noexcept { ExecuteWorkload(item); });
   }
 
   // update the global counter
@@ -341,15 +348,13 @@ bool ThreadPoolImplementation::ExecuteWorkload(WorkItem const &workload)
   {
     try
     {
-      LOG_STACK_TRACE_POINT;
-
       // execute the item
       workload();
 
       // signal successful execution
       success = true;
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Caught exception in ThreadPool::ExecuteWorkload - ",
                       ex.what());
@@ -360,5 +365,11 @@ bool ThreadPoolImplementation::ExecuteWorkload(WorkItem const &workload)
 }
 
 }  // namespace details
+
+ThreadPool MakeThreadPool(std::size_t threads, std::string const &name)
+{
+  return std::make_shared<details::ThreadPoolImplementation>(threads, name);
+}
+
 }  // namespace network
 }  // namespace fetch

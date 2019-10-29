@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,411 +16,82 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/commandline/cli_header.hpp"
-#include "core/commandline/parameter_parser.hpp"
-#include "core/commandline/params.hpp"
-#include "core/json/document.hpp"
-#include "core/macros.hpp"
-#include "crypto/ecdsa.hpp"
-#include "crypto/prover.hpp"
-#include "metrics/metrics.hpp"
-#include "network/adapters.hpp"
-#include "network/fetch_asio.hpp"
-#include "network/management/network_manager.hpp"
-#include "variant/variant.hpp"
-
 #include "bootstrap_monitor.hpp"
-#include "constellation.hpp"
+#include "chain/address.hpp"
+#include "config_builder.hpp"
+#include "constants.hpp"
+#include "constellation/constellation.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/commandline/params.hpp"
+#include "core/macros.hpp"
+#include "core/runnable.hpp"
+#include "core/string/to_lower.hpp"
+#include "crypto/ecdsa.hpp"
+#include "crypto/fetch_identity.hpp"
+#include "crypto/identity.hpp"
+#include "crypto/key_generator.hpp"
+#include "crypto/prover.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "logging/logging.hpp"
+#include "network/adapters.hpp"
+#include "network/peer.hpp"
+#include "network/uri.hpp"
+#include "settings.hpp"
+#include "shards/manifest.hpp"
+#include "version/cli_header.hpp"
+#include "version/fetch_version.hpp"
 
-#include <array>
+#include <atomic>
 #include <csignal>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <exception>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <string>
-#include <system_error>
+#include <thread>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace {
 
-static constexpr char const *LOGGING_NAME = "main";
+constexpr char const *LOGGING_NAME = "main";
 
-using Prover         = fetch::crypto::Prover;
-using BootstrapPtr   = std::unique_ptr<fetch::BootstrapMonitor>;
-using ProverPtr      = std::unique_ptr<Prover>;
-using ConstByteArray = fetch::byte_array::ConstByteArray;
-using ByteArray      = fetch::byte_array::ByteArray;
+using fetch::BootstrapMonitor;
+using fetch::Settings;
+using fetch::core::WeakRunnable;
+using fetch::crypto::Prover;
+using fetch::network::Uri;
 
-std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
-std::atomic<std::size_t>            gInterruptCount{0};
+using BootstrapPtr = std::unique_ptr<BootstrapMonitor>;
+using ProverPtr    = std::shared_ptr<Prover>;
+using NetworkMode  = fetch::constellation::Constellation::NetworkMode;
+using UriSet       = fetch::constellation::Constellation::UriSet;
+using Uris         = std::vector<Uri>;
 
-// REVIEW: Move to platform
-uint32_t Log2(uint32_t value)
+std::atomic<fetch::constellation::Constellation *> gConstellationInstance{nullptr};
+std::atomic<std::size_t>                           gInterruptCount{0};
+
+UriSet ToUriSet(Uris const &uris)
 {
-  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
-  return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
-                               static_cast<uint32_t>(__builtin_clz(value) + 1));
+  UriSet s{};
+  for (auto const &uri : uris)
+  {
+    s.emplace(uri);
+  }
+
+  return s;
 }
 
-bool EnsureLog2(uint32_t value)
-{
-  uint32_t const log2_value = Log2(value);
-  return value == (1u << log2_value);
-}
-
-ConstByteArray ReadContentsOfFile(char const *filename)
-{
-  ConstByteArray buffer;
-
-  std::ifstream stream(filename, std::ios::in | std::ios::binary);
-
-  if (stream.is_open())
-  {
-    // determine the complete size of the file
-    stream.seekg(0, std::ios::end);
-    std::streamsize const stream_size = stream.tellg();
-    stream.seekg(0, std::ios::beg);
-
-    // allocate the buffer
-    ByteArray buf;
-    buf.Resize(static_cast<std::size_t>(stream_size));
-    static_assert(sizeof(stream_size) >= sizeof(std::size_t), "Must be same size or larger");
-
-    // read in size of the buffer
-    stream.read(buf.char_pointer(), stream_size);
-
-    // update the output buffer
-    buffer = buf;
-  }
-
-  return buffer;
-}
-
-struct CommandLineArguments
-{
-  using StringList  = std::vector<std::string>;
-  using UriList     = fetch::Constellation::UriList;
-  using AdapterList = fetch::network::Adapter::adapter_list_type;
-  using Manifest    = fetch::network::Manifest;
-  using ManifestPtr = std::unique_ptr<Manifest>;
-  using Uri         = fetch::network::Uri;
-  using Peer        = fetch::network::Peer;
-
-  using ServiceIdentifier = fetch::network::ServiceIdentifier;
-  using ServiceType       = fetch::network::ServiceType;
-
-  static constexpr uint16_t HTTP_PORT_OFFSET    = 0;
-  static constexpr uint16_t P2P_PORT_OFFSET     = 1;
-  static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
-
-  static const uint32_t DEFAULT_NUM_LANES      = 4;
-  static const uint32_t DEFAULT_NUM_SLICES     = 4;
-  static const uint32_t DEFAULT_NUM_EXECUTORS  = DEFAULT_NUM_LANES;
-  static const uint16_t DEFAULT_PORT           = 8000;
-  static const uint32_t DEFAULT_NETWORK_ID     = 0x10;
-  static const uint32_t DEFAULT_BLOCK_INTERVAL = 5000;  // milliseconds.
-
-  uint16_t    port{0};
-  uint32_t    network_id;
-  UriList     peers;
-  uint32_t    num_executors;
-  uint32_t    num_lanes;
-  uint32_t    log2_num_lanes;
-  uint32_t    num_slices;
-  uint32_t    block_interval;
-  std::string interface;
-  std::string token;
-  bool        bootstrap{false};
-  bool        mine{false};
-  std::string dbdir;
-  std::string external_address;
-  std::string host_name;
-  ManifestPtr manifest;
-
-  static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
-                                    Prover const &prover)
-  {
-    CommandLineArguments args;
-
-    // define the parameters
-    std::string raw_peers;
-
-    fetch::commandline::Params parameters;
-    std::string                bootstrap_address;
-    std::string                external_address;
-    std::string                config_path;
-
-    parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
-    parameters.add(args.num_executors, "executors", "The number of executors to configure",
-                   DEFAULT_NUM_EXECUTORS);
-    parameters.add(args.num_lanes, "lanes", "The number of lanes to be used", DEFAULT_NUM_LANES);
-    parameters.add(args.num_slices, "slices", "The number of slices to be used",
-                   DEFAULT_NUM_SLICES);
-    parameters.add(raw_peers, "peers",
-                   "The comma separated list of addresses to initially connect to", std::string{});
-    parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage",
-                   std::string{"node_storage"});
-    parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
-    parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
-    parameters.add(args.block_interval, "block-interval", "Block interval in milliseconds.",
-                   uint32_t{DEFAULT_BLOCK_INTERVAL});
-    parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
-                   std::string{});
-    parameters.add(args.token, "token",
-                   "The authentication token to be used with bootstrapping the client",
-                   std::string{});
-    parameters.add(args.mine, "mine", "Enable mining on this node", false);
-
-    parameters.add(args.external_address, "external", "This node's global IP addr.", std::string{});
-    parameters.add(bootstrap_address, "bootstrap", "Src addr for network boostrap.", std::string{});
-    parameters.add(args.host_name, "host-name", "The hostname / identifier for this node",
-                   std::string{});
-    parameters.add(config_path, "config", "The path to the manifest configuration", std::string{});
-
-    // parse the args
-    parameters.Parse(argc, argv);
-
-    // update the peers
-    args.SetPeers(raw_peers);
-
-    // ensure that the number lanes is a valid power of 2
-    if (!EnsureLog2(args.num_lanes))
-    {
-      std::cout << "Number of lanes is not a valid log2 number" << std::endl;
-      std::exit(1);
-    }
-
-    // calculate the log2 num lanes
-    args.log2_num_lanes = Log2(args.num_lanes);
-
-    // if the user has explicitly passed a configuration then we must parse it here
-    if (!config_path.empty())
-    {
-      // read the contents of the manifest from the path specified
-      args.manifest = LoadManifestFromFile(config_path.c_str());
-    }
-
-    args.bootstrap = (!bootstrap_address.empty());
-    if (args.bootstrap && args.token.size())
-    {
-      // determine what the P2P port is. This is either specified with the port parameter or
-      // explicitly given via the manifest
-      uint16_t p2p_port = static_cast<uint16_t>(args.port + P2P_PORT_OFFSET);
-
-      // if we have a valid manifest then we should respect the port configuration specified here
-      // otherwise we default to the port specified
-      if (args.manifest)
-      {
-        auto const &uri = args.manifest->GetUri(ServiceIdentifier{ServiceType::P2P});
-
-        if (uri.scheme() == Uri::Scheme::Tcp)
-        {
-          p2p_port = uri.AsPeer().port();
-        }
-      }
-
-      // create the bootstrap node
-      bootstrap = std::make_unique<fetch::BootstrapMonitor>(
-          prover.identity(), p2p_port, args.network_id, args.token, args.host_name);
-
-      // augment the peer list with the bootstrapped version
-      if (bootstrap->Start(args.peers))
-      {
-        args.interface = bootstrap->interface_address();
-
-        if (args.external_address.empty())
-        {
-          args.external_address = bootstrap->external_address();
-        }
-      }
-    }
-
-    if (args.external_address.empty())
-    {
-      args.external_address = "127.0.0.1";
-    }
-
-    // if we do not have a correct
-    if (!args.manifest)
-    {
-      args.manifest = GenerateManifest(args.external_address, args.port, args.num_lanes);
-    }
-
-    return args;
-  }
-
-  void SetPeers(std::string const &raw_peers)
-  {
-    if (!raw_peers.empty())
-    {
-      // split the peers
-      std::size_t         position = 0;
-      fetch::network::Uri peer;
-      while (std::string::npos != position)
-      {
-        // locate the separator
-        std::size_t const separator_position = raw_peers.find(',', position);
-
-        // parse the peer
-        std::string const peer_address =
-            raw_peers.substr(position, (separator_position - position));
-        if (peer.Parse(peer_address))
-        {
-          peers.push_back(peer);
-        }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse input peer address: '", peer_address, "'");
-        }
-
-        // update the position for the next search
-        if (std::string::npos == separator_position)
-        {
-          position = std::string::npos;
-        }
-        else
-        {
-          position = separator_position + 1;  // advance past separator
-        }
-      }
-    }
-  }
-
-  static ManifestPtr GenerateManifest(std::string const &external_address, uint16_t port,
-                                      uint32_t num_lanes)
-  {
-    ManifestPtr manifest = std::make_unique<Manifest>();
-    Peer        peer;
-
-    // register the HTTP service
-    peer.Update(external_address, port + HTTP_PORT_OFFSET);
-    manifest->AddService(ServiceIdentifier{ServiceType::HTTP}, Manifest::Entry{Uri{peer}});
-
-    // register the P2P service
-    peer.Update(external_address, static_cast<uint16_t>(port + P2P_PORT_OFFSET));
-    manifest->AddService(ServiceIdentifier{ServiceType::P2P}, Manifest::Entry{Uri{peer}});
-
-    // register all of the lanes (storage shards)
-    for (uint32_t i = 0; i < num_lanes; ++i)
-    {
-      peer.Update(external_address, static_cast<uint16_t>(port + STORAGE_PORT_OFFSET + i));
-
-      manifest->AddService(ServiceIdentifier{ServiceType::LANE, static_cast<uint16_t>(i)},
-                           Manifest::Entry{Uri{peer}});
-    }
-
-    return manifest;
-  }
-
-  static ManifestPtr LoadManifestFromFile(char const *filename)
-  {
-    ConstByteArray buffer = ReadContentsOfFile(filename);
-
-    // check to see if the read failed
-    if (buffer.size() == 0)
-    {
-      throw std::runtime_error("Unable to read the contents of the requested file");
-    }
-
-    ManifestPtr manifest = std::make_unique<Manifest>();
-    if (!manifest->Parse(buffer))
-    {
-      throw std::runtime_error("Unable to parse the contents of the manifest file");
-    }
-
-    return manifest;
-  }
-
-  friend std::ostream &operator<<(std::ostream &              s,
-                                  CommandLineArguments const &args) FETCH_MAYBE_UNUSED
-  {
-    s << '\n';
-    s << "port...........: " << args.port << '\n';
-    s << "network id.....: 0x" << std::hex << args.network_id << std::dec << '\n';
-    s << "num executors..: " << args.num_executors << '\n';
-    s << "num lanes......: " << args.num_lanes << '\n';
-    s << "num slices.....: " << args.num_slices << '\n';
-    s << "bootstrap......: " << args.bootstrap << '\n';
-    s << "host name......: " << args.host_name << '\n';
-    s << "external addr..: " << args.external_address << '\n';
-    s << "db-prefix......: " << args.dbdir << '\n';
-    s << "interface......: " << args.interface << '\n';
-    s << "mining.........: " << args.mine << '\n';
-    s << "block interval.: " << args.block_interval << "ms" << std::endl;
-    // generate the peer listing
-    s << "peers..........: ";
-    for (auto const &peer : args.peers)
-    {
-      s << peer.uri() << ' ';
-    }
-
-    if (args.manifest)
-    {
-      s << '\n' << "manifest.......: " << args.manifest->ToString() << '\n';
-    }
-
-    // terminate and flush
-    s << std::endl;
-
-    return s;
-  }
-};
-
-ProverPtr GenerateP2PKey()
-{
-  static constexpr char const *KEY_FILENAME = "p2p.key";
-
-  using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::unique_ptr<Signer>;
-
-  SignerPtr certificate        = std::make_unique<Signer>();
-  bool      certificate_loaded = false;
-
-  // Step 1. Attempt to load the existing key
-  {
-    std::ifstream input_file(KEY_FILENAME, std::ios::in | std::ios::binary);
-
-    if (input_file.is_open())
-    {
-      fetch::byte_array::ByteArray private_key_data;
-      private_key_data.Resize(Signer::PrivateKey::ecdsa_curve_type::privateKeySize);
-
-      // attempt to read in the private key
-      input_file.read(private_key_data.char_pointer(),
-                      static_cast<std::streamsize>(private_key_data.size()));
-
-      if (!(input_file.fail() || input_file.eof()))
-      {
-        certificate->Load(private_key_data);
-        certificate_loaded = true;
-      }
-    }
-  }
-
-  // Generate a key if the load failed
-  if (!certificate_loaded)
-  {
-    certificate->GenerateKeys();
-
-    std::ofstream output_file(KEY_FILENAME, std::ios::out | std::ios::binary);
-
-    if (output_file.is_open())
-    {
-      auto const private_key_data = certificate->private_key();
-
-      output_file.write(private_key_data.char_pointer(),
-                        static_cast<std::streamsize>(private_key_data.size()));
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to save P2P key");
-    }
-  }
-
-  return certificate;
-}
-
+/**
+ * The main interrupt handler for the application
+ */
 void InterruptHandler(int /*signal*/)
 {
   std::size_t const interrupt_count = ++gInterruptCount;
@@ -434,7 +105,7 @@ void InterruptHandler(int /*signal*/)
     FETCH_LOG_INFO(LOGGING_NAME, "User requests stop of service");
   }
 
-  if (gConstellationInstance)
+  if (gConstellationInstance != nullptr)
   {
     gConstellationInstance.load()->SignalStop();
   }
@@ -445,13 +116,91 @@ void InterruptHandler(int /*signal*/)
   }
 }
 
+/**
+ * Determine is a version flag has been present on the command line
+ *
+ * @param argc The number of args
+ * @param argv The array of arguments
+ * @return true if the version flag is present, otherwise false
+ */
+bool HasVersionFlag(int argc, char **argv)
+{
+  static const std::string FULL_VERSION_FLAG{"--version"};
+  static const std::string SHORT_VERSION_FLAG{"-v"};
+
+  bool has_version{false};
+
+  for (int i = 1; i < argc; ++i)
+  {
+    if ((FULL_VERSION_FLAG == argv[i]) || (SHORT_VERSION_FLAG == argv[i]))
+    {
+      has_version = true;
+      break;
+    }
+  }
+
+  return has_version;
+}
+
+/**
+ * Based on the settings create a bootstrap instance if necessary
+ *
+ * @param settings The settings of the system
+ * @param prover The key for the node
+ * @param uris The initial set of nodes
+ * @return The new bootstrap pointer if one exists
+ */
+BootstrapPtr CreateBootstrap(Settings const &settings, ProverPtr const &prover, UriSet &uris)
+{
+  BootstrapPtr bootstrap{};
+
+  if (settings.bootstrap.value())
+  {
+    // build the bootstrap monitor instance
+    bootstrap = std::make_unique<BootstrapMonitor>(
+        prover, settings.port.value() + fetch::P2P_PORT_OFFSET, settings.network_name.value(),
+        settings.discoverable.value(), settings.token.value(), settings.hostname.value());
+
+    // run the discover
+    bootstrap->DiscoverPeers(uris, settings.external.value());
+  }
+
+  return bootstrap;
+}
+
+/**
+ * Extract the WeakRunnable from bootstrap so that it can be added to a reactor
+ *
+ * @param bootstrap The bootstrap instance
+ * @return The weak runnable to be added to the reactor
+ */
+WeakRunnable ExtractRunnable(BootstrapPtr const &bootstrap)
+{
+  if (bootstrap)
+  {
+    return bootstrap->GetWeakRunnable();
+  }
+
+  return {};
+}
+
 }  // namespace
 
 int main(int argc, char **argv)
 {
   int exit_code = EXIT_FAILURE;
 
-  fetch::commandline::DisplayCLIHeader("Constellation");
+  fetch::crypto::mcl::details::MCLInitialiser();
+
+  // Special case for the version flag
+  if (HasVersionFlag(argc, argv))
+  {
+    std::cout << fetch::version::FULL << std::endl;
+    return 0;
+  }
+
+  // version header
+  fetch::version::DisplayCLIHeader("Constellation");
 
   if (!fetch::version::VALID)
   {
@@ -460,42 +209,48 @@ int main(int argc, char **argv)
 
   try
   {
-#ifdef FETCH_ENABLE_METRICS
-    fetch::metrics::Metrics::Instance().ConfigureFileHandler("metrics.csv");
-#endif  // FETCH_ENABLE_METRICS
-
-    // create and load the main certificate for the bootstrapper
-    ProverPtr p2p_key = GenerateP2PKey();
-
-    BootstrapPtr bootstrap_monitor;
-    auto         args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", args);
-
-    // create and run the constellation
-    auto constellation = std::make_unique<fetch::Constellation>(
-        std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
-        args.num_slices, args.interface, args.dbdir, args.external_address,
-        std::chrono::milliseconds(args.block_interval));
-
-    // update the instance pointer
-    gConstellationInstance = constellation.get();
-
-    // register the signal handler
-    std::signal(SIGINT, InterruptHandler);
-
-    // run the application
-    constellation->Run(args.peers, args.mine);
-
-    // stop the bootstrapper if we have one
-    if (bootstrap_monitor)
+    Settings settings{};
+    if (!settings.Update(argc, argv))
     {
-      bootstrap_monitor->Stop();
+      FETCH_LOG_WARN(LOGGING_NAME, "Invalid configuration");
     }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Input Configuration:\n", settings);
 
-    exit_code = EXIT_SUCCESS;
+      // create and load the main certificate for the bootstrapper
+      auto p2p_key = fetch::crypto::GenerateP2PKey();
+
+      // create the bootrap monitor (if configued to do so)
+      auto initial_peers = ToUriSet(settings.peers.value());
+      auto bootstrap     = CreateBootstrap(settings, p2p_key, initial_peers);
+
+      for (auto const &uri : initial_peers)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Initial Peer: ", uri);
+      }
+
+      // attempt to build the configuration for constellation
+      fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
+
+      // create and run the constellation
+      auto constellation =
+          std::make_unique<fetch::constellation::Constellation>(std::move(p2p_key), std::move(cfg));
+
+      // update the instance pointer
+      gConstellationInstance = constellation.get();
+
+      // register the signal handlers
+      std::signal(SIGINT, InterruptHandler);
+      std::signal(SIGTERM, InterruptHandler);
+
+      // run the application
+      constellation->Run(initial_peers, ExtractRunnable(bootstrap));
+
+      exit_code = EXIT_SUCCESS;
+    }
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Fatal Error: ", ex.what());
     std::cerr << "Fatal Error: " << ex.what() << std::endl;

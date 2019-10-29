@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,38 +18,32 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
-#include "vectorise/memory/range.hpp"
-
-#include <cmath>
+#include "math/meta/math_type_traits.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "vectorise/math/max.hpp"
+#include "vectorise/math/min.hpp"
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type Minkowski(memory::VectorSlice<T, S> const &a,
-                                                          memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Minkowski(ArrayType const &        a,
+                                                                   ArrayType const &        b,
+                                                                   typename ArrayType::Type n)
 {
   detailed_assert(a.size() == b.size());
-  using Type                 = typename memory::VectorSlice<T, S>::Type;
-  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
+  using DataType = typename ArrayType::Type;
 
-  Type dist = a.data().in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [n](vector_register_type const &x, vector_register_type const &y) {
-        return pow(max(x, y) - min(x, y), n);
-      },
-      b.data());
+  DataType sum{0};
+  auto     b_it = b.begin();
+  for (auto &val : a)
+  {
+    sum += Pow(fetch::vectorise::Max(val, *b_it) - fetch::vectorise::Min(val, *b_it), n);
+    ++b_it;
+  }
 
-  return std::pow(dist, 1. / double(n));
-}
-
-template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::Type Minkowski(ShapeLessArray<T, C> const &a,
-                                                     ShapeLessArray<T, C> const &b)
-{
-  return Minkowski(a.data(), b.data());
+  return Pow(sum, DataType{1} / DataType{n});
 }
 
 }  // namespace distance

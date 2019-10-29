@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,17 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/trigonometry.hpp"
+#include "vectorise/memory/array.hpp"
+#include "vectorise/memory/shared_array.hpp"
+
 #include <chrono>
 #include <cmath>
+#include <cstddef>
+#include <cstdlib>
 #include <iostream>
 #include <vector>
 
-using type       = double;
+using type       = fetch::fixed_point::fp64_t;
 using array_type = std::vector<type>;
 
 type InnerProduct(array_type const &A, array_type const &B)
 {
-  type ret = 0;
+  type ret{0};
 
   for (std::size_t i = 0; i < A.size(); ++i)
   {
@@ -48,7 +54,7 @@ int main(int argc, char const **argv)
     return 0;
   }
 
-  std::size_t       N = std::size_t(atoi(argv[1]));
+  auto              N = std::size_t(std::atoi(argv[1]));
   std::vector<type> A, B;
 
   A.resize(N);
@@ -56,8 +62,8 @@ int main(int argc, char const **argv)
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    A[i] = type(0.001 * std::sin(-0.1 * type(i)));
-    B[i] = type(0.001 * std::cos(-0.1 * type(i)));
+    A[i] = type(fetch::math::Sin(type(i) * (-0.1)));
+    B[i] = type(fetch::math::Cos(type(i) * (-0.1)));
   }
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();

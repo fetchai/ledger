@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -46,14 +46,14 @@ namespace storage {
  * this map.
  *
  */
-template <typename T, typename D = uint64_t>
+template <typename T, typename D = uint64_t, typename STACK = RandomAccessStack<T, D>>
 class CachedRandomAccessStack
 {
 public:
-  using event_handler_type = std::function<void()>;
-  using stack_type         = RandomAccessStack<T, D>;
-  using header_extra_type  = D;
-  using type               = T;
+  using EventHandlerType = std::function<void()>;
+  using StackType        = STACK;
+  using HeaderExtraType  = D;
+  using type             = T;
 
   CachedRandomAccessStack()
   {
@@ -75,12 +75,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -108,7 +108,7 @@ public:
     this->SignalFileLoaded();
   }
 
-  void Get(uint64_t const &i, type &object) const
+  void Get(uint64_t i, type &object) const
   {
     assert(i < objects_);
 
@@ -136,7 +136,7 @@ public:
    * @param: i The index
    * @param: object The object to write
    */
-  void Set(uint64_t const &i, type const &object)
+  void Set(uint64_t i, type const &object)
   {
     assert(i < objects_);
 
@@ -165,12 +165,12 @@ public:
     stack_.Close(true);
   }
 
-  void SetExtraHeader(header_extra_type const &he)
+  void SetExtraHeader(HeaderExtraType const &he)
   {
     stack_.SetExtraHeader(he);
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return stack_.header_extra();
   }
@@ -200,7 +200,7 @@ public:
     return ret;
   }
 
-  void Swap(uint64_t const &i, uint64_t const &j)
+  void Swap(uint64_t i, uint64_t j)
   {
 
     if (i == j)
@@ -232,7 +232,7 @@ public:
   /**
    * Flush all of the cached elements to file if they have been updated
    */
-  void Flush()
+  void Flush(bool /*lazy*/ = true)
   {
     this->SignalBeforeFlush();
 
@@ -275,13 +275,18 @@ public:
     return stack_.is_open();
   }
 
+  StackType &underlying_stack()
+  {
+    return stack_;
+  }
+
 private:
   static constexpr std::size_t MAX_SIZE_BYTES = 10000;
-  event_handler_type           on_file_loaded_;
-  event_handler_type           on_before_flush_;
+  EventHandlerType             on_file_loaded_;
+  EventHandlerType             on_before_flush_;
 
   // Underlying stack
-  stack_type stack_;
+  StackType stack_;
 
   // Cached items
   struct CachedDataItem
@@ -289,7 +294,7 @@ private:
     uint64_t reads   = 0;
     uint64_t writes  = 0;
     bool     updated = false;
-    type     data;
+    type     data{};
   };
 
   mutable std::map<uint64_t, CachedDataItem> data_;

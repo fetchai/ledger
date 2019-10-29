@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,207 +17,92 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/json/document.hpp"
-#include "core/logger.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/string/replace.hpp"
-#include "http/json_response.hpp"
+#include "core/mutex.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "http/module.hpp"
-#include "ledger/chaincode/cache.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "ledger/transaction_processor.hpp"
-#include "miner/miner_interface.hpp"
+#include "ledger/chaincode/chain_code_cache.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/wire_transaction.hpp"
-
-#include <algorithm>
-#include <iostream>
-#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
 
 namespace fetch {
+
+namespace variant {
+class Variant;
+}  // namespace variant
+
 namespace ledger {
+
+class StorageInterface;
+class TransactionProcessor;
 
 class ContractHttpInterface : public http::HTTPModule
 {
 public:
-  static constexpr char const *           LOGGING_NAME = "ContractHttpInterface";
-  static byte_array::ConstByteArray const API_PATH_CONTRACT_PREFIX;
-  static byte_array::ConstByteArray const CONTRACT_NAME_SEPARATOR;
-  static byte_array::ConstByteArray const PATH_SEPARATOR;
+  // Construction / Destruction
+  ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor);
+  ContractHttpInterface(ContractHttpInterface const &) = delete;
+  ContractHttpInterface(ContractHttpInterface &&)      = delete;
+  ~ContractHttpInterface() override                    = default;
 
-  ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor)
-    : storage_{storage}
-    , processor_{processor}
-  {
-
-    // create all the contracts
-    auto const &contracts = contract_cache_.factory().GetContracts();
-    for (auto const &contract_name : contracts)
-    {
-
-      // create the contract
-      auto contract = contract_cache_.factory().Create(contract_name);
-
-      byte_array::ByteArray contract_path{contract_name};
-      contract_path.Replace(static_cast<char const &>(CONTRACT_NAME_SEPARATOR[0]),
-                            static_cast<char const &>(PATH_SEPARATOR[0]));
-
-      byte_array::ByteArray api_path;
-      //* ByteArry from `contract_name` performs deep copy due to const -> non-const
-      api_path.Append(API_PATH_CONTRACT_PREFIX, contract_path, PATH_SEPARATOR);
-      std::size_t const api_path_base_size = api_path.size();
-
-      // enumerate all of the contract query handlers
-      auto const &query_handlers = contract->query_handlers();
-      for (auto const &handler : query_handlers)
-      {
-        byte_array::ConstByteArray const &query_name = handler.first;
-        api_path.Resize(api_path_base_size, ResizeParadigm::ABSOLUTE);
-        api_path.Append(query_name);
-
-        FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);
-
-        Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
-                                                         http::HTTPRequest const &request) {
-          return OnQuery(contract_name, query_name, request);
-        });
-      }
-    }
-
-    // add custom debug handlers
-    Post("/api/debug/submit",
-         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           chain::MutableTransaction tx;
-
-           tx.PushResource("foo.bar.baz" + std::to_string(transaction_index_));
-           tx.set_fee(transaction_index_);
-           tx.set_contract_name("fetch.dummy.run");
-           tx.set_data(std::to_string(transaction_index_++));
-
-           processor_.AddTransaction(tx);
-
-           std::ostringstream oss;
-           oss << R"({ "submitted": true })";
-
-           return http::CreateJsonResponse(oss.str());
-         });
-
-    // new transaction
-    Post("/api/contract/submit",
-         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           std::ostringstream oss;
-
-           bool error_response{true};
-           try
-           {
-             std::size_t submitted{0};
-
-             // detect the content format, defaulting to json
-             byte_array::ConstByteArray content_type = "application/vnd+fetch.transaction+json";
-             if (request.header().Has("content-type"))
-             {
-               content_type = request.header()["content-type"];
-             }
-
-             // handle the types of transaction
-             bool unknown_format = false;
-             if (content_type == "application/vnd+fetch.transaction+native")
-             {
-               submitted = SubmitNativeTx(request);
-             }
-             else if (content_type == "application/vnd+fetch.transaction+json")
-             {
-               submitted = SubmitJsonTx(request);
-             }
-             else
-             {
-               unknown_format = true;
-             }
-
-             if (unknown_format)
-             {
-               // format the message
-               std::ostringstream error_msg;
-               error_msg << "Unknown content type: " << content_type;
-
-               oss << R"({ "submitted": false, "error": )" << std::quoted(error_msg.str()) << " }";
-             }
-             else
-             {
-               // success report the statistics
-               oss << R"({ "submitted": true, "count": )" << submitted << " }";
-               error_response = false;
-             }
-           }
-           catch (std::exception const &ex)
-           {
-             oss.clear();
-             oss << R"({ "submitted": false, "error": ")" << std::quoted(ex.what()) << " }";
-           }
-
-           return http::CreateJsonResponse(oss.str(), (error_response)
-                                                          ? http::Status::CLIENT_ERROR_BAD_REQUEST
-                                                          : http::Status::SUCCESS_OK);
-         });
-  }
+  // Operators
+  ContractHttpInterface &operator=(ContractHttpInterface const &) = delete;
+  ContractHttpInterface &operator=(ContractHttpInterface &&) = delete;
 
 private:
-  http::HTTPResponse OnQuery(byte_array::ConstByteArray const &contract_name,
-                             byte_array::ConstByteArray const &query,
-                             http::HTTPRequest const &         request)
+  using ConstByteArray = byte_array::ConstByteArray;
+  using TxHashes       = std::vector<ConstByteArray>;
+
+  /**
+   * Structure containing status of of multi-transaction submission.
+   *
+   * The structure is supposed to carry information about how many transactions
+   * have been successfully processed and how many transactions have been
+   * actually received for processing.
+   * The structure is supposed to be used as return value for methods which
+   * are dedicated to handle HTTP request for bulk transaction (multi-transaction)
+   * reception, giving caller ability to check status of how request has been
+   * handled (transaction reception/processing).
+   *
+   * @see SubmitJsonTx
+   * @see SubmitNativeTx
+   */
+  struct SubmitTxStatus
   {
-    try
-    {
-      // parse the incoming request
-      json::JSONDocument doc;
-      doc.Parse(request.body());
+    std::size_t processed{0};
+    std::size_t received{0};
+  };
 
-      // dispatch the contract type
-      variant::Variant response;
-      auto             contract = contract_cache_.Lookup(contract_name);
+  /// @name Query Handler
+  /// @{
+  http::HTTPResponse OnQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
+                             http::HTTPRequest const &request);
+  /// @}
 
-      // attach, dispatch and detach
-      contract->Attach(storage_);
-      auto const status = contract->DispatchQuery(query, doc.root(), response);
-      contract->Detach();
+  /// @name Transaction Handlers
+  /// @{
+  http::HTTPResponse OnTransaction(http::HTTPRequest const &request,
+                                   ConstByteArray const &   expected_contract);
+  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &request, TxHashes &txs);
+  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &request, TxHashes &txs);
+  /// @}
 
-      if (status == Contract::Status::OK)
-      {
-        // encode the response
-        std::ostringstream oss;
-        oss << response;
+  /// @name Access Log
+  /// @{
+  void RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request,
+                         ConstByteArray const &expected_contract);
+  void RecordQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
+                   http::HTTPRequest const &request);
+  void WriteToAccessLog(variant::Variant const &entry);
+  /// @}
 
-        // generate the response object
-        return http::CreateJsonResponse(oss.str());
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Error running query. status = ", static_cast<int>(status));
-      }
-    }
-    catch (std::exception &ex)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Query error: ", ex.what());
-    }
-
-    return JsonBadRequest();
-  }
-
-  static http::HTTPResponse JsonBadRequest()
-  {
-    return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
-  }
-
-  std::size_t SubmitJsonTx(http::HTTPRequest const &request);
-  std::size_t SubmitNativeTx(http::HTTPRequest const &request);
-
-  std::size_t transaction_index_{0};
-
-  StorageInterface &    storage_;
-  TransactionProcessor &processor_;
-  ChainCodeCache        contract_cache_;
+  TokenContract            token_contract_{};
+  StorageInterface &       storage_;
+  TransactionProcessor &   processor_;
+  ChainCodeCache           contract_cache_{};
+  Protected<std::ofstream> access_log_;
 };
 
 }  // namespace ledger

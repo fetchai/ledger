@@ -1,7 +1,7 @@
-################################################################################
+#
 # F E T C H   L E D G E R   L I B R A R Y
-################################################################################
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+#
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-ledger)
 
 # CMake Configuration
@@ -10,22 +10,31 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Main Library Target
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 setup_library(fetch-ledger)
-target_link_libraries(fetch-ledger PUBLIC
-  fetch-core
-  fetch-http
-  fetch-network
-  fetch-crypto
-  fetch-math
-  fetch-storage
-  fetch-miner
-  fetch-vm
-  fetch-metrics
-)
+target_link_libraries(fetch-ledger
+                      PUBLIC fetch-core
+                             fetch-http
+                             fetch-network
+                             fetch-crypto
+                             fetch-math
+                             fetch-storage
+                             fetch-vm
+                             fetch-vm-modules
+                             fetch-moment
+                             fetch-beacon
+                             fetch-bloomfilter
+                             fetch-logging
+                             fetch-entropy
+                             fetch-shards
+                             vendor-msgpack)
+
+if (_is_clang_compiler)
+  target_compile_options(fetch-ledger PRIVATE -Wshadow)
+endif ()
 
 add_test_target()
 add_subdirectory(examples)

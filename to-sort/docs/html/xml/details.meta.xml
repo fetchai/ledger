@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<namespace id="details::meta" name="meta" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <structtemplate name="Log2" ref="details::meta::Log2#details::meta::Log2">
-    <templatenontypeparameter id="details::meta::Log2::N" name="N">
-      <type name="uint64_t" />
-    </templatenontypeparameter>
-  </structtemplate>
-  <struct name="Log2" ref="details::meta::Log2#details::meta::Log2" />
-</namespace>

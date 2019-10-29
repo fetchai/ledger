@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,11 +19,15 @@
 
 #define FETCH_UNUSED(x) (void)(x)
 
-#ifdef __GNUC__
+template <typename>
+struct Unused
+{
+  constexpr static void noop()
+  {}
+};
+#define FETCH_UNUSED_ALIAS(x) (void)Unused<x>::noop()
+
 #define FETCH_MAYBE_UNUSED __attribute__((used))
-#else
-#define FETCH_MAYBE_UNUSED
-#endif
 
 #if defined(__clang__)
 #define FETCH_THREAD_ANNOTATION_ATTRIBUTE__(x) __attribute__((x))

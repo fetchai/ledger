@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,22 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/fetch_asio.hpp"  // required to avoid failing build due to -Werror
+#include "logging/logging.hpp"
+#include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
+
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <memory>
+#include <new>
+#include <string>
+#include <system_error>
+#include <thread>
 #include <utility>
 
 namespace fetch {
 namespace network {
 
-std::atomic<std::size_t> openSessions{0};
+static std::atomic<std::size_t> openSessions{0};
 
 class BasicLoopback : public std::enable_shared_from_this<BasicLoopback>
 {
 public:
-  BasicLoopback(asio::ip::tcp::tcp::socket socket)
+  explicit BasicLoopback(asio::ip::tcp::tcp::socket socket)
     : socket_(std::move(socket))
   {
     openSessions++;
@@ -52,7 +62,7 @@ public:
 private:
   asio::ip::tcp::tcp::socket socket_;
   std::size_t                lengthPerRead_ = 1024;
-  message_type               message_;
+  MessageType                message_;
 
   void Read() noexcept
   {
@@ -87,7 +97,7 @@ public:
 
   explicit LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS)
     : port_{port}
-    , networkManager_{num_threads}
+    , networkManager_{"Loopback", num_threads}
   {
     networkManager_.Start();
     networkManager_.Post([this] {

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,31 +17,40 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/queue.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "metrics/metrics.hpp"
-#include "miner/miner_interface.hpp"
-#include "network/details/thread_pool.hpp"
+#include "ledger/dag/dag_interface.hpp"
+#include "ledger/storage_unit/transaction_sinks.hpp"
+#include "ledger/transaction_verifier.hpp"
 
 #include <atomic>
+#include <memory>
 #include <thread>
 
 namespace fetch {
+
+namespace chain {
+
+class Transaction;
+
+}  // namespace chain
+
 namespace ledger {
 
-class TransactionProcessor
+class StorageUnitInterface;
+class BlockPackerInterface;
+class TransactionStatusCache;
+
+class TransactionProcessor : public TransactionSink
 {
 public:
-  using MutableTransaction = chain::MutableTransaction;
-
-  using TransactionList = std::vector<chain::Transaction>;
+  using DAGPtr           = std::shared_ptr<fetch::ledger::DAGInterface>;
+  using TxStatusCachePtr = std::shared_ptr<TransactionStatusCache>;
 
   // Construction / Destruction
-  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner);
+  TransactionProcessor(DAGPtr dag, StorageUnitInterface &storage, BlockPackerInterface &packer,
+                       TxStatusCachePtr tx_status_cache, std::size_t num_threads);
   TransactionProcessor(TransactionProcessor const &) = delete;
   TransactionProcessor(TransactionProcessor &&)      = delete;
-  ~TransactionProcessor()                            = default;
+  ~TransactionProcessor() override;
 
   /// @name Processor Controls
   /// @{
@@ -51,60 +60,31 @@ public:
 
   /// @name Transaction Processing
   /// @{
-  void AddTransaction(MutableTransaction const &mtx);
-  void AddTransaction(MutableTransaction &&mtx);
+  void AddTransaction(TransactionPtr const &tx);
+  void AddTransaction(TransactionPtr &&tx);
   /// @}
 
   // Operators
   TransactionProcessor &operator=(TransactionProcessor const &) = delete;
   TransactionProcessor &operator=(TransactionProcessor &&) = delete;
 
+protected:
+  void OnTransaction(TransactionPtr const &tx) override;
+
 private:
-  static constexpr std::size_t QUEUE_SIZE = 1u << 20u;  // 1,048,576
+  using Flag      = std::atomic<bool>;
+  using ThreadPtr = std::unique_ptr<std::thread>;
 
-  using Flag            = std::atomic<bool>;
-  using VerifiedQueue   = core::MPSCQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
-  using UnverifiedQueue = core::MPMCQueue<chain::MutableTransaction, QUEUE_SIZE>;
-  using ThreadPtr       = std::unique_ptr<std::thread>;
-  using Threads         = std::vector<ThreadPtr>;
+  DAGPtr                dag_;
+  StorageUnitInterface &storage_;
+  BlockPackerInterface &packer_;
+  TxStatusCachePtr      status_cache_;
+  TransactionVerifier   verifier_;
+  ThreadPtr             poll_new_tx_thread_;
+  Flag                  running_{false};
 
-  void Verifier();
-  void Dispatcher();
-
-  StorageUnitInterface & storage_;
-  miner::MinerInterface &miner_;
-
-  Flag            active_{true};
-  Threads         threads_;
-  VerifiedQueue   verified_queue_;
-  UnverifiedQueue unverified_queue_;
+  void ThreadEntryPoint();
 };
-
-/**
- * Add a single transaction to the processor
- *
- * @param tx The reference to the new transaction to be processed
- */
-inline void TransactionProcessor::AddTransaction(MutableTransaction const &mtx)
-{
-  FETCH_METRIC_TX_SUBMITTED(mtx.digest());
-
-  // enqueue the transaction to the unverified queue
-  unverified_queue_.Push(mtx);
-}
-
-/**
- * Add a single transaction to the processor
- *
- * @param tx The reference to the new transaction to be processed
- */
-inline void TransactionProcessor::AddTransaction(MutableTransaction &&mtx)
-{
-  FETCH_METRIC_TX_SUBMITTED(mtx.digest());
-
-  // enqueue the transaction to the unverified queue
-  unverified_queue_.Push(std::move(mtx));
-}
 
 }  // namespace ledger
 }  // namespace fetch

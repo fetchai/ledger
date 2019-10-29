@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logger.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "network/details/network_manager_implementation.hpp"
-
 #include "network/fetch_asio.hpp"
+
 #include <functional>
 #include <map>
+#include <utility>
 
 namespace fetch {
 namespace network {
@@ -32,18 +33,17 @@ namespace network {
 class NetworkManager
 {
 public:
-  using event_function_type = std::function<void()>;
+  using EventFunctionType = std::function<void()>;
 
-  using implementation_type = details::NetworkManagerImplementation;
-  using pointer_type        = std::shared_ptr<implementation_type>;
-  using weak_ref_type       = std::weak_ptr<implementation_type>;
+  using ImplementationType = details::NetworkManagerImplementation;
+  using PointerType        = std::shared_ptr<ImplementationType>;
+  using WeakRefType        = std::weak_ptr<ImplementationType>;
 
   static constexpr char const *LOGGING_NAME = "NetworkManager";
 
-  explicit NetworkManager(std::size_t threads = 1)
-  {
-    pointer_ = std::make_shared<implementation_type>(threads);
-  }
+  NetworkManager(std::string name, std::size_t threads)
+    : pointer_{std::make_shared<ImplementationType>(std::move(name), threads)}
+  {}
 
   NetworkManager(NetworkManager const &other)
     : is_copy_(true)
@@ -58,41 +58,23 @@ public:
     }
   }
 
-  ~NetworkManager()
-  {
-    if (!is_copy_)
-    {
-      Stop();
-    }
-  }
-
   NetworkManager(NetworkManager &&rhs) = delete;
   NetworkManager &operator=(NetworkManager const &rhs) = delete;
   NetworkManager &operator=(NetworkManager &&rhs) = delete;
 
   void Start()
   {
-    if (is_copy_)
+    if (is_primary())
     {
-      return;
-    }
-    auto ptr = lock();
-    if (ptr)
-    {
-      ptr->Start();
+      pointer_->Start();
     }
   }
 
   void Stop()
   {
-    if (is_copy_)
+    if (is_primary())
     {
-      return;
-    }
-    auto ptr = lock();
-    if (ptr)
-    {
-      ptr->Stop();
+      pointer_->Stop();
     }
   }
 
@@ -102,12 +84,10 @@ public:
     auto ptr = lock();
     if (ptr)
     {
-      return ptr->Post(f);
+      return ptr->Post(std::forward<F>(f));
     }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Failed to post: network man dead.");
-    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to post: network man dead.");
   }
 
   template <typename F>
@@ -116,13 +96,19 @@ public:
     auto ptr = lock();
     if (ptr)
     {
-      return ptr->Post(f, milliseconds);
+      return ptr->Post(std::forward<F>(f), milliseconds);
     }
   }
 
   bool is_valid()
   {
-    return (!is_copy_) || bool(weak_pointer_.lock());
+    return is_primary() || bool(weak_pointer_.lock());
+  }
+
+  bool Running()
+  {
+    auto ptr = lock();
+    return ptr && ptr->Running();
   }
 
   bool is_primary()
@@ -130,31 +116,32 @@ public:
     return (!is_copy_);
   }
 
-  pointer_type lock()
+  PointerType lock()
   {
-    if (is_copy_)
+    if (is_primary())
     {
-      return weak_pointer_.lock();
+      return pointer_;
     }
-    return pointer_;
+    return weak_pointer_.lock();
   }
 
-  template <typename IO, typename... arguments>
-  std::shared_ptr<IO> CreateIO(arguments &&... args)
+  template <typename IO, typename... Args>
+  std::shared_ptr<IO> CreateIO(Args &&... args)
   {
     auto ptr = lock();
     if (ptr)
     {
-      return ptr->CreateIO<IO>(std::forward<arguments>(args)...);
+      return ptr->CreateIO<IO>(std::forward<Args>(args)...);
     }
     TODO_FAIL("Attempted to get IO from dead TM");
-    return std::shared_ptr<IO>(nullptr);
+    return std::shared_ptr<IO>{};
   }
 
 private:
-  pointer_type  pointer_;
-  weak_ref_type weak_pointer_;
-  bool          is_copy_ = false;
+  PointerType pointer_;
+  WeakRefType weak_pointer_;
+  bool        is_copy_ = false;
 };
+
 }  // namespace network
 }  // namespace fetch

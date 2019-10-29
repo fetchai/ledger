@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,19 +17,20 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/memory/shared_array.hpp"
+
 #include <iostream>
-#include <vector>
 
-using array_type  = fetch::memory::SharedArray<float>;
-using vector_type = typename array_type::vector_register_type;
+using type        = double;
+using array_type  = fetch::memory::SharedArray<type>;
+using vector_type = typename array_type::VectorRegisterType;
 
-float InnerProduct(array_type const &A, array_type const &B)
+type InnerProduct(array_type const &A, array_type const &B)
 {
-  float ret = 0;
+  type ret = 0;
 
   ret = A.in_parallel().SumReduce(
-      [](vector_type const &a, vector_type const &b) {
-        vector_type d = a - b;
+      [](auto const &a, auto const &b) {
+        auto d = a - b;
         return d * d;
       },
       B);
@@ -37,11 +38,12 @@ float InnerProduct(array_type const &A, array_type const &B)
   return ret;
 }
 
-int main(int argc, char **argv)
+int main(int /*argc*/, char ** /*argv*/)
 {
   array_type A, B;
 
-  InnerProduct(A, B);
+  double product = InnerProduct(A, B);
+  std::cout << "product = " << product << std::endl;
 
   return 0;
 }

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,10 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/json_client.hpp"
 #include "core/commandline/params.hpp"
+#include "http/json_client.hpp"
 
+#include <cstdint>
+#include <cstdlib>
 #include <iostream>
+
+using fetch::http::JsonClient;
 
 int main(int argc, char **argv)
 {
@@ -31,16 +35,24 @@ int main(int argc, char **argv)
   uint16_t    port = 0;
   std::string method;
   std::string endpoint;
+  bool        ssl = false;
 
   parser.add(host, "host", "The hostname or IP to connect to", std::string{"api.ipify.org"});
-  parser.add(port, "port", "The port number to connect to", uint16_t{80});
+  parser.add(port, "port", "The port number to connect to", uint16_t{0});
   parser.add(method, "method", "The http method to be used", std::string{"GET"});
   parser.add(endpoint, "endpoint", "The endpoint to be requested", std::string{"/"});
+  parser.add(ssl, "ssl", "The type of the connection being requested", false);
 
   parser.Parse(argc, argv);
 
+  if (port == 0)
+  {
+    port = (ssl) ? 443u : 80u;
+  }
+
   // create the client
-  fetch::http::JsonHttpClient client(host, port);
+  JsonClient client((ssl) ? JsonClient::ConnectionMode::HTTPS : JsonClient::ConnectionMode::HTTP,
+                    host, port);
 
   fetch::variant::Variant response;
   if (client.Get("/?format=json", response))

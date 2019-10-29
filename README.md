@@ -1,10 +1,10 @@
 # Ledger
 
-Welcome to Fetch ledger repository. We are building the digital world for today, and the future.
+Welcome to Fetch.AI ledger repository. We are building the digital world for today, and the future.
 
 ## License
 
-Fetch Ledger is licensed under the Apache software license (see LICENSE file). Unless required by
+Fetch.AI Ledger is licensed under the Apache software license (see LICENSE file). Unless required by
 applicable law or agreed to in writing, software distributed under the License is distributed on an
 "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either \express or implied.
 
@@ -15,15 +15,13 @@ implement the ledger, you do so at your own risk. In no event will Fetch.AI be l
 for any damages whatsoever, even if it had been advised of the possibility of damage.
 
 As such this codebase should be treated as experimental and does not contain all currently developed
-features. Fetch will be delivering regular updates.
-
-There is no publicly available test net currently running at this point.
+features. Fetch.AI will be delivering regular updates.
 
 ## Resources
 
 1. [Website](https://fetch.ai/)
 2. [Blog](https://fetch.ai/blog)
-3. Developer Portal - Coming soon - [Signup Open](https://fetch.ai/#community)
+3. [Community Website](https://community.fetch.ai/)
 4. [Community Telegram Group](https://t.me/fetchai)
 5. [Whitepapers](https://fetch.ai/publications.html)
 6. [Roadmap](https://fetch.ai/#/roadmap)
@@ -34,40 +32,44 @@ There is no publicly available test net currently running at this point.
 * MacOS Darwin 10.13x and higher (64bit)
 * Ubuntu 18.04 (x86_64)
 
-(We plan to support all major platforms in the future)
+(We plan to support all major platforms in the future).
 
 ## Getting Started
 
-A more complete guide is available in our [Getting Started Guide](docs/source/getting_started/index.rst).
-However, the following section outlines some of the initial steps.
+```
+git clone https://github.com/fetchai/ledger.git
+cd ledger
+./scripts/quickstart.sh
+```
 
-To get started, ensure all the code along with the submodules has been checked out with the
-following commands:
+Or follow our online documentation at [building the ledger](http://docs.fetch.ai/getting-started/installation-mac/).
 
-    git clone https://github.com/fetchai/ledger.git
+## Connecting to a test network
 
-    cd ledger
+Navigate to the constellation application folder:
 
-    git submodule update --init
+```
+cd build/apps/constellation
+```
 
-## Dependencies
+Optionally delete the database files (in the case where you have been running a local network):
 
-### Ubuntu
+```
+rm -f *.db
+```
 
-    sudo apt-get install libssl-dev cmake python3-dev clang
+Connect to the `alpha` test network:
 
-### MacOS
+```
+git checkout release/v0.7.x
+./scripts/quickstart.sh
+./constellation -bootstrap -network alpha
+```
 
-    sudo brew install cmake openssl
+## Running the ledger locally
 
-## Building the code
+Alternatively, you can run the ledger locally (1 second block interval in this case):
 
-The project uses cmake so you can following formal build proceedure of:
-
-    mkdir build
-
-    cd build
-
-    cmake ../
-
-    make -j
+```
+./constellation -standalone -block-interval 1000
+```

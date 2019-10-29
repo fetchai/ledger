@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
-
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "storage/key_byte_array_store.hpp"
+
+#include <cstddef>
+#include <mutex>
+#include <string>
 
 namespace fetch {
 namespace storage {
@@ -47,10 +48,18 @@ template <typename T, std::size_t S = 2048>
 class ObjectStore
 {
 public:
-  using type            = T;
-  using self_type       = ObjectStore<T, S>;
-  using serializer_type = serializers::TypedByteArrayBuffer;
+  using type           = T;
+  using SelfType       = ObjectStore<T, S>;
+  using SerializerType = serializers::MsgPackSerializer;
+
   class Iterator;
+
+  ObjectStore()                       = default;
+  ObjectStore(ObjectStore const &rhs) = delete;
+  ObjectStore(ObjectStore &&rhs)      = delete;
+  ObjectStore &operator=(ObjectStore const &rhs) = delete;
+  ObjectStore &operator=(ObjectStore &&rhs) = delete;
+  virtual ~ObjectStore()                    = default;
 
   /**
    * Create a new file for the object store with the filename parameters for the
@@ -59,7 +68,8 @@ public:
    *
    * If these arguments correspond to existing files, it will overwrite them
    */
-  void New(std::string const &doc_file, std::string const &index_file, bool const &create = true)
+  void New(std::string const &doc_file, std::string const &index_file,
+           bool const & /*create*/ = true)
   {
     store_.New(doc_file, index_file);
   }
@@ -84,8 +94,14 @@ public:
    */
   bool Get(ResourceID const &rid, type &object)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return LocklessGet(rid, object);
+  }
+
+  void Erase(ResourceID const &rid)
+  {
+    FETCH_LOCK(mutex_);
+    LocklessErase(rid);
   }
 
   /**
@@ -97,7 +113,7 @@ public:
    */
   bool Has(ResourceID const &rid)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return LocklessHas(rid);
   }
 
@@ -110,8 +126,8 @@ public:
    */
   void Set(ResourceID const &rid, type const &object)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
-    return LocklessSet(rid, object);
+    FETCH_LOCK(mutex_);
+    LocklessSet(rid, object);
   }
 
   /**
@@ -121,16 +137,16 @@ public:
    *
    * @param: f The closure
    */
-  void WithLock(std::function<void()> const &f)
+  template <typename F>
+  void WithLock(F &&f)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     f();
   }
 
   /**
    * Do a get without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -139,21 +155,28 @@ public:
    */
   bool LocklessGet(ResourceID const &rid, type &object)
   {
+    // assert(object != nullptr);
     Document doc = store_.Get(rid);
     if (doc.failed)
     {
       return false;
     }
 
-    serializer_type ser(doc.document);
+    SerializerType ser(doc.document);
+
     ser >> object;
+
     return true;
+  }
+
+  void LocklessErase(ResourceID const &rid)
+  {
+    store_.Erase(rid);
   }
 
   /**
    * Do a has without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -168,8 +191,7 @@ public:
 
   /**
    * Do a set without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -177,14 +199,22 @@ public:
    */
   void LocklessSet(ResourceID const &rid, type const &object)
   {
-    serializer_type ser;
+    SerializerType ser;
     ser << object;
-    store_.Set(rid, ser.data());
+
+    store_.Set(rid, ser.data());  // temporarily disable disk writes
   }
 
   std::size_t size() const
   {
+    FETCH_LOCK(mutex_);
     return store_.size();
+  }
+
+  void Flush(bool lazy = true)
+  {
+    FETCH_LOCK(mutex_);
+    store_.Flush(lazy);
   }
 
   /**
@@ -196,28 +226,33 @@ public:
   class Iterator
   {
   public:
-    Iterator(typename KeyByteArrayStore<S>::Iterator it)
+    explicit Iterator(typename KeyByteArrayStore<S>::Iterator it)
       : wrapped_iterator_{it}
     {}
-    Iterator()                    = default;
-    Iterator(Iterator const &rhs) = default;
-    Iterator(Iterator &&rhs)      = default;
+    Iterator()                        = default;
+    Iterator(Iterator const &rhs)     = default;
+    Iterator(Iterator &&rhs) noexcept = default;
     Iterator &operator=(Iterator const &rhs) = default;
-    Iterator &operator=(Iterator &&rhs) = default;
+    Iterator &operator=(Iterator &&rhs) noexcept = default;
 
     void operator++()
     {
       ++wrapped_iterator_;
     }
 
-    bool operator==(Iterator const &rhs)
+    bool operator==(Iterator const &rhs) const
     {
       return wrapped_iterator_ == rhs.wrapped_iterator_;
     }
 
-    bool operator!=(Iterator const &rhs)
+    bool operator!=(Iterator const &rhs) const
     {
       return !(wrapped_iterator_ == rhs.wrapped_iterator_);
+    }
+
+    ResourceID GetKey() const
+    {
+      return ResourceID{wrapped_iterator_.GetKey()};
     }
 
     /**
@@ -229,8 +264,8 @@ public:
     {
       Document doc = *wrapped_iterator_;
 
-      type            ret;
-      serializer_type ser(doc.document);
+      type           ret;
+      SerializerType ser(doc.document);
       ser >> ret;
 
       return ret;
@@ -240,7 +275,7 @@ public:
     typename KeyByteArrayStore<S>::Iterator wrapped_iterator_;
   };
 
-  self_type::Iterator Find(ResourceID const &rid)
+  SelfType::Iterator Find(ResourceID const &rid)
   {
     auto it = store_.Find(rid);
 
@@ -257,25 +292,25 @@ public:
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  SelfType::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
     auto it = store_.GetSubtree(rid, bits);
 
     return Iterator(it);
   }
 
-  self_type::Iterator begin()
+  SelfType::Iterator begin()
   {
     return Iterator(store_.begin());
   }
 
-  self_type::Iterator end()
+  SelfType::Iterator end()
   {
     return Iterator(store_.end());
   }
 
 private:
-  mutex::Mutex         mutex_{__LINE__, __FILE__};
+  mutable Mutex        mutex_;
   KeyByteArrayStore<S> store_;
 };
 

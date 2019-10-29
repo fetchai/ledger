@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,66 +16,161 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/exception.hpp"
 #include "network/service/promise.hpp"
+
+#include <chrono>
 
 namespace fetch {
 namespace service {
 namespace details {
+namespace {
+
+using byte_array::ConstByteArray;
+using serializers::SerializableException;
+
+using Counter = PromiseImplementation::Counter;
+using State   = PromiseImplementation::State;
+
+template <typename NAME, typename ID>
+void LogTimout(NAME const &name, ID const &id)
+{
+  if (name.length() > 0)
+  {
+    FETCH_LOG_WARN(PromiseImplementation::LOGGING_NAME, "Promise '", name, "'timed out!");
+  }
+  else
+  {
+    FETCH_LOG_WARN(PromiseImplementation::LOGGING_NAME, "Promise ", id, " timed out!");
+  }
+}
+}  // namespace
 
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
-PromiseImplementation::Mutex   PromiseImplementation::counter_lock_{__LINE__, __FILE__};
+Mutex                          PromiseImplementation::counter_lock_;
+
+std::chrono::seconds const PromiseImplementation::DEFAULT_TIMEOUT{30};
+
+PromiseImplementation::PromiseImplementation(uint64_t protocol, uint64_t function)
+  : protocol_{protocol}
+  , function_{function}
+{}
+
+ConstByteArray const &PromiseImplementation::value() const
+{
+  return value_;
+}
+
+Counter PromiseImplementation::id() const
+{
+  return id_;
+}
+
+PromiseImplementation::Timepoint const &PromiseImplementation::created_at() const
+{
+  return created_;
+}
+
+PromiseImplementation::Timepoint const &PromiseImplementation::deadline() const
+{
+  return deadline_;
+}
+
+uint64_t PromiseImplementation::protocol() const
+{
+  return protocol_;
+}
+
+uint64_t PromiseImplementation::function() const
+{
+  return function_;
+}
+
+State PromiseImplementation::state() const
+{
+  if (Clock::now() >= deadline_)
+  {
+    UpdateState(State::TIMEDOUT);
+  }
+
+  return state_;
+}
+
+std::string const &PromiseImplementation::name() const
+{
+  return name_;
+}
+
+bool PromiseImplementation::IsWaiting() const
+{
+  return (State::WAITING == state());
+}
+
+bool PromiseImplementation::IsSuccessful() const
+{
+  return (State::SUCCESS == state());
+}
+
+bool PromiseImplementation::IsFailed() const
+{
+  return (State::FAILED == state());
+}
 
 PromiseBuilder PromiseImplementation::WithHandlers()
 {
   return PromiseBuilder{*this};
 }
 
-/**
- * Wait for the promise to conclude.
- *
- * @param timeout_ms The timeout (in milliseconds) to wait for the promise to be available
- * @param throw_exception Signal if the promise has failed, if it should throw the associated
- * exception
- * @return true if the promise was fulfilled, otherwise false
- */
-bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) const
+void PromiseImplementation::Fulfill(ConstByteArray const &value)
 {
-  LOG_STACK_TRACE_POINT;
+  value_ = value;
 
-  bool const      has_timeout      = (timeout_ms > 0) && (timeout_ms < FOREVER);
-  Timepoint const timeout_deadline = Clock::now() + std::chrono::milliseconds{timeout_ms};
+  UpdateState(State::SUCCESS);
+}
 
-  while (timeout_ms && IsWaiting())
+void PromiseImplementation::Fail(SerializableException const &exception)
+{
+  exception_ = std::make_unique<SerializableException>(exception);
+
+  UpdateState(State::FAILED);
+}
+
+void PromiseImplementation::Timeout()
+{
+  UpdateState(State::TIMEDOUT);
+}
+
+void PromiseImplementation::Fail()
+{
+  UpdateState(State::FAILED);
+}
+
+bool PromiseImplementation::Wait(bool throw_exception) const
+{
+  if (Clock::now() >= deadline_)
   {
-    // determine if timeout has expired
-    if (has_timeout && (Clock::now() >= timeout_deadline))
-    {
-      if (name_.length() > 0)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Promise '", name_, "'timed out!");
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " timed out!");
-      }
-      return false;
-    }
-
-    // poll period
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
-
-  if (IsWaiting())
-  {
+    LogTimout(name_, id_);
     return false;
   }
-  else if (IsFailed())
+
+  std::unique_lock<std::mutex> lock(notify_lock_);
+  while (State::WAITING == state())
+  {
+    if (std::cv_status::timeout == notify_.wait_until(lock, deadline_))
+    {
+      LogTimout(name_, id_);
+      return false;
+    }
+  }
+  State state_copy = state();
+
+  if (State::FAILED == state_copy)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " failed!");
 
     if (throw_exception && exception_)
     {
-      throw *exception_;
+      throw SerializableException{*exception_};
     }
 
     return false;
@@ -84,23 +179,54 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
   return true;
 }
 
-void PromiseImplementation::UpdateState(State state)
+void PromiseImplementation::SetSuccessCallback(Callback const &cb)
 {
-  LOG_STACK_TRACE_POINT;
+  FETCH_LOCK(callback_lock_);
+  callback_success_ = cb;
+}
 
-  if (state_.exchange(state) == State::WAITING)
+void PromiseImplementation::SetFailureCallback(Callback const &cb)
+{
+  FETCH_LOCK(callback_lock_);
+  callback_failure_ = cb;
+}
+
+void PromiseImplementation::SetCompletionCallback(Callback const &cb)
+{
+  FETCH_LOCK(callback_lock_);
+  callback_completion_ = cb;
+}
+
+void PromiseImplementation::UpdateState(State state) const
+{
+  assert(state != State::WAITING);
+
+  bool dispatch = false;
+
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Promise ", id_, " set from Waiting to ", ToString(state));
+    FETCH_LOCK(notify_lock_);
+    if (state_ == State::WAITING)
+    {
+      state_   = state;
+      dispatch = true;
+    }
+  }
 
+  if (dispatch)
+  {
+    // wake up all the pending threads
+    notify_.notify_all();
     DispatchCallbacks();
   }
 }
 
-void PromiseImplementation::DispatchCallbacks()
+void PromiseImplementation::DispatchCallbacks() const
 {
-  Callback *handler = nullptr;
+  FETCH_LOCK(callback_lock_);
 
-  switch (state_.load())
+  Callback const *handler = nullptr;
+
+  switch (state())
   {
   case State::SUCCESS:
     handler = &callback_success_;
@@ -113,7 +239,7 @@ void PromiseImplementation::DispatchCallbacks()
   }
 
   // dispatch the event
-  if (handler && *handler)
+  if ((handler != nullptr) && *handler)
   {
     // call the success or failure handler
     (*handler)();
@@ -126,15 +252,53 @@ void PromiseImplementation::DispatchCallbacks()
   }
 
   // invalidate the callbacks
-  callback_success_    = Callback{};
-  callback_failure_    = Callback{};
-  callback_completion_ = Callback{};
+  callback_success_    = nullptr;
+  callback_failure_    = nullptr;
+  callback_completion_ = nullptr;
 }
 
 PromiseImplementation::Counter PromiseImplementation::GetNextId()
 {
   FETCH_LOCK(counter_lock_);
   return counter_++;
+}
+
+// promise builder
+
+PromiseBuilder::PromiseBuilder(PromiseImplementation &promise)
+  : promise_(promise)
+{}
+
+PromiseBuilder::~PromiseBuilder()
+{
+  promise_.SetSuccessCallback(callback_success_);
+  promise_.SetFailureCallback(callback_failure_);
+  promise_.SetCompletionCallback(callback_complete_);
+
+  // in the rare (probably failure case) when the promise has been resolved during before the
+  // responses have been set
+  if (!promise_.IsWaiting())
+  {
+    promise_.DispatchCallbacks();
+  }
+}
+
+PromiseBuilder &PromiseBuilder::Then(Callback const &cb)
+{
+  callback_success_ = cb;
+  return *this;
+}
+
+PromiseBuilder &PromiseBuilder::Catch(Callback const &cb)
+{
+  callback_failure_ = cb;
+  return *this;
+}
+
+PromiseBuilder &PromiseBuilder::Finally(Callback const &cb)
+{
+  callback_complete_ = cb;
+  return *this;
 }
 
 }  // namespace details
@@ -173,6 +337,16 @@ static const std::array<PromiseState, 4> promise_states{
 const std::array<PromiseState, 4> &GetAllPromiseStates()
 {
   return promise_states;
+}
+
+Promise MakePromise()
+{
+  return std::make_shared<details::PromiseImplementation>();
+}
+
+Promise MakePromise(uint64_t pro, uint64_t func)
+{
+  return std::make_shared<details::PromiseImplementation>(pro, func);
 }
 
 }  // namespace service

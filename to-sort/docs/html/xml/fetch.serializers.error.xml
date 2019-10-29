@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<namespace id="fetch::serializers::error" name="error" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <variable id="fetch::serializers::error::TYPE_ERROR" name="TYPE_ERROR">
-    <type name="error_type" qualifier=" const" ref="fetch::serializers::error#fetch::serializers::error::error_type" />
-  </variable>
-  <typedef id="fetch::serializers::error::error_type" name="error_type">
-    <type name="uint64_t" />
-  </typedef>
-</namespace>

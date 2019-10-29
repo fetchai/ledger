@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/base_types.hpp"
 #include "core/serializers/counter.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <iomanip>
 #include <iostream>
+#include <memory>
+#include <string>
 #include <vector>
 
 using namespace fetch::serializers;
@@ -42,7 +43,7 @@ void MakeString(T &str)
 
   for (std::size_t j = 0; j < 256; ++j)
   {
-    entry[j] = uint8_t(lfg() >> 19);
+    entry[j] = uint8_t(lfg() >> 19u);
   }
 
   str = T(entry);
@@ -63,9 +64,9 @@ std::size_t PopulateData(std::vector<uint32_t> &s)
 {
   s.resize(16 * 100000);
 
-  for (std::size_t i = 0; i < s.size(); ++i)
+  for (uint32_t &i : s)
   {
-    s[i] = uint32_t(lfg());
+    i = uint32_t(lfg());
   }
 
   return sizeof(uint32_t) * s.size();
@@ -75,9 +76,9 @@ std::size_t PopulateData(std::vector<uint64_t> &s)
 {
   s.resize(16 * 100000);
 
-  for (std::size_t i = 0; i < s.size(); ++i)
+  for (uint64_t &i : s)
   {
-    s[i] = lfg();
+    i = lfg();
   }
 
   return sizeof(uint64_t) * s.size();
@@ -113,14 +114,14 @@ struct Result
 template <typename S, typename T, typename... Args>
 Result BenchmarkSingle(Args... args)
 {
-  Result      ret;
+  Result      ret{};
   T           data;
   std::size_t size = PopulateData(data, args...);
 
   S buffer;
 
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
-  SizeCounter<S>                    counter;
+  SizeCounter                       counter;
   counter << data;
   buffer.Reserve(counter.size());
   buffer << data;
@@ -163,13 +164,13 @@ int main()
   std::cout << std::setw(width) << "Ser. MBs";
   std::cout << std::setw(width) << "Des. MBs" << std::endl;
 
-  Result result;
+  Result result{};
 
-  SINGLE_BENCHMARK(ByteArrayBuffer, std::vector<uint32_t>);
-  SINGLE_BENCHMARK(ByteArrayBuffer, std::vector<uint64_t>);
-  SINGLE_BENCHMARK(ByteArrayBuffer, std::vector<ByteArray>);
-  SINGLE_BENCHMARK(ByteArrayBuffer, std::vector<ConstByteArray>);
-  SINGLE_BENCHMARK(ByteArrayBuffer, std::vector<std::string>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint32_t>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint64_t>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ConstByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<std::string>);
 
   std::cout << std::endl;
 
@@ -180,11 +181,11 @@ int main()
   std::cout << std::setw(width) << "Ser. MBs";
   std::cout << std::setw(width) << "Des. MBs" << std::endl;
 
-  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<uint32_t>);
-  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<uint64_t>);
-  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<ByteArray>);
-  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<ConstByteArray>);
-  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<std::string>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint32_t>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint64_t>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ConstByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<std::string>);
 
   return 0;
 }

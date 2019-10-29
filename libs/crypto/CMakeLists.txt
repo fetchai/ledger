@@ -1,7 +1,7 @@
-################################################################################
+#
 # F E T C H   C R Y P T O   L I B R A R Y
-################################################################################
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+#
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-crypto)
 
 # CMake Configuration
@@ -10,12 +10,23 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Main Library Target
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 setup_library(fetch-crypto)
-target_link_libraries(fetch-crypto PUBLIC fetch-core fetch-meta vendor-openssl)
+target_link_libraries(fetch-crypto
+                      PUBLIC fetch-core
+                             fetch-meta
+                             fetch-math
+                             fetch-vectorise
+                             fetch-logging
+                             vendor-openssl
+                             vendor-mcl)
+
+if (_is_clang_compiler)
+  target_compile_options(fetch-crypto PRIVATE -Wshadow)
+endif ()
 
 add_test_target()
 

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <condition_variable>
+#include "core/future_timepoint.hpp"
+#include "core/mutex.hpp"
+#include "logging/logging.hpp"
 
-#include "core/logger.hpp"
-#include "network/generics/future_timepoint.hpp"
+#include <condition_variable>
 
 namespace fetch {
 namespace network {
@@ -28,6 +29,7 @@ namespace network {
 enum class AtomicCounterName
 {
   TCP_PORT_STARTUP,
+  LOCAL_SERVICE_CONNECTIONS,
 };
 
 /**
@@ -49,7 +51,7 @@ public:
   {
     Counter &counter = GetCounter();
 
-    Lock lock(counter.mutex);
+    FETCH_LOCK(counter.mutex);
     ++counter.total;
   }
   ~AtomicInFlightCounter() = default;
@@ -58,12 +60,12 @@ public:
   {
     auto &counter = GetCounter();
 
-    Lock lock(counter.mutex);
+    FETCH_LOCK(counter.mutex);
     ++counter.complete;
     counter.cv.notify_all();
   }
 
-  static bool Wait(const FutureTimepoint &until)
+  static bool Wait(core::FutureTimepoint const &until)
   {
     auto &the_counter = GetCounter();
 
@@ -84,7 +86,6 @@ public:
 
 private:
   using CondVar = std::condition_variable;
-  using Mutex   = std::mutex;
   using Lock    = std::unique_lock<Mutex>;
 
   struct Counter

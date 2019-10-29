@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,14 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "core/logger.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 
-#include <functional>
-#include <map>
+#include <atomic>
+#include <cstddef>
 #include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace network {
@@ -33,14 +37,13 @@ namespace details {
 class NetworkManagerImplementation
   : public std::enable_shared_from_this<NetworkManagerImplementation>
 {
-  using Mutex = fetch::mutex::Mutex;
-  using Lock  = std::unique_lock<Mutex>;
-
 public:
   static constexpr char const *LOGGING_NAME = "NetworkManagerImpl";
 
-  NetworkManagerImplementation(std::size_t threads = 1)
-    : number_of_threads_(threads)
+  NetworkManagerImplementation(std::string name, std::size_t threads)
+    : name_(std::move(name))
+    , number_of_threads_(threads)
+    , running_{false}
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Creating network manager");
   }
@@ -52,11 +55,12 @@ public:
   }
 
   NetworkManagerImplementation(NetworkManagerImplementation const &) = delete;
-  NetworkManagerImplementation(NetworkManagerImplementation &&)      = default;
+  NetworkManagerImplementation(NetworkManagerImplementation &&)      = delete;
 
   void Start();
   void Work();
   void Stop();
+  bool Running();
 
   // Must only be called within a post, then the io_service_ is always
   // guaranteed to be valid
@@ -73,15 +77,17 @@ public:
   }
 
 private:
+  std::string const                         name_;
   std::thread::id                           owning_thread_;
   std::size_t                               number_of_threads_ = 1;
   std::vector<std::shared_ptr<std::thread>> threads_;
+  std::atomic<bool>                         running_;
 
   std::unique_ptr<asio::io_service> io_service_ = std::make_unique<asio::io_service>();
 
   std::shared_ptr<asio::io_service::work> shared_work_;
 
-  mutable Mutex thread_mutex_{__LINE__, __FILE__};
+  mutable Mutex thread_mutex_;
 };
 
 }  // namespace details

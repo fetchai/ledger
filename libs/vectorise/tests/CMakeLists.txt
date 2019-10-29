@@ -1,7 +1,7 @@
-################################################################################
-# F E T C H   V E C T O R I S A T I O N   T E S T S
-################################################################################
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+#
+# F E T C H   V E C T O R I S E   T E S T S
+#
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-vectorisation-tests)
 
 # CMake configuration
@@ -10,12 +10,11 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(vec_exp fetch-vectorise vectorize/approx_exp.cpp)
-add_fetch_test(parallel_dispatcher_test fetch-vectorise memory/parallel_dispatcher.cpp)
-add_fetch_test(native_test fetch-vectorise native.cpp)
-add_fetch_test(sse_test fetch-vectorise sse.cpp)
+fetch_add_test(vectorise_exponent_gtest fetch-vectorise vectorise)
+fetch_add_test(vectorise_exact_exponents_gtest fetch-vectorise meta/gtest)
 
-add_fetch_test(shared_array_tests fetch-vectorise memory/shared_array_test.cpp DISABLED)
+fetch_add_test(vectorise_memory_gtest fetch-vectorise memory)
+target_link_libraries(vectorise_memory_gtest PRIVATE fetch-core)
 
-add_fetch_gtest(vectorise_exact_exponents_gtest fetch-vectorise meta/gtest)
-
+fetch_add_slow_test(vectorise_gtest fetch-vectorise gtest)
+target_link_libraries(vectorise_gtest PRIVATE fetch-core)

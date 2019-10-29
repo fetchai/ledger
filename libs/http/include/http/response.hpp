@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,7 +21,11 @@
 #include "http/mime_types.hpp"
 #include "http/status.hpp"
 #include "network/fetch_asio.hpp"
-#include <ostream>
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <string>
 #include <utility>
 
 namespace fetch {
@@ -30,9 +34,7 @@ namespace http {
 class HTTPResponse : public std::enable_shared_from_this<HTTPResponse>
 {
 public:
-  HTTPResponse() = default;
-
-  explicit HTTPResponse(byte_array::ConstByteArray const &body,
+  explicit HTTPResponse(byte_array::ConstByteArray body = {},
                         MimeType mime = {".html", "text/html"}, Status status = Status::SUCCESS_OK)
     : body_(std::move(body))
     , mime_(std::move(mime))

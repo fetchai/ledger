@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 
 namespace fetch {
 namespace network {
-using message_type       = byte_array::ByteArray;
-using message_queue_type = std::deque<message_type>;
+using MessageType      = byte_array::ByteArray;
+using MessageQueueType = std::deque<MessageType>;
 }  // namespace network
 }  // namespace fetch

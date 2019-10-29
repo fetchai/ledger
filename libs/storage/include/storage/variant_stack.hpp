@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@
 //                                  └─────────────────────┴─────────────────────┘
 
 #include "core/assert.hpp"
+#include "core/macros.hpp"
 #include "storage/storage_exception.hpp"
+
 #include <cassert>
 #include <cstring>
 #include <fstream>
@@ -62,47 +64,42 @@ public:
   static constexpr char const *LOGGING_NAME = "VariantStack";
 
   /**
-   * Seperator holding information about previous object.
+   * Separator holding information about previous object.
    */
   struct Separator
   {
-    uint64_t type;
-    uint64_t object_size;
-    int64_t  previous;
-    Separator()
-    {
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-    Separator(uint64_t const &t, uint64_t const &o, int64_t const &p)
-    {
-      memset(this, 0, sizeof(decltype(*this)));
-      type        = t;
-      object_size = o;
-      previous    = p;
-    }
+    uint64_t type{0};
+    uint64_t object_size{0};
+    int64_t  previous{0};
+
+    Separator() = default;
+    Separator(uint64_t t, uint64_t o, int64_t p)
+      : type{t}
+      , object_size{o}
+      , previous{p}
+    {}
   };
+
+  // This check is necessary to ensure structures are correctly packed
+  static_assert(sizeof(Separator) == 24, "Header structure must be packed");
 
   /**
    * Header holding information about the stack
    */
   struct Header
   {
-    uint64_t object_count;
-    int64_t  end;
+    uint64_t object_count = 0;
+    int64_t  end          = 0;
 
-    Header(uint64_t const &o, int64_t const &e)
-    {
-      memset(this, 0, sizeof(decltype(*this)));
-      object_count = o;
-      end          = e;
-    }
-
-    Header()
-    {
-      memset(this, 0, sizeof(decltype(*this)));
-      end = sizeof(decltype(*this)) + sizeof(Separator);
-    }
+    Header() = default;
+    Header(uint64_t o, int64_t e)
+      : object_count{o}
+      , end{e}
+    {}
   };
+
+  // This check is necessary to ensure structures are correctly packed
+  static_assert(sizeof(Header) == 16, "Header structure must be packed");
 
   ~VariantStack()
   {
@@ -111,13 +108,13 @@ public:
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
+
     filename_    = filename;
     file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
     if (!file_handle_)
     {
       if (create_if_not_exists)
       {
-
         Clear();
         file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
       }
@@ -166,17 +163,17 @@ public:
    *
    */
   template <typename T>
-  void Push(T const &object, uint64_t const &type = uint64_t(-1))
+  void Push(T const &object, uint64_t type = uint64_t(-1))
   {
     assert(bool(file_handle_));
-    file_handle_.seekg(header_.end, file_handle_.beg);
+    file_handle_.seekg(header_.end, std::fstream::beg);
     Separator separator = {type, sizeof(T), header_.end};
 
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(T));
     file_handle_.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
     header_.end += sizeof(T) + sizeof(Separator);
     ++header_.object_count;
-    //    WriteHeader();
+    // WriteHeader();
   }
 
   /**
@@ -185,14 +182,14 @@ public:
   void Pop()
   {
     assert(header_.object_count != 0);
-    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), file_handle_.beg);
+    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), std::fstream::beg);
     Separator separator;
 
     file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
 
     header_.end = separator.previous;
     --header_.object_count;
-    //    WriteHeader();
+    // WriteHeader();
   }
 
   /**
@@ -207,11 +204,11 @@ public:
   {
     assert(bool(file_handle_));
 
-    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), file_handle_.beg);
+    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), std::fstream::beg);
     Separator separator;
 
     file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
-    int64_t offset = int64_t(sizeof(Separator) + separator.object_size);
+    auto offset = int64_t(sizeof(Separator) + separator.object_size);
 
     if (separator.object_size != sizeof(T))
     {
@@ -223,7 +220,7 @@ public:
       throw StorageException(ret.str());
     }
 
-    file_handle_.seekg(header_.end - offset, file_handle_.beg);
+    file_handle_.seekg(header_.end - offset, std::fstream::beg);
     file_handle_.read(reinterpret_cast<char *>(&object), sizeof(T));
     return separator.type;
   }
@@ -235,7 +232,7 @@ public:
    */
   uint64_t Type()
   {
-    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), file_handle_.beg);
+    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), std::fstream::beg);
     Separator separator;
 
     file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
@@ -246,17 +243,18 @@ public:
   /**
    * Reset the state of the file handle to starting conditions. This consists of a header and a
    * separator (it is convenient to have a starting invalid separator).
-   *
    */
   void Clear()
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
-    fin.seekg(0, fin.beg);
+    fin.seekg(0, decltype(fin)::beg);
 
     Separator separator = {HEADER_OBJECT, 0, UNDEFINED_POSITION};
 
-    header_ = Header();
+    header_     = Header();
+    header_.end = sizeof(Header) + sizeof(Separator);
+
     fin.write(reinterpret_cast<char const *>(&header_), sizeof(Header));
     fin.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
 
@@ -267,21 +265,29 @@ public:
   {
     return header_.object_count == 0;
   }
+
   std::size_t size() const
   {
     return std::size_t(header_.object_count);
   }
 
+  void Flush(bool lazy = false)
+  {
+    FETCH_UNUSED(lazy);
+
+    WriteHeader();
+  }
+
 protected:
   void ReadHeader()
   {
-    file_handle_.seekg(0, file_handle_.beg);
+    file_handle_.seekg(0, std::fstream::beg);
     file_handle_.read(reinterpret_cast<char *>(&header_), sizeof(Header));
   }
 
   void WriteHeader()
   {
-    file_handle_.seekg(0, file_handle_.beg);
+    file_handle_.seekg(0, std::fstream::beg);
     file_handle_.write(reinterpret_cast<char const *>(&header_), sizeof(Header));
   }
 

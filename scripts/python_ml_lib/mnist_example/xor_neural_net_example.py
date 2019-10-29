@@ -1,5 +1,3 @@
-
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -24,14 +22,14 @@ for t in range(200):
     y_pred = h_relu.dot(w2)
 
     # Compute and print loss
-    loss = np.square(y_pred - y).sum() # loss function
+    loss = np.square(y_pred - y).sum()  # loss function
     loss_col.append(loss)
     print(t, loss, y_pred)
 
     # Backprop to compute gradients of w1 and w2 with respect to loss
-    grad_y_pred = 2.0 * (y_pred - y) # the last layer's error
+    grad_y_pred = 2.0 * (y_pred - y)  # the last layer's error
     grad_w2 = h_relu.T.dot(grad_y_pred)
-    grad_h_relu = grad_y_pred.dot(w2.T) # the second laye's error
+    grad_h_relu = grad_y_pred.dot(w2.T)  # the second laye's error
     grad_h = grad_h_relu.copy()
     grad_h[h < 0] = 0  # the derivate of ReLU
     grad_w1 = x.T.dot(grad_h)

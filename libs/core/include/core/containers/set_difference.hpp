@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,6 +26,18 @@ namespace fetch {
 
 template <typename K>
 std::unordered_set<K> operator-(std::unordered_set<K> const &lhs, std::unordered_set<K> const &rhs)
+{
+  std::unordered_set<K> result;
+
+  std::copy_if(lhs.begin(), lhs.end(), std::inserter(result, result.begin()),
+               [&rhs](K const &item) { return rhs.find(item) == rhs.end(); });
+
+  return result;
+}
+
+template <typename K, typename V, typename H>
+std::unordered_set<K, H> operator-(std::unordered_set<K, H> const &   lhs,
+                                   std::unordered_map<K, V, H> const &rhs)
 {
   std::unordered_set<K> result;
 

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,172 +17,184 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/block_entropy.hpp"
+#include "chain/address.hpp"
+#include "chain/transaction_layout.hpp"
+#include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/encoders.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "crypto/fnv.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "core/digest.hpp"
+#include "core/serializers/base_types.hpp"
+#include "ledger/chain/consensus/proof_of_work.hpp"
+#include "ledger/dag/dag_epoch.hpp"
+#include "moment/clocks.hpp"
+
+#include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
-struct BlockSlice
-{
-  std::vector<TransactionSummary> transactions;
-};
-
-template <typename T>
-void Serialize(T &serializer, BlockSlice const &slice)
-{
-  serializer << slice.transactions;
-}
-
-template <typename T>
-void Deserialize(T &serializer, BlockSlice &slice)
-{
-  serializer >> slice.transactions;
-}
-
-struct BlockBody
-{
-  using digest_type       = byte_array::ConstByteArray;
-  using block_slices_type = std::vector<BlockSlice>;
-
-  digest_type hash;
-  digest_type previous_hash;
-  digest_type merkle_hash;
-  // digest_type       state_hash;
-  uint64_t          block_number{0};
-  uint64_t          miner_number{0};
-  uint64_t          nonce{0};
-  uint32_t          log2_num_lanes{0};
-  block_slices_type slices;
-};
-
-template <typename T>
-void Serialize(T &serializer, BlockBody const &body)
-{
-  serializer << body.previous_hash << body.merkle_hash << body.nonce << body.block_number
-             << body.miner_number << body.log2_num_lanes << body.slices;
-}
-
-template <typename T>
-void Deserialize(T &serializer, BlockBody &body)
-{
-  serializer >> body.previous_hash >> body.merkle_hash >> body.nonce >> body.block_number >>
-      body.miner_number >> body.log2_num_lanes >> body.slices;
-}
-
-template <typename P, typename H>
-class BasicBlock
+/**
+ * The block class constitutes the complete node that forms the main chain. The block class is
+ * split into two levels. The body, which is consensus agnostic and the main block which has
+ * consensus specific details.
+ */
+class Block
 {
 public:
-  using body_type   = BlockBody;
-  using hasher_type = H;
-  using proof_type  = P;
-  using digest_type = byte_array::ConstByteArray;
+  using Proof        = consensus::ProofOfWork;
+  using Slice        = std::vector<chain::TransactionLayout>;
+  using Slices       = std::vector<Slice>;
+  using DAGEpoch     = fetch::ledger::DAGEpoch;
+  using Hash         = Digest;
+  using Weight       = uint64_t;
+  using BlockEntropy = beacon::BlockEntropy;
+  using Identity     = crypto::Identity;
+  using SystemClock  = moment::ClockPtr;
 
-  body_type const &SetBody(body_type const &body)
+  Block();
+
+  bool operator==(Block const &rhs) const;
+
+  struct Body
   {
-    body_ = body;
-    return body_;
+    Digest         hash;               ///< The hash of the block
+    Digest         previous_hash;      ///< The hash of the previous block
+    Digest         merkle_hash;        ///< The merkle state hash across all shards
+    uint64_t       block_number{0};    ///< The height of the block from genesis
+    chain::Address miner;              ///< The identity of the generated miner
+    Identity       miner_id;           ///< The identity of the generated miner
+    uint32_t       log2_num_lanes{0};  ///< The log2(number of lanes)
+    Slices         slices;             ///< The slice lists
+    DAGEpoch       dag_epoch;          ///< DAG epoch containing information on new dag_nodes
+    uint64_t       timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
+    BlockEntropy   block_entropy;  ///< Entropy that determines miner priority for the next block
+  };
+
+  /// @name Block Contents
+  /// @{
+  Body body;  ///< The core fields that make up a block
+  /// @}
+
+  // Miners in qual must sign the block.
+  Digest miner_signature;
+
+  /// @name Proof of Work specifics
+  /// @{
+  uint64_t nonce{0};  ///< The nonce field associated with the proof
+  Proof    proof;     ///< The consensus proof
+  /// @}
+
+  // TODO(HUT): This should be part of body since it's no longer going to be metadata
+  Weight weight = 1;
+
+  /// @name Metadata for block management
+  /// @{
+  Weight total_weight = 1;
+  bool   is_loose     = false;
+  /// @}
+
+  // Helper functions
+  std::size_t GetTransactionCount() const;
+  void        UpdateDigest();
+  void        UpdateTimestamp();
+  SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
+};
+}  // namespace ledger
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<ledger::Block::Body, D>
+{
+public:
+  using Type       = ledger::Block::Body;
+  using DriverType = D;
+
+  static uint8_t const HASH           = 1;
+  static uint8_t const PREVIOUS_HASH  = 2;
+  static uint8_t const MERKLE_HASH    = 3;
+  static uint8_t const BLOCK_NUMBER   = 4;
+  static uint8_t const MINER          = 5;
+  static uint8_t const MINER_ID       = 6;
+  static uint8_t const LOG2_NUM_LANES = 7;
+  static uint8_t const SLICES         = 8;
+  static uint8_t const DAG_EPOCH      = 9;
+  static uint8_t const TIMESTAMP      = 10;
+  static uint8_t const ENTROPY        = 11;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &body)
+  {
+    auto map = map_constructor(11);
+    map.Append(HASH, body.hash);
+    map.Append(PREVIOUS_HASH, body.previous_hash);
+    map.Append(MERKLE_HASH, body.merkle_hash);
+    map.Append(BLOCK_NUMBER, body.block_number);
+    map.Append(MINER, body.miner);
+    map.Append(MINER_ID, body.miner_id);
+    map.Append(LOG2_NUM_LANES, body.log2_num_lanes);
+    map.Append(SLICES, body.slices);
+    map.Append(DAG_EPOCH, body.dag_epoch);
+    map.Append(TIMESTAMP, body.timestamp);
+    map.Append(ENTROPY, body.block_entropy);
   }
 
-  // Meta: Update hash
-  void UpdateDigest()
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &body)
   {
-    serializers::ByteArrayBuffer buf;
-    buf << body_.previous_hash << body_.merkle_hash << body_.block_number << body_.nonce
-        << body_.miner_number;
-
-    hasher_type hash;
-    hash.Reset();
-    hash.Update(buf.data());
-    body_.hash = hash.Final();
-
-    proof_.SetHeader(body_.hash);
+    map.ExpectKeyGetValue(HASH, body.hash);
+    map.ExpectKeyGetValue(PREVIOUS_HASH, body.previous_hash);
+    map.ExpectKeyGetValue(MERKLE_HASH, body.merkle_hash);
+    map.ExpectKeyGetValue(BLOCK_NUMBER, body.block_number);
+    map.ExpectKeyGetValue(MINER, body.miner);
+    map.ExpectKeyGetValue(MINER_ID, body.miner_id);
+    map.ExpectKeyGetValue(LOG2_NUM_LANES, body.log2_num_lanes);
+    map.ExpectKeyGetValue(SLICES, body.slices);
+    map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);
+    map.ExpectKeyGetValue(TIMESTAMP, body.timestamp);
+    map.ExpectKeyGetValue(ENTROPY, body.block_entropy);
   }
-
-  body_type const &body() const
-  {
-    return body_;
-  }
-
-  body_type &body()
-  {
-    return body_;
-  }
-
-  digest_type const &hash() const
-  {
-    return body_.hash;
-  }
-
-  digest_type const &prev() const
-  {
-    return body_.previous_hash;
-  }
-
-  proof_type const &proof() const
-  {
-    return proof_;
-  }
-
-  proof_type &proof()
-  {
-    return proof_;
-  }
-
-  uint64_t &weight()
-  {
-    return weight_;
-  }
-
-  uint64_t &totalWeight()
-  {
-    return total_weight_;
-  }
-
-  uint64_t const &totalWeight() const
-  {
-    return total_weight_;
-  }
-
-  bool &loose()
-  {
-    return is_loose_;
-  }
-
-private:
-  body_type  body_;
-  proof_type proof_;
-
-  // META data to help with block management
-  uint64_t weight_       = 1;
-  uint64_t total_weight_ = 1;
-  bool     is_loose_     = true;
-
-  template <typename AT, typename AP, typename AH>
-  friend inline void Serialize(AT &serializer, BasicBlock<AP, AH> const &);
-
-  template <typename AT, typename AP, typename AH>
-  friend inline void Deserialize(AT &serializer, BasicBlock<AP, AH> &b);
 };
 
-template <typename T, typename P, typename H>
-inline void Serialize(T &serializer, BasicBlock<P, H> const &b)
+template <typename D>
+struct MapSerializer<ledger::Block, D>
 {
-  serializer << b.body_ << b.proof();
-}
+public:
+  using Type       = ledger::Block;
+  using DriverType = D;
 
-template <typename T, typename P, typename H>
-inline void Deserialize(T &serializer, BasicBlock<P, H> &b)
-{
-  BlockBody body;
-  serializer >> body >> b.proof();
-  b.SetBody(body);
-}
-}  // namespace chain
+  static uint8_t const BODY            = 1;
+  static uint8_t const NONCE           = 2;
+  static uint8_t const PROOF           = 3;
+  static uint8_t const WEIGHT          = 4;
+  static uint8_t const TOTAL_WEIGHT    = 5;
+  static uint8_t const MINER_SIGNATURE = 6;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &block)
+  {
+    auto map = map_constructor(6);
+    map.Append(BODY, block.body);
+    map.Append(NONCE, block.nonce);
+    map.Append(PROOF, block.proof);
+    map.Append(WEIGHT, block.weight);
+    map.Append(TOTAL_WEIGHT, block.total_weight);
+    map.Append(MINER_SIGNATURE, block.miner_signature);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &block)
+  {
+    map.ExpectKeyGetValue(BODY, block.body);
+    map.ExpectKeyGetValue(NONCE, block.nonce);
+    map.ExpectKeyGetValue(PROOF, block.proof);
+    map.ExpectKeyGetValue(WEIGHT, block.weight);
+    map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
+    map.ExpectKeyGetValue(MINER_SIGNATURE, block.miner_signature);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

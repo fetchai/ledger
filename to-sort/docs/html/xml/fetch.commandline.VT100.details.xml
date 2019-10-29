@@ -1,6 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<namespace id="fetch::commandline::VT100::details" name="details" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <variable id="fetch::commandline::VT100::details::color_map" name="color_map">
-    <type name="std::__1::map&lt;std::__1::basic_string&lt;char&gt;, unsigned short, std::__1::less&lt;std::__1::basic_string&lt;char&gt; &gt;, std::__1::allocator&lt;std::__1::pair&lt;const std::__1::basic_string&lt;char&gt;, unsigned short&gt; &gt; &gt;" qualifier=" const" />
-  </variable>
-</namespace>

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
 namespace byte_array {
 
 ConstByteArray FromBase64(ConstByteArray const &str) noexcept;
 ConstByteArray FromHex(ConstByteArray const &str) noexcept;
+ConstByteArray FromBase58(ConstByteArray const &str);
+
 }  // namespace byte_array
 }  // namespace fetch

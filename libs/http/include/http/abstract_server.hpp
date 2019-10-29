@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,31 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
-#include "http/request.hpp"
+
+#include <cstdint>
 
 namespace fetch {
 namespace http {
 
+class HTTPRequest;
+
 class AbstractHTTPServer
 {
 public:
-  using handle_type = uint64_t;
+  using HandleType = uint64_t;
 
-  virtual void PushRequest(handle_type client, HTTPRequest req) = 0;
+  virtual void PushRequest(HandleType client, HTTPRequest req) = 0;
 
-  static handle_type next_handle()
+  static HandleType next_handle()
   {
-    std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
-    handle_type                          ret = global_handle_counter_;
+    FETCH_LOCK(global_handle_mutex_);
+    HandleType ret = global_handle_counter_;
     ++global_handle_counter_;
     return ret;
   }
 
 private:
-  static handle_type         global_handle_counter_;
-  static fetch::mutex::Mutex global_handle_mutex_;
+  static HandleType global_handle_counter_;
+  static Mutex      global_handle_mutex_;
 };
 
 }  // namespace http

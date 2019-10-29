@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,69 +17,81 @@
 //
 //------------------------------------------------------------------------------
 
-#include <core/byte_array/const_byte_array.hpp>
-#include <crypto/sha256.hpp>
-#include <math/bignumber.hpp>
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/group_definitions.hpp"
+#include "vectorise/uint/uint.hpp"
+
+#include <cstddef>
+#include <utility>
+
 namespace fetch {
-namespace chain {
+namespace ledger {
 namespace consensus {
 
-class ProofOfWork : public math::BigUnsigned
+class ProofOfWork : public vectorise::UInt<256>
 {
 public:
-  using super_type  = math::BigUnsigned;
-  using header_type = byte_array::ConstByteArray;
+  using UInt256    = vectorise::UInt<256>;
+  using HeaderType = byte_array::ConstByteArray;
 
+  // Construction / Destruction
   ProofOfWork() = default;
-  ProofOfWork(header_type header)
-  {
-    header_ = header;
-  }
+  explicit ProofOfWork(HeaderType header);
+  ~ProofOfWork() = default;
 
-  bool operator()()
-  {
-    crypto::SHA256 hasher;
-    hasher.Reset();
-    hasher.Update(header_);
-    hasher.Update(*this);
-    digest_ = hasher.Final();
-    hasher.Reset();
-    hasher.Update(digest_);
-    digest_ = hasher.Final();
+  bool operator()();
 
-    return digest_ < target_;
-  }
+  void SetTarget(std::size_t zeros);
+  void SetTarget(UInt256 &&target);
+  void SetHeader(byte_array::ByteArray const &header);
 
-  void SetTarget(std::size_t zeros)
-  {
-    target_ = 1;
-    target_ <<= 8 * sizeof(uint8_t) * super_type::size() - 1 - zeros;
-  }
-
-  void SetHeader(byte_array::ByteArray header)
-  {
-    header_ = header;
-    assert(header_ == header);
-  }
-
-  header_type const &header() const
-  {
-    return header_;
-  }
-  math::BigUnsigned digest() const
-  {
-    return digest_;
-  }
-  math::BigUnsigned target() const
-  {
-    return target_;
-  }
+  HeaderType const &header() const;
+  UInt256 const &   digest() const;
+  UInt256 const &   target() const;
 
 private:
-  math::BigUnsigned digest_;
-  math::BigUnsigned target_;
-  header_type       header_;
+  UInt256                    digest_;
+  UInt256                    target_;
+  byte_array::ConstByteArray header_;
 };
+
 }  // namespace consensus
-}  // namespace chain
+}  // namespace ledger
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<ledger::consensus::ProofOfWork, D>
+{
+public:
+  using Type       = ledger::consensus::ProofOfWork;
+  using DriverType = D;
+
+  static uint8_t const HEADER = 1;
+  static uint8_t const TARGET = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &p)
+  {
+    auto map = map_constructor(2);
+    map.Append(HEADER, p.header());
+    map.Append(TARGET, p.target());
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &p)
+  {
+    byte_array::ConstByteArray header;
+    vectorise::UInt<256>       target;
+
+    map.ExpectKeyGetValue(HEADER, header);
+    map.ExpectKeyGetValue(TARGET, target);
+
+    p.SetHeader(header);
+    p.SetTarget(std::move(target));
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

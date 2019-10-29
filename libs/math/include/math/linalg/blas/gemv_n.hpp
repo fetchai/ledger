@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,22 +47,22 @@
 
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
+#include "math/tensor_view.hpp"
 
 namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename S, typename MATRIX, uint64_t V>
-class Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-           Computes(_y = _alpha * _A * _x + _beta * _y), V>
+template <typename S, uint64_t V>
+class Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+           Computes(_y <= _alpha * _A * _x + _beta * _y), V>
 {
 public:
-  using type = S;
+  using Type               = S;
+  using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
 
-  void operator()(type const &alpha, MATRIX const &a,
-                  ShapeLessArray<type, memory::SharedArray<type>> const &x, int const &incx,
-                  type const &beta, ShapeLessArray<type, memory::SharedArray<type>> &y,
-                  int const &incy) const;
+  void operator()(Type alpha, TensorView<Type> a, TensorView<Type> x, int incx, Type beta,
+                  TensorView<Type> y, int incy) const;
 };
 
 }  // namespace linalg

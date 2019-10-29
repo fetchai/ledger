@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/set_thread_name.hpp"
 
 #include <condition_variable>
 #include <functional>
@@ -37,14 +38,20 @@ public:
     : Pool(2 * std::thread::hardware_concurrency())
   {}
 
-  Pool(std::size_t const &n)
+  explicit Pool(std::size_t n, std::string name = std::string{})
+    : concurrency_{n}
+    , name_{std::move(name)}
   {
-    running_           = true;
-    tasks_in_progress_ = 0;
-
     for (std::size_t i = 0; i < n; ++i)
     {
-      workers_.emplace_back([this]() { this->Work(); });
+      workers_.emplace_back([this, i]() {
+        if (!name_.empty())
+        {
+          SetThreadName(name_, i);
+        }
+
+        this->Work();
+      });
     }
   }
 
@@ -53,7 +60,7 @@ public:
     running_ = false;
 
     {
-      std::lock_guard<std::mutex> lock(mutex_);
+      FETCH_LOCK(mutex_);
       condition_.notify_all();
     }
 
@@ -66,14 +73,14 @@ public:
   template <typename F, typename... Args>
   std::future<typename std::result_of<F(Args...)>::type> Dispatch(F &&f, Args &&... args)
   {
-    using return_type = typename std::result_of<F(Args...)>::type;
-    using task_type   = std::packaged_task<return_type()>;
+    using ReturnType = typename std::result_of<F(Args...)>::type;
+    using TaskType   = std::packaged_task<ReturnType()>;
 
-    std::shared_ptr<task_type> task =
-        std::make_shared<task_type>(std::bind(f, std::forward<Args>(args)...));
+    std::shared_ptr<TaskType> task =
+        std::make_shared<TaskType>(std::bind(f, std::forward<Args>(args)...));
 
     {
-      std::lock_guard<std::mutex> lock(mutex_);
+      FETCH_LOCK(mutex_);
       tasks_.emplace([task]() { (*task)(); });
     }
 
@@ -95,8 +102,13 @@ public:
 
   bool Empty()
   {
-    std::unique_lock<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return tasks_.empty();
+  }
+
+  std::size_t concurrency() const
+  {
+    return concurrency_;
   }
 
 private:
@@ -104,7 +116,7 @@ private:
   {
     while (running_)
     {
-      std::function<void()> task = NextTask();
+      auto task = NextTask();
       if (task)
       {
         task();
@@ -119,18 +131,20 @@ private:
     condition_.wait(lock, [this] { return (!bool(running_)) || (!tasks_.empty()); });
     if (!bool(running_))
     {
-      return std::function<void()>();
+      return {};
     }
 
-    std::function<void()> task = tasks_.front();
+    auto task = tasks_.front();
     ++tasks_in_progress_;
 
     tasks_.pop();
     return task;
   }
 
-  std::atomic<uint32_t>             tasks_in_progress_;
-  std::atomic<bool>                 running_;
+  std::size_t const                 concurrency_;
+  std::string                       name_{};
+  std::atomic<uint32_t>             tasks_in_progress_{0};
+  std::atomic<bool>                 running_{true};
   std::mutex                        mutex_;
   std::vector<std::thread>          workers_;
   std::queue<std::function<void()>> tasks_;

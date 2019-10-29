@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,52 +20,65 @@
 #include <cstdint>
 #include <cstdlib>
 #include <limits>
+#include <utility>
 
 namespace fetch {
 namespace random {
 class LinearCongruentialGenerator
 {
 public:
-  using random_type = uint64_t;
+  using RandomType = uint64_t;
 
-  random_type Seed() const
+  // Note, breaking naming convention for STL compatibility
+  using result_type = RandomType;
+
+  explicit LinearCongruentialGenerator(RandomType seed = 42) noexcept
+  {
+    Seed(seed);
+  }
+
+  RandomType Seed() const noexcept
   {
     return seed_;
   }
-  random_type Seed(random_type const &s)
+
+  RandomType Seed(RandomType const &s) noexcept
   {
     return x_ = seed_ = s;
   }
-  void Reset()
+
+  void Reset() noexcept
   {
     Seed(Seed());
   }
-  random_type operator()()
+
+  RandomType operator()() noexcept
   {
     return x_ = x_ * a_ + c_;
   }
-  double AsDouble()
+
+  double AsDouble() noexcept
   {
-    return double(this->operator()()) * inv_double_max_;
+    return static_cast<double>(this->operator()()) * inv_double_max_;
   }
 
-  static constexpr random_type max()
+  static constexpr RandomType max() noexcept
   {
-    return std::numeric_limits<random_type>::max();
+    return std::numeric_limits<RandomType>::max();
   }
 
-  static constexpr random_type min()
+  static constexpr RandomType min() noexcept
   {
-    return std::numeric_limits<random_type>::min();
+    return std::numeric_limits<RandomType>::min();
   }
 
 private:
-  random_type x_    = 1;
-  random_type seed_ = 1;
-  random_type a_    = 6364136223846793005ull;
-  random_type c_    = 1442695040888963407ull;
+  RandomType x_    = 1;
+  RandomType seed_ = 1;
+  RandomType a_    = 6364136223846793005ull;
+  RandomType c_    = 1442695040888963407ull;
 
-  static constexpr double inv_double_max_ = 1. / double(std::numeric_limits<random_type>::max());
+  static constexpr double inv_double_max_ = 1. / double(std::numeric_limits<RandomType>::max());
 };
 }  // namespace random
 }  // namespace fetch

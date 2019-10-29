@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "logging/logging.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
 #include "network/tcp/client_implementation.hpp"
@@ -37,13 +36,13 @@ namespace network {
 class TCPClient
 {
 public:
-  using network_manager_type = NetworkManager;
-  using handle_type          = uint64_t;
-  using implementation_type  = TCPClientImplementation;
-  using pointer_type         = std::shared_ptr<implementation_type>;
+  using NetworkManagerType = NetworkManager;
+  using HandleType         = uint64_t;
+  using ImplementationType = TCPClientImplementation;
+  using PointerType        = std::shared_ptr<ImplementationType>;
 
-  explicit TCPClient(network_manager_type network_manager)
-    : pointer_{std::make_shared<implementation_type>(network_manager)}
+  explicit TCPClient(NetworkManagerType network_manager)
+    : pointer_{std::make_shared<ImplementationType>(network_manager)}
   {
     // Note we register handles here, but do not connect until the base class
     // constructed
@@ -56,10 +55,7 @@ public:
   TCPClient &operator=(TCPClient const &rhs) = delete;
   TCPClient &operator=(TCPClient &&rhs) = delete;
 
-  ~TCPClient() noexcept
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  ~TCPClient() = default;
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {
@@ -82,7 +78,7 @@ public:
     }
   }
 
-  void OnMessage(std::function<void(network::message_type const &msg)> const &f)
+  void OnMessage(std::function<void(network::MessageType const &msg)> const &f)
   {
     if (pointer_)
     {
@@ -108,12 +104,12 @@ public:
     return pointer_->Closed();
   }
 
-  void Send(message_type const &msg) noexcept
+  void Send(MessageType const &msg) noexcept
   {
     pointer_->Send(msg);
   }
 
-  handle_type handle() const noexcept
+  HandleType handle() const noexcept
   {
     return pointer_->handle();
   }
@@ -128,7 +124,7 @@ public:
     return pointer_->is_alive();
   }
 
-  typename implementation_type::weak_ptr_type connection_pointer()
+  typename ImplementationType::WeakPointerType connection_pointer()
   {
     return pointer_->connection_pointer();
   }
@@ -150,7 +146,7 @@ public:
   }
 
 protected:
-  pointer_type pointer_;
+  PointerType pointer_;
 };
 
 }  // namespace network

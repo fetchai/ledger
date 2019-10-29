@@ -1,8 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<namespace id="fetch::mutex" name="mutex" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <class name="DebugMutex" ref="fetch::mutex::DebugMutex#fetch::mutex::DebugMutex" />
-  <class name="ProductionMutex" ref="fetch::mutex::ProductionMutex#fetch::mutex::ProductionMutex" />
-  <typedef id="fetch::mutex::Mutex" name="Mutex">
-    <type name="DebugMutex" ref="fetch::mutex::DebugMutex#fetch::mutex::DebugMutex" />
-  </typedef>
-</namespace>

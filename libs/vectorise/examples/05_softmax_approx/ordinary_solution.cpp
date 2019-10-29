@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstddef>
+#include <cstdlib>
 #include <iostream>
 #include <vector>
 
@@ -30,7 +32,7 @@ void SoftMax(array_type const &A, array_type &B)
 
   for (std::size_t i = 0; i < A.size(); ++i)
   {
-    type e = type(std::exp(A[i]));
+    auto e = type(std::exp(A[i]));
     B[i]   = e;
     sum += e;
   }
@@ -51,7 +53,7 @@ int main(int argc, char const **argv)
     std::cout << std::endl;
     return 0;
   }
-  std::size_t N = std::size_t(atoi(argv[1]));
+  auto N = std::size_t(std::atoi(argv[1]));
 
   std::vector<type> A, B;
 

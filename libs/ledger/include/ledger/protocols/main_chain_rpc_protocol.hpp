@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "network/service/protocol.hpp"
@@ -28,36 +28,60 @@ namespace ledger {
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Block     = chain::MainChain::BlockType;
-  using BlockList = std::vector<Block>;
-  using BlockHash = chain::MainChain::BlockHash;
+  using Blocks = std::vector<Block>;
 
   enum
   {
-    HEAVIEST_CHAIN  = 1,
-    CHAIN_PRECEDING = 2,
+    HEAVIEST_CHAIN   = 1,
+    TIME_TRAVEL      = 2,
+    COMMON_SUB_CHAIN = 3
   };
 
-  explicit MainChainProtocol(chain::MainChain &chain)
+  explicit MainChainProtocol(MainChain &chain)
     : chain_(chain)
   {
     Expose(HEAVIEST_CHAIN, this, &MainChainProtocol::GetHeaviestChain);
-    Expose(CHAIN_PRECEDING, this, &MainChainProtocol::GetChainPreceding);
+    Expose(COMMON_SUB_CHAIN, this, &MainChainProtocol::GetCommonSubChain);
+    Expose(TIME_TRAVEL, this, &MainChainProtocol::TimeTravel);
   }
 
 private:
-  std::vector<Block> GetHeaviestChain(uint32_t const &maxsize)
+  Blocks GetHeaviestChain(uint64_t maxsize)
   {
-    LOG_STACK_TRACE_POINT;
-    return chain_.HeaviestChain(maxsize);
-  }
-  std::vector<Block> GetChainPreceding(const BlockHash &at, uint32_t const &maxsize)
-  {
-    LOG_STACK_TRACE_POINT;
-    return chain_.ChainPreceding(at, maxsize);
+    return Copy(chain_.GetHeaviestChain(maxsize));
   }
 
-  chain::MainChain &chain_;
+  Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit)
+  {
+    MainChain::Blocks blocks;
+
+    // TODO(issue 1725): this can cause issue if it doesn't exist (?)
+    if (!chain_.GetPathToCommonAncestor(blocks, std::move(start), std::move(last_seen), limit))
+    {
+      return Blocks{};
+    }
+    return Copy(blocks);
+  }
+
+  Blocks TimeTravel(Digest start, int64_t limit)
+  {
+    return Copy(chain_.TimeTravel(std::move(start), limit));
+  }
+
+  static Blocks Copy(MainChain::Blocks const &blocks)
+  {
+    Blocks output{};
+    output.reserve(blocks.size());
+
+    for (auto const &block : blocks)
+    {
+      output.emplace_back(*block);
+    }
+
+    return output;
+  }
+
+  MainChain &chain_;
 };
 
 }  // namespace ledger

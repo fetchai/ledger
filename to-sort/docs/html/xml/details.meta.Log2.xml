@@ -1,6 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<struct id="details::meta::Log2" name="Log2" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <enum anonymous="yes" id="details::meta::Log2::(anonymous::1)" name="(anonymous::1)">
-    <enumvalue id="details::meta::Log2::value" name="value" value="0" />
-  </enum>
-</struct>

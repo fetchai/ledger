@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,20 +18,22 @@
 
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
+
 #include <chrono>
+#include <cstddef>
+#include <cstdlib>
 #include <iostream>
-#include <vector>
 
 using type        = float;
 using array_type  = fetch::memory::Array<type>;
-using vector_type = typename array_type::vector_register_type;
+using vector_type = typename array_type::VectorRegisterType;
 
 void RelativeDifference(array_type const &A, array_type const &B, array_type &C)
 {
-  vector_type cst(0.5);
-  C.in_parallel().Apply([cst](vector_type const &a, vector_type const &b,
-                              vector_type &c) { c = cst * (a - b) / (a + b); },
-                        A, B);
+  type cst{0.5};
+  C.in_parallel().Apply(
+      [cst](auto const &a, auto const &b, auto &c) { c = decltype(a)(cst) * (a - b) / (a + b); }, A,
+      B);
 }
 
 int main(int argc, char const **argv)
@@ -44,13 +46,13 @@ int main(int argc, char const **argv)
     return 0;
   }
 
-  std::size_t N = std::size_t(atoi(argv[1]));
-  array_type  A(N), B(N), C(N);
+  auto       N = std::size_t(std::atoi(argv[1]));
+  array_type A(N), B(N), C(N);
 
   for (std::size_t i = 0; i < N; ++i)
   {
     A[i] = type(i);
-    B[i] = 2 * type(i);
+    B[i] = type(i) * 2;
   }
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();

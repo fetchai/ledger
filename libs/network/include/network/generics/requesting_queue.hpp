@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
 #include "network/generics/promise_of.hpp"
 #include "network/service/promise.hpp"
 
@@ -30,17 +30,15 @@
 namespace fetch {
 namespace network {
 
-template <typename K, typename R, typename P = PromiseOf<R>>
+template <typename K, typename R, typename P = PromiseOf<R>, typename H = std::hash<K>>
 class RequestingQueueOf
 {
 public:
   using Key          = K;
   using Promised     = R;
-  using Mutex        = fetch::mutex::Mutex;
-  using Lock         = std::lock_guard<Mutex>;
   using Promise      = P;
   using PromiseState = fetch::service::PromiseState;
-  using PromiseMap   = std::unordered_map<Key, Promise>;
+  using PromiseMap   = std::unordered_map<Key, Promise, H>;
   using KeySet       = std::unordered_set<Key>;
   using Counter      = std::atomic<std::size_t>;
   using Timepoint    = typename Promise::Timepoint;
@@ -77,6 +75,7 @@ public:
 
   SuccessfulResults Get(std::size_t limit);
   FailedResults     GetFailures(std::size_t limit);
+  PromiseMap        GetPending();
 
   KeySet FilterOutInFlight(KeySet const &inputs);
   bool   IsInFlight(Key const &key) const;
@@ -84,17 +83,20 @@ public:
   Counters Resolve();
   Counters Resolve(Timepoint const &time_point);
 
-  bool HasCompletedPromises() const;
-  bool HasFailedPromises() const;
-  void DiscardFailures();
-  void DiscardCompleted();
+  bool        HasCompletedPromises() const;
+  bool        HasFailedPromises() const;
+  void        DiscardFailures();
+  void        DiscardCompleted();
+  bool        Empty() const;
+  uint64_t    Size() const;
+  std::size_t GetNumPending() const;
 
   // Operators
   RequestingQueueOf &operator=(RequestingQueueOf const &) = delete;
   RequestingQueueOf &operator=(RequestingQueueOf &&) = delete;
 
 private:
-  mutable Mutex     mutex_{__LINE__, __FILE__};
+  mutable Mutex     mutex_;
   PromiseMap        requests_;   ///< The map of currently monitored promises
   SuccessfulResults completed_;  ///< The map of completed promises
   FailedResults     failed_;     ///< The set of failed keys
@@ -103,8 +105,8 @@ private:
   Counter           num_pending_{0};
 };
 
-template <typename K, typename R, typename P>
-bool RequestingQueueOf<K, R, P>::Add(Key const &key, Promise const &promise)
+template <typename K, typename R, typename P, typename H>
+bool RequestingQueueOf<K, R, P, H>::Add(Key const &key, Promise const &promise)
 {
   bool success = false;
 
@@ -122,8 +124,8 @@ bool RequestingQueueOf<K, R, P>::Add(Key const &key, Promise const &promise)
   return success;
 }
 
-template <typename K, typename R, typename P>
-typename RequestingQueueOf<K, R, P>::SuccessfulResults RequestingQueueOf<K, R, P>::Get(
+template <typename K, typename R, typename P, typename H>
+typename RequestingQueueOf<K, R, P, H>::SuccessfulResults RequestingQueueOf<K, R, P, H>::Get(
     std::size_t limit)
 {
   FETCH_LOCK(mutex_);
@@ -151,8 +153,8 @@ typename RequestingQueueOf<K, R, P>::SuccessfulResults RequestingQueueOf<K, R, P
   return results;
 }
 
-template <typename K, typename R, typename P>
-typename RequestingQueueOf<K, R, P>::FailedResults RequestingQueueOf<K, R, P>::GetFailures(
+template <typename K, typename R, typename P, typename H>
+typename RequestingQueueOf<K, R, P, H>::FailedResults RequestingQueueOf<K, R, P, H>::GetFailures(
     std::size_t limit)
 {
   FETCH_LOCK(mutex_);
@@ -180,8 +182,17 @@ typename RequestingQueueOf<K, R, P>::FailedResults RequestingQueueOf<K, R, P>::G
   return results;
 }
 
-template <typename K, typename R, typename P>
-typename RequestingQueueOf<K, R, P>::Counters RequestingQueueOf<K, R, P>::Resolve()
+template <typename K, typename R, typename P, typename H>
+typename RequestingQueueOf<K, R, P, H>::PromiseMap RequestingQueueOf<K, R, P, H>::GetPending()
+{
+  FETCH_LOCK(mutex_);
+  PromiseMap pending = std::move(requests_);
+  requests_.clear();
+  return pending;
+}
+
+template <typename K, typename R, typename P, typename H>
+typename RequestingQueueOf<K, R, P, H>::Counters RequestingQueueOf<K, R, P, H>::Resolve()
 {
   FETCH_LOCK(mutex_);
 
@@ -222,8 +233,8 @@ typename RequestingQueueOf<K, R, P>::Counters RequestingQueueOf<K, R, P>::Resolv
   return {completed_.size(), failed_.size(), requests_.size()};
 }
 
-template <typename K, typename R, typename P>
-typename RequestingQueueOf<K, R, P>::Counters RequestingQueueOf<K, R, P>::Resolve(
+template <typename K, typename R, typename P, typename H>
+typename RequestingQueueOf<K, R, P, H>::Counters RequestingQueueOf<K, R, P, H>::Resolve(
     Timepoint const &time_point)
 {
   FETCH_LOCK(mutex_);
@@ -265,8 +276,8 @@ typename RequestingQueueOf<K, R, P>::Counters RequestingQueueOf<K, R, P>::Resolv
   return {completed_.size(), failed_.size(), requests_.size()};
 }
 
-template <typename K, typename R, typename P>
-typename RequestingQueueOf<K, R, P>::KeySet RequestingQueueOf<K, R, P>::FilterOutInFlight(
+template <typename K, typename R, typename P, typename H>
+typename RequestingQueueOf<K, R, P, H>::KeySet RequestingQueueOf<K, R, P, H>::FilterOutInFlight(
     KeySet const &inputs)
 {
   FETCH_LOCK(mutex_);
@@ -279,39 +290,58 @@ typename RequestingQueueOf<K, R, P>::KeySet RequestingQueueOf<K, R, P>::FilterOu
   return keys;
 }
 
-template <typename K, typename R, typename P>
-bool RequestingQueueOf<K, R, P>::IsInFlight(Key const &key) const
+template <typename K, typename R, typename P, typename H>
+bool RequestingQueueOf<K, R, P, H>::IsInFlight(Key const &key) const
 {
   FETCH_LOCK(mutex_);
   return requests_.find(key) != requests_.end();
 }
 
-template <typename K, typename R, typename P>
-bool RequestingQueueOf<K, R, P>::HasCompletedPromises() const
+template <typename K, typename R, typename P, typename H>
+bool RequestingQueueOf<K, R, P, H>::HasCompletedPromises() const
 {
   FETCH_LOCK(mutex_);
   return !completed_.empty();
 }
 
-template <typename K, typename R, typename P>
-bool RequestingQueueOf<K, R, P>::HasFailedPromises() const
+template <typename K, typename R, typename P, typename H>
+bool RequestingQueueOf<K, R, P, H>::HasFailedPromises() const
 {
   FETCH_LOCK(mutex_);
   return !failed_.empty();
 }
 
-template <typename K, typename R, typename P>
-void RequestingQueueOf<K, R, P>::DiscardFailures()
+template <typename K, typename R, typename P, typename H>
+void RequestingQueueOf<K, R, P, H>::DiscardFailures()
 {
   FETCH_LOCK(mutex_);
   failed_.clear();
 }
 
-template <typename K, typename R, typename P>
-void RequestingQueueOf<K, R, P>::DiscardCompleted()
+template <typename K, typename R, typename P, typename H>
+void RequestingQueueOf<K, R, P, H>::DiscardCompleted()
 {
   FETCH_LOCK(mutex_);
   completed_.clear();
+}
+
+template <typename K, typename R, typename P, typename H>
+bool RequestingQueueOf<K, R, P, H>::Empty() const
+{
+  return Size() == 0;
+}
+
+template <typename K, typename R, typename P, typename H>
+uint64_t RequestingQueueOf<K, R, P, H>::Size() const
+{
+  FETCH_LOCK(mutex_);
+  return requests_.size() + completed_.size() + failed_.size();
+}
+
+template <typename K, typename R, typename P, typename H>
+std::size_t RequestingQueueOf<K, R, P, H>::GetNumPending() const
+{
+  return num_pending_;
 }
 
 }  // namespace network

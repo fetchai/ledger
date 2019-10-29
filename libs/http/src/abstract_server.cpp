@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@
 namespace fetch {
 namespace http {
 
-AbstractHTTPServer::handle_type AbstractHTTPServer::global_handle_counter_ = 0;
-fetch::mutex::Mutex             AbstractHTTPServer::global_handle_mutex_(__LINE__, __FILE__);
+AbstractHTTPServer::HandleType AbstractHTTPServer::global_handle_counter_ = 0;
+Mutex                          AbstractHTTPServer::global_handle_mutex_;
 
 }  // namespace http
 }  // namespace fetch

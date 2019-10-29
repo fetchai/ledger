@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,16 +17,19 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/details/encode_decode.hpp"
+
+#include <cstdint>
 #include <stdexcept>
+
 namespace fetch {
 namespace byte_array {
 namespace details {
 
-const char base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-const char base64pad     = '=';
-const char hexChars[]    = "0123456789abcdef";
+char const base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+char const base64pad     = '=';
+char const hexChars[]    = "0123456789abcdef";
 
-const unsigned char base64decode[] = {
+const uint8_t base64decode[] = {
     66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 64, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,
     66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 62, 66, 66, 66, 63,
     52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 66, 66, 66, 65, 66, 66, 66, 0,  1,  2,  3,  4,  5,  6,

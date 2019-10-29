@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,10 +16,28 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
+#include "chain/transaction_layout.hpp"
+#include "core/set_thread_name.hpp"
+#include "ledger/block_packer_interface.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "ledger/transaction_status_cache.hpp"
+
+#include <cstddef>
+#include <thread>
+#include <utility>
+#include <vector>
+
+using fetch::chain::Transaction;
+using fetch::chain::TransactionLayout;
 
 namespace fetch {
 namespace ledger {
+
+namespace {
+constexpr char const *LOGGING_NAME = "TransactionProcessor";
+}
 
 /**
  * Transaction Processor constructor
@@ -27,154 +45,139 @@ namespace ledger {
  * @param storage The reference to the storage unit
  * @param miner The reference to the system miner
  */
-TransactionProcessor::TransactionProcessor(StorageUnitInterface & storage,
-                                           miner::MinerInterface &miner)
-  : storage_{storage}
-  , miner_{miner}
+TransactionProcessor::TransactionProcessor(DAGPtr dag, StorageUnitInterface &storage,
+                                           BlockPackerInterface &packer,
+                                           TxStatusCachePtr      tx_status_cache,
+                                           std::size_t           num_threads)
+  : dag_{std::move(dag)}
+  , storage_{storage}
+  , packer_{packer}
+  , status_cache_{std::move(tx_status_cache)}
+  , verifier_{*this, num_threads, "TxV-P"}
+  , running_{false}
 {}
 
+TransactionProcessor::~TransactionProcessor()
+{
+  Stop();
+}
+
+void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
+{
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Input Transaction: 0x", tx->digest().ToHex());
+
+  // dispatch the transaction to the storage engine
+  try
+  {
+    storage_.AddTransaction(*tx);
+  }
+  catch (std::runtime_error const &e)
+  {
+    // TODO(unknown): We need to think about how we handle failures of that class.
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());
+    return;
+  }
+
+  switch (tx->contract_mode())
+  {
+  case Transaction::ContractMode::NOT_PRESENT:
+  case Transaction::ContractMode::PRESENT:
+  case Transaction::ContractMode::CHAIN_CODE:
+
+    // dispatch the summary to the miner
+    packer_.EnqueueTransaction(*tx);
+
+    // update the status cache with the state of this transaction
+    if (status_cache_)
+    {
+      status_cache_->Update(tx->digest(), TransactionStatus::PENDING);
+    }
+    break;
+
+  case Transaction::ContractMode::SYNERGETIC:
+
+    if (tx->action() == "data" && dag_)
+    {
+      dag_->AddTransaction(*tx, DAGInterface::DAGTypes::DATA);
+
+      // update the status cache with the state of this transaction
+      if (status_cache_)
+      {
+        status_cache_->Update(tx->digest(), TransactionStatus::SUBMITTED);
+      }
+    }
+
+    break;
+  }
+}
+
+void TransactionProcessor::ThreadEntryPoint()
+{
+  SetThreadName("TxProc");
+
+  std::vector<TransactionLayout> new_txs;
+  while (running_)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    new_txs.clear();
+    new_txs = storage_.PollRecentTx(10000);
+
+    if (!new_txs.empty())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Pulled ", new_txs.size(), " transactions from shards");
+    }
+
+    for (auto const &summary : new_txs)
+    {
+      packer_.EnqueueTransaction(summary);
+    }
+  }
+}
+
 /**
- * Start the processor
+ * Start the transaction processor
  */
 void TransactionProcessor::Start()
 {
-  std::size_t const num_verifier_threads = 2 * std::thread::hardware_concurrency();
-
-  // reserve the space required for all threads
-  threads_.reserve(num_verifier_threads + 1);
-
-  // create the verifier threads
-  for (std::size_t i = 0, end = num_verifier_threads; i < end; ++i)
-  {
-    threads_.emplace_back(std::make_unique<std::thread>(&TransactionProcessor::Verifier, this));
-  }
-
-  // create the dispatcher
-  threads_.emplace_back(std::make_unique<std::thread>(&TransactionProcessor::Dispatcher, this));
+  verifier_.Start();
+  running_ = true;
+  poll_new_tx_thread_ =
+      std::make_unique<std::thread>(&TransactionProcessor::ThreadEntryPoint, this);
 }
 
 /**
- * Stop the processor
+ * Stop the transactions processor
  */
 void TransactionProcessor::Stop()
 {
-  // signal the worker threads to stop
-  active_ = false;
-
-  // wait for the threads to complete
-  for (auto &thread : threads_)
+  running_ = false;
+  if (poll_new_tx_thread_)
   {
-    thread->join();
-    thread.reset();
+    poll_new_tx_thread_->join();
+    poll_new_tx_thread_.reset();
   }
-  threads_.clear();
+
+  verifier_.Stop();
 }
 
 /**
- * Internal: Thread process for the verification of
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
  */
-void TransactionProcessor::Verifier()
+void TransactionProcessor::AddTransaction(TransactionPtr const &tx)
 {
-  MutableTransaction mtx;
-
-  while (active_)
-  {
-    // wait for a mutable transaction to be available
-    if (unverified_queue_.Pop(mtx, std::chrono::milliseconds{300}))
-    {
-      // convert the transaction to a verified one and enqueue
-      verified_queue_.Push(chain::VerifiedTransaction::Create(mtx));
-    }
-  }
+  verifier_.AddTransaction(tx);
 }
 
 /**
- * Internal: Dispatch thread process for verified transactions to be sent to the storage
- * engine and the mining interface.
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
  */
-void TransactionProcessor::Dispatcher()
+void TransactionProcessor::AddTransaction(TransactionPtr &&tx)
 {
-  static constexpr std::size_t MAXIMUM_BATCH_SIZE = 1000;
-
-  std::vector<chain::VerifiedTransaction> txs;
-
-  while (active_)
-  {
-    chain::VerifiedTransaction tx;
-
-    bool dispatch  = false;
-    bool populated = false;
-
-    // the dispatcher works in two modes
-    if (txs.empty())
-    {
-      // wait for a new element to be available
-      populated = verified_queue_.Pop(tx, std::chrono::milliseconds{300});
-    }
-    else if (txs.size() >= MAXIMUM_BATCH_SIZE)
-    {
-      // signal the dispatch
-      dispatch = true;
-    }
-    else
-    {
-      // since we know that there is at least one tx in the our local queue
-      // attempt to create batches of the transactions up.
-      populated = verified_queue_.Pop(tx, std::chrono::microseconds{1});
-
-      // if we do not collect any more transactions then dispatch the batch
-      dispatch = !populated;
-    }
-
-    // update our transaction list if needed
-    if (populated)
-    {
-      txs.emplace_back(std::move(tx));
-    }
-
-    // if required dispatch all the transactions
-    if (dispatch)
-    {
-      // add the transactions to the storage engine
-      if (txs.size() == 1)
-      {
-        storage_.AddTransaction(txs[0]);
-
-        FETCH_METRIC_TX_STORED(txs[0].digest());
-      }
-      else
-      {
-        storage_.AddTransactions(txs);
-
-#ifdef FETCH_ENABLE_METRICS
-        auto const stored = metrics::Metrics::Clock::now();
-
-        for (auto const &tx : txs)
-        {
-          FETCH_METRIC_TX_STORED_EX(tx.digest(), stored);
-        }
-#endif  // FETCH_ENABLE_METRICS
-      }
-
-      // enqueue all the transactions
-      for (auto const &tx : txs)
-      {
-        miner_.EnqueueTransaction(tx.summary());
-      }
-
-#ifdef FETCH_ENABLE_METRICS
-      auto const queued = metrics::Metrics::Clock::now();
-
-      for (auto const &tx : txs)
-      {
-        FETCH_METRIC_TX_QUEUED_EX(tx.digest(), queued);
-      }
-#endif  // FETCH_ENABLE_METRICS
-
-      // clear the transaction list
-      txs.clear();
-    }
-  }
+  verifier_.AddTransaction(std::move(tx));
 }
 
 }  // namespace ledger

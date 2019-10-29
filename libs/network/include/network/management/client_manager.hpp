@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logger.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/tcp/abstract_server.hpp"
 
@@ -37,51 +37,47 @@ namespace network {
 class ClientManager
 {
 public:
-  using connection_type        = typename AbstractConnection::shared_type;
-  using connection_handle_type = typename AbstractConnection::connection_handle_type;
+  using ConnectionType       = typename AbstractConnection::SharedType;
+  using ConnectionHandleType = typename AbstractConnection::ConnectionHandleType;
 
   static constexpr char const *LOGGING_NAME = "ClientManager";
 
-  ClientManager(AbstractNetworkServer &server)
+  explicit ClientManager(AbstractNetworkServer &server)
     : server_(server)
-    , clients_mutex_(__LINE__, __FILE__)
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  {}
 
-  connection_handle_type Join(connection_type client)
+  ConnectionHandleType Join(ConnectionType const &client)
   {
-    LOG_STACK_TRACE_POINT;
-    connection_handle_type handle = client->handle();
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Client joining with handle ", handle);
+    ConnectionHandleType handle = client->handle();
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is joining");
 
-    std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
+    FETCH_LOCK(clients_mutex_);
     clients_[handle] = client;
     return handle;
   }
 
   // TODO(issue 28): may be risky if handle type is made small
-  void Leave(connection_handle_type handle)
+  void Leave(ConnectionHandleType handle)
   {
-    LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
+    FETCH_LOCK(clients_mutex_);
 
-    if (clients_.find(handle) != clients_.end())
+    auto client{clients_.find(handle)};
+    if (client != clients_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Client ", handle, " is leaving");
-      clients_.erase(handle);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is leaving");
+      clients_.erase(client);
     }
   }
 
-  bool Send(connection_handle_type client, message_type const &msg)
+  bool Send(ConnectionHandleType client, MessageType const &msg)
   {
-    LOG_STACK_TRACE_POINT;
     bool ret = true;
     clients_mutex_.lock();
 
-    if (clients_.find(client) != clients_.end())
+    auto which{clients_.find(client)};
+    if (which != clients_.end())
     {
-      auto c = clients_[client];
+      auto c = which->second;
       clients_mutex_.unlock();
       c->Send(msg);
       FETCH_LOG_DEBUG(LOGGING_NAME, "Client manager did send message to ", client);
@@ -96,9 +92,8 @@ public:
     return ret;
   }
 
-  void Broadcast(message_type const &msg)
+  void Broadcast(MessageType const &msg)
   {
-    LOG_STACK_TRACE_POINT;
     clients_mutex_.lock();
     for (auto &client : clients_)
     {
@@ -110,16 +105,22 @@ public:
     clients_mutex_.unlock();
   }
 
-  void PushRequest(connection_handle_type client, message_type const &msg)
+  void PushRequest(ConnectionHandleType client, MessageType const &msg)
   {
-    LOG_STACK_TRACE_POINT;
-    server_.PushRequest(client, msg);
+    try
+    {
+      server_.PushRequest(client, msg);
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", client, " error: ", ex.what());
+      throw;
+    }
   }
 
-  std::string GetAddress(connection_handle_type client)
+  std::string GetAddress(ConnectionHandleType client)
   {
-    LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
+    FETCH_LOCK(clients_mutex_);
     if (clients_.find(client) != clients_.end())
     {
       return clients_[client]->Address();
@@ -128,9 +129,9 @@ public:
   }
 
 private:
-  AbstractNetworkServer &                           server_;
-  std::map<connection_handle_type, connection_type> clients_;
-  fetch::mutex::Mutex                               clients_mutex_;
+  AbstractNetworkServer &                        server_;
+  std::map<ConnectionHandleType, ConnectionType> clients_;
+  Mutex                                          clients_mutex_;
 };
 }  // namespace network
 }  // namespace fetch

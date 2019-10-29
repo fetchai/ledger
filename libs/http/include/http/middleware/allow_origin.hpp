@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,16 +18,15 @@
 //------------------------------------------------------------------------------
 
 #include "http/server.hpp"
+
+#include <string>
+
 namespace fetch {
 namespace http {
 namespace middleware {
 
-inline typename HTTPServer::response_middleware_type AllowOrigin(std::string const &val)
-{
-  return [val](fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
-    res.AddHeader("Access-Control-Allow-Origin", val);
-  };
-}
+HTTPServer::ResponseMiddleware AllowOrigin(std::string const &val);
+
 }  // namespace middleware
 }  // namespace http
 }  // namespace fetch

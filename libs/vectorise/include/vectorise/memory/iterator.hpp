@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,47 +18,50 @@
 //------------------------------------------------------------------------------
 
 #include <cassert>
+#include <cstddef>
+#include <iterator>
+#include <type_traits>
 
 namespace fetch {
 namespace memory {
 
 template <typename T>
-class ForwardIterator
+class ForwardIterator : public std::iterator<std::forward_iterator_tag, T>
 {
 public:
   ForwardIterator() = delete;
 
-  ForwardIterator(ForwardIterator const &other) = default;
-  ForwardIterator(ForwardIterator &&other)      = default;
-  ForwardIterator &operator=(ForwardIterator const &other) = default;
-  ForwardIterator &operator=(ForwardIterator &&other) = default;
+  constexpr ForwardIterator(ForwardIterator const &other)     = default;
+  constexpr ForwardIterator(ForwardIterator &&other) noexcept = default;
+  constexpr ForwardIterator &operator=(ForwardIterator const &other) = default;
+  constexpr ForwardIterator &operator=(ForwardIterator &&other) noexcept = default;
 
-  ForwardIterator(T *pos)
+  constexpr explicit ForwardIterator(T *pos) noexcept
     : pos_(pos)
   {}
-  ForwardIterator(T *pos, T *end)
+  constexpr ForwardIterator(T *pos, T *end) noexcept
     : pos_(pos)
     , end_(end)
   {}
 
-  ForwardIterator &operator++()
+  constexpr ForwardIterator &operator++() noexcept
   {
     ++pos_;
     return *this;
   }
 
-  T &operator*()
+  constexpr T &operator*() noexcept
   {
     assert(pos_ != nullptr);
     assert((end_ != nullptr) && (pos_ < end_));
     return *pos_;
   }
 
-  bool operator==(ForwardIterator const &other)
+  constexpr bool operator==(ForwardIterator const &other) const noexcept
   {
     return other.pos_ == pos_;
   }
-  bool operator!=(ForwardIterator const &other)
+  constexpr bool operator!=(ForwardIterator const &other) const noexcept
   {
     return other.pos_ != pos_;
   }
@@ -69,42 +72,42 @@ private:
 };
 
 template <typename T>
-class BackwardIterator
+class BackwardIterator : public std::iterator<std::forward_iterator_tag, T>
 {
 public:
-  BackwardIterator() = delete;
+  constexpr BackwardIterator() = delete;
 
-  BackwardIterator(BackwardIterator const &other) = default;
-  BackwardIterator(BackwardIterator &&other)      = default;
-  BackwardIterator &operator=(BackwardIterator const &other) = default;
-  BackwardIterator &operator=(BackwardIterator &&other) = default;
+  constexpr BackwardIterator(BackwardIterator const &other)     = default;
+  constexpr BackwardIterator(BackwardIterator &&other) noexcept = default;
+  constexpr BackwardIterator &operator=(BackwardIterator const &other) = default;
+  constexpr BackwardIterator &operator=(BackwardIterator &&other) noexcept = default;
 
-  BackwardIterator(T *pos)
+  constexpr explicit BackwardIterator(T *pos) noexcept
     : pos_(pos)
   {}
-  BackwardIterator(T *pos, T *begin)
+  constexpr BackwardIterator(T *pos, T *begin) noexcept
     : pos_(pos)
     , begin_(begin)
   {}
 
-  BackwardIterator &operator++()
+  constexpr BackwardIterator &operator++() noexcept
   {
     --pos_;
     return *this;
   }
 
-  T &operator*()
+  constexpr T &operator*() noexcept
   {
     assert(pos_ != nullptr);
     assert((begin_ != nullptr) && (pos_ > begin_));
     return *pos_;
   }
 
-  bool operator==(BackwardIterator const &other)
+  constexpr bool operator==(BackwardIterator const &other) const noexcept
   {
     return other.pos_ == pos_;
   }
-  bool operator!=(BackwardIterator const &other)
+  constexpr bool operator!=(BackwardIterator const &other) const noexcept
   {
     return other.pos_ != pos_;
   }
@@ -113,5 +116,30 @@ private:
   T *pos_   = nullptr;
   T *begin_ = nullptr;
 };
+
 }  // namespace memory
 }  // namespace fetch
+
+namespace std {
+
+template <typename T>
+struct iterator_traits<fetch::memory::ForwardIterator<T>>  // NOLINT
+{
+  using difference_type   = std::ptrdiff_t;             // NOLINT
+  using value_type        = std::remove_cv_t<T>;        // NOLINT
+  using pointer           = T *;                        // NOLINT
+  using reference         = T &;                        // NOLINT
+  using iterator_category = std::forward_iterator_tag;  // NOLINT
+};
+
+template <typename T>
+struct iterator_traits<fetch::memory::BackwardIterator<T>>  // NOLINT
+{
+  using difference_type   = std::ptrdiff_t;             // NOLINT
+  using value_type        = std::remove_cv_t<T>;        // NOLINT
+  using pointer           = T *;                        // NOLINT
+  using reference         = T &;                        // NOLINT
+  using iterator_category = std::forward_iterator_tag;  // NOLINT
+};
+
+}  // namespace std

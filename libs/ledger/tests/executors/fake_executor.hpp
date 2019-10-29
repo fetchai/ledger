@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,57 +17,57 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/digest.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
 
-#include <atomic>
 #include <chrono>
-#include <iostream>
 #include <sstream>
 #include <thread>
 #include <utility>
+#include <vector>
 
 class FakeExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
-  static constexpr char const *LOGGING_NAME = "FakeExecutor";
+  using Digest    = fetch::Digest;
+  using Address   = fetch::chain::Address;
+  using BitVector = fetch::BitVector;
+  using Clock     = std::chrono::high_resolution_clock;
+  using Timepoint = Clock::time_point;
 
   struct HistoryElement
   {
-    using clock_type     = std::chrono::high_resolution_clock;
-    using timepoint_type = clock_type::time_point;
-
-    HistoryElement(TxDigest const &h, std::size_t s, LaneSet l)
-      : hash(h)
-      , slice(s)
-      , lanes(std::move(l))
-    {}
-    HistoryElement(HistoryElement const &) = default;
-
-    TxDigest       hash;
-    std::size_t    slice;
-    LaneSet        lanes;
-    timepoint_type timestamp{clock_type::now()};
+    Digest     digest;
+    BlockIndex block;
+    SliceIndex slice;
+    BitVector  shards;
+    Timepoint  timestamp;
   };
 
   using HistoryElementCache = std::vector<HistoryElement>;
   using StorageInterface    = fetch::ledger::StorageInterface;
 
-  Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) override
+  Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
+                 BitVector const &shards) override
   {
-    history_.emplace_back(hash, slice, lanes);
+    history_.emplace_back(HistoryElement{digest, block, slice, shards, Clock::now()});
 
     // if we have a state then make some changes to it
-    if (state_)
+    if (state_ != nullptr)
     {
-      state_->Set(fetch::storage::ResourceAddress{hash}, "executed");
+      state_->Set(fetch::storage::ResourceAddress{digest}, "executed");
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Executing transaction sort of...");
+    return {Status::SUCCESS};
+  }
 
-    return Status::SUCCESS;
+  void SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override
+  {
+    FETCH_UNUSED(miner);
+    FETCH_UNUSED(amount);
+    FETCH_UNUSED(log2_num_lanes);
   }
 
   std::size_t GetNumExecutions() const

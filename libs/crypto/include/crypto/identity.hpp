@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,35 +17,43 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "core/byte_array/byte_array.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/openssl_common.hpp"
+#include "crypto/signature_register.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <utility>
 
 namespace fetch {
 namespace crypto {
 
 class Identity
 {
+public:
   using edcsa_curve_type = crypto::openssl::ECDSACurve<NID_secp256k1>;
 
-public:
-  Identity()
-  {}
+  Identity() = default;
 
   Identity(Identity const &other) = default;
+  Identity(Identity &&other)      = default;
   Identity &operator=(Identity const &other) = default;
-  Identity(Identity &&other)                 = default;
   Identity &operator=(Identity &&other) = default;
 
-  // Fully relying on caller that it will behave = will NOT modify value passed (Const)ByteArray(s)
-  Identity(byte_array::ConstByteArray identity_parameters, byte_array::ConstByteArray identifier)
-    : identity_parameters_{std::move(identity_parameters)}
+  // Fully relying on caller that it will behave = will NOT modify value passed
+  // (Const)ByteArray(s)
+  Identity(uint8_t identity_parameters, byte_array::ConstByteArray identifier)
+    : identity_parameters_{identity_parameters}
     , identifier_{std::move(identifier)}
   {}
 
-  byte_array::ConstByteArray const &parameters() const
+  explicit Identity(byte_array::ConstByteArray identifier)
+    : identifier_{std::move(identifier)}
+  {}
+
+  uint8_t parameters() const
   {
     return identity_parameters_;
   }
@@ -60,15 +68,14 @@ public:
     identifier_ = ident;
   }
 
-  void SetParameters(byte_array::ConstByteArray const &params)
+  void SetParameters(uint8_t p)
   {
-    identity_parameters_ = params;
+    identity_parameters_ = p;
   }
 
-  operator bool() const
+  explicit operator bool() const
   {
-    return identity_parameters_ == edcsa_curve_type::sn &&
-           identifier_.size() == edcsa_curve_type::publicKeySize;
+    return TestIdentityParameterSize(identity_parameters_, identifier_.size());
   }
 
   static Identity CreateInvalid()
@@ -88,7 +95,7 @@ public:
     {
       return true;
     }
-    else if (identifier_ == right.identifier_)
+    if (identifier_ == right.identifier_)
     {
       return identity_parameters_ < right.identity_parameters_;
     }
@@ -98,47 +105,54 @@ public:
 
   void Clone()
   {
-    identifier_          = identifier_.Copy();
-    identity_parameters_ = identity_parameters_.Copy();
+    identifier_ = identifier_.Copy();
   }
 
 private:
-  byte_array::ConstByteArray identity_parameters_;
+  uint8_t                    identity_parameters_{edcsa_curve_type::sn};
   byte_array::ConstByteArray identifier_;
 };
 
-static inline Identity InvalidIdentity()
+}  // namespace crypto
+
+namespace serializers {
+template <typename D>
+struct MapSerializer<crypto::Identity, D>
 {
-  return Identity::CreateInvalid();
-}
+public:
+  using Type       = crypto::Identity;
+  using DriverType = D;
 
-template <typename T>
-T &Serialize(T &serializer, Identity const &data)
-{
-  serializer << data.identifier();
-  serializer << data.parameters();
+  static uint8_t const ID     = 1;
+  static uint8_t const PARAMS = 2;
 
-  return serializer;
-}
-
-template <typename T>
-T &Deserialize(T &serializer, Identity &data)
-{
-  byte_array::ByteArray params, id;
-  serializer >> id;
-  serializer >> params;
-
-  data.SetParameters(params);
-  data.SetIdentifier(id);
-  if (!data)
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &data)
   {
-    data = InvalidIdentity();
+    auto map = map_constructor(2);
+    map.Append(ID, data.identifier());
+    map.Append(PARAMS, data.parameters());
   }
 
-  return serializer;
-}
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &data)
+  {
+    byte_array::ByteArray id;
+    uint8_t               params;
 
-}  // namespace crypto
+    map.ExpectKeyGetValue(ID, id);
+    map.ExpectKeyGetValue(PARAMS, params);
+
+    data.SetParameters(params);
+    data.SetIdentifier(id);
+    if (!data)
+    {
+      data = crypto::Identity::CreateInvalid();
+    }
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch
 
 namespace std {
@@ -146,12 +160,18 @@ namespace std {
 template <>
 struct hash<fetch::crypto::Identity>
 {
-  std::size_t operator()(fetch::crypto::Identity const &value) const
+  std::size_t operator()(fetch::crypto::Identity const &value) const noexcept
   {
     fetch::crypto::FNV hashStream;
     hashStream.Update(value.identifier());
-    hashStream.Update(value.parameters());
-    return hashStream.Final<>();
+
+    auto const params = value.parameters();
+    hashStream.Update(&params, sizeof(decltype(params)));
+
+    auto const        arr = hashStream.Final();
+    std::size_t const out = *reinterpret_cast<std::size_t const *>(arr.pointer());
+
+    return out;
   }
 };
 

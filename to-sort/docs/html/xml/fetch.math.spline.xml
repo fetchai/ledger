@@ -1,6 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<namespace id="fetch::math::spline" name="spline" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <classtemplate name="Spline" ref="fetch::math::spline::Spline#fetch::math::spline::Spline">
-    <templatetypeparameter id="fetch::math::spline::Spline::T" name="T" />
-  </classtemplate>
-</namespace>

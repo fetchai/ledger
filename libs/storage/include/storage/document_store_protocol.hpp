@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,9 +19,16 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
+#include "core/synchronisation/protected.hpp"
+#include "logging/logging.hpp"
+#include "network/service/call_context.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document_store.hpp"
-#include "storage/revertible_document_store.hpp"
+#include "storage/new_revertible_document_store.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
+#include "telemetry/utils/timer.hpp"
 
 #include <map>
 
@@ -31,8 +38,11 @@ namespace storage {
 class RevertibleDocumentStoreProtocol : public fetch::service::Protocol
 {
 public:
-  using connection_handle_type = network::AbstractConnection::connection_handle_type;
-  using lane_type              = uint32_t;  // TODO(issue 12): Fetch from some other palce
+  using ConnectionHandleType = network::AbstractConnection::ConnectionHandleType;
+  using LaneType             = uint32_t;  // TODO(issue 12): Fetch from some other palce
+  using CallContext          = service::CallContext;
+
+  using Identifier = byte_array::ConstByteArray;
 
   static constexpr char const *LOGGING_NAME = "RevertibleDocumentStoreProtocol";
 
@@ -40,171 +50,260 @@ public:
   {
     GET = 0,
     GET_OR_CREATE,
-    LAZY_GET,
     SET,
+
     COMMIT,
-    REVERT,
-    HASH,
+    REVERT_TO_HASH,
+    CURRENT_HASH,
+    HASH_EXISTS,
+    RESET,
 
     LOCK = 20,
     UNLOCK,
     HAS_LOCK
   };
 
-  explicit RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store)
-    : fetch::service::Protocol()
-    , doc_store_(doc_store)
+  explicit RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, LaneType lane)
+    : doc_store_(doc_store)
+    , get_count_(CreateCounter(lane, "ledger_statedb_get_total", "The total no. get ops"))
+    , get_create_count_(
+          CreateCounter(lane, "ledger_statedb_get_create_total", "The total no. get/create ops"))
+    , set_count_(CreateCounter(lane, "ledger_statedb_set_total", "The total no. set ops"))
+    , commit_count_(CreateCounter(lane, "ledger_statedb_commit_total", "The total no. commit ops"))
+    , revert_count_(CreateCounter(lane, "ledger_statedb_revert_total", "The total no. revert ops"))
+    , current_hash_count_(CreateCounter(lane, "ledger_statedb_current_hash_total",
+                                        "The total no. current_hash ops"))
+    , hash_exists_count_(
+          CreateCounter(lane, "ledger_statedb_hash_exist_total", "The total no. hash_exists ops"))
+    , reset_count_(CreateCounter(lane, "ledger_statedb_reset_total", "The total no. reset ops"))
+    , lock_count_(CreateCounter(lane, "ledger_statedb_lock_total", "The total no. lock ops"))
+    , unlock_count_(CreateCounter(lane, "ledger_statedb_unlock_total", "The total no. unlock ops"))
+    , has_lock_count_(
+          CreateCounter(lane, "ledger_statedb_has_lock_total", "The total no. has lock ops"))
+    , get_durations_(CreateHistogram(lane, "ledger_statedb_get_request_seconds",
+                                     "The histogram of get request durations"))
+    , set_durations_(CreateHistogram(lane, "ledger_statedb_set_request_seconds",
+                                     "The histogram of set request durations"))
+    , lock_durations_(CreateHistogram(lane, "ledger_statedb_lock_request_seconds",
+                                      "The histogram of lock request durations"))
+    , unlock_durations_(CreateHistogram(lane, "ledger_statedb_unlock_request_seconds",
+                                        "The histogram of unlock request durations"))
   {
-    this->Expose(GET, (RevertibleDocumentStore::super_type *)doc_store,
-                 &RevertibleDocumentStore::super_type::Get);
-    this->Expose(GET_OR_CREATE, (RevertibleDocumentStore::super_type *)doc_store,
-                 &RevertibleDocumentStore::super_type::GetOrCreate);
-    this->Expose(SET, (RevertibleDocumentStore::super_type *)doc_store,
-                 &RevertibleDocumentStore::super_type::Set);
-    this->Expose(COMMIT, doc_store, &RevertibleDocumentStore::Commit);
-    this->Expose(REVERT, doc_store, &RevertibleDocumentStore::Revert);
-    this->Expose(HASH, doc_store, &RevertibleDocumentStore::Hash);
+    this->Expose(GET, this, &RevertibleDocumentStoreProtocol::Get);
+    this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetOrCreate);
+    this->Expose(SET, this, &RevertibleDocumentStoreProtocol::Set);
 
-    this->ExposeWithClientArg(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
-    this->ExposeWithClientArg(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
-    this->ExposeWithClientArg(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
+    // Functionality for hashing/state
+    this->Expose(COMMIT, this, &RevertibleDocumentStoreProtocol::Commit);
+    this->Expose(REVERT_TO_HASH, this, &RevertibleDocumentStoreProtocol::RevertToHash);
+    this->Expose(CURRENT_HASH, this, &RevertibleDocumentStoreProtocol::CurrentHash);
+    this->Expose(HASH_EXISTS, this, &RevertibleDocumentStoreProtocol::HashExists);
+    this->Expose(RESET, this, &RevertibleDocumentStoreProtocol::Reset);
+
+    this->ExposeWithClientContext(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
+    this->ExposeWithClientContext(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
+    this->ExposeWithClientContext(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
-  RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store, lane_type const &lane,
-                                  lane_type const &maxlanes)
-    : fetch::service::Protocol()
-    , doc_store_(doc_store)
-    , lane_assignment_(lane)
+  RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, LaneType const &lane,
+                                  LaneType const &maxlanes)
+    : RevertibleDocumentStoreProtocol(doc_store, lane)
   {
-
     SetLaneLog2(maxlanes);
     assert(maxlanes == (1u << log2_lanes_));
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Spinning up lane ", lane_assignment_);
-
-    this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
-    this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetOrCreateLaneChecked);
-    this->ExposeWithClientArg(SET, this, &RevertibleDocumentStoreProtocol::SetLaneChecked);
-
-    this->Expose(COMMIT, doc_store, &RevertibleDocumentStore::Commit);
-    this->Expose(REVERT, doc_store, &RevertibleDocumentStore::Revert);
-    this->Expose(HASH, doc_store, &RevertibleDocumentStore::Hash);
-
-    this->ExposeWithClientArg(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
-    this->ExposeWithClientArg(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
-    this->ExposeWithClientArg(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
-  bool HasLock(connection_handle_type const &client_id, ResourceID const &rid)
+  bool HasLock(CallContext const &context)
   {
-    std::lock_guard<mutex::Mutex> lock(lock_mutex_);
-    auto                          it = locks_.find(rid.id());
-    if (it == locks_.end())
+    if (!context.is_valid())
     {
-      return false;
+      throw serializers::SerializableException(  // TODO(issue 11): set exception number
+          0, ByteArrayType(std::string("No context for HasLock.")));
     }
 
-    return (it->second == client_id);
+    bool has_lock = false;
+    lock_status_.ApplyVoid([&context, &has_lock](LockStatus const &status) {
+      has_lock = (status.is_locked && (status.client == context.sender_address));
+    });
+
+    has_lock_count_->increment();
+
+    return has_lock;
   }
 
-  bool LockResource(connection_handle_type const &client_id, ResourceID const &rid)
+  bool LockResource(CallContext const &context)
   {
-    std::lock_guard<mutex::Mutex> lock(lock_mutex_);
-    auto                          it = locks_.find(rid.id());
-    if (it == locks_.end())
+    telemetry::FunctionTimer const timer{*lock_durations_};
+    if (!context.is_valid())
     {
-      locks_[rid.id()] = client_id;
-      return true;
+      // TODO(issue 11): set exception number
+      throw serializers::SerializableException(0, ByteArrayType{"No context for HasLock."});
     }
 
-    return (it->second == client_id);
+    // attempt to lock this shard
+    bool success = false;
+    lock_status_.ApplyVoid([&context, &success](LockStatus &status) {
+      if (!status.is_locked)
+      {
+        status.is_locked = true;
+        status.client    = context.sender_address;
+        success          = true;
+      }
+    });
+
+    // print an error message on failure
+    if (!success)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Resource lock failed for: ", context.sender_address.ToBase64());
+    }
+
+    lock_count_->increment();
+
+    return success;
   }
 
-  bool UnlockResource(connection_handle_type const &client_id, ResourceID const &rid)
+  bool UnlockResource(CallContext const &context)
   {
-
-    std::lock_guard<mutex::Mutex> lock(lock_mutex_);
-    auto                          it = locks_.find(rid.id());
-    if (it == locks_.end())
+    telemetry::FunctionTimer const timer{*unlock_durations_};
+    if (!context.is_valid())
     {
-      return false;
+      throw serializers::SerializableException(  // TODO(issue 11): set exception number
+          0, ByteArrayType(std::string("No context for HasLock.")));
     }
 
-    if (it->second == client_id)
+    // attempt to unlock this shard
+    bool success = false;
+    lock_status_.ApplyVoid([&context, &success](LockStatus &status) {
+      if (status.is_locked && (status.client == context.sender_address))
+      {
+        status.is_locked = false;
+        status.client    = Identifier{};
+        success          = true;
+      }
+    });
+
+    if (!success)
     {
-      locks_.erase(it);
-      return true;
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Resource unlock failed for: ", context.sender_address.ToBase64());
     }
 
-    return false;
+    unlock_count_->increment();
+
+    return success;
   }
 
 private:
-  Document GetLaneChecked(ResourceID const &rid)
+  static telemetry::CounterPtr CreateCounter(LaneType lane, char const *name,
+                                             char const *description)
   {
-    if (lane_assignment_ != rid.lane(log2_lanes_))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Lane assignment is ", lane_assignment_, " vs ",
-                     rid.lane(log2_lanes_));
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Address:", byte_array::ToHex(rid.id()));
-
-      throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type("Get: Resource located on other lane. TODO, set error number"));
-    }
-
-    return doc_store_->Get(rid);
+    return telemetry::Registry::Instance().CreateCounter(name, description,
+                                                         {{"lane", std::to_string(lane)}});
   }
 
-  Document GetOrCreateLaneChecked(ResourceID const &rid)
+  static telemetry::HistogramPtr CreateHistogram(LaneType lane, char const *name,
+                                                 char const *description)
   {
-    if (lane_assignment_ != rid.lane(log2_lanes_))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Lane assignment is ", lane_assignment_, " vs ",
-                     rid.lane(log2_lanes_));
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Address:", byte_array::ToHex(rid.id()));
-
-      throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type("GetOrCreate: Resource located on other lane. "
-                             "TODO, set error number"));
-    }
-
-    return doc_store_->GetOrCreate(rid);
+    return telemetry::Registry::Instance().CreateHistogram(
+        {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+         0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+         0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+         0.001,    0.01,     0.1,      1,        10.,      100.},
+        name, description, {{"lane", std::to_string(lane)}});
   }
 
-  void SetLaneChecked(connection_handle_type const &client_id, ResourceID const &rid,
-                      byte_array::ConstByteArray const &value)
+  Document Get(ResourceID const &rid)
   {
-    if (lane_assignment_ != rid.lane(log2_lanes_))
-    {
-      throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type("Set: Resource located on other lane. TODO: Set error number."));
-    }
-    {
-      std::lock_guard<mutex::Mutex> lock(lock_mutex_);
-      auto                          it = locks_.find(rid.id());
-      if ((it == locks_.end()) || (it->second != client_id))
-      {
-        throw serializers::SerializableException(  // TODO(issue 11): set exception number
-            0, byte_array_type("Client does not have a lock for the resource"));
-      }
-    }
+    telemetry::FunctionTimer const timer{*get_durations_};
 
-    doc_store_->Set(rid, value);
+    auto const doc = doc_store_->Get(rid);
+    get_count_->increment();
+    return doc;
   }
 
-  void SetLaneLog2(lane_type const &count)
+  Document GetOrCreate(ResourceID const &rid)
   {
-    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
+    telemetry::FunctionTimer const timer{*get_durations_};
+
+    auto const doc = doc_store_->GetOrCreate(rid);
+    get_create_count_->increment();
+    return doc;
   }
 
-  RevertibleDocumentStore *doc_store_;
+  void Set(ResourceID const &rid, byte_array::ConstByteArray const &data)
+  {
+    telemetry::FunctionTimer const timer{*set_durations_};
+
+    doc_store_->Set(rid, data);
+    set_count_->increment();
+  }
+
+  NewRevertibleDocumentStore::Hash Commit()
+  {
+    auto const hash = doc_store_->Commit();
+    commit_count_->increment();
+    return hash;
+  }
+
+  bool RevertToHash(NewRevertibleDocumentStore::Hash const &hash)
+  {
+    auto const success = doc_store_->RevertToHash(hash);
+    revert_count_->increment();
+    return success;
+  }
+
+  NewRevertibleDocumentStore::Hash CurrentHash()
+  {
+    auto const hash = doc_store_->CurrentHash();
+    current_hash_count_->increment();
+    return hash;
+  }
+
+  bool HashExists(NewRevertibleDocumentStore::Hash const &hash)
+  {
+    auto const success = doc_store_->HashExists(hash);
+    hash_exists_count_->increment();
+    return success;
+  }
+
+  void Reset()
+  {
+    doc_store_->Reset();
+    reset_count_->increment();
+  }
+
+  void SetLaneLog2(LaneType const &count)
+  {
+    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3u) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
+  }
+
+  NewRevertibleDocumentStore *doc_store_;
 
   uint32_t log2_lanes_ = 0;
 
-  uint32_t lane_assignment_ = 0;
+  struct LockStatus
+  {
+    bool       is_locked{false};  ///< Flag to signal which client has locked the resource
+    Identifier client;            ///< The identifier of the locking client
+  };
 
-  mutex::Mutex                                                 lock_mutex_{__LINE__, __FILE__};
-  std::map<byte_array::ConstByteArray, connection_handle_type> locks_;
+  Protected<LockStatus> lock_status_;
+
+  telemetry::CounterPtr   get_count_;
+  telemetry::CounterPtr   get_create_count_;
+  telemetry::CounterPtr   set_count_;
+  telemetry::CounterPtr   commit_count_;
+  telemetry::CounterPtr   revert_count_;
+  telemetry::CounterPtr   current_hash_count_;
+  telemetry::CounterPtr   hash_exists_count_;
+  telemetry::CounterPtr   reset_count_;
+  telemetry::CounterPtr   lock_count_;
+  telemetry::CounterPtr   unlock_count_;
+  telemetry::CounterPtr   has_lock_count_;
+  telemetry::HistogramPtr get_durations_;
+  telemetry::HistogramPtr set_durations_;
+  telemetry::HistogramPtr lock_durations_;
+  telemetry::HistogramPtr unlock_durations_;
 };
 
 }  // namespace storage

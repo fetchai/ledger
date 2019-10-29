@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,39 +18,36 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
-#include "vectorise/memory/range.hpp"
-
-#include <cmath>
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename A, typename F>
-inline A &PairWiseDistance(A &r, A const &a, F &&metric)
+template <typename ArrayType, typename F>
+meta::IfIsMathArray<ArrayType, ArrayType> &PairWiseDistance(ArrayType const &a, F &&metric,
+                                                            ArrayType &ret)
 {
-  detailed_assert(r.height() == 1);
-  detailed_assert(r.width() == (a.height() * (a.height() - 1) / 2));
+  using SizeType = typename ArrayType::SizeType;
 
-  std::size_t offset1 = 0;
-  std::size_t k       = 0;
+  detailed_assert(ret.shape(0) == 1);
+  detailed_assert(ret.shape(1) == (a.shape(0) * (a.shape(0) - 1) / 2));
+  detailed_assert(ret.shape().size() == 2);
 
-  for (std::size_t i = 0; i < a.height(); ++i)
+  SizeType k = 0;
+
+  for (SizeType i = 0; i < a.shape(0); ++i)
   {
-    typename A::vector_slice_type slice1 = a.data().slice(offset1, a.width());
-    offset1 += a.padded_width();
-    std::size_t offset2 = offset1;
-
-    for (std::size_t j = i + 1; j < a.height(); ++j)
+    // todo: #1320 Implement isiterable with math library and then the copies here can be removed.
+    ArrayType slice1 = a.Slice(i).Copy();
+    for (SizeType j = i + 1; j < a.shape(0); ++j)
     {
-      typename A::vector_slice_type slice2 = a.data().slice(offset2, a.width());
-      offset2 += a.padded_width();
-      r(std::size_t(0), k++) = metric(slice1, slice2);
+      ArrayType slice2      = a.Slice(j).Copy();
+      ret(SizeType{0}, k++) = metric(slice1, slice2);
     }
   }
 
-  return r;
+  return ret;
 }
 
 }  // namespace distance

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "logging/logging.hpp"
 #include "storage/storage_exception.hpp"
+
 #include <exception>
 #include <string>
 #include <utility>
@@ -28,8 +29,8 @@ namespace fetch {
 namespace storage {
 
 namespace error {
-using error_type            = uint64_t;
-error_type const TYPE_ERROR = 0;
+using ErrorType            = uint64_t;
+ErrorType const TYPE_ERROR = 0;
 }  // namespace error
 
 /**
@@ -41,85 +42,55 @@ public:
   StorageException()
     : error_code_(error::TYPE_ERROR)
     , explanation_("unknown")
-  {
-    LOG_STACK_TRACE_POINT;
+  {}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  StorageException(const char *explanation)
+  explicit StorageException(char const *explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::string(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
+  {}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  StorageException(std::string explanation)
+  explicit StorageException(std::string explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::move(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
+  {}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  StorageException(byte_array::ConstByteArray const &explanation)
+  explicit StorageException(byte_array::ConstByteArray const &explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::string(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
+  {}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  StorageException(error::error_type error_code, std::string explanation)
+  StorageException(error::ErrorType error_code, std::string explanation)
     : error_code_(error_code)
     , explanation_(std::move(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
+  {}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  StorageException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
+  StorageException(error::ErrorType error_code, byte_array::ConstByteArray const &explanation)
     : error_code_(error_code)
     , explanation_(std::string(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
+  {}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
+  StorageException(StorageException const &) = default;
+  StorageException &operator=(StorageException const &) = default;
 
-  virtual ~StorageException()
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  StorageException(StorageException &&) noexcept = default;
+  StorageException &operator=(StorageException &&) noexcept = default;
+
+  ~StorageException() override = default;
 
   char const *what() const noexcept override
   {
     return explanation_.c_str();
   }
+
   uint64_t error_code() const
   {
     return error_code_;
-  }
-  std::string explanation() const
-  {
-    return explanation_;
-  }
-
-  void StackTrace() const
-  {
-    LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception")
   }
 
 private:
   uint64_t    error_code_;
   std::string explanation_;
-
-  LOG_CONTEXT_VARIABLE(stack_trace_)
 };
+
 }  // namespace storage
 }  // namespace fetch

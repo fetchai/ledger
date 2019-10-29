@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,14 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/shard_config.hpp"
+#include "ledger/storage_unit/lane_service.hpp"
+#include "ledger/storage_unit/object_store_protocol.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "muddle/muddle_endpoint.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store.hpp"
-#include "storage/object_store_protocol.hpp"
-#include "storage/object_store_syncronisation_protocol.hpp"
-#include "storage/revertible_document_store.hpp"
 
-#include "ledger/storage_unit/lane_service.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
+#include <cstddef>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
@@ -42,13 +45,18 @@ public:
   StorageUnitBundledService &operator=(StorageUnitBundledService const &) = delete;
   StorageUnitBundledService &operator=(StorageUnitBundledService &&) = delete;
 
-  void Setup(std::string const &storage_path, std::size_t const &lanes, uint16_t const &port,
-             fetch::network::NetworkManager const &tm, bool refresh_storage = false)
+  using NetworkManager = network::NetworkManager;
+  using Mode           = LaneService::Mode;
+
+  void Setup(NetworkManager const &mgr, ShardConfigs const &configs,
+             Mode mode = Mode::LOAD_DATABASE)
   {
-    for (std::size_t i = 0; i < lanes; ++i)
+    // create all the lane pointers
+    lanes_.resize(configs.size());
+
+    for (std::size_t i = 0; i < configs.size(); ++i)
     {
-      lanes_.push_back(std::make_shared<LaneService>(storage_path, uint32_t(i), lanes,
-                                                     uint16_t(port + i), tm, refresh_storage));
+      lanes_[i] = std::make_shared<LaneService>(mgr, configs[i], mode);
     }
   }
 

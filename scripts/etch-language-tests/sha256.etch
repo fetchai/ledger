@@ -1,0 +1,6 @@
+function main()
+    var hasher = SHA256();
+    hasher.update("words words");
+
+    assert("7b71f5189ececcd5fc8ba94d55d236bd8d511ca518712916acdfedd0d5be120d" == toString(hasher.final()));
+endfunction

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,17 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/tcp/client_connection.hpp"
 #include "network/tcp/tcp_server.hpp"
+
+#include <chrono>
+#include <exception>
+#include <memory>
+#include <new>
+#include <system_error>
+#include <thread>
+#include <utility>
 
 namespace fetch {
 namespace network {
 
-TCPServer::TCPServer(uint16_t const &port, network_manager_type const &network_manager)
+TCPServer::TCPServer(uint16_t port, NetworkManagerType const &network_manager)
   : network_manager_{network_manager}
   , port_{port}
 {
-  LOG_STACK_TRACE_POINT;
-
   FETCH_LOG_DEBUG(LOGGING_NAME, "Creating TCP server on tcp://0.0.0.0:", port);
 
   manager_ = std::make_shared<ClientManager>(*this);
@@ -34,13 +41,7 @@ TCPServer::TCPServer(uint16_t const &port, network_manager_type const &network_m
 
 TCPServer::~TCPServer()
 {
-  LOG_STACK_TRACE_POINT;
-  {
-    std::lock_guard<std::mutex> lock(startMutex_);
-    stopping_ = true;
-  }
-
-  std::weak_ptr<acceptor_type> acceptorWeak = acceptor_;
+  std::weak_ptr<AcceptorType> acceptorWeak = acceptor_;
 
   network_manager_.Post([acceptorWeak] {
     auto acceptorStrong = acceptorWeak.lock();
@@ -60,120 +61,128 @@ TCPServer::~TCPServer()
     }
   });
 
-  while (destruct_guard_.use_count() > 1)
+  // Need to block until the acceptor has expired as it refers back to this class.
+  while (!acceptor_.expired())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for TCP server ", this, " start closure to clear");
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
-
-  while (!acceptor_.expired() && running_)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for TCP server ", this, " to destruct");
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-  }
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Destructing TCP server ", this);
 }
 
 void TCPServer::Start()
 {
-  std::shared_ptr<int> destruct_guard = destruct_guard_;
+  std::shared_ptr<int> closure_alive = std::make_shared<int>(-1);
 
-  auto closure = [this, destruct_guard] {
-    std::lock_guard<std::mutex> lock(startMutex_);
-
-    if (!stopping_)
-    {
-      std::shared_ptr<acceptor_type> acceptor;
+  {
+    auto closure = [this, closure_alive] {
+      std::shared_ptr<AcceptorType> acceptor;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Opening TCP server");
 
       try
-      {  // KLL this also appears to generate a data race.
-        // This might throw if the port is not free
-        acceptor = network_manager_.CreateIO<acceptor_type>(
+      {
+        acceptor = network_manager_.CreateIO<AcceptorType>(
             asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
 
         acceptor_ = acceptor;
 
+        // always update the port with the "correct" listening port
+        port_ = acceptor->local_endpoint().port();
+
         FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TCP server acceptor loop");
-        acceptor_ = acceptor;
 
         if (acceptor)
         {
-          running_ = true;
-
           Accept(acceptor);
-
-          counter_.Completed();
 
           FETCH_LOG_DEBUG(LOGGING_NAME, "Accepting TCP server connections");
         }
       }
-      catch (std::exception &e)
+      catch (std::exception const &e)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Failed to open socket: ", port_, " with error: ", e.what());
+        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to open socket: ", port_, " with error: ", e.what());
       }
-    }
-  };
 
-  network_manager_.Post(closure);
+      counter_.Completed();
+    };
+
+    if (!network_manager_.Running())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "TCP server trying to start with non-running network manager. This will block "
+                     "until the network manager starts!");
+    }
+
+    network_manager_.Post(closure);
+  }  // end of scope for closure which would hold closure_alive.use_count() at 2
+
+  // Guarantee posted closure has either executed or will never execute
+  for (std::size_t loop = 0; closure_alive.use_count() != 1; ++loop)
+  {
+    // allow start up time before showing warnings
+    if (loop > 5)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "TCP server is waiting to open. Use count: ", closure_alive.use_count(),
+                     " NM running: ", network_manager_.Running());
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Listening for incoming connections on tcp://0.0.0.0:", port_);
 }
 
 void TCPServer::Stop()
 {}
 
-void TCPServer::PushRequest(connection_handle_type client, message_type const &msg)
+uint16_t TCPServer::GetListeningPort() const
 {
-  LOG_STACK_TRACE_POINT;
+  return port_;
+}
+
+void TCPServer::PushRequest(ConnectionHandleType client, MessageType const &msg)
+{
   FETCH_LOG_DEBUG(LOGGING_NAME, "Got request from ", client);
 
-  std::lock_guard<mutex_type> lock(request_mutex_);
+  FETCH_LOCK(request_mutex_);
   requests_.push_back({client, msg});
 }
 
-void TCPServer::Broadcast(message_type const &msg)
+void TCPServer::Broadcast(MessageType const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   manager_->Broadcast(msg);
 }
 
-bool TCPServer::Send(connection_handle_type const &client, message_type const &msg)
+bool TCPServer::Send(ConnectionHandleType const &client, MessageType const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   return manager_->Send(client, msg);
 }
 
 bool TCPServer::has_requests()
 {
-  LOG_STACK_TRACE_POINT;
-  std::lock_guard<mutex_type> lock(request_mutex_);
-  bool                        ret = (requests_.size() != 0);
-  return ret;
+  FETCH_LOCK(request_mutex_);
+  return !requests_.empty();
 }
 
 TCPServer::Request TCPServer::Top()
 {
-  std::lock_guard<mutex_type> lock(request_mutex_);
-  Request                     top = requests_.front();
+  FETCH_LOCK(request_mutex_);
+  Request top = requests_.front();
   return top;
 }
 
 void TCPServer::Pop()
 {
-  LOG_STACK_TRACE_POINT;
-  std::lock_guard<mutex_type> lock(request_mutex_);
+  FETCH_LOCK(request_mutex_);
   requests_.pop_front();
 }
 
-std::string TCPServer::GetAddress(connection_handle_type const &client)
+std::string TCPServer::GetAddress(ConnectionHandleType const &client)
 {
-  LOG_STACK_TRACE_POINT;
   return manager_->GetAddress(client);
 }
 
-void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
+void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> const &acceptor)
 {
-  LOG_STACK_TRACE_POINT;
-
   auto strongSocket                = network_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
   std::weak_ptr<ClientManager> man = manager_;
 
@@ -186,7 +195,7 @@ void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
 
     if (!ec)
     {
-      auto conn = std::make_shared<ClientConnection>(strongSocket, manager_);
+      auto conn = std::make_shared<ClientConnection>(strongSocket, manager_, network_manager_);
       auto ptr  = connection_register_.lock();
 
       if (ptr)
@@ -198,9 +207,13 @@ void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
       conn->Start();
       Accept(acceptor);
     }
+    else if (asio::error::operation_aborted == ec.value())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Shutting down server on tcp://0.0.0.0:", port_);
+    }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Acceptor in TCP server received EC");
+      FETCH_LOG_WARN(LOGGING_NAME, "Error generated in acceptor: ", ec.message());
     }
   };
 

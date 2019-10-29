@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -42,30 +42,30 @@ public:
   PromiseOf() = default;
   explicit PromiseOf(Promise promise);
   PromiseOf(PromiseOf const &rhs) = default;
-  ~PromiseOf()                    = default;
+  ~PromiseOf() override           = default;
 
   // Promise Accessors
   RESULT Get() const override;
-  bool   Wait(uint32_t timeout_ms      = std::numeric_limits<uint32_t>::max(),
-              bool     throw_exception = true) const;
+  bool   Wait(bool throw_exception = true) const;
 
   Promise const &GetInnerPromise() const
   {
     return promise_;
   }
+
   PromiseBuilder WithHandlers()
   {
     return promise_->WithHandlers();
   }
 
-  bool empty()
+  bool empty() const
   {
     return !promise_;
   }
 
   State GetState() override
   {
-    return promise_->GetState();
+    return promise_->state();
   }
 
   PromiseCounter id() const override
@@ -73,19 +73,9 @@ public:
     return promise_->id();
   }
 
-  std::string &name()
+  std::string const &name() const
   {
     return promise_->name();
-  }
-  const std::string &name() const
-  {
-    return promise_->name();
-  }
-
-  // TODO(EJF): This seems a little scary, is this a copy or move?
-  void Adopt(Promise &promise)
-  {
-    promise_ = promise;
   }
 
   // Operators
@@ -105,7 +95,7 @@ private:
  * @param promise The promise value
  */
 template <typename TYPE>
-inline PromiseOf<TYPE>::PromiseOf(Promise promise)
+PromiseOf<TYPE>::PromiseOf(Promise promise)
   : promise_(std::move(promise))
 {}
 
@@ -116,7 +106,7 @@ inline PromiseOf<TYPE>::PromiseOf(Promise promise)
  * @return Return the value from the promise, or throw an exception if not possible
  */
 template <typename TYPE>
-inline TYPE PromiseOf<TYPE>::Get() const
+TYPE PromiseOf<TYPE>::Get() const
 {
   return promise_->As<TYPE>();
 }
@@ -128,7 +118,7 @@ inline TYPE PromiseOf<TYPE>::Get() const
  * @return true if the promise has been fulfilled, otherwise false
  */
 template <typename TYPE>
-inline PromiseOf<TYPE>::operator bool() const
+PromiseOf<TYPE>::operator bool() const
 {
   return promise_ && promise_->IsSuccessful();
 }
@@ -137,15 +127,13 @@ inline PromiseOf<TYPE>::operator bool() const
  * Waits for the promise to complete
  *
  * @tparam TYPE The expected return type of the promise
- * @param timeout_ms The timeout in milliseconds to wait for this promise to conclude
  * @param throw_exception Signal if the function should throw an exception in the case of an error
  * @return true if the promise has been fulfilled (given the constraints), otherwise false
  */
 template <typename TYPE>
-inline bool PromiseOf<TYPE>::Wait(uint32_t timeout_ms, bool throw_exception) const
+bool PromiseOf<TYPE>::Wait(bool throw_exception) const
 {
-  FETCH_LOG_PROMISE();
-  promise_->Wait(timeout_ms, throw_exception);
+  promise_->Wait(throw_exception);
   return promise_->IsSuccessful();
 }
 

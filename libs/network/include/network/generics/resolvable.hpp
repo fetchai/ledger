@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ public:
   using Clock          = std::chrono::steady_clock;
   using Timepoint      = Clock::time_point;
 
-  ResolvableTo()  = default;
-  ~ResolvableTo() = default;
+  ResolvableTo()           = default;
+  ~ResolvableTo() override = default;
 
   ResolvableTo(ResolvableTo const &rhs) = default;
 
@@ -56,12 +56,12 @@ public:
   ResolvableTo &operator=(ResolvableTo const &rhs) = default;
   ResolvableTo &operator=(ResolvableTo &&rhs) noexcept = default;
 
-  virtual State GetState(Timepoint const &tp)
+  virtual State GetState(Timepoint const & /*tp*/)
   {
     return GetState();
   }
-  virtual State          GetState() = 0;
-  virtual PromiseCounter id() const = 0;
+  State          GetState() override = 0;
+  PromiseCounter id() const override = 0;
 
   virtual RESULT Get() const = 0;
 };

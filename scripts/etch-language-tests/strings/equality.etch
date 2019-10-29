@@ -1,0 +1,25 @@
+function ascii()
+
+    var myString1 : String = "hello";
+    var myString2 : String = "hello";
+
+    assert(myString1 == myString2);
+
+endfunction
+
+function utf8()
+
+    var myString1 : String = "他身旁放着一支磨尖的花岗岩长矛备用，脚边卧着一头犬族猛兽，它发出的喘hōu声表明它虽已入睡却睡不安稳。";
+    var myString2 : String = "他身旁放着一支磨尖的花岗岩长矛备用，脚边卧着一头犬族猛兽，它发出的喘hōu声表明它虽已入睡却睡不安稳。";
+
+    assert(myString1 == myString2);
+
+endfunction
+
+
+function main()
+
+   ascii();
+   utf8();
+
+endfunction

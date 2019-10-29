@@ -23,8 +23,8 @@
 
 
 
-int Set(fetch::vm::Token* token, const fetch::vm::Token::Kind kind, const char* text,
-	const uint16_t length, fetch::vm::Location* location)
+int Set(fetch::vm::Token *token, const fetch::vm::Token::Kind kind, char const *text,
+	uint16_t const length, fetch::vm::Location *location)
 {
 	//printf("kind=%d text=[%s] length=%d line=%d offset=%d\n",
 		//kind, text, length, location->line, location->offset);
@@ -38,15 +38,18 @@ int Set(fetch::vm::Token* token, const fetch::vm::Token::Kind kind, const char* 
 }
 
 %}
-	 
+
 
 EXP			[Ee][+-]?[0-9]+
-STR			([^"\\\n]|\\.)*
+STR1			([^"\\\n]|\\.)*
+STR2			([^'\\\n]|\\.)*
 INTEGER		[0-9][0-9]*
 REAL1		([0-9]*\.[0-9]+|[0-9]+\.){EXP}?
 REAL2		[0-9]+{EXP}
-		
-	
+FIXED1		([0-9]*\.[0-9]+|[0-9]+\.)
+FIXED2		[0-9]
+IDENT		[_a-zA-Z][_a-zA-Z0-9]*
+
 %%
 
 	/* whitespace */
@@ -81,41 +84,73 @@ REAL2		[0-9]+{EXP}
 	yyextra->offset += yyleng;
 	yyextra->line++;
 }
-	
+
 	/* numbers */
-		
+
+{INTEGER}i8 {
+	return Set(yylval, fetch::vm::Token::Kind::Integer8, yytext, yyleng, yyextra);
+}
+
+{INTEGER}u8 {
+	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger8, yytext, yyleng, yyextra);
+}
+
+{INTEGER}i16 {
+	return Set(yylval, fetch::vm::Token::Kind::Integer16, yytext, yyleng, yyextra);
+}
+
+{INTEGER}u16 {
+	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger16, yytext, yyleng, yyextra);
+}
+
+{INTEGER}i32 {
+	return Set(yylval, fetch::vm::Token::Kind::Integer32, yytext, yyleng, yyextra);
+}
+
+{INTEGER}u32 {
+	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger32, yytext, yyleng, yyextra);
+}
+
+{INTEGER}i64 {
+	return Set(yylval, fetch::vm::Token::Kind::Integer64, yytext, yyleng, yyextra);
+}
+
+{INTEGER}u64 {
+	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger64, yytext, yyleng, yyextra);
+}
+
 {INTEGER} {
 	return Set(yylval, fetch::vm::Token::Kind::Integer32, yytext, yyleng, yyextra);
 }
 
-{INTEGER}u {
-	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger32, yytext, yyleng, yyextra);
-}
-
-{INTEGER}l {
-	return Set(yylval, fetch::vm::Token::Kind::Integer64, yytext, yyleng, yyextra);
-}
-
-{INTEGER}ul {
-	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger64, yytext, yyleng, yyextra);
-}
-
 {REAL1}f |
 {REAL2}f {
-	return Set(yylval, fetch::vm::Token::Kind::SinglePrecisionNumber, yytext, yyleng, yyextra);
+	return Set(yylval, fetch::vm::Token::Kind::Float32, yytext, yyleng, yyextra);
 }
 
 {REAL1} |
 {REAL2} {
-	return Set(yylval, fetch::vm::Token::Kind::DoublePrecisionNumber, yytext, yyleng, yyextra);
+	return Set(yylval, fetch::vm::Token::Kind::Float64, yytext, yyleng, yyextra);
+}
+
+{FIXED1}fp32 |
+{FIXED2}fp32 {
+	return Set(yylval, fetch::vm::Token::Kind::Fixed32, yytext, yyleng, yyextra);
+}
+
+{FIXED1}fp64 |
+{FIXED2}fp64 {
+	return Set(yylval, fetch::vm::Token::Kind::Fixed64, yytext, yyleng, yyextra);
 }
 
 	/* strings */
-\"{STR}\" {
+\"{STR1}\" |
+\'{STR2}\' {
 	return Set(yylval, fetch::vm::Token::Kind::String, yytext, yyleng, yyextra);
 }
 
-\"{STR}\n { 
+\"{STR1}\n |
+\'{STR2}\n {
 	Set(yylval, fetch::vm::Token::Kind::BadString, yytext, yyleng, yyextra);
 	yyextra->line++;
 	return 1;
@@ -140,10 +175,19 @@ REAL2		[0-9]+{EXP}
 "return"      {return Set(yylval, fetch::vm::Token::Kind::Return, yytext, yyleng, yyextra);}
 "break"       {return Set(yylval, fetch::vm::Token::Kind::Break, yytext, yyleng, yyextra);}
 "continue"    {return Set(yylval, fetch::vm::Token::Kind::Continue, yytext, yyleng, yyextra);}
+"persistent"  {return Set(yylval, fetch::vm::Token::Kind::Persistent, yytext, yyleng, yyextra);}
+"use"         {return Set(yylval, fetch::vm::Token::Kind::Use, yytext, yyleng, yyextra);}
+"as"          {return Set(yylval, fetch::vm::Token::Kind::As, yytext, yyleng, yyextra);}
+
 
 	/* identifiers */
-[_a-zA-Z][_a-zA-Z0-9]* {
+{IDENT} {
 	return Set(yylval, fetch::vm::Token::Kind::Identifier, yytext, yyleng, yyextra);
+}
+
+	/* annotation identifiers */
+@{IDENT} {
+	return Set(yylval, fetch::vm::Token::Kind::AnnotationIdentifier, yytext, yyleng, yyextra);
 }
 
 	/*  punctuation and operators */
@@ -151,18 +195,22 @@ REAL2		[0-9]+{EXP}
 "."   {return Set(yylval, fetch::vm::Token::Kind::Dot, yytext, yyleng, yyextra);}
 ":"   {return Set(yylval, fetch::vm::Token::Kind::Colon, yytext, yyleng, yyextra);}
 ";"   {return Set(yylval, fetch::vm::Token::Kind::SemiColon, yytext, yyleng, yyextra);}
-"("   {return Set(yylval, fetch::vm::Token::Kind::LeftRoundBracket, yytext, yyleng, yyextra);}
-")"   {return Set(yylval, fetch::vm::Token::Kind::RightRoundBracket, yytext, yyleng, yyextra);}
+"("   {return Set(yylval, fetch::vm::Token::Kind::LeftParenthesis, yytext, yyleng, yyextra);}
+")"   {return Set(yylval, fetch::vm::Token::Kind::RightParenthesis, yytext, yyleng, yyextra);}
 "["   {return Set(yylval, fetch::vm::Token::Kind::LeftSquareBracket, yytext, yyleng, yyextra);}
 "]"   {return Set(yylval, fetch::vm::Token::Kind::RightSquareBracket, yytext, yyleng, yyextra);}
+"{"   {return Set(yylval, fetch::vm::Token::Kind::LeftBrace, yytext, yyleng, yyextra);}
+"}"   {return Set(yylval, fetch::vm::Token::Kind::RightBrace, yytext, yyleng, yyextra);}
+"%"   {return Set(yylval, fetch::vm::Token::Kind::Modulo, yytext, yyleng, yyextra);}
 "+"   {return Set(yylval, fetch::vm::Token::Kind::Plus, yytext, yyleng, yyextra);}
 "-"   {return Set(yylval, fetch::vm::Token::Kind::Minus, yytext, yyleng, yyextra);}
 "*"   {return Set(yylval, fetch::vm::Token::Kind::Multiply, yytext, yyleng, yyextra);}
 "/"   {return Set(yylval, fetch::vm::Token::Kind::Divide, yytext, yyleng, yyextra);}
-"+="  {return Set(yylval, fetch::vm::Token::Kind::AddAssign, yytext, yyleng, yyextra);}
-"-="  {return Set(yylval, fetch::vm::Token::Kind::SubtractAssign, yytext, yyleng, yyextra);}
-"*="  {return Set(yylval, fetch::vm::Token::Kind::MultiplyAssign, yytext, yyleng, yyextra);}
-"/="  {return Set(yylval, fetch::vm::Token::Kind::DivideAssign, yytext, yyleng, yyextra);}
+"%="  {return Set(yylval, fetch::vm::Token::Kind::InplaceModulo, yytext, yyleng, yyextra);}
+"+="  {return Set(yylval, fetch::vm::Token::Kind::InplaceAdd, yytext, yyleng, yyextra);}
+"-="  {return Set(yylval, fetch::vm::Token::Kind::InplaceSubtract, yytext, yyleng, yyextra);}
+"*="  {return Set(yylval, fetch::vm::Token::Kind::InplaceMultiply, yytext, yyleng, yyextra);}
+"/="  {return Set(yylval, fetch::vm::Token::Kind::InplaceDivide, yytext, yyleng, yyextra);}
 "="   {return Set(yylval, fetch::vm::Token::Kind::Assign, yytext, yyleng, yyextra);}
 "=="  {return Set(yylval, fetch::vm::Token::Kind::Equal, yytext, yyleng, yyextra);}
 "!="  {return Set(yylval, fetch::vm::Token::Kind::NotEqual, yytext, yyleng, yyextra);}
@@ -176,7 +224,7 @@ REAL2		[0-9]+{EXP}
 "++"  {return Set(yylval, fetch::vm::Token::Kind::Inc, yytext, yyleng, yyextra);}
 "--"  {return Set(yylval, fetch::vm::Token::Kind::Dec, yytext, yyleng, yyextra);}
 
-<<EOF>> {Set(yylval, fetch::vm::Token::Kind::EndOfInput, yytext, yyleng, yyextra); return 0;}
+<<EOF>> {Set(yylval, fetch::vm::Token::Kind::EndOfInput, "", 0, yyextra); return 0;}
 
 	/* catch-all for unrecognised */
 . {return Set(yylval, fetch::vm::Token::Kind::Unknown, yytext, yyleng, yyextra);}

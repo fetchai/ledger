@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,26 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "crypto/stream_hasher.hpp"
-#include <openssl/sha.h>
+#include "crypto/hasher_interface.hpp"
+#include "crypto/openssl_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
 
-class SHA256 : public StreamHasher
+class SHA256 : public HasherInterface
 {
-  SHA256_CTX context_;
-
 public:
-  using StreamHasher::Update;
-  using StreamHasher::Final;
+  using HasherInterface::Update;
+  using HasherInterface::Final;
 
-  SHA256();
+  static constexpr std::size_t size_in_bytes = 32u;
+
+  SHA256()               = default;
+  ~SHA256() override     = default;
+  SHA256(SHA256 const &) = delete;
+  SHA256(SHA256 &&)      = delete;
+
+  SHA256 &operator=(SHA256 const &) = delete;
+  SHA256 &operator=(SHA256 &&) = delete;
+
   void        Reset() override;
-  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
-  void        Final(uint8_t *hash, std::size_t const &size) override;
-  std::size_t hashSize() const override;
+  bool        Update(uint8_t const *data_to_hash, std::size_t size) override;
+  void        Final(uint8_t *hash) override;
+  std::size_t HashSizeInBytes() const override;
+
+private:
+  internal::OpenSslHasher openssl_hasher_{internal::OpenSslDigestType::SHA2_256};
 };
 
 }  // namespace crypto
