@@ -23,6 +23,7 @@
 #include "crypto/mcl_dkg.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/protocols/notarisation_service.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "muddle/create_muddle_fake.hpp"
@@ -44,7 +45,7 @@ using ProverPtr      = std::shared_ptr<Prover>;
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
-using BlockPtr       = BlockGenerator::BlockPtr;
+using BlockPtr       = Consensus::NextBlockPtr;
 using BlockPtrConst  = BlockGenerator::BlockPtrConst;
 
 struct DummyManifestCache : public fetch::shards::ManifestCacheInterface
@@ -78,7 +79,6 @@ struct NotarisationNode
   std::shared_ptr<NotarisationService>       notarisation_service;
   std::shared_ptr<StakeManager>              stake_manager;
   Consensus                                  consensus;
-  std::unordered_set<BlockHash>              notarised_blocks;
 
   NotarisationNode(uint16_t port_number, uint16_t index, uint64_t cabinet_size)
     : muddle_port{port_number}
@@ -131,7 +131,7 @@ TEST(notarisation, notarise_blocks)
 {
   // Set up identity and keys
   uint32_t committee_size = 3;
-  uint32_t threshold      = 1;
+  uint32_t threshold      = 2;
 
   std::vector<std::shared_ptr<NotarisationNode>> nodes;
   std::set<MuddleAddress>                        cabinet;
@@ -186,20 +186,38 @@ TEST(notarisation, notarise_blocks)
     node->reactor.Start();
   }
 
-  // Create previous entropy
-  BlockEntropy prev_entropy;
-  prev_entropy.group_signature = "Hello";
+  // Stake setup
+  StakeSnapshot snapshot;
+  for (auto node : nodes)
+  {
+    snapshot.UpdateStake(node->muddle_certificate->identity(), 10);
+    node->consensus.SetCabinetSize(committee_size);
+    node->consensus.SetThreshold(0.5);
+  }
+  EXPECT_EQ(snapshot.total_stake(), committee_size * 10);
 
   uint64_t round_length = 5;
   for (uint8_t round = 0; round < 2; ++round)
   {
     // Setup trusted dealer
-    TrustedDealer dealer(cabinet, threshold);
+    TrustedDealer dealer{cabinet, threshold};
+
+    // Create previous entropy
+    BlockEntropy prev_entropy;
+    if (round == 0)
+    {
+      prev_entropy.group_signature = "Hello";
+    }
+    else
+    {
+      prev_entropy = nodes[0]->chain.GetHeaviestBlock()->body.block_entropy;
+    }
 
     // Reset cabinet for dkg
-    uint64_t round_start = round * round_length;
+    uint64_t round_start = round * round_length + 1;
     for (auto &node : nodes)
     {
+      node->consensus.stake()->Reset(snapshot);
       node->beacon_setup_service->StartNewCabinet(
           cabinet, threshold, round_start, round_start + round_length,
           GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5,
@@ -207,64 +225,57 @@ TEST(notarisation, notarise_blocks)
           dealer.GetNotarisationKeys(node->address()));
     }
 
-    // Generate blocks and notarise
-    std::vector<BlockPtr> blocks_to_sign;
-    BlockGenerator        generator(1, 1);
-    for (uint16_t i = 0; i < round_length - 1; i++)
+    for (uint16_t i = 0; i < round_length; i++)
     {
-      auto          random_miner = static_cast<uint32_t>(rand()) % committee_size;
-      BlockPtrConst previous     = nodes[random_miner]->chain.GetHeaviestBlock();
-      blocks_to_sign.push_back(generator(previous));
-      blocks_to_sign[i]->body.block_entropy.qualified = cabinet;
-      blocks_to_sign[i]->body.miner_id = nodes[random_miner]->muddle_certificate->identity();
-
-      // Add this block to everyone's chain and ask them to sign
-      for (auto &node : nodes)
+      std::vector<BlockPtr> blocks_this_round;
+      // Generate blocks and notarise
+      uint32_t count = 0;
+      while (count == 0)
       {
-        node->chain.AddBlock(*blocks_to_sign[i]);
-      }
-
-      // Wait for everyone to notarise this block
-      pending_nodes.resize(committee_size, 0);
-      std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
-      while (!pending_nodes.empty())
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
+        for (auto &node : nodes)
         {
-          nodes[*it]->notarisation_service->NotariseBlock(blocks_to_sign[i]->body);
-          if (!nodes[*it]
-                   ->notarisation_service->GetNotarisations(blocks_to_sign[i]->body.block_number)
-                   .empty())
+          auto next_block = node->consensus.GenerateNextBlock();
+
+          if (next_block != nullptr)
           {
-            it = pending_nodes.erase(it);
-          }
-          else
-          {
-            ++it;
+
+            // Set block hash and ficticious weight
+            if (round == 0 && i == 0)
+            {
+              next_block->body.previous_hash = node->chain.GetHeaviestBlock()->body.hash;
+              next_block->weight             = static_cast<uint64_t>(
+                  committee_size -
+                  std::distance(nodes.begin(), std::find(nodes.begin(), nodes.end(), node)));
+            }
+
+            next_block->UpdateDigest();
+            next_block->UpdateTimestamp();
+            next_block->miner_signature = node->muddle_certificate->Sign(next_block->body.hash);
+
+            blocks_this_round.push_back(std::move(next_block));
+            ++count;
           }
         }
       }
 
-      // Wait for everyone to collect enough notarisations for this block
-      pending_nodes.resize(committee_size, 0);
-      std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
-      while (!pending_nodes.empty())
+      std::cout << "Generated " << count << " blocks for round " << i << std::endl;
+
+      // Verify notarisation in block
+      for (auto &node : nodes)
       {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
+        for (auto &block : blocks_this_round)
         {
-          if (nodes[*it]
-                  ->notarisation_service
-                  ->HeaviestNotarisedBlock(blocks_to_sign[i]->body.block_number)
-                  .first == blocks_to_sign[i]->body.hash)
-          {
-            it = pending_nodes.erase(it);
-          }
-          else
-          {
-            ++it;
-          }
+          EXPECT_TRUE(node->consensus.VerifyNotarisation(*block));
+        }
+      }
+
+      // Add this block to everyone's chain
+      for (auto &node : nodes)
+      {
+        for (auto &block : blocks_this_round)
+        {
+          node->chain.AddBlock(*block);
+          node->consensus.UpdateCurrentBlock(*block);
         }
       }
     }

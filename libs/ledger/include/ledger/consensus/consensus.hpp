@@ -58,6 +58,7 @@ public:
   void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
   Status       ValidBlock(Block const &current) const override;
+  bool         VerifyNotarisation(Block const &block) const;
   void         Reset(StakeSnapshot const &snapshot);
   void         Refresh() override;
 
@@ -104,7 +105,6 @@ private:
   bool       ShouldTriggerNewCabinet(Block const &block);
   bool       EnoughQualSigned(BlockEntropy const &block_entropy) const;
   uint32_t   GetThreshold(Block const &block) const;
-  bool       VerifyNotarisation(Block const &block) const;
 };
 
 }  // namespace ledger

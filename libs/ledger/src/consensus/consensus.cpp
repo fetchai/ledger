@@ -170,19 +170,24 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
 bool Consensus::VerifyNotarisation(Block const &block) const
 {
-  if (notarisation_ && block.body.block_number != 0)
+  // Genesis is not notarised so the body of blocks with block number 1 do
+  // not contain a notarisation
+  if (notarisation_ && block.body.block_number > 1)
   {
     // Try to verify with notarisation units in notarisation_
-    auto result = notarisation_->Verify(block.body.block_number, block.body.hash,
+    auto previous_notarised_block = chain_.GetBlock(block.body.previous_hash);
+    auto result = notarisation_->Verify(previous_notarised_block->body.block_number,
+                                        previous_notarised_block->body.hash,
                                         block.body.block_entropy.block_notarisation);
     if (result == NotarisationResult::CAN_NOT_VERIFY)
     {
       // If block is too old then get aeon beginning
-      auto aeon_block                = GetBeginningOfAeon(block, chain_);
-      auto threshold                 = GetThreshold(block);
+      auto aeon_block                = GetBeginningOfAeon(*previous_notarised_block, chain_);
+      auto threshold                 = GetThreshold(*previous_notarised_block);
       auto ordered_notarisation_keys = aeon_block.body.block_entropy.member_details;
 
-      return notarisation_->Verify(block.body.hash, block.body.block_entropy.block_notarisation,
+      return notarisation_->Verify(previous_notarised_block->body.hash,
+                                   block.body.block_entropy.block_notarisation,
                                    ordered_notarisation_keys, threshold);
     }
     if (result == NotarisationResult::FAIL_VERIFICATION)
@@ -203,7 +208,7 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Addre
   // TODO(EJF): Depending on the cabinet sizes this would need to be improved
   for (auto const &member : cabinet)
   {
-    if (address == chain::Address(member))
+    if (address == chain::Address::FromMuddleAddress(member))
     {
       break;
     }
