@@ -201,7 +201,7 @@ function add(a : Float64, b : Float32) : Float64
 endfunction
 
 )";
-auto const AddFloat32        = R"(
+auto const AddFloat32      = R"(
 
 function add(a : Float32, b : Float32) : Float32
   return a + b;
@@ -1400,8 +1400,8 @@ TEST(BasicVmEngineDmlfTests, AddFloat32)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  float  a = 4.6f;
-  float  b = 3.5f;
+  float a = 4.6f;
+  float b = 3.5f;
 
   ExecutionResult result =
       engine.Run("add", "state", "add", Params{LedgerVariant(a), LedgerVariant(b)});
@@ -1812,7 +1812,6 @@ TEST(BasicVmEngineDmlfTests, StringOutput)
   ExecutionResult result = engine.Run("stringOut", "state", "outString", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<std::string>(), "Hello");
-
 }
 
 TEST(BasicVmEngineDmlfTests, IntToString)
