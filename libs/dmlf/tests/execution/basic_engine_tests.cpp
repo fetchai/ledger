@@ -601,6 +601,21 @@ endfunction
 
 )";
 
+auto const StringOut = R"(
+
+function outString() : String
+  return "Hello";
+endfunction
+
+)";
+
+auto const IntToString = R"(
+  function IntToString(x : Int32) : String
+    return toString(x);
+  endfunction
+
+)";
+
 }  // namespace
 
 TEST(BasicVmEngineDmlfTests, Return1)
@@ -1782,6 +1797,37 @@ TEST(BasicVmEngineDmlfTests, BigStateMatrixMyCalls)
 
   result = engine.Run("stateMatrix", "state", "doStuff2", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+}
+
+TEST(BasicVmEngineDmlfTests, StringOutput)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("stringOut", {{"etch", StringOut}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run("stringOut", "state", "outString", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<std::string>(), "Hello");
+
+}
+
+TEST(BasicVmEngineDmlfTests, IntToString)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("toString", {{"etch", IntToString}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run("toString", "state", "IntToString", Params{LedgerVariant(1)});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  EXPECT_EQ(result.output().As<std::string>(), "1");
 }
 
 }  // namespace
