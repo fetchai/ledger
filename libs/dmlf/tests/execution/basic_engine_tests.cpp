@@ -295,14 +295,12 @@ endfunction
 
 )";
 
-/*
-auto const AddFloat2Array = R"(
-
-function add(array : Array<Array<Float64>>) : Float64
-  return array[0][0] + array[0][1];
-endfunction
-)";
-*/
+//auto const AddFloat2Array = R"(
+//
+//function add(array : Array<Array<Float64>>) : Float64
+//  return array[0][0] + array[0][1];
+//endfunction
+//)";
 
 // auto const AddArrayThree = R"(
 //
@@ -564,6 +562,124 @@ function doAdd() : Int32
   swola[0][1][1] = 3;
 
 	return doSum(swola);
+
+endfunction
+
+)";
+
+auto const StateMatrix = R"(
+function doStuff()
+
+    var myState = State<Array<Array<Array<Int64>>>>("arrayState");
+
+    var test = Array<Array<Int64>>(2);
+    
+    test[0] = Array<Int64>(2);
+    test[1] = Array<Int64>(2);
+
+    test[0][0] = 0i64;
+    test[0][1] = 1i64;
+    test[1][0] = 2i64;
+    test[1][1] = 3i64;
+
+    var bigger = Array<Array<Array<Int64>>>(2);
+    bigger[0] = test;
+    bigger[1] = test;
+
+    myState.set(bigger);
+    
+    printLn("State is " + toString(myState.get()[0][1][0]));
+    
+    changeState(myState);
+    printLn("State is " + toString(myState.get()[0][1][0]));
+
+endfunction
+
+function doStuff2()
+    otherChange();
+endfunction
+
+function main()
+
+  doStuff();
+  doStuff2();
+
+endfunction
+
+function changeState(state : State<Array<Array<Array<Int64>>>>)
+
+  state.get()[0][1][0] = 5i64;
+
+endfunction
+
+function otherChange()
+
+  var myState = State<Array<Array<Array<Int64>>>>("arrayState");
+  
+  myState.get()[0][1][0] = myState.get()[0][1][0] * 2i64;
+  printLn("State is " + toString(myState.get()[0][1][0]));
+
+endfunction
+)";
+
+
+
+
+auto const BigStMatrix = R"(
+
+function doStuff()
+
+    var myState = State<Array<Array<Array<Array<Int64>>>>>("arrayState");
+
+    var test = Array<Array<Int64>>(2);
+    
+    test[0] = Array<Int64>(2);
+    test[1] = Array<Int64>(2);
+
+    test[0][0] = 0i64;
+    test[0][1] = 1i64;
+    test[1][0] = 2i64;
+    test[1][1] = 3i64;
+
+    var bigger = Array<Array<Array<Int64>>>(2);
+    bigger[0] = test;
+    bigger[1] = test;
+    
+    var evenBigger = Array<Array<Array<Array<Int64>>>>(2);
+    evenBigger[0] = bigger;
+    evenBigger[1] = bigger;
+    myState.set(evenBigger);
+    
+    printLn("State is " + toString(myState.get()[0][0][1][0]));
+    
+    //changeState(myState);
+    printLn("State is " + toString(myState.get()[0][0][1][0]));
+
+endfunction
+
+function doStuff2()
+    otherChange();
+endfunction
+
+function main()
+
+  doStuff();
+  doStuff2();
+
+endfunction
+
+function changeState(state : State<Array<Array<Array<Array<Int64>>>>>)
+
+  state.get()[0][0][1][0] = 5i64;
+
+endfunction
+
+function otherChange()
+
+  var myState = State<Array<Array<Array<Array<Int64>>>>>("arrayState");
+  
+  myState.get()[0][0][1][0] = myState.get()[0][0][1][0] * 2i64;
+  printLn("State is " + toString(myState.get()[0][0][1][0]));
 
 endfunction
 
@@ -1841,22 +1957,84 @@ TEST(BasicVmEngineDmlfTests, ByteAddFloat64Array)
   EXPECT_NEAR(result.output().As<double>(), 3.9, 0.0001);
 }
 
-/*
-TEST(BasicVmEngineDmlfTests, ByteAddFloat2Array)
+TEST(BasicVmEngineDmlfTests, StateMatrixMain)
 {
   BasicVmEngine engine;
 
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloat2Array}});
+  ExecutionResult createdProgram = engine.CreateExecutable("stateMatrix", {{"etch", StateMatrix}});
   EXPECT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.Run(
-      "add", "state", "add", SerializeParameters(std::vector<std::vector<double>>{{1.2,2.7}}));
+  ExecutionResult result =
+      engine.Run("stateMatrix", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_NEAR(result.output().As<double>(), 3.9, 0.0001);
 }
-*/
+
+TEST(BasicVmEngineDmlfTests, StateMatrixMyCalls)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("stateMatrix", {{"etch", StateMatrix}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run("stateMatrix", "state", "doStuff", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+
+  result = engine.Run("stateMatrix", "state", "doStuff2", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+}
+
+TEST(BasicVmEngineDmlfTests, BigStateMatrixMain)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("stateMatrix", {{"etch", BigStMatrix}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run("stateMatrix", "state", "main", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+
+}
+
+TEST(BasicVmEngineDmlfTests, BigStateMatrixMyCalls)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("stateMatrix", {{"etch", BigStMatrix}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run("stateMatrix", "state", "doStuff", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+
+  result = engine.Run("stateMatrix", "state", "doStuff2", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+}
+
+//TEST(BasicVmEngineDmlfTests, ByteAddFloat2Array)
+//{
+//  BasicVmEngine engine;
+//
+//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloat2Array}});
+//  EXPECT_TRUE(createdProgram.succeeded());
+//
+//  ExecutionResult createdState = engine.CreateState("state");
+//  EXPECT_TRUE(createdState.succeeded());
+//
+//  ExecutionResult result = engine.Run(
+//      "add", "state", "add", SerializeParameters(std::vector<std::vector<double>>{{1.2,2.7}}));
+//  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+//  EXPECT_NEAR(result.output().As<double>(), 3.9, 0.0001);
+//}
 
 }  // namespace
