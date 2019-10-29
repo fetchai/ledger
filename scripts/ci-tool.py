@@ -356,7 +356,7 @@ def main():
 
     # attempt to detect the sccache path on the system
     sccache_path = shutil.which('sccache')
-    if (args.build or args.lint or args.all) and sccache_path:
+    if (args.build or args.lint or args.all) and sccache_path and False:
         t = threading.Thread(target=run_sccache_server, args=(sccache_path,))
         t.daemon = True
         t.start()
