@@ -179,9 +179,9 @@ private:
       }
       break;
     }
+      // MaxPool2D
     case 4:
     {
-      // MaxPool2D
       if (!pool_op_ptr_ || pool_2d_ != false)
       {
         pool_op_ptr_ =
