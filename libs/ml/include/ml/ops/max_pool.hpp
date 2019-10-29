@@ -45,14 +45,10 @@ public:
   MaxPool(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}
     , stride_size_{stride_size}
-    , max_pool_1d_(kernel_size, stride_size)
-    , max_pool_2d_(kernel_size, stride_size)
   {}
 
   explicit MaxPool(SPType const &sp)
     : Ops<T>(sp)
-    , max_pool_1d_(sp.kernel_size, sp.stride_size)
-    , max_pool_2d_(sp.kernel_size, sp.stride_size)
   {
     kernel_size_ = sp.kernel_size;
     stride_size_ = sp.stride_size;
@@ -80,46 +76,34 @@ public:
 
     return copyshare;
   }
+
   /**
-   * Applies 1D max pooling of kernel_size_ for each channel described here:
+   * Applies 1D/2D max pooling of kernel_size_ (x kernel_size_) for each channel described here:
    * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
    * @param inputs vector of tensor references where at:
-   * inputs[0] = input_data[input_channels x input_height]
-   * @param output tensor of size [input_channels=output_channels x number_of_stride_sized_steps]
+   * inputs[0] = input_data[input_channels x input_height (x input_width)]
+   * @param output tensor of size [input_channels=output_channels x
+   * number_of_stride_sized_steps_over_input_height (x
+   * number_of_stride_sized_steps_over_input_width)]
    * @return: output tensor parameter
    */
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
 
-    switch (inputs.at(0)->shape().size())
-    {
-    case 3:
-    {
-      max_pool_1d_.Forward(inputs, output);
-      break;
-    }
-    case 2:
-    {
-      max_pool_2d_.Forward(inputs, output);
-      break;
-    }
-
-    default:
-    {
-      throw fetch::ml::exceptions::InvalidMode("Unsupported data shape");
-    }
-    }
+    UpdatePointer(inputs);
+    pool_op_ptr_->Forward(inputs, output);
   }
 
   /**
-   * Computes gradient of 1D max pooling of kernel_size_ for each channel described here:
-   * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
-   * Error signal of max pool is passed only to max node
+   * Computes gradient of 2D max pooling of kernel_size_ (x kernel_size) for each channel described
+   * here: http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf Error signal
+   * of max pool is passed only to max node
    * @param inputs vector of tensor references where at:
-   * inputs[0] = input_data[input_channels x input_height]
-   * @param error_signal tensor of size [output_channels=input_channels x
-   * number_of_stride_sized_steps]
+   * inputs[0] = input_data[input_channels x input_height (x input_width)]
+   * @param error_signal tensor of size  [output_channels x
+   * number_of_stride_sized_steps_over_input_height (x
+   * number_of_stride_sized_steps_over_input_width)]
    * @return: output vector of tensors with back propagated error signal
    * output[0]=input_error[inputs[0].shape]
    */
@@ -128,46 +112,40 @@ public:
   {
     assert(inputs.size() == 1);
 
-    switch (inputs.at(0)->shape().size())
-    {
-    case 3:
-    {
-      return max_pool_1d_.Backward(inputs, error_signal);
-      break;
-    }
-    case 2:
-    {
-      return max_pool_2d_.Backward(inputs, error_signal);
-    }
-
-    default:
-    {
-      throw fetch::ml::exceptions::InvalidMode("Unsupported data shape");
-    }
-    }
+    UpdatePointer(inputs);
+    return pool_op_ptr_->Backward(inputs, error_signal);
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     assert(inputs.size() == 1);
+    assert(inputs.at(0)->shape().size() == 2 || inputs.at(0)->shape().size() == 3);
 
-    switch (inputs.at(0)->shape().size())
+    std::vector<SizeType> output_shape;
+
+    // output_shape_[0]=number of output channels
+    output_shape.emplace_back(inputs.at(0)->shape().at(0));
+    // output_shape_[1]=number of stride_size steps over input height
+    output_shape.emplace_back((inputs.at(0)->shape().at(1) - (kernel_size_ - stride_size_)) /
+                              stride_size_);
+
+    // MaxPool1D
+    if (inputs.at(0)->shape().size() == 2)
     {
-    case 3:
-    {
-      return max_pool_1d_.ComputeOutputShape(inputs);
-      break;
+      // output_shape_[2]=batch dimension
+      output_shape.emplace_back(inputs.at(0)->shape().at(2));
     }
-    case 2:
+    // MaxPool2D
+    else
     {
-      return max_pool_2d_.ComputeOutputShape(inputs);
+      // output_shape_[2]=number of stride_size steps over input width
+      output_shape.emplace_back((inputs.at(0)->shape().at(2) - (kernel_size_ - stride_size_)) /
+                                stride_size_);
+      // output_shape_[3]=batch dimension
+      output_shape.emplace_back(inputs.at(0)->shape().at(3));
     }
 
-    default:
-    {
-      throw fetch::ml::exceptions::InvalidMode("Unsupported data shape");
-    }
-    }
+    return output_shape;
   }
 
   static constexpr OpType OpCode()
@@ -177,10 +155,47 @@ public:
   static constexpr char const *DESCRIPTOR = "MaxPool";
 
 private:
-  SizeType                              kernel_size_;
-  SizeType                              stride_size_;
-  fetch::ml::ops::MaxPool1D<TensorType> max_pool_1d_;
-  fetch::ml::ops::MaxPool2D<TensorType> max_pool_2d_;
+  SizeType                                         kernel_size_;
+  SizeType                                         stride_size_;
+  bool                                             pool_2d_;
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> pool_op_ptr_;
+
+  /**
+   * Update pointer to pooling op depending on input size
+   * @param inputs
+   */
+  void UpdatePointer(VecTensorType const &inputs)
+  {
+    switch (inputs.at(0)->shape().size())
+    {
+    case 3:
+    {
+      if (!pool_op_ptr_ || pool_2d_ != false)
+      {
+        pool_op_ptr_ =
+            std::make_shared<fetch::ml::ops::MaxPool2D<TensorType>>(kernel_size_, stride_size_);
+        pool_2d_ = false;
+      }
+
+      break;
+    }
+    case 2:
+    {
+      if (!pool_op_ptr_ || pool_2d_ != true)
+      {
+        pool_op_ptr_ =
+            std::make_shared<fetch::ml::ops::MaxPool1D<TensorType>>(kernel_size_, stride_size_);
+        pool_2d_ = true;
+      }
+      break;
+    }
+
+    default:
+    {
+      throw fetch::ml::exceptions::InvalidMode("Unsupported data shape");
+    }
+    }
+  }
 };
 
 }  // namespace ops
