@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_setup_service.hpp"
+#include "beacon/beacon_service.hpp"
 #include "beacon/create_new_certificate.hpp"
-#include "beacon/trusted_dealer.hpp"
+#include "beacon/trusted_dealer_beacon_service.hpp"
 #include "core/reactor.hpp"
 #include "crypto/mcl_dkg.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/consensus/consensus.hpp"
 #include "ledger/protocols/notarisation_service.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "muddle/create_muddle_fake.hpp"
@@ -64,36 +65,48 @@ using SharedAeonExecutionUnit    = BeaconSetupService::SharedAeonExecutionUnit;
 
 struct NotarisationNode
 {
-  uint16_t                      muddle_port;
-  network::NetworkManager       network_manager;
-  core::Reactor                 reactor;
-  ProverPtr                     muddle_certificate;
-  Muddle                        muddle;
-  DummyManifestCache            manifest_cache;
-  MainChain                     chain;
-  BeaconSetupService            beacon_setup_service;
-  NotarisationService           notarisation_service;
-  std::unordered_set<BlockHash> notarised_blocks;
-  std::atomic<bool>             finished;
-  DkgOutput                     output;
+  uint16_t                                   muddle_port;
+  EventManager::SharedEventManager           event_manager;
+  network::NetworkManager                    network_manager;
+  core::Reactor                              reactor;
+  ProverPtr                                  muddle_certificate;
+  Muddle                                     muddle;
+  DummyManifestCache                         manifest_cache;
+  MainChain                                  chain;
+  std::shared_ptr<TrustedDealerSetupService> beacon_setup_service;
+  std::shared_ptr<BeaconService>             beacon_service;
+  std::shared_ptr<NotarisationService>       notarisation_service;
+  std::shared_ptr<StakeManager>              stake_manager;
+  Consensus                                  consensus;
+  std::unordered_set<BlockHash>              notarised_blocks;
 
-  NotarisationNode(uint16_t port_number, uint16_t index)
+  NotarisationNode(uint16_t port_number, uint16_t index, uint64_t cabinet_size)
     : muddle_port{port_number}
+    , event_manager{EventManager::New()}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
     , chain{false, ledger::MainChain::Mode::IN_MEMORY_DB}
-    , beacon_setup_service{*muddle, manifest_cache, muddle_certificate}
-    , notarisation_service{*muddle, chain, muddle_certificate, beacon_setup_service}
+    , beacon_setup_service{new TrustedDealerSetupService{*muddle, manifest_cache,
+                                                         muddle_certificate}}
+    , beacon_service{new BeaconService{*muddle, muddle_certificate, *beacon_setup_service,
+                                       event_manager}}
+    , notarisation_service{new NotarisationService{*muddle, chain, muddle_certificate,
+                                                   *beacon_setup_service}}
+    , stake_manager{new StakeManager{cabinet_size}}
+    , consensus{stake_manager,
+                beacon_setup_service,
+                beacon_service,
+                chain,
+                muddle_certificate->identity(),
+                10,
+                cabinet_size,
+                1000,
+                notarisation_service}
   {
     network_manager.Start();
     muddle->Start({muddle_port});
-
-    beacon_setup_service.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
-      finished = true;
-      output   = beacon->manager.GetDkgOutput();
-    });
   }
 
   ~NotarisationNode()
@@ -125,7 +138,7 @@ TEST(notarisation, notarise_blocks)
   for (uint16_t i = 0; i < committee_size; ++i)
   {
     auto port_number = static_cast<uint16_t>(10000 + i);
-    nodes.emplace_back(new NotarisationNode(port_number, i));
+    nodes.emplace_back(new NotarisationNode(port_number, i, committee_size));
     cabinet.insert(nodes[i]->address());
   }
 
@@ -162,8 +175,9 @@ TEST(notarisation, notarise_blocks)
   // Attach runnables
   for (auto &node : nodes)
   {
-    node->reactor.Attach(node->beacon_setup_service.GetWeakRunnables());
-    node->reactor.Attach(node->notarisation_service.GetWeakRunnable());
+    node->reactor.Attach(node->beacon_setup_service->GetWeakRunnables());
+    node->reactor.Attach(node->beacon_service->GetWeakRunnable());
+    node->reactor.Attach(node->notarisation_service->GetWeakRunnable());
   }
 
   // Start reactor
@@ -179,37 +193,18 @@ TEST(notarisation, notarise_blocks)
   uint64_t round_length = 5;
   for (uint8_t round = 0; round < 2; ++round)
   {
+    // Setup trusted dealer
+    TrustedDealer dealer(cabinet, threshold);
+
     // Reset cabinet for dkg
     uint64_t round_start = round * round_length;
     for (auto &node : nodes)
     {
-      node->beacon_setup_service.StartNewCabinet(
+      node->beacon_setup_service->StartNewCabinet(
           cabinet, threshold, round_start, round_start + round_length,
           GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5,
-          prev_entropy);
-    }
-
-    // Loop until everyone we expect to finish completes the DKG
-    pending_nodes.resize(committee_size, 0);
-    std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
-    while (!pending_nodes.empty())
-    {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
-      {
-        if (nodes[*it]->finished)
-        {
-          it = pending_nodes.erase(it);
-          break;
-        }
-        ++it;
-      }
-    }
-
-    // Reset DKG finished
-    for (auto &nodes : nodes)
-    {
-      nodes->finished = false;
+          prev_entropy, dealer.GetDkgKeys(node->address()),
+          dealer.GetNotarisationKeys(node->address()));
     }
 
     // Generate blocks and notarise
@@ -227,10 +222,6 @@ TEST(notarisation, notarise_blocks)
       for (auto &node : nodes)
       {
         node->chain.AddBlock(*blocks_to_sign[i]);
-        node->notarisation_service.NotariseBlock(blocks_to_sign[i]->body);
-        EXPECT_TRUE(
-            !node->notarisation_service.GetNotarisations(blocks_to_sign[i]->body.block_number)
-                 .empty());
       }
 
       // Wait for everyone to notarise this block
@@ -241,9 +232,31 @@ TEST(notarisation, notarise_blocks)
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
         {
+          nodes[*it]->notarisation_service->NotariseBlock(blocks_to_sign[i]->body);
+          if (!nodes[*it]
+                   ->notarisation_service->GetNotarisations(blocks_to_sign[i]->body.block_number)
+                   .empty())
+          {
+            it = pending_nodes.erase(it);
+          }
+          else
+          {
+            ++it;
+          }
+        }
+      }
+
+      // Wait for everyone to collect enough notarisations for this block
+      pending_nodes.resize(committee_size, 0);
+      std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
+      while (!pending_nodes.empty())
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
+        {
           if (nodes[*it]
                   ->notarisation_service
-                  .HeaviestNotarisedBlock(blocks_to_sign[i]->body.block_number)
+                  ->HeaviestNotarisedBlock(blocks_to_sign[i]->body.block_number)
                   .first == blocks_to_sign[i]->body.hash)
           {
             it = pending_nodes.erase(it);

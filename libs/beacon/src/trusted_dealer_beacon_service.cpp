@@ -28,11 +28,10 @@ TrustedDealerSetupService::TrustedDealerSetupService(MuddleInterface &       mud
   , certificate_{certificate}
 {}
 
-void TrustedDealerSetupService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
-                                                uint64_t round_start, uint64_t round_end,
-                                                uint64_t            start_time,
-                                                BlockEntropy const &prev_entropy,
-                                                DkgOutput const &   output)
+void TrustedDealerSetupService::StartNewCabinet(
+    CabinetMemberList members, uint32_t threshold, uint64_t round_start, uint64_t round_end,
+    uint64_t start_time, BlockEntropy const &prev_entropy, DkgOutput const &output,
+    std::pair<SharedNotarisationManager, CabinetNotarisationKeys> notarisation_keys)
 {
   auto diff_time =
       int64_t(GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))) -
@@ -81,6 +80,14 @@ void TrustedDealerSetupService::StartNewCabinet(CabinetMemberList members, uint3
   if (callback_function_)
   {
     callback_function_(beacon);
+  }
+
+  if (notarisation_keys.first && !notarisation_keys.second.empty() &&
+      notarisation_callback_function_)
+  {
+    notarisation_keys.first->SetAeonDetails(round_start, round_end, threshold,
+                                            notarisation_keys.second);
+    notarisation_callback_function_(notarisation_keys.first);
   }
 }
 }  // namespace beacon

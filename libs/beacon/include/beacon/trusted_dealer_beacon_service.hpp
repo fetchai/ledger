@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_setup_service.hpp"
+#include "beacon/trusted_dealer.hpp"
 
 namespace fetch {
 namespace beacon {
@@ -31,16 +32,20 @@ class TrustedDealerSetupService : public BeaconSetupService
 public:
   static constexpr char const *LOGGING_NAME = "TrustedDealerSetupService";
 
-  using CertificatePtr    = BeaconSetupService::CertificatePtr;
-  using CabinetMemberList = BeaconSetupService::CabinetMemberList;
-  using CallbackFunction  = BeaconSetupService::CallbackFunction;
+  using CertificatePtr            = BeaconSetupService::CertificatePtr;
+  using CabinetMemberList         = BeaconSetupService::CabinetMemberList;
+  using CallbackFunction          = BeaconSetupService::CallbackFunction;
+  using SharedNotarisationManager = TrustedDealer::SharedNotarisationManager;
+  using CabinetNotarisationKeys   = TrustedDealer::CabinetNotarisationKeys;
 
   TrustedDealerSetupService(MuddleInterface &muddle, ManifestCacheInterface &manifest_cache,
                             CertificatePtr const &certificate);
 
-  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy,
-                       DkgOutput const &output);
+  void StartNewCabinet(
+      CabinetMemberList members, uint32_t threshold, uint64_t round_start, uint64_t round_end,
+      uint64_t start_time, BlockEntropy const &prev_entropy, DkgOutput const &output,
+      std::pair<SharedNotarisationManager, CabinetNotarisationKeys> notarisation_keys = {nullptr,
+                                                                                         {}});
 
 private:
   using SharedAeonExecutionUnit = BeaconSetupService::SharedAeonExecutionUnit;

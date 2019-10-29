@@ -191,9 +191,9 @@ void EntropyGen(benchmark::State &state)
     std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
     for (uint32_t m = 0; m < nodes_online; ++m)
     {
-      nodes[m]->ResetCabinet(cabinet, test_attempt * entropy_rounds,
-                             test_attempt * entropy_rounds + entropy_rounds, prev_entropy,
-                             dealer.GetKeys(nodes[m]->muddle_certificate->identity().identifier()));
+      nodes[m]->ResetCabinet(
+          cabinet, test_attempt * entropy_rounds, test_attempt * entropy_rounds + entropy_rounds,
+          prev_entropy, dealer.GetDkgKeys(nodes[m]->muddle_certificate->identity().identifier()));
     }
     state.ResumeTiming();
 
