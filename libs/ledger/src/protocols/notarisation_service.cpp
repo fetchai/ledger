@@ -345,11 +345,16 @@ NotarisationService::BlockNotarisation NotarisationService::GetNotarisation(Bloc
 {
   FETCH_LOCK(mutex_);
   BlockNotarisation notarisation;
-  auto              all_notarisations = notarisations_built_[block.block_number];
-  if (all_notarisations.find(block.hash) != all_notarisations.end())
+
+  // Do not need to add notarisation if building on genesis block
+  if (block.block_number != 0)
   {
-    notarisation.first  = all_notarisations.at(block.hash).first.getStr();
-    notarisation.second = all_notarisations.at(block.hash).second;
+    auto all_notarisations = notarisations_built_[block.block_number];
+    if (all_notarisations.find(block.hash) != all_notarisations.end())
+    {
+      notarisation.first  = all_notarisations.at(block.hash).first.getStr();
+      notarisation.second = all_notarisations.at(block.hash).second;
+    }
   }
   return notarisation;
 }

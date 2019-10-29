@@ -170,7 +170,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
 bool Consensus::VerifyNotarisation(Block const &block) const
 {
-  if (notarisation_)
+  if (notarisation_ && block.body.block_number != 0)
   {
     // Try to verify with notarisation units in notarisation_
     auto result = notarisation_->Verify(block.body.block_number, block.body.hash,
@@ -451,7 +451,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   {
     // Add notarisation to block
     auto notarisation = notarisation_->GetNotarisation(current_block_.body);
-    if (notarisation.first.empty())
+    if (current_block_.body.block_number != 0 && notarisation.first.empty())
     {
       // Notarisation for head of chain is not ready yet so wait
       return {};
