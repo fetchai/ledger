@@ -47,7 +47,8 @@ public:
   using ResolverType       = asio::ip::tcp::resolver;
   using MutexType          = std::mutex;
 
-  static constexpr char const *LOGGING_NAME = "TCPClientImpl";
+  static const uint64_t        NETWORK_MAGIC = 0xFE7C80A1FE7C80A1;
+  static constexpr char const *LOGGING_NAME  = "TCPClientImpl";
 
   explicit TCPClientImplementation(NetworkManagerType const &network_manager) noexcept;
   TCPClientImplementation(TCPClientImplementation const &rhs) = delete;
@@ -71,8 +72,9 @@ public:
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation &&rhs) = delete;
 
+  static void SetHeader(byte_array::ByteArray &header, uint64_t bufSize);
+
 private:
-  static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
 
   NetworkManagerType networkManager_;
   // IO objects should be guaranteed to have lifetime less than the
@@ -94,7 +96,6 @@ private:
   void ReadHeader() noexcept;
   void ReadBody(byte_array::ByteArray const &header) noexcept;
 
-  static void SetHeader(byte_array::ByteArray &header, uint64_t bufSize);
 
   // Always executed in a run(), in a strand
   void WriteNext(SharedSelfType const &selfLock);

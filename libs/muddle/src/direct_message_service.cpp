@@ -185,6 +185,8 @@ void DirectMessageService::OnDirectMessage(Handle handle, PacketPtr const &packe
 void DirectMessageService::OnRoutingMessage(Handle handle, PacketPtr const &packet,
                                             RoutingMessage const &msg)
 {
+  FETCH_LOG_INFO(logging_name_, "OnRoutingMessage");
+
   switch (msg.type)
   {
   case RoutingMessage::Type::PING:
