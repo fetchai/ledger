@@ -17,7 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/ecdsa.hpp"
+#include "http/server.hpp"
 #include "messenger/messenger_api.hpp"
+#include "messenger/messenger_http_interface.hpp"
 #include <iostream>
 #include <set>
 
@@ -26,11 +28,13 @@ using namespace fetch::byte_array;
 using namespace fetch::messenger;
 using namespace fetch;
 
-using Prover         = fetch::crypto::Prover;
-using ProverPtr      = std::shared_ptr<Prover>;
-using Certificate    = fetch::crypto::Prover;
-using CertificatePtr = std::shared_ptr<Certificate>;
-using Address        = fetch::muddle::Packet::Address;
+using Prover              = fetch::crypto::Prover;
+using ProverPtr           = std::shared_ptr<Prover>;
+using Certificate         = fetch::crypto::Prover;
+using CertificatePtr      = std::shared_ptr<Certificate>;
+using Address             = fetch::muddle::Packet::Address;
+using MessengerHttpModule = fetch::messenger::MessengerHttpModule;
+using HTTPServer          = fetch::http::HTTPServer;
 
 ProverPtr CreateNewCertificate()
 {
@@ -55,8 +59,15 @@ int main()
   network_manager.Start();
   muddle->Start({static_cast<uint16_t>(1337)});
 
+  // The mailbox and messenger API
   Mailbox      mailbox{muddle};
   MessengerAPI serv(muddle, mailbox);
+
+  // HTTP Server for the agent to interact with the system
+  HTTPServer          http(network_manager);
+  MessengerHttpModule http_module(serv);
+  http.AddModule(http_module);
+  http.Start(8000);
 
   std::string search_for;
   std::cout << "Enter a string to search the AEAs for this string" << std::endl;
@@ -65,6 +76,8 @@ int main()
     std::cout << "> " << std::flush;
     std::getline(std::cin, search_for);
   }
+
+  http.Stop();
 
   std::cout << std::endl;
   std::cout << "Bye ..." << std::endl;

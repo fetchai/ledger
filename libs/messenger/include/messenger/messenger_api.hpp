@@ -70,16 +70,16 @@ public:
 
   /// Mailbox interface
   /// @{
-  void        SendMessage(service::CallContext const & /*call_context*/, Message msg);
+  void        SendMessage(service::CallContext const &call_context, Message msg);
   MessageList GetMessages(service::CallContext const &call_context);
   /// @}
 
   /// Search interface
   /// @{
-  ResultList FindAgents(service::CallContext const & /*call_context*/,
-                        ConstByteArray const & /*query_type*/, ConstByteArray const & /*query*/);
+  ResultList FindAgents(service::CallContext const &call_context, ConstByteArray const &query_type,
+                        ConstByteArray const &query);
 
-  void Advertise(service::CallContext const & /*call_context*/);
+  void Advertise(service::CallContext const &call_context);
   /// @}
 
   /// Ledger interface

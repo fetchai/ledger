@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/details/encode_decode.hpp"
 
 #include <cassert>
@@ -33,7 +33,14 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
 {
   // After
   // https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
-  assert((str.size() % 4) == 0);
+
+  // Prevents potential attack vector so
+  // should be checked both in debug and release
+  if ((str.size() % 4) != 0)
+  {
+    return "";
+  }
+
   std::size_t pad = 0;
   while ((pad < str.size()) && (str[str.size() - pad - 1] == details::base64pad))
   {

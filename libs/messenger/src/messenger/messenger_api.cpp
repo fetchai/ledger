@@ -90,6 +90,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
 
 void MessengerAPI::RegisterMessenger(service::CallContext const &call_context, bool setup_mailbox)
 {
+  std::cout << "Registering agent" << std::endl;
   // Setting mailbox up if requested by the messenger.
   if (setup_mailbox)
   {

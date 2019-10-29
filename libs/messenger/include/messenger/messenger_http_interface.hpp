@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "http/json_response.hpp"
 #include "http/module.hpp"
 #include "messenger/messenger_api.hpp"
 
@@ -30,35 +31,85 @@ public:
     : messenger_{messenger}
   {
 
-    Get("/api/messenger/register", "Registers an agent to the network.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          return http::CreateJsonResponse("{}");
-        });
+    Post("/api/messenger/register", "Registers an agent to the network.",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           // Finding sender
+           auto doc = request.JSON();
+           if (!doc.Has("sender"))  // TODO: Check that it is a string as well.
+           {
+             return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
+           }
 
-    Get("/api/messenger/unregister", "Unregisters an agent from the network.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          return http::CreateJsonResponse("{}");
-        });
+           // Sender
+           service::CallContext context;
+           context.sender_address =
+               byte_array::FromBase64(doc["sender"].As<byte_array::ConstByteArray>());
 
-    Get("/api/messenger/sendmessage", "Sends a message to a specific agent.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          return http::CreateJsonResponse("{}");
-        });
+           // TODO: Extract from request
+           bool setup_mailbox = true;
 
-    Get("/api/messenger/getmessages", "Gets messages in inbox.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          return http::CreateJsonResponse("{}");
-        });
+           // TODO: Authentication missing.
+           messenger_.RegisterMessenger(context, setup_mailbox);
 
-    Get("/api/messenger/findagent", "Finds agents matching search criteria.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          return http::CreateJsonResponse("{}");
-        });
+           variant::Variant response = variant::Variant::Object();
+           response["status"]        = "OK";
+           return http::CreateJsonResponse(response);
+         });
 
-    Get("/api/messenger/advertise", "Creates advertisement on the node.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          return http::CreateJsonResponse("{}");
-        });
+    Post("/api/messenger/unregister", "Unregisters an agent from the network.",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           // Finding sender
+           auto doc = request.JSON();
+           if (!doc.Has("sender"))  // TODO: Check that it is a string as well.
+           {
+             return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
+           }
+
+           // Sender
+           service::CallContext context;
+           context.sender_address =
+               byte_array::FromBase64(doc["sender"].As<byte_array::ConstByteArray>());
+
+           // TODO: Extract from request
+           bool setup_mailbox = true;
+
+           // TODO: Authentication missing.
+           messenger_.UnregisterMessenger(context);
+
+           variant::Variant response = variant::Variant::Object();
+           response["status"]        = "OK";
+           return http::CreateJsonResponse(response);
+
+           //   void UnregisterMessenger(service::CallContext const &call_context);
+           return http::CreateJsonResponse("{}");
+         });
+
+    Post("/api/messenger/sendmessage", "Sends a message to a specific agent.",
+         [](http::ViewParameters const &, http::HTTPRequest const &) {
+           //  void        SendMessage(service::CallContext const &call_context, Message msg);
+
+           return http::CreateJsonResponse("{}");
+         });
+
+    Post("/api/messenger/getmessages", "Gets messages in inbox.",
+         [](http::ViewParameters const &, http::HTTPRequest const &) {
+           //  MessageList GetMessages(service::CallContext const &call_context);
+           return http::CreateJsonResponse("{}");
+         });
+
+    Post("/api/messenger/findagent", "Finds agents matching search criteria.",
+         [](http::ViewParameters const &, http::HTTPRequest const &) {
+           //  ResultList FindAgents(service::CallContext const & call_context, ConstByteArray const
+           //  & query_type, ConstByteArray const & query);
+
+           return http::CreateJsonResponse("{}");
+         });
+
+    Post("/api/messenger/advertise", "Creates advertisement on the node.",
+         [](http::ViewParameters const &, http::HTTPRequest const &) {
+           //   void Advertise(service::CallContext const & call_context);
+           return http::CreateJsonResponse("{}");
+         });
   }
 
 private:
