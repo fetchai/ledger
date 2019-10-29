@@ -30,6 +30,13 @@
 #include <utility>
 
 namespace fetch {
+namespace dmlf {
+namespace distributed_learning {
+template <class TensorType>
+class TrainingClient;
+}  // namespace distributed_learning
+}  // namespace dmlf
+
 namespace ml {
 namespace model {
 
@@ -82,10 +89,6 @@ public:
   std::string OutputName();
   std::string ErrorName();
 
-  DataLoaderType *    GetDataloader();
-  ModelOptimiserType *GetOptimiser();
-  GraphType *         GetGraph();
-
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
@@ -110,6 +113,8 @@ protected:
                           DataType test_loss = fetch::math::numeric_max<DataType>());
 
 private:
+  friend class dmlf::distributed_learning::TrainingClient<TensorType>;
+
   bool SetOptimiser();
   void TrainImplementation(DataType &loss, SizeType n_rounds = 1);
 };
@@ -289,24 +294,6 @@ template <typename TensorType>
 std::string Model<TensorType>::ErrorName()
 {
   return error_;
-}
-
-template <typename TensorType>
-typename Model<TensorType>::DataLoaderType *Model<TensorType>::GetDataloader()
-{
-  return dataloader_ptr_.get();
-}
-
-template <typename TensorType>
-typename Model<TensorType>::ModelOptimiserType *Model<TensorType>::GetOptimiser()
-{
-  return optimiser_ptr_.get();
-}
-
-template <typename TensorType>
-typename Model<TensorType>::GraphType *Model<TensorType>::GetGraph()
-{
-  return graph_ptr_.get();
 }
 
 template <typename TensorType>

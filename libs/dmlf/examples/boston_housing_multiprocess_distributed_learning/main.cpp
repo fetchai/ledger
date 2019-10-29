@@ -100,18 +100,6 @@ int main(int argc, char **argv)
   // Give client pointer to its networker
   client->SetNetworker(networker);
 
-  // Create loss csv file
-
-  std::string results_filename = results_dir + "/fetch_" + std::to_string(n_clients) + "_Adam_" +
-                                 std::to_string(float(client_params.learning_rate)) + "_" +
-                                 std::to_string(seed) + "_FC3.csv";
-  std::ofstream lossfile(results_filename, std::ofstream::out);
-
-  if (!lossfile)
-  {
-    throw fetch::ml::exceptions::InvalidFile("Bad output file");
-  }
-
   /**
    * Main loop
    */
@@ -123,8 +111,6 @@ int main(int argc, char **argv)
     // Start client
     client->Run();
   }
-
-  std::cout << "Results saved in " << results_filename << std::endl;
 
   return 0;
 }

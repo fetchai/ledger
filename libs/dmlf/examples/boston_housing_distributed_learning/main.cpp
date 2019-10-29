@@ -110,17 +110,6 @@ int main(int argc, char **argv)
     clients[i]->SetNetworker(networkers[i]);
   }
 
-  // Create loss csv file
-  std::string results_filename = results_dir + "/fetch_" + std::to_string(n_clients) + "_Adam_" +
-                                 std::to_string(float(client_params.learning_rate)) + "_" +
-                                 std::to_string(seed) + "_FC3.csv";
-  std::ofstream lossfile(results_filename, std::ofstream::out);
-
-  if (!lossfile)
-  {
-    throw fetch::ml::exceptions::InvalidFile("Bad output file");
-  }
-
   /**
    * Main loop
    */
@@ -148,8 +137,6 @@ int main(int argc, char **argv)
       fetch::dmlf::distributed_learning::utilities::SynchroniseWeights<TensorType>(clients);
     }
   }
-
-  std::cout << "Results saved in " << results_filename << std::endl;
 
   return 0;
 }
