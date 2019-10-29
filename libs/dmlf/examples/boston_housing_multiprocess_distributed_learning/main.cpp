@@ -63,7 +63,6 @@ int main(int argc, char **argv)
   auto data_file      = doc["data"].As<std::string>();
   auto labels_file    = doc["labels"].As<std::string>();
   auto results_dir    = doc["results"].As<std::string>();
-  auto n_clients      = doc["n_clients"].As<SizeType>();
   auto n_peers        = doc["n_peers"].As<SizeType>();
   auto n_rounds       = doc["n_rounds"].As<SizeType>();
   auto seed           = doc["random_seed"].As<SizeType>();

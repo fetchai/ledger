@@ -116,15 +116,17 @@ void Word2VecClient<TensorType>::Test()
     // Lock model
     FETCH_LOCK(this->model_mutex_);
     fetch::ml::utilities::TestEmbeddings<TensorType>(
-        *this->graph_ptr_, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1, tp_.word2,
-        tp_.word3, tp_.k, tp_.analogies_test_file, false, "/tmp/w2v_client_" + this->id_);
+        *this->model_ptr_->graph_ptr__, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1,
+        tp_.word2, tp_.word3, tp_.k, tp_.analogies_test_file, false,
+        "/tmp/w2v_client_" + this->id_);
   }
 }
 
 template <class TensorType>
 float Word2VecClient<TensorType>::ComputeAnalogyScore()
 {
-  TensorType const &weights = fetch::ml::utilities::GetEmbeddings(*this->graph_ptr_, skipgram_);
+  TensorType const &weights =
+      fetch::ml::utilities::GetEmbeddings(*this->model_ptr_->graph_ptr__, skipgram_);
 
   return fetch::ml::utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights,
                                                  tp_.analogies_test_file)
@@ -138,7 +140,7 @@ template <class TensorType>
 std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(this->model_mutex_);
-  return std::make_shared<GradientType>(this->graph_ptr_->GetGradients(),
+  return std::make_shared<GradientType>(this->model_ptr_->graph_ptr__->GetGradients(),
                                         w2v_data_loader_ptr_->GetVocabHash(),
                                         w2v_data_loader_ptr_->GetVocab()->GetReverseVocab());
 }
@@ -186,28 +188,32 @@ void Word2VecClient<TensorType>::PrepareDataLoader()
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
   w2v_data_loader_ptr_->BuildVocabAndData({tp_.data}, tp_.min_count);
 
-  this->dataloader_ptr_ = w2v_data_loader_ptr_.get();
+  this->model_ptr_->dataloader_ptr_ = w2v_data_loader_ptr_.get();
 }
 
 template <class TensorType>
 void Word2VecClient<TensorType>::PrepareOptimiser()
 {
   // set up the graph first
-  auto graph_ptr   = std::make_shared<fetch::ml::Graph<TensorType>>();
-  this->graph_ptr_ = graph_ptr.get();
+  auto graph_ptr                = std::make_shared<fetch::ml::Graph<TensorType>>();
+  this->model_ptr_->graph_ptr__ = graph_ptr.get();
 
   std::string input_name =
-      this->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+      this->model_ptr_->graph_ptr__->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(
+          "Input", {});
   std::string context_name =
-      this->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
+      this->model_ptr_->graph_ptr__->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(
+          "Context", {});
   this->label_name_ =
-      this->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
-  skipgram_ = this->graph_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
-      "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
-      w2v_data_loader_ptr_->vocab_size());
+      this->model_ptr_->graph_ptr__->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(
+          "Label", {});
+  skipgram_ =
+      this->model_ptr_->graph_ptr__->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
+          "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
+          w2v_data_loader_ptr_->vocab_size());
 
   this->error_name_ =
-      this->graph_ptr_->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
+      this->model_ptr_->graph_ptr__->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
           "Error", {skipgram_, this->label_name_});
 
   this->inputs_names_ = {input_name, context_name};
@@ -217,7 +223,7 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
       graph_ptr, this->inputs_names_, this->label_name_, this->error_name_,
       tp_.learning_rate_param);
 
-  this->opti_ptr_ = optimiser_ptr_.get();
+  this->model_ptr_->optimiser_ptr_ = optimiser_ptr_.get();
 }
 
 template <class TensorType>
