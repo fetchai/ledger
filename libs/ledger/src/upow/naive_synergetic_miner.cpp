@@ -18,6 +18,7 @@
 
 #include "core/digest.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/problem_id.hpp"
@@ -114,7 +115,7 @@ void NaiveSynergeticMiner::Mine()
   {
     if (DAGNode::DATA == node.type)
     {
-      // lookup the problem data
+      // look up the problem data
       auto &problem_data = problem_spaces[{node.contract_address, node.contract_digest}];
 
       problem_data.emplace_back(node.contents);

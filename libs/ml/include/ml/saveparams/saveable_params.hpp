@@ -209,8 +209,7 @@ struct OpGeluSaveableParams : public OpsSaveableParams
 template <typename TensorType>
 struct OpEmbeddingsSaveableParams : public OpWeightsSaveableParams<TensorType>
 {
-  fetch::ml::OpType                  op_type = OpType::OP_EMBEDDINGS;
-  std::vector<fetch::math::SizeType> updated_rows;
+  fetch::ml::OpType                  op_type           = OpType::OP_EMBEDDINGS;
   std::vector<fetch::math::SizeType> trailing_indices1 = {0, 0};
   std::vector<fetch::math::SizeType> trailing_indices2 = {0};
 };
@@ -321,6 +320,19 @@ struct OpSqueezeSaveableParams : public OpsSaveableParams
   using SizeType = typename TensorType::SizeType;
 
   fetch::ml::OpType op_type = OpType::OP_SQUEEZE;
+};
+
+/**
+ * Saveable parameters for Squeeze op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpReduceMeanSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+  SizeType axis{};
+
+  fetch::ml::OpType op_type = OpType::OP_REDUCE_MEAN;
 };
 
 /**

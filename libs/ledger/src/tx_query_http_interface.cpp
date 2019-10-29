@@ -61,7 +61,7 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
 
         FETCH_LOG_DEBUG(LOGGING_NAME, "Querying tx: 0x", digest.ToHex());
 
-        // attempt to lookup the transaction
+        // attempt to look up the transaction
         Transaction tx;
         if (!storage_unit_.GetTransaction(digest, tx))
         {

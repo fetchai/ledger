@@ -28,6 +28,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -70,11 +71,6 @@ const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
 
-SynergeticExecMgrPtr CreateSynergeticExecutor(DAGPtr dag, StorageUnitInterface &storage_unit)
-{
-  return std::make_unique<SynergeticExecutionManager>(
-      dag, 1u, [&storage_unit]() { return std::make_shared<SynergeticExecutor>(storage_unit); });
-}
 }  // namespace
 
 /**
@@ -88,7 +84,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &block_sink, ProverPtr prover,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty, ConsensusPtr consensus)
+                                   std::size_t block_difficulty, ConsensusPtr consensus,
+                                   SynergeticExecMgrPtr synergetic_exec_manager)
   : chain_{chain}
   , dag_{std::move(dag)}
   , consensus_{std::move(consensus)}
@@ -109,7 +106,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
-  , synergetic_exec_mgr_{CreateSynergeticExecutor(dag_, storage_unit_)}
+  , synergetic_exec_mgr_{std::move(synergetic_exec_manager)}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reload_state_total",
         "The total number of times in the reload state")}
@@ -235,7 +232,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
   reload_state_count_->increment();
 
-  // if no current block then this is the first time in the state therefore lookup the heaviest
+  // if no current block then this is the first time in the state therefore look up the heaviest
   // block
   if (!current_block_)
   {
@@ -336,7 +333,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     auto previous_block = chain_.GetBlock(previous_hash);
     if (!previous_block)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up previous block: ", ToBase64(current_hash));
       return State::RESET;
     }
 
@@ -369,7 +366,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     if (!lookup_success)
     {
       FETCH_LOG_WARN(LOGGING_NAME,
-                     "Unable to lookup common ancestor for block:", ToBase64(current_hash));
+                     "Unable to look up common ancestor for block:", ToBase64(current_hash));
       return State::RESET;
     }
 
@@ -628,11 +625,11 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
   // Executing synergetic work
   if ((!is_genesis) && synergetic_exec_mgr_)
   {
-    // lookup the previous block
+    // look up the previous block
     auto const previous_block = chain_.GetBlock(current_block_->body.previous_hash);
     if (!previous_block)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to lookup previous block");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to look up previous block");
       return State::RESET;
     }
 
@@ -954,7 +951,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 
   if (synergetic_exec_mgr_ && dag_)
   {
-    // lookup the previous block
+    // look up the previous block
     BlockPtr previous_block = chain_.GetBlock(next_block_->body.previous_hash);
 
     // prepare the work queue

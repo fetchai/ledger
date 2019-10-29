@@ -1,7 +1,7 @@
 function main()
 
 if (System.Argc() != 3)
-  print("Usage: VM SCRIPT_FILE PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte");
+  print("Usage: SCRIPT_FILE -- PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte");
   return;
 endif
 
