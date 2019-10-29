@@ -222,6 +222,13 @@ typename VMModel::DataType VMModel::Evaluate()
   return model_->Evaluate();
 }
 
+vm::Ptr<VMModel::VMTensor> VMModel::Predict(vm::Ptr<VMTensor> const &data)
+{
+  vm::Ptr<VMTensor> prediction = this->vm_->CreateNewObject<VMTensor>(data->shape());
+  model_->Predict(data->GetTensor(), prediction->GetTensor());
+  return prediction;
+}
+
 void VMModel::Bind(Module &module)
 {
   module.CreateClassType<VMModel>("Model")
@@ -231,7 +238,8 @@ void VMModel::Bind(Module &module)
       .CreateMemberFunction("compile", &VMModel::CompileSequential)
       .CreateMemberFunction("compile", &VMModel::CompileSimple)
       .CreateMemberFunction("fit", &VMModel::Fit)
-      .CreateMemberFunction("evaluate", &VMModel::Evaluate);
+      .CreateMemberFunction("evaluate", &VMModel::Evaluate)
+      .CreateMemberFunction("predict", &VMModel::Predict);
 }
 
 }  // namespace model
