@@ -159,7 +159,7 @@ Ptr<IShardedState> IShardedState::ConstructorFromString(VM *vm, TypeId type_id,
   if (name)
   {
     TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
-    TypeId const    value_type_id = type_info.parameter_type_ids[0];
+    TypeId const    value_type_id = type_info.template_parameter_type_ids[0];
     return Ptr<IShardedState>{new ShardedState(vm, type_id, name, value_type_id)};
   }
 

@@ -23,6 +23,7 @@
 #include "http/json_response.hpp"
 #include "json/document.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
@@ -236,8 +237,10 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     // adapt the storage engine so that that get and sets are sandboxed for the contract
     StateAdapter storage_adapter{storage_, contract_id};
 
-    // attach, dispatch and detach
-    contract->Attach(storage_adapter);
+    chain::Address address;
+    chain::Address::Parse(contract_id.name(), address);
+    // Current block index does not apply to queries - set to 0
+    contract->Attach({&token_contract_, std::move(address), &storage_adapter, 0});
     auto const status = contract->DispatchQuery(query, doc.root(), response);
     contract->Detach();
 
