@@ -100,7 +100,7 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contrac
   }
   else  // invalid or chain code
   {
-    // attempt to lookup the chain code instance
+    // attempt to look up the chain code instance
     auto it = global_registry.find(contract_id.full_name());
     if (it != global_registry.end())
     {

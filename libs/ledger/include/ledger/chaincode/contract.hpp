@@ -219,7 +219,7 @@ void Contract::OnQuery(std::string const &name, C *instance,
 }
 
 /**
- * Lookup the state record stored with the specified key
+ * Look up the state record stored with the specified key
  *
  * @tparam T The type of the state record
  * @param record The reference to the record to be populated
@@ -284,7 +284,7 @@ StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray co
   serializers::MsgPackSerializer buffer;
   buffer << record;
 
-  // lookup reference to the underlying buffer
+  // look up reference to the underlying buffer
   auto const &data = buffer.data();
 
   // store the buffer
