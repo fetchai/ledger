@@ -96,14 +96,16 @@ ConstByteArray FromBase58(ConstByteArray const &str)
   auto size = static_cast<int>((raw_end - raw_start) * 733 /1000 + 1); // log(58) / log(256), rounded up.
   std::vector<uint8_t> b256(static_cast<std::size_t>(size));
 
+  // guarantee not out of range
+  static_assert(sizeof(mapBase58)/sizeof(mapBase58[0]) == 256, "mapBase58.size() should be 256");
+
   // Process the characters.
-  static_assert(sizeof(mapBase58)/sizeof(mapBase58[0]) == 256, "mapBase58.size() should be 256"); // guarantee not out of range
   while (raw_start < raw_end && !IsSpace(*raw_start)) {
     // Decode base58 character
     int carry = mapBase58[*raw_start];
-    if (carry == -1)  // Invalid b58 character
+    if (carry == -1)
     {
-      return {};
+      throw std::runtime_error("Invalid base58 character");
     }
 
     int i = 0;
