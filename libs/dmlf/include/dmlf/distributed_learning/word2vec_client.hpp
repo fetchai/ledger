@@ -195,7 +195,7 @@ template <class TensorType>
 void Word2VecClient<TensorType>::PrepareOptimiser()
 {
   // set up the graph first
-  auto graph_ptr                = std::make_shared<fetch::ml::Graph<TensorType>>();
+  auto graph_ptr               = std::make_shared<fetch::ml::Graph<TensorType>>();
   this->model_ptr_->graph_ptr_ = graph_ptr.get();
 
   std::string input_name =
