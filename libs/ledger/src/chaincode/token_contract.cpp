@@ -383,7 +383,7 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
     chain::Address address{};
     if (chain::Address::Parse(input, address))
     {
-      // lookup the record
+      // look up the record
       WalletRecord record{};
       GetStateRecord(record, address.display());
 
@@ -411,7 +411,7 @@ Contract::Status TokenContract::Stake(Query const &query, Query &response)
     chain::Address address{};
     if (chain::Address::Parse(input, address))
     {
-      // lookup the record
+      // look up the record
       WalletRecord record{};
       GetStateRecord(record, address.display());
 
@@ -439,7 +439,7 @@ Contract::Status TokenContract::CooldownStake(Query const &query, Query &respons
     chain::Address address{};
     if (chain::Address::Parse(input, address))
     {
-      // lookup the record
+      // look up the record
       WalletRecord record{};
       GetStateRecord(record, address.display());
 

@@ -21,6 +21,7 @@
 #include "dmlf/var_converter.hpp"
 
 #include "core/serializers/main_serializer.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/common.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
@@ -31,6 +32,10 @@
 
 namespace fetch {
 namespace dmlf {
+
+// This must match the type as defined in variant::variant.hpp
+using fp64_t = fetch::fixed_point::fp64_t;
+using fp32_t = fetch::fixed_point::fp32_t;
 
 ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFiles const &sources)
 {
@@ -152,8 +157,8 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
   if (numParameters != params.size())
   {
     return EngineError(Error::Code::RUNTIME_ERROR,
-                       "Wrong number of parameters expected " + std::to_string(numParameters) +
-                           " recieved " + std::to_string(params.size()));
+                       "Wrong number of parameters: expected " + std::to_string(numParameters) +
+                           "; received " + std::to_string(params.size()));
   }
 
   fetch::vm::ParameterPack parameterPack(vm.registered_types());
@@ -407,6 +412,11 @@ bool BasicVmEngine::Convertable(LedgerVariant const &ledgerVariant, TypeId const
   {
     return ledgerVariant.IsFloatingPoint();
   }
+  case fetch::vm::TypeIds::Fixed32:
+  case fetch::vm::TypeIds::Fixed64:
+  {
+    return ledgerVariant.IsFixedPoint();
+  }
   default:
     return false;
   }
@@ -431,9 +441,17 @@ BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const &ledgerVaria
     return VmVariant(ledgerVariant.As<int>(), typeId);
   }
   case fetch::vm::TypeIds::Float32:
+  {
+    return VmVariant(ledgerVariant.As<float>(), typeId);
+  }
   case fetch::vm::TypeIds::Float64:
   {
     return VmVariant(ledgerVariant.As<double>(), typeId);
+  }
+  case fetch::vm::TypeIds::Fixed32:
+  case fetch::vm::TypeIds::Fixed64:
+  {
+    return VmVariant(ledgerVariant.As<fp64_t>(), typeId);
   }
   default:
     return VmVariant();
@@ -462,6 +480,14 @@ BasicVmEngine::LedgerVariant BasicVmEngine::Convert(VmVariant const &vmVariant) 
   case fetch::vm::TypeIds::Float64:
   {
     return LedgerVariant{vmVariant.Get<double>()};
+  }
+  case fetch::vm::TypeIds::Fixed32:
+  {
+    return LedgerVariant{vmVariant.Get<fp32_t>()};
+  }
+  case fetch::vm::TypeIds::Fixed64:
+  {
+    return LedgerVariant{vmVariant.Get<fp64_t>()};
   }
   default:
     return LedgerVariant{};
