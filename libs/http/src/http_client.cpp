@@ -66,7 +66,7 @@ bool HttpClient::Request(HTTPRequest const &request, HTTPResponse &response)
   Write(buffer, ec);
   if (ec)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to send boostrap request: ", ec.message());
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to send bootstrap request: ", ec.message());
     return false;
   }
 
@@ -74,7 +74,7 @@ bool HttpClient::Request(HTTPRequest const &request, HTTPResponse &response)
   std::size_t     header_length = ReadUntil(input_buffer, "\r\n\r\n", ec);
   if (ec)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to recv response header: ", ec.message());
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to receive response header: ", ec.message());
     return false;
   }
 
