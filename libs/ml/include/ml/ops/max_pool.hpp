@@ -171,7 +171,7 @@ private:
       // MaxPool1D
     case 3:
     {
-      if (!pool_op_ptr_ || pool_2d_ != true)
+      if (!pool_op_ptr_ || pool_2d_)
       {
         pool_op_ptr_ =
             std::make_shared<fetch::ml::ops::MaxPool1D<TensorType>>(kernel_size_, stride_size_);
@@ -182,7 +182,7 @@ private:
       // MaxPool2D
     case 4:
     {
-      if (!pool_op_ptr_ || pool_2d_ != false)
+      if (!pool_op_ptr_ || !pool_2d_)
       {
         pool_op_ptr_ =
             std::make_shared<fetch::ml::ops::MaxPool2D<TensorType>>(kernel_size_, stride_size_);
