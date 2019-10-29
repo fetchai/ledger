@@ -119,7 +119,7 @@ public:
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     assert(inputs.size() == 1);
-    assert(inputs.at(0)->shape().size() == 2 || inputs.at(0)->shape().size() == 3);
+    assert(inputs.at(0)->shape().size() == 3 || inputs.at(0)->shape().size() == 4);
 
     std::vector<SizeType> output_shape;
 
@@ -130,7 +130,7 @@ public:
                               stride_size_);
 
     // MaxPool1D
-    if (inputs.at(0)->shape().size() == 2)
+    if (inputs.at(0)->shape().size() == 3)
     {
       // output_shape_[2]=batch dimension
       output_shape.emplace_back(inputs.at(0)->shape().at(2));
@@ -168,24 +168,25 @@ private:
   {
     switch (inputs.at(0)->shape().size())
     {
+      // MaxPool1D
     case 3:
-    {
-      if (!pool_op_ptr_ || pool_2d_ != false)
-      {
-        pool_op_ptr_ =
-            std::make_shared<fetch::ml::ops::MaxPool2D<TensorType>>(kernel_size_, stride_size_);
-        pool_2d_ = false;
-      }
-
-      break;
-    }
-    case 2:
     {
       if (!pool_op_ptr_ || pool_2d_ != true)
       {
         pool_op_ptr_ =
             std::make_shared<fetch::ml::ops::MaxPool1D<TensorType>>(kernel_size_, stride_size_);
         pool_2d_ = true;
+      }
+      break;
+    }
+    case 4:
+    {
+      // MaxPool2D
+      if (!pool_op_ptr_ || pool_2d_ != false)
+      {
+        pool_op_ptr_ =
+            std::make_shared<fetch::ml::ops::MaxPool2D<TensorType>>(kernel_size_, stride_size_);
+        pool_2d_ = false;
       }
       break;
     }
