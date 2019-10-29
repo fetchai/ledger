@@ -52,12 +52,12 @@ ConstByteArray operator+(char const *a, ConstByteArray const &b)
 
 ConstByteArray ConstByteArray::FromBase64() const
 {
-  return ::fetch::byte_array::FromBase64(*this);
+  return fetch::byte_array::FromBase64(*this);
 }
 
 ConstByteArray ConstByteArray::FromHex() const
 {
-  return ::fetch::byte_array::FromHex(*this);
+  return fetch::byte_array::FromHex(*this);
 }
 
 }  // namespace byte_array
