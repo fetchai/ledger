@@ -485,7 +485,7 @@ function doStuff()
     var myState = State<Array<Array<Array<Int64>>>>("arrayState");
 
     var test = Array<Array<Int64>>(2);
-    
+
     test[0] = Array<Int64>(2);
     test[1] = Array<Int64>(2);
 
@@ -499,9 +499,9 @@ function doStuff()
     bigger[1] = test;
 
     myState.set(bigger);
-    
+
     printLn("State is " + toString(myState.get()[0][1][0]));
-    
+
     changeState(myState);
     printLn("State is " + toString(myState.get()[0][1][0]));
 
@@ -527,15 +527,12 @@ endfunction
 function otherChange()
 
   var myState = State<Array<Array<Array<Int64>>>>("arrayState");
-  
+
   myState.get()[0][1][0] = myState.get()[0][1][0] * 2i64;
   printLn("State is " + toString(myState.get()[0][1][0]));
 
 endfunction
 )";
-
-
-
 
 auto const BigStMatrix = R"(
 
@@ -544,7 +541,7 @@ function doStuff()
     var myState = State<Array<Array<Array<Array<Int64>>>>>("arrayState");
 
     var test = Array<Array<Int64>>(2);
-    
+
     test[0] = Array<Int64>(2);
     test[1] = Array<Int64>(2);
 
@@ -556,14 +553,14 @@ function doStuff()
     var bigger = Array<Array<Array<Int64>>>(2);
     bigger[0] = test;
     bigger[1] = test;
-    
+
     var evenBigger = Array<Array<Array<Array<Int64>>>>(2);
     evenBigger[0] = bigger;
     evenBigger[1] = bigger;
     myState.set(evenBigger);
-    
+
     printLn("State is " + toString(myState.get()[0][0][1][0]));
-    
+
     //changeState(myState);
     printLn("State is " + toString(myState.get()[0][0][1][0]));
 
@@ -589,7 +586,7 @@ endfunction
 function otherChange()
 
   var myState = State<Array<Array<Array<Array<Int64>>>>>("arrayState");
-  
+
   myState.get()[0][0][1][0] = myState.get()[0][0][1][0] * 2i64;
   printLn("State is " + toString(myState.get()[0][0][1][0]));
 
@@ -1699,7 +1696,6 @@ TEST(BasicVmEngineDmlfTests, AddNonPersistentMatrix)
   EXPECT_EQ(result.output().As<int>(), 6);
 }
 
-
 TEST(BasicVmEngineDmlfTests, StateMatrixMain)
 {
   BasicVmEngine engine;
@@ -1710,8 +1706,7 @@ TEST(BasicVmEngineDmlfTests, StateMatrixMain)
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result =
-      engine.Run("stateMatrix", "state", "main", Params{});
+  ExecutionResult result = engine.Run("stateMatrix", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
 }
 
@@ -1744,7 +1739,6 @@ TEST(BasicVmEngineDmlfTests, BigStateMatrixMain)
 
   ExecutionResult result = engine.Run("stateMatrix", "state", "main", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
-
 }
 
 TEST(BasicVmEngineDmlfTests, BigStateMatrixMyCalls)

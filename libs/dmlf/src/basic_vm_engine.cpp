@@ -36,7 +36,6 @@ namespace dmlf {
 // This must match the type as defined in variant::variant.hpp
 using fp64_t = fetch::fixed_point::fp64_t;
 using fp32_t = fetch::fixed_point::fp32_t;
-  
 
 ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFiles const &sources)
 {
@@ -484,11 +483,11 @@ BasicVmEngine::LedgerVariant BasicVmEngine::Convert(VmVariant const &vmVariant) 
   }
   case fetch::vm::TypeIds::Fixed32:
   {
-    return LedgerVariant{vmVariant.Get<fp32_t>()};  
+    return LedgerVariant{vmVariant.Get<fp32_t>()};
   }
   case fetch::vm::TypeIds::Fixed64:
   {
-    return LedgerVariant{vmVariant.Get<fp64_t>()};  
+    return LedgerVariant{vmVariant.Get<fp64_t>()};
   }
   default:
     return LedgerVariant{};

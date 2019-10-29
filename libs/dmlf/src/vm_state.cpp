@@ -37,7 +37,7 @@ Status VmState::Read(const std::string &key, void *data, uint64_t &size)
   const auto &buf = it->second;
   if (size < buf.size())
   {
-    size = buf.size(); // Signal how big a buffer is needed
+    size = buf.size();  // Signal how big a buffer is needed
     return Status::BUFFER_TOO_SMALL;
   }
 
