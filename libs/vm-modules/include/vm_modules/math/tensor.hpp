@@ -93,6 +93,8 @@ public:
 
   fetch::vm::Ptr<VMTensor> Squeeze();
 
+  fetch::vm::Ptr<VMTensor> Unsqueeze();
+
   bool Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
 
   void Transpose();

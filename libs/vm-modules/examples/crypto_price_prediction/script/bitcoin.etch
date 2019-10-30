@@ -59,10 +59,10 @@ var orig_train_data.transpose();
 var orig_train_labels.transpose();
 var orig_test_data.transpose();
 var orig_test_labels.transpose();
-var orig_train_data.reshape(1u64, );
-var orig_train_labels.reshape(1u64, );
-var orig_test_data.reshape(1u64, );
-var orig_test_labels.reshape(1u64, );
+var orig_train_data.unsqueeze();
+var orig_train_labels.unsqueeze();
+var orig_test_data.unsqueeze();
+var orig_test_labels.unsqueeze();
 
 // NORMALISE ALL DATA TO THE MAX RANGE OF THE TRAINING DATA
 var scaler = Scaler();

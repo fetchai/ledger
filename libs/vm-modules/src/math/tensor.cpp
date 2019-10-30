@@ -76,6 +76,7 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("squeeze", &VMTensor::Squeeze)
       .CreateMemberFunction("size", &VMTensor::size)
       .CreateMemberFunction("transpose", &VMTensor::Transpose)
+      .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze)
       .CreateMemberFunction("fromString", &VMTensor::FromString)
       .CreateMemberFunction("toString", &VMTensor::ToString);
 }
@@ -155,6 +156,13 @@ Ptr<VMTensor> VMTensor::Squeeze()
   auto squeezed_tensor = tensor_.Copy();
   squeezed_tensor.Squeeze();
   return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, squeezed_tensor));
+}
+
+Ptr<VMTensor> VMTensor::Unsqueeze()
+{
+  auto unsqueezed_tensor = tensor_.Copy();
+  unsqueezed_tensor.Unsqueeze();
+  return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, unsqueezed_tensor));
 }
 
 bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
