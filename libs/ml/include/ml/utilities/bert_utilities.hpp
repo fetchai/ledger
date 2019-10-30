@@ -229,7 +229,7 @@ void PutWeightInFullyConnected(fetch::ml::StateDict<TensorType> &state_dict, Siz
   TensorType weights = LoadTensorFromFile<TensorType>(weights_file_name);
   TensorType bias    = LoadTensorFromFile<TensorType>(bias_file_name);
   FETCH_UNUSED(in_size);
-  assert(weights.shape() == TensorType::SizeVector({out_size, in_size}));
+  assert(weights.shape() == typename TensorType::SizeVector({out_size, in_size}));
   assert(bias.size() == out_size);
   bias.Reshape({out_size, 1, 1});
 
@@ -278,12 +278,15 @@ void PutWeightInMultiheadAttention(
     TensorType sliced_key_bias      = key_bias.Slice(start_end_slice, 0u).Copy();
     TensorType sliced_value_weights = value_weights.Slice(start_end_slice, 0u).Copy();
     TensorType sliced_value_bias    = value_bias.Slice(start_end_slice, 0u).Copy();
-    assert(sliced_value_weights.shape() == TensorType::SizeVector({attn_head_size, model_dims}));
-    assert(sliced_value_bias.shape() == TensorType::SizeVector({attn_head_size, 1, 1}));
-    assert(sliced_query_weights.shape() == TensorType::SizeVector({attn_head_size, model_dims}));
-    assert(sliced_query_bias.shape() == TensorType::SizeVector({attn_head_size, 1, 1}));
-    assert(sliced_key_weights.shape() == TensorType::SizeVector({attn_head_size, model_dims}));
-    assert(sliced_key_bias.shape() == TensorType::SizeVector({attn_head_size, 1, 1}));
+    assert(sliced_value_weights.shape() ==
+           typename TensorType::SizeVector({attn_head_size, model_dims}));
+    assert(sliced_value_bias.shape() == typename TensorType::SizeVector({attn_head_size, 1, 1}));
+    assert(sliced_query_weights.shape() ==
+           typename TensorType::SizeVector({attn_head_size, model_dims}));
+    assert(sliced_query_bias.shape() == typename TensorType::SizeVector({attn_head_size, 1, 1}));
+    assert(sliced_key_weights.shape() ==
+           typename TensorType::SizeVector({attn_head_size, model_dims}));
+    assert(sliced_key_bias.shape() == typename TensorType::SizeVector({attn_head_size, 1, 1}));
 
     // put the weights into each head
     *(state_dict.dict_[this_attn_prefix + query_weights_name].weights_) = sliced_query_weights;
