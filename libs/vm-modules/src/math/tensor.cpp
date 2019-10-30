@@ -75,6 +75,7 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("reshape", &VMTensor::Reshape)
       .CreateMemberFunction("squeeze", &VMTensor::Squeeze)
       .CreateMemberFunction("size", &VMTensor::size)
+      .CreateMemberFunction("transpose", &VMTensor::Transpose)
       .CreateMemberFunction("fromString", &VMTensor::FromString)
       .CreateMemberFunction("toString", &VMTensor::ToString);
 }
@@ -159,6 +160,11 @@ Ptr<VMTensor> VMTensor::Squeeze()
 bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 {
   return tensor_.Reshape(new_shape->elements);
+}
+
+void VMTensor::Transpose()
+{
+  tensor_.Transpose();
 }
 
 //////////////////////////////

@@ -20,35 +20,32 @@
 #include "core/random.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/dataloader.hpp"
 
 #include <fstream>
 #include <string>
 
 namespace fetch {
-namespace ml {
-namespace dataloaders {
+namespace math {
+namespace utilities {
 
 /**
  * Loads a csv file into an TensorType (a Tensor)
  * The Tensor will have the same number of rows as this file has (minus rows_to_skip) and the same
- * number of columns (minus cols_to_skip) as the file, unless transpose=true is specified in which
- * case it will be transposed.
+ * number of columns (minus cols_to_skip) as the file
  * @param filename  name of the file
  * @param cols_to_skip  number of columns to skip
  * @param rows_to_skip  number of rows to skip
- * @param transpose  whether to transpose the resulting Tensor
  * @return TensorType with data
  */
 template <typename TensorType>
 TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_skip = 0,
-                   math::SizeType rows_to_skip = 0, bool transpose = false)
+                   math::SizeType rows_to_skip = 0)
 {
   using DataType = typename TensorType::Type;
   std::ifstream file(filename);
   if (file.fail())
   {
-    throw ml::exceptions::InvalidFile("ReadCSV cannot open file " + filename);
+    throw math::exceptions::InvalidFile("ReadCSV cannot open file " + filename);
   }
 
   std::string           buf;
@@ -101,13 +98,8 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
     ++row;
   }
 
-  if (transpose)
-  {
-    weights = weights.Transpose();
-  }
-
   return weights;
 }
-}  // namespace dataloaders
-}  // namespace ml
+}  // namespace utilities
+}  // namespace math
 }  // namespace fetch

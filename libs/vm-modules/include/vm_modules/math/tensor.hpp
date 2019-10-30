@@ -95,6 +95,8 @@ public:
 
   bool Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
 
+  void Transpose();
+
   //////////////////////////////
   /// PRINTING AND EXPORTING ///
   //////////////////////////////
