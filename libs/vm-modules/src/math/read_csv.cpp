@@ -19,6 +19,7 @@
 #include "math/utilities/ReadCSV.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/read_csv.hpp"
 
 namespace fetch {
 
