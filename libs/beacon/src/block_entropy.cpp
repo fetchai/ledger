@@ -20,7 +20,12 @@
 
 using fetch::beacon::BlockEntropy;
 
-BlockEntropy::BlockEntropy() = default;
+BlockEntropy::BlockEntropy()
+{
+  crypto::mcl::details::MCLInitialiser();
+
+  block_notarisation.first.clear();
+}
 
 /**
  * Copy method - no need for the digest or confirmations
