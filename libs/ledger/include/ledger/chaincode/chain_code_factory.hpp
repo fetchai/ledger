@@ -19,28 +19,19 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 
-#include <functional>
 #include <memory>
 #include <unordered_set>
 
 namespace fetch {
+namespace byte_array {
+class ConstByteArray;
+}
 namespace ledger {
 
-class Identifier;
 class Contract;
-class StorageInterface;
 
-class ChainCodeFactory
-{
-public:
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using ContractPtr     = std::shared_ptr<Contract>;
-  using ContractNameSet = std::unordered_set<ConstByteArray>;
-
-  ContractPtr Create(Identifier const &contract_id, StorageInterface &storage) const;
-
-  ContractNameSet const &GetChainCodeContracts() const;
-};
+std::shared_ptr<Contract> CreateChainCode(byte_array::ConstByteArray const &contract_name);
+std::unordered_set<byte_array::ConstByteArray> const &GetChainCodeContracts();
 
 }  // namespace ledger
 }  // namespace fetch

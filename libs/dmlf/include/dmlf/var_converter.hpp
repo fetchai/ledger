@@ -17,36 +17,38 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/synergetic_contract.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "variant/variant.hpp"
 
 namespace fetch {
-namespace chain {
 
-class Address;
+namespace serializers {
+class MsgPackSerializer;
+}
 
-}  // namespace chain
-namespace ledger {
+namespace dmlf {
 
-class StorageInterface;
-
-class SynergeticContractFactory
+class VarConverter
 {
 public:
-  // Construction / Destruction
-  explicit SynergeticContractFactory(StorageInterface &storage);
-  SynergeticContractFactory(SynergeticContractFactory const &) = delete;
-  SynergeticContractFactory(SynergeticContractFactory &&)      = delete;
-  ~SynergeticContractFactory()                                 = default;
+  VarConverter()          = default;
+  virtual ~VarConverter() = default;
 
-  SynergeticContractPtr Create(Digest const &digest);
+  bool Convert(byte_array::ByteArray &target, const variant::Variant &source,
+               const std::string &format);
 
-  // Operators
-  SynergeticContractFactory &operator=(SynergeticContractFactory const &) = delete;
-  SynergeticContractFactory &operator=(SynergeticContractFactory &&) = delete;
+  VarConverter(VarConverter const &other) = delete;
+  VarConverter &operator=(VarConverter const &other)  = delete;
+  bool          operator==(VarConverter const &other) = delete;
+  bool          operator<(VarConverter const &other)  = delete;
 
+  void Dump(byte_array::ByteArray &ba);
+
+protected:
 private:
-  StorageInterface &storage_;
+  bool Convert(fetch::serializers::MsgPackSerializer &os, const variant::Variant &source,
+               const std::string &format);
 };
 
-}  // namespace ledger
+}  // namespace dmlf
 }  // namespace fetch
