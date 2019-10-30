@@ -43,7 +43,6 @@ struct BlockEntropy : public BlockEntropyInterface
   using AeonNotarisationKeys  = std::map<MuddleAddress, SignedNotarisationKey>;
 
   BlockEntropy();
-  BlockEntropy(BlockEntropy const &rhs);
 
   // When new committee, block contains muddle address of those who suceeded the DKG and
   // are qualified to produce blocks, and notarisation key (signed)
@@ -69,6 +68,7 @@ struct BlockEntropy : public BlockEntropyInterface
   // Notarisation of block
   AggregateSignature block_notarisation;
 
+  void   SelectCopy(BlockEntropy const &rhs);
   Digest EntropyAsSHA256() const override;
 
   // This will always be safe so long as the entropy function is properly sha256-ing

@@ -63,6 +63,17 @@ void TrustedDealerSetupService::StartNewCabinet(
   beacon->manager.NewCabinet(members, threshold);
   beacon->manager.SetDkgOutput(output);
 
+  // Set block entropy for start of aeon
+  beacon->block_entropy                  = BlockEntropy{};
+  beacon->block_entropy.qualified        = beacon->manager.qual();
+  beacon->block_entropy.group_public_key = beacon->manager.group_public_key();
+  beacon->block_entropy.block_number     = round_start;
+  for (auto const &mem : members)
+  {
+    beacon->block_entropy.confirmations.insert({mem, {}});
+  }
+  beacon->block_entropy.HashSelf();
+
   // Setting the aeon details
   beacon->aeon.round_start               = round_start;
   beacon->aeon.round_end                 = round_end;
@@ -70,24 +81,25 @@ void TrustedDealerSetupService::StartNewCabinet(
   beacon->aeon.start_reference_timepoint = start_time;
   beacon->aeon.block_entropy_previous    = prev_entropy;
 
-  // Set block entropy for start of aeon
-  beacon->block_entropy                  = BlockEntropy{};
-  beacon->block_entropy.qualified        = beacon->manager.qual();
-  beacon->block_entropy.group_public_key = beacon->manager.group_public_key();
-  beacon->block_entropy.block_number     = beacon->aeon.round_start;
-  beacon->block_entropy.HashSelf();
+  if (notarisation_keys.first && !notarisation_keys.second.empty() &&
+      notarisation_callback_function_)
+  {
+    BlockEntropy::AeonNotarisationKeys aeon_keys;
+    for (auto const &key : notarisation_keys.second)
+    {
+      // ECDSA signature on notarisation key is empty
+      aeon_keys.insert({key.first, {key.second, {}}});
+    }
+    beacon->block_entropy.aeon_notarisation_keys = aeon_keys;
+
+    notarisation_keys.first->SetAeonDetails(round_start, round_end, threshold,
+                                            notarisation_keys.second);
+    notarisation_callback_function_(notarisation_keys.first);
+  }
 
   if (callback_function_)
   {
     callback_function_(beacon);
-  }
-
-  if (notarisation_keys.first && !notarisation_keys.second.empty() &&
-      notarisation_callback_function_)
-  {
-    notarisation_keys.first->SetAeonDetails(round_start, round_end, threshold,
-                                            notarisation_keys.second);
-    notarisation_callback_function_(notarisation_keys.first);
   }
 }
 }  // namespace beacon

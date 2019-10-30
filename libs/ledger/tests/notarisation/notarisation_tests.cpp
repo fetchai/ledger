@@ -80,7 +80,8 @@ struct NotarisationNode
   std::shared_ptr<StakeManager>              stake_manager;
   Consensus                                  consensus;
 
-  NotarisationNode(uint16_t port_number, uint16_t index, uint64_t cabinet_size)
+  NotarisationNode(uint16_t port_number, uint16_t index, uint64_t cabinet_size,
+                   uint64_t aeon_period)
     : muddle_port{port_number}
     , event_manager{EventManager::New()}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
@@ -100,7 +101,7 @@ struct NotarisationNode
                 beacon_service,
                 chain,
                 muddle_certificate->identity(),
-                10,
+                aeon_period,
                 cabinet_size,
                 1000,
                 notarisation_service}
@@ -127,18 +128,20 @@ struct NotarisationNode
   }
 };
 
+// TODO(JMW): Include committee rotation with two different committees in test
 TEST(notarisation, notarise_blocks)
 {
   // Set up identity and keys
   uint32_t committee_size = 3;
   uint32_t threshold      = 2;
+  uint64_t aeon_period    = 5;
 
   std::vector<std::shared_ptr<NotarisationNode>> nodes;
   std::set<MuddleAddress>                        cabinet;
   for (uint16_t i = 0; i < committee_size; ++i)
   {
     auto port_number = static_cast<uint16_t>(10000 + i);
-    nodes.emplace_back(new NotarisationNode(port_number, i, committee_size));
+    nodes.emplace_back(new NotarisationNode(port_number, i, committee_size, aeon_period));
     cabinet.insert(nodes[i]->address());
   }
 
@@ -196,87 +199,75 @@ TEST(notarisation, notarise_blocks)
   }
   EXPECT_EQ(snapshot.total_stake(), committee_size * 10);
 
-  uint64_t round_length = 5;
-  for (uint8_t round = 0; round < 2; ++round)
+  // Setup trusted dealer for first aeon
+  TrustedDealer dealer{cabinet, threshold};
+
+  // Reset cabinet for ready made keys
+  uint64_t     round_start = 1;
+  BlockEntropy prev_entropy;
+  prev_entropy.group_signature = "Hello";
+  for (auto &node : nodes)
   {
-    // Setup trusted dealer
-    TrustedDealer dealer{cabinet, threshold};
+    node->consensus.Reset(snapshot);
+    node->beacon_setup_service->StartNewCabinet(
+        cabinet, threshold, round_start, aeon_period,
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5,
+        prev_entropy, dealer.GetDkgKeys(node->address()),
+        dealer.GetNotarisationKeys(node->address()));
+  }
 
-    // Create previous entropy
-    BlockEntropy prev_entropy;
-    if (round == 0)
+  // Generate blocks for 2 aeons
+  for (uint16_t i = 1; i < aeon_period * 2 + 1; i++)
+  {
+    std::vector<BlockPtr> blocks_this_round;
+    // Generate blocks and notarise
+    uint32_t count = 0;
+    while (count == 0)
     {
-      prev_entropy.group_signature = "Hello";
-    }
-    else
-    {
-      prev_entropy = nodes[0]->chain.GetHeaviestBlock()->body.block_entropy;
+      for (auto &node : nodes)
+      {
+        auto next_block = node->consensus.GenerateNextBlock();
+
+        if (next_block != nullptr)
+        {
+
+          // Set block hash and ficticious weight for first block
+          if (i == 1)
+          {
+            next_block->body.previous_hash = node->chain.GetHeaviestBlock()->body.hash;
+            next_block->weight             = static_cast<uint64_t>(
+                committee_size -
+                std::distance(nodes.begin(), std::find(nodes.begin(), nodes.end(), node)));
+          }
+
+          next_block->UpdateDigest();
+          next_block->UpdateTimestamp();
+          next_block->miner_signature = node->muddle_certificate->Sign(next_block->body.hash);
+
+          blocks_this_round.push_back(std::move(next_block));
+          ++count;
+        }
+      }
     }
 
-    // Reset cabinet for dkg
-    uint64_t round_start = round * round_length + 1;
+    std::cout << "Generated " << count << " blocks for round " << i << std::endl;
+
+    // Verify notarisation in block
     for (auto &node : nodes)
     {
-      node->consensus.stake()->Reset(snapshot);
-      node->beacon_setup_service->StartNewCabinet(
-          cabinet, threshold, round_start, round_start + round_length,
-          GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5,
-          prev_entropy, dealer.GetDkgKeys(node->address()),
-          dealer.GetNotarisationKeys(node->address()));
+      for (auto &block : blocks_this_round)
+      {
+        EXPECT_TRUE(node->consensus.VerifyNotarisation(*block));
+      }
     }
 
-    for (uint16_t i = 0; i < round_length; i++)
+    // Add this block to everyone's chain
+    for (auto &node : nodes)
     {
-      std::vector<BlockPtr> blocks_this_round;
-      // Generate blocks and notarise
-      uint32_t count = 0;
-      while (count == 0)
+      for (auto &block : blocks_this_round)
       {
-        for (auto &node : nodes)
-        {
-          auto next_block = node->consensus.GenerateNextBlock();
-
-          if (next_block != nullptr)
-          {
-
-            // Set block hash and ficticious weight
-            if (round == 0 && i == 0)
-            {
-              next_block->body.previous_hash = node->chain.GetHeaviestBlock()->body.hash;
-              next_block->weight             = static_cast<uint64_t>(
-                  committee_size -
-                  std::distance(nodes.begin(), std::find(nodes.begin(), nodes.end(), node)));
-            }
-
-            next_block->UpdateDigest();
-            next_block->UpdateTimestamp();
-            next_block->miner_signature = node->muddle_certificate->Sign(next_block->body.hash);
-
-            blocks_this_round.push_back(std::move(next_block));
-            ++count;
-          }
-        }
-      }
-
-      std::cout << "Generated " << count << " blocks for round " << i << std::endl;
-
-      // Verify notarisation in block
-      for (auto &node : nodes)
-      {
-        for (auto &block : blocks_this_round)
-        {
-          EXPECT_TRUE(node->consensus.VerifyNotarisation(*block));
-        }
-      }
-
-      // Add this block to everyone's chain
-      for (auto &node : nodes)
-      {
-        for (auto &block : blocks_this_round)
-        {
-          node->chain.AddBlock(*block);
-          node->consensus.UpdateCurrentBlock(*block);
-        }
+        node->chain.AddBlock(*block);
+        node->consensus.UpdateCurrentBlock(*block);
       }
     }
   }

@@ -190,7 +190,7 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
       // Select correct committee to verify with
       notarisation_unit = active_notarisation_unit_;
       if (previous_notarisation_unit_ &&
-          notarisation_collection_height_ < previous_notarisation_unit_->round_end())
+          notarisation_collection_height_ <= previous_notarisation_unit_->round_end())
       {
         assert(notarisation_collection_height_ >= previous_notarisation_unit_->round_start());
         notarisation_unit = previous_notarisation_unit_;
@@ -317,7 +317,7 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
   // If block is within current aeon then notarise now
   SharedAeonNotarisationUnit notarisation_unit;
   if (active_notarisation_unit_ && block.block_number >= active_notarisation_unit_->round_start() &&
-      block.block_number < active_notarisation_unit_->round_end())
+      block.block_number <= active_notarisation_unit_->round_end())
   {
     notarisation_unit = active_notarisation_unit_;
   }
@@ -325,7 +325,7 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
   // If block is not in current aeon then check previous notarisation unit
   if (previous_notarisation_unit_ && previous_notarisation_unit_->CanSign() &&
       block.block_number >= previous_notarisation_unit_->round_start() &&
-      block.block_number < previous_notarisation_unit_->round_end())
+      block.block_number <= previous_notarisation_unit_->round_end())
   {
     notarisation_unit = previous_notarisation_unit_;
   }
@@ -397,14 +397,14 @@ NotarisationService::NotarisationResult NotarisationService::Verify(
   // If block is within current aeon then notarise now
   SharedAeonNotarisationUnit notarisation_unit;
   if (active_notarisation_unit_ && block_number >= active_notarisation_unit_->round_start() &&
-      block_number < active_notarisation_unit_->round_end())
+      block_number <= active_notarisation_unit_->round_end())
   {
     notarisation_unit = active_notarisation_unit_;
   }
 
   // If block is not in current aeon then check previous notarisation unit
   if (previous_notarisation_unit_ && block_number >= previous_notarisation_unit_->round_start() &&
-      block_number < previous_notarisation_unit_->round_end())
+      block_number <= previous_notarisation_unit_->round_end())
   {
     notarisation_unit = previous_notarisation_unit_;
   }

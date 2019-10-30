@@ -23,11 +23,11 @@ using fetch::beacon::BlockEntropy;
 BlockEntropy::BlockEntropy() = default;
 
 /**
- * Copy constructor - no need for the digest or confirmations
- * since the copy constructor is used to create the next block
+ * Copy method - no need for the digest or confirmations
+ * since this is used to create the next block
  * entropy
  */
-BlockEntropy::BlockEntropy(BlockEntropy const &rhs)
+void BlockEntropy::SelectCopy(BlockEntropy const &rhs)
 {
   qualified        = rhs.qualified;
   group_public_key = rhs.group_public_key;
@@ -58,5 +58,10 @@ void BlockEntropy::HashSelf()
 
 bool BlockEntropy::IsAeonBeginning() const
 {
-  return !qualified.empty();
+  bool is_beginning = !confirmations.empty();
+  if (is_beginning)
+  {
+    assert(!aeon_notarisation_keys.empty());
+  }
+  return is_beginning;
 }

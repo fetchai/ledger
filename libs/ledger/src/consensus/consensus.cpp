@@ -370,6 +370,14 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   if (notarisation_)
   {
     notarisation_->NotariseBlock(current_block_.body);
+    if (current.body.block_entropy.IsAeonBeginning())
+    {
+      uint64_t round_start = current_block_.body.block_number;
+      assert(!current_block_.body.block_entropy.aeon_notarisation_keys.empty());
+      notarisation_->SetAeonDetails(round_start, round_start + aeon_period_,
+                                    GetThreshold(current_block_),
+                                    current_block_.body.block_entropy.aeon_notarisation_keys);
+    }
   }
 
   if (ShouldTriggerNewCabinet(current_block_))
@@ -487,6 +495,25 @@ bool BlockSignedByQualMember(fetch::ledger::Block const &block)
 }
 
 /**
+ * Checks all cabinet members have submitted a notarisation key which has been signed correctly
+ */
+bool ValidNotarisationKeys(Consensus::BlockEntropy::Cabinet const &             cabinet,
+                           Consensus::BlockEntropy::AeonNotarisationKeys const &notarisation_keys)
+{
+  for (auto const &member : cabinet)
+  {
+    if (notarisation_keys.find(member) == notarisation_keys.end() ||
+        !fetch::crypto::Verifier::Verify(fetch::crypto::Identity(member),
+                                         notarisation_keys.at(member).first.getStr(),
+                                         notarisation_keys.at(member).second))
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Given a block entropy, determine whether it has been signed off on
  * by enough qualified stakers.
  */
@@ -545,6 +572,13 @@ Status Consensus::ValidBlock(Block const &current) const
 
     qualified_cabinet = block_entropy.qualified;
     group_pub_key     = block_entropy.group_public_key;
+
+    if (notarisation_ &&
+        !ValidNotarisationKeys(qualified_cabinet, block_entropy.aeon_notarisation_keys))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Found block whose notarisation keys are not valid");
+      return Status::NO;
+    }
   }
   else
   {
