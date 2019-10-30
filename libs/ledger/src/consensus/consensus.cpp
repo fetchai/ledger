@@ -286,7 +286,8 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   {
     auto const delta_ms = target_block_time_ms - time_now_ms;
 
-    FETCH_LOG_TRACE(LOGGING_NAME, "Not ready to start next block. Delta: ", delta_ms, " now: ", time_now_ms, " target: ", target_block_time_ms);
+    FETCH_LOG_TRACE(LOGGING_NAME, "Not ready to start next block. Delta: ", delta_ms,
+                    " now: ", time_now_ms, " target: ", target_block_time_ms);
     FETCH_LOG_VARIABLE(delta_ms);
     return false;
   }
@@ -420,8 +421,8 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->weight = GetBlockGenerationWeight(current_block_, mining_address_);
 
 #if 1
-  static uint64_t counter = 0;
-  bool const should_debug = (counter++ & 0x3fu) == 0u;
+  static uint64_t counter      = 0;
+  bool const      should_debug = (counter++ & 0x3fu) == 0u;
 #endif
 
   // Try to get entropy for the block we are generating - is allowed to fail if we request too

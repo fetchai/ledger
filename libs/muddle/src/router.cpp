@@ -576,7 +576,6 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
 
   bool display{false};
 
-
   FETCH_LOCK(routing_table_lock_);
 
   // lookup (or create) the routing table entry
@@ -617,8 +616,8 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
     status  = UpdateStatus::UPDATED;
     display = is_empty || is_upgrade;
 
-    FETCH_LOG_TRACE(logging_name_, is_connection_update, "-", is_duplicate_direct, "-",
-                    is_upgrade, "-", is_different, "-", is_update);
+    FETCH_LOG_TRACE(logging_name_, is_connection_update, "-", is_duplicate_direct, "-", is_upgrade,
+                    "-", is_different, "-", is_update);
     FETCH_LOG_TRACE(logging_name_, "Handle was: ", current_handle, " now: ", handle,
                     " direct: ", direct, "-", routing_data.direct);
     FETCH_LOG_VARIABLE(current_handle);
@@ -687,13 +686,12 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
       using Distribution = std::uniform_int_distribution<std::size_t>;
 
       // decide the random index to access
-      Distribution table_dist{0, routing_table_.size() - 1};
+      Distribution      table_dist{0, routing_table_.size() - 1};
       std::size_t const element = table_dist(rng);
 
       // advance the iterator to the correct offset
       auto it = routing_table_.cbegin();
       std::advance(it, static_cast<std::ptrdiff_t>(element));
-
 
       auto const &handles = it->second.handles;
 
@@ -858,7 +856,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     // this should never be necessary, but in the case where the routing table is not correctly
     // updated by the peer is directly connected, then we should always use that peer
     auto const address_index = register_.GetAddressIndex();
-    auto const index_it = address_index.find(packet->GetTarget());
+    auto const index_it      = address_index.find(packet->GetTarget());
     if (index_it != address_index.end())
     {
       // extract the handle from the index
@@ -891,7 +889,8 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     handle = LookupRandomHandle(packet->GetTargetRaw());
     if (handle != 0u)
     {
-      FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", packet->GetTarget().ToBase64());
+      FETCH_LOG_WARN(logging_name_,
+                     "Speculative routing to peer: ", packet->GetTarget().ToBase64());
       SendToConnection(handle, packet);
       return;
     }

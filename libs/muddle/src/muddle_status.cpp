@@ -153,7 +153,7 @@ void BuildRoutingTable(Router::RoutingTable const &routing_table, variant::Varia
   for (auto const &element : routing_table)
   {
     ConstByteArray const address{element.first.data(), element.first.size()};
-    auto const &handles = element.second.handles;
+    auto const &         handles = element.second.handles;
 
     auto &entry = output[address.ToBase64()] = variant::Variant::Object();
 

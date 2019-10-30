@@ -81,6 +81,8 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
         "beacon_dkg_time_allocated", "Time allocated for the DKG to complete")}
   , beacon_dkg_aeon_setting_up_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_aeon_setting_up", "The aeon currently under setup.")}
+  , beacon_dkg_miners_in_qual_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_miners_in_qual", "Number of miners that have made it into qual")}
   , beacon_dkg_failures_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_failures_total", "The total number of DKG failures")}
   , beacon_dkg_aborts_total_{telemetry::Registry::Instance().CreateCounter(
@@ -729,6 +731,7 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
   FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::BEACON_READY));
   beacon_dkg_successes_total_->add(1);
+  beacon_dkg_miners_in_qual_->set(beacon_->manager.qual().size());
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                  " ******* New beacon generated! ******* Qual: ", beacon_->manager.qual().size(),
@@ -1445,8 +1448,8 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   else
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                    " #### Proceeding to next state \"", ToString(state), "\", to last ",
-                    state_deadline_ - current_time, " seconds (deadline: ", state_deadline_, ")");
+                   " #### Proceeding to next state \"", ToString(state), "\", to last ",
+                   state_deadline_ - current_time, " seconds (deadline: ", state_deadline_, ")");
     timer_to_proceed_.Restart(std::chrono::seconds{state_deadline_ - current_time});
   }
 }

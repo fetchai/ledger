@@ -432,7 +432,8 @@ BeaconService::State BeaconService::OnCompleteState()
 
     if ((count & 0x1fu) == 0u)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting to trigger next entropy sequence. (completed: ", completed_block_entropy_.size(), ")");
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting to trigger next entropy sequence. (completed: ",
+                     completed_block_entropy_.size(), ")");
     }
 
     ++count;

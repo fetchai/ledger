@@ -171,7 +171,8 @@ void DirectMessageService::OnDirectMessage(Handle handle, PacketPtr const &packe
       RoutingMessage msg;
       if (!ExtractPayload(packet->GetPayload(), msg))
       {
-        FETCH_LOG_WARN(logging_name_, "Unable to extract routing message payload (conn: ", handle, ")");
+        FETCH_LOG_WARN(logging_name_, "Unable to extract routing message payload (conn: ", handle,
+                       ")");
         return;
       }
 
@@ -246,7 +247,8 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
     RoutingMessage response{};
     response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
-    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (duplicate) (conn: ", handle, ")");
+    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (duplicate) (conn: ", handle,
+                   ")");
 
     // send the message to the connection
     SendMessageToConnection(handle, response);
@@ -257,7 +259,8 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
     RoutingMessage response{};
     response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
-    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (replaced) (conn: ", handle, ")");
+    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (replaced) (conn: ", handle,
+                   ")");
 
     // send the message to the connection
     SendMessageToConnection(previous_handle, response);

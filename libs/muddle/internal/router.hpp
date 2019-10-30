@@ -139,7 +139,7 @@ public:
   void SetKademliaRouting(bool enable = true);
 
   RoutingTable routing_table() const;
-  EchoCache echo_cache() const;
+  EchoCache    echo_cache() const;
 
   // Operators
   Router &operator=(Router const &) = delete;
