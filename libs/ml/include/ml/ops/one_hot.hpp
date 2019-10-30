@@ -98,6 +98,7 @@ public:
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override
   {
+    FETCH_UNUSED(error_signal);
     assert(inputs.size() == 1);
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
