@@ -126,7 +126,7 @@ public:
       for (size_t i = 0; i < nodes_count; ++i)
       {
         std::string uri = nodes[i]["uri"].As<std::string>();
-        nodes_uris_.push_back(uri);
+        nodes_uris_.push_back(std::move(uri));
         std::string pub = nodes[i]["pub"].As<std::string>();
         // TODO(LR) how to check if a public key is valid
         /*
@@ -135,7 +135,7 @@ public:
           throw std::runtime_error{"Bad public key"+pub};
         }
         */
-        nodes_pubs_.push_back(pub);
+        nodes_pubs_.push_back(std::move(pub));
       }
 
       return true;
