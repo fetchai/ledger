@@ -146,19 +146,19 @@ bool TensorDataLoader<LabelType, InputType>::AddData(std::vector<InputType> cons
   one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
   labels_                                                        = labels.Copy();
 
-  one_sample_data_shapes_.emplace_back(data.at(0).shape());
-  one_sample_data_shapes_.at(0).at(one_sample_data_shapes_.at(0).size() - 1) = 1;
-
   // Resize data vector
   if (data_.size() < data.size())
   {
     data_.resize(data.size());
+    one_sample_data_shapes_.resize(data.size());
   }
 
   // Add data to data vector
   for (SizeType i{0}; i < data.size(); i++)
   {
-    data_.at(i) = data.at(i).Copy();
+    data_.at(i)                                                                = data.at(i).Copy();
+    one_sample_data_shapes_.at(i)                                              = data.at(i).shape();
+    one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
   }
 
   n_samples_ = data_.at(0).shape().at(data_.at(0).shape().size() - 1);
