@@ -102,51 +102,9 @@ BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, Bloc
 
   FETCH_LOCK(mutex_);
 
-#if 1
+  if (completed_block_entropy_.find(block_number) != completed_block_entropy_.end())
   {
-    static std::string last_have{};
-    std::ostringstream oss;
-
-    bool initial_loop{true};
-    for (auto const &element : completed_block_entropy_)
-    {
-      if (!initial_loop)
-      {
-        oss << ',';
-      }
-      oss << element.first;
-      initial_loop = false;
-    }
-
-    std::string now_have = oss.str();
-
-    if (now_have != last_have)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Have entropy for: ", oss.str());
-      last_have = std::move(now_have);
-    }
-  }
-#endif
-
-  auto it = completed_block_entropy_.find(block_number);
-  if (it != completed_block_entropy_.end())
-  {
-    entropy = *(it->second);
-
-    // trim down the entropy cache
-    it = completed_block_entropy_.begin();
-    while (it != completed_block_entropy_.end())
-    {
-      if (it->first < block_number)
-      {
-        it = completed_block_entropy_.erase(it);
-      }
-      else
-      {
-        ++it;
-      }
-    }
-
+    entropy = *completed_block_entropy_[block_number];
     return Status::OK;
   }
 
