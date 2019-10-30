@@ -35,8 +35,6 @@ void OneHot(ArrayType &ret, ArrayType const &indices, typename ArrayType::SizeTy
             SizeType axis = 0, typename ArrayType::Type on_value = typename ArrayType::Type{1.0},
             typename ArrayType::Type off_value = typename ArrayType::Type{0.0})
 {
-  using SizeType = typename ArrayType::SizeType;
-
   assert((indices.shape().size() + 1) == ret.shape().size());
   assert(axis <= indices.size());
   assert(depth == ret.shape().at(axis));
@@ -93,8 +91,6 @@ ArrayType OneHot(ArrayType const &indices, typename ArrayType::SizeType depth, S
                  typename ArrayType::Type on_value  = typename ArrayType::Type{1.0},
                  typename ArrayType::Type off_value = typename ArrayType::Type{0.0})
 {
-  using SizeType = typename ArrayType::SizeType;
-
   assert(axis <= indices.shape().size());
 
   std::vector<SizeType> ret_shape = indices.shape();
