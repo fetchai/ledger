@@ -440,7 +440,7 @@ bool DAG::GetWork(ConstByteArray const &hash, Work &work)
   FETCH_LOCK(mutex_);
   bool success{false};
 
-  // lookup the DAG node in question
+  // look up the DAG node in question
   DAGNode node;
   if (GetDAGNode(hash, node))
   {

@@ -127,7 +127,7 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type servi
   auto it = manifest.FindService(identifier);
   if (it == manifest.end())
   {
-    throw std::runtime_error("Unable to lookup requested service from the manifest");
+    throw std::runtime_error("Unable to look up requested service from the manifest");
   }
 
   return it->second.local_port();
@@ -146,7 +146,7 @@ ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
 
   for (uint32_t i = 0; i < cfg.num_lanes(); ++i)
   {
-    // lookup the service in the provided manifest
+    // look up the service in the provided manifest
     auto it = cfg.manifest.FindService(ServiceIdentifier{ServiceIdentifier::Type::LANE, i});
 
     if (it == cfg.manifest.end())

@@ -232,7 +232,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
   reload_state_count_->increment();
 
-  // if no current block then this is the first time in the state therefore lookup the heaviest
+  // if no current block then this is the first time in the state therefore look up the heaviest
   // block
   if (!current_block_)
   {
@@ -333,7 +333,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     auto previous_block = chain_.GetBlock(previous_hash);
     if (!previous_block)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up previous block: ", ToBase64(current_hash));
       return State::RESET;
     }
 
@@ -366,7 +366,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     if (!lookup_success)
     {
       FETCH_LOG_WARN(LOGGING_NAME,
-                     "Unable to lookup common ancestor for block:", ToBase64(current_hash));
+                     "Unable to look up common ancestor for block:", ToBase64(current_hash));
       return State::RESET;
     }
 
@@ -625,11 +625,11 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
   // Executing synergetic work
   if ((!is_genesis) && synergetic_exec_mgr_)
   {
-    // lookup the previous block
+    // look up the previous block
     auto const previous_block = chain_.GetBlock(current_block_->body.previous_hash);
     if (!previous_block)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to lookup previous block");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to look up previous block");
       return State::RESET;
     }
 
@@ -951,7 +951,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 
   if (synergetic_exec_mgr_ && dag_)
   {
-    // lookup the previous block
+    // look up the previous block
     BlockPtr previous_block = chain_.GetBlock(next_block_->body.previous_hash);
 
     // prepare the work queue

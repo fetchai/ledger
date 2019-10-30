@@ -140,7 +140,7 @@ private:
 
   Variant GenerateBlockList(bool include_transactions, std::size_t length)
   {
-    // lookup the blocks from the heaviest chain
+    // look up the blocks from the heaviest chain
     auto blocks = chain_.GetHeaviestChain(length);
 
     Variant block_list = Variant::Array(blocks.size());

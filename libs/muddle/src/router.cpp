@@ -635,7 +635,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
 /**
  * Internal: Looks up the specified connection handle from a given address
  *
- * @param address The address to lookup the handle for.
+ * @param address The address to look up the handle for.
  * @return The target handle for the connection, or zero on failure.
  */
 Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
@@ -707,7 +707,7 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
 }
 
 /**
- * Lookup the closest directly connected handle to route the packet to
+ * Look up the closest directly connected handle to route the packet to
  *
  * @param address The address
  * @return
@@ -750,7 +750,7 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet)
   // internal method, we expect all inputs be valid at this stage
   assert(static_cast<bool>(packet));
 
-  // lookup the connection
+  // look up the connection
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
@@ -963,7 +963,7 @@ bool Router::IsEcho(Packet const &packet, bool register_echo)
   {
     FETCH_LOCK(echo_cache_lock_);
 
-    // lookup if the echo is in the cache
+    // look up if the echo is in the cache
     auto it = echo_cache_.find(index);
     if (it == echo_cache_.end())
     {
