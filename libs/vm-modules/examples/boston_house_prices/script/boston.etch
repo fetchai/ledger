@@ -9,10 +9,6 @@ var data = readCSV(System.Argv(1));
 var label = readCSV(System.Argv(2));
 var test_data = readCSV(System.Argv(3));
 var test_label = readCSV(System.Argv(4));
-data.transpose();
-label.transpose();
-test_data.transpose();
-test_label.transpose();
 
 // set up a model architecture
 var model = Model("sequential");

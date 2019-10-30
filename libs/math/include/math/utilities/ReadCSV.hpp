@@ -68,7 +68,9 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
     ++row;
   }
 
-  TensorType weights({row - rows_to_skip, col - cols_to_skip});
+  // we swap rows and columns because rows are ordinarily data samples, which should be the trailing
+  // dimension of our tensor
+  TensorType weights({col - cols_to_skip, row - rows_to_skip});
 
   // read data into weights array
   std::string token;
@@ -92,7 +94,7 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
     }
     while (std::getline(ss, field_value, delimiter))
     {
-      weights(row, col) = static_cast<DataType>(stod(field_value));
+      weights(col, row) = static_cast<DataType>(stod(field_value));
       ++col;
     }
     ++row;
