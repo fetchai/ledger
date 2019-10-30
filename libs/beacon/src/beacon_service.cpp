@@ -279,6 +279,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   // Block for up to half a second waiting for the promise to resolve
   if (!timer_to_proceed_.HasExpired() && !sig_share_promise_->IsSuccessful())
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Delaying until resolved RPC call!");
     return State::VERIFY_SIGNATURES;
   }
 
@@ -306,7 +307,8 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 
     if (ret.threshold_signatures.empty())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Peer wasn't ready when asking for signatures: ",
+      // TODO(HUT): debug this.
+      FETCH_LOG_INFO(LOGGING_NAME, "Peer wasn't ready when asking for signatures: ",
                       qual_promise_identity_.identifier().ToBase64());
       state_machine_->Delay(std::chrono::milliseconds(100));
 
@@ -343,7 +345,9 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
                     " signatures. Round: ", index);
   }  // Mutex unlocks here since verification can take some time
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Start verifying.");
   MilliTimer const timer{"Verify threshold signature", 100};
+  FETCH_LOG_INFO(LOGGING_NAME, "Finish verifying.");
 
   // TODO(HUT): possibility for infinite loop here I suspect.
   if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
@@ -387,6 +391,7 @@ BeaconService::State BeaconService::OnCompleteState()
 
     while (it != completed_block_entropy_.end() && completed_block_entropy_.size() > max_cache_size)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Trimming!");
       it = completed_block_entropy_.erase(it);
     }
 
@@ -394,6 +399,7 @@ BeaconService::State BeaconService::OnCompleteState()
 
     while (it2 != signatures_being_built_.end() && signatures_being_built_.size() > max_cache_size)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Trimming!");
       it2 = signatures_being_built_.erase(it2);
     }
   }
