@@ -280,7 +280,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
 
   // Blocks cannot be created within the block interval of the previous, this enforces
   // the block period
-  if (proposed_block_timestamp_ms < last_block_timestamp_ms + block_interval_ms_)
+  if (proposed_block_timestamp_ms < (last_block_timestamp_ms + block_interval_ms_))
   {
     return false;
   }
@@ -294,9 +294,9 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   }
 
   // Until the time slot has elapsed, others can not produce
-  if (last_block_timestamp_ms + block_interval_ms_ < time_now_ms)
+  if ((last_block_timestamp_ms + block_interval_ms_) < time_now_ms)
   {
-    return true;
+    //return true;
   }
 
   return false;
