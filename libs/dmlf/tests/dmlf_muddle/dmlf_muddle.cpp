@@ -43,7 +43,7 @@ using NetworkManager              = fetch::network::NetworkManager;
 using MuddlePtr                   = fetch::muddle::MuddlePtr;
 using RemoteExecutionProtocol     = fetch::dmlf::RemoteExecutionProtocol;
 using ExecutionInterfacePtr       = std::shared_ptr<ExecutionInterface>;
-using ExecutionEngineInterfacePtr = ExecutionWorkload::ExecutionInterfacePtr;
+using ExecutionEngineInterfacePtr = ExecutionWorkload::ExecutionEngineInterfacePtr;
 
 using Server = muddle::rpc::Server;
 
