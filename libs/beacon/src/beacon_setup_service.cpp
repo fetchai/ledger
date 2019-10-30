@@ -134,6 +134,7 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
   beacon_dkg_aeon_setting_up_->set(0);
 
   beacon_.reset();
+  notarisation_manager_.reset();
 
   if (!aeon_exe_queue_.empty())
   {
@@ -956,7 +957,6 @@ void BeaconSetupService::BroadcastQualComplaints()
  * the secret shares we received from them to all cabinet members and collect the shares broadcasted
  * by others
  */
-
 void BeaconSetupService::BroadcastReconstructionShares()
 {
   SharesExposedMap complaint_shares;
@@ -1430,6 +1430,11 @@ void BeaconSetupService::StartNewCabinet(CabinetMemberList members, uint32_t thr
                                          uint64_t round_start, uint64_t round_end,
                                          uint64_t start_time, BlockEntropy const &prev_entropy)
 {
+  if (members.find(identity_.identifier()) == members.end())
+  {
+    return;
+  }
+
   auto diff_time =
       int64_t(GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))) -
       int64_t(start_time);

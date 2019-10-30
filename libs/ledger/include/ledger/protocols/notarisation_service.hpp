@@ -101,7 +101,7 @@ public:
   NotarisationService()                            = delete;
   NotarisationService(NotarisationService const &) = delete;
 
-  NotarisationService(MuddleInterface &muddle, MainChain &main_chain, CertificatePtr certificate,
+  NotarisationService(MuddleInterface &muddle, CertificatePtr certificate,
                       BeaconSetupService &beacon_setup);
 
   /// State methods
@@ -161,8 +161,6 @@ private:
   std::mutex                    mutex_;
   CertificatePtr                certificate_;
   std::shared_ptr<StateMachine> state_machine_;
-
-  MainChain &chain_;  ///< Ref to system chain
 
   /// Management of active DKG keys
   bool                                   new_keys{false};

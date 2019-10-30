@@ -93,7 +93,7 @@ struct NotarisationNode
                                                          muddle_certificate}}
     , beacon_service{new BeaconService{*muddle, muddle_certificate, *beacon_setup_service,
                                        event_manager}}
-    , notarisation_service{new NotarisationService{*muddle, chain, muddle_certificate,
+    , notarisation_service{new NotarisationService{*muddle, muddle_certificate,
                                                    *beacon_setup_service}}
     , stake_manager{new StakeManager{cabinet_size}}
     , consensus{stake_manager,
@@ -128,34 +128,33 @@ struct NotarisationNode
   }
 };
 
-// TODO(JMW): Include committee rotation with two different committees in test
 TEST(notarisation, notarise_blocks)
 {
   // Set up identity and keys
-  uint32_t committee_size = 3;
-  uint32_t threshold      = 2;
-  uint64_t aeon_period    = 5;
+  uint32_t num_nodes    = 6;
+  uint32_t cabinet_size = 3;
+  uint32_t threshold    = 2;
+  uint64_t aeon_period  = 5;
+  uint64_t stake        = 10;
 
   std::vector<std::shared_ptr<NotarisationNode>> nodes;
-  std::set<MuddleAddress>                        cabinet;
-  for (uint16_t i = 0; i < committee_size; ++i)
+  for (uint16_t i = 0; i < num_nodes; ++i)
   {
     auto port_number = static_cast<uint16_t>(10000 + i);
-    nodes.emplace_back(new NotarisationNode(port_number, i, committee_size, aeon_period));
-    cabinet.insert(nodes[i]->address());
+    nodes.emplace_back(new NotarisationNode(port_number, i, cabinet_size, aeon_period));
   }
 
   // Connect muddles together (localhost for this example)
-  for (uint32_t i = 0; i < committee_size; i++)
+  for (uint32_t i = 0; i < num_nodes; i++)
   {
-    for (uint32_t j = i + 1; j < committee_size; j++)
+    for (uint32_t j = i + 1; j < num_nodes; j++)
     {
       nodes[i]->muddle->ConnectTo(nodes[j]->address(), nodes[j]->GetHint());
     }
   }
 
   // wait for all the nodes to completely connect
-  std::vector<uint32_t> pending_nodes(committee_size, 0);
+  std::vector<uint32_t> pending_nodes(num_nodes, 0);
   std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
   while (!pending_nodes.empty())
   {
@@ -164,7 +163,7 @@ TEST(notarisation, notarise_blocks)
     {
       auto &muddle = *(nodes[*it]->muddle);
 
-      if ((committee_size - 1) <= muddle.GetNumDirectlyConnectedPeers())
+      if ((num_nodes - 1) <= muddle.GetNumDirectlyConnectedPeers())
       {
         it = pending_nodes.erase(it);
       }
@@ -187,17 +186,30 @@ TEST(notarisation, notarise_blocks)
   for (auto &node : nodes)
   {
     node->reactor.Start();
+    node->consensus.SetCabinetSize(cabinet_size);
+    node->consensus.SetThreshold(0.5);
   }
 
   // Stake setup
-  StakeSnapshot snapshot;
-  for (auto const &node : nodes)
+  StakeSnapshot           snapshot;
+  std::set<MuddleAddress> cabinet;
+  for (uint32_t i = 0; i < cabinet_size; ++i)
   {
-    snapshot.UpdateStake(node->muddle_certificate->identity(), 10);
-    node->consensus.SetCabinetSize(committee_size);
-    node->consensus.SetThreshold(0.5);
+    snapshot.UpdateStake(nodes[i]->muddle_certificate->identity(), stake);
+    cabinet.insert(nodes[i]->muddle_certificate->identity().identifier());
   }
-  EXPECT_EQ(snapshot.total_stake(), committee_size * 10);
+  EXPECT_EQ(snapshot.total_stake(), cabinet_size * stake);
+
+  // Update stake and queue updates for next committee
+  for (auto &node : nodes)
+  {
+    node->consensus.Reset(snapshot);
+    for (uint32_t j = cabinet_size; j < num_nodes; ++j)
+    {
+      node->consensus.stake()->update_queue().AddStakeUpdate(
+          4, nodes[j]->muddle_certificate->identity(), stake);
+    }
+  }
 
   // Setup trusted dealer for first aeon
   TrustedDealer dealer{cabinet, threshold};
@@ -206,18 +218,17 @@ TEST(notarisation, notarise_blocks)
   uint64_t     round_start = 1;
   BlockEntropy prev_entropy;
   prev_entropy.group_signature = "Hello";
-  for (auto &node : nodes)
+  for (uint32_t i = 0; i < cabinet_size; ++i)
   {
-    node->consensus.Reset(snapshot);
-    node->beacon_setup_service->StartNewCabinet(
+    nodes[i]->beacon_setup_service->StartNewCabinet(
         cabinet, threshold, round_start, aeon_period,
         GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5,
-        prev_entropy, dealer.GetDkgKeys(node->address()),
-        dealer.GetNotarisationKeys(node->address()));
+        prev_entropy, dealer.GetDkgKeys(nodes[i]->address()),
+        dealer.GetNotarisationKeys(nodes[i]->address()));
   }
 
   // Generate blocks for 2 aeons
-  for (uint16_t i = 1; i < aeon_period * 2 + 1; i++)
+  for (uint16_t block_number = 1; block_number < aeon_period * 2 + 1; block_number++)
   {
     std::vector<BlockPtr> blocks_this_round;
     // Generate blocks and notarise
@@ -232,17 +243,18 @@ TEST(notarisation, notarise_blocks)
         {
 
           // Set block hash and ficticious weight for first block
-          if (i == 1)
+          if (block_number == 1)
           {
             next_block->body.previous_hash = node->chain.GetHeaviestBlock()->body.hash;
             next_block->weight             = static_cast<uint64_t>(
-                committee_size -
+                cabinet_size -
                 std::distance(nodes.begin(), std::find(nodes.begin(), nodes.end(), node)));
           }
 
           next_block->UpdateDigest();
           next_block->UpdateTimestamp();
           next_block->miner_signature = node->muddle_certificate->Sign(next_block->body.hash);
+          assert(next_block->weight != 0);
 
           blocks_this_round.push_back(std::move(next_block));
           ++count;
@@ -250,7 +262,7 @@ TEST(notarisation, notarise_blocks)
       }
     }
 
-    std::cout << "Generated " << count << " blocks for round " << i << std::endl;
+    std::cout << "Generated " << count << " blocks for round " << block_number << std::endl;
 
     // Verify notarisation in block
     for (auto &node : nodes)

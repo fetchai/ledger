@@ -27,16 +27,14 @@ namespace ledger {
 
 char const *StateToString(NotarisationService::State state);
 
-NotarisationService::NotarisationService(MuddleInterface &muddle, MainChain &main_chain,
-                                         CertificatePtr      certificate,
+NotarisationService::NotarisationService(MuddleInterface &muddle, CertificatePtr certificate,
                                          BeaconSetupService &beacon_setup)
   : endpoint_{muddle.GetEndpoint()}
   , rpc_client_{"NotarisationService", endpoint_, SERVICE_MAIN_CHAIN, CHANNEL_RPC}
   , notarisation_protocol_{*this}
   , certificate_{std::move(certificate)}
-  , state_machine_{std::make_shared<StateMachine>("NotarisationService", State::KEY_ROTATION,
-                                                  StateToString)}
-  , chain_{main_chain}
+  , state_machine_{
+        std::make_shared<StateMachine>("NotarisationService", State::KEY_ROTATION, StateToString)}
 {
   // Attaching notarisation ready callback handler
   beacon_setup.SetNotarisationCallback([this](SharedAeonNotarisationUnit notarisation_manager) {

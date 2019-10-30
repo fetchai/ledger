@@ -110,6 +110,8 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 {
   FETCH_LOCK(mutex_);
 
+  active_exe_unit_.reset();
+
   // Checking whether the next cabinet is ready
   // to produce random numbers.
   if (!aeon_exe_queue_.empty())

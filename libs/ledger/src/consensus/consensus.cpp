@@ -374,7 +374,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     {
       uint64_t round_start = current_block_.body.block_number;
       assert(!current_block_.body.block_entropy.aeon_notarisation_keys.empty());
-      notarisation_->SetAeonDetails(round_start, round_start + aeon_period_,
+      notarisation_->SetAeonDetails(round_start, round_start + aeon_period_ - 1,
                                     GetThreshold(current_block_),
                                     current_block_.body.block_entropy.aeon_notarisation_keys);
     }
@@ -436,6 +436,16 @@ NextBlockPtr Consensus::GenerateNextBlock()
 
   ret = std::make_unique<Block>();
 
+  // Try to get entropy for the block we are generating - is allowed to fail if we request too
+  // early. Need to do entropy generation first so that we can pass the block we are generating
+  // into GetBlockGenerationWeight (important for first block of each aeon which specifies the
+  // qual for this aeon)
+  if (EntropyGeneratorInterface::Status::OK !=
+      beacon_->GenerateEntropy(block_number, ret->body.block_entropy))
+  {
+    return {};
+  }
+
   // Note, it is important to do this here so the block when passed to ValidBlockTiming
   // is well formed
   ret->body.previous_hash = current_block_.body.hash;
@@ -444,15 +454,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->body.miner_id      = mining_identity_;
   ret->body.timestamp =
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-  ret->weight = GetBlockGenerationWeight(current_block_, mining_address_);
-
-  // Try to get entropy for the block we are generating - is allowed to fail if we request too
-  // early
-  if (EntropyGeneratorInterface::Status::OK !=
-      beacon_->GenerateEntropy(block_number, ret->body.block_entropy))
-  {
-    return {};
-  }
+  ret->weight = GetBlockGenerationWeight(*ret, mining_address_);
 
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
