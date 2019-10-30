@@ -28,12 +28,13 @@ namespace dmlf {
 namespace distributed_learning {
 
 template <class DataType>
-struct W2VTrainingParams : public ClientParams<DataType>
+struct Word2VecTrainingParams : public ClientParams<DataType>
 {
   using SizeType = fetch::math::SizeType;
 
   // Overwriting base client default params
-  W2VTrainingParams()
+  explicit Word2VecTrainingParams(ClientParams<DataType> &cp)
+    : ClientParams<DataType>(cp)
   {
     this->batch_size = 10000;
 

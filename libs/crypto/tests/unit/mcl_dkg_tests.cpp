@@ -197,7 +197,6 @@ TEST(MclDkgTests, Interpolation)
     values2.emplace_back(s_i);
   }
 
-  EXPECT_EQ(vec_a[0], ComputeZi(member_set, values));
   EXPECT_EQ(vec_a, InterpolatePolynom(points, values2));
 }
 
