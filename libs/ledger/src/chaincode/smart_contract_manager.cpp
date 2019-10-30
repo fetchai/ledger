@@ -203,7 +203,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
 storage::ResourceAddress SmartContractManager::CreateAddressForContract(Digest const &digest)
 {
   // create the resource address in the form fetch.contract.state.<digest of contract>
-  return StateAdapter::CreateAddress(Identifier{NAME}, digest);
+  return StateAdapter::CreateAddress(Identifier{NAME}, digest.ToHex());
 }
 
 }  // namespace ledger

@@ -17,36 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/synergetic_contract.hpp"
+#include "math/base_types.hpp"
 
 namespace fetch {
-namespace chain {
+namespace dmlf {
+namespace distributed_learning {
 
-class Address;
-
-}  // namespace chain
-namespace ledger {
-
-class StorageInterface;
-
-class SynergeticContractFactory
+template <typename DataType>
+struct ClientParams
 {
-public:
-  // Construction / Destruction
-  explicit SynergeticContractFactory(StorageInterface &storage);
-  SynergeticContractFactory(SynergeticContractFactory const &) = delete;
-  SynergeticContractFactory(SynergeticContractFactory &&)      = delete;
-  ~SynergeticContractFactory()                                 = default;
+  using SizeType = fetch::math::SizeType;
 
-  SynergeticContractPtr Create(Digest const &digest);
+  SizeType batch_size{};
+  SizeType max_updates;
+  DataType learning_rate;
+  bool     print_loss = false;
 
-  // Operators
-  SynergeticContractFactory &operator=(SynergeticContractFactory const &) = delete;
-  SynergeticContractFactory &operator=(SynergeticContractFactory &&) = delete;
-
-private:
-  StorageInterface &storage_;
+  std::vector<std::string> inputs_names = {"Input"};
+  std::string              label_name   = "Label";
+  std::string              error_name   = "Error";
 };
 
-}  // namespace ledger
+}  // namespace distributed_learning
+}  // namespace dmlf
 }  // namespace fetch
