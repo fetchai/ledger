@@ -143,7 +143,7 @@ class BinaryDeserializer
 public:
   enum
   {
-    CODE8  = TypeCodes::BINARY_CODE_FIXED,
+    CODE8  = TypeCodes::BINARY_CODE8,
     CODE16 = TypeCodes::BINARY_CODE16,
     CODE32 = TypeCodes::BINARY_CODE32
   };

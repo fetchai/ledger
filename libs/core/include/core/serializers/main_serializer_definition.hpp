@@ -73,6 +73,11 @@ public:
 
   MsgPackSerializer &operator=(MsgPackSerializer const &from);
 
+  SerializerTypes GetNextType() const
+  {
+    return DetermineType(data_[pos_]);
+  }
+
   void Allocate(uint64_t const &delta);
 
   void Resize(uint64_t const &      size,
