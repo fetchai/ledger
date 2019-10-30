@@ -251,4 +251,3 @@ class DmlfEtchInstance(Instance):
     # Append arbitrary flags
     def append_to_cmd(self, extra):
         self._cmd = [*self._cmd, *extra]
-
