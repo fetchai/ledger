@@ -157,7 +157,7 @@ private:
 
   /// General configuration
   /// @{
-  bool broadcasting_ = false;
+  bool broadcasting_       = false;
   /// @}
 
   /// Beacon and entropy control units
@@ -167,6 +167,7 @@ private:
 
   /// Variables relating to getting threshold signatures of the seed
   /// @{
+  // Important this is ordered for trimming
   std::map<uint64_t, SignatureInformation> signatures_being_built_;
   std::size_t                              random_number_{0};
   Identity                                 qual_promise_identity_;
@@ -174,6 +175,8 @@ private:
 
   BlockEntropyPtr                     block_entropy_previous_;
   BlockEntropyPtr                     block_entropy_being_created_;
+
+  // Important this is ordered for trimming
   std::map<uint64_t, BlockEntropyPtr> completed_block_entropy_;
   /// @}
 

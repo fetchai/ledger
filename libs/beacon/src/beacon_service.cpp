@@ -78,15 +78,13 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
   rpc_server_ = std::make_shared<Server>(endpoint_, SERVICE_DKG, CHANNEL_RPC);
   rpc_server_->Add(RPC_BEACON, &beacon_protocol_);
 
-  state_machine_->RegisterHandler(State::WAIT_FOR_SETUP_COMPLETION, this,
-                                  &BeaconService::OnWaitForSetupCompletionState);
-  state_machine_->RegisterHandler(State::PREPARE_ENTROPY_GENERATION, this,
-                                  &BeaconService::OnPrepareEntropyGeneration);
-  state_machine_->RegisterHandler(State::COLLECT_SIGNATURES, this,
-                                  &BeaconService::OnCollectSignaturesState);
-  state_machine_->RegisterHandler(State::VERIFY_SIGNATURES, this,
-                                  &BeaconService::OnVerifySignaturesState);
+  // clang-format off
+  state_machine_->RegisterHandler(State::WAIT_FOR_SETUP_COMPLETION, this, &BeaconService::OnWaitForSetupCompletionState);
+  state_machine_->RegisterHandler(State::PREPARE_ENTROPY_GENERATION, this, &BeaconService::OnPrepareEntropyGeneration);
+  state_machine_->RegisterHandler(State::COLLECT_SIGNATURES, this, &BeaconService::OnCollectSignaturesState);
+  state_machine_->RegisterHandler(State::VERIFY_SIGNATURES, this, &BeaconService::OnVerifySignaturesState);
   state_machine_->RegisterHandler(State::COMPLETE, this, &BeaconService::OnCompleteState);
+  // clang-format on
 
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(this);
@@ -249,6 +247,8 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
+  // Don't proceed from this state if it is ahead of the entropy we are trying to generate
+
   uint64_t const index = block_entropy_being_created_->block_number;
   beacon_entropy_current_round_->set(index);
 
@@ -396,57 +396,41 @@ BeaconService::State BeaconService::OnCompleteState()
   FETCH_LOCK(mutex_);
 
   uint64_t const index = block_entropy_being_created_->block_number;
+  beacon_entropy_last_generated_->set(index);
+  beacon_entropy_generated_total_->add(1);
 
-  if (completed_block_entropy_.find(index) == completed_block_entropy_.end())
+  // Populate the block entropy structure appropriately
+  block_entropy_being_created_->group_signature =
+      active_exe_unit_->manager.GroupSignature().getStr();
+
+  // Check when in debug mode that the block entropy signing has gone correctly
+  if (!dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
+                                  block_entropy_previous_->EntropyAsSHA256(),
+                                  block_entropy_being_created_->group_signature))
   {
-    beacon_entropy_last_generated_->set(index);
-    beacon_entropy_generated_total_->add(1);
-
-    // Populate the block entropy structure appropriately
-    block_entropy_being_created_->group_signature =
-        active_exe_unit_->manager.GroupSignature().getStr();
-
-    // Check when in debug mode that the block entropy signing has gone correctly
-    if (!dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
-                                    block_entropy_previous_->EntropyAsSHA256(),
-                                    block_entropy_being_created_->group_signature))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify freshly signed entropy!");
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Completed beacon round ", index);
-    }
-
-    // Save it for querying
-    completed_block_entropy_[index] = block_entropy_being_created_;
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify freshly signed entropy!");
   }
 
-#define BEACON_DEBUG
-#ifdef BEACON_DEBUG
-  static uint64_t count = 0;
-#endif
-  if (completed_block_entropy_.size() >= 3)
-  {
-#ifdef BEACON_DEBUG
+  // Save it for querying
+  completed_block_entropy_[index] = block_entropy_being_created_;
 
-    if ((count & 0x1fu) == 0u)
+  // Trim maps of unnecessary info
+  {
+    auto const max_cache_size = (active_exe_unit_->aeon.round_end - active_exe_unit_->aeon.round_start) + 1;
+    auto it = completed_block_entropy_.begin();
+
+    while(it != completed_block_entropy_.end() && completed_block_entropy_.size() > max_cache_size)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting to trigger next entropy sequence. (completed: ",
-                     completed_block_entropy_.size(), ")");
+      it = completed_block_entropy_.erase(it);
     }
 
-    ++count;
-#endif
+    auto it2 = signatures_being_built_.begin();
 
-    state_machine_->Delay(200ms);
-    return State::COMPLETE;
+    while(it2 != signatures_being_built_.end() && signatures_being_built_.size() > max_cache_size)
+    {
+      it2 = signatures_being_built_.erase(it2);
+    }
   }
-
-#ifdef BEACON_DEBUG
-  count = 0;
-#endif
-#undef BEACON_DEBUG
 
   // If there is still entropy left to generate, set up and go around the loop
   if (block_entropy_being_created_->block_number < active_exe_unit_->aeon.round_end)
