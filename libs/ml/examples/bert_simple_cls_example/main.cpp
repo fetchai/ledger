@@ -16,24 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "bert_utilities.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/ops/embeddings.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/utilities/bert_utilities.hpp"
 
 #include <iostream>
 #include <string>
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
+using namespace fetch::ml::utilities;
 
 using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
 using SizeVector = typename TensorType::SizeVector;
 
 using GraphType     = typename fetch::ml::Graph<TensorType>;
@@ -44,9 +43,8 @@ using RegType         = fetch::ml::RegularisationType;
 using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
 using ActivationType  = fetch::ml::details::ActivationType;
 
-std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(SizeType          size,
-                                                                    BERTConfig const &config,
-                                                                    SizeType          seed = 1337);
+std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(
+    SizeType size, BERTConfig<TensorType> const &config, SizeType seed = 1337);
 
 int main()
 {
@@ -61,7 +59,7 @@ int main()
   SizeType epochs     = 2;
   auto     lr         = static_cast<DataType>(1e-3);
 
-  BERTConfig config;
+  BERTConfig<TensorType> config;
   config.n_encoder_layers  = 2u;
   config.max_seq_len       = 20u;
   config.model_dims        = 12u;
@@ -71,7 +69,7 @@ int main()
   config.segment_size      = 1u;
   config.dropout_keep_prob = static_cast<DataType>(0.9);
 
-  BERTInterface interface(config);
+  BERTInterface<TensorType> interface(config);
 
   // create custom bert model
   GraphType g;
@@ -113,9 +111,8 @@ int main()
   return 0;
 }
 
-std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(SizeType          size,
-                                                                    BERTConfig const &config,
-                                                                    SizeType          seed)
+std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(
+    SizeType size, BERTConfig<TensorType> const &config, SizeType seed)
 {
   // create a toy cls dataset that generated balanced training data for the aforementioned
   // classification task
