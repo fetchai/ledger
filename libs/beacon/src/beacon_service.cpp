@@ -210,8 +210,9 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   uint64_t const index = block_entropy_being_created_->block_number;
 
   // Don't proceed from this state if it is ahead of the entropy we are trying to generate
-  if (index > most_recent_round_seen_ + entropy_lead_blocks_)
+  if (index > (most_recent_round_seen_ + entropy_lead_blocks_))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "fail ", index, " ", most_recent_round_seen_, " ", (most_recent_round_seen_ + entropy_lead_blocks_));
     state_machine_->Delay(std::chrono::milliseconds(5));
     return State::COLLECT_SIGNATURES;
   }
