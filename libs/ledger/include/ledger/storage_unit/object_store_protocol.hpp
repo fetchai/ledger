@@ -119,7 +119,7 @@ private:
 
     if (!obj_store_->Get(rid, ret))
     {
-      throw std::runtime_error("Unable to lookup element across object store protocol");
+      throw std::runtime_error("Unable to look up element across object store protocol");
     }
 
     // once we have retrieved a transaction from the core it is important that we persist it to disk

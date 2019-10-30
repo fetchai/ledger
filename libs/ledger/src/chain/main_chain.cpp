@@ -419,17 +419,17 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
 
   Blocks result;
 
-  // lookup the heaviest block hash
+  // look up the heaviest block hash
   for (BlockHash current_hash = std::move(start);
        // exit once we have gathered enough blocks or reached genesis
        result.size() < limit && current_hash != chain::GENESIS_DIGEST;)
   {
-    // lookup the block
+    // look up the block
     auto block = GetBlock(current_hash);
     if (!block)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
-      throw std::runtime_error("Failed to lookup block");
+      throw std::runtime_error("Failed to look up block");
     }
 
     // walk the hash
@@ -467,7 +467,7 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
 
   Blocks result;
 
-  // lookup the heaviest block hash
+  // look up the heaviest block hash
   Block     block;
   BlockHash next_hash;
 
@@ -477,7 +477,7 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
        result.size() < lim
        // genesis as the next hash designates the tip of the chain
        && current_hash != chain::GENESIS_DIGEST
-       // lookup the block in storage
+       // look up the block in storage
        && LoadBlock(current_hash, block, &next_hash);
        // walk the stack
        current_hash = std::move(next_hash))
@@ -536,7 +536,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       left = GetBlock(left_hash);
       if (!left)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup block (left): ", ToBase64(left_hash));
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (left): ", ToBase64(left_hash));
         success = false;
         break;
       }
@@ -574,7 +574,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       right = GetBlock(right_hash);
       if (!right)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup block (right): ", ToBase64(right_hash));
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (right): ", ToBase64(right_hash));
         success = false;
         break;
       }
@@ -602,7 +602,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
   blocks.resize(res.size());
   std::move(res.begin(), res.end(), blocks.begin());
 
-  // If an lookup error has occurred then we do not return anything
+  // If a lookup error has occurred then we do not return anything
   if (!success)
   {
     blocks.clear();
@@ -623,7 +623,7 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash) const
 
   BlockPtr output_block{};
 
-  // attempt to lookup the block
+  // attempt to look up the block
   auto internal_block = std::make_shared<Block>();
   if (LookupBlock(hash, internal_block))
   {
@@ -632,7 +632,7 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash) const
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to lookup block! Hash: ", hash.ToBase64());
+    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to look up block! Hash: ", hash.ToBase64());
   }
 
   return output_block;
@@ -837,7 +837,7 @@ void MainChain::RecoverFromFile(Mode mode)
  */
 void MainChain::WriteToFile()
 {
-  // lookup the heaviest block
+  // look up the heaviest block
   IntBlockPtr block = block_chain_.at(heaviest_.hash);
 
   // skip if the block store is not persistent
@@ -1228,7 +1228,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 }
 
 /**
- * Attempt to lookup a block.
+ * Attempt to look up a block.
  *
  * The search is performed initially on the in memory cache and then if this fails the persistent
  * disk storage is searched

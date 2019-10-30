@@ -17,30 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-
-#include <functional>
-#include <memory>
-#include <unordered_set>
+#include "math/base_types.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace dmlf {
+namespace distributed_learning {
 
-class Identifier;
-class Contract;
-class StorageInterface;
-
-class ChainCodeFactory
+template <typename DataType>
+struct ClientParams
 {
-public:
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using ContractPtr     = std::shared_ptr<Contract>;
-  using ContractNameSet = std::unordered_set<ConstByteArray>;
+  using SizeType = fetch::math::SizeType;
 
-  ContractPtr Create(Identifier const &contract_id, StorageInterface &storage) const;
+  SizeType batch_size{};
+  SizeType max_updates;
+  DataType learning_rate;
+  bool     print_loss = false;
 
-  ContractNameSet const &GetChainCodeContracts() const;
+  std::vector<std::string> inputs_names = {"Input"};
+  std::string              label_name   = "Label";
+  std::string              error_name   = "Error";
 };
 
-}  // namespace ledger
+}  // namespace distributed_learning
+}  // namespace dmlf
 }  // namespace fetch
