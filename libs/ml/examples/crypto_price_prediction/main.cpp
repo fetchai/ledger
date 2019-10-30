@@ -180,7 +180,7 @@ int main(int ac, char **av)
 
   DataLoaderType loader(train_label.shape(), {train_data.shape()});
   loader.SetRandomMode(true);
-  loader.AddData(train_data, train_label);
+  loader.AddData({train_data}, train_label);
 
   std::cout << "Build model & optimiser... " << std::endl;
   std::string                input_name, output_name, label_name, error_name;

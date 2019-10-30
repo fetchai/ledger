@@ -50,7 +50,7 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
                                                                             {data1_tensor.shape()});
 
   // add some data
-  tdl.AddData(data1_tensor, label_tensor);
+  tdl.AddData({data1_tensor}, label_tensor);
 
   fetch::serializers::MsgPackSerializer b;
   b << tdl;
@@ -73,7 +73,7 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
   data1_tensor = TypeParam::UniformRandom(24);
   label_tensor.Reshape({1, 4});
   data1_tensor.Reshape({2, 3, 4});
-  EXPECT_EQ(tdl.AddData(data1_tensor, label_tensor), tdl_2.AddData(data1_tensor, label_tensor));
+  EXPECT_EQ(tdl.AddData({data1_tensor}, label_tensor), tdl_2.AddData({data1_tensor}, label_tensor));
 
   EXPECT_EQ(tdl.Size(), tdl_2.Size());
   EXPECT_EQ(tdl.IsDone(), tdl_2.IsDone());
@@ -94,7 +94,7 @@ TYPED_TEST(TensorDataloaderTest, test_validation_splitting_dataloader_test)
   tdl.SetValidationRatio(0.1f);
 
   // add some data
-  tdl.AddData(data1_tensor, label_tensor);
+  tdl.AddData({data1_tensor}, label_tensor);
 
   EXPECT_EQ(tdl.Size(), 1);
   EXPECT_THROW(tdl.SetMode(DataLoaderMode::TEST), std::runtime_error);
@@ -119,7 +119,7 @@ TYPED_TEST(TensorDataloaderTest, prepare_batch_test)
   auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>(label_tensor.shape(),
                                                                             {data1_tensor.shape()});
   // add some data
-  tdl.AddData(data1_tensor, label_tensor);
+  tdl.AddData({data1_tensor}, label_tensor);
 
   bool is_done_set = false;
   auto batch       = tdl.PrepareBatch(batch_size, is_done_set).second;

@@ -206,7 +206,7 @@ void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels
   // prepare dataloader
   dl_ = std::make_unique<TensorDataloader>();
   dl_->SetRandomMode(true);
-  dl_->AddData(data->GetTensor(), labels->GetTensor());
+  dl_->AddData({data->GetTensor()}, labels->GetTensor());
   model_->SetDataloader(std::move(dl_));
 
   // set batch size

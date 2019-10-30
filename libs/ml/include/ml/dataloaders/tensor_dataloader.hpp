@@ -50,7 +50,7 @@ public:
 
   ReturnType GetNext() override;
 
-  bool AddData(InputType const &data, LabelType const &labels) override;
+  bool AddData(std::vector<InputType> const &data, LabelType const &labels) override;
 
   SizeType Size() const override;
   bool     IsDone() const override;
@@ -134,15 +134,16 @@ TensorDataLoader<LabelType, InputType>::GetNext()
 }
 
 template <typename LabelType, typename InputType>
-bool TensorDataLoader<LabelType, InputType>::AddData(InputType const &data, LabelType const &labels)
+bool TensorDataLoader<LabelType, InputType>::AddData(std::vector<InputType> const &data,
+                                                     LabelType const &             labels)
 {
   one_sample_label_shape_                                        = labels.shape();
   one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
 
-  one_sample_data_shapes_.emplace_back(data.shape());
+  one_sample_data_shapes_.emplace_back(data.at(0).shape());
   one_sample_data_shapes_.at(0).at(one_sample_data_shapes_.at(0).size() - 1) = 1;
 
-  data_   = data.Copy();
+  data_   = data.at(0).Copy();
   labels_ = labels.Copy();
 
   n_samples_ = data_.shape().at(data_.shape().size() - 1);
