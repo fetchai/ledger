@@ -278,25 +278,23 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
     return false;
   }
 
+  const auto previous_block_window_ends = (last_block_timestamp_ms + block_interval_ms_);
+
   // Blocks cannot be created within the block interval of the previous, this enforces
   // the block period
-  if (proposed_block_timestamp_ms < (last_block_timestamp_ms + block_interval_ms_))
+  if (proposed_block_timestamp_ms < previous_block_window_ends)
   {
     return false;
   }
 
   assert(!qualified_cabinet_weighted.empty());
 
-  // First qual member can always produce
-  if (*qualified_cabinet_weighted.begin() == identity)
+  // Miners must additionally wait N block periods according to their rank (0 being the best)
+  auto const miner_rank = std::distance(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.find(identity));
+
+  if(proposed_block_timestamp_ms > (previous_block_window_ends + (miner_rank * block_interval_ms_))
   {
     return true;
-  }
-
-  // Until the time slot has elapsed, others can not produce
-  if ((last_block_timestamp_ms + block_interval_ms_) < time_now_ms)
-  {
-    //return true;
   }
 
   return false;
