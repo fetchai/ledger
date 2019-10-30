@@ -57,7 +57,7 @@ private:
 
   /// @name Shard Limits
   /// @{
-  BitVector shards_;
+  BitVector const shards_;
   /// @}
 
   /// @name Counters
