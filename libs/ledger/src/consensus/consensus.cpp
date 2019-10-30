@@ -396,7 +396,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                              last_block_time + block_interval, current.body.block_entropy);
   }
 
-  beacon_->AbortCabinet(current_block_.body.block_number);
+  beacon_->MostRecentSeen(current_block_.body.block_number);
 }
 
 // TODO(HUT): put block number confirmation/check here (?)

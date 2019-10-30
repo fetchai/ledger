@@ -153,9 +153,11 @@ BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, Bloc
   return Status::FAILED;
 }
 
-void BeaconService::AbortCabinet(uint64_t round_start)
+void BeaconService::MostRecentSeen(uint64_t round)
 {
-  cabinet_creator_.Abort(round_start);
+  FETCH_LOCK(mutex_);
+  most_recent_round_seen_ = round;
+  cabinet_creator_.Abort(round);
 }
 
 void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
@@ -247,9 +249,15 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
-  // Don't proceed from this state if it is ahead of the entropy we are trying to generate
-
   uint64_t const index = block_entropy_being_created_->block_number;
+
+  // Don't proceed from this state if it is ahead of the entropy we are trying to generate
+  if (index < most_recent_round_seen_ + entropy_lead_blocks_)
+  {
+    state_machine_->Delay(std::chrono::milliseconds(5));
+    return State::COLLECT_SIGNATURES;
+  }
+
   beacon_entropy_current_round_->set(index);
 
   // On first entry to function, populate with our info (will go between collect and verify)
@@ -416,17 +424,18 @@ BeaconService::State BeaconService::OnCompleteState()
 
   // Trim maps of unnecessary info
   {
-    auto const max_cache_size = (active_exe_unit_->aeon.round_end - active_exe_unit_->aeon.round_start) + 1;
+    auto const max_cache_size =
+        (active_exe_unit_->aeon.round_end - active_exe_unit_->aeon.round_start) + 1;
     auto it = completed_block_entropy_.begin();
 
-    while(it != completed_block_entropy_.end() && completed_block_entropy_.size() > max_cache_size)
+    while (it != completed_block_entropy_.end() && completed_block_entropy_.size() > max_cache_size)
     {
       it = completed_block_entropy_.erase(it);
     }
 
     auto it2 = signatures_being_built_.begin();
 
-    while(it2 != signatures_being_built_.end() && signatures_being_built_.size() > max_cache_size)
+    while (it2 != signatures_being_built_.end() && signatures_being_built_.size() > max_cache_size)
     {
       it2 = signatures_being_built_.erase(it2);
     }

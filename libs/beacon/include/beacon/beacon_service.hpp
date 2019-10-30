@@ -111,7 +111,7 @@ public:
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
                        uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy);
 
-  void AbortCabinet(uint64_t round_start);
+  void MostRecentSeen(uint64_t round);
   /// @}
 
   /// Beacon runnables
@@ -155,9 +155,13 @@ private:
   StateMachinePtr state_machine_;
   DeadlineTimer   timer_to_proceed_{"beacon:main"};
 
+  // Limit run away entropy generation
+  uint64_t entropy_lead_blocks_    = 3;
+  uint64_t most_recent_round_seen_ = 0;
+
   /// General configuration
   /// @{
-  bool broadcasting_       = false;
+  bool broadcasting_ = false;
   /// @}
 
   /// Beacon and entropy control units
@@ -173,8 +177,8 @@ private:
   Identity                                 qual_promise_identity_;
   service::Promise                         sig_share_promise_;
 
-  BlockEntropyPtr                     block_entropy_previous_;
-  BlockEntropyPtr                     block_entropy_being_created_;
+  BlockEntropyPtr block_entropy_previous_;
+  BlockEntropyPtr block_entropy_being_created_;
 
   // Important this is ordered for trimming
   std::map<uint64_t, BlockEntropyPtr> completed_block_entropy_;
