@@ -62,6 +62,7 @@ public:
   /// Helper functions
   /// @{
   uint32_t                      Index(MuddleAddress const &member) const;
+  bool                          CanSign() const;
   uint64_t                      round_start() const;
   uint64_t                      round_end() const;
   uint32_t                      threshold() const;

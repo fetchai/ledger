@@ -115,6 +115,11 @@ uint32_t NotarisationManager::Index(MuddleAddress const &member) const
   return identity_to_index_.at(member);
 }
 
+bool NotarisationManager::CanSign() const
+{
+  return !private_key_.isZero();
+}
+
 uint64_t NotarisationManager::round_start() const
 {
   return round_start_;

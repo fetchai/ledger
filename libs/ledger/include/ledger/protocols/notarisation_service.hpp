@@ -79,8 +79,7 @@ public:
   using BlockNumber                   = uint64_t;
   using BlockWeight                   = Block::Weight;
   using BlockEntropy                  = beacon::BlockEntropy;
-  using BlockNotarisation             = BlockEntropy::AggregateSignature;
-  using BlockNotarisationKeys         = BlockEntropy::CabinetMemberDetails;
+  using AeonNotarisationKeys          = BlockEntropy::AeonNotarisationKeys;
   using BeaconSetupService            = beacon::BeaconSetupService;
   using MuddleInterface               = muddle::MuddleInterface;
   using Endpoint                      = muddle::MuddleEndpoint;
@@ -95,9 +94,9 @@ public:
   using CallbackFunction              = std::function<void(BlockHash)>;
   using NotarisationShares            = std::unordered_map<MuddleAddress, SignedNotarisation>;
   using BlockNotarisationShares       = std::unordered_map<BlockHash, NotarisationShares>;
+  using BlockAggregateNotarisations   = std::unordered_map<BlockHash, AggregateSignature>;
   using BlockHeightNotarisationShares = std::map<BlockNumber, BlockNotarisationShares>;
-  using BlockHeightGroupNotarisations =
-      std::map<BlockNumber, std::unordered_map<BlockHash, AggregateSignature>>;
+  using BlockHeightGroupNotarisations = std::map<BlockNumber, BlockAggregateNotarisations>;
 
   NotarisationService()                            = delete;
   NotarisationService(NotarisationService const &) = delete;
@@ -121,22 +120,31 @@ public:
 
   /// Calls from other services
   /// @{
-  void                                    NotariseBlock(BlockBody const &block);
-  std::pair<BlockHash, BlockNotarisation> HeaviestNotarisedBlock(BlockNumber const &block_number);
-  BlockNotarisation                       GetNotarisation(BlockBody const &block);
+  void               NotariseBlock(BlockBody const &block);
+  void               SetAeonDetails(uint64_t round_start, uint64_t round_end, uint32_t threshold,
+                                    AeonNotarisationKeys const &cabinet_public_keys);
+  AggregateSignature GetAggregateNotarisation(BlockBody const &block);
   /// @}
 
   /// Verifying notarised blocks
   /// @{
   NotarisationResult Verify(BlockNumber const &block_number, BlockHash const &block_hash,
-                            BlockNotarisation const &notarisation);
-  static bool        Verify(BlockHash const &block_hash, BlockNotarisation const &notarisation,
-                            BlockNotarisationKeys const &notarisation_key_str, uint32_t threshold);
+                            AggregateSignature const &notarisation);
+  static bool        Verify(BlockHash const &block_hash, AggregateSignature const &notarisation,
+                            AeonNotarisationKeys const &signed_notarisation_key, uint32_t threshold);
   /// @}
 
   std::weak_ptr<core::Runnable> GetWeakRunnable();
 
 private:
+  struct AeonDetails
+  {
+    uint64_t             round_start{0};
+    uint64_t             round_end{0};
+    uint32_t             threshold{0};
+    AeonNotarisationKeys cabinet_public_keys{};
+  };
+
   /// Helper function
   /// @{
   uint64_t BlockNumberCutoff() const;
@@ -170,6 +178,7 @@ private:
   uint64_t notarised_chain_height_{0};          ///< Current highest notarised block number in chain
   uint64_t notarisation_collection_height_{0};  // Block number current collecting signatures for
   static const uint32_t cutoff_ = 2;            ///< Number of blocks behind
+  AeonDetails           current_aeon_details;
   /// @}
 };
 }  // namespace ledger

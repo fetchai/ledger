@@ -184,7 +184,7 @@ bool Consensus::VerifyNotarisation(Block const &block) const
       // If block is too old then get aeon beginning
       auto aeon_block                = GetBeginningOfAeon(*previous_notarised_block, chain_);
       auto threshold                 = GetThreshold(*previous_notarised_block);
-      auto ordered_notarisation_keys = aeon_block.body.block_entropy.member_details;
+      auto ordered_notarisation_keys = aeon_block.body.block_entropy.aeon_notarisation_keys;
 
       return notarisation_->Verify(previous_notarised_block->body.hash,
                                    block.body.block_entropy.block_notarisation,
@@ -455,8 +455,8 @@ NextBlockPtr Consensus::GenerateNextBlock()
   if (notarisation_)
   {
     // Add notarisation to block
-    auto notarisation = notarisation_->GetNotarisation(current_block_.body);
-    if (current_block_.body.block_number != 0 && notarisation.first.empty())
+    auto notarisation = notarisation_->GetAggregateNotarisation(current_block_.body);
+    if (current_block_.body.block_number != 0 && notarisation.first.isZero())
     {
       // Notarisation for head of chain is not ready yet so wait
       return {};

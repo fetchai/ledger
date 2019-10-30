@@ -249,5 +249,42 @@ public:
     }
   }
 };
+
+template <typename V, typename D>
+struct ArraySerializer<std::pair<crypto::mcl::PublicKey, V>, D>
+{
+public:
+  using Type       = std::pair<crypto::mcl::PublicKey, V>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    auto array = array_constructor(2);
+    array.Append(input.first.getStr());
+    array.Append(input.second);
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    if (array.size() != 2)
+    {
+      throw SerializableException(std::string("std::pair must have exactly 2 elements."));
+    }
+
+    std::string key_str;
+    array.GetNextValue(key_str);
+    output.first.clear();
+    bool check;
+    output.first.setStr(&check, key_str.data());
+    if (!check)
+    {
+      throw SerializableException(error::TYPE_ERROR,
+                                  std::string("String does not convert to MCL type"));
+    }
+    array.GetNextValue(output.second);
+  }
+};
 }  // namespace serializers
 }  // namespace fetch

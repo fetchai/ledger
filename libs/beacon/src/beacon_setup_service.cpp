@@ -810,11 +810,9 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
     {
       assert(notarisation_key_msgs_.find(member) != notarisation_key_msgs_.end());
       auto notarisation_msg = notarisation_key_msgs_.at(member);
-      beacon_->block_entropy.member_details.insert(
+      beacon_->block_entropy.aeon_notarisation_keys.insert(
           {member, std::make_pair(notarisation_msg.PublicKey(), notarisation_msg.Signature())});
-      NotarisationManager::PublicKey notarisation_key;
-      notarisation_key.setStr(std::string(notarisation_msg.PublicKey()));
-      qual_notarisation_keys.insert({member, notarisation_key});
+      qual_notarisation_keys.insert({member, notarisation_msg.PublicKey()});
     }
     notarisation_manager_->SetAeonDetails(beacon_->aeon.round_start, beacon_->aeon.round_end,
                                           beacon_->manager.polynomial_degree() + 1,
@@ -862,7 +860,7 @@ void BeaconSetupService::BroadcastNotarisationKeys()
 
   // Insert own signed notarisation key into entropy cabinet details
   auto notarisation_msg =
-      NotarisationKeyMessage{std::make_pair(notarisation_public_key.getStr(), signature)};
+      NotarisationKeyMessage{std::make_pair(notarisation_public_key, signature)};
   notarisation_key_msgs_.insert({certificate_->identity().identifier(), notarisation_msg});
   valid_dkg_members_.insert(certificate_->identity().identifier());
   SendBroadcast(DKGEnvelope{notarisation_msg});
@@ -1260,18 +1258,10 @@ void BeaconSetupService::OnNotarisationKey(NotarisationKeyMessage const &key_msg
 {
   auto iter = valid_dkg_members_.find(from);
   if (iter == valid_dkg_members_.end() &&
-      crypto::Verifier::Verify(Identity(from), key_msg.PublicKey(), key_msg.Signature()))
+      crypto::Verifier::Verify(Identity(from), key_msg.PublicKey().getStr(), key_msg.Signature()))
   {
-    // Check the notarisation key deserialises correctly
-    NotarisationManager::PublicKey notarisation_key;
-    notarisation_key.clear();
-    bool check;
-    notarisation_key.setStr(&check, std::string(key_msg.PublicKey()).data());
-    if (check)
-    {
-      notarisation_key_msgs_.insert({from, key_msg});
-      valid_dkg_members_.insert(from);
-    }
+    notarisation_key_msgs_.insert({from, key_msg});
+    valid_dkg_members_.insert(from);
   }
 }
 

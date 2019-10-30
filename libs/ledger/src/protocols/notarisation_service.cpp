@@ -77,6 +77,21 @@ NotarisationService::State NotarisationService::OnKeyRotation()
     active_notarisation_unit_ = aeon_notarisation_queue_.front();
     aeon_notarisation_queue_.pop_front();
 
+    // If previous notarisation has been reset then create new one just for verification
+    if (!previous_notarisation_unit_)
+    {
+      previous_notarisation_unit_ = std::make_shared<NotarisationManager>();
+      std::map<MuddleAddress, NotarisationManager::PublicKey> public_notarisation_keys;
+      for (auto const &key : current_aeon_details.cabinet_public_keys)
+      {
+        public_notarisation_keys.insert({key.first, key.second.first});
+      }
+      previous_notarisation_unit_->SetAeonDetails(
+          current_aeon_details.round_start, current_aeon_details.round_end,
+          current_aeon_details.threshold, public_notarisation_keys);
+      assert(!previous_notarisation_unit_->CanSign());
+    }
+
     return State::NOTARISATION_SYNCHRONISATION;
   }
 
@@ -88,7 +103,7 @@ NotarisationService::State NotarisationService::OnNotarisationSynchronisation()
 {
   FETCH_LOCK(mutex_);
 
-  // Need to collect signatures starting from block number = round_start - 1 in order
+  // Need to collect notarisation starting from block number = round_start - 1 in order
   // to be able to include the notarisation of the previous block into the first block of this
   // aeon
   if (notarised_chain_height_ + 1 < active_notarisation_unit_->round_start() - 1)
@@ -145,7 +160,7 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
   }
 
   // Note: don't lock until the promise has resolved (above)! Otherwise the system can deadlock
-  // due to everyone trying to lock and resolve each others' signatures
+  // due to everyone trying to lock and resolve each others' notarisations
   std::unordered_set<BlockHash> can_verify;
   SharedAeonNotarisationUnit    notarisation_unit;
   {
@@ -153,7 +168,7 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
 
     if (ret.empty())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Peer wasn't ready when asking for signatures");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Peer wasn't ready when asking for notarisations");
       state_machine_->Delay(std::chrono::milliseconds(100));
 
       return State::COMPLETE;
@@ -205,7 +220,7 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
             }
           }
         }
-        // If we have collected enough signatures for this block hash then move onto next hash
+        // If we have collected enough notarisations for this block hash then move onto next hash
         if (existing_notarisations.size() == active_notarisation_unit_->threshold())
         {
           can_verify.insert(block_hash);
@@ -308,7 +323,7 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
   }
 
   // If block is not in current aeon then check previous notarisation unit
-  if (previous_notarisation_unit_ &&
+  if (previous_notarisation_unit_ && previous_notarisation_unit_->CanSign() &&
       block.block_number >= previous_notarisation_unit_->round_start() &&
       block.block_number < previous_notarisation_unit_->round_end())
   {
@@ -333,32 +348,19 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
   FETCH_LOG_INFO(LOGGING_NAME, "Notarised block at height ", block.block_number);
 }
 
-std::pair<NotarisationService::BlockHash, NotarisationService::BlockNotarisation>
-NotarisationService::HeaviestNotarisedBlock(BlockNumber const &block_number)
+void NotarisationService::SetAeonDetails(uint64_t round_start, uint64_t round_end,
+                                         uint32_t                    threshold,
+                                         AeonNotarisationKeys const &cabinet_public_keys)
 {
-  FETCH_LOCK(mutex_);
-  std::pair<BlockHash, BlockNotarisation> heaviest_block;
-  BlockWeight                             weight = 1;
-  for (auto const &notarisation : notarisations_built_[block_number])
-  {
-    auto block = chain_.GetBlock(notarisation.first);
-    if (block->total_weight > weight)
-    {
-      weight               = block->total_weight;
-      heaviest_block.first = notarisation.first;
-      BlockNotarisation notarisation_str;
-      notarisation_str.first  = notarisation.second.first.getStr();
-      notarisation_str.second = notarisation.second.second;
-      heaviest_block.second   = notarisation_str;
-    }
-  }
-  return heaviest_block;
+  current_aeon_details = AeonDetails{round_start, round_end, threshold, cabinet_public_keys};
 }
 
-NotarisationService::BlockNotarisation NotarisationService::GetNotarisation(BlockBody const &block)
+NotarisationService::AggregateSignature NotarisationService::GetAggregateNotarisation(
+    BlockBody const &block)
 {
   FETCH_LOCK(mutex_);
-  BlockNotarisation notarisation;
+  AggregateSignature notarisation;
+  notarisation.first.clear();
 
   // Do not need to add notarisation if building on genesis block
   if (block.block_number != 0)
@@ -366,8 +368,7 @@ NotarisationService::BlockNotarisation NotarisationService::GetNotarisation(Bloc
     auto all_notarisations = notarisations_built_[block.block_number];
     if (all_notarisations.find(block.hash) != all_notarisations.end())
     {
-      notarisation.first  = all_notarisations.at(block.hash).first.getStr();
-      notarisation.second = all_notarisations.at(block.hash).second;
+      notarisation = all_notarisations.at(block.hash);
     }
   }
   return notarisation;
@@ -389,7 +390,7 @@ uint64_t NotarisationService::BlockNumberCutoff() const
 
 NotarisationService::NotarisationResult NotarisationService::Verify(
     BlockNumber const &block_number, BlockHash const &block_hash,
-    BlockNotarisation const &notarisation)
+    AggregateSignature const &notarisation)
 {
   FETCH_LOCK(mutex_);
 
@@ -413,17 +414,12 @@ NotarisationService::NotarisationResult NotarisationService::Verify(
     return NotarisationResult::CAN_NOT_VERIFY;
   }
 
-  AggregateSignature aggregate_signature;
-  bool               check;
-  aggregate_signature.first.setStr(&check, std::string(notarisation.first).data());
-
   // Check signature deserialises and that the signature was created with the correct number of
   // signers
-  if (check && count(notarisation.second.begin(), notarisation.second.end(), 1) ==
-                   notarisation_unit->threshold())
+  if (count(notarisation.second.begin(), notarisation.second.end(), 1) ==
+      notarisation_unit->threshold())
   {
-    aggregate_signature.second = notarisation.second;
-    if (notarisation_unit->VerifyAggregateSignature(block_hash, aggregate_signature))
+    if (notarisation_unit->VerifyAggregateSignature(block_hash, notarisation))
     {
       return NotarisationResult::PASS_VERIFICATION;
     }
@@ -431,31 +427,20 @@ NotarisationService::NotarisationResult NotarisationService::Verify(
   return NotarisationResult::FAIL_VERIFICATION;
 }
 
-bool NotarisationService::Verify(BlockHash const &block_hash, BlockNotarisation const &notarisation,
-                                 BlockNotarisationKeys const &notarisation_key_str,
-                                 uint32_t                     threshold)
+bool NotarisationService::Verify(BlockHash const &           block_hash,
+                                 AggregateSignature const &  notarisation,
+                                 AeonNotarisationKeys const &signed_notarisation_key,
+                                 uint32_t                    threshold)
 {
   std::vector<NotarisationManager::PublicKey> notarisation_keys;
-  for (auto const &key_str : notarisation_key_str)
+  for (auto const &key_sig_pair : signed_notarisation_key)
   {
-    crypto::mcl::PublicKey key;
-    bool                   check;
-    key.setStr(&check, std::string(key_str.second.first).data());
-    if (!check)
-    {
-      return false;
-    }
-    notarisation_keys.push_back(key);
+    notarisation_keys.push_back(key_sig_pair.second.first);
   }
 
-  AggregateSignature aggregate_signature;
-  bool               check;
-  aggregate_signature.first.setStr(&check, std::string(notarisation.first).data());
-
-  if (check && count(notarisation.second.begin(), notarisation.second.end(), 1) == threshold)
+  if (count(notarisation.second.begin(), notarisation.second.end(), 1) == threshold)
   {
-    aggregate_signature.second = notarisation.second;
-    return NotarisationManager::VerifyAggregateSignature(block_hash, aggregate_signature,
+    return NotarisationManager::VerifyAggregateSignature(block_hash, notarisation,
                                                          notarisation_keys);
   }
   return false;
@@ -474,10 +459,10 @@ char const *StateToString(NotarisationService::State state)
     text = "Preparing entropy generation";
     break;
   case NotarisationService::State::COLLECT_NOTARISATIONS:
-    text = "Collecting signatures";
+    text = "Collecting notarisations shares";
     break;
   case NotarisationService::State::VERIFY_NOTARISATIONS:
-    text = "Verifying signatures";
+    text = "Verifying notarisation shares";
     break;
   case NotarisationService::State::COMPLETE:
     text = "Completion state";

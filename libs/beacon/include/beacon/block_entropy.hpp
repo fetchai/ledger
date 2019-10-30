@@ -19,6 +19,7 @@
 
 #include "beacon/beacon_manager.hpp"
 #include "beacon/block_entropy_interface.hpp"
+#include "beacon/notarisation_manager.hpp"
 #include "core/digest.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
@@ -34,12 +35,12 @@ struct BlockEntropy : public BlockEntropyInterface
   using MemberSignature       = byte_array::ConstByteArray;
   using Confirmations         = std::map<MemberPublicKey, MemberSignature>;
   using GroupSignature        = byte_array::ConstByteArray;
-  using NotarisationKey       = byte_array::ConstByteArray;
   using ECDSASignature        = byte_array::ConstByteArray;
+  using NotarisationKey       = ledger::NotarisationManager::PublicKey;
+  using AggregateSignature    = ledger::NotarisationManager::AggregateSignature;
   using Cabinet               = std::set<MuddleAddress>;
   using SignedNotarisationKey = std::pair<NotarisationKey, ECDSASignature>;
-  using CabinetMemberDetails  = std::map<MuddleAddress, SignedNotarisationKey>;
-  using AggregateSignature    = std::pair<GroupSignature, std::vector<uint8_t>>;
+  using AeonNotarisationKeys  = std::map<MuddleAddress, SignedNotarisationKey>;
 
   BlockEntropy();
   BlockEntropy(BlockEntropy const &rhs);
@@ -47,7 +48,7 @@ struct BlockEntropy : public BlockEntropyInterface
   // When new committee, block contains muddle address of those who suceeded the DKG and
   // are qualified to produce blocks, and notarisation key (signed)
   Cabinet              qualified;
-  CabinetMemberDetails member_details{};
+  AeonNotarisationKeys aeon_notarisation_keys{};
 
   // The group public key (when new cabinet)
   GroupPublicKey group_public_key;
@@ -92,7 +93,7 @@ public:
   static uint8_t const BLOCK_NUMBER         = 3;
   static uint8_t const CONFIRMATIONS        = 4;
   static uint8_t const GROUP_SIGNATURE      = 5;
-  static uint8_t const MEMBER_DETAILS       = 6;
+  static uint8_t const NOTARISATION_KEYS    = 6;
   static uint8_t const NOTARISATION         = 7;
   static uint8_t const NOTARISATION_MEMBERS = 8;
 
@@ -106,7 +107,7 @@ public:
     map.Append(BLOCK_NUMBER, member.block_number);
     map.Append(CONFIRMATIONS, member.confirmations);
     map.Append(GROUP_SIGNATURE, member.group_signature);
-    map.Append(MEMBER_DETAILS, member.member_details);
+    map.Append(NOTARISATION_KEYS, member.aeon_notarisation_keys);
     map.Append(NOTARISATION, member.block_notarisation.first);
     map.Append(NOTARISATION_MEMBERS, member.block_notarisation.second);
   }
@@ -119,7 +120,7 @@ public:
     map.ExpectKeyGetValue(BLOCK_NUMBER, member.block_number);
     map.ExpectKeyGetValue(CONFIRMATIONS, member.confirmations);
     map.ExpectKeyGetValue(GROUP_SIGNATURE, member.group_signature);
-    map.ExpectKeyGetValue(MEMBER_DETAILS, member.member_details);
+    map.ExpectKeyGetValue(NOTARISATION_KEYS, member.aeon_notarisation_keys);
     map.ExpectKeyGetValue(NOTARISATION, member.block_notarisation.first);
     map.ExpectKeyGetValue(NOTARISATION_MEMBERS, member.block_notarisation.second);
   }

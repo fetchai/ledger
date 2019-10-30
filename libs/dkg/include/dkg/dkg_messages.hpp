@@ -238,7 +238,7 @@ public:
 
 class NotarisationKeyMessage : public DKGMessage
 {
-  using NotarisationKey       = byte_array::ConstByteArray;
+  using NotarisationKey       = crypto::mcl::PublicKey;
   using ECDSASignature        = byte_array::ConstByteArray;
   using SignedNotarisationKey = std::pair<NotarisationKey, ECDSASignature>;
 
