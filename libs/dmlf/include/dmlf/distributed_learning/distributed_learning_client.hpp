@@ -145,7 +145,7 @@ TrainingClient<TensorType>::TrainingClient(std::string id, ModelPtrType model_pt
                                            ClientParams<DataType> const &client_params,
                                            std::shared_ptr<std::mutex>   console_mutex_ptr)
   : id_(std::move(id))
-  , model_ptr_(model_ptr)
+  , model_ptr_(std::move(model_ptr))
   , console_mutex_ptr_(std::move(console_mutex_ptr))
 {
   dataloader_ptr_ = model_ptr_->dataloader_ptr_;
