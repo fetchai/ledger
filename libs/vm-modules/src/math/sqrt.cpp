@@ -18,7 +18,6 @@
 
 #include "math/standard_functions/sqrt.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/math/sqrt.hpp"
 
 #include <cmath>
 

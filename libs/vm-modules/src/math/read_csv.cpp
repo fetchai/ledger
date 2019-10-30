@@ -18,11 +18,14 @@
 
 #include "math/utilities/ReadCSV.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/math/read_csv.hpp"
 #include "vm_modules/math/tensor.hpp"
 
-
 namespace fetch {
+
+namespace vm {
+class Module;
+}
+
 namespace vm_modules {
 namespace math {
 
@@ -39,7 +42,7 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ReadCSV(
 
 }  // namespace
 
-void BindReadCSV(Module &module)
+void BindReadCSV(fetch::vm::Module &module)
 {
   module.CreateFreeFunction("readCSV", &ReadCSV);
 }
