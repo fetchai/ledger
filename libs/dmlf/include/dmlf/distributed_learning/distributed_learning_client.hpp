@@ -52,14 +52,13 @@ class TrainingClient
       std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>>;
   using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
   using OptimiserPtrType = std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>;
-  using ModelType = fetch::ml::model::Sequential<TensorType>;
-  using ModelPtrType     = std::shared_ptr<ModelType>;
+  using ModelPtrType     = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
 
 public:
   TrainingClient(std::string id, ClientParams<DataType> const &client_params,
                  std::shared_ptr<std::mutex> console_mutex_ptr);
 
-  TrainingClient(std::string id, ModelType model_ptr,
+  TrainingClient(std::string id, ModelPtrType model_ptr,
                  ClientParams<DataType> const &client_params,
                  std::shared_ptr<std::mutex>   console_mutex_ptr);
 
@@ -142,11 +141,11 @@ private:
 };
 
 template <class TensorType>
-TrainingClient<TensorType>::TrainingClient(std::string id, ModelType model,
+TrainingClient<TensorType>::TrainingClient(std::string id, ModelPtrType model_ptr,
                                            ClientParams<DataType> const &client_params,
                                            std::shared_ptr<std::mutex>   console_mutex_ptr)
   : id_(std::move(id))
-  , model_ptr_(std::move(model))
+  , model_ptr_(std::move(model_ptr))
   , console_mutex_ptr_(std::move(console_mutex_ptr))
 {
   dataloader_ptr_ = model_ptr_->dataloader_ptr_;
