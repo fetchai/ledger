@@ -662,27 +662,27 @@ TEST_F(MLTests, model_string_serialisation_test)
       var model_string3 = state3.get();
       var model_string4 = state4.get();
 
-//      var model1 = Model();
-//      var model2 = Model();
-//      var model3 = Model();
-//      var model4 = Model();
-//      model1 = graph.deserializeFromString(model_string1);
-//      model2 = graph.deserializeFromString(model_string2);
-//      model3 = graph.deserializeFromString(model_string3);
-//      model4 = graph.deserializeFromString(model_string4);
+      var model1 = Model();
+      var model2 = Model();
+      var model3 = Model();
+      var model4 = Model();
+      model1 = graph.deserializeFromString(model_string1);
+      model2 = graph.deserializeFromString(model_string2);
+      model3 = graph.deserializeFromString(model_string3);
+      model4 = graph.deserializeFromString(model_string4);
 
     endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(graph_deserialise_src));
-  //  EXPECT_CALL(toolkit.observer(), Exists(state_name1));
-  //  EXPECT_CALL(toolkit.observer(), Exists(state_name2));
-  //  EXPECT_CALL(toolkit.observer(), Exists(state_name3));
-  //  EXPECT_CALL(toolkit.observer(), Exists(state_name4));
-  //  EXPECT_CALL(toolkit.observer(), Read(state_name1, _, _)).Times(::testing::Between(1, 2));
-  //  EXPECT_CALL(toolkit.observer(), Read(state_name2, _, _)).Times(::testing::Between(1, 2));
-  //  EXPECT_CALL(toolkit.observer(), Read(state_name3, _, _)).Times(::testing::Between(1, 2));
-  //  EXPECT_CALL(toolkit.observer(), Read(state_name4, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name1));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name2));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name3));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name4));
+  EXPECT_CALL(toolkit.observer(), Read(state_name1, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(state_name2, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(state_name3, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(state_name4, _, _)).Times(::testing::Between(1, 2));
   ASSERT_TRUE(toolkit.Run());
 }
 
