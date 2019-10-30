@@ -158,7 +158,7 @@ private:
   // clang-format off
   // volatile state
   std::unordered_map<DAGTipID, DAGTipPtr>               all_tips_;  // All tips are here
-  std::unordered_map<NodeHash, DAGTipPtr>               tips_;  // lookup tips of the dag pointing at a certain node hash
+  std::unordered_map<NodeHash, DAGTipPtr>               tips_;  // look up tips of the dag pointing at a certain node hash
   std::unordered_map<NodeHash, DAGNodePtr>              node_pool_;  // dag nodes that are not finalised but are still valid
   std::unordered_map<NodeHash, DAGNodePtr>              loose_nodes_;  // nodes that are missing one or more references (waiting on NodeHash)
   std::unordered_map<NodeHash, std::vector<DAGNodePtr>> loose_nodes_lookup_;  // nodes that are missing one or more references (waiting on NodeHash)

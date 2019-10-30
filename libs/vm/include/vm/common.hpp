@@ -197,18 +197,20 @@ enum class FunctionKind : uint8_t
 struct TypeInfo
 {
   TypeInfo() = default;
-  TypeInfo(TypeKind type_kind__, std::string name__, TypeId template_type_id__,
-           TypeIdArray parameter_type_ids__)
-    : type_kind{type_kind__}
+  TypeInfo(TypeKind kind__, std::string name__, TypeId type_id__, TypeId template_type_id__,
+           TypeIdArray template_parameter_type_ids__)
+    : kind{kind__}
     , name{std::move(name__)}
+    , type_id{type_id__}
     , template_type_id{template_type_id__}
-    , parameter_type_ids{std::move(parameter_type_ids__)}
+    , template_parameter_type_ids{std::move(template_parameter_type_ids__)}
   {}
 
-  TypeKind    type_kind = TypeKind::Unknown;
+  TypeKind    kind = TypeKind::Unknown;
   std::string name;
+  TypeId      type_id          = TypeIds::Unknown;
   TypeId      template_type_id = TypeIds::Unknown;
-  TypeIdArray parameter_type_ids;
+  TypeIdArray template_parameter_type_ids;
 };
 using TypeInfoArray = std::vector<TypeInfo>;
 using TypeInfoMap   = std::unordered_map<std::string, TypeId>;

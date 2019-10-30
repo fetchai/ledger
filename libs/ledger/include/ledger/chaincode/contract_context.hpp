@@ -17,35 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/synergetic_contract.hpp"
+#include "chain/address.hpp"
+#include "chain/transaction_layout.hpp"
 
 namespace fetch {
-namespace chain {
-
-class Address;
-
-}  // namespace chain
 namespace ledger {
 
-class StorageInterface;
+class TokenContract;
+class StateAdapter;
 
-class SynergeticContractFactory
+struct ContractContext
 {
-public:
-  // Construction / Destruction
-  explicit SynergeticContractFactory(StorageInterface &storage);
-  SynergeticContractFactory(SynergeticContractFactory const &) = delete;
-  SynergeticContractFactory(SynergeticContractFactory &&)      = delete;
-  ~SynergeticContractFactory()                                 = default;
+  ContractContext()                        = default;
+  ContractContext(ContractContext const &) = default;
+  ContractContext(ContractContext &&)      = default;
 
-  SynergeticContractPtr Create(Digest const &digest);
+  ContractContext(TokenContract *token_contract_param, chain::Address address,
+                  StateAdapter *                       state_adapter_param,
+                  chain::TransactionLayout::BlockIndex block_index_param);
 
-  // Operators
-  SynergeticContractFactory &operator=(SynergeticContractFactory const &) = delete;
-  SynergeticContractFactory &operator=(SynergeticContractFactory &&) = delete;
-
-private:
-  StorageInterface &storage_;
+  TokenContract *const                       token_contract{nullptr};
+  chain::Address const                       contract_address{};
+  StateAdapter *const                        state_adapter{nullptr};
+  chain::TransactionLayout::BlockIndex const block_index{0};
 };
 
 }  // namespace ledger
