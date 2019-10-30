@@ -96,7 +96,7 @@ std::string Manifest::FindExternalAddress(ServiceIdentifier::Type type, uint32_t
   auto it = FindService(ServiceIdentifier{type, index});
   if (it == end())
   {
-    throw std::runtime_error(std::string{"Unable to lookup external address for "} +
+    throw std::runtime_error(std::string{"Unable to look up external address for "} +
                              ToString(type));
   }
 

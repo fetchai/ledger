@@ -123,7 +123,7 @@ Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string descri
 }
 
 /**
- * Lookup and existing metric from the registry
+ * Look up an existing metric from the registry
  *
  * @tparam T The underlying metric type being requested
  * @param name The name of the metric

@@ -215,7 +215,7 @@ void GenesisFileCreator::LoadState(Variant const &object)
         serializers::MsgPackSerializer buffer;
         buffer << record;
 
-        // lookup reference to the underlying buffer
+        // look up reference to the underlying buffer
         auto const &data = buffer.data();
 
         // store the buffer

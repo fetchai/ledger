@@ -34,7 +34,7 @@ char const *LOGGING_NAME         = "KeyGenerator";
 char const *DEFAULT_KEY_FILENAME = "p2p.key";
 
 /**
- * Lookup the key path for the key
+ * Look up the key path for the key
  *
  * @return The path to the key file
  */
