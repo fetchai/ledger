@@ -87,6 +87,7 @@ enum class OpType : uint16_t
   OP_LOGSOFTMAX,
   OP_MASK_FILL,
   OP_MATRIX_MULTIPLY,
+  OP_MAX_POOL,
   OP_MAX_POOL_1D,
   OP_MAX_POOL_2D,
   OP_AVG_POOL_1D,
@@ -109,6 +110,7 @@ enum class OpType : uint16_t
   OP_WEIGHTS,
   OP_SLICE,
   OP_SQUEEZE,
+  OP_REDUCE_MEAN,
 
   // OpKind - LOSS
   LOSS_CROSS_ENTROPY,

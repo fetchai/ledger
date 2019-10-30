@@ -308,19 +308,20 @@ TEST_F(LocalLearnerNetworkerTests, multiThreadedVersion)
   EXPECT_EQ(total_integrations, 20 * 10 * 5);
 }
 
-TEST_F(LocalLearnerNetworkerTests, multiThreadedFilePassingVersion)
-{
-  DoMtFilepassingWork();
-
-  std::size_t total_integrations = 0;
-  for (auto const &inst : insts)
-  {
-    total_integrations += inst->integrations;
-  }
-
-  EXPECT_EQ(insts.size(), 20);
-  EXPECT_EQ(total_integrations, 20 * 10 * 5);
-}
+// TODO(1841) fix or delete flaky test
+// TEST_F(LocalLearnerNetworkerTests, multiThreadedFilePassingVersion)
+//{
+//  DoMtFilepassingWork();
+//
+//  std::size_t total_integrations = 0;
+//  for (auto const &inst : insts)
+//  {
+//    total_integrations += inst->integrations;
+//  }
+//
+//  EXPECT_EQ(insts.size(), 20);
+//  EXPECT_EQ(total_integrations, 20 * 10 * 5);
+//}
 
 using namespace std::chrono_literals;
 class UpdateSerialisationTests : public ::testing::Test

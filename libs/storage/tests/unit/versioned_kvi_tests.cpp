@@ -133,7 +133,7 @@ TEST(versioned_kvi_gtest, basic_test)
   // Checking values
   for (auto const &value : values)
   {
-    // lookup the value from the index
+    // look up the value from the index
     uint64_t const stored_value = key_value_index.Get(value.key);
 
     // check that it is as expected

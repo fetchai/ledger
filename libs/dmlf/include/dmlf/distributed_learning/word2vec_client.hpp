@@ -19,25 +19,14 @@
 
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
 #include "dmlf/distributed_learning/translator.hpp"
+#include "dmlf/distributed_learning/word2vec_training_params.hpp"
 #include "math/clustering/knn.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
-#include "word2vec_training_params.hpp"
 
 namespace fetch {
-namespace ml {
+namespace dmlf {
 namespace distributed_learning {
-
-inline std::string ReadFile(std::string const &path)
-{
-  std::ifstream t(path);
-  if (t.fail())
-  {
-    throw ml::exceptions::InvalidFile("Cannot open file " + path);
-  }
-
-  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-}
 
 template <class TensorType>
 class Word2VecClient : public TrainingClient<TensorType>
@@ -51,29 +40,13 @@ public:
   Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
                  std::shared_ptr<std::mutex> console_mutex_ptr);
 
-  void PrepareModel();
-
-  void PrepareDataLoader();
-
-  void PrepareOptimiser();
-
   void Run() override;
 
   void Test() override;
 
-  float analogy_score_ = 0.0f;
-
-  float GetAnalogyScore()
-  {
-    TensorType const &weights = utilities::GetEmbeddings(*this->g_ptr_, skipgram_);
-
-    return utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights, tp_.analogies_test_file)
-        .second;
-  }
+  float GetAnalogyScore();
 
   std::shared_ptr<GradientType> GetGradients() override;
-
-  VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients) override;
 
   std::pair<std::vector<std::string>, byte_array::ConstByteArray> GetVocab();
   void AddVocab(const std::pair<std::vector<std::string>, byte_array::ConstByteArray> &vocab_info);
@@ -85,8 +58,18 @@ private:
   W2VTrainingParams<DataType>                                         tp_;
   std::string                                                         skipgram_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<TensorType>> w2v_data_loader_ptr_;
+  float                                                               analogy_score_ = 0.0f;
+  Translator                                                          translator_;
 
-  Translator translator_;
+  void PrepareModel();
+
+  void PrepareDataLoader();
+
+  void PrepareOptimiser();
+
+  VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients) override;
+
+  float ComputeAnalogyScore();
 };
 
 template <class TensorType>
@@ -111,6 +94,91 @@ Word2VecClient<TensorType>::Word2VecClient(std::string const &                id
 
   translator_.SetMyVocab(w2v_data_loader_ptr_->GetVocab());
 }
+
+/**
+ * Main loop that runs in thread
+ */
+template <class TensorType>
+void Word2VecClient<TensorType>::Run()
+{
+  TrainingClient<TensorType>::Run();
+  analogy_score_ = ComputeAnalogyScore();
+}
+
+/**
+ * Run model on test set to get test loss
+ * @param test_loss
+ */
+template <class TensorType>
+void Word2VecClient<TensorType>::Test()
+{
+  if (this->batch_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
+  {
+    // Lock model
+    FETCH_LOCK(this->model_mutex_);
+    fetch::ml::utilities::TestEmbeddings<TensorType>(
+        *this->g_ptr_, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1, tp_.word2, tp_.word3,
+        tp_.k, tp_.analogies_test_file, false, "/tmp/w2v_client_" + this->id_);
+  }
+}
+
+template <class TensorType>
+float Word2VecClient<TensorType>::ComputeAnalogyScore()
+{
+  TensorType const &weights = fetch::ml::utilities::GetEmbeddings(*this->g_ptr_, skipgram_);
+
+  return fetch::ml::utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights,
+                                                 tp_.analogies_test_file)
+      .second;
+}
+
+/**
+ * @return vector of gradient update values
+ */
+template <class TensorType>
+std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::GetGradients()
+{
+  FETCH_LOCK(this->model_mutex_);
+  return std::make_shared<GradientType>(this->g_ptr_->GetGradients(),
+                                        w2v_data_loader_ptr_->GetVocabHash(),
+                                        w2v_data_loader_ptr_->GetVocab()->GetReverseVocab());
+}
+
+/**
+ * @return pair of vocab strings and vocab hash
+ */
+template <class TensorType>
+std::pair<std::vector<std::string>, byte_array::ConstByteArray>
+Word2VecClient<TensorType>::GetVocab()
+{
+  auto vocab      = w2v_data_loader_ptr_->GetVocab();
+  auto vocab_hash = w2v_data_loader_ptr_->GetVocabHash();
+  // "ReverseVocab" is a vector of strings, and is the most compact way of sending the vocab
+  return std::make_pair(vocab->GetReverseVocab(), vocab->GetVocabHash());
+}
+
+/**
+ * Add a vocab to the translator_
+ * @param vocab_info pair of vocab strings and vocab hash
+ */
+template <class TensorType>
+void Word2VecClient<TensorType>::AddVocab(
+    std::pair<std::vector<std::string>, byte_array::ConstByteArray> const &vocab_info)
+{
+  translator_.AddVocab(vocab_info.second, vocab_info.first);
+}
+
+template <class TensorType>
+std::pair<TensorType, TensorType> Word2VecClient<TensorType>::TranslateWeights(
+    TensorType &new_weights, const byte_array::ConstByteArray &vocab_hash)
+{
+  std::pair<TensorType, TensorType> ret =
+      translator_.Translate<TensorType>(new_weights, vocab_hash);
+
+  return ret;
+}
+
+// private
 
 template <class TensorType>
 void Word2VecClient<TensorType>::PrepareModel()
@@ -152,68 +220,6 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
       tp_.learning_rate_param);
 }
 
-/**
- * Main loop that runs in thread
- */
-template <class TensorType>
-void Word2VecClient<TensorType>::Run()
-{
-  TrainingClient<TensorType>::Run();
-  analogy_score_ = GetAnalogyScore();
-}
-
-/**
- * Run model on test set to get test loss
- * @param test_loss
- */
-template <class TensorType>
-void Word2VecClient<TensorType>::Test()
-{
-  if (this->batch_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
-  {
-    // Lock model
-    FETCH_LOCK(this->model_mutex_);
-    utilities::TestEmbeddings<TensorType>(
-        *this->g_ptr_, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1, tp_.word2, tp_.word3,
-        tp_.k, tp_.analogies_test_file, false, "/tmp/w2v_client_" + this->id_);
-  }
-}
-
-/**
- * @return vector of gradient update values
- */
-template <class TensorType>
-std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::GetGradients()
-{
-  FETCH_LOCK(this->model_mutex_);
-  return std::make_shared<GradientType>(this->g_ptr_->GetGradients(),
-                                        w2v_data_loader_ptr_->GetVocabHash());
-}
-
-/**
- * @return pair of vocab strings and vocab hash
- */
-template <class TensorType>
-std::pair<std::vector<std::string>, byte_array::ConstByteArray>
-Word2VecClient<TensorType>::GetVocab()
-{
-  auto vocab      = w2v_data_loader_ptr_->GetVocab();
-  auto vocab_hash = w2v_data_loader_ptr_->GetVocabHash();
-  // "ReverseVocab" is a vector of strings, and is the most compact way of sending the vocab
-  return std::make_pair(vocab->GetReverseVocab(), vocab->GetVocabHash());
-}
-
-/**
- * Add a vocab to the translator_
- * @param vocab_info pair of vocab strings and vocab hash
- */
-template <class TensorType>
-void Word2VecClient<TensorType>::AddVocab(
-    std::pair<std::vector<std::string>, byte_array::ConstByteArray> const &vocab_info)
-{
-  translator_.AddVocab(vocab_info.second, vocab_info.first);
-}
-
 template <class TensorType>
 typename Word2VecClient<TensorType>::VectorTensorType
 Word2VecClient<TensorType>::TranslateGradients(
@@ -221,6 +227,12 @@ Word2VecClient<TensorType>::TranslateGradients(
 {
   assert(new_gradients->GetGradients().size() ==
          2);  // Translation unit is only defined for word2vec
+
+  // Add vocab from update if not known by translator
+  if (!translator_.VocabKnown(new_gradients->GetHash()))
+  {
+    translator_.AddVocab(new_gradients->GetHash(), new_gradients->GetReverseVocab());
+  }
 
   VectorTensorType ret;
   ret.push_back(
@@ -235,15 +247,11 @@ Word2VecClient<TensorType>::TranslateGradients(
 }
 
 template <class TensorType>
-std::pair<TensorType, TensorType> Word2VecClient<TensorType>::TranslateWeights(
-    TensorType &new_weights, const byte_array::ConstByteArray &vocab_hash)
+float Word2VecClient<TensorType>::GetAnalogyScore()
 {
-  std::pair<TensorType, TensorType> ret =
-      translator_.Translate<TensorType>(new_weights, vocab_hash);
-
-  return ret;
+  return analogy_score_;
 }
 
 }  // namespace distributed_learning
-}  // namespace ml
+}  // namespace dmlf
 }  // namespace fetch

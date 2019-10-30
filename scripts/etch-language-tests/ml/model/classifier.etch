@@ -21,7 +21,9 @@ function main()
   // train the model
   model.fit(data, label, 32u64);
 
-  // make a prediction
+  // evaluate performance
   var loss = model.evaluate();
 
+  // make a prediction
+  var prediction = model.predict(data);
 endfunction
