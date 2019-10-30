@@ -95,10 +95,6 @@ public:
 
     while (a_it.is_valid())
     {
-      // TODO (#1583) Decide how to handle the following assertion. The assertion is here to assure
-      // no 0 division would happen during loss calculation. But for low precision datatype this
-      // would happen eventurally. We can either remove it or add an epsilon on denominators.
-      // assert(*a_it > 0 && *a_it < 1);
       assert(*b_it == 0 || *b_it == 1);
       if (*b_it == 1)
       {
