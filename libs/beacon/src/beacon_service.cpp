@@ -378,13 +378,11 @@ BeaconService::State BeaconService::OnCompleteState()
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify freshly signed entropy!");
   }
 
-  // Save it for querying
-  completed_block_entropy_[index] = block_entropy_being_created_;
-
   // Trim maps of unnecessary info
   {
     auto const max_cache_size =
         (active_exe_unit_->aeon.round_end - active_exe_unit_->aeon.round_start) + 1;
+    FETCH_LOG_INFO(LOGGING_NAME, "Trim cache: ", max_cache_size);
     auto it = completed_block_entropy_.begin();
 
     while (it != completed_block_entropy_.end() && completed_block_entropy_.size() > max_cache_size)
@@ -399,6 +397,9 @@ BeaconService::State BeaconService::OnCompleteState()
       it2 = signatures_being_built_.erase(it2);
     }
   }
+
+  // Save it for querying
+  completed_block_entropy_[index] = block_entropy_being_created_;
 
   // If there is still entropy left to generate, set up and go around the loop
   if (block_entropy_being_created_->block_number < active_exe_unit_->aeon.round_end)
