@@ -312,7 +312,7 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   // deserialise the model category
   uint8_t model_category_int;
   buffer >> model_category_int;
-  ModelCategory model_category = static_cast<ModelCategory>(model_category_int);
+  auto model_category = static_cast<ModelCategory>(model_category_int);
 
   // deserialise the model config
   ModelConfigType model_config;

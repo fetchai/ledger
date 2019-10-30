@@ -58,9 +58,9 @@ public:
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-          fetch::vm::Ptr<fetch::vm::String> const &model_type);
+          fetch::vm::Ptr<fetch::vm::String> const &model_category);
 
-  VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &model_type);
+  VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &model_category);
 
   static fetch::vm::Ptr<VMModel> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                              fetch::vm::Ptr<fetch::vm::String> const &model_type);
