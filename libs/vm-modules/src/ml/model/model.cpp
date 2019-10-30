@@ -40,7 +40,9 @@ using VMPtrString = Ptr<String>;
 
 VMModel::VMModel(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-{}
+{
+  Init("none");
+}
 
 VMModel::VMModel(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &model_category)
   : Object(vm, type_id)
@@ -70,6 +72,10 @@ void VMModel::Init(std::string const &model_category)
   else if (model_category == "classifier")
   {
     model_category_ = ModelCategory::CLASSIFIER;
+  }
+  else if (model_category == "none")
+  {
+    model_category_ = ModelCategory::NONE;
   }
   else
   {
