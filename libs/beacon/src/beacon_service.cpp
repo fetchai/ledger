@@ -66,6 +66,8 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
         "beacon_entropy_current_round", "The current round attempting to generate for.")}
   , beacon_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_state_gauge", "State the beacon is in as integer")}
+  , beacon_most_recent_round_seen_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_most_recent_round_seen", "Most recent round the beacon has seen")}
 {
 
   // Attaching beacon ready callback handler
@@ -115,6 +117,7 @@ void BeaconService::MostRecentSeen(uint64_t round)
 {
   FETCH_LOCK(mutex_);
   most_recent_round_seen_ = round;
+  beacon_most_recent_round_seen_->set(most_recent_round_seen_);
   cabinet_creator_.Abort(round);
 }
 
@@ -212,7 +215,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   // Don't proceed from this state if it is ahead of the entropy we are trying to generate
   if (index > (most_recent_round_seen_ + entropy_lead_blocks_))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "fail ", index, " ", most_recent_round_seen_, " ", (most_recent_round_seen_ + entropy_lead_blocks_));
+    FETCH_LOG_INFO(LOGGING_NAME, "no proceed collect sigs. ", index, " ", most_recent_round_seen_, " ", (most_recent_round_seen_ + entropy_lead_blocks_));
     state_machine_->Delay(std::chrono::milliseconds(5));
     return State::COLLECT_SIGNATURES;
   }
@@ -280,6 +283,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   if (!timer_to_proceed_.HasExpired() && !sig_share_promise_->IsSuccessful())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Delaying until resolved RPC call!");
+    state_machine_->Delay(std::chrono::milliseconds(50));
     return State::VERIFY_SIGNATURES;
   }
 
