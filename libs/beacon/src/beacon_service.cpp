@@ -211,15 +211,6 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   FETCH_LOCK(mutex_);
 
   uint64_t const index = block_entropy_being_created_->block_number;
-
-  // Don't proceed from this state if it is ahead of the entropy we are trying to generate
-  if (index > (most_recent_round_seen_ + entropy_lead_blocks_))
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "no proceed collect sigs. ", index, " ", most_recent_round_seen_, " ", (most_recent_round_seen_ + entropy_lead_blocks_));
-    state_machine_->Delay(std::chrono::milliseconds(5));
-    return State::COLLECT_SIGNATURES;
-  }
-
   beacon_entropy_current_round_->set(index);
 
   // On first entry to function, populate with our info (will go between collect and verify)
@@ -231,6 +222,14 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
     signatures_being_built_[index]                          = this_round;
 
     // TODO(HUT): clean historically old sigs + entropy here
+  }
+
+  // Don't proceed from this state if it is ahead of the entropy we are trying to generate
+  if (index > (most_recent_round_seen_ + entropy_lead_blocks_))
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "no proceed collect sigs. ", index, " ", most_recent_round_seen_, " ", (most_recent_round_seen_ + entropy_lead_blocks_));
+    state_machine_->Delay(std::chrono::milliseconds(5));
+    return State::COLLECT_SIGNATURES;
   }
 
   // Attempt to get signatures from a peer we do not have the signature of
