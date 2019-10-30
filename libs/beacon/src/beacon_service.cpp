@@ -347,7 +347,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 
   FETCH_LOG_INFO(LOGGING_NAME, "Start verifying.");
   MilliTimer const timer{"Verify threshold signature", 100};
-  FETCH_LOG_INFO(LOGGING_NAME, "Finish verifying.");
+  FETCH_LOG_INFO(LOGGING_NAME, "Finish verifying!");
 
   // TODO(HUT): possibility for infinite loop here I suspect.
   if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
