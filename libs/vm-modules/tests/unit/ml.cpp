@@ -662,14 +662,14 @@ TEST_F(MLTests, model_string_serialisation_test)
       var model_string3 = state3.get();
       var model_string4 = state4.get();
 
-      var model1 = Model();
-      var model2 = Model();
-      var model3 = Model();
-      var model4 = Model();
-      model1 = graph.deserializeFromString(model_string1);
-      model2 = graph.deserializeFromString(model_string2);
-      model3 = graph.deserializeFromString(model_string3);
-      model4 = graph.deserializeFromString(model_string4);
+      var model1 = Model("none");
+      var model2 = Model("none");
+      var model3 = Model("none");
+      var model4 = Model("none");
+      model1 = model1.deserializeFromString(model_string1);
+      model2 = model2.deserializeFromString(model_string2);
+      model3 = model3.deserializeFromString(model_string3);
+      model4 = model4.deserializeFromString(model_string4);
 
     endfunction
   )";
