@@ -60,6 +60,8 @@ public:
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
           fetch::vm::Ptr<fetch::vm::String> const &model_type);
 
+  VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &model_type);
+
   static fetch::vm::Ptr<VMModel> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                              fetch::vm::Ptr<fetch::vm::String> const &model_type);
 
@@ -103,6 +105,8 @@ private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;
   ModelCategory      model_category_ = ModelCategory::NONE;
+
+  void Init(std::string const &model_category);
 };
 
 }  // namespace model

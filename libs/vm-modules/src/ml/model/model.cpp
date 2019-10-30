@@ -45,18 +45,29 @@ VMModel::VMModel(VM *vm, TypeId type_id)
 VMModel::VMModel(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &model_category)
   : Object(vm, type_id)
 {
+  Init(model_category->str);
+}
+
+VMModel::VMModel(VM *vm, TypeId type_id, std::string const &model_category)
+  : Object(vm, type_id)
+{
+  Init(model_category);
+}
+
+void VMModel::Init(std::string const &model_category)
+{
   model_config_ = std::make_shared<ModelConfigType>();
 
-  if (model_category->str == "sequential")
+  if (model_category == "sequential")
   {
     model_          = std::make_shared<fetch::ml::model::Sequential<TensorType>>(*model_config_);
     model_category_ = ModelCategory::SEQUENTIAL;
   }
-  else if (model_category->str == "regressor")
+  else if (model_category == "regressor")
   {
     model_category_ = ModelCategory::REGRESSOR;
   }
-  else if (model_category->str == "classifier")
+  else if (model_category == "classifier")
   {
     model_category_ = ModelCategory::CLASSIFIER;
   }
@@ -272,7 +283,9 @@ void VMModel::Bind(Module &module)
       .CreateMemberFunction("evaluate", &VMModel::Evaluate)
       .CreateMemberFunction("predict", &VMModel::Predict)
       .CreateMemberFunction("evaluate", &VMModel::Evaluate)
-      .CreateMemberFunction("predict", &VMModel::Predict);
+      .CreateMemberFunction("predict", &VMModel::Predict)
+      .CreateMemberFunction("serializeToString", &VMModel::SerializeToString)
+      .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString);
 }
 
 typename VMModel::ModelPtrType &VMModel::GetModel()
@@ -283,7 +296,7 @@ typename VMModel::ModelPtrType &VMModel::GetModel()
 bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
   buffer << static_cast<uint8_t>(model_category_);
-  buffer << model_config_;
+  buffer << *model_config_;
   buffer << *model_;
   return true;
 }
@@ -296,7 +309,9 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   ModelCategory model_category = static_cast<ModelCategory>(model_category_int);
 
   // deserialise the model config
-  buffer >> model_config_;
+  ModelConfigType model_config;
+  buffer >> model_config;
+  model_config_ = std::make_shared<ModelConfigType>(model_config);
 
   // deserialise the model
   auto model_ptr = std::make_shared<fetch::ml::model::Model<TensorType>>();
@@ -332,13 +347,11 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   }
 
   // assign deserialised model category
-  Ptr<fetch::vm::String> model_category_str_ptr;
-  model_category_str_ptr->str = model_category_str;
-  VMModel vm_model(this->vm_, this->type_id_, model_category_str_ptr);
+  VMModel vm_model(this->vm_, this->type_id_, model_category_str);
   vm_model.model_category_ = model_category;
 
   // assign deserialised model config
-  vm_model.model_config_ = model_config;
+  vm_model.model_config_ = model_config_;
 
   // assign deserialised model
   vm_model.GetModel() = model_ptr;
@@ -349,27 +362,27 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return true;
 }
 
-// fetch::vm::Ptr<fetch::vm::String> VMModel::SerializeToString()
-//{
-//  serializers::MsgPackSerializer b;
-//  SerializeTo(b);
-//  auto byte_array_data = b.data().ToBase64();
-//  return Ptr<String>{new fetch::vm::String(vm_, static_cast<std::string>(byte_array_data))};
-//}
-//
-// fetch::vm::Ptr<VMModel> VMModel::DeserializeFromString(
-//    fetch::vm::Ptr<fetch::vm::String> const &model_string)
-//{
-//  byte_array::ConstByteArray b(graph_string->str);
-//  b = byte_array::FromBase64(b);
-//  MsgPackSerializer buffer(b);
-//  DeserializeFrom(buffer);
-//
-//  auto vm_graph        = fetch::vm::Ptr<VMGraph>(new VMGraph(vm_, type_id_));
-//  vm_graph->GetGraph() = graph_;
-//
-//  return vm_graph;
-//}
+fetch::vm::Ptr<fetch::vm::String> VMModel::SerializeToString()
+{
+  serializers::MsgPackSerializer b;
+  SerializeTo(b);
+  auto byte_array_data = b.data().ToBase64();
+  return Ptr<String>{new fetch::vm::String(vm_, static_cast<std::string>(byte_array_data))};
+}
+
+fetch::vm::Ptr<VMModel> VMModel::DeserializeFromString(
+    fetch::vm::Ptr<fetch::vm::String> const &model_string)
+{
+  byte_array::ConstByteArray b(model_string->str);
+  b = byte_array::FromBase64(b);
+  MsgPackSerializer buffer(b);
+  DeserializeFrom(buffer);
+
+  auto vm_model        = fetch::vm::Ptr<VMModel>(new VMModel(vm_, type_id_));
+  vm_model->GetModel() = model_;
+
+  return vm_model;
+}
 
 }  // namespace model
 }  // namespace ml
