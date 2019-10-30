@@ -62,7 +62,7 @@ struct BERTConfig
 template <class TensorType>
 struct BERTInterface
 {
-  // the default names for input and outpus of a Fetch bert model
+  // the default names for input and outputs of a Fetch bert model
   std::vector<std::string> inputs = {"Segment", "Position", "Tokens", "Mask"};
   std::vector<std::string> outputs;
 

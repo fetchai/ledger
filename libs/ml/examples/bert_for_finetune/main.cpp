@@ -81,11 +81,11 @@ int main(int ac, char **av)
 
   // load pretrained bert model
   GraphType                 g = *(LoadGraph<GraphType>(file_path));
-  BERTInterface<TensorType> bertInterface(config);
+  BERTInterface<TensorType> bert_interface(config);
   std::cout << "finish loading pretraining model" << std::endl;
 
-  std::vector<std::string> bert_inputs  = bertInterface.inputs;
-  std::string              layer_output = bertInterface.outputs[layer_no];
+  std::vector<std::string> bert_inputs  = bert_interface.inputs;
+  std::string              layer_output = bert_interface.outputs[layer_no];
 
   // Add linear classification layer
   std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<TensorType>>(
