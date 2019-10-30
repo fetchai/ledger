@@ -41,185 +41,6 @@ class TestCase(object):
         pass
 
 
-class DmlfEtchTestCase(TestCase):
-    """
-    Sets up an instance of a test, containing references to started nodes and other relevant data
-    """
-
-    def __init__(self, build_directory, node_exe, yaml_file):
-
-        self._number_of_nodes = 0
-        self._node_connections = None
-        self._port_start_range = 8000
-        self._port_range = 20
-        self._workspace = ""
-        self._max_test_time = 1000
-        self._nodes = []
-        self._watchdog = None
-        self._creation_time = time.perf_counter()
-        self._nodes_pubkeys = []
-        self._nodes_keys = []
-
-        # Default to removing old tests
-        for f in glob.glob(build_directory + "/end_to_end_test_*"):
-            shutil.rmtree(f)
-
-        # To avoid possible collisions, prepend output files with the date
-        self._random_identifer = '{0:%Y_%m_%d_%H_%M_%S}'.format(
-            datetime.datetime.now())
-
-        self._random_identifer = "default"
-
-        self._workspace = os.path.join(
-            build_directory, 'end_to_end_test_{}'.format(
-                self._random_identifer))
-        self._build_directory = build_directory
-        self._node_exe = os.path.abspath(node_exe)
-        self._yaml_file = os.path.abspath(yaml_file)
-        self._test_files_dir = os.path.dirname(self._yaml_file)
-
-        verify_file(node_exe)
-        verify_file(self._yaml_file)
-
-        # Ensure that build/end_to_end_output_XXX/ exists for the test output
-        os.makedirs(self._workspace, exist_ok=True)
-
-    def append_node(self, index, load_directory=None):
-        # Create a folder for the node to write logs to etc.
-        root = os.path.abspath(os.path.join(
-            self._workspace, 'node{}'.format(index)))
-
-        # ensure the workspace folder exits
-        os.makedirs(root, exist_ok=True)
-
-        if load_directory and index in load_directory:
-            load_from = self._test_files_dir + \
-                "/nodes_saved/" + load_directory[index]
-            files = os.listdir(load_from)
-
-            for f in files:
-                shutil.copy(load_from + f, root)
-
-        port = self._port_start_range + (self._port_range * index)
-        key = self._nodes_keys[index]
-        pub = self._nodes_pubkeys[index]
-
-        # Create an instance of the constellation - note we don't clear path since
-        # it should be clear unless load_directory is used
-        instance = DmlfEtchInstance(
-            self._node_exe,
-            port,
-            key,
-            pub,
-            root,
-            clear_path=False
-        )
-
-        assert len(self._nodes) == index, "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(
-            len(self._nodes), index)
-
-        self._nodes.append(instance)
-
-    def setup_nodes_keys(self):
-
-        # Give each node a unique identity
-        for index in range(self._number_of_nodes):
-            entity = Entity()
-            pub64 = entity.public_key
-            key64 = entity.private_key
-
-            print('Setting up key for node {}...'.format(index))
-            print('Giving node the identity: {}'.format(pub64))
-            self._nodes_pubkeys.append(pub64)
-
-            print('Giving node key: {}'.format(key64))
-            self._nodes_keys.append(key64)
-
-    def connect_nodes(self, node_connections):
-        for connect_from, connect_to in node_connections:
-            self._nodes[connect_from].add_peer(self._nodes[connect_to])
-            output("Connect node {} to {}".format(connect_from, connect_to))
-
-    def start_node(self, index):
-        print('Starting Node {}...'.format(index))
-
-        self._nodes[index].start()
-        print('Starting Node {}...complete'.format(index))
-
-        time.sleep(1)
-
-    def restart_node(self, index):
-        print('Restarting Node {}...'.format(index))
-
-        self._nodes[index].stop()
-
-        # Optically remove db files when testing recovering from a genesis file
-        if False:
-            self.dump_debug(index)
-
-            pattern = ["*.db"]
-            for p in pattern:
-                [os.remove(x) for x in glob.iglob('./**/' + p, recursive=True)]
-
-        self.start_node(index)
-        time.sleep(3)
-
-    def print_time_elapsed(self):
-        output("Elapsed time: {}".format(
-            time.perf_counter() - self._creation_time))
-
-    def run(self):
-
-        # setup node keys
-        self.setup_nodes_keys()
-
-        # build up all the node instances
-        for index in range(self._number_of_nodes):
-            self.append_node(index, self._node_load_directory)
-
-        # Now connect the nodes as specified
-        if self._node_connections:
-            self.connect_nodes(self._node_connections)
-
-        # start all the nodes
-        for index in range(self._number_of_nodes):
-            self.start_node(index)
-
-        time.sleep(5)  # TODO(HUT): blocking http call to node for ready state
-
-    def stop(self):
-        if self._nodes:
-            for n, node in enumerate(self._nodes):
-                print('Stopping Node {}...'.format(n))
-                if(node):
-                    node.stop()
-                print('Stopping Node {}...complete'.format(n))
-
-        if self._watchdog:
-            self._watchdog.stop()
-
-    # If something goes wrong, print out debug state (mainly node log files)
-    def dump_debug(self, only_node=None):
-        if self._nodes:
-            for n, node in enumerate(self._nodes):
-
-                if only_node is not None and n is not only_node:
-                    continue
-
-                print('\nNode debug. Node:{}'.format(n))
-                node_log_path = node.log_path
-
-                if not os.path.isfile(node_log_path):
-                    output("Couldn't find supposed node log file: {}".format(
-                        node_log_path))
-                else:
-                    # Send raw bytes directly to stdout since it contains
-                    # non-ascii
-                    data = Path(node_log_path).read_bytes()
-                    sys.stdout.buffer.write(data)
-                    sys.stdout.flush()
-
-
 class ConstellationTestCase(TestCase):
     """
     Sets up an instance of a test, containing references to started nodes and other relevant data
@@ -449,6 +270,185 @@ class ConstellationTestCase(TestCase):
             for n, node in enumerate(self._nodes):
                 print('Stopping Node {}...'.format(n))
                 if node:
+                    node.stop()
+                print('Stopping Node {}...complete'.format(n))
+
+        if self._watchdog:
+            self._watchdog.stop()
+
+    # If something goes wrong, print out debug state (mainly node log files)
+    def dump_debug(self, only_node=None):
+        if self._nodes:
+            for n, node in enumerate(self._nodes):
+
+                if only_node is not None and n is not only_node:
+                    continue
+
+                print('\nNode debug. Node:{}'.format(n))
+                node_log_path = node.log_path
+
+                if not os.path.isfile(node_log_path):
+                    output("Couldn't find supposed node log file: {}".format(
+                        node_log_path))
+                else:
+                    # Send raw bytes directly to stdout since it contains
+                    # non-ascii
+                    data = Path(node_log_path).read_bytes()
+                    sys.stdout.buffer.write(data)
+                    sys.stdout.flush()
+
+
+class DmlfEtchTestCase(TestCase):
+    """
+    Sets up an instance of a test, containing references to started nodes and other relevant data
+    """
+
+    def __init__(self, build_directory, node_exe, yaml_file):
+
+        self._number_of_nodes = 0
+        self._node_connections = None
+        self._port_start_range = 8000
+        self._port_range = 20
+        self._workspace = ""
+        self._max_test_time = 1000
+        self._nodes = []
+        self._watchdog = None
+        self._creation_time = time.perf_counter()
+        self._nodes_pubkeys = []
+        self._nodes_keys = []
+
+        # Default to removing old tests
+        for f in glob.glob(build_directory + "/end_to_end_test_*"):
+            shutil.rmtree(f)
+
+        # To avoid possible collisions, prepend output files with the date
+        self._random_identifer = '{0:%Y_%m_%d_%H_%M_%S}'.format(
+            datetime.datetime.now())
+
+        self._random_identifer = "default"
+
+        self._workspace = os.path.join(
+            build_directory, 'end_to_end_test_{}'.format(
+                self._random_identifer))
+        self._build_directory = build_directory
+        self._node_exe = os.path.abspath(node_exe)
+        self._yaml_file = os.path.abspath(yaml_file)
+        self._test_files_dir = os.path.dirname(self._yaml_file)
+
+        verify_file(node_exe)
+        verify_file(self._yaml_file)
+
+        # Ensure that build/end_to_end_output_XXX/ exists for the test output
+        os.makedirs(self._workspace, exist_ok=True)
+
+    def append_node(self, index, load_directory=None):
+        # Create a folder for the node to write logs to etc.
+        root = os.path.abspath(os.path.join(
+            self._workspace, 'node{}'.format(index)))
+
+        # ensure the workspace folder exits
+        os.makedirs(root, exist_ok=True)
+
+        if load_directory and index in load_directory:
+            load_from = self._test_files_dir + \
+                "/nodes_saved/" + load_directory[index]
+            files = os.listdir(load_from)
+
+            for f in files:
+                shutil.copy(load_from + f, root)
+
+        port = self._port_start_range + (self._port_range * index)
+        key = self._nodes_keys[index]
+        pub = self._nodes_pubkeys[index]
+
+        # Create an instance of the constellation - note we don't clear path since
+        # it should be clear unless load_directory is used
+        instance = DmlfEtchInstance(
+            self._node_exe,
+            port,
+            key,
+            pub,
+            root,
+            clear_path=False
+        )
+
+        assert len(self._nodes) == index, "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(
+            len(self._nodes), index)
+
+        self._nodes.append(instance)
+
+    def setup_nodes_keys(self):
+
+        # Give each node a unique identity
+        for index in range(self._number_of_nodes):
+            entity = Entity()
+            pub64 = entity.public_key
+            key64 = entity.private_key
+
+            print('Setting up key for node {}...'.format(index))
+            print('Giving node the identity: {}'.format(pub64))
+            self._nodes_pubkeys.append(pub64)
+
+            print('Giving node key: {}'.format(key64))
+            self._nodes_keys.append(key64)
+
+    def connect_nodes(self, node_connections):
+        for connect_from, connect_to in node_connections:
+            self._nodes[connect_from].add_peer(self._nodes[connect_to])
+            output("Connect node {} to {}".format(connect_from, connect_to))
+
+    def start_node(self, index):
+        print('Starting Node {}...'.format(index))
+
+        self._nodes[index].start()
+        print('Starting Node {}...complete'.format(index))
+
+        time.sleep(1)
+
+    def restart_node(self, index):
+        print('Restarting Node {}...'.format(index))
+
+        self._nodes[index].stop()
+
+        # Optically remove db files when testing recovering from a genesis file
+        if False:
+            self.dump_debug(index)
+
+            pattern = ["*.db"]
+            for p in pattern:
+                [os.remove(x) for x in glob.iglob('./**/' + p, recursive=True)]
+
+        self.start_node(index)
+        time.sleep(3)
+
+    def print_time_elapsed(self):
+        output("Elapsed time: {}".format(
+            time.perf_counter() - self._creation_time))
+
+    def run(self):
+
+        # setup node keys
+        self.setup_nodes_keys()
+
+        # build up all the node instances
+        for index in range(self._number_of_nodes):
+            self.append_node(index, self._node_load_directory)
+
+        # Now connect the nodes as specified
+        if self._node_connections:
+            self.connect_nodes(self._node_connections)
+
+        # start all the nodes
+        for index in range(self._number_of_nodes):
+            self.start_node(index)
+
+        time.sleep(5)  # TODO(HUT): blocking http call to node for ready state
+
+    def stop(self):
+        if self._nodes:
+            for n, node in enumerate(self._nodes):
+                print('Stopping Node {}...'.format(n))
+                if(node):
                     node.stop()
                 print('Stopping Node {}...complete'.format(n))
 

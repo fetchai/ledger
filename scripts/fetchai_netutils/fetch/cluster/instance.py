@@ -47,76 +47,6 @@ class Instance(object):
         return self._log_path
 
 
-class DmlfEtchInstance(Instance):
-    def __init__(self, app_path, port_start, key_b64, pub_b64, root, clear_path=True):
-        self._app_path = str(app_path)
-        self._port_start = int(port_start)
-        self._root = root
-        self._key = key_b64
-        self._pub = pub_b64
-        self._peers_uris = []
-        self._peers_pubs = []
-
-        super().__init__([], root)
-
-        self._update_cmd()
-
-    def add_peer(self, peer):
-        self._peers_uris.append(peer.uri)
-        self._peers_pubs.append(peer.public_key)
-
-    def start(self):
-        self._update_cmd()
-
-        super().start()
-
-        print('Dmlf Etch instance {} on pid {}'.format(
-            self._port_start, self._process.pid))
-        print(self._cmd)
-
-    @property
-    def uri(self):
-        return 'tcp://127.0.0.1:' + str(self._port_start)
-
-    @property
-    def public_key(self):
-        return self._pub
-
-    def _update_cmd(self):
-        config_file = "{}/config_{}.json".format(self._root, self._port_start)
-        self._generate_json(config_file)
-        cmd = [
-            self._app_path,
-            config_file,
-        ]
-        self._cmd = cmd
-
-    def _generate_json(self, filename):
-        config = {
-            "node": {
-                "uri": self.uri,
-                "key": self._key
-            }
-        }
-        with open(filename, 'w') as config_file:
-            json.dump(config, config_file)
-
-    def generate_nodes_config(self):
-        nodes = [
-            {
-                "uri": uri,
-                "pub": pub
-            }
-            for uri, pub in zip(self._peers_uris, self._peers_pubs)
-        ]
-
-        return nodes
-
-    # Append arbitrary flags
-    def append_to_cmd(self, extra):
-        self._cmd = [*self._cmd, *extra]
-
-
 class ConstellationInstance(Instance):
     def __init__(self, app_path, port_start, root, clear_path=True):
         self._app_path = str(app_path)
@@ -251,3 +181,74 @@ class ConstellationInstance(Instance):
     # Append arbitrary flags
     def append_to_cmd(self, extra):
         self._cmd = [*self._cmd, *extra]
+
+
+class DmlfEtchInstance(Instance):
+    def __init__(self, app_path, port_start, key_b64, pub_b64, root, clear_path=True):
+        self._app_path = str(app_path)
+        self._port_start = int(port_start)
+        self._root = root
+        self._key = key_b64
+        self._pub = pub_b64
+        self._peers_uris = []
+        self._peers_pubs = []
+
+        super().__init__([], root)
+
+        self._update_cmd()
+
+    def add_peer(self, peer):
+        self._peers_uris.append(peer.uri)
+        self._peers_pubs.append(peer.public_key)
+
+    def start(self):
+        self._update_cmd()
+
+        super().start()
+
+        print('Dmlf Etch instance {} on pid {}'.format(
+            self._port_start, self._process.pid))
+        print(self._cmd)
+
+    @property
+    def uri(self):
+        return 'tcp://127.0.0.1:' + str(self._port_start)
+
+    @property
+    def public_key(self):
+        return self._pub
+
+    def _update_cmd(self):
+        config_file = "{}/config_{}.json".format(self._root, self._port_start)
+        self._generate_json(config_file)
+        cmd = [
+            self._app_path,
+            config_file,
+        ]
+        self._cmd = cmd
+
+    def _generate_json(self, filename):
+        config = {
+            "node": {
+                "uri": self.uri,
+                "key": self._key
+            }
+        }
+        with open(filename, 'w') as config_file:
+            json.dump(config, config_file)
+
+    def generate_nodes_config(self):
+        nodes = [
+            {
+                "uri": uri,
+                "pub": pub
+            }
+            for uri, pub in zip(self._peers_uris, self._peers_pubs)
+        ]
+
+        return nodes
+
+    # Append arbitrary flags
+    def append_to_cmd(self, extra):
+        self._cmd = [*self._cmd, *extra]
+

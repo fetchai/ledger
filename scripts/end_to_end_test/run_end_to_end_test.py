@@ -509,7 +509,7 @@ def parse_commandline():
         help='Location of the build directory relative to current path')
     parser.add_argument(
         'node_exe', type=str,
-        help='Location of the application binary to deploy relative to current path (should match with the application_type in the yaml_file)')
+        help='Location of the application binary to deploy relative to current path (should be compatible with the test_type in the yaml_file)')
     parser.add_argument('yaml_file', type=str,
                         help='Location of the yaml file dictating the tests')
 
