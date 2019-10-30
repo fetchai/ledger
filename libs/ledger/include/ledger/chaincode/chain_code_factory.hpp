@@ -17,36 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/synergetic_contract.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+
+#include <memory>
+#include <unordered_set>
 
 namespace fetch {
-namespace chain {
-
-class Address;
-
-}  // namespace chain
+namespace byte_array {
+class ConstByteArray;
+}
 namespace ledger {
 
-class StorageInterface;
+class Contract;
 
-class SynergeticContractFactory
-{
-public:
-  // Construction / Destruction
-  explicit SynergeticContractFactory(StorageInterface &storage);
-  SynergeticContractFactory(SynergeticContractFactory const &) = delete;
-  SynergeticContractFactory(SynergeticContractFactory &&)      = delete;
-  ~SynergeticContractFactory()                                 = default;
-
-  SynergeticContractPtr Create(Digest const &digest);
-
-  // Operators
-  SynergeticContractFactory &operator=(SynergeticContractFactory const &) = delete;
-  SynergeticContractFactory &operator=(SynergeticContractFactory &&) = delete;
-
-private:
-  StorageInterface &storage_;
-};
+std::shared_ptr<Contract> CreateChainCode(byte_array::ConstByteArray const &contract_name);
+std::unordered_set<byte_array::ConstByteArray> const &GetChainCodeContracts();
 
 }  // namespace ledger
 }  // namespace fetch

@@ -175,3 +175,18 @@ steps:
   - sleep: 5
   - run_python_test: { "script": ".smart_contract_tests.transfer" }
 ...
+
+---
+test_description: >
+  Test that contract owner address is passed to @init
+
+setup_conditions:
+  test_name: "init_owner_address"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.init_owner_address" }
+...
