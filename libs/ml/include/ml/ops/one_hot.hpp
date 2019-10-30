@@ -40,6 +40,13 @@ public:
   using SPType        = OpOneHotSaveableParams<T>;
   using MyType        = OneHot<TensorType>;
 
+  /**
+   * One hot function based on tf.one_hot
+   * @param depth number of classes
+   * @param axis
+   * @param on_value TRUE value
+   * @param off_value FALSE value
+   */
   explicit OneHot(SizeType depth, SizeType axis = 0, DataType on_value = DataType{1.0},
                   DataType off_value = DataType{0.0})
     : depth_(depth)
