@@ -172,7 +172,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
     state().PushContext(scope.full_name());
     smart_contract.Attach(
         {context().token_contract, tx.contract_address(), &state(), context().block_index});
-    init_status = smart_contract.DispatchInitialise(payable_address, tx);
+    init_status = smart_contract.DispatchInitialise(tx.from(), tx);
     smart_contract.Detach();
     state().PopContext();
 
@@ -203,7 +203,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
 storage::ResourceAddress SmartContractManager::CreateAddressForContract(Digest const &digest)
 {
   // create the resource address in the form fetch.contract.state.<digest of contract>
-  return StateAdapter::CreateAddress(Identifier{NAME}, digest);
+  return StateAdapter::CreateAddress(Identifier{NAME}, digest.ToHex());
 }
 
 }  // namespace ledger
