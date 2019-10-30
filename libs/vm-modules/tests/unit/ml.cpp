@@ -644,65 +644,65 @@ TEST_F(MLTests, model_string_serialisation_test)
   std::string const state_name3{"model_state3"};
   std::string const state_name4{"model_state4"};
   ASSERT_TRUE(toolkit.Compile(graph_serialise_src));
-//  EXPECT_CALL(toolkit.observer(), Write(state_name1, _, _));
-//  EXPECT_CALL(toolkit.observer(), Write(state_name2, _, _));
-//  EXPECT_CALL(toolkit.observer(), Write(state_name3, _, _));
-//  EXPECT_CALL(toolkit.observer(), Write(state_name4, _, _));
+  //  EXPECT_CALL(toolkit.observer(), Write(state_name1, _, _));
+  //  EXPECT_CALL(toolkit.observer(), Write(state_name2, _, _));
+  //  EXPECT_CALL(toolkit.observer(), Write(state_name3, _, _));
+  //  EXPECT_CALL(toolkit.observer(), Write(state_name4, _, _));
   ASSERT_TRUE(toolkit.Run());
 
-//  static char const *graph_deserialise_src = R"(
-//    function main() : Tensor
-//      var state1 = State<String>("model_state1");
-//      var state2 = State<String>("model_state2");
-//      var state3 = State<String>("model_state3");
-//      var state4 = State<String>("model_state4");
-//
-//      var model_string1 = state1.get();
-//      var model_string2 = state2.get();
-//      var model_string3 = state3.get();
-//      var model_string4 = state4.get();
-//
-//      var model1 = Model();
-//      var model2 = Model();
-//      var model3 = Model();
-//      var model4 = Model();
-//      model1 = graph.deserializeFromString(model_string1);
-//      model2 = graph.deserializeFromString(model_string2);
-//      model3 = graph.deserializeFromString(model_string3);
-//      model4 = graph.deserializeFromString(model_string4);
-//
-////      var tensor_shape = Array<UInt64>(2);
-////      tensor_shape[0] = 2u64;
-////      tensor_shape[1] = 10u64;
-////      var data_tensor = Tensor(tensor_shape);
-////      var label_tensor = Tensor(tensor_shape);
-////      data_tensor.fill(7.0fp64);
-////      label_tensor.fill(7.0fp64);
-////
-////      graph.setInput("Input", data_tensor);
-////      graph.setInput("Label", label_tensor);
-////
-////      return graph.evaluate("Error");
-//    endfunction
-//  )";
-//
-//  ASSERT_TRUE(toolkit.Compile(graph_deserialise_src));
-//
-//  Variant res;
-//  EXPECT_CALL(toolkit.observer(), Exists(state_name1));
-//  EXPECT_CALL(toolkit.observer(), Exists(state_name2));
-//  EXPECT_CALL(toolkit.observer(), Exists(state_name3));
-//  EXPECT_CALL(toolkit.observer(), Exists(state_name4));
-//  EXPECT_CALL(toolkit.observer(), Read(state_name1, _, _)).Times(::testing::Between(1, 2));
-//  EXPECT_CALL(toolkit.observer(), Read(state_name2, _, _)).Times(::testing::Between(1, 2));
-//  EXPECT_CALL(toolkit.observer(), Read(state_name3, _, _)).Times(::testing::Between(1, 2));
-//  EXPECT_CALL(toolkit.observer(), Read(state_name4, _, _)).Times(::testing::Between(1, 2));
-//  ASSERT_TRUE(toolkit.Run(&res));
-//
-//  auto const initial_loss = first_res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-//  auto const loss         = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-//
-//  EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
+  //  static char const *graph_deserialise_src = R"(
+  //    function main() : Tensor
+  //      var state1 = State<String>("model_state1");
+  //      var state2 = State<String>("model_state2");
+  //      var state3 = State<String>("model_state3");
+  //      var state4 = State<String>("model_state4");
+  //
+  //      var model_string1 = state1.get();
+  //      var model_string2 = state2.get();
+  //      var model_string3 = state3.get();
+  //      var model_string4 = state4.get();
+  //
+  //      var model1 = Model();
+  //      var model2 = Model();
+  //      var model3 = Model();
+  //      var model4 = Model();
+  //      model1 = graph.deserializeFromString(model_string1);
+  //      model2 = graph.deserializeFromString(model_string2);
+  //      model3 = graph.deserializeFromString(model_string3);
+  //      model4 = graph.deserializeFromString(model_string4);
+  //
+  ////      var tensor_shape = Array<UInt64>(2);
+  ////      tensor_shape[0] = 2u64;
+  ////      tensor_shape[1] = 10u64;
+  ////      var data_tensor = Tensor(tensor_shape);
+  ////      var label_tensor = Tensor(tensor_shape);
+  ////      data_tensor.fill(7.0fp64);
+  ////      label_tensor.fill(7.0fp64);
+  ////
+  ////      graph.setInput("Input", data_tensor);
+  ////      graph.setInput("Label", label_tensor);
+  ////
+  ////      return graph.evaluate("Error");
+  //    endfunction
+  //  )";
+  //
+  //  ASSERT_TRUE(toolkit.Compile(graph_deserialise_src));
+  //
+  //  Variant res;
+  //  EXPECT_CALL(toolkit.observer(), Exists(state_name1));
+  //  EXPECT_CALL(toolkit.observer(), Exists(state_name2));
+  //  EXPECT_CALL(toolkit.observer(), Exists(state_name3));
+  //  EXPECT_CALL(toolkit.observer(), Exists(state_name4));
+  //  EXPECT_CALL(toolkit.observer(), Read(state_name1, _, _)).Times(::testing::Between(1, 2));
+  //  EXPECT_CALL(toolkit.observer(), Read(state_name2, _, _)).Times(::testing::Between(1, 2));
+  //  EXPECT_CALL(toolkit.observer(), Read(state_name3, _, _)).Times(::testing::Between(1, 2));
+  //  EXPECT_CALL(toolkit.observer(), Read(state_name4, _, _)).Times(::testing::Between(1, 2));
+  //  ASSERT_TRUE(toolkit.Run(&res));
+  //
+  //  auto const initial_loss = first_res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  //  auto const loss         = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  //
+  //  EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
 }
 
 TEST_F(MLTests, optimiser_set_graph_test)
