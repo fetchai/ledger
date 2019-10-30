@@ -75,7 +75,7 @@ void MuddleRegister::Broadcast(ConstByteArray const &data) const
 }
 
 /**
- * Lookup a connection given a specified handle
+ * Look up a connection given a specified handle
  *
  * @param handle The handle of the requested connection
  * @return A valid connection if successful, otherwise an invalid one

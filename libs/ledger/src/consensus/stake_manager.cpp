@@ -101,7 +101,7 @@ StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex bloc
 
   if (upper_bound == stake_history_.begin())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Update to lookup stake snapshot for block ", block);
+    FETCH_LOG_WARN(LOGGING_NAME, "Update to look up stake snapshot for block ", block);
     return {};
   }
 
