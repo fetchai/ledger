@@ -224,13 +224,12 @@ void PutWeightInFullyConnected(fetch::ml::StateDict<TensorType> &state_dict, Siz
                                std::string const &bias_file_name, std::string const &weights_name,
                                std::string const &bias_name)
 {
-  using SizeVector = typename TensorType::SizeVector;
   // load embedding layernorm gamma beta weights
 
   TensorType weights = LoadTensorFromFile<TensorType>(weights_file_name);
   TensorType bias    = LoadTensorFromFile<TensorType>(bias_file_name);
   FETCH_UNUSED(in_size);
-  assert(weights.shape() == SizeVector({out_size, in_size}));
+  assert(weights.shape() == TensorType::SizeVector({out_size, in_size}));
   assert(bias.size() == out_size);
   bias.Reshape({out_size, 1, 1});
 
@@ -250,7 +249,6 @@ void PutWeightInMultiheadAttention(
     std::string const &value_weights_name, std::string const &value_bias_name,
     std::string const &mattn_prefix)
 {
-  using SizeVector = typename TensorType::SizeVector;
   // get weight arrays from file
   TensorType query_weights = LoadTensorFromFile<TensorType>(query_weights_file_name);
   TensorType query_bias    = LoadTensorFromFile<TensorType>(query_bias_file_name);
@@ -280,12 +278,12 @@ void PutWeightInMultiheadAttention(
     TensorType sliced_key_bias      = key_bias.Slice(start_end_slice, 0u).Copy();
     TensorType sliced_value_weights = value_weights.Slice(start_end_slice, 0u).Copy();
     TensorType sliced_value_bias    = value_bias.Slice(start_end_slice, 0u).Copy();
-    assert(sliced_value_weights.shape() == SizeVector({attn_head_size, model_dims}));
-    assert(sliced_value_bias.shape() == SizeVector({attn_head_size, 1, 1}));
-    assert(sliced_query_weights.shape() == SizeVector({attn_head_size, model_dims}));
-    assert(sliced_query_bias.shape() == SizeVector({attn_head_size, 1, 1}));
-    assert(sliced_key_weights.shape() == SizeVector({attn_head_size, model_dims}));
-    assert(sliced_key_bias.shape() == SizeVector({attn_head_size, 1, 1}));
+    assert(sliced_value_weights.shape() == TensorType::SizeVector({attn_head_size, model_dims}));
+    assert(sliced_value_bias.shape() == TensorType::SizeVector({attn_head_size, 1, 1}));
+    assert(sliced_query_weights.shape() == TensorType::SizeVector({attn_head_size, model_dims}));
+    assert(sliced_query_bias.shape() == TensorType::SizeVector({attn_head_size, 1, 1}));
+    assert(sliced_key_weights.shape() == TensorType::SizeVector({attn_head_size, model_dims}));
+    assert(sliced_key_bias.shape() == TensorType::SizeVector({attn_head_size, 1, 1}));
 
     // put the weights into each head
     *(state_dict.dict_[this_attn_prefix + query_weights_name].weights_) = sliced_query_weights;
