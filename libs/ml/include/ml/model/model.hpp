@@ -56,8 +56,8 @@ public:
   using DataLoaderType     = dataloaders::DataLoader<TensorType, TensorType>;
   using ModelOptimiserType = optimisers::Optimiser<TensorType>;
   using GraphPtrType       = typename std::shared_ptr<GraphType>;
-  using DataLoaderPtrType  = typename std::unique_ptr<DataLoaderType>;
-  using OptimiserPtrType   = typename std::unique_ptr<ModelOptimiserType>;
+  using DataLoaderPtrType  = typename std::shared_ptr<DataLoaderType>;
+  using OptimiserPtrType   = typename std::shared_ptr<ModelOptimiserType>;
 
   explicit Model(ModelConfig<DataType> model_config = ModelConfig<DataType>())
     : model_config_(std::move(model_config))
@@ -72,7 +72,7 @@ public:
   virtual ~Model() = default;
 
   void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
-  void SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr);
+  void SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr);
   void SetOptimiser(OptimiserPtrType optimiser_ptr);
 
   void     Train();
@@ -95,7 +95,7 @@ public:
 
 protected:
   ModelConfig<DataType> model_config_;
-  GraphPtrType          graph_ptr_ = std::make_unique<GraphType>();
+  GraphPtrType          graph_ptr_ = std::make_shared<GraphType>();
   DataLoaderPtrType     dataloader_ptr_;
   OptimiserPtrType      optimiser_ptr_;
 
@@ -183,21 +183,14 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
 }
 
 /**
- * Overwrite the models dataloader with an external custom dataloader. It must be
- * moved in as a unique_ptr to ensure ownership entirely belongs to model
+ * Overwrite the models dataloader with an external custom dataloader.
  * @tparam TensorType
  * @param dataloader_ptr
  */
 template <typename TensorType>
-void Model<TensorType>::SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr)
+void Model<TensorType>::SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr)
 {
-  dataloader_ptr_ = std::move(dataloader_ptr);
-}
-
-template <typename TensorType>
-void Model<TensorType>::SetOptimiser(OptimiserPtrType optimiser_ptr)
-{
-  optimiser_ptr = std::move(optimiser_ptr);
+  dataloader_ptr_ = dataloader_ptr;
 }
 
 /**

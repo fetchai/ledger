@@ -61,8 +61,6 @@ private:
   float                                                               analogy_score_ = 0.0f;
   Translator                                                          translator_;
 
-  void PrepareDataLoader();
-
   void PrepareOptimiser();
 
   VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients) override;
@@ -77,13 +75,19 @@ Word2VecClient<TensorType>::Word2VecClient(std::string const &                  
   : TrainingClient<TensorType>(id, tp, console_mutex_ptr)
   , tp_(tp)
 {
-  PrepareDataLoader();
+  // set up dataloader
+  w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<TensorType>>(
+      tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
+  this->dataloader_ptr_ = w2v_data_loader_ptr_;
 
-  DataType est_samples = w2v_data_loader_ptr_->EstimatedSampleNumber();
-  // calc the compatiable linear lr decay
-  tp_.learning_rate_param.linear_decay_rate = DataType{1} / est_samples;
-  // this decay rate gurantees that the lr is reduced to zero by the
+  // build vocab
+  w2v_data_loader_ptr_->BuildVocabAndData({tp_.data}, tp_.min_count);
+
+  // calculate the compatible linear lr decay
+  // this decay rate guarantees that the lr is reduced to zero by the
   // end of an epoch (despite capping by ending learning rate)
+  DataType est_samples                      = w2v_data_loader_ptr_->EstimatedSampleNumber();
+  tp_.learning_rate_param.linear_decay_rate = DataType{1} / est_samples;
   std::cout << "id: " << id << ", dataloader_.EstimatedSampleNumber(): " << est_samples
             << std::endl;
 
@@ -114,18 +118,16 @@ void Word2VecClient<TensorType>::Test()
     // Lock model
     FETCH_LOCK(this->model_mutex_);
 
-    auto graph = this->GetGraph();
-
     fetch::ml::utilities::TestEmbeddings<TensorType>(
-        graph, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k,
-        tp_.analogies_test_file, false, "/tmp/w2v_client_" + this->id_);
+        *this->graph_ptr_, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1, tp_.word2,
+        tp_.word3, tp_.k, tp_.analogies_test_file, false, "/tmp/w2v_client_" + this->id_);
   }
 }
 
 template <class TensorType>
 float Word2VecClient<TensorType>::ComputeAnalogyScore()
 {
-  TensorType const &weights = fetch::ml::utilities::GetEmbeddings(this->GetGraph(), skipgram_);
+  TensorType const &weights = fetch::ml::utilities::GetEmbeddings(*this->graph_ptr_, skipgram_);
 
   return fetch::ml::utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights,
                                                  tp_.analogies_test_file)
@@ -139,7 +141,7 @@ template <class TensorType>
 std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(this->model_mutex_);
-  return std::make_shared<GradientType>(this->GetGraph().GetGradients(),
+  return std::make_shared<GradientType>(this->graph_ptr_->GetGradients(),
                                         w2v_data_loader_ptr_->GetVocabHash(),
                                         w2v_data_loader_ptr_->GetVocab()->GetReverseVocab());
 }
@@ -181,44 +183,30 @@ std::pair<TensorType, TensorType> Word2VecClient<TensorType>::TranslateWeights(
 // private
 
 template <class TensorType>
-void Word2VecClient<TensorType>::PrepareDataLoader()
-{
-  w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<TensorType>>(
-      tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
-  w2v_data_loader_ptr_->BuildVocabAndData({tp_.data}, tp_.min_count);
-
-  this->SetDataloader(*w2v_data_loader_ptr_);
-}
-
-template <class TensorType>
 void Word2VecClient<TensorType>::PrepareOptimiser()
 {
   // set up the graph first
-  auto graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
-
+  this->graph_ptr_ = std::make_shared<fetch::ml::Graph<TensorType>>();
   std::string input_name =
-      graph_ptr->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+      this->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
   std::string context_name =
-      graph_ptr->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
+      this->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
   this->label_name_ =
-      graph_ptr->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
-  skipgram_ = graph_ptr->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
+      this->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+  skipgram_ = this->graph_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
       "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
       w2v_data_loader_ptr_->vocab_size());
 
-  this->error_name_ = graph_ptr->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
-      "Error", {skipgram_, this->label_name_});
+  this->error_name_ =
+      this->graph_ptr_->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
+          "Error", {skipgram_, this->label_name_});
 
   this->inputs_names_ = {input_name, context_name};
 
-  auto model_graph = this->GetGraph();
-  model_graph      = *graph_ptr;
-
   // Initialise Optimiser
-  auto optimiser = fetch::ml::optimisers::AdamOptimiser<TensorType>(
-      graph_ptr, this->inputs_names_, this->label_name_, this->error_name_,
+  this->optimiser_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
+      this->graph_ptr_, this->inputs_names_, this->label_name_, this->error_name_,
       tp_.learning_rate_param);
-  this->SetOptimiser(optimiser);
 }
 
 template <class TensorType>
