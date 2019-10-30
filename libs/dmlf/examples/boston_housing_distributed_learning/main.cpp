@@ -24,7 +24,7 @@
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/ReadCSV.hpp"
+#include "math/utilities/ReadCSV.hpp"
 #include "ml/exceptions/exceptions.hpp"
 
 #include <algorithm>
@@ -70,8 +70,8 @@ int main(int argc, char **argv)
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   // Load data
-  TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(data_file).Transpose();
-  TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(labels_file).Transpose();
+  TensorType data_tensor  = fetch::math::utilities::ReadCSV<TensorType>(data_file).Transpose();
+  TensorType label_tensor = fetch::math::utilities::ReadCSV<TensorType>(labels_file).Transpose();
 
   // Shuffle data
   utilities::Shuffle(data_tensor, label_tensor, seed);

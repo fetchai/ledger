@@ -55,14 +55,11 @@ var orig_train_data = readCSV(System.Argv(1));
 var orig_train_labels = readCSV(System.Argv(2));
 var orig_test_data = readCSV(System.Argv(3));
 var orig_test_labels = readCSV(System.Argv(4));
-var orig_train_data.transpose();
-var orig_train_labels.transpose();
-var orig_test_data.transpose();
-var orig_test_labels.transpose();
-var orig_train_data.unsqueeze();
-var orig_train_labels.unsqueeze();
-var orig_test_data.unsqueeze();
-var orig_test_labels.unsqueeze();
+
+orig_train_data = orig_train_data.unsqueeze();
+orig_train_labels = orig_train_labels.unsqueeze();
+orig_test_data = orig_test_data.unsqueeze();
+orig_test_labels = orig_test_labels.unsqueeze();
 
 // NORMALISE ALL DATA TO THE MAX RANGE OF THE TRAINING DATA
 var scaler = Scaler();
