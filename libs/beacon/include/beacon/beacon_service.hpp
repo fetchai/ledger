@@ -156,7 +156,7 @@ private:
   DeadlineTimer   timer_to_proceed_{"beacon:main"};
 
   // Limit run away entropy generation
-  uint64_t entropy_lead_blocks_    = 3;
+  uint64_t entropy_lead_blocks_    = 5;
   uint64_t most_recent_round_seen_ = 0;
 
   /// General configuration
