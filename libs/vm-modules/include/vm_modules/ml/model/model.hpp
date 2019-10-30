@@ -51,7 +51,7 @@ public:
   using ModelConfigPtrType  = std::shared_ptr<fetch::ml::model::ModelConfig<DataType>>;
   using GraphType           = fetch::ml::Graph<TensorType>;
   using TensorDataloader    = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
-  using TensorDataloaderPtr = std::unique_ptr<TensorDataloader>;
+  using TensorDataloaderPtr = std::shared_ptr<TensorDataloader>;
   using VMTensor            = fetch::vm_modules::math::VMTensor;
 
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
