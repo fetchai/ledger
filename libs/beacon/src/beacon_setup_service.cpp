@@ -746,8 +746,8 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
 
     // Add own signature to the structure
     auto own_signature = certificate_->Sign(beacon_->block_entropy.digest);
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " signs digest ",
-                   beacon_->block_entropy.digest.ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " signs digest ",
+                    beacon_->block_entropy.digest.ToHex());
     beacon_->block_entropy.confirmations.insert(
         {certificate_->identity().identifier(), own_signature});
 

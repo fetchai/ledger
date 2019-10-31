@@ -118,8 +118,17 @@ NotarisationService::State NotarisationService::OnCollectNotarisations()
 {
   FETCH_LOCK(mutex_);
 
+  // Select correct committee to collect from
+  SharedAeonNotarisationUnit notarisation_unit = active_notarisation_unit_;
+  if (previous_notarisation_unit_ &&
+      notarisation_collection_height_ <= previous_notarisation_unit_->round_end())
+  {
+    assert(notarisation_collection_height_ >= previous_notarisation_unit_->round_start());
+    notarisation_unit = previous_notarisation_unit_;
+  }
+
   // Randomly select someone from qual to query
-  auto        members             = active_notarisation_unit_->notarisation_members();
+  auto        members             = notarisation_unit->notarisation_members();
   std::size_t random_member_index = static_cast<size_t>(rand()) % members.size();
   auto        it                  = std::next(members.begin(), long(random_member_index));
 
@@ -241,7 +250,7 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
       auto sig = notarisation_unit->ComputeAggregateSignature(notarisation_shares);
       assert(notarisation_unit->VerifyAggregateSignature(hash, sig));
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Notarisation built for block ", hash.ToHex(), " at height ",
+      FETCH_LOG_INFO(LOGGING_NAME, "Notarisation built for block number ",
                      notarisation_collection_height_);
       assert(notarisations_built_[notarisation_collection_height_].find(hash) ==
              notarisations_built_[notarisation_collection_height_].end());
@@ -343,7 +352,7 @@ void NotarisationService::NotariseBlock(BlockBody const &block)
   notarisations_being_built_[block.block_number][block.hash].insert(
       {endpoint_.GetAddress(), SignedNotarisation(ecdsa_sig, notarisation)});
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Notarised block at height ", block.block_number);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Notarised block at height ", block.block_number);
 }
 
 void NotarisationService::SetAeonDetails(uint64_t round_start, uint64_t round_end,

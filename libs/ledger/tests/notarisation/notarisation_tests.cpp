@@ -40,14 +40,7 @@ using namespace fetch::dkg;
 using namespace fetch::ledger;
 using namespace fetch::ledger::testing;
 
-using Prover         = fetch::crypto::Prover;
-using ProverPtr      = std::shared_ptr<Prover>;
-using Certificate    = fetch::crypto::Prover;
-using CertificatePtr = std::shared_ptr<Certificate>;
-using Address        = fetch::muddle::Packet::Address;
-using BlockPtr       = Consensus::NextBlockPtr;
-using BlockPtrConst  = BlockGenerator::BlockPtrConst;
-
+using Address = fetch::muddle::Packet::Address;
 struct DummyManifestCache : public fetch::shards::ManifestCacheInterface
 {
   bool QueryManifest(Address const & /*address*/, fetch::shards::Manifest & /*manifest*/) override
@@ -56,13 +49,12 @@ struct DummyManifestCache : public fetch::shards::ManifestCacheInterface
   }
 };
 
-using Muddle                     = muddle::MuddlePtr;
-using ConstByteArray             = byte_array::ConstByteArray;
-using MuddleAddress              = ConstByteArray;
-using BlockHash                  = Digest;
-using AeonNotarisationUnit       = ledger::NotarisationManager;
-using SharedAeonNotarisationUnit = std::shared_ptr<AeonNotarisationUnit>;
-using SharedAeonExecutionUnit    = BeaconSetupService::SharedAeonExecutionUnit;
+using Certificate    = fetch::crypto::Prover;
+using CertificatePtr = std::shared_ptr<Certificate>;
+using BlockPtr       = Consensus::NextBlockPtr;
+using Muddle         = muddle::MuddlePtr;
+using ConstByteArray = byte_array::ConstByteArray;
+using MuddleAddress  = ConstByteArray;
 
 struct NotarisationNode
 {
@@ -130,7 +122,6 @@ struct NotarisationNode
 
 TEST(notarisation, notarise_blocks)
 {
-  // Set up identity and keys
   uint32_t num_nodes    = 6;
   uint32_t cabinet_size = 3;
   uint32_t threshold    = 2;
@@ -144,7 +135,7 @@ TEST(notarisation, notarise_blocks)
     nodes.emplace_back(new NotarisationNode(port_number, i, cabinet_size, aeon_period));
   }
 
-  // Connect muddles together (localhost for this example)
+  // Connect muddles together
   for (uint32_t i = 0; i < num_nodes; i++)
   {
     for (uint32_t j = i + 1; j < num_nodes; j++)
@@ -153,7 +144,7 @@ TEST(notarisation, notarise_blocks)
     }
   }
 
-  // wait for all the nodes to completely connect
+  // Wait for all the nodes to completely connect
   std::vector<uint32_t> pending_nodes(num_nodes, 0);
   std::iota(pending_nodes.begin(), pending_nodes.end(), 0);
   while (!pending_nodes.empty())
@@ -200,21 +191,29 @@ TEST(notarisation, notarise_blocks)
   }
   EXPECT_EQ(snapshot.total_stake(), cabinet_size * stake);
 
-  // Update stake and queue updates for next committee
+  // Completely change over committee and queue updates
   for (auto &node : nodes)
   {
     node->consensus.Reset(snapshot);
-    for (uint32_t j = cabinet_size; j < num_nodes; ++j)
+    for (uint32_t j = 0; j < num_nodes; ++j)
     {
-      node->consensus.stake()->update_queue().AddStakeUpdate(
-          4, nodes[j]->muddle_certificate->identity(), stake);
+      if (j >= cabinet_size)
+      {
+        node->consensus.stake()->update_queue().AddStakeUpdate(
+            4, nodes[j]->muddle_certificate->identity(), stake);
+      }
+      else
+      {
+        node->consensus.stake()->update_queue().AddStakeUpdate(
+            4, nodes[j]->muddle_certificate->identity(), 0);
+      }
     }
   }
 
   // Setup trusted dealer for first aeon
   TrustedDealer dealer{cabinet, threshold};
 
-  // Reset cabinet for ready made keys
+  // Reset cabinet with ready made keys
   uint64_t     round_start = 1;
   BlockEntropy prev_entropy;
   prev_entropy.group_signature = "Hello";
@@ -227,12 +226,11 @@ TEST(notarisation, notarise_blocks)
         dealer.GetNotarisationKeys(nodes[i]->address()));
   }
 
-  // Generate blocks for 2 aeons
+  // Generate blocks and notarise for 2 aeons
   for (uint16_t block_number = 1; block_number < aeon_period * 2 + 1; block_number++)
   {
     std::vector<BlockPtr> blocks_this_round;
-    // Generate blocks and notarise
-    uint32_t count = 0;
+    uint32_t              count = 0;
     while (count == 0)
     {
       for (auto &node : nodes)
@@ -241,7 +239,6 @@ TEST(notarisation, notarise_blocks)
 
         if (next_block != nullptr)
         {
-
           // Set block hash and ficticious weight for first block
           if (block_number == 1)
           {
@@ -261,8 +258,6 @@ TEST(notarisation, notarise_blocks)
         }
       }
     }
-
-    std::cout << "Generated " << count << " blocks for round " << block_number << std::endl;
 
     // Verify notarisation in block
     for (auto &node : nodes)
