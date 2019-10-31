@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/metrics/mean_absolute_error.hpp"
-#include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
@@ -26,10 +25,9 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/utilities/graph_saver.hpp"
 #include "ml/utilities/min_max_scaler.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "ml/serializers/ml_types.hpp"
 
 #include <iostream>
 #include <memory>
@@ -121,25 +119,6 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
   return {train_data_tensor, train_labels_tensor, test_data_tensor, test_labels_tensor};
 }
 
-void SaveGraphToFile(GraphType &g, std::string const &file_name)
-{
-
-  // start serializing and writing to file
-  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
-  std::cout << "got saveable params" << std::endl;
-
-  fetch::serializers::LargeObjectSerializeHelper losh;
-
-  losh << gsp1;
-  std::cout << "finish serializing" << std::endl;
-
-  std::ofstream outFile(file_name, std::ios::out | std::ios::binary);
-  outFile.write(losh.buffer.data().char_pointer(), std::streamsize(losh.buffer.size()));
-  outFile.close();
-  std::cout << losh.buffer.size() << std::endl;
-  std::cout << "finish writing to file" << std::endl;
-}
-
 int main(int ac, char **av)
 {
   if (ac < 5)
@@ -205,13 +184,14 @@ int main(int ac, char **av)
       scaler.DeNormalise(prediction, prediction);
     }
 
-    SaveGraphToFile(*g, "./ethereum_price_prediction_graph" + std::to_string(i) + ".bin");
+    fetch::ml::utilities::SaveGraph<GraphType>(
+        *g, "./ethereum_price_prediction_graph" + std::to_string(i) + ".bin");
 
     auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
     std::cout << "mean absolute validation error: " << result << std::endl;
   }
 
-  SaveGraphToFile(*g, "./ethereum_price_prediction_graph.bin");
+  fetch::ml::utilities::SaveGraph(*g, "./ethereum_price_prediction_graph.bin");
 
   return 0;
 }

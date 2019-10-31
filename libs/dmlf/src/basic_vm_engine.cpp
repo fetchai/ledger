@@ -477,6 +477,9 @@ BasicVmEngine::LedgerVariant BasicVmEngine::Convert(VmVariant const &vmVariant) 
     return LedgerVariant{vmVariant.Get<int>()};
   }
   case fetch::vm::TypeIds::Float32:
+  {
+    return LedgerVariant{vmVariant.Get<float>()};
+  }
   case fetch::vm::TypeIds::Float64:
   {
     return LedgerVariant{vmVariant.Get<double>()};
@@ -488,6 +491,11 @@ BasicVmEngine::LedgerVariant BasicVmEngine::Convert(VmVariant const &vmVariant) 
   case fetch::vm::TypeIds::Fixed64:
   {
     return LedgerVariant{vmVariant.Get<fp64_t>()};
+  }
+  case fetch::vm::TypeIds::String:
+  {
+    std::string temp{vmVariant.Get<vm::Ptr<vm::String>>()->str};
+    return LedgerVariant{std::move(temp)};
   }
   default:
     return LedgerVariant{};

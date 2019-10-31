@@ -41,7 +41,7 @@ public:
   using ErrorCode  = ExecutionErrorMessage::Code;
   using Error      = ExecutionResult::Error;
 
-  explicit LocalExecutor(ExecutionEnginePtr &exec_engine);
+  explicit LocalExecutor(ExecutionEnginePtr exec_engine);
   ~LocalExecutor() override = default;
 
   LocalExecutor(LocalExecutor const &other) = delete;
