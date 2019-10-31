@@ -60,6 +60,10 @@ public:
   ExecutionResult Run(Name const &execName, Name const &stateName, std::string const &entrypoint,
                       Params params) override;
 
+  // This is a test function for developing non-primitive type passing.
+  ExecutionResult RunSerialisedParameterPassing(Name const &execName, Name const &stateName,
+                                                std::string const &entrypoint, Params params);
+
 private:
   bool HasExecutable(std::string const &name) const;
   bool HasState(std::string const &name) const;

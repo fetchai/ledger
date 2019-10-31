@@ -61,7 +61,7 @@ public:
     COLLECT_SIGNATURES,
     VERIFY_SIGNATURES,
     COMPLETE,
-    COMITEE_ROTATION,
+    CABINET_ROTATION,
 
     WAIT_FOR_PUBLIC_KEYS,
     OBSERVE_ENTROPY_GENERATION
@@ -135,8 +135,6 @@ protected:
   State OnCollectSignaturesState();
   State OnVerifySignaturesState();
   State OnCompleteState();
-
-  State OnComiteeState();
   /// @}
 
   /// Protocol endpoints

@@ -68,14 +68,14 @@ public:
   std::vector<Coefficient> GetCoefficients();
   std::pair<Share, Share>  GetOwnShares(MuddleAddress const &receiver);
   std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &owner);
-  bool AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
-  bool AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
+  void AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  void AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
   std::unordered_set<MuddleAddress> ComputeComplaints(
       std::set<MuddleAddress> const &coeff_received);
   bool VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer);
   void ComputeSecretShare();
   std::vector<Coefficient> GetQualCoefficients();
-  bool AddQualCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  void AddQualCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
   SharesExposedMap ComputeQualComplaints(std::set<MuddleAddress> const &coeff_received);
   MuddleAddress    VerifyQualComplaint(MuddleAddress const &from, ComplaintAnswer const &answer);
   void             ComputePublicKeys();
@@ -114,7 +114,7 @@ private:
   static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
 
   CertificatePtr certificate_;
-  uint32_t       cabinet_size_;       ///< Size of committee
+  uint32_t       cabinet_size_;       ///< Size of cabinet
   uint32_t       polynomial_degree_;  ///< Degree of polynomial in DKG
   CabinetIndex   cabinet_index_;      ///< Index of our address in cabinet_
 
@@ -133,7 +133,6 @@ private:
   PrivateKey                           xprime_i;
   std::vector<PublicKey>               y_i;
   std::vector<std::vector<PrivateKey>> s_ij, sprime_ij;  ///< Secret shares
-  std::vector<PrivateKey>              z_i;
   std::vector<std::vector<PublicKey>>  C_ik;  ///< Verification vectors from cabinet members
   std::vector<std::vector<PublicKey>>  A_ik;  ///< Qual verification vectors
   std::vector<std::vector<PublicKey>>  g__s_ij;

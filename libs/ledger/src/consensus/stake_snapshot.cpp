@@ -38,19 +38,19 @@ using DRNG        = random::LinearCongruentialGenerator;
  * @param count The size of the selection
  * @return The selection of identities
  */
-StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std::size_t count) const
+StakeSnapshot::CabinetPtr StakeSnapshot::BuildCabinet(uint64_t entropy, std::size_t count) const
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Building committee from pool of: ", stake_index_.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Building cabinet from pool of: ", stake_index_.size());
 
-  CommitteePtr committee = std::make_shared<Committee>();
-  committee->reserve(count);
-  auto stake_index = stake_index_;  // Since build committee is const
+  CabinetPtr cabinet = std::make_shared<Cabinet>();
+  cabinet->reserve(count);
+  auto stake_index = stake_index_;  // Since build cabinet is const
 
   if (count >= identity_index_.size())
   {
     for (auto const &record : stake_index)
     {
-      committee->emplace_back(record->identity);
+      cabinet->emplace_back(record->identity);
     }
   }
   else
@@ -83,7 +83,7 @@ StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std:
 
           if (chosen_identities.find(record->identity) == chosen_identities.end())
           {
-            committee->emplace_back(record->identity);
+            cabinet->emplace_back(record->identity);
             chosen_identities.emplace(record->identity);
 
             // exit from the search loop
@@ -100,11 +100,11 @@ StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std:
     }
   }
 
-  return committee;
+  return cabinet;
 }
 
 /**
- * Lookup stake for a given identity
+ * Look up stake for a given identity
  *
  * @param identity The identity to be queried
  * @return The stake amount

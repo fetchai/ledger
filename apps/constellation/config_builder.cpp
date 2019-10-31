@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "config_builder.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "manifest_builder.hpp"
 #include "settings.hpp"
 #include "vectorise/platform.hpp"
@@ -68,7 +69,7 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
   cfg.transient_peers       = settings.transient_peers.value();
   cfg.block_interval_ms     = settings.block_interval.value();
   cfg.aeon_period           = settings.aeon_period.value();
-  cfg.max_committee_size    = settings.max_committee_size.value();
+  cfg.max_cabinet_size      = settings.max_cabinet_size.value();
   cfg.stake_delay_period    = settings.stake_delay_period.value();
   cfg.peers_update_cycle_ms = settings.peer_update_interval.value();
   cfg.disable_signing       = settings.disable_signing.value();
