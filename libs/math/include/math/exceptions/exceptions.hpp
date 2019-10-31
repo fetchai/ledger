@@ -108,6 +108,7 @@ public:
 
   explicit NegativeLog(std::string const &msg)
     : std::runtime_error(msg)
+    , msg_(msg)
   {}
 
   char const *what() const noexcept override
@@ -157,12 +158,20 @@ public:
 
   explicit InvalidNumericCharacter(std::string const &msg)
     : std::runtime_error(msg)
+    , msg_(msg)
   {}
 
   char const *what() const noexcept override
   {
+    if (!(msg_.empty()))
+    {
+      return msg_.c_str();
+    }
     return "attempted to assign data to tensor using invalid character";
   }
+
+private:
+  std::string msg_;
 };
 
 class InvalidMode : public std::runtime_error
@@ -174,12 +183,20 @@ public:
 
   explicit InvalidMode(std::string const &msg)
     : std::runtime_error(msg)
+    , msg_(msg)
   {}
 
   char const *what() const noexcept override
   {
+    if (!(msg_.empty()))
+    {
+      return msg_.c_str();
+    }
     return "invalid mode selected";
   }
+
+private:
+  std::string msg_;
 };
 
 }  // namespace exceptions
