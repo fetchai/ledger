@@ -232,7 +232,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
 
   auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
   auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
-  loader.AddData(data, label);
+  loader.AddData({data}, label);
 
   while (!loader.IsDone())
   {
@@ -345,7 +345,7 @@ int main(int argc, char **argv)
     fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
     auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
     auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
-    loader.AddData(data, label);
+    loader.AddData({data}, label);
 
     /// FORWARD PASS PREDICTIONS ///
 
@@ -409,7 +409,7 @@ int main(int argc, char **argv)
       loader.Reset();
       auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(train_x_file);
       auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(train_y_file);
-      loader.AddData(data, label);
+      loader.AddData({data}, label);
 
       // Training loop
       // run first loop to get loss
@@ -454,7 +454,7 @@ int main(int argc, char **argv)
     loader.Reset();
     auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
     auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
-    loader.AddData(data, label);
+    loader.AddData({data}, label);
 
     DataType    distance         = 0;
     DataType    distance_counter = 0;

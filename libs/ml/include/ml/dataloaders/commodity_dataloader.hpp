@@ -61,7 +61,7 @@ public:
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
 
-  bool AddData(InputType const &data, LabelType const &label) override;
+  bool AddData(std::vector<InputType> const &data, LabelType const &label) override;
 
   LoaderType LoaderCode() override
   {
@@ -111,13 +111,13 @@ private:
  * @return
  */
 template <typename LabelType, typename InputType>
-bool CommodityDataLoader<LabelType, InputType>::AddData(InputType const &data,
-                                                        LabelType const &label)
+bool CommodityDataLoader<LabelType, InputType>::AddData(std::vector<InputType> const &data,
+                                                        LabelType const &             label)
 {
-  data_   = data;
+  data_   = data.at(0);
   labels_ = label;
   assert(data_.shape().at(1) == labels_.shape().at(1));
-  size_ = data.shape().at(1);
+  size_ = data.at(0).shape().at(1);
 
   UpdateRanges();
 
