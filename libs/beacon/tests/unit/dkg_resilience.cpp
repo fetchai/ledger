@@ -567,7 +567,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   uint64_t start_time =
-      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) - 50;
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
