@@ -294,7 +294,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
 
   if(proposed_block_timestamp_ms > uint64_t(previous_block_window_ends + uint32_t(miner_rank * block_interval_ms_)))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Minting block. Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms, " Prev window ends: ", previous_block_window_ends, " last block TS:  ", last_block_timestamp_ms);
+    FETCH_LOG_INFO(LOGGING_NAME, "Minting block. Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms, " Prev window ends: ", previous_block_window_ends, " last block TS:  ", last_block_timestamp_ms, " miner rank: ", miner_rank);
     return true;
   }
 

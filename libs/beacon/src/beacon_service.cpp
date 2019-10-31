@@ -281,7 +281,6 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   // Block for up to half a second waiting for the promise to resolve
   if (!timer_to_proceed_.HasExpired() && !sig_share_promise_->IsSuccessful())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Delaying until resolved RPC call!");
     state_machine_->Delay(std::chrono::milliseconds(50));
     return State::VERIFY_SIGNATURES;
   }
@@ -348,9 +347,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
                     " signatures. Round: ", index);
   }  // Mutex unlocks here since verification can take some time
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Start verifying.");
   MilliTimer const timer{"Verify threshold signature", 100};
-  FETCH_LOG_INFO(LOGGING_NAME, "Finish verifying!");
 
   // TODO(HUT): possibility for infinite loop here I suspect.
   if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
@@ -388,8 +385,8 @@ BeaconService::State BeaconService::OnCompleteState()
   // Trim maps of unnecessary info
   {
     auto const max_cache_size =
-        (active_exe_unit_->aeon.round_end - active_exe_unit_->aeon.round_start) + 1;
-    FETCH_LOG_INFO(LOGGING_NAME, "Trim cache: ", max_cache_size);
+        ((active_exe_unit_->aeon.round_end - active_exe_unit_->aeon.round_start) + 1)*3;
+
     auto it = completed_block_entropy_.begin();
 
     while (it != completed_block_entropy_.end() && completed_block_entropy_.size() > max_cache_size)
