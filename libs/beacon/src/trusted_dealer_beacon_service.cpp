@@ -70,6 +70,13 @@ void TrustedDealerBeaconService::StartNewCabinet(CabinetMemberList members, uint
   beacon->aeon.start_reference_timepoint = start_time;
   beacon->aeon.block_entropy_previous    = prev_entropy;
 
+  // Set block entropy for start of aeon
+  beacon->block_entropy                  = BlockEntropy{};
+  beacon->block_entropy.qualified        = beacon->manager.qual();
+  beacon->block_entropy.group_public_key = beacon->manager.group_public_key();
+  beacon->block_entropy.block_number     = beacon->aeon.round_start;
+  beacon->block_entropy.HashSelf();
+
   aeon_exe_queue_.push_back(beacon);
 }
 }  // namespace beacon
