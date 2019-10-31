@@ -227,7 +227,6 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   // Don't proceed from this state if it is ahead of the entropy we are trying to generate
   if (index > (most_recent_round_seen_ + entropy_lead_blocks_))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "no proceed collect sigs. ", index, " ", most_recent_round_seen_, " ", (most_recent_round_seen_ + entropy_lead_blocks_));
     state_machine_->Delay(std::chrono::milliseconds(5));
     return State::COLLECT_SIGNATURES;
   }
