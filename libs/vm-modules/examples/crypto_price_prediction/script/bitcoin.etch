@@ -70,7 +70,7 @@ var test_data = scaler.normalise(orig_test_data);
 var test_labels = scaler.normalise(orig_test_labels);
 
 var data_loader = DataLoader("tensor");
-data_loader.addData(train_data, train_labels);
+data_loader.addData({train_data}, train_labels);
 
 // SET UP GRAPH
 var graph = Graph();

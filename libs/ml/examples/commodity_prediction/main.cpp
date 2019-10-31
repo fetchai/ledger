@@ -231,7 +231,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
   data.Transpose();
   auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
   label.Transpose();
-  loader.AddData(data, label);
+  loader.AddData({data}, label);
 
   while (!loader.IsDone())
   {
@@ -347,7 +347,7 @@ int main(int argc, char **argv)
     data.Transpose();
     auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
     label.Transpose();
-    loader.AddData(data, label);
+    loader.AddData({data}, label);
 
     /// FORWARD PASS PREDICTIONS ///
 
@@ -413,7 +413,7 @@ int main(int argc, char **argv)
       data.Transpose();
       auto label = fetch::math::utilities::ReadCSV<TensorType>(train_y_file);
       label.Transpose();
-      loader.AddData(data, label);
+      loader.AddData({data}, label);
 
       // Training loop
       // run first loop to get loss
@@ -460,7 +460,7 @@ int main(int argc, char **argv)
     data.Transpose();
     auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
     label.Transpose();
-    loader.AddData(data, label);
+    loader.AddData({data}, label);
 
     DataType    distance         = 0;
     DataType    distance_counter = 0;

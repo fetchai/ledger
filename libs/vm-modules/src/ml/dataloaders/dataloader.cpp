@@ -139,7 +139,7 @@ void VMDataLoader::AddCommodityData(Ptr<String> const &xfilename, Ptr<String> co
   auto data  = fetch::math::utilities::ReadCSV<MathTensorType>(xfilename->str);
   auto label = fetch::math::utilities::ReadCSV<MathTensorType>(yfilename->str);
 
-  std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData(data, label);
+  std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData({data}, label);
 }
 
 void VMDataLoader::AddMnistData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
@@ -150,7 +150,7 @@ void VMDataLoader::AddMnistData(Ptr<String> const &xfilename, Ptr<String> const 
 
 void VMDataLoader::AddTensorData(Ptr<VMTensorType> const &data, Ptr<VMTensorType> const &labels)
 {
-  std::static_pointer_cast<TensorLoaderType>(loader_)->AddData(data->GetTensor(),
+  std::static_pointer_cast<TensorLoaderType>(loader_)->AddData({data->GetTensor()},
                                                                labels->GetTensor());
 }
 
