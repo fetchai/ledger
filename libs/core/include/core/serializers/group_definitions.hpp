@@ -147,7 +147,7 @@ inline SerializerTypes DetermineType(uint8_t b)
     return SerializerTypes::STRING;
   }
 
-  if (0 <= b && b < 128)
+  if (b < 128)
   {
     return SerializerTypes::UNSIGNED_INTEGER;
   }
