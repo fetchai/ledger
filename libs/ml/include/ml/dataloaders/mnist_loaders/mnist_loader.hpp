@@ -132,7 +132,7 @@ public:
    * @param label
    * @return
    */
-  bool AddData(InputType const &data, LabelType const &label) override
+  bool AddData(std::vector<InputType> const &data, LabelType const &label) override
   {
     FETCH_UNUSED(data);
     FETCH_UNUSED(label);
