@@ -309,8 +309,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 
     if (ret.threshold_signatures.empty())
     {
-      // TODO(HUT): debug this.
-      FETCH_LOG_INFO(LOGGING_NAME, "Peer wasn't ready when asking for signatures: ",
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Peer wasn't ready when asking for signatures: ",
                       qual_promise_identity_.identifier().ToBase64());
       state_machine_->Delay(std::chrono::milliseconds(100));
 
