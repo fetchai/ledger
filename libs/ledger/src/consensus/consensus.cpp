@@ -290,7 +290,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   assert(!qualified_cabinet_weighted.empty());
 
   // Miners must additionally wait N block periods according to their rank (0 being the best)
-  auto const miner_rank = std::distance(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.find(identity));
+  auto const miner_rank = std::distance(qualified_cabinet_weighted.begin(), std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity));
 
   if(proposed_block_timestamp_ms > (previous_block_window_ends + (miner_rank * block_interval_ms_))
   {
