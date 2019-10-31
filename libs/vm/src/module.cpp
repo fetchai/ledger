@@ -250,21 +250,19 @@ Module::Module()
           })
       .CreateCPPCopyConstructor<std::vector<std::vector<double>>>(
           [](VM *vm, TypeId, std::vector<std::vector<double>> const &arr) -> Ptr<IArray> {
-            auto outerid = vm->GetTypeId<Array<Ptr<Object>>>();
+            auto outerid = vm->GetTypeId<Array<Ptr<Array<double>>>>();
             auto innerid = vm->GetTypeId<Array<double>>();
-            std::cout << " " << vm->GetTypeId<Array<Ptr<Object>>>() << " "
-                      << vm->GetTypeId<Array<Ptr<IArray>>>() << " " << vm->GetTypeId<IArray>()
-                      << " " << vm->GetTypeId<Array<Ptr<Array<double>>>>() << " "
-                      << vm->GetTypeId<Array<double>>() << std::endl;
-            auto ret = Ptr<Array<Ptr<Object>>>(new Array<Ptr<Object>>(vm, outerid, innerid, 0));
+            std::cout << "ID: " << vm->GetTypeId<Array<Ptr<Array<double>>>>() << std::endl;
+            auto ret = Ptr<Array<Ptr<Array<double>>>>(
+                new Array<Ptr<Array<double>>>(vm, outerid, innerid, 0));
 
-            for (std::size_t i = 0; i < arr.size(); ++i)
+            for (auto &element : arr)
             {
               auto a = Ptr<Array<double>>(new Array<double>(vm, vm->GetTypeId<Array<double>>(),
                                                             vm->GetTypeId<double>(), 0));
 
-              a->elements = arr[i];
-              ret->elements.push_back(a);
+              a->elements = element;
+              ret->elements.emplace_back(a);
             }
 
             return ret;

@@ -104,7 +104,7 @@ StakeSnapshot::CabinetPtr StakeSnapshot::BuildCabinet(uint64_t entropy, std::siz
 }
 
 /**
- * Lookup stake for a given identity
+ * Look up stake for a given identity
  *
  * @param identity The identity to be queried
  * @return The stake amount

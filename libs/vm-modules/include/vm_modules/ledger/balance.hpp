@@ -17,30 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-
-#include <functional>
-#include <memory>
-#include <unordered_set>
+#include "vm/module.hpp"
 
 namespace fetch {
+namespace vm_modules {
 namespace ledger {
 
-class Identifier;
-class Contract;
-class StorageInterface;
-
-class ChainCodeFactory
+template <typename Contract>
+void BindBalanceFunction(vm::Module &module, Contract const &contract)
 {
-public:
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using ContractPtr     = std::shared_ptr<Contract>;
-  using ContractNameSet = std::unordered_set<ConstByteArray>;
+  module.CreateFreeFunction("balance", [&contract](vm::VM *) -> uint64_t {
+    decltype(auto) c = contract.context();
 
-  ContractPtr Create(Identifier const &contract_id, StorageInterface &storage) const;
+    c.token_contract->Attach(c);
+    c.state_adapter->PushContext("fetch.token");
 
-  ContractNameSet const &GetChainCodeContracts() const;
-};
+    auto const balance = c.token_contract->GetBalance(c.contract_address);
+
+    c.state_adapter->PopContext();
+    c.token_contract->Detach();
+
+    return balance;
+  });
+}
 
 }  // namespace ledger
+}  // namespace vm_modules
 }  // namespace fetch
