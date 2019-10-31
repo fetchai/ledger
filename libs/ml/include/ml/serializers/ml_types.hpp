@@ -306,6 +306,11 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
                                                                                       op);
     break;
   }
+  case ml::OpType::OP_ONE_HOT:
+  {
+    SerializeImplementation<TensorType, D, ml::OpOneHotSaveableParams<TensorType>>(map, code, op);
+    break;
+  }
   case ml::OpType::OP_SQUEEZE:
   {
     SerializeImplementation<TensorType, D, ml::OpSqueezeSaveableParams<TensorType>>(map, code, op);
@@ -646,6 +651,12 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   {
     op = DeserializeImplementation<TensorType, D, ml::OpTransposeSaveableParams<TensorType>>(map,
                                                                                              code);
+    break;
+  }
+  case ml::OpType::OP_ONE_HOT:
+  {
+    op =
+        DeserializeImplementation<TensorType, D, ml::OpOneHotSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::OP_SQUEEZE:
@@ -2720,6 +2731,51 @@ struct MapSerializer<ml::OpTransposeSaveableParams<TensorType>, D>
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(TRANSPOSE_VECTOR, sp.transpose_vector);
+  }
+};
+
+/**
+ * serializer for OpOneHotSaveableParams
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::OpOneHotSaveableParams<TensorType>, D>
+{
+  using Type       = ml::OpOneHotSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const BASE_OPS  = 1;
+  static uint8_t const OP_CODE   = 2;
+  static uint8_t const DEPTH     = 3;
+  static uint8_t const AXIS      = 4;
+  static uint8_t const ON_VALUE  = 5;
+  static uint8_t const OFF_VALUE = 6;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(6);
+
+    // serialize parent class first
+    auto ops_pointer = static_cast<ml::OpsSaveableParams const *>(&sp);
+    map.Append(BASE_OPS, *(ops_pointer));
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(DEPTH, sp.depth);
+    map.Append(AXIS, sp.axis);
+    map.Append(ON_VALUE, sp.on_value);
+    map.Append(OFF_VALUE, sp.off_value);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto ops_pointer = static_cast<ml::OpsSaveableParams *>(&sp);
+    map.ExpectKeyGetValue(BASE_OPS, (*ops_pointer));
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(DEPTH, sp.depth);
+    map.ExpectKeyGetValue(AXIS, sp.axis);
+    map.ExpectKeyGetValue(ON_VALUE, sp.on_value);
+    map.ExpectKeyGetValue(OFF_VALUE, sp.off_value);
   }
 };
 
