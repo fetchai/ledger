@@ -49,6 +49,31 @@ private:
   std::string msg_;
 };
 
+class InvalidFile : public std::runtime_error
+{
+public:
+  explicit InvalidFile()
+    : std::runtime_error("")
+  {}
+
+  explicit InvalidFile(std::string const &msg)
+    : std::runtime_error(msg)
+    , msg_(msg)
+  {}
+
+  char const *what() const noexcept override
+  {
+    if (!(msg_.empty()))
+    {
+      return msg_.c_str();
+    }
+    return "cannot find file or filetype not valid";
+  }
+
+private:
+  std::string msg_;
+};
+
 class WrongShape : public std::runtime_error
 {
 public:
