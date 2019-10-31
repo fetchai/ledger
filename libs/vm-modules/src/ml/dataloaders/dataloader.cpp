@@ -18,6 +18,7 @@
 
 #include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
+#include "math/utilities/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
@@ -135,8 +136,8 @@ void VMDataLoader::AddDataByData(Ptr<VMTensorType> const &data, Ptr<VMTensorType
 
 void VMDataLoader::AddCommodityData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
 {
-  auto data  = fetch::ml::dataloaders::ReadCSV<MathTensorType>(xfilename->str);
-  auto label = fetch::ml::dataloaders::ReadCSV<MathTensorType>(yfilename->str);
+  auto data  = fetch::math::utilities::ReadCSV<MathTensorType>(xfilename->str);
+  auto label = fetch::math::utilities::ReadCSV<MathTensorType>(yfilename->str);
 
   std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData({data}, label);
 }

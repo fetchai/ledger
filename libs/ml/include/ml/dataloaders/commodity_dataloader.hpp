@@ -20,7 +20,6 @@
 #include "core/random.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 
@@ -69,12 +68,9 @@ public:
   }
 
 private:
-  bool      random_mode_ = false;
-  InputType data_;    // n_data, features
-  LabelType labels_;  // n_data, features
-
-  SizeType   rows_to_skip_ = 1;
-  SizeType   cols_to_skip_ = 1;
+  bool       random_mode_ = false;
+  InputType  data_;    // n_data, features
+  LabelType  labels_;  // n_data, features
   ReturnType buffer_;
 
   SizeType size_ = 0;

@@ -16,40 +16,36 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/utilities/ReadCSV.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/math/abs.hpp"
-#include "vm_modules/math/exp.hpp"
-#include "vm_modules/math/log.hpp"
-#include "vm_modules/math/math.hpp"
-#include "vm_modules/math/pow.hpp"
-#include "vm_modules/math/random.hpp"
 #include "vm_modules/math/read_csv.hpp"
-#include "vm_modules/math/sqrt.hpp"
 #include "vm_modules/math/tensor.hpp"
-#include "vm_modules/math/trigonometry.hpp"
-
-using namespace fetch::vm;
 
 namespace fetch {
+
+namespace vm {
+class Module;
+}
+
 namespace vm_modules {
 namespace math {
 
-void BindMath(Module &module)
+namespace {
+
+fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ReadCSV(
+    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
 {
-  // bind math functions
-  BindAbs(module);
-  BindExp(module);
-  BindLog(module);
-  BindPow(module);
-  BindRand(module);
-  BindSqrt(module);
-  BindTrigonometry(module);
+  fetch::vm_modules::math::VMTensor::TensorType tensor =
+      fetch::math::utilities::ReadCSV<fetch::vm_modules::math::VMTensor::TensorType>(filename->str,
+                                                                                     0, 0);
+  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
+}
 
-  // bind math classes
-  VMTensor::Bind(module);
+}  // namespace
 
-  // ReadCSV depends on VMTensor so must be bound after it
-  BindReadCSV(module);
+void BindReadCSV(fetch::vm::Module &module)
+{
+  module.CreateFreeFunction("readCSV", &ReadCSV);
 }
 
 }  // namespace math
