@@ -290,12 +290,16 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   assert(!qualified_cabinet_weighted.empty());
 
   // Miners must additionally wait N block periods according to their rank (0 being the best)
+  // Note, this is the identity specified in the block.
   auto const miner_rank = std::distance(qualified_cabinet_weighted.begin(), std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity));
 
   // Minting block. Timestamp: 5000 proposed: 1572486552000 Prev window ends: 528525664 last block TS:  1572486551000 miner rank: 12
   if(proposed_block_timestamp_ms > uint64_t(previous_block_window_ends + (uint64_t(miner_rank) * block_interval_ms_)))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Minting block. Time now: ", time_now_ms, " Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms, " Prev window ends: ", previous_block_window_ends, " last block TS:  ", last_block_timestamp_ms, " miner rank: ", miner_rank);
+    if(identity == mining_identity_)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Minting block. Time now: ", time_now_ms, " Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms, " Prev window ends: ", previous_block_window_ends, " last block TS:  ", last_block_timestamp_ms, " miner rank: ", miner_rank, " target: ", uint64_t(previous_block_window_ends + (uint64_t(miner_rank) * block_interval_ms_)), " block weight: ", proposed.weight);
+    }
     return true;
   }
 
