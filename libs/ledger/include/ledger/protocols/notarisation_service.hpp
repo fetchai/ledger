@@ -32,9 +32,9 @@ namespace ledger {
 class MainChain;
 
 /**
- * Service which notarises a continuous chain of blocks. Proceeds onto next block height
- * as long as one block at the previous height, which references a previous notarised block,
- * is notarised
+ * Service which notarises valid blocks, and verifies notarisations inside blocks. View of chain is
+ * based on what the service has been called to notarise and collects notarisation shares from peers
+ * to compute aggregate notarisation of blocks with the highest block number in chain
  */
 class NotarisationService
 {
@@ -162,11 +162,12 @@ private:
   CertificatePtr                certificate_;
   std::shared_ptr<StateMachine> state_machine_;
 
-  /// Management of active DKG keys
+  /// @{Management of active notarisation keys
   bool                                   new_keys{false};
   std::deque<SharedAeonNotarisationUnit> aeon_notarisation_queue_;
   SharedAeonNotarisationUnit             active_notarisation_unit_;
   SharedAeonNotarisationUnit             previous_notarisation_unit_;
+  /// @}
 
   /// @{Notarisations
   BlockHeightNotarisationShares
@@ -176,7 +177,8 @@ private:
   uint64_t notarised_chain_height_{0};          ///< Current highest notarised block number in chain
   uint64_t notarisation_collection_height_{0};  // Block number current collecting signatures for
   static const uint32_t cutoff_ = 2;            ///< Number of blocks behind
-  AeonDetails           current_aeon_details;
+  AeonDetails current_aeon_details;  ///< Details of current aeon which are necessary if not a
+                                     ///< cabinet member
   /// @}
 };
 }  // namespace ledger
