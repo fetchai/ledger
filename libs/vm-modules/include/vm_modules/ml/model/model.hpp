@@ -62,8 +62,9 @@ public:
 
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &model_category);
 
-  static fetch::vm::Ptr<VMModel> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                             fetch::vm::Ptr<fetch::vm::String> const &model_category);
+  static fetch::vm::Ptr<VMModel> Constructor(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+      fetch::vm::Ptr<fetch::vm::String> const &model_category);
 
   void LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
                 math::SizeType const &hidden_nodes);
