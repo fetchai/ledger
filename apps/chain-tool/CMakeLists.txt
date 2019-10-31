@@ -6,5 +6,5 @@ project(chain-tool)
 
 setup_compiler()
 
-add_executable(chain-tool main.cpp ../muddle-probe/main.cpp)
+add_executable(chain-tool main.cpp)
 target_link_libraries(chain-tool PRIVATE fetch-ledger)
