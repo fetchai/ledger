@@ -226,8 +226,8 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
 
     if ((next.properties & QueryInstruction::PROP_IS_OPERATOR) != 0)
     {
-      while ((op_stack.size() > 0) && (next.type > op_stack.back().type) &&
-             (op_stack.back().properties & QueryInstruction::PROP_IS_OPERATOR))
+      while ((!op_stack.empty()) && (next.type > op_stack.back().type) &&
+             static_cast<bool>(op_stack.back().properties & QueryInstruction::PROP_IS_OPERATOR))
       {
         auto back = op_stack.back();
         op_stack.pop_back();
@@ -238,13 +238,13 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
     }
     else if ((next.properties & QueryInstruction::PROP_IS_GROUP) != 0)
     {
-      if (next.properties & QueryInstruction::PROP_IS_GROUP_OPEN)
+      if ((next.properties & QueryInstruction::PROP_IS_GROUP_OPEN) != 0)
       {
         op_stack.push_back(next);
       }
       else
       {
-        while ((op_stack.size() > 0) &&
+        while ((!op_stack.empty()) &&
                ((op_stack.back().properties & QueryInstruction::PROP_IS_GROUP) == 0))
         {
           auto back = op_stack.back();
@@ -253,7 +253,7 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
         }
 
         auto b = op_stack.back();
-        if (b.properties & QueryInstruction::PROP_IS_CALL)
+        if ((b.properties & QueryInstruction::PROP_IS_CALL) != 0)
         {
           next.type = Type::EXECUTE_CALL;
           main_stack.push_back(next);
@@ -272,7 +272,7 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
   }
 
   // Emtpying the operator stack.
-  while ((op_stack.size() > 0))
+  while (!op_stack.empty())
   {
     auto back = op_stack.back();
     op_stack.pop_back();
@@ -475,7 +475,7 @@ void QueryCompiler::Tokenise()
   }
 }
 
-bool QueryCompiler::Match(ConstByteArray token)
+bool QueryCompiler::Match(ConstByteArray const &token) const
 {
   return document_.Match(token, position_);
 }

@@ -23,8 +23,8 @@
 namespace fetch {
 namespace semanticsearch {
 
-void VocabularyInstance::Walk(std::function<void(std::string, Vocabulary)> callback,
-                              std::string                                  name)
+void VocabularyInstance::Walk(std::function<void(std::string, Vocabulary)> const &callback,
+                              std::string const &                                 name)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
@@ -39,7 +39,7 @@ void VocabularyInstance::Walk(std::function<void(std::string, Vocabulary)> callb
   }
 }
 
-VocabularyInstance::Vocabulary &VocabularyInstance::operator[](std::string name)
+VocabularyInstance::Vocabulary &VocabularyInstance::operator[](std::string const &name)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
@@ -52,7 +52,7 @@ VocabularyInstance::Vocabulary &VocabularyInstance::operator[](std::string name)
   return map[name];
 }
 
-void VocabularyInstance::Insert(std::string name, Vocabulary value)
+void VocabularyInstance::Insert(std::string const &name, Vocabulary const &value)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {

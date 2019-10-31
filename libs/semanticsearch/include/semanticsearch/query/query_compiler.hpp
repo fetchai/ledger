@@ -50,7 +50,7 @@ private:
   std::vector<QueryInstruction> AssembleStatement(Statement const &stmt);
   void                          Tokenise();
 
-  bool Match(ConstByteArray token);
+  bool Match(ConstByteArray const &token) const;
   void SkipUntilEOL();
   void SkipWhitespaces();
   void SkipChar();

@@ -38,7 +38,7 @@ TEST(MessengerMailboxTest, BasicRegisteringUnregistering)
   EXPECT_EQ(server->mailbox.registered_messengers, 5);
 
   // Unregistering
-  for (auto messenger : messengers)
+  for (auto const &messenger : messengers)
   {
     messenger->messenger->Unregister();
   }
@@ -79,7 +79,7 @@ TEST(MessengerMailboxTest, BilateralCommsMailbox)
 
   for (uint64_t i = 0; i < 10; ++i)
   {
-    if (i & 1)
+    if ((i & 1) != 0)
     {
       Message msg;
       msg.from.node      = server->mail_muddle->GetAddress();
@@ -137,8 +137,11 @@ TEST(MessengerMailboxTest, MessagesRouting)
   for (uint16_t i = 0; i < NETWORK_LENGTH - 1; ++i)
   {
     auto &a = servers[i];
-    a->mail_muddle->ConnectTo(
-        "", fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + i + 1)));
+    for (uint16_t j = i + 1; j < NETWORK_LENGTH; ++j)
+    {
+      a->mail_muddle->ConnectTo("",
+                                fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + j)));
+    }
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(1000 * NETWORK_LENGTH));
 

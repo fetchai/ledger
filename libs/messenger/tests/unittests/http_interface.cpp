@@ -38,7 +38,7 @@ TEST(MessengerMailboxTest, BasicHTTPRegisteringUnregistering)
   EXPECT_EQ(server->mailbox.registered_messengers, 5);
 
   // Unregistering
-  for (auto messenger : messengers)
+  for (auto const &messenger : messengers)
   {
     messenger->Unregister();
   }
@@ -76,7 +76,7 @@ TEST(MessengerMailboxTest, BilateralHTTPCommsMailbox)
 
   for (uint64_t i = 0; i < 10; ++i)
   {
-    if (i & 1)
+    if ((i & 1) != 0)
     {
       Message msg;
       msg.from.node      = server->mail_muddle->GetAddress();

@@ -35,8 +35,8 @@ public:
 
   AdvertisementRegister() = default;
 
-  bool        CreateModel(std::string name, VocabularySchema object);
-  SharedModel GetAdvertisementModel(std::string name);
+  bool        CreateModel(std::string const &name, VocabularySchema object);
+  SharedModel GetAdvertisementModel(std::string const &name);
   void       AdvertiseAgent(AgentId aid, std::string const &name, SemanticPosition const &position);
   AgentIdSet FindAgents(std::string const &name, SemanticPosition const &position,
                         SemanticCoordinateType granularity);
@@ -46,7 +46,7 @@ public:
   void OnAddModel(std::string const &name, VocabularySchema const &object) override;
 
 private:
-  bool CreateModelInternal(std::string name, VocabularySchema object);
+  bool CreateModelInternal(std::string const &name, VocabularySchema const &object);
 
   std::map<std::string, SharedModel> model_advertisement_;
 };

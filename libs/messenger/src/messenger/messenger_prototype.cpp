@@ -59,7 +59,7 @@ void MessengerPrototype::SendMessage(Message msg)
     throw std::runtime_error("Not connected to any nodes.");
   }
 
-  // TODO: Set messenger id.
+  // TODO(tfr): Set messenger id.
 
   // Checking if we are directly connected to the relevant
   // node
@@ -88,7 +88,7 @@ void MessengerPrototype::SendMessage(Message msg)
   rpc_client_.CallSpecificAddress(msg.from.node, RPC_MESSENGER_INTERFACE,
                                   MessengerProtocol::SEND_MESSAGE, msg);
 
-  // TODO: Return node address such that agent knows where to fetch the response
+  // TODO(tfr): Return node address such that agent knows where to fetch the response
 }
 
 void MessengerPrototype::PullMessages()

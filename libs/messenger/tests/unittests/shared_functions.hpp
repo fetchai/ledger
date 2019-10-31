@@ -61,12 +61,12 @@ inline ProverPtr CreateNewCertificate()
 class FakeMailbox : public fetch::messenger::MailboxInterface
 {
 public:
-  void SendMessage(Message) override
+  void SendMessage(Message /*message*/) override
   {
     ++send;
   }
 
-  MessageList GetMessages(Address) override
+  MessageList GetMessages(Address /*messenger*/) override
   {
     ++empty_mailbox;
     return {};
@@ -75,12 +75,12 @@ public:
   void ClearMessages(Address /*messenger*/, uint64_t /*count*/) override
   {}
 
-  void RegisterMailbox(Address) override
+  void RegisterMailbox(Address /*messenger*/) override
   {
     ++registered_messengers;
   }
 
-  void UnregisterMailbox(Address) override
+  void UnregisterMailbox(Address /*messenger*/) override
   {
     ++unregistered_messengers;
   }
@@ -93,7 +93,7 @@ public:
 
 struct ServerWithFakeMailbox
 {
-  ServerWithFakeMailbox(uint16_t port_offset)
+  explicit ServerWithFakeMailbox(uint16_t port_offset)
     : certificate{CreateNewCertificate()}
     , network_manager{"SearchNetworkManager", 1}
     , messenger_muddle{fetch::muddle::CreateMuddle("MSGN", certificate, network_manager,
@@ -121,7 +121,7 @@ struct ServerWithFakeMailbox
 
 struct Server
 {
-  Server(uint16_t port_offset)
+  explicit Server(uint16_t port_offset)
     : certificate{CreateNewCertificate()}
     , network_manager{"SearchNetworkManager", 1}
     , messenger_muddle{fetch::muddle::CreateMuddle("MSGN", certificate, network_manager,
@@ -165,7 +165,7 @@ inline std::shared_ptr<Server> NewServer(uint16_t port_offset)
 
 struct Messenger
 {
-  Messenger(uint16_t port)
+  explicit Messenger(uint16_t port)
     : certificate{CreateNewCertificate()}
     , network_manager{"MessengerNetworkManager", 1}
     , messenger_muddle{
@@ -202,7 +202,7 @@ std::set<T> ToSet(std::deque<T> const &d)
 
 struct HTTPMessenger
 {
-  HTTPMessenger(uint16_t port)
+  explicit HTTPMessenger(uint16_t port)
     : certificate{CreateNewCertificate()}
     , client{std::make_shared<JsonClient>(JsonClient::ConnectionMode::HTTP, "127.0.0.1", port)}
   {}

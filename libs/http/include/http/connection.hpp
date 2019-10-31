@@ -49,7 +49,7 @@ public:
 
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManagerPtr manager)
     : socket_(std::move(socket))
-    , manager_(manager)
+    , manager_(std::move(manager))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP connection from ",
                     socket_.remote_endpoint().address().to_string());

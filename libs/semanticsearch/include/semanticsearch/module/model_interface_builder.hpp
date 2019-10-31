@@ -37,11 +37,11 @@ public:
                                  SemanticSearchModule *factory = nullptr);
 
   explicit               operator bool() const;
-  ModelInterfaceBuilder &Field(std::string name, std::string type);
-  ModelInterfaceBuilder &Field(std::string name, ModelInterfaceBuilder proxy);
-  ModelInterfaceBuilder &Field(std::string name, ModelField model);
+  ModelInterfaceBuilder &Field(std::string const &name, std::string const &type);
+  ModelInterfaceBuilder &Field(std::string const &name, ModelInterfaceBuilder proxy);
+  ModelInterfaceBuilder &Field(std::string const &name, ModelField const &model);
 
-  ModelInterfaceBuilder Vocabulary(std::string name);
+  ModelInterfaceBuilder Vocabulary(std::string const &name);
 
   VocabularySchema const &model() const
   {

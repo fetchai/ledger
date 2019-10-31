@@ -23,27 +23,28 @@
 namespace fetch {
 namespace semanticsearch {
 
-bool AdvertisementRegister::CreateModel(std::string name, VocabularySchema object)
+bool AdvertisementRegister::CreateModel(std::string const &name, VocabularySchema object)
 {
   if (HasModel(name))
   {
     return false;
   }
 
-  return CreateModelInternal(std::move(name), std::move(object));
+  return CreateModelInternal(name, std::move(object));
 }
 
-AdvertisementRegister::SharedModel AdvertisementRegister::GetAdvertisementModel(std::string name)
+AdvertisementRegister::SharedModel AdvertisementRegister::GetAdvertisementModel(
+    std::string const &name)
 {
   assert(model_advertisement_.find(name) != model_advertisement_.end());
-  return model_advertisement_[std::move(name)];
+  return model_advertisement_[name];
 }
 
 void AdvertisementRegister::AdvertiseAgent(AgentId aid, std::string const &name,
                                            SemanticPosition const &position)
 {
   assert(HasModel(name));
-  auto ad_model = GetAdvertisementModel(std::move(name));
+  auto ad_model = GetAdvertisementModel(name);
   ad_model->SubscribeAgent(aid, position);
 }
 
@@ -65,13 +66,14 @@ AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(
 
 void AdvertisementRegister::OnAddModel(std::string const &name, VocabularySchema const &object)
 {
-  CreateModelInternal(std::move(name), std::move(object));
+  CreateModelInternal(name, object);
 }
 
-bool AdvertisementRegister::CreateModelInternal(std::string name, VocabularySchema object)
+bool AdvertisementRegister::CreateModelInternal(std::string const &     name,
+                                                VocabularySchema const &object)
 {
 
-  SharedModel model          = SharedModel(new VocabularyAdvertisement(object));
+  SharedModel model          = std::make_shared<VocabularyAdvertisement>(object);
   model_advertisement_[name] = model;
 
   return true;

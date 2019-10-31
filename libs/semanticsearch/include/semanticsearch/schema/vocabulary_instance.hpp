@@ -50,9 +50,10 @@ public:
     return type_;
   }
 
-  void        Walk(std::function<void(std::string, Vocabulary)> callback, std::string name = "");
-  Vocabulary &operator[](std::string name);
-  void        Insert(std::string name, Vocabulary value);
+  void        Walk(std::function<void(std::string, Vocabulary)> const &callback,
+                   std::string const &                                 name = "");
+  Vocabulary &operator[](std::string const &name);
+  void        Insert(std::string const &name, Vocabulary const &value);
 
 private:
   VocabularyInstance(std::type_index type, void *data)

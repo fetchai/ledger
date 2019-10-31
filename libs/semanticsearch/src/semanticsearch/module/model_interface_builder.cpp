@@ -35,7 +35,8 @@ ModelInterfaceBuilder::operator bool() const
   return model_ != nullptr;
 }
 
-ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string name, std::string type)
+ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &name,
+                                                    std::string const &type)
 {
   assert(factory_);
   auto field_model = factory_->GetField(type);
@@ -43,21 +44,23 @@ ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string name, std::strin
   return *this;
 }
 
-ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string name, ModelInterfaceBuilder proxy)
+ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &   name,
+                                                    ModelInterfaceBuilder proxy)
 {
   assert(proxy.model_ != nullptr);
   model_->Insert(name, proxy.model_);
   return *this;
 }
 
-ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string name, ModelField model)
+ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &name,
+                                                    ModelField const & model)
 {
   assert(model != nullptr);
   model_->Insert(name, model);
   return *this;
 }
 
-ModelInterfaceBuilder ModelInterfaceBuilder::Vocabulary(std::string name)
+ModelInterfaceBuilder ModelInterfaceBuilder::Vocabulary(std::string const &name)
 {
   auto new_model = PropertiesToSubspace::New();
   model_->Insert(name, new_model);
