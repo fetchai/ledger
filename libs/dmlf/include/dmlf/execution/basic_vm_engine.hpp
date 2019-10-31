@@ -65,6 +65,15 @@ public:
                                                 std::string const &entrypoint, Params params);
 
 private:
+
+  struct ExecutionContext
+  {
+    ExecutionContext(VM *vm, Executable *executable);
+    ~ExecutionContext();
+
+    VM* vm_;
+  };
+
   bool HasExecutable(std::string const &name) const;
   bool HasState(std::string const &name) const;
 

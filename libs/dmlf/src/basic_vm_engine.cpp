@@ -136,13 +136,6 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
 
   auto &             exec  = executables_[execName];
   auto &             state = states_[stateName];
-  std::ostringstream console{};
-
-  // We create a a VM for each execution. It might be better to create a single VM and reuse it, but
-  // (currently) if you create a VM before compiling the VM is badly formed and crashes on execution
-  VM vm{module_.get()};
-  vm.SetIOObserver(*state);
-  vm.AttachOutputDevice(fetch::vm::VM::STDOUT, console);
 
   // Convert and check function signature
   auto const *func = exec->FindFunction(entrypoint);
@@ -151,7 +144,6 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
   {
     return EngineError(Error::Code::RUNTIME_ERROR, entrypoint + " does not exist");
   }
-
   auto const numParameters = static_cast<std::size_t>(func->num_parameters);
 
   if (numParameters != params.size())
@@ -161,18 +153,63 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
                            "; received " + std::to_string(params.size()));
   }
 
-  fetch::vm::ParameterPack parameterPack(vm.registered_types());
+  serializers::MsgPackSerializer serializer;
+
+  for (auto const& p : params)
+  {
+    serializer << p;
+  }
+  serializer.seek(0);
+
+  // We create a a VM for each execution. It might be better to create a single VM and reuse it, but
+  // (currently) if you create a VM before compiling the VM is badly formed and crashes on execution
+  VM vm{module_.get()};
+  vm.SetIOObserver(*state);
+  std::ostringstream console{};
+  vm.AttachOutputDevice(fetch::vm::VM::STDOUT, console);
+  
+  vm::ParameterPack parameterPack(vm.registered_types());
+  
+  {
+  ExecutionContext executionContext(&vm, exec.get());
+
   for (std::size_t i = 0; i < numParameters; ++i)
   {
-    auto const &typeId = func->variables[i].type_id;
-
-    if (!Convertable(params[i], typeId))
+    auto type_id = func->variables[i].type_id;
+    if (type_id <= vm::TypeIds::PrimitiveMaxId)
     {
-      return EngineError(Error::Code::RUNTIME_ERROR, "Wrong parameter at " + std::to_string(i) +
-                                                         " Expected " + vm.GetTypeName(typeId));
+      VmVariant param;
+
+      serializer >> param.primitive.i64;
+      param.type_id = type_id;
+
+      parameterPack.AddSingle(param);
     }
-    parameterPack.AddSingle(Convert(params[i], typeId));
+    else
+    {
+      // Checking if we can construct the object
+      if (!vm.IsDefaultSerializeConstructable(type_id))
+      {
+        return EngineError(Error::Code::RUNTIME_ERROR, "Error at parameter " + std::to_string(i) +
+                                           " Could not construct type " + vm.GetTypeName(type_id));
+      }
+
+      // Creating the object
+      vm::Ptr<vm::Object> object  = vm.DefaultSerializeConstruct(type_id);
+      auto                success = object->DeserializeFrom(serializer);
+
+      // If deserialization failed we return
+      if (!success)
+      {
+        return EngineError(Error::Code::RUNTIME_ERROR, "Error at parameter " + std::to_string(i) +
+                                         " Could not deserialize type " + vm.GetTypeName(type_id));
+      }
+
+      // Adding the parameter to the parameter pack
+      parameterPack.AddSingle(object);
+    }
   }
+  } // End Execution Context
 
   // Run
   std::string runTimeError;
@@ -216,6 +253,7 @@ ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &       
   VM vm{module_.get()};
   vm.SetIOObserver(*state);
   vm.AttachOutputDevice(fetch::vm::VM::STDOUT, console);
+
 
   // Convert and check function signature
   auto const *func = exec->FindFunction(entrypoint);
@@ -500,6 +538,16 @@ BasicVmEngine::LedgerVariant BasicVmEngine::Convert(VmVariant const &vmVariant) 
   default:
     return LedgerVariant{};
   }
+}
+
+BasicVmEngine::ExecutionContext::ExecutionContext(VM *vm, Executable *executable)
+:vm_(vm)
+{
+  vm_->LoadExecutable(executable);
+}
+BasicVmEngine::ExecutionContext::~ExecutionContext()
+{
+  vm_->UnloadExecutable();
 }
 
 }  // namespace dmlf

@@ -1372,7 +1372,7 @@ TEST(BasicVmEngineDmlfTests, Add64)
   EXPECT_EQ(result.output().As<int>(), std::numeric_limits<int>::max());
 }
 
-TEST(BasicVmEngineDmlfTests, AddFloat)
+TEST(DISABLED_BasicVmEngineDmlfTests, AddFloat)
 {
   BasicVmEngine engine;
 
@@ -1390,7 +1390,7 @@ TEST(BasicVmEngineDmlfTests, AddFloat)
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<float>(), 8.0, 0.001);
 }
-TEST(BasicVmEngineDmlfTests, AddFloat32)
+TEST(DISABLED_BasicVmEngineDmlfTests, AddFloat32)
 {
   BasicVmEngine engine;
 
@@ -1409,7 +1409,7 @@ TEST(BasicVmEngineDmlfTests, AddFloat32)
   EXPECT_NEAR(result.output().As<float>(), 8.1, 0.001);
 }
 
-TEST(BasicVmEngineDmlfTests, AddFloatComplex)
+TEST(DISABLED_BasicVmEngineDmlfTests, AddFloatComplex)
 {
   BasicVmEngine engine;
 
@@ -1445,7 +1445,7 @@ TEST(BasicVmEngineDmlfTests, AddFixed)
   EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
 }
 
-TEST(BasicVmEngineDmlfTests, TrueIntToFloatCompare)
+TEST(DISABLED_BasicVmEngineDmlfTests, TrueIntToFloatCompare)
 {
   BasicVmEngine engine;
 
@@ -1463,7 +1463,7 @@ TEST(BasicVmEngineDmlfTests, TrueIntToFloatCompare)
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
-TEST(BasicVmEngineDmlfTests, FalseIntToFloatCompare)
+TEST(DISABLED_BasicVmEngineDmlfTests, FalseIntToFloatCompare)
 {
   BasicVmEngine engine;
 
@@ -1481,7 +1481,7 @@ TEST(BasicVmEngineDmlfTests, FalseIntToFloatCompare)
   EXPECT_EQ(result.output().As<int>(), 0);
 }
 
-TEST(BasicVmEngineDmlfTests, TrueBoolCompare)
+TEST(DISABLED_BasicVmEngineDmlfTests, TrueBoolCompare)
 {
   BasicVmEngine engine;
 
@@ -1497,7 +1497,7 @@ TEST(BasicVmEngineDmlfTests, TrueBoolCompare)
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
-TEST(BasicVmEngineDmlfTests, FalseBoolCompare)
+TEST(DISABLED_BasicVmEngineDmlfTests, FalseBoolCompare)
 {
   BasicVmEngine engine;
 
@@ -1513,7 +1513,7 @@ TEST(BasicVmEngineDmlfTests, FalseBoolCompare)
   EXPECT_EQ(result.output().As<int>(), 0);
 }
 
-TEST(BasicVmEngineDmlfTests, BadParamsTrueIntToFloatCompare)
+TEST(DISABLED_BasicVmEngineDmlfTests, BadParamsTrueIntToFloatCompare)
 {
   BasicVmEngine engine;
 
