@@ -458,9 +458,14 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       map.Append(OPTIMISER_PTR, *optimiser_ptr);
       break;
     }
-
-    case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::ADAM:
+    {
+      auto *optimiser_ptr =
+          static_cast<fetch::ml::optimisers::AdamOptimiser<TensorType> *>(sp.optimiser_ptr_.get());
+      map.Append(OPTIMISER_PTR, *optimiser_ptr);
+      break;
+    }
+    case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::MOMENTUM:
     case ml::OptimiserType::RMSPROP:
     {
@@ -524,9 +529,16 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       sp.optimiser_ptr_->Init();
       break;
     }
-
-    case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::ADAM:
+    {
+      auto optimiser_ptr = new ml::optimisers::AdamOptimiser<TensorType>();
+      map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
+      sp.optimiser_ptr_.reset(optimiser_ptr);
+      sp.optimiser_ptr_->SetGraph(sp.graph_ptr_);
+      sp.optimiser_ptr_->Init();
+      break;
+    }
+    case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::MOMENTUM:
     case ml::OptimiserType::RMSPROP:
     {
