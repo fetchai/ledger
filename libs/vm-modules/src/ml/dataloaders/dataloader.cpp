@@ -117,7 +117,7 @@ void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> cons
   }
 }
 
-void VMDataLoader::AddDataByData(Ptr<VMTensorType> const &data, Ptr<VMTensorType> const &labels)
+void VMDataLoader::AddDataByData(fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMTensorType>>> const &data, Ptr<VMTensorType> const &labels)
 {
   switch (mode_)
   {
@@ -147,10 +147,24 @@ void VMDataLoader::AddMnistData(Ptr<String> const &xfilename, Ptr<String> const 
                                                                          yfilename->str);
 }
 
-void VMDataLoader::AddTensorData(Ptr<VMTensorType> const &data, Ptr<VMTensorType> const &labels)
+void VMDataLoader::AddTensorData(fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMTensorType>>> const &data, Ptr<VMTensorType> const &labels)
 {
-  std::static_pointer_cast<TensorLoaderType>(loader_)->AddData({data->GetTensor()},
-                                                               labels->GetTensor());
+ /* auto                     n_elements = data->elements.size();
+  std::vector<TensorType> c_data(n_elements);
+
+  for (fetch::math::SizeType i{0}; i < n_elements; i++)
+  {
+    Ptr<VMTensorType> ptr_string = data->elements.at(i);
+    c_data.at(i)                 = (ptr_string)->GetTensor();
+  }
+
+  std::static_pointer_cast<TensorLoaderType>(loader_)->AddData(c_data,
+                                                               labels->GetTensor());*/
+
+  (void) data;
+ std::static_pointer_cast<TensorLoaderType>(loader_)->AddData({labels->GetTensor()},
+            labels->GetTensor());
+
 }
 
 // TODO(issue 1692): Simplify Array<Tensor> construction

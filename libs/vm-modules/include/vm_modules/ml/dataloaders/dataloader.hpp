@@ -21,6 +21,7 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vm/object.hpp"
+#include "vm/array.hpp"
 #include "vm_modules/math/type.hpp"
 
 #include <memory>
@@ -74,7 +75,7 @@ public:
    * @param data
    * @param labels
    */
-  void AddDataByData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
+  void AddDataByData(fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> const &data,
                      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
 
   /**
@@ -98,7 +99,7 @@ public:
    * @param xfilename
    * @param yfilename
    */
-  void AddTensorData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
+  void AddTensorData(fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> const &data,
                      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
 
   /**

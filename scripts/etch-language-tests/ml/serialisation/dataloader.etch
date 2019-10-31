@@ -8,7 +8,7 @@ function main()
     label_tensor.fill(7.0fp64);
 
     var dataloader = DataLoader("tensor");
-    dataloader.addData(data_tensor, label_tensor);
+    dataloader.addData({data_tensor}, label_tensor);
 
     var state = State<DataLoader>("dataloader");
     state.set(dataloader);

@@ -133,7 +133,7 @@ TEST_F(MLTests, dataloader_serialisation_test)
       label_tensor.fill(7.0fp64);
 
       var dataloader = DataLoader("tensor");
-      dataloader.addData(data_tensor, label_tensor);
+      dataloader.addData({data_tensor}, label_tensor);
 
       var state = State<DataLoader>("dataloader");
       state.set(dataloader);
@@ -351,7 +351,7 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
       var dataloader = DataLoader("tensor");
-      dataloader.addData(data_tensor, label_tensor);
+      dataloader.addData({data_tensor}, label_tensor);
 
       var batch_size = 8u64;
       var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
@@ -416,7 +416,11 @@ TEST_F(MLTests, serialisation_several_components_test)
         graph_state.set(graph);
 
         var dataloader = DataLoader("tensor");
-        dataloader.addData(data_tensor, label_tensor);
+
+        var data_vector = Array<Tensor>(1);
+        data_vector[0]=data_tensor;
+
+        dataloader.addData({data_tensor}, label_tensor);
         var dataloader_state = State<DataLoader>("dataloader");
         dataloader_state.set(dataloader);
 
@@ -707,7 +711,7 @@ TEST_F(MLTests, optimiser_set_graph_test)
         graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
         var dataloader = DataLoader("tensor");
-        dataloader.addData(data_tensor, label_tensor);
+        dataloader.addData({data_tensor}, label_tensor);
 
         var batch_size = 8u64;
         var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
