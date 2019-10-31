@@ -16,27 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "bert_utilities.hpp"
 #include "core/filesystem/read_file_contents.hpp"
-#include "core/serializers/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/ops/embeddings.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/bert_utilities.hpp"
+#include "ml/utilities/graph_saver.hpp"
 
 #include <iostream>
 #include <string>
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
+using namespace fetch::ml::utilities;
 
 using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
 using SizeVector = typename TensorType::SizeVector;
 
 using GraphType     = typename fetch::ml::Graph<TensorType>;
@@ -51,7 +50,7 @@ using ActivationType  = fetch::ml::details::ActivationType;
 std::vector<TensorType> LoadIMDBFinetuneData(std::string const &file_path);
 std::vector<std::pair<std::vector<TensorType>, TensorType>> PrepareIMDBFinetuneTrainData(
     std::string const &file_path, SizeType train_size, SizeType test_size,
-    BERTConfig const &config);
+    BERTConfig<TensorType> const &config);
 
 int main(int ac, char **av)
 {
@@ -76,17 +75,17 @@ int main(int ac, char **av)
   std::cout << "IMDB review data: " << IMDB_path << std::endl;
   std::cout << "Starting FETCH BERT Demo" << std::endl;
 
-  BERTConfig config;
+  BERTConfig<TensorType> config{};
   // prepare IMDB data
   auto all_train_data = PrepareIMDBFinetuneTrainData(IMDB_path, train_size, test_size, config);
 
   // load pretrained bert model
-  GraphType     g = ReadFileToGraph(file_path);
-  BERTInterface bertInterface(config);
+  GraphType                 g = *(LoadGraph<GraphType>(file_path));
+  BERTInterface<TensorType> bert_interface(config);
   std::cout << "finish loading pretraining model" << std::endl;
 
-  std::vector<std::string> bert_inputs  = bertInterface.inputs;
-  std::string              layer_output = bertInterface.outputs[layer_no];
+  std::vector<std::string> bert_inputs  = bert_interface.inputs;
+  std::string              layer_output = bert_interface.outputs[layer_no];
 
   // Add linear classification layer
   std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<TensorType>>(
@@ -128,7 +127,8 @@ int main(int ac, char **av)
 }
 
 std::vector<std::pair<std::vector<TensorType>, TensorType>> PrepareIMDBFinetuneTrainData(
-    std::string const &file_path, SizeType train_size, SizeType test_size, BERTConfig const &config)
+    std::string const &file_path, SizeType train_size, SizeType test_size,
+    BERTConfig<TensorType> const &config)
 {
   // prepare IMDB data
   auto train_data = LoadIMDBFinetuneData(file_path);
@@ -179,9 +179,9 @@ std::vector<std::pair<std::vector<TensorType>, TensorType>> PrepareIMDBFinetuneT
 
 std::vector<TensorType> LoadIMDBFinetuneData(std::string const &file_path)
 {
-  TensorType train_pos = LoadTensorFromFile(file_path + "train_pos");
-  TensorType train_neg = LoadTensorFromFile(file_path + "train_neg");
-  TensorType test_pos  = LoadTensorFromFile(file_path + "test_pos");
-  TensorType test_neg  = LoadTensorFromFile(file_path + "test_neg");
+  TensorType train_pos = LoadTensorFromFile<TensorType>(file_path + "train_pos");
+  TensorType train_neg = LoadTensorFromFile<TensorType>(file_path + "train_neg");
+  TensorType test_pos  = LoadTensorFromFile<TensorType>(file_path + "test_pos");
+  TensorType test_neg  = LoadTensorFromFile<TensorType>(file_path + "test_neg");
   return {train_pos, train_neg, test_pos, test_neg};
 }
