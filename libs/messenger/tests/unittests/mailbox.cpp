@@ -137,7 +137,7 @@ TEST(MessengerMailboxTest, MessagesRouting)
   for (uint16_t i = 0; i < NETWORK_LENGTH - 1; ++i)
   {
     auto &a = servers[i];
-    for (uint16_t j = i + 1; j < NETWORK_LENGTH; ++j)
+    for (uint16_t j = static_cast<uint16_t>(i + 1); j < NETWORK_LENGTH; ++j)
     {
       a->mail_muddle->ConnectTo("",
                                 fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + j)));
