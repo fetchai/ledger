@@ -76,8 +76,8 @@ int main(int argc, char **argv)
 
   // Load data
 
-  TensorType data_tensor  = fetch::math::utilities::ReadCSV<TensorType>(data_file).Transpose();
-  TensorType label_tensor = fetch::math::utilities::ReadCSV<TensorType>(labels_file).Transpose();
+  TensorType data_tensor  = fetch::math::utilities::ReadCSV<TensorType>(data_file);
+  TensorType label_tensor = fetch::math::utilities::ReadCSV<TensorType>(labels_file);
 
   // Shuffle data
   utilities::Shuffle(data_tensor, label_tensor, seed);
