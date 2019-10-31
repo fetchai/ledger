@@ -754,8 +754,16 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     SendBroadcast(DKGEnvelope{FinalStateMessage{own_signature}});
   }
 
+  if (!condition_to_proceed_ && final_state_payload_.size() == beacon_->manager.qual().size() - 1)
+  {
+    condition_to_proceed_ = true;
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
+  }
+
   // When the timer has expired, try to create the final structure
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     // Need at least DKG threshold number of signatures otherwise there will not be enough
     // parties who agree of the dkg output to compute threshold signatures
