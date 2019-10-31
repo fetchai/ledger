@@ -52,7 +52,7 @@ public:
 
   virtual ReturnType GetNext() = 0;
 
-  virtual bool       AddData(InputType const &data, LabelType const &label) = 0;
+  virtual bool       AddData(std::vector<InputType> const &data, LabelType const &label) = 0;
   virtual ReturnType PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set);
 
   virtual SizeType Size() const                                   = 0;
