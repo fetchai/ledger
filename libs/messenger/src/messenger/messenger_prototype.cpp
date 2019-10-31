@@ -51,13 +51,15 @@ void MessengerPrototype::Unregister()
   }
 }
 
-void MessengerPrototype::SendMessage(Message const &msg)
+void MessengerPrototype::SendMessage(Message msg)
 {
   // Checking if any node connectivity exists
   if (node_addresses_.empty())
   {
     throw std::runtime_error("Not connected to any nodes.");
   }
+
+  // TODO: Set messenger id.
 
   // Checking if we are directly connected to the relevant
   // node
@@ -73,8 +75,20 @@ void MessengerPrototype::SendMessage(Message const &msg)
 
   // Sending to the first node in the list
   auto address = *node_addresses_.begin();
-  rpc_client_.CallSpecificAddress(address, RPC_MESSENGER_INTERFACE, MessengerProtocol::SEND_MESSAGE,
-                                  msg);
+  if (msg.from.node.empty())
+  {
+    msg.from.node = address;
+  }
+
+  if (msg.from.messenger.empty())
+  {
+    msg.from.messenger = endpoint_.GetAddress();
+  }
+
+  rpc_client_.CallSpecificAddress(msg.from.node, RPC_MESSENGER_INTERFACE,
+                                  MessengerProtocol::SEND_MESSAGE, msg);
+
+  // TODO: Return node address such that agent knows where to fetch the response
 }
 
 void MessengerPrototype::PullMessages()
@@ -105,12 +119,21 @@ void MessengerPrototype::ResolveMessages()
       unresolved.push_back(p);
       break;
     case service::PromiseState::SUCCESS:
+    {
+      MessageList list = p->As<MessageList>();
+
       // Adding the resulting messages to the inbox
-      for (auto const &msg : p->As<MessageList>())
+      for (auto const &msg : list)
       {
         inbox_.push_back(msg);
       }
+
+      // Removing messages from the mailbox
+      // TODO(tfr): implement
+      // rpc_client_.CallSpecificAddress(address, RPC_MESSENGER_INTERFACE,
+      //                                             MessengerProtocol::GET_MESSAGES);
       break;
+    }
     case service::PromiseState::FAILED:
     case service::PromiseState::TIMEDOUT:
       // Ignored as they will not contain any data.

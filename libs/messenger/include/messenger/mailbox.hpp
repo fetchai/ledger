@@ -59,6 +59,11 @@ public:
 protected:
   void DeliverMessageLockLess(Message const &message);
 
+  /// Subscription Hnadlers
+  /// @{
+  void OnNewMessagePacket(muddle::Packet const &packet, Address const &last_hop);
+  /// }
+
   // TODO(tfr): Add state logic to trim inboxes
   //
 private:

@@ -28,7 +28,23 @@ Mailbox::Mailbox(muddle::MuddlePtr &muddle)
   : message_endpoint_{muddle->GetEndpoint()}
   , message_subscription_{
         message_endpoint_.Subscribe(SERVICE_MSG_TRANSPORT, CHANNEL_MESSEGNER_TRANSPORT)}
-{}
+{
+  message_subscription_->SetMessageHandler(this, &Mailbox::OnNewMessagePacket);
+}
+
+void Mailbox::OnNewMessagePacket(muddle::Packet const &packet, Address const & /*last_hop*/)
+{
+  fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
+  try
+  {
+    Message message;
+    serialiser >> message;
+    SendMessage(message);
+  }
+  catch (...)
+  {
+  }
+}
 
 void Mailbox::SendMessage(Message message)
 {

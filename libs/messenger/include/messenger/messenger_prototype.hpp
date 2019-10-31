@@ -67,7 +67,7 @@ public:
 
   /// Mailbox management
   /// @{
-  void        SendMessage(Message const &msg);
+  void        SendMessage(Message msg);
   void        PullMessages();
   void        ResolveMessages();
   MessageList GetMessages(uint64_t wait = 0);

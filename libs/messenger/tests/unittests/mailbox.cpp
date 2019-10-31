@@ -21,7 +21,7 @@
 
 TEST(MessengerMailboxTest, BasicRegisteringUnregistering)
 {
-  auto server = NewServerWithFakeMailbox(1337, 1338);
+  auto server = NewServerWithFakeMailbox(0);
 
   // Registering a mailbox for every other messenger
   std::vector<std::shared_ptr<Messenger>> messengers;
@@ -56,11 +56,16 @@ TEST(MessengerMailboxTest, BasicRegisteringUnregistering)
     messenger->network_manager.Stop();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+
+  // Shutting down
+  server->http.Stop();
+  server->messenger_muddle->Stop();
+  server->network_manager.Stop();
 }
 
 TEST(MessengerMailboxTest, BilateralCommsMailbox)
 {
-  auto server = NewServer(1337, 1338);
+  auto server = NewServer(0);
 
   // Testing mailbox.
   auto messenger1 = NewMessenger(1337);
@@ -109,33 +114,80 @@ TEST(MessengerMailboxTest, BilateralCommsMailbox)
 
   EXPECT_EQ(ToSet(messages2), ToSet(recevied_messages2));
   EXPECT_EQ(ToSet(messages2), ToSet(sent_messages2));
+
+  // Shutting down
+  server->http.Stop();
+  server->messenger_muddle->Stop();
+  server->mail_muddle->Stop();
+  server->network_manager.Stop();
 }
 
-/*
-  TODO: Things to test
-  1) Unregister on timeout (does not exist yet)
-  2) Chain based message delivery
-  3) HTTP interface
-*/
-
-/*
 TEST(MessengerMailboxTest, MessagesRouting)
 {
-  //  std::vector< Server > server_chain;
+#define NETWORK_LENGTH 5
+  std::vector<std::shared_ptr<Server>> servers;
+  // Creating servers
+  for (uint16_t i = 0; i < NETWORK_LENGTH; ++i)
+  {
+    servers.emplace_back(NewServer(i));
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
-  //  auto server = NewServer(1337, 1338);
-  EXPECT_TRUE(false);
-}
-*/
+  // Connecting servers in a line
+  for (uint16_t i = 0; i < NETWORK_LENGTH - 1; ++i)
+  {
+    auto &a = servers[i];
+    a->mail_muddle->ConnectTo(
+        "", fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + i + 1)));
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000 * NETWORK_LENGTH));
 
-/*
-TEST(MessengerMailboxTest, DirectDelivery)
-{
-  EXPECT_TRUE(false);
-}
+  // Creating one messenger per server
+  std::vector<std::shared_ptr<Messenger>> messengers;
+  for (uint16_t i = 0; i < NETWORK_LENGTH; ++i)
+  {
+    auto messenger = NewMessenger(static_cast<uint16_t>(1337 + i));
+    messenger->messenger->Register(true);
+    messengers.push_back(messenger);
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(100 * NETWORK_LENGTH));
 
-TEST(MessengerMailboxTest, MailboxDelivery)
-{
-  EXPECT_TRUE(false);
+  // Sending a message from every messenger to every other messenger
+  for (uint16_t i = 0; i < NETWORK_LENGTH; ++i)
+  {
+    std::string prefix = "Hello from " + std::to_string(i) + " to ";
+    auto &      from   = messengers[i];
+
+    for (uint16_t j = 0; j < NETWORK_LENGTH; ++j)
+    {
+      auto &to_server = servers[j];
+      auto &to        = messengers[j];
+
+      std::string message = prefix + std::to_string(j);
+      Message     msg;
+      // Delibrately left out     msg.from.node      = server->mail_muddle->GetAddress();
+      // Delibrately left out     msg.from.messenger = from->messenger_muddle->GetAddress();
+      msg.to.node      = to_server->mail_muddle->GetAddress();
+      msg.to.messenger = to->messenger_muddle->GetAddress();
+
+      // Sending message
+      from->messenger->SendMessage(msg);
+    }
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000 * NETWORK_LENGTH * NETWORK_LENGTH));
+
+  for (auto &messenger : messengers)
+  {
+    auto recevied_messages = messenger->messenger->GetMessages(400);
+    EXPECT_EQ(recevied_messages.size(), NETWORK_LENGTH);
+  }
+
+  // Shutting down
+  for (auto &server : servers)
+  {
+    server->http.Stop();
+    server->messenger_muddle->Stop();
+    server->mail_muddle->Stop();
+    server->network_manager.Stop();
+  }
 }
-*/
