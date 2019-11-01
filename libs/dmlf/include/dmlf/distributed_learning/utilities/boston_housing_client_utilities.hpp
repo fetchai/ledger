@@ -33,44 +33,30 @@ template <typename TensorType>
 std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>> MakeBostonClient(
     std::string                                                                 id,
     fetch::dmlf::distributed_learning::ClientParams<typename TensorType::Type> &client_params,
-    TensorType &data_tensor, TensorType &label_tensor, float test_set_ratio,
+    TensorType &data, TensorType &labels, float test_set_ratio,
     std::shared_ptr<std::mutex> console_mutex_ptr)
 {
   // Initialise model
-  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr =
-      std::make_shared<fetch::ml::Graph<TensorType>>();
+  auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
 
-  client_params.inputs_names = {
-      g_ptr->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {})};
-  g_ptr->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC1", {"Input"}, 13u,
-                                                                         10u);
-  g_ptr->template AddNode<fetch::ml::ops::Relu<TensorType>>("Relu1", {"FC1"});
-  g_ptr->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u,
-                                                                         10u);
-  g_ptr->template AddNode<fetch::ml::ops::Relu<TensorType>>("Relu2", {"FC2"});
-  g_ptr->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 1u);
-  client_params.label_name =
-      g_ptr->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
-  client_params.error_name =
-      g_ptr->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>("Error",
-                                                                               {"FC3", "Label"});
-  g_ptr->Compile();
+  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+      13u, 10u, fetch::ml::details::ActivationType::RELU);
+  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+      10u, 10u, fetch::ml::details::ActivationType::RELU);
+  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(10u, 1u);
 
   // Initialise DataLoader
-  std::shared_ptr<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>> dataloader_ptr =
-      std::make_shared<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
-  dataloader_ptr->AddData(data_tensor, label_tensor);
-
+  auto dataloader_ptr =
+      std::make_unique<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
+  dataloader_ptr->AddData({data}, labels);
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);
-  // Initialise Optimiser
-  std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> optimiser_ptr =
-      std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
-          std::shared_ptr<fetch::ml::Graph<TensorType>>(g_ptr), client_params.inputs_names,
-          client_params.label_name, client_params.error_name, client_params.learning_rate);
+
+  model_ptr->SetDataloader(std::move(dataloader_ptr));
+  model_ptr->Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
 
   return std::make_shared<fetch::dmlf::distributed_learning::TrainingClient<TensorType>>(
-      id, g_ptr, dataloader_ptr, optimiser_ptr, client_params, console_mutex_ptr);
+      id, model_ptr, client_params, console_mutex_ptr);
 }
 
 }  // namespace utilities
