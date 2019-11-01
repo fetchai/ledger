@@ -137,7 +137,7 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
   auto &             exec  = executables_[execName];
   auto &             state = states_[stateName];
 
-  // Convert and check function signature
+  // LedgerVariant to VM Variant
   auto const *func = exec->FindFunction(entrypoint);
 
   if (func == nullptr)
@@ -224,184 +224,7 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
         console.str()};
   }
 
-  return ExecutionResult{Convert(vmOutput),
-                         Error{Error::Stage::RUNNING, Error::Code::SUCCESS,
-                               "Ran " + execName + " with state " + stateName},
-                         console.str()};
-}
-
-ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &       execName,
-                                                             Name const &       stateName,
-                                                             std::string const &entrypoint,
-                                                             Params             params)
-{
-  if (!HasExecutable(execName))
-  {
-    return EngineError(Error::Code::BAD_EXECUTABLE, "No executable " + execName);
-  }
-  if (!HasState(stateName))
-  {
-    return EngineError(Error::Code::BAD_STATE, "No state " + stateName);
-  }
-
-  auto &             exec  = executables_[execName];
-  auto &             state = states_[stateName];
-  std::ostringstream console{};
-
-  // We create a a VM for each execution. It might be better to create a single VM and reuse it, but
-  // (currently) if you create a VM before compiling the VM is badly formed and crashes on execution
-  VM vm{module_.get()};
-  vm.SetIOObserver(*state);
-  vm.AttachOutputDevice(fetch::vm::VM::STDOUT, console);
-
-
-  // Convert and check function signature
-  auto const *func = exec->FindFunction(entrypoint);
-
-  if (func == nullptr)
-  {
-    return EngineError(Error::Code::RUNTIME_ERROR, entrypoint + " does not exist");
-  }
-
-  auto const numParameters = static_cast<std::size_t>(func->num_parameters);
-
-  fetch::vm::ParameterPack parameterPack(vm.registered_types());
-  for (std::size_t parameter_number = 0; parameter_number < numParameters; ++parameter_number)
-  {
-    try
-    {
-      auto type_id = func->variables[parameter_number].type_id;
-      // std::size_t const x_local_type_count = exec->types.size();
-      std::size_t const m_local_type_count = module_->GetTypeInfoArray().size();
-      /*
-        This is some code for displaying the state of things.
-
-        std::cout << "TYPE ID = " << type_id << std::endl;
-      std::cout << "PrimitiveMaxId = " << vm::TypeIds::PrimitiveMaxId << std::endl;
-
-      for (std::size_t i = 0; i < x_local_type_count; ++i)
-      {
-        auto const &type_info = exec->types[i];
-        std::cout << "X TYPE:" << i << ":" << type_info.name << "(templ=" <<
-      type_info.template_type_id << ")" << std::endl;
-      }
-
-      for (std::size_t i = 0; i < m_local_type_count; ++i)
-      {
-        auto const &type_info = module_ -> type_info_array_[i];
-        std::cout << "M TYPE:" << i << ":" << type_info.name << "(templ=" <<
-      type_info.template_type_id << ")" << std::endl;
-      }
-
-      for (const auto &foo : module_ -> type_info_map_)
-      {
-        std::cout << "M(map):" << foo.first << " -> " << foo.second << std::endl;
-      }
-
-      for (const auto &foo : module_ -> GetDeserializationConstructors())
-      {
-      //std::cout << "M(dc map):" << foo.first << " -> " << foo.second << std::endl;
-      }
-
-      */
-
-      std::string           working_type_name;
-      byte_array::ByteArray ba;
-      VarConverter          vc;
-
-      const vm::TypeInfo *working_type_info = nullptr;
-
-      if (type_id < m_local_type_count)
-      {
-        working_type_info = &(module_->GetTypeInfoArray()[type_id]);
-        working_type_name = working_type_info->name;
-      }
-      else
-      {
-        working_type_info = &(exec->types[type_id - m_local_type_count]);
-        working_type_name = working_type_info->name;
-      }
-
-      auto r = vc.Convert(ba, params[parameter_number], working_type_name);
-      /* vc.Dump(ba); */
-      serializers::MsgPackSerializer serializer{ba};
-
-      if (!r)
-      {
-        return EngineError(Error::Code::RUNTIME_ERROR,
-                           "no serialisation for parameter " + std::to_string(parameter_number));
-      }
-
-      if (ba.empty())
-      {
-        return EngineError(Error::Code::RUNTIME_ERROR,
-                           "no serialised data for parameter " + std::to_string(parameter_number));
-      }
-
-      if (type_id <= vm::TypeIds::PrimitiveMaxId)
-      {
-        vm::Variant param;
-        serializer >> param.primitive.i64;
-        param.type_id = type_id;
-        parameterPack.AddSingle(param);
-      }
-      else
-      {
-        // Checking if we can construct the object
-        if (!vm.IsDefaultSerializeConstructable(type_id))
-        {
-          return EngineError(Error::Code::RUNTIME_ERROR,
-                             "expected input type " + working_type_name +
-                                 " is not DefaultSerializeConstructable param number " +
-                                 std::to_string(parameter_number));
-        }
-
-        // Creating the object
-        vm::Ptr<vm::Object> object  = vm.DefaultSerializeConstruct(type_id);
-        auto                success = object->DeserializeFrom(serializer);
-
-        // If deserialization failed we return
-        if (!success)
-        {
-          return EngineError(Error::Code::RUNTIME_ERROR, "deserialisation failed for parameter " +
-                                                             std::to_string(parameter_number));
-        }
-
-        // Adding the parameter to the parameter pack
-        parameterPack.AddSingle(object);
-      }
-    }
-    catch (std::exception &ex)
-    {
-      return ExecutionResult{LedgerVariant{},
-                             Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, ex.what()},
-                             console.str()};
-    }
-    catch (...)
-    {
-      return ExecutionResult{LedgerVariant{},
-                             Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, "no details"},
-                             console.str()};
-    }
-  }
-
-  // Run
-  std::string runTimeError;
-  VmVariant   vmOutput;
-
-  bool allOK = vm.Execute(*exec, entrypoint, runTimeError, vmOutput, parameterPack);
-  if (!allOK || !runTimeError.empty())
-  {
-    return ExecutionResult{
-        LedgerVariant{},
-        Error{Error::Stage::RUNNING, Error::Code::RUNTIME_ERROR, std::move(runTimeError)},
-        console.str()};
-  }
-
-  return ExecutionResult{Convert(vmOutput),
-                         Error{Error::Stage::RUNNING, Error::Code::SUCCESS,
-                               "Ran " + execName + " with state " + stateName},
-                         console.str()};
+  return PrepOutput(vm, exec.get(), vmOutput, console.str(), "exec " + execName + " with state " + stateName);
 }
 
 ExecutionResult BasicVmEngine::EngineError(Error::Code code, std::string errorMessage) const
@@ -427,117 +250,104 @@ bool BasicVmEngine::HasState(std::string const &name) const
   return states_.find(name) != states_.end();
 }
 
-bool BasicVmEngine::Convertable(LedgerVariant const &ledgerVariant, TypeId const &typeId) const
+ExecutionResult BasicVmEngine::PrepOutput(VM& vm, Executable *exec, VmVariant const &vmVariant, std::string const &console, std::string &&message) const
 {
-  switch (typeId)
+  LedgerVariant output;
+  if (vmVariant.type_id <= vm::TypeIds::PrimitiveMaxId)
   {
-  case fetch::vm::TypeIds::Bool:
+    switch (vmVariant.type_id)
+    {
+    case fetch::vm::TypeIds::Bool:
+    {
+      output = vmVariant.Get<bool>();
+      break;
+    }
+    case fetch::vm::TypeIds::Int8:
+    case fetch::vm::TypeIds::UInt8:
+    case fetch::vm::TypeIds::Int16:
+    case fetch::vm::TypeIds::UInt16:
+    case fetch::vm::TypeIds::Int32:
+    case fetch::vm::TypeIds::UInt32:
+    case fetch::vm::TypeIds::Int64:
+    {
+      output = vmVariant.Get<int>();
+      break;
+    }
+    case fetch::vm::TypeIds::Float32:
+    {
+      output = vmVariant.Get<float>();
+      break;
+    }
+    case fetch::vm::TypeIds::Float64:
+    {
+      output = vmVariant.Get<double>();
+      break;
+    }
+    case fetch::vm::TypeIds::Fixed32:
+    {
+      output = vmVariant.Get<fp32_t>();
+      break;
+    }
+    case fetch::vm::TypeIds::Fixed64:
+    {
+      output = vmVariant.Get<fp64_t>();
+      break;
+    }
+    case vm::TypeIds::Void:
+    case vm::TypeIds::Unknown:
+    {
+      break;
+    }
+    default:
+      return EngineError(Error::Code::RUNTIME_ERROR, 
+          "Error in output after running " + std::move(message) + "Could not transform primitive type " + vm.GetTypeName(vmVariant.type_id));
+    }
+  }
+  else if (vmVariant.type_id == vm::TypeIds::String)
   {
-    return ledgerVariant.IsBoolean();
+      output = vmVariant.Get<vm::Ptr<vm::String>>()->str;
   }
-  case fetch::vm::TypeIds::Int8:
-  case fetch::vm::TypeIds::UInt8:
-  case fetch::vm::TypeIds::Int16:
-  case fetch::vm::TypeIds::UInt16:
-  case fetch::vm::TypeIds::Int32:
-  case fetch::vm::TypeIds::UInt32:
-  case fetch::vm::TypeIds::Int64:
-  {
-    return ledgerVariant.IsInteger();
-  }
-  case fetch::vm::TypeIds::Float32:
-  case fetch::vm::TypeIds::Float64:
-  {
-    return ledgerVariant.IsFloatingPoint();
-  }
-  case fetch::vm::TypeIds::Fixed32:
-  case fetch::vm::TypeIds::Fixed64:
-  {
-    return ledgerVariant.IsFixedPoint();
-  }
-  default:
-    return false;
-  }
-}
-BasicVmEngine::VmVariant BasicVmEngine::Convert(LedgerVariant const &ledgerVariant,
-                                                TypeId const &       typeId) const
-{
-  switch (typeId)
-  {
-  case fetch::vm::TypeIds::Bool:
-  {
-    return VmVariant(ledgerVariant.As<bool>(), typeId);
-  }
-  case fetch::vm::TypeIds::Int8:
-  case fetch::vm::TypeIds::UInt8:
-  case fetch::vm::TypeIds::Int16:
-  case fetch::vm::TypeIds::UInt16:
-  case fetch::vm::TypeIds::Int32:
-  case fetch::vm::TypeIds::UInt32:
-  case fetch::vm::TypeIds::Int64:
-  {
-    return VmVariant(ledgerVariant.As<int>(), typeId);
-  }
-  case fetch::vm::TypeIds::Float32:
-  {
-    return VmVariant(ledgerVariant.As<float>(), typeId);
-  }
-  case fetch::vm::TypeIds::Float64:
-  {
-    return VmVariant(ledgerVariant.As<double>(), typeId);
-  }
-  case fetch::vm::TypeIds::Fixed32:
-  case fetch::vm::TypeIds::Fixed64:
-  {
-    return VmVariant(ledgerVariant.As<fp64_t>(), typeId);
-  }
-  default:
-    return VmVariant();
-  }
-}
+  else {
+    ExecutionContext executionContext(&vm, exec);
+    std::cout << "I am converting " << vm.GetTypeName(vmVariant.type_id) << '(' 
+      << vmVariant.type_id << ")\n";
+    
+    auto inside = vmVariant.Get<vm::Ptr<vm::Object>>();
 
-BasicVmEngine::LedgerVariant BasicVmEngine::Convert(VmVariant const &vmVariant) const
-{
-  switch (vmVariant.type_id)
-  {
-  case fetch::vm::TypeIds::Bool:
-  {
-    return LedgerVariant{vmVariant.Get<bool>()};
+    serializers::MsgPackSerializer serializer;
+    try
+    {
+      inside->SerializeTo(serializer);
+      serializer.seek(0);
+    }
+    catch(std::exception &ex)
+    {
+      return EngineError(Error::Code::SERIALIZATION_ERROR, 
+          "Error serializing output after running " + std::move(message) + " Threw error " + std::string(ex.what()));
+    }
+    catch(...)
+    {
+      return EngineError(Error::Code::SERIALIZATION_ERROR, 
+          "Error serializing output after running " + std::move(message) + " No details");
+    }
+
+    try
+    {
+      serializer >> output;
+    }
+    catch(std::exception &ex)
+    {
+      return EngineError(Error::Code::SERIALIZATION_ERROR, 
+          "Error deserializing output after running " + std::move(message) + " Threw error " + std::string(ex.what()));
+    }
+    catch(...)
+    {
+      return EngineError(Error::Code::SERIALIZATION_ERROR, 
+          "Error deserializing output after running " + std::move(message) + " No details");
+    }
   }
-  case fetch::vm::TypeIds::Int8:
-  case fetch::vm::TypeIds::UInt8:
-  case fetch::vm::TypeIds::Int16:
-  case fetch::vm::TypeIds::UInt16:
-  case fetch::vm::TypeIds::Int32:
-  case fetch::vm::TypeIds::UInt32:
-  case fetch::vm::TypeIds::Int64:
-  {
-    return LedgerVariant{vmVariant.Get<int>()};
-  }
-  case fetch::vm::TypeIds::Float32:
-  {
-    return LedgerVariant{vmVariant.Get<float>()};
-  }
-  case fetch::vm::TypeIds::Float64:
-  {
-    return LedgerVariant{vmVariant.Get<double>()};
-  }
-  case fetch::vm::TypeIds::Fixed32:
-  {
-    return LedgerVariant{vmVariant.Get<fp32_t>()};
-  }
-  case fetch::vm::TypeIds::Fixed64:
-  {
-    return LedgerVariant{vmVariant.Get<fp64_t>()};
-  }
-  case fetch::vm::TypeIds::String:
-  {
-    std::string temp{vmVariant.Get<vm::Ptr<vm::String>>()->str};
-    return LedgerVariant{std::move(temp)};
-  }
-  default:
-    return LedgerVariant{};
-  }
+  return ExecutionResult{output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS,
+         "Ran " + std::move(message)}, console};
 }
 
 BasicVmEngine::ExecutionContext::ExecutionContext(VM *vm, Executable *executable)

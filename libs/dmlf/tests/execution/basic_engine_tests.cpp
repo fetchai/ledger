@@ -616,6 +616,33 @@ auto const IntToString = R"(
 
 )";
 
+auto const ArrayInt64Out = R"(
+
+function arrayOut() : Array<Int64>
+  var array = Array<Int64>(2);
+  array[0] = 1i64;
+  array[1] = 2i64;
+  return array;
+endfunction
+
+)";
+
+auto const ArrayIntInt64Out = R"(
+
+function arrayOut() : Array<Array<Int64>>
+  var array = Array<Int64>(2);
+  array[0] = 1i64;
+  array[1] = 2i64;
+
+  var big = Array<Array<Int64>>(2);
+  big[0] = array;
+  big[1] = array;
+  
+  return big;
+endfunction
+
+)";
+
 }  // namespace
 
 TEST(BasicVmEngineDmlfTests, Return1)
@@ -1827,6 +1854,51 @@ TEST(BasicVmEngineDmlfTests, IntToString)
   ExecutionResult result = engine.Run("toString", "state", "IntToString", Params{LedgerVariant(1)});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<std::string>(), "1");
+}
+
+TEST(BasicVmEngineDmlfTests, ArrayInt64)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("arrayOut", {{"etch", ArrayInt64Out}});
+  EXPECT_TRUE(createdProgram.succeeded());
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run("arrayOut", "state", "arrayOut", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  auto output = result.output();
+  EXPECT_TRUE(output.IsArray());
+  EXPECT_TRUE(output.size() == 2);
+  EXPECT_TRUE(output[0].As<int>() == 1);
+  EXPECT_TRUE(output[1].As<int>() == 2);
+}
+
+TEST(BasicVmEngineDmlfTests, ArrayIntInt64)
+{
+  BasicVmEngine engine;
+  
+  ExecutionResult createdProgram = engine.CreateExecutable("arrayOut", {{"etch", ArrayIntInt64Out}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded());
+
+  ExecutionResult result = engine.Run("arrayOut", "state", "arrayOut", Params{});
+  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  auto output = result.output();
+  ASSERT_TRUE(output.IsArray());
+  ASSERT_EQ(output.size(), 2);
+  ASSERT_TRUE(output[0].IsArray());
+  ASSERT_EQ(output[0].size(), 2);
+  ASSERT_TRUE(output[1].IsArray());
+  
+  EXPECT_EQ(output[1].size(), 2);
+  EXPECT_EQ(output[0][0].As<int>(), 1);
+  EXPECT_EQ(output[0][1].As<int>(), 2);
+  EXPECT_EQ(output[1][0].As<int>(), 1);
+  EXPECT_EQ(output[1][1].As<int>(), 2);
 }
 
 }  // namespace
