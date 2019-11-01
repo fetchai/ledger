@@ -96,7 +96,6 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_3)
                            fetch::math::function_tolerance<DataType>()));
 }
 
-} // test
-} // math
-} // fetch
-
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
