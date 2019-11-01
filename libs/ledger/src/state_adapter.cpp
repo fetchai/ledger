@@ -146,6 +146,7 @@ StateAdapter::Status StateAdapter::Exists(std::string const &key)
 ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteArray const &key)
 {
   FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key, " scope: ", scope.full_name());
+
   return ResourceAddress{scope.full_name() + ".state." + key};
 }
 
@@ -161,7 +162,7 @@ void StateAdapter::PopContext()
 
 Identifier StateAdapter::CurrentScope() const
 {
-  return Identifier{scope_.back().full_name()};
+  return scope_.back();
 }
 
 }  // namespace ledger

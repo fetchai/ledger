@@ -85,7 +85,7 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_3)
   ArrayType data = TypeParam::FromString("1,0,1,2");
   data.Reshape({2, 2, 1, 1});
   ArrayType gt = TypeParam::FromString("-1, 5, -1; 5, -1, -1; -1, 5, -1; -1, -1, 5");
-  gt.Reshape({2, 2, 1, 3});
+  gt.Reshape({2, 2, 1, 3, 1});
 
   SizeType depth     = 3;
   auto     on_value  = DataType{5.0f};

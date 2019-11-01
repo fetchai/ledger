@@ -646,7 +646,7 @@ void Generator::HandleUseStatement(IRNodePtr const &node)
   IRNodePtr           list_node       = node->children[1];
   IRExpressionNodePtr alias_name_node = ConvertToIRExpressionNodePtr(node->children[2]);
   IRExpressionNodePtr n               = alias_name_node ? alias_name_node : state_name_node;
-  HandleUseVariable(n);
+  HandleUseVariable(state_name_node->text, state_name_node->line, n);
 }
 
 void Generator::HandleUseAnyStatement(IRNodePtr const &node)
@@ -654,11 +654,12 @@ void Generator::HandleUseAnyStatement(IRNodePtr const &node)
   for (auto const &c : node->children)
   {
     IRExpressionNodePtr child = ConvertToIRExpressionNodePtr(c);
-    HandleUseVariable(child);
+    HandleUseVariable(child->text, child->line, child);
   }
 }
 
-void Generator::HandleUseVariable(IRExpressionNodePtr const &node)
+void Generator::HandleUseVariable(std::string const &name, uint16_t line,
+                                  IRExpressionNodePtr const &node)
 {
   IRVariablePtr v              = node->variable;
   IRFunctionPtr f              = node->function;
@@ -671,7 +672,7 @@ void Generator::HandleUseVariable(IRExpressionNodePtr const &node)
     Scope &scope = scopes_[scope_number];
     scope.objects.push_back(variable_index);
   }
-  PushString(v->name, node->line);
+  PushString(name, line);
   uint16_t                opcode = f->resolved_opcode;
   Executable::Instruction constructor_instruction(opcode);
   constructor_instruction.type_id     = type_id;

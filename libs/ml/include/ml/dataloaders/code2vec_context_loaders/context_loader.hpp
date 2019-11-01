@@ -76,7 +76,7 @@ public:
   SizeType Size() const override;
   bool     IsDone() const override;
   void     Reset() override;
-  bool     AddData(InputType const &data, LabelType const &label) override;
+  bool     AddData(std::vector<InputType> const &data, LabelType const &label) override;
   void     SetTestRatio(float new_test_ratio) override;
   void     SetValidationRatio(float new_validation_ratio) override;
   bool     IsModeAvailable(DataLoaderMode mode) override;
@@ -135,7 +135,8 @@ private:
 };
 
 template <typename LabelType, typename InputType>
-bool C2VLoader<LabelType, InputType>::AddData(InputType const &data, LabelType const &label)
+bool C2VLoader<LabelType, InputType>::AddData(std::vector<InputType> const &data,
+                                              LabelType const &             label)
 {
   FETCH_UNUSED(data);
   FETCH_UNUSED(label);
