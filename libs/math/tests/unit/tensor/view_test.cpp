@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "meta/type_traits.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
 namespace math {
@@ -169,6 +169,6 @@ TYPED_TEST(TensorViewTests, view_copy)
   EXPECT_TRUE(t1.AllClose(t3));
 }
 
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

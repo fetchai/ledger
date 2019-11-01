@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-#include "test_types.hpp"
 #include "gtest/gtest.h"
+#include "math/tensor.hpp"
+#include "test_types.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
 namespace math {
@@ -521,6 +521,6 @@ TYPED_TEST(TensorOperationsTest, slices_same_tensor_test)
 
 // TODO (private 867) - reimplement shuffle & test
 
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

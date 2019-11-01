@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -63,6 +63,6 @@ TYPED_TEST(SerializersTest, serialize_tensor)
   EXPECT_EQ(t1, t2);
 }
 
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

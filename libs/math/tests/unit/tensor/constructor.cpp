@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -39,6 +39,6 @@ TYPED_TEST(TensorConstructorTest, string_construction)
   ASSERT_EQ(tensor.At(0, 2), TypeParam(4));
 }
 
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

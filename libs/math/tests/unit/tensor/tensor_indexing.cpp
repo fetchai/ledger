@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
-
 
 namespace fetch {
 namespace math {
@@ -118,7 +117,7 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
   }
 
   std::vector<double> gt({0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
-                             15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29});
+                          15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29});
 
   uint64_t counter = 0;
   for (uint64_t i(0); i < 2; i++)
@@ -385,6 +384,6 @@ TYPED_TEST(TensorIndexingTest, major_order_flip_test)
   EXPECT_EQ(t[8], 8);
 }
 
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

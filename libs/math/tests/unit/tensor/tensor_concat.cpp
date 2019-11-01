@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
-
 
 namespace fetch {
 namespace math {
@@ -407,6 +406,6 @@ TYPED_TEST(TensorConcatenationTest, tensor_Split_3d)
   EXPECT_TRUE(ret_tensors[2].AllClose(t3));
 }
 
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

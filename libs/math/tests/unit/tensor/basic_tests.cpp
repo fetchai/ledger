@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "meta/type_traits.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
 namespace math {
@@ -264,8 +264,6 @@ TYPED_TEST(TensorBasicTests, minus_equals_test)
   ASSERT_TRUE(test_array_2.AllClose(result_array));
 }
 
-} // test
-} // math
-} // fetch
-
-
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
