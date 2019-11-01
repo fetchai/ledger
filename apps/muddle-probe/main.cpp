@@ -1,5 +1,23 @@
 //------------------------------------------------------------------------------
 //
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+//
 //   Copyright 2018 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +34,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/ecdsa.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/service_ids.hpp"
 #include "core/commandline/parameter_parser.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "core/service_ids.hpp"
+#include "crypto/ecdsa.hpp"
+#include "muddle/network_id.hpp"
+#include "muddle/packet.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/tcp/client_implementation.hpp"
-#include "muddle/packet.hpp"
-#include "muddle/network_id.hpp"
 
 #include <iostream>
 #include <string>
 
-struct PingMessage {};
+struct PingMessage
+{
+};
 
 namespace fetch {
 namespace serializers {
@@ -78,8 +98,8 @@ using fetch::network::TCPClientImplementation;
 using fetch::serializers::MsgPackSerializer;
 using fetch::byte_array::FromHex;
 
-using Socket = asio::ip::tcp::socket;
-using Resolver = asio::ip::tcp::resolver;
+using Socket    = asio::ip::tcp::socket;
+using Resolver  = asio::ip::tcp::resolver;
 using IoService = asio::io_service;
 
 ByteArray FormatPacket(Packet const &packet)
@@ -168,11 +188,11 @@ void WritePacket(Packet const &packet, Socket &sock, std::error_code &ec)
 std::error_code SendPingTo(std::string const &host, std::string const &port, uint32_t network_id)
 {
   std::error_code ec;
-  IoService service{};
+  IoService       service{};
 
   // resolve the address
   Resolver resolver{service};
-  auto it = resolver.resolve({host, port}, ec);
+  auto     it = resolver.resolve({host, port}, ec);
   if (ec)
   {
     std::cerr << "Error writing resolving to host: " << ec.message() << std::endl;
@@ -263,7 +283,8 @@ uint32_t ConvertNetworkId(std::string const &name)
   }
   else if (IsLaneId(name))
   {
-    auto const converted = FromHex(ConstByteArray{reinterpret_cast<uint8_t const *>(name.data() + 1), 6});
+    auto const converted =
+        FromHex(ConstByteArray{reinterpret_cast<uint8_t const *>(name.data() + 1), 6});
 
     network_id = uint32_t{'L'} << 24u;
 
@@ -277,7 +298,7 @@ uint32_t ConvertNetworkId(std::string const &name)
   return network_id;
 }
 
-} // namespace
+}  // namespace
 
 int main(int argc, char **argv)
 {
@@ -302,7 +323,7 @@ int main(int argc, char **argv)
     auto const ec = SendPingTo(argv[1], argv[2], nid);
     if (ec)
     {
-      std::cerr << "Error: "<< ec.message() << std::endl;
+      std::cerr << "Error: " << ec.message() << std::endl;
       return EXIT_FAILURE;
     }
 
@@ -316,4 +337,3 @@ int main(int argc, char **argv)
 
   return exit_code;
 }
-
