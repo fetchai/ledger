@@ -22,7 +22,6 @@
 #include "core/serializers/main_serializer.hpp"
 #include "json/document.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "variant/variant.hpp"
 #include "vm/io_observer_interface.hpp"
@@ -30,6 +29,7 @@
 #include "vm/variant.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/system.hpp"
+#include "vm_modules/math/read_csv.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/ml.hpp"
 
@@ -47,21 +47,6 @@ using System     = fetch::vm_modules::System;
 
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToHex;
-
-// read the weights and bias csv files
-
-fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
-    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose)
-{
-  TensorType weights = fetch::ml::dataloaders::ReadCSV<TensorType>(filename->str, 0, 0, transpose);
-  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
-}
-
-fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv_no_transpose(
-    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
-{
-  return read_csv(vm, filename, false);
-}
 
 std::string ReadFileContents(std::string const &path)
 {
@@ -288,8 +273,7 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::CreatePrint(*module);
 
-  module->CreateFreeFunction("read_csv", &read_csv);
-  module->CreateFreeFunction("read_csv", &read_csv_no_transpose);
+  fetch::vm_modules::math::BindReadCSV(*module);
 
   RunEtchScript(etch_saver, module);
   RunEtchScript(etch_loader, module);
