@@ -136,8 +136,8 @@ TEST(MessengerMailboxTest, MessagesRouting)
   // Connecting servers in a line
   for (uint16_t i = 0; i < NETWORK_LENGTH; ++i)
   {
-    /*
     auto &a = servers[i];
+    /*
     a->mail_muddle->ConnectTo(
         "", fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + i + 1)));
 
