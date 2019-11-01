@@ -36,6 +36,7 @@ TYPED_TEST_CASE(ClusteringTest, FloatingTypes);
 TYPED_TEST(ClusteringTest, knn_euclidean_test)
 {
   using ArrayType = TypeParam;
+  using DataType  = typename TypeParam::Type;
   using SizeType  = typename TypeParam::SizeType;
 
   ArrayType A = ArrayType::FromString("1, 2, 3, 4; 2, 3, 4, 5; -1, -2, -3, -4; -2, -3, -4, -5");
@@ -44,13 +45,14 @@ TYPED_TEST(ClusteringTest, knn_euclidean_test)
   auto output = clustering::KNN<ArrayType, fetch::math::distance::Euclidean>(A, v, 4);
 
   EXPECT_EQ(output.at(0).first, SizeType(1));
-  EXPECT_NEAR(double(output.at(0).second), double(2), 1e-4);
   EXPECT_EQ(output.at(1).first, SizeType(0));
-  EXPECT_NEAR(double(output.at(1).second), double(4), 1e-4);
   EXPECT_EQ(output.at(2).first, SizeType(2));
-  EXPECT_NEAR(double(output.at(2).second), double(14.6969384), 1e-4);
   EXPECT_EQ(output.at(3).first, SizeType(3));
-  EXPECT_NEAR(double(output.at(3).second), double(16.6132477), 1e-4);
+
+  EXPECT_TRUE(output.at(0).second - double(2) < function_tolerance<DataType>());
+  EXPECT_TRUE(output.at(1).second - double(4) < function_tolerance<DataType>());
+  EXPECT_TRUE(output.at(2).second - double(14.6973) < function_tolerance<DataType>());
+  EXPECT_TRUE(output.at(3).second - double(16.6132477) < function_tolerance<DataType>());
 }
 
 TYPED_TEST(ClusteringTest, knn_cosine_test)
@@ -61,7 +63,7 @@ TYPED_TEST(ClusteringTest, knn_cosine_test)
   ArrayType A = ArrayType::FromString("1, 2, 3, 4; 2, 3, 4, 5; -1, -2, -3, -4; -2, -3, -4, -5");
   ArrayType v = ArrayType::FromString("3, 4, 5, 6");
 
-  auto output = KNNCosine(A, v, 4);
+  auto output = clustering::KNNCosine(A, v, 4);
 
   EXPECT_EQ(output.at(0).first, SizeType(1));
   EXPECT_NEAR(double(output.at(0).second), double(0.00215564), 1e-4);
@@ -73,7 +75,6 @@ TYPED_TEST(ClusteringTest, knn_cosine_test)
   EXPECT_NEAR(double(output.at(3).second), double(1.99784), 1e-4);
 }
 
-
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

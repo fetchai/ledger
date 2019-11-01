@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/normalize_array.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -59,8 +59,6 @@ TYPED_TEST(NormalizeArrayTest, conditional_distance)
   }
 }
 
-} // test
-} // math
-} // fetch
-
-
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

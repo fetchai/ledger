@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/standard_functions/clamp.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -127,8 +127,6 @@ TYPED_TEST(StandardFunctionTests, clamp_array_2D_test)
   ASSERT_TRUE(A.AllClose(A_clamp_expected, DataType{1e-5f}, DataType{1e-5f}));
 }
 
-
-} // test
-} // math
-} // fetch
-
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

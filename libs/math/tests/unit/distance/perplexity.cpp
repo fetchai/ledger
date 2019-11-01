@@ -17,23 +17,19 @@
 //------------------------------------------------------------------------------
 
 #include "math/statistics/perplexity.hpp"
-#include "math/tensor.hpp"
-
+#include "test_types.hpp"
 #include "gtest/gtest.h"
 
-using namespace fetch::math::statistics;
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class PerplexityTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(PerplexityTest, MyTypes);
+TYPED_TEST_CASE(PerplexityTest, FloatingTypes);
 
 TYPED_TEST(PerplexityTest, entropy)
 {
@@ -48,5 +44,10 @@ TYPED_TEST(PerplexityTest, entropy)
   A.Set(SizeType{2}, DataType(0.3));
   A.Set(SizeType{3}, DataType(0.4));
 
-  EXPECT_NEAR(double(Perplexity(A)), 3.59611546662432, 1e-3);
+  EXPECT_NEAR(double(statistics::Perplexity(A)), 3.59611546662432, 1e-3);
 }
+
+
+} // test
+} // math
+} // fetch
