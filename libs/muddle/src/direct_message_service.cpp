@@ -185,7 +185,7 @@ void DirectMessageService::OnDirectMessage(Handle handle, PacketPtr const &packe
 void DirectMessageService::OnRoutingMessage(Handle handle, PacketPtr const &packet,
                                             RoutingMessage const &msg)
 {
-  FETCH_LOG_INFO(logging_name_, "OnRoutingMessage");
+  FETCH_LOG_TRACE(logging_name_, "OnRoutingMessage");
 
   switch (msg.type)
   {
@@ -292,7 +292,7 @@ void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &pack
   Handle     previous_handle{0};
   auto const status = UpdateReservation(packet->GetSender(), handle, &previous_handle);
 
-  FETCH_LOG_INFO(logging_name_, "Req. Reserve for conn: ", handle, " status: ", ToString(status));
+  FETCH_LOG_TRACE(logging_name_, "Req. Reserve for conn: ", handle, " status: ", ToString(status));
 
   if ((UpdateStatus::REPLACED == status) || (UpdateStatus::ADDED == status))
   {
@@ -322,7 +322,7 @@ void DirectMessageService::OnRoutingAccepted(Handle handle, PacketPtr const &pac
                                              RoutingMessage const &msg)
 {
   FETCH_UNUSED(msg);
-  FETCH_LOG_INFO(logging_name_, "OnRoutingAccepted (conn: ", handle, ")");
+  FETCH_LOG_TRACE(logging_name_, "OnRoutingAccepted (conn: ", handle, ")");
 
   auto const status =
       router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true, false);
