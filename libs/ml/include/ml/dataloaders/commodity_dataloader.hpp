@@ -20,7 +20,6 @@
 #include "core/random.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 
@@ -61,7 +60,7 @@ public:
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
 
-  bool AddData(InputType const &data, LabelType const &label) override;
+  bool AddData(std::vector<InputType> const &data, LabelType const &label) override;
 
   LoaderType LoaderCode() override
   {
@@ -69,12 +68,9 @@ public:
   }
 
 private:
-  bool      random_mode_ = false;
-  InputType data_;    // n_data, features
-  LabelType labels_;  // n_data, features
-
-  SizeType   rows_to_skip_ = 1;
-  SizeType   cols_to_skip_ = 1;
+  bool       random_mode_ = false;
+  InputType  data_;    // n_data, features
+  LabelType  labels_;  // n_data, features
   ReturnType buffer_;
 
   SizeType size_ = 0;
@@ -111,13 +107,13 @@ private:
  * @return
  */
 template <typename LabelType, typename InputType>
-bool CommodityDataLoader<LabelType, InputType>::AddData(InputType const &data,
-                                                        LabelType const &label)
+bool CommodityDataLoader<LabelType, InputType>::AddData(std::vector<InputType> const &data,
+                                                        LabelType const &             label)
 {
-  data_   = data;
+  data_   = data.at(0);
   labels_ = label;
   assert(data_.shape().at(1) == labels_.shape().at(1));
-  size_ = data.shape().at(1);
+  size_ = data.at(0).shape().at(1);
 
   UpdateRanges();
 

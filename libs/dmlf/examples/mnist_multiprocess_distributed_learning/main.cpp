@@ -17,23 +17,18 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
-#include "dmlf/distributed_learning/utilities/distributed_learning_utilities.hpp"
 #include "dmlf/distributed_learning/utilities/mnist_client_utilities.hpp"
+#include "dmlf/distributed_learning/utilities/utilities.hpp"
 #include "dmlf/networkers/muddle_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
-#include "math/matrix_operations.hpp"
+#include "json/document.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
 
 #include <algorithm>
-#include <chrono>
-#include <ctime>
 #include <iostream>
 #include <string>
 #include <thread>
-#include <utility>
 #include <vector>
 
 using namespace fetch::ml::ops;
@@ -45,39 +40,30 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
   // This example will create muddle networking distributed client with simple classification neural
   // net and learns how to predict hand written digits from MNIST dataset
 
-  if (ac < 3)
+  if (argc != 4)
   {
-    std::cout << "Usage : " << av[0]
-              << " PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte "
-                 "networker_config instance_number"
-              << std::endl;
+    std::cout << "learner_config.json networker_config instance_number" << std::endl;
     return 1;
   }
 
-  /**
-   * Prepare configuration
-   */
+  auto networker_config = std::string(argv[2]);
+  int  instance_number  = std::atoi(argv[3]);
 
-  ClientParams<DataType> client_params;
+  fetch::json::JSONDocument                                 doc;
+  fetch::dmlf::distributed_learning::ClientParams<DataType> client_params =
+      fetch::dmlf::distributed_learning::utilities::ClientParamsFromJson<TensorType>(
+          std::string(argv[1]), doc);
 
-  // Command line parameters
-  std::string images_filename = av[1];
-  std::string labels_filename = av[2];
-  std::string config          = std::string(av[3]);
-  int         instance_number = std::atoi(av[4]);
-
-  // Distributed learning parameters:
-  SizeType number_of_rounds   = 10;
-  client_params.max_updates   = 100;  // Round ends after this number of batches
-  SizeType number_of_peers    = 3;
-  client_params.batch_size    = 32;
-  client_params.learning_rate = static_cast<DataType>(.001f);
-  float test_set_ratio        = 0.03f;
+  auto data_file      = doc["data"].As<std::string>();
+  auto labels_file    = doc["labels"].As<std::string>();
+  auto n_rounds       = doc["n_rounds"].As<SizeType>();
+  auto n_peers        = doc["n_peers"].As<SizeType>();
+  auto test_set_ratio = doc["test_set_ratio"].As<float>();
 
   /**
    * Prepare environment
@@ -89,15 +75,16 @@ int main(int ac, char **av)
 
   // Create learning client
   auto client = fetch::dmlf::distributed_learning::utilities::MakeMNISTClient<TensorType>(
-      std::to_string(instance_number), client_params, images_filename, labels_filename,
-      test_set_ratio, console_mutex_ptr);
+      std::to_string(instance_number), client_params, data_file, labels_file, test_set_ratio,
+      console_mutex_ptr);
 
   // Create networker and assign shuffle algorithm
-  auto networker = std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(config, instance_number);
+  auto networker =
+      std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(networker_config, instance_number);
   networker->Initialize<fetch::dmlf::Update<TensorType>>();
 
-  networker->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
-      networker->GetPeerCount(), number_of_peers));
+  networker->SetShuffleAlgorithm(
+      std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));
 
   // Give client pointer to its networker
   client->SetNetworker(networker);
@@ -106,7 +93,7 @@ int main(int ac, char **av)
    * Main loop
    */
 
-  for (SizeType it{0}; it < number_of_rounds; ++it)
+  for (SizeType it{0}; it < n_rounds; ++it)
   {
     // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;

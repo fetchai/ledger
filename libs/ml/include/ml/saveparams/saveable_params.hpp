@@ -430,6 +430,14 @@ struct OpMaxPool2DSaveableParams : public OpsSaveableParams
 };
 
 template <typename TensorType>
+struct OpMaxPoolSaveableParams : public OpsSaveableParams
+{
+  fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type     = OpType::OP_MAX_POOL;
+};
+
+template <typename TensorType>
 struct OpAvgPool1DSaveableParams : public OpsSaveableParams
 {
   fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
@@ -704,6 +712,18 @@ struct OpTransposeSaveableParams : public OpsSaveableParams
 {
   std::vector<fetch::math::SizeType> transpose_vector;
   fetch::ml::OpType                  op_type = OpType::OP_TRANSPOSE;
+};
+
+template <typename TensorType>
+struct OpOneHotSaveableParams : public OpsSaveableParams
+{
+  using DataType = typename TensorType::Type;
+
+  fetch::math::SizeType depth;
+  fetch::math::SizeType axis;
+  DataType              on_value;
+  DataType              off_value;
+  fetch::ml::OpType     op_type = OpType::OP_ONE_HOT;
 };
 
 }  // namespace ml
