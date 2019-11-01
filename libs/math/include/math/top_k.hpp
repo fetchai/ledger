@@ -58,6 +58,7 @@ void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType 
   std::vector<std::pair<SizeType, DataType>> vec;
   vec.resize(axis_size);
 
+  SizeType i = 0, k_minus_one = k - 1;
   while (data_it.is_valid())
   {
     // Copy values to vector
@@ -78,15 +79,16 @@ void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType 
       // Normal order
       if (sorted)
       {
-        (*ret_data_it)    = vec.at(index).second;
-        (*ret_indices_it) = vec.at(index).first;
+        i = index;
       }
       // Reverse order
       else
       {
-        (*ret_data_it)    = vec.at(k - index - 1).second;
-        (*ret_indices_it) = vec.at(k - index - 1).first;
+        i = k_minus_one - index;
       }
+
+      (*ret_data_it)    = vec.at(i).second;
+      (*ret_indices_it) = vec.at(i).first;
 
       ++ret_data_it;
       ++ret_indices_it;
