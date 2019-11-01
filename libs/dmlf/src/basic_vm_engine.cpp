@@ -309,8 +309,6 @@ ExecutionResult BasicVmEngine::PrepOutput(VM& vm, Executable *exec, VmVariant co
   }
   else {
     ExecutionContext executionContext(&vm, exec);
-    std::cout << "I am converting " << vm.GetTypeName(vmVariant.type_id) << '(' 
-      << vmVariant.type_id << ")\n";
     
     auto inside = vmVariant.Get<vm::Ptr<vm::Object>>();
 
