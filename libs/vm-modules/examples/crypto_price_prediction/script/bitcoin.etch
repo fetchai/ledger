@@ -50,11 +50,16 @@ if (System.Argc() != 5) print("Usage: VM SCRIPT_FILE PATH/TO/TRAIN_DATA.CSV /PAT
     return;
 endif
 
-// LOAD THE DATA
-var orig_train_data = readCSV(System.Argv(1), true);
-var orig_train_labels = readCSV(System.Argv(2), true);
-var orig_test_data = readCSV(System.Argv(3), true);
-var orig_test_labels = readCSV(System.Argv(4), true);
+// LOAD & TRANSPOSE THE DATA
+var orig_train_data = readCSV(System.Argv(1));
+var orig_train_labels = readCSV(System.Argv(2));
+var orig_test_data = readCSV(System.Argv(3));
+var orig_test_labels = readCSV(System.Argv(4));
+
+orig_train_data = orig_train_data.unsqueeze();
+orig_train_labels = orig_train_labels.unsqueeze();
+orig_test_data = orig_test_data.unsqueeze();
+orig_test_labels = orig_test_labels.unsqueeze();
 
 // NORMALISE ALL DATA TO THE MAX RANGE OF THE TRAINING DATA
 var scaler = Scaler();
@@ -65,7 +70,7 @@ var test_data = scaler.normalise(orig_test_data);
 var test_labels = scaler.normalise(orig_test_labels);
 
 var data_loader = DataLoader("tensor");
-data_loader.addData(train_data, train_labels);
+data_loader.addData({train_data}, train_labels);
 
 // SET UP GRAPH
 var graph = Graph();
