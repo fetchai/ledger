@@ -18,6 +18,7 @@
 
 #include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
+#include "math/utilities/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
@@ -117,7 +118,9 @@ void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> cons
   }
 }
 
-void VMDataLoader::AddDataByData(fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMTensorType>>> const &data, Ptr<VMTensorType> const &labels)
+void VMDataLoader::AddDataByData(
+    fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMTensorType>>> const &data,
+    Ptr<VMTensorType> const &                                             labels)
 {
   switch (mode_)
   {
@@ -135,8 +138,8 @@ void VMDataLoader::AddDataByData(fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<
 
 void VMDataLoader::AddCommodityData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
 {
-  auto data  = fetch::ml::dataloaders::ReadCSV<MathTensorType>(xfilename->str);
-  auto label = fetch::ml::dataloaders::ReadCSV<MathTensorType>(yfilename->str);
+  auto data  = fetch::math::utilities::ReadCSV<MathTensorType>(xfilename->str);
+  auto label = fetch::math::utilities::ReadCSV<MathTensorType>(yfilename->str);
 
   std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData({data}, label);
 }
@@ -147,9 +150,11 @@ void VMDataLoader::AddMnistData(Ptr<String> const &xfilename, Ptr<String> const 
                                                                          yfilename->str);
 }
 
-void VMDataLoader::AddTensorData(fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMTensorType>>> const &data, Ptr<VMTensorType> const &labels)
+void VMDataLoader::AddTensorData(
+    fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMTensorType>>> const &data,
+    Ptr<VMTensorType> const &                                             labels)
 {
- /* auto                     n_elements = data->elements.size();
+  auto                    n_elements = data->elements.size();
   std::vector<TensorType> c_data(n_elements);
 
   for (fetch::math::SizeType i{0}; i < n_elements; i++)
@@ -158,13 +163,7 @@ void VMDataLoader::AddTensorData(fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<
     c_data.at(i)                 = (ptr_string)->GetTensor();
   }
 
-  std::static_pointer_cast<TensorLoaderType>(loader_)->AddData(c_data,
-                                                               labels->GetTensor());*/
-
-  (void) data;
- std::static_pointer_cast<TensorLoaderType>(loader_)->AddData({labels->GetTensor()},
-            labels->GetTensor());
-
+  std::static_pointer_cast<TensorLoaderType>(loader_)->AddData(c_data, labels->GetTensor());
 }
 
 // TODO(issue 1692): Simplify Array<Tensor> construction

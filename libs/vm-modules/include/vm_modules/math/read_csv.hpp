@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,41 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
-#include "vm_modules/math/abs.hpp"
-#include "vm_modules/math/exp.hpp"
-#include "vm_modules/math/log.hpp"
-#include "vm_modules/math/math.hpp"
-#include "vm_modules/math/pow.hpp"
-#include "vm_modules/math/random.hpp"
-#include "vm_modules/math/read_csv.hpp"
-#include "vm_modules/math/sqrt.hpp"
-#include "vm_modules/math/tensor.hpp"
-#include "vm_modules/math/trigonometry.hpp"
-
-using namespace fetch::vm;
-
 namespace fetch {
+
+namespace vm {
+class Module;
+}
+
 namespace vm_modules {
 namespace math {
 
-void BindMath(Module &module)
-{
-  // bind math functions
-  BindAbs(module);
-  BindExp(module);
-  BindLog(module);
-  BindPow(module);
-  BindRand(module);
-  BindSqrt(module);
-  BindTrigonometry(module);
-
-  // bind math classes
-  VMTensor::Bind(module);
-
-  // ReadCSV depends on VMTensor so must be bound after it
-  BindReadCSV(module);
-}
+void BindReadCSV(fetch::vm::Module &module);
 
 }  // namespace math
 }  // namespace vm_modules
