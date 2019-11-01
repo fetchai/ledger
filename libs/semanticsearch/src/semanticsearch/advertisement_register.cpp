@@ -23,14 +23,14 @@
 namespace fetch {
 namespace semanticsearch {
 
-bool AdvertisementRegister::CreateModel(std::string const &name, VocabularySchema object)
+bool AdvertisementRegister::CreateModel(std::string const &name, VocabularySchema const &object)
 {
   if (HasModel(name))
   {
     return false;
   }
 
-  return CreateModelInternal(name, std::move(object));
+  return CreateModelInternal(name, object);
 }
 
 AdvertisementRegister::SharedModel AdvertisementRegister::GetAdvertisementModel(

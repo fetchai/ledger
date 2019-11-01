@@ -35,7 +35,7 @@ public:
 
   AdvertisementRegister() = default;
 
-  bool        CreateModel(std::string const &name, VocabularySchema object);
+  bool        CreateModel(std::string const &name, VocabularySchema const &object);
   SharedModel GetAdvertisementModel(std::string const &name);
   void       AdvertiseAgent(AgentId aid, std::string const &name, SemanticPosition const &position);
   AgentIdSet FindAgents(std::string const &name, SemanticPosition const &position,
