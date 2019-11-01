@@ -296,14 +296,12 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
       qualified_cabinet_weighted.begin(),
       std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity));
 
-  // Minting block. Timestamp: 5000 proposed: 1572486552000 Prev window ends: 528525664 last block
-  // TS:  1572486551000 miner rank: 12
   if (proposed_block_timestamp_ms >
       uint64_t(previous_block_window_ends + (uint64_t(miner_rank) * block_interval_ms_)))
   {
     if (identity == mining_identity_)
     {
-      FETCH_LOG_INFO(
+      FETCH_LOG_DEBUG(
           LOGGING_NAME, "Minting block. Time now: ", time_now_ms,
           " Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms,
           " Prev window ends: ", previous_block_window_ends,
