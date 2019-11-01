@@ -643,23 +643,31 @@ endfunction
 
 )";
 
+ExecutionResult RunStatelessTest(std::string const& which, std::string const& entrypoint,
+    Params const& params)
+{
+  BasicVmEngine engine;
+
+  ExecutionResult createdProgram = engine.CreateExecutable("exec", {{"etch", which}});
+  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+
+  ExecutionResult createdState = engine.CreateState("state");
+  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+
+  ExecutionResult result = engine.Run("exec", "state", entrypoint, params);
+  return result;
+}
+
 }  // namespace
 
 TEST(BasicVmEngineDmlfTests, Return1)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("return1", {{"etch", return1}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = engine.Run("return1", "state", "main", Params{});
-  EXPECT_TRUE(result.succeeded());
+  ExecutionResult result = RunStatelessTest(return1, "main", {});
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
+// Check if running has sideffects on engine
 TEST(BasicVmEngineDmlfTests, DoubleReturn1)
 {
   BasicVmEngine engine;
@@ -736,43 +744,6 @@ TEST(BasicVmEngineDmlfTests, Tick_2States)
   EXPECT_TRUE(result.succeeded());
   EXPECT_EQ(result.output().As<int>(), 1);
 }
-
-// Repeated things
-
-// Breaks VM
-// TEST(BasicVmEngineDmlfTests, break_vm)
-//{
-//
-//
-//  ExecutionResult createdProgram = engine.CreateExecutable("return1", {{"etch", return1}});
-//  EXPECT_TRUE(createdProgram.succeeded());
-//
-//
-//  ExecutionResult createdState = engine.CreateState("state");
-//  EXPECT_TRUE(createdState.succeeded());
-//
-//  ExecutionResult result = engine.Run("return1",  "state", "main", Params{});
-//  EXPECT_TRUE(result.succeeded());
-//
-//  //EXPECT_EQ(output.str(), "Hello world!!\n");
-//}
-
-// TEST(BasicVmEngineDmlfTests, bad_stdOut)
-//{
-//  BasicVmEngine engine;
-//
-//  ExecutionResult createdProgram = engine.CreateExecutable("return1", {{"etch", return1}});
-//  EXPECT_TRUE(createdProgram.succeeded());
-//
-//  std::stringstream badOutput;
-//
-//  ExecutionResult createdState = engine.CreateState("state");
-//  EXPECT_TRUE(createdState.succeeded());
-//
-//  ExecutionResult result = engine.Run("return1",  "state", "main", Params{});
-//  EXPECT_TRUE(result.succeeded());
-//  EXPECT_EQ(result.output().As<int>(), 1);
-//}
 
 TEST(BasicVmEngineDmlfTests, Tick_Tick2_State)
 {
@@ -1349,210 +1320,88 @@ TEST(BasicVmEngineDmlfTests, RuntimeError)
 
 TEST(BasicVmEngineDmlfTests, Add)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", add}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result =
-      engine.Run("add", "state", "add", Params{LedgerVariant(1), LedgerVariant(2)});
-  EXPECT_TRUE(result.succeeded());
-  // std::cout << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(add, "add",Params{LedgerVariant(1), LedgerVariant(2)}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 3);
 }
 
 TEST(BasicVmEngineDmlfTests, Add8)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", Add8}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result =
-      engine.Run("add", "state", "add", Params{LedgerVariant(1), LedgerVariant(2)});
-  EXPECT_TRUE(result.succeeded());
-  // std::cout << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(Add8, "add",Params{LedgerVariant(1), LedgerVariant(2)}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 3);
 }
 
 TEST(BasicVmEngineDmlfTests, Add64)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", Add64}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result =
-      engine.Run("add", "state", "add",
-                 Params{LedgerVariant(0), LedgerVariant(std::numeric_limits<int>::max())});
-  EXPECT_TRUE(result.succeeded());
-  // std::cout << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(Add64, "add",Params{LedgerVariant(0), LedgerVariant(std::numeric_limits<int>::max())}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), std::numeric_limits<int>::max());
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, AddFloat)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloat}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
   double a = 4.5;
   float  b = 3.5;
-
-  ExecutionResult result =
-      engine.Run("add", "state", "add", Params{LedgerVariant(a), LedgerVariant(b)});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(AddFloat, "add",Params{LedgerVariant(a), LedgerVariant(b)}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<float>(), 8.0, 0.001);
 }
 TEST(DISABLED_BasicVmEngineDmlfTests, AddFloat32)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloat32}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
   float a = 4.6f;
   float b = 3.5f;
-
-  ExecutionResult result =
-      engine.Run("add", "state", "add", Params{LedgerVariant(a), LedgerVariant(b)});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(AddFloat32, "add",Params{LedgerVariant(a), LedgerVariant(b)}); 
   EXPECT_NEAR(result.output().As<float>(), 8.1, 0.001);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, AddFloatComplex)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFloatComplex}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
   double a = 4.5;
   float  b = 3.3f;
-
-  ExecutionResult result =
-      engine.Run("add", "state", "add", Params{LedgerVariant(a), LedgerVariant(b)});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(AddFloatComplex, "add",Params{LedgerVariant(a), LedgerVariant(b)}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<double>(), 7.8, 0.001);
 }
 
 TEST(BasicVmEngineDmlfTests, AddFixed)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddFixed}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = engine.Run(
-      "add", "state", "add", Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
-  EXPECT_TRUE(result.succeeded());
-  // std::cout << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(AddFixed, "add",Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, TrueIntToFloatCompare)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram =
-      engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result =
-      engine.Run("compare", "state", "compare", Params{LedgerVariant(5), LedgerVariant(6.5)});
-  EXPECT_TRUE(result.succeeded());
-  // std::cout << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(IntToFloatCompare, "compare",Params{LedgerVariant(5), LedgerVariant(6.5)}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, FalseIntToFloatCompare)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram =
-      engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result =
-      engine.Run("compare", "state", "compare", Params{LedgerVariant(5), LedgerVariant(4.5)});
-  EXPECT_TRUE(result.succeeded());
-  // std::cout << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(IntToFloatCompare, "compare",Params{LedgerVariant(5), LedgerVariant(4.5)}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 0);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, TrueBoolCompare)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", BoolCompare}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = engine.Run("compare", "state", "compare", Params{LedgerVariant(true)});
-  EXPECT_TRUE(result.succeeded());
-  // std::cout << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(BoolCompare, "compare",Params{LedgerVariant(true)}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, FalseBoolCompare)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("compare", {{"etch", BoolCompare}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = engine.Run("compare", "state", "compare", Params{LedgerVariant(false)});
-  EXPECT_TRUE(result.succeeded());
-  // std::cout << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(BoolCompare, "compare",Params{LedgerVariant(false)}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 0);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, BadParamsTrueIntToFloatCompare)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram =
-      engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result =
-      engine.Run("compare", "state", "compare", Params{LedgerVariant(6.5), LedgerVariant(5)});
+  ExecutionResult result = RunStatelessTest(IntToFloatCompare, "compare",Params{LedgerVariant(6.5), LedgerVariant(5)}); 
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
@@ -1560,16 +1409,7 @@ TEST(DISABLED_BasicVmEngineDmlfTests, BadParamsTrueIntToFloatCompare)
 
 TEST(BasicVmEngineDmlfTests, WrongNumberOfParamsTrueIntToFloatCompare)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram =
-      engine.CreateExecutable("compare", {{"etch", IntToFloatCompare}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = engine.Run("compare", "state", "compare", Params{LedgerVariant(6.5)});
+  ExecutionResult result = RunStatelessTest(IntToFloatCompare, "compare",Params{LedgerVariant(6.5)}); 
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
@@ -1629,13 +1469,13 @@ TEST(BasicVmEngineDmlfTests, AddMatrix)
   BasicVmEngine engine;
 
   ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddMatrix}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
 
   ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+  ASSERT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
   ExecutionResult result = engine.Run("add", "state", "init", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
   result = engine.Run("add", "state", "doAdd", Params{});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
@@ -1651,22 +1491,22 @@ TEST(BasicVmEngineDmlfTests, AddMatrixSameCode)
   BasicVmEngine engine;
 
   ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddMatrix}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
   createdProgram = engine.CreateExecutable("add2", {{"etch", AddMatrix}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
 
   ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+  ASSERT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
   ExecutionResult result = engine.Run("add", "state", "init", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
   result = engine.Run("add2", "state", "doAdd", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
   result = engine.Run("add", "state", "doAdd", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
 
@@ -1675,22 +1515,22 @@ TEST(BasicVmEngineDmlfTests, AddMatrixEqualCode)
   BasicVmEngine engine;
 
   ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddMatrix}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
   createdProgram = engine.CreateExecutable("add2", {{"etch", AddMatrix2}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
 
   ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+  ASSERT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
   ExecutionResult result = engine.Run("add", "state", "init", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
   result = engine.Run("add2", "state", "doAdd", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
   result = engine.Run("add", "state", "doAdd", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
 
@@ -1699,22 +1539,22 @@ TEST(BasicVmEngineDmlfTests, AddMatrixAltCode)
   BasicVmEngine engine;
 
   ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddMatrix}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
   createdProgram = engine.CreateExecutable("add2", {{"etch", AddMatrixAltCode}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
 
   ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+  ASSERT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
   ExecutionResult result = engine.Run("add", "state", "init", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
   result = engine.Run("add2", "state", "doAdd", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
   result = engine.Run("add", "state", "doAdd", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
 
@@ -1723,22 +1563,22 @@ TEST(BasicVmEngineDmlfTests, AddNMatrixAltCode)
   BasicVmEngine engine;
 
   ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddNMatrix}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
   createdProgram = engine.CreateExecutable("add2", {{"etch", AddNMatrixAltCode}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
 
   ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+  ASSERT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
   ExecutionResult result = engine.Run("add", "state", "init", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
   result = engine.Run("add2", "state", "doAdd", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
   result = engine.Run("add", "state", "doAdd", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
 
@@ -1748,19 +1588,19 @@ TEST(BasicVmEngineDmlfTests, AddNonPersistentMatrix)
 
   ExecutionResult createdProgram =
       engine.CreateExecutable("add", {{"etch", AddNonPersistentMatrix}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
   createdProgram = engine.CreateExecutable("add2", {{"etch", AddNonPersistentMatrix2}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
+  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
 
   ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
+  ASSERT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
 
   ExecutionResult result = engine.Run("add2", "state", "doAdd", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
   result = engine.Run("add", "state", "doAdd", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 }
 
@@ -1769,13 +1609,13 @@ TEST(BasicVmEngineDmlfTests, StateMatrixMain)
   BasicVmEngine engine;
 
   ExecutionResult createdProgram = engine.CreateExecutable("stateMatrix", {{"etch", StateMatrix}});
-  EXPECT_TRUE(createdProgram.succeeded());
+  ASSERT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
+  ASSERT_TRUE(createdState.succeeded());
 
   ExecutionResult result = engine.Run("stateMatrix", "state", "main", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 }
 
 TEST(BasicVmEngineDmlfTests, StateMatrixMyCalls)
@@ -1783,16 +1623,16 @@ TEST(BasicVmEngineDmlfTests, StateMatrixMyCalls)
   BasicVmEngine engine;
 
   ExecutionResult createdProgram = engine.CreateExecutable("stateMatrix", {{"etch", StateMatrix}});
-  EXPECT_TRUE(createdProgram.succeeded());
+  ASSERT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
+  ASSERT_TRUE(createdState.succeeded());
 
   ExecutionResult result = engine.Run("stateMatrix", "state", "doStuff", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
   result = engine.Run("stateMatrix", "state", "doStuff2", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 }
 
 TEST(BasicVmEngineDmlfTests, BigStateMatrixMain)
@@ -1800,13 +1640,13 @@ TEST(BasicVmEngineDmlfTests, BigStateMatrixMain)
   BasicVmEngine engine;
 
   ExecutionResult createdProgram = engine.CreateExecutable("stateMatrix", {{"etch", BigStMatrix}});
-  EXPECT_TRUE(createdProgram.succeeded());
+  ASSERT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
+  ASSERT_TRUE(createdState.succeeded());
 
   ExecutionResult result = engine.Run("stateMatrix", "state", "main", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 }
 
 TEST(BasicVmEngineDmlfTests, BigStateMatrixMyCalls)
@@ -1814,60 +1654,36 @@ TEST(BasicVmEngineDmlfTests, BigStateMatrixMyCalls)
   BasicVmEngine engine;
 
   ExecutionResult createdProgram = engine.CreateExecutable("stateMatrix", {{"etch", BigStMatrix}});
-  EXPECT_TRUE(createdProgram.succeeded());
+  ASSERT_TRUE(createdProgram.succeeded());
 
   ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
+  ASSERT_TRUE(createdState.succeeded());
 
   ExecutionResult result = engine.Run("stateMatrix", "state", "doStuff", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
   result = engine.Run("stateMatrix", "state", "doStuff2", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 }
 
 TEST(BasicVmEngineDmlfTests, StringOutput)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("stringOut", {{"etch", StringOut}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = engine.Run("stringOut", "state", "outString", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(StringOut, "outString",Params{}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<std::string>(), "Hello");
 }
 
 TEST(BasicVmEngineDmlfTests, IntToString)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("toString", {{"etch", IntToString}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = engine.Run("toString", "state", "IntToString", Params{LedgerVariant(1)});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(IntToString, "IntToString",Params{LedgerVariant(1)});
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<std::string>(), "1");
 }
 
 TEST(BasicVmEngineDmlfTests, ArrayInt64)
 {
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("arrayOut", {{"etch", ArrayInt64Out}});
-  EXPECT_TRUE(createdProgram.succeeded());
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = engine.Run("arrayOut", "state", "arrayOut", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(ArrayInt64Out, "arrayOut",Params{}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   auto output = result.output();
   EXPECT_TRUE(output.IsArray());
   EXPECT_TRUE(output.size() == 2);
@@ -1877,16 +1693,8 @@ TEST(BasicVmEngineDmlfTests, ArrayInt64)
 
 TEST(BasicVmEngineDmlfTests, ArrayIntInt64)
 {
-  BasicVmEngine engine;
-  
-  ExecutionResult createdProgram = engine.CreateExecutable("arrayOut", {{"etch", ArrayIntInt64Out}});
-  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
-
-  ExecutionResult createdState = engine.CreateState("state");
-  EXPECT_TRUE(createdState.succeeded());
-
-  ExecutionResult result = engine.Run("arrayOut", "state", "arrayOut", Params{});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  ExecutionResult result = RunStatelessTest(ArrayIntInt64Out, "arrayOut",Params{}); 
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   auto output = result.output();
   ASSERT_TRUE(output.IsArray());
   ASSERT_EQ(output.size(), 2);
