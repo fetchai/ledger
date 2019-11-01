@@ -628,7 +628,8 @@ TYPED_TEST(TrigTest, atanh_22)
   numpy_output.Set(one, zero, TypeParam(0.86730051));
   numpy_output.Set(one, one, TypeParam(-1.4722193));
 
-  ASSERT_TRUE(output.AllClose(numpy_output, TypeParam(4) * function_tolerance<TypeParam>(), TypeParam(4) * function_tolerance<TypeParam>()));
+  ASSERT_TRUE(output.AllClose(numpy_output, TypeParam(4) * function_tolerance<TypeParam>(),
+                              TypeParam(4) * function_tolerance<TypeParam>()));
 }
 
 }  // namespace test
