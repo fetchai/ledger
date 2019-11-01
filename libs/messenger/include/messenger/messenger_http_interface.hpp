@@ -27,7 +27,7 @@ namespace messenger {
 class MessengerHttpModule : public http::HTTPModule
 {
 public:
-  explicit MessengerHttpModule(MessengerAPI &messenger)
+  MessengerHttpModule(MessengerAPI &messenger)
     : messenger_{messenger}
   {
 
