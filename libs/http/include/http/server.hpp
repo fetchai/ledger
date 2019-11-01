@@ -80,6 +80,10 @@ public:
     auto socketWeak = socket_;
     auto accepWeak  = acceptor_;
 
+    manager_.reset();
+    socket_.reset();
+    acceptor_.reset();
+
     networkManager_.Post([socketWeak, accepWeak] {
       auto            socket   = socketWeak.lock();
       auto            acceptor = accepWeak.lock();
@@ -218,7 +222,7 @@ public:
     auto cb = [soc, accep, manager](std::error_code ec) {
       if (!ec)
       {
-        std::make_shared<HTTPConnection>(std::move(*soc), *manager)->Start();
+        std::make_shared<HTTPConnection>(std::move(*soc), manager)->Start();
       }
       else
       {

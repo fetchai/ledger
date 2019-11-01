@@ -32,6 +32,11 @@ HTTPConnectionManager::HTTPConnectionManager(AbstractHTTPServer &server)
   : server_(server)
 {}
 
+HTTPConnectionManager::~HTTPConnectionManager()
+{
+  clients_.clear();
+}
+
 HTTPConnectionManager::HandleType HTTPConnectionManager::Join(ConnectionType client)
 {
   HandleType handle = AbstractHTTPServer::next_handle();

@@ -276,76 +276,76 @@ private:
   LineToPcMap              line_to_pc_map_;
   std::vector<std::string> errors_;
 
-  void     Initialise(VM *vm, uint16_t num_system_types);
-  void     AddLineNumber(uint16_t line, uint16_t pc);
-  void     ResolveTypes(IR const &ir);
-  void     ResolveFunctions(IR const &ir);
-  void     CreateFunctions(IRBlockNodePtr const &block_node);
-  void     CreateAnnotations(IRNodePtr const &node, AnnotationArray &annotations);
-  void     SetAnnotationLiteral(IRNodePtr const &node, AnnotationLiteral &literal);
-  void     HandleBlock(IRBlockNodePtr const &block_node);
-  void     HandleFile(IRBlockNodePtr const &block_node);
-  void     HandleFunctionDefinitionStatement(IRBlockNodePtr const &block_node);
-  void     HandleWhileStatement(IRBlockNodePtr const &block_node);
-  void     HandleForStatement(IRBlockNodePtr const &block_node);
-  void     HandleIfStatement(IRNodePtr const &node);
-  void     HandleUseStatement(IRNodePtr const &node);
-  void     HandleUseAnyStatement(IRNodePtr const &node);
-  void     HandleUseVariable(IRExpressionNodePtr const &node);
-  void     HandleVarStatement(IRNodePtr const &node);
-  void     HandleReturnStatement(IRNodePtr const &node);
-  void     HandleBreakStatement(IRNodePtr const &node);
-  void     HandleContinueStatement(IRNodePtr const &node);
-  void     HandleAssignmentStatement(IRExpressionNodePtr const &node);
-  void     HandleInplaceAssignmentStatement(IRExpressionNodePtr const &node);
-  void     HandleVariableAssignmentStatement(IRExpressionNodePtr const &lhs,
-                                             IRExpressionNodePtr const &rhs);
-  void     HandleVariableInplaceAssignmentStatement(IRExpressionNodePtr const &node,
-                                                    IRExpressionNodePtr const &lhs,
-                                                    IRExpressionNodePtr const &rhs);
-  void     HandleIndexedAssignmentStatement(IRExpressionNodePtr const &node,
-                                            IRExpressionNodePtr const &lhs,
-                                            IRExpressionNodePtr const &rhs);
-  void     HandleIndexedInplaceAssignmentStatement(IRExpressionNodePtr const &node,
-                                                   IRExpressionNodePtr const &lhs,
-                                                   IRExpressionNodePtr const &rhs);
-  void     HandleExpression(IRExpressionNodePtr const &node);
-  void     HandleIdentifier(IRExpressionNodePtr const &node);
-  void     HandleInteger8(IRExpressionNodePtr const &node);
-  void     HandleUnsignedInteger8(IRExpressionNodePtr const &node);
-  void     HandleInteger16(IRExpressionNodePtr const &node);
-  void     HandleUnsignedInteger16(IRExpressionNodePtr const &node);
-  void     HandleInteger32(IRExpressionNodePtr const &node);
-  void     HandleUnsignedInteger32(IRExpressionNodePtr const &node);
-  void     HandleInteger64(IRExpressionNodePtr const &node);
-  void     HandleUnsignedInteger64(IRExpressionNodePtr const &node);
-  void     HandleFloat32(IRExpressionNodePtr const &node);
-  void     HandleFloat64(IRExpressionNodePtr const &node);
-  void     HandleFixed32(IRExpressionNodePtr const &node);
-  void     HandleFixed64(IRExpressionNodePtr const &node);
-  void     HandleString(IRExpressionNodePtr const &node);
-  void     PushString(std::string const &s, uint16_t line);
-  void     HandleTrue(IRExpressionNodePtr const &node);
-  void     HandleFalse(IRExpressionNodePtr const &node);
-  void     HandleInitialiserList(IRExpressionNodePtr const &node);
-  void     HandleNull(IRExpressionNodePtr const &node);
-  void     HandlePrefixPostfixOp(IRExpressionNodePtr const &node);
-  void     HandleBinaryOp(IRExpressionNodePtr const &node);
-  void     HandleUnaryOp(IRExpressionNodePtr const &node);
-  Chain    HandleConditionExpression(IRBlockNodePtr const &     block_node,
-                                     IRExpressionNodePtr const &node);
-  Chain    HandleShortCircuitOp(IRNodePtr const &parent, IRExpressionNodePtr const &node);
-  void     FinaliseShortCircuitChain(Chain const &chain, bool is_condition_chain,
-                                     uint16_t destination_pc);
-  void     HandleIndexOp(IRExpressionNodePtr const &node);
-  void     HandleDotOp(IRExpressionNodePtr const &node);
-  void     HandleInvokeOp(IRExpressionNodePtr const &node);
-  void     HandleVariablePrefixPostfixOp(IRExpressionNodePtr const &node,
-                                         IRExpressionNodePtr const &operand);
-  void     HandleIndexedPrefixPostfixOp(IRExpressionNodePtr const &node,
-                                        IRExpressionNodePtr const &operand);
-  void     ScopeEnter();
-  void     ScopeLeave(IRBlockNodePtr const &block_node);
+  void  Initialise(VM *vm, uint16_t num_system_types);
+  void  AddLineNumber(uint16_t line, uint16_t pc);
+  void  ResolveTypes(IR const &ir);
+  void  ResolveFunctions(IR const &ir);
+  void  CreateFunctions(IRBlockNodePtr const &block_node);
+  void  CreateAnnotations(IRNodePtr const &node, AnnotationArray &annotations);
+  void  SetAnnotationLiteral(IRNodePtr const &node, AnnotationLiteral &literal);
+  void  HandleBlock(IRBlockNodePtr const &block_node);
+  void  HandleFile(IRBlockNodePtr const &block_node);
+  void  HandleFunctionDefinitionStatement(IRBlockNodePtr const &block_node);
+  void  HandleWhileStatement(IRBlockNodePtr const &block_node);
+  void  HandleForStatement(IRBlockNodePtr const &block_node);
+  void  HandleIfStatement(IRNodePtr const &node);
+  void  HandleUseStatement(IRNodePtr const &node);
+  void  HandleUseAnyStatement(IRNodePtr const &node);
+  void  HandleUseVariable(std::string const &name, uint16_t line, IRExpressionNodePtr const &node);
+  void  HandleVarStatement(IRNodePtr const &node);
+  void  HandleReturnStatement(IRNodePtr const &node);
+  void  HandleBreakStatement(IRNodePtr const &node);
+  void  HandleContinueStatement(IRNodePtr const &node);
+  void  HandleAssignmentStatement(IRExpressionNodePtr const &node);
+  void  HandleInplaceAssignmentStatement(IRExpressionNodePtr const &node);
+  void  HandleVariableAssignmentStatement(IRExpressionNodePtr const &lhs,
+                                          IRExpressionNodePtr const &rhs);
+  void  HandleVariableInplaceAssignmentStatement(IRExpressionNodePtr const &node,
+                                                 IRExpressionNodePtr const &lhs,
+                                                 IRExpressionNodePtr const &rhs);
+  void  HandleIndexedAssignmentStatement(IRExpressionNodePtr const &node,
+                                         IRExpressionNodePtr const &lhs,
+                                         IRExpressionNodePtr const &rhs);
+  void  HandleIndexedInplaceAssignmentStatement(IRExpressionNodePtr const &node,
+                                                IRExpressionNodePtr const &lhs,
+                                                IRExpressionNodePtr const &rhs);
+  void  HandleExpression(IRExpressionNodePtr const &node);
+  void  HandleIdentifier(IRExpressionNodePtr const &node);
+  void  HandleInteger8(IRExpressionNodePtr const &node);
+  void  HandleUnsignedInteger8(IRExpressionNodePtr const &node);
+  void  HandleInteger16(IRExpressionNodePtr const &node);
+  void  HandleUnsignedInteger16(IRExpressionNodePtr const &node);
+  void  HandleInteger32(IRExpressionNodePtr const &node);
+  void  HandleUnsignedInteger32(IRExpressionNodePtr const &node);
+  void  HandleInteger64(IRExpressionNodePtr const &node);
+  void  HandleUnsignedInteger64(IRExpressionNodePtr const &node);
+  void  HandleFloat32(IRExpressionNodePtr const &node);
+  void  HandleFloat64(IRExpressionNodePtr const &node);
+  void  HandleFixed32(IRExpressionNodePtr const &node);
+  void  HandleFixed64(IRExpressionNodePtr const &node);
+  void  HandleString(IRExpressionNodePtr const &node);
+  void  PushString(std::string const &s, uint16_t line);
+  void  HandleTrue(IRExpressionNodePtr const &node);
+  void  HandleFalse(IRExpressionNodePtr const &node);
+  void  HandleInitialiserList(IRExpressionNodePtr const &node);
+  void  HandleNull(IRExpressionNodePtr const &node);
+  void  HandlePrefixPostfixOp(IRExpressionNodePtr const &node);
+  void  HandleBinaryOp(IRExpressionNodePtr const &node);
+  void  HandleUnaryOp(IRExpressionNodePtr const &node);
+  Chain HandleConditionExpression(IRBlockNodePtr const &     block_node,
+                                  IRExpressionNodePtr const &node);
+  Chain HandleShortCircuitOp(IRNodePtr const &parent, IRExpressionNodePtr const &node);
+  void  FinaliseShortCircuitChain(Chain const &chain, bool is_condition_chain,
+                                  uint16_t destination_pc);
+  void  HandleIndexOp(IRExpressionNodePtr const &node);
+  void  HandleDotOp(IRExpressionNodePtr const &node);
+  void  HandleInvokeOp(IRExpressionNodePtr const &node);
+  void  HandleVariablePrefixPostfixOp(IRExpressionNodePtr const &node,
+                                      IRExpressionNodePtr const &operand);
+  void  HandleIndexedPrefixPostfixOp(IRExpressionNodePtr const &node,
+                                     IRExpressionNodePtr const &operand);
+  void  ScopeEnter();
+  void  ScopeLeave(IRBlockNodePtr const &block_node);
   uint16_t AddConstant(Variant const &c);
   uint16_t GetInplaceArithmeticOpcode(bool is_primitive, TypeId lhs_type_id, TypeId rhs_type_id,
                                       uint16_t opcode1, uint16_t opcode2, uint16_t opcode3);
