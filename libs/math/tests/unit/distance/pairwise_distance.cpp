@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/distance/pairwise_distance.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -39,11 +39,11 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
   TypeParam R = TypeParam({1, data.shape(0) * (data.shape(0) - 1) / 2});
 
   distance::PairWiseDistance(data,
-                   [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
-                     TypeParam z = x - y;
-                     return z.Sum();
-                   },
-                   R);
+                             [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
+                               TypeParam z = x - y;
+                               return z.Sum();
+                             },
+                             R);
 
   EXPECT_TRUE(R.AllClose(gt));
 
@@ -53,11 +53,11 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
   R = TypeParam({1, data.shape(0) * (data.shape(0) - 1) / 2});
 
   distance::PairWiseDistance(data,
-                   [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
-                     TypeParam z = x - y;
-                     return z.Sum();
-                   },
-                   R);
+                             [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
+                               TypeParam z = x - y;
+                               return z.Sum();
+                             },
+                             R);
 
   EXPECT_TRUE(R.AllClose(gt));
 
@@ -67,14 +67,14 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
   R = TypeParam({1, data.shape(0) * (data.shape(0) - 1) / 2});
 
   distance::PairWiseDistance(data,
-                   [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
-                     TypeParam z = x - y;
-                     return z.Sum();
-                   },
-                   R);
+                             [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
+                               TypeParam z = x - y;
+                               return z.Sum();
+                             },
+                             R);
 
   EXPECT_TRUE(R.AllClose(gt));
 }
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

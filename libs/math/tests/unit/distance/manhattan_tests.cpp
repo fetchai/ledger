@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
+#include "gtest/gtest.h"
 #include "math/distance/manhattan.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -55,6 +55,6 @@ TYPED_TEST(ManhattanTest, simple_test)
   EXPECT_NEAR(static_cast<double>(ret), 1, static_cast<double>(function_tolerance<Type>()));
 }
 
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/statistics/entropy.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -46,7 +46,6 @@ TYPED_TEST(EntropyTest, entropy)
   EXPECT_NEAR(double(statistics::Entropy(A)), 1.84643934467102, 1e-4);
 }
 
-} // test
-} // math
-} // fetch
-
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

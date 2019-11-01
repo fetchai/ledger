@@ -16,15 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "math/distance/cosine.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
 namespace test {
-
 
 template <typename T>
 class DistanceTest : public ::testing::Test
@@ -65,7 +64,6 @@ TYPED_TEST(DistanceTest, cosine_distance)
               (double)function_tolerance<DataType>());
 }
 
-
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

@@ -18,24 +18,21 @@
 
 #include "core/random/lcg.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
+#include "test_types.hpp"
 #include "gtest/gtest.h"
 
-#include <cstddef>
 #include <vector>
 
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class FreeFunctionsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(FreeFunctionsTest, MyTypes);
+TYPED_TEST_CASE(FreeFunctionsTest, FloatingTypes);
 
 TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
 {
@@ -1258,3 +1255,8 @@ TYPED_TEST(FreeFunctionsTest, DynamicStitch)
   EXPECT_NEAR(static_cast<double>(output(5)), -2.,
               static_cast<double>(function_tolerance<DataType>()));
 }
+
+
+} // test
+} // math
+} // fetch

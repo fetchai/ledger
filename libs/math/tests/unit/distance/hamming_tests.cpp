@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
+#include "gtest/gtest.h"
 #include "math/distance/hamming.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -64,7 +64,6 @@ TEST(HammingTest, simple_test)
   EXPECT_EQ(distance::Hamming(C, D), 1);
 }
 
-} // distance
-} // math
-} // fetch
-
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

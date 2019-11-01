@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/statistics/perplexity.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -47,7 +47,6 @@ TYPED_TEST(PerplexityTest, entropy)
   EXPECT_NEAR(double(statistics::Perplexity(A)), 3.59611546662432, 1e-3);
 }
 
-
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

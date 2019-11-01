@@ -72,6 +72,6 @@ TYPED_TEST(MinkowskiTest, simple_test)
               static_cast<double>(function_tolerance<Type>()));
 }
 
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

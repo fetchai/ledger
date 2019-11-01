@@ -114,6 +114,6 @@ TYPED_TEST(EuclideanTest, matrix_euclidean_test)
   EXPECT_NEAR(double(ret.At(2, 0)), 18.54723699, 5.0 * (double)function_tolerance<DataType>());
 }
 
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

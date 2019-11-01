@@ -53,6 +53,6 @@ TEST(correlation_gtest, pearson_correlation_test)
   EXPECT_FLOAT_EQ(float(-1), float(correlation::Pearson(A, B)));
 }
 
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
