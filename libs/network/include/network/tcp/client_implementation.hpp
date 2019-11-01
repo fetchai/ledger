@@ -75,7 +75,6 @@ public:
   static void SetHeader(byte_array::ByteArray &header, uint64_t bufSize);
 
 private:
-
   NetworkManagerType networkManager_;
   // IO objects should be guaranteed to have lifetime less than the
   // io_service/networkManager
@@ -95,7 +94,6 @@ private:
 
   void ReadHeader() noexcept;
   void ReadBody(byte_array::ByteArray const &header) noexcept;
-
 
   // Always executed in a run(), in a strand
   void WriteNext(SharedSelfType const &selfLock);

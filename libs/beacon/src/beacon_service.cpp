@@ -379,7 +379,7 @@ BeaconService::State BeaconService::OnCompleteState()
   // Trim maps of unnecessary info
   {
     auto const max_cache_size =
-        ((active_exe_unit_->aeon.round_end - active_exe_unit_->aeon.round_start) + 1)*3;
+        ((active_exe_unit_->aeon.round_end - active_exe_unit_->aeon.round_start) + 1) * 3;
 
     auto it = completed_block_entropy_.begin();
 

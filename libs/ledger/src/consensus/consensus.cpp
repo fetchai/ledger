@@ -278,7 +278,8 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
     return false;
   }
 
-  const uint64_t previous_block_window_ends = uint64_t(last_block_timestamp_ms + block_interval_ms_);
+  const uint64_t previous_block_window_ends =
+      uint64_t(last_block_timestamp_ms + block_interval_ms_);
 
   // Blocks cannot be created within the block interval of the previous, this enforces
   // the block period
@@ -291,14 +292,22 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
 
   // Miners must additionally wait N block periods according to their rank (0 being the best)
   // Note, this is the identity specified in the block.
-  auto const miner_rank = std::distance(qualified_cabinet_weighted.begin(), std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity));
+  auto const miner_rank = std::distance(
+      qualified_cabinet_weighted.begin(),
+      std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity));
 
-  // Minting block. Timestamp: 5000 proposed: 1572486552000 Prev window ends: 528525664 last block TS:  1572486551000 miner rank: 12
-  if(proposed_block_timestamp_ms > uint64_t(previous_block_window_ends + (uint64_t(miner_rank) * block_interval_ms_)))
+  if (proposed_block_timestamp_ms >
+      uint64_t(previous_block_window_ends + (uint64_t(miner_rank) * block_interval_ms_)))
   {
-    if(identity == mining_identity_)
+    if (identity == mining_identity_)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Minting block. Time now: ", time_now_ms, " Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms, " Prev window ends: ", previous_block_window_ends, " last block TS:  ", last_block_timestamp_ms, " miner rank: ", miner_rank, " target: ", uint64_t(previous_block_window_ends + (uint64_t(miner_rank) * block_interval_ms_)), " block weight: ", proposed.weight);
+      FETCH_LOG_DEBUG(
+          LOGGING_NAME, "Minting block. Time now: ", time_now_ms,
+          " Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms,
+          " Prev window ends: ", previous_block_window_ends,
+          " last block TS:  ", last_block_timestamp_ms, " miner rank: ", miner_rank, " target: ",
+          uint64_t(previous_block_window_ends + (uint64_t(miner_rank) * block_interval_ms_)),
+          " block weight: ", proposed.weight);
     }
     return true;
   }
