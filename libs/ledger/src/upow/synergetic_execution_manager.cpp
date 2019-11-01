@@ -21,6 +21,8 @@
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
 #include "logging/logging.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -34,6 +36,9 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
   : dag_{std::move(dag)}
   , executors_(num_executors)
   , threads_{num_executors, "SynEx"}
+  , no_executor_count_{telemetry::Registry::Instance().CreateCounter(
+      "ledger_upow_exec_manager_rid_no_executor_total",
+      "The number of items needed to be added back to the queue because of missing executor.")}
 {
   if (num_executors != 1)
   {
@@ -158,7 +163,7 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(std::size_t num_lane
   return true;
 }
 
-void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const &problem_data,
+void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData &problem_data,
                                              std::size_t num_lanes)
 {
   ExecutorPtr executor;
@@ -166,6 +171,16 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
   // pick up an executor from the stack
   {
     FETCH_LOCK(lock_);
+    if (executors_.empty())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Executors empty, can't execute item!");
+      auto ptr = std::make_shared<WorkItem>();
+      ptr->problem_data = std::move(problem_data);
+      ptr->work_queue   = std::move(queue);
+      solution_stack_.emplace_back(std::move(ptr));
+      no_executor_count_->increment();
+      return;
+    }
     executor = executors_.back();
     executors_.pop_back();
   }

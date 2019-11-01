@@ -24,6 +24,7 @@
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/work_queue.hpp"
 #include "vectorise/threading/pool.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <functional>
 #include <unordered_map>
@@ -72,7 +73,7 @@ private:
   using WorkQueueStack = std::vector<WorkItemPtr>;
   using ThreadPool     = threading::Pool;
 
-  void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, std::size_t num_lanes);
+  void ExecuteItem(WorkQueue &queue, ProblemData &problem_data, std::size_t num_lanes);
 
   // System Components
   DAGPtr dag_;
@@ -83,6 +84,11 @@ private:
   WorkQueueStack solution_stack_;
   Executors      executors_;
   ThreadPool     threads_;
+  /// @}
+
+  /// @name Telemetry
+  /// @{
+  telemetry::CounterPtr no_executor_count_;
   /// @}
 };
 
