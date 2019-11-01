@@ -125,8 +125,7 @@ private:
         {
           continue;
         }
-        bn::Fr fake;
-        fake.clear();
+        MessageShare fake;
         SendShares(cab_i, {fake, fake});
       }
     }
@@ -153,8 +152,7 @@ private:
     }
     else if (Failure(Failures::MESSAGES_WITH_INVALID_CRYPTO))
     {
-      bn::G2 fake;
-      fake.clear();
+      MessageCoefficient fake;
       SendBroadcast(
           DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES), {fake}}});
     }
@@ -173,8 +171,7 @@ private:
   void SendBadCoefficients()
   {
     std::vector<MessageCoefficient> coefficients;
-    bn::G2                          fake;
-    fake.clear();
+    MessageCoefficient              fake;
     for (std::size_t k = 0; k <= beacon_->manager.polynomial_degree(); k++)
     {
       coefficients.push_back(fake);
@@ -196,10 +193,8 @@ private:
       // Send a one node trivial shares
       if (!sent_bad)
       {
-        bn::Fr trivial_share;
-        trivial_share.clear();
-        std::pair<MessageShare, MessageShare> shares{trivial_share.getStr(),
-                                                     trivial_share.getStr()};
+        MessageShare                          trivial_share;
+        std::pair<MessageShare, MessageShare> shares{trivial_share, trivial_share};
         SendShares(cab_i, shares);
         sent_bad = true;
       }
@@ -235,13 +230,11 @@ private:
     if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
     {
       MessageShare fake;
-      fake.clear();
       complaint_answers.insert({"unknown reporter", {fake, fake}});
     }
     else if (Failure(Failures::MESSAGES_WITH_INVALID_CRYPTO))
     {
       MessageShare fake;
-      fake.clear();
       for (auto const &reporter : complaints_manager_.ComplaintsAgainstSelf())
       {
         complaint_answers.insert({reporter, {fake, fake}});
@@ -266,7 +259,6 @@ private:
   void BroadcastQualCoefficients() override
   {
     MessageCoefficient fake;
-    fake.clear();
     if (Failure(Failures::BAD_QUAL_COEFFICIENTS))
     {
       std::vector<MessageCoefficient> coefficients;
@@ -300,7 +292,6 @@ private:
   void BroadcastQualComplaints() override
   {
     MessageShare fake;
-    fake.clear();
     if (Failure(Failures::SEND_FALSE_QUAL_COMPLAINT))
     {
       auto victim = beacon_->aeon.members.begin();
@@ -349,8 +340,7 @@ private:
 
   void BroadcastReconstructionShares() override
   {
-    MessageShare fake;
-    fake.clear();
+    MessageShare     fake;
     SharesExposedMap complaint_shares;
     if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
@@ -512,7 +502,6 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                   const std::vector<std::vector<FaultySetupService::Failures>> &failures    = {},
                   uint16_t                                                      setup_delay = 0)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
   std::set<MuddleAddress>                                             cabinet_addresses;
   std::vector<std::unique_ptr<DkgMember>>                             cabinet_members;
   std::set<RBC::MuddleAddress>                                        expected_qual;

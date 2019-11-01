@@ -77,7 +77,7 @@ private:
   std::set<MuddleAddress>                     notarisation_members_{};
   std::unordered_map<MuddleAddress, uint32_t> identity_to_index_{};
 
-  static Generator generator_;
+  const Generator generator_;
 
   // Notarisation keys for this aeon
   PrivateKey             private_key_;

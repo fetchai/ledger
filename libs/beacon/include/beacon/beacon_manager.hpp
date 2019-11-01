@@ -35,6 +35,7 @@ public:
   using Signature        = crypto::mcl::Signature;
   using PublicKey        = crypto::mcl::PublicKey;
   using PrivateKey       = crypto::mcl::PrivateKey;
+  using Generator        = crypto::mcl::Generator;
   using CabinetIndex     = crypto::mcl::CabinetIndex;
   using MessagePayload   = crypto::mcl::MessagePayload;
   using Identity         = crypto::Identity;
@@ -109,10 +110,9 @@ public:
   ///}
 
 private:
-  static bn::G2 zeroG2_;   ///< Zero for public key type
-  static bn::Fr zeroFr_;   ///< Zero for private key type
-  static bn::G2 group_g_;  ///< Generator of group used in DKG
-  static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
+  const PrivateKey zeroFr_;   ///< Zero for private key type
+  const Generator  group_g_;  ///< Generator of group used in DKG
+  const Generator  group_h_;  ///< Generator of subgroup used in DKG
 
   CertificatePtr certificate_;
   uint32_t       cabinet_size_;       ///< Size of cabinet

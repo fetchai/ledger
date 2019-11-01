@@ -246,7 +246,6 @@ void RunHonestCabinetRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
 
 TEST(beacon, DISABLED_full_cycle)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
   //  SetGlobalLogLevel(LogLevel::CRITICAL);
   // TODO(tfr): Heuristically fails atm. RunHonestCabinetRenewal(100, 4, 4, 4, 10, 0.5);
   RunHonestCabinetRenewal(100, 4, 2, 2, 10, 0.5);

@@ -20,21 +20,12 @@
 
 namespace fetch {
 namespace ledger {
-NotarisationManager::Generator NotarisationManager::generator_;
+
+constexpr char const *generator_string = "Fetch.ai Elliptic Curve Generator G";
 
 NotarisationManager::NotarisationManager()
-{
-  static std::once_flag flag;
-
-  std::call_once(flag, []() {
-    fetch::crypto::mcl::details::MCLInitialiser();
-    generator_.clear();
-    crypto::mcl::SetGenerator(generator_);
-  });
-
-  private_key_.clear();
-  public_key_.clear();
-}
+  : generator_{generator_string}
+{}
 
 NotarisationManager::Signature NotarisationManager::Sign(MessagePayload const &message)
 {
@@ -70,8 +61,9 @@ bool NotarisationManager::VerifyAggregateSignature(MessagePayload const &    mes
                                                    AggregateSignature const &aggregate_signature,
                                                    std::vector<PublicKey> const &public_keys)
 {
+  Generator generator_tmp{generator_string};
   return crypto::mcl::VerifyAggregateSignature(message, aggregate_signature, public_keys,
-                                               generator_);
+                                               generator_tmp);
 }
 
 NotarisationManager::PublicKey NotarisationManager::GenerateKeys()

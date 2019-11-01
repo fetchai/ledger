@@ -62,8 +62,8 @@ void TrustedDealerSetupService::StartNewCabinet(
   }
 
   std::lock_guard<std::mutex> lock(mutex_);
-  SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
-  beacon->block_entropy                  = BlockEntropy{};
+  SharedAeonExecutionUnit     beacon = std::make_shared<AeonExecutionUnit>();
+  beacon->block_entropy              = BlockEntropy{};
 
   if (notarisation_keys.first && !notarisation_keys.second.empty() &&
       notarisation_callback_function_)

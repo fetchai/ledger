@@ -743,11 +743,12 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     // If notarising then also populate entropy with notarisation keys
     if (notarisation_callback_function_)
     {
-      for (auto const &member : beacon_->manager.qual()) {
+      for (auto const &member : beacon_->manager.qual())
+      {
         assert(notarisation_key_msgs_.find(member) != notarisation_key_msgs_.end());
         auto notarisation_msg = notarisation_key_msgs_.at(member);
         beacon_->block_entropy.aeon_notarisation_keys.insert(
-                {member, std::make_pair(notarisation_msg.PublicKey(), notarisation_msg.Signature())});
+            {member, std::make_pair(notarisation_msg.PublicKey(), notarisation_msg.Signature())});
       }
     }
     beacon_->block_entropy.HashSelf();

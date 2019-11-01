@@ -35,7 +35,6 @@ TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, double threshold)
     ++index;
   }
 
-  fetch::crypto::mcl::details::MCLInitialiser();
   outputs_ =
       crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold_);
 }

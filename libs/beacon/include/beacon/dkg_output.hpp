@@ -30,7 +30,7 @@ struct DkgOutput
   using MuddleAddress     = byte_array::ConstByteArray;
   using CabinetList       = std::set<MuddleAddress>;
 
-  DkgOutput();
+  DkgOutput() = default;
 
   DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares, PrivateKey const &secret_share,
             CabinetList qual_members);

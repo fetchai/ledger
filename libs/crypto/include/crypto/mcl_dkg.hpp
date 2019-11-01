@@ -35,15 +35,6 @@ namespace fetch {
 namespace crypto {
 namespace mcl {
 
-using PrivateKey         = bn::Fr;
-using PublicKey          = bn::G2;
-using Signature          = bn::G1;
-using Generator          = bn::G2;
-using MessagePayload     = byte_array::ConstByteArray;
-using CabinetIndex       = uint32_t;
-using SignerRecord       = std::vector<uint8_t>;
-using AggregateSignature = std::pair<Signature, SignerRecord>;
-
 namespace details {
 struct MCLInitialiser
 {
@@ -60,25 +51,50 @@ struct MCLInitialiser
 };
 }  // namespace details
 
+/**
+ * Classes for BLS Signatures
+ */
+class PublicKey : public bn::G2
+{
+public:
+  PublicKey();
+};
+
+class PrivateKey : public bn::Fr
+{
+public:
+  PrivateKey();
+  explicit PrivateKey(uint32_t value);
+};
+
+class Signature : public bn::G1
+{
+public:
+  Signature();
+};
+
+class Generator : public bn::G2
+{
+public:
+  Generator();
+  explicit Generator(std::string const &string_to_hash);
+};
+
 struct DkgKeyInformation
 {
-  DkgKeyInformation()
-  {
-    details::MCLInitialiser();
-    group_public_key.clear();
-    private_key_share.clear();
-  }
+  DkgKeyInformation() = default;
   DkgKeyInformation(PublicKey group_public_key1, std::vector<PublicKey> public_key_shares1,
-                    PrivateKey secret_key_shares1)  // NOLINT
-    : group_public_key{std::move(group_public_key1)}
-    , public_key_shares{std::move(public_key_shares1)}
-    , private_key_share{secret_key_shares1}
-  {}
+                    PrivateKey secret_key_shares1);
 
   PublicKey              group_public_key;
   std::vector<PublicKey> public_key_shares{};
   PrivateKey             private_key_share;
 };
+
+using MessagePayload     = byte_array::ConstByteArray;
+using CabinetIndex       = uint32_t;
+using SignerRecord       = std::vector<uint8_t>;
+using AggregateSignature = std::pair<Signature, SignerRecord>;
 
 /**
  * Vector initialisation for mcl data structures
@@ -126,14 +142,16 @@ void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j)
 void SetGenerator(Generator &generator_g, std::string string_to_hash = "");
 void SetGenerators(Generator &generator_g, Generator &generator_h, std::string string_to_hash = "",
                    std::string string_to_hash2 = "");
-bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
-                  bn::Fr const &share2);
-bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2);
-void   UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
-bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
-void   ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
-                     std::vector<bn::Fr> const &b_i, uint32_t index);
-std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b);
+PublicKey ComputeLHS(PublicKey &tmpG, Generator const &G, Generator const &H,
+                     PrivateKey const &share1, PrivateKey const &share2);
+PublicKey ComputeLHS(Generator const &G, Generator const &H, PrivateKey const &share1,
+                     PrivateKey const &share2);
+void      UpdateRHS(uint32_t rank, PublicKey &rhsG, std::vector<PublicKey> const &input);
+PublicKey ComputeRHS(uint32_t rank, std::vector<PublicKey> const &input);
+void      ComputeShares(PrivateKey &s_i, PrivateKey &sprime_i, std::vector<PrivateKey> const &a_i,
+                        std::vector<PrivateKey> const &b_i, uint32_t index);
+std::vector<PrivateKey> InterpolatePolynom(std::vector<PrivateKey> const &a,
+                                           std::vector<PrivateKey> const &b);
 
 // For signatures
 Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
@@ -144,7 +162,7 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t cabinet_size, 
 std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator);
 
 // For aggregate signatures
-bn::Fr             SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
+PrivateKey         SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
                                                    std::vector<PublicKey> const &cabinet_notarisation_keys);
 AggregateSignature ComputeAggregateSignature(
     std::unordered_map<uint32_t, Signature> const &signatures,

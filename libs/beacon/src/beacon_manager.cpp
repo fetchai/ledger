@@ -27,15 +27,13 @@
 namespace fetch {
 namespace dkg {
 
-bn::G2 BeaconManager::zeroG2_;
-bn::Fr BeaconManager::zeroFr_;
-bn::G2 BeaconManager::group_g_;
-bn::G2 BeaconManager::group_h_;
-
-constexpr char const *LOGGING_NAME = "BeaconManager";
+constexpr char const *LOGGING_NAME     = "BeaconManager";
+constexpr char const *generator_string = "Fetch.ai Elliptic Curve Generator G";
 
 BeaconManager::BeaconManager(CertificatePtr certificate)
   : certificate_{std::move(certificate)}
+  , group_g_{generator_string}
+  , group_h_{"Fetch.ai Elliptic Curve Generator H"}
 {
   if (certificate_ == nullptr)
   {
@@ -43,15 +41,6 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
     certificate_.reset(ptr);
     ptr->GenerateKeys();
   }
-
-  static std::once_flag flag;
-
-  std::call_once(flag, []() {
-    fetch::crypto::mcl::details::MCLInitialiser();
-    zeroG2_.clear();
-    zeroFr_.clear();
-    crypto::mcl::SetGenerators(group_g_, group_h_);
-  });
 }
 
 void BeaconManager::SetCertificate(CertificatePtr certificate)
@@ -203,8 +192,6 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
  */
 void BeaconManager::ComputeSecretShare()
 {
-  secret_share_.clear();
-  xprime_i = 0;
   for (auto const &iq : qual_)
   {
     CabinetIndex iq_index = identity_to_index_[iq];
@@ -600,7 +587,8 @@ bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
     return false;
   }
 
-  return crypto::mcl::VerifySign(tmp, message, tmp2, group_g_);
+  Generator generator_tmp{generator_string};
+  return crypto::mcl::VerifySign(tmp, message, tmp2, generator_tmp);
 }
 
 /**

@@ -20,13 +20,6 @@
 
 using fetch::beacon::DkgOutput;
 
-DkgOutput::DkgOutput()
-{
-  fetch::crypto::mcl::details::MCLInitialiser();
-  group_public_key.clear();
-  private_key_share.clear();
-}
-
 DkgOutput::DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares,
                      PrivateKey const &secret_share, CabinetList qual_members)
   : qual{std::move(qual_members)}
