@@ -1050,6 +1050,13 @@ void BeaconSetupService::OnNewShares(const MuddleAddress &                      
                                      std::pair<MessageShare, MessageShare> const &shares)
 {
   FETCH_LOCK(mutex_);
+
+  // This can occur if someone were to send you shares before you load the beacon
+  if (!beacon_)
+  {
+    return;
+  }
+
   // Check if sender is in cabinet
   bool in_cabinet{false};
   for (auto &member : beacon_->aeon.members)
@@ -1284,6 +1291,11 @@ void BeaconSetupService::CheckQualComplaints()
 bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
                                        std::shared_ptr<DKGMessage> const &msg_ptr)
 {
+  if (!beacon_)
+  {
+    return false;
+  }
+
   // Check if sender is in cabinet
   bool in_cabinet{false};
   for (auto &member : beacon_->aeon.members)
