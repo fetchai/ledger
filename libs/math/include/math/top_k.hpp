@@ -113,8 +113,6 @@ std::pair<ArrayDataType, ArrayIndicesType> TopK(ArrayDataType const &           
                                                 typename ArrayDataType::SizeType k,
                                                 bool                             sorted = true)
 {
-  (void)sorted;
-
   assert(k <= data.shape().at(data.shape().size() - 1));
 
   std::vector<SizeType> ret_shape    = data.shape();
