@@ -103,8 +103,17 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &exec_res)
   {
-    auto map = map_constructor(3);
-    map.Append(OUTPUT, exec_res.output_);
+    auto             map    = map_constructor(3);
+    variant::Variant output = exec_res.output_;
+
+    if (output.IsUndefined())
+    {
+      // MsgPack does not support undefined
+      // unless extended.
+      output = static_cast<std::string>("");
+    }
+
+    map.Append(OUTPUT, output);
     map.Append(ERROR, exec_res.error_);
     map.Append(CONSOLE, exec_res.console_);
   }

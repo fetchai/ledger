@@ -30,11 +30,11 @@ class ExecutionWorkload
   friend class RemoteExecutionHost;
 
 public:
-  using ExecutionInterfacePtr = std::shared_ptr<ExecutionEngineInterface>;
-  using Respondent            = fetch::byte_array::ConstByteArray;
-  using OpIdent               = std::string;
-  using Worker                = std::function<ExecutionResult(ExecutionInterfacePtr)>;
-  using Name                  = ExecutionInterface::Name;
+  using ExecutionEngineInterfacePtr = std::shared_ptr<ExecutionEngineInterface>;
+  using Respondent                  = fetch::byte_array::ConstByteArray;
+  using OpIdent                     = std::string;
+  using Worker                      = std::function<ExecutionResult(ExecutionEngineInterfacePtr)>;
+  using Name                        = ExecutionInterface::Name;
 
   ExecutionWorkload(Respondent respondent, OpIdent op_id, Name state_name, Worker worker)
     : respondent_(std::move(respondent))

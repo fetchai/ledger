@@ -49,6 +49,31 @@ private:
   std::string msg_;
 };
 
+class InvalidFile : public std::runtime_error
+{
+public:
+  explicit InvalidFile()
+    : std::runtime_error("")
+  {}
+
+  explicit InvalidFile(std::string const &msg)
+    : std::runtime_error(msg)
+    , msg_(msg)
+  {}
+
+  char const *what() const noexcept override
+  {
+    if (!(msg_.empty()))
+    {
+      return msg_.c_str();
+    }
+    return "cannot find file or filetype not valid";
+  }
+
+private:
+  std::string msg_;
+};
+
 class WrongShape : public std::runtime_error
 {
 public:
@@ -83,6 +108,7 @@ public:
 
   explicit NegativeLog(std::string const &msg)
     : std::runtime_error(msg)
+    , msg_(msg)
   {}
 
   char const *what() const noexcept override
@@ -132,12 +158,20 @@ public:
 
   explicit InvalidNumericCharacter(std::string const &msg)
     : std::runtime_error(msg)
+    , msg_(msg)
   {}
 
   char const *what() const noexcept override
   {
+    if (!(msg_.empty()))
+    {
+      return msg_.c_str();
+    }
     return "attempted to assign data to tensor using invalid character";
   }
+
+private:
+  std::string msg_;
 };
 
 class InvalidMode : public std::runtime_error
@@ -149,12 +183,20 @@ public:
 
   explicit InvalidMode(std::string const &msg)
     : std::runtime_error(msg)
+    , msg_(msg)
   {}
 
   char const *what() const noexcept override
   {
+    if (!(msg_.empty()))
+    {
+      return msg_.c_str();
+    }
     return "invalid mode selected";
   }
+
+private:
+  std::string msg_;
 };
 
 }  // namespace exceptions
