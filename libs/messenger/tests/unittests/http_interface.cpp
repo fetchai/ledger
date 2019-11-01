@@ -25,14 +25,14 @@ TEST(MessengerMailboxTest, BasicHTTPRegisteringUnregistering)
 
   // Registering a mailbox for every other messenger
   std::vector<std::shared_ptr<HTTPMessenger>> messengers;
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
   for (uint64_t i = 0; i < 10; ++i)
   {
     auto messenger = NewHTTPMessenger(8000);
     messenger->Register((i & 1) == 0);
     messengers.push_back(messenger);
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   EXPECT_EQ(server->mailbox.unregistered_messengers, 0);
   EXPECT_EQ(server->mailbox.registered_messengers, 5);
@@ -42,7 +42,7 @@ TEST(MessengerMailboxTest, BasicHTTPRegisteringUnregistering)
   {
     messenger->Unregister();
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
   EXPECT_EQ(server->mailbox.unregistered_messengers, 10);
   EXPECT_EQ(server->mailbox.registered_messengers, 5);
@@ -63,6 +63,7 @@ TEST(MessengerMailboxTest, BasicHTTPRegisteringUnregistering)
 TEST(MessengerMailboxTest, BilateralHTTPCommsMailbox)
 {
   auto server = NewServer(0);
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
   // Testing mailbox.
   auto messenger1 = NewHTTPMessenger(8000);
@@ -99,7 +100,7 @@ TEST(MessengerMailboxTest, BilateralHTTPCommsMailbox)
       sent_messages1.push_back(msg);
     }
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   auto messages1          = server->mailbox.GetMessages(messenger1->GetAddress());
   auto messages2          = server->mailbox.GetMessages(messenger2->GetAddress());

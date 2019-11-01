@@ -25,7 +25,7 @@ TEST(MessengerMailboxTest, BasicRegisteringUnregistering)
 
   // Registering a mailbox for every other messenger
   std::vector<std::shared_ptr<Messenger>> messengers;
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   for (uint64_t i = 0; i < 10; ++i)
   {
     auto messenger = NewMessenger(1337);
@@ -66,6 +66,7 @@ TEST(MessengerMailboxTest, BasicRegisteringUnregistering)
 TEST(MessengerMailboxTest, BilateralCommsMailbox)
 {
   auto server = NewServer(0);
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
   // Testing mailbox.
   auto messenger1 = NewMessenger(1337);
