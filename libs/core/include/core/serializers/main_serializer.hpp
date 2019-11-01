@@ -281,7 +281,7 @@ typename BinarySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
 {
   using Serializer = BinarySerializer<T, MsgPackSerializer>;
   using Constructor =
-      interfaces::BinaryConstructorInterface<MsgPackSerializer, TypeCodes::BINARY_CODE_FIXED,
+      interfaces::BinaryConstructorInterface<MsgPackSerializer, TypeCodes::BINARY_CODE8,
                                              TypeCodes::BINARY_CODE16, TypeCodes::BINARY_CODE32>;
 
   try
