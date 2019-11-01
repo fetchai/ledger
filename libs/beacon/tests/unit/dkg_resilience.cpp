@@ -428,10 +428,9 @@ struct DkgMember
     network_manager.Stop();
   }
 
-  virtual void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold,
-                            uint64_t start_time)                        = 0;
-  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables() = 0;
-  virtual bool                                       DkgFinished()      = 0;
+  virtual void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) = 0;
+  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables()          = 0;
+  virtual bool                                       DkgFinished()               = 0;
 };
 
 struct FaultyDkgMember : DkgMember
@@ -456,8 +455,7 @@ struct FaultyDkgMember : DkgMember
     reactor.Stop();
   }
 
-  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold,
-                    uint64_t start_time) override
+  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -469,7 +467,8 @@ struct FaultyDkgMember : DkgMember
     beacon->aeon.round_end   = 10;
     beacon->aeon.members     = std::move(cabinet);
     // Plus 5 so tests pass on first DKG attempt
-    beacon->aeon.start_reference_timepoint = start_time;
+    beacon->aeon.start_reference_timepoint =
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
 
     dkg.QueueSetup(beacon);
   }
@@ -505,8 +504,7 @@ struct HonestDkgMember : DkgMember
     reactor.Stop();
   }
 
-  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold,
-                    uint64_t start_time) override
+  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -518,7 +516,8 @@ struct HonestDkgMember : DkgMember
     beacon->aeon.round_end   = 10;
     beacon->aeon.members     = std::move(cabinet);
     // Plus 5 so tests pass on first DKG attempt
-    beacon->aeon.start_reference_timepoint = start_time;
+    beacon->aeon.start_reference_timepoint =
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
 
     dkg.QueueSetup(beacon);
   }
@@ -566,12 +565,10 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  uint64_t start_time =
-      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    cabinet_members[ii]->QueueCabinet(cabinet_addresses, threshold, start_time);
+    cabinet_members[ii]->QueueCabinet(cabinet_addresses, threshold);
   }
 
   // Start off some connections until everyone else has connected
