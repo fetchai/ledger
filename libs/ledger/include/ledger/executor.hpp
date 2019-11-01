@@ -73,9 +73,9 @@ private:
 
   /// @name Resources
   /// @{
-  StorageUnitPtr   storage_;             ///< The collection of resources
-  ChainCodeCache   chain_code_cache_{};  //< The factory to create new chain code instances
-  TokenContract    token_contract_{};
+  StorageUnitPtr storage_;             ///< The collection of resources
+  ChainCodeCache chain_code_cache_{};  //< The factory to create new chain code instances
+  TokenContract  token_contract_{};
   /// @}
 
   /// @name Per Execution State
