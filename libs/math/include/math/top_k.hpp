@@ -64,7 +64,8 @@ void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType 
     // Copy values to vector
     for (SizeType index{0}; index < axis_size; index++)
     {
-      vec.at(index) = std::pair<SizeType, DataType>(index, *data_it);
+      vec.at(index).first  = index;
+      vec.at(index).second = *data_it;
       ++data_it;
     }
 
