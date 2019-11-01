@@ -30,7 +30,7 @@ class EuclideanTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(EuclideanTest, FloatingTypes);
+TYPED_TEST_CASE(EuclideanTest, TensorFloatingTypes);
 
 TYPED_TEST(EuclideanTest, simple_test)
 {

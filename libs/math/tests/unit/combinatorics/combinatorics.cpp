@@ -34,7 +34,7 @@ class CombinatoricsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(CombinatoricsTest, FloatingTypes);
+TYPED_TEST_CASE(CombinatoricsTest, TensorFloatingTypes);
 
 // Factorial function - test edge case (0!)
 TYPED_TEST(CombinatoricsTest, test_factorial_zero)

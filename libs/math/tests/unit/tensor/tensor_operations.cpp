@@ -18,18 +18,19 @@
 
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-
+#include "test_types.hpp"
 #include "gtest/gtest.h"
+
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class TensorOperationsTest : public ::testing::Test
 {
 };
 
-using MyTypes =
-    ::testing::Types<int32_t, int64_t, float, double, fetch::fixed_point::FixedPoint<16, 16>,
-                     fetch::fixed_point::FixedPoint<32, 32>>;
-TYPED_TEST_CASE(TensorOperationsTest, MyTypes);
+TYPED_TEST_CASE(TensorOperationsTest, UnsignedIntAndFloatingTypes);
 
 TYPED_TEST(TensorOperationsTest, inline_add_test)
 {
@@ -519,3 +520,7 @@ TYPED_TEST(TensorOperationsTest, slices_same_tensor_test)
 }
 
 // TODO (private 867) - reimplement shuffle & test
+
+} // test
+} // math
+} // fetch

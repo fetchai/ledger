@@ -31,7 +31,7 @@ class OneHotTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(OneHotTest, FloatingTypes);
+TYPED_TEST_CASE(OneHotTest, TensorFloatingTypes);
 
 TYPED_TEST(OneHotTest, one_hot_test_axis_0)
 {

@@ -28,7 +28,7 @@ class EntropyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(EntropyTest, FloatingTypes);
+TYPED_TEST_CASE(EntropyTest, TensorFloatingTypes);
 
 TYPED_TEST(EntropyTest, entropy)
 {

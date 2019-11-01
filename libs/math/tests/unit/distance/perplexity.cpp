@@ -29,7 +29,7 @@ class PerplexityTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(PerplexityTest, FloatingTypes);
+TYPED_TEST_CASE(PerplexityTest, TensorFloatingTypes);
 
 TYPED_TEST(PerplexityTest, entropy)
 {

@@ -29,7 +29,7 @@ class MeanAbsoluteErrorTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MeanAbsoluteErrorTest, FloatingTypes);
+TYPED_TEST_CASE(MeanAbsoluteErrorTest, TensorFloatingTypes);
 
 TYPED_TEST(MeanAbsoluteErrorTest, perfect_match_test)
 {

@@ -31,7 +31,7 @@ class ClusteringTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ClusteringTest, FloatingTypes);
+TYPED_TEST_CASE(ClusteringTest, TensorFloatingTypes);
 
 TYPED_TEST(ClusteringTest, knn_euclidean_test)
 {

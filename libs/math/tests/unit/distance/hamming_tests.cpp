@@ -30,7 +30,7 @@ class HammingTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(HammingTest, FloatingTypes);
+TYPED_TEST_CASE(HammingTest, TensorFloatingTypes);
 
 TEST(HammingTest, simple_test)
 {
