@@ -166,7 +166,6 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
 
 BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 {
-
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 

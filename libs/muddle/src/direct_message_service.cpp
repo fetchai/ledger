@@ -110,7 +110,7 @@ DirectMessageService::DirectMessageService(Address address, Router &router, Mudd
 
 void DirectMessageService::InitiateConnection(Handle handle)
 {
-  FETCH_LOG_INFO(logging_name_, "Init. Connection (conn: ", handle, ")");
+  FETCH_LOG_TRACE(logging_name_, "Init. Connection (conn: ", handle, ")");
 
   // format the message
   RoutingMessage msg{};
@@ -212,7 +212,7 @@ void DirectMessageService::OnRoutingMessage(Handle handle, PacketPtr const &pack
 void DirectMessageService::OnRoutingPing(Handle handle, PacketPtr const &packet,
                                          RoutingMessage const &msg)
 {
-  FETCH_LOG_INFO(logging_name_, "OnRoutingPing (conn: ", handle, ")");
+  FETCH_LOG_TRACE(logging_name_, "OnRoutingPing (conn: ", handle, ")");
   FETCH_UNUSED(packet);
   FETCH_UNUSED(msg);
 
@@ -228,7 +228,7 @@ void DirectMessageService::OnRoutingPing(Handle handle, PacketPtr const &packet,
 void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
                                          RoutingMessage const &msg)
 {
-  FETCH_LOG_INFO(logging_name_, "OnRoutingPong (conn: ", handle, ")");
+  FETCH_LOG_TRACE(logging_name_, "OnRoutingPong (conn: ", handle, ")");
   FETCH_UNUSED(msg);
 
   // determine if we have not routed to this connection yet
@@ -277,14 +277,14 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
                    " status: ", ToString(status));
   }
 
-  FETCH_LOG_INFO(logging_name_, "OnRoutingPong (conn: ", handle, ") complete");
+  FETCH_LOG_TRACE(logging_name_, "OnRoutingPong (conn: ", handle, ") complete");
 }
 
 void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &packet,
                                             RoutingMessage const &msg)
 {
   FETCH_UNUSED(msg);
-  FETCH_LOG_INFO(logging_name_, "OnRoutingRequest (conn: ", handle, ")");
+  FETCH_LOG_TRACE(logging_name_, "OnRoutingRequest (conn: ", handle, ")");
 
   RoutingMessage response{};
   response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
@@ -345,7 +345,7 @@ void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr c
 {
   FETCH_UNUSED(msg);
   FETCH_UNUSED(packet);
-  FETCH_LOG_INFO(logging_name_, "OnRoutingDisconnectRequest (conn: ", handle, ")");
+  FETCH_LOG_TRACE(logging_name_, "OnRoutingDisconnectRequest (conn: ", handle, ")");
 
   auto const conn        = register_.LookupConnection(handle).lock();
   bool const is_outgoing = conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING;

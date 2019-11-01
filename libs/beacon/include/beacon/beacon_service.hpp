@@ -54,7 +54,6 @@ class BeaconService : public ledger::EntropyGeneratorInterface
 public:
   constexpr static char const *LOGGING_NAME = "BeaconService";
 
-
   enum class State
   {
     WAIT_FOR_SETUP_COMPLETION,
