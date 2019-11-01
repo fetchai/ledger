@@ -174,7 +174,7 @@ struct Messenger
     network_manager.Start();
     messenger_muddle->Start({"tcp://127.0.0.1:" + std::to_string(port)}, {});
 
-    while (messenger_muddle->GetDirectlyConnectedPeers().size() < 1)
+    while (messenger_muddle->GetDirectlyConnectedPeers().empty())
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
