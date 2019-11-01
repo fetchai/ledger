@@ -18,22 +18,20 @@
 
 #include "math/clustering/knn.hpp"
 #include "math/distance/euclidean.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
-using namespace fetch::math;
-using namespace fetch::math::clustering;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class ClusteringTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(ClusteringTest, MyTypes);
+TYPED_TEST_CASE(ClusteringTest, FloatingTypes);
 
 TYPED_TEST(ClusteringTest, knn_euclidean_test)
 {
@@ -43,7 +41,7 @@ TYPED_TEST(ClusteringTest, knn_euclidean_test)
   ArrayType A = ArrayType::FromString("1, 2, 3, 4; 2, 3, 4, 5; -1, -2, -3, -4; -2, -3, -4, -5");
   ArrayType v = ArrayType::FromString("3, 4, 5, 6");
 
-  auto output = KNN<ArrayType, fetch::math::distance::Euclidean>(A, v, 4);
+  auto output = clustering::KNN<ArrayType, fetch::math::distance::Euclidean>(A, v, 4);
 
   EXPECT_EQ(output.at(0).first, SizeType(1));
   EXPECT_NEAR(double(output.at(0).second), double(2), 1e-4);
@@ -74,3 +72,8 @@ TYPED_TEST(ClusteringTest, knn_cosine_test)
   EXPECT_EQ(output.at(3).first, SizeType(3));
   EXPECT_NEAR(double(output.at(3).second), double(1.99784), 1e-4);
 }
+
+
+} // test
+} // math
+} // fetch

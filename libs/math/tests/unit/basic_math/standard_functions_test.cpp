@@ -17,22 +17,19 @@
 //------------------------------------------------------------------------------
 
 #include "math/standard_functions/clamp.hpp"
-#include "math/tensor.hpp"
-
+#include "test_types.hpp"
 #include "gtest/gtest.h"
 
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class StandardFunctionTests : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(StandardFunctionTests, MyTypes);
+TYPED_TEST_CASE(StandardFunctionTests, FloatingTypes);
 
 template <typename TensorType>
 void RandomAssign(TensorType &tensor)
@@ -129,3 +126,9 @@ TYPED_TEST(StandardFunctionTests, clamp_array_2D_test)
 
   ASSERT_TRUE(A.AllClose(A_clamp_expected, DataType{1e-5f}, DataType{1e-5f}));
 }
+
+
+} // test
+} // math
+} // fetch
+

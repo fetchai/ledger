@@ -17,22 +17,19 @@
 //------------------------------------------------------------------------------
 
 #include "math/normalize_array.hpp"
-#include "math/tensor.hpp"
-
+#include "test_types.hpp"
 #include "gtest/gtest.h"
 
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class NormalizeArrayTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(NormalizeArrayTest, MyTypes);
+TYPED_TEST_CASE(NormalizeArrayTest, FloatingTypes);
 
 TYPED_TEST(NormalizeArrayTest, conditional_distance)
 {
@@ -61,3 +58,9 @@ TYPED_TEST(NormalizeArrayTest, conditional_distance)
     EXPECT_NEAR(double(A_norm.At(i)), double(A_norm_expected.At(i)), 1e-4);
   }
 }
+
+} // test
+} // math
+} // fetch
+
+
