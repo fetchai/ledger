@@ -79,6 +79,7 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze)
       .CreateMemberFunction("fromString", &VMTensor::FromString)
       .CreateMemberFunction("toString", &VMTensor::ToString);
+  module.GetClassInterface<IArray>().CreateInstantiationType<Ptr<VMTensor>>();
 }
 
 SizeVector VMTensor::shape() const

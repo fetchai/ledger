@@ -23,6 +23,7 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/structured_data.hpp"
+#include "vm_modules/math/tensor.hpp"
 
 #include <sstream>
 #include <stdexcept>
