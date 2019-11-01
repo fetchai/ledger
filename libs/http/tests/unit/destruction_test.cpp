@@ -66,7 +66,7 @@ std::vector<SharedJsonClient> SimpleTest()
   ret.push_back(client);
   Variant result;
   client->Post("/test", result);
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
   http.Stop();
 
