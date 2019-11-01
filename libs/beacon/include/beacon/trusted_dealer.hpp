@@ -38,7 +38,7 @@ public:
   using SharedNotarisationManager = std::shared_ptr<NotarisationManager>;
   using CabinetNotarisationKeys   = std::map<MuddleAddress, NotarisationManager::PublicKey>;
 
-  TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold);
+  TrustedDealer(std::set<MuddleAddress> cabinet, double threshold);
   DkgOutput GetDkgKeys(MuddleAddress const &address) const;
   std::pair<SharedNotarisationManager, CabinetNotarisationKeys> GetNotarisationKeys(
       MuddleAddress const &address);

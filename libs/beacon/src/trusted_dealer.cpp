@@ -21,9 +21,10 @@
 using fetch::beacon::TrustedDealer;
 using DkgOutput = TrustedDealer::DkgOutput;
 
-TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold)
+TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, double threshold)
   : cabinet_{std::move(cabinet)}
-  , threshold_{threshold}
+  , threshold_{static_cast<uint32_t>(std::floor(threshold * static_cast<double>(cabinet_.size()))) +
+               1}
 {
   uint32_t index = 0;
   for (auto const &mem : cabinet_)

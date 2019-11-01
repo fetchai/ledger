@@ -39,11 +39,12 @@ public:
   using CabinetNotarisationKeys   = TrustedDealer::CabinetNotarisationKeys;
 
   TrustedDealerSetupService(MuddleInterface &muddle, ManifestCacheInterface &manifest_cache,
-                            CertificatePtr const &certificate);
+                            CertificatePtr const &certificate, double threshold,
+                            uint64_t aeon_period);
 
   void StartNewCabinet(
-      CabinetMemberList members, uint32_t threshold, uint64_t round_start, uint64_t round_end,
-      uint64_t start_time, BlockEntropy const &prev_entropy, DkgOutput const &output,
+      CabinetMemberList members, uint64_t round_start, uint64_t start_time,
+      BlockEntropy const &prev_entropy, DkgOutput const &output,
       std::pair<SharedNotarisationManager, CabinetNotarisationKeys> notarisation_keys = {nullptr,
                                                                                          {}});
 
@@ -51,6 +52,8 @@ private:
   using SharedAeonExecutionUnit = BeaconSetupService::SharedAeonExecutionUnit;
 
   CertificatePtr certificate_;
+  double         threshold_;
+  uint64_t       aeon_period_;
 };
 }  // namespace beacon
 }  // namespace fetch

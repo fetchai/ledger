@@ -196,13 +196,14 @@ void RunHonestCabinetRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
     if (i < total_renewals)
     {
       std::cout << "- Scheduling round " << i << std::endl;
+      uint64_t start_time =
+          GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
       for (auto &member : cabinet)
       {
         member->beacon_setup_service.StartNewCabinet(
             cabinet_select,
             static_cast<uint32_t>(static_cast<double>(cabinet_select.size()) * threshold),
-            i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
-            GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)),
+            i * numbers_per_aeon, (i + 1) * numbers_per_aeon, start_time,
             member->genesis_block_entropy);
       }
     }

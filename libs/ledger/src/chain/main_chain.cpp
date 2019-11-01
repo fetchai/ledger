@@ -1367,6 +1367,9 @@ bool MainChain::DetermineHeaviestTip()
           auto const &a_hash{a.first}, &b_hash{b.first};
           auto        a_weight{a.second.weight}, b_weight{b.second.weight};
 
+          // The weight, which is related to the rank of the miner producing the block is used here
+          // to tie break chains with equivalent total weight giving priority to miners which have
+          // high weight, where the weight is determined by the entropy for a particular block round
           return a_total_weight < b_total_weight ||
                  (a_total_weight == b_total_weight && a_weight < b_weight) ||
                  (a_total_weight == b_total_weight && a_weight == b_weight && a_hash < b_hash);

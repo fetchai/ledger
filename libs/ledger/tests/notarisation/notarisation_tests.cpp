@@ -73,7 +73,7 @@ struct NotarisationNode
   Consensus                                  consensus;
 
   NotarisationNode(uint16_t port_number, uint16_t index, uint64_t cabinet_size,
-                   uint64_t aeon_period)
+                   uint64_t aeon_period, double threshold)
     : muddle_port{port_number}
     , event_manager{EventManager::New()}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
@@ -81,8 +81,8 @@ struct NotarisationNode
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
     , chain{false, ledger::MainChain::Mode::IN_MEMORY_DB}
-    , beacon_setup_service{new TrustedDealerSetupService{*muddle, manifest_cache,
-                                                         muddle_certificate}}
+    , beacon_setup_service{new TrustedDealerSetupService{
+          *muddle, manifest_cache, muddle_certificate, threshold, aeon_period}}
     , beacon_service{new BeaconService{*muddle, muddle_certificate, *beacon_setup_service,
                                        event_manager}}
     , notarisation_service{new NotarisationService{*muddle, muddle_certificate,
@@ -124,7 +124,7 @@ TEST(notarisation, notarise_blocks)
 {
   uint32_t num_nodes    = 6;
   uint32_t cabinet_size = 3;
-  uint32_t threshold    = 2;
+  double   threshold    = 0.5;
   uint64_t aeon_period  = 5;
   uint64_t stake        = 10;
 
@@ -132,7 +132,7 @@ TEST(notarisation, notarise_blocks)
   for (uint16_t i = 0; i < num_nodes; ++i)
   {
     auto port_number = static_cast<uint16_t>(10000 + i);
-    nodes.emplace_back(new NotarisationNode(port_number, i, cabinet_size, aeon_period));
+    nodes.emplace_back(new NotarisationNode(port_number, i, cabinet_size, aeon_period, threshold));
   }
 
   // Connect muddles together
@@ -178,7 +178,7 @@ TEST(notarisation, notarise_blocks)
   {
     node->reactor.Start();
     node->consensus.SetCabinetSize(cabinet_size);
-    node->consensus.SetThreshold(0.5);
+    node->consensus.SetThreshold(threshold);
   }
 
   // Stake setup
@@ -214,15 +214,15 @@ TEST(notarisation, notarise_blocks)
   TrustedDealer dealer{cabinet, threshold};
 
   // Reset cabinet with ready made keys
-  uint64_t     round_start = 1;
+  uint64_t round_start = 1;
+  uint64_t start_time =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
   BlockEntropy prev_entropy;
   prev_entropy.group_signature = "Hello";
   for (uint32_t i = 0; i < cabinet_size; ++i)
   {
     nodes[i]->beacon_setup_service->StartNewCabinet(
-        cabinet, threshold, round_start, aeon_period,
-        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5,
-        prev_entropy, dealer.GetDkgKeys(nodes[i]->address()),
+        cabinet, round_start, start_time, prev_entropy, dealer.GetDkgKeys(nodes[i]->address()),
         dealer.GetNotarisationKeys(nodes[i]->address()));
   }
 

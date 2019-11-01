@@ -63,10 +63,5 @@ void BlockEntropy::HashSelf()
 
 bool BlockEntropy::IsAeonBeginning() const
 {
-  bool is_beginning = !confirmations.empty();
-  if (is_beginning)
-  {
-    assert(!aeon_notarisation_keys.empty());
-  }
-  return is_beginning;
+  return !confirmations.empty();
 }

@@ -1359,11 +1359,8 @@ bool BeaconSetupService::BuildQual()
   beacon_->manager.SetQual(complaint_answers_manager_.BuildQual(valid_dkg_members_));
   std::set<MuddleAddress> qual = beacon_->manager.qual();
 
-  // Check there are no members in qual that are not in valid_dkg_members
-  std::set<MuddleAddress> diff;
-  std::set_difference(qual.begin(), qual.end(), valid_dkg_members_.begin(),
-                      valid_dkg_members_.end(), std::inserter(diff, diff.begin()));
-  assert(diff.empty());
+  // There should be no members in qual that are not in valid_dkg_members
+  assert((qual & valid_dkg_members_) == qual);
 
   if (qual.find(identity_.identifier()) == qual.end())
   {
