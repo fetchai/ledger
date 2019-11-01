@@ -210,7 +210,8 @@ TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
   array1(3, 1) = DataType(-0.5);
 
   DataType output = fetch::math::Product(array1);
-  EXPECT_NEAR(static_cast<double>(output), 30.03, 8 * static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output), 30.03,
+              8 * static_cast<double>(function_tolerance<DataType>()));
 
   array1(1, 1) = 0;
   output       = fetch::math::Product(array1);
