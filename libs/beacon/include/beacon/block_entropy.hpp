@@ -42,7 +42,7 @@ struct BlockEntropy : public BlockEntropyInterface
   using SignedNotarisationKey = std::pair<NotarisationKey, ECDSASignature>;
   using AeonNotarisationKeys  = std::map<MuddleAddress, SignedNotarisationKey>;
 
-  BlockEntropy();
+  BlockEntropy() = default;
 
   // When new committee, block contains muddle address of those who suceeded the DKG and
   // are qualified to produce blocks, and notarisation key (signed)

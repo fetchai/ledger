@@ -20,13 +20,6 @@
 
 using fetch::beacon::BlockEntropy;
 
-BlockEntropy::BlockEntropy()
-{
-  crypto::mcl::details::MCLInitialiser();
-
-  block_notarisation.first.clear();
-}
-
 /**
  * Copy method - no need for the digest or confirmations
  * since this is used to create the next block
@@ -58,6 +51,7 @@ void BlockEntropy::HashSelf()
   serializer << qualified;
   serializer << group_public_key;
   serializer << block_number;
+  serializer << aeon_notarisation_keys;
   digest = crypto::Hash<crypto::SHA256>(serializer.data());
 }
 

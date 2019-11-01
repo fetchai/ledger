@@ -740,6 +740,16 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     beacon_->block_entropy.qualified        = beacon_->manager.qual();
     beacon_->block_entropy.group_public_key = beacon_->manager.group_public_key();
     beacon_->block_entropy.block_number     = beacon_->aeon.round_start;
+    // If notarising then also populate entropy with notarisation keys
+    if (notarisation_callback_function_)
+    {
+      for (auto const &member : beacon_->manager.qual()) {
+        assert(notarisation_key_msgs_.find(member) != notarisation_key_msgs_.end());
+        auto notarisation_msg = notarisation_key_msgs_.at(member);
+        beacon_->block_entropy.aeon_notarisation_keys.insert(
+                {member, std::make_pair(notarisation_msg.PublicKey(), notarisation_msg.Signature())});
+      }
+    }
     beacon_->block_entropy.HashSelf();
 
     assert(!beacon_->block_entropy.digest.empty());
@@ -811,17 +821,13 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
 {
   FETCH_LOCK(mutex_);
 
-  // Populate beacon entropy with notarisation keys of qual
+  // Set up notarisation manager with public keys
   if (notarisation_callback_function_)
   {
     std::map<MuddleAddress, NotarisationManager::PublicKey> qual_notarisation_keys;
     for (auto const &member : beacon_->manager.qual())
     {
-      assert(notarisation_key_msgs_.find(member) != notarisation_key_msgs_.end());
-      auto notarisation_msg = notarisation_key_msgs_.at(member);
-      beacon_->block_entropy.aeon_notarisation_keys.insert(
-          {member, std::make_pair(notarisation_msg.PublicKey(), notarisation_msg.Signature())});
-      qual_notarisation_keys.insert({member, notarisation_msg.PublicKey()});
+      qual_notarisation_keys.insert({member, notarisation_key_msgs_.at(member).PublicKey()});
     }
     notarisation_manager_->SetAeonDetails(beacon_->aeon.round_start, beacon_->aeon.round_end,
                                           beacon_->manager.polynomial_degree() + 1,
