@@ -135,7 +135,7 @@ struct Server
     network_manager.Start();
     messenger_muddle->Start({static_cast<uint16_t>(1337 + port_offset)});
 
-    mail_muddle->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
+    // mail_muddle->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
     mail_muddle->Start({static_cast<uint16_t>(6500 + port_offset)});
 
     http.AddModule(http_module);

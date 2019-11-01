@@ -124,7 +124,7 @@ TEST(MessengerMailboxTest, BilateralCommsMailbox)
 
 TEST(MessengerMailboxTest, MessagesRouting)
 {
-#define NETWORK_LENGTH 5
+#define NETWORK_LENGTH 10
   std::vector<std::shared_ptr<Server>> servers;
   // Creating servers
   for (uint16_t i = 0; i < NETWORK_LENGTH; ++i)
@@ -134,9 +134,17 @@ TEST(MessengerMailboxTest, MessagesRouting)
   std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
   // Connecting servers in a line
-  for (uint16_t i = 0; i < NETWORK_LENGTH; ++i)
+  for (uint16_t i = 0; i < NETWORK_LENGTH - 1; ++i)
   {
     auto &a = servers[i];
+    a->mail_muddle->ConnectTo(
+        "", fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + i + 1)));
+
+    auto &b = servers[i + 1];
+    b->mail_muddle->ConnectTo("",
+                              fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + i)));
+
+    /*
     for (uint16_t j = 0; j < NETWORK_LENGTH; ++j)
     {
       if (i == j)
@@ -146,6 +154,7 @@ TEST(MessengerMailboxTest, MessagesRouting)
       a->mail_muddle->ConnectTo("",
                                 fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + j)));
     }
+    */
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(1000 * NETWORK_LENGTH));
 
@@ -181,12 +190,15 @@ TEST(MessengerMailboxTest, MessagesRouting)
       from->messenger->SendMessage(msg);
     }
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000 * NETWORK_LENGTH * NETWORK_LENGTH));
+  std::this_thread::sleep_for(std::chrono::milliseconds(100 * NETWORK_LENGTH));
 
+  uint64_t i = 0;
   for (auto &messenger : messengers)
   {
     auto recevied_messages = messenger->messenger->GetMessages(400);
-    EXPECT_EQ(recevied_messages.size(), NETWORK_LENGTH);
+    EXPECT_EQ(recevied_messages.size(), NETWORK_LENGTH)
+        << "Mailbox " << i << " failed!" << std::endl;
+    ++i;
   }
 
   // Shutting down
