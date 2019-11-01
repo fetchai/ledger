@@ -343,6 +343,82 @@ ExecutionResult BasicVmEngine::PrepOutput(VM& vm, Executable *exec, VmVariant co
       return EngineError(Error::Code::SERIALIZATION_ERROR, 
           "Error deserializing output after running " + std::move(message) + " No details");
     }
+
+    auto GetInnermostTypeId = [&] (LedgerVariant const &ledgerVariant, VmVariant const &vmVariant)
+    {
+      int depth = 0;
+      auto current = ledgerVariant;
+      while (current.IsArray())
+      {
+        ++depth;
+        current = current[0];
+      }
+
+      std::cout << "Depth is " << depth << '\n';
+
+      auto result = vmVariant.type_id;
+      if (depth >= 1)
+      {
+        auto currentTypeId = vmVariant.type_id;
+        std::cout << "currentType is " << vm.GetTypeName(currentTypeId) << "(" << currentTypeId << ")\n";
+        for (int i = 0; i < depth-1; ++i)
+        {
+          std::cout << "\tcurrentType is " << vm.GetTypeName(currentTypeId) << "(" << currentTypeId << ")\n";
+          currentTypeId = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
+        }
+        std::cout << "\tcurrentType is finally " << vm.GetTypeName(currentTypeId) << "(" << currentTypeId << ")\n";
+        result = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
+      }
+
+      return result;
+    };
+
+    auto innermostType = GetInnermostTypeId(output, vmVariant);
+
+    
+
+    if (innermostType == vm::TypeIds::Fixed64)
+    {
+      std::function<void(LedgerVariant &)> toFixed64;
+      toFixed64 = [&toFixed64] (LedgerVariant & var)
+      {
+        if (var.IsArray())
+        {
+          for (std::size_t i = 0; i < var.size(); ++i)
+          {
+            toFixed64(var[i]);
+          }
+        }
+        else {
+          var = LedgerVariant(fp64_t::FromBase(var.As<int64_t>()));
+        }
+      };
+      toFixed64(output);
+    }
+    /*
+    else if (innermostType == vm::TypeIds::Fixed32)
+    {
+      std::function<void(LedgerVariant &)> toFixed32;
+      toFixed32 = [&toFixed32] (LedgerVariant & var)
+      {
+        if (var.IsArray())
+        {
+          for (std::size_t i = 0; i < var.size(); ++i)
+          {
+            toFixed32(var[i]);
+          }
+        }
+        else {
+          fp32_t newVal;
+          newVal.Data() = static_cast<int32_t>(var.As<int>());
+          var = LedgerVariant(newVal);
+        }
+      };
+      toFixed32(output);
+    }
+    */
+
+    std::cout << "Innermost type is " << vm.GetTypeName(innermostType) << '(' << innermostType << ")\n";
   }
   return ExecutionResult{output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS,
          "Ran " + std::move(message)}, console};
