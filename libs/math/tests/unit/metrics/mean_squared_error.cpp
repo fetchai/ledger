@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/metrics/mean_square_error.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -33,7 +33,7 @@ TYPED_TEST_CASE(MeanSquareErrorTest, FloatingTypes);
 
 TYPED_TEST(MeanSquareErrorTest, perfect_match_test)
 {
-  using DataType = typename TypeParam::Type;
+  using DataType       = typename TypeParam::Type;
   TypeParam test_array = TypeParam{8};
   TypeParam gt_array   = TypeParam{8};
 
@@ -93,9 +93,10 @@ TYPED_TEST(MeanSquareErrorTest, value_test)
   score = fetch::math::MeanSquareError(test_array, gt_array);
 
   // test correct values
-  ASSERT_NEAR(double(score), double(191.18f / 8.0f), 8.0 * static_cast<double>(function_tolerance<DataType>()));
+  ASSERT_NEAR(double(score), double(191.18f / 8.0f),
+              8.0 * static_cast<double>(function_tolerance<DataType>()));
 }
 
-} // test
-} // math
-} // fetch
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

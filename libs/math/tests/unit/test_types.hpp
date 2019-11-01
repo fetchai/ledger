@@ -29,10 +29,17 @@ using FloatingTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::
                                        fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
 using IntAndFloatingTypes =
-    ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                     fetch::math::Tensor<double>, fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+    ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<int64_t>,
+                     fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                     fetch::math::Tensor<fetch::fixed_point::fp32_t>,
                      fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
+using UnsignedIntAndFloatingTypes =
+    ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<uint32_t>,
+                     fetch::math::Tensor<int64_t>, fetch::math::Tensor<uint64_t>,
+                     fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                     fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+                     fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 }  // namespace test
 }  // namespace math
 }  // namespace fetch
