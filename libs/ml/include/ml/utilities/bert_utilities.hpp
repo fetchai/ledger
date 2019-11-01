@@ -37,15 +37,16 @@
 #include <string>
 #include <utility>
 
-using DataType      = float;
-using TensorType    = fetch::math::Tensor<DataType>;
-using SizeType      = typename TensorType::SizeType;
-using SizeVector    = typename TensorType::SizeVector;
-using GraphType     = typename fetch::ml::Graph<TensorType>;
-using StateDictType = typename fetch::ml::StateDict<TensorType>;
+namespace fetch {
+namespace ml {
+namespace utilities {
 
+using SizeType = fetch::math::SizeType;
+
+template <class TensorType>
 struct BERTConfig
 {
+  using DataType = typename TensorType::Type;
   // the default config is for bert base uncased pretrained model
   SizeType n_encoder_layers  = 12u;
   SizeType max_seq_len       = 512u;
@@ -58,13 +59,14 @@ struct BERTConfig
   DataType dropout_keep_prob = static_cast<DataType>(0.9);
 };
 
+template <class TensorType>
 struct BERTInterface
 {
-  // the default names for input and outpus of a Fetch bert model
+  // the default names for input and outputs of a Fetch bert model
   std::vector<std::string> inputs = {"Segment", "Position", "Tokens", "Mask"};
   std::vector<std::string> outputs;
 
-  explicit BERTInterface(BERTConfig const &config)
+  explicit BERTInterface(BERTConfig<TensorType> const &config)
   {
     outputs.emplace_back("norm_embed");
     for (SizeType i = 0; i < config.n_encoder_layers; i++)
@@ -74,9 +76,12 @@ struct BERTInterface
   }
 };
 
-inline std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
-    BERTConfig const &config, GraphType &g)
+template <class TensorType>
+std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
+    BERTConfig<TensorType> const &config, fetch::ml::Graph<TensorType> &g)
 {
+  using DataType   = typename TensorType::Type;
+  using SizeVector = typename TensorType::SizeVector;
   // create a bert model based on the config passed in
   SizeType n_encoder_layers  = config.n_encoder_layers;
   SizeType max_seq_len       = config.max_seq_len;
@@ -131,10 +136,12 @@ inline std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertMod
                         encoder_outputs);
 }
 
-inline void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes,
-                          std::string const &output_node, std::vector<TensorType> input_data,
-                          TensorType output_data, bool verbose = true)
+template <class TensorType>
+void EvaluateGraph(fetch::ml::Graph<TensorType> &g, std::vector<std::string> input_nodes,
+                   std::string const &output_node, std::vector<TensorType> input_data,
+                   TensorType output_data, bool verbose = true)
 {
+  using DataType = typename TensorType::Type;
   // Evaluate the model classification performance on a set of test data.
   std::cout << "Starting forward passing for manual evaluation on: " << output_data.shape(1)
             << std::endl;
@@ -180,7 +187,8 @@ inline void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes,
             << std::endl;
 }
 
-inline TensorType LoadTensorFromFile(std::string const &file_name)
+template <class TensorType>
+TensorType LoadTensorFromFile(std::string const &file_name)
 {
   std::ifstream weight_file(file_name);
   assert(weight_file.is_open());
@@ -192,15 +200,14 @@ inline TensorType LoadTensorFromFile(std::string const &file_name)
   return TensorType::FromString(weight_str);
 }
 
-inline void PutWeightInLayerNorm(StateDictType &state_dict, SizeType model_dims,
-                                 std::string const &gamma_file_name,
-                                 std::string const &beta_file_name,
-                                 std::string const &gamma_weight_name,
-                                 std::string const &beta_weight_name)
+template <class TensorType>
+void PutWeightInLayerNorm(fetch::ml::StateDict<TensorType> &state_dict, SizeType model_dims,
+                          std::string const &gamma_file_name, std::string const &beta_file_name,
+                          std::string const &gamma_weight_name, std::string const &beta_weight_name)
 {
   // load embedding layernorm gamma beta weights
-  TensorType layernorm_gamma = LoadTensorFromFile(gamma_file_name);
-  TensorType layernorm_beta  = LoadTensorFromFile(beta_file_name);
+  TensorType layernorm_gamma = LoadTensorFromFile<TensorType>(gamma_file_name);
+  TensorType layernorm_beta  = LoadTensorFromFile<TensorType>(beta_file_name);
   assert(layernorm_beta.size() == model_dims);
   assert(layernorm_gamma.size() == model_dims);
   layernorm_beta.Reshape({model_dims, 1, 1});
@@ -211,16 +218,18 @@ inline void PutWeightInLayerNorm(StateDictType &state_dict, SizeType model_dims,
   *(state_dict.dict_[beta_weight_name].weights_)  = layernorm_beta;
 }
 
-inline void PutWeightInFullyConnected(StateDictType &state_dict, SizeType in_size,
-                                      SizeType out_size, std::string const &weights_file_name,
-                                      std::string const &bias_file_name,
-                                      std::string const &weights_name, std::string const &bias_name)
+template <class TensorType>
+void PutWeightInFullyConnected(fetch::ml::StateDict<TensorType> &state_dict, SizeType in_size,
+                               SizeType out_size, std::string const &weights_file_name,
+                               std::string const &bias_file_name, std::string const &weights_name,
+                               std::string const &bias_name)
 {
   // load embedding layernorm gamma beta weights
-  TensorType weights = LoadTensorFromFile(weights_file_name);
-  TensorType bias    = LoadTensorFromFile(bias_file_name);
+
+  TensorType weights = LoadTensorFromFile<TensorType>(weights_file_name);
+  TensorType bias    = LoadTensorFromFile<TensorType>(bias_file_name);
   FETCH_UNUSED(in_size);
-  assert(weights.shape() == SizeVector({out_size, in_size}));
+  assert(weights.shape() == typename TensorType::SizeVector({out_size, in_size}));
   assert(bias.size() == out_size);
   bias.Reshape({out_size, 1, 1});
 
@@ -229,8 +238,9 @@ inline void PutWeightInFullyConnected(StateDictType &state_dict, SizeType in_siz
   *(state_dict.dict_[bias_name].weights_)    = bias;
 }
 
-inline void PutWeightInMultiheadAttention(
-    StateDictType &state_dict, SizeType n_heads, SizeType model_dims,
+template <class TensorType>
+void PutWeightInMultiheadAttention(
+    fetch::ml::StateDict<TensorType> &state_dict, SizeType n_heads, SizeType model_dims,
     std::string const &query_weights_file_name, std::string const &query_bias_file_name,
     std::string const &key_weights_file_name, std::string const &key_bias_file_name,
     std::string const &value_weights_file_name, std::string const &value_bias_file_name,
@@ -240,14 +250,14 @@ inline void PutWeightInMultiheadAttention(
     std::string const &mattn_prefix)
 {
   // get weight arrays from file
-  TensorType query_weights = LoadTensorFromFile(query_weights_file_name);
-  TensorType query_bias    = LoadTensorFromFile(query_bias_file_name);
+  TensorType query_weights = LoadTensorFromFile<TensorType>(query_weights_file_name);
+  TensorType query_bias    = LoadTensorFromFile<TensorType>(query_bias_file_name);
   query_bias.Reshape({model_dims, 1, 1});
-  TensorType key_weights = LoadTensorFromFile(key_weights_file_name);
-  TensorType key_bias    = LoadTensorFromFile(key_bias_file_name);
+  TensorType key_weights = LoadTensorFromFile<TensorType>(key_weights_file_name);
+  TensorType key_bias    = LoadTensorFromFile<TensorType>(key_bias_file_name);
   key_bias.Reshape({model_dims, 1, 1});
-  TensorType value_weights = LoadTensorFromFile(value_weights_file_name);
-  TensorType value_bias    = LoadTensorFromFile(value_bias_file_name);
+  TensorType value_weights = LoadTensorFromFile<TensorType>(value_weights_file_name);
+  TensorType value_bias    = LoadTensorFromFile<TensorType>(value_bias_file_name);
   value_bias.Reshape({model_dims, 1, 1});
 
   // put weights into each head
@@ -268,12 +278,15 @@ inline void PutWeightInMultiheadAttention(
     TensorType sliced_key_bias      = key_bias.Slice(start_end_slice, 0u).Copy();
     TensorType sliced_value_weights = value_weights.Slice(start_end_slice, 0u).Copy();
     TensorType sliced_value_bias    = value_bias.Slice(start_end_slice, 0u).Copy();
-    assert(sliced_value_weights.shape() == SizeVector({attn_head_size, model_dims}));
-    assert(sliced_value_bias.shape() == SizeVector({attn_head_size, 1, 1}));
-    assert(sliced_query_weights.shape() == SizeVector({attn_head_size, model_dims}));
-    assert(sliced_query_bias.shape() == SizeVector({attn_head_size, 1, 1}));
-    assert(sliced_key_weights.shape() == SizeVector({attn_head_size, model_dims}));
-    assert(sliced_key_bias.shape() == SizeVector({attn_head_size, 1, 1}));
+    assert(sliced_value_weights.shape() ==
+           typename TensorType::SizeVector({attn_head_size, model_dims}));
+    assert(sliced_value_bias.shape() == typename TensorType::SizeVector({attn_head_size, 1, 1}));
+    assert(sliced_query_weights.shape() ==
+           typename TensorType::SizeVector({attn_head_size, model_dims}));
+    assert(sliced_query_bias.shape() == typename TensorType::SizeVector({attn_head_size, 1, 1}));
+    assert(sliced_key_weights.shape() ==
+           typename TensorType::SizeVector({attn_head_size, model_dims}));
+    assert(sliced_key_bias.shape() == typename TensorType::SizeVector({attn_head_size, 1, 1}));
 
     // put the weights into each head
     *(state_dict.dict_[this_attn_prefix + query_weights_name].weights_) = sliced_query_weights;
@@ -285,9 +298,13 @@ inline void PutWeightInMultiheadAttention(
   }
 }
 
-inline std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrainedBertModel(
-    std::string const &file_path, BERTConfig const &config, GraphType &g)
+template <class TensorType>
+std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrainedBertModel(
+    std::string const &file_path, BERTConfig<TensorType> const &config,
+    fetch::ml::Graph<TensorType> &g)
 {
+  using DataType             = typename TensorType::Type;
+  using SizeVector           = typename TensorType::SizeVector;
   SizeType n_encoder_layers  = config.n_encoder_layers;
   SizeType max_seq_len       = config.max_seq_len;
   SizeType model_dims        = config.model_dims;
@@ -311,26 +328,26 @@ inline std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrai
   std::string mask   = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Mask", {});
 
   // prepare reuseable container
-  StateDictType state_dict;
+  fetch::ml::StateDict<TensorType> state_dict;
 
   // load weights to three embeddings
   // ###################################################################################################################
 
   // load segment embeddings
   TensorType segment_embedding_weights =
-      LoadTensorFromFile(file_path + "bert_embeddings_token_type_embeddings_weight");
+      LoadTensorFromFile<TensorType>(file_path + "bert_embeddings_token_type_embeddings_weight");
   segment_embedding_weights = segment_embedding_weights.Transpose();
   assert(segment_embedding_weights.shape() == SizeVector({model_dims, segment_size}));
 
   // load position embeddings
   TensorType position_embedding_weights =
-      LoadTensorFromFile(file_path + "bert_embeddings_position_embeddings_weight");
+      LoadTensorFromFile<TensorType>(file_path + "bert_embeddings_position_embeddings_weight");
   position_embedding_weights = position_embedding_weights.Transpose();
   assert(position_embedding_weights.shape() == SizeVector({model_dims, max_seq_len}));
 
   // load token embeddings
   TensorType token_embedding_weights =
-      LoadTensorFromFile(file_path + "bert_embeddings_word_embeddings_weight");
+      LoadTensorFromFile<TensorType>(file_path + "bert_embeddings_word_embeddings_weight");
   token_embedding_weights = token_embedding_weights.Transpose();
   assert(token_embedding_weights.shape() == SizeVector({model_dims, vocab_size}));
 
@@ -354,7 +371,9 @@ inline std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrai
   // create layernorm layer and get statedict
   std::string norm_embed = g.template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(
       "norm_embed", {sum_embed}, SizeVector({model_dims, 1}), 0u, epsilon);
-  state_dict = std::dynamic_pointer_cast<GraphType>(g.GetNode(norm_embed)->GetOp())->StateDict();
+  state_dict =
+      std::dynamic_pointer_cast<fetch::ml::Graph<TensorType>>(g.GetNode(norm_embed)->GetOp())
+          ->StateDict();
 
   // load embedding layernorm gamma beta weights
   PutWeightInLayerNorm(state_dict, model_dims, file_path + "bert_embeddings_LayerNorm_gamma",
@@ -381,7 +400,8 @@ inline std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrai
 
     // get state dict for this layer
     state_dict =
-        std::dynamic_pointer_cast<GraphType>(g.GetNode(layer_output)->GetOp())->StateDict();
+        std::dynamic_pointer_cast<fetch::ml::Graph<TensorType>>(g.GetNode(layer_output)->GetOp())
+            ->StateDict();
 
     // get file path prefix
     std::string file_prefix = file_path + "bert_encoder_layer_" + std::to_string(i) + "_";
@@ -434,10 +454,12 @@ inline std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrai
                         encoder_outputs);
 }
 
-inline TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes,
-                                       std::string output_node, BERTConfig const &config,
-                                       GraphType g, SizeType batch_size, bool verbose)
+template <class TensorType>
+TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes, std::string output_node,
+                                BERTConfig<TensorType> const &config,
+                                fetch::ml::Graph<TensorType> g, SizeType batch_size, bool verbose)
 {
+  using DataType           = typename TensorType::Type;
   std::string segment      = std::move(input_nodes[0]);
   std::string position     = std::move(input_nodes[1]);
   std::string tokens       = std::move(input_nodes[2]);
@@ -494,51 +516,11 @@ inline TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes,
   return output;
 }
 
-inline void SaveGraphToFile(GraphType &g, std::string const &file_name)
+template <class TensorType>
+std::vector<TensorType> PrepareTensorForBert(TensorType const &            data,
+                                             BERTConfig<TensorType> const &config)
 {
-  // start serializing and writing to file
-  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
-  std::cout << "got saveable params" << std::endl;
-
-  fetch::serializers::LargeObjectSerializeHelper b;
-  b << gsp1;
-  std::cout << "finish serializing" << std::endl;
-
-  std::ofstream outFile(file_name, std::ios::out | std::ios::binary);
-  outFile.write(b.data().char_pointer(), std::streamsize(b.data().size()));
-  outFile.close();
-  std::cout << b.data().size() << std::endl;
-  std::cout << "finish writing to file" << std::endl;
-}
-
-inline GraphType ReadFileToGraph(std::string const &file_name)
-{
-  auto cur_time = std::chrono::high_resolution_clock::now();
-  // start reading a file and deserializing
-  fetch::byte_array::ConstByteArray buffer = fetch::core::ReadContentsOfFile(file_name.c_str());
-  std::cout << "The buffer read from file is of size: " << buffer.size() << " bytes" << std::endl;
-  fetch::serializers::MsgPackSerializer b(buffer);
-  std::cout << "finish loading bytes to serlializer" << std::endl;
-
-  // start deserializing
-  b.seek(0);
-  fetch::ml::GraphSaveableParams<TensorType> gsp2;
-  b >> gsp2;
-  std::cout << "finish deserializing" << std::endl;
-  auto g = std::make_shared<GraphType>();
-  fetch::ml::utilities::BuildGraph<TensorType>(gsp2, g);
-  std::cout << "finish rebuilding graph" << std::endl;
-
-  auto time_span = std::chrono::duration_cast<std::chrono::duration<double>>(
-      std::chrono::high_resolution_clock::now() - cur_time);
-  std::cout << "time span: " << static_cast<double>(time_span.count()) << std::endl;
-
-  return *g;
-}
-
-inline std::vector<TensorType> PrepareTensorForBert(TensorType const &data,
-                                                    BERTConfig const &config)
-{
+  using DataType       = typename TensorType::Type;
   SizeType max_seq_len = config.max_seq_len;
   // check that data shape is proper for bert input
   if (data.shape().size() != 2 || data.shape(0) != max_seq_len)
@@ -577,3 +559,6 @@ inline std::vector<TensorType> PrepareTensorForBert(TensorType const &data,
   }
   return {segment_data, position_data, data, mask_data};
 }
+}  // namespace utilities
+}  // namespace ml
+}  // namespace fetch

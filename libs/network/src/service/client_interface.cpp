@@ -30,7 +30,7 @@ void ServiceClientInterface::ProcessRPCResult(network::MessageType const &msg,
   PromiseCounter id;
   params >> id;
 
-  // lookup the promise
+  // look up the promise
   Promise p = ExtractPromise(id);
 
   // There is a chance that this message will not belong to this client. In this case we will
@@ -65,7 +65,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::MessageType const &ms
     serializers::SerializableException e;
     params >> e;
 
-    // lookup the promise and fail it
+    // look up the promise and fail it
     Promise p = ExtractPromise(id);
     p->Fail(e);
 

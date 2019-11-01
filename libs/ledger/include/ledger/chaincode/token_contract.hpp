@@ -50,12 +50,12 @@ public:
   bool     TransferTokens(chain::Transaction const &tx, chain::Address const &to, uint64_t amount);
 
   // transaction handlers
-  Result CreateWealth(chain::Transaction const &tx, BlockIndex /*index*/);
-  Result Deed(chain::Transaction const &tx, BlockIndex /*index*/);
-  Result Transfer(chain::Transaction const &tx, BlockIndex /*index*/);
-  Result AddStake(chain::Transaction const &tx, BlockIndex /*index*/);
-  Result DeStake(chain::Transaction const &tx, BlockIndex /*index*/);
-  Result CollectStake(chain::Transaction const &tx, BlockIndex /*index*/);
+  Result CreateWealth(chain::Transaction const &tx);
+  Result Deed(chain::Transaction const &tx);
+  Result Transfer(chain::Transaction const &tx);
+  Result AddStake(chain::Transaction const &tx);
+  Result DeStake(chain::Transaction const &tx);
+  Result CollectStake(chain::Transaction const &tx);
 
   // queries
   Status Balance(Query const &query, Query &response);

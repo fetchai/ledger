@@ -193,7 +193,7 @@ int main(int argc, char **argv)
     peers.emplace(parser.GetArg(i));
   }
 
-  // lookup the endpoint
+  // look up the endpoint
   auto &endpoint = muddle->GetEndpoint();
   auto  sub      = endpoint.Subscribe(SERVICE, CHANNEL);
   sub->SetMessageHandler([&muddle](Address const &from, Packet::Payload const &payload) {

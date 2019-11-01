@@ -20,6 +20,7 @@
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chaincode/chain_code_cache.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "telemetry/telemetry.hpp"
@@ -35,7 +36,6 @@ class Address;
 }  // namespace chain
 namespace ledger {
 
-class TokenContract;
 class CachedStorageAdapter;
 class StateSentinelAdapter;
 class StakeUpdateInterface;
@@ -62,7 +62,6 @@ public:
   /// @}
 
 private:
-  using TokenContractPtr        = std::shared_ptr<TokenContract>;
   using TransactionPtr          = std::shared_ptr<chain::Transaction>;
   using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
 
@@ -76,7 +75,7 @@ private:
   /// @{
   StorageUnitPtr   storage_;             ///< The collection of resources
   ChainCodeCache   chain_code_cache_{};  //< The factory to create new chain code instances
-  TokenContractPtr token_contract_;
+  TokenContract    token_contract_{};
   /// @}
 
   /// @name Per Execution State

@@ -26,6 +26,7 @@
 #include "json/document.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_manager.hpp"
@@ -187,7 +188,7 @@ bool GenesisFileCreator::LoadState(Variant const &object)
         serializers::MsgPackSerializer buffer;
         buffer << record;
 
-        // lookup reference to the underlying buffer
+        // look up reference to the underlying buffer
         auto const &data = buffer.data();
 
         // store the buffer

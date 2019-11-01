@@ -17,29 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-
-#include <functional>
-#include <memory>
-#include <unordered_set>
+#include "chain/address.hpp"
+#include "chain/transaction_layout.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class Identifier;
-class Contract;
-class StorageInterface;
+class TokenContract;
+class StateAdapter;
 
-class ChainCodeFactory
+struct ContractContext
 {
-public:
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using ContractPtr     = std::shared_ptr<Contract>;
-  using ContractNameSet = std::unordered_set<ConstByteArray>;
+  ContractContext()                        = default;
+  ContractContext(ContractContext const &) = default;
+  ContractContext(ContractContext &&)      = default;
 
-  ContractPtr Create(Identifier const &contract_id, StorageInterface &storage) const;
+  ContractContext(TokenContract *token_contract_param, chain::Address address,
+                  StateAdapter *                       state_adapter_param,
+                  chain::TransactionLayout::BlockIndex block_index_param);
 
-  ContractNameSet const &GetChainCodeContracts() const;
+  TokenContract *const                       token_contract{nullptr};
+  chain::Address const                       contract_address{};
+  StateAdapter *const                        state_adapter{nullptr};
+  chain::TransactionLayout::BlockIndex const block_index{0};
 };
 
 }  // namespace ledger

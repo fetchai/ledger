@@ -594,17 +594,16 @@ public:
   template <typename Serializer>
   static void Serialize(Serializer &serializer, Type const &var)
   {
-    auto typecode = static_cast<int>(var.type());
-    serializer << typecode;
     switch (var.type())
     {
     case Type::Type::UNDEFINED:
     {
+      // TODO(tfr): Work out if msgpack has support for undefined
       return;
     }
-
     case Type::Type::NULL_VALUE:
     {
+      // TODO(tfr): Work out if msgpack has support for null
       return;
     }
     case Type::Type::INTEGER:
@@ -634,21 +633,22 @@ public:
     }
     case Type::Type::ARRAY:
     {
-      auto sz = static_cast<uint32_t>(var.size());
-      serializer << sz;
+      auto constructor  = serializer.NewArrayConstructor();
+      auto array_buffer = constructor(var.size());
+
       for (std::size_t i = 0; i < var.size(); i++)
       {
-        Serialize(serializer, var[i]);
+        array_buffer.Append(var[i]);
       }
       return;
     }
     case Type::Type::OBJECT:
     {
-      auto sz = static_cast<uint32_t>(var.size());
-      serializer << sz;
+      auto constructor = serializer.NewMapConstructor();
+      auto map_buffer  = constructor(var.size());
+
       var.IterateObject([&](auto const &k, auto const &v) {
-        serializer << k;
-        Serialize(serializer, v);
+        map_buffer.Append(k, v);
         return true;
       });
       return;
@@ -660,77 +660,93 @@ public:
   template <typename Deserializer>
   static void Deserialize(Deserializer &deserializer, Type &var)
   {
-    int typecode;
-    deserializer >> typecode;
-    auto type = static_cast<Type::Type>(typecode);
-    switch (type)
+    using SerializerTypes = serializers::SerializerTypes;
+
+    switch (deserializer.GetNextType())
     {
-    case Type::Type::UNDEFINED:
+
+    // TODO(tfr): Add MsgPack support
+    case SerializerTypes::BINARY:
+    case SerializerTypes::EXTENSION:
+    case SerializerTypes::UNKNOWN:
     {
       var = Variant::Undefined();
       return;
     }
-    case Type::Type::NULL_VALUE:
+
+    case SerializerTypes::NULL_VALUE:
     {
       var = Variant::Null();
       return;
     }
-    case Type::Type::INTEGER:
+    case SerializerTypes::UNSIGNED_INTEGER:
+    {
+      uint64_t tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
+    case SerializerTypes::INTEGER:
     {
       int64_t tmp;
       deserializer >> tmp;
       var = tmp;
       return;
     }
-    case Type::Type::FLOATING_POINT:
+    case SerializerTypes::FLOATING_POINT:
     {
       double tmp;
       deserializer >> tmp;
       var = tmp;
       return;
     }
-    case Type::Type::FIXED_POINT:
+    /*
+    // TODO(tfr): ADD SUPPORT
+    case SerializerTypes::FIXED_POINT:
     {
       fixed_point::fp64_t tmp;
       deserializer >> tmp;
       var = tmp;
       return;
     }
-    case Type::Type::BOOLEAN:
+    */
+    case SerializerTypes::BOOLEAN:
     {
       bool tmp;
       deserializer >> tmp;
       var = tmp;
       return;
     }
-    case Type::Type::STRING:
+    case SerializerTypes::STRING:
     {
       byte_array::ConstByteArray tmp;
       deserializer >> tmp;
       var = tmp;
       return;
     }
-    case Type::Type::ARRAY:
+    case SerializerTypes::ARRAY:
     {
-      uint64_t count;
-      deserializer >> count;
-      var = variant::Variant::Array(count);
-      for (std::size_t i = 0; i < count; i++)
+      auto array = deserializer.NewArrayDeserializer();
+
+      var = variant::Variant::Array(array.size());
+      for (std::size_t i = 0; i < array.size(); i++)
       {
-        Deserialize(deserializer, var[i]);
+        array.GetNextValue(var[i]);
       }
       return;
     }
-    case Type::Type::OBJECT:
+    case SerializerTypes::MAP:
     {
-      uint64_t count;
-      deserializer >> count;
-      var = variant::Variant::Object();
-      for (uint64_t i = 0; i < count; i++)
+      auto map = deserializer.NewMapDeserializer();
+
+      var = variant::Variant::Array(map.size());
+      for (std::size_t i = 0; i < map.size(); i++)
       {
-        byte_array::ConstByteArray k;
-        deserializer >> k;
-        Deserialize(deserializer, var[k]);
+        byte_array::ConstByteArray key;
+        Type                       value;
+        map.GetNextKeyPair(key, value);
+
+        var[key] = value;
       }
       return;
     }

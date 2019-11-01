@@ -17,36 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/synergetic_contract.hpp"
-
 namespace fetch {
-namespace chain {
 
-class Address;
+namespace vm {
+class Module;
+}
 
-}  // namespace chain
-namespace ledger {
+namespace vm_modules {
+namespace math {
 
-class StorageInterface;
+void BindReadCSV(fetch::vm::Module &module);
 
-class SynergeticContractFactory
-{
-public:
-  // Construction / Destruction
-  explicit SynergeticContractFactory(StorageInterface &storage);
-  SynergeticContractFactory(SynergeticContractFactory const &) = delete;
-  SynergeticContractFactory(SynergeticContractFactory &&)      = delete;
-  ~SynergeticContractFactory()                                 = default;
-
-  SynergeticContractPtr Create(Digest const &digest);
-
-  // Operators
-  SynergeticContractFactory &operator=(SynergeticContractFactory const &) = delete;
-  SynergeticContractFactory &operator=(SynergeticContractFactory &&) = delete;
-
-private:
-  StorageInterface &storage_;
-};
-
-}  // namespace ledger
+}  // namespace math
+}  // namespace vm_modules
 }  // namespace fetch

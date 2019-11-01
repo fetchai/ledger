@@ -21,6 +21,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "core/set_thread_name.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/consensus/stake_update_event.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/executor.hpp"
@@ -240,7 +241,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
 {
   ExecutorPtr executor;
 
-  // lookup a free executor
+  // look up a free executor
   {
     FETCH_LOCK(idle_executors_lock_);
     if (!idle_executors_.empty())
