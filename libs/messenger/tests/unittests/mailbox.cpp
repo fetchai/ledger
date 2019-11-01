@@ -134,8 +134,9 @@ TEST(MessengerMailboxTest, MessagesRouting)
   std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
   // Connecting servers in a line
-  for (uint16_t i = 0; i < NETWORK_LENGTH - 1; ++i)
+  for (uint16_t i = 0; i < NETWORK_LENGTH; ++i)
   {
+    /*
     auto &a = servers[i];
     a->mail_muddle->ConnectTo(
         "", fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + i + 1)));
@@ -143,8 +144,8 @@ TEST(MessengerMailboxTest, MessagesRouting)
     auto &b = servers[i + 1];
     b->mail_muddle->ConnectTo("",
                               fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + i)));
+    */
 
-    /*
     for (uint16_t j = 0; j < NETWORK_LENGTH; ++j)
     {
       if (i == j)
@@ -154,7 +155,6 @@ TEST(MessengerMailboxTest, MessagesRouting)
       a->mail_muddle->ConnectTo("",
                                 fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + j)));
     }
-    */
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(1000 * NETWORK_LENGTH));
 
