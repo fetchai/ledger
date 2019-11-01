@@ -103,10 +103,9 @@ public:
       fetch::vm::Ptr<fetch::vm::String> const &model_string);
 
 private:
-  TensorDataloaderPtr dl_;
-  ModelPtrType        model_;
-  ModelConfigPtrType  model_config_;
-  ModelCategory       model_category_ = ModelCategory::NONE;
+  ModelPtrType       model_;
+  ModelConfigPtrType model_config_;
+  ModelCategory      model_category_ = ModelCategory::NONE;
 
   void Init(std::string const &model_category);
 };

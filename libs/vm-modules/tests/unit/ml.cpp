@@ -417,9 +417,6 @@ TEST_F(MLTests, serialisation_several_components_test)
 
         var dataloader = DataLoader("tensor");
 
-        var data_vector = Array<Tensor>(1);
-        data_vector[0]=data_tensor;
-
         dataloader.addData({data_tensor}, label_tensor);
         var dataloader_state = State<DataLoader>("dataloader");
         dataloader_state.set(dataloader);

@@ -159,8 +159,8 @@ void VMDataLoader::AddTensorData(
 
   for (fetch::math::SizeType i{0}; i < n_elements; i++)
   {
-    Ptr<VMTensorType> ptr_string = data->elements.at(i);
-    c_data.at(i)                 = (ptr_string)->GetTensor();
+    Ptr<VMTensorType> ptr_tensor = data->elements.at(i);
+    c_data.at(i)                 = (ptr_tensor)->GetTensor();
   }
 
   std::static_pointer_cast<TensorLoaderType>(loader_)->AddData(c_data, labels->GetTensor());

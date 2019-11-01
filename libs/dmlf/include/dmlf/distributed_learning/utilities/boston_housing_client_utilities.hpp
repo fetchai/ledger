@@ -49,7 +49,6 @@ std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>> M
   auto dataloader_ptr =
       std::make_unique<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
   dataloader_ptr->AddData({data}, labels);
-
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);
 
