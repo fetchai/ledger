@@ -37,39 +37,31 @@ std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>> M
     std::shared_ptr<std::mutex> console_mutex_ptr)
 {
   // Initialise model
-  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr =
-      std::make_shared<fetch::ml::Graph<TensorType>>();
+  auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
 
-  client_params.inputs_names = {
-      g_ptr->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {})};
-  g_ptr->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC1", {"Input"},
-                                                                         28u * 28u, 10u);
-  g_ptr->template AddNode<fetch::ml::ops::Relu<TensorType>>("Relu1", {"FC1"});
-  g_ptr->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u,
-                                                                         10u);
-  g_ptr->template AddNode<fetch::ml::ops::Relu<TensorType>>("Relu2", {"FC2"});
-  g_ptr->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u,
-                                                                         10u);
-  g_ptr->template AddNode<fetch::ml::ops::Softmax<TensorType>>("Softmax", {"FC3"});
-  client_params.label_name =
-      g_ptr->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
-  client_params.error_name = g_ptr->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
-      "Error", {"Softmax", "Label"});
-  g_ptr->Compile();
+  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+      28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
+  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+      10u, 10u, fetch::ml::details::ActivationType::RELU);
+  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+      10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
 
   // Initialise DataLoader
-  std::shared_ptr<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>> dataloader_ptr =
-      std::make_shared<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>>(images, labels);
+  auto dataloader_ptr =
+      std::make_unique<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>>(images, labels);
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);
-  // Initialise Optimiser
-  std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> optimiser_ptr =
-      std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
-          std::shared_ptr<fetch::ml::Graph<TensorType>>(g_ptr), client_params.inputs_names,
-          client_params.label_name, client_params.error_name, client_params.learning_rate);
 
-  return std::make_shared<fetch::dmlf::distributed_learning::TrainingClient<TensorType>>(
-      id, g_ptr, dataloader_ptr, optimiser_ptr, client_params, console_mutex_ptr);
+  model_ptr->SetDataloader(std::move(dataloader_ptr));
+  model_ptr->Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::CROSS_ENTROPY);
+
+  // N.B. some names are not set until AFTER the model is compiled
+  client_params.inputs_names = {model_ptr->InputName()};
+  client_params.label_name   = model_ptr->LabelName();
+  client_params.error_name   = model_ptr->ErrorName();
+
+  return std::make_shared<TrainingClient<TensorType>>(id, model_ptr, client_params,
+                                                      console_mutex_ptr);
 }
 
 }  // namespace utilities
