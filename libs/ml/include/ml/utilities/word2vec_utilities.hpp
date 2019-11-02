@@ -270,10 +270,13 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
 inline std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
+  if (t.fail())
+  {
+    throw ml::exceptions::InvalidFile("Cannot open file " + path);
+  }
+
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
-
-std::string GetStrTimestamp();
 
 }  // namespace utilities
 }  // namespace ml

@@ -63,7 +63,7 @@ public:
   void       GetNext(ReturnType &ret);
   ReturnType GetNext() override;
 
-  bool AddData(InputType const &input, LabelType const &label) override;
+  bool AddData(std::vector<InputType> const &input, LabelType const &label) override;
 
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
@@ -300,7 +300,7 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
 }
 
 template <typename T>
-bool W2VLoader<T>::AddData(InputType const &input, LabelType const &label)
+bool W2VLoader<T>::AddData(std::vector<InputType> const &input, LabelType const &label)
 {
   FETCH_UNUSED(input);
   FETCH_UNUSED(label);

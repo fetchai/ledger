@@ -53,7 +53,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
   SizeVector              label_shape = {gt.shape().at(0), 1};
   std::vector<SizeVector> data_shape  = {{data.shape().at(0), 1}};
   auto data_loader_ptr                = std::make_unique<DataLoaderType>(label_shape, data_shape);
-  data_loader_ptr->AddData(data, gt);
+  data_loader_ptr->AddData({data}, gt);
 
   // run model in training mode
   auto model = ModelType(model_config, {3, 7, 5, 1});

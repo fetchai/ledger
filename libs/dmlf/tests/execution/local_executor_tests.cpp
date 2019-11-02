@@ -31,8 +31,8 @@
 namespace {
 
 using fetch::dmlf::BasicVmEngine;
-using fetch::dmlf::ExecutionResult;
 using fetch::dmlf::ExecutionEngineInterface;
+using fetch::dmlf::ExecutionResult;
 using fetch::dmlf::LocalExecutor;
 using fetch::vm::SourceFile;
 
@@ -99,14 +99,14 @@ public:
   {
     result = promise.Get();
     return result.succeeded() && result.console().empty() &&
-           result.output().type() == VariantType::UNDEFINED;
+           result.output().type() == VariantType::STRING;
   }
 
   bool IsSuccessfullyFulfilledWithOutput(PromiseOfResult &promise, std::string const &output)
   {
     result = promise.Get();
     return result.succeeded() && result.console() == output &&
-           result.output().type() == VariantType::UNDEFINED;
+           result.output().type() == VariantType::STRING;
   }
 };
 
@@ -131,6 +131,8 @@ TEST_F(LocalExecutorTests, delete_state)
 
 TEST_F(LocalExecutorTests, create_executable)
 {
+  // TODO(tfr): It is unclear why running the same code twice would yeild two different results
+  // Some explanation would be good.
   result_promise = CreateExecutable("HelloWorld", SourceFile{"hello_world.etch", hello_world_etch});
   ASSERT_TRUE(IsSuccessfullyFulfilled(result_promise));
 

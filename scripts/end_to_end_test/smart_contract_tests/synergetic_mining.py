@@ -21,28 +21,36 @@ from fetchai.ledger.contract import Contract
 from fetchai.ledger.crypto import Entity
 
 CONTRACT_TEXT = """
+persistent solution : Int32;
+persistent init_test : Int32;
+persistent action_test : Int32;
+
 @init
 function init_test()
-  var state = State<Int32>("init_test");
-  state.set(123);
+  use init_test;
+
+  init_test.set(123);
 endfunction
 
 @query
 function query_init_test() : Int32
-  var state = State<Int32>("init_test");
-  return state.get(-1);
+  use init_test;
+
+  return init_test.get(-1);
 endfunction
 
 @action
 function action_test()
-  var state = State<Int32>("action_test");
-  state.set(456);
+  use action_test;
+
+  action_test.set(456);
 endfunction
 
 @query
 function query_action_test() : Int32
-  var state = State<Int32>("action_test");
-  return state.get(-1);
+  use action_test;
+
+  return action_test.get(-1);
 endfunction
 
 @problem
@@ -65,21 +73,23 @@ function doWork(problem : Int32, nonce : UInt256) :  Int32
 endfunction
 
 @clear
-function applyWork(problem : Int32, solution : Int32)
-  var result = State<Int32>("solution");
-  result.set(result.get(0) + solution);
+function applyWork(problem : Int32, new_solution : Int32)
+  use solution;
+
+  solution.set(solution.get(0) + new_solution);
 endfunction
 
 @query
 function query_result() : Int32
-  var result = State<Int32>("solution");
-  return result.get(-1);
+  use solution;
+
+  return solution.get(-1);
 endfunction
 """
 
 
 def submit_synergetic_data(api, contract, data, entity):
-    api.sync([api.contracts.submit_data(entity, contract.digest, value=value)
+    api.sync([api.contracts.submit_data(entity, contract.digest, contract.address, value=value)
               for value in data])
 
     print('Submitted:', sorted(data))
@@ -88,7 +98,8 @@ def submit_synergetic_data(api, contract, data, entity):
 
     result = contract.query(api, 'query_result')
     print('Result:', result)
-    assert result == sum(data)
+    assert result == sum(data), \
+        'Expected {}, found {}'.format(sum(data), result)
 
 
 def run(options):
@@ -101,7 +112,7 @@ def run(options):
     print('Create wealth...')
     api.sync(api.tokens.wealth(entity1, 100000000))
 
-    contract = Contract(CONTRACT_TEXT)
+    contract = Contract(CONTRACT_TEXT, entity1)
 
     # deploy the contract to the network
     print('Create contract...')
