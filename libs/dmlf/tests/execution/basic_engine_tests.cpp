@@ -1865,7 +1865,6 @@ void RunArrayTest(std::string entrypoint, std::vector<fp64_t> const& vals)
   EXPECT_EQ(fp64_t::FromBase(output[1][0].As<int64_t>()), vals[2]);
   EXPECT_EQ(fp64_t::FromBase(output[1][1].As<int64_t>()), vals[3]);
 }
-*/
 void RunArrayTest(std::string entrypoint, std::vector<fp32_t> const& vals)
 {
   LedgerVariant input = Make2x2(vals);
@@ -1885,6 +1884,7 @@ void RunArrayTest(std::string entrypoint, std::vector<fp32_t> const& vals)
   EXPECT_EQ(fp64_t::FromBase(output[1][0].As<int64_t>()), vals[2]);
   EXPECT_EQ(fp64_t::FromBase(output[1][1].As<int64_t>()), vals[3]);
 }
+*/
 
 
 TEST(BasicVmEngineDmlfTests, ArrayArrayOpTests)
