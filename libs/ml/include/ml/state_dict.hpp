@@ -37,7 +37,7 @@ struct StateDict
 {
   using TensorType   = T;
   using ArrayPtrType = std::shared_ptr<TensorType>;
-  using SizeType     = fetch::math::DefaultSizeType;
+  using SizeType     = fetch::math::SizeType;
 
   ArrayPtrType                        weights_;
   std::map<std::string, StateDict<T>> dict_;

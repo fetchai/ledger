@@ -133,7 +133,7 @@ ArrayType Softmax(ArrayType const &array)
  * @param axes Vector of SizeType
  */
 template <typename ArrayType>
-void Softmax(ArrayType const &array, ArrayType &ret, std::vector<DefaultSizeType> axes)
+void Softmax(ArrayType const &array, ArrayType &ret, std::vector<SizeType> axes)
 {
   assert(ret.shape() == array.shape());
   assert(axes.size() >= 2);

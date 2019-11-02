@@ -29,7 +29,7 @@
 
 using namespace fetch::math;
 
-template <typename T, DefaultSizeType L, DefaultSizeType H, DefaultSizeType W>
+template <typename T, SizeType L, SizeType H, SizeType W>
 void BM_Elu(benchmark::State &state)
 {
   Tensor<T> input({L, H, W});
@@ -51,7 +51,7 @@ BENCHMARK_TEMPLATE(BM_Elu, double, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Elu, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Elu, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
-template <typename T, DefaultSizeType L, DefaultSizeType H, DefaultSizeType W>
+template <typename T, SizeType L, SizeType H, SizeType W>
 void BM_Relu(benchmark::State &state)
 {
   Tensor<T> input({L, H, W});
@@ -75,7 +75,7 @@ BENCHMARK_TEMPLATE(BM_Relu, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Relu, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Relu, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
-template <typename T, DefaultSizeType L, DefaultSizeType H, DefaultSizeType W>
+template <typename T, SizeType L, SizeType H, SizeType W>
 void BM_LeakyRelu(benchmark::State &state)
 {
   Tensor<T> input({L, H, W});
@@ -99,7 +99,7 @@ BENCHMARK_TEMPLATE(BM_LeakyRelu, int, 256, 256, 256)->Unit(benchmark::kMilliseco
 BENCHMARK_TEMPLATE(BM_LeakyRelu, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_LeakyRelu, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
-template <typename T, DefaultSizeType L, DefaultSizeType H, DefaultSizeType W>
+template <typename T, SizeType L, SizeType H, SizeType W>
 void BM_Sigmoid(benchmark::State &state)
 {
   Tensor<T> input({L, H, W});
@@ -123,7 +123,7 @@ BENCHMARK_TEMPLATE(BM_Sigmoid, int, 256, 256, 256)->Unit(benchmark::kMillisecond
 BENCHMARK_TEMPLATE(BM_Sigmoid, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Sigmoid, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
-template <typename T, DefaultSizeType L, DefaultSizeType H>
+template <typename T, SizeType L, SizeType H>
 void BM_Softmax(benchmark::State &state)
 {
   Tensor<T> input({L, H});

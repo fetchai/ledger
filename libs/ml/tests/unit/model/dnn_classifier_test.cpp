@@ -66,7 +66,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
 template <typename TypeParam>
 bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type tolerance,
              typename TypeParam::Type     lr = static_cast<typename TypeParam::Type>(0.5),
-             fetch::math::DefaultSizeType training_steps = 100)
+             fetch::math::SizeType training_steps = 100)
 {
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::DNNClassifier<TypeParam>;
@@ -141,7 +141,7 @@ TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier_serialisation)
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::DNNClassifier<TypeParam>;
 
-  fetch::math::DefaultSizeType n_training_steps = 10;
+  fetch::math::SizeType n_training_steps = 10;
   auto                         tolerance        = DataType{0};
   auto                         learning_rate    = DataType{0.06f};
   fetch::ml::OptimiserType     optimiser_type   = fetch::ml::OptimiserType::SGD;

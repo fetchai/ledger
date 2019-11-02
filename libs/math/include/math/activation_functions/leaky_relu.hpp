@@ -83,9 +83,9 @@ void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
   assert(t.shape().size() == ret.shape().size());
   assert(a.shape().at(a.shape().size() - 1) == 1);
 
-  DefaultSizeType batch_size = t.shape().at(t.shape().size() - 1);
+  SizeType batch_size = t.shape().at(t.shape().size() - 1);
 
-  for (DefaultSizeType i{0}; i < batch_size; i++)
+  for (SizeType i{0}; i < batch_size; i++)
   {
     // View along batch dimension
     auto t_view   = t.View(i);

@@ -43,7 +43,7 @@ template <class TensorType>
 class Word2VecClient : public TrainingClient<TensorType>
 {
   using DataType         = typename TensorType::Type;
-  using SizeType         = typename TensorType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using VectorTensorType = std::vector<TensorType>;
   using GradientType     = fetch::dmlf::Update<TensorType>;
 

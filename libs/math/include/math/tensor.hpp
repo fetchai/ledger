@@ -55,7 +55,7 @@ template <typename DataType, typename ArrayType>
 static void ArangeImplementation(DataType const &from, DataType const &to, DataType const &delta,
                                  ArrayType &ret)
 {
-  auto N = DefaultSizeType((to - from) / delta);
+  auto N = SizeType((to - from) / delta);
   ret.Resize({N});
   ret.FillArange(static_cast<typename ArrayType::Type>(from),
                  static_cast<typename ArrayType::Type>(to));
@@ -78,7 +78,7 @@ public:
   using SliceIteratorType      = TensorSliceIterator<T, ContainerType>;
   using ConstSliceIteratorType = ConstTensorSliceIterator<T, ContainerType>;
   using ViewType               = TensorView<T, C>;
-  using SizeType               = fetch::math::DefaultSizeType;
+  using SizeType               = fetch::math::SizeType;
   using SizeVector             = fetch::math::SizeVector;
 
   static constexpr char const *LOGGING_NAME = "Tensor";
@@ -1525,7 +1525,7 @@ Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
  * @return index in the underlying data structure
  */
 template <typename T, typename C>
-DefaultSizeType Tensor<T, C>::ComputeIndex(SizeVector const &indices) const
+SizeType Tensor<T, C>::ComputeIndex(SizeVector const &indices) const
 {
   return ComputeColIndex(indices);
 }
@@ -2352,7 +2352,7 @@ std::string Tensor<T, C>::ToString() const
  * @return
  */
 template <typename T, typename C>
-DefaultSizeType Tensor<T, C>::Find(Type val) const
+SizeType Tensor<T, C>::Find(Type val) const
 {
   SizeType idx{0};
   for (auto cur_val : *this)
@@ -2670,7 +2670,7 @@ bool Tensor<T, C>::operator!=(Tensor<T, C> const &other) const
  * @tparam Args The Parameter pack containing the indices and one value
  */
 template <typename T, typename C>
-template <DefaultSizeType N, typename TSType, typename... Args>
+template <SizeType N, typename TSType, typename... Args>
 struct Tensor<T, C>::TensorSetter
 {
   // Finding the return value
@@ -2701,7 +2701,7 @@ struct Tensor<T, C>::TensorSetter
  * @tparam TSType Tensor SizeType
  */
 template <typename T, typename C>
-template <DefaultSizeType N, typename TSType>
+template <SizeType N, typename TSType>
 struct Tensor<T, C>::TensorSetter<N, TSType>
 {
   using Type = TSType;

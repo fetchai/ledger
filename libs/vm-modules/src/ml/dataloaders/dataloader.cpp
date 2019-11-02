@@ -171,7 +171,7 @@ Ptr<VMTrainingPair> VMDataLoader::GetNext()
   AnyInteger first_index(0, TypeIds::UInt16);
   second_vector->SetIndexedValue(first_index, first_element);
 
-  for (fetch::math::DefaultSizeType i{1}; i < next.second.size(); i++)
+  for (fetch::math::SizeType i{1}; i < next.second.size(); i++)
   {
     second = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(i));
     TemplateParameter1 element(second, second->GetTypeId());

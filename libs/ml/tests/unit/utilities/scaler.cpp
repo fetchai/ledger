@@ -38,7 +38,7 @@ TYPED_TEST_CASE(ScalerTest, MyTypes);
 TYPED_TEST(ScalerTest, min_max_2d_test)
 {
   using DataType = typename TypeParam::Type;
-  using SizeType = fetch::math::DefaultSizeType;
+  using SizeType = fetch::math::SizeType;
 
   std::vector<SizeType> tensor_shape = {2, 4};
 
@@ -70,7 +70,7 @@ TYPED_TEST(ScalerTest, min_max_2d_test)
 TYPED_TEST(ScalerTest, min_max_3d_test)
 {
   using DataType = typename TypeParam::Type;
-  using SizeType = fetch::math::DefaultSizeType;
+  using SizeType = fetch::math::SizeType;
 
   std::vector<SizeType> tensor_shape = {2, 3, 4};
 

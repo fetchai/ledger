@@ -31,7 +31,7 @@ template <typename TensorType>
 class DNNClassifier : public Model<TensorType>
 {
 public:
-  using SizeType          = fetch::math::DefaultSizeType;
+  using SizeType          = fetch::math::SizeType;
   using DataType          = typename TensorType::Type;
   using CostFunctionType  = fetch::ml::ops::CrossEntropyLoss<TensorType>;
   using OptimiserType     = fetch::ml::OptimiserType;

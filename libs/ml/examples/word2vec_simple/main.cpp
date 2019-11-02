@@ -34,7 +34,7 @@
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 using FloatType  = float;
-using SizeType   = fetch::math::DefaultSizeType;
+using SizeType   = fetch::math::SizeType;
 using TensorType = fetch::math::Tensor<FloatType>;
 
 std::string ReadFile(std::string const &path)

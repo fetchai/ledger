@@ -32,8 +32,8 @@ namespace fetch {
 namespace ml {
 namespace optimisers {
 
-static constexpr fetch::math::DefaultSizeType SIZE_NOT_SET =
-    fetch::math::numeric_max<math::DefaultSizeType>();
+static constexpr fetch::math::SizeType SIZE_NOT_SET =
+    fetch::math::numeric_max<math::SizeType>();
 
 /**
  * Abstract gradient optimiser class
@@ -46,7 +46,7 @@ class Optimiser
 public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   Optimiser() = default;
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
@@ -389,7 +389,7 @@ void Optimiser<T>::PrintStats(SizeType batch_size, SizeType subset_size)
 {
   cur_time_  = std::chrono::high_resolution_clock::now();
   time_span_ = std::chrono::duration_cast<std::chrono::duration<double>>(cur_time_ - start_time_);
-  if (subset_size == fetch::math::numeric_max<math::DefaultSizeType>())
+  if (subset_size == fetch::math::numeric_max<math::SizeType>())
   {
     stat_string_ =
         std::to_string(step_) + " (??%) -- " +

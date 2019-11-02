@@ -47,7 +47,7 @@ public:
   using InputType = fetch::math::Tensor<T>;
   using LabelType = fetch::math::Tensor<T>;
 
-  using SizeType   = fetch::math::DefaultSizeType;
+  using SizeType   = fetch::math::SizeType;
   using VocabType  = Vocab;
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
@@ -126,7 +126,7 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples)
  * @return
  */
 template <typename T>
-math::DefaultSizeType W2VLoader<T>::Size() const
+math::SizeType W2VLoader<T>::Size() const
 {
   SizeType size(0);
   for (auto const &s : data_)
@@ -355,7 +355,7 @@ void W2VLoader<T>::LoadVocab(std::string const &filename)
  * @return
  */
 template <typename T>
-math::DefaultSizeType W2VLoader<T>::vocab_size() const
+math::SizeType W2VLoader<T>::vocab_size() const
 {
   return vocab_.GetVocabCount();
 }
@@ -408,7 +408,7 @@ typename W2VLoader<T>::SizeType W2VLoader<T>::window_size()
  * @return
  */
 template <typename T>
-std::vector<math::DefaultSizeType> W2VLoader<T>::StringsToIndices(
+std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(
     std::vector<std::string> const &strings)
 {
   std::vector<SizeType> indexes;

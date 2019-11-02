@@ -29,7 +29,7 @@ using MyTypes = ::testing::Types<int32_t, int64_t, uint32_t, uint64_t, float, do
 TYPED_TEST_CASE(TensorConcatenationTest, MyTypes);
 
 template <typename T>
-fetch::math::Tensor<T> PrepareTensor(std::vector<fetch::math::DefaultSizeType> const &shape)
+fetch::math::Tensor<T> PrepareTensor(std::vector<fetch::math::SizeType> const &shape)
 {
   fetch::math::Tensor<T> t{shape};
   t.FillArange(static_cast<T>(0), static_cast<T>(t.size()));
@@ -37,11 +37,11 @@ fetch::math::Tensor<T> PrepareTensor(std::vector<fetch::math::DefaultSizeType> c
 }
 
 template <typename T>
-fetch::math::Tensor<T> PrepareGroundTruth2D(std::vector<fetch::math::DefaultSizeType> const &shape,
+fetch::math::Tensor<T> PrepareGroundTruth2D(std::vector<fetch::math::SizeType> const &shape,
                                             std::vector<fetch::math::Tensor<T>> const &      vt,
-                                            typename fetch::math::DefaultSizeType const &    axis)
+                                            typename fetch::math::SizeType const &    axis)
 {
-  using SizeType = fetch::math::DefaultSizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<T> gt{shape};
 
@@ -72,11 +72,11 @@ fetch::math::Tensor<T> PrepareGroundTruth2D(std::vector<fetch::math::DefaultSize
 }
 
 template <typename T>
-fetch::math::Tensor<T> PrepareGroundTruth3D(std::vector<fetch::math::DefaultSizeType> const &shape,
+fetch::math::Tensor<T> PrepareGroundTruth3D(std::vector<fetch::math::SizeType> const &shape,
                                             std::vector<fetch::math::Tensor<T>> const &      vt,
-                                            typename fetch::math::DefaultSizeType const &    axis)
+                                            typename fetch::math::SizeType const &    axis)
 {
-  using SizeType = fetch::math::DefaultSizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<T> gt{shape};
 
@@ -247,7 +247,7 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_various_sizes)
 TYPED_TEST(TensorConcatenationTest, tensor_Split_2d)
 {
   using Tensor   = fetch::math::Tensor<TypeParam>;
-  using SizeType = fetch::math::DefaultSizeType;
+  using SizeType = fetch::math::SizeType;
 
   SizeType axis = 0;
 
@@ -312,7 +312,7 @@ TYPED_TEST(TensorConcatenationTest, tensor_Split_2d)
 TYPED_TEST(TensorConcatenationTest, tensor_Split_3d)
 {
   using Tensor   = fetch::math::Tensor<TypeParam>;
-  using SizeType = fetch::math::DefaultSizeType;
+  using SizeType = fetch::math::SizeType;
 
   SizeType axis = 0;
 

@@ -38,7 +38,7 @@ TYPED_TEST_CASE(ClusteringTest, MyTypes);
 TYPED_TEST(ClusteringTest, knn_euclidean_test)
 {
   using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   ArrayType A = ArrayType::FromString("1, 2, 3, 4; 2, 3, 4, 5; -1, -2, -3, -4; -2, -3, -4, -5");
   ArrayType v = ArrayType::FromString("3, 4, 5, 6");
@@ -58,7 +58,7 @@ TYPED_TEST(ClusteringTest, knn_euclidean_test)
 TYPED_TEST(ClusteringTest, knn_cosine_test)
 {
   using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   ArrayType A = ArrayType::FromString("1, 2, 3, 4; 2, 3, 4, 5; -1, -2, -3, -4; -2, -3, -4, -5");
   ArrayType v = ArrayType::FromString("3, 4, 5, 6");

@@ -40,10 +40,9 @@ TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
 {
 
   using DataType   = typename TypeParam::Type;
-  using SizeType   = fetch::math::DefaultSizeType;
   using TensorType = TypeParam;
 
-  DefaultSizeType RANDOM_SEED{123456};
+  SizeType RANDOM_SEED{123456};
   DataType        LEARNING_RATE{500};  // (seems very high!)
   SizeType        MAX_ITERATIONS{1};
   DataType        PERPLEXITY{20};
@@ -92,7 +91,6 @@ TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
 
 TEST(TsneTests, tsne_test_2d_float)
 {
-  using SizeType = fetch::math::DefaultSizeType;
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
 
@@ -113,7 +111,6 @@ TEST(TsneTests, tsne_test_2d_float)
 
 TEST(TsneTests, tsne_test_2d_double)
 {
-  using SizeType = fetch::math::DefaultSizeType;
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
 
@@ -134,7 +131,6 @@ TEST(TsneTests, tsne_test_2d_double)
 
 TEST(TsneTests, tsne_test_2d_fixed_point)
 {
-  using SizeType = fetch::math::DefaultSizeType;
   using DataType = typename fetch::fixed_point::FixedPoint<32, 32>;
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};
@@ -157,7 +153,6 @@ TEST(TsneTests, tsne_test_2d_fixed_point)
 TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
 {
   using DataType = typename TypeParam::Type;
-  using SizeType = fetch::math::DefaultSizeType;
 
   SizeType N_DATA_SIZE{100};
   SizeType N_OUTPUT_FEATURE_SIZE{2};

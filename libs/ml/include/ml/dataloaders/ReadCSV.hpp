@@ -41,8 +41,8 @@ namespace dataloaders {
  * @return TensorType with data
  */
 template <typename TensorType>
-TensorType ReadCSV(std::string const &filename, math::DefaultSizeType const cols_to_skip = 0,
-                   math::DefaultSizeType rows_to_skip = 0, bool transpose = false)
+TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_skip = 0,
+                   math::SizeType rows_to_skip = 0, bool transpose = false)
 {
   using DataType = typename TensorType::Type;
   std::ifstream file(filename);
@@ -54,8 +54,8 @@ TensorType ReadCSV(std::string const &filename, math::DefaultSizeType const cols
   std::string                  buf;
   char const                   delimiter = ',';
   std::string                  field_value;
-  fetch::math::DefaultSizeType row{0};
-  fetch::math::DefaultSizeType col{0};
+  fetch::math::SizeType row{0};
+  fetch::math::SizeType col{0};
 
   // find number of rows and columns in the file
   while (std::getline(file, buf, '\n'))
@@ -89,7 +89,7 @@ TensorType ReadCSV(std::string const &filename, math::DefaultSizeType const cols
   {
     col = 0;
     std::stringstream ss(buf);
-    for (math::DefaultSizeType i = 0; i < cols_to_skip; i++)
+    for (math::SizeType i = 0; i < cols_to_skip; i++)
     {
       std::getline(ss, field_value, delimiter);
     }

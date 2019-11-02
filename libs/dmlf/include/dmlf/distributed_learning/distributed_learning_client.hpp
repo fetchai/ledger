@@ -47,7 +47,7 @@ namespace distributed_learning {
 template <typename DataType>
 struct ClientParams
 {
-  using SizeType = fetch::math::DefaultSizeType;
+  using SizeType = fetch::math::SizeType;
 
   SizeType batch_size{};
   SizeType max_updates;
@@ -63,7 +63,7 @@ template <class TensorType>
 class TrainingClient
 {
   using DataType         = typename TensorType::Type;
-  using SizeType         = typename TensorType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
   using GradientType     = fetch::dmlf::Update<TensorType>;

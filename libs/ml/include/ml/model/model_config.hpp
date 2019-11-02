@@ -26,7 +26,7 @@ namespace model {
 template <typename DataType>
 struct ModelConfig
 {
-  using SizeType = fetch::math::DefaultSizeType;
+  using SizeType = fetch::math::SizeType;
 
   bool     early_stopping = false;
   bool     test           = false;

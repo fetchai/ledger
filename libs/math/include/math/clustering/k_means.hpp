@@ -59,7 +59,7 @@ class KMeansImplementation
 {
 
   using DataType        = typename ArrayType::Type;
-  using SizeType        = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using ArrayOfSizeType = typename fetch::math::Tensor<SizeType>;
 
 public:
@@ -781,7 +781,7 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
                       InitMode                            init_mode = InitMode::KMeansPP,
                       typename ArrayType::SizeType        max_no_change_convergence = 10)
 {
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename ArrayType::Type;
 
   SizeType n_points = data.shape()[0];
@@ -826,7 +826,7 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
                       typename ArrayType::SizeType max_loops                 = 100,
                       typename ArrayType::SizeType max_no_change_convergence = 10)
 {
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   SizeType       n_points = data.shape()[0];
   ClusteringType ret{n_points};
@@ -854,7 +854,7 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
                       typename ArrayType::SizeType max_loops                 = 100,
                       typename ArrayType::SizeType max_no_change_convergence = 10)
 {
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename ArrayType::Type;
 
   SizeType       n_points = data.shape()[0];

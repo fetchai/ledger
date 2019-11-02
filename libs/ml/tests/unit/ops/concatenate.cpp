@@ -41,8 +41,8 @@ TYPED_TEST_CASE(ConcatenateTest, MyTypes);
 
 TYPED_TEST(ConcatenateTest, forward_test)
 {
-  TypeParam data1(std::vector<fetch::math::DefaultSizeType>({8, 8}));
-  TypeParam data2(std::vector<fetch::math::DefaultSizeType>({8, 8}));
+  TypeParam data1(std::vector<fetch::math::SizeType>({8, 8}));
+  TypeParam data2(std::vector<fetch::math::SizeType>({8, 8}));
 
   fetch::ml::ops::Concatenate<TypeParam> op{1};
 
@@ -56,8 +56,8 @@ TYPED_TEST(ConcatenateTest, forward_test)
 
 TYPED_TEST(ConcatenateTest, compute_output_shape_test)
 {
-  TypeParam data1(std::vector<fetch::math::DefaultSizeType>({8, 8, 10}));
-  TypeParam data2(std::vector<fetch::math::DefaultSizeType>({8, 8, 2}));
+  TypeParam data1(std::vector<fetch::math::SizeType>({8, 8, 10}));
+  TypeParam data2(std::vector<fetch::math::SizeType>({8, 8, 2}));
 
   fetch::ml::ops::Concatenate<TypeParam> op{2};
 
@@ -70,8 +70,8 @@ TYPED_TEST(ConcatenateTest, compute_output_shape_test)
 
 TYPED_TEST(ConcatenateTest, backward_test)
 {
-  TypeParam data1(std::vector<fetch::math::DefaultSizeType>({8, 8}));
-  TypeParam data2(std::vector<fetch::math::DefaultSizeType>({8, 8}));
+  TypeParam data1(std::vector<fetch::math::SizeType>({8, 8}));
+  TypeParam data2(std::vector<fetch::math::SizeType>({8, 8}));
 
   fetch::ml::ops::Concatenate<TypeParam> op{1};
 
@@ -144,8 +144,8 @@ TYPED_TEST(ConcatenateTest, saveparams_backward_test)
   using OpType     = fetch::ml::ops::Concatenate<TensorType>;
   using SPType     = typename OpType::SPType;
 
-  TypeParam data1(std::vector<fetch::math::DefaultSizeType>({8, 8}));
-  TypeParam data2(std::vector<fetch::math::DefaultSizeType>({8, 8}));
+  TypeParam data1(std::vector<fetch::math::SizeType>({8, 8}));
+  TypeParam data2(std::vector<fetch::math::SizeType>({8, 8}));
 
   fetch::ml::ops::Concatenate<TypeParam> op{1};
 

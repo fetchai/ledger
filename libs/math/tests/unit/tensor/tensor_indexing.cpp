@@ -88,7 +88,7 @@ TYPED_TEST(TensorIndexingTest, index_op_vs_iterator)
 
 TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t({2, 3, 5});
 
@@ -132,7 +132,7 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
 
 TYPED_TEST(TensorIndexingTest, double_slicing_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t({2, 3, 5});
 

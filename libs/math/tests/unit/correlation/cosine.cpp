@@ -24,8 +24,6 @@
 using namespace fetch::math;
 using namespace fetch::math::correlation;
 
-using SizeType = typename Tensor<double>::SizeType;
-
 TEST(distance_tests, cosine_distance)
 {
 

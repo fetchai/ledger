@@ -30,7 +30,7 @@ namespace distributed_learning {
 template <class DataType>
 struct W2VTrainingParams : public ClientParams<DataType>
 {
-  using SizeType = fetch::math::DefaultSizeType;
+  using SizeType = fetch::math::SizeType;
 
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;  // number of negative sample per word-context pair

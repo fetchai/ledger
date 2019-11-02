@@ -73,7 +73,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
 template <typename TypeParam>
 bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type tolerance,
              typename TypeParam::Type     lr = static_cast<typename TypeParam::Type>(0.5),
-             fetch::math::DefaultSizeType training_steps = 100)
+             fetch::math::SizeType training_steps = 100)
 {
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::Sequential<TypeParam>;
@@ -155,7 +155,7 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::Sequential<TypeParam>;
 
-  fetch::math::DefaultSizeType n_training_steps = 10;
+  fetch::math::SizeType n_training_steps = 10;
 
   fetch::ml::model::ModelConfig<DataType> model_config;
   model_config.learning_rate_param.mode =

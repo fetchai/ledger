@@ -28,7 +28,7 @@ template <typename ArrayType, typename F>
 meta::IfIsMathArray<ArrayType, ArrayType> &PairWiseDistance(ArrayType const &a, F &&metric,
                                                             ArrayType &ret)
 {
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   detailed_assert(ret.shape(0) == 1);
   detailed_assert(ret.shape(1) == (a.shape(0) * (a.shape(0) - 1) / 2));

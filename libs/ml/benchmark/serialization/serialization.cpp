@@ -32,7 +32,7 @@
 #include <memory>
 #include <string>
 
-using SizeType = fetch::math::DefaultSizeType;
+using SizeType = fetch::math::SizeType;
 template <typename T>
 void CreateGraph(std::shared_ptr<fetch::ml::Graph<typename fetch::math::Tensor<T>>> g,
                  SizeType dims, SizeType n_layers)
@@ -50,7 +50,7 @@ void CreateGraph(std::shared_ptr<fetch::ml::Graph<typename fetch::math::Tensor<T
   }
 }
 
-template <typename T, fetch::math::DefaultSizeType D, fetch::math::DefaultSizeType L>
+template <typename T, fetch::math::SizeType D, fetch::math::SizeType L>
 void BM_Setup_And_Serialize(benchmark::State &state)
 {
   using DataType   = T;
@@ -106,7 +106,7 @@ BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp64_t, 100, 4)
     ->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp64_t, 100, 8)
     ->Unit(benchmark::kMillisecond);
-template <typename T, fetch::math::DefaultSizeType D, fetch::math::DefaultSizeType L>
+template <typename T, fetch::math::SizeType D, fetch::math::SizeType L>
 void BM_Setup_And_Deserialize(benchmark::State &state)
 {
   using DataType   = T;

@@ -39,7 +39,7 @@ using namespace fetch::ml::distributed_learning;
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
-using SizeType         = typename TensorType::SizeType;
+using SizeType = fetch::math::SizeType;
 
 std::vector<std::string> SplitTrainingData(std::string const &train_file,
                                            SizeType           number_of_clients)

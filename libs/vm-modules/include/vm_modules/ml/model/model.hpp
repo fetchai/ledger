@@ -77,7 +77,7 @@ public:
                      fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers);
 
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
-           ::fetch::math::DefaultSizeType const &batch_size);
+           ::fetch::math::SizeType const &batch_size);
 
   DataType Evaluate();
 

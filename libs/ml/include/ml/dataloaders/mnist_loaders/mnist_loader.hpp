@@ -37,7 +37,7 @@ template <typename LabelType, typename InputType>
 class MNISTLoader : public DataLoader<LabelType, InputType>
 {
 public:
-  using SizeType   = typename InputType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType   = typename InputType::Type;
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
@@ -148,7 +148,7 @@ public:
     std::vector<InputType> ret_images;
     ret_images.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, subset_size}));
 
-    for (fetch::math::DefaultSizeType index{0}; index < subset_size; ++index)
+    for (fetch::math::SizeType index{0}; index < subset_size; ++index)
     {
 
       SizeType i{0};

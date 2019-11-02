@@ -37,7 +37,7 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
   using TensorType = InputType;
   using DataType   = typename TensorType::Type;
 
-  using SizeType     = fetch::math::DefaultSizeType;
+  using SizeType     = fetch::math::SizeType;
   using SizeVector   = fetch::math::SizeVector;
   using ReturnType   = std::pair<LabelType, std::vector<TensorType>>;
   using IteratorType = typename TensorType::IteratorType;

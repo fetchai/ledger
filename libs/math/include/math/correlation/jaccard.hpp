@@ -31,7 +31,7 @@ typename ArrayType::Type Jaccard(ArrayType const &a, ArrayType const &b)
 {
   assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   DataType sumA  = 0;
   DataType sumB  = 0;
@@ -51,7 +51,7 @@ typename ArrayType::Type GeneralisedJaccard(ArrayType const &a, ArrayType const 
 {
   assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   DataType sumA  = 0;
   DataType sumB  = 0;

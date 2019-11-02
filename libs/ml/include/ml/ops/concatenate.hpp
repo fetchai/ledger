@@ -32,7 +32,7 @@ class Concatenate : public fetch::ml::ops::Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = fetch::math::DefaultSizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpConcatenateSaveableParams<T>;
   using MyType        = Concatenate<TensorType>;

@@ -35,7 +35,7 @@ namespace vm_modules {
 namespace ml {
 namespace model {
 
-using SizeType    = fetch::math::DefaultSizeType;
+using SizeType    = fetch::math::SizeType;
 using VMPtrString = Ptr<String>;
 
 VMModel::VMModel(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &model_type)
@@ -201,7 +201,7 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
   model_->Compile(optimiser_type);
 }
 void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
-                  fetch::math::DefaultSizeType const &batch_size)
+                  fetch::math::SizeType const &batch_size)
 {
   // prepare dataloader
   dl_ = std::make_unique<TensorDataloader>();

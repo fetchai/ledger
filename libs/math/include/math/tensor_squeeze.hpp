@@ -33,11 +33,11 @@ namespace math {
  * @param axis is the axis to squeeze.
  */
 inline bool ShapeFromSqueeze(SizeVector const &a, SizeVector &b,
-                             DefaultSizeType const &axis = DefaultSizeType(-1))
+                             SizeType const &axis = SizeType(-1))
 {
-  DefaultSizeType i = 0;
+  SizeType i = 0;
   b.clear();
-  if (axis == DefaultSizeType(-1))
+  if (axis == SizeType(-1))
   {
     for (auto const &v : a)
     {
@@ -70,7 +70,7 @@ inline bool ShapeFromSqueeze(SizeVector const &a, SizeVector &b,
  */
 inline bool ShapeFromSqueeze(SizeVector const &a, SizeVector &b, SizeSet const &axes)
 {
-  DefaultSizeType i = 0;
+  SizeType i = 0;
   b.clear();
   for (auto const &v : a)
   {
@@ -89,7 +89,7 @@ inline bool ShapeFromSqueeze(SizeVector const &a, SizeVector &b, SizeSet const &
  * @param axis is the axes to squeeze.
  */
 template <typename T, typename C>
-void Squeeze(Tensor<T, C> &arr, DefaultSizeType const &axis = DefaultSizeType(-1))
+void Squeeze(Tensor<T, C> &arr, SizeType const &axis = SizeType(-1))
 {
   SizeVector newshape;
   ShapeFromSqueeze(arr.shape(), newshape, axis);
@@ -112,7 +112,7 @@ namespace reduce_details {
 
 template <typename F, typename T, typename C>
 void Reduce(F fnc, ConstTensorSliceIterator<T, C> &it_a, TensorSliceIterator<T, C> &it_b,
-            DefaultSizeType const &N)
+            SizeType const &N)
 {
   while (bool(it_a) && bool(it_b))
   {
@@ -120,7 +120,7 @@ void Reduce(F fnc, ConstTensorSliceIterator<T, C> &it_a, TensorSliceIterator<T, 
     *it_b = *it_a;
     ++it_a;
 
-    for (DefaultSizeType i = 0; i < N - 1; ++i)
+    for (SizeType i = 0; i < N - 1; ++i)
     {
       *it_b = fnc(*it_b, *it_a);
       ++it_a;
@@ -137,13 +137,13 @@ void Reduce(F fnc, ConstTensorSliceIterator<T, C> &it_a, TensorSliceIterator<T, 
  * @param axis are the axis along which the reduction happens.
  */
 template <typename F, typename T, typename C>
-void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, DefaultSizeType const &axis = 0)
+void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeType const &axis = 0)
 {
-  DefaultSizeType N;
+  SizeType N;
 
-  DefaultSizeType k{1};
+  SizeType k{1};
   SizeVector      out_shape{};
-  for (DefaultSizeType i = 0; i < input.shape().size(); ++i)
+  for (SizeType i = 0; i < input.shape().size(); ++i)
   {
     if (i != axis)
     {
@@ -177,13 +177,13 @@ void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, DefaultSizeT
 template <typename F, typename T, typename C>
 void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeVector const &axes)
 {
-  DefaultSizeType N;
+  SizeType N;
 
-  DefaultSizeType k = 1;
+  SizeType k = 1;
   SizeVector      out_shape;
   SizeSet         axes_set(axes.begin(), axes.end());
 
-  for (DefaultSizeType i = 0; i < input.shape().size(); ++i)
+  for (SizeType i = 0; i < input.shape().size(); ++i)
   {
     if (axes_set.find(i) != axes_set.end())
     {
@@ -201,7 +201,7 @@ void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeVector c
   it_a.MoveAxisToFront(axes);
 
   N = 1;
-  for (DefaultSizeType i = 0; i < axes.size(); ++i)
+  for (SizeType i = 0; i < axes.size(); ++i)
   {
     N *= it_a.range(i).total_steps;
   }
