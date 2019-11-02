@@ -31,7 +31,7 @@ TEST(MclTests, BaseMcl)
 {
   Generator generator;
   SetGenerator(generator);
-  bn::G1 P(1, -1);
+  bn::G1 P(-1, 1);
 
   // Checking clear operation resets to 0
   {
