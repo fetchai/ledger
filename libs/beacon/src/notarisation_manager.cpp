@@ -21,6 +21,7 @@
 namespace fetch {
 namespace ledger {
 
+// To set elliptic curve generator in static verify function
 constexpr char const *generator_string = "Fetch.ai Elliptic Curve Generator G";
 
 NotarisationManager::NotarisationManager()

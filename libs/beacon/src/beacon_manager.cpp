@@ -27,13 +27,14 @@
 namespace fetch {
 namespace dkg {
 
-constexpr char const *LOGGING_NAME     = "BeaconManager";
+constexpr char const *LOGGING_NAME = "BeaconManager";
+// To set elliptic curve generator in static verify function
 constexpr char const *generator_string = "Fetch.ai Elliptic Curve Generator G";
 
 BeaconManager::BeaconManager(CertificatePtr certificate)
-  : certificate_{std::move(certificate)}
-  , group_g_{generator_string}
+  : group_g_{generator_string}
   , group_h_{"Fetch.ai Elliptic Curve Generator H"}
+  , certificate_{std::move(certificate)}
 {
   if (certificate_ == nullptr)
   {
