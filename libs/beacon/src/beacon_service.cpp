@@ -35,6 +35,19 @@ using fetch::generics::MilliTimer;
 
 namespace fetch {
 namespace beacon {
+namespace {
+
+template <typename T>
+void TrimToSize(T &container, std::size_t max_size)
+{
+  auto it = container.begin();
+  while ((it != container.end()) && (container.size() > max_size))
+  {
+    it = container.erase(it);
+  }
+}
+
+} // namespace
 
 char const *ToString(BeaconService::State state);
 
@@ -377,26 +390,11 @@ BeaconService::State BeaconService::OnCompleteState()
                                     block_entropy_being_created_->group_signature));
 
   // Trim maps of unnecessary info
-  {
-    auto const max_cache_size =
-        ((active_exe_unit_->aeon.round_end - active_exe_unit_->aeon.round_start) + 1) * 3;
+  auto const max_cache_size =
+      ((active_exe_unit_->aeon.round_end - active_exe_unit_->aeon.round_start) + 1) * 3;
 
-    auto it = completed_block_entropy_.begin();
-
-    while (it != completed_block_entropy_.end() && completed_block_entropy_.size() > max_cache_size)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Trimming!");
-      it = completed_block_entropy_.erase(it);
-    }
-
-    auto it2 = signatures_being_built_.begin();
-
-    while (it2 != signatures_being_built_.end() && signatures_being_built_.size() > max_cache_size)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Trimming!");
-      it2 = signatures_being_built_.erase(it2);
-    }
-  }
+  TrimToSize(completed_block_entropy_, max_cache_size);
+  TrimToSize(signatures_being_built_, max_cache_size);
 
   // Save it for querying
   completed_block_entropy_[index] = block_entropy_being_created_;
