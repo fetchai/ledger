@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "main.hpp"
-
 #include "MtCore.hpp"
 
 int main(int argc, char *argv[])
