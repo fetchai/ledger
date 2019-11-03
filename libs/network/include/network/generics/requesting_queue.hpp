@@ -51,9 +51,8 @@ public:
 
   struct FailedResult
   {
-    Key          key;
-    PromiseState promise_state{PromiseState::FAILED};
-    Promise      promise;
+    Key     key;
+    Promise promise;
   };
 
   struct Counters
@@ -203,8 +202,7 @@ typename RequestingQueueOf<K, R, P, H>::Counters RequestingQueueOf<K, R, P, H>::
     auto const &key     = iter->first;
     auto &      promise = iter->second;
 
-    auto const promise_state = promise.GetState();
-    switch (promise_state)
+    switch (promise.GetState())
     {
     case PromiseState::WAITING:
       ++iter;
@@ -217,7 +215,7 @@ typename RequestingQueueOf<K, R, P, H>::Counters RequestingQueueOf<K, R, P, H>::
       break;
     case PromiseState::FAILED:
     case PromiseState::TIMEDOUT:
-      failed_.emplace_back(FailedResult{key, promise_state, promise});
+      failed_.emplace_back(FailedResult{key, promise});
       ++num_failed_;
       --num_pending_;
       iter = requests_.erase(iter);

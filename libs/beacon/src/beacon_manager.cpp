@@ -94,14 +94,6 @@ private:
   std::unique_ptr<Params> params_;
 };
 
-template <typename T>
-T CreateAndClear()
-{
-  T value{};
-  value.clear();
-  return value;
-}
-
 Protected<CurveParameters> curve_params_{};
 
 } // namespace

@@ -21,7 +21,6 @@
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
-#include "network/service/promise.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -168,25 +167,6 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
                     "Failed object count promises: ", counts.failed);
-
-    auto const failures = pending_object_count_.GetFailures(MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE);
-    std::size_t timeouts{0};
-    std::size_t failure_count{0};
-    for (auto const &failure : failures)
-    {
-      if (failure.promise_state == service::PromiseState::TIMEDOUT)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Timeout from: ", failure.key.ToBase64());
-        ++timeouts;
-      }
-      else
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Failure from: ", failure.key.ToBase64());
-        ++failure_count;
-      }
-    }
-    FETCH_LOG_ERROR(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
-                    "Failed object count promises: ", counts.failed, " - ", timeouts, " - ", failure_count);
 
     resolve_count_failures_->add(static_cast<uint64_t>(counts.failed));
   }
