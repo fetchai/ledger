@@ -97,7 +97,7 @@ TYPED_TEST(EmbeddingsTest, backward)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
-  using SizeType = fetch::math::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   fetch::ml::ops::Embeddings<TypeParam> e(6, 10);
   TypeParam                             weights(std::vector<uint64_t>({6, 10}));

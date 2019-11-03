@@ -96,7 +96,7 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
 
 TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType  = fetch::math::SizeType;
   using LayerType = typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>;
   using SPType    = typename LayerType::SPType;
   using DataType  = typename TypeParam::Type;

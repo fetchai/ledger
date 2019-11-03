@@ -101,8 +101,7 @@ void Reduce(SizeType axis, F function, const Tensor<T, C> &array, Tensor<T, C> &
  * @param ret Output tensor
  */
 template <typename F, typename T, typename C>
-void Reduce(std::vector<SizeType> axes, F function, const Tensor<T, C> &array,
-            Tensor<T, C> &ret)
+void Reduce(std::vector<SizeType> axes, F function, const Tensor<T, C> &array, Tensor<T, C> &ret)
 {
   for (SizeType i{0}; i < axes.size(); i++)
   {

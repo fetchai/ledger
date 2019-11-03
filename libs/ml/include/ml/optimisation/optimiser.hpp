@@ -32,8 +32,7 @@ namespace fetch {
 namespace ml {
 namespace optimisers {
 
-static constexpr fetch::math::SizeType SIZE_NOT_SET =
-    fetch::math::numeric_max<math::SizeType>();
+static constexpr fetch::math::SizeType SIZE_NOT_SET = fetch::math::numeric_max<math::SizeType>();
 
 /**
  * Abstract gradient optimiser class
@@ -46,7 +45,7 @@ class Optimiser
 public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
-  using SizeType = fetch::math::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   Optimiser() = default;
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,

@@ -37,7 +37,7 @@ class Ops
 {
 public:
   using TensorType    = T;
-  using SizeType = fetch::math::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
 

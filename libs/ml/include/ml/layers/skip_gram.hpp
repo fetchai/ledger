@@ -41,7 +41,7 @@ class SkipGram : public SubGraph<T>
 {
 public:
   using TensorType    = T;
-  using SizeType = fetch::math::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;

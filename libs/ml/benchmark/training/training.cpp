@@ -28,9 +28,8 @@
 #include <memory>
 #include <string>
 
-template <typename T, fetch::math::SizeType B, fetch::math::SizeType I,
-          fetch::math::SizeType H, fetch::math::SizeType O,
-          fetch::math::SizeType E>
+template <typename T, fetch::math::SizeType B, fetch::math::SizeType I, fetch::math::SizeType H,
+          fetch::math::SizeType O, fetch::math::SizeType E>
 void BM_Setup_And_Train(benchmark::State &state)
 {
   using SizeType   = fetch::math::SizeType;

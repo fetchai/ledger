@@ -45,8 +45,7 @@ public:
     PADDING     = static_cast<SizeType>(1) << LOG_PADDING
   };
 
-  TensorView(ContainerType data, SizeType height, SizeType width,
-             SizeType offset = 0)
+  TensorView(ContainerType data, SizeType height, SizeType width, SizeType offset = 0)
     : height_{height}
     , width_{width}
     , padded_height_{PadValue(height_)}
@@ -100,10 +99,10 @@ public:
   ContainerType &      data();
 
 private:
-  SizeType height_{0};
-  SizeType width_{0};
-  SizeType padded_height_{0};
-  ContainerType   data_{};
+  SizeType      height_{0};
+  SizeType      width_{0};
+  SizeType      padded_height_{0};
+  ContainerType data_{};
 };
 
 //////////////////////

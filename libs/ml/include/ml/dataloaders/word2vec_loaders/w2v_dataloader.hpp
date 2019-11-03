@@ -408,8 +408,7 @@ typename W2VLoader<T>::SizeType W2VLoader<T>::window_size()
  * @return
  */
 template <typename T>
-std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(
-    std::vector<std::string> const &strings)
+std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(std::vector<std::string> const &strings)
 {
   std::vector<SizeType> indexes;
   if (strings.size() >= 2 * window_size_ + 1)  // Don't bother processing too short inputs

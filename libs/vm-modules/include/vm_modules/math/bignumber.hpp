@@ -38,7 +38,7 @@ namespace math {
 class UInt256Wrapper : public fetch::vm::Object
 {
 public:
-  using UInt256  = vectorise::UInt<256>;
+  using UInt256 = vectorise::UInt<256>;
 
   UInt256Wrapper()           = delete;
   ~UInt256Wrapper() override = default;

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
 #include "core/assert.hpp"
+#include "math/base_types.hpp"
 
 namespace fetch {
 namespace math {

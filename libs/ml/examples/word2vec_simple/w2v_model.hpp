@@ -29,7 +29,7 @@ template <typename TensorType>
 class W2VModel
 {
 private:
-  using SizeType = fetch::math::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using ContainerType = typename TensorType::ContainerType;
 
@@ -41,12 +41,12 @@ private:
 
   TensorType word_vector_;
 
-  TensorType                                embeddings_;
-  TensorType                                gradient_embeddings_;
+  TensorType                         embeddings_;
+  TensorType                         gradient_embeddings_;
   std::vector<fetch::math::SizeType> updated_rows_embeddings_;
 
-  TensorType                                weights_;
-  TensorType                                gradient_weights_;
+  TensorType                         weights_;
+  TensorType                         gradient_weights_;
   std::vector<fetch::math::SizeType> updated_rows_weights_;
 
   TensorType target_weights_;
@@ -278,8 +278,7 @@ void W2VModel<TensorType>::SGNSTrain(  // TODO (#1304) CBOW implementation not S
 
       // Embeddings: context Backward
       auto error_signal_view = error_words_.View(0);
-      auto view1 =
-          gradient_embeddings_.View(static_cast<fetch::math::SizeType>(cur_context_word));
+      auto view1 = gradient_embeddings_.View(static_cast<fetch::math::SizeType>(cur_context_word));
       PolyfillInlineAdd(view1, error_signal_view);
 
       // Embeddings: target Backward

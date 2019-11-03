@@ -206,7 +206,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
 TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
 {
   using TensorType = TypeParam;
-  using SizeType = fetch::math::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using DataType   = typename TypeParam::Type;
   using SPType     = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>::SPType;
   using OpType     = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>;
@@ -272,7 +272,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
 TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
-  using SizeType = fetch::math::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using DataType   = typename TypeParam::Type;
   using SPType     = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>::SPType;
   using OpType     = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>;

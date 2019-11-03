@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/meta/math_type_traits.hpp"
 #include "math/base_types.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {

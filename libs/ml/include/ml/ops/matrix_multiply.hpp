@@ -34,7 +34,7 @@ class MatrixMultiply : public fetch::ml::ops::Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType = fetch::math::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using SizeVector    = typename TensorType::SizeVector;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpMatrixMultiplySaveableParams<T>;

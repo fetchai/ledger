@@ -396,7 +396,7 @@ TYPED_TEST(TensorOperationsTest, broadcastable_assignment_test)
 {
 
   using ArrayType = fetch::math::Tensor<TypeParam>;
-  using SizeType = fetch::math::SizeType;
+  using SizeType  = fetch::math::SizeType;
 
   ArrayType small_data = ArrayType::FromString("1, 2; 2, 1;2, 4");
   small_data.Reshape({3, 1, 2});

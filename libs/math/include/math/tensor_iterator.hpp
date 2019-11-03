@@ -33,8 +33,8 @@ public:
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
    */
-  TensorIterator(T *pointer, SizeType size, SizeType padded_size,
-                 SizeType height, SizeType padded_height)
+  TensorIterator(T *pointer, SizeType size, SizeType padded_size, SizeType height,
+                 SizeType padded_height)
   {
     pointer_ = pointer;
     skip_    = padded_height - height;

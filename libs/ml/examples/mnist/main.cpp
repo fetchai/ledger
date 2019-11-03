@@ -35,7 +35,7 @@ using namespace fetch::ml::layers;
 
 using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType = fetch::math::SizeType;
+using SizeType   = fetch::math::SizeType;
 
 using GraphType      = typename fetch::ml::Graph<TensorType>;
 using OptimiserType  = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;

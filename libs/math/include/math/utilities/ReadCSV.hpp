@@ -48,9 +48,9 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
     throw math::exceptions::InvalidFile("ReadCSV cannot open file " + filename);
   }
 
-  std::string                  buf;
-  char const                   delimiter = ',';
-  std::string                  field_value;
+  std::string           buf;
+  char const            delimiter = ',';
+  std::string           field_value;
   fetch::math::SizeType row{0};
   fetch::math::SizeType col{0};
 

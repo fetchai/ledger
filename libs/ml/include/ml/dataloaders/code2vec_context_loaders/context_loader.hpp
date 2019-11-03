@@ -50,7 +50,7 @@ class C2VLoader : public DataLoader<LabelType, InputType>
 public:
   using TensorType              = InputType;
   using Type                    = typename TensorType::Type;
-  using SizeType = fetch::math::SizeType;
+  using SizeType                = fetch::math::SizeType;
   using ContextTuple            = std::tuple<SizeType, SizeType, SizeType>;
   using ContextVector           = std::vector<TensorType>;
   using ContextLabelPair        = std::pair<SizeType, ContextTuple>;
@@ -426,8 +426,8 @@ void C2VLoader<LabelType, InputType>::createIdxUMapsFromCounter(
   int idx = 0;
   for (auto kv : counter)
   {
-    name_to_idx[kv.first] = uint64_t(idx);
-    idx_to_name[uint64_t(idx)]      = kv.first;
+    name_to_idx[kv.first]      = uint64_t(idx);
+    idx_to_name[uint64_t(idx)] = kv.first;
     idx++;
   }
 }

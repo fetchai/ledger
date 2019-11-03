@@ -59,7 +59,7 @@ class KMeansImplementation
 {
 
   using DataType        = typename ArrayType::Type;
-  using SizeType = fetch::math::SizeType;
+  using SizeType        = fetch::math::SizeType;
   using ArrayOfSizeType = typename fetch::math::Tensor<SizeType>;
 
 public:

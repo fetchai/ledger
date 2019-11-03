@@ -41,7 +41,7 @@ class AdamOptimiser : public Optimiser<T>
 public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
-  using SizeType = fetch::math::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   AdamOptimiser() = default;
 

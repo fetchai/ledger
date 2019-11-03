@@ -117,8 +117,7 @@ void DataLoader<LabelType, InputType>::SetDataSize(
  */
 template <typename LabelType, typename InputType>
 typename DataLoader<LabelType, InputType>::ReturnType
-DataLoader<LabelType, InputType>::PrepareBatch(fetch::math::SizeType batch_size,
-                                               bool &                       is_done_set)
+DataLoader<LabelType, InputType>::PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set)
 {
   if (size_not_set_)
   {

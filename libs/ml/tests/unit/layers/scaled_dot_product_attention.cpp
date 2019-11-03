@@ -282,7 +282,7 @@ TYPED_TEST(ScaledDotProductAttention,
 TYPED_TEST(ScaledDotProductAttention, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType = fetch::math::SizeType;
+  using SizeType  = fetch::math::SizeType;
   using LayerType = typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>;
   using SPType    = typename LayerType::SPType;
 

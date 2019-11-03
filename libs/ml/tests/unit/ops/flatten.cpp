@@ -182,7 +182,7 @@ TYPED_TEST(FlattenTest, saveparams_test)
 
 TYPED_TEST(FlattenTest, saveparams_backward_test)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using OpType     = fetch::ml::ops::Flatten<TensorType>;
