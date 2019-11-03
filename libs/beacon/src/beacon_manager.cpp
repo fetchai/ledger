@@ -590,7 +590,7 @@ bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
   Signature tmp2;
 
   // Check strings deserialise into correct MCL types
-  bool check_deserialisation;
+  bool check_deserialisation{false};
   tmp.setStr(&check_deserialisation, std::string(group_public_key).data());
   if (check_deserialisation)
   {
@@ -599,6 +599,7 @@ bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
 
   if (!check_deserialisation)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect serial length of the group public key");
     return false;
   }
 
