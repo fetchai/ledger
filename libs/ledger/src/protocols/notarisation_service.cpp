@@ -274,8 +274,11 @@ NotarisationService::State NotarisationService::OnComplete()
     notarisation_collection_height_ = notarised_chain_height_ + 1;
   }
 
-  // If we have new notarisation keys, or we have notarised all blocks for this aeon
-  if (new_keys || notarised_chain_height_ >= active_notarisation_unit_->round_end())
+  // If we have new notarisation keys and the next block to notarise is the end of the aeon then we
+  // change keys - prevents switching out of keys too early if they are computed far in advance
+  bool load_new_keys =
+      new_keys && notarisation_collection_height_ == active_notarisation_unit_->round_end();
+  if (load_new_keys || notarisation_collection_height_ > active_notarisation_unit_->round_end())
   {
     // Save previous as we might still need to notarise blocks from previous aeon
     previous_notarisation_unit_ = active_notarisation_unit_;
