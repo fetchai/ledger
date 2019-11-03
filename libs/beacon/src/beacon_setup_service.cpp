@@ -1428,21 +1428,23 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     // Easy case where the start point is ahead in time
     // If not ahead in time, the DKG must have failed before. Algorithmically decide how long
     // to increase the allotted DKG time (scheme 2x)
-    uint64_t next_start_point = beacon_->aeon.start_reference_timepoint;
-    uint64_t dkg_time         = expected_dkg_time_s;
-    uint16_t failures         = 0;
+    uint64_t next_start_point       = beacon_->aeon.start_reference_timepoint;
+    uint64_t dkg_time               = expected_dkg_time_s;
+    uint16_t failures               = 0;
+    double   adjusted_time_per_slot = time_per_slot;
 
     while (next_start_point < current_time)
     {
       failures++;
       next_start_point += dkg_time;
-      time_per_slot += 0.5 * time_per_slot;
+      adjusted_time_per_slot += 0.5 * adjusted_time_per_slot;
       dkg_time =
           dkg_time + static_cast<uint64_t>(time_per_slot * static_cast<double>(time_slots_in_dkg_));
     }
 
     expected_dkg_timespan_ = dkg_time;
     reference_timepoint_   = next_start_point;
+    time_per_slot_         = adjusted_time_per_slot;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " DKG round: ", beacon_->aeon.round_start, " failures so far: ", failures,
@@ -1464,8 +1466,12 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   SetTimeBySlots(state, time_slots_total, time_slot_for_state);
 
-  seconds_for_state_ = uint64_t(double(time_slot_for_state) * time_per_slot);
-  state_deadline_    = reference_timepoint_ + uint64_t(double(time_slots_total) * time_per_slot);
+  FETCH_LOG_DEBUG(
+      LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), "Time per slot: ", time_per_slot_,
+      ", time slots for state: ", time_slot_for_state, ", time slots total: ", time_slots_total);
+
+  seconds_for_state_ = uint64_t(double(time_slot_for_state) * time_per_slot_);
+  state_deadline_    = reference_timepoint_ + uint64_t(double(time_slots_total) * time_per_slot_);
 
   if (state_deadline_ < current_time)
   {
