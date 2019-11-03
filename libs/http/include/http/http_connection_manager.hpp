@@ -27,7 +27,7 @@
 namespace fetch {
 namespace http {
 
-class HTTPConnectionManager : public std::enable_shared_from_this<HTTPConnectionManager>
+class HTTPConnectionManager
 {
 public:
   using ConnectionType = typename AbstractHTTPConnection::SharedType;
@@ -36,7 +36,6 @@ public:
   static constexpr char const *LOGGING_NAME = "HTTPConnectionManager";
 
   explicit HTTPConnectionManager(AbstractHTTPServer &server);
-  ~HTTPConnectionManager();
 
   HandleType  Join(ConnectionType client);
   void        Leave(HandleType handle);
