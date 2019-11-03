@@ -279,8 +279,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
     return false;
   }
 
-  const uint64_t previous_block_window_ends =
-      uint64_t(last_block_timestamp_ms + block_interval_ms_);
+  uint64_t const previous_block_window_ends = last_block_timestamp_ms + block_interval_ms_;
 
   // Blocks cannot be created within the block interval of the previous, this enforces
   // the block period
