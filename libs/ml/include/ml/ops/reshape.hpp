@@ -33,7 +33,7 @@ class Reshape : public fetch::ml::ops::Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpReshapeSaveableParams<T>;
   using MyType        = Reshape<TensorType>;

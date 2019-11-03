@@ -39,7 +39,7 @@ class Convolution1D : public SubGraph<T>
 public:
   using TensorType    = T;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType        = LayerConvolution1DSaveableParams<TensorType>;

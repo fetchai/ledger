@@ -36,7 +36,7 @@ public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Weights<T>::VecTensorType;
   using SPType        = OpEmbeddingsSaveableParams<TensorType>;
   using MyType        = Embeddings<TensorType>;

@@ -19,9 +19,5 @@ target_link_libraries(fetch-python
                               fetch-muddle
                               fetch-core)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-python PRIVATE -Wshadow)
-endif ()
-
 # make the name match the bindings
 set_target_properties(fetch-python PROPERTIES OUTPUT_NAME "fetch")
