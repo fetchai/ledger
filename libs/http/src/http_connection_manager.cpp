@@ -58,11 +58,13 @@ void HTTPConnectionManager::Leave(HandleType handle)
 {
   FETCH_LOCK(clients_mutex_);
 
-  if (clients_.find(handle) != clients_.end())
+  auto it = clients_.find(handle);
+
+  if (it != clients_.end())
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is leaving");
-    // TODO(issue 35): Close socket!
-    clients_.erase(handle);
+    it->second->CloseConnnection();
+    clients_.erase(it);
   }
   FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is leaving");
 }

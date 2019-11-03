@@ -69,13 +69,14 @@ void SimpleTest()
 
     if (test_port == 8000)
     {
-      SharedJsonClient client = std::make_shared<JsonClient>(
-          JsonClient::CreateFromUrl("http://127.0.0.1:" + std::to_string(test_port)));
-      ret.push_back(client);
-      Variant result;
-      std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-      client->Get("/test", result);
-      std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+      for (std::size_t i = 0; i < 1; ++i)
+      {
+        SharedJsonClient client = std::make_shared<JsonClient>(
+            JsonClient::CreateFromUrl("http://127.0.0.1:" + std::to_string(test_port)));
+        ret.push_back(client);
+        Variant result;
+        client->Get("/test", result);
+      }
     }
 
     http.Stop();
