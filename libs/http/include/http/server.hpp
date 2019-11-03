@@ -125,7 +125,6 @@ public:
 
   void Start(uint16_t port)
   {
-    std::cerr << "starting" << std::endl;  // DELETEME_NH
     std::weak_ptr<ConnectionManager> &manager   = manager_;
     std::weak_ptr<Socket> &           socRef    = socket_;
     std::weak_ptr<Acceptor> &         accepRef  = acceptor_;
@@ -267,12 +266,9 @@ public:
       if (!ec)
       {
         assert(manager);
-        std::cerr << "Starting connection. manager: " << manager << std::endl;  // DELETEME_NH
-        // std::make_shared<HTTPConnection>(std::move(*soc), *manager)->Start();
         auto new_connection = std::make_shared<HTTPConnection>(std::move(*soc), *manager);
         manager->Join(new_connection);
         new_connection->Start();
-        // std::cerr <<  << std::endl; // DELETEME_NH
       }
       else
       {

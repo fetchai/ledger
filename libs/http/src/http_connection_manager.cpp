@@ -34,12 +34,7 @@ HTTPConnectionManager::HTTPConnectionManager(AbstractHTTPServer &server)
 
 HTTPConnectionManager::~HTTPConnectionManager()
 {
-  // for(auto const &i : cliei)
-  //{
-  //}
-  std::cerr << "HTTPDEST 2" << std::endl;  // DELETEME_NH
   FETCH_LOCK(clients_mutex_);
-  std::cerr << "HTTPDEST 2.1" << std::endl;  // DELETEME_NH
 
   for (auto const &client : clients_)
   {
@@ -47,7 +42,6 @@ HTTPConnectionManager::~HTTPConnectionManager()
   }
 
   clients_.clear();
-  std::cerr << "HTTPDEST 3" << std::endl;  // DELETEME_NH
 }
 
 HTTPConnectionManager::HandleType HTTPConnectionManager::Join(ConnectionType client)
