@@ -89,7 +89,6 @@ TEST(tensor_iterator, simple_iterator_permute_test)
 
 TEST(tensor_iterator, iterator_4dim_copy_test)
 {
-  using SizeType = fetch::math::SizeType;
 
   // set up an initial array
   Tensor<double> array{Tensor<double>::Arange(0., 1008., 1.)};
@@ -129,7 +128,6 @@ TEST(tensor_iterator, iterator_4dim_copy_test)
 
 TEST(Tensor, iterator_4dim_permute_test)
 {
-  using SizeType = fetch::math::SizeType;
   // set up an initial array
   Tensor<double> array{Tensor<double>::Arange(0., 1008., 1.)};
   array.Reshape({4, 6, 7, 6});
@@ -170,7 +168,6 @@ TEST(Tensor, iterator_4dim_permute_test)
 
 TEST(Tensor, simple_iterator_transpose_test)
 {
-  using SizeType = fetch::math::SizeType;
   std::vector<SizeType> perm{2, 1, 0};
   std::vector<SizeType> original_shape{2, 3, 4};
   std::vector<SizeType> new_shape;

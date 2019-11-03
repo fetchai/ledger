@@ -100,7 +100,6 @@ LayerType GetLayerType(std::string const &layer_name)
 std::pair<std::string, std::vector<std::string>> ReadArchitecture(
     std::string const &filename, std::shared_ptr<GraphType> const &g, SizeType line_num = 0)
 {
-  using SizeType                     = fetch::math::SizeType;
   char                     delimiter = ',';
   std::ifstream            file(filename);
   std::string              buf;
@@ -255,7 +254,6 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
  */
 int main(int argc, char **argv)
 {
-  using SizeType = fetch::math::SizeType;
   int         i;
   std::string input_dir;
   SizeType    model_num           = 0;

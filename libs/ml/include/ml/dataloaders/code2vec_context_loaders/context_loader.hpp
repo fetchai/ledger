@@ -426,8 +426,8 @@ void C2VLoader<LabelType, InputType>::createIdxUMapsFromCounter(
   int idx = 0;
   for (auto kv : counter)
   {
-    name_to_idx[kv.first] = idx;
-    idx_to_name[idx]      = kv.first;
+    name_to_idx[kv.first] = uint64_t(idx);
+    idx_to_name[uint64_t(idx)]      = kv.first;
     idx++;
   }
 }

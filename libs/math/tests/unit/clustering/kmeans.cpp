@@ -30,7 +30,6 @@ using namespace fetch::math;
 
 using DataType   = int64_t;
 using TensorType = Tensor<DataType>;
-using SizeType   = Tensor<DataType>::SizeType;
 
 using ClusteringType = fetch::math::clustering::ClusteringType;
 

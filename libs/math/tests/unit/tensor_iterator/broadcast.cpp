@@ -52,8 +52,6 @@ TEST(tensor_iterator, simple_broadcast_test)
 
 TEST(Tensor, broadcast_3D_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   Tensor<double> a = Tensor<double>::Arange(0u, 21u, 1u);
   ASSERT_TRUE(a.size() == 21);
   a.Reshape({1, 3, 7});
@@ -97,8 +95,6 @@ TEST(Tensor, broadcast_3D_test)
 
 TEST(tensor_iterator, broadcast_shape_size_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   Tensor<double> a = Tensor<double>::Arange(0u, 90u, 1u);
   a.Reshape({1, 3, 1, 6, 5});
   Tensor<double> b = Tensor<double>::Arange(0u, 42u, 1u);
