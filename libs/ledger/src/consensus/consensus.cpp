@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/block_entropy.hpp"
+#include "beacon/beacon_manager.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/consensus/consensus.hpp"
 
@@ -388,7 +389,11 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       cabinet_member_list.insert(staker.identifier());
     }
 
-    if (member_of_cabinet)
+    if (!member_of_cabinet)
+    {
+      dkg::BeaconManager dummy{};
+    }
+    else
     {
       auto threshold = static_cast<uint32_t>(
           std::ceil(static_cast<double>(cabinet_member_list.size()) * threshold_));
