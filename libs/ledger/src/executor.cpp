@@ -203,7 +203,7 @@ void Executor::SettleFees(chain::Address const &miner, BlockIndex block, TokenAm
     token_contract_.Detach();
   }
 
-  FETCH_LOG_TRACE(LOGGING_NAME, "Aggregating state updates...");
+  FETCH_LOG_TRACE(LOGGING_NAME, "Aggregating stake updates...");
 
   if (!stake_updates.empty())
   {
@@ -231,7 +231,7 @@ void Executor::SettleFees(chain::Address const &miner, BlockIndex block, TokenAm
     }
   }
 
-  FETCH_LOG_TRACE(LOGGING_NAME, "Aggregating state updates...complete");
+  FETCH_LOG_TRACE(LOGGING_NAME, "Aggregating stake updates...complete");
 }
 
 bool Executor::RetrieveTransaction(Digest const &digest)

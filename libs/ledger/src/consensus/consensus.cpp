@@ -346,7 +346,12 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     beginning_of_aeon_ = GetBeginningOfAeon(current_block_, chain_);
   }
 
-  stake_->Load(storage_);
+  if (!stake_->Load(storage_))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Failure to load stake information. block: ", current_block_.body.block_number);
+    return;
+  }
 
   // this might cause a trim that is not flushed to the state DB, however, on the next block the
   // full trim will take place and the state DB will be updated.
@@ -552,11 +557,11 @@ void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
 
   if (success)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Reseting stake aggregate...complete");
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting stake aggregate...complete");
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Reseting stake aggregate...FAILED");
+    FETCH_LOG_WARN(LOGGING_NAME, "Resetting stake aggregate...FAILED");
   }
 }
 

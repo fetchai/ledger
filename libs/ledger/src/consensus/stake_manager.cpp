@@ -33,7 +33,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "StakeMgr";
 
-storage::ResourceAddress const STORAGE_ADDRESS{"fetch.token.state.aggregation.stake"};
+storage::ResourceAddress const STAKE_STORAGE_ADDRESS{"fetch.token.state.aggregation.stake"};
 
 }  // namespace
 
@@ -79,7 +79,7 @@ bool StakeManager::Save(StorageInterface &storage)
     serializers::LargeObjectSerializeHelper serializer{};
     serializer << *this;
 
-    storage.Set(STORAGE_ADDRESS, serializer.data());
+    storage.Set(STAKE_STORAGE_ADDRESS, serializer.data());
 
     success = true;
   }
@@ -97,7 +97,7 @@ bool StakeManager::Load(StorageInterface &storage)
 
   try
   {
-    auto const result = storage.Get(STORAGE_ADDRESS);
+    auto const result = storage.Get(STAKE_STORAGE_ADDRESS);
 
     if (!result.document.empty())
     {

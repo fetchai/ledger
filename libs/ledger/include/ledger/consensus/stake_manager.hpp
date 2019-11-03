@@ -104,7 +104,6 @@ private:
   StakeSnapshotPtr         LookupStakeSnapshot(BlockIndex block) const;
   StakeManager::CabinetPtr ResetInternal(StakeSnapshotPtr &&snapshot, uint64_t cabinet_size);
 
-  uint64_t         cabinet_size_{0};         ///< The "static" size of the committee
   StakeUpdateQueue update_queue_;            ///< The update queue of events
   StakeHistory     stake_history_{};         ///< Cache of historical snapshots
   StakeSnapshotPtr current_{};               ///< Most recent snapshot
@@ -157,7 +156,6 @@ public:
   using Type       = ledger::StakeManager;
   using DriverType = D;
 
-  static uint8_t const COMITTEE_SIZE       = 1;
   static uint8_t const UPDATE_QUQUE        = 2;
   static uint8_t const STAKE_HISTORY       = 2;
   static uint8_t const CURRENT_SNAPSHOT    = 3;
@@ -167,7 +165,6 @@ public:
   static void Serialize(Constructor &map_constructor, Type const &stake_manager)
   {
     auto map = map_constructor(5);
-    //    map.Append(COMITTEE_SIZE, stake_manager.committee_size_);
     map.Append(UPDATE_QUQUE, stake_manager.update_queue_);
     map.Append(STAKE_HISTORY, stake_manager.stake_history_);
     map.Append(CURRENT_SNAPSHOT, stake_manager.current_);
@@ -177,7 +174,6 @@ public:
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &stake_manager)
   {
-    //    map.ExpectKeyGetValue(COMITTEE_SIZE, stake_manager.committee_size_);
     map.ExpectKeyGetValue(UPDATE_QUQUE, stake_manager.update_queue_);
     map.ExpectKeyGetValue(STAKE_HISTORY, stake_manager.stake_history_);
     map.ExpectKeyGetValue(CURRENT_SNAPSHOT, stake_manager.current_);

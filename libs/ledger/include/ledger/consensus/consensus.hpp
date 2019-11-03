@@ -65,7 +65,7 @@ public:
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
-  static constexpr uint64_t    INVALID_BLOCK  = 0xFFFFFFFFFFFFFFFFllu;
+  //  static constexpr uint64_t    INVALID_BLOCK  = 0xFFFFFFFFFFFFFFFFllu;
 
   using Cabinet        = StakeManager::Cabinet;
   using CabinetPtr     = std::shared_ptr<Cabinet const>;
