@@ -95,29 +95,77 @@ public:
         acceptor->close(dummy);
       }
     });
+
+    // Since the connection manager contains a reference to this class, we must guarantee it has
+    // destructed before we do.
+    std::shared_ptr<uint64_t> ref_counter = std::make_shared<uint64_t>();
+
+    {
+      auto ref_counter_copy = ref_counter;
+      auto manager          = manager_;
+
+      networkManager_.Post([manager] {
+        auto manager_lock = manager.lock();
+
+        if (manager_lock)
+        {
+          while (manager_lock.use_count() > 1)
+          {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          }
+        }
+      });
+    }
+
+    while (ref_counter.use_count() != 1)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
   }
 
   void Start(uint16_t port)
   {
-    std::shared_ptr<ConnectionManager> manager   = manager_;
-    std::weak_ptr<Socket> &            socRef    = socket_;
-    std::weak_ptr<Acceptor> &          accepRef  = acceptor_;
-    NetworkManager &                   threadMan = networkManager_;
+    std::cerr << "starting" << std::endl;  // DELETEME_NH
+    std::weak_ptr<ConnectionManager> &manager   = manager_;
+    std::weak_ptr<Socket> &           socRef    = socket_;
+    std::weak_ptr<Acceptor> &         accepRef  = acceptor_;
+    NetworkManager &                  threadMan = networkManager_;
 
-    networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
-      auto soc   = threadMan.CreateIO<Socket>();
-      auto accep = threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+    // Count instances of this shared pointer that exist to know whether the closure has executed
+    std::shared_ptr<uint64_t> ref_counter = std::make_shared<uint64_t>();
 
-      FETCH_LOG_INFO(LOGGING_NAME,
-                     "Starting HTTPServer on http://127.0.0.1:", accep->local_endpoint().port());
+    {
+      auto        ref_counter_copy = ref_counter;
+      HTTPServer &server_ref       = *this;
 
-      // allow initiating class to post closes to these
-      socRef   = soc;
-      accepRef = accep;
+      networkManager_.Post([&socRef, &accepRef, &manager, &threadMan, port, ref_counter_copy,
+                            &server_ref] {
+        auto soc = threadMan.CreateIO<Socket>();
+        auto accep =
+            threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+        auto strong_manager                    = std::make_shared<ConnectionManager>(server_ref);
+        auto ref_counter_decrement_on_destruct = ref_counter_copy;
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Starting HTTPServer Accept");
-      HTTPServer::Accept(soc, accep, manager);
-    });
+        FETCH_LOG_INFO(LOGGING_NAME,
+                       "Starting HTTPServer on http://127.0.0.1:", accep->local_endpoint().port());
+
+        // allow initiating class to post closes to these
+        socRef   = soc;
+        accepRef = accep;
+        manager  = strong_manager;
+
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Starting HTTPServer Accept");
+        HTTPServer::Accept(soc, accep, strong_manager);
+      });
+    }
+
+    // Block until we know the closure above has either been executed or destructed as the network
+    // manager wasn't ready We need to block since the closure has references to our class within
+    // it.
+    while (ref_counter.use_count() != 1)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
   }
 
   void Stop()
@@ -136,7 +184,7 @@ public:
       res.AddHeader("Access-Control-Allow-Headers",
                     "Content-Type, Authorization, Content-Length, X-Requested-With");
 
-      manager_->Send(client, res);
+      SendToManager(client, res);
       return;
     }
 
@@ -173,7 +221,7 @@ public:
             res = HTTPResponse("authentication required",
                                fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
                                Status::SERVER_ERROR_NETWORK_AUTHENTICATION_REQUIRED);
-            manager_->Send(client, res);
+            SendToManager(client, res);
             return;
           }
 
@@ -196,7 +244,7 @@ public:
       HTTPResponse response("internal error: " + std::string(e.what()),
                             fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
                             Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
-      manager_->Send(client, response);
+      SendToManager(client, response);
       return;
     }
     catch (...)
@@ -204,11 +252,11 @@ public:
       HTTPResponse response("unknown internal error",
                             fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
                             Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
-      manager_->Send(client, response);
+      SendToManager(client, response);
       return;
     }
 
-    manager_->Send(client, res);
+    SendToManager(client, res);
   }
 
   // Accept static void to avoid having to create shared ptr to this class
@@ -218,7 +266,13 @@ public:
     auto cb = [soc, accep, manager](std::error_code ec) {
       if (!ec)
       {
-        std::make_shared<HTTPConnection>(std::move(*soc), *manager)->Start();
+        assert(manager);
+        std::cerr << "Starting connection. manager: " << manager << std::endl;  // DELETEME_NH
+        // std::make_shared<HTTPConnection>(std::move(*soc), *manager)->Start();
+        auto new_connection = std::make_shared<HTTPConnection>(std::move(*soc), *manager);
+        manager->Join(new_connection);
+        new_connection->Start();
+        // std::cerr <<  << std::endl; // DELETEME_NH
       }
       else
       {
@@ -284,6 +338,20 @@ public:
     return views_;
   }
 
+  void SendToManager(HandleType client, HTTPResponse const &res)
+  {
+    std::weak_ptr<ConnectionManager> manager = manager_;
+
+    networkManager_.Post([manager, client, res] {
+      auto manager_lock = manager.lock();
+
+      if (manager_lock)
+      {
+        manager_lock->Send(client, res);
+      }
+    });
+  }
+
 private:
   std::mutex eval_mutex_;
 
@@ -291,11 +359,11 @@ private:
   std::vector<MountedView>        views_;
   std::vector<ResponseMiddleware> post_view_middleware_;
 
-  NetworkManager                     networkManager_;
-  std::deque<HTTPRequest>            requests_;
-  std::weak_ptr<Acceptor>            acceptor_;
-  std::weak_ptr<Socket>              socket_;
-  std::shared_ptr<ConnectionManager> manager_{std::make_shared<ConnectionManager>(*this)};
+  NetworkManager                   networkManager_;
+  std::deque<HTTPRequest>          requests_;
+  std::weak_ptr<Acceptor>          acceptor_;
+  std::weak_ptr<Socket>            socket_;
+  std::weak_ptr<ConnectionManager> manager_;
 };
 }  // namespace http
 }  // namespace fetch

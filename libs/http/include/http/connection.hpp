@@ -56,17 +56,18 @@ public:
 
   ~HTTPConnection() override
   {
-    manager_.Leave(handle_);
+    /*manager_.Leave(handle_);*/
+    std::cerr << "HTTPDEST 1" << std::endl;  // DELETEME_NH
   }
 
   void Start()
   {
     is_open_ = true;
-    handle_  = manager_.Join(shared_from_this());
-    if (is_open_)
-    {
-      ReadHeader();
-    }
+    // handle_  = manager_.Join(shared_from_this());
+    // if (is_open_)
+    //{
+    ReadHeader();
+    //}
   }
 
   void Send(HTTPResponse const &response) override
@@ -220,6 +221,13 @@ public:
     };
 
     asio::async_write(socket_, *buffer_ptr, cb);
+  }
+
+  void CloseConnnection() override
+  {
+    std::error_code dummy;
+    socket_.shutdown(asio::ip::tcp::socket::shutdown_both, dummy);
+    socket_.close(dummy);
   }
 
   void Close()
