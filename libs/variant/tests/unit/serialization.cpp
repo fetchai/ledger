@@ -108,3 +108,124 @@ TEST(VariantSerialization, ArrayArraySerialisation)
   EXPECT_EQ(y[3][2], 9);
   EXPECT_EQ(y[3][3], 10);
 }
+
+TEST(VariantSerialization, VariantInt)
+{
+  MsgPackSerializer stream;
+  Variant           i1, i2;
+
+  i1 = 123456;
+  stream << i1;
+  stream.seek(0);
+  stream >> i2;
+  EXPECT_EQ(i2.As<int>(), 123456);
+}
+
+TEST(VariantSerialization, VariantFloat)
+{
+  MsgPackSerializer stream;
+  Variant           fp1, fp2;
+
+  fp1 = 1.25;  // should be repn exactly.
+  stream << fp1;
+  stream.seek(0);
+  stream >> fp2;
+  EXPECT_EQ(fp2.As<float>(), 1.25);
+}
+
+TEST(VariantSerialization, VariantString)
+{
+  MsgPackSerializer stream;
+  Variant           s1, s2;
+
+  s1 = "123456";
+  stream << s1;
+  stream.seek(0);
+  stream >> s2;
+  EXPECT_EQ(s2.As<std::string>(), "123456");
+}
+
+TEST(VariantSerialization, VariantNull)
+{
+  MsgPackSerializer stream;
+  Variant           null1, null2;
+
+  null1 = Variant::Null();
+  stream << null1;
+  stream.seek(0);
+  stream >> null2;
+  EXPECT_EQ(null2.IsNull(), true);
+}
+
+TEST(VariantSerialization, DISABLED_VariantArray)
+{
+  MsgPackSerializer stream;
+  Variant           arr1, arr2;
+
+  arr1    = Variant::Array(4);
+  arr1[0] = Variant::Null();
+  arr1[1] = 123456;
+  arr1[2] = 1.25;
+  arr1[3] = "123456";
+  stream << arr1;
+  stream.seek(0);
+  stream >> arr2;
+  EXPECT_EQ(arr2.IsArray(), true);
+  EXPECT_EQ(arr2[0].IsNull(), true);
+  EXPECT_EQ(arr2[1].As<int>(), 123456);
+  EXPECT_EQ(arr2[2].As<float>(), 1.25);
+  EXPECT_EQ(arr2[3].As<std::string>(), "123456");
+}
+
+TEST(VariantSerialization, DISABLED_VariantArrayOfArray)
+{
+  MsgPackSerializer stream;
+  Variant           arr1, arr2;
+
+  arr1    = Variant::Array(4);
+  arr1[0] = Variant::Array(4);
+  arr1[1] = Variant::Array(4);
+  arr1[2] = Variant::Array(4);
+  arr1[3] = Variant::Array(4);
+
+  for (std::size_t i = 0; i < 4; i++)
+  {
+    for (std::size_t j = 0; j < 4; j++)
+    {
+      arr1[i][j] = (i == j) ? 1 : 0;
+    }
+  }
+
+  stream << arr1;
+  stream.seek(0);
+  stream >> arr2;
+
+  EXPECT_EQ(arr2.IsArray(), true);
+  for (std::size_t i = 0; i < 4; i++)
+  {
+    EXPECT_EQ(arr2[i].IsArray(), true);
+    for (std::size_t j = 0; j < 4; j++)
+    {
+      EXPECT_EQ(arr2[i][j].As<int>(), (i == j) ? 1 : 0);
+    }
+  }
+}
+
+TEST(VariantSerialization, DISABLED_VariantObject)
+{
+  MsgPackSerializer stream;
+  Variant           obj1, obj2;
+
+  obj1 = Variant::Object();
+
+  obj1["foo"] = 1;
+  obj1["bar"] = 2;
+
+  stream << obj1;
+  stream.seek(0);
+  stream >> obj2;
+
+  EXPECT_EQ(obj2.IsObject(), true);
+  EXPECT_EQ(obj2["foo"].As<int>(), 1);
+  EXPECT_EQ(obj2["bar"].As<int>(), 2);
+}

@@ -21,6 +21,7 @@
 
 namespace fetch {
 namespace serializers {
+
 enum class SerializerTypes
 {
   BOOLEAN,
@@ -40,6 +41,8 @@ struct TypeCodes
 {
   enum
   {
+    NIL = 0xc0,
+
     BOOL_TRUE  = 0xc3,
     BOOL_FALSE = 0xc2,
     INT8       = 0xd0,
@@ -92,6 +95,8 @@ inline SerializerTypes DetermineType(uint8_t b)
 {
   switch (b)
   {
+  case TypeCodes::NIL:
+    return SerializerTypes::NULL_VALUE;
   case TypeCodes::BOOL_TRUE:
   case TypeCodes::BOOL_FALSE:
     return SerializerTypes::BOOLEAN;
