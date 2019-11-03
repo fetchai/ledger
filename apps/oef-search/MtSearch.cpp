@@ -99,6 +99,8 @@ std::string prometheusUpThatNamingString(const std::string &name)
         upshift = false;
         break;
       }
+
+    /* fall through */
     default:
       r += c;
       break;
