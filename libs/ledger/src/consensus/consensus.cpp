@@ -547,6 +547,10 @@ Status Consensus::ValidBlock(Block const &current) const
                                   current.body.block_entropy.group_signature))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
+    FETCH_LOG_WARN(LOGGING_NAME, " => ", group_pub_key.ToBase64());
+    FETCH_LOG_WARN(LOGGING_NAME, " => ", block_preceeding.body.block_entropy.EntropyAsSHA256().ToBase64());
+    FETCH_LOG_WARN(LOGGING_NAME, " => ", current.body.block_entropy.group_signature.ToBase64());
+
     return Status::NO;
   }
 

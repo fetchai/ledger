@@ -537,8 +537,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   bool const is_genesis = current_block_->body.previous_hash == chain::GENESIS_DIGEST;
 
   auto fail{[this](char const *reason) {
-    FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
-                   ToBase64(current_block_->body.hash), ')');
+    FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (0x",
+                   current_block_->body.hash.ToHex(), ')');
 
     chain_.RemoveBlock(current_block_->body.hash);
     return State::RESET;
@@ -644,7 +644,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 
     if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(num_lanes_))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(current_block_->body.hash),
+      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (0x", current_block_->body.hash.ToHex(),
                      ")");
       chain_.RemoveBlock(current_block_->body.hash);
 
@@ -812,8 +812,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 
     if (exec_wait_periodic_.Poll())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for execution to complete for block: ",
-                     current_block_->body.hash.ToBase64());
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for execution to complete for block: 0x",
+                     current_block_->body.hash.ToHex());
     }
 
     // signal that the next execution should not happen immediately
