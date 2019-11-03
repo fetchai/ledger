@@ -108,10 +108,9 @@ public:
   ///}
 
 private:
-  static bn::G2 zeroG2_;   ///< Zero for public key type
-  static bn::Fr zeroFr_;   ///< Zero for private key type
-  static bn::G2 group_g_;  ///< Generator of group used in DKG
-  static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
+
+  static bn::G2 const &GetGroupG();
+  static bn::G2 const &GetGroupH();
 
   CertificatePtr certificate_;
   uint32_t       cabinet_size_;       ///< Size of cabinet

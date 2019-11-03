@@ -389,11 +389,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       cabinet_member_list.insert(staker.identifier());
     }
 
-    if (!member_of_cabinet)
-    {
-      dkg::BeaconManager dummy{};
-    }
-    else
+    if (member_of_cabinet)
     {
       auto threshold = static_cast<uint32_t>(
           std::ceil(static_cast<double>(cabinet_member_list.size()) * threshold_));

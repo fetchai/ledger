@@ -19,6 +19,7 @@
 #include "beacon/beacon_manager.hpp"
 #include "crypto/ecdsa.hpp"
 #include "network/generics/milli_timer.hpp"
+#include "core/synchronisation/protected.hpp"
 
 #include <mutex>
 #include <utility>
@@ -26,11 +27,70 @@
 
 namespace fetch {
 namespace dkg {
+namespace {
 
-bn::G2 BeaconManager::zeroG2_;
-bn::Fr BeaconManager::zeroFr_;
-bn::G2 BeaconManager::group_g_;
-bn::G2 BeaconManager::group_h_;
+class CurveParameters
+{
+public:
+
+  // Construction / Destruction
+  CurveParameters() = default;
+  CurveParameters(CurveParameters const &) = delete;
+  CurveParameters(CurveParameters &&) = delete;
+  ~CurveParameters() = default;
+
+  bn::G2 const &GetGroupG()
+  {
+    EnsureInitialised();
+    return params_->group_g_;
+  }
+
+  bn::G2 const &GetGroupH()
+  {
+    EnsureInitialised();
+    return params_->group_h_;
+  }
+
+  void EnsureInitialised()
+  {
+    if (!params_)
+    {
+      fetch::crypto::mcl::details::MCLInitialiser();
+
+      params_ = std::make_unique<Params>();
+      crypto::mcl::SetGenerators(params_->group_g_, params_->group_h_);
+    }
+  }
+
+  // Operators
+  CurveParameters &operator=(CurveParameters const &) = delete;
+  CurveParameters &operator=(CurveParameters &&) = delete;
+
+private:
+
+  struct Params
+  {
+    bn::G2 group_g_;
+    bn::G2 group_h_;
+  };
+
+  std::unique_ptr<Params> params_;
+};
+
+template <typename T>
+T CreateAndClear()
+{
+  T value{};
+  value.clear();
+  return value;
+}
+
+bn::G2 const zeroG2_{CreateAndClear<bn::G2>()};
+bn::Fr const zeroFr_{CreateAndClear<bn::Fr>()};
+
+Protected<CurveParameters> curve_params_{};
+
+} // namespace
 
 constexpr char const *LOGGING_NAME = "BeaconManager";
 
@@ -44,13 +104,8 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
     ptr->GenerateKeys();
   }
 
-  static std::once_flag flag;
-
-  std::call_once(flag, []() {
-    fetch::crypto::mcl::details::MCLInitialiser();
-    zeroG2_.clear();
-    zeroFr_.clear();
-    crypto::mcl::SetGenerators(group_g_, group_h_);
+  curve_params_.ApplyVoid([](CurveParameters &params) {
+    params.EnsureInitialised();
   });
 }
 
@@ -72,7 +127,7 @@ void BeaconManager::GenerateCoefficients()
   for (uint32_t k = 0; k <= polynomial_degree_; k++)
   {
     C_ik[cabinet_index_][k] =
-        crypto::mcl::ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
+        crypto::mcl::ComputeLHS(g__a_i[k], GetGroupG(), GetGroupH(), a_i[k], b_i[k]);
   }
 
   for (uint32_t l = 0; l < cabinet_size_; l++)
@@ -149,7 +204,7 @@ std::unordered_set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaint
     {
       PublicKey rhs;
       PublicKey lhs;
-      lhs = crypto::mcl::ComputeLHS(g__s_ij[i][cabinet_index_], group_g_, group_h_,
+      lhs = crypto::mcl::ComputeLHS(g__s_ij[i][cabinet_index_], GetGroupG(), GetGroupH(),
                                     s_ij[i][cabinet_index_], sprime_ij[i][cabinet_index_]);
       rhs = crypto::mcl::ComputeRHS(cabinet_index_, C_ik[i]);
       if (lhs != rhs || lhs.isZero())
@@ -176,7 +231,7 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
   s      = answer.second.first;
   sprime = answer.second.second;
   rhsG   = crypto::mcl::ComputeRHS(reporter_index, C_ik[from_index]);
-  lhsG   = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
+  lhsG   = crypto::mcl::ComputeLHS(GetGroupG(), GetGroupH(), s, sprime);
   if (lhsG != rhsG || lhsG.isZero())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " verification for node ", from_index,
@@ -192,7 +247,7 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
     s_ij[from_index][cabinet_index_]      = s;
     sprime_ij[from_index][cabinet_index_] = sprime;
     g__s_ij[from_index][cabinet_index_].clear();
-    bn::G2::mul(g__s_ij[from_index][cabinet_index_], group_g_, s_ij[from_index][cabinet_index_]);
+    bn::G2::mul(g__s_ij[from_index][cabinet_index_], GetGroupG(), s_ij[from_index][cabinet_index_]);
   }
   return true;
 }
@@ -293,7 +348,7 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
   PrivateKey sprime;
   s      = answer.second.first;
   sprime = answer.second.second;
-  lhs    = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
+  lhs    = crypto::mcl::ComputeLHS(GetGroupG(), GetGroupH(), s, sprime);
   rhs    = crypto::mcl::ComputeRHS(from_index, C_ik[victim_index]);
   if (lhs != rhs || lhs.isZero())
   {
@@ -303,7 +358,7 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
     return from;
   }
 
-  bn::G2::mul(lhs, group_g_, s);  // G^s
+  bn::G2::mul(lhs, GetGroupG(), s);  // G^s
   rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
   if (lhs != rhs || rhs.isZero())
   {
@@ -397,7 +452,7 @@ void BeaconManager::VerifyReconstructionShare(MuddleAddress const &from, Exposed
   PrivateKey   sprime;
   s      = share.second.first;
   sprime = share.second.second;
-  lhs    = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
+  lhs    = crypto::mcl::ComputeLHS(GetGroupG(), GetGroupH(), s, sprime);
   rhs    = crypto::mcl::ComputeRHS(identity_to_index_[from], C_ik[victim_index]);
 
   if (lhs == rhs && !lhs.isZero())
@@ -452,7 +507,7 @@ bool BeaconManager::RunReconstruction()
     a_ik[victim_index] = crypto::mcl::InterpolatePolynom(points, shares_f);
     for (std::size_t k = 0; k <= polynomial_degree_; k++)
     {
-      bn::G2::mul(A_ik[victim_index][k], group_g_, a_ik[victim_index][k]);
+      bn::G2::mul(A_ik[victim_index][k], GetGroupG(), a_ik[victim_index][k]);
     }
   }
   return true;
@@ -546,7 +601,7 @@ BeaconManager::AddResult BeaconManager::AddSignaturePart(Identity const & from,
   }
 
   uint64_t n = it->second;
-  if (!crypto::mcl::VerifySign(public_key_shares_[n], current_message_, signature, group_g_))
+  if (!crypto::mcl::VerifySign(public_key_shares_[n], current_message_, signature, GetGroupG()))
   {
     return AddResult::INVALID_SIGNATURE;
   }
@@ -571,7 +626,7 @@ bool BeaconManager::Verify()
 bool BeaconManager::Verify(Signature const &signature)
 {
   // TODO(HUT): use the static helper
-  return crypto::mcl::VerifySign(public_key_, current_message_, signature, group_g_);
+  return crypto::mcl::VerifySign(public_key_, current_message_, signature, GetGroupG());
 }
 
 /**
@@ -603,7 +658,7 @@ bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
     return false;
   }
 
-  return crypto::mcl::VerifySign(tmp, message, tmp2, group_g_);
+  return crypto::mcl::VerifySign(tmp, message, tmp2, GetGroupG());
 }
 
 /**
@@ -674,6 +729,20 @@ bool BeaconManager::can_verify()
 std::string BeaconManager::group_public_key() const
 {
   return public_key_.getStr();
+}
+
+bn::G2 const &BeaconManager::GetGroupG()
+{
+  return *curve_params_.Apply([](CurveParameters &params) {
+    return &params.GetGroupG();
+  });
+}
+
+bn::G2 const &BeaconManager::GetGroupH()
+{
+  return *curve_params_.Apply([](CurveParameters &params) {
+    return &params.GetGroupH();
+  });
 }
 
 }  // namespace dkg
