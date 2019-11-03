@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_manager.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "crypto/ecdsa.hpp"
 #include "network/generics/milli_timer.hpp"
-#include "core/synchronisation/protected.hpp"
 
 #include <mutex>
 #include <utility>
@@ -32,12 +32,11 @@ namespace {
 class CurveParameters
 {
 public:
-
   // Construction / Destruction
-  CurveParameters() = default;
+  CurveParameters()                        = default;
   CurveParameters(CurveParameters const &) = delete;
-  CurveParameters(CurveParameters &&) = delete;
-  ~CurveParameters() = default;
+  CurveParameters(CurveParameters &&)      = delete;
+  ~CurveParameters()                       = default;
 
   bn::G2 const &GetZeroG2()
   {
@@ -81,7 +80,6 @@ public:
   CurveParameters &operator=(CurveParameters &&) = delete;
 
 private:
-
   struct Params
   {
     bn::G2 zeroG2_{};
@@ -96,7 +94,7 @@ private:
 
 Protected<CurveParameters> curve_params_{};
 
-} // namespace
+}  // namespace
 
 constexpr char const *LOGGING_NAME = "BeaconManager";
 
@@ -110,9 +108,7 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
     ptr->GenerateKeys();
   }
 
-  curve_params_.ApplyVoid([](CurveParameters &params) {
-    params.EnsureInitialised();
-  });
+  curve_params_.ApplyVoid([](CurveParameters &params) { params.EnsureInitialised(); });
 }
 
 void BeaconManager::SetCertificate(CertificatePtr certificate)
@@ -420,7 +416,8 @@ void BeaconManager::AddReconstructionShare(MuddleAddress const &address)
   CabinetIndex index = identity_to_index_[address];
   if (reconstruction_shares.find(address) == reconstruction_shares.end())
   {
-    reconstruction_shares.insert({address, {{}, std::vector<PrivateKey>(cabinet_size_, GetZeroFr())}});
+    reconstruction_shares.insert(
+        {address, {{}, std::vector<PrivateKey>(cabinet_size_, GetZeroFr())}});
   }
   reconstruction_shares.at(address).first.insert(cabinet_index_);
   reconstruction_shares.at(address).second[cabinet_index_] = s_ij[index][cabinet_index_];
@@ -739,30 +736,22 @@ std::string BeaconManager::group_public_key() const
 
 bn::G2 const &BeaconManager::GetGroupG()
 {
-  return *curve_params_.Apply([](CurveParameters &params) {
-    return &params.GetGroupG();
-  });
+  return *curve_params_.Apply([](CurveParameters &params) { return &params.GetGroupG(); });
 }
 
 bn::G2 const &BeaconManager::GetGroupH()
 {
-  return *curve_params_.Apply([](CurveParameters &params) {
-    return &params.GetGroupH();
-  });
+  return *curve_params_.Apply([](CurveParameters &params) { return &params.GetGroupH(); });
 }
 
 bn::G2 const &BeaconManager::GetZeroG2()
 {
-  return *curve_params_.Apply([](CurveParameters &params) {
-    return &params.GetZeroG2();
-  });
+  return *curve_params_.Apply([](CurveParameters &params) { return &params.GetZeroG2(); });
 }
 
 bn::Fr const &BeaconManager::GetZeroFr()
 {
-  return *curve_params_.Apply([](CurveParameters &params) {
-    return &params.GetZeroFr();
-  });
+  return *curve_params_.Apply([](CurveParameters &params) { return &params.GetZeroFr(); });
 }
 
 }  // namespace dkg

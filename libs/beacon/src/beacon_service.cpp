@@ -47,7 +47,7 @@ void TrimToSize(T &container, std::size_t max_size)
   }
 }
 
-} // namespace
+}  // namespace
 
 char const *ToString(BeaconService::State state);
 

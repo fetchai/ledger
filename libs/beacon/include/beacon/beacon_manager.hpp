@@ -108,7 +108,6 @@ public:
   ///}
 
 private:
-
   static bn::G2 const &GetGroupG();
   static bn::G2 const &GetGroupH();
   static bn::G2 const &GetZeroG2();
