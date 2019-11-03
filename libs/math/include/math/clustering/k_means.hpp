@@ -67,7 +67,7 @@ public:
                        SizeType const &r_seed, SizeType const &max_loops, InitMode init_mode,
                        SizeType max_no_change_convergence)
     : n_clusters_(n_clusters)
-    , max_no_change_convergence_(std::move(max_no_change_convergence))
+    , max_no_change_convergence_(max_no_change_convergence)
     , max_loops_(max_loops)
     , init_mode_(init_mode)
   {
@@ -98,7 +98,7 @@ public:
                        SizeType const &r_seed, SizeType const &max_loops,
                        ClusteringType k_assignment, SizeType max_no_change_convergence)
     : n_clusters_(n_clusters)
-    , max_no_change_convergence_(std::move(max_no_change_convergence))
+    , max_no_change_convergence_(max_no_change_convergence)
     , max_loops_(max_loops)
     , k_assignment_(std::move(k_assignment))
   {

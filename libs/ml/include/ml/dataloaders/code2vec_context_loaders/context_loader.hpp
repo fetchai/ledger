@@ -126,7 +126,7 @@ private:
   static void createIdxUMapsFromCounter(umap_str_int &counter, umap_str_int &name_to_idx,
                                         umap_int_str &idx_to_name);
 
-  static void addValueToCounter(umap_str_int &umap, std::string word);
+  static void addValueToCounter(umap_str_int &umap, const std::string &word);
 
   static std::vector<std::string> splitStringByChar(std::stringstream input, char const *sep);
 
@@ -352,7 +352,7 @@ void C2VLoader<LabelType, DataType>::SetValidationRatio(float new_validation_rat
  */
 template <typename LabelType, typename InputType>
 void C2VLoader<LabelType, InputType>::addValueToCounter(
-    typename C2VLoader<LabelType, InputType>::umap_str_int &umap, std::string word)
+    typename C2VLoader<LabelType, InputType>::umap_str_int &umap, const std::string &word)
 {
   if (umap.find(word) == umap.end())
   {
