@@ -375,38 +375,48 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
     TrimToSize(cabinet_history_, HISTORY_LENGTH);
 
+    bool member_of_cabinet{false};
     for (auto const &staker : *cabinet_history_[current.body.block_number])
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
+
+      if (staker == mining_identity_)
+      {
+        member_of_cabinet = true;
+      }
+
       cabinet_member_list.insert(staker.identifier());
     }
 
-    auto threshold = static_cast<uint32_t>(
-        std::ceil(static_cast<double>(cabinet_member_list.size()) * threshold_));
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_.body.block_number,
-                   " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
-                   " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
-
-    uint64_t last_block_time = current.body.timestamp;
-    auto     current_time =
-        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-
-    if (current.body.block_number == 0)
+    if (member_of_cabinet)
     {
-      last_block_time = default_start_time_;
+      auto threshold = static_cast<uint32_t>(
+          std::ceil(static_cast<double>(cabinet_member_list.size()) * threshold_));
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_.body.block_number,
+                     " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
+                     " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
+
+      uint64_t last_block_time = current.body.timestamp;
+      auto     current_time =
+          GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+
+      if (current.body.block_number == 0)
+      {
+        last_block_time = default_start_time_;
+      }
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG with timestamp: ", last_block_time,
+                     " current: ", current_time,
+                     " diff: ", int64_t(current_time) - int64_t(last_block_time));
+
+      uint64_t block_interval = 1;
+
+      // Safe to call this multiple times
+      beacon_->StartNewCabinet(cabinet_member_list, threshold, current_block_.body.block_number + 1,
+                               current_block_.body.block_number + aeon_period_,
+                               last_block_time + block_interval, current.body.block_entropy);
     }
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG with timestamp: ", last_block_time,
-                   " current: ", current_time,
-                   " diff: ", int64_t(current_time) - int64_t(last_block_time));
-
-    uint64_t block_interval = 1;
-
-    // Safe to call this multiple times
-    beacon_->StartNewCabinet(cabinet_member_list, threshold, current_block_.body.block_number + 1,
-                             current_block_.body.block_number + aeon_period_,
-                             last_block_time + block_interval, current.body.block_entropy);
   }
 
   beacon_->MostRecentSeen(current_block_.body.block_number);
