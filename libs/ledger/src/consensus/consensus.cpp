@@ -302,13 +302,13 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   {
     if (identity == mining_identity_)
     {
-      FETCH_LOG_DEBUG(
+      FETCH_LOG_INFO(
           LOGGING_NAME, "Minting block. Time now: ", time_now_ms,
           " Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms,
           " Prev window ends: ", previous_block_window_ends,
           " last block TS:  ", last_block_timestamp_ms, " miner rank: ", miner_rank, " target: ",
           uint64_t(previous_block_window_ends + (uint64_t(miner_rank) * block_interval_ms_)),
-          " block weight: ", proposed.weight);
+          " block weight: ", proposed.weight, " ident: ", mining_identity_.identifier().ToBase64());
     }
     return true;
   }
