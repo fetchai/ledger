@@ -111,6 +111,8 @@ private:
 
   static bn::G2 const &GetGroupG();
   static bn::G2 const &GetGroupH();
+  static bn::G2 const &GetZeroG2();
+  static bn::Fr const &GetZeroFr();
 
   CertificatePtr certificate_;
   uint32_t       cabinet_size_;       ///< Size of cabinet

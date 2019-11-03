@@ -39,6 +39,18 @@ public:
   CurveParameters(CurveParameters &&) = delete;
   ~CurveParameters() = default;
 
+  bn::G2 const &GetZeroG2()
+  {
+    EnsureInitialised();
+    return params_->zeroG2_;
+  }
+
+  bn::Fr const &GetZeroFr()
+  {
+    EnsureInitialised();
+    return params_->zeroFr_;
+  }
+
   bn::G2 const &GetGroupG()
   {
     EnsureInitialised();
@@ -58,6 +70,8 @@ public:
       fetch::crypto::mcl::details::MCLInitialiser();
 
       params_ = std::make_unique<Params>();
+      params_->zeroFr_.clear();
+      params_->zeroG2_.clear();
       crypto::mcl::SetGenerators(params_->group_g_, params_->group_h_);
     }
   }
@@ -70,8 +84,11 @@ private:
 
   struct Params
   {
-    bn::G2 group_g_;
-    bn::G2 group_h_;
+    bn::G2 zeroG2_{};
+    bn::Fr zeroFr_{};
+
+    bn::G2 group_g_{};
+    bn::G2 group_h_{};
   };
 
   std::unique_ptr<Params> params_;
@@ -84,9 +101,6 @@ T CreateAndClear()
   value.clear();
   return value;
 }
-
-bn::G2 const zeroG2_{CreateAndClear<bn::G2>()};
-bn::Fr const zeroFr_{CreateAndClear<bn::Fr>()};
 
 Protected<CurveParameters> curve_params_{};
 
@@ -116,8 +130,8 @@ void BeaconManager::SetCertificate(CertificatePtr certificate)
 
 void BeaconManager::GenerateCoefficients()
 {
-  std::vector<PrivateKey> a_i(polynomial_degree_ + 1, zeroFr_);
-  std::vector<PrivateKey> b_i(polynomial_degree_ + 1, zeroFr_);
+  std::vector<PrivateKey> a_i(polynomial_degree_ + 1, GetZeroFr());
+  std::vector<PrivateKey> b_i(polynomial_degree_ + 1, GetZeroFr());
   for (uint32_t k = 0; k <= polynomial_degree_; k++)
   {
     a_i[k].setRand();
@@ -414,7 +428,7 @@ void BeaconManager::AddReconstructionShare(MuddleAddress const &address)
   CabinetIndex index = identity_to_index_[address];
   if (reconstruction_shares.find(address) == reconstruction_shares.end())
   {
-    reconstruction_shares.insert({address, {{}, std::vector<PrivateKey>(cabinet_size_, zeroFr_)}});
+    reconstruction_shares.insert({address, {{}, std::vector<PrivateKey>(cabinet_size_, GetZeroFr())}});
   }
   reconstruction_shares.at(address).first.insert(cabinet_index_);
   reconstruction_shares.at(address).second[cabinet_index_] = s_ij[index][cabinet_index_];
@@ -429,7 +443,7 @@ void BeaconManager::AddReconstructionShare(MuddleAddress const &                
   if (reconstruction_shares.find(share.first) == reconstruction_shares.end())
   {
     reconstruction_shares.insert(
-        {share.first, {{}, std::vector<PrivateKey>(cabinet_size_, zeroFr_)}});
+        {share.first, {{}, std::vector<PrivateKey>(cabinet_size_, GetZeroFr())}});
   }
   else if (!reconstruction_shares.at(share.first).second[from_index].isZero())
   {
@@ -742,6 +756,20 @@ bn::G2 const &BeaconManager::GetGroupH()
 {
   return *curve_params_.Apply([](CurveParameters &params) {
     return &params.GetGroupH();
+  });
+}
+
+bn::G2 const &BeaconManager::GetZeroG2()
+{
+  return *curve_params_.Apply([](CurveParameters &params) {
+    return &params.GetZeroG2();
+  });
+}
+
+bn::Fr const &BeaconManager::GetZeroFr()
+{
+  return *curve_params_.Apply([](CurveParameters &params) {
+    return &params.GetZeroFr();
   });
 }
 
