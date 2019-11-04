@@ -202,7 +202,8 @@ bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers 
   }
   catch (std::exception const &ex)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Failed to make ", ToString(method), " to ", endpoint);
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to make ", ToString(method), " to ", endpoint,
+                   ". Exception: ", ex.what());
     success = false;
   }
 

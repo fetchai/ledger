@@ -54,19 +54,12 @@ public:
                     socket_.remote_endpoint().address().to_string());
   }
 
-  ~HTTPConnection() override
-  {
-    manager_.Leave(handle_);
-  }
+  ~HTTPConnection() override = default;
 
   void Start()
   {
     is_open_ = true;
-    handle_  = manager_.Join(shared_from_this());
-    if (is_open_)
-    {
-      ReadHeader();
-    }
+    ReadHeader();
   }
 
   void Send(HTTPResponse const &response) override
@@ -222,10 +215,23 @@ public:
     asio::async_write(socket_, *buffer_ptr, cb);
   }
 
+  void CloseConnnection() override
+  {
+    std::error_code dummy;
+    socket_.shutdown(asio::ip::tcp::socket::shutdown_both, dummy);
+    socket_.close(dummy);
+  }
+
   void Close()
   {
     is_open_ = false;
+    CloseConnnection();
     manager_.Leave(handle_);
+  }
+
+  void SetHandle(HandleType handle)
+  {
+    handle_ = handle;
   }
 
 private:
