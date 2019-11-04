@@ -16,7 +16,7 @@
 #
 # ------------------------------------------------------------------------------
 
-#from __future__ import annotations
+# from __future__ import annotations
 from typing import get_type_hints, Set, Tuple, Dict, List, Callable
 from ..graph import Graph, Corners, OrientedPath
 import unittest

@@ -17,7 +17,7 @@
 # ------------------------------------------------------------------------------
 
 # The following line should be enabled once we switch to python3.7
-#from __future__ import annotations
+# from __future__ import annotations
 from typing import Set, Tuple, Dict, Any, List, TypeVar, Generic  # Type, Callable
 from copy import copy, deepcopy
 
