@@ -1363,7 +1363,22 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator+=(FixedPoint<I, F> const 
   }
   else
   {
-    if (CheckOverflow(static_cast<NextType>(data_) + static_cast<NextType>(n.Data())))
+    if (IsPosInfinity(n))
+    {
+      fp_state |= STATE_INFINITY;
+      *this = POSITIVE_INFINITY;
+    }
+    else if (IsNegInfinity(n))
+    {
+      fp_state |= STATE_INFINITY;
+      *this = NEGATIVE_INFINITY;
+    }
+    else if (CheckOverflow(static_cast<NextType>(data_) + static_cast<NextType>(n.Data())))
+    {
+      fp_state |= STATE_OVERFLOW;
+      data_ = MAX;
+    }
+    else if (CheckUnderflow(static_cast<NextType>(data_) + static_cast<NextType>(n.Data())))
     {
       fp_state |= STATE_OVERFLOW;
       data_ = MIN;
@@ -2461,7 +2476,7 @@ constexpr FixedPoint<32, 32> FixedPoint<32, 32>::SinApproxPi4(FixedPoint<32, 32>
 }
 
 template <>
-FixedPoint<64, 64> FixedPoint<64, 64>::SinApproxPi4(FixedPoint<64, 64> const &r)
+constexpr FixedPoint<64, 64> FixedPoint<64, 64>::SinApproxPi4(FixedPoint<64, 64> const &r)
 {
   assert(r <= CONST_PI_4);
 
