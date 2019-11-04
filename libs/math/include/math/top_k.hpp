@@ -36,8 +36,9 @@ template <typename ArrayDataType, typename ArrayIndicesType>
 void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType const &data,
           typename ArrayDataType::SizeType k, bool sorted = true)
 {
-  using DataType   = typename ArrayDataType::Type;
-  using IndiceType = typename ArrayIndicesType::Type;
+
+  using DataType  = typename ArrayDataType::Type;
+  using IndexType = typename ArrayIndicesType::Type;
 
   assert(k <= data.shape().at(data.shape().size() - 1));
 
@@ -58,7 +59,8 @@ void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType 
   std::vector<std::pair<SizeType, DataType>> vec;
   vec.resize(axis_size);
 
-  SizeType i = 0, k_minus_one = k - 1;
+  SizeType i           = 0;
+  SizeType k_minus_one = k - 1;
   while (data_it.is_valid())
   {
     // Copy values to vector
@@ -71,8 +73,9 @@ void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType 
 
     // sort the top k values
     std::sort(vec.begin(), vec.end(),
-              [](std::pair<IndiceType, DataType> const &a,
-                 std::pair<IndiceType, DataType> const &b) { return a.second > b.second; });
+              [](std::pair<IndexType, DataType> const &a, std::pair<IndexType, DataType> const &b) {
+                return a.second > b.second;
+              });
 
     // Copy sorted values to return array
     for (SizeType index{0}; index < k; index++)

@@ -17,22 +17,21 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "math/top_k.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class TopKTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(TopKTest, MyTypes);
+TYPED_TEST_CASE(TopKTest, TensorFloatingTypes);
 
 TYPED_TEST(TopKTest, top_k_test_sorted)
 {
@@ -77,3 +76,7 @@ TYPED_TEST(TopKTest, top_k_test_unsorted)
                                  fetch::math::function_tolerance<DataType>()));
   ASSERT_TRUE(ret.second.AllClose(gt_indices, 0, 0));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
