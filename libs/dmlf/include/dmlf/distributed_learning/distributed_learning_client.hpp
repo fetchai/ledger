@@ -35,6 +35,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <core/time/to_seconds.hpp>
 
 namespace fetch {
 namespace dmlf {
@@ -138,6 +139,8 @@ protected:
 
 private:
   void GraphAddGradients(VectorTensorType const &gradients);
+
+  std::chrono::steady_clock::time_point start_time_;
 };
 
 template <class TensorType>
@@ -170,7 +173,8 @@ TrainingClient<TensorType>::TrainingClient(std::string                   id,
 template <class TensorType>
 void TrainingClient<TensorType>::ClearLossFile()
 {
-  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::trunc);
+  std::ofstream lossfile("/home/emmasmith/Development/ledger-vm-misc/TFF_MNIST/fetch_results_" + id_ + ".csv",
+      std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
 }
 
@@ -185,6 +189,7 @@ void TrainingClient<TensorType>::SetParams(
   learning_rate_ = new_params.learning_rate;
   print_loss_    = new_params.print_loss;
   max_updates_   = new_params.max_updates;
+  start_time_    = std::chrono::steady_clock::now();
 }
 
 template <class TensorType>
@@ -221,7 +226,8 @@ void TrainingClient<TensorType>::Run()
 {
   ResetLossCnt();
 
-  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
+  std::ofstream lossfile("/home/emmasmith/Development/ledger-vm-misc/TFF_MNIST/fetch_results_" + id_ + ".csv",
+      std::ofstream::out | std::ofstream::app);
 
   update_counter_ = 0;
   while (update_counter_ < max_updates_)
@@ -231,35 +237,39 @@ void TrainingClient<TensorType>::Run()
     // Validate loss for logging purpose
     Test();
 
-    // Save loss variation data
-    // Upload to https://plot.ly/create/#/ for visualisation
-
-    if (lossfile)
-    {
-      lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
-               << static_cast<double>(train_loss_) << ", " << static_cast<double>(test_loss_)
-               << "\n";
-    }
-
     if (print_loss_)
     {
       // Lock console
       FETCH_LOCK(*console_mutex_ptr_);
       std::cout << "Client " << id_ << "\tTraining loss: " << static_cast<double>(train_loss_)
-                << "\tTest loss: " << static_cast<double>(test_loss_) << std::endl;
+                << "\tTest_loss: " << static_cast<double>(test_loss_) << std::endl;
     }
   }
 
   optimiser_ptr_->IncrementEpochCounter();
   optimiser_ptr_->UpdateLearningRate();
 
+  // Save loss variation data
+  // Upload to https://plot.ly/create/#/ for visualisation
+  Test();
   if (lossfile)
   {
-    lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
-             << "STOPPED"
+    double seconds = fetch::ToSeconds(std::chrono::steady_clock::now() - start_time_);
+    lossfile << "Time: " << seconds
+             << " Epoch: " << static_cast<int>(batch_counter_ / max_updates_)
+             << " Loss: " << static_cast<double>(train_loss_)
+             << " Test_loss: " << static_cast<double>(test_loss_)
              << "\n";
+//    lossfile.flush();
     lossfile.close();
   }
+//  if (lossfile)
+//  {
+//    lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
+//             << "STOPPED"
+//             << "\n";
+//    lossfile.close();
+//  }
 
   if (print_loss_)
   {
