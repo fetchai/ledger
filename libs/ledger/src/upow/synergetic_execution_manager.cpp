@@ -37,8 +37,8 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
   , executors_(num_executors)
   , threads_{num_executors, "SynEx"}
   , no_executor_count_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_upow_exec_manager_rid_no_executor_total",
-      "The number of items needed to be added back to the queue because of missing executor.")}
+        "ledger_upow_exec_manager_rid_no_executor_total",
+        "The number of items needed to be added back to the queue because of missing executor.")}
 {
   if (num_executors != 1)
   {
@@ -174,7 +174,7 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData &prob
     if (executors_.empty())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Executors empty, can't execute item!");
-      auto ptr = std::make_shared<WorkItem>();
+      auto ptr          = std::make_shared<WorkItem>();
       ptr->problem_data = std::move(problem_data);
       ptr->work_queue   = std::move(queue);
       solution_stack_.emplace_back(std::move(ptr));
