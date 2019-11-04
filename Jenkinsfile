@@ -194,35 +194,35 @@ def run_builds_in_parallel()
 {
   def stages = [:]
 
-  for (config in Configuration.values())
-  {
-    for (platform in LINUX_PLATFORMS_CORE)
-    {
-      stages["${platform.label} ${config.label}"] = create_docker_build(
-        platform,
-        config,
-        full_run)
-    }
-
-    // Only run macOS builds on master and head branches
-    if (run_full_build())
-    {
-      stages["macOS ${Platform.DEFAULT_CLANG.label} ${config.label}"] = create_macos_build(
-        Platform.DEFAULT_CLANG,
-        config)
-    }
-  }
-
-  for (config in (run_full_build() ? Configuration.values() : [Configuration.RELEASE]))
-  {
-    for (platform in LINUX_PLATFORMS_AUX)
-    {
-      stages["${platform.label} ${config.label}"] = create_docker_build(
-        platform,
-        config,
-        run_full_build() ? full_run : fast_run)
-    }
-  }
+//   for (config in Configuration.values())
+//   {
+//     for (platform in LINUX_PLATFORMS_CORE)
+//     {
+//       stages["${platform.label} ${config.label}"] = create_docker_build(
+//         platform,
+//         config,
+//         full_run)
+//     }
+//
+//     // Only run macOS builds on master and head branches
+//     if (run_full_build())
+//     {
+//       stages["macOS ${Platform.DEFAULT_CLANG.label} ${config.label}"] = create_macos_build(
+//         Platform.DEFAULT_CLANG,
+//         config)
+//     }
+//   }
+//
+//   for (config in (run_full_build() ? Configuration.values() : [Configuration.RELEASE]))
+//   {
+//     for (platform in LINUX_PLATFORMS_AUX)
+//     {
+//       stages["${platform.label} ${config.label}"] = create_docker_build(
+//         platform,
+//         config,
+//         run_full_build() ? full_run : fast_run)
+//     }
+//   }
 
   if (run_full_build())
   {
@@ -259,7 +259,7 @@ def run_basic_checks()
 def main()
 {
   timeout(180) {
-    run_basic_checks()
+//     run_basic_checks()
     run_builds_in_parallel()
   }
 }
