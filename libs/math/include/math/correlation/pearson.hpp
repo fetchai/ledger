@@ -34,7 +34,7 @@ typename ArrayType::Type Pearson(ArrayType const &a, ArrayType const &b)
 {
   assert(a.size() == b.size());
   using Type     = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   Type meanA  = fetch::math::statistics::Mean(a);
   Type meanB  = fetch::math::statistics::Mean(b);

@@ -34,8 +34,6 @@ TYPED_TEST_CASE(HammingTest, TensorFloatingTypes);
 
 TEST(HammingTest, simple_test)
 {
-  using SizeType = typename fetch::math::Tensor<float>::SizeType;
-
   Tensor<double> A = Tensor<double>(4);
   A.Set(SizeType{0}, 1);
   A.Set(SizeType{1}, 2);

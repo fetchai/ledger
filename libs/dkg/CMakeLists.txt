@@ -23,7 +23,3 @@ target_link_libraries(fetch-dkg
                              fetch-entropy
                              fetch-muddle
                              fetch-logging)
-
-if (_is_clang_compiler)
-  target_compile_options(fetch-dkg PRIVATE -Wshadow)
-endif ()

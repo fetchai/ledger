@@ -21,10 +21,6 @@ target_link_libraries(fetch-muddle
                              fetch-moment
                              fetch-telemetry)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-muddle PRIVATE -Wshadow)
-endif ()
-
 # Unit tests
 add_subdirectory(tests)
 add_subdirectory(benchmark)

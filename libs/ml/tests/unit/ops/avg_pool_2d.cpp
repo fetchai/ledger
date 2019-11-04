@@ -42,7 +42,7 @@ TYPED_TEST(AvgPool2DTest, forward_test_3_2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_width  = 10;
   SizeType const input_height = 5;
@@ -85,7 +85,7 @@ TYPED_TEST(AvgPool2DTest, forward_2_channels_test_3_2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const channels_size = 2;
   SizeType const input_width   = 10;
@@ -136,7 +136,7 @@ TYPED_TEST(AvgPool2DTest, backward_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_width   = 5;
   SizeType const input_height  = 5;
@@ -205,7 +205,7 @@ TYPED_TEST(AvgPool2DTest, backward_2_channels_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const channels_size = 2;
   SizeType const input_width   = 5;
@@ -309,7 +309,7 @@ TYPED_TEST(AvgPool2DTest, saveparams_test)
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::AvgPool2D<TensorType>::SPType;
   using OpType        = typename fetch::ml::ops::AvgPool2D<TensorType>;
-  using SizeType      = typename TypeParam::SizeType;
+  using SizeType      = fetch::math::SizeType;
 
   SizeType const channels_size = 2;
   SizeType const input_width   = 10;
@@ -385,7 +385,7 @@ TYPED_TEST(AvgPool2DTest, saveparams_backward_2_channels_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using OpType     = typename fetch::ml::ops::AvgPool2D<TensorType>;
   using SPType     = typename OpType::SPType;
 

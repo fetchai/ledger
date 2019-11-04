@@ -29,7 +29,7 @@ template <typename TensorType>
 class W2VModel
 {
 private:
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using ContainerType = typename TensorType::ContainerType;
 

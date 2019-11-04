@@ -42,7 +42,7 @@ using namespace fetch::ml::examples;
 
 using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
+using SizeType   = fetch::math::SizeType;
 
 ////////////////////////
 /// MODEL DEFINITION ///
