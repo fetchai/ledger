@@ -293,7 +293,8 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
 
   alignas(32) type PInf[TypeParam::E_BLOCK_COUNT], NInf[TypeParam::E_BLOCK_COUNT],
       NaN[TypeParam::E_BLOCK_COUNT], A[TypeParam::E_BLOCK_COUNT], B[TypeParam::E_BLOCK_COUNT],
-      C[TypeParam::E_BLOCK_COUNT], D[TypeParam::E_BLOCK_COUNT], max{type::FP_MAX}, min{type::FP_MIN}, zero{type::_0};
+      C[TypeParam::E_BLOCK_COUNT], D[TypeParam::E_BLOCK_COUNT];
+
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     PInf[i] = type::POSITIVE_INFINITY;
@@ -308,9 +309,9 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   TypeParam vnan{NaN};
   TypeParam va{A};
   TypeParam vb{B};
-  TypeParam vmax{max};
-  TypeParam vmin{min};
-  TypeParam vzero{zero};
+  TypeParam vmax(type::FP_MAX);
+  TypeParam vmin(type::FP_MIN);
+  TypeParam vzero(type::_0);
   // NaN != NaN
   EXPECT_FALSE(any_equal_to(vnan, vnan));
   // -inf == -inf
@@ -340,7 +341,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
        [&](size_t i) { C[i] = A[i] + B[i]; }, [&]() { vret = va + vb; }, false, false, false},
       {// Overflow state check
        [&](size_t i) {
-         A[i] = type::FP_MAX / 2 + i;
+         A[i] = type::FP_MAX / 2 + i + 1;
          B[i] = type::FP_MAX / 2;
          C[i] = A[i] + B[i];
        },
@@ -352,7 +353,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
        false, false, true},
       {// Underflow state check
        [&](size_t i) {
-         A[i] = -type::FP_MAX / 2 - i;
+         A[i] = -type::FP_MAX / 2 - i - 1;
          B[i] = -type::FP_MAX / 2;
          C[i] = A[i] + B[i];
        },
