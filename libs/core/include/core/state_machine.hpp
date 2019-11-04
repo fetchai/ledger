@@ -84,6 +84,7 @@ public:
   /// @{
   bool IsReadyToExecute() const override;
   void Execute() override;
+  char const * GetId() const override;
   /// @}
 
   State state() const
@@ -247,6 +248,20 @@ char const *StateMachine<S>::GetName() const
 {
   return name_.c_str();
 }
+
+
+/**
+ * Get the id of the runnable
+ *
+ * @tparam S The state enum type
+ * @return The string name of the state machine
+ */
+template <typename S>
+char const *StateMachine<S>::GetId() const
+{
+  return name_.c_str();
+}
+
 
 /**
  * Get the current string representation for the current state
