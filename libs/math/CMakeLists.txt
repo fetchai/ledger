@@ -17,10 +17,6 @@ setup_compiler()
 setup_library(fetch-math)
 target_link_libraries(fetch-math PUBLIC fetch-core fetch-logging)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-math PRIVATE -Wshadow)
-endif ()
-
 add_test_target()
 
 add_subdirectory(benchmark)

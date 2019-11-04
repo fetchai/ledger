@@ -41,7 +41,7 @@ TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as 
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -95,7 +95,7 @@ TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -150,7 +150,7 @@ TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -244,7 +244,7 @@ TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -309,7 +309,7 @@ TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -413,7 +413,7 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -469,7 +469,7 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
 TYPED_TEST(Convolution2DTest, getStateDict)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -500,7 +500,7 @@ TYPED_TEST(Convolution2DTest, getStateDict)
 TYPED_TEST(Convolution2DTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
+  using SizeType  = fetch::math::SizeType;
   using LayerType = fetch::ml::layers::Convolution2D<TypeParam>;
   using SPType    = typename LayerType::SPType;
 

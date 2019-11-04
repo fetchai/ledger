@@ -90,7 +90,7 @@ TYPED_TEST(GraphTest, get_state_dict)
 TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   fetch::ml::Graph<TensorType> g;
 
@@ -107,7 +107,7 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
 TYPED_TEST(GraphTest, node_add_wrong_order_test)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   fetch::ml::Graph<TensorType> g;
 

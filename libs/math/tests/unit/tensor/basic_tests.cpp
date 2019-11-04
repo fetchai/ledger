@@ -16,22 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "meta/type_traits.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "gtest/gtest.h"
-
+namespace fetch {
+namespace math {
+namespace test {
 template <typename T>
 class TensorBasicTests : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int32_t, uint32_t, int64_t, uint64_t, float, double,
-                                 fetch::fixed_point::FixedPoint<32, 32>>;
-TYPED_TEST_CASE(TensorBasicTests, MyTypes);
-
-using namespace fetch::math;
+TYPED_TEST_CASE(TensorBasicTests, FloatIntAndUIntTypes);
 
 // template for producing a random array of FixedPoints
 template <uint16_t I, uint16_t F>
@@ -216,7 +215,6 @@ TYPED_TEST(TensorBasicTests, is_equal_test)
 
 TYPED_TEST(TensorBasicTests, is_not_equal_test)
 {
-  using SizeType               = typename Tensor<TypeParam>::SizeType;
   std::size_t       n          = 10000;
   Tensor<TypeParam> test_array = RandomArray(n, TypeParam(0));
   Tensor<TypeParam> test_array_2(n);
@@ -264,3 +262,7 @@ TYPED_TEST(TensorBasicTests, minus_equals_test)
   }
   ASSERT_TRUE(test_array_2.AllClose(result_array));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

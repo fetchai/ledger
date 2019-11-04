@@ -16,24 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "gtest/gtest.h"
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class TensorOperationsTest : public ::testing::Test
 {
 };
 
-using MyTypes =
-    ::testing::Types<int32_t, int64_t, float, double, fetch::fixed_point::FixedPoint<16, 16>,
-                     fetch::fixed_point::FixedPoint<32, 32>>;
-TYPED_TEST_CASE(TensorOperationsTest, MyTypes);
+TYPED_TEST_CASE(TensorOperationsTest, FloatIntAndUIntTypes);
 
 TYPED_TEST(TensorOperationsTest, inline_add_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({2, 4}));
   fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({2, 4}));
@@ -68,7 +69,7 @@ TYPED_TEST(TensorOperationsTest, inline_add_test)
 
 TYPED_TEST(TensorOperationsTest, inline_mul_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({2, 4}));
   fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({2, 4}));
@@ -101,7 +102,7 @@ TYPED_TEST(TensorOperationsTest, inline_mul_test)
 
 TYPED_TEST(TensorOperationsTest, sum_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({2, 4}));
   fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({2, 4}));
@@ -125,7 +126,7 @@ TYPED_TEST(TensorOperationsTest, sum_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
   SizeType                       counter{0};
@@ -153,7 +154,7 @@ TYPED_TEST(TensorOperationsTest, transpose_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
   SizeType                       counter{0};
@@ -187,7 +188,7 @@ TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
   SizeType                       count = 0;
@@ -212,7 +213,7 @@ TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 
 TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
   SizeType                       count = 0;
@@ -270,7 +271,7 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
   SizeType                       count = 0;
@@ -296,7 +297,7 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_separated_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
   SizeType                       count = 0;
@@ -344,7 +345,7 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_separated_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
   SizeType                       count = 0;
@@ -396,7 +397,7 @@ TYPED_TEST(TensorOperationsTest, broadcastable_assignment_test)
 {
 
   using ArrayType = fetch::math::Tensor<TypeParam>;
-  using SizeType  = typename ArrayType::SizeType;
+  using SizeType  = fetch::math::SizeType;
 
   ArrayType small_data = ArrayType::FromString("1, 2; 2, 1;2, 4");
   small_data.Reshape({3, 1, 2});
@@ -412,7 +413,7 @@ TYPED_TEST(TensorOperationsTest, broadcastable_assignment_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
   fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({3, 2, 3}));
@@ -463,7 +464,7 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)
 
 TYPED_TEST(TensorOperationsTest, slices_same_tensor_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
 
@@ -519,3 +520,7 @@ TYPED_TEST(TensorOperationsTest, slices_same_tensor_test)
 }
 
 // TODO (private 867) - reimplement shuffle & test
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

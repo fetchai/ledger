@@ -18,26 +18,24 @@
 
 #include "math/base_types.hpp"
 #include "math/one_hot.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class OneHotTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(OneHotTest, MyTypes);
+TYPED_TEST_CASE(OneHotTest, TensorFloatingTypes);
 
 TYPED_TEST(OneHotTest, one_hot_test_axis_0)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType data = TypeParam::FromString("1,0,1,2");
@@ -58,7 +56,6 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_0)
 TYPED_TEST(OneHotTest, one_hot_test_axis_1)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType data = TypeParam::FromString("1,0,1,2");
@@ -79,7 +76,6 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_1)
 TYPED_TEST(OneHotTest, one_hot_test_axis_3)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType data = TypeParam::FromString("1,0,1,2");
@@ -96,3 +92,7 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_3)
   ASSERT_TRUE(ret.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                            fetch::math::function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

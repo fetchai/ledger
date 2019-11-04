@@ -33,7 +33,6 @@ using namespace fetch::ml;
 
 using DataType   = double;
 using TensorType = Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
 
 /**
  * i.e. Fill tensor matrix with DataType values from file at path

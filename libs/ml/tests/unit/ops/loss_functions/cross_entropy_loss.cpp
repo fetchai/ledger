@@ -119,7 +119,7 @@ TYPED_TEST(CrossEntropyTest, onehot_forward_log_zero_test)
 
 TYPED_TEST(CrossEntropyTest, binary_forward_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   uint64_t n_classes     = 1;
   uint64_t n_data_points = 3;
@@ -147,7 +147,7 @@ TYPED_TEST(CrossEntropyTest, binary_forward_test)
 
 TYPED_TEST(CrossEntropyTest, binary_backward_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   uint64_t n_classes     = 1;

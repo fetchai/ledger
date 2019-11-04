@@ -16,29 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/statistics/entropy.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/statistics/entropy.hpp"
+#include "test_types.hpp"
 
-using namespace fetch::math::statistics;
-using namespace fetch::math;
-
+namespace fetch {
+namespace math {
+namespace test {
 template <typename T>
 class EntropyTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(EntropyTest, MyTypes);
+TYPED_TEST_CASE(EntropyTest, TensorFloatingTypes);
 
 TYPED_TEST(EntropyTest, entropy)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType A(4);
@@ -48,5 +42,9 @@ TYPED_TEST(EntropyTest, entropy)
   A.Set(SizeType{2}, DataType(0.3));
   A.Set(SizeType{3}, DataType(0.4));
 
-  EXPECT_NEAR(double(Entropy(A)), 1.84643934467102, 1e-4);
+  EXPECT_NEAR(double(statistics::Entropy(A)), 1.84643934467102, 1e-4);
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

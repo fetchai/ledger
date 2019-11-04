@@ -16,21 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/activation_functions/relu.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/activation_functions/relu.hpp"
+#include "test_types.hpp"
+
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class ReluTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(ReluTest, MyTypes);
+TYPED_TEST_CASE(ReluTest, TensorIntAndFloatingTypes);
 
 template <typename ArrayType>
 ArrayType RandomArrayNegative(std::size_t n)
@@ -102,3 +101,7 @@ TYPED_TEST(ReluTest, positive_response)
     ASSERT_EQ(test_array_2[i], test_array[i]);
   }
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
