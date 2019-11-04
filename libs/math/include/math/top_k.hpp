@@ -36,7 +36,6 @@ template <typename ArrayDataType, typename ArrayIndicesType>
 void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType const &data,
           typename ArrayDataType::SizeType k, bool sorted = true)
 {
-
   using DataType  = typename ArrayDataType::Type;
   using IndexType = typename ArrayIndicesType::Type;
 
