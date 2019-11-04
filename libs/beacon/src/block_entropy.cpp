@@ -20,14 +20,12 @@
 
 using fetch::beacon::BlockEntropy;
 
-BlockEntropy::BlockEntropy() = default;
-
 /**
- * Copy constructor - no need for the digest or confirmations
- * since the copy constructor is used to create the next block
+ * Copy method - no need for the digest or confirmations
+ * since this is used to create the next block
  * entropy
  */
-BlockEntropy::BlockEntropy(BlockEntropy const &rhs)
+void BlockEntropy::SelectCopy(BlockEntropy const &rhs)
 {
   qualified        = rhs.qualified;
   group_public_key = rhs.group_public_key;
@@ -53,10 +51,11 @@ void BlockEntropy::HashSelf()
   serializer << qualified;
   serializer << group_public_key;
   serializer << block_number;
+  serializer << aeon_notarisation_keys;
   digest = crypto::Hash<crypto::SHA256>(serializer.data());
 }
 
 bool BlockEntropy::IsAeonBeginning() const
 {
-  return !qualified.empty();
+  return !confirmations.empty();
 }

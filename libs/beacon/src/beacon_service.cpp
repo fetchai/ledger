@@ -36,9 +36,8 @@ namespace beacon {
 
 char const *ToString(BeaconService::State state);
 
-BeaconService::BeaconService(MuddleInterface &               muddle,
-                             shards::ManifestCacheInterface &manifest_cache,
-                             const CertificatePtr &certificate, SharedEventManager event_manager)
+BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &certificate,
+                             BeaconSetupService &beacon_setup, SharedEventManager event_manager)
   : certificate_{certificate}
   , identity_{certificate->identity()}
   , endpoint_{muddle.GetEndpoint()}
@@ -46,7 +45,6 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
                                                   ToString)}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , event_manager_{std::move(event_manager)}
-  , cabinet_creator_{muddle, identity_, manifest_cache, certificate_}
   , beacon_protocol_{*this}
   , beacon_entropy_generated_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_entropy_generated_total", "The total number of times entropy has been generated")}
@@ -63,9 +61,8 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
   , beacon_entropy_current_round_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_entropy_current_round", "The current round attempting to generate for.")}
 {
-
   // Attaching beacon ready callback handler
-  cabinet_creator_.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) {
+  beacon_setup.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) {
     FETCH_LOCK(mutex_);
     aeon_exe_queue_.push_back(beacon);
   });
@@ -109,57 +106,11 @@ BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, Bloc
   return Status::FAILED;
 }
 
-void BeaconService::AbortCabinet(uint64_t round_start)
-{
-  cabinet_creator_.Abort(round_start);
-}
-
-void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
-                                    uint64_t round_start, uint64_t round_end, uint64_t start_time,
-                                    BlockEntropy const &prev_entropy)
-{
-  auto diff_time =
-      int64_t(GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))) -
-      int64_t(start_time);
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
-                 "at time: ", start_time, " (diff): ", diff_time);
-
-  // Check threshold meets the requirements for the RBC
-  uint32_t rbc_threshold{0};
-  if (members.size() % 3 == 0)
-  {
-    rbc_threshold = static_cast<uint32_t>(members.size() / 3 - 1);
-  }
-  else
-  {
-    rbc_threshold = static_cast<uint32_t>(members.size() / 3);
-  }
-  if (threshold < rbc_threshold)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Threshold is below RBC threshold. Reset to rbc threshold");
-    threshold = rbc_threshold;
-  }
-
-  FETCH_LOCK(mutex_);
-
-  SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
-
-  beacon->manager.SetCertificate(certificate_);
-  beacon->manager.NewCabinet(members, threshold);
-
-  // Setting the aeon details
-  beacon->aeon.round_start               = round_start;
-  beacon->aeon.round_end                 = round_end;
-  beacon->aeon.members                   = std::move(members);
-  beacon->aeon.start_reference_timepoint = start_time;
-  beacon->aeon.block_entropy_previous    = prev_entropy;
-
-  cabinet_creator_.QueueSetup(beacon);
-}
-
 BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 {
   FETCH_LOCK(mutex_);
+
+  active_exe_unit_.reset();
 
   // Checking whether the next cabinet is ready
   // to produce random numbers.
@@ -355,9 +306,9 @@ BeaconService::State BeaconService::OnCompleteState()
   // If there is still entropy left to generate, set up and go around the loop
   if (block_entropy_being_created_->block_number < active_exe_unit_->aeon.round_end)
   {
-    block_entropy_previous_                    = std::move(block_entropy_being_created_);
-    block_entropy_being_created_               = std::make_shared<BlockEntropy>();
-    *block_entropy_being_created_              = *block_entropy_previous_;
+    block_entropy_previous_      = std::move(block_entropy_being_created_);
+    block_entropy_being_created_ = std::make_shared<BlockEntropy>();
+    block_entropy_being_created_->SelectCopy(*block_entropy_previous_);
     block_entropy_being_created_->block_number = block_entropy_previous_->block_number + 1;
 
     return State::PREPARE_ENTROPY_GENERATION;
@@ -404,16 +355,9 @@ bool BeaconService::AddSignature(SignatureShare share)
   return true;
 }
 
-std::vector<std::weak_ptr<core::Runnable>> BeaconService::GetWeakRunnables()
+std::weak_ptr<core::Runnable> BeaconService::GetWeakRunnable()
 {
-  std::vector<std::weak_ptr<core::Runnable>> ret = {state_machine_};
-
-  auto setup_runnables = cabinet_creator_.GetWeakRunnables();
-
-  for (auto const &i : setup_runnables)
-  {
-    ret.push_back(i);
-  }
+  std::weak_ptr<core::Runnable> ret = {state_machine_};
 
   return ret;
 }

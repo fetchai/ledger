@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,31 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/mcl_dkg.hpp"
+#include "core/service_ids.hpp"
+#include "ledger/protocols/notarisation_protocol.hpp"
+#include "ledger/protocols/notarisation_service.hpp"
 
 namespace fetch {
-namespace beacon {
+namespace ledger {
 
-struct DkgOutput
+NotarisationServiceProtocol::NotarisationServiceProtocol(NotarisationService &service)
+  : service_(service)
 {
-  using PublicKey         = crypto::mcl::PublicKey;
-  using PrivateKey        = crypto::mcl::PrivateKey;
-  using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using CabinetList       = std::set<MuddleAddress>;
+  this->Expose(GET_NOTARISATIONS, &service_, &NotarisationService::GetNotarisations);
+}
 
-  DkgOutput() = default;
-
-  DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares, PrivateKey secret_share,
-            CabinetList qual_members);
-
-  DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members);
-
-  CabinetList            qual{};
-  PublicKey              group_public_key;
-  std::vector<PublicKey> public_key_shares{};
-  PrivateKey             private_key_share;
-};
-
-}  // namespace beacon
+}  // namespace ledger
 }  // namespace fetch

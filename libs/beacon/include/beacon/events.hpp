@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/aeon.hpp"
+
 namespace fetch {
 namespace beacon {
 

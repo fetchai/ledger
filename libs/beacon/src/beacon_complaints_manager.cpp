@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_complaints_manager.hpp"
+#include "core/containers/set_intersection.hpp"
 
 #include <cstdint>
 #include <mutex>
@@ -33,7 +34,6 @@ void ComplaintsManager::ResetCabinet(MuddleAddress const &address, uint32_t thre
   address_   = address;
   finished_  = false;
   complaints_counter_.clear();
-  complaints_from_.clear();
   complaints_.clear();
   complaints_received_.clear();
 }
@@ -44,74 +44,91 @@ void ComplaintsManager::AddComplaintAgainst(MuddleAddress const &complaint_addre
   complaints_counter_[complaint_address].insert(address_);
 }
 
-void ComplaintsManager::AddComplaintsFrom(MuddleAddress const &                    from,
-                                          std::unordered_set<MuddleAddress> const &complaints,
-                                          std::set<MuddleAddress> const &          cabinet)
+void ComplaintsManager::AddComplaintsFrom(MuddleAddress const & from,
+                                          ComplaintsList const &complaints, Cabinet const &cabinet)
 {
   FETCH_LOCK(mutex_);
   // Check if we have received a complaints message from this node before and if not log that we
   // received a complaint message
-  if (complaints_received_.find(from) == complaints_received_.end())
-  {
-    complaints_received_.insert(from);
-  }
-  else
+  if (complaints_received_.find(from) != complaints_received_.end())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Duplicate complaints received. Discarding.");
     return;
   }
 
-  for (auto const &bad_node : complaints)
-  {
-    if (cabinet.find(bad_node) != cabinet.end())
-    {
-      complaints_counter_[bad_node].insert(from);
-      // If a node receives complaint against itself then store in complaints from
-      // for answering later
-      if (bad_node == address_)
-      {
-        complaints_from_.insert(from);
-      }
-    }
-  }
+  // Only keep elements of complaints in cabinet
+  auto cabinet_complaints = complaints & cabinet;
+  complaints_received_.insert({from, cabinet_complaints});
 }
 
 void ComplaintsManager::Finish(std::set<MuddleAddress> const &cabinet)
 {
   FETCH_LOCK(mutex_);
-  if (!finished_)
+
+  assert(!finished_);
+  assert(complaints_.empty());
+
+  for (auto const &from : cabinet)
   {
+    if (from == address_)
+    {
+      continue;
+    }
+
     // Add miners which did not send a complaint to complaints
-    for (auto const &cab : cabinet)
+    if (complaints_received_.find(from) == complaints_received_.end())
     {
-      if (cab != address_ && complaints_received_.find(cab) == complaints_received_.end())
+      complaints_.insert(from);
+    }
+    else
+    {
+      auto complaints = complaints_received_.at(from);
+      for (auto const &bad_node : complaints)
       {
-        complaints_.insert(cab);
+        if (cabinet.find(bad_node) != cabinet.end())
+        {
+          complaints_counter_[bad_node].insert(from);
+        }
       }
     }
-    // All miners who have received threshold or more complaints are also disqualified
-    for (auto const &node_complaints : complaints_counter_)
-    {
-      if (node_complaints.second.size() >= threshold_)
-      {
-        complaints_.insert(node_complaints.first);
-      }
-    }
-    finished_ = true;
   }
+
+  // All miners who have received threshold or more complaints are also disqualified
+  for (auto const &member : complaints_counter_)
+  {
+    if (member.second.size() >= threshold_)
+    {
+      complaints_.insert(member.first);
+    }
+  }
+  complaints_received_.clear();
+  finished_ = true;
 }
 
-uint32_t ComplaintsManager::NumComplaintsReceived() const
+uint32_t ComplaintsManager::NumComplaintsReceived(std::set<MuddleAddress> const &cabinet) const
 {
   FETCH_LOCK(mutex_);
-  return static_cast<uint32_t>(complaints_received_.size());
+
+  std::set<MuddleAddress> complaint_senders;
+  for (auto const &member : complaints_received_)
+  {
+    complaint_senders.insert(member.first);
+  }
+  auto cabinet_complaints = complaint_senders & cabinet;
+  return static_cast<uint32_t>(cabinet_complaints.size());
 }
 
-std::set<ComplaintsManager::MuddleAddress> ComplaintsManager::ComplaintsAgainstSelf() const
+std::unordered_set<ComplaintsManager::MuddleAddress> ComplaintsManager::ComplaintsAgainstSelf()
+    const
 {
   FETCH_LOCK(mutex_);
   assert(finished_);
-  return complaints_from_;
+  auto iter = complaints_counter_.find(address_);
+  if (iter == complaints_counter_.end())
+  {
+    return {};
+  }
+  return complaints_counter_.at(address_);
 }
 
 bool ComplaintsManager::FindComplaint(MuddleAddress const &complaint_address,
@@ -147,7 +164,7 @@ std::set<dkg::ComplaintsMessage::MuddleAddress> ComplaintsManager::Complaints() 
   return complaints_;
 }
 
-void ComplaintAnswersManager::Init(std::set<MuddleAddress> const &complaints)
+void ComplaintAnswersManager::Init(ComplaintsList const &complaints)
 {
   FETCH_LOCK(mutex_);
   std::copy(complaints.begin(), complaints.end(), std::inserter(complaints_, complaints_.begin()));
@@ -179,32 +196,44 @@ void ComplaintAnswersManager::AddComplaintAnswerFrom(MuddleAddress const &from,
   complaint_answers_received_.insert({from, complaint_answer});
 }
 
-void ComplaintAnswersManager::Finish(std::set<MuddleAddress> const &cabinet,
-                                     MuddleAddress const &          node_id)
+void ComplaintAnswersManager::Finish(Cabinet const &cabinet, MuddleAddress const &node_id)
 {
   FETCH_LOCK(mutex_);
-  if (!finished_)
+  assert(!finished_);
+
+  ComplaintAnswers cabinet_answers;
+  // Add miners which did not send a complaint answer to complaints
+  for (auto const &cab : cabinet)
   {
-    // Add miners which did not send a complaint answer to complaints
-    for (auto const &cab : cabinet)
+    if (cab == node_id)
     {
-      if (cab == node_id)
-      {
-        continue;
-      }
-      if (complaint_answers_received_.find(cab) == complaint_answers_received_.end())
-      {
-        complaints_.insert(cab);
-      }
+      continue;
     }
-    finished_ = true;
+    if (complaint_answers_received_.find(cab) == complaint_answers_received_.end())
+    {
+      complaints_.insert(cab);
+    }
+    else
+    {
+      cabinet_answers.insert({cab, complaint_answers_received_.at(cab)});
+    }
   }
+
+  // Only keep answers from members of cabinet
+  complaint_answers_received_ = cabinet_answers;
+  finished_                   = true;
 }
 
-uint32_t ComplaintAnswersManager::NumComplaintAnswersReceived() const
+uint32_t ComplaintAnswersManager::NumComplaintAnswersReceived(Cabinet const &cabinet) const
 {
   FETCH_LOCK(mutex_);
-  return static_cast<uint32_t>(complaint_answers_received_.size());
+  std::set<MuddleAddress> complaint_answer_senders;
+  for (auto const &member : complaint_answers_received_)
+  {
+    complaint_answer_senders.insert(member.first);
+  }
+  auto cabinet_answers = complaint_answer_senders & cabinet;
+  return static_cast<uint32_t>(cabinet_answers.size());
 }
 
 ComplaintAnswersManager::ComplaintAnswers ComplaintAnswersManager::ComplaintAnswersReceived() const
@@ -215,7 +244,7 @@ ComplaintAnswersManager::ComplaintAnswers ComplaintAnswersManager::ComplaintAnsw
 }
 
 std::set<ComplaintAnswersManager::MuddleAddress> ComplaintAnswersManager::BuildQual(
-    std::set<MuddleAddress> const &cabinet) const
+    Cabinet const &cabinet) const
 {
   FETCH_LOCK(mutex_);
   assert(finished_);
@@ -258,8 +287,7 @@ void QualComplaintsManager::AddComplaintsFrom(
   complaints_received_.insert({id, complaints});
 }
 
-void QualComplaintsManager::Finish(std::set<MuddleAddress> const &qual,
-                                   MuddleAddress const &          node_id)
+void QualComplaintsManager::Finish(Cabinet const &qual, MuddleAddress const &node_id)
 {
   FETCH_LOCK(mutex_);
   if (!finished_)
@@ -276,7 +304,7 @@ void QualComplaintsManager::Finish(std::set<MuddleAddress> const &qual,
   }
 }
 
-uint32_t QualComplaintsManager::NumComplaintsReceived(std::set<MuddleAddress> const &qual) const
+uint32_t QualComplaintsManager::NumComplaintsReceived(Cabinet const &qual) const
 {
   FETCH_LOCK(mutex_);
   uint32_t qual_complaints{0};
@@ -291,7 +319,7 @@ uint32_t QualComplaintsManager::NumComplaintsReceived(std::set<MuddleAddress> co
 }
 
 QualComplaintsManager::QualComplaints QualComplaintsManager::ComplaintsReceived(
-    std::set<MuddleAddress> const &qual) const
+    Cabinet const &qual) const
 {
   FETCH_LOCK(mutex_);
   assert(finished_);

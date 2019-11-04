@@ -16,23 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "beacon/dkg_output.hpp"
 
 using fetch::beacon::DkgOutput;
 
-DkgOutput::DkgOutput()
-{
-  fetch::crypto::mcl::details::MCLInitialiser();
-  group_public_key.clear();
-  private_key_share.clear();
-}
-
 DkgOutput::DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares,
-                     PrivateKey const &secret_share, CabinetList qual_members)
+                     PrivateKey secret_share, CabinetList qual_members)
   : qual{std::move(qual_members)}
   , group_public_key{std::move(group_key)}
   , public_key_shares{std::move(key_shares)}
-  , private_key_share{secret_share}
+  , private_key_share{std::move(secret_share)}
 {}
 
 DkgOutput::DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members)

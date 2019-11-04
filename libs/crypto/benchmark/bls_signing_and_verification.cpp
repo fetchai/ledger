@@ -54,8 +54,6 @@ ConstByteArray GenerateRandomData(std::size_t length)
 
 void SignBLSSignature(benchmark::State &state)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
-
   // Create keys
   auto     cabinet_size = static_cast<uint32_t>(state.range(0));
   uint32_t threshold    = cabinet_size / 2 + 1;
@@ -78,8 +76,7 @@ void SignBLSSignature(benchmark::State &state)
 
 void VerifyBLSSignature(benchmark::State &state)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
-  bn::G2 generator;
+  fetch::crypto::mcl::Generator generator;
   fetch::crypto::mcl::SetGenerator(generator);
 
   // Create keys
@@ -108,8 +105,6 @@ void VerifyBLSSignature(benchmark::State &state)
 
 void ComputeGroupSignature(benchmark::State &state)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
-
   // Create keys
   auto     cabinet_size = static_cast<uint32_t>(state.range(0));
   uint32_t threshold    = cabinet_size / 2 + 1;
