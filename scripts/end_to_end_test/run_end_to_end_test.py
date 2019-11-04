@@ -462,7 +462,8 @@ def create_contract(parameters, test_instance):
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
 
-        helper = ContractTestHelper(name, api, entity, test_instance._workspace)
+        helper = ContractTestHelper(
+            name, api, entity, test_instance._workspace)
         helper.create_new(fee_limit)
         test_instance._nodes[node_index]._contract = helper
 
@@ -471,7 +472,7 @@ def run_contract(parameters, test_instance):
     from smart_contract_tests.synergetic_utils import ContractTestHelper
     nodes = parameters["nodes"]
     contract_name = parameters["contract_name"]
-    wait_for_blocks_num= parameters["wait_for_blocks"]
+    wait_for_blocks_num = parameters["wait_for_blocks"]
     for node_index in nodes:
         node_host = "localhost"
         node_port = test_instance._nodes[node_index]._port_start
@@ -484,18 +485,23 @@ def run_contract(parameters, test_instance):
         try:
             contract_helper = test_instance._nodes[node_index]._contract
         except AttributeError:
-            output(f"No contract stored in test_instance (node_index={node_index})! Loading from file...")
-            contract_helper = ContractTestHelper(contract_name, api, entity, test_instance._workspace)
+            output(
+                f"No contract stored in test_instance (node_index={node_index})! Loading from file...")
+            contract_helper = ContractTestHelper(
+                contract_name, api, entity, test_instance._workspace)
             contract_helper.load()
 
         contract_helper.submit_random_data(10, (0, 200))
         api.wait_for_blocks(wait_for_blocks_num)
         valid = contract_helper.validate_execution()
         if not valid:
-            output(f"Synergetic contract ({contract_name}) execution failed on node {node_index}!")
-            raise Exception(f"Synergetic contract ({contract_name}) execution failed on node {node_index}!")
+            output(
+                f"Synergetic contract ({contract_name}) execution failed on node {node_index}!")
+            raise Exception(
+                f"Synergetic contract ({contract_name}) execution failed on node {node_index}!")
         else:
-            output(f"Synergetic contract ({contract_name}) executed on node {node_index} ")
+            output(
+                f"Synergetic contract ({contract_name}) executed on node {node_index} ")
 
 
 def wait_for_blocks(parameters, test_instance):
@@ -504,7 +510,8 @@ def wait_for_blocks(parameters, test_instance):
     for node_index in nodes:
         node_host = "localhost"
         node_port = test_instance._nodes[node_index]._port_start
-        output(f"Waiting for {wait_for_blocks_num} blocks on node {node_index}")
+        output(
+            f"Waiting for {wait_for_blocks_num} blocks on node {node_index}")
         api = LedgerApi(node_host, node_port)
         api.wait_for_blocks(wait_for_blocks_num)
 
@@ -549,7 +556,8 @@ def wait_network_ready(parameters, test_instance):
         except Exception as e:
             print("Exception: ", e)
         time.sleep(sleep_time)
-    raise RuntimeError(f"Network readiness check failed, because reached max trials ({max_trials})")
+    raise RuntimeError(
+        f"Network readiness check failed, because reached max trials ({max_trials})")
 
 
 def run_steps(test_yaml, test_instance):

@@ -228,7 +228,7 @@ class ConstellationTestCase(TestCase):
 
         # Optically remove db files when testing recovering from a genesis file
         if remove_db:
-            #self.dump_debug(index)
+            # self.dump_debug(index)
 
             pattern = ["*.db"]
             for p in pattern:
@@ -333,7 +333,8 @@ class ConstellationTestCase(TestCase):
             if status:
                 for key, value in response.items():
                     if not value:
-                        output(f"Node {index} not ready, because {key} is False!")
+                        output(
+                            f"Node {index} not ready, because {key} is False!")
                         return False
                 return True
         except Exception as e:

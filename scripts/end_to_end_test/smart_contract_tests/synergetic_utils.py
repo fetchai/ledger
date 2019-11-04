@@ -54,7 +54,8 @@ class ContractTestHelper:
     def create_new(self, fee_limit):
         self.contract = Contract(_CONTRACT_TEXT, self._entity)
         print('Creating contract..')
-        self._api.sync(self._api.contracts.create(self._entity, self.contract, fee_limit))
+        self._api.sync(self._api.contracts.create(
+            self._entity, self.contract, fee_limit))
         if len(self._name) > 0:
             with open(self._workdir+"/"+self._name+".json", "w") as f:
                 self.contract.dump(f)
@@ -68,7 +69,7 @@ class ContractTestHelper:
         # create a whole series of random data to submit to the DAG
         random_ints = [random.randint(*number_range) for _ in range(n)]
         self._api.sync(
-            [self._api.contracts.submit_data(self._entity, self.contract.digest, self.contract.address, value=value) \
+            [self._api.contracts.submit_data(self._entity, self.contract.digest, self.contract.address, value=value)
              for value in random_ints])
         print('Data submitted.')
 

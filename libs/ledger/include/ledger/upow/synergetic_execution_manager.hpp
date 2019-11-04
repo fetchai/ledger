@@ -23,8 +23,8 @@
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/work_queue.hpp"
-#include "vectorise/threading/pool.hpp"
 #include "telemetry/telemetry.hpp"
+#include "vectorise/threading/pool.hpp"
 
 #include <functional>
 #include <unordered_map>

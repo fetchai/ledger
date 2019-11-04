@@ -41,7 +41,7 @@ public:
   }
   virtual void Execute() = 0;
 
-  virtual char const * GetId() const
+  virtual char const *GetId() const
   {
     return "";
   }

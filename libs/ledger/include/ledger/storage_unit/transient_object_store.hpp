@@ -146,10 +146,11 @@ template <typename O>
 TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
   : log2_num_lanes_(log2_num_lanes)
   , rids(batch_size_)
-  , state_machine_{
-        std::make_shared<core::StateMachine<Phase>>("TransientObjectStore", Phase::Populating)}
+  , state_machine_{std::make_shared<core::StateMachine<Phase>>("TransientObjectStore",
+                                                               Phase::Populating)}
   , cache_rid_removed_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_storage_transient_rid_removed_total", "The number of needed rids which were removed from cache.")}
+        "ledger_storage_transient_rid_removed_total",
+        "The number of needed rids which were removed from cache.")}
 
 {
   state_machine_->RegisterHandler(Phase::Populating, this, &TransientObjectStore<O>::OnPopulating);
@@ -265,7 +266,8 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
   {
     // If this is the case then for some reason the RID that was added
     // to the queue has been removed from the cache.
-    FETCH_LOG_WARN(LOGGING_NAME, "RID that was added to the queue has been removed from the cache.");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "RID that was added to the queue has been removed from the cache.");
     cache_rid_removed_->increment();
     assert(false);
   }

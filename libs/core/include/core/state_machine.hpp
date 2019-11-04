@@ -82,9 +82,9 @@ public:
 
   /// @name Runnable Interface
   /// @{
-  bool IsReadyToExecute() const override;
-  void Execute() override;
-  char const * GetId() const override;
+  bool        IsReadyToExecute() const override;
+  void        Execute() override;
+  char const *GetId() const override;
   /// @}
 
   State state() const
@@ -249,7 +249,6 @@ char const *StateMachine<S>::GetName() const
   return name_.c_str();
 }
 
-
 /**
  * Get the id of the runnable
  *
@@ -261,7 +260,6 @@ char const *StateMachine<S>::GetId() const
 {
   return name_.c_str();
 }
-
 
 /**
  * Get the current string representation for the current state
