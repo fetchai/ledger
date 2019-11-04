@@ -222,21 +222,17 @@ public:
   // Inline initialisation
   MyClass() = default;
 
-  // Initialisation list for size, constructor body for pointer
+  // Initialisation list for one attribute, constructor body for another
   explicit MyClass(std::size_t n)
     : size_(n)
   {
-    pointer_ = new int[n];
-    for (std::size_t i = 0; i < n; ++i)
-    {
-      pointer_[i] = 0;
-    }
+    doubled_ = n * 2;
   }
   // ...
 
 private:
   std::size_t size_    = 0;
-  int *       pointer_ = nullptr;
+  std::size_t doubled_ = 0;
 };
 ```
 
