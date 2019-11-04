@@ -293,7 +293,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
 
   alignas(32) type PInf[TypeParam::E_BLOCK_COUNT], NInf[TypeParam::E_BLOCK_COUNT],
       NaN[TypeParam::E_BLOCK_COUNT], A[TypeParam::E_BLOCK_COUNT], B[TypeParam::E_BLOCK_COUNT],
-      C[TypeParam::E_BLOCK_COUNT], D[TypeParam::E_BLOCK_COUNT];
+      C[TypeParam::E_BLOCK_COUNT], D[TypeParam::E_BLOCK_COUNT], max{type::FP_MAX}, min{type::FP_MIN}, zero{type::_0};
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     PInf[i] = type::POSITIVE_INFINITY;
@@ -308,6 +308,9 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   TypeParam vnan{NaN};
   TypeParam va{A};
   TypeParam vb{B};
+  TypeParam vmax{max};
+  TypeParam vmin{min};
+  TypeParam vzero{zero};
   // NaN != NaN
   EXPECT_FALSE(any_equal_to(vnan, vnan));
   // -inf == -inf
@@ -317,14 +320,11 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   // -inf < +inf
   EXPECT_TRUE(all_less_than(vneg_inf, vpos_inf));
   // MAX < +inf
-  EXPECT_TRUE(all_less_than(TypeParam::MaskMax(), vpos_inf));
+  EXPECT_TRUE(all_less_than(vmax, vpos_inf));
   // -inf < MIN
-  EXPECT_TRUE(all_less_than(vneg_inf, TypeParam::MaskMin()));
+  EXPECT_TRUE(all_less_than(vneg_inf, vmin));
   // -inf < 0
-  EXPECT_TRUE(all_less_than(vneg_inf, TypeParam::_0()));
-
-  VectorRegister<int32_t, TypeParam::E_VECTOR_SIZE> vtest_int(-1073709056);
-  VectorRegister<type, TypeParam::E_VECTOR_SIZE>    vtest_fp(vtest_int.data());
+  EXPECT_TRUE(all_less_than(vneg_inf, vzero));
 
   TypeParam vret;
   struct Test
