@@ -33,7 +33,6 @@ TYPED_TEST_CASE(EntropyTest, TensorFloatingTypes);
 TYPED_TEST(EntropyTest, entropy)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType A(4);

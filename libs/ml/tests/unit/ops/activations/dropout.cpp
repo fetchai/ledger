@@ -83,7 +83,7 @@ TYPED_TEST(DropoutTest, forward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 2, 2});
   TensorType          gt({2, 2, 2});
@@ -151,7 +151,7 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
 {
   using DataType      = typename TypeParam::Type;
   using TensorType    = TypeParam;
-  using SizeType      = typename TypeParam::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   DataType prob{0.5};
 
@@ -245,7 +245,7 @@ TYPED_TEST(DropoutTest, saveparams_backward_3d_tensor_test)
 {
   using DataType      = typename TypeParam::Type;
   using TensorType    = TypeParam;
-  using SizeType      = typename TypeParam::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using OpType        = fetch::ml::ops::Dropout<TensorType>;
   using SPType        = typename OpType::SPType;

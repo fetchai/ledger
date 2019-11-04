@@ -36,7 +36,6 @@ TYPED_TEST_CASE(OneHotTest, TensorFloatingTypes);
 TYPED_TEST(OneHotTest, one_hot_test_axis_0)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType data = TypeParam::FromString("1,0,1,2");
@@ -57,7 +56,6 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_0)
 TYPED_TEST(OneHotTest, one_hot_test_axis_1)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType data = TypeParam::FromString("1,0,1,2");
@@ -78,7 +76,6 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_1)
 TYPED_TEST(OneHotTest, one_hot_test_axis_3)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType data = TypeParam::FromString("1,0,1,2");

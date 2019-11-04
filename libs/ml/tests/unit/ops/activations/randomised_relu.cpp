@@ -39,7 +39,7 @@ TYPED_TEST(RandomisedReluTest, forward_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data(8);
   TensorType          gt(8);
@@ -90,7 +90,7 @@ TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 2, 2});
   TensorType          gt({2, 2, 2});
@@ -121,7 +121,7 @@ TYPED_TEST(RandomisedReluTest, backward_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data(8);
   TensorType          error(8);
@@ -175,7 +175,7 @@ TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});
@@ -257,7 +257,7 @@ TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using OpType     = typename fetch::ml::ops::RandomisedRelu<TensorType>;
   using SPType     = typename OpType::SPType;
 

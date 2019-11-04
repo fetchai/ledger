@@ -672,7 +672,7 @@ GraphW2VLoader<TensorType>::GetVocab() const
  * @return
  */
 template <typename TensorType>
-std::string GraphW2VLoader<TensorType>::WordFromIndex(SizeType index) const
+std::string GraphW2VLoader<TensorType>::WordFromIndex(math::SizeType index) const
 {
   return vocab_->WordFromIndex(index);
 }

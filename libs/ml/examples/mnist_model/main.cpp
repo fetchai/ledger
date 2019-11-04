@@ -27,7 +27,7 @@ using namespace fetch::ml::optimisers;
 
 using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
+using SizeType   = fetch::math::SizeType;
 
 using ModelType      = typename fetch::ml::model::DNNClassifier<TensorType>;
 using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>;

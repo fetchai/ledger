@@ -26,7 +26,6 @@ using namespace fetch::math::correlation;
 
 TEST(distance_tests, cosine_distance)
 {
-  using SizeType = typename Tensor<double>::SizeType;
 
   Tensor<double> A = Tensor<double>({1, 4});
   A.Set(SizeType{0}, SizeType{0}, 1);

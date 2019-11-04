@@ -37,7 +37,7 @@ template <typename LabelType, typename InputType>
 class MNISTLoader : public DataLoader<LabelType, InputType>
 {
 public:
-  using SizeType   = typename InputType::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using DataType   = typename InputType::Type;
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 

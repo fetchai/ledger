@@ -35,7 +35,6 @@ TYPED_TEST(NormalizeArrayTest, conditional_distance)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType A = ArrayType({4});
 
