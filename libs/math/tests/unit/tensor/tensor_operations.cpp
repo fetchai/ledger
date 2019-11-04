@@ -30,7 +30,7 @@ class TensorOperationsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorOperationsTest, UnsignedIntAndFloatingTypes);
+TYPED_TEST_CASE(TensorOperationsTest, FloatIntAndUIntTypes);
 
 TYPED_TEST(TensorOperationsTest, inline_add_test)
 {

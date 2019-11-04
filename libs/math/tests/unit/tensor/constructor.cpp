@@ -29,7 +29,7 @@ class TensorConstructorTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorConstructorTest, UnsignedIntAndFloatingTypes);
+TYPED_TEST_CASE(TensorConstructorTest, FloatIntAndUIntTypes);
 
 TYPED_TEST(TensorConstructorTest, string_construction)
 {

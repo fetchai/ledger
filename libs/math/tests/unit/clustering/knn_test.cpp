@@ -49,10 +49,10 @@ TYPED_TEST(ClusteringTest, knn_euclidean_test)
   EXPECT_EQ(output.at(2).first, SizeType(2));
   EXPECT_EQ(output.at(3).first, SizeType(3));
 
-  EXPECT_TRUE(output.at(0).second - double(2) < function_tolerance<DataType>());
-  EXPECT_TRUE(output.at(1).second - double(4) < function_tolerance<DataType>());
-  EXPECT_TRUE(output.at(2).second - double(14.6973) < function_tolerance<DataType>());
-  EXPECT_TRUE(output.at(3).second - double(16.6132477) < function_tolerance<DataType>());
+  EXPECT_NEAR(static_cast<double>(output.at(0).second), double(2), static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output.at(1).second), double(4), static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output.at(2).second), double(14.6973), static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output.at(3).second), double(16.6132477), static_cast<double>(function_tolerance<DataType>()));
 }
 
 TYPED_TEST(ClusteringTest, knn_cosine_test)

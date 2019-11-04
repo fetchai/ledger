@@ -20,9 +20,6 @@
 #include "math/activation_functions/sigmoid.hpp"
 #include "test_types.hpp"
 
-#include <iomanip>
-#include <iostream>
-
 namespace fetch {
 namespace math {
 namespace test {
