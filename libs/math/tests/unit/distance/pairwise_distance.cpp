@@ -16,25 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/distance/pairwise_distance.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/distance/pairwise_distance.hpp"
+#include "test_types.hpp"
 
-namespace {
-using namespace fetch::math::distance;
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class PairWiseDistanceTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(PairWiseDistanceTest, MyTypes);
+TYPED_TEST_CASE(PairWiseDistanceTest, TensorFloatingTypes);
 
 TYPED_TEST(PairWiseDistanceTest, simple_test)
 {
@@ -43,12 +38,12 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
 
   TypeParam R = TypeParam({1, data.shape(0) * (data.shape(0) - 1) / 2});
 
-  PairWiseDistance(data,
-                   [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
-                     TypeParam z = x - y;
-                     return z.Sum();
-                   },
-                   R);
+  distance::PairWiseDistance(data,
+                             [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
+                               TypeParam z = x - y;
+                               return z.Sum();
+                             },
+                             R);
 
   EXPECT_TRUE(R.AllClose(gt));
 
@@ -57,12 +52,12 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
 
   R = TypeParam({1, data.shape(0) * (data.shape(0) - 1) / 2});
 
-  PairWiseDistance(data,
-                   [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
-                     TypeParam z = x - y;
-                     return z.Sum();
-                   },
-                   R);
+  distance::PairWiseDistance(data,
+                             [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
+                               TypeParam z = x - y;
+                               return z.Sum();
+                             },
+                             R);
 
   EXPECT_TRUE(R.AllClose(gt));
 
@@ -71,13 +66,15 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
 
   R = TypeParam({1, data.shape(0) * (data.shape(0) - 1) / 2});
 
-  PairWiseDistance(data,
-                   [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
-                     TypeParam z = x - y;
-                     return z.Sum();
-                   },
-                   R);
+  distance::PairWiseDistance(data,
+                             [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
+                               TypeParam z = x - y;
+                               return z.Sum();
+                             },
+                             R);
 
   EXPECT_TRUE(R.AllClose(gt));
 }
-}  // namespace
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
