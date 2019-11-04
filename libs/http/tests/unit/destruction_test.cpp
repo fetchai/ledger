@@ -49,7 +49,7 @@ using SharedJsonClient = std::shared_ptr<JsonClient>;
 std::vector<SharedJsonClient> SimpleTest()
 {
   std::vector<SharedJsonClient> ret;
-  NetworkManager                network_manager{"Test", 1};
+  NetworkManager                network_manager{"Test", 2};
 
   network_manager.Start();
 

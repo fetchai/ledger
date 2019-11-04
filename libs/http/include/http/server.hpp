@@ -98,28 +98,7 @@ public:
 
     // Since the connection manager contains a reference to this class, we must guarantee it has
     // destructed before we do.
-    std::shared_ptr<uint64_t> ref_counter = std::make_shared<uint64_t>();
-
-    {
-      auto manager = manager_;
-
-      networkManager_.Post([manager, ref_counter] {
-        auto manager_lock = manager.lock();
-
-        // Important to keep this alive during cb scope
-        FETCH_UNUSED(ref_counter);
-
-        if (manager_lock)
-        {
-          while (manager_lock.use_count() > 1)
-          {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-          }
-        }
-      });
-    }
-
-    while (ref_counter.use_count() != 1)
+    while (!manager_.expired())
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }

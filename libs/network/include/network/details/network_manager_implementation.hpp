@@ -73,6 +73,10 @@ public:
   template <typename F>
   void Post(F &&f)
   {
+    if (!running_)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Note, posting to a closed network manager");
+    }
     io_service_->post(std::forward<F>(f));
   }
 
