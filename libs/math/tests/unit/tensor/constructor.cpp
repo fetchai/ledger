@@ -16,17 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/tensor.hpp"
+#include "test_types.hpp"
+
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class TensorConstructorTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int32_t, uint32_t, int64_t, uint64_t, float, double>;
-TYPED_TEST_CASE(TensorConstructorTest, MyTypes);
+TYPED_TEST_CASE(TensorConstructorTest, FloatIntAndUIntTypes);
 
 TYPED_TEST(TensorConstructorTest, string_construction)
 {
@@ -35,3 +38,7 @@ TYPED_TEST(TensorConstructorTest, string_construction)
   ASSERT_EQ(tensor.At(0, 1), TypeParam(3));
   ASSERT_EQ(tensor.At(0, 2), TypeParam(4));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
