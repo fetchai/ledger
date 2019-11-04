@@ -27,8 +27,9 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-VMTrainingPair::VMTrainingPair(VM *vm, TypeId type_id, Ptr<fetch::vm_modules::math::VMTensor> ta,
-                               Ptr<fetch::vm::IArray> tb)
+VMTrainingPair::VMTrainingPair(
+    VM *vm, TypeId type_id, Ptr<fetch::vm_modules::math::VMTensor> ta,
+    fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> tb)
   : Object(vm, type_id)
 {
   this->first  = std::move(ta);
@@ -43,14 +44,15 @@ void VMTrainingPair::Bind(Module &module)
       .CreateMemberFunction("label", &fetch::vm_modules::ml::VMTrainingPair::label);
 }
 
-Ptr<VMTrainingPair> VMTrainingPair::Constructor(VM *vm, TypeId type_id,
-                                                Ptr<fetch::vm_modules::math::VMTensor> const &ta,
-                                                Ptr<fetch::vm::IArray> const &                tb)
+Ptr<VMTrainingPair> VMTrainingPair::Constructor(
+    VM *vm, TypeId type_id, Ptr<fetch::vm_modules::math::VMTensor> const &ta,
+    fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> const &tb)
 {
   return Ptr<VMTrainingPair>{new VMTrainingPair(vm, type_id, ta, tb)};
 }
 
-Ptr<fetch::vm::IArray> VMTrainingPair::data() const
+fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>>
+VMTrainingPair::data() const
 {
   return this->second;
 }

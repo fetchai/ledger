@@ -17,25 +17,19 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "math/distance/manhattan.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/distance/manhattan.hpp"
+#include "test_types.hpp"
 
-namespace {
-using namespace fetch::math::distance;
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class ManhattanTest : public ::testing::Test
 {
 };
-
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(ManhattanTest, MyTypes);
+TYPED_TEST_CASE(ManhattanTest, TensorFloatingTypes);
 
 TYPED_TEST(ManhattanTest, simple_test)
 {
@@ -43,21 +37,24 @@ TYPED_TEST(ManhattanTest, simple_test)
 
   TypeParam a   = TypeParam::FromString("1, 0, 0");
   TypeParam b   = TypeParam::FromString("0, 1, 0");
-  Type      ret = Manhattan(a, b);
+  Type      ret = distance::Manhattan(a, b);
   EXPECT_NEAR(static_cast<double>(ret), 2, static_cast<double>(function_tolerance<Type>()));
 
   a   = TypeParam::FromString("2, 3, 5");
-  ret = Manhattan(a, a);
+  ret = distance::Manhattan(a, a);
   EXPECT_NEAR(static_cast<double>(ret), 0, static_cast<double>(function_tolerance<Type>()));
 
   a   = TypeParam::FromString("1, 0, 0");
   b   = TypeParam::FromString("0, 2, 0");
-  ret = Manhattan(a, b);
+  ret = distance::Manhattan(a, b);
   EXPECT_NEAR(static_cast<double>(ret), 3, static_cast<double>(function_tolerance<Type>()));
 
   a   = TypeParam::FromString("1, 0, 0");
   b   = TypeParam::FromString("1, 1, 0");
-  ret = Manhattan(a, b);
+  ret = distance::Manhattan(a, b);
   EXPECT_NEAR(static_cast<double>(ret), 1, static_cast<double>(function_tolerance<Type>()));
 }
-}  // namespace
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

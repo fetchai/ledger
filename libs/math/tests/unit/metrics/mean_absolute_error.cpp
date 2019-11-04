@@ -16,20 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/metrics/mean_absolute_error.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/metrics/mean_absolute_error.hpp"
+#include "test_types.hpp"
+
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class MeanAbsoluteErrorTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
-TYPED_TEST_CASE(MeanAbsoluteErrorTest, MyTypes);
+TYPED_TEST_CASE(MeanAbsoluteErrorTest, TensorFloatingTypes);
 
 TYPED_TEST(MeanAbsoluteErrorTest, perfect_match_test)
 {
@@ -60,3 +60,7 @@ TYPED_TEST(MeanAbsoluteErrorTest, value_test)
               static_cast<double>(test_array.size()) *
                   static_cast<double>(fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

@@ -20,6 +20,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
+#include "vm/array.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
 
@@ -74,8 +75,10 @@ public:
    * @param data
    * @param labels
    */
-  void AddDataByData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
-                     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
+  void AddDataByData(
+      fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> const
+          &                                                    data,
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
 
   /**
    * Add data to commodity data loader
@@ -98,8 +101,10 @@ public:
    * @param xfilename
    * @param yfilename
    */
-  void AddTensorData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
-                     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
+  void AddTensorData(
+      fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> const
+          &                                                    data,
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
 
   /**
    * Get the next training pair of data and labels from the dataloader

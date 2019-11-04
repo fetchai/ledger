@@ -12,7 +12,7 @@ function main()
     var label_tensor = Tensor(label_shape);
 
     var dataloader = DataLoader("tensor");
-    dataloader.addData(data_tensor, label_tensor);
+    dataloader.addData({data_tensor}, label_tensor);
 
     var graph = Graph();
     graph.addPlaceholder("Input");

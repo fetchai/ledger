@@ -16,19 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/metrics/cross_entropy.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/metrics/cross_entropy.hpp"
+#include "test_types.hpp"
+
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class CrossEntropyTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(CrossEntropyTest, MyTypes);
+TYPED_TEST_CASE(CrossEntropyTest, TensorFloatingTypes);
 
 TYPED_TEST(CrossEntropyTest, perfect_match_test)
 {
@@ -112,3 +113,7 @@ TYPED_TEST(CrossEntropyTest, value_test)
   // test correct values
   ASSERT_NEAR(double(score), double(0.893887639), double(1.0e-5f));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
