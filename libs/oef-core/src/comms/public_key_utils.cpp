@@ -31,7 +31,7 @@ RSAKey::RSAKey(const EvpPublicKey &evp_pk)
   }
 }
 
-inline std::string RSAKey::to_string() const
+std::string RSAKey::to_string() const
 {
   std::string out{};
 
@@ -66,7 +66,7 @@ inline std::string RSAKey::to_string() const
 
 // TOFIX doesn't output same text as when ASCII priting PEM file
 // TOFIX remove code redundency with to_string()
-inline std::string RSAKey::to_string_base64() const
+std::string RSAKey::to_string_base64() const
 {
   std::string out{};
 
