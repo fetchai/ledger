@@ -26,13 +26,13 @@
 #include <vm_modules/crypto/sha256.hpp>
 #include <vm_modules/core/byte_array_wrapper.hpp>
 
+#include "benchmark/benchmark.h"
+
 #include "vm/vm.hpp"
 #include "vm/module.hpp"
 #include "vm/compiler.hpp"
 #include "vm/ir.hpp"
 #include "vm/opcodes.hpp"
-
-#include "benchmark/benchmark.h"
 
 using fetch::vm::VM;
 using fetch::vm::Module;
@@ -43,6 +43,7 @@ using fetch::vm::IR;
 
 namespace {
 
+// Used to index benchmarks so that they are readable by scripts/benchmark/opcode_timing.py
 u_int const n_basic_bms = 13, n_object_bms = 11, n_prim_bms = 25, n_math_bms = 16, n_crypto_bms = 4;
 u_int const n_primitives = 11, n_dec_primitives = 4;
 
@@ -58,6 +59,7 @@ u_int const
     crypto_begin = math_end,
     crypto_end = crypto_begin + n_crypto_bms;
 
+// Main benchmark function - compiles and runs Etch code snippets and saves opcodes to file
 void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_name, std::string const &etch_code,
                        std::string const &baseline_name, u_int const bm_ind) {
 
