@@ -33,7 +33,7 @@ This documents contains guidelines regarding:
 	4. Other libraries.
 	5. Fetch library.
 
-* Classes in this order
+* Class access specifiers in this order
 	1. `public`.
 	2. `protected`.
 	3. `private`.
@@ -302,7 +302,7 @@ public:
 ## Memory handling
 
 * Use references where the value cannot be null. Use pointers where it can.
-* Make sure no uninitialised memory is accessed.
+* Make sure no uninitialised memory is accessed or created.
 * Always prefer passing by reference or `const` reference where possible.
 * Prefer smart pointers (`std::shared_ptr`, `std::unique_ptr`, etc) over raw pointers.
 * Use `make_shared` and `make_unique` to wrap objects in smart pointers.
@@ -367,6 +367,6 @@ Example of using smart pointer with **exclusive** ownership:
 	5. `noexcept`.
 * Pre increment: `++i` as it is more performant for non primitive types.
 * Lambda captures must be explicit reference or copy.
-* TODOs should refer to the author in the style `TODO(`HUT`) :`.
+* TODOs should refer to the author in the style `TODO(HUT) :`.
 * Avoid leaving `TODOs` in code.
 * Use templates judiciously and defined to library code where only a small number of developers need to understand them.
