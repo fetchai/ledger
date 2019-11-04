@@ -19,6 +19,7 @@
 
 #include "math/tensor.hpp"
 #include "math/top_k.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -97,12 +98,48 @@ public:
   {
     FETCH_UNUSED(error_signal);
     assert(inputs.size() == 1);
+
+    // Forward needs to be run first
     assert(indices_.size() != 0);
 
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
-    // This might be tricky
-    return {TensorType{inputs.at(0)->shape()}};
+    TensorType ret_signal(inputs.at(0)->shape());
+
+    switch (error_signal.shape().size())
+    {
+
+    // 1D
+    case 1:
+    {
+      for (SizeType i{0}; i < error_signal.shape().at(0); i++)
+      {
+        ret_signal.At(indices_.At(i)) = error_signal.At(i);
+      }
+    }
+    break;
+
+    // 2D
+    case 2:
+    {
+      for (SizeType i{0}; i < error_signal.shape().at(0); i++)
+      {
+        for (SizeType j{0}; j < error_signal.shape().at(1); j++)
+        {
+          ret_signal.At(i, indices_.At(i, j)) = error_signal.At(i, j);
+        }
+      }
+    }
+    break;
+
+    default:
+    {
+      throw exceptions::InvalidMode("Backward pass for more than 2D array not supported yet.");
+    }
+    break;
+    }
+
+    return {ret_signal};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

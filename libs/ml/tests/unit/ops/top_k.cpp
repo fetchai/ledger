@@ -111,3 +111,132 @@ TYPED_TEST(TopKOpTest, saveparams_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+TYPED_TEST(TopKOpTest, backward_1D_test)
+{
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+
+  TensorType data = TypeParam::FromString("16,4,3,2,5,6,7,8,9,10,11,12,13,14,15,1");
+  data.Reshape({16});
+  TensorType error = TypeParam::FromString("16,15,14,13");
+  error.Reshape({4});
+  TensorType gt_error = TypeParam::FromString("16,0,0,0,0,0,0,0,0,0,0,0,13,14,15,0");
+  gt_error.Reshape({16});
+
+  SizeType k      = 4;
+  bool     sorted = true;
+
+  auto shape = error.shape();
+
+  fetch::ml::ops::TopK<TypeParam> op(k, sorted);
+
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(data)}));
+  op.Forward({std::make_shared<TypeParam>(data)}, prediction);
+
+  std::vector<TensorType> error_signal =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  ASSERT_EQ(error_signal.at(0).shape().size(), 1);
+  ASSERT_EQ(error_signal.at(0).shape().at(0), 16);
+
+  ASSERT_TRUE(error_signal.at(0).AllClose(gt_error, fetch::math::function_tolerance<DataType>(),
+                                          fetch::math::function_tolerance<DataType>()));
+  fetch::math::state_clear<DataType>();
+}
+
+TYPED_TEST(TopKOpTest, backward_2D_test)
+{
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+
+  TensorType data = TypeParam::FromString("1,4,3,2;5,6,7,8;9,10,11,12;13,14,15,16");
+  data.Reshape({4, 4});
+  TensorType error = TypeParam::FromString("4,3;8,7;12,11;16,15");
+  error.Reshape({4, 2});
+  TensorType gt_error = TypeParam::FromString("0,4,3,0;0,0,7,8;0,0,11,12;0,0,15,16");
+  gt_error.Reshape({4, 4});
+
+  SizeType k      = 2;
+  bool     sorted = true;
+
+  auto shape = error.shape();
+
+  fetch::ml::ops::TopK<TypeParam> op(k, sorted);
+
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(data)}));
+  op.Forward({std::make_shared<TypeParam>(data)}, prediction);
+
+  std::vector<TensorType> error_signal =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  ASSERT_EQ(error_signal.at(0).shape().size(), 2);
+  ASSERT_EQ(error_signal.at(0).shape().at(0), 4);
+  ASSERT_EQ(error_signal.at(0).shape().at(1), 4);
+
+  ASSERT_TRUE(error_signal.at(0).AllClose(gt_error, fetch::math::function_tolerance<DataType>(),
+                                          fetch::math::function_tolerance<DataType>()));
+  fetch::math::state_clear<DataType>();
+}
+
+TYPED_TEST(TopKOpTest, saveparams_backward_test)
+{
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using OpType     = fetch::ml::ops::TopK<TensorType>;
+  using SPType     = typename OpType::SPType;
+
+  TensorType data = TypeParam::FromString("1,4,3,2;5,6,7,8;9,10,11,12;13,14,15,16");
+  data.Reshape({4, 4});
+  TensorType error = TypeParam::FromString("4,3;8,7;12,11;16,15");
+  error.Reshape({4, 2});
+
+  SizeType k      = 2;
+  bool     sorted = true;
+
+  fetch::ml::ops::TopK<TypeParam> op(k, sorted);
+
+  // Run forward pass before backward pass
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(data)}));
+  op.Forward({std::make_shared<TypeParam>(data)}, prediction);
+
+  std::vector<TensorType> error_signal =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // get another error_signal with the original op
+  error_signal = op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // Run forward pass before backward pass
+  new_op.Forward({std::make_shared<TypeParam>(data)}, prediction);
+
+  // check that new error_signal match the old
+  std::vector<TensorType> new_error_signal =
+      new_op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // test correct values
+  EXPECT_TRUE(error_signal.at(0).AllClose(
+      new_error_signal.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+  fetch::math::state_clear<DataType>();
+}
