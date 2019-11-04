@@ -374,7 +374,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     auto cabinet = stake_->BuildCabinet(current_block_);
     if (!cabinet)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to build cabinet for block: ", current_block_.body.block_number);
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Failed to build cabinet for block: ", current_block_.body.block_number);
       return;
     }
 
