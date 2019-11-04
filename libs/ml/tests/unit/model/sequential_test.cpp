@@ -133,7 +133,7 @@ TYPED_TEST(SequentialModelTest, momentum_sequential)
 TYPED_TEST(SequentialModelTest, rmsprop_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-2f},
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{2e-2f},
                                  DataType{0.005f}, 200));
 }
 
