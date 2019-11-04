@@ -44,11 +44,9 @@ public:
   using MyType         = TopK<TensorType>;
 
   /**
-   * One hot function based on tf.top_k
-   * @param depth number of classes
-   * @param axis
-   * @param on_value TRUE value
-   * @param off_value FALSE value
+   * TopK function based on tf.top_k
+   * @param k number of k highest numbers to be outputed
+   * @param sorted TRUE=descending order, FALSE=ascending order
    */
   explicit TopK(SizeType k, bool sorted = true)
     : k_(k)
@@ -83,6 +81,15 @@ public:
 
     return copyshare;
   }
+
+  /**
+   * Returns array of k-highest values
+   * for input array of shape [x,y,z] and value k, return array would be of shape [x,y,k]
+   * Implementation based on tf.math.top_k
+   * Updates indices array with indices of k highest values from input array
+   * @param inputs input tensor
+   * @param output return tensor
+   */
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
@@ -93,6 +100,13 @@ public:
     fetch::math::TopK<TensorType, TensorSizeType>(output, indices_, *(inputs.at(0)), k_, sorted_);
   }
 
+  /**
+   * Error signal is propagated to k largest nodes from input tensor
+   * Forward needs to be called first to initialise indices array
+   * @param inputs input tensor
+   * @param error_signal
+   * @return return signal tensor of same size as input tensor
+   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override
   {
