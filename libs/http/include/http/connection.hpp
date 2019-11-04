@@ -54,8 +54,7 @@ public:
                     socket_.remote_endpoint().address().to_string());
   }
 
-  ~HTTPConnection() override
-  {}
+  ~HTTPConnection() override = default;
 
   void Start()
   {

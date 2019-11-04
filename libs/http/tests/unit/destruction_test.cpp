@@ -27,7 +27,6 @@
 #include <chrono>
 #include <iostream>
 #include <set>
-#include <string>
 
 using namespace fetch::http;
 using namespace fetch::network;
@@ -37,59 +36,51 @@ struct TestModule : HTTPModule
 {
   TestModule()
   {
-    static int counter = 0;
     Get("/test", "Test page",
         [](fetch::http::ViewParameters const & /*params*/,
            fetch::http::HTTPRequest const & /*request*/) {
-          return fetch::http::CreateJsonResponse("{\"result\" : " + std::to_string(counter++) + "}",
-                                                 fetch::http::Status::SUCCESS_OK);
+          return fetch::http::CreateJsonResponse("{}", fetch::http::Status::SUCCESS_OK);
         });
   }
 };
 
 using SharedJsonClient = std::shared_ptr<JsonClient>;
 
-void SimpleTest()
+std::vector<SharedJsonClient> SimpleTest()
 {
-  static uint16_t test_port = 8000;
-
   std::vector<SharedJsonClient> ret;
-  {
-    NetworkManager network_manager{"Test", 2};
+  NetworkManager                network_manager{"Test", 1};
 
-    network_manager.Start();
+  network_manager.Start();
 
-    // HTTP Server for the agent to interact with the system
-    HTTPServer http(network_manager);
-    TestModule http_module;
-    http.AddModule(http_module);
-    http.Start(test_port);
+  // HTTP Server for the agent to interact with the system
+  HTTPServer http(network_manager);
+  TestModule http_module;
+  http.AddModule(http_module);
+  http.Start(8000);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
-    if (test_port == 8000)
-    {
-      for (std::size_t i = 0; i < 1; ++i)
-      {
-        SharedJsonClient client = std::make_shared<JsonClient>(
-            JsonClient::CreateFromUrl("http://127.0.0.1:" + std::to_string(test_port)));
-        ret.push_back(client);
-        Variant result;
-        client->Get("/test", result);
-      }
-    }
+  SharedJsonClient client =
+      std::make_shared<JsonClient>(JsonClient::CreateFromUrl("http://127.0.0.1:8000"));
+  ret.push_back(client);
+  Variant result;
+  client->Post("/test", result);
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
-    http.Stop();
+  http.Stop();
 
-    network_manager.Stop();
+  network_manager.Stop();
 
-    // Note that the client can outlive the server at the end of this scope
-  }
-  test_port++;
+  // Note that we return the shared pointers to keep client side
+  // connections alive
+  return ret;
 }
 
 TEST(HTTPTest, CheckDestruction)
 {
-  SimpleTest();
-  SimpleTest();
+  auto clients1 = SimpleTest();
+  auto clients2 = SimpleTest();
+  auto clients3 = SimpleTest();
+  auto clients4 = SimpleTest();
 }

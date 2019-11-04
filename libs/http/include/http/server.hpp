@@ -101,8 +101,8 @@ public:
     std::shared_ptr<uint64_t> ref_counter = std::make_shared<uint64_t>();
 
     {
-      auto ref_counter_copy = ref_counter;
-      auto manager          = manager_;
+      const auto &ref_counter_copy = ref_counter;
+      auto        manager          = manager_;
 
       networkManager_.Post([manager] {
         auto manager_lock = manager.lock();
@@ -134,7 +134,7 @@ public:
     std::shared_ptr<uint64_t> ref_counter = std::make_shared<uint64_t>();
 
     {
-      auto        ref_counter_copy = ref_counter;
+      const auto &ref_counter_copy = ref_counter;
       HTTPServer &server_ref       = *this;
 
       networkManager_.Post([&socRef, &accepRef, &manager, &threadMan, port, ref_counter_copy,
@@ -142,8 +142,8 @@ public:
         auto soc = threadMan.CreateIO<Socket>();
         auto accep =
             threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
-        auto strong_manager                    = std::make_shared<ConnectionManager>(server_ref);
-        auto ref_counter_decrement_on_destruct = ref_counter_copy;
+        auto        strong_manager = std::make_shared<ConnectionManager>(server_ref);
+        const auto &ref_counter_decrement_on_destruct = ref_counter_copy;
 
         FETCH_LOG_INFO(LOGGING_NAME,
                        "Starting HTTPServer on http://127.0.0.1:", accep->local_endpoint().port());
