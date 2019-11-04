@@ -370,8 +370,16 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
   if (ShouldTriggerNewCabinet(current_block_))
   {
+    // attempt to build the cabinet from
+    auto cabinet = stake_->BuildCabinet(current_block_);
+    if (!cabinet)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to build cabinet for block: ", current_block_.body.block_number);
+      return;
+    }
+
     CabinetMemberList cabinet_member_list;
-    cabinet_history_[current.body.block_number] = stake_->BuildCabinet(current_block_);
+    cabinet_history_[current.body.block_number] = cabinet;
 
     TrimToSize(cabinet_history_, HISTORY_LENGTH);
 
