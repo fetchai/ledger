@@ -45,11 +45,11 @@ using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<TensorType, 
 int main(int ac, char **av)
 {
   DataType                      learning_rate{0.01f};
-  SizeType                      subset_size{100};
+//  SizeType                      subset_size{100};
   SizeType                      epochs{10};
-  SizeType                      batch_size{10};
+  SizeType                      batch_size{100};
   fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::L1;
-  DataType                      reg_rate{0.01f};
+  DataType                      reg_rate{0.00f};
 
   if (ac < 3)
   {
@@ -86,11 +86,11 @@ int main(int ac, char **av)
   // Training loop
   DataType loss;
   std::string output_csv_file = "/home/emmasmith/Development/ledger-vm-misc/TFF_MNIST/fetch_results.txt";
-  std::ofstream lossfile(output_csv_file, std::ofstream::out | std::ofstream::app);
+  std::ofstream lossfile(output_csv_file, std::ofstream::out);
   auto start_time = std::chrono::steady_clock::now();
   for (SizeType i{0}; i < epochs; i++)
   {
-    loss = optimiser.Run(data_loader, batch_size, subset_size);
+    loss = optimiser.Run(data_loader, batch_size); //, subset_size);
     std::cout << "Loss: " << loss << std::endl;
     double seconds = fetch::ToSeconds(std::chrono::steady_clock::now() - start_time);
     lossfile << "Time: " << seconds << " Epoch: " << i << " Loss: " << loss << std::endl;
