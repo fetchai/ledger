@@ -17,25 +17,22 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
 #include "gtest/gtest.h"
+#include "math/matrix_operations.hpp"
+#include "test_types.hpp"
 
-#include <cstddef>
 #include <vector>
 
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class FreeFunctionsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(FreeFunctionsTest, MyTypes);
+TYPED_TEST_CASE(FreeFunctionsTest, TensorFloatingTypes);
 
 TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
 {
@@ -202,19 +199,19 @@ TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
   SizeType  n_features{2};
   TypeParam array1{{n_data, n_features}};
 
-  array1(0, 0) = DataType{-17};
-  array1(1, 0) = DataType{1};
-  array1(2, 0) = DataType{13};
-  array1(3, 0) = DataType{21};
+  array1(0, 0) = DataType(-2);
+  array1(1, 0) = DataType(1);
+  array1(2, 0) = DataType(0.13);
+  array1(3, 0) = DataType(7);
 
-  array1(0, 1) = DataType{21};
-  array1(1, 1) = DataType{1};
-  array1(2, 1) = DataType{10};
-  array1(3, 1) = DataType{-0.5};
+  array1(0, 1) = DataType(11);
+  array1(1, 1) = DataType(1);
+  array1(2, 1) = DataType(3);
+  array1(3, 1) = DataType(-0.5);
 
   DataType output = fetch::math::Product(array1);
-  EXPECT_NEAR(static_cast<double>(output), 487305.0,
-              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output), 30.03,
+              8 * static_cast<double>(function_tolerance<DataType>()));
 
   array1(1, 1) = 0;
   output       = fetch::math::Product(array1);
@@ -1258,3 +1255,7 @@ TYPED_TEST(FreeFunctionsTest, DynamicStitch)
   EXPECT_NEAR(static_cast<double>(output(5)), -2.,
               static_cast<double>(function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
