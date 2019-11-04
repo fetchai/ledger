@@ -230,6 +230,11 @@ public:
     manager_.Leave(handle_);
   }
 
+  void SetHandle(HandleType handle)
+  {
+    handle_ = handle;
+  }
+
 private:
   asio::ip::tcp::tcp::socket socket_;
   HTTPConnectionManager &    manager_;

@@ -267,7 +267,7 @@ public:
       {
         assert(manager);
         auto new_connection = std::make_shared<HTTPConnection>(std::move(*soc), *manager);
-        manager->Join(new_connection);
+        new_connection->SetHandle(manager->Join(new_connection));
         new_connection->Start();
         FETCH_LOG_INFO(LOGGING_NAME, "New connection formed.");
       }
