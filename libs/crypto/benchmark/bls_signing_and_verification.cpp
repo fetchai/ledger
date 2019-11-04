@@ -129,48 +129,8 @@ void ComputeGroupSignature(benchmark::State &state)
     fetch::crypto::mcl::LagrangeInterpolation(threshold_signatures);
   }
 }
-
-  void ComputeAggregateSignature(benchmark::State &state)
-  {
-    fetch::crypto::mcl::details::MCLInitialiser();
-    Generator generator;
-    fetch::crypto::mcl::SetGenerator(generator);
-
-
-    // Create keys
-    auto     cabinet_size = static_cast<uint32_t>(state.range(0));
-    uint32_t threshold    = cabinet_size / 2 + 1;
-    std::vector<PrivateKey> notarisation_private_keys;
-    std::vector<PublicKey> notarisation_public_keys;
-    for (uint32_t i = 0; i < cabinet_size; ++i)
-    {
-      auto keys = fetch::crypto::mcl::GenerateKeyPair(generator);
-      notarisation_private_keys.push_back(keys.first);
-      notarisation_public_keys.push_back(keys.second);
-    }
-
-    for (auto _ : state)
-    {
-      state.PauseTiming();
-      // Generate a random message
-      ConstByteArray msg = GenerateRandomData(256);
-      // Randomly select indices to sign
-      std::unordered_map<uint32_t, fetch::crypto::mcl::Signature> signatures;
-      while (signatures.size() < threshold)
-      {
-        auto sign_index = static_cast<uint32_t>(rng() % cabinet_size);
-        auto signature  = fetch::crypto::mcl::SignShare(msg, notarisation_private_keys[sign_index]);
-        signatures.insert({sign_index, signature});
-      }
-      state.ResumeTiming();
-
-      // Compute group signature
-      fetch::crypto::mcl::ComputeAggregateSignature(signatures, notarisation_public_keys);
-    }
-  }
 }  // namespace
 
 BENCHMARK(SignBLSSignature)->RangeMultiplier(2)->Range(50, 500);
 BENCHMARK(VerifyBLSSignature)->RangeMultiplier(2)->Range(50, 500);
 BENCHMARK(ComputeGroupSignature)->RangeMultiplier(2)->Range(50, 500);
-BENCHMARK(ComputeAggregateSignature)->RangeMultiplier(2)->Range(50,500);

@@ -362,6 +362,7 @@ void NotarisationService::SetAeonDetails(uint64_t round_start, uint64_t round_en
                                          uint32_t                    threshold,
                                          AeonNotarisationKeys const &cabinet_public_keys)
 {
+  FETCH_LOCK(mutex_);
   current_aeon_details = AeonDetails{round_start, round_end, threshold, cabinet_public_keys};
 }
 
