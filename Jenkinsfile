@@ -1,4 +1,5 @@
 DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.1'
+STATIC_ANALYSIS_IMAGE = 'gcr.io/organic-storm-201412/ledger-ci-clang-tidy:v0.1.1-2-g21e8ba4'
 HIGH_LOAD_NODE_LABEL = 'ledger'
 MACOS_NODE_LABEL = 'mac-mini'
 
@@ -60,7 +61,7 @@ def static_analysis(Configuration config)
         }
 
         stage('Run Static Analysis') {
-          docker.image(DOCKER_IMAGE_NAME).inside {
+          docker.image(STATIC_ANALYSIS_IMAGE).inside {
             sh "./scripts/ci-tool.py --lint ${config.label}"
           }
         }
