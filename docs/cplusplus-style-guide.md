@@ -45,8 +45,8 @@ This documents contains guidelines regarding:
 * Include a comment summary at the top of all files.
 
 ``` c++
-/* Approximation of the exponential function.
- * @x is the argument that is used in the exponent 2^(x / M_LN2).
+/**
+ * Approximation of the exponential function.
  *
  * We exploit the IEEE-754 standard to efficiently create a linear
  * interpolation between points of the form 2^n where n is an integer.
@@ -55,7 +55,8 @@ This documents contains guidelines regarding:
  * [1] "A fast, compact approximation of the exponential function",
  * Nicol N. Schraudolph, 1999 Neural computation 11, 853-862.
  *
- * @return the exponential of x.
+ * @param x the argument that is used in the exponent 2^(x / M_LN2).
+ * @returns The exponential of x
  */
 double Exp(double const &x)
 {
@@ -79,6 +80,7 @@ double Exp(double const &x)
 
   return conv.d;
 }
+
 ```
 
 * Comment the non-obvious, not the obvious.
@@ -157,37 +159,36 @@ Foo::Foo()
 * Do not do `using namespace foo` in the top `fetch` namespace, as it pollutes all of it. Instead, do the following:
 
 ```c++
-namespace fetch
+namespace fetch {
+namespace details {
+
+struct FetchImpl
 {
-  namespace details
-  {
-    struct FetchImpl
-    {
-      /* ... */
-    };
-
-    void HelperFunction(FetchImpl &s)
-    {
-      /* ... */
-    }
-    };  // namespace details
-
-    class MyFetchClass
-    {
-
-    public:
-      void DoSomeThing()
-      {
-        // This improves readability
-        using namespace details;
-
-        FetchImpl f;
-        HelperFunction(f);
-      }
-      // ...
-    };
-  };
+  /* ... */
 };
+
+void HelperFunction(FetchImpl &s)
+{
+  /* ... */
+}
+
+}  // namespace details
+
+class MyFetchClass
+{
+public:
+  void DoSomeThing()
+  {
+    // This improves readability
+    using namespace details;
+
+    FetchImpl f;
+    HelperFunction(f);
+  }
+  // ...
+};
+
+}  // namespace fetch
 ```
 
 
@@ -248,8 +249,7 @@ public:
   Transaction()                    = default;
   Transaction(Transaction const &) = default;
   Transaction(Transaction &&)      = deleted;
-
-  ~Transaction() = default;
+  ~Transaction()                   = default;
 
   Transaction operator(Transaction const &) = default;
   Transaction operator(Transaction &&)      = deleted;
