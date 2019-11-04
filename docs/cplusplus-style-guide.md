@@ -150,6 +150,7 @@ Foo::Foo()
 
 * Prefer `enum class` over regular `enum`.
 
+
 ## Namespaces
 
 * Do not do `using namespace foo` or `namespace baz = ::foo::bar::baz` in `.hpp` files.
@@ -202,6 +203,7 @@ struct Person
   // ...
 };
 ```
+
 
 ## Classes
 
@@ -256,38 +258,6 @@ public:
 
 * Mark a class `final` if it is not meant to be subclassed. The same counts for final implementations of virtual functions.
 
-``` c++
-class Foo
-{
-public:
-  virtual ~Foo()                        = default;
-  virtual void Greet()                  = 0;
-  virtual void Say(std::string const &) = 0;
-};
-
-class Bar : public Foo
-{
-public:
-  void Greet() override final
-  {
-    // ...
-  }
-
-  void Say(std::string const &what) override {
-      // ...
-  };
-};
-
-class Baz final : public Bar
-{
-public:
-  void Say(std::string const &what) override
-  {
-    // ...
-  }
-};
-```
-
 
 ## Error handling
 
@@ -296,7 +266,7 @@ public:
 * Handle normal errors gracefully.
 
 * Do not rely on exceptions to avoid taking responsibility.
-* Do not throw exceptions in destructors as this can crash the program.
+* Do not throw exceptions in destructors, in order to prevent calls to `std::terminate` during stack unwinding (as per the [C++ standard definition](http://en.cppreference.com/w/cpp/language/destructor#Exceptions)).
 
 
 ## Memory handling
@@ -312,47 +282,11 @@ public:
   * From the standard library, such as `std::vector` and `std::string`.
   * `SharedArray` and `Array` classes from `fetch::memory` namespace.
   * Classes from `fetch::byte_array` namespace, such as `BasicByteArray`.
-* It is safe to transfer ownership from `std::unique_ptr` to `std::shared_ptr`. However, do **NOT** transfer ownership the other way around, as that will result in memory access exceptions; in this case a non-owning `std::weak_ptr` should be used instead of `std::unique_ptr` (see [reference documentation](https://en.cppreference.com/w/cpp/memory/weak_ptr)).
-
-Example of using smart pointer with **exclusive** ownership:
-
-``` c++
-#include <memory>
-
-// Parent Scope block
-{
-  std::unique_ptr<int> a0;
-
-  // Nested scope block
-  {
-    std::unique_ptr<int> a1 = std::make_unique<int>(5);
-    a0                      = a1;  // Transfer of OWNERSHIP from `a1` to `a0`
-    // `a1` does NOT control lifecycle of the `int` instance anymore.
-
-    // This will result in throwing an exception since `a1` is now `nullptr`
-    std::cout << "a1=" << *a1 << std::endl;
-
-    // The automatically called destructor of `a1` does NOTHING since
-    // `a1` does NOT control any object.
-  }
-
-  // Automatically called destructor of `a0` destroys the `int` instance
-  // allocated and initialised in the nested scope above.
-}
-```
 
 
 ## Resource handling
 
-* Use a smart pointer to manage resources whose lifecycle needs strict control, such as:
-  * Thread synchronisation constructs (e.g. mutex).
-  * Filesystem objects.
-  * Network connections.
-  * Database sessions.
-
-* A destructor must **NEVER** throw an exception. The reason for this is that when the destructor is called automatically because an exception is thrown, if said destructor throws another one, the C++ runtime will call `std::terminate` of the process (as per the [C++ standard definition](http://en.cppreference.com/w/cpp/language/destructor#Exceptions)).
-
-* Use locking guards provided in C++ `std` namespace, such as `std::unique_lock` and `std::lock_guard`.
+* Use the locking guard `FETCH_LOCK` whenever possible, and only those provided in C++ `std` namespace (such as `std::unique_lock` and `std::lock_guard`) when necessary.
 * Prefer implementations of mutex in the `fetch::mutex` namespace (which conform to a `std` locking API contract) over a plain `std::mutex`. These are `fetch::mutex::DebugMutex` and `fetch::mutex::ProductionMutex`.
 
 
