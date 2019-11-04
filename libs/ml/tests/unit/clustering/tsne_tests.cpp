@@ -17,28 +17,27 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/clustering/tsne.hpp"
 
 #include "gtest/gtest.h"
 
-using namespace fetch::math;
-using namespace fetch::math::distance;
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class TsneTests : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(TsneTests, MyTypes);
+TYPED_TEST_CASE(TsneTests, math::test::FloatingTypes);
 
 template <typename TypeParam>
 TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
                   typename TypeParam::SizeType n_data_size)
 {
-
+  using SizeType   = fetch::math::SizeType;
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
 
@@ -173,3 +172,7 @@ TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
   EXPECT_NEAR(double(output_matrix.At(0, 99)), -0.87262111902236938477, tolerance);
   EXPECT_NEAR(double(output_matrix.At(1, 99)), 3.0463356971740722656, tolerance);
 }
+
+} // test
+} // ml
+} // fetch
