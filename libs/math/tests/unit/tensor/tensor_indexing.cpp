@@ -16,17 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/tensor.hpp"
+#include "test_types.hpp"
+
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class TensorIndexingTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int32_t, uint32_t, int64_t, uint64_t, float, double>;
-TYPED_TEST_CASE(TensorIndexingTest, MyTypes);
+TYPED_TEST_CASE(TensorIndexingTest, FloatIntAndUIntTypes);
 
 TYPED_TEST(TensorIndexingTest, empty_tensor_test)
 {
@@ -108,13 +111,13 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
       {
         t.Set(i, j, k, s);
         ASSERT_EQ(t.At(i, j, k), s);
-        s++;
+        s += TypeParam(1);
       }
     }
   }
 
-  std::vector<TypeParam> gt({0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
-                             15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29});
+  std::vector<double> gt({0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
+                          15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29});
 
   uint64_t counter = 0;
   for (uint64_t i(0); i < 2; i++)
@@ -123,7 +126,7 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
     {
       for (uint64_t k(0); k < 5; k++)
       {
-        ASSERT_EQ(gt[counter], t.At(i, j, k));
+        ASSERT_EQ(static_cast<TypeParam>(gt[counter]), t.At(i, j, k));
         ++counter;
       }
     }
@@ -165,11 +168,11 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_1d)
 {
 
   fetch::math::Tensor<TypeParam> t({5});
-  TypeParam                      i(0);
+  TypeParam                      count(0);
   for (TypeParam &e : t)
   {
-    e = i;
-    i += TypeParam(1);
+    e = count;
+    count += TypeParam(1);
   }
   for (uint64_t i(0); i < t.size(); ++i)
   {
@@ -180,11 +183,11 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_1d)
 TYPED_TEST(TensorIndexingTest, range_based_iteration_2d)
 {
   fetch::math::Tensor<TypeParam> t({5, 2});
-  TypeParam                      i(0);
+  TypeParam                      count(0);
   for (TypeParam &e : t)
   {
-    e = i;
-    i += TypeParam(1);
+    e = count;
+    count += TypeParam(1);
   }
   TypeParam val{0};
   for (uint64_t i(0); i < t.shape()[1]; ++i)
@@ -200,11 +203,11 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_2d)
 TYPED_TEST(TensorIndexingTest, range_based_iteration_3d)
 {
   fetch::math::Tensor<TypeParam> t({5, 2, 4});
-  TypeParam                      i(0);
+  TypeParam                      count(0);
   for (TypeParam &e : t)
   {
-    e = i;
-    i += TypeParam(1);
+    e = count;
+    count += TypeParam(1);
   }
   TypeParam val{0};
   for (uint64_t i(0); i < t.shape()[2]; ++i)
@@ -223,11 +226,11 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_3d)
 TYPED_TEST(TensorIndexingTest, range_based_iteration_4d)
 {
   fetch::math::Tensor<TypeParam> t({5, 2, 4, 6});
-  TypeParam                      i(0);
+  TypeParam                      count(0);
   for (TypeParam &e : t)
   {
-    e = i;
-    i += TypeParam(1);
+    e = count;
+    count += TypeParam(1);
   }
   TypeParam val{0};
   for (uint64_t i(0); i < t.shape()[3]; ++i)
@@ -380,3 +383,7 @@ TYPED_TEST(TensorIndexingTest, major_order_flip_test)
   EXPECT_EQ(t[7], 7);
   EXPECT_EQ(t[8], 8);
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
