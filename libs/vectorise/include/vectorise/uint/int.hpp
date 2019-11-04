@@ -355,7 +355,7 @@ constexpr Int<S>::Int(__int128_t number)
   {
     for (std::size_t i{2}; i < WIDE_ELEMENTS; ++i)
     {
-      wide_[i] = ~wide_[i];
+      wide_[i] = 0xffffffffffffffffULL;
     }
   }
 }
@@ -365,6 +365,10 @@ constexpr Int<S>::Int(__uint128_t number)
 {
   wide_[0] = static_cast<WideType>(number);
   wide_[1] = static_cast<WideType>(number >> 64);
+  for (std::size_t i{2}; i < WIDE_ELEMENTS; ++i)
+  {
+    wide_[i] = 0;
+  }
 }
 
 /////////////////////////
@@ -677,6 +681,10 @@ constexpr Int<S> Int<S>::operator^(Int<S> const &n) const
 template <uint16_t S>
 constexpr Int<S> &Int<S>::operator+=(Int<S> const &n)
 {
+  if (n < _0){
+    *this -= -n;
+    return *this;
+  }
   Int<S>::WideType carry = 0, new_carry = 0;
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -710,7 +718,7 @@ constexpr Int<S> &Int<S>::operator-=(Int<S> const &n)
 
 // Implementation for 256-bits only
 template <>
-/*constexpr*/ Int<256> &Int<256>::operator*=(Int<256> const &n)
+constexpr Int<256> &Int<256>::operator*=(Int<256> const &n)
 {
   bool sign = true;
   if (*this < _0)
