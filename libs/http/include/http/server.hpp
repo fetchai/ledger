@@ -101,12 +101,13 @@ public:
     std::shared_ptr<uint64_t> ref_counter = std::make_shared<uint64_t>();
 
     {
-      auto ref_counter_copy = ref_counter;
-      auto manager          = manager_;
+      auto manager = manager_;
 
-      networkManager_.Post([manager, ref_counter_copy] {
+      networkManager_.Post([manager, ref_counter] {
         auto manager_lock = manager.lock();
-        FETCH_UNUSED(ref_counter_copy);
+
+        // Important to keep this alive during cb scope
+        FETCH_UNUSED(ref_counter);
 
         if (manager_lock)
         {
@@ -135,12 +136,13 @@ public:
     std::shared_ptr<uint64_t> ref_counter = std::make_shared<uint64_t>();
 
     {
-      auto        ref_counter_copy = ref_counter;  // NOLINT
-      HTTPServer &server_ref       = *this;
+      HTTPServer &server_ref = *this;
 
-      networkManager_.Post([&socRef, &accepRef, &manager, &threadMan, port, ref_counter_copy,
+      networkManager_.Post([&socRef, &accepRef, &manager, &threadMan, port, ref_counter,
                             &server_ref] {
-        FETCH_UNUSED(ref_counter_copy);
+        // Important to keep this alive during cb scope
+        FETCH_UNUSED(ref_counter);
+
         auto soc = threadMan.CreateIO<Socket>();
         auto accep =
             threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
