@@ -121,8 +121,9 @@ int main(int argc, char **argv)
   semantic_search_module->RegisterAgent("agent2");
   semantic_search_module->RegisterAgent("agent3");
 
-  QueryExecutor exe(semantic_search_module,
-                    error_tracker);  // TODO(tfr): Need to pass collection, not single instance
+  QueryExecutor exe(
+      semantic_search_module,
+      error_tracker);  // TODO(private issue AEA-128): Need to pass collection, not single instance
 
   // Executing query on behalf of agent2
   auto agent = semantic_search_module->GetAgent("agent2");

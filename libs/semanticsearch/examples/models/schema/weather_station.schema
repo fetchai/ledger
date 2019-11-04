@@ -28,6 +28,4 @@ var z : IntPair = {
 store x;
 store x;
 // reduce y = x;
-// TODO(tfr): advertise [1212,121212,1212] agent 1;
-
 

@@ -34,7 +34,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
   rpc_server_ = std::make_shared<Server>(messenger_endpoint_, SERVICE_MESSENGER, CHANNEL_RPC);
   rpc_server_->Add(RPC_MESSENGER_INTERFACE, &messenger_protocol_);
 
-  // TODO(tfr): Move somewhere else
+  // TODO(priave issue AEA-126): Move somewhere else
   using Int        = int;
   using Float      = double;
   using String     = std::string;
@@ -85,7 +85,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
         return instance;
       });
 
-  /// TODO(tfr): End
+  /// TODO(priave issue AEA-126): End
 }
 
 void MessengerAPI::RegisterMessenger(service::CallContext const &call_context, bool setup_mailbox)
@@ -110,7 +110,7 @@ void MessengerAPI::UnregisterMessenger(service::CallContext const &call_context)
 
 void MessengerAPI::SendMessage(service::CallContext const & /*call_context*/, Message msg)
 {
-  // TODO(tfr): Validate sender address
+  // TODO(private issue AEA-127): Validate sender address
   mailbox_.SendMessage(std::move(msg));
 }
 

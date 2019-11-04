@@ -66,13 +66,11 @@ void Mailbox::SendMessage(Message message)
   // away
   if (message.to.node == message_endpoint_.GetAddress())
   {
-    std::cout << "Delivering message" << std::endl;
     DeliverMessageLockLess(message);
     return;
   }
 
   // Else we pass it to the muddle for delivery
-  std::cout << "Forwarding message" << std::endl;
   serializers::MsgPackSerializer serializer;
   serializer << message;
 
@@ -160,14 +158,12 @@ void Mailbox::DeliverMessageLockLess(Message const &message)
   auto it = inboxes_.find(message.to.messenger);
   if (it == inboxes_.end())
   {
-    std::cout << "Mailbox not found!" << std::endl;
     // Attempting to deliver directly
-    // TODO(tfr): Attempt direct delivery
+    // TODO(private issue AEA-125): Attempt direct delivery
     return;
   }
 
   // Adding message to mailbox
-  std::cout << "Message delivered!" << std::endl;
   it->second.push_back(message);
 }
 

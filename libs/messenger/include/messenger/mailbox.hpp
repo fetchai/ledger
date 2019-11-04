@@ -64,7 +64,7 @@ protected:
   void OnNewMessagePacket(muddle::Packet const &packet, Address const &last_hop);
   /// }
 
-  // TODO(tfr): Add state logic to trim inboxes
+  // TODO(private issue AEA-122): Add state logic to trim inboxes
   //
 private:
   Mutex                                    mutex_{};

@@ -43,7 +43,7 @@ public:
   {
     SemanticSubscription rel;
     rel.position = std::move(position);
-    rel.index    = aid;  // TODO(tfr): Change to agent id
+    rel.index    = aid;  // TODO(private issue AEA-129): Change to agent id
 
     index_.AddRelation(rel);
   }

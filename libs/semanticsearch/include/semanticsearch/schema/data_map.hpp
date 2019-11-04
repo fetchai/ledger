@@ -77,7 +77,7 @@ public:
   bool IsSame(ModelInterface const &optr) const override
   {
     return (type() == optr->type());
-    // TODO(tfr): Check reducers and validators - they are currently ignored.
+    // TODO(private issue AEA-130): Check reducers and validators - they are currently ignored.
   }
 
   bool VisitSubmodelsWithVocabulary(

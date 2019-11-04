@@ -34,7 +34,7 @@ public:
   using Vocabulary          = std::shared_ptr<VocabularyInstance>;
   using SharedModelRegister = ModelRegister::SharedModelRegister;
 
-  using Int    = int;  // TODO(tfr): Get rid of these
+  using Int    = int;  // TODO(private issue AEA-126): Get rid of these
   using Float  = double;
   using String = std::string;
 
@@ -58,7 +58,7 @@ private:
     TYPE_FUNCTION_NAME
   };
 
-  // TODO(tfr): combine these three into a single execute statement.
+  // TODO(private issue AEA-128): combine these three into a single execute statement.
   void ExecuteStore(CompiledStatement const &stmt);
   void ExecuteSet(CompiledStatement const &stmt);
   void ExecuteDefine(CompiledStatement const &stmt);

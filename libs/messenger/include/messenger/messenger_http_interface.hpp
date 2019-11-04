@@ -35,7 +35,7 @@ public:
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            // Finding sender
            auto doc = request.JSON();
-           if (!doc.Has("sender"))  // TODO(tfr): Check that it is a string as well.
+           if ((!doc.Has("sender")) || (!doc["sender"].IsString()))
            {
              return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
            }
@@ -45,11 +45,8 @@ public:
            context.sender_address =
                byte_array::FromBase64(doc["sender"].As<byte_array::ConstByteArray>());
 
-           // TODO(tfr): HTTP messenger must always have a mailbox
-           bool setup_mailbox = doc["mailbox"].As<bool>();
-
-           // TODO(tfr): Authentication missing.
-           messenger_.RegisterMessenger(context, setup_mailbox);
+           // TODO(private issue AEA-124): Authentication missing.
+           messenger_.RegisterMessenger(context, true);
 
            variant::Variant response = variant::Variant::Object();
            response["status"]        = "OK";
@@ -60,7 +57,7 @@ public:
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            // Finding sender
            auto doc = request.JSON();
-           if (!doc.Has("sender"))  // TODO(tfr): Check that it is a string as well.
+           if ((!doc.Has("sender")) || (!doc["sender"].IsString()))
            {
              return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
            }
@@ -70,7 +67,7 @@ public:
            context.sender_address =
                byte_array::FromBase64(doc["sender"].As<byte_array::ConstByteArray>());
 
-           // TODO(tfr): Authentication missing.
+           // TODO(private issue AEA-124): Authentication missing.
            messenger_.UnregisterMessenger(context);
 
            variant::Variant response = variant::Variant::Object();
@@ -82,12 +79,12 @@ public:
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            // Finding sender
            auto doc = request.JSON();
-           if (!doc.Has("sender"))  // TODO(tfr): Check that it is a string as well.
+           if ((!doc.Has("sender")) || (!doc["sender"].IsString()))
            {
              return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
            }
 
-           if (!doc.Has("message"))  // TODO(tfr): Check that it is a string as well.
+           if ((!doc.Has("message")) || (!doc["message"].IsString()))
            {
              return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
            }
@@ -102,7 +99,7 @@ public:
            Message msg;
            buffer >> msg;
 
-           // TODO(tfr): Authentication missing.
+           // TODO(private issue AEA-124): Authentication missing.
            messenger_.SendMessage(context, msg);
 
            variant::Variant response = variant::Variant::Object();
@@ -114,7 +111,7 @@ public:
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            // Finding sender
            auto doc = request.JSON();
-           if (!doc.Has("sender"))  // TODO(tfr): Check that it is a string as well.
+           if ((!doc.Has("sender")) || (!doc["sender"].IsString()))
            {
              return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
            }
@@ -124,7 +121,7 @@ public:
            context.sender_address =
                byte_array::FromBase64(doc["sender"].As<byte_array::ConstByteArray>());
 
-           // TODO(tfr): Authentication missing.
+           // TODO(private issue AEA-124): Authentication missing.
            auto messages = messenger_.GetMessages(context);
 
            // Creating stream with messages
