@@ -38,16 +38,15 @@ class HTTPConnection : public AbstractHTTPConnection,
                        public std::enable_shared_from_this<HTTPConnection>
 {
 public:
-  using HTTPConnectionManagerPtr = std::weak_ptr<HTTPConnectionManager>;
-  using ResponseQueueType        = std::deque<HTTPResponse>;
-  using ConnectionType           = typename AbstractHTTPConnection::SharedType;
-  using HandleType               = HTTPConnectionManager::HandleType;
-  using SharedRequestType        = std::shared_ptr<HTTPRequest>;
-  using BufferPointerType        = std::shared_ptr<asio::streambuf>;
+  using ResponseQueueType = std::deque<HTTPResponse>;
+  using ConnectionType    = typename AbstractHTTPConnection::SharedType;
+  using HandleType        = HTTPConnectionManager::HandleType;
+  using SharedRequestType = std::shared_ptr<HTTPRequest>;
+  using BufferPointerType = std::shared_ptr<asio::streambuf>;
 
   static constexpr char const *LOGGING_NAME = "HTTPConnection";
 
-  HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManagerPtr manager)
+  HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
     : socket_(std::move(socket))
     , manager_(manager)
   {
@@ -55,29 +54,12 @@ public:
                     socket_.remote_endpoint().address().to_string());
   }
 
-  ~HTTPConnection() override
-  {
-    auto ptr = manager_.lock();
-    if (ptr)
-    {
-      ptr->Leave(handle_);
-    }
-  }
+  ~HTTPConnection() override = default;
 
   void Start()
   {
     is_open_ = true;
-    auto ptr = manager_.lock();
-
-    if (ptr)
-    {
-      handle_ = ptr->Join(shared_from_this());
-    }
-
-    if (is_open_)
-    {
-      ReadHeader();
-    }
+    ReadHeader();
   }
 
   void Send(HTTPResponse const &response) override
@@ -158,15 +140,11 @@ public:
       request->SetOriginatingAddress(remote_endpoint.address().to_string(), remote_endpoint.port());
 
       // push the request to the main server
-      auto ptr = manager_.lock();
-      if (ptr)
-      {
-        ptr->PushRequest(handle_, *request);
+      manager_.PushRequest(handle_, *request);
 
-        if (is_open_)
-        {
-          ReadHeader(buffer_ptr);
-        }
+      if (is_open_)
+      {
+        ReadHeader(buffer_ptr);
       }
       return;
     }
@@ -230,30 +208,35 @@ public:
       }
       else
       {
-        auto ptr = manager_.lock();
-        if (ptr)
-        {
-          ptr->Leave(handle_);
-        }
+        manager_.Leave(handle_);
       }
     };
 
     asio::async_write(socket_, *buffer_ptr, cb);
   }
 
+  void CloseConnnection() override
+  {
+    std::error_code dummy;
+    socket_.shutdown(asio::ip::tcp::socket::shutdown_both, dummy);
+    socket_.close(dummy);
+  }
+
   void Close()
   {
     is_open_ = false;
-    auto ptr = manager_.lock();
-    if (ptr)
-    {
-      ptr->Leave(handle_);
-    }
+    CloseConnnection();
+    manager_.Leave(handle_);
+  }
+
+  void SetHandle(HandleType handle)
+  {
+    handle_ = handle;
   }
 
 private:
   asio::ip::tcp::tcp::socket socket_;
-  HTTPConnectionManagerPtr   manager_;
+  HTTPConnectionManager &    manager_;
   ResponseQueueType          write_queue_;
   Mutex                      write_mutex_;
 

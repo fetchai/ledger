@@ -17,30 +17,27 @@
 //------------------------------------------------------------------------------
 
 #include "math/correlation/pearson.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
-using namespace fetch::math;
-using namespace fetch::math::correlation;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class PearsonCorrelationTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(PearsonCorrelationTest, MyTypes);
+TYPED_TEST_CASE(PearsonCorrelationTest, TensorFloatingTypes);
 
 TYPED_TEST(PearsonCorrelationTest, simple_test)
 {
   Tensor<double> A{3};
   A.Fill(0.0);
   A.At(0) = 1.0;
-  EXPECT_FLOAT_EQ(float(1), float(Pearson(A, A)));
+  EXPECT_FLOAT_EQ(float(1), float(correlation::Pearson(A, A)));
 }
 
 TEST(correlation_gtest, pearson_correlation_test)
@@ -53,5 +50,9 @@ TEST(correlation_gtest, pearson_correlation_test)
   B.At(0) = 3.0;
   B.At(1) = 2.0;
   B.At(2) = 1.0;
-  EXPECT_FLOAT_EQ(float(-1), float(Pearson(A, B)));
+  EXPECT_FLOAT_EQ(float(-1), float(correlation::Pearson(A, B)));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

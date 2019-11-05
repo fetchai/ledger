@@ -149,6 +149,10 @@ public:
         status.client    = context.sender_address;
         success          = true;
       }
+      else if (status.client == context.sender_address)
+      {
+        success = true;
+      }
     });
 
     // print an error message on failure
@@ -174,7 +178,12 @@ public:
     // attempt to unlock this shard
     bool success = false;
     lock_status_.ApplyVoid([&context, &success](LockStatus &status) {
-      if (status.is_locked && (status.client == context.sender_address))
+      if (!status.is_locked)
+      {
+        status.client = Identifier{};
+        success       = true;
+      }
+      else if (status.client == context.sender_address)
       {
         status.is_locked = false;
         status.client    = Identifier{};

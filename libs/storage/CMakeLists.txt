@@ -23,10 +23,6 @@ target_link_libraries(fetch-storage
                              fetch-network
                              vendor-mio)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-storage PRIVATE -Wshadow)
-endif ()
-
 # ------------------------------------------------------------------------------
 # Test Targets
 # ------------------------------------------------------------------------------
