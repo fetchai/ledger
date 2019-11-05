@@ -744,10 +744,7 @@ void VM::Handler__InvokeContractFunction()
   std::string identity = Ptr<String>(sv.object)->str;
   sv.Reset();
 
-  // here we have the identity, contract, function and parameters
-  // maybe pass id of function as well?
-  printf("identity=%s contract=%s function=%s num_parameters=%d\n", identity.c_str(),
-         contract.name.c_str(), function.name.c_str(), function.num_parameters);
+  // invoke here....
 
   // simulate return value
   if (function.return_type_id != TypeIds::Void)
