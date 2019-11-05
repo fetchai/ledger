@@ -32,7 +32,7 @@ from fetch.cluster.utils import output, verify_file, yaml_extract
 from fetchai.ledger.api import LedgerApi
 from fetchai.ledger.crypto import Entity
 
-from smart_contract_tests.synergetic_utils import SynergeticContractTestHelper
+from .smart_contract_tests.synergetic_utils import SynergeticContractTestHelper
 
 
 class TimerWatchdog():
