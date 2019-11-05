@@ -22,8 +22,8 @@
 namespace fetch {
 namespace byte_array {
 
-ConstByteArray FromBase64(ConstByteArray const &str) noexcept;
-ConstByteArray FromHex(ConstByteArray const &str) noexcept;
+ConstByteArray FromBase64(ConstByteArray const &str);
+ConstByteArray FromHex(ConstByteArray const &str);
 ConstByteArray FromBase58(ConstByteArray const &str);
 
 }  // namespace byte_array
