@@ -34,7 +34,7 @@ TYPED_TEST_CASE(MultiheadAttention, MyTypes);
 TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class as a subgraph
 {
   using DataType = typename TypeParam::Type;
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -65,7 +65,7 @@ TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class a
 
 TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
   fetch::ml::layers::MultiheadAttention<TypeParam> m_att(static_cast<SizeType>(4),
                                                          static_cast<SizeType>(12), DataType(0.9));

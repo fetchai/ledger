@@ -17,9 +17,5 @@ setup_compiler()
 setup_library(fetch-settings)
 target_link_libraries(fetch-settings PUBLIC fetch-core fetch-logging)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-settings PRIVATE -Wshadow)
-endif ()
-
 # test targets
 add_test_target()

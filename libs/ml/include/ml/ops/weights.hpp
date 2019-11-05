@@ -53,7 +53,7 @@ class Weights : public fetch::ml::ops::Variable<T>
 {
 public:
   using TensorType     = T;
-  using SizeType       = typename TensorType::SizeType;
+  using SizeType       = fetch::math::SizeType;
   using DataType       = typename TensorType::Type;
   using ArrayPtrType   = std::shared_ptr<TensorType>;
   using VecTensorType  = typename Variable<T>::VecTensorType;

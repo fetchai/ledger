@@ -44,7 +44,7 @@ TYPED_TEST_CASE(FlattenTest, MyTypes);
 
 TYPED_TEST(FlattenTest, forward_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType height  = 7;
@@ -78,7 +78,7 @@ TYPED_TEST(FlattenTest, forward_test)
 
 TYPED_TEST(FlattenTest, backward_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType height  = 5;
@@ -124,7 +124,7 @@ TYPED_TEST(FlattenTest, saveparams_test)
   using SPType        = typename fetch::ml::ops::Flatten<TensorType>::SPType;
   using OpType        = fetch::ml::ops::Flatten<TensorType>;
 
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType height  = 7;
@@ -182,7 +182,7 @@ TYPED_TEST(FlattenTest, saveparams_test)
 
 TYPED_TEST(FlattenTest, saveparams_backward_test)
 {
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using OpType     = fetch::ml::ops::Flatten<TensorType>;
