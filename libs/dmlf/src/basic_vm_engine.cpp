@@ -34,8 +34,8 @@ namespace fetch {
 namespace dmlf {
 
 // This must match the type as defined in variant::variant.hpp
-using fp64_t = fetch::fixed_point::fp64_t;
-using fp32_t = fetch::fixed_point::fp32_t;
+using fp64_t = fixed_point::fp64_t;
+using fp32_t = fixed_point::fp32_t;
 
 ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFiles const &sources)
 {
