@@ -18,7 +18,6 @@
 
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
@@ -41,7 +40,7 @@ using SizeType   = fetch::math::SizeType;
 
 using GraphType      = typename fetch::ml::Graph<TensorType>;
 using OptimiserType  = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
-using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>;
+using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
 
 int main(int ac, char **av)
 {
@@ -65,9 +64,9 @@ int main(int ac, char **av)
   //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
   auto g = std::make_shared<GraphType>();
 
-  std::string input = g->AddNode<PlaceHolder<TensorType>>("Input", {});
-  std::string label = g->AddNode<PlaceHolder<TensorType>>("Label", {});
-  std::string label_onehot = g->AddNode<OneHot<TensorType>>("Label_onehot", {label}, 10, 0);
+  std::string input         = g->AddNode<PlaceHolder<TensorType>>("Input", {});
+  std::string label         = g->AddNode<PlaceHolder<TensorType>>("Label", {});
+  std::string label_onehot  = g->AddNode<OneHot<TensorType>>("Label_onehot", {label}, 10, 0);
   std::string label_flatten = g->AddNode<Flatten<TensorType>>("Label flatten", {label_onehot});
 
   std::string layer_1 = g->AddNode<FullyConnected<TensorType>>(
@@ -80,11 +79,11 @@ int main(int ac, char **av)
       reg_rate);
   std::string error = g->AddNode<CrossEntropyLoss<TensorType>>("Error", {output, label_flatten});
 
-  auto     mnist_images = fetch::ml::utilities::ReadMnistImages<TensorType>(av[1]);
-  auto mnist_labels = fetch::ml::utilities::ReadMnistLabels<TensorType>(av[2]);
+  auto mnist_images = fetch::ml::utilities::read_mnist_images<TensorType>(av[1]);
+  auto mnist_labels = fetch::ml::utilities::read_mnist_labels<TensorType>(av[2]);
 
-  // Initialise MNIST loader
-  fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> data_loader;
+  // Initialise dataloader
+  DataLoaderType data_loader;
   data_loader.AddData({mnist_images}, mnist_labels);
 
   // Initialise Optimiser

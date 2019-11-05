@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/platform.hpp"
 #include "math/base_types.hpp"
+#include "math/one_hot.hpp"
 #include "ml/exceptions/exceptions.hpp"
+#include "vectorise/platform.hpp"
 
-#include <string>
 #include <fstream>
+#include <string>
 
 namespace fetch {
 namespace ml {
@@ -30,14 +31,13 @@ namespace utilities {
 
 using SizeType = fetch::math::SizeType;
 
-
 /**
  * Reads the mnist image file into a Tensor
  * @param full_path Path to image file
  * @return Tensor with shape {28, 28, n_images}
  */
 template <typename TensorType>
-TensorType ReadMnistImages(std::string const &full_path)
+TensorType read_mnist_images(std::string const &full_path)
 {
   using DataType = typename TensorType::Type;
 
@@ -69,16 +69,18 @@ TensorType ReadMnistImages(std::string const &full_path)
 
   SizeType image_size{n_rows * n_cols};
 
-  TensorType tensor_dataset {{n_rows, n_cols, n_images}};
-  auto image_char = new char[image_size];
+  TensorType tensor_dataset{{n_rows, n_cols, n_images}};
+  auto       image_char = new char[image_size];
 
   for (SizeType i{0}; i < SizeType{n_images}; i++)
   {
     file.read(image_char, std::streamsize(image_size));
-    for (SizeType j{0}; j< n_rows; j++){
-      for (SizeType k{0}; k< n_cols; k++) {
-        tensor_dataset.At(j, k, i) = static_cast<DataType>(
-                                      static_cast<uint8_t >(image_char[j * n_cols + k])) / DataType{256};
+    for (SizeType j{0}; j < n_rows; j++)
+    {
+      for (SizeType k{0}; k < n_cols; k++)
+      {
+        tensor_dataset.At(j, k, i) =
+            static_cast<DataType>(static_cast<uint8_t>(image_char[j * n_cols + k])) / DataType{256};
       }
     }
   }
@@ -86,14 +88,13 @@ TensorType ReadMnistImages(std::string const &full_path)
   return tensor_dataset;
 }
 
-
 /**
  * Reads the mnist labels file into a Tensor
  * @param full_path Path to labels file
  * @return Tensor with shape {1, n_images}
  */
 template <typename TensorType>
-TensorType ReadMnistLabels(std::string const &full_path)
+TensorType read_mnist_labels(std::string const &full_path)
 {
   using DataType = typename TensorType::Type;
   std::ifstream file(full_path, std::ios::binary);
@@ -118,7 +119,7 @@ TensorType ReadMnistLabels(std::string const &full_path)
   n_labels = platform::ToBigEndian(n_labels);
 
   TensorType labels{{1, n_labels}};
-  char label_char;
+  char       label_char;
   for (SizeType i{0}; i < SizeType{n_labels}; i++)
   {
     file.read(&label_char, 1);
@@ -126,6 +127,18 @@ TensorType ReadMnistLabels(std::string const &full_path)
   }
 
   return labels;
+}
+
+template <typename TensorType>
+TensorType convert_labels_to_onehot(TensorType labels)
+{
+  assert(labels.shape().at(0) == 1);
+  SizeType n_labels{10};
+
+  // one_hot has shape {10, 1, batch_size}
+  TensorType one_hot = fetch::math::OneHot(labels, n_labels);
+
+  return one_hot.View().Copy();
 }
 
 }  // namespace utilities

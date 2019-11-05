@@ -25,6 +25,7 @@
 #include "vm_modules/ml/optimisation/optimiser.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/ml/training_pair.hpp"
+#include "vm_modules/ml/utilities/mnist_utilities.hpp"
 #include "vm_modules/ml/utilities/scaler.hpp"
 
 using namespace fetch::vm;
@@ -54,6 +55,7 @@ void BindML(Module &module)
 
   // utilities
   utilities::VMScaler::Bind(module);
+  utilities::BindMnistUtils(module);
 }
 
 }  // namespace ml

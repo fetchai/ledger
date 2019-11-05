@@ -427,7 +427,6 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       break;
     }
 
-    case ml::LoaderType::MNIST:
     case ml::LoaderType::SGNS:
     case ml::LoaderType::W2V:
     case ml::LoaderType::COMMODITY:
@@ -495,7 +494,6 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       sp.dataloader_ptr_.reset(loader_ptr);
       break;
     }
-    case ml::LoaderType::MNIST:
     case ml::LoaderType::SGNS:
     case ml::LoaderType::W2V:
     case ml::LoaderType::COMMODITY:

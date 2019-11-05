@@ -18,11 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/distributed_learning/distributed_learning_client.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/utilities/mnist_utilities.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -47,8 +48,13 @@ std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>> M
       10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
 
   // Initialise DataLoader
+  auto mnist_images = fetch::ml::utilities::read_mnist_images<TensorType>(images);
+  auto mnist_labels = fetch::ml::utilities::read_mnist_labels<TensorType>(labels);
+  mnist_labels      = fetch::ml::utilities::convert_labels_to_onehot(mnist_labels);
+
   auto dataloader_ptr =
-      std::make_unique<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>>(images, labels);
+      std::make_unique<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
+  dataloader_ptr->AddData({mnist_images}, mnist_labels);
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);
 

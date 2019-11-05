@@ -18,7 +18,8 @@
 
 #include "math/tensor.hpp"
 #include "ml/clustering/tsne.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
+#include "ml/utilities/mnist_utilities.hpp"
 
 #include <cstdint>
 #include <fstream>
@@ -86,9 +87,15 @@ int main(int ac, char **av)
   }
 
   std::cout << "Loading input data. " << std::endl;
-  fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType> data_loader(av[1], av[2]);
-  bool                                                        is_done = data_loader.IsDone();
-  std::pair<TensorType, std::vector<TensorType>>              input =
+  auto mnist_images = fetch::ml::utilities::read_mnist_images<TensorType>(av[1]);
+  auto mnist_labels = fetch::ml::utilities::read_mnist_labels<TensorType>(av[2]);
+  mnist_labels      = fetch::ml::utilities::convert_labels_to_onehot(mnist_labels);
+
+  fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> data_loader;
+  data_loader.AddData({mnist_images}, mnist_labels);
+
+  bool                                           is_done = data_loader.IsDone();
+  std::pair<TensorType, std::vector<TensorType>> input =
       data_loader.PrepareBatch(SUBSET_SIZE, is_done);
 
   // Initialise TSNE
