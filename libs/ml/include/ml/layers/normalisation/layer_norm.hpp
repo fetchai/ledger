@@ -42,7 +42,7 @@ class LayerNorm : public SubGraph<T>
 public:
   using TensorType    = T;
   using TensorPtrType = std::shared_ptr<TensorType>;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType        = LayerLayerNormSaveableParams<T>;

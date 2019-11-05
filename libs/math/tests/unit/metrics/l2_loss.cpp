@@ -16,21 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/metrics/l2_loss.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/metrics/l2_loss.hpp"
+#include "test_types.hpp"
 
-namespace {
+namespace fetch {
+namespace math {
+namespace test {
+
 template <typename T>
 class L2LossTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(L2LossTest, MyTypes);
+TYPED_TEST_CASE(L2LossTest, TensorFloatingTypes);
 
 TYPED_TEST(L2LossTest, value_test)
 {
@@ -43,4 +42,7 @@ TYPED_TEST(L2LossTest, value_test)
   // test correct values
   EXPECT_NEAR(double(score), double(102), 1e-7);
 }
-}  // namespace
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
