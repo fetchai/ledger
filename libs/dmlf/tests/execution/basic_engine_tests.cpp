@@ -638,7 +638,7 @@ function arrayOut() : Array<Array<Int64>>
   var big = Array<Array<Int64>>(2);
   big[0] = array;
   big[1] = array;
-  
+
   return big;
 endfunction
 
@@ -716,8 +716,8 @@ endfunction
 
 )";
 
-ExecutionResult RunStatelessTest(std::string const& which, std::string const& entrypoint,
-    Params const& params)
+ExecutionResult RunStatelessTest(std::string const &which, std::string const &entrypoint,
+                                 Params const &params)
 {
   BasicVmEngine engine;
 
@@ -732,11 +732,11 @@ ExecutionResult RunStatelessTest(std::string const& which, std::string const& en
 }
 
 template <typename T>
-LedgerVariant Make2x2(std::vector<T> const& vals)
+LedgerVariant Make2x2(std::vector<T> const &vals)
 {
   LedgerVariant result = LedgerVariant::Array(2);
-  result[0] = LedgerVariant::Array(2);
-  result[1] = LedgerVariant::Array(2);
+  result[0]            = LedgerVariant::Array(2);
+  result[1]            = LedgerVariant::Array(2);
 
   result[0][0] = LedgerVariant{vals[0]};
   result[0][1] = LedgerVariant{vals[1]};
@@ -745,11 +745,11 @@ LedgerVariant Make2x2(std::vector<T> const& vals)
 
   return result;
 }
-LedgerVariant Make2x2(std::vector<std::string> const& vals)
+LedgerVariant Make2x2(std::vector<std::string> const &vals)
 {
   LedgerVariant result = LedgerVariant::Array(2);
-  result[0] = LedgerVariant::Array(2);
-  result[1] = LedgerVariant::Array(2);
+  result[0]            = LedgerVariant::Array(2);
+  result[1]            = LedgerVariant::Array(2);
 
   result[0][0] = LedgerVariant{std::string(vals[0])};
   result[0][1] = LedgerVariant{std::string(vals[1])};
@@ -759,11 +759,11 @@ LedgerVariant Make2x2(std::vector<std::string> const& vals)
   return result;
 }
 
-LedgerVariant Make2x2(std::vector<bool> const& vals)
+LedgerVariant Make2x2(std::vector<bool> const &vals)
 {
   LedgerVariant result = LedgerVariant::Array(2);
-  result[0] = LedgerVariant::Array(2);
-  result[1] = LedgerVariant::Array(2);
+  result[0]            = LedgerVariant::Array(2);
+  result[1]            = LedgerVariant::Array(2);
 
   result[0][0] = LedgerVariant{vals[0] == true};
   result[0][1] = LedgerVariant{vals[1] == true};
@@ -772,7 +772,6 @@ LedgerVariant Make2x2(std::vector<bool> const& vals)
 
   return result;
 }
-
 
 }  // namespace
 
@@ -1436,88 +1435,97 @@ TEST(BasicVmEngineDmlfTests, RuntimeError)
 
 TEST(BasicVmEngineDmlfTests, Add)
 {
-  ExecutionResult result = RunStatelessTest(add, "add",Params{LedgerVariant(1), LedgerVariant(2)}); 
+  ExecutionResult result = RunStatelessTest(add, "add", Params{LedgerVariant(1), LedgerVariant(2)});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 3);
 }
 
 TEST(BasicVmEngineDmlfTests, Add8)
 {
-  ExecutionResult result = RunStatelessTest(Add8, "add",Params{LedgerVariant(1), LedgerVariant(2)}); 
+  ExecutionResult result =
+      RunStatelessTest(Add8, "add", Params{LedgerVariant(1), LedgerVariant(2)});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 3);
 }
 
 TEST(BasicVmEngineDmlfTests, Add64)
 {
-  ExecutionResult result = RunStatelessTest(Add64, "add",Params{LedgerVariant(0), LedgerVariant(std::numeric_limits<int>::max())}); 
+  ExecutionResult result = RunStatelessTest(
+      Add64, "add", Params{LedgerVariant(0), LedgerVariant(std::numeric_limits<int>::max())});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), std::numeric_limits<int>::max());
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, AddFloat)
 {
-  double a = 4.5;
-  float  b = 3.5;
-  ExecutionResult result = RunStatelessTest(AddFloat, "add",Params{LedgerVariant(a), LedgerVariant(b)}); 
+  double          a = 4.5;
+  float           b = 3.5;
+  ExecutionResult result =
+      RunStatelessTest(AddFloat, "add", Params{LedgerVariant(a), LedgerVariant(b)});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<float>(), 8.0, 0.001);
 }
 TEST(DISABLED_BasicVmEngineDmlfTests, AddFloat32)
 {
-  float a = 4.6f;
-  float b = 3.5f;
-  ExecutionResult result = RunStatelessTest(AddFloat32, "add",Params{LedgerVariant(a), LedgerVariant(b)}); 
+  float           a = 4.6f;
+  float           b = 3.5f;
+  ExecutionResult result =
+      RunStatelessTest(AddFloat32, "add", Params{LedgerVariant(a), LedgerVariant(b)});
   EXPECT_NEAR(result.output().As<float>(), 8.1, 0.001);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, AddFloatComplex)
 {
-  double a = 4.5;
-  float  b = 3.3f;
-  ExecutionResult result = RunStatelessTest(AddFloatComplex, "add",Params{LedgerVariant(a), LedgerVariant(b)}); 
+  double          a = 4.5;
+  float           b = 3.3f;
+  ExecutionResult result =
+      RunStatelessTest(AddFloatComplex, "add", Params{LedgerVariant(a), LedgerVariant(b)});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<double>(), 7.8, 0.001);
 }
 
 TEST(BasicVmEngineDmlfTests, AddFixed)
 {
-  ExecutionResult result = RunStatelessTest(AddFixed, "add",Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))}); 
+  ExecutionResult result = RunStatelessTest(
+      AddFixed, "add", Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, TrueIntToFloatCompare)
 {
-  ExecutionResult result = RunStatelessTest(IntToFloatCompare, "compare",Params{LedgerVariant(5), LedgerVariant(6.5)}); 
+  ExecutionResult result =
+      RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(5), LedgerVariant(6.5)});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, FalseIntToFloatCompare)
 {
-  ExecutionResult result = RunStatelessTest(IntToFloatCompare, "compare",Params{LedgerVariant(5), LedgerVariant(4.5)}); 
+  ExecutionResult result =
+      RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(5), LedgerVariant(4.5)});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 0);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, TrueBoolCompare)
 {
-  ExecutionResult result = RunStatelessTest(BoolCompare, "compare",Params{LedgerVariant(true)}); 
+  ExecutionResult result = RunStatelessTest(BoolCompare, "compare", Params{LedgerVariant(true)});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, FalseBoolCompare)
 {
-  ExecutionResult result = RunStatelessTest(BoolCompare, "compare",Params{LedgerVariant(false)}); 
+  ExecutionResult result = RunStatelessTest(BoolCompare, "compare", Params{LedgerVariant(false)});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 0);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, BadParamsTrueIntToFloatCompare)
 {
-  ExecutionResult result = RunStatelessTest(IntToFloatCompare, "compare",Params{LedgerVariant(6.5), LedgerVariant(5)}); 
+  ExecutionResult result =
+      RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(6.5), LedgerVariant(5)});
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
@@ -1525,7 +1533,8 @@ TEST(DISABLED_BasicVmEngineDmlfTests, BadParamsTrueIntToFloatCompare)
 
 TEST(BasicVmEngineDmlfTests, WrongNumberOfParamsTrueIntToFloatCompare)
 {
-  ExecutionResult result = RunStatelessTest(IntToFloatCompare, "compare",Params{LedgerVariant(6.5)}); 
+  ExecutionResult result =
+      RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(6.5)});
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
@@ -1784,21 +1793,21 @@ TEST(BasicVmEngineDmlfTests, BigStateMatrixMyCalls)
 
 TEST(BasicVmEngineDmlfTests, StringOutput)
 {
-  ExecutionResult result = RunStatelessTest(StringOut, "outString",Params{}); 
+  ExecutionResult result = RunStatelessTest(StringOut, "outString", Params{});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<std::string>(), "Hello");
 }
 
 TEST(BasicVmEngineDmlfTests, IntToString)
 {
-  ExecutionResult result = RunStatelessTest(IntToString, "IntToString",Params{LedgerVariant(1)});
+  ExecutionResult result = RunStatelessTest(IntToString, "IntToString", Params{LedgerVariant(1)});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<std::string>(), "1");
 }
 
 TEST(BasicVmEngineDmlfTests, ArrayInt64)
 {
-  ExecutionResult result = RunStatelessTest(ArrayInt64Out, "arrayOut",Params{}); 
+  ExecutionResult result = RunStatelessTest(ArrayInt64Out, "arrayOut", Params{});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   auto output = result.output();
   EXPECT_TRUE(output.IsArray());
@@ -1809,7 +1818,7 @@ TEST(BasicVmEngineDmlfTests, ArrayInt64)
 
 TEST(BasicVmEngineDmlfTests, ArrayIntInt64)
 {
-  ExecutionResult result = RunStatelessTest(ArrayIntInt64Out, "arrayOut",Params{}); 
+  ExecutionResult result = RunStatelessTest(ArrayIntInt64Out, "arrayOut", Params{});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   auto output = result.output();
   ASSERT_TRUE(output.IsArray());
@@ -1817,7 +1826,7 @@ TEST(BasicVmEngineDmlfTests, ArrayIntInt64)
   ASSERT_TRUE(output[0].IsArray());
   ASSERT_EQ(output[0].size(), 2);
   ASSERT_TRUE(output[1].IsArray());
-  
+
   EXPECT_EQ(output[1].size(), 2);
   EXPECT_EQ(output[0][0].As<int>(), 1);
   EXPECT_EQ(output[0][1].As<int>(), 2);
@@ -1825,12 +1834,12 @@ TEST(BasicVmEngineDmlfTests, ArrayIntInt64)
   EXPECT_EQ(output[1][1].As<int>(), 2);
 }
 
-template<typename T>
-void RunArrayTest(std::string entrypoint, std::vector<T> const& vals)
+template <typename T>
+void RunArrayTest(std::string entrypoint, std::vector<T> const &vals)
 {
   LedgerVariant input = Make2x2(vals);
 
-  ExecutionResult result = RunStatelessTest(ArrayArrayOp, entrypoint, Params{input}); 
+  ExecutionResult result = RunStatelessTest(ArrayArrayOp, entrypoint, Params{input});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   auto output = result.output();
   ASSERT_TRUE(output.IsArray());
@@ -1839,7 +1848,7 @@ void RunArrayTest(std::string entrypoint, std::vector<T> const& vals)
   ASSERT_EQ(output[0].size(), 2);
   ASSERT_TRUE(output[1].IsArray());
   ASSERT_EQ(output[1].size(), 2);
-  
+
   EXPECT_EQ(output[0][0].As<T>(), vals[3]);
   EXPECT_EQ(output[0][1].As<T>(), vals[1]);
   EXPECT_EQ(output[1][0].As<T>(), vals[2]);
@@ -1850,7 +1859,7 @@ void RunArrayTest(std::string entrypoint, std::vector<fp64_t> const& vals)
 {
   LedgerVariant input = Make2x2(vals);
 
-  ExecutionResult result = RunStatelessTest(ArrayArrayOp, entrypoint, Params{input}); 
+  ExecutionResult result = RunStatelessTest(ArrayArrayOp, entrypoint, Params{input});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   auto output = result.output();
   ASSERT_TRUE(output.IsArray());
@@ -1859,7 +1868,7 @@ void RunArrayTest(std::string entrypoint, std::vector<fp64_t> const& vals)
   ASSERT_EQ(output[0].size(), 2);
   ASSERT_TRUE(output[1].IsArray());
   ASSERT_EQ(output[1].size(), 2);
-  
+
   EXPECT_EQ(fp64_t::FromBase(output[0][0].As<int64_t>()), vals[3]);
   EXPECT_EQ(fp64_t::FromBase(output[0][1].As<int64_t>()), vals[1]);
   EXPECT_EQ(fp64_t::FromBase(output[1][0].As<int64_t>()), vals[2]);
@@ -1869,7 +1878,7 @@ void RunArrayTest(std::string entrypoint, std::vector<fp32_t> const& vals)
 {
   LedgerVariant input = Make2x2(vals);
 
-  ExecutionResult result = RunStatelessTest(ArrayArrayOp, entrypoint, Params{input}); 
+  ExecutionResult result = RunStatelessTest(ArrayArrayOp, entrypoint, Params{input});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
   auto output = result.output();
   ASSERT_TRUE(output.IsArray());
@@ -1878,7 +1887,7 @@ void RunArrayTest(std::string entrypoint, std::vector<fp32_t> const& vals)
   ASSERT_EQ(output[0].size(), 2);
   ASSERT_TRUE(output[1].IsArray());
   ASSERT_EQ(output[1].size(), 2);
-  
+
   EXPECT_EQ(fp64_t::FromBase(output[0][0].As<int64_t>()), vals[3]);
   EXPECT_EQ(fp64_t::FromBase(output[0][1].As<int64_t>()), vals[1]);
   EXPECT_EQ(fp64_t::FromBase(output[1][0].As<int64_t>()), vals[2]);
@@ -1886,37 +1895,40 @@ void RunArrayTest(std::string entrypoint, std::vector<fp32_t> const& vals)
 }
 */
 
-
 TEST(BasicVmEngineDmlfTests, ArrayArrayOpTests)
 {
-  RunArrayTest("doInt8", std::vector<int8_t>{1,2,3,4});
-  RunArrayTest("doUInt8", std::vector<uint8_t>{1,2,3,4});
-  RunArrayTest("doInt16", std::vector<int16_t>{1,2,3,4});
-  RunArrayTest("doUInt16", std::vector<uint16_t>{1,2,3,4});
-  RunArrayTest("doInt32", std::vector<int32_t>{1,2,3,4});
-  RunArrayTest("doUInt32", std::vector<uint32_t>{1,2,3,4});
-  RunArrayTest("doInt64" , std::vector<int64_t>{1,2,3,4});
-  RunArrayTest("doUInt64", std::vector<uint64_t>{1,2,3,4});
+  RunArrayTest("doInt8", std::vector<int8_t>{1, 2, 3, 4});
+  RunArrayTest("doUInt8", std::vector<uint8_t>{1, 2, 3, 4});
+  RunArrayTest("doInt16", std::vector<int16_t>{1, 2, 3, 4});
+  RunArrayTest("doUInt16", std::vector<uint16_t>{1, 2, 3, 4});
+  RunArrayTest("doInt32", std::vector<int32_t>{1, 2, 3, 4});
+  RunArrayTest("doUInt32", std::vector<uint32_t>{1, 2, 3, 4});
+  RunArrayTest("doInt64", std::vector<int64_t>{1, 2, 3, 4});
+  RunArrayTest("doUInt64", std::vector<uint64_t>{1, 2, 3, 4});
 
-  //RunArrayTest("doFloat32", std::vector<float>{1.0f,2.0f,3.0f,4.0f});
-  RunArrayTest("doFloat64" , std::vector<double>{1.0,2.0,3.0,4.0});
+  // RunArrayTest("doFloat32", std::vector<float>{1.0f,2.0f,3.0f,4.0f});
+  RunArrayTest("doFloat64", std::vector<double>{1.0, 2.0, 3.0, 4.0});
 
-  //RunArrayTest("doFixed32", std::vector<fp32_t>{fp32_t{1.2},fp32_t{2.4},fp32_t{3.7}, fp32_t{4.8}});
-  RunArrayTest("doFixed64", std::vector<fp64_t>{fp64_t{1.3},fp64_t{2.2},fp64_t{3.5}, fp64_t{4.7}});
+  // RunArrayTest("doFixed32", std::vector<fp32_t>{fp32_t{1.2},fp32_t{2.4},fp32_t{3.7},
+  // fp32_t{4.8}});
+  RunArrayTest("doFixed64",
+               std::vector<fp64_t>{fp64_t{1.3}, fp64_t{2.2}, fp64_t{3.5}, fp64_t{4.7}});
 
-  //RunArrayTest("doBool", std::vector<bool>{true,true,false,false});
-  RunArrayTest("doString" , std::vector<std::string>{"a","b","c","d"});
+  // RunArrayTest("doBool", std::vector<bool>{true,true,false,false});
+  RunArrayTest("doString", std::vector<std::string>{"a", "b", "c", "d"});
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, DisabledArrayArrayOpTests)
 {
-  RunArrayTest("doFloat32", std::vector<float>{1.0f,2.0f,3.0f,4.0f});
+  RunArrayTest("doFloat32", std::vector<float>{1.0f, 2.0f, 3.0f, 4.0f});
 
-  RunArrayTest("doFixed32", std::vector<fp32_t>{fp32_t{1.0},fp32_t{2.0},fp32_t{3.0}, fp32_t{4.0}});
-  RunArrayTest("doFixed64", std::vector<fp64_t>{fp64_t{1.0},fp64_t{2.0},fp64_t{3.0}, fp64_t{4.0}});
+  RunArrayTest("doFixed32",
+               std::vector<fp32_t>{fp32_t{1.0}, fp32_t{2.0}, fp32_t{3.0}, fp32_t{4.0}});
+  RunArrayTest("doFixed64",
+               std::vector<fp64_t>{fp64_t{1.0}, fp64_t{2.0}, fp64_t{3.0}, fp64_t{4.0}});
 
-  RunArrayTest("doBool", std::vector<bool>{true,true,false,false});
-  EXPECT_EQ(1,1);
+  RunArrayTest("doBool", std::vector<bool>{true, true, false, false});
+  EXPECT_EQ(1, 1);
 }
 
 }  // namespace

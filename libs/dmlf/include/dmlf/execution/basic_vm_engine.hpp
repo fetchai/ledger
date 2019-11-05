@@ -61,20 +61,19 @@ public:
                       Params params) override;
 
 private:
-
   struct ExecutionContext
   {
     ExecutionContext(VM *vm, Executable *executable);
     ~ExecutionContext();
 
-    VM* vm_;
+    VM *vm_;
   };
 
   bool HasExecutable(std::string const &name) const;
   bool HasState(std::string const &name) const;
 
-  ExecutionResult PrepOutput(VM &vm, Executable *exec, 
-      VmVariant const &vmVariant, std::string const& console, std::string&& message) const;
+  ExecutionResult PrepOutput(VM &vm, Executable *exec, VmVariant const &vmVariant,
+                             std::string const &console, std::string &&message) const;
 
   ExecutionResult EngineError(Error::Code code, std::string errorMessage) const;
   ExecutionResult EngineSuccess(std::string successMessage) const;
