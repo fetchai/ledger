@@ -17,15 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "dmlf/collective_learning/client_algorithm.hpp"
 #include "dmlf/collective_learning/collective_learning_client.hpp"
 #include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/meta/ml_type_traits.hpp"
-//#include "ml/ops/activations/relu.hpp"
-//#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-//#include "ml/ops/placeholder.hpp"
-//#include "ml/optimisation/adam_optimiser.hpp"
 
 namespace fetch {
 namespace dmlf {

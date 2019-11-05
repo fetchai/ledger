@@ -83,8 +83,9 @@ void SynchroniseWeights(std::vector<std::shared_ptr<CollectiveLearningClient<Ten
 
   for (SizeType i{0}; i < clients.size(); ++i)
   {
-    clients_weights[i]      = client_algorithms[i]->GetWeights();
-    auto cast_client_i      = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(client_algorithms[i]);
+    clients_weights[i] = client_algorithms[i]->GetWeights();
+    auto cast_client_i =
+        std::dynamic_pointer_cast<Word2VecClient<TensorType>>(client_algorithms[i]);
     clients_vocab_hashes[i] = cast_client_i->GetVocab().second;
   }
 
@@ -94,7 +95,8 @@ void SynchroniseWeights(std::vector<std::shared_ptr<CollectiveLearningClient<Ten
   {
     VectorTensorType weights_new;
 
-    auto cast_client_i = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(client_algorithms[i]);
+    auto cast_client_i =
+        std::dynamic_pointer_cast<Word2VecClient<TensorType>>(client_algorithms[i]);
 
     for (SizeType k{0}; k < clients_weights.at(i).size(); ++k)
     {
@@ -189,9 +191,13 @@ int main(int argc, char **argv)
   {
     Word2VecTrainingParams<DataType> cp(*word2vec_client_params);
     cp.data    = {client_data[i]};
-    clients[i] = std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp,
-                                                              networkers.at(i), console_mutex_ptr);
+    clients[i] = std::make_shared<CollectiveLearningClient<TensorType>>(
+        std::to_string(i), cp, networkers.at(i), console_mutex_ptr, false);
+
+    // TODO - explicitly build word2vec algorithms in the client
+    clients[i]
   }
+
 
   /**
    * Main loop
@@ -200,10 +206,10 @@ int main(int argc, char **argv)
   {
     // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
-    std::list<std::thread> threads;
+    std::vector<std::thread> threads;
     for (auto &c : clients)
     {
-      threads.emplace_back([&c] { c->Run(); });
+      c->RunAlgorithms(threads);
     }
 
     // Wait for everyone to finish

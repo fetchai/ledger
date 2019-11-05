@@ -49,12 +49,13 @@ class CollectiveLearningClient
 public:
   CollectiveLearningClient(std::string const &id, ClientParams<DataType> const &client_params,
                            std::shared_ptr<dmlf::AbstractLearnerNetworker> networker_ptr,
-                           std::shared_ptr<std::mutex>                     console_mutex_ptr);
+                           std::shared_ptr<std::mutex>                     console_mutex_ptr, bool build_algorithms = true);
   virtual ~CollectiveLearningClient() = default;
 
   void RunAlgorithms(std::vector<std::thread> &threads);
 
   std::vector<AlgorithmPtrType> GetAlgorithms();
+  DataType                      GetLossAverage();
 
 protected:
   std::string                              id_;
@@ -70,14 +71,18 @@ template <class TensorType>
 CollectiveLearningClient<TensorType>::CollectiveLearningClient(
     std::string const &id, ClientParams<DataType> const &client_params,
     std::shared_ptr<dmlf::AbstractLearnerNetworker> networker_ptr,
-    std::shared_ptr<std::mutex>                     console_mutex_ptr)
+    std::shared_ptr<std::mutex>                     console_mutex_ptr,
+    bool build_algorithms)
   : id_(id)
 {
   // build algorithm controller
   algorithm_controller_ = std::make_shared<AlgorithmControllerType>(networker_ptr);
 
-  // build algorithms
-  BuildAlgorithms(client_params, console_mutex_ptr);
+  if (build_algorithms)
+  {
+    // build algorithms
+    BuildAlgorithms(client_params, console_mutex_ptr);
+  }
 }
 
 template <class TensorType>
@@ -109,6 +114,19 @@ CollectiveLearningClient<TensorType>::GetAlgorithms()
 {
   std::vector<AlgorithmPtrType> ret = algorithms_;
   return ret;
+}
+
+template <class TensorType>
+typename CollectiveLearningClient<TensorType>::DataType
+CollectiveLearningClient<TensorType>::GetLossAverage()
+{
+  DataType loss_mean(0);
+  for (auto algorithm : algorithms_)
+  {
+    loss_mean += algorithm->GetLossAverage();
+  }
+  loss_mean /= static_cast<DataType>(algorithms_.size());
+  return loss_mean;
 }
 
 }  // namespace collective_learning
