@@ -63,7 +63,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   auto const &current_epoch  = current.body.dag_epoch;
   auto const &previous_epoch = previous.body.dag_epoch;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
 
   // Step 1. loop through all the solutions which were presented in this epoch
   WorkMap work_map{};
@@ -120,8 +120,8 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     it->second->problem_data.emplace_back(node.contents);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number,
-                 " (complete)");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number,
+                  " (complete)");
 
   // Step 3. Update the final queue
   {
