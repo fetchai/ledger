@@ -2,7 +2,6 @@
 # F E T C H   S E M A N T I C   S E A R C H   E X A M P L E S
 # ##################################################################################################
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-semanticsearch)
 
 # CMake configuration
@@ -16,7 +15,3 @@ setup_compiler()
 # -------------------------------------------------------------------------------
 
 setup_library_examples(fetch-semanticsearch)
-
-if (FETCH_ENABLE_EXAMPLES)
-
-endif (FETCH_ENABLE_EXAMPLES)

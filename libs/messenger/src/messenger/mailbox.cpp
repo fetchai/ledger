@@ -27,7 +27,7 @@ namespace messenger {
 Mailbox::Mailbox(muddle::MuddlePtr &muddle)
   : message_endpoint_{muddle->GetEndpoint()}
   , message_subscription_{
-        message_endpoint_.Subscribe(SERVICE_MSG_TRANSPORT, CHANNEL_MESSEGNER_TRANSPORT)}
+        message_endpoint_.Subscribe(SERVICE_MSG_TRANSPORT, CHANNEL_MESSENGER_TRANSPORT)}
 {
   message_subscription_->SetMessageHandler(this, &Mailbox::OnNewMessagePacket);
 }
@@ -41,7 +41,7 @@ void Mailbox::OnNewMessagePacket(muddle::Packet const &packet, Address const & /
     serialiser >> message;
     SendMessage(message);
   }
-  catch (...)
+  catch (std::exception const &)
   {
   }
 }
@@ -74,7 +74,7 @@ void Mailbox::SendMessage(Message message)
   serializers::MsgPackSerializer serializer;
   serializer << message;
 
-  message_endpoint_.Send(message.to.node, SERVICE_MSG_TRANSPORT, CHANNEL_MESSEGNER_TRANSPORT,
+  message_endpoint_.Send(message.to.node, SERVICE_MSG_TRANSPORT, CHANNEL_MESSENGER_TRANSPORT,
                          serializer.data());
 }
 

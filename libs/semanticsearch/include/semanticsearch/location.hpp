@@ -29,9 +29,9 @@ struct VocabularyLocation
 {
   std::string      model;
   SemanticPosition position;
-  bool             operator<(VocabularyLocation const &other) const
-  {
 
+  bool operator<(VocabularyLocation const &other) const
+  {
     if (model == other.model)
     {
       std::size_t i = 0, n = std::min(position.size(), other.position.size());

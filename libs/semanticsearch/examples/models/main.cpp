@@ -137,48 +137,4 @@ int main(int argc, char **argv)
   }
 
   return 0;
-
-  // Getting stuff out of the execution engine
-  auto model = adv->GetModel("Advanced");
-  assert(model != nullptr);
-
-  auto instance = exe.GetInstance("x");
-  assert(instance != nullptr);
-
-  std::cout << "Validating: " << model->Validate(instance) << " " << model->rank() << std::endl;
-  std::cout << "Reduce: ";
-  for (auto &v : model->Reduce(instance))
-  {
-    std::cout << v << ", ";
-  }
-  std::cout << std::endl;
-
-  auto z = exe.GetInstance("z");
-  assert(z != nullptr);
-
-  model = adv->GetModel("IntPair");
-  assert(model != nullptr);
-  std::cout << "Validating: " << model->Validate(z) << " " << model->rank() << std::endl;
-
-  for (auto v : model->Reduce(z))
-  {
-    std::cout << v << ", ";
-  }
-  std::cout << std::endl;
-  /*
-    using Vocabulary = std::shared_ptr< VocabularyInstance >;
-    instance->Walk([](std::string name, Vocabulary){
-      std::cout << name << std::endl;
-    });
-    */
-  auto agents = adv->FindAgents("IntPair", z, 8);
-  if (agents)
-  {
-    std::cout << "X: " << agents->size() << std::endl;
-  }
-  else
-  {
-    std::cout << "No results" << std::endl;
-  }
-  return 0;
 }

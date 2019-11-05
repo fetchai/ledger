@@ -29,13 +29,13 @@ TEST(MessengerMailboxTest, BasicHTTPRegisteringUnregistering)
   for (uint64_t i = 0; i < 10; ++i)
   {
     auto messenger = NewHTTPMessenger(8000);
-    messenger->Register((i & 1) == 0);
+    messenger->Register();
     messengers.push_back(messenger);
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   EXPECT_EQ(server->mailbox.unregistered_messengers, 0);
-  EXPECT_EQ(server->mailbox.registered_messengers, 5);
+  EXPECT_EQ(server->mailbox.registered_messengers, 10);
 
   // Unregistering
   for (auto const &messenger : messengers)
@@ -45,7 +45,7 @@ TEST(MessengerMailboxTest, BasicHTTPRegisteringUnregistering)
   std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
   EXPECT_EQ(server->mailbox.unregistered_messengers, 10);
-  EXPECT_EQ(server->mailbox.registered_messengers, 5);
+  EXPECT_EQ(server->mailbox.registered_messengers, 10);
 
   // Teardown
   while (!messengers.empty())
@@ -69,8 +69,8 @@ TEST(MessengerMailboxTest, BilateralHTTPCommsMailbox)
   auto messenger1 = NewHTTPMessenger(8000);
   auto messenger2 = NewHTTPMessenger(8000);
 
-  messenger1->Register(true);
-  messenger2->Register(true);
+  messenger1->Register();
+  messenger2->Register();
 
   std::deque<Message> sent_messages1;
   std::deque<Message> sent_messages2;

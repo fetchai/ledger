@@ -34,7 +34,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
   rpc_server_ = std::make_shared<Server>(messenger_endpoint_, SERVICE_MESSENGER, CHANNEL_RPC);
   rpc_server_->Add(RPC_MESSENGER_INTERFACE, &messenger_protocol_);
 
-  // TODO(priave issue AEA-126): Move somewhere else
+  // TODO(private issue AEA-126): Move somewhere else
   using Int        = int;
   using Float      = double;
   using String     = std::string;
@@ -85,12 +85,11 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
         return instance;
       });
 
-  /// TODO(priave issue AEA-126): End
+  /// TODO(private issue AEA-126): End
 }
 
 void MessengerAPI::RegisterMessenger(service::CallContext const &call_context, bool setup_mailbox)
 {
-  std::cout << "Registering agent" << std::endl;
   // Setting mailbox up if requested by the messenger.
   if (setup_mailbox)
   {
@@ -134,9 +133,7 @@ MessengerAPI::ResultList MessengerAPI::FindAgents(service::CallContext const & /
 }
 
 void MessengerAPI::Advertise(service::CallContext const & /*call_context*/)
-{
-  std::cout << "Advertising" << std::endl;
-}
+{}
 
 }  // namespace messenger
 }  // namespace fetch

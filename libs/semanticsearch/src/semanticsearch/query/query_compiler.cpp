@@ -215,12 +215,6 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
       {
         next.properties = QueryInstruction::PROP_CTX_FIND;
       }
-      /*
-        "find",
-        "let",
-        "subspace",
-        "schema"
-      */
       break;
     }
 

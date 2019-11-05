@@ -26,6 +26,7 @@
 
 #include <memory>
 
+namespace {
 using Prover              = fetch::crypto::Prover;
 using ProverPtr           = std::shared_ptr<Prover>;
 using Certificate         = fetch::crypto::Prover;
@@ -45,6 +46,7 @@ using SharedJsonClient    = std::shared_ptr<JsonClient>;
 using Variant             = fetch::variant::Variant;
 using ConstByteArray      = fetch::byte_array::ConstByteArray;
 using MsgPackSerializer   = fetch::serializers::MsgPackSerializer;
+}  // namespace
 
 inline ProverPtr CreateNewCertificate()
 {
@@ -126,7 +128,7 @@ struct Server
     , network_manager{"SearchNetworkManager", 1}
     , messenger_muddle{fetch::muddle::CreateMuddle("MSGN", certificate, network_manager,
                                                    "127.0.0.1")}
-    , mail_muddle{fetch::muddle::CreateMuddle("XXXX", certificate, network_manager, "127.0.0.1")}
+    , mail_muddle{fetch::muddle::CreateMuddle("MALM", certificate, network_manager, "127.0.0.1")}
     , mailbox{mail_muddle}
     , api{messenger_muddle, mailbox}
     , http{network_manager}
@@ -207,12 +209,11 @@ struct HTTPMessenger
     , client{std::make_shared<JsonClient>(JsonClient::ConnectionMode::HTTP, "127.0.0.1", port)}
   {}
 
-  bool Register(bool mailbox)
+  bool Register()
   {
     Variant result;
-    Variant payload    = Variant::Object();
-    payload["sender"]  = fetch::byte_array::ToBase64(certificate->identity().identifier());
-    payload["mailbox"] = mailbox;
+    Variant payload   = Variant::Object();
+    payload["sender"] = fetch::byte_array::ToBase64(certificate->identity().identifier());
     client->Post("/api/messenger/register", payload, result);
     if (!result.IsObject())
     {

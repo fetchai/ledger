@@ -25,18 +25,21 @@ namespace fetch {
 namespace semanticsearch {
 
 namespace details {
+/* This code converts C++ arguments into a
+ * vector of types
+ */
 template <typename R, typename A, typename... Args>
-struct ArgumentsToSemanticPosition
+struct ArgumentsToTypeVector
 {
   static void Apply(std::vector<std::type_index> &args)
   {
     args.push_back(std::type_index(typeid(A)));
-    ArgumentsToSemanticPosition<R, Args...>::Apply(args);
+    ArgumentsToTypeVector<R, Args...>::Apply(args);
   }
 };
 
 template <typename R, typename A>
-struct ArgumentsToSemanticPosition<R, A>
+struct ArgumentsToTypeVector<R, A>
 {
   static void Apply(std::vector<std::type_index> &args)
   {
@@ -45,14 +48,17 @@ struct ArgumentsToSemanticPosition<R, A>
 };
 
 template <typename R>
-struct ArgumentsToSemanticPosition<R, void>
+struct ArgumentsToTypeVector<R, void>
 {
   static void Apply(std::vector<std::type_index> & /*args*/)
   {}
 };
 
+/* This code converts  a vector of type-erased types
+ * into the types matching the argument types.
+ */
 template <uint64_t N, typename... UsedArgs>
-struct SemanticPositionToArguments
+struct VectorToArguments
 {
 
   template <typename R, typename A, typename... RemainingArguments>
@@ -65,8 +71,8 @@ struct SemanticPositionToArguments
     {
       using B = typename std::decay<A>::type;
       B val   = *reinterpret_cast<B const *>(data[i]);
-      SemanticPositionToArguments<N - 1, UsedArgs..., B>::template Unroll<
-          R, RemainingArguments...>::Apply(i + 1, std::move(fnc), return_value, data, args..., val);
+      VectorToArguments<N - 1, UsedArgs..., B>::template Unroll<R, RemainingArguments...>::Apply(
+          i + 1, std::move(fnc), return_value, data, args..., val);
     }
   };
 

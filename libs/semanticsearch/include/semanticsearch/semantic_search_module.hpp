@@ -22,7 +22,7 @@
 #include "semanticsearch/module/args_resolver.hpp"
 #include "semanticsearch/module/builtin_query_function.hpp"
 #include "semanticsearch/module/model_interface_builder.hpp"
-#include "semanticsearch/query/variant.hpp"
+#include "semanticsearch/query/abstract_query_variant.hpp"
 #include "semanticsearch/schema/data_map.hpp"
 #include "semanticsearch/schema/semantic_reducer.hpp"
 
@@ -33,7 +33,7 @@
 namespace fetch {
 namespace semanticsearch {
 
-// TODO(tfr): Work out which methods are friends of Executor
+// TODO(private issue AEA-141): Work out which methods are friends of Executor
 
 class SemanticSearchModule
 {

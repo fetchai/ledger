@@ -27,7 +27,12 @@ struct SubscriptionGroup
   SubscriptionGroup() = default;
   SubscriptionGroup(SemanticCoordinateType g, SemanticPosition position);
 
-  static constexpr SemanticCoordinateType DBIndexListPtrSize(SemanticCoordinateType g)
+  /*
+   * @brief computes the size of group number g
+   *
+   * The larger the group number, the smaller the size.
+   */
+  static constexpr SemanticCoordinateType SubscriptionGroupSize(SemanticCoordinateType g)
   {
     return SemanticCoordinateType(-1) >> g;
   }

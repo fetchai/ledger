@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/query/variant.hpp"
+#include "semanticsearch/query/abstract_query_variant.hpp"
 
 #include <cassert>
 

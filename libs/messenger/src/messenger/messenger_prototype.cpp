@@ -29,8 +29,8 @@ MessengerPrototype::MessengerPrototype(muddle::MuddlePtr &muddle, Addresses node
   , message_subscription_{endpoint_.Subscribe(SERVICE_MESSENGER, CHANNEL_MESSENGER_MESSAGE)}
   , node_addresses_{std::move(node_addresses)}
 {
-  //    rpc_server_ = std::make_shared<Server>(endpoint_, SERVICE_MESSENGER, CHANNEL_RPC);
-  //    rpc_server_->Add(RPC_NODE_TO_MESSENGER, &protocol_);
+  // rpc_server_ = std::make_shared<Server>(endpoint_, SERVICE_MESSENGER, CHANNEL_RPC);
+  // rpc_server_->Add(RPC_NODE_TO_MESSENGER, &protocol_);
 }
 
 void MessengerPrototype::Register(bool require_mailbox)
@@ -150,8 +150,8 @@ MessengerPrototype::MessageList MessengerPrototype::GetMessages(uint64_t wait)
   ResolveMessages();
 
   // Creating return value and emptying messages.
-  auto ret = inbox_;
-  inbox_.clear();
+  MessageList ret;
+  std::swap(ret, inbox_);
 
   // Turning all pulled requests into messages
   PromiseList remaining;

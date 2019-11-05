@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/module/args_resolver.hpp"
-#include "semanticsearch/query/variant.hpp"
+#include "semanticsearch/query/abstract_query_variant.hpp"
 
 #include <functional>
 #include <memory>
@@ -36,13 +36,21 @@ public:
   template <typename R, typename... Args>
   static Function New(std::function<R(Args...)> caller)
   {
+    // Creating a shared builtin query function and
+    // computes a list of type indices for the function arguments
     Function ret = Function(new BuiltinQueryFunction(std::type_index(typeid(R))));
-    details::ArgumentsToSemanticPosition<R, Args...>::Apply(ret->arguments_);
+    details::ArgumentsToTypeVector<R, Args...>::Apply(ret->arguments_);
 
+    // Creating a type converter which converts type-erased void* arguments
+    // into their original types
     ret->caller_ = [caller](std::vector<void const *> &args) -> QueryVariant {
       R return_value;
-      details::SemanticPositionToArguments<sizeof...(Args)>::template Unroll<R, Args...>::Apply(
+
+      // Calls the original caller function
+      details::VectorToArguments<sizeof...(Args)>::template Unroll<R, Args...>::Apply(
           0, caller, return_value, args);
+
+      // Creating a resulting variant for the return type.
       return NewQueryVariant(return_value);
     };
 

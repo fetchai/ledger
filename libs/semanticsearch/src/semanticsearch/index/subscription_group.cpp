@@ -26,7 +26,7 @@ namespace semanticsearch {
 SubscriptionGroup::SubscriptionGroup(SemanticCoordinateType g, SemanticPosition position)
   : width_parameter(g)
 {
-  auto cs = DBIndexListPtrSize(width_parameter);
+  auto cs = SubscriptionGroupSize(width_parameter);
   for (auto const &p : position)
   {
     indices.push_back(p / cs);

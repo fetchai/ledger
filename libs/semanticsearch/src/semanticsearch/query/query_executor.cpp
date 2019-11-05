@@ -23,8 +23,6 @@
 namespace fetch {
 namespace semanticsearch {
 
-// QueryExecutor
-
 QueryExecutor::QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &error_tracker)
   : error_tracker_(error_tracker)
   , semantic_search_module_{std::move(instance)}
@@ -173,13 +171,14 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
     }
     case Type::POP_SCOPE:
       --scope_depth;
-      // TODO(tfr): Check enough
+      // TODO(private issue AEA-131): Check enough
       last = scope_objects.back();
       scope_objects.pop_back();
 
       {
         QueryVariant s =
-            NewQueryVariant(last, TYPE_INSTANCE, x.token);  // TODO(tfr): Nested shared_ptr
+            NewQueryVariant(last, TYPE_INSTANCE,
+                            x.token);  // TODO(private issue AEA-132): Nested shared_ptr
         stack.push_back(s);
       }
 
@@ -195,7 +194,7 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
       auto object = scope_objects.back();
       assert(object != nullptr);
 
-      // TODO(tfr): Assert types
+      // TODO(private issue AEA-133): Assert types
       //  model.Field(static_cast<std::string>(key.value), value.model);
       std::string name = static_cast<std::string>(key->As<Token>());
       switch (value->type())
@@ -210,8 +209,9 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
         object->Insert(name, VocabularyInstance::New<String>(value->As<String>()));
         break;
       case TYPE_INSTANCE:
-        object->Insert(name, value->As<Vocabulary>());  // TODO(tfr): Double reference
+        object->Insert(name, value->As<Vocabulary>());
         break;
+        // TODO(private issue AEA-134): Create type code index
       default:
         break;
       }
@@ -220,13 +220,13 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
     break;
 
     case Type::SEPARATOR:
-      // TODO(tfr): Validate
+      // TODO(private issue AEA-135): Validate
       break;
 
     case Type::IDENTIFIER:
     {
-      auto obj = context_.Get(
-          static_cast<std::string>(x.token));  // TODO(tfr): Update context to store query variant
+      auto         obj = context_.Get(static_cast<std::string>(
+          x.token));  // TODO(rivate issue AEA-136): Update context to store query variant
       QueryVariant ele = NewQueryVariant(obj, TYPE_INSTANCE, x.token);
 
       stack.push_back(ele);
@@ -265,7 +265,7 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
     ++i;
   }
 
-  if (bool(last))
+  if (static_cast<bool>(last))
   {
 
     auto value = stack.back();
@@ -275,7 +275,7 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
     auto key = stack.back();
     stack.pop_back();
 
-    // TODO(tfr): add some sanity checks here
+    // TODO(private issue AEA-137): add some sanity checks here
 
     auto name_of_model = model_var->As<std::string>();
     auto model         = semantic_search_module_->GetModel(name_of_model);
@@ -290,7 +290,7 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
     {
       error_tracker_.RaiseRuntimeError("Instance does not match model requirements.",
                                        stmt[stmt.size() - 1].token);
-      // TODO(tfr): List what is wrong
+      // TODO(private issue AEA-138): List what is wrong
       return;
     }
 
@@ -330,7 +330,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
     case Type::POP_SCOPE:
 
       --scope_depth;
-      // TODO(tfr): Check enough
+      // TODO(private issue AEA-131): Check enough
       last = scope_models.back();
       scope_models.pop_back();
 
@@ -381,7 +381,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
     break;
 
     case Type::SEPARATOR:
-      // TODO(tfr): Validate
+      // TODO(private issue AEA-135): Validate
       break;
 
     case Type::IDENTIFIER:
@@ -442,7 +442,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
     {
       if (stack_.empty())
       {
-        std::cerr << "INTERNAL ERROR!" << std::endl;  // TODO(tfr): Handle this
+        std::cerr << "INTERNAL ERROR!" << std::endl;  // TODO(private issue AEA-139): Handle this
         exit(-1);
       }
 
@@ -512,7 +512,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
     }
     default:
       std::cout << "'" << x.token << "'  - TODO IMPLEMENT "
-                << std::endl;  // TODO(tfr): Handle this case
+                << std::endl;  // TODO(private issue AEA-140): Handle this case
       break;
     }
 
@@ -526,11 +526,12 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
     auto key = stack_.back();
     stack_.pop_back();
 
-    // TODO(tfr): add some sanity checks here
+    // TODO(private issue AEA-137): add some sanity checks here
     semantic_search_module_->AddModel(static_cast<std::string>(key->As<Token>()), last.model());
   }
   else
   {
+    // TODO(private issue AEA-140): Handle this case
     std::cout << "NOT READY: " << last.model() << std::endl;
   }
 }

@@ -65,7 +65,7 @@ static constexpr uint16_t CHANNEL_CONNECTIONS_SETUP = 403;
 static constexpr uint16_t CHANNEL_ID_DISTRIBUTION = 450;
 
 static constexpr uint64_t CHANNEL_MESSENGER_MESSAGE   = 600;
-static constexpr uint64_t CHANNEL_MESSEGNER_TRANSPORT = 601;
+static constexpr uint64_t CHANNEL_MESSENGER_TRANSPORT = 601;
 
 // RPC Protocol identifiers
 static constexpr uint64_t RPC_SHARD_MGMT        = 10;
