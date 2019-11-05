@@ -36,7 +36,7 @@ TYPED_TEST_CASE(SkipGramTest, MyTypes);
 TYPED_TEST(SkipGramTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
+  using SizeType  = fetch::math::SizeType;
   using LayerType = typename fetch::ml::layers::SkipGram<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
