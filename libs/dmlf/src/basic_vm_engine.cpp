@@ -133,9 +133,9 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
     return EngineError(Error::Code::BAD_STATE, "Error: No state " + stateName);
   }
 
-  auto &exec  = executables_[execName];
-  auto &state = states_[stateName];
-  auto const *func = exec->FindFunction(entrypoint);
+  auto &      exec  = executables_[execName];
+  auto &      state = states_[stateName];
+  auto const *func  = exec->FindFunction(entrypoint);
   if (func == nullptr)
   {
     return EngineError(Error::Code::RUNTIME_ERROR, entrypoint + " does not exist");
@@ -196,8 +196,8 @@ bool BasicVmEngine::HasState(std::string const &name) const
   return states_.find(name) != states_.end();
 }
 
-BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack &result,
-                                              Params const &params, VM &vm, Executable *exec,
+BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack &result, Params const &params,
+                                              VM &vm, Executable *exec,
                                               Executable::Function const *func,
                                               std::string const &         runName)
 {
@@ -379,8 +379,8 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
     if (output.IsArray())  // Convert inner type from int to fixedpoint if necessary
     {
       auto GetInnermostTypeId = [&vm](LedgerVariant const &ledgerVariant,
-                                      VmVariant     const &vmVariant) {
-        int  depth   = 0;
+                                      VmVariant const &    vmVariant) {
+        int                  depth   = 0;
         LedgerVariant const *current = &ledgerVariant;
         while (current->IsArray())
         {
@@ -438,7 +438,7 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
             fp32_t val32;
             val32.Data() = var.As<int>();
             fp64_t val64{fp64_t::FromBase(static_cast<int64_t>(val32.Data()) << 16)};
-            var           = LedgerVariant{val64};
+            var = LedgerVariant{val64};
           }
         };
         toFixed32(output);
