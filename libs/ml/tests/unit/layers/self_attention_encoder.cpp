@@ -35,7 +35,7 @@ TYPED_TEST_CASE(SelfAttentionEncoder, Types);
 
 TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class as a part of a graph
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   fetch::ml::Graph<TypeParam> g;
@@ -62,7 +62,7 @@ TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class 
 
 TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a subgraph
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
   fetch::ml::layers::SelfAttentionEncoder<TypeParam> encoder(
       static_cast<SizeType>(4), static_cast<SizeType>(12), static_cast<SizeType>(13));
@@ -96,7 +96,7 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
 
 TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 {
-  using SizeType  = typename TypeParam::SizeType;
+  using SizeType  = fetch::math::SizeType;
   using LayerType = typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>;
   using SPType    = typename LayerType::SPType;
   using DataType  = typename TypeParam::Type;

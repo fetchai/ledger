@@ -156,7 +156,7 @@ void UInt256Wrapper::Increase()
   ++number_;
 }
 
-UInt256Wrapper::SizeType UInt256Wrapper::size() const
+fetch::math::SizeType UInt256Wrapper::size() const
 {
   return number_.size();
 }

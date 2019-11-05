@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "vectorise/uint/uint.hpp"
 #include "vm/object.hpp"
 
@@ -37,8 +38,7 @@ namespace math {
 class UInt256Wrapper : public fetch::vm::Object
 {
 public:
-  using SizeType = uint64_t;
-  using UInt256  = vectorise::UInt<256>;
+  using UInt256 = vectorise::UInt<256>;
 
   UInt256Wrapper()           = delete;
   ~UInt256Wrapper() override = default;
@@ -73,7 +73,7 @@ public:
 
   void Increase();
 
-  SizeType size() const;
+  fetch::math::SizeType size() const;
 
   fetch::vectorise::UInt<256> const &number() const;
 
