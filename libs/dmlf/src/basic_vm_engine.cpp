@@ -152,7 +152,7 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
   vm::ParameterPack parameterPack(vm.registered_types());
 
   Error prepSuccess = PrepInput(parameterPack, params, vm, exec.get(), func,
-    "Exec: " + execName + " State: " + stateName);
+                                "Exec: " + execName + " State: " + stateName);
   if (prepSuccess.code() != Error::Code::SUCCESS)
   {
     return ExecutionResult(LedgerVariant{}, prepSuccess, "");
@@ -198,19 +198,22 @@ bool BasicVmEngine::HasState(std::string const &name) const
   return states_.find(name) != states_.end();
 }
 
-BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack& parameterPack, Params const& params, VM& vm, Executable *exec, Executable::Function const *func, std::string const &runName)
+BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack &parameterPack,
+                                              Params const &params, VM &vm, Executable *exec,
+                                              Executable::Function const *func,
+                                              std::string const &         runName)
 {
   const std::string errorPrefix = "Error( " + runName + "): ";
 
   auto const numParameters = static_cast<std::size_t>(func->num_parameters);
   if (numParameters != params.size())
   {
-    return Error(Error::Stage::ENGINE, Error::Code::RUNTIME_ERROR, 
-                       errorPrefix + "Wrong number of parameters expected " + std::to_string(numParameters) +
-                           "; received " + std::to_string(params.size()));
+    return Error(Error::Stage::ENGINE, Error::Code::RUNTIME_ERROR,
+                 errorPrefix + "Wrong number of parameters expected " +
+                     std::to_string(numParameters) + "; received " + std::to_string(params.size()));
   }
 
-  // Serialize LedgerVariant to MsgPack... 
+  // Serialize LedgerVariant to MsgPack...
   serializers::MsgPackSerializer serializer;
   try
   {
@@ -221,13 +224,14 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack& parameterPack, 
   }
   catch (std::exception &ex)
   {
-    return Error(Error::Stage::ENGINE, Error::Code::SERIALIZATION_ERROR,
-                       errorPrefix + "Serializing input before running: Threw error " + std::string(ex.what()));
+    return Error(
+        Error::Stage::ENGINE, Error::Code::SERIALIZATION_ERROR,
+        errorPrefix + "Serializing input before running: Threw error " + std::string(ex.what()));
   }
   catch (...)
   {
     return Error(Error::Stage::ENGINE, Error::Code::SERIALIZATION_ERROR,
-        errorPrefix + "Serializing input before running:  No details");
+                 errorPrefix + "Serializing input before running:  No details");
   }
   serializer.seek(0);
 
@@ -250,9 +254,9 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack& parameterPack, 
       // Checking if we can construct the object
       if (!vm.IsDefaultSerializeConstructable(type_id))
       {
-        return Error{Error::Stage::ENGINE, Error::Code::RUNTIME_ERROR, 
-          errorPrefix + "Parameter " + std::to_string(i) + " Could not construct type " +
-                                                           vm.GetTypeName(type_id)};
+        return Error{Error::Stage::ENGINE, Error::Code::RUNTIME_ERROR,
+                     errorPrefix + "Parameter " + std::to_string(i) + " Could not construct type " +
+                         vm.GetTypeName(type_id)};
       }
 
       // Creating the object
@@ -262,10 +266,9 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack& parameterPack, 
       // If deserialization failed we return
       if (!success)
       {
-        return Error{Error::Stage::ENGINE, 
-            Error::Code::RUNTIME_ERROR, errorPrefix + "Parameter " + std::to_string(i) +
-                                                           " Could not deserialize type " +
-                                                           vm.GetTypeName(type_id)};
+        return Error{Error::Stage::ENGINE, Error::Code::RUNTIME_ERROR,
+                     errorPrefix + "Parameter " + std::to_string(i) +
+                         " Could not deserialize type " + vm.GetTypeName(type_id)};
       }
 
       // Adding the parameter to the parameter pack
@@ -278,12 +281,11 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack& parameterPack, 
 ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant const &vmVariant,
                                           std::string const &console, std::string &&id) const
 {
-  auto serializationError = [&] (std::string&& errorMessage)
-  {
-    return ExecutionResult{ LedgerVariant{} 
-        , Error{Error::Stage::ENGINE, Error::Code::SERIALIZATION_ERROR
-        , "Error(" + id + ") in output after running. " + errorMessage}
-        , console};
+  auto serializationError = [&](std::string &&errorMessage) {
+    return ExecutionResult{LedgerVariant{},
+                           Error{Error::Stage::ENGINE, Error::Code::SERIALIZATION_ERROR,
+                                 "Error(" + id + ") in output after running. " + errorMessage},
+                           console};
   };
 
   LedgerVariant output;
@@ -333,7 +335,8 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
       break;
     }
     default:
-      return serializationError( "Could not transform primitive type " + vm.GetTypeName(vmVariant.type_id));
+      return serializationError("Could not transform primitive type " +
+                                vm.GetTypeName(vmVariant.type_id));
     }
   }
   else if (vmVariant.type_id == vm::TypeIds::String)
@@ -354,11 +357,11 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
     }
     catch (std::exception &ex)
     {
-      return serializationError( "Serializing output threw error " + std::string(ex.what()));
+      return serializationError("Serializing output threw error " + std::string(ex.what()));
     }
     catch (...)
     {
-      return serializationError( "Serializing output threw error. No details.");
+      return serializationError("Serializing output threw error. No details.");
     }
 
     try
@@ -367,7 +370,8 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
     }
     catch (std::exception &ex)
     {
-      return serializationError(" Deserializing output after running. Threw error " + std::string(ex.what()));
+      return serializationError(" Deserializing output after running. Threw error " +
+                                std::string(ex.what()));
     }
     catch (...)
     {
@@ -443,8 +447,7 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
     }
   }
   return ExecutionResult{
-      output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS, "Ran " + std::move(id)},
-      console};
+      output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS, "Ran " + std::move(id)}, console};
 }
 
 BasicVmEngine::ExecutionContext::ExecutionContext(VM *vm, Executable *executable)
