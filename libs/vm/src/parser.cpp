@@ -329,7 +329,7 @@ NodePtr Parser::ParsePersistentStatement()
 BlockNodePtr Parser::ParseContractDefinition()
 {
   BlockNodePtr contract_definition_node =
-     CreateBlockNode(NodeKind::ContractDefinition, token_->text, token_->line);
+      CreateBlockNode(NodeKind::ContractDefinition, token_->text, token_->line);
   Next();
   if (token_->kind != Token::Kind::Identifier)
   {
@@ -341,7 +341,8 @@ BlockNodePtr Parser::ParseContractDefinition()
     }
     return nullptr;
   }
-  ExpressionNodePtr contract_name_node = CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+  ExpressionNodePtr contract_name_node =
+      CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
   contract_definition_node->children.push_back(contract_name_node);
   blocks_.push_back(NodeKind::ContractDefinition);
   do
@@ -378,8 +379,8 @@ BlockNodePtr Parser::ParseContractDefinition()
         continue;
       }
     }
-    NodePtr contract_function_prototype_node = CreateBasicNode(NodeKind::ContractFunctionPrototype,
-        token_->text, token_->line);
+    NodePtr contract_function_prototype_node =
+        CreateBasicNode(NodeKind::ContractFunctionPrototype, token_->text, token_->line);
     // NOTE: the annotations node is legitimately null if no annotations are supplied
     contract_function_prototype_node->children.push_back(annotations_node);
     if (!ParseFunctionPrototype(contract_function_prototype_node))
@@ -404,8 +405,7 @@ BlockNodePtr Parser::ParseContractDefinition()
 
 void Parser::SkipContractFunctionPrototype()
 {
-  while ((token_->kind != Token::Kind::EndOfInput) &&
-         (token_->kind != Token::Kind::SemiColon))
+  while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::SemiColon))
   {
     if ((token_->kind == Token::Kind::Function) || (token_->kind == Token::Kind::EndContract))
     {
@@ -418,9 +418,9 @@ void Parser::SkipContractFunctionPrototype()
 
 BlockNodePtr Parser::ParseFunctionDefinition()
 {
-  NodeKind const block_kind = blocks_.back();
-  bool const is_top_level = (block_kind == NodeKind::File);
-  NodePtr annotations_node;
+  NodeKind const block_kind   = blocks_.back();
+  bool const     is_top_level = (block_kind == NodeKind::File);
+  NodePtr        annotations_node;
   if (token_->kind == Token::Kind::AnnotationIdentifier)
   {
     if (!is_top_level)
@@ -577,8 +577,7 @@ NodePtr Parser::ParseAnnotations()
       return nullptr;
     }
     annotations_node->children.push_back(annotation_node);
-  }
-  while (token_->kind == Token::Kind::AnnotationIdentifier);
+  } while (token_->kind == Token::Kind::AnnotationIdentifier);
   return annotations_node;
 }
 
@@ -714,18 +713,12 @@ ExpressionNodePtr Parser::ParseAnnotationLiteral()
 
 void Parser::SkipAnnotations()
 {
-  while ((token_->kind != Token::Kind::EndOfInput) &&
-        (token_->kind != Token::Kind::Persistent) &&
-        (token_->kind != Token::Kind::Contract) &&
-        (token_->kind != Token::Kind::Function) &&
-        (token_->kind != Token::Kind::While) &&
-        (token_->kind != Token::Kind::For) &&
-        (token_->kind != Token::Kind::If) &&
-        (token_->kind != Token::Kind::Use) &&
-        (token_->kind != Token::Kind::Var) &&
-        (token_->kind != Token::Kind::Return) &&
-        (token_->kind != Token::Kind::Break) &&
-        (token_->kind != Token::Kind::Continue))
+  while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::Persistent) &&
+         (token_->kind != Token::Kind::Contract) && (token_->kind != Token::Kind::Function) &&
+         (token_->kind != Token::Kind::While) && (token_->kind != Token::Kind::For) &&
+         (token_->kind != Token::Kind::If) && (token_->kind != Token::Kind::Use) &&
+         (token_->kind != Token::Kind::Var) && (token_->kind != Token::Kind::Return) &&
+         (token_->kind != Token::Kind::Break) && (token_->kind != Token::Kind::Continue))
   {
     Next();
   }
@@ -1281,17 +1274,12 @@ void Parser::GoToNextStatement()
 {
   while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::SemiColon))
   {
-    if ((token_->kind == Token::Kind::Persistent) ||
-        (token_->kind == Token::Kind::Contract) ||
+    if ((token_->kind == Token::Kind::Persistent) || (token_->kind == Token::Kind::Contract) ||
         (token_->kind == Token::Kind::AnnotationIdentifier) ||
-        (token_->kind == Token::Kind::Function) ||
-        (token_->kind == Token::Kind::While) ||
-        (token_->kind == Token::Kind::For) ||
-        (token_->kind == Token::Kind::If) ||
-        (token_->kind == Token::Kind::Use) ||
-        (token_->kind == Token::Kind::Var) ||
-        (token_->kind == Token::Kind::Return) ||
-        (token_->kind == Token::Kind::Break) ||
+        (token_->kind == Token::Kind::Function) || (token_->kind == Token::Kind::While) ||
+        (token_->kind == Token::Kind::For) || (token_->kind == Token::Kind::If) ||
+        (token_->kind == Token::Kind::Use) || (token_->kind == Token::Kind::Var) ||
+        (token_->kind == Token::Kind::Return) || (token_->kind == Token::Kind::Break) ||
         (token_->kind == Token::Kind::Continue))
     {
       Undo();
@@ -1520,8 +1508,8 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       break;
 
     case Token::Kind::LeftParenthesis:
-      parses = HandleOpener(NodeKind::Parenthesis, NodeKind::Invoke,
-                            Token::Kind::RightParenthesis, ")");
+      parses =
+          HandleOpener(NodeKind::Parenthesis, NodeKind::Invoke, Token::Kind::RightParenthesis, ")");
       break;
 
     case Token::Kind::LeftSquareBracket:

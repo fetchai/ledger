@@ -178,7 +178,7 @@ struct Executable
     int              num_parameters{};
     ParameterArray   parameters;
     int              num_variables{};  // parameters + locals
-    VariableArray    variables;  // parameters + locals
+    VariableArray    variables;        // parameters + locals
     InstructionArray instructions;
     PcToLineMap      pc_to_line_map_;
   };
@@ -242,7 +242,7 @@ struct Executable
 class Generator
 {
 public:
-  Generator() = default;
+  Generator()  = default;
   ~Generator() = default;
   bool GenerateExecutable(IR const &ir, std::string const &executable_name, Executable &executable,
                           std::vector<std::string> &errors);

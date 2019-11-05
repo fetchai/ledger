@@ -51,25 +51,20 @@ IRNodePtr IRBuilder::BuildNode(NodePtr const &node)
   }
   if (node->IsBlockNode())
   {
-    BlockNodePtr   block_node = ConvertToBlockNodePtr(node);
-    IRBlockNodePtr ir_block_node =
-        CreateIRBlockNode(block_node->node_kind, block_node->text, block_node->line,
-                          BuildChildren(block_node->children),
-                          BuildChildren(block_node->block_children),
-      block_node->block_terminator_text,
-      block_node->block_terminator_line);
+    BlockNodePtr   block_node    = ConvertToBlockNodePtr(node);
+    IRBlockNodePtr ir_block_node = CreateIRBlockNode(
+        block_node->node_kind, block_node->text, block_node->line,
+        BuildChildren(block_node->children), BuildChildren(block_node->block_children),
+        block_node->block_terminator_text, block_node->block_terminator_line);
     return ir_block_node;
   }
 
-  ExpressionNodePtr   expression_node = ConvertToExpressionNodePtr(node);
-  IRExpressionNodePtr ir_expression_node =
-      CreateIRExpressionNode(expression_node->node_kind, expression_node->text,
-                             expression_node->line, BuildChildren(expression_node->children),
-                             expression_node->expression_kind,
-          BuildType(expression_node->type),
-            BuildVariable(expression_node->variable),
-              expression_node->function_invoker_is_instance,
-              BuildFunction(expression_node->function));
+  ExpressionNodePtr   expression_node    = ConvertToExpressionNodePtr(node);
+  IRExpressionNodePtr ir_expression_node = CreateIRExpressionNode(
+      expression_node->node_kind, expression_node->text, expression_node->line,
+      BuildChildren(expression_node->children), expression_node->expression_kind,
+      BuildType(expression_node->type), BuildVariable(expression_node->variable),
+      expression_node->function_invoker_is_instance, BuildFunction(expression_node->function));
   return ir_expression_node;
 }
 

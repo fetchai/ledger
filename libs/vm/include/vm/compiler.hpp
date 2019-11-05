@@ -51,14 +51,15 @@ private:
   }
 
   void CreateTemplateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
-                               TypeIndexArray const &template_parameter_type_index_array)
+                                       TypeIndexArray const &template_parameter_type_index_array)
   {
     analyser_.CreateTemplateInstantiationType(type_index, template_type_index,
-                                      template_parameter_type_index_array);
+                                              template_parameter_type_index_array);
   }
 
   void CreateFreeFunction(std::string const &name, TypeIndexArray const &parameter_type_index_array,
-                          TypeIndex return_type_index, Handler const &handler, ChargeAmount static_charge)
+                          TypeIndex return_type_index, Handler const &handler,
+                          ChargeAmount static_charge)
   {
     analyser_.CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler,
                                  static_charge);

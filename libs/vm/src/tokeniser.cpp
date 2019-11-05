@@ -2659,5 +2659,4 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #line 235 "tokeniser.l"
 
-
 // clang-format on

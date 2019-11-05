@@ -247,7 +247,7 @@ public:
       auto compiler_setup_function = [instantiation_type_index, template_type_index,
                                       template_parameter_type_index_array](Compiler *compiler) {
         compiler->CreateTemplateInstantiationType(instantiation_type_index, template_type_index,
-                                          template_parameter_type_index_array);
+                                                  template_parameter_type_index_array);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
 

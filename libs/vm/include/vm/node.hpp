@@ -257,12 +257,11 @@ using FunctionPtrArray = std::vector<FunctionPtr>;
 
 inline FunctionPtr CreateFunction(FunctionKind function_kind, std::string name,
                                   std::string unique_name, TypePtrArray parameter_types,
-                                  VariablePtrArray parameter_variables,
-                                  TypePtr return_type)
+                                  VariablePtrArray parameter_variables, TypePtr return_type)
 {
   return std::make_shared<Function>(
       Function(function_kind, std::move(name), std::move(unique_name), std::move(parameter_types),
-          std::move(parameter_variables), std::move(return_type)));
+               std::move(parameter_variables), std::move(return_type)));
 }
 
 struct FunctionGroup : public Symbol

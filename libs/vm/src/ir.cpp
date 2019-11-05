@@ -100,25 +100,20 @@ IRNodePtr IR::CloneNode(IRNodePtr const &node)
   }
   if (node->IsBlockNode())
   {
-    IRBlockNodePtr block_node = ConvertToIRBlockNodePtr(node);
-    IRBlockNodePtr clone_block_node =
-        CreateIRBlockNode(block_node->node_kind, block_node->text, block_node->line,
-                          CloneChildren(block_node->children),
-                          CloneChildren(block_node->block_children),
-                      block_node->block_terminator_text,
-                      block_node->block_terminator_line);
+    IRBlockNodePtr block_node       = ConvertToIRBlockNodePtr(node);
+    IRBlockNodePtr clone_block_node = CreateIRBlockNode(
+        block_node->node_kind, block_node->text, block_node->line,
+        CloneChildren(block_node->children), CloneChildren(block_node->block_children),
+        block_node->block_terminator_text, block_node->block_terminator_line);
     return clone_block_node;
   }
 
-  IRExpressionNodePtr expression_node = ConvertToIRExpressionNodePtr(node);
-  IRExpressionNodePtr clone_expression_node =
-      CreateIRExpressionNode(expression_node->node_kind, expression_node->text,
-                             expression_node->line, CloneChildren(expression_node->children),
-        expression_node->expression_kind,
-        CloneType(expression_node->type),
-        CloneVariable(expression_node->variable),
-        expression_node->function_invoker_is_instance,
-        CloneFunction(expression_node->function));
+  IRExpressionNodePtr expression_node       = ConvertToIRExpressionNodePtr(node);
+  IRExpressionNodePtr clone_expression_node = CreateIRExpressionNode(
+      expression_node->node_kind, expression_node->text, expression_node->line,
+      CloneChildren(expression_node->children), expression_node->expression_kind,
+      CloneType(expression_node->type), CloneVariable(expression_node->variable),
+      expression_node->function_invoker_is_instance, CloneFunction(expression_node->function));
   return clone_expression_node;
 }
 
@@ -150,8 +145,8 @@ IRTypePtr IR::CloneType(IRTypePtr const &type)
     clone_template_type            = CloneType(type->template_type);
     clone_template_parameter_types = CloneTypes(type->template_parameter_types);
   }
-  clone_type =
-      CreateIRType(type->type_kind, type->name, clone_template_type, clone_template_parameter_types);
+  clone_type = CreateIRType(type->type_kind, type->name, clone_template_type,
+                            clone_template_parameter_types);
   type_map_.AddPair(type, clone_type);
   AddType(clone_type);
   return clone_type;
@@ -217,8 +212,6 @@ IRVariablePtrArray IR::CloneVariables(IRVariablePtrArray const &variables)
   }
   return array;
 }
-
-
 
 }  // namespace vm
 }  // namespace fetch

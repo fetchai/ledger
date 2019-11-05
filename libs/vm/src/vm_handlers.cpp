@@ -730,30 +730,24 @@ void VM::Handler__ContractVariableDeclareAssign()
 
 void VM::Handler__InvokeContractFunction()
 {
-  uint16_t contract_id = instruction_->data;
-  uint16_t function_id = instruction_->index;
-  Executable::Contract const &contract = executable_->contracts[contract_id];
-  Executable::Function const &function = contract.functions[function_id];
-  std::vector<Variant> parameters(function.num_parameters);
-  int count = function.num_parameters;
+  uint16_t                    contract_id = instruction_->data;
+  uint16_t                    function_id = instruction_->index;
+  Executable::Contract const &contract    = executable_->contracts[contract_id];
+  Executable::Function const &function    = contract.functions[function_id];
+  std::vector<Variant>        parameters(function.num_parameters);
+  int                         count = function.num_parameters;
   while (--count >= 0)
   {
     parameters[count] = std::move(Pop());
   }
-  Variant& sv = Pop();
+  Variant &   sv       = Pop();
   std::string identity = Ptr<String>(sv.object)->str;
   sv.Reset();
 
-
-
-
-
   // here we have the identity, contract, function and parameters
   // maybe pass id of function as well?
-  printf("identity=%s contract=%s function=%s num_parameters=%d\n",
-      identity.c_str(), contract.name.c_str(), function.name.c_str(), function.num_parameters);
-
-
+  printf("identity=%s contract=%s function=%s num_parameters=%d\n", identity.c_str(),
+         contract.name.c_str(), function.name.c_str(), function.num_parameters);
 
   // simulate return value
   if (function.return_type_id != TypeIds::Void)
