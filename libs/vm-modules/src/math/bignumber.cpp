@@ -156,7 +156,7 @@ void UInt256Wrapper::Increase()
   ++number_;
 }
 
-UInt256Wrapper::SizeType UInt256Wrapper::size() const
+fetch::math::SizeType UInt256Wrapper::size() const
 {
   return number_.size();
 }
@@ -220,12 +220,20 @@ bool UInt256Wrapper::FromJSON(JSONVariant const &variant)
 
   if (!variant["value"].IsString())
   {
-    vm_->RuntimeError("Field 'value' must be a hex encoded string.");
+    vm_->RuntimeError("Field 'value' must be a hex-encoded string.");
     return false;
   }
 
-  // TODO(issue 1262): Caller can't unambiguously detect whether the conversion failed or not
-  auto const value = FromHex(variant["value"].As<byte_array::ConstByteArray>());
+  byte_array::ByteArray value;
+  try
+  {
+    value = FromHex(variant["value"].As<byte_array::ConstByteArray>());
+  }
+  catch (std::runtime_error const &e)
+  {
+    vm_->RuntimeError("Field 'value' must be a hex-encoded string.");
+    return false;
+  }
 
   uint64_t i = 0;
   uint64_t n = std::min(32ul, value.size());

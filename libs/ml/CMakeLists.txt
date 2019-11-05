@@ -17,10 +17,6 @@ setup_compiler()
 setup_library(fetch-ml)
 target_link_libraries(fetch-ml PUBLIC fetch-core fetch-crypto fetch-math)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-ml PRIVATE -Wshadow)
-endif ()
-
 # ------------------------------------------------------------------------------
 # Example Targets
 # ------------------------------------------------------------------------------

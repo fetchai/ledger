@@ -50,7 +50,7 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
     typename TypeParam::SizeType input_size, typename TypeParam::SizeType output_size,
     std::string &input_name, std::string &label_name, std::string &error_name)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   auto hidden_size = SizeType(10);
 
