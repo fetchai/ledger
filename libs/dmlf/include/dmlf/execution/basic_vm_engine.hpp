@@ -75,10 +75,10 @@ private:
   bool HasExecutable(std::string const &name) const;
   bool HasState(std::string const &name) const;
 
-  Error PrepInput(vm::ParameterPack &parameterPack, Params const &params, VM &vm, Executable *exec,
+  Error PrepInput(vm::ParameterPack &result, Params const &params, VM &vm, Executable *exec,
                   Executable::Function const *func, std::string const &runName);
   ExecutionResult PrepOutput(VM &vm, Executable *exec, VmVariant const &vmVariant,
-                             std::string const &console, std::string &&message) const;
+                             std::string const &console, std::string &&id) const;
 
   ExecutionResult EngineError(Error::Code code, std::string errorMessage) const;
   ExecutionResult EngineSuccess(std::string successMessage) const;

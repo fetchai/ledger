@@ -765,10 +765,10 @@ LedgerVariant Make2x2(std::vector<bool> const &vals)
   result[0]            = LedgerVariant::Array(2);
   result[1]            = LedgerVariant::Array(2);
 
-  result[0][0] = LedgerVariant{vals[0] == true};
-  result[0][1] = LedgerVariant{vals[1] == true};
-  result[1][0] = LedgerVariant{vals[2] == true};
-  result[1][1] = LedgerVariant{vals[3] == true};
+  result[0][0] = LedgerVariant{static_cast<bool>(vals[0])};
+  result[0][1] = LedgerVariant{static_cast<bool>(vals[1])};
+  result[1][0] = LedgerVariant{static_cast<bool>(vals[2])};
+  result[1][1] = LedgerVariant{static_cast<bool>(vals[3])};
 
   return result;
 }
@@ -1835,7 +1835,7 @@ TEST(BasicVmEngineDmlfTests, ArrayIntInt64)
 }
 
 template <typename T>
-void RunArrayTest(std::string entrypoint, std::vector<T> const &vals)
+void RunArrayTest(std::string const &entrypoint, std::vector<T> const &vals)
 {
   LedgerVariant input = Make2x2(vals);
 
@@ -1854,28 +1854,7 @@ void RunArrayTest(std::string entrypoint, std::vector<T> const &vals)
   EXPECT_EQ(output[1][0].As<T>(), vals[2]);
   EXPECT_EQ(output[1][1].As<T>(), vals[3]);
 }
-/*
-void RunArrayTest(std::string entrypoint, std::vector<fp64_t> const& vals)
-{
-  LedgerVariant input = Make2x2(vals);
-
-  ExecutionResult result = RunStatelessTest(ArrayArrayOp, entrypoint, Params{input});
-  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  auto output = result.output();
-  ASSERT_TRUE(output.IsArray());
-  ASSERT_EQ(output.size(), 2);
-  ASSERT_TRUE(output[0].IsArray());
-  ASSERT_EQ(output[0].size(), 2);
-  ASSERT_TRUE(output[1].IsArray());
-  ASSERT_EQ(output[1].size(), 2);
-
-  EXPECT_EQ(fp64_t::FromBase(output[0][0].As<int64_t>()), vals[3]);
-  EXPECT_EQ(fp64_t::FromBase(output[0][1].As<int64_t>()), vals[1]);
-  EXPECT_EQ(fp64_t::FromBase(output[1][0].As<int64_t>()), vals[2]);
-  EXPECT_EQ(fp64_t::FromBase(output[1][1].As<int64_t>()), vals[3]);
-}
-*/
-void RunArrayTest(std::string entrypoint, std::vector<fp32_t> const &vals)
+void RunArrayTest(std::string const &entrypoint, std::vector<fp32_t> const &vals)
 {
   LedgerVariant input = Make2x2(vals);
 
