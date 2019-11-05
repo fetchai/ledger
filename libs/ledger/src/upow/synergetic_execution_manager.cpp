@@ -38,7 +38,10 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
   , threads_{num_executors, "SynEx"}
   , no_executor_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_upow_exec_manager_rid_no_executor_total",
-        "The number of items needed to be added back to the queue because of missing executor.")}
+        "The number of cases where ExecuteItem had missing executor.")}
+  , no_executor_loop_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_upow_exec_manager_rid_no_executor_loop_iter_total",
+        "The total number of iterations we had to make when executor was missing in ExecuteItem")}
 {
   if (num_executors != 1)
   {
@@ -163,24 +166,34 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(std::size_t num_lane
   return true;
 }
 
-void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData &problem_data,
+void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const &problem_data,
                                              std::size_t num_lanes)
 {
   ExecutorPtr executor;
 
+  bool first = true;
+  while (true)
+  {
+    {
+      FETCH_LOCK(lock_);
+      if (!executors_.empty())
+      {
+        break;
+      }
+    }
+    if (first)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Executors empty, can't execute item! Waiting...");
+      no_executor_count_->increment();
+      first = false;
+    }
+    no_executor_loop_count_->increment();
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+  }
+
   // pick up an executor from the stack
   {
     FETCH_LOCK(lock_);
-    if (executors_.empty())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Executors empty, can't execute item!");
-      auto ptr          = std::make_shared<WorkItem>();
-      ptr->problem_data = std::move(problem_data);
-      ptr->work_queue   = std::move(queue);
-      solution_stack_.emplace_back(std::move(ptr));
-      no_executor_count_->increment();
-      return;
-    }
     executor = executors_.back();
     executors_.pop_back();
   }

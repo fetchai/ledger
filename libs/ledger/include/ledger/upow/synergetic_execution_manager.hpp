@@ -73,7 +73,7 @@ private:
   using WorkQueueStack = std::vector<WorkItemPtr>;
   using ThreadPool     = threading::Pool;
 
-  void ExecuteItem(WorkQueue &queue, ProblemData &problem_data, std::size_t num_lanes);
+  void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, std::size_t num_lanes);
 
   // System Components
   DAGPtr dag_;
@@ -89,6 +89,7 @@ private:
   /// @name Telemetry
   /// @{
   telemetry::CounterPtr no_executor_count_;
+  telemetry::CounterPtr no_executor_loop_count_;
   /// @}
 };
 
