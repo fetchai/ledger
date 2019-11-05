@@ -12,6 +12,7 @@ from fetch.cluster.utils import output, verify_file
 from fetchai.ledger.crypto import Entity
 from fetchai.ledger.genesis import *
 
+
 class TestCase(object):
     """
     """
@@ -149,7 +150,7 @@ class ConstellationTestCase(TestCase):
 
     def setup_pos_for_nodes(self):
 
-        nodes_identities        = []
+        nodes_identities = []
         nodes_mining_identities = []
 
         # First give each node that is mining a unique identity
@@ -169,7 +170,7 @@ class ConstellationTestCase(TestCase):
                 nodes_mining_identities.append((node._entity, 100))
 
                 #key_path = expected_ouptut_dir + "/{}.key".format(index)
-                #verify_file(key_path)
+                # verify_file(key_path)
 
                 # Copy the keyfile from its location to the node's cwd
                 #shutil.copy(key_path, node.root + "/p2p.key")
@@ -187,11 +188,13 @@ class ConstellationTestCase(TestCase):
 
         #import ipdb; ipdb.set_trace(context=20)
 
-        genesis_file = GenesisFile(nodes_identities, nodes_mining_identities, 20, 5, self._block_interval)
-        genesis_file_location = os.path.abspath(os.path.join(self._workspace, "genesis_file.json"))
+        genesis_file = GenesisFile(
+            nodes_identities, nodes_mining_identities, 20, 5, self._block_interval)
+        genesis_file_location = os.path.abspath(
+            os.path.join(self._workspace, "genesis_file.json"))
         genesis_file.dump_to_file(genesis_file_location)
 
-        ## After giving the relevant nodes identities, make a stake file
+        # After giving the relevant nodes identities, make a stake file
         #exit_code = subprocess.call(cmd)
 
         # Give all nodes this stake file, plus append POS flag for when node starts

@@ -5,6 +5,7 @@ import json
 
 from fetchai.ledger.crypto import Entity
 
+
 class Instance(object):
     def __init__(self, cmd, root):
         self._root = root

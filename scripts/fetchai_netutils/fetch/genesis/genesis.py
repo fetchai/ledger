@@ -11,6 +11,7 @@ import time
 TOTAL_SUPPLY = 11529975750000000000
 MUDDLE_ADDDRESS_RAW_LENGTH = 64
 
+
 def _muddle_address(text):
     raw = base64.b64decode(text)
     if len(raw) != MUDDLE_ADDDRESS_RAW_LENGTH:
@@ -65,6 +66,7 @@ def create_record(address, balance, stake):
     resource_id = calc_resource_id('fetch.token.state.' + address)
     resource_value = {"balance": balance, "stake": stake}
     return resource_id, resource_value
+
 
 def create_genesis_file(stake_percentage, max_cabinet_size, addresses):
     # build up the stake information
@@ -123,10 +125,13 @@ def create_genesis_file(stake_percentage, max_cabinet_size, addresses):
         else:
             json.dump(genesis_file, output_file, indent=4, sort_keys=True)
 
+
 def main():
     args = parse_commandline()
 
-    create_genesis_file(args.stake_percentage, args.max_cabinet, args.addresses, args.output, args.when_start)
+    create_genesis_file(args.stake_percentage, args.max_cabinet,
+                        args.addresses, args.output, args.when_start)
+
 
 if __name__ == '__main__':
     main()
