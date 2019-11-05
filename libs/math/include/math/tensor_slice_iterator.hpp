@@ -28,7 +28,7 @@ namespace math {
 
 struct TensorSliceIteratorRange
 {
-  using SizeType       = uint64_t;
+  using SizeType       = fetch::math::SizeType;
   SizeType index       = 0;
   SizeType from        = 0;
   SizeType to          = 0;
@@ -50,7 +50,7 @@ class TensorSliceIterator
 {
 public:
   using Type     = T;
-  using SizeType = uint64_t;
+  using SizeType = fetch::math::SizeType;
   /**
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array

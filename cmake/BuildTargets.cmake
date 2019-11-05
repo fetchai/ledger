@@ -79,7 +79,7 @@ macro (setup_compiler)
   if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas -Wno-unknown-pragmas")
   elseif (_is_clang_compiler)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning-option")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning-option -Wshadow")
   endif ()
 
   if (FETCH_WARNINGS_AS_ERRORS)
@@ -268,8 +268,6 @@ function (configure_vendor_targets)
                              -DMCL_USE_VINT
                              -DMCL_VINT_FIXED_BUFFER
                              -DMCLBN_FP_UNIT_SIZE=4)
-
-  # TODO(HUT): remove unit size
 
   add_library(vendor-mcl INTERFACE)
   target_link_libraries(vendor-mcl INTERFACE mcl_st)
