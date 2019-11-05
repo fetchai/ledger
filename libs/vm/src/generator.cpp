@@ -453,9 +453,9 @@ void Generator::HandleFunctionDefinition(IRBlockNodePtr const &block_node)
 
   for (auto const &it : line_to_pc_map_)
   {
-    uint16_t line                  = it.first;
-    uint16_t pc                    = it.second;
-    function_->pc_to_line_map_[pc] = line;
+    uint16_t line                 = it.first;
+    uint16_t pc                   = it.second;
+    function_->pc_to_line_map[pc] = line;
   }
 
   function_ = nullptr;

@@ -150,15 +150,15 @@ struct Executable
       , annotations{std::move(annotations__)}
       , return_type_id{return_type_id__}
     {}
-    void AddParameter(std::string name, TypeId type_id)
+    void AddParameter(std::string variable_name, TypeId type_id)
     {
-      parameters.emplace_back(std::move(name), type_id);
+      parameters.emplace_back(std::move(variable_name), type_id);
       ++num_parameters;
     }
-    uint16_t AddVariable(std::string name, TypeId type_id, uint16_t scope_number)
+    uint16_t AddVariable(std::string variable_name, TypeId type_id, uint16_t scope_number)
     {
       auto const id = static_cast<uint16_t>(num_variables++);
-      variables.emplace_back(std::move(name), type_id, scope_number);
+      variables.emplace_back(std::move(variable_name), type_id, scope_number);
       return id;
     }
     uint16_t AddInstruction(Instruction instruction)
@@ -169,7 +169,7 @@ struct Executable
     }
     uint16_t FindLineNumber(uint16_t pc) const
     {
-      auto it = pc_to_line_map_.lower_bound(uint16_t(pc + 1));
+      auto it = pc_to_line_map.lower_bound(uint16_t(pc + 1));
       return (--it)->second;
     }
     std::string      name;
@@ -180,7 +180,7 @@ struct Executable
     int              num_variables{};  // parameters + locals
     VariableArray    variables;        // parameters + locals
     InstructionArray instructions;
-    PcToLineMap      pc_to_line_map_;
+    PcToLineMap      pc_to_line_map;
   };
   using FunctionArray = std::vector<Function>;
 
