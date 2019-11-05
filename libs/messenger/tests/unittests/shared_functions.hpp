@@ -26,43 +26,32 @@
 
 #include <memory>
 
-namespace {
-using Prover              = fetch::crypto::Prover;
-using ProverPtr           = std::shared_ptr<Prover>;
-using Certificate         = fetch::crypto::Prover;
-using CertificatePtr      = std::shared_ptr<Certificate>;
-using Address             = fetch::muddle::Packet::Address;
-using NetworkManager      = fetch::network::NetworkManager;
-using MuddlePtr           = fetch::muddle::MuddlePtr;
-using MessengerAPI        = fetch::messenger::MessengerAPI;
-using MessengerPrototype  = fetch::messenger::MessengerPrototype;
-using Mailbox             = fetch::messenger::Mailbox;
-using Message             = fetch::messenger::Message;
-using MessageList         = fetch::messenger::Mailbox::MessageList;
-using HTTPServer          = fetch::http::HTTPServer;
-using MessengerHttpModule = fetch::messenger::MessengerHttpModule;
-using JsonClient          = fetch::http::JsonClient;
-using SharedJsonClient    = std::shared_ptr<JsonClient>;
-using Variant             = fetch::variant::Variant;
-using ConstByteArray      = fetch::byte_array::ConstByteArray;
-using MsgPackSerializer   = fetch::serializers::MsgPackSerializer;
-}  // namespace
-
-inline ProverPtr CreateNewCertificate()
+struct CertificateGenerator
 {
-  using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::shared_ptr<Signer>;
+  using Prover         = fetch::crypto::Prover;
+  using ProverPtr      = std::shared_ptr<Prover>;
+  using Certificate    = fetch::crypto::Prover;
+  using CertificatePtr = std::shared_ptr<Certificate>;
 
-  SignerPtr certificate = std::make_shared<Signer>();
+  static ProverPtr New()
+  {
+    using Signer    = fetch::crypto::ECDSASigner;
+    using SignerPtr = std::shared_ptr<Signer>;
 
-  certificate->GenerateKeys();
+    SignerPtr certificate = std::make_shared<Signer>();
 
-  return certificate;
-}
+    certificate->GenerateKeys();
+
+    return certificate;
+  }
+};
 
 class FakeMailbox : public fetch::messenger::MailboxInterface
 {
 public:
+  using Address = fetch::muddle::Packet::Address;
+  using Message = fetch::messenger::Message;
+
   void SendMessage(Message /*message*/) override
   {
     ++send;
@@ -95,8 +84,28 @@ public:
 
 struct ServerWithFakeMailbox
 {
+  using Prover              = fetch::crypto::Prover;
+  using ProverPtr           = std::shared_ptr<Prover>;
+  using Certificate         = fetch::crypto::Prover;
+  using CertificatePtr      = std::shared_ptr<Certificate>;
+  using Address             = fetch::muddle::Packet::Address;
+  using NetworkManager      = fetch::network::NetworkManager;
+  using MuddlePtr           = fetch::muddle::MuddlePtr;
+  using MessengerAPI        = fetch::messenger::MessengerAPI;
+  using MessengerPrototype  = fetch::messenger::MessengerPrototype;
+  using Mailbox             = fetch::messenger::Mailbox;
+  using Message             = fetch::messenger::Message;
+  using MessageList         = fetch::messenger::Mailbox::MessageList;
+  using HTTPServer          = fetch::http::HTTPServer;
+  using MessengerHttpModule = fetch::messenger::MessengerHttpModule;
+  using JsonClient          = fetch::http::JsonClient;
+  using SharedJsonClient    = std::shared_ptr<JsonClient>;
+  using Variant             = fetch::variant::Variant;
+  using ConstByteArray      = fetch::byte_array::ConstByteArray;
+  using MsgPackSerializer   = fetch::serializers::MsgPackSerializer;
+
   explicit ServerWithFakeMailbox(uint16_t port_offset)
-    : certificate{CreateNewCertificate()}
+    : certificate{CertificateGenerator::New()}
     , network_manager{"SearchNetworkManager", 1}
     , messenger_muddle{fetch::muddle::CreateMuddle("MSGN", certificate, network_manager,
                                                    "127.0.0.1")}
@@ -123,8 +132,28 @@ struct ServerWithFakeMailbox
 
 struct Server
 {
+  using Prover              = fetch::crypto::Prover;
+  using ProverPtr           = std::shared_ptr<Prover>;
+  using Certificate         = fetch::crypto::Prover;
+  using CertificatePtr      = std::shared_ptr<Certificate>;
+  using Address             = fetch::muddle::Packet::Address;
+  using NetworkManager      = fetch::network::NetworkManager;
+  using MuddlePtr           = fetch::muddle::MuddlePtr;
+  using MessengerAPI        = fetch::messenger::MessengerAPI;
+  using MessengerPrototype  = fetch::messenger::MessengerPrototype;
+  using Mailbox             = fetch::messenger::Mailbox;
+  using Message             = fetch::messenger::Message;
+  using MessageList         = fetch::messenger::Mailbox::MessageList;
+  using HTTPServer          = fetch::http::HTTPServer;
+  using MessengerHttpModule = fetch::messenger::MessengerHttpModule;
+  using JsonClient          = fetch::http::JsonClient;
+  using SharedJsonClient    = std::shared_ptr<JsonClient>;
+  using Variant             = fetch::variant::Variant;
+  using ConstByteArray      = fetch::byte_array::ConstByteArray;
+  using MsgPackSerializer   = fetch::serializers::MsgPackSerializer;
+
   explicit Server(uint16_t port_offset)
-    : certificate{CreateNewCertificate()}
+    : certificate{CertificateGenerator::New()}
     , network_manager{"SearchNetworkManager", 1}
     , messenger_muddle{fetch::muddle::CreateMuddle("MSGN", certificate, network_manager,
                                                    "127.0.0.1")}
@@ -155,20 +184,30 @@ struct Server
   MessengerHttpModule http_module;
 };
 
-inline std::shared_ptr<ServerWithFakeMailbox> NewServerWithFakeMailbox(uint16_t port_offset)
-{
-  return std::make_shared<ServerWithFakeMailbox>(port_offset);
-}
-
-inline std::shared_ptr<Server> NewServer(uint16_t port_offset)
-{
-  return std::make_shared<Server>(port_offset);
-}
-
 struct Messenger
 {
+  using Prover              = fetch::crypto::Prover;
+  using ProverPtr           = std::shared_ptr<Prover>;
+  using Certificate         = fetch::crypto::Prover;
+  using CertificatePtr      = std::shared_ptr<Certificate>;
+  using Address             = fetch::muddle::Packet::Address;
+  using NetworkManager      = fetch::network::NetworkManager;
+  using MuddlePtr           = fetch::muddle::MuddlePtr;
+  using MessengerAPI        = fetch::messenger::MessengerAPI;
+  using MessengerPrototype  = fetch::messenger::MessengerPrototype;
+  using Mailbox             = fetch::messenger::Mailbox;
+  using Message             = fetch::messenger::Message;
+  using MessageList         = fetch::messenger::Mailbox::MessageList;
+  using HTTPServer          = fetch::http::HTTPServer;
+  using MessengerHttpModule = fetch::messenger::MessengerHttpModule;
+  using JsonClient          = fetch::http::JsonClient;
+  using SharedJsonClient    = std::shared_ptr<JsonClient>;
+  using Variant             = fetch::variant::Variant;
+  using ConstByteArray      = fetch::byte_array::ConstByteArray;
+  using MsgPackSerializer   = fetch::serializers::MsgPackSerializer;
+
   explicit Messenger(uint16_t port)
-    : certificate{CreateNewCertificate()}
+    : certificate{CertificateGenerator::New()}
     , network_manager{"MessengerNetworkManager", 1}
     , messenger_muddle{
           fetch::muddle::CreateMuddle("MSGN", certificate, network_manager, "127.0.0.1")}
@@ -196,16 +235,30 @@ inline std::shared_ptr<Messenger> NewMessenger(uint16_t port)
   return std::make_shared<Messenger>(port);
 }
 
-template <typename T>
-std::set<T> ToSet(std::deque<T> const &d)
-{
-  return std::set<T>(d.begin(), d.end());
-}
-
 struct HTTPMessenger
 {
+  using Prover              = fetch::crypto::Prover;
+  using ProverPtr           = std::shared_ptr<Prover>;
+  using Certificate         = fetch::crypto::Prover;
+  using CertificatePtr      = std::shared_ptr<Certificate>;
+  using Address             = fetch::muddle::Packet::Address;
+  using NetworkManager      = fetch::network::NetworkManager;
+  using MuddlePtr           = fetch::muddle::MuddlePtr;
+  using MessengerAPI        = fetch::messenger::MessengerAPI;
+  using MessengerPrototype  = fetch::messenger::MessengerPrototype;
+  using Mailbox             = fetch::messenger::Mailbox;
+  using Message             = fetch::messenger::Message;
+  using MessageList         = fetch::messenger::Mailbox::MessageList;
+  using HTTPServer          = fetch::http::HTTPServer;
+  using MessengerHttpModule = fetch::messenger::MessengerHttpModule;
+  using JsonClient          = fetch::http::JsonClient;
+  using SharedJsonClient    = std::shared_ptr<JsonClient>;
+  using Variant             = fetch::variant::Variant;
+  using ConstByteArray      = fetch::byte_array::ConstByteArray;
+  using MsgPackSerializer   = fetch::serializers::MsgPackSerializer;
+
   explicit HTTPMessenger(uint16_t port)
-    : certificate{CreateNewCertificate()}
+    : certificate{CertificateGenerator::New()}
     , client{std::make_shared<JsonClient>(JsonClient::ConnectionMode::HTTP, "127.0.0.1", port)}
   {}
 
@@ -283,7 +336,23 @@ struct HTTPMessenger
   SharedJsonClient client{nullptr};
 };
 
+inline std::shared_ptr<ServerWithFakeMailbox> NewServerWithFakeMailbox(uint16_t port_offset)
+{
+  return std::make_shared<ServerWithFakeMailbox>(port_offset);
+}
+
+inline std::shared_ptr<Server> NewServer(uint16_t port_offset)
+{
+  return std::make_shared<Server>(port_offset);
+}
+
 inline std::shared_ptr<HTTPMessenger> NewHTTPMessenger(uint16_t port)
 {
   return std::make_shared<HTTPMessenger>(port);
+}
+
+template <typename T>
+std::set<T> ToSet(std::deque<T> const &d)
+{
+  return std::set<T>(d.begin(), d.end());
 }

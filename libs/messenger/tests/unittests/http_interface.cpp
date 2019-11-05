@@ -19,6 +19,11 @@
 #include "gtest/gtest.h"
 #include "shared_functions.hpp"
 
+using Address        = fetch::muddle::Packet::Address;
+using Message        = fetch::messenger::Message;
+using MessageList    = fetch::messenger::Mailbox::MessageList;
+using ConstByteArray = fetch::byte_array::ConstByteArray;
+
 TEST(MessengerMailboxTest, BasicHTTPRegisteringUnregistering)
 {
   auto server = NewServerWithFakeMailbox(0);
