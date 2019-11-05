@@ -172,7 +172,7 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
   ExecutorPtr executor;
 
   bool first = true;
-  while (true)
+  for (uint8_t i = 0; i < 5; ++i)
   {
     {
       FETCH_LOCK(lock_);
@@ -194,6 +194,10 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
   // pick up an executor from the stack
   {
     FETCH_LOCK(lock_);
+    if (executors_.empty())
+    {
+      throw std::runtime_error("ExecuteItem: executors empty after 500ms wait!");
+    }
     executor = executors_.back();
     executors_.pop_back();
   }
