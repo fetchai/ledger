@@ -25,7 +25,7 @@ using namespace fetch::ml;
 
 TEST(UnigramTableTest, simple_test)
 {
-  using SizeType = typename UnigramTable::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   std::vector<SizeType> counts   = {2, 1, 5};
   std::vector<SizeType> table_gt = {0, 0, 0, 1, 1, 2, 2, 2, 2, 2};
@@ -41,7 +41,7 @@ TEST(UnigramTableTest, simple_test)
 
 TEST(UnigramTableTest, test_with_zero_counts)
 {
-  using SizeType = typename UnigramTable::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   std::vector<SizeType> counts   = {2, 1, 0, 5, 0};
   std::vector<SizeType> table_gt = {0, 0, 0, 1, 1, 3, 3, 3, 3};
