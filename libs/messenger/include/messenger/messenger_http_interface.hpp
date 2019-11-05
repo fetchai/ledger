@@ -30,6 +30,13 @@ public:
   explicit MessengerHttpModule(MessengerAPI &messenger)
     : messenger_{messenger}
   {
+    Get("/api/messenger/node-address", "Gets the address of the node.",
+        [this](http::ViewParameters const &, http::HTTPRequest const &) {
+          variant::Variant response = variant::Variant::Object();
+          response["address"]       = byte_array::ToBase64(messenger_.GetAddress());
+
+          return http::CreateJsonResponse(response);
+        });
 
     Post("/api/messenger/register", "Registers an agent to the network.",
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
