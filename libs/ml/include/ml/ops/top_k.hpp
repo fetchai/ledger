@@ -84,7 +84,7 @@ public:
 
   /**
    * Returns array of k-highest values
-   * for input array of shape [x,y,z] and value k, return array would be of shape [x,y,k]
+   * for input array of shape [x,n] and value k, return array would be of shape [k,n]
    * Implementation based on tf.math.top_k
    * Updates indices array with indices of k highest values from input array
    * @param inputs input tensor
@@ -140,7 +140,7 @@ public:
       {
         for (SizeType j{0}; j < error_signal.shape().at(1); j++)
         {
-          ret_signal.At(i, indices_.At(i, j)) = error_signal.At(i, j);
+          ret_signal.At(indices_.At(i, j), j) = error_signal.At(i, j);
         }
       }
     }
@@ -160,8 +160,16 @@ public:
   {
     assert(inputs.size() == 1);
 
-    std::vector<SizeType> ret_shape    = inputs.at(0)->shape();
-    ret_shape.at(ret_shape.size() - 1) = k_;
+    std::vector<SizeType> ret_shape = inputs.at(0)->shape();
+
+    if (ret_shape.size() > 1)
+    {
+      ret_shape.at(ret_shape.size() - 2) = k_;
+    }
+    else
+    {
+      ret_shape.at(ret_shape.size() - 1) = k_;
+    }
 
     return ret_shape;
   }

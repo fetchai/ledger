@@ -41,7 +41,17 @@ void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType 
 
   assert(k <= data.shape().at(data.shape().size() - 1));
 
-  SizeType axis      = data.shape().size() - 1;
+  SizeType axis;
+
+  if (data.shape().size() > 1)
+  {
+    axis = data.shape().size() - 2;
+  }
+  else
+  {
+    axis = data.shape().size() - 1;
+  }
+
   SizeType axis_size = data.shape().at(axis);
 
   // Create iterators
@@ -117,8 +127,19 @@ std::pair<ArrayDataType, ArrayIndicesType> TopK(ArrayDataType const &           
 {
   assert(k <= data.shape().at(data.shape().size() - 1));
 
-  std::vector<SizeType> ret_shape    = data.shape();
-  ret_shape.at(ret_shape.size() - 1) = k;
+  SizeType axis;
+
+  if (data.shape().size() > 1)
+  {
+    axis = data.shape().size() - 2;
+  }
+  else
+  {
+    axis = data.shape().size() - 1;
+  }
+
+  std::vector<SizeType> ret_shape = data.shape();
+  ret_shape.at(axis)              = k;
 
   ArrayDataType    ret_data(ret_shape);
   ArrayIndicesType ret_indices(ret_shape);

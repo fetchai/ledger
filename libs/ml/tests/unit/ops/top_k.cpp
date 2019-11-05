@@ -43,10 +43,10 @@ TYPED_TEST(TopKOpTest, forward_test)
   using SizeType   = typename TypeParam::SizeType;
   using TensorType = TypeParam;
 
-  TensorType data = TypeParam::FromString("1,4,3,2;5,6,7,8;9,10,11,12;13,14,15,16");
+  TensorType data = TypeParam::FromString("9,4,3,2;5,6,7,8;1,10,11,12;13,14,15,16");
   data.Reshape({4, 4});
-  TensorType gt = TypeParam::FromString("4,3;8,7;12,11;16,15");
-  gt.Reshape({4, 2});
+  TensorType gt = TypeParam::FromString("13,14,15,16;9,10,11,12");
+  gt.Reshape({2, 4});
 
   SizeType k      = 2;
   bool     sorted = true;
@@ -70,10 +70,10 @@ TYPED_TEST(TopKOpTest, saveparams_test)
   using SPType        = typename fetch::ml::ops::TopK<TensorType>::SPType;
   using OpType        = typename fetch::ml::ops::TopK<TensorType>;
 
-  TensorType data = TypeParam::FromString("1,4,3,2;5,6,7,8;9,10,11,12;13,14,15,16");
+  TensorType data = TypeParam::FromString("9,4,3,2;5,6,7,8;1,10,11,12;13,14,15,16");
   data.Reshape({4, 4});
-  TensorType gt = TypeParam::FromString("4,3;8,7;12,11;16,15");
-  gt.Reshape({4, 2});
+  TensorType gt = TypeParam::FromString("13,14,15,16;9,10,11,12");
+  gt.Reshape({2, 4});
 
   SizeType k      = 2;
   bool     sorted = true;
@@ -152,11 +152,11 @@ TYPED_TEST(TopKOpTest, backward_2D_test)
   using SizeType   = typename TypeParam::SizeType;
   using DataType   = typename TypeParam::Type;
 
-  TensorType data = TypeParam::FromString("1,4,3,2;5,6,7,8;9,10,11,12;13,14,15,16");
+  TensorType data = TypeParam::FromString("9,4,3,2;5,6,7,8;1,10,11,12;13,14,15,16");
   data.Reshape({4, 4});
-  TensorType error = TypeParam::FromString("4,3;8,7;12,11;16,15");
-  error.Reshape({4, 2});
-  TensorType gt_error = TypeParam::FromString("0,4,3,0;0,0,7,8;0,0,11,12;0,0,15,16");
+  TensorType error = TypeParam::FromString("20,-21,22,-23;24,-25,26,-27");
+  error.Reshape({2, 4});
+  TensorType gt_error = TypeParam::FromString("24,0,0,0;0,0,0,0;0,-25,26,-27;20,-21,22,-23");
   gt_error.Reshape({4, 4});
 
   SizeType k      = 2;
@@ -189,10 +189,10 @@ TYPED_TEST(TopKOpTest, saveparams_backward_test)
   using OpType     = fetch::ml::ops::TopK<TensorType>;
   using SPType     = typename OpType::SPType;
 
-  TensorType data = TypeParam::FromString("1,4,3,2;5,6,7,8;9,10,11,12;13,14,15,16");
+  TensorType data = TypeParam::FromString("9,4,3,2;5,6,7,8;1,10,11,12;13,14,15,16");
   data.Reshape({4, 4});
-  TensorType error = TypeParam::FromString("4,3;8,7;12,11;16,15");
-  error.Reshape({4, 2});
+  TensorType error = TypeParam::FromString("20,-21,22,-23;24,-25,26,-27");
+  error.Reshape({2, 4});
 
   SizeType k      = 2;
   bool     sorted = true;
