@@ -814,7 +814,7 @@ TYPED_TEST(TranscendentalTest, Pow_positive_x_gt_1)
   }
   avg_error /= static_cast<double>(N);
   // Due to accuracy limitations esp in the smaller types, max_error can get quite high
-  EXPECT_NEAR(max_error, 0.0, 0.1);
+  EXPECT_NEAR(max_error, 0.0, 0.2);
   EXPECT_NEAR(avg_error, 0.0, static_cast<double>(tolerance) * 100);
 }
 
