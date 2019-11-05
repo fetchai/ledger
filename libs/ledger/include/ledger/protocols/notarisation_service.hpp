@@ -177,8 +177,6 @@ private:
   uint64_t notarised_chain_height_{0};          ///< Current highest notarised block number in chain
   uint64_t notarisation_collection_height_{0};  ///< Block number current collecting signatures for
   static const uint32_t cutoff_ = 2;            ///< Number of blocks behind
-  AeonDetails current_aeon_details;  ///< Details of current aeon which are necessary if not a
-                                     ///< cabinet member
   /// @}
 };
 }  // namespace ledger
