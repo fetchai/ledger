@@ -13,12 +13,33 @@ model CarAgent {
   type: Int
 };
 
-var car : CarAgent = {
+
+// Cylinder geometry
+find CarAgent 
+around {
   location: {
     lat: 9.52,
     lng: 12.12
   },
   type: 0
-};
+}
+direction
+{
+  location: {
+    lat: 9.52,
+    lng: 12.12
+  },
+  type: 0
+}
+boundby
+({
+  location: {
+    lat: 9.52,
+    lng: 12.12
+  },
+  type: 0
+}
+-
 
-// var query : CarAgent = { location: { lat: 9.52, lng: 12.12 }, type: 0 }; find var;
+
+;
