@@ -1,5 +1,5 @@
 #
-# F E T C H   M A T H   E X A M P L E S
+# F E T C H   M E S S E N G E R   E X A M P L E S
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-messenger)
