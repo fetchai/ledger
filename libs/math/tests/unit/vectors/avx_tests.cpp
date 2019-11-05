@@ -112,8 +112,9 @@ using MyTypes = ::testing::Types<fetch::vectorise::VectorRegister<float, 32>,
                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>,
                                  fetch::vectorise::VectorRegister<double, 64>>;
 
-using MyFPTypes = ::testing::Types<fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 32>,
-                                   fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>>;
+using MyFPTypes =
+    ::testing::Types<fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 32>,
+                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>>;
 #endif
 
 TYPED_TEST_CASE(VectorRegisterTest, MyTypes);

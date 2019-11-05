@@ -27,10 +27,10 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <iomanip>
 
 namespace fetch {
 namespace vectorise {
@@ -1087,7 +1087,7 @@ template <uint16_t S>
 inline std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
 {
   s << std::string(x);
-  return s; 
+  return s;
 }
 
 inline double Log(UInt<256> const &x)

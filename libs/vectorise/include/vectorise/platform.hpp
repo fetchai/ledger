@@ -268,7 +268,7 @@ template <>
 constexpr int32_t HighestSetBit(__int128_t n_input)
 {
   auto const high = static_cast<uint64_t>(n_input >> 64);
-  auto const low = static_cast<uint64_t>(n_input >> 64);
+  auto const low  = static_cast<uint64_t>(n_input >> 64);
 
   if (high == 0)
   {

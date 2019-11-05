@@ -20,8 +20,8 @@
 #include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
-#include "vectorise/uint/uint.hpp"
 #include "vectorise/uint/int.hpp"
+#include "vectorise/uint/uint.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -29,8 +29,8 @@
 #include <cstdint>
 #include <functional>
 #include <iomanip>
-#include <limits>
 #include <iostream>
+#include <limits>
 
 namespace fetch {
 namespace fixed_point {
@@ -60,22 +60,24 @@ struct TypeFromSize<256>
   using ValueType                    = fetch::vectorise::Int<256>;
   using UnsignedType                 = fetch::vectorise::UInt<256>;
   using SignedType                   = fetch::vectorise::Int<256>;
-  //using NextSize                   = TypeFromSize<256>;
+  // using NextSize                   = TypeFromSize<256>;
 };
 // 128 bit implementation
 template <>
 struct TypeFromSize<128>
 {
-  static constexpr bool     is_valid    = true;
-  static constexpr uint16_t size        = 128;
-  using ValueType                       = __int128_t;
-  using UnsignedType                    = __uint128_t;
-  using SignedType                      = __int128_t;
-  using NextSize                        = TypeFromSize<256>;
-  static constexpr uint16_t  decimals   = 18;
-  static constexpr ValueType tolerance  = 0x10000000000;                 // 0.0000000000291038
-  static constexpr ValueType max_exp    = (static_cast<__uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000;  // 43.6682723752765511
-  static constexpr UnsignedType min_exp = (static_cast<__uint128_t>(0xffffffffffffffd4) << 64) | 0x54ec1a035df20000;  // -43.6682723752765511
+  static constexpr bool     is_valid   = true;
+  static constexpr uint16_t size       = 128;
+  using ValueType                      = __int128_t;
+  using UnsignedType                   = __uint128_t;
+  using SignedType                     = __int128_t;
+  using NextSize                       = TypeFromSize<256>;
+  static constexpr uint16_t  decimals  = 18;
+  static constexpr ValueType tolerance = 0x10000000000;  // 0.0000000000291038
+  static constexpr ValueType max_exp =
+      (static_cast<__uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000;  // 43.6682723752765511
+  static constexpr UnsignedType min_exp = (static_cast<__uint128_t>(0xffffffffffffffd4) << 64) |
+                                          0x54ec1a035df20000;  // -43.6682723752765511
 };
 #endif
 
@@ -83,32 +85,32 @@ struct TypeFromSize<128>
 template <>
 struct TypeFromSize<64>
 {
-  static constexpr bool     is_valid    = true;
-  static constexpr uint16_t size        = 64;
-  using ValueType                       = int64_t;
-  using UnsignedType                    = uint64_t;
-  using SignedType                      = int64_t;
-  using NextSize                        = TypeFromSize<128>;
-  static constexpr uint16_t  decimals   = 9;
-  static constexpr ValueType tolerance  = 0x200;                 // 0.00000012
-  static constexpr ValueType max_exp    = 0x000000157cd0e6e8LL;  // 21.48756259
-  static constexpr UnsignedType min_exp = 0xffffffea832f1918LL;  // -21.48756259
+  static constexpr bool     is_valid      = true;
+  static constexpr uint16_t size          = 64;
+  using ValueType                         = int64_t;
+  using UnsignedType                      = uint64_t;
+  using SignedType                        = int64_t;
+  using NextSize                          = TypeFromSize<128>;
+  static constexpr uint16_t     decimals  = 9;
+  static constexpr ValueType    tolerance = 0x200;                 // 0.00000012
+  static constexpr ValueType    max_exp   = 0x000000157cd0e6e8LL;  // 21.48756259
+  static constexpr UnsignedType min_exp   = 0xffffffea832f1918LL;  // -21.48756259
 };
 
 // 32 bit implementation
 template <>
 struct TypeFromSize<32>
 {
-  static constexpr bool     is_valid    = true;
-  static constexpr uint16_t size        = 32;
-  using ValueType                       = int32_t;
-  using UnsignedType                    = uint32_t;
-  using SignedType                      = int32_t;
-  using NextSize                        = TypeFromSize<64>;
-  static constexpr uint16_t  decimals   = 4;
-  static constexpr ValueType tolerance  = 0x15;         // 0.0003
-  static constexpr ValueType max_exp    = 0x000a65adL;  //  10.3971
-  static constexpr UnsignedType min_exp = 0xfff59a53L;  // -10.3972
+  static constexpr bool     is_valid      = true;
+  static constexpr uint16_t size          = 32;
+  using ValueType                         = int32_t;
+  using UnsignedType                      = uint32_t;
+  using SignedType                        = int32_t;
+  using NextSize                          = TypeFromSize<64>;
+  static constexpr uint16_t     decimals  = 4;
+  static constexpr ValueType    tolerance = 0x15;         // 0.0003
+  static constexpr ValueType    max_exp   = 0x000a65adL;  //  10.3971
+  static constexpr UnsignedType min_exp   = 0xfff59a53L;  // -10.3972
 };
 
 // 16 bit implementation
@@ -156,12 +158,9 @@ public:
   using NextType     = typename BaseTypeInfo::NextSize::ValueType;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
 
-  enum
-  {
-    FRACTIONAL_MASK = Type((Type(1ull) << FRACTIONAL_BITS) - 1),
-    INTEGER_MASK    = Type(~FRACTIONAL_MASK),
-    ONE_MASK        = Type(1) << FRACTIONAL_BITS
-  };
+  static constexpr Type FRACTIONAL_MASK = Type((Type(1ull) << FRACTIONAL_BITS) - 1);
+  static constexpr Type INTEGER_MASK    = Type(~FRACTIONAL_MASK);
+  static constexpr Type ONE_MASK        = Type(1) << FRACTIONAL_BITS;
 
   ////////////////////////
   /// Constants/Limits ///
@@ -584,7 +583,7 @@ FixedPoint<I, F> const FixedPoint<I, F>::MAX_EXP{FixedPoint<I, F>::FromBase(
     FixedPoint<I, F>::BaseTypeInfo::max_exp)}; /* maximum exponent for Exp() */
 template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::MIN_EXP{FixedPoint<I, F>::FromBase(
-    FixedPoint<I, F>::BaseTypeInfo::min_exp)}; /* minimum exponent for Exp() */
+    static_cast<FixedPoint<I, F>::Type>(FixedPoint<I, F>::BaseTypeInfo::min_exp))}; /* minimum exponent for Exp() */
 template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::FP_MAX{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MAX)};
 template <uint16_t I, uint16_t F>
@@ -610,7 +609,7 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 {
   std::ios_base::fmtflags f(s.flags());
   s << std::setfill('0');
-  s << std::setw(I/4);
+  s << std::setw(I / 4);
   s << std::setprecision(F / 4);
   s << std::fixed;
   if (FixedPoint<I, F>::IsNaN(n))
@@ -629,10 +628,10 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   {
     s << double(n);
   }
-  #ifndef NDEBUG
+#ifndef NDEBUG
   // Only output the hex value in DEBUG mode
   s << " (0x" << std::hex << static_cast<typename FixedPoint<I, F>::Type>(n.Data()) << ")";
-  #endif
+#endif
   s.flags(f);
   return s;
 }
@@ -1587,12 +1586,12 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator/=(FixedPoint<I, F> const 
   }
   else
   {
-    FixedPoint sign      = Sign(*this);
-    FixedPoint abs_n     = Abs(*this);
-    NextType   numerator = NextType(abs_n.Data()) << size_t(FRACTIONAL_BITS);
-    NextType denominator = NextType(n.Data());
-    NextType   quotient  = numerator / denominator;
-    *this                = sign * FromBase(Type(quotient));
+    FixedPoint sign        = Sign(*this);
+    FixedPoint abs_n       = Abs(*this);
+    auto       numerator   = NextType(abs_n.Data()) << size_t(FRACTIONAL_BITS);
+    auto       denominator = NextType(n.Data());
+    NextType   quotient    = numerator / denominator;
+    *this                  = sign * FromBase(Type(quotient));
   }
   return *this;
 }
@@ -2406,7 +2405,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
       }
       return pow;
     }
-    
+
     // Already checked the case for integer y
     fp_state |= STATE_NAN;
     return NaN;

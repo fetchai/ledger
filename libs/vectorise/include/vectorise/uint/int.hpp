@@ -27,11 +27,11 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <iomanip>
-#include <iostream>
 
 namespace fetch {
 namespace vectorise {
@@ -59,7 +59,9 @@ public:
     WIDE_ELEMENT_SIZE = sizeof(WideType) * 8,
     WIDE_ELEMENTS     = (INT_SIZE + WIDE_ELEMENT_SIZE - 1) / WIDE_ELEMENT_SIZE,
   };
-  static_assert(S >= 256, "Int class is intended for ints >= 256 bits, for smaller sizes, use the primitive types");
+  static_assert(
+      S >= 256,
+      "Int class is intended for ints >= 256 bits, for smaller sizes, use the primitive types");
   static_assert(S == (WIDE_ELEMENTS * WIDE_ELEMENT_SIZE), "Size must be a multiple of 64 bits.");
 
   using WideContainerType                   = core::Array<WideType, WIDE_ELEMENTS>;
@@ -108,9 +110,9 @@ public:
 
   explicit operator std::string() const;
   template <typename T, meta::IfIsInteger<T> * = nullptr>
-  constexpr operator T() const;
-  constexpr operator __int128_t() const;
-  constexpr operator __uint128_t() const;
+  explicit constexpr operator T() const;
+  explicit constexpr operator __int128_t() const;
+  explicit constexpr operator __uint128_t() const;
 
   ////////////////////////////
   /// assignment operators ///
@@ -221,8 +223,8 @@ public:
   template <typename T>
   constexpr meta::IfIsInteger<T, Int> &operator>>=(T n);
 
-  constexpr Int Sign() const;
-  constexpr bool IsPositive() const;
+  constexpr Int         Sign() const;
+  constexpr bool        IsPositive() const;
   constexpr std::size_t msb() const;
   constexpr std::size_t lsb() const;
 
@@ -262,7 +264,6 @@ private:
   constexpr ContainerType const &base() const;
   constexpr ContainerType &      base();
 
-
   struct MaxValueConstructorEnabler
   {
   };
@@ -285,6 +286,40 @@ template <uint16_t S>
 constexpr typename Int<S>::ContainerType &Int<S>::base()
 {
   return reinterpret_cast<ContainerType &>(wide_.data());
+}
+
+template <uint16_t S>
+constexpr uint8_t const *Int<S>::pointer() const
+{
+  return reinterpret_cast<uint8_t const *>(wide_.data());
+}
+
+/////////////////////////
+/// element accessors ///
+/////////////////////////
+
+template <uint16_t S>
+constexpr uint8_t Int<S>::operator[](std::size_t n) const
+{
+  return base()[n];
+}
+
+template <uint16_t S>
+constexpr uint8_t &Int<S>::operator[](std::size_t n)
+{
+  return base()[n];
+}
+
+template <uint16_t S>
+constexpr typename Int<S>::WideType Int<S>::ElementAt(std::size_t n) const
+{
+  return wide_[n];
+}
+
+template <uint16_t S>
+constexpr typename Int<S>::WideType &Int<S>::ElementAt(std::size_t n)
+{
+  return wide_[n];
 }
 
 /////////////////
@@ -681,7 +716,8 @@ constexpr Int<S> Int<S>::operator^(Int<S> const &n) const
 template <uint16_t S>
 constexpr Int<S> &Int<S>::operator+=(Int<S> const &n)
 {
-  if (n < _0){
+  if (n < _0)
+  {
     *this -= -n;
     return *this;
   }
@@ -700,7 +736,8 @@ constexpr Int<S> &Int<S>::operator+=(Int<S> const &n)
 template <uint16_t S>
 constexpr Int<S> &Int<S>::operator-=(Int<S> const &n)
 {
-  if (n < _0){
+  if (n < _0)
+  {
     *this += -n;
     return *this;
   }
@@ -724,12 +761,12 @@ constexpr Int<256> &Int<256>::operator*=(Int<256> const &n)
   if (*this < _0)
   {
     *this = -*this;
-    sign = !sign;
+    sign  = !sign;
   }
   Int<256> o{n};
   if (o < _0)
   {
-    o = -o;
+    o    = -o;
     sign = !sign;
   }
 
@@ -814,12 +851,12 @@ constexpr Int<S> &Int<S>::operator/=(Int<S> const &n)
   Int<S> sign = _1;
   if (N < _0)
   {
-    N = -N;
+    N    = -N;
     sign = -sign;
   }
   if (D < _0)
   {
-    D = -D;
+    D    = -D;
     sign = -sign;
   }
 
@@ -1076,10 +1113,10 @@ constexpr meta::IfIsSignedInteger<T, Int<S>> &Int<S>::operator^=(T n)
 
 template <uint16_t S>
 template <typename T>
-constexpr meta::IfIsInteger<T, Int<S>> &Int<S>::operator<<=(T bits)
+constexpr meta::IfIsInteger<T, Int<S>> &Int<S>::operator<<=(T n)
 {
-  std::size_t full_words = bits / (sizeof(uint64_t) * 8);
-  std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
+  std::size_t full_words = static_cast<std::size_t>(n) / (sizeof(uint64_t) * 8);
+  std::size_t real_bits  = static_cast<std::size_t>(n) - full_words * sizeof(uint64_t) * 8;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
   if (full_words != 0u)
@@ -1110,13 +1147,13 @@ constexpr meta::IfIsInteger<T, Int<S>> &Int<S>::operator<<=(T bits)
 
 template <uint16_t S>
 template <typename T>
-constexpr meta::IfIsInteger<T, Int<S>> &Int<S>::operator>>=(T bits)
+constexpr meta::IfIsInteger<T, Int<S>> &Int<S>::operator>>=(T n)
 {
-  bool is_positive = IsPositive();
-  WideType mask = is_positive ? 0 : 0xffffffffffffffffULL;
-  std::size_t full_words = bits / (sizeof(uint64_t) * 8);
-  std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
-  std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
+  bool        is_positive = IsPositive();
+  WideType    mask        = is_positive ? 0 : 0xffffffffffffffffULL;
+  std::size_t full_words  = static_cast<std::size_t>(n) / (sizeof(uint64_t) * 8);
+  std::size_t real_bits   = static_cast<std::size_t>(n) - full_words * sizeof(uint64_t) * 8;
+  std::size_t nbits       = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
   if (full_words != 0u)
   {
@@ -1192,34 +1229,6 @@ constexpr std::size_t Int<S>::lsb() const
   return lsb;
 }
 
-/////////////////////////
-/// element accessors ///
-/////////////////////////
-
-template <uint16_t S>
-constexpr uint8_t Int<S>::operator[](std::size_t n) const
-{
-  return base()[n];
-}
-
-template <uint16_t S>
-constexpr uint8_t &Int<S>::operator[](std::size_t n)
-{
-  return base()[n];
-}
-
-template <uint16_t S>
-constexpr typename Int<S>::WideType Int<S>::ElementAt(std::size_t n) const
-{
-  return wide_[n];
-}
-
-template <uint16_t S>
-constexpr typename Int<S>::WideType &Int<S>::ElementAt(std::size_t n)
-{
-  return wide_[n];
-}
-
 template <uint16_t S>
 constexpr uint64_t Int<S>::TrimmedSize() const
 {
@@ -1229,12 +1238,6 @@ constexpr uint64_t Int<S>::TrimmedSize() const
     --ret;
   }
   return ret;
-}
-
-template <uint16_t S>
-constexpr uint8_t const *Int<S>::pointer() const
-{
-  return reinterpret_cast<uint8_t const *>(wide_.data());
 }
 
 template <uint16_t S>
@@ -1253,7 +1256,7 @@ template <uint16_t S>
 inline std::ostream &operator<<(std::ostream &s, Int<S> const &x)
 {
   s << std::string(x);
-  return s; 
+  return s;
 }
 
 }  // namespace vectorise

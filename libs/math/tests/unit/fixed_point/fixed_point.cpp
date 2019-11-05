@@ -29,8 +29,7 @@ static const int64_t N{10000};
 
 using namespace fetch::fixed_point;
 
-using MyFPTypes = ::testing::Types<fetch::fixed_point::fp32_t,
-                                   fetch::fixed_point::fp64_t,
+using MyFPTypes = ::testing::Types<fetch::fixed_point::fp32_t, fetch::fixed_point::fp64_t,
                                    fetch::fixed_point::fp128_t>;
 
 TEST(FixedPointTest, Conversion_16_16)
@@ -172,26 +171,30 @@ TEST(FixedPointTest, Conversion_64_64)
   // Largest double fractional closest to one, representable to a FixedPoint
   fp128_t almost_one(0.999999999999999944);
   // Largest fractional closest to one, representable to a FixedPoint
-  fp128_t largest_int(std::numeric_limits<int64_t>::max() -1, 0);
+  fp128_t largest_int(std::numeric_limits<int64_t>::max() - 1, 0UL); // NOLINT
 
   // Smallest possible integer, increase by one, in order to allow for the fractional part.
-  fp128_t smallest_int(std::numeric_limits<int64_t>::min() +2, 0);
+  fp128_t smallest_int(std::numeric_limits<int64_t>::min() + 2, 0UL); // NOLINT
 
   // Largest possible Fixed Point number.
-  fp128_t largest_fixed_point = largest_int + fp128_t(0, fp128_t::LARGEST_FRACTION);//almost_one;
+  fp128_t largest_fixed_point = largest_int + fp128_t(0, fp128_t::LARGEST_FRACTION);  // almost_one;
 
   // Smallest possible Fixed Point number.
-  fp128_t smallest_fixed_point = smallest_int - fp128_t(0, fp128_t::LARGEST_FRACTION);//almost_one;
-  
+  fp128_t smallest_fixed_point =
+      smallest_int - fp128_t(0, fp128_t::LARGEST_FRACTION);  // almost_one;
+
   EXPECT_EQ(infinitesimal.Data(), fp128_t::SMALLEST_FRACTION);
-  // Commented out, double does not give adequate precision to represent the largest fractional part representable by fp128
-  //EXPECT_EQ(almost_one.Data(), fp128_t::LARGEST_FRACTION);
+  // Commented out, double does not give adequate precision to represent the largest fractional part
+  // representable by fp128
+  // EXPECT_EQ(almost_one.Data(), fp128_t::LARGEST_FRACTION);
   EXPECT_EQ(largest_int.Data(), fp128_t::MAX_INT);
   EXPECT_EQ(smallest_int.Data(), fp128_t::MIN_INT);
   EXPECT_EQ(largest_fixed_point.Data(), fp128_t::MAX);
   EXPECT_EQ(smallest_fixed_point.Data(), fp128_t::MIN);
-  EXPECT_EQ(fp128_t::MIN, (static_cast<__uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
-  EXPECT_EQ(fp128_t::MAX, (static_cast<__uint128_t>(0x7ffffffffffffffe) << 64) | 0xffffffffffffffff);
+  EXPECT_EQ(fp128_t::MIN,
+            (static_cast<__uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
+  EXPECT_EQ(fp128_t::MAX,
+            (static_cast<__uint128_t>(0x7ffffffffffffffe) << 64) | 0xffffffffffffffff);
 
   // We cannot be smaller than the actual negative integer of the actual type
   EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<__int128_t>::min());
@@ -264,7 +267,8 @@ TEST(FixedPointTest, Constants_64_64)
   EXPECT_TRUE(fp128_t::CONST_PI == 3.141592653589793238462643383279502884);
   EXPECT_TRUE(fp128_t::CONST_PI / 2 == fp128_t::CONST_PI_2);
   EXPECT_TRUE(fp128_t::CONST_PI_4 == 0.785398163397448309615660845819875721);
-  EXPECT_NEAR(static_cast<double>(one / fp128_t::CONST_PI), static_cast<double>(fp128_t::CONST_INV_PI), static_cast<double>(fp128_t::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(one / fp128_t::CONST_PI),
+              static_cast<double>(fp128_t::CONST_INV_PI), static_cast<double>(fp128_t::TOLERANCE));
   EXPECT_TRUE(fp128_t::CONST_TWO_INV_PI == 0.636619772367581343075535053490057448);
   EXPECT_TRUE(fp128_t::CONST_TWO_INV_SQRTPI == 1.128379167095512573896158903121545172);
   EXPECT_TRUE(fp128_t::CONST_SQRT2 == 1.414213562373095048801688724209698079);
@@ -272,11 +276,14 @@ TEST(FixedPointTest, Constants_64_64)
 
   EXPECT_EQ(fp128_t::MAX_INT, (static_cast<__uint128_t>(0x7ffffffffffffffe) << 64));
   EXPECT_EQ(fp128_t::MIN_INT, (static_cast<__uint128_t>(0x8000000000000002) << 64));
-  EXPECT_EQ(fp128_t::MAX, (static_cast<__uint128_t>(0x7ffffffffffffffe) << 64) | 0xffffffffffffffff);
-  EXPECT_EQ(fp128_t::MIN, (static_cast<__uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
+  EXPECT_EQ(fp128_t::MAX,
+            (static_cast<__uint128_t>(0x7ffffffffffffffe) << 64) | 0xffffffffffffffff);
+  EXPECT_EQ(fp128_t::MIN,
+            (static_cast<__uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
 
   EXPECT_EQ(fp128_t::MAX_EXP.Data(), (static_cast<__uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000);
-  EXPECT_EQ(fp128_t::MIN_EXP.Data(), (static_cast<__uint128_t>(0xffffffffffffffd4) << 64) | 0x54ec1a035df20000);
+  EXPECT_EQ(fp128_t::MIN_EXP.Data(),
+            (static_cast<__uint128_t>(0xffffffffffffffd4) << 64) | 0x54ec1a035df20000);
 }
 
 template <typename T>
@@ -592,7 +599,7 @@ TYPED_TEST(BasicTest, Abs)
   TypeParam m_one_point_five(-1.5);
   TypeParam ten(10);
   TypeParam m_ten(-10);
-  TypeParam huge(TypeParam::FP_MAX/2);
+  TypeParam huge(TypeParam::FP_MAX / 2);
   TypeParam e1 = TypeParam::Abs(one);
   TypeParam e2 = TypeParam::Abs(m_one);
   TypeParam e3 = TypeParam::Abs(one_point_five);
@@ -629,13 +636,27 @@ TYPED_TEST(BasicTest, Remainder)
   TypeParam e6 = TypeParam::Remainder(m_ten, x);
   TypeParam e7 = TypeParam::Remainder(huge, x);
 
-  EXPECT_NEAR(static_cast<double>(e1), std::remainder(static_cast<double>(ten), static_cast<double>(one)), static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e2), std::remainder(static_cast<double>(ten), static_cast<double>(m_one)), static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e3), std::remainder(static_cast<double>(ten), static_cast<double>(one_point_five)), static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e4), std::remainder(static_cast<double>(ten), static_cast<double>(m_one_point_five)), static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e5), std::remainder(static_cast<double>(ten), static_cast<double>(x)), static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e6), std::remainder(static_cast<double>(m_ten), static_cast<double>(x)), static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e7), std::remainder(static_cast<double>(huge), static_cast<double>(x)), static_cast<double>(TypeParam::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(e1),
+              std::remainder(static_cast<double>(ten), static_cast<double>(one)),
+              static_cast<double>(TypeParam::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(e2),
+              std::remainder(static_cast<double>(ten), static_cast<double>(m_one)),
+              static_cast<double>(TypeParam::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(e3),
+              std::remainder(static_cast<double>(ten), static_cast<double>(one_point_five)),
+              static_cast<double>(TypeParam::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(e4),
+              std::remainder(static_cast<double>(ten), static_cast<double>(m_one_point_five)),
+              static_cast<double>(TypeParam::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(e5),
+              std::remainder(static_cast<double>(ten), static_cast<double>(x)),
+              static_cast<double>(TypeParam::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(e6),
+              std::remainder(static_cast<double>(m_ten), static_cast<double>(x)),
+              static_cast<double>(TypeParam::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(e7),
+              std::remainder(static_cast<double>(huge), static_cast<double>(x)),
+              static_cast<double>(TypeParam::TOLERANCE));
 }
 
 TYPED_TEST(BasicTest, Fmod)
@@ -675,12 +696,12 @@ TYPED_TEST(TranscendentalTest, Exp)
   TypeParam small(0.0001);
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam negative{-0.40028143};
-  TypeParam e1 = TypeParam::Exp(one);
-  TypeParam e2 = TypeParam::Exp(two);
-  TypeParam e3 = TypeParam::Exp(small);
-  TypeParam e4 = TypeParam::Exp(tiny);
-  TypeParam e5 = TypeParam::Exp(negative);
-  TypeParam e6 = TypeParam::Exp(ten);
+  TypeParam e1    = TypeParam::Exp(one);
+  TypeParam e2    = TypeParam::Exp(two);
+  TypeParam e3    = TypeParam::Exp(small);
+  TypeParam e4    = TypeParam::Exp(tiny);
+  TypeParam e5    = TypeParam::Exp(negative);
+  TypeParam e6    = TypeParam::Exp(ten);
   TypeParam e_max = TypeParam::Exp(TypeParam::MAX_EXP);
 
   EXPECT_NEAR(static_cast<double>(e1) - std::exp(static_cast<double>(one)), 0,
@@ -698,8 +719,7 @@ TYPED_TEST(TranscendentalTest, Exp)
   EXPECT_NEAR((static_cast<double>(e6) - std::exp(static_cast<double>(ten))) /
                   std::exp(static_cast<double>(ten)),
               0, static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR((static_cast<double>(e_max) -
-               std::exp(static_cast<double>(TypeParam::MAX_EXP))) /
+  EXPECT_NEAR((static_cast<double>(e_max) - std::exp(static_cast<double>(TypeParam::MAX_EXP))) /
                   std::exp(static_cast<double>(TypeParam::MAX_EXP)),
               0, static_cast<double>(TypeParam::TOLERANCE));
 
@@ -718,27 +738,27 @@ TYPED_TEST(TranscendentalTest, Exp)
   EXPECT_NEAR(static_cast<double>(TypeParam::Exp(-ten)) - std::exp(-static_cast<double>(ten)), 0,
               static_cast<double>(TypeParam::TOLERANCE));
   // The rest pass with fp64_t::TOLERANCE
-  EXPECT_NEAR(static_cast<double>(TypeParam::Exp(-small)) - std::exp(-static_cast<double>(small)), 0,
-              static_cast<double>(TypeParam::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(TypeParam::Exp(-small)) - std::exp(-static_cast<double>(small)),
+              0, static_cast<double>(TypeParam::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(TypeParam::Exp(-tiny)) - std::exp(-static_cast<double>(tiny)), 0,
               static_cast<double>(TypeParam::TOLERANCE));
   EXPECT_NEAR(static_cast<double>(TypeParam::Exp(TypeParam::MIN_EXP)) -
                   std::exp(static_cast<double>(fp64_t::MIN_EXP)),
               0, static_cast<double>(TypeParam::TOLERANCE));
 
-  double r;
-  double delta, max_error = 0, avg_error = 0;
-  TypeParam x, scale, margin;
-  scale = 5.0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
+  TypeParam x, scale;
+  scale               = 5.0;
   TypeParam tolerance = TypeParam::TOLERANCE;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale * 2) - scale;
-    TypeParam e = TypeParam::Exp(x);
-    double e_real = std::exp(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale * 2) - scale;
+    TypeParam e      = TypeParam::Exp(x);
+    double    e_real = std::exp(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -763,30 +783,33 @@ TYPED_TEST(TranscendentalTest, Pow_positive_x_gt_1)
   EXPECT_NEAR(static_cast<double>(e3 / std::pow(2, 1.8464393615723)), 1.0,
               static_cast<double>(TypeParam::TOLERANCE));
 
-  TypeParam base{1.0000018429229975};
-  TypeParam extreme{22741975.0640760175883770};
+  // Disabled for now, when fp128 will have full accuracy we will compare to the correct value
+  // TypeParam base{1.0000018429229975};
+  // TypeParam extreme{22741975.0640760175883770};
 
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, y, scalex, scaley, margin, tolerance;
-  scalex = 5.0;
-  margin = 1.0;
+  scalex    = 5.0;
+  margin    = 1.0;
   tolerance = TypeParam::TOLERANCE;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scalex) + margin;
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    scaley = std::floor(std::log(static_cast<double>(TypeParam::FP_MAX))/std::log(static_cast<double>(x)));
-    y = static_cast<TypeParam>(r) * scaley;
+    r      = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x      = static_cast<TypeParam>(r) * (scalex) + margin;
+    r      = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    scaley = std::floor(std::log(static_cast<double>(TypeParam::FP_MAX)) /
+                        std::log(static_cast<double>(x)));
+    y      = static_cast<TypeParam>(r) * scaley;
     TypeParam::StateClear();
     TypeParam e = TypeParam::Pow(x, y);
-    if (TypeParam::IsStateOverflow()) {
+    if (TypeParam::IsStateOverflow())
+    {
       continue;
     }
     double e_real = std::pow(static_cast<double>(x), static_cast<double>(y));
-    delta    = std::abs(static_cast<double>(e) - e_real)/e_real;
-    max_error    = std::max(max_error, delta);
+    delta         = std::abs(static_cast<double>(e) - e_real) / e_real;
+    max_error     = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -797,27 +820,29 @@ TYPED_TEST(TranscendentalTest, Pow_positive_x_gt_1)
 
 TYPED_TEST(TranscendentalTest, Pow_positive_x_lt_1)
 {
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, y, scalex, scaley, margin, tolerance;
-  scalex = 1.0;
-  margin = 0.001;
+  scalex    = 1.0;
+  margin    = 0.001;
   tolerance = TypeParam::TOLERANCE;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scalex) + margin;
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    scaley = std::floor(std::log(static_cast<double>(TypeParam::FP_MAX))/std::log(static_cast<double>(x)));
-    y = static_cast<TypeParam>(r) * scaley;
+    r      = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x      = static_cast<TypeParam>(r) * (scalex) + margin;
+    r      = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    scaley = std::floor(std::log(static_cast<double>(TypeParam::FP_MAX)) /
+                        std::log(static_cast<double>(x)));
+    y      = static_cast<TypeParam>(r) * scaley;
     TypeParam::StateClear();
     TypeParam e = TypeParam::Pow(x, y);
-    if (TypeParam::IsStateOverflow()) {
+    if (TypeParam::IsStateOverflow())
+    {
       continue;
     }
     double e_real = std::pow(static_cast<double>(x), static_cast<double>(y));
-    delta    = std::abs(static_cast<double>(e) - e_real)/e_real;
-    max_error    = std::max(max_error, delta);
+    delta         = std::abs(static_cast<double>(e) - e_real) / e_real;
+    max_error     = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -832,7 +857,6 @@ TYPED_TEST(TranscendentalTest, Pow_negative_x)
   TypeParam a{-1.6519711627625};
   TypeParam two{2};
   TypeParam three{3};
-  TypeParam b{1.8464393615723};
   TypeParam e1 = TypeParam::Pow(a, two);
   TypeParam e2 = TypeParam::Pow(a, three);
 
@@ -841,22 +865,22 @@ TYPED_TEST(TranscendentalTest, Pow_negative_x)
   EXPECT_NEAR(static_cast<double>(e2 / std::pow(static_cast<double>(a), 3)), 1.0,
               static_cast<double>(TypeParam::TOLERANCE));
   EXPECT_TRUE(TypeParam::IsNaN(TypeParam::Pow(a, a)));
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, y, scalex, scaley, margin, tolerance;
-  scalex = 10.0;
-  margin = 0.0001;
+  scalex    = 10.0;
+  margin    = 0.0001;
   tolerance = TypeParam::TOLERANCE;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scalex) + margin;
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    scaley = std::log(static_cast<double>(TypeParam::FP_MAX))/std::log(static_cast<double>(x));
-    y = TypeParam::Floor(static_cast<TypeParam>(r-1) * scaley);
-    TypeParam e = TypeParam::Pow(-x, y);
-    double e_real = std::pow(static_cast<double>(-x), static_cast<double>(y));
-    delta    = std::abs(static_cast<double>(e) - e_real);
+    r      = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x      = static_cast<TypeParam>(r) * (scalex) + margin;
+    r      = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    scaley = std::log(static_cast<double>(TypeParam::FP_MAX)) / std::log(static_cast<double>(x));
+    y      = TypeParam::Floor(static_cast<TypeParam>(r - 1) * scaley);
+    TypeParam e      = TypeParam::Pow(-x, y);
+    double    e_real = std::pow(static_cast<double>(-x), static_cast<double>(y));
+    delta            = std::abs(static_cast<double>(e) - e_real);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -869,7 +893,7 @@ TYPED_TEST(TranscendentalTest, Logarithm)
   TypeParam one(1);
   TypeParam one_point_five(1.5);
   TypeParam ten(10);
-  TypeParam huge(TypeParam::FP_MAX/2);
+  TypeParam huge(TypeParam::FP_MAX / 2);
   TypeParam small(0.001);
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam e1 = TypeParam::Log2(one);
@@ -892,20 +916,20 @@ TYPED_TEST(TranscendentalTest, Logarithm)
   EXPECT_NEAR(static_cast<double>(e6), std::log2(static_cast<double>(tiny)),
               static_cast<double>(TypeParam::TOLERANCE));
 
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale = 5.0;
-  margin = 0.0001;
+  scale               = 5.0;
+  margin              = 0.0001;
   TypeParam tolerance = TypeParam::TOLERANCE;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * scale + margin;
-    TypeParam l = TypeParam::Log2(x);
-    double l_real = std::log2(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(l) - l_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * scale + margin;
+    TypeParam l      = TypeParam::Log2(x);
+    double    l_real = std::log2(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(l) - l_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -963,20 +987,19 @@ TYPED_TEST(TranscendentalTest, Sqrt)
   // Sqrt of a negative
   EXPECT_TRUE(TypeParam::IsNaN(TypeParam::Sqrt(-one)));
 
-
-  double r;
-  double max_error = 0, avg_error = 0;
-  TypeParam x, scale, margin;
-  scale = 5.0;
+  double    r;
+  double    max_error = 0, avg_error = 0;
+  TypeParam x, scale;
+  scale               = 5.0;
   TypeParam tolerance = TypeParam::TOLERANCE;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * scale;
-    TypeParam s = TypeParam::Sqrt(x);
-    double s_real = std::sqrt(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(s) - s_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * scale;
+    TypeParam s      = TypeParam::Sqrt(x);
+    double    s_real = std::sqrt(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(s) - s_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1055,20 +1078,20 @@ TYPED_TEST(TrigonometryTest, Sin)
   EXPECT_NEAR(delta / std::sin(static_cast<double>(TypeParam::CONST_PI_4 * 3)), 0.0,
               static_cast<double>(TypeParam::TOLERANCE));
 
-  double r;
-  double max_error = 0, avg_error = 0;
+  double    r;
+  double    max_error = 0, avg_error = 0;
   TypeParam x, scale, margin, tolerance;
-  scale = TypeParam::CONST_PI * 10.0;
-  margin = TypeParam::TOLERANCE;
+  scale     = TypeParam::CONST_PI * 10.0;
+  margin    = TypeParam::TOLERANCE;
   tolerance = TypeParam::TOLERANCE;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale * 2 - margin) - (scale - margin);
-    TypeParam e = TypeParam::Sin(x);
-    double e_real = std::sin(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale * 2 - margin) - (scale - margin);
+    TypeParam e      = TypeParam::Sin(x);
+    double    e_real = std::sin(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1142,19 +1165,19 @@ TYPED_TEST(TrigonometryTest, Cos)
   EXPECT_NEAR(delta / std::cos(static_cast<double>(TypeParam::CONST_PI_4 * 3)), 0.0,
               static_cast<double>(TypeParam::TOLERANCE));
 
-  double r;
-  double max_error = 0, avg_error = 0;
+  double    r;
+  double    max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale = TypeParam::CONST_PI * 10.0;
+  scale  = TypeParam::CONST_PI * 10.0;
   margin = TypeParam::TOLERANCE;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale * 2 - margin) - (scale - margin);
-    TypeParam e = TypeParam::Cos(x);
-    double e_real = std::cos(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale * 2 - margin) - (scale - margin);
+    TypeParam e      = TypeParam::Cos(x);
+    double    e_real = std::cos(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1223,44 +1246,45 @@ TYPED_TEST(TrigonometryTest, Tan)
   EXPECT_TRUE(TypeParam::IsPosInfinity(TypeParam::Tan(TypeParam::CONST_PI_2)));
   EXPECT_TRUE(TypeParam::IsNegInfinity(TypeParam::Tan(-TypeParam::CONST_PI_2)));
 
-  double r;
-  double max_error = 0, avg_error = 0;
+  double    r;
+  double    max_error = 0, avg_error = 0;
   TypeParam x, scale, margin, tolerance;
-  scale = TypeParam::CONST_PI_2;
-  margin = 0.1;
+  scale     = TypeParam::CONST_PI_2;
+  margin    = 0.1;
   tolerance = TypeParam::TOLERANCE;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale * 2 - margin) - (scale - margin);
-    TypeParam e = TypeParam::Tan(x);
-    double e_real = std::tan(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    delta = e_real != 0.0 ? delta/std::abs(e_real) : delta;
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale * 2 - margin) - (scale - margin);
+    TypeParam e      = TypeParam::Tan(x);
+    double    e_real = std::tan(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    delta            = e_real != 0.0 ? delta / std::abs(e_real) : delta;
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
-  // Unfortunately Tan() for fp32_t is not really very accurate close to the edges, which gives a high max_error
+  // Unfortunately Tan() for fp32_t is not really very accurate close to the edges, which gives a
+  // high max_error
   EXPECT_NEAR(max_error, 0.0, 0.2);
   EXPECT_NEAR(avg_error, 0.0, static_cast<double>(tolerance));
 }
 
 TYPED_TEST(TrigonometryTest, ASin)
 {
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale = TypeParam::_1;
-  margin = TypeParam::TOLERANCE*10;
+  scale  = TypeParam::_1;
+  margin = TypeParam::TOLERANCE * 10;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
-    TypeParam e = TypeParam::ASin(x);
-    double e_real = std::asin(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
+    TypeParam e      = TypeParam::ASin(x);
+    double    e_real = std::asin(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1270,19 +1294,19 @@ TYPED_TEST(TrigonometryTest, ASin)
 
 TYPED_TEST(TrigonometryTest, ACos)
 {
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale = TypeParam::_1;
+  scale  = TypeParam::_1;
   margin = TypeParam::TOLERANCE * 10;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
-    TypeParam e = TypeParam::ACos(x);
-    double e_real = std::acos(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
+    TypeParam e      = TypeParam::ACos(x);
+    double    e_real = std::acos(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1292,19 +1316,19 @@ TYPED_TEST(TrigonometryTest, ACos)
 
 TYPED_TEST(TrigonometryTest, ATan)
 {
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale = TypeParam{5.0};
+  scale  = TypeParam{5.0};
   margin = TypeParam::_0;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
-    TypeParam e = TypeParam::ATan(x);
-    double e_real = std::atan(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
+    TypeParam e      = TypeParam::ATan(x);
+    double    e_real = std::atan(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1314,21 +1338,21 @@ TYPED_TEST(TrigonometryTest, ATan)
 
 TYPED_TEST(TrigonometryTest, ATan2)
 {
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, y, scale, margin;
-  scale = TypeParam{2.0};
+  scale  = TypeParam{2.0};
   margin = TypeParam::_0;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    y = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
-    TypeParam e = TypeParam::ATan2(y, x);
-    double e_real = std::atan2(static_cast<double>(y), static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    y                = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
+    TypeParam e      = TypeParam::ATan2(y, x);
+    double    e_real = std::atan2(static_cast<double>(y), static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1343,19 +1367,19 @@ class HyperbolicTest : public ::testing::Test
 TYPED_TEST_CASE(HyperbolicTest, MyFPTypes);
 TYPED_TEST(HyperbolicTest, SinH)
 {
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale = TypeParam{5.0};
+  scale  = TypeParam{5.0};
   margin = TypeParam::_0;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
-    TypeParam e = TypeParam::SinH(x);
-    double e_real = std::sinh(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
+    TypeParam e      = TypeParam::SinH(x);
+    double    e_real = std::sinh(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1365,19 +1389,19 @@ TYPED_TEST(HyperbolicTest, SinH)
 
 TYPED_TEST(HyperbolicTest, CosH)
 {
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale = TypeParam{5.0};
+  scale  = TypeParam{5.0};
   margin = TypeParam::_0;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
-    TypeParam e = TypeParam::CosH(x);
-    double e_real = std::cosh(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
+    TypeParam e      = TypeParam::CosH(x);
+    double    e_real = std::cosh(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1387,19 +1411,19 @@ TYPED_TEST(HyperbolicTest, CosH)
 
 TYPED_TEST(HyperbolicTest, TanH)
 {
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale = TypeParam{5.0};
+  scale  = TypeParam{5.0};
   margin = TypeParam::_0;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
-    TypeParam e = TypeParam::TanH(x);
-    double e_real = std::tanh(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
+    TypeParam e      = TypeParam::TanH(x);
+    double    e_real = std::tanh(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1409,19 +1433,19 @@ TYPED_TEST(HyperbolicTest, TanH)
 
 TYPED_TEST(HyperbolicTest, ASinH)
 {
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale = TypeParam{3.0};
+  scale  = TypeParam{3.0};
   margin = TypeParam::_0;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
-    TypeParam e = TypeParam::ASinH(x);
-    double e_real = std::asinh(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
+    TypeParam e      = TypeParam::ASinH(x);
+    double    e_real = std::asinh(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1431,19 +1455,19 @@ TYPED_TEST(HyperbolicTest, ASinH)
 
 TYPED_TEST(HyperbolicTest, ACosH)
 {
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, offset;
-  scale = TypeParam{2.0};
+  scale  = TypeParam{2.0};
   offset = TypeParam::_1;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * scale + offset;
-    TypeParam e = TypeParam::ACosH(x);
-    double e_real = std::acosh(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * scale + offset;
+    TypeParam e      = TypeParam::ACosH(x);
+    double    e_real = std::acosh(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1453,19 +1477,19 @@ TYPED_TEST(HyperbolicTest, ACosH)
 
 TYPED_TEST(HyperbolicTest, ATanH)
 {
-  double r;
-  double delta, max_error = 0, avg_error = 0;
+  double    r;
+  double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale = TypeParam{1.0};
+  scale  = TypeParam{1.0};
   margin = 0.001;
   for (size_t i{0}; i < N; i++)
   {
-    r = static_cast<double>(random())/static_cast<double>(RAND_MAX);
-    x = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
-    TypeParam e = TypeParam::ATanH(x);
-    double e_real = std::atanh(static_cast<double>(x));
-    delta    = std::abs(static_cast<double>(e) - e_real);
-    max_error    = std::max(max_error, delta);
+    r                = static_cast<double>(random()) / static_cast<double>(RAND_MAX);
+    x                = static_cast<TypeParam>(r) * (scale - margin) - (scale - margin);
+    TypeParam e      = TypeParam::ATanH(x);
+    double    e_real = std::atanh(static_cast<double>(x));
+    delta            = std::abs(static_cast<double>(e) - e_real);
+    max_error        = std::max(max_error, delta);
     avg_error += delta;
   }
   avg_error /= static_cast<double>(N);
@@ -1617,6 +1641,12 @@ TYPED_TEST(NanInfinityTest, nan_inf_tests)
   TypeParam::StateClear();
   EXPECT_TRUE(TypeParam::IsNaN(TypeParam::Exp(TypeParam::_0 / TypeParam::_0)));
   EXPECT_TRUE(TypeParam::IsStateNaN());
+}
+
+TYPED_TEST(NanInfinityTest, trans_function_nan_inf_tests)
+{
+  TypeParam m_inf{TypeParam::NEGATIVE_INFINITY};
+  TypeParam p_inf{TypeParam::POSITIVE_INFINITY};
 
   // e ^ (+∞) = +∞
   TypeParam::StateClear();
@@ -1703,6 +1733,12 @@ TYPED_TEST(NanInfinityTest, nan_inf_tests)
   TypeParam::StateClear();
   EXPECT_TRUE(TypeParam::IsInfinity(TypeParam::Log(p_inf)));
   EXPECT_TRUE(TypeParam::IsStateInfinity());
+}
+
+TYPED_TEST(NanInfinityTest, trig_function_nan_inf_tests)
+{
+  TypeParam m_inf{TypeParam::NEGATIVE_INFINITY};
+  TypeParam p_inf{TypeParam::POSITIVE_INFINITY};
 
   // Trigonometry checks
   // Sin/Cos/Tan(NaN)
