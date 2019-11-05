@@ -36,18 +36,18 @@ using IRTypePtrArray = std::vector<IRTypePtr>;
 struct IRType
 {
   IRType(TypeKind type_kind__, std::string name__, IRTypePtr template_type__,
-         IRTypePtrArray parameter_types__)
+         IRTypePtrArray template_parameter_types__)
     : type_kind{type_kind__}
     , name{std::move(name__)}
     , template_type{std::move(template_type__)}
-    , parameter_types{std::move(parameter_types__)}
+    , template_parameter_types{std::move(template_parameter_types__)}
   {}
   virtual ~IRType() = default;
 
   virtual void Reset()
   {
     template_type = nullptr;
-    parameter_types.clear();
+    template_parameter_types.clear();
   }
 
   bool IsNull() const
@@ -62,21 +62,41 @@ struct IRType
   {
     return (type_kind == TypeKind::Primitive);
   }
+  bool IsClass() const
+  {
+    return (type_kind == TypeKind::Class);
+  }
+  bool IsTemplate() const
+  {
+    return (type_kind == TypeKind::Template);
+  }
+  bool IsTemplateInstantiation() const
+  {
+    return (type_kind == TypeKind::TemplateInstantiation);
+  }
+  bool IsUserDefinedTemplateInstantiation() const
+  {
+    return (type_kind == TypeKind::UserDefinedTemplateInstantiation);
+  }
   bool IsInstantiation() const
   {
-    return ((type_kind == TypeKind::Instantiation) ||
-            (type_kind == TypeKind::UserDefinedInstantiation));
+    return IsTemplateInstantiation() || IsUserDefinedTemplateInstantiation();
   }
 
-  TypeKind       type_kind;
+  TypeKind       type_kind{TypeKind::Unknown};
   std::string    name;
   IRTypePtr      template_type;
-  IRTypePtrArray parameter_types;
-  uint16_t       resolved_id = TypeIds::Unknown;
+  IRTypePtrArray template_parameter_types;
+  // only used during code generation
+  uint16_t       id{};
 };
 
-IRTypePtr CreateIRType(TypeKind type_kind, std::string name, IRTypePtr template_type,
-                       IRTypePtrArray parameter_types);
+inline IRTypePtr CreateIRType(TypeKind type_kind, std::string name, IRTypePtr template_type,
+                       IRTypePtrArray template_parameter_types)
+{
+  return std::make_shared<IRType>(type_kind, std::move(name), std::move(template_type),
+                                  std::move(template_parameter_types));
+}
 
 struct IRVariable
 {
@@ -93,26 +113,30 @@ struct IRVariable
     type = nullptr;
   }
 
-  VariableKind variable_kind;
+  VariableKind variable_kind{VariableKind::Unknown};
   std::string  name;
   IRTypePtr    type;
   bool         referenced;
-  uint16_t     index = 0;
+  // only used during code generation
+  uint16_t     id{};
 };
 using IRVariablePtr      = std::shared_ptr<IRVariable>;
 using IRVariablePtrArray = std::vector<IRVariablePtr>;
 
-IRVariablePtr CreateIRVariable(VariableKind variable_kind, std::string name, IRTypePtr type,
-                               bool referenced);
+inline IRVariablePtr CreateIRVariable(VariableKind variable_kind, std::string name, IRTypePtr type,
+                               bool referenced)
+{
+  return std::make_shared<IRVariable>(variable_kind, std::move(name), std::move(type), referenced);
+}
 
 struct IRFunction
 {
-  IRFunction(FunctionKind function_kind__, std::string name__, std::string unique_id__,
+  IRFunction(FunctionKind function_kind__, std::string name__, std::string unique_name__,
              IRTypePtrArray parameter_types__, IRVariablePtrArray parameter_variables__,
              IRTypePtr return_type__)
     : function_kind{function_kind__}
     , name{std::move(name__)}
-    , unique_id{std::move(unique_id__)}
+    , unique_name{std::move(unique_name__)}
     , parameter_types{std::move(parameter_types__)}
     , parameter_variables{std::move(parameter_variables__)}
     , return_type{std::move(return_type__)}
@@ -123,21 +147,25 @@ struct IRFunction
     parameter_variables.clear();
     return_type = nullptr;
   }
-  FunctionKind       function_kind;
+  FunctionKind       function_kind{FunctionKind::Unknown};
   std::string        name;
-  std::string        unique_id;
+  std::string        unique_name;
   IRTypePtrArray     parameter_types;
   IRVariablePtrArray parameter_variables;
   IRTypePtr          return_type;
-  uint16_t           index           = 0;
-  uint16_t           resolved_opcode = Opcodes::Unknown;
+  // only used during code generation
+  uint16_t           id{};
 };
 using IRFunctionPtr      = std::shared_ptr<IRFunction>;
 using IRFunctionPtrArray = std::vector<IRFunctionPtr>;
 
-IRFunctionPtr CreateIRFunction(FunctionKind function_kind, std::string name, std::string unique_id,
-                               IRTypePtrArray     parameter_types,
-                               IRVariablePtrArray parameter_variables, IRTypePtr return_type);
+inline IRFunctionPtr CreateIRFunction(FunctionKind function_kind, std::string name, std::string unique_name,
+                               IRTypePtrArray     parameter_types, IRVariablePtrArray parameter_variables, IRTypePtr return_type)
+{
+   return std::make_shared<IRFunction>(function_kind, std::move(name), std::move(unique_name),
+                                      std::move(parameter_types), std::move(parameter_variables),
+                                      std::move(return_type));
+}
 
 struct IRNode;
 using IRNodePtr      = std::shared_ptr<IRNode>;
@@ -178,20 +206,28 @@ struct IRNode
     return (node_category == NodeCategory::Expression);
   }
 
-  NodeCategory   node_category;
-  NodeKind       node_kind;
+  NodeCategory   node_category{NodeCategory::Unknown};
+  NodeKind       node_kind{NodeKind::Unknown};
   std::string    text;
-  uint16_t       line;
+  uint16_t       line{};
   IRNodePtrArray children;
 };
 
-IRNodePtr CreateIRBasicNode(NodeKind node_kind, std::string text, uint16_t line,
-                            IRNodePtrArray children);
+inline IRNodePtr CreateIRBasicNode(NodeKind node_kind, std::string text, uint16_t line, IRNodePtrArray children)
+{
+  return std::make_shared<IRNode>(NodeCategory::Basic, node_kind, std::move(text), line,
+                                  std::move(children));
+}
 
 struct IRBlockNode : public IRNode
 {
-  IRBlockNode(NodeKind node_kind, std::string text, uint16_t line, IRNodePtrArray children)
+  IRBlockNode(NodeKind node_kind, std::string text, uint16_t line, IRNodePtrArray children,
+      IRNodePtrArray block_children__, std::string block_terminator_text__,
+      uint16_t block_terminator_line__)
     : IRNode(NodeCategory::Block, node_kind, std::move(text), line, std::move(children))
+    , block_children{std::move(block_children__)}
+    , block_terminator_text{std::move(block_terminator_text__)}
+    , block_terminator_line{block_terminator_line__}
   {}
   ~IRBlockNode() override = default;
 
@@ -211,16 +247,26 @@ struct IRBlockNode : public IRNode
 using IRBlockNodePtr      = std::shared_ptr<IRBlockNode>;
 using IRBlockNodePtrArray = std::vector<IRBlockNodePtr>;
 
-IRBlockNodePtr CreateIRBlockNode(NodeKind node_kind, std::string text, uint16_t line,
-                                 IRNodePtrArray children);
+inline IRBlockNodePtr CreateIRBlockNode(NodeKind node_kind, std::string text, uint16_t line,
+                                 IRNodePtrArray children, IRNodePtrArray block_children,
+                                 std::string block_terminator_text, uint16_t block_terminator_line)
+{
+  return std::make_shared<IRBlockNode>(node_kind, std::move(text), line, std::move(children),
+      std::move(block_children), std::move(block_terminator_text), block_terminator_line);
+}
 
 struct IRExpressionNode : public IRNode
 {
-  IRExpressionNode(NodeKind node_kind, std::string text, uint16_t line, IRNodePtrArray children)
+  IRExpressionNode(NodeKind node_kind, std::string text, uint16_t line, IRNodePtrArray children,
+     ExpressionKind expression_kind__, IRTypePtr type__, IRVariablePtr  variable__,
+     bool function_invoker_is_instance__, IRFunctionPtr  function__)
     : IRNode(NodeCategory::Expression, node_kind, std::move(text), line, std::move(children))
-  {
-    expression_kind = ExpressionKind::Unknown;
-  }
+    , expression_kind{expression_kind__}
+    , type{std::move(type__)}
+    , variable{std::move(variable__)}
+    , function_invoker_is_instance{function_invoker_is_instance__}
+    , function{std::move(function__)}
+  {}
   ~IRExpressionNode() override = default;
 
   void Reset() override
@@ -252,18 +298,36 @@ struct IRExpressionNode : public IRNode
     return (expression_kind == ExpressionKind::FunctionGroup);
   }
 
-  ExpressionKind expression_kind;
+  ExpressionKind expression_kind{ExpressionKind::Unknown};
   IRTypePtr      type;
   IRVariablePtr  variable;
+  bool           function_invoker_is_instance;
   IRFunctionPtr  function;
 };
 using IRExpressionNodePtr      = std::shared_ptr<IRExpressionNode>;
 using IRExpressionNodePtrArray = std::vector<IRExpressionNodePtr>;
 
-IRExpressionNodePtr CreateIRExpressionNode(NodeKind node_kind, std::string text, uint16_t line,
-                                           IRNodePtrArray children);
-IRBlockNodePtr      ConvertToIRBlockNodePtr(IRNodePtr const &node);
-IRExpressionNodePtr ConvertToIRExpressionNodePtr(IRNodePtr const &node);
+inline IRExpressionNodePtr CreateIRExpressionNode(NodeKind node_kind, std::string text, uint16_t line,
+                                           IRNodePtrArray children,
+                                            ExpressionKind expression_kind, IRTypePtr type,
+  IRVariablePtr variable, bool function_invoker_is_instance, IRFunctionPtr function)
+{
+  return std::make_shared<IRExpressionNode>(node_kind, std::move(text), line, std::move(children),
+    expression_kind, std::move(type), std::move(variable), function_invoker_is_instance,
+    std::move(function));
+}
+
+inline IRBlockNodePtr ConvertToIRBlockNodePtr(IRNodePtr const &node)
+{
+  assert(!node || node->IsBlockNode());
+  return std::static_pointer_cast<IRBlockNode>(node);
+}
+
+inline IRExpressionNodePtr ConvertToIRExpressionNodePtr(IRNodePtr const &node)
+{
+  assert(!node || node->IsExpressionNode());
+  return std::static_pointer_cast<IRExpressionNode>(node);
+}
 
 class IR
 {

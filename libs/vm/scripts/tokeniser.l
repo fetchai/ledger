@@ -160,6 +160,8 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 "true"        {return Set(yylval, fetch::vm::Token::Kind::True, yytext, yyleng, yyextra);}
 "false"       {return Set(yylval, fetch::vm::Token::Kind::False, yytext, yyleng, yyextra);}
 "null"        {return Set(yylval, fetch::vm::Token::Kind::Null, yytext, yyleng, yyextra);}
+"contract"    {return Set(yylval, fetch::vm::Token::Kind::Contract, yytext, yyleng, yyextra);}
+"endcontract" {return Set(yylval, fetch::vm::Token::Kind::EndContract, yytext, yyleng, yyextra);}
 "function"    {return Set(yylval, fetch::vm::Token::Kind::Function, yytext, yyleng, yyextra);}
 "endfunction" {return Set(yylval, fetch::vm::Token::Kind::EndFunction, yytext, yyleng, yyextra);}
 "while"       {return Set(yylval, fetch::vm::Token::Kind::While, yytext, yyleng, yyextra);}

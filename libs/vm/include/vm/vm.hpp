@@ -557,14 +557,13 @@ public:
   struct OpcodeInfo
   {
     OpcodeInfo() = default;
-
-    OpcodeInfo(std::string name__, Handler handler__, ChargeAmount charge)
-      : name(std::move(name__))
+    OpcodeInfo(std::string unique_name__, Handler handler__, ChargeAmount static_charge__)
+      : unique_name(std::move(unique_name__))
       , handler(std::move(handler__))
-      , static_charge{charge}
+      , static_charge{static_charge__}
     {}
 
-    std::string  name;
+    std::string  unique_name;
     Handler      handler;
     ChargeAmount static_charge{};
   };
@@ -574,7 +573,7 @@ public:
   ChargeAmount GetChargeLimit() const;
   void         SetChargeLimit(ChargeAmount limit);
 
-  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_charges);
+  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_static_charges);
 
 private:
   static const int FRAME_STACK_SIZE = 50;
@@ -657,10 +656,10 @@ private:
   ChargeAmount charge_total_{0};
   /// @}
 
-  void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler,
+  void AddOpcodeInfo(uint16_t opcode, std::string unique_name, Handler handler,
                      ChargeAmount static_charge = 1)
   {
-    opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler), static_charge);
+    opcode_info_array_[opcode] = OpcodeInfo(std::move(unique_name), std::move(handler), static_charge);
   }
 
   bool Execute(std::string &error, Variant &output);
@@ -1682,6 +1681,8 @@ private:
   void Handler__PrimitiveModulo();
   void Handler__VariablePrimitiveInplaceModulo();
   void Handler__InitialiseArray();
+  void Handler__ContractVariableDeclareAssign();
+  void Handler__InvokeContractFunction();
 
   friend class Object;
   friend class Module;

@@ -103,21 +103,22 @@ IRNodePtr IR::CloneNode(IRNodePtr const &node)
     IRBlockNodePtr block_node = ConvertToIRBlockNodePtr(node);
     IRBlockNodePtr clone_block_node =
         CreateIRBlockNode(block_node->node_kind, block_node->text, block_node->line,
-                          CloneChildren(block_node->children));
-    clone_block_node->block_children        = CloneChildren(block_node->block_children);
-    clone_block_node->block_terminator_text = block_node->block_terminator_text;
-    clone_block_node->block_terminator_line = block_node->block_terminator_line;
+                          CloneChildren(block_node->children),
+                          CloneChildren(block_node->block_children),
+                      block_node->block_terminator_text,
+                      block_node->block_terminator_line);
     return clone_block_node;
   }
 
   IRExpressionNodePtr expression_node = ConvertToIRExpressionNodePtr(node);
   IRExpressionNodePtr clone_expression_node =
       CreateIRExpressionNode(expression_node->node_kind, expression_node->text,
-                             expression_node->line, CloneChildren(expression_node->children));
-  clone_expression_node->expression_kind = expression_node->expression_kind;
-  clone_expression_node->type            = CloneType(expression_node->type);
-  clone_expression_node->variable        = CloneVariable(expression_node->variable);
-  clone_expression_node->function        = CloneFunction(expression_node->function);
+                             expression_node->line, CloneChildren(expression_node->children),
+        expression_node->expression_kind,
+        CloneType(expression_node->type),
+        CloneVariable(expression_node->variable),
+        expression_node->function_invoker_is_instance,
+        CloneFunction(expression_node->function));
   return clone_expression_node;
 }
 
@@ -143,14 +144,14 @@ IRTypePtr IR::CloneType(IRTypePtr const &type)
     return clone_type;
   }
   IRTypePtr      clone_template_type;
-  IRTypePtrArray clone_parameter_types;
+  IRTypePtrArray clone_template_parameter_types;
   if (type->IsInstantiation())
   {
-    clone_template_type   = CloneType(type->template_type);
-    clone_parameter_types = CloneTypes(type->parameter_types);
+    clone_template_type            = CloneType(type->template_type);
+    clone_template_parameter_types = CloneTypes(type->template_parameter_types);
   }
   clone_type =
-      CreateIRType(type->type_kind, type->name, clone_template_type, clone_parameter_types);
+      CreateIRType(type->type_kind, type->name, clone_template_type, clone_template_parameter_types);
   type_map_.AddPair(type, clone_type);
   AddType(clone_type);
   return clone_type;
@@ -190,7 +191,7 @@ IRFunctionPtr IR::CloneFunction(IRFunctionPtr const &function)
   IRVariablePtrArray clone_parameter_variables = CloneVariables(function->parameter_variables);
   IRTypePtr          clone_return_type         = CloneType(function->return_type);
   clone_function =
-      CreateIRFunction(function->function_kind, function->name, function->unique_id,
+      CreateIRFunction(function->function_kind, function->name, function->unique_name,
                        clone_parameter_types, clone_parameter_variables, clone_return_type);
   function_map_.AddPair(function, clone_function);
   AddFunction(clone_function);
@@ -217,56 +218,7 @@ IRVariablePtrArray IR::CloneVariables(IRVariablePtrArray const &variables)
   return array;
 }
 
-IRTypePtr CreateIRType(TypeKind type_kind, std::string name, IRTypePtr template_type,
-                       IRTypePtrArray parameter_types)
-{
-  return std::make_shared<IRType>(type_kind, std::move(name), std::move(template_type),
-                                  std::move(parameter_types));
-}
 
-IRVariablePtr CreateIRVariable(VariableKind variable_kind, std::string name, IRTypePtr type,
-                               bool referenced)
-{
-  return std::make_shared<IRVariable>(variable_kind, std::move(name), std::move(type), referenced);
-}
-
-IRFunctionPtr CreateIRFunction(FunctionKind function_kind, std::string name, std::string unique_id,
-                               IRTypePtrArray     parameter_types,
-                               IRVariablePtrArray parameter_variables, IRTypePtr return_type)
-{
-  return std::make_shared<IRFunction>(function_kind, std::move(name), std::move(unique_id),
-                                      std::move(parameter_types), std::move(parameter_variables),
-                                      std::move(return_type));
-}
-
-IRNodePtr CreateIRBasicNode(NodeKind node_kind, std::string text, uint16_t line,
-                            IRNodePtrArray children)
-{
-  return std::make_shared<IRNode>(NodeCategory::Basic, node_kind, std::move(text), line,
-                                  std::move(children));
-}
-
-IRBlockNodePtr CreateIRBlockNode(NodeKind node_kind, std::string text, uint16_t line,
-                                 IRNodePtrArray children)
-{
-  return std::make_shared<IRBlockNode>(node_kind, std::move(text), line, std::move(children));
-}
-
-IRExpressionNodePtr CreateIRExpressionNode(NodeKind node_kind, std::string text, uint16_t line,
-                                           IRNodePtrArray children)
-{
-  return std::make_shared<IRExpressionNode>(node_kind, std::move(text), line, std::move(children));
-}
-
-IRBlockNodePtr ConvertToIRBlockNodePtr(IRNodePtr const &node)
-{
-  return std::static_pointer_cast<IRBlockNode>(node);
-}
-
-IRExpressionNodePtr ConvertToIRExpressionNodePtr(IRNodePtr const &node)
-{
-  return std::static_pointer_cast<IRExpressionNode>(node);
-}
 
 }  // namespace vm
 }  // namespace fetch

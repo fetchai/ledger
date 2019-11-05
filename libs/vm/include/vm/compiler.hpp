@@ -50,42 +50,42 @@ private:
     analyser_.CreateTemplateType(name, type_index, allowed_types_index_array);
   }
 
-  void CreateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
+  void CreateTemplateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
                                TypeIndexArray const &template_parameter_type_index_array)
   {
-    analyser_.CreateInstantiationType(type_index, template_type_index,
+    analyser_.CreateTemplateInstantiationType(type_index, template_type_index,
                                       template_parameter_type_index_array);
   }
 
   void CreateFreeFunction(std::string const &name, TypeIndexArray const &parameter_type_index_array,
-                          TypeIndex return_type_index, Handler const &handler, ChargeAmount charge)
+                          TypeIndex return_type_index, Handler const &handler, ChargeAmount static_charge)
   {
     analyser_.CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler,
-                                 charge);
+                                 static_charge);
   }
 
   void CreateConstructor(TypeIndex type_index, TypeIndexArray const &parameter_type_index_array,
-                         Handler const &handler, ChargeAmount charge)
+                         Handler const &handler, ChargeAmount static_charge)
   {
-    analyser_.CreateConstructor(type_index, parameter_type_index_array, handler, charge);
+    analyser_.CreateConstructor(type_index, parameter_type_index_array, handler, static_charge);
   }
 
   void CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                   TypeIndexArray const &parameter_type_index_array,
                                   TypeIndex return_type_index, Handler const &handler,
-                                  ChargeAmount charge)
+                                  ChargeAmount static_charge)
   {
     analyser_.CreateStaticMemberFunction(type_index, function_name, parameter_type_index_array,
-                                         return_type_index, handler, charge);
+                                         return_type_index, handler, static_charge);
   }
 
   void CreateMemberFunction(TypeIndex type_index, std::string const &function_name,
                             TypeIndexArray const &parameter_type_index_array,
                             TypeIndex return_type_index, Handler const &handler,
-                            ChargeAmount charge)
+                            ChargeAmount static_charge)
   {
     analyser_.CreateMemberFunction(type_index, function_name, parameter_type_index_array,
-                                   return_type_index, handler, charge);
+                                   return_type_index, handler, static_charge);
   }
 
   void EnableOperator(TypeIndex type_index, Operator op)
@@ -105,11 +105,11 @@ private:
 
   void EnableIndexOperator(TypeIndex type_index, TypeIndexArray const &input_type_index_array,
                            TypeIndex output_type_index, Handler const &get_handler,
-                           Handler const &set_handler, ChargeAmount get_charge,
-                           ChargeAmount set_charge)
+                           Handler const &set_handler, ChargeAmount get_static_charge,
+                           ChargeAmount set_static_charge)
   {
     analyser_.EnableIndexOperator(type_index, input_type_index_array, output_type_index,
-                                  get_handler, set_handler, get_charge, set_charge);
+                                  get_handler, set_handler, get_static_charge, set_static_charge);
   }
 
   void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
