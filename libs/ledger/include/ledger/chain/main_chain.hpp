@@ -55,12 +55,14 @@ namespace ledger {
  *     All blocks added MUST have a valid hash and previous hash
  *
  * Loose blocks are blocks where the previous hash/block isn't found.
- * Tips keep track of all non loose chains.
+ * Tips keep track of all non loose chains. Has the property that the chain will not present a
+ * heaviest block that it sees as having a duplicated weight
  */
 struct Tip
 {
   uint64_t total_weight{0};
   uint64_t weight{0};
+  uint64_t block_number{0};
 };
 
 enum class BlockStatus
@@ -89,6 +91,9 @@ public:
   using BlockHash            = Block::Hash;
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
+  using BlockNumber          = uint64_t;
+  using BlockWeight          = uint64_t;
+  using MinerIdentity        = Block::Identity;
   using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
@@ -160,24 +165,26 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
-  using DbRecord      = BlockDbRecord;
-  using IntBlockPtr   = std::shared_ptr<Block>;
-  using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
-  using References    = std::unordered_multimap<BlockHash, BlockHash>;
-  using Proof         = Block::Proof;
-  using TipsMap       = std::unordered_map<BlockHash, Tip>;
-  using BlockHashList = std::list<BlockHash>;
-  using LooseBlockMap = std::unordered_map<BlockHash, BlockHashList>;
-  using BlockStore    = fetch::storage::ObjectStore<DbRecord>;
-  using BlockStorePtr = std::unique_ptr<BlockStore>;
-  using RMutex        = std::recursive_mutex;
-  using RLock         = std::unique_lock<RMutex>;
+  using DbRecord          = BlockDbRecord;
+  using IntBlockPtr       = std::shared_ptr<Block>;
+  using BlockMap          = std::unordered_map<BlockHash, IntBlockPtr>;
+  using References        = std::unordered_multimap<BlockHash, BlockHash>;
+  using Proof             = Block::Proof;
+  using TipsMap           = std::unordered_map<BlockHash, Tip>;
+  using BlockHashList     = std::list<BlockHash>;
+  using LooseBlockMap     = std::unordered_map<BlockHash, BlockHashList>;
+  using BlockStore        = fetch::storage::ObjectStore<DbRecord>;
+  using BlockStorePtr     = std::unique_ptr<BlockStore>;
+  using RMutex            = std::recursive_mutex;
+  using RLock             = std::unique_lock<RMutex>;
+  using ExcludedMinersMap = std::unordered_map<BlockNumber, std::unordered_set<BlockWeight>>;
 
   struct HeaviestTip
   {
-    uint64_t  total_weight{0};
-    uint64_t  weight{0};
-    BlockHash hash{chain::GENESIS_DIGEST};
+    BlockWeight total_weight{0};
+    BlockWeight weight{0};
+    BlockNumber block_number{0};
+    BlockHash   hash{chain::GENESIS_DIGEST};
 
     bool Update(Block const &block);
   };
@@ -218,6 +225,7 @@ public:
   /// @name Tip Management
   /// @{
   bool AddTip(IntBlockPtr const &block);
+  bool RemoveTip(IntBlockPtr const &block);
   bool UpdateTips(IntBlockPtr const &block);
   bool DetermineHeaviestTip();
   /// @}
@@ -235,10 +243,11 @@ public:
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
   // The whole tree of previous-next relations among cached blocks
-  mutable References                references_;
-  TipsMap                           tips_;          ///< Keep track of the tips
-  HeaviestTip                       heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks
+  mutable References references_;
+  TipsMap            tips_;                      ///< Keep track of the tips
+  HeaviestTip        heaviest_;                  ///< Heaviest block/tip
+  LooseBlockMap      loose_blocks_;              ///< Waiting (loose) blocks
+  ExcludedMinersMap  conflicting_block_miners_;  ///< Miners whose blocks should not be tips
   std::unique_ptr<BasicBloomFilter> bloom_filter_;
   bool const                        enable_bloom_filter_;
   telemetry::GaugePtr<std::size_t>  bloom_filter_queried_bit_count_;

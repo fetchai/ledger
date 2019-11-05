@@ -794,7 +794,7 @@ void MainChain::RecoverFromFile(Mode mode)
 
       // Update this as our heaviest
       bool const result      = heaviest_.Update(*head);
-      tips_[head->body.hash] = Tip{head->total_weight, head->weight};
+      tips_[head->body.hash] = Tip{head->total_weight, head->weight, head->body.block_number};
 
       if (!result)
       {
@@ -1094,10 +1094,32 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
   assert(!block->is_loose);
   assert(block->weight != 0);
   assert(block->total_weight != 0);
+  assert(block->body.block_number != 0);
+
+  // if block with same height and weight exist by the same miner then do not include
+  // either in tips
+  for (auto const &tip : tips_)
+  {
+    if (tip.second.block_number == block->body.block_number && tip.second.weight == block->weight)
+    {
+      auto old_heaviest = heaviest_;
+      conflicting_block_miners_[tip.second.block_number].insert(tip.second.weight);
+      RemoveTip(std::make_shared<Block>(*GetBlock(tip.first)));
+      return old_heaviest.hash == heaviest_.hash;
+    }
+  }
+
+  // if tip is from miner who has previously produced conflicting blocks for this round
+  // do not hadd new block to tips
+  if (conflicting_block_miners_[block->body.block_number].find(block->weight) !=
+      conflicting_block_miners_[block->body.block_number].end())
+  {
+    return false;
+  }
 
   // remove the tip if exists and add the new one
   tips_.erase(block->body.previous_hash);
-  tips_[block->body.hash] = Tip{block->total_weight, block->weight};
+  tips_[block->body.hash] = Tip{block->total_weight, block->weight, block->body.block_number};
 
   // attempt to update the heaviest tip
   return heaviest_.Update(*block);
@@ -1343,9 +1365,56 @@ bool MainChain::AddTip(IntBlockPtr const &block)
 {
   FETCH_LOCK(lock_);
 
-  // record the tip weight
-  tips_[block->body.hash] = Tip{block->total_weight, block->weight};
+  // if block has same height and weight as another tip then do not include either in tips
+  for (auto const &tip : tips_)
+  {
+    if (tip.second.block_number == block->body.block_number && tip.second.weight == block->weight)
+    {
+      conflicting_block_miners_[tip.second.block_number].insert(tip.second.weight);
+      return RemoveTip(std::make_shared<Block>(*GetBlock(tip.first)));
+    }
+  }
 
+  // if tip is from miner who has previously produced conflicting blocks for this round
+  // then do not include in tips
+  if (conflicting_block_miners_[block->body.block_number].find(block->weight) !=
+      conflicting_block_miners_[block->body.block_number].end())
+  {
+    return DetermineHeaviestTip();
+  }
+
+  // record the tip weight
+  tips_[block->body.hash] = Tip{block->total_weight, block->weight, block->body.block_number};
+
+  return DetermineHeaviestTip();
+}
+
+/**
+ * Removes a new tip for the given block and inserts in previous
+ *
+ * @param block The block for the tip to be removed
+ */
+bool MainChain::RemoveTip(IntBlockPtr const &block)
+{
+  FETCH_LOCK(lock_);
+  bool replaced{false};
+  if (tips_.erase(block->body.hash))
+  {
+    auto previous_block = GetBlock(block->body.previous_hash);
+    // Check previous is not banned, insert in previous
+    while (!replaced && previous_block)
+    {
+      BlockNumber previous_block_number = previous_block->body.block_number;
+      if (conflicting_block_miners_[previous_block_number].find(previous_block->weight) ==
+          conflicting_block_miners_[previous_block_number].end())
+      {
+        tips_[previous_block->body.hash] =
+            Tip{previous_block->total_weight, previous_block->weight, previous_block_number};
+        replaced = true;
+      }
+      previous_block = GetBlock(previous_block->body.previous_hash);
+    }
+  }
   return DetermineHeaviestTip();
 }
 
@@ -1379,6 +1448,7 @@ bool MainChain::DetermineHeaviestTip()
     heaviest_.hash         = it->first;
     heaviest_.weight       = it->second.weight;
     heaviest_.total_weight = it->second.total_weight;
+    heaviest_.block_number = it->second.block_number;
     return true;
   }
 
@@ -1401,6 +1471,7 @@ bool MainChain::ReindexTips()
   TipsMap   new_tips;
   uint64_t  max_total_weight{};
   uint64_t  max_weight{};
+  uint64_t  max_block_number{};
   BlockHash max_hash;
 
   for (auto const &block_entry : block_chain_)
@@ -1424,7 +1495,16 @@ bool MainChain::ReindexTips()
     auto const &   block{*block_entry.second};
     const uint64_t total_weight{block.total_weight};
     const uint64_t weight{block.weight};
-    new_tips[hash] = Tip{total_weight, weight};
+    const uint64_t block_number{block.body.block_number};
+    new_tips[hash] = Tip{total_weight, weight, block_number};
+
+    // check if it should be excluded
+    if (conflicting_block_miners_[block_number].find(weight) !=
+        conflicting_block_miners_[block_number].end())
+    {
+      continue;
+    }
+
     // check if this tip is the current heaviest
     if (total_weight > max_total_weight ||
         (total_weight == max_total_weight && weight > max_weight) ||
@@ -1433,6 +1513,7 @@ bool MainChain::ReindexTips()
       max_total_weight = total_weight;
       max_weight       = weight;
       max_hash         = hash;
+      max_block_number = block_number;
     }
   }
   tips_ = std::move(new_tips);
@@ -1442,6 +1523,7 @@ bool MainChain::ReindexTips()
     // finally update the heaviest tip
     heaviest_.total_weight = max_total_weight;
     heaviest_.weight       = max_weight;
+    heaviest_.block_number = max_block_number;
     heaviest_.hash         = max_hash;
     return true;
   }
@@ -1495,6 +1577,7 @@ bool MainChain::HeaviestTip::Update(Block const &block)
 
     total_weight = block.total_weight;
     weight       = block.weight;
+    block_number = block.body.block_number;
     hash         = block.body.hash;
     updated      = true;
   }

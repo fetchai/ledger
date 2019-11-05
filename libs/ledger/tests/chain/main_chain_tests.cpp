@@ -866,6 +866,40 @@ TEST_P(MainChainTests, CheckResolvedLooseWeight)
   ASSERT_EQ(chain_->GetBlock(main5->body.hash)->total_weight, main5->total_weight);
 }
 
+TEST_P(MainChainTests, MultipleBlocksSameHeightSameMiner)
+{
+  auto genesis = generator_->Generate();
+
+  auto chain1_1  = generator_->Generate(genesis, 2);
+  auto chain1_2a = generator_->Generate(chain1_1, 3);
+  auto chain1_2b = generator_->Generate(chain1_1, 3);
+  auto chain1_2c = generator_->Generate(chain1_1, 3);
+  auto chain1_3  = generator_->Generate(chain1_2a, 3);
+
+  auto chain2_1 = generator_->Generate(genesis, 1);
+  auto chain2_2 = generator_->Generate(chain2_1, 2);
+
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_1));
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain2_1));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain1_1->body.hash);
+
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_2a));
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain2_2));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain1_2a->body.hash);
+
+  // Now at a second block with the same weight at the same height
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_2b));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain2_2->body.hash);
+
+  // Should not accept more blocks from invalidated miner at same height
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_2c));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain2_2->body.hash);
+
+  // Now receive block that builds on one of the tips removed
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_3));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain1_3->body.hash);
+}
+
 INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,
                         ::testing::Values(MainChain::Mode::CREATE_PERSISTENT_DB,
                                           MainChain::Mode::IN_MEMORY_DB), );
