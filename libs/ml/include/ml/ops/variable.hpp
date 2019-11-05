@@ -60,7 +60,7 @@ class Variable : public DataHolder<T>, public Trainable<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpVariableSaveableParams<TensorType>;
@@ -118,6 +118,13 @@ public:
     return sp;
   }
 
+  /**
+   * Responsibility:
+   * When overloaded it needs to reset gradient flag if not frozen
+   * @param inputs
+   * @param error_signal
+   * @return
+   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override
   {
@@ -200,7 +207,7 @@ public:
   static constexpr char const *DESCRIPTOR = "Variable";
 
 protected:
-  bool               reset_gradients_ = true;
+  bool               reset_gradients_ = false;
   TensorPtrType      gradient_accumulation_;
   RegularisationType regularisation_type = RegularisationType::NONE;
   DataType           regularisation_rate = fetch::math::numeric_max<DataType>();

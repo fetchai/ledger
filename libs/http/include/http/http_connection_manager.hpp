@@ -36,6 +36,7 @@ public:
   static constexpr char const *LOGGING_NAME = "HTTPConnectionManager";
 
   explicit HTTPConnectionManager(AbstractHTTPServer &server);
+  ~HTTPConnectionManager();
 
   HandleType  Join(ConnectionType client);
   void        Leave(HandleType handle);

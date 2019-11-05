@@ -35,6 +35,14 @@
 // appear in middle of graph
 
 namespace fetch {
+
+namespace dmlf {
+namespace distributed_learning {
+template <typename TensorType>
+class TrainingClient;
+}  // namespace distributed_learning
+}  // namespace dmlf
+
 namespace ml {
 
 ///////////////
@@ -50,11 +58,6 @@ namespace model {
 template <typename TensorType>
 class ModelInterface;
 }  // namespace model
-
-namespace distributed_learning {
-template <typename TensorType>
-class TrainingClient;
-}  // namespace distributed_learning
 
 ///////////////////
 /// GRAPH STATE ///
@@ -80,7 +83,7 @@ class Graph
 public:
   using TensorType       = T;
   using ArrayPtrType     = std::shared_ptr<TensorType>;
-  using SizeType         = typename TensorType::SizeType;
+  using SizeType         = fetch::math::SizeType;
   using DataType         = typename TensorType::Type;
   using NodePtrType      = typename std::shared_ptr<fetch::ml::Node<TensorType>>;
   using TrainablePtrType = typename std::shared_ptr<fetch::ml::ops::Trainable<TensorType>>;
@@ -165,7 +168,7 @@ private:
 
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
-  friend class distributed_learning::TrainingClient<TensorType>;
+  friend class dmlf::distributed_learning::TrainingClient<TensorType>;
 
   TensorType ForwardImplementation(std::string const &node_name, bool is_training,
                                    bool evaluate_mode);

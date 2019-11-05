@@ -345,12 +345,9 @@ BeaconService::State BeaconService::OnCompleteState()
       active_exe_unit_->manager.GroupSignature().getStr();
 
   // Check when in debug mode that the block entropy signing has gone correctly
-  if (!dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
-                                  block_entropy_previous_->EntropyAsSHA256(),
-                                  block_entropy_being_created_->group_signature))
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to verify freshly signed entropy!");
-  }
+  assert(dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
+                                    block_entropy_previous_->EntropyAsSHA256(),
+                                    block_entropy_being_created_->group_signature));
 
   // Save it for querying
   completed_block_entropy_[index] = block_entropy_being_created_;
@@ -459,7 +456,7 @@ char const *ToString(BeaconService::State state)
   case BeaconService::State::COMPLETE:
     text = "Completion state";
     break;
-  case BeaconService::State::COMITEE_ROTATION:
+  case BeaconService::State::CABINET_ROTATION:
     text = "Decide on cabinet rotation";
     break;
   case BeaconService::State::OBSERVE_ENTROPY_GENERATION:

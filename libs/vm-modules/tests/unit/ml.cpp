@@ -127,13 +127,15 @@ TEST_F(MLTests, dataloader_serialisation_test)
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 10u64;
-      var data_tensor = Tensor(tensor_shape);
+      var data_tensor_1 = Tensor(tensor_shape);
+      var data_tensor_2 = Tensor(tensor_shape);
       var label_tensor = Tensor(tensor_shape);
-      data_tensor.fill(7.0fp64);
+      data_tensor_1.fill(7.0fp64);
+      data_tensor_2.fill(7.0fp64);
       label_tensor.fill(7.0fp64);
 
       var dataloader = DataLoader("tensor");
-      dataloader.addData(data_tensor, label_tensor);
+      dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
 
       var state = State<DataLoader>("dataloader");
       state.set(dataloader);
@@ -338,23 +340,26 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 10u64;
-      var data_tensor = Tensor(tensor_shape);
+      var data_tensor_1 = Tensor(tensor_shape);
+      var data_tensor_2 = Tensor(tensor_shape);
       var label_tensor = Tensor(tensor_shape);
-      data_tensor.fill(7.0fp64);
+      data_tensor_1.fill(7.0fp64);
+      data_tensor_2.fill(7.0fp64);
       label_tensor.fill(7.0fp64);
 
       var graph = Graph();
-      graph.addPlaceholder("Input");
+      graph.addPlaceholder("Input_1");
+      graph.addPlaceholder("Input_2");
       graph.addPlaceholder("Label");
-      graph.addFullyConnected("FC1", "Input", 2, 2);
+      graph.addFullyConnected("FC1", "Input_2", 2, 2);
       graph.addRelu("Output", "FC1");
       graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
       var dataloader = DataLoader("tensor");
-      dataloader.addData(data_tensor, label_tensor);
+      dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
 
       var batch_size = 8u64;
-      var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
+      var optimiser = Optimiser("sgd", graph, dataloader, {"Input_1","Input_2"}, "Label", "Error");
 
       var state = State<Optimiser>("optimiser");
       state.set(optimiser);
@@ -398,30 +403,34 @@ TEST_F(MLTests, serialisation_several_components_test)
   static char const *several_serialise_src = R"(
       function main()
 
-        var tensor_shape = Array<UInt64>(2);
-        tensor_shape[0] = 2u64;
-        tensor_shape[1] = 10u64;
-        var data_tensor = Tensor(tensor_shape);
-        var label_tensor = Tensor(tensor_shape);
-        data_tensor.fill(7.0fp64);
-        label_tensor.fill(7.0fp64);
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor_1 = Tensor(tensor_shape);
+      var data_tensor_2 = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor_1.fill(7.0fp64);
+      data_tensor_2.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
 
         var graph = Graph();
-        graph.addPlaceholder("Input");
+        graph.addPlaceholder("Input_1");
+        graph.addPlaceholder("Input_2");
         graph.addPlaceholder("Label");
-        graph.addFullyConnected("FC1", "Input", 2, 2);
+        graph.addFullyConnected("FC1", "Input_2", 2, 2);
         graph.addRelu("Output", "FC1");
         graph.addMeanSquareErrorLoss("Error", "Output", "Label");
         var graph_state = State<Graph>("graph");
         graph_state.set(graph);
 
         var dataloader = DataLoader("tensor");
-        dataloader.addData(data_tensor, label_tensor);
+
+        dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
         var dataloader_state = State<DataLoader>("dataloader");
         dataloader_state.set(dataloader);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input_1","Input_2"}, "Label", "Error");
         var optimiser_state = State<Optimiser>("optimiser");
         optimiser_state.set(optimiser);
 
@@ -460,6 +469,232 @@ TEST_F(MLTests, serialisation_several_components_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
+/////
+/// MODEL SERIALISATION TESTS
+/////
+TEST_F(MLTests, serialisation_model)
+{
+  static char const *model_serialise_src = R"(
+
+      function build_model() : Model
+        var model = Model("sequential");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 1u64);
+        return model;
+      endfunction
+
+      function main()
+
+        // set up data and labels
+        var data_shape = Array<UInt64>(2);
+        data_shape[0] = 10u64;
+        data_shape[1] = 1000u64;
+        var label_shape = Array<UInt64>(2);
+        label_shape[0] = 1u64;
+        label_shape[1] = 1000u64;
+        var data = Tensor(data_shape);
+        var label = Tensor(label_shape);
+
+        // set up a model
+        var model1 = build_model();
+        var model2 = build_model();
+        var model3 = build_model();
+        var model4 = build_model();
+
+        // compile the models with different optimisers and loss functions
+        model1.compile("mse", "sgd");
+        model2.compile("cel", "sgd");
+        model3.compile("mse", "adam");
+        model4.compile("cel", "adam");
+
+        // train the models
+        model1.fit(data, label, 32u64);
+        model2.fit(data, label, 32u64);
+        model3.fit(data, label, 32u64);
+        model4.fit(data, label, 32u64);
+
+        // evaluate performance
+        var loss1 = model1.evaluate();
+        var loss2 = model2.evaluate();
+        var loss3 = model3.evaluate();
+        var loss4 = model4.evaluate();
+
+        // make a prediction
+        var prediction1 = model1.predict(data);
+        var prediction2 = model2.predict(data);
+        var prediction3 = model3.predict(data);
+        var prediction4 = model4.predict(data);
+
+        // serialise model
+        var model_state1 = State<Model>("model1");
+        var model_state2 = State<Model>("model2");
+        var model_state3 = State<Model>("model3");
+        var model_state4 = State<Model>("model4");
+        model_state1.set(model1);
+        model_state2.set(model2);
+        model_state3.set(model3);
+        model_state4.set(model4);
+
+      endfunction
+    )";
+
+  std::string const model_name1{"model1"};
+  std::string const model_name2{"model2"};
+  std::string const model_name3{"model3"};
+  std::string const model_name4{"model4"};
+
+  ASSERT_TRUE(toolkit.Compile(model_serialise_src));
+  EXPECT_CALL(toolkit.observer(), Write(model_name1, _, _));
+  EXPECT_CALL(toolkit.observer(), Write(model_name2, _, _));
+  EXPECT_CALL(toolkit.observer(), Write(model_name3, _, _));
+  EXPECT_CALL(toolkit.observer(), Write(model_name4, _, _));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *model_deserialise_src = R"(
+      function main()
+        var model_state1 = State<Model>("model1");
+        var model_state2 = State<Model>("model2");
+        var model_state3 = State<Model>("model3");
+        var model_state4 = State<Model>("model4");
+        var model1 = model_state1.get();
+        var model2 = model_state2.get();
+        var model3 = model_state3.get();
+        var model4 = model_state4.get();
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(model_deserialise_src));
+  EXPECT_CALL(toolkit.observer(), Exists(model_name1));
+  EXPECT_CALL(toolkit.observer(), Exists(model_name2));
+  EXPECT_CALL(toolkit.observer(), Exists(model_name3));
+  EXPECT_CALL(toolkit.observer(), Exists(model_name4));
+  EXPECT_CALL(toolkit.observer(), Read(model_name1, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(model_name2, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(model_name3, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(model_name4, _, _)).Times(::testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, model_string_serialisation_test)
+{
+  static char const *graph_serialise_src = R"(
+
+      function build_model() : Model
+        var model = Model("sequential");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 1u64);
+        return model;
+      endfunction
+
+      function main()
+
+        // set up data and labels
+        var data_shape = Array<UInt64>(2);
+        data_shape[0] = 10u64;
+        data_shape[1] = 1000u64;
+        var label_shape = Array<UInt64>(2);
+        label_shape[0] = 1u64;
+        label_shape[1] = 1000u64;
+        var data = Tensor(data_shape);
+        var label = Tensor(label_shape);
+
+        // set up a model
+        var model1 = build_model();
+        var model2 = build_model();
+        var model3 = build_model();
+        var model4 = build_model();
+        // compile the models with different optimisers and loss functions
+        model1.compile("mse", "sgd");
+        model2.compile("cel", "sgd");
+        model3.compile("mse", "adam");
+        model4.compile("cel", "adam");
+
+        // train the models
+        model1.fit(data, label, 32u64);
+        model2.fit(data, label, 32u64);
+        model3.fit(data, label, 32u64);
+        model4.fit(data, label, 32u64);
+
+        // evaluate performance
+        var loss1 = model1.evaluate();
+        var loss2 = model2.evaluate();
+        var loss3 = model3.evaluate();
+        var loss4 = model4.evaluate();
+
+        // make a prediction
+        var prediction1 = model1.predict(data);
+        var prediction2 = model2.predict(data);
+        var prediction3 = model3.predict(data);
+        var prediction4 = model4.predict(data);
+
+       // serialise to string
+        var model_string_1 = model1.serializeToString();
+        var model_string_2 = model2.serializeToString();
+        var model_string_3 = model3.serializeToString();
+        var model_string_4 = model4.serializeToString();
+
+        var state1 = State<String>("model_state1");
+        var state2 = State<String>("model_state2");
+        var state3 = State<String>("model_state3");
+        var state4 = State<String>("model_state4");
+
+        state1.set(model_string_1);
+        state2.set(model_string_2);
+        state3.set(model_string_3);
+        state4.set(model_string_4);
+
+      endfunction
+  )";
+
+  std::string const state_name1{"model_state1"};
+  std::string const state_name2{"model_state2"};
+  std::string const state_name3{"model_state3"};
+  std::string const state_name4{"model_state4"};
+  ASSERT_TRUE(toolkit.Compile(graph_serialise_src));
+  EXPECT_CALL(toolkit.observer(), Write(state_name1, _, _));
+  EXPECT_CALL(toolkit.observer(), Write(state_name2, _, _));
+  EXPECT_CALL(toolkit.observer(), Write(state_name3, _, _));
+  EXPECT_CALL(toolkit.observer(), Write(state_name4, _, _));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *graph_deserialise_src = R"(
+    function main()
+      var state1 = State<String>("model_state1");
+      var state2 = State<String>("model_state2");
+      var state3 = State<String>("model_state3");
+      var state4 = State<String>("model_state4");
+
+      var model_string1 = state1.get();
+      var model_string2 = state2.get();
+      var model_string3 = state3.get();
+      var model_string4 = state4.get();
+
+      var model1 = Model("none");
+      var model2 = Model("none");
+      var model3 = Model("none");
+      var model4 = Model("none");
+      model1 = model1.deserializeFromString(model_string1);
+      model2 = model2.deserializeFromString(model_string2);
+      model3 = model3.deserializeFromString(model_string3);
+      model4 = model4.deserializeFromString(model_string4);
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(graph_deserialise_src));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name1));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name2));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name3));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name4));
+  EXPECT_CALL(toolkit.observer(), Read(state_name1, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(state_name2, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(state_name3, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(state_name4, _, _)).Times(::testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run());
+}
+
 TEST_F(MLTests, optimiser_set_graph_test)
 {
   static char const *several_serialise_src = R"(
@@ -468,23 +703,26 @@ TEST_F(MLTests, optimiser_set_graph_test)
         var tensor_shape = Array<UInt64>(2);
         tensor_shape[0] = 2u64;
         tensor_shape[1] = 10u64;
-        var data_tensor = Tensor(tensor_shape);
+        var data_tensor_1 = Tensor(tensor_shape);
+        var data_tensor_2 = Tensor(tensor_shape);
         var label_tensor = Tensor(tensor_shape);
-        data_tensor.fill(7.0fp64);
+        data_tensor_1.fill(7.0fp64);
+        data_tensor_2.fill(7.0fp64);
         label_tensor.fill(7.0fp64);
 
         var graph = Graph();
-        graph.addPlaceholder("Input");
+        graph.addPlaceholder("Input_1");
+        graph.addPlaceholder("Input_2");
         graph.addPlaceholder("Label");
-        graph.addFullyConnected("FC1", "Input", 2, 2);
+        graph.addFullyConnected("FC1", "Input_2", 2, 2);
         graph.addRelu("Output", "FC1");
         graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
         var dataloader = DataLoader("tensor");
-        dataloader.addData(data_tensor, label_tensor);
+        dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input_1","Input_2"}, "Label", "Error");
 
         optimiser.setGraph(graph);
         optimiser.setDataloader(dataloader);

@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,30 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/utilities/word2vec_utilities.hpp"
-
 namespace fetch {
-namespace ml {
-namespace utilities {
 
-// Timestamp for logging
-std::string GetStrTimestamp()
-{
-  auto now       = std::chrono::system_clock::now();
-  auto in_time_t = std::chrono::system_clock::to_time_t(now);
-
-  auto now_milliseconds =
-      std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-
-  std::stringstream ss;
-  ss << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H:%M:%S");
-
-  // add milliseconds to timestamp string
-  ss << '.' << std::setfill('0') << std::setw(3) << now_milliseconds.count();
-
-  return ss.str();
+namespace vm {
+class Module;
 }
 
-}  // namespace utilities
-}  // namespace ml
+namespace vm_modules {
+namespace math {
+
+void BindReadCSV(fetch::vm::Module &module);
+
+}  // namespace math
+}  // namespace vm_modules
 }  // namespace fetch

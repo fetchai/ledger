@@ -24,13 +24,30 @@
 ////////////////////////////////
 
 namespace fetch {
-namespace ml {
+namespace dmlf {
 namespace distributed_learning {
 
 template <class DataType>
-struct W2VTrainingParams : public ClientParams<DataType>
+struct Word2VecTrainingParams : public ClientParams<DataType>
 {
   using SizeType = fetch::math::SizeType;
+
+  // Overwriting base client default params
+  explicit Word2VecTrainingParams(ClientParams<DataType> &cp)
+    : ClientParams<DataType>(cp)
+  {
+    this->batch_size = 10000;
+
+    // Initialise default values
+
+    // calc the true starting learning rate
+    starting_learning_rate_per_sample =
+        static_cast<DataType>(this->batch_size) * starting_learning_rate_per_sample;
+    ending_learning_rate =
+        static_cast<DataType>(this->batch_size) * ending_learning_rate_per_sample;
+    learning_rate_param.starting_learning_rate = starting_learning_rate;
+    learning_rate_param.ending_learning_rate   = ending_learning_rate;
+  }
 
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;  // number of negative sample per word-context pair
@@ -41,7 +58,7 @@ struct W2VTrainingParams : public ClientParams<DataType>
   SizeType embedding_size = 100;  // dimension of embedding vec
   SizeType test_frequency = 50;   // After how many batches we want to test our embeddings
   DataType starting_learning_rate_per_sample =
-      DataType{0.025f};  // these are the learning rates we have for each sample
+      DataType{0.0025f};  // these are the learning rates we have for each sample
   DataType    ending_learning_rate_per_sample = DataType{0.0001f};
   DataType    starting_learning_rate;  // this is the true learning rate set for the graph training
   DataType    ending_learning_rate;
@@ -61,5 +78,5 @@ struct W2VTrainingParams : public ClientParams<DataType>
 };
 
 }  // namespace distributed_learning
-}  // namespace ml
+}  // namespace dmlf
 }  // namespace fetch

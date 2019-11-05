@@ -67,12 +67,22 @@ class ClangToolchain:
             self._clang_format_path = os.path.join(
                 toolchain_base_path, 'bin', 'clang-format')
 
+            # if we find `clang-tidy-cache` in the path we should always prefer to use this
+            clang_tidy_cache_path = shutil.which('clang-tidy-cache')
+            if clang_tidy_cache_path is not None:
+                self._clang_tidy_path = clang_tidy_cache_path
+
     def __detect_linux(self):
         self._clang_tidy_path = shutil.which('clang-tidy-6.0')
         self._run_clang_tidy_path = shutil.which('run-clang-tidy-6.0.py')
         self._clang_apply_replacements_path = shutil.which(
             'clang-apply-replacements-6.0')
         self._clang_format_path = shutil.which('clang-format-6.0')
+
+        # if we find `clang-tidy-cache` in the path we should always prefer to use this
+        clang_tidy_cache_path = shutil.which('clang-tidy-cache')
+        if clang_tidy_cache_path is not None:
+            self._clang_tidy_path = clang_tidy_cache_path
 
     @staticmethod
     def __validate_path(path, name):

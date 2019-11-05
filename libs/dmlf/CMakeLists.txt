@@ -21,12 +21,9 @@ target_link_libraries(fetch-dmlf
                              fetch-muddle
                              fetch-crypto
                              fetch-math
+                             fetch-ml
                              fetch-vm
                              fetch-vm-modules)
-
-if (_is_clang_compiler)
-  target_compile_options(fetch-dmlf PRIVATE -Wshadow)
-endif ()
 
 # Test targets
 add_test_target()

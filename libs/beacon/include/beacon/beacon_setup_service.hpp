@@ -215,7 +215,10 @@ private:
   uint64_t      state_deadline_        = 0;
   uint64_t      seconds_for_state_     = 0;
   uint64_t      expected_dkg_timespan_ = 0;
+  double        time_per_slot_         = 0.;
   bool          condition_to_proceed_  = false;
+  const std::map<BeaconSetupService::State, uint64_t> time_slot_map_;
+  uint64_t                                            time_slots_in_dkg_ = 0;
 
   uint16_t failures_{0};
 
@@ -237,6 +240,8 @@ private:
 
   /// @name Helper methods
   /// @{
+  void     SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
+                          uint64_t &time_slot_for_state);
   bool     BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
   void     CheckComplaintAnswers();
   bool     BuildQual();

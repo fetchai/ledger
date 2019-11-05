@@ -116,14 +116,17 @@ void Generator::ResolveTypes(IR const &ir)
     if (type->type_kind == TypeKind::UserDefinedInstantiation)
     {
       TypeId      template_type_id = type->template_type->resolved_id;
-      TypeIdArray parameter_type_ids;
-      for (auto const &parameter_type : type->parameter_types)
+      TypeIdArray template_parameter_type_ids;
+      for (auto const &template_parameter_type : type->parameter_types)
       {
-        parameter_type_ids.push_back(parameter_type->resolved_id);
+        template_parameter_type_ids.push_back(template_parameter_type->resolved_id);
       }
-      uint16_t index = executable_.AddType(
-          TypeInfo(type->type_kind, type->name, template_type_id, parameter_type_ids));
-      type->resolved_id = uint16_t(num_system_types_ + index);
+      auto num_local_types = static_cast<uint16_t>(executable_.types.size());
+      auto type_id         = uint16_t(num_system_types_ + num_local_types);
+      type->resolved_id    = type_id;
+      TypeInfo type_info(type->type_kind, type->name, type_id, template_type_id,
+                         template_parameter_type_ids);
+      executable_.AddTypeInfo(std::move(type_info));
       continue;
     }
     uint16_t type_id = vm_->FindType(type->name);
@@ -643,7 +646,7 @@ void Generator::HandleUseStatement(IRNodePtr const &node)
   IRNodePtr           list_node       = node->children[1];
   IRExpressionNodePtr alias_name_node = ConvertToIRExpressionNodePtr(node->children[2]);
   IRExpressionNodePtr n               = alias_name_node ? alias_name_node : state_name_node;
-  HandleUseVariable(n);
+  HandleUseVariable(state_name_node->text, state_name_node->line, n);
 }
 
 void Generator::HandleUseAnyStatement(IRNodePtr const &node)
@@ -651,11 +654,12 @@ void Generator::HandleUseAnyStatement(IRNodePtr const &node)
   for (auto const &c : node->children)
   {
     IRExpressionNodePtr child = ConvertToIRExpressionNodePtr(c);
-    HandleUseVariable(child);
+    HandleUseVariable(child->text, child->line, child);
   }
 }
 
-void Generator::HandleUseVariable(IRExpressionNodePtr const &node)
+void Generator::HandleUseVariable(std::string const &name, uint16_t line,
+                                  IRExpressionNodePtr const &node)
 {
   IRVariablePtr v              = node->variable;
   IRFunctionPtr f              = node->function;
@@ -668,7 +672,7 @@ void Generator::HandleUseVariable(IRExpressionNodePtr const &node)
     Scope &scope = scopes_[scope_number];
     scope.objects.push_back(variable_index);
   }
-  PushString(v->name, node->line);
+  PushString(name, line);
   uint16_t                opcode = f->resolved_opcode;
   Executable::Instruction constructor_instruction(opcode);
   constructor_instruction.type_id     = type_id;

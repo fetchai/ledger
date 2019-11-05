@@ -4,7 +4,7 @@
 # header only or static library.
 function (setup_library name)
 
-  # lookup the files for the library
+  # look up the files for the library
   file(GLOB_RECURSE headers include/*.hpp)
   file(GLOB_RECURSE srcs src/*.cpp)
   list(LENGTH headers headers_length)
@@ -149,6 +149,7 @@ function (_internal_add_fetch_test
     target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
     target_include_directories(${name}
                                PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+    target_include_directories(${name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/${directory}")
     target_include_directories(${name}
                                PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
 

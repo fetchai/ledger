@@ -100,9 +100,9 @@ struct CabinetNode
   }
 };
 
-void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
-                              uint16_t number_of_cabinets = 4, uint16_t cabinet_size = 4,
-                              uint16_t numbers_per_aeon = 10, double threshold = 0.5)
+void RunHonestCabinetRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
+                             uint16_t number_of_cabinets = 4, uint16_t cabinet_size = 4,
+                             uint16_t numbers_per_aeon = 10, double threshold = 0.5)
 {
   std::cout << "- Setup" << std::endl;
   auto number_of_nodes = static_cast<uint16_t>(number_of_cabinets * cabinet_size);
@@ -168,9 +168,9 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   {
     auto runnables = member->beacon_service.GetWeakRunnables();
 
-    for (auto const &i : runnables)
+    for (auto const &j : runnables)
     {
-      member->reactor.Attach(i);
+      member->reactor.Attach(j);
     }
   }
 
@@ -249,8 +249,8 @@ TEST(beacon, DISABLED_full_cycle)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
   //  SetGlobalLogLevel(LogLevel::CRITICAL);
-  // TODO(tfr): Heuristically fails atm. RunHonestComitteeRenewal(100, 4, 4, 4, 10, 0.5);
-  RunHonestComitteeRenewal(100, 4, 2, 2, 10, 0.5);
+  // TODO(tfr): Heuristically fails atm. RunHonestCabinetRenewal(100, 4, 4, 4, 10, 0.5);
+  RunHonestCabinetRenewal(100, 4, 2, 2, 10, 0.5);
 }
 
 }  // namespace

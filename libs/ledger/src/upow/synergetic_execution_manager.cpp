@@ -16,9 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
@@ -63,7 +61,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   WorkMap work_map{};
   for (auto const &digest : current_epoch.solution_nodes)
   {
-    // lookup the work from the block
+    // look up the work from the block
     auto work = std::make_shared<Work>();
     if (!dag_->GetWork(digest, *work))
     {
@@ -71,7 +69,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
       continue;
     }
 
-    // lookup (or create) the solution queue
+    // look up (or create) the solution queue
     auto &work_item = work_map[{work->address(), work->contract_digest()}];
 
     if (!work_item)
@@ -87,7 +85,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   DAGNode node{};
   for (auto const &digest : previous_epoch.data_nodes)
   {
-    // lookup the referenced DAG node
+    // look up the referenced DAG node
     if (!dag_->GetDAGNode(digest, node))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to retrieve referenced DAG node: 0x", digest.ToHex());
@@ -101,11 +99,11 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
       continue;
     }
 
-    // attempt to lookup the contract being referenced
+    // attempt to look up the contract being referenced
     auto it = work_map.find({node.contract_address, node.contract_digest});
     if (it == work_map.end())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup references contract: address ",
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up references contract: address ",
                      node.contract_address.display(), " digest 0x", node.contract_digest.ToHex());
       continue;
     }

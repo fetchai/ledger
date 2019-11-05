@@ -57,7 +57,7 @@ TYPED_TEST(LogSigmoidTest, forward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 2, 2});
   TensorType          gt({2, 2, 2});
@@ -108,7 +108,7 @@ TYPED_TEST(LogSigmoidTest, backward_3d_tensor_test)
 
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});
@@ -187,7 +187,7 @@ TYPED_TEST(LogSigmoidTest, saveparams_backward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using OpType     = fetch::ml::ops::LogSigmoid<TensorType>;
   using SPType     = typename OpType::SPType;
 

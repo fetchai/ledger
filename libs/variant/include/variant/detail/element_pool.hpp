@@ -99,7 +99,7 @@ T *ElementPool<T>::Allocate()
     throw std::runtime_error("Unable to allocate element");
   }
 
-  // lookup the next element and update the internal data structures
+  // look up the next element and update the internal data structures
   T *element = free_.back();
   free_.pop_back();
   in_use_.emplace(element);

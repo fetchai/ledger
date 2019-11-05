@@ -300,8 +300,6 @@ private:
                                             beacon_->manager.GetQualCoefficients()}});
       }
     }
-
-    qual_coefficients_received_.insert(identity_.identifier());
   }
 
   void BroadcastQualComplaints() override
@@ -430,9 +428,10 @@ struct DkgMember
     network_manager.Stop();
   }
 
-  virtual void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) = 0;
-  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables()          = 0;
-  virtual bool                                       DkgFinished()               = 0;
+  virtual void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold,
+                            uint64_t start_time)                        = 0;
+  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables() = 0;
+  virtual bool                                       DkgFinished()      = 0;
 };
 
 struct FaultyDkgMember : DkgMember
@@ -457,7 +456,8 @@ struct FaultyDkgMember : DkgMember
     reactor.Stop();
   }
 
-  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
+  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold,
+                    uint64_t start_time) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -469,8 +469,7 @@ struct FaultyDkgMember : DkgMember
     beacon->aeon.round_end   = 10;
     beacon->aeon.members     = std::move(cabinet);
     // Plus 5 so tests pass on first DKG attempt
-    beacon->aeon.start_reference_timepoint =
-        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
+    beacon->aeon.start_reference_timepoint = start_time;
 
     dkg.QueueSetup(beacon);
   }
@@ -506,7 +505,8 @@ struct HonestDkgMember : DkgMember
     reactor.Stop();
   }
 
-  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
+  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold,
+                    uint64_t start_time) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -518,8 +518,7 @@ struct HonestDkgMember : DkgMember
     beacon->aeon.round_end   = 10;
     beacon->aeon.members     = std::move(cabinet);
     // Plus 5 so tests pass on first DKG attempt
-    beacon->aeon.start_reference_timepoint =
-        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
+    beacon->aeon.start_reference_timepoint = start_time;
 
     dkg.QueueSetup(beacon);
   }
@@ -540,8 +539,8 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                   uint16_t                                                      setup_delay = 0)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
-  std::set<MuddleAddress>                                             cabinet;
-  std::vector<std::unique_ptr<DkgMember>>                             committee;
+  std::set<MuddleAddress>                                             cabinet_addresses;
+  std::vector<std::unique_ptr<DkgMember>>                             cabinet_members;
   std::set<RBC::MuddleAddress>                                        expected_qual;
   std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
   std::set<uint32_t>                                                  qual_index;
@@ -550,27 +549,29 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     auto port_number = static_cast<uint16_t>(9000 + ii);
     if (ii < failures.size() && !failures[ii].empty())
     {
-      committee.emplace_back(new FaultyDkgMember{port_number, ii, failures[ii]});
+      cabinet_members.emplace_back(new FaultyDkgMember{port_number, ii, failures[ii]});
     }
     else
     {
-      committee.emplace_back(new HonestDkgMember{port_number, ii});
+      cabinet_members.emplace_back(new HonestDkgMember{port_number, ii});
     }
     if (ii >= (cabinet_size - qual_size))
     {
-      expected_qual.insert(committee[ii]->muddle->GetAddress());
+      expected_qual.insert(cabinet_members[ii]->muddle->GetAddress());
       qual_index.insert(ii);
     }
-    peers_list.insert({committee[ii]->muddle_certificate->identity().identifier(),
+    peers_list.insert({cabinet_members[ii]->muddle_certificate->identity().identifier(),
                        fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(port_number)}});
-    cabinet.insert(committee[ii]->muddle_certificate->identity().identifier());
+    cabinet_addresses.insert(cabinet_members[ii]->muddle_certificate->identity().identifier());
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  uint64_t start_time =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    committee[ii]->QueueCabinet(cabinet, threshold);
+    cabinet_members[ii]->QueueCabinet(cabinet_addresses, threshold, start_time);
   }
 
   // Start off some connections until everyone else has connected
@@ -578,19 +579,19 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   {
     for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
     {
-      committee[ii]->muddle->ConnectTo(committee[jj]->muddle->GetAddress(),
-                                       peers_list[committee[jj]->muddle->GetAddress()]);
+      cabinet_members[ii]->muddle->ConnectTo(cabinet_members[jj]->muddle->GetAddress(),
+                                             peers_list[cabinet_members[jj]->muddle->GetAddress()]);
     }
   }
 
   // Start at DKG
   {
-    for (auto &member : committee)
+    for (auto &member : cabinet_members)
     {
       member->reactor.Attach(member->GetWeakRunnables());
     }
 
-    for (auto &member : committee)
+    for (auto &member : cabinet_members)
     {
       member->reactor.Start();
       std::this_thread::sleep_for(std::chrono::milliseconds(setup_delay));
@@ -603,7 +604,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
       std::this_thread::sleep_for(std::chrono::seconds(1));
       for (auto qq = pp; qq < cabinet_size; ++qq)
       {
-        if (!committee[qq]->DkgFinished())
+        if (!cabinet_members[qq]->DkgFinished())
         {
           break;
         }
@@ -616,29 +617,29 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     uint32_t start_qual = cabinet_size - expected_completion_size;
     for (uint32_t nn = start_qual + 1; nn < cabinet_size; ++nn)
     {
-      EXPECT_EQ(committee[start_qual]->output.qual, expected_qual);
+      EXPECT_EQ(cabinet_members[start_qual]->output.qual, expected_qual);
     }
 
     // Check DKG is working correctly for everyone who completes the DKG successfully
     uint32_t start_complete = cabinet_size - expected_completion_size;
     for (uint32_t nn = start_complete + 1; nn < cabinet_size; ++nn)
     {
-      EXPECT_EQ(committee[start_complete]->output.group_public_key,
-                committee[nn]->output.group_public_key);
-      EXPECT_EQ(committee[start_complete]->output.public_key_shares,
-                committee[nn]->output.public_key_shares);
-      EXPECT_NE(committee[start_complete]->output.public_key_shares[start_complete],
-                committee[nn]->output.public_key_shares[nn]);
+      EXPECT_EQ(cabinet_members[start_complete]->output.group_public_key,
+                cabinet_members[nn]->output.group_public_key);
+      EXPECT_EQ(cabinet_members[start_complete]->output.public_key_shares,
+                cabinet_members[nn]->output.public_key_shares);
+      EXPECT_NE(cabinet_members[start_complete]->output.public_key_shares[start_complete],
+                cabinet_members[nn]->output.public_key_shares[nn]);
       for (uint32_t qq = nn + 1; qq < cabinet_size; ++qq)
       {
-        EXPECT_NE(committee[start_complete]->output.public_key_shares[nn],
-                  committee[start_complete]->output.public_key_shares[qq]);
+        EXPECT_NE(cabinet_members[start_complete]->output.public_key_shares[nn],
+                  cabinet_members[start_complete]->output.public_key_shares[qq]);
       }
     }
   }
 }
 
-TEST(dkg_setup, DISABLED_bad_messages)
+TEST(dkg_setup, bad_messages)
 {
   // Node 0 sends pre-qual messages with invalid crypto - is excluded from qual.
   // Another node sends certain messages with unknown member in it. Ignored and not excluded.
@@ -650,8 +651,7 @@ TEST(dkg_setup, DISABLED_bad_messages)
                 {FaultySetupService::Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES}});
 }
 
-// disabled due to timeouts TODO(HUT): fix
-TEST(dkg_setup, DISABLED_send_empty_complaint_answer)
+TEST(dkg_setup, send_empty_complaint_answer)
 {
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then does not send real shares and instead sends empty complaint answer.
@@ -663,7 +663,7 @@ TEST(dkg_setup, DISABLED_send_empty_complaint_answer)
                 {FaultySetupService::Failures::SEND_BAD_SHARE}});
 }
 
-TEST(dkg_setup, DISABLED_send_multiple_messages)
+TEST(dkg_setup, send_multiple_messages)
 {
   // Node 0 broadcasts bad coefficients which fails verification by everyone and is
   // rejected from qual. Another node sends multiple of each DKG message but should succeed in DKG.

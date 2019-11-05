@@ -16,27 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/metrics/kl_divergence.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/base_types.hpp"
+#include "math/metrics/kl_divergence.hpp"
+#include "test_types.hpp"
 
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class KlDivergenceTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(KlDivergenceTest, MyTypes);
+TYPED_TEST_CASE(KlDivergenceTest, TensorFloatingTypes);
 
 TYPED_TEST(KlDivergenceTest, same_tensors_divergence_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
-
   TypeParam A({4, 4});
 
   A.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(0.1));
@@ -67,7 +64,7 @@ TYPED_TEST(KlDivergenceTest, same_tensors_divergence_test)
 
 TYPED_TEST(KlDivergenceTest, other_divergence_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using DataType = typename TypeParam::Type;
   TypeParam A({4, 4});
 
   A.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(0.15));
@@ -112,6 +109,12 @@ TYPED_TEST(KlDivergenceTest, other_divergence_test)
   B.Set(SizeType{3}, SizeType{2}, typename TypeParam::Type(0.45));
   B.Set(SizeType{3}, SizeType{3}, typename TypeParam::Type(0.46));
 
-  EXPECT_NEAR(double(KlDivergence(A, B)), -1.920114985949124, 1e-4);
-  EXPECT_NEAR(double(KlDivergence(B, A)), 3.3324871063232422, 1e-4);
+  EXPECT_NEAR(static_cast<double>(KlDivergence(A, B)), static_cast<double>(-1.920114985949124),
+              10 * static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(KlDivergence(B, A)), static_cast<double>(3.3324871063232422),
+              10 * static_cast<double>(function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
