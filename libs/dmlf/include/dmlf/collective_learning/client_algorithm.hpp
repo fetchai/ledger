@@ -19,8 +19,8 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
-#include "dmlf/distributed_learning/client_params.hpp"
-#include "dmlf/networkers/abstract_learner_networker.hpp"
+#include "dmlf/collective_learning/client_algorithm_controller.hpp"
+#include "dmlf/collective_learning/client_params.hpp"
 #include "dmlf/update.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
@@ -38,10 +38,10 @@
 
 namespace fetch {
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 
 template <class TensorType>
-class TrainingClient
+class ClientAlgorithm
 {
   using DataType         = typename TensorType::Type;
   using SizeType         = typename TensorType::SizeType;
@@ -50,43 +50,35 @@ class TrainingClient
   using UpdateType       = fetch::dmlf::Update<TensorType>;
   using DataloaderPtrType =
       std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>>;
-  using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
-  using OptimiserPtrType = std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>;
-  using ModelPtrType     = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
+  using GraphPtrType               = std::shared_ptr<fetch::ml::Graph<TensorType>>;
+  using OptimiserPtrType           = std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>;
+  using ModelPtrType               = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
+  using AlgorithmControllerType    = ClientAlgorithmController<TensorType>;
+  using AlgorithmControllerPtrType = std::shared_ptr<ClientAlgorithmController<TensorType>>;
 
 public:
-  TrainingClient(std::string id, ClientParams<DataType> const &client_params,
-                 std::shared_ptr<std::mutex> console_mutex_ptr);
+  ClientAlgorithm(AlgorithmControllerPtrType algorithm_controller, std::string id,
+                  ClientParams<DataType> const &client_params,
+                  std::shared_ptr<std::mutex>   console_mutex_ptr);
 
-  TrainingClient(std::string id, ModelPtrType model_ptr,
-                 ClientParams<DataType> const &client_params,
-                 std::shared_ptr<std::mutex>   console_mutex_ptr);
-
-  virtual ~TrainingClient() = default;
-
-  void SetNetworker(std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> networker_ptr);
+  virtual ~ClientAlgorithm() = default;
 
   virtual void Run();
-
-  void Train();
-
+  void         Train();
   virtual void Test();
 
-  virtual std::shared_ptr<UpdateType> GetGradients();
+  ///////////////////////////
+  /// Getters and Setters ///
+  ///////////////////////////
 
-  VectorTensorType GetWeights() const;
-
-  void SetWeights(VectorTensorType const &new_weights);
-
-  void SetParams(ClientParams<DataType> const &new_params);
-
-  ModelPtrType GetModel();
-
-  std::string GetId() const;
-
-  void ResetLossCnt();
-
-  DataType GetLossAverage() const;
+  void                                SetModel(ModelPtrType model_ptr);
+  ModelPtrType                        GetModel();
+  VectorTensorType                    GetWeights() const;
+  void                                SetWeights(VectorTensorType const &new_weights);
+  void                                SetParams(ClientParams<DataType> const &new_params);
+  std::string                         GetId() const;
+  virtual std::shared_ptr<UpdateType> GetUpdate();
+  DataType                            GetLossAverage() const;
 
 protected:
   // Client id (identification name)
@@ -110,9 +102,6 @@ protected:
   std::string              label_name_;
   std::string              error_name_;
 
-  // Pointer to client's own iLearnerNetworker
-  std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> networker_ptr_;
-
   // Console mutex pointer
   std::shared_ptr<std::mutex> console_mutex_ptr_;
 
@@ -121,61 +110,61 @@ protected:
   DataType learning_rate_ = static_cast<DataType>(0);
 
   // Count for number of batches
-  SizeType batch_counter_  = 0;
-  SizeType update_counter_ = 0;
-  SizeType max_updates_    = 0;
+  SizeType round_counter_   = 0;
+  SizeType updates_applied_ = 0;
+  SizeType max_updates_     = 0;
 
   // Print to console flag
   bool print_loss_;
 
-  virtual VectorTensorType TranslateGradients(std::shared_ptr<UpdateType> &new_gradients);
+  virtual VectorTensorType TranslateUpdate(std::shared_ptr<UpdateType> &new_gradients);
 
   TimestampType GetTimestamp();
 
-  void DoBatch();
+  void DoRound();
 
   void ClearLossFile();
 
 private:
-  void GraphAddGradients(VectorTensorType const &gradients);
+  std::mutex algorithm_mutex_;
+
+  AlgorithmControllerPtrType algorithm_controller_;
+
+  void AggregateUpdate(VectorTensorType const &gradients);
+  void ApplyUpdates();
 };
 
 template <class TensorType>
-TrainingClient<TensorType>::TrainingClient(std::string id, ModelPtrType model_ptr,
-                                           ClientParams<DataType> const &client_params,
-                                           std::shared_ptr<std::mutex>   console_mutex_ptr)
+ClientAlgorithm<TensorType>::ClientAlgorithm(AlgorithmControllerPtrType    algorithm_controller,
+                                             std::string                   id,
+                                             ClientParams<DataType> const &client_params,
+                                             std::shared_ptr<std::mutex>   console_mutex_ptr)
   : id_(std::move(id))
-  , model_ptr_(std::move(model_ptr))
-  , console_mutex_ptr_(std::move(console_mutex_ptr))
+  , console_mutex_ptr_(console_mutex_ptr)
+  , algorithm_controller_(algorithm_controller)
 {
+  SetParams(client_params);
+  ClearLossFile();
+}
+
+template <typename TensorType>
+void ClientAlgorithm<TensorType>::SetModel(ModelPtrType model_ptr)
+{
+  model_ptr_      = std::move(model_ptr);
+  optimiser_ptr_  = model_ptr_->optimiser_ptr_;
   dataloader_ptr_ = model_ptr_->dataloader_ptr_;
   graph_ptr_      = model_ptr_->graph_ptr_;
-  optimiser_ptr_  = model_ptr_->optimiser_ptr_;
-
-  SetParams(client_params);
-  ClearLossFile();
 }
 
 template <class TensorType>
-TrainingClient<TensorType>::TrainingClient(std::string                   id,
-                                           ClientParams<DataType> const &client_params,
-                                           std::shared_ptr<std::mutex>   console_mutex_ptr)
-  : id_(std::move(id))
-  , console_mutex_ptr_(std::move(console_mutex_ptr))
-{
-  SetParams(client_params);
-  ClearLossFile();
-}
-
-template <class TensorType>
-void TrainingClient<TensorType>::ClearLossFile()
+void ClientAlgorithm<TensorType>::ClearLossFile()
 {
   std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
 }
 
 template <class TensorType>
-void TrainingClient<TensorType>::SetParams(
+void ClientAlgorithm<TensorType>::SetParams(
     ClientParams<typename TensorType::Type> const &new_params)
 {
   inputs_names_  = new_params.inputs_names;
@@ -185,30 +174,17 @@ void TrainingClient<TensorType>::SetParams(
   learning_rate_ = new_params.learning_rate;
   print_loss_    = new_params.print_loss;
   max_updates_   = new_params.max_updates;
+  results_dir_   = new_params.results_dir;
 }
 
 template <class TensorType>
-void TrainingClient<TensorType>::SetNetworker(
-    std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> networker_ptr)
-{
-  networker_ptr_ = networker_ptr;
-}
-
-template <class TensorType>
-std::string TrainingClient<TensorType>::GetId() const
+std::string ClientAlgorithm<TensorType>::GetId() const
 {
   return id_;
 }
 
 template <class TensorType>
-void TrainingClient<TensorType>::ResetLossCnt()
-{
-  train_loss_sum_ = static_cast<DataType>(0);
-  train_loss_cnt_ = 0;
-}
-
-template <class TensorType>
-typename TensorType::Type TrainingClient<TensorType>::GetLossAverage() const
+typename TensorType::Type ClientAlgorithm<TensorType>::GetLossAverage() const
 {
   return train_loss_sum_ / static_cast<DataType>(train_loss_cnt_);
 }
@@ -217,23 +193,26 @@ typename TensorType::Type TrainingClient<TensorType>::GetLossAverage() const
  * Main loop that runs in thread
  */
 template <class TensorType>
-void TrainingClient<TensorType>::Run()
+void ClientAlgorithm<TensorType>::Run()
 {
-  ResetLossCnt();
+  FETCH_LOCK(algorithm_mutex_);
+  // reset loss count
+  train_loss_sum_ = static_cast<DataType>(0);
+  train_loss_cnt_ = 0;
 
-  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
+  std::ofstream lossfile(results_dir_ + "losses_" + id_ + ".csv",
+                         std::ofstream::out | std::ofstream::app);
 
-  update_counter_ = 0;
-  while (update_counter_ < max_updates_)
+  updates_applied_ = 0;
+  while (updates_applied_ < max_updates_)
   {
-    DoBatch();
+    // perform a round of training on this client
+    DoRound();
 
     // Validate loss for logging purpose
     Test();
 
-    // Save loss variation data
-    // Upload to https://plot.ly/create/#/ for visualisation
-
+    // Save loss data
     if (lossfile)
     {
       lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
@@ -274,7 +253,7 @@ void TrainingClient<TensorType>::Run()
  * @return training batch loss
  */
 template <class TensorType>
-void TrainingClient<TensorType>::Train()
+void ClientAlgorithm<TensorType>::Train()
 {
   dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
   dataloader_ptr_->SetRandomMode(true);
@@ -306,7 +285,7 @@ void TrainingClient<TensorType>::Train()
 
     graph_ptr_->BackPropagate(error_name_);
   }
-  update_counter_++;
+  updates_applied_++;
 }
 
 /**
@@ -314,7 +293,7 @@ void TrainingClient<TensorType>::Train()
  * @param test_loss
  */
 template <class TensorType>
-void TrainingClient<TensorType>::Test()
+void ClientAlgorithm<TensorType>::Test()
 {
   // If test set is not available we run test on whole training set
   if (dataloader_ptr_->IsModeAvailable(fetch::ml::dataloaders::DataLoaderMode::TEST))
@@ -358,8 +337,8 @@ void TrainingClient<TensorType>::Test()
  * @return vector of gradient update values
  */
 template <class TensorType>
-std::shared_ptr<typename TrainingClient<TensorType>::UpdateType>
-TrainingClient<TensorType>::GetGradients()
+std::shared_ptr<typename ClientAlgorithm<TensorType>::UpdateType>
+ClientAlgorithm<TensorType>::GetUpdate()
 {
   FETCH_LOCK(model_mutex_);
   return std::make_shared<UpdateType>(graph_ptr_->GetGradients());
@@ -369,7 +348,7 @@ TrainingClient<TensorType>::GetGradients()
  * @return vector of weights that represents the model
  */
 template <class TensorType>
-std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
+std::vector<TensorType> ClientAlgorithm<TensorType>::GetWeights() const
 {
   FETCH_LOCK(model_mutex_);
   return graph_ptr_->GetWeightsReferences();
@@ -380,7 +359,7 @@ std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
  * @param new_weights Vector of weights that represent model
  */
 template <class TensorType>
-void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
+void ClientAlgorithm<TensorType>::SetWeights(VectorTensorType const &new_weights)
 {
   FETCH_LOCK(model_mutex_);
 
@@ -395,7 +374,7 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
 }
 
 template <class TensorType>
-std::vector<TensorType> TrainingClient<TensorType>::TranslateGradients(
+std::vector<TensorType> ClientAlgorithm<TensorType>::TranslateUpdate(
     std::shared_ptr<UpdateType> &new_gradients)
 {
   return new_gradients->GetGradients();
@@ -403,7 +382,7 @@ std::vector<TensorType> TrainingClient<TensorType>::TranslateGradients(
 
 // Timestamp for gradient queue
 template <class TensorType>
-int64_t TrainingClient<TensorType>::GetTimestamp()
+int64_t ClientAlgorithm<TensorType>::GetTimestamp()
 {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::system_clock::now().time_since_epoch())
@@ -411,39 +390,38 @@ int64_t TrainingClient<TensorType>::GetTimestamp()
 }
 
 /**
- * Do one batch and broadcast gradients
+ * Perform one round of training. This includes
+ * 1. local training
+ * 2. push local updates to algorithm controller
+ * 3. apply updates received by algorithm controller
+ * 4. aggregate and apply updates
  */
 template <class TensorType>
-void TrainingClient<TensorType>::DoBatch()
+void ClientAlgorithm<TensorType>::DoRound()
 {
   // Train one batch to create own gradient
   Train();
 
-  // Push own gradient to iLearner
-  auto update = GetGradients();
-  networker_ptr_->PushUpdate(update);
+  // Give latest gradient update to algorithm controller
+  algorithm_controller_->PushUpdate(GetUpdate());
 
-  SizeType ucnt = 0;
-
-  // Sum all gradient from iLearner
-  while (networker_ptr_->GetUpdateCount() > 0)
+  // Sum all gradients provided by algorithm controller
+  while (algorithm_controller_->UpdateCount() > 0)
   {
-    ucnt++;
-    auto             new_update    = networker_ptr_->GetUpdate<UpdateType>();
-    VectorTensorType new_gradients = TranslateGradients(new_update);
+    // get new update from algorithm controller
+    auto new_update = algorithm_controller_->template GetUpdate<UpdateType>();
 
-    GraphAddGradients(new_gradients);
-    update_counter_++;
+    // Translate and apply update to model
+    AggregateUpdate(TranslateUpdate(new_update));
+
+    // track number of total updates applied for evaluation
+    updates_applied_++;
   }
 
-  // Apply sum of all gradients from queue along with own gradient
-  {
-    FETCH_LOCK(model_mutex_);
-    optimiser_ptr_->ApplyGradients(batch_size_);
-    optimiser_ptr_->IncrementBatchCounters(batch_size_);
-    optimiser_ptr_->UpdateLearningRate();
-  }
-  batch_counter_++;
+  // apply aggregated local and remote updates
+  ApplyUpdates();
+
+  round_counter_++;
 }
 
 ///////////////////////
@@ -451,11 +429,12 @@ void TrainingClient<TensorType>::DoBatch()
 ///////////////////////
 
 /**
- * Adds a vector of Tensors to the gradient accumulation of all the trainable pointers in the graph.
+ * Aggregates updates from any source together in the model
+ * In this case the updates are gradients aggregated in the graph
  * @param gradient
  */
 template <class TensorType>
-void TrainingClient<TensorType>::GraphAddGradients(VectorTensorType const &gradients)
+void ClientAlgorithm<TensorType>::AggregateUpdate(VectorTensorType const &gradients)
 {
   assert(gradients.size() == graph_ptr_->GetTrainables().size());
   auto grad_it = gradients.begin();
@@ -467,12 +446,25 @@ void TrainingClient<TensorType>::GraphAddGradients(VectorTensorType const &gradi
   }
 }
 
+/**
+ * Applies previously aggregated updates in the model
+ * @tparam TensorType
+ */
 template <class TensorType>
-typename TrainingClient<TensorType>::ModelPtrType TrainingClient<TensorType>::GetModel()
+void ClientAlgorithm<TensorType>::ApplyUpdates()
+{
+  FETCH_LOCK(model_mutex_);
+  optimiser_ptr_->ApplyGradients(batch_size_);
+  optimiser_ptr_->IncrementBatchCounters(batch_size_);
+  optimiser_ptr_->UpdateLearningRate();
+}
+
+template <class TensorType>
+typename ClientAlgorithm<TensorType>::ModelPtrType ClientAlgorithm<TensorType>::GetModel()
 {
   return model_ptr_;
 }
 
-}  // namespace distributed_learning
+}  // namespace collective_learning
 }  // namespace dmlf
 }  // namespace fetch

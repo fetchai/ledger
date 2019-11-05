@@ -17,16 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/distributed_learning/distributed_learning_client.hpp"
-#include "dmlf/distributed_learning/translator.hpp"
-#include "dmlf/distributed_learning/word2vec_training_params.hpp"
+#include "dmlf/collective_learning/client_algorithm.hpp"
+#include "dmlf/collective_learning/translator.hpp"
+#include "dmlf/collective_learning/word2vec_training_params.hpp"
 #include "math/clustering/knn.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
 
 namespace fetch {
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 
 template <class TensorType>
 class Word2VecClient : public TrainingClient<TensorType>
@@ -113,7 +113,7 @@ void Word2VecClient<TensorType>::Run()
 template <class TensorType>
 void Word2VecClient<TensorType>::Test()
 {
-  if (this->batch_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
+  if (this->round_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
   {
     // Lock model
     FETCH_LOCK(this->model_mutex_);
@@ -241,6 +241,6 @@ float Word2VecClient<TensorType>::GetAnalogyScore()
   return analogy_score_;
 }
 
-}  // namespace distributed_learning
+}  // namespace collective_learning
 }  // namespace dmlf
 }  // namespace fetch

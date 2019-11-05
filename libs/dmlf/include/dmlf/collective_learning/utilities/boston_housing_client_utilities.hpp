@@ -17,54 +17,51 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/distributed_learning/distributed_learning_client.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
+#include "dmlf/collective_learning/client_algorithm.hpp"
+#include "dmlf/networkers/abstract_learner_networker.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/ops/activations/relu.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
 namespace fetch {
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 namespace utilities {
 
 template <typename TensorType>
-std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>> MakeMNISTClient(
-    std::string const &                                                         id,
-    fetch::dmlf::distributed_learning::ClientParams<typename TensorType::Type> &client_params,
-    std::string const &images, std::string const &labels, float test_set_ratio,
-    std::shared_ptr<std::mutex> console_mutex_ptr)
+std::shared_ptr<fetch::dmlf::collective_learning::TrainingClient<TensorType>> MakeBostonClient(
+    std::string                                                                id,
+    fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> &client_params,
+    TensorType &data, TensorType &labels, float test_set_ratio,
+    std::shared_ptr<AbstractLearnerNetworker> networker,
+    std::shared_ptr<std::mutex>               console_mutex_ptr)
 {
   // Initialise model
   auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
 
   model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
+      13u, 10u, fetch::ml::details::ActivationType::RELU);
   model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
       10u, 10u, fetch::ml::details::ActivationType::RELU);
-  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
+  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(10u, 1u);
 
   // Initialise DataLoader
   auto dataloader_ptr =
-      std::make_unique<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>>(images, labels);
+      std::make_unique<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
+  dataloader_ptr->AddData({data}, labels);
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);
 
   model_ptr->SetDataloader(std::move(dataloader_ptr));
-  model_ptr->Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::CROSS_ENTROPY);
+  model_ptr->Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
 
-  // N.B. some names are not set until AFTER the model is compiled
-  client_params.inputs_names = {model_ptr->InputName()};
-  client_params.label_name   = model_ptr->LabelName();
-  client_params.error_name   = model_ptr->ErrorName();
-
-  return std::make_shared<TrainingClient<TensorType>>(id, model_ptr, client_params,
-                                                      console_mutex_ptr);
+  return std::make_shared<fetch::dmlf::collective_learning::TrainingClient<TensorType>>(
+      id, model_ptr, client_params, networker, console_mutex_ptr);
 }
 
 }  // namespace utilities
-}  // namespace distributed_learning
+}  // namespace collective_learning
 }  // namespace dmlf
 }  // namespace fetch

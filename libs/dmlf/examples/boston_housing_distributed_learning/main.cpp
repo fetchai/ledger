@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/distributed_learning/distributed_learning_client.hpp"
-#include "dmlf/distributed_learning/utilities/boston_housing_client_utilities.hpp"
+#include "dmlf/collective_learning/client_algorithm.hpp"
+#include "dmlf/collective_learning/utilities/boston_housing_client_utilities.hpp"
 
-#include "dmlf/distributed_learning/utilities/utilities.hpp"
+#include "dmlf/collective_learning/utilities/utilities.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
@@ -35,7 +35,7 @@
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-using namespace fetch::dmlf::distributed_learning;
+using namespace fetch::dmlf::collective_learning;
 
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
@@ -53,9 +53,9 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  fetch::json::JSONDocument                                 doc;
-  fetch::dmlf::distributed_learning::ClientParams<DataType> client_params =
-      fetch::dmlf::distributed_learning::utilities::ClientParamsFromJson<TensorType>(
+  fetch::json::JSONDocument                                doc;
+  fetch::dmlf::collective_learning::ClientParams<DataType> client_params =
+      fetch::dmlf::collective_learning::utilities::ClientParamsFromJson<TensorType>(
           std::string(argv[1]), doc);
   auto data_file      = doc["data"].As<std::string>();
   auto labels_file    = doc["labels"].As<std::string>();
@@ -102,12 +102,9 @@ int main(int argc, char **argv)
   {
     // Instantiate n_clients clients
 
-    clients[i] = fetch::dmlf::distributed_learning::utilities::MakeBostonClient<TensorType>(
+    clients[i] = fetch::dmlf::collective_learning::utilities::MakeBostonClient<TensorType>(
         std::to_string(i), client_params, data_tensors.at(i), label_tensors.at(i), test_set_ratio,
-        console_mutex_ptr);
-
-    // Give each client pointer to its networker
-    clients[i]->SetNetworker(networkers[i]);
+        networkers.at(i), console_mutex_ptr);
   }
 
   /**
@@ -134,7 +131,7 @@ int main(int argc, char **argv)
     if (synchronise)
     {
       std::cout << std::endl << "Synchronising weights" << std::endl;
-      fetch::dmlf::distributed_learning::utilities::SynchroniseWeights<TensorType>(clients);
+      fetch::dmlf::collective_learning::utilities::SynchroniseWeights<TensorType>(clients);
     }
   }
 

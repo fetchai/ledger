@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/distributed_learning/utilities/utilities.hpp"
-#include "dmlf/distributed_learning/word2vec_client.hpp"
+#include "dmlf/collective_learning/client_word2vec_algorithm.hpp"
+#include "dmlf/collective_learning/utilities/utilities.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
@@ -33,7 +33,7 @@ using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
-using namespace fetch::dmlf::distributed_learning;
+using namespace fetch::dmlf::collective_learning;
 
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 
   fetch::json::JSONDocument doc;
   ClientParams<DataType>    client_params =
-      fetch::dmlf::distributed_learning::utilities::ClientParamsFromJson<TensorType>(
+      fetch::dmlf::collective_learning::utilities::ClientParamsFromJson<TensorType>(
           std::string(argv[1]), doc);
   auto word2vec_client_params = std::make_shared<Word2VecTrainingParams<DataType>>(client_params);
 
@@ -178,12 +178,9 @@ int main(int argc, char **argv)
   for (SizeType i(0); i < n_clients; ++i)
   {
     Word2VecTrainingParams<DataType> cp(*word2vec_client_params);
-    cp.data = {client_data[i]};
-    clients[i] =
-        std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
-
-    // Give each client pointer to its networker
-    clients[i]->SetNetworker(networkers[i]);
+    cp.data    = {client_data[i]};
+    clients[i] = std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp,
+                                                              networkers.at(i), console_mutex_ptr);
   }
 
   /**

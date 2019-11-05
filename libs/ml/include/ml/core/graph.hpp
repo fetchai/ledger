@@ -37,9 +37,9 @@
 namespace fetch {
 
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 template <typename TensorType>
-class TrainingClient;
+class ClientAlgorithm;
 }  // namespace distributed_learning
 }  // namespace dmlf
 
@@ -168,7 +168,7 @@ private:
 
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
-  friend class dmlf::distributed_learning::TrainingClient<TensorType>;
+  friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
 
   TensorType ForwardImplementation(std::string const &node_name, bool is_training,
                                    bool evaluate_mode);
