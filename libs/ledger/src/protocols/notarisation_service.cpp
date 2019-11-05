@@ -24,6 +24,18 @@
 
 namespace fetch {
 namespace ledger {
+namespace {
+
+template <typename T>
+void TrimToSize(T &container, std::size_t max_size)
+{
+  auto it = container.begin();
+  while ((it != container.end()) && (container.size() > max_size))
+  {
+    it = container.erase(it);
+  }
+}
+}  // namespace
 
 char const *StateToString(NotarisationService::State state);
 
@@ -259,7 +271,11 @@ NotarisationService::State NotarisationService::OnComplete()
 {
   FETCH_LOCK(mutex_);
 
-  // TODO(JMW): Clear old signature shares
+  // Trim maps of unnecessary info
+  auto const max_cache_size =
+      ((active_notarisation_unit_->round_end() - active_notarisation_unit_->round_start()) + 1) * 3;
+  TrimToSize(notarisations_being_built_, max_cache_size);
+  TrimToSize(notarisations_built_, max_cache_size);
 
   // If chain has moved ahead faster while notarisations were being collected then reset
   // the block number collection is working on

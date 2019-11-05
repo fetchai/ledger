@@ -137,14 +137,6 @@ public:
   std::weak_ptr<core::Runnable> GetWeakRunnable();
 
 private:
-  struct AeonDetails
-  {
-    uint64_t             round_start{0};
-    uint64_t             round_end{0};
-    uint32_t             threshold{0};
-    AeonNotarisationKeys cabinet_public_keys{};
-  };
-
   /// Helper function
   /// @{
   uint64_t BlockNumberCutoff() const;
