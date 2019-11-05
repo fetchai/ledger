@@ -46,7 +46,7 @@ public:
 
   float GetAnalogyScore();
 
-  std::shared_ptr<GradientType> GetGradients() override;
+  std::shared_ptr<GradientType> GetUpdate() override;
 
   std::pair<std::vector<std::string>, byte_array::ConstByteArray> GetVocab();
   void AddVocab(const std::pair<std::vector<std::string>, byte_array::ConstByteArray> &vocab_info);
@@ -138,7 +138,7 @@ float Word2VecClient<TensorType>::ComputeAnalogyScore()
  * @return vector of gradient update values
  */
 template <class TensorType>
-std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::GetGradients()
+std::shared_ptr<fetch::dmlf::Update<TensorType>> Word2VecClient<TensorType>::GetUpdate()
 {
   FETCH_LOCK(this->model_mutex_);
   return std::make_shared<GradientType>(this->graph_ptr_->GetGradients(),

@@ -67,31 +67,41 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file, SizeTy
  */
 void SynchroniseWeights(std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> clients)
 {
+  // gather all of the different clients' algorithms
+  std::vector<std::shared_ptr<ClientAlgorithm<TensorType>>> client_algorithms;
+  for (auto &client : clients)
+  {
+    std::vector<std::shared_ptr<ClientAlgorithm<TensorType>>> current_client_algorithms =
+        client->GetAlgorithms();
+    client_algorithms.insert(client_algorithms.end(), current_client_algorithms.begin(),
+                             current_client_algorithms.end());
+  }
+
   // Synchronize weights by giving all clients average of all client's weights
-  std::vector<VectorTensorType>                  clients_weights{clients.size()};
-  std::vector<fetch::byte_array::ConstByteArray> clients_vocab_hashes{clients.size()};
+  std::vector<VectorTensorType>                  clients_weights{client_algorithms.size()};
+  std::vector<fetch::byte_array::ConstByteArray> clients_vocab_hashes{client_algorithms.size()};
 
   for (SizeType i{0}; i < clients.size(); ++i)
   {
-    clients_weights[i]      = clients[i]->GetWeights();
-    auto cast_client_i      = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(clients[i]);
+    clients_weights[i]      = client_algorithms[i]->GetWeights();
+    auto cast_client_i      = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(client_algorithms[i]);
     clients_vocab_hashes[i] = cast_client_i->GetVocab().second;
   }
 
-  std::vector<VectorTensorType> clients_new_weights{clients.size()};
+  std::vector<VectorTensorType> clients_new_weights{client_algorithms.size()};
 
-  for (SizeType i{0}; i < clients.size(); ++i)
+  for (SizeType i{0}; i < client_algorithms.size(); ++i)
   {
     VectorTensorType weights_new;
 
-    auto cast_client_i = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(clients[i]);
+    auto cast_client_i = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(client_algorithms[i]);
 
     for (SizeType k{0}; k < clients_weights.at(i).size(); ++k)
     {
       TensorType weight_sum;
       TensorType counts_sum;
       bool       first = true;
-      for (SizeType j{0}; j < clients.size(); ++j)
+      for (SizeType j{0}; j < client_algorithms.size(); ++j)
       {
         auto ret =
             cast_client_i->TranslateWeights(clients_weights.at(j).at(k), clients_vocab_hashes[j]);

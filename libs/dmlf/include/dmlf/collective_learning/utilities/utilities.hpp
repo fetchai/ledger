@@ -17,8 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/collective_learning/client_algorithm.hpp"
-#include "dmlf/collective_learning/client_params.hpp"
+#include "dmlf/collective_learning/collective_learning_client.hpp"
 #include "json/document.hpp"
 #include "math/base_types.hpp"
 
