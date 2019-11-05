@@ -87,6 +87,10 @@ public:
   // TODO(tfr): Yet to be written
   /// @}
 
+  /// @{
+  ConstByteArray GetAddress() const;
+  /// @}
+
 private:
   /// Networking
   /// @{

@@ -120,6 +120,11 @@ MessengerAPI::MessageList MessengerAPI::GetMessages(service::CallContext const &
   return ret;
 }
 
+MessengerAPI::ConstByteArray MessengerAPI::GetAddress() const
+{
+  return messenger_endpoint_.GetAddress();
+}
+
 MessengerAPI::ResultList MessengerAPI::FindAgents(service::CallContext const & /*call_context*/,
                                                   ConstByteArray const & /*query_type*/,
                                                   ConstByteArray const & /*query*/)

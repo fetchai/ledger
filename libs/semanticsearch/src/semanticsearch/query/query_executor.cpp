@@ -277,14 +277,15 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
 
     // TODO(tfr): add some sanity checks here
 
-    auto model_name = model_var->As<std::string>();
-    auto model      = semantic_search_module_->GetModel(model_name);
+    auto name_of_model = model_var->As<std::string>();
+    auto model         = semantic_search_module_->GetModel(name_of_model);
     if (model == nullptr)
     {
-      error_tracker_.RaiseRuntimeError("Could not find model '" + model_name + "'.",
+      error_tracker_.RaiseRuntimeError("Could not find model '" + name_of_model + "'.",
                                        stmt[stmt.size() - 1].token);
       return;
     }
+
     if (!model->Validate(last))
     {
       error_tracker_.RaiseRuntimeError("Instance does not match model requirements.",
@@ -293,7 +294,7 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
       return;
     }
 
-    context_.Set(key->As<std::string>(), last, model_name);
+    context_.Set(key->As<std::string>(), last, name_of_model);
   }
   else
   {
@@ -499,7 +500,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
       }
 
       // Clearing stack
-      for (std::size_t i = 0; i < args.size(); ++i)
+      for (std::size_t j = 0; j < args.size(); ++j)
       {
         stack_.pop_back();
       }
