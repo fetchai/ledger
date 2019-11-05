@@ -40,7 +40,7 @@ namespace dmlf {
 namespace collective_learning {
 template <typename TensorType>
 class ClientAlgorithm;
-}  // namespace distributed_learning
+}  // namespace collective_learning
 }  // namespace dmlf
 
 namespace ml {

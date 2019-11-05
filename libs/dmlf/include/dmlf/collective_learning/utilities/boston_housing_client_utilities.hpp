@@ -17,26 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/collective_learning/client_algorithm.hpp"
+//#include "dmlf/collective_learning/client_algorithm.hpp"
+#include "dmlf/collective_learning/collective_learning_client.hpp"
 #include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/ops/activations/relu.hpp"
-#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "ml/ops/placeholder.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/meta/ml_type_traits.hpp"
+//#include "ml/ops/activations/relu.hpp"
+//#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+//#include "ml/ops/placeholder.hpp"
+//#include "ml/optimisation/adam_optimiser.hpp"
 
 namespace fetch {
 namespace dmlf {
 namespace collective_learning {
 namespace utilities {
 
+namespace {
+/**
+ * Utility for setting up a single MnistModel
+ * @tparam TensorType
+ * @param client_params
+ * @param images
+ * @param labels
+ * @param test_set_ratio
+ * @return
+ */
 template <typename TensorType>
-std::shared_ptr<fetch::dmlf::collective_learning::TrainingClient<TensorType>> MakeBostonClient(
-    std::string                                                                id,
-    fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> &client_params,
-    TensorType &data, TensorType &labels, float test_set_ratio,
-    std::shared_ptr<AbstractLearnerNetworker> networker,
-    std::shared_ptr<std::mutex>               console_mutex_ptr)
+std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeBostonModel(TensorType &data,
+                                                                          TensorType &labels,
+                                                                          float test_set_ratio)
 {
   // Initialise model
   auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
@@ -57,8 +66,35 @@ std::shared_ptr<fetch::dmlf::collective_learning::TrainingClient<TensorType>> Ma
   model_ptr->SetDataloader(std::move(dataloader_ptr));
   model_ptr->Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
 
-  return std::make_shared<fetch::dmlf::collective_learning::TrainingClient<TensorType>>(
-      id, model_ptr, client_params, networker, console_mutex_ptr);
+  return model_ptr;
+}
+}  // namespace
+
+template <typename TensorType>
+std::shared_ptr<fetch::dmlf::collective_learning::CollectiveLearningClient<TensorType>>
+MakeBostonClient(
+    std::string                                                                id,
+    fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> &client_params,
+    TensorType &data, TensorType &labels, float test_set_ratio,
+    std::shared_ptr<AbstractLearnerNetworker> networker,
+    std::shared_ptr<std::mutex>               console_mutex_ptr)
+{
+
+  // set up the client first
+  auto client = std::make_shared<CollectiveLearningClient<TensorType>>(id, client_params, networker,
+                                                                       console_mutex_ptr);
+
+  // build a boston model for each algorithm in the client
+  auto algorithms = client->GetAlgorithms();
+  for (auto algorithm : algorithms)
+  {
+    // build the mnist model
+    auto model_ptr = MakeBostonModel<TensorType>(data, labels, test_set_ratio);
+
+    algorithm->SetModel(model_ptr);
+  }
+
+  return client;
 }
 
 }  // namespace utilities

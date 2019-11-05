@@ -65,7 +65,7 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file, SizeTy
  * Averages weights between all clients
  * @param clients
  */
-void SynchroniseWeights(std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients)
+void SynchroniseWeights(std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> clients)
 {
   // Synchronize weights by giving all clients average of all client's weights
   std::vector<VectorTensorType>                  clients_weights{clients.size()};
@@ -156,8 +156,8 @@ int main(int argc, char **argv)
   std::cout << "FETCH Distributed Word2vec Demo" << std::endl;
 
   std::vector<std::string> client_data = SplitTrainingData(data_file, n_clients);
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>>         clients(n_clients);
-  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(n_clients);
+  std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> clients(n_clients);
+  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>>   networkers(n_clients);
 
   // Create networkers
   for (SizeType i(0); i < n_clients; ++i)

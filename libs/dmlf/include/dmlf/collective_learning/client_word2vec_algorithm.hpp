@@ -29,7 +29,7 @@ namespace dmlf {
 namespace collective_learning {
 
 template <class TensorType>
-class Word2VecClient : public TrainingClient<TensorType>
+class Word2VecClient : public ClientAlgorithm<TensorType>
 {
   using DataType         = typename TensorType::Type;
   using SizeType         = typename TensorType::SizeType;
@@ -63,7 +63,7 @@ private:
 
   void PrepareOptimiser();
 
-  VectorTensorType TranslateGradients(std::shared_ptr<GradientType> &new_gradients) override;
+  VectorTensorType TranslateUpdate(std::shared_ptr<GradientType> &new_gradients) override;
 
   float ComputeAnalogyScore();
 };
@@ -72,7 +72,7 @@ template <class TensorType>
 Word2VecClient<TensorType>::Word2VecClient(std::string const &                     id,
                                            Word2VecTrainingParams<DataType> const &tp,
                                            std::shared_ptr<std::mutex> console_mutex_ptr)
-  : TrainingClient<TensorType>(id, tp, console_mutex_ptr)
+  : ClientAlgorithm<TensorType>(id, tp, console_mutex_ptr)
   , tp_(tp)
 {
   // set up dataloader
@@ -102,7 +102,7 @@ Word2VecClient<TensorType>::Word2VecClient(std::string const &                  
 template <class TensorType>
 void Word2VecClient<TensorType>::Run()
 {
-  TrainingClient<TensorType>::Run();
+  ClientAlgorithm<TensorType>::Run();
   analogy_score_ = ComputeAnalogyScore();
 }
 
@@ -210,8 +210,7 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 }
 
 template <class TensorType>
-typename Word2VecClient<TensorType>::VectorTensorType
-Word2VecClient<TensorType>::TranslateGradients(
+typename Word2VecClient<TensorType>::VectorTensorType Word2VecClient<TensorType>::TranslateUpdate(
     std::shared_ptr<Word2VecClient::GradientType> &new_gradients)
 {
   assert(new_gradients->GetGradients().size() ==

@@ -190,7 +190,7 @@ fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> Client
 
   if (!doc["results"].IsUndefined())
   {
-    client_params.results_dir = doc["results"].As<SizeType>();
+    client_params.results_dir = doc["results"].As<std::string>();
   }
   if (!doc["batch_size"].IsUndefined())
   {

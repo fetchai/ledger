@@ -89,7 +89,8 @@ void CollectiveLearningClient<TensorType>::BuildAlgorithms(
   for (std::size_t i = 0; i < client_params.n_algorithms_per_client; ++i)
   {
     algorithms_.emplace_back(std::make_shared<AlgorithmType>(
-        algorithm_controller_, std::to_string(i), client_params, console_mutex_ptr));
+        algorithm_controller_, "client_" + id_ + "_algo_" + std::to_string(i), client_params,
+        console_mutex_ptr));
   }
 }
 

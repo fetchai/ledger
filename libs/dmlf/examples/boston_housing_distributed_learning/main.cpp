@@ -97,7 +97,7 @@ int main(int argc, char **argv)
   }
 
   // Create training clients
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(n_clients);
+  std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> clients(n_clients);
   for (SizeType i{0}; i < n_clients; ++i)
   {
     // Instantiate n_clients clients
@@ -115,10 +115,10 @@ int main(int argc, char **argv)
   {
     // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
-    std::list<std::thread> threads;
+    std::vector<std::thread> threads;
     for (auto &c : clients)
     {
-      threads.emplace_back([&c] { c->Run(); });
+      c->RunAlgorithms(threads);
     }
 
     // Wait for everyone to finish

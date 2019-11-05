@@ -114,6 +114,8 @@ protected:
   SizeType updates_applied_ = 0;
   SizeType max_updates_     = 0;
 
+  std::string results_dir_;
+
   // Print to console flag
   bool print_loss_;
 
@@ -249,7 +251,7 @@ void ClientAlgorithm<TensorType>::Run()
 }
 
 /**
- * Train one batch
+ * Train one round
  * @return training batch loss
  */
 template <class TensorType>
