@@ -1346,7 +1346,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
     AddError(node->line, "illegal use of type '" + node->type->name + "'");
     return false;
   }
-  else if (node->IsFunctionGroupExpression())
+  if (node->IsFunctionGroupExpression())
   {
     AddError(node->line, "illegal use of function '" + node->function_group->name + "'");
     return false;
@@ -1954,18 +1954,15 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
     SetFunctionGroupExpression(node, function_group, lhs->type, !lhs_is_type_expression);
     return true;
   }
-  else if (member_symbol->IsType())
+  if (member_symbol->IsType())
   {
     // member is a type name
     AddError(lhs->line, "not supported");
     return false;
   }
-  else
-  {
-    // member is a variable name
-    AddError(lhs->line, "not supported");
-    return false;
-  }
+  // member is a variable name
+  AddError(lhs->line, "not supported");
+  return false;
 }
 
 bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
@@ -2028,7 +2025,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     node->function = f;
     return true;
   }
-  else if (lhs->IsTypeExpression())
+  if (lhs->IsTypeExpression())
   {
     // Type constructor
     if (lhs->type->IsPrimitive())
@@ -2070,18 +2067,15 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     node->function = f;
     return true;
   }
-  else
-  {
-    // lhs->IsVariableExpression()
-    // lhs->IsLVExpression()
-    // lhs->IsRVExpression()
-    // e.g.
-    // variable();
-    // (a + b)();
-    // array[index]();
-    AddError(lhs->line, "operand does not support function-call operator");
-    return false;
-  }
+  // lhs->IsVariableExpression()
+  // lhs->IsLVExpression()
+  // lhs->IsRVExpression()
+  // e.g.
+  // variable();
+  // (a + b)();
+  // array[index]();
+  AddError(lhs->line, "operand does not support function-call operator");
+  return false;
 }
 
 bool Analyser::AnnotateInitialiserList(ExpressionNodePtr const &node)

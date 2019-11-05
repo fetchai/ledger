@@ -734,11 +734,11 @@ void VM::Handler__InvokeContractFunction()
   uint16_t                    function_id = instruction_->index;
   Executable::Contract const &contract    = executable_->contracts[contract_id];
   Executable::Function const &function    = contract.functions[function_id];
-  std::vector<Variant>        parameters(function.num_parameters);
+  std::vector<Variant>        parameters(std::size_t(function.num_parameters));
   int                         count = function.num_parameters;
   while (--count >= 0)
   {
-    parameters[count] = std::move(Pop());
+    parameters[std::size_t(count)] = std::move(Pop());
   }
   Variant &   sv       = Pop();
   std::string identity = Ptr<String>(sv.object)->str;

@@ -49,7 +49,7 @@ bool Generator::GenerateExecutable(IR const &ir, std::string const &executable_n
   errors_.clear();
   errors.clear();
 
-  if (!vm_)
+  if (vm_ == nullptr)
   {
     errors.emplace_back("error: Generator is not initialised");
     return false;
