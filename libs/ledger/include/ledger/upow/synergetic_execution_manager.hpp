@@ -23,6 +23,7 @@
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/work_queue.hpp"
+#include "telemetry/telemetry.hpp"
 #include "vectorise/threading/pool.hpp"
 
 #include <functional>
@@ -83,6 +84,12 @@ private:
   WorkQueueStack solution_stack_;
   Executors      executors_;
   ThreadPool     threads_;
+  /// @}
+
+  /// @name Telemetry
+  /// @{
+  telemetry::CounterPtr no_executor_count_;
+  telemetry::CounterPtr no_executor_loop_count_;
   /// @}
 };
 
