@@ -18,26 +18,24 @@
 
 #include "math/base_types.hpp"
 #include "math/one_hot.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class OneHotTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(OneHotTest, MyTypes);
+TYPED_TEST_CASE(OneHotTest, TensorFloatingTypes);
 
 TYPED_TEST(OneHotTest, one_hot_test_axis_0)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType data = TypeParam::FromString("1,0,1,2");
@@ -51,6 +49,7 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_0)
 
   ArrayType ret = OneHot(data, depth, 0, on_value, off_value);
 
+  ASSERT_EQ(ret.shape(), gt.shape());
   ASSERT_TRUE(ret.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                            fetch::math::function_tolerance<DataType>()));
 }
@@ -58,13 +57,12 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_0)
 TYPED_TEST(OneHotTest, one_hot_test_axis_1)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType data = TypeParam::FromString("1,0,1,2");
   data.Reshape({4});
   ArrayType gt = TypeParam::FromString("-1, 5, -1; 5, -1, -1; -1, 5, -1; -1, -1, 5");
-  gt.Reshape({3, 4});
+  gt.Reshape({4, 3});
 
   SizeType depth     = 3;
   auto     on_value  = DataType{5.0f};
@@ -72,6 +70,7 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_1)
 
   ArrayType ret = OneHot(data, depth, 1, on_value, off_value);
 
+  ASSERT_EQ(ret.shape(), gt.shape());
   ASSERT_TRUE(ret.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                            fetch::math::function_tolerance<DataType>()));
 }
@@ -79,7 +78,6 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_1)
 TYPED_TEST(OneHotTest, one_hot_test_axis_3)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType data = TypeParam::FromString("1,0,1,2");
@@ -93,6 +91,11 @@ TYPED_TEST(OneHotTest, one_hot_test_axis_3)
 
   ArrayType ret = OneHot(data, depth, 3, on_value, off_value);
 
+  ASSERT_EQ(ret.shape(), gt.shape());
   ASSERT_TRUE(ret.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                            fetch::math::function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
