@@ -169,33 +169,13 @@ class ConstellationTestCase(TestCase):
 
                 nodes_mining_identities.append((node._entity, 100))
 
-                #key_path = expected_ouptut_dir + "/{}.key".format(index)
-                # verify_file(key_path)
-
-                # Copy the keyfile from its location to the node's cwd
-                #shutil.copy(key_path, node.root + "/p2p.key")
-
             nodes_identities.append((node._entity, 100))
-
-#        stake_gen = os.path.abspath("./scripts/generate-genesis-file.py")
-#        verify_file(stake_gen)
-#
-#        # Create a stake file into the logging directory for all nodes
-#        # Importantly, set the time to start
-#        cmd = [stake_gen, *nodes_mining_identities,
-#               "-o", genesis_file_location, "-w", "10"]
-#
-
-        #import ipdb; ipdb.set_trace(context=20)
 
         genesis_file = GenesisFile(
             nodes_identities, nodes_mining_identities, 20, 5, self._block_interval)
         genesis_file_location = os.path.abspath(
             os.path.join(self._workspace, "genesis_file.json"))
         genesis_file.dump_to_file(genesis_file_location)
-
-        # After giving the relevant nodes identities, make a stake file
-        #exit_code = subprocess.call(cmd)
 
         # Give all nodes this stake file, plus append POS flag for when node starts
         for index in range(self._number_of_nodes):
