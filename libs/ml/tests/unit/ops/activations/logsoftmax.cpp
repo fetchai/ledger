@@ -58,7 +58,7 @@ TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({3, 3, 1});
   TensorType          gt({3, 3, 1});
@@ -105,7 +105,7 @@ TYPED_TEST(LogSoftmaxTest, backward_3d_tensor_axis_0_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({3, 3, 1});
   TensorType          error({3, 3, 1});
@@ -180,7 +180,7 @@ TYPED_TEST(LogSoftmaxTest, saveparams_backward_3d_tensor_axis_0_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using OpType     = fetch::ml::ops::LogSoftmax<TensorType>;
   using SPType     = typename OpType::SPType;
 

@@ -1323,10 +1323,10 @@ TEST(FixedPointTest, SQRT_16_16)
   double      tolerance  = 4 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < max; x += step)
   {
-    fp32_t e     = fp32_t::Sqrt(x);
-    double r     = std::sqrt(static_cast<double>(x));
-    double delta = std::abs(static_cast<double>(e - r));
-    max_error    = std::max(max_error, delta);
+    fp32_t e  = fp32_t::Sqrt(x);
+    double r  = std::sqrt(static_cast<double>(x));
+    delta     = std::abs(static_cast<double>(e - r));
+    max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
   }
@@ -1394,10 +1394,10 @@ TEST(FixedPointTest, SQRT_32_32)
   auto        tolerance  = static_cast<double>(fp64_t::TOLERANCE);
   for (; x < 5.0; x += step)
   {
-    fp64_t e     = fp64_t::Sqrt(x);
-    double r     = std::sqrt(static_cast<double>(x));
-    double delta = std::abs(static_cast<double>(e - r));
-    max_error    = std::max(max_error, delta);
+    fp64_t e  = fp64_t::Sqrt(x);
+    double r  = std::sqrt(static_cast<double>(x));
+    delta     = std::abs(static_cast<double>(e - r));
+    max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
   }
@@ -1786,10 +1786,10 @@ TEST(FixedPointTest, Tan_16_16)
   double      tolerance  = 2 * static_cast<double>(fp32_t::TOLERANCE);
   for (; x < max; x += step)
   {
-    fp32_t e     = fp32_t::Tan(x);
-    double r     = std::tan(static_cast<double>(x));
-    double delta = std::abs(static_cast<double>(e - r));
-    max_error    = std::max(max_error, delta);
+    fp32_t e  = fp32_t::Tan(x);
+    double r  = std::tan(static_cast<double>(x));
+    delta     = std::abs(static_cast<double>(e - r));
+    max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
   }
@@ -1866,10 +1866,10 @@ TEST(FixedPointTest, Tan_32_32)
   double      tolerance  = 2 * static_cast<double>(fp64_t::TOLERANCE);
   for (; x < max; x += step)
   {
-    fp64_t e     = fp64_t::Tan(x);
-    double r     = std::tan(static_cast<double>(x));
-    double delta = std::abs(static_cast<double>(e - r));
-    max_error    = std::max(max_error, delta);
+    fp64_t e  = fp64_t::Tan(x);
+    double r  = std::tan(static_cast<double>(x));
+    delta     = std::abs(static_cast<double>(e - r));
+    max_error = std::max(max_error, delta);
     avg_error += delta;
     iterations++;
   }

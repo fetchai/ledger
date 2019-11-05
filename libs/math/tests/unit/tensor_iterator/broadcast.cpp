@@ -95,7 +95,6 @@ TEST(Tensor, broadcast_3D_test)
 
 TEST(tensor_iterator, broadcast_shape_size_test)
 {
-
   Tensor<double> a = Tensor<double>::Arange(0u, 90u, 1u);
   a.Reshape({1, 3, 1, 6, 5});
   Tensor<double> b = Tensor<double>::Arange(0u, 42u, 1u);
