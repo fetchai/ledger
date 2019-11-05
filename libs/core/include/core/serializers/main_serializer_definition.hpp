@@ -95,6 +95,7 @@ public:
   void WriteBytes(uint8_t const *arr, uint64_t const &size);
 
   void WriteByte(uint8_t const &val);
+  void WriteNil();
 
   template <typename WriteType, typename InitialType>
   void WritePrimitive(InitialType const &val);
@@ -108,6 +109,8 @@ public:
 
   void ReadByteArray(byte_array::ConstByteArray &b, uint64_t const &size);
   void SkipBytes(uint64_t const &size);
+
+  MsgPackSerializer &operator<<(nullptr_t const &);
 
   template <typename T>
   typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const & /*unused*/);

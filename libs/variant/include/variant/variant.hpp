@@ -602,8 +602,7 @@ public:
     }
     case Type::Type::NULL_VALUE:
     {
-      serializer.Allocate(sizeof(uint8_t));
-      serializer.WriteByte(static_cast<uint8_t>(TypeCodes::NIL));
+      serializer << nullptr;
       return;
     }
     case Type::Type::INTEGER:
