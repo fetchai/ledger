@@ -22,6 +22,7 @@ target_link_libraries(fetch-dmlf
                              fetch-crypto
                              fetch-math
                              fetch-ml
+                             fetch-oef-base
                              fetch-vm
                              fetch-vm-modules)
 

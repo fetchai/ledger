@@ -1,14 +1,29 @@
-#include "muddle_message_handler.hpp"
+#include "dmlf/colearn/muddle_message_handler.hpp"
+#include <unistd.h>
+
+#include "dmlf/colearn/muddle_learner_networker_impl.hpp"
 
 namespace fetch {
 namespace colearn {
-  
-//std::ostream& operator<<(std::ostream& os, const MuddleMessageHandler &output) {}
 
-//void swap(MuddleMessageHandler& v1, MuddleMessageHandler& v2) {
-//    v1.swap(v2);
-//}
+  MuddleMessageHandler::MuddleMessageHandler(MuddleLearnerNetworkerImpl &impl, MuddlePtr muddle)
+    : impl_(impl)
+    , muddle_(muddle)
+  {
+  }
 
+  MuddleMessageHandler::~MuddleMessageHandler()
+  {
+  }
+
+  bool MuddleMessageHandler::supplyUpdate(CallContext const &/*context*/, const std::string &type, Bytes const &msg)
+  {
+    // TODO, create a message handling task at this point to do the indexing /evalution.
+
+    // For now, directly add message.
+    impl_ . NewMessage(type, msg);
+
+    return true;
+  }
 }
 }
-

@@ -57,6 +57,18 @@ void AbstractLearnerNetworker::NewMessage(Bytes const &msg)
   queue_->PushNewMessage(msg);
 }
 
+void AbstractLearnerNetworker::NewMessage(const std::string &key, Bytes const &update)
+{
+  FETCH_LOCK(queue_map_m_);
+  auto iter = queue_map_.find(key);
+  if (iter != queue_map_.end())
+  {
+    iter->second->PushNewMessage(update);
+    return;
+  }
+  throw std::runtime_error{"Received Update with a non-registered type"};
+}
+
 void AbstractLearnerNetworker::NewDmlfMessage(Bytes const &msg)
 {
   serializers::MsgPackSerializer serializer{msg};
