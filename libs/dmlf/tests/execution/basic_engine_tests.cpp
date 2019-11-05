@@ -1874,6 +1874,7 @@ void RunArrayTest(std::string entrypoint, std::vector<fp64_t> const& vals)
   EXPECT_EQ(fp64_t::FromBase(output[1][0].As<int64_t>()), vals[2]);
   EXPECT_EQ(fp64_t::FromBase(output[1][1].As<int64_t>()), vals[3]);
 }
+*/
 void RunArrayTest(std::string entrypoint, std::vector<fp32_t> const& vals)
 {
   LedgerVariant input = Make2x2(vals);
@@ -1888,12 +1889,12 @@ void RunArrayTest(std::string entrypoint, std::vector<fp32_t> const& vals)
   ASSERT_TRUE(output[1].IsArray());
   ASSERT_EQ(output[1].size(), 2);
 
-  EXPECT_EQ(fp64_t::FromBase(output[0][0].As<int64_t>()), vals[3]);
-  EXPECT_EQ(fp64_t::FromBase(output[0][1].As<int64_t>()), vals[1]);
-  EXPECT_EQ(fp64_t::FromBase(output[1][0].As<int64_t>()), vals[2]);
-  EXPECT_EQ(fp64_t::FromBase(output[1][1].As<int64_t>()), vals[3]);
+
+  EXPECT_NEAR(static_cast<double>(output[0][0].As<fp64_t>()), static_cast<double>(vals[3]), static_cast<double>(fp32_t::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(output[0][1].As<fp64_t>()), static_cast<double>(vals[1]), static_cast<double>(fp32_t::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(output[1][0].As<fp64_t>()), static_cast<double>(vals[2]), static_cast<double>(fp32_t::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(output[1][1].As<fp64_t>()), static_cast<double>(vals[3]), static_cast<double>(fp32_t::TOLERANCE));
 }
-*/
 
 TEST(BasicVmEngineDmlfTests, ArrayArrayOpTests)
 {
@@ -1909,8 +1910,8 @@ TEST(BasicVmEngineDmlfTests, ArrayArrayOpTests)
   // RunArrayTest("doFloat32", std::vector<float>{1.0f,2.0f,3.0f,4.0f});
   RunArrayTest("doFloat64", std::vector<double>{1.0, 2.0, 3.0, 4.0});
 
-  // RunArrayTest("doFixed32", std::vector<fp32_t>{fp32_t{1.2},fp32_t{2.4},fp32_t{3.7},
-  // fp32_t{4.8}});
+  RunArrayTest("doFixed32", std::vector<fp32_t>{fp32_t{1.2},fp32_t{2.4},fp32_t{3.7},
+  fp32_t{4.8}});
   RunArrayTest("doFixed64",
                std::vector<fp64_t>{fp64_t{1.3}, fp64_t{2.2}, fp64_t{3.5}, fp64_t{4.7}});
 
