@@ -279,7 +279,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
                                       BeaconServiceProtocol::GET_SIGNATURE_SHARES, index);
 
   // Timer to wait maximally for network events
-  timer_to_proceed_.Restart(std::chrono::seconds{1});
+  timer_to_proceed_.Restart(std::chrono::milliseconds{50});
 
   return State::VERIFY_SIGNATURES;
 }
