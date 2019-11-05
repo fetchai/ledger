@@ -15,16 +15,16 @@ setup_conditions:
 steps:
   - wait_network_ready: {"sleep": 5}
   - create_wealth: {"amount": 100000000, "nodes": [0]}
-  - create_contract: {"name": "contract001", "fee_limit": 10000, "nodes": [0]}
+  - create_synergetic_contract: {"name": "contract001", "fee_limit": 10000, "nodes": [0]}
   - wait_for_blocks: {"nodes": [0], "num": 5}
   - run_contract: {"contract_name": "contract001", "nodes": [0], "wait_for_blocks": 15}
-  - stop_nodes: { "nodes": [0], "remove_dbs": 1}
+  - stop_nodes: { "nodes": [0], "remove_dbs": True}
   - sleep: 20
   - wait_for_blocks: {"nodes": [1, 2], "num": 15}
   - start_nodes: {"nodes": [0]}
   - sleep: 10
   - wait_network_ready: {}
-  - verify_chain_sync: { "node": 0, "max_trials": 10, "sleep_between_trials": 2 }
+  - verify_chain_sync: { "node": 0 }
   - run_contract: {"contract_name": "contract001", "nodes": [0], "wait_for_blocks": 15}
-  - stop_nodes: {"nodes": [0, 1, 2], "remove_dbs": 1}
+  - stop_nodes: {"nodes": [0, 1, 2], "remove_dbs": True}
 ...

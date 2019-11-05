@@ -32,6 +32,8 @@ from fetch.cluster.utils import output, verify_file, yaml_extract
 from fetchai.ledger.api import LedgerApi
 from fetchai.ledger.crypto import Entity
 
+from smart_contract_tests.synergetic_utils import SynergeticContractTestHelper
+
 
 class TimerWatchdog():
     """
@@ -448,8 +450,7 @@ def create_wealth(parameters, test_instance):
         api.sync(api.tokens.wealth(entity, amount))
 
 
-def create_contract(parameters, test_instance):
-    from smart_contract_tests.synergetic_utils import ContractTestHelper
+def create_synergetic_contract(parameters, test_instance):
     nodes = parameters["nodes"]
     name = parameters["name"]
     fee_limit = parameters["fee_limit"]
@@ -462,14 +463,13 @@ def create_contract(parameters, test_instance):
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
 
-        helper = ContractTestHelper(
+        helper = SynergeticContractTestHelper(
             name, api, entity, test_instance._workspace)
         helper.create_new(fee_limit)
         test_instance._nodes[node_index]._contract = helper
 
 
 def run_contract(parameters, test_instance):
-    from smart_contract_tests.synergetic_utils import ContractTestHelper
     nodes = parameters["nodes"]
     contract_name = parameters["contract_name"]
     wait_for_blocks_num = parameters["wait_for_blocks"]
@@ -487,7 +487,7 @@ def run_contract(parameters, test_instance):
         except AttributeError:
             output(
                 f"No contract stored in test_instance (node_index={node_index})! Loading from file...")
-            contract_helper = ContractTestHelper(
+            contract_helper = SynergeticContractTestHelper(
                 contract_name, api, entity, test_instance._workspace)
             contract_helper.load()
 
@@ -508,42 +508,17 @@ def wait_for_blocks(parameters, test_instance):
     nodes = parameters["nodes"]
     wait_for_blocks_num = parameters["num"]
     for node_index in nodes:
-        node_host = "localhost"
-        node_port = test_instance._nodes[node_index]._port_start
-        output(
-            f"Waiting for {wait_for_blocks_num} blocks on node {node_index}")
-        api = LedgerApi(node_host, node_port)
-        api.wait_for_blocks(wait_for_blocks_num)
+        test_instance.wait_for_blocks(node_index, wait_for_blocks_num)
 
 
 def verify_chain_sync(parameters, test_instance):
-    from fetch.cluster.chain import ChainSyncTesting
-    max_trials = parameters["max_trials"]
-    sleep_time = parameters["sleep_between_trials"]
+    max_trials = parameters.get("max_trials", 20)
     node_idx = parameters["node"]
     output(f"verify_chain_sync: node={node_idx}")
 
-    config = []
-    for node in test_instance._nodes:
-        node_host = "localhost"
-        node_port = node._port_start
-        config.append({
-            "host": node_host,
-            "port": node_port
-        })
-    sync_test = ChainSyncTesting(config)
-    target_host = "localhost"
-    target_port = test_instance._nodes[node_idx]._port_start
-    for i in range(max_trials):
-        try:
-            if sync_test.node_synced(target_host, target_port):
-                output(f"Node {node_idx} chain synced with the network!")
-                return
-        except:
-            pass
-        time.sleep(sleep_time)
-    output(f"Node {node_idx} chain not synced with the network!")
-    raise RuntimeError(f"Node {node_idx} chain not synced with the network!")
+    if not test_instance.verify_chain_sync(node_idx, max_trials):
+        raise RuntimeError(
+            f"Node {node_idx} chain not synced with the network!")
 
 
 def wait_network_ready(parameters, test_instance):
@@ -602,8 +577,8 @@ def run_steps(test_yaml, test_instance):
             run_dmlf_etch_client(parameters, test_instance)
         elif command == "create_wealth":
             create_wealth(parameters, test_instance)
-        elif command == "create_contract":
-            create_contract(parameters, test_instance)
+        elif command == "create_synergetic_contract":
+            create_synergetic_contract(parameters, test_instance)
         elif command == "run_contract":
             run_contract(parameters, test_instance)
         elif command == "wait_for_blocks":

@@ -8,9 +8,12 @@ import subprocess
 
 from fetch.cluster.instance import ConstellationInstance, DmlfEtchInstance
 from fetch.cluster.utils import output, verify_file
+from fetch.cluster.chain import ChainSyncTesting
 
 from fetchai.ledger.api.common import ApiEndpoint
+from fetchai.ledger.api import LedgerApi
 from fetchai.ledger.crypto import Entity
+from fetch.cluster.chain import ChainSyncTesting
 
 
 class TestCase(object):
@@ -48,6 +51,12 @@ class TestCase(object):
         pass
 
     def network_ready(self):
+        pass
+
+    def wait_for_blocks(self, node_index, number_of_blocks):
+        pass
+
+    def verify_chain_sync(self, node_index, max_trials, sleep_time):
         pass
 
 
@@ -242,7 +251,8 @@ class ConstellationTestCase(TestCase):
             self._workspace, 'node{}'.format(index)))
         pattern = ["*.db"]
         for p in pattern:
-            [os.remove(x) for x in glob.iglob(root+'/**/' + p, recursive=True)]
+            [os.remove(x)
+             for x in glob.iglob(f"{root}/**/{p}", recursive=True)]
         for f in os.listdir(root):
             if f.find(".db") != -1:
                 raise RuntimeError(f"Db files not removed for node {index}")
@@ -346,6 +356,48 @@ class ConstellationTestCase(TestCase):
             if not self.node_ready(i):
                 return False
         return True
+
+    def wait_for_blocks(self, node_index, number_of_blocks):
+        """
+        Wait for a specific number of blocks in the selected node
+        :param node_index: which node we are interested in
+        :param number_of_blocks: for how many new block to wait
+        :return:
+        """
+        port = self._nodes[node_index]._port_start
+        output(
+            f"Waiting for {number_of_blocks} blocks on node {port}")
+        api = LedgerApi("localhost", port)
+        api.wait_for_blocks(number_of_blocks)
+
+    def verify_chain_sync(self, node_index, max_trials=20):
+        """
+        Verify if a node has synced it's chain with the rest of the network
+        :param node_index: which node we want to verify
+        :param max_trials: maximum of how many times we try the sync test
+        :return:
+        """
+        config = []
+        for node in self._nodes:
+            node_host = "localhost"
+            node_port = node._port_start
+            config.append({
+                "host": node_host,
+                "port": node_port
+            })
+        sync_test = ChainSyncTesting(config)
+        target_host = "localhost"
+        target_port = self._nodes[node_index]._port_start
+        sleep_time = self._nodes[node_index].block_interval*1.2/1000.
+        for i in range(max_trials):
+            try:
+                if sync_test.node_synced(target_host, target_port):
+                    output(f"Node {node_index} chain synced with the network!")
+                    return True
+            except Exception as e:
+                output(f"verify_chain_sync exception: {e}")
+            time.sleep(sleep_time)
+        return False
 
 
 class DmlfEtchTestCase(TestCase):
@@ -534,3 +586,9 @@ class DmlfEtchTestCase(TestCase):
 
     def network_ready(self):
         return True
+
+    def wait_for_blocks(self, node_index, number_of_blocks):
+        pass
+
+    def verify_chain_sync(self, node_index, max_trials, sleep_time):
+        pass

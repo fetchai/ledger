@@ -43,7 +43,7 @@ endfunction
 """
 
 
-class ContractTestHelper:
+class SynergeticContractTestHelper:
     def __init__(self, name, api, entity, workdir="."):
         self._api = api
         self._entity = entity

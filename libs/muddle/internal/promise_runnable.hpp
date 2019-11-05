@@ -46,8 +46,8 @@ public:
 
   /// @name Runnable
   /// @{
-  bool IsReadyToExecute() const final;
-  void Execute() final;
+  bool        IsReadyToExecute() const final;
+  void        Execute() final;
   char const *GetId() const final;
   /// @}
 
