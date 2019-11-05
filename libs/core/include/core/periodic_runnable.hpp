@@ -44,6 +44,7 @@ public:
   /// @{
   bool IsReadyToExecute() const final;
   void Execute() final;
+  char const *GetId() const final;
   /// @}
 
   /// @name Periodic Runnable Interface

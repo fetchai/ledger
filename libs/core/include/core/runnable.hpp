@@ -41,10 +41,7 @@ public:
   }
   virtual void Execute() = 0;
 
-  virtual char const *GetId() const
-  {
-    return "";
-  }
+  virtual char const *GetId() const = 0;
   /// @}
 
   // Helper operators
