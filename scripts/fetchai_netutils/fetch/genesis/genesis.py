@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import json
 import struct
@@ -11,7 +10,6 @@ import time
 
 TOTAL_SUPPLY = 11529975750000000000
 MUDDLE_ADDDRESS_RAW_LENGTH = 64
-
 
 def _muddle_address(text):
     raw = base64.b64decode(text)
@@ -68,21 +66,13 @@ def create_record(address, balance, stake):
     resource_value = {"balance": balance, "stake": stake}
     return resource_id, resource_value
 
-
-def main():
-    args = parse_commandline()
-
+def create_genesis_file(stake_percentage, max_cabinet_size, addresses):
     # build up the stake information
     individual_balance = TOTAL_SUPPLY // len(args.addresses)
-    individual_stake = (min(args.stake_percentage, 100)
+    individual_stake = (min(stake_percentage, 100)
                         * individual_balance) // 100
 
     max_cabinet = 0
-
-    if not args.max_cabinet:
-        max_cabinet = len(args.addresses)
-    else:
-        max_cabinet = args.max_cabinet
 
     stakes = []
     state = []
@@ -116,10 +106,10 @@ def main():
 
     # form the genesis data
     genesis_file = {
-        'version': 2,
+        'version': 3,
         'consensus': {
             'startTime': start_time,
-            'cabinetSize': max_cabinet,
+            'cabinetSize': max_cabinet_size,
             'threshold': float(args.threshold),
             'stakers': stakes,
         },
@@ -133,6 +123,10 @@ def main():
         else:
             json.dump(genesis_file, output_file, indent=4, sort_keys=True)
 
+def main():
+    args = parse_commandline()
+
+    create_genesis_file(args.stake_percentage, args.max_cabinet, args.addresses, args.output, args.when_start)
 
 if __name__ == '__main__':
     main()
