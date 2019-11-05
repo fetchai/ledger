@@ -35,7 +35,6 @@ TYPED_TEST_CASE(EuclideanTest, TensorFloatingTypes);
 TYPED_TEST(EuclideanTest, simple_test)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType A = ArrayType(4);
@@ -57,7 +56,6 @@ TYPED_TEST(EuclideanTest, simple_test)
 TYPED_TEST(EuclideanTest, matrix_euclidean_test)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType A = ArrayType({3, 4});

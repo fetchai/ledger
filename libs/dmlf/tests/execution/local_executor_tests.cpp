@@ -70,9 +70,9 @@ public:
     executor = std::make_shared<LocalExecutor>(engine);
   }
 
-  PromiseOfResult CreateExecutable(std::string const &exec_name, SourceFile const &source_file)
+  PromiseOfResult CreateExecutable(std::string const &exec_name, SourceFile const &source_file_loc)
   {
-    return executor->CreateExecutable(host, exec_name, {source_file});
+    return executor->CreateExecutable(host, exec_name, {source_file_loc});
   }
 
   PromiseOfResult DeleteExecutable(std::string const &exec_name)

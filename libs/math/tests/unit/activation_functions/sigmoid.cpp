@@ -143,7 +143,7 @@ TYPED_TEST(SigmoidTest, exact_values)
 
 TYPED_TEST(SigmoidTest, sigmoid_2x2)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   TypeParam array1{{2, 2}};
 
   array1.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(0.3));
@@ -169,7 +169,7 @@ TYPED_TEST(SigmoidTest, sigmoid_2x2)
 // Test sigmoid function output against numpy output for 2x2 input matrix of random values
 TYPED_TEST(SigmoidTest, sigmoid_11)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   TypeParam input{1};
   TypeParam output{1};
