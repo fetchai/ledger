@@ -171,10 +171,10 @@ TEST(FixedPointTest, Conversion_64_64)
   // Largest double fractional closest to one, representable to a FixedPoint
   fp128_t almost_one(0.999999999999999944);
   // Largest fractional closest to one, representable to a FixedPoint
-  fp128_t largest_int(std::numeric_limits<int64_t>::max() - 1, 0UL); // NOLINT
+  fp128_t largest_int(std::numeric_limits<int64_t>::max() - 1, 0UL);  // NOLINT
 
   // Smallest possible integer, increase by one, in order to allow for the fractional part.
-  fp128_t smallest_int(std::numeric_limits<int64_t>::min() + 2, 0UL); // NOLINT
+  fp128_t smallest_int(std::numeric_limits<int64_t>::min() + 2, 0UL);  // NOLINT
 
   // Largest possible Fixed Point number.
   fp128_t largest_fixed_point = largest_int + fp128_t(0, fp128_t::LARGEST_FRACTION);  // almost_one;
