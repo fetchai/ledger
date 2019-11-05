@@ -17,27 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/platform.hpp"
+#include "math/base_types.hpp"
+#include "ml/exceptions/exceptions.hpp"
+
+#include <string>
+#include <fstream>
+
 namespace fetch {
 namespace ml {
 namespace utilities {
 
 using SizeType = fetch::math::SizeType;
 
-namespace {
-auto reverseInt = [](uint32_t i) -> uint32_t {
-  // TODO(issue 1674): Change to use platform tools
-  uint8_t c1, c2, c3, c4;
-  c1 = static_cast<uint8_t>(i & 255u);
-  c2 = static_cast<uint8_t>((i >> 8u) & 255u);
-  c3 = static_cast<uint8_t>((i >> 16u) & 255u);
-  c4 = static_cast<uint8_t>((i >> 24u) & 255u);
-  return static_cast<uint32_t>((static_cast<uint32_t>(c1) << 24u) +
-                               (static_cast<uint32_t>(c2) << 16u) +
-                               (static_cast<uint32_t>(c3) << 8u) + c4);
-};
-}
 
-// function to read mnist data into a tensor
+/**
+ * Reads the mnist image file into a Tensor
+ * @param full_path Path to image file
+ * @return Tensor with shape {28, 28, n_images}
+ */
 template <typename TensorType>
 TensorType ReadMnistImages(std::string const &full_path)
 {
@@ -50,10 +48,10 @@ TensorType ReadMnistImages(std::string const &full_path)
     throw exceptions::InvalidFile("Cannot open file `" + full_path + "`!");
   }
 
-  unsigned int magic_number = 0, n_rows = 0, n_cols = 0;
+  uint32_t magic_number = 0, n_rows = 0, n_cols = 0;
 
   file.read(reinterpret_cast<char *>(&magic_number), sizeof(magic_number));
-  magic_number = reverseInt(magic_number);
+  magic_number = platform::ToBigEndian(magic_number);
 
   if (magic_number != 2051)
   {
@@ -62,20 +60,20 @@ TensorType ReadMnistImages(std::string const &full_path)
 
   uint32_t n_images;
   file.read(reinterpret_cast<char *>(&n_images), sizeof(n_images));
-  SizeType number_of_images = reverseInt(n_images);
+  n_images = platform::ToBigEndian(n_images);
 
   file.read(reinterpret_cast<char *>(&n_rows), sizeof(n_rows));
-  n_rows = reverseInt(n_rows);
+  n_rows = platform::ToBigEndian(n_rows);
   file.read(reinterpret_cast<char *>(&n_cols), sizeof(n_cols));
-  n_cols = reverseInt(n_cols);
+  n_cols = platform::ToBigEndian(n_cols);
 
-  SizeType image_size = n_rows * n_cols;
+  SizeType image_size{n_rows * n_cols};
 
-  TensorType tensor_dataset {{n_rows, n_cols, number_of_images}};
+  TensorType tensor_dataset {{n_rows, n_cols, n_images}};
+  auto image_char = new char[image_size];
 
-  for (SizeType i{0}; i < number_of_images; i++)
+  for (SizeType i{0}; i < SizeType{n_images}; i++)
   {
-    auto image_char = new char[image_size];
     file.read(image_char, std::streamsize(image_size));
     for (SizeType j{0}; j< n_rows; j++){
       for (SizeType k{0}; k< n_cols; k++) {
@@ -88,7 +86,12 @@ TensorType ReadMnistImages(std::string const &full_path)
   return tensor_dataset;
 }
 
-// function to read mnist labels into a tensor
+
+/**
+ * Reads the mnist labels file into a Tensor
+ * @param full_path Path to labels file
+ * @return Tensor with shape {1, n_images}
+ */
 template <typename TensorType>
 TensorType ReadMnistLabels(std::string const &full_path)
 {
@@ -100,10 +103,10 @@ TensorType ReadMnistLabels(std::string const &full_path)
     throw exceptions::InvalidFile("Cannot open file `" + full_path + "`!");
   }
 
-  u_int32_t magic_number = 0;
+  uint32_t magic_number = 0;
 
   file.read(reinterpret_cast<char *>(&magic_number), sizeof(magic_number));
-  magic_number = reverseInt(magic_number);
+  magic_number = platform::ToBigEndian(magic_number);
 
   if (magic_number != 2049)
   {
@@ -112,16 +115,16 @@ TensorType ReadMnistLabels(std::string const &full_path)
 
   uint32_t n_labels;
   file.read(reinterpret_cast<char *>(&n_labels), sizeof(n_labels));
-  SizeType number_of_labels = reverseInt(n_labels);
+  n_labels = platform::ToBigEndian(n_labels);
 
-  TensorType labels{{1, number_of_labels}};
-  for (SizeType i{0}; i < number_of_labels; i++)
+  TensorType labels{{1, n_labels}};
+  char label_char;
+  for (SizeType i{0}; i < SizeType{n_labels}; i++)
   {
-    char label_char;
     file.read(&label_char, 1);
     labels.At(0, i) = static_cast<DataType>(static_cast<uint8_t>(label_char));
   }
-  std::cout << "labels.ToString(): " << labels.ToString() << std::endl;
+
   return labels;
 }
 
