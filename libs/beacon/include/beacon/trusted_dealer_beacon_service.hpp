@@ -17,7 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/trusted_dealer.hpp"
 
 namespace fetch {
 namespace beacon {
@@ -26,16 +27,33 @@ namespace beacon {
  * Class which allows the beacon service to take in pre-computed DKG public and private keys from a
  * trusted dealer, thereby circumventing the running of the DKG inorder to generate entropy
  */
-class TrustedDealerBeaconService : public BeaconService
+class TrustedDealerSetupService : public BeaconSetupService
 {
 public:
-  TrustedDealerBeaconService(MuddleInterface &               muddle,
-                             shards::ManifestCacheInterface &manifest_cache,
-                             const CertificatePtr &certificate, SharedEventManager event_manager);
+  static constexpr char const *LOGGING_NAME = "TrustedDealerSetupService";
 
-  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy,
-                       const DkgOutput &output);
+  using CertificatePtr            = BeaconSetupService::CertificatePtr;
+  using CabinetMemberList         = BeaconSetupService::CabinetMemberList;
+  using CallbackFunction          = BeaconSetupService::CallbackFunction;
+  using SharedNotarisationManager = TrustedDealer::SharedNotarisationManager;
+  using CabinetNotarisationKeys   = TrustedDealer::CabinetNotarisationKeys;
+
+  TrustedDealerSetupService(MuddleInterface &muddle, ManifestCacheInterface &manifest_cache,
+                            CertificatePtr const &certificate, double threshold,
+                            uint64_t aeon_period);
+
+  void StartNewCabinet(
+      CabinetMemberList members, uint64_t round_start, uint64_t start_time,
+      BlockEntropy const &prev_entropy, DkgOutput const &output,
+      std::pair<SharedNotarisationManager, CabinetNotarisationKeys> notarisation_keys = {nullptr,
+                                                                                         {}});
+
+private:
+  using SharedAeonExecutionUnit = BeaconSetupService::SharedAeonExecutionUnit;
+
+  CertificatePtr certificate_;
+  double         threshold_;
+  uint64_t       aeon_period_;
 };
 }  // namespace beacon
 }  // namespace fetch

@@ -27,13 +27,15 @@ namespace dkg {
 class BeaconManager
 {
 public:
-  using MuddleAddress    = byte_array::ConstByteArray;
+  using ConstByteArray   = byte_array::ConstByteArray;
+  using MuddleAddress    = ConstByteArray;
   using DkgOutput        = beacon::DkgOutput;
   using Certificate      = crypto::Prover;
   using CertificatePtr   = std::shared_ptr<Certificate>;
   using Signature        = crypto::mcl::Signature;
   using PublicKey        = crypto::mcl::PublicKey;
   using PrivateKey       = crypto::mcl::PrivateKey;
+  using Generator        = crypto::mcl::Generator;
   using CabinetIndex     = crypto::mcl::CabinetIndex;
   using MessagePayload   = crypto::mcl::MessagePayload;
   using Identity         = crypto::Identity;
@@ -70,8 +72,7 @@ public:
   std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &owner);
   void AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
   void AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
-  std::unordered_set<MuddleAddress> ComputeComplaints(
-      std::set<MuddleAddress> const &coeff_received);
+  std::set<MuddleAddress> ComputeComplaints(std::set<MuddleAddress> const &coeff_received);
   bool VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer);
   void ComputeSecretShare();
   std::vector<Coefficient> GetQualCoefficients();
@@ -99,6 +100,7 @@ public:
 
   /// Property methods
   /// @{
+  bool                           InQual(MuddleAddress const &address) const;
   std::set<MuddleAddress> const &qual() const;
   uint32_t                       polynomial_degree() const;
   CabinetIndex                   cabinet_index() const;
@@ -108,10 +110,9 @@ public:
   ///}
 
 private:
-  static bn::G2 zeroG2_;   ///< Zero for public key type
-  static bn::Fr zeroFr_;   ///< Zero for private key type
-  static bn::G2 group_g_;  ///< Generator of group used in DKG
-  static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
+  const PrivateKey zeroFr_;   ///< Zero for private key type
+  const Generator  group_g_;  ///< Generator of group used in DKG
+  const Generator  group_h_;  ///< Generator of subgroup used in DKG
 
   CertificatePtr certificate_;
   uint32_t       cabinet_size_;       ///< Size of cabinet

@@ -27,15 +27,14 @@
 namespace fetch {
 namespace dkg {
 
-bn::G2 BeaconManager::zeroG2_;
-bn::Fr BeaconManager::zeroFr_;
-bn::G2 BeaconManager::group_g_;
-bn::G2 BeaconManager::group_h_;
-
 constexpr char const *LOGGING_NAME = "BeaconManager";
+// To set elliptic curve generator in static verify function
+constexpr char const *generator_string = "Fetch.ai Elliptic Curve Generator G";
 
 BeaconManager::BeaconManager(CertificatePtr certificate)
-  : certificate_{std::move(certificate)}
+  : group_g_{generator_string}
+  , group_h_{"Fetch.ai Elliptic Curve Generator H"}
+  , certificate_{std::move(certificate)}
 {
   if (certificate_ == nullptr)
   {
@@ -43,15 +42,6 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
     certificate_.reset(ptr);
     ptr->GenerateKeys();
   }
-
-  static std::once_flag flag;
-
-  std::call_once(flag, []() {
-    fetch::crypto::mcl::details::MCLInitialiser();
-    zeroG2_.clear();
-    zeroFr_.clear();
-    crypto::mcl::SetGenerators(group_g_, group_h_);
-  });
 }
 
 void BeaconManager::SetCertificate(CertificatePtr certificate)
@@ -138,10 +128,10 @@ void BeaconManager::AddShares(MuddleAddress const &from, std::pair<Share, Share>
  *
  * @return Set of muddle addresses of nodes we complain against
  */
-std::unordered_set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaints(
+std::set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaints(
     std::set<MuddleAddress> const &coeff_received)
 {
-  std::unordered_set<MuddleAddress> complaints_local;
+  std::set<MuddleAddress> complaints_local;
   for (auto &cab : coeff_received)
   {
     CabinetIndex i = identity_to_index_[cab];
@@ -203,8 +193,6 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
  */
 void BeaconManager::ComputeSecretShare()
 {
-  secret_share_.clear();
-  xprime_i = 0;
   for (auto const &iq : qual_)
   {
     CabinetIndex iq_index = identity_to_index_[iq];
@@ -575,9 +563,6 @@ bool BeaconManager::Verify(Signature const &signature)
   return crypto::mcl::VerifySign(public_key_, current_message_, signature, group_g_);
 }
 
-/**
- * @brief verifies a signed message by the group signature, where all parameters are specified.
- */
 bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
                            MessagePayload const &            message,
                            byte_array::ConstByteArray const &signature)
@@ -603,7 +588,8 @@ bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
     return false;
   }
 
-  return crypto::mcl::VerifySign(tmp, message, tmp2, group_g_);
+  Generator generator_tmp{generator_string};
+  return crypto::mcl::VerifySign(tmp, message, tmp2, generator_tmp);
 }
 
 /**
@@ -643,6 +629,11 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   }
 
   return smsg;
+}
+
+bool BeaconManager::InQual(MuddleAddress const &address) const
+{
+  return qual_.find(address) != qual_.end();
 }
 
 std::set<BeaconManager::MuddleAddress> const &BeaconManager::qual() const
