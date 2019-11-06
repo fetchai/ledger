@@ -58,8 +58,8 @@ class ClientAlgorithm
 
 public:
   ClientAlgorithm(AlgorithmControllerPtrType algorithm_controller, std::string id,
-                  ClientParams<DataType>      const &client_params,
-                  std::shared_ptr<std::mutex> console_mutex_ptr);
+                  ClientParams<DataType> const &client_params,
+                  std::shared_ptr<std::mutex>   console_mutex_ptr);
 
   /**
    * explicit copy constructor because mutexes can't be copied

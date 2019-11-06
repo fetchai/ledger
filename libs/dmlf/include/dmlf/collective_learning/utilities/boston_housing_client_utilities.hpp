@@ -33,7 +33,7 @@ namespace {
  * Utility for setting up a single model
  * @tparam TensorType
  * @param data
- * @param labels 
+ * @param labels
  * @param test_set_ratio
  * @return
  */
