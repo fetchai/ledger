@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/distributed_learning/utilities/utilities.hpp"
-#include "dmlf/distributed_learning/word2vec_client.hpp"
+#include "dmlf/collective_learning/client_word2vec_algorithm.hpp"
+#include "dmlf/collective_learning/utilities/utilities.hpp"
 #include "dmlf/networkers/muddle_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
@@ -32,7 +32,7 @@ using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
-using namespace fetch::dmlf::distributed_learning;
+using namespace fetch::dmlf::collective_learning;
 
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 
   fetch::json::JSONDocument doc;
   ClientParams<DataType>    client_params =
-      fetch::dmlf::distributed_learning::utilities::ClientParamsFromJson<TensorType>(
+      fetch::dmlf::collective_learning::utilities::ClientParamsFromJson<TensorType>(
           std::string(argv[1]), doc);
   auto word2vec_client_params = std::make_shared<Word2VecTrainingParams<DataType>>(client_params);
 
@@ -82,23 +82,19 @@ int main(int argc, char **argv)
 
   std::string client_data = fetch::ml::utilities::ReadFile(data_file);
 
-  Word2VecTrainingParams<DataType> cp(*word2vec_client_params);
-  cp.data = {client_data};
-
-  // Create learning client
-  auto client = std::make_shared<Word2VecClient<TensorType>>(std::to_string(instance_number), cp,
-                                                             console_mutex_ptr);
-
   // Create networker and assign shuffle algorithm
   auto networker =
       std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(networker_config, instance_number);
   networker->Initialize<fetch::dmlf::Update<TensorType>>();
-
   networker->SetShuffleAlgorithm(
       std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));
 
-  // Give client pointer to its networker
-  client->SetNetworker(networker);
+  // Create learning client
+  Word2VecTrainingParams<DataType> cp(*word2vec_client_params);
+  cp.data     = {client_data};
+  auto client = std::make_shared<CollectiveLearningClient<TensorType>>(
+      std::to_string(instance_number), cp, networker, console_mutex_ptr, false);
+  client->BuildAlgorithms<ClientWord2VecAlgorithm<TensorType>>(cp, console_mutex_ptr);
 
   /**
    * Main loop
@@ -109,20 +105,22 @@ int main(int argc, char **argv)
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
 
     // Start client
-    client->Run();
+    client->RunAlgorithms();
 
     std::ofstream lossfile(output_csv_file, std::ofstream::out | std::ofstream::app);
 
     // Write statistic to csv
     std::cout << "Test losses:";
     lossfile << fetch::ml::utilities::GetStrTimestamp();
-    auto *w2v_client = dynamic_cast<Word2VecClient<TensorType> *>(client.get());
+    for (auto &algo : client->GetAlgorithms())
+    {
+      auto *w2v_client = dynamic_cast<ClientWord2VecAlgorithm<TensorType> *>(algo.get());
 
-    std::cout << "\t" << static_cast<double>(client->GetLossAverage()) << "\t"
-              << w2v_client->GetAnalogyScore();
-    lossfile << "\t" << static_cast<double>(client->GetLossAverage()) << "\t"
-             << w2v_client->GetAnalogyScore();
-
+      std::cout << "\t" << static_cast<double>(client->GetLossAverage()) << "\t"
+                << w2v_client->GetAnalogyScore();
+      lossfile << "\t" << static_cast<double>(client->GetLossAverage()) << "\t"
+               << w2v_client->GetAnalogyScore();
+    }
     std::cout << std::endl;
     lossfile << std::endl;
 
