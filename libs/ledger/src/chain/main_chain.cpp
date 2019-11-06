@@ -52,8 +52,8 @@ namespace ledger {
  *
  * @param mode Flag to signal which storage mode has been requested
  */
-MainChain::MainChain(bool const enable_bloom_filter, Mode mode, bool const enable_tip_removal)
-  : enable_tip_removal_{enable_tip_removal}
+MainChain::MainChain(bool const enable_bloom_filter, Mode mode, bool const enable_stutter_removal)
+  : enable_stutter_removal_{enable_stutter_removal}
   , bloom_filter_{std::make_unique<BasicBloomFilter>()}
   , enable_bloom_filter_{enable_bloom_filter}
   , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
@@ -984,6 +984,18 @@ void MainChain::TrimCache()
     }
   }
 
+  // Trim stutter map
+  auto stutter_map_back = stutter_blocks_.rbegin();
+  if (stutter_map_back != stutter_blocks_.rend())
+  {
+    uint64_t const stutter_threshold = stutter_map_back->first - CACHE_TRIM_THRESHOLD;
+    auto           stutter_map_iter  = stutter_blocks_.begin();
+    while (stutter_threshold >= stutter_map_iter->first)
+    {
+      stutter_map_iter = stutter_blocks_.erase(stutter_map_iter);
+    }
+  }
+
   // Debug and sanity check
   auto loose_it = loose_blocks_.begin();
   while (loose_it != loose_blocks_.end())
@@ -1098,7 +1110,7 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
   assert(block->total_weight != 0);
   assert(block->body.block_number != 0);
 
-  if (enable_tip_removal_)
+  if (enable_stutter_removal_)
   {
     // if block with same height and weight exist by the same miner then do not include
     // either in tips
@@ -1107,16 +1119,16 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
       if (tip.second.block_number == block->body.block_number && tip.second.weight == block->weight)
       {
         auto old_heaviest = heaviest_;
-        conflicting_block_miners_[tip.second.block_number].insert(tip.second.weight);
+        stutter_blocks_[tip.second.block_number].insert(tip.second.weight);
         RemoveTip(std::make_shared<Block>(*GetBlock(tip.first)));
         return old_heaviest.hash == heaviest_.hash;
       }
     }
 
-    // if tip is from miner who has previously produced conflicting blocks for this round
-    // do not hadd new block to tips
-    if (conflicting_block_miners_[block->body.block_number].find(block->weight) !=
-        conflicting_block_miners_[block->body.block_number].end())
+    // if tip is from miner who has previously produced stutter blocks for this round
+    // do not add new block to tips
+    if (stutter_blocks_[block->body.block_number].find(block->weight) !=
+        stutter_blocks_[block->body.block_number].end())
     {
       return false;
     }
@@ -1223,12 +1235,16 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   // we expect only non-loose blocks here
   assert(!block->is_loose);
 
-  auto entropy_determined_weight =
-      Consensus::GetBlockGenerationWeight(*this, *block, block->body.miner);
-  if (entropy_determined_weight != block->weight)
+  // if removing stutter blocks then need to ensure weight to correct
+  if (enable_stutter_removal_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Received block with invalid weight");
-    return BlockStatus::INVALID;
+    auto entropy_determined_weight =
+        Consensus::GetBlockGenerationWeight(*this, *block, block->body.miner);
+    if (entropy_determined_weight != block->weight)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Received block with invalid weight");
+      return BlockStatus::INVALID;
+    }
   }
 
   // by definition this also means we expect blocks to have a valid parent block too
@@ -1378,22 +1394,22 @@ bool MainChain::AddTip(IntBlockPtr const &block)
 {
   FETCH_LOCK(lock_);
 
-  if (enable_tip_removal_)
+  if (enable_stutter_removal_)
   {
     // if block has same height and weight as another tip then do not include either in tips
     for (auto const &tip : tips_)
     {
       if (tip.second.block_number == block->body.block_number && tip.second.weight == block->weight)
       {
-        conflicting_block_miners_[tip.second.block_number].insert(tip.second.weight);
+        stutter_blocks_[tip.second.block_number].insert(tip.second.weight);
         return RemoveTip(std::make_shared<Block>(*GetBlock(tip.first)));
       }
     }
 
-    // if tip is from miner who has previously produced conflicting blocks for this round
+    // if tip is from miner who has previously produced stutter blocks for this round
     // then do not include in tips
-    if (conflicting_block_miners_[block->body.block_number].find(block->weight) !=
-        conflicting_block_miners_[block->body.block_number].end())
+    if (stutter_blocks_[block->body.block_number].find(block->weight) !=
+        stutter_blocks_[block->body.block_number].end())
     {
       return DetermineHeaviestTip();
     }
@@ -1413,7 +1429,7 @@ bool MainChain::AddTip(IntBlockPtr const &block)
 bool MainChain::RemoveTip(IntBlockPtr const &block)
 {
   FETCH_LOCK(lock_);
-  assert(enable_tip_removal_);
+  assert(enable_stutter_removal_);
   bool replaced{false};
   if (tips_.erase(block->body.hash))
   {
@@ -1422,8 +1438,8 @@ bool MainChain::RemoveTip(IntBlockPtr const &block)
     while (!replaced && previous_block)
     {
       BlockNumber previous_block_number = previous_block->body.block_number;
-      if (conflicting_block_miners_[previous_block_number].find(previous_block->weight) ==
-          conflicting_block_miners_[previous_block_number].end())
+      if (stutter_blocks_[previous_block_number].find(previous_block->weight) ==
+          stutter_blocks_[previous_block_number].end())
       {
         tips_[previous_block->body.hash] =
             Tip{previous_block->total_weight, previous_block->weight, previous_block_number};
@@ -1514,19 +1530,19 @@ bool MainChain::ReindexTips()
     uint64_t weight{block.weight};
     uint64_t block_number{block.body.block_number};
 
-    // check if it should be excluded
-    if (conflicting_block_miners_[block_number].find(weight) !=
-        conflicting_block_miners_[block_number].end())
+    // check if block is stutter block and if so loop until a non-stutter block is found and replace
+    // as tip
+    if (stutter_blocks_[block_number].find(weight) != stutter_blocks_[block_number].end())
     {
-      assert(enable_tip_removal_);
+      assert(enable_stutter_removal_);
       bool replaced{false};
       auto previous_block = GetBlock(block.body.previous_hash);
-      // Check previous is not banned, insert in previous
+
       while (!replaced && previous_block)
       {
         BlockNumber previous_block_number = previous_block->body.block_number;
-        if (conflicting_block_miners_[previous_block_number].find(previous_block->weight) ==
-            conflicting_block_miners_[previous_block_number].end())
+        if (stutter_blocks_[previous_block_number].find(previous_block->weight) ==
+            stutter_blocks_[previous_block_number].end())
         {
           block        = *previous_block;
           total_weight = block.total_weight;

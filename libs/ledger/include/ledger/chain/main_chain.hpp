@@ -117,7 +117,7 @@ public:
 
   // Construction / Destruction
   explicit MainChain(bool enable_bloom_filter = false, Mode mode = Mode::IN_MEMORY_DB,
-                     bool enable_tip_removal = false);
+                     bool enable_stutter_removal = false);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
@@ -166,19 +166,19 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
-  using DbRecord          = BlockDbRecord;
-  using IntBlockPtr       = std::shared_ptr<Block>;
-  using BlockMap          = std::unordered_map<BlockHash, IntBlockPtr>;
-  using References        = std::unordered_multimap<BlockHash, BlockHash>;
-  using Proof             = Block::Proof;
-  using TipsMap           = std::unordered_map<BlockHash, Tip>;
-  using BlockHashList     = std::list<BlockHash>;
-  using LooseBlockMap     = std::unordered_map<BlockHash, BlockHashList>;
-  using BlockStore        = fetch::storage::ObjectStore<DbRecord>;
-  using BlockStorePtr     = std::unique_ptr<BlockStore>;
-  using RMutex            = std::recursive_mutex;
-  using RLock             = std::unique_lock<RMutex>;
-  using ExcludedMinersMap = std::unordered_map<BlockNumber, std::unordered_set<BlockWeight>>;
+  using DbRecord        = BlockDbRecord;
+  using IntBlockPtr     = std::shared_ptr<Block>;
+  using BlockMap        = std::unordered_map<BlockHash, IntBlockPtr>;
+  using References      = std::unordered_multimap<BlockHash, BlockHash>;
+  using Proof           = Block::Proof;
+  using TipsMap         = std::unordered_map<BlockHash, Tip>;
+  using BlockHashList   = std::list<BlockHash>;
+  using LooseBlockMap   = std::unordered_map<BlockHash, BlockHashList>;
+  using BlockStore      = fetch::storage::ObjectStore<DbRecord>;
+  using BlockStorePtr   = std::unique_ptr<BlockStore>;
+  using RMutex          = std::recursive_mutex;
+  using RLock           = std::unique_lock<RMutex>;
+  using StutterBlockMap = std::map<BlockNumber, std::unordered_set<BlockWeight>>;
 
   struct HeaviestTip
   {
@@ -244,12 +244,12 @@ public:
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
   // The whole tree of previous-next relations among cached blocks
-  mutable References references_;
-  TipsMap            tips_;          ///< Keep track of the tips
-  HeaviestTip        heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
-  bool const         enable_tip_removal_;
-  ExcludedMinersMap  conflicting_block_miners_;  ///< Miners whose blocks should not be tips
+  mutable References                references_;
+  TipsMap                           tips_;          ///< Keep track of the tips
+  HeaviestTip                       heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks
+  bool const                        enable_stutter_removal_;
+  StutterBlockMap                   stutter_blocks_;  ///< Miners whose blocks should not be tips
   std::unique_ptr<BasicBloomFilter> bloom_filter_;
   bool const                        enable_bloom_filter_;
   telemetry::GaugePtr<std::size_t>  bloom_filter_queried_bit_count_;

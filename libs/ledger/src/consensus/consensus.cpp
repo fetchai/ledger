@@ -111,9 +111,9 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
 
   // if notarising then must have removal of conflicting blocks of the same weight from tips in main
   // chain
-  if (notarisation_ && !chain_.enable_tip_removal_)
+  if (notarisation_ && !chain_.enable_stutter_removal_)
   {
-    assert(chain_.enable_tip_removal_);
+    assert(chain_.enable_stutter_removal_);
     FETCH_LOG_WARN(LOGGING_NAME,
                    "Notarising enabled when main chain allows multiple blocks of same weight. "
                    "Notarisation disabled.");
@@ -172,7 +172,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
   // Walk back the chain until we see a block specifying an aeon beginning (corner
   // case for true genesis)
-  while (!ret.body.block_entropy.IsAeonBeginning() && current.body.block_number != 0)
+  while (!ret.body.block_entropy.IsAeonBeginning() && ret.body.block_number != 0)
   {
     ret = GetBlockPriorTo(ret, chain);
   }

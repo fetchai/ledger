@@ -121,7 +121,25 @@ protected:
   BlockGeneratorPtr generator_;
 };
 
-TEST_P(MainChainTests, EnsureGenesisIsConsistent)
+class MainChainTestsWithRemoval : public ::testing::TestWithParam<MainChain::Mode>
+{
+protected:
+  void SetUp() override
+  {
+    static constexpr std::size_t NUM_LANES  = 1;
+    static constexpr std::size_t NUM_SLICES = 2;
+
+    auto const main_chain_mode = GetParam();
+
+    chain_     = std::make_unique<MainChain>(false, main_chain_mode, true);
+    generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
+  }
+
+  MainChainPtr      chain_;
+  BlockGeneratorPtr generator_;
+};
+
+TEST_P(MainChainTestsWithRemoval, EnsureGenesisIsConsistent)
 {
   auto const genesis = generator_->Generate();
   ASSERT_EQ(BlockStatus::DUPLICATE, chain_->AddBlock(*genesis));
@@ -865,24 +883,6 @@ TEST_P(MainChainTests, CheckResolvedLooseWeight)
   ASSERT_EQ(chain_->GetBlock(main4->body.hash)->total_weight, main4->total_weight);
   ASSERT_EQ(chain_->GetBlock(main5->body.hash)->total_weight, main5->total_weight);
 }
-
-class MainChainTestsWithRemoval : public ::testing::TestWithParam<MainChain::Mode>
-{
-protected:
-  void SetUp() override
-  {
-    static constexpr std::size_t NUM_LANES  = 1;
-    static constexpr std::size_t NUM_SLICES = 2;
-
-    auto const main_chain_mode = GetParam();
-
-    chain_     = std::make_unique<MainChain>(false, main_chain_mode, true);
-    generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
-  }
-
-  MainChainPtr      chain_;
-  BlockGeneratorPtr generator_;
-};
 
 TEST_P(MainChainTestsWithRemoval, MultipleBlocksSameHeightSameMiner)
 {
