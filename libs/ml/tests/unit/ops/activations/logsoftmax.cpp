@@ -33,7 +33,7 @@ class LogSoftmaxTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(LogSoftmaxTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(LogSoftmaxTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(LogSoftmaxTest, forward_test)
 {
@@ -49,8 +49,9 @@ TYPED_TEST(LogSoftmaxTest, forward_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
-                                  math::function_tolerance<DataType>()));
+  ASSERT_TRUE(
+      prediction.AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(),
+                          static_cast<DataType>(50) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
@@ -78,8 +79,9 @@ TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
-                                  math::function_tolerance<DataType>()));
+  ASSERT_TRUE(
+      prediction.AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(),
+                          static_cast<DataType>(50) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, backward_test)
@@ -98,7 +100,9 @@ TYPED_TEST(LogSoftmaxTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(
+      prediction[0].AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(),
+                             static_cast<DataType>(50) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, backward_3d_tensor_axis_0_test)
@@ -128,7 +132,9 @@ TYPED_TEST(LogSoftmaxTest, backward_3d_tensor_axis_0_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(
+      prediction[0].AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(),
+                             static_cast<DataType>(50) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, saveparams_test)
