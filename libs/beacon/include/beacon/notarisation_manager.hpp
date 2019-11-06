@@ -70,14 +70,14 @@ public:
   /// @}
 
 private:
+  static Generator const &GetGenerator();
+
   // Aeon details
   uint64_t                                    round_start_{0};
   uint64_t                                    round_end_{0};
   uint32_t                                    threshold_{0};
   std::set<MuddleAddress>                     notarisation_members_{};
   std::unordered_map<MuddleAddress, uint32_t> identity_to_index_{};
-
-  const Generator generator_;
 
   // Notarisation keys for this aeon
   PrivateKey             private_key_;

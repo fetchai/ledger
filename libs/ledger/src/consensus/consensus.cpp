@@ -431,8 +431,10 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
     if (member_of_cabinet)
     {
-      auto threshold = static_cast<uint32_t>(
-                               std::floor(static_cast<double>(cabinet_member_list.size())) * threshold_) + 1;
+      auto threshold =
+          static_cast<uint32_t>(std::floor(static_cast<double>(cabinet_member_list.size())) *
+                                threshold_) +
+          1;
 
       FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_.body.block_number,
                      " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
@@ -454,9 +456,10 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       uint64_t block_interval = 1;
 
       // Safe to call this multiple times
-    cabinet_creator_->StartNewCabinet(cabinet_member_list, threshold, current_block_.body.block_number + 1,
-                               current_block_.body.block_number + aeon_period_,
-                               last_block_time + block_interval, current.body.block_entropy);
+      cabinet_creator_->StartNewCabinet(
+          cabinet_member_list, threshold, current_block_.body.block_number + 1,
+          current_block_.body.block_number + aeon_period_, last_block_time + block_interval,
+          current.body.block_entropy);
     }
   }
 

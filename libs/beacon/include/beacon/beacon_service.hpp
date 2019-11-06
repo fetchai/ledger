@@ -106,7 +106,7 @@ public:
   /// Beacon runnable
   /// @{
   std::weak_ptr<core::Runnable> GetWeakRunnable();
-  void MostRecentSeen(uint64_t round);
+  void                          MostRecentSeen(uint64_t round);
   /// @}
 
   friend class BeaconServiceProtocol;

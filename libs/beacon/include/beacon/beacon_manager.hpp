@@ -110,8 +110,8 @@ public:
   ///}
 
 private:
-  static Generator const &GetGroupG();
-  static Generator const &GetGroupH();
+  static Generator const & GetGroupG();
+  static Generator const & GetGroupH();
   static PrivateKey const &GetZeroFr();
 
   CertificatePtr certificate_;
