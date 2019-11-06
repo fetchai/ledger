@@ -20,19 +20,14 @@
 #include "ml/utilities/mnist_utilities.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/type.hpp"
+#include "vm_modules/math/tensor.hpp"
 
 namespace fetch {
-
-namespace vm {
-class Module;
-}
-
 namespace vm_modules {
 namespace ml {
 namespace utilities {
 
-void BindMNISTUtils(fetch::vm::Module &module);
+void BindMNISTUtils(vm::Module &module);
 
 }  // namespace utilities
 }  // namespace ml

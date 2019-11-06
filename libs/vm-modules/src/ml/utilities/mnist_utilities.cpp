@@ -16,45 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/utilities/mnist_utilities.hpp"
 
 namespace fetch {
-
-namespace vm {
-class Module;
-}
-
 namespace vm_modules {
-
-namespace math {
-class VMTensor;
-}
-
 namespace ml {
 namespace utilities {
 
-fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> load_mnist_images(
-    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
+vm::Ptr<math::VMTensor> load_mnist_images(vm::VM *vm, vm::Ptr<vm::String> const &filename)
 {
-  fetch::vm_modules::math::VMTensor::TensorType tensor =
-      fetch::ml::utilities::read_mnist_images<fetch::vm_modules::math::VMTensor::TensorType>(
-          filename->str);
-  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
+  math::VMTensor::TensorType tensor =
+      fetch::ml::utilities::read_mnist_images<math::VMTensor::TensorType>(filename->str);
+  return vm->CreateNewObject<math::VMTensor>(tensor);
 }
 
-fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> load_mnist_labels(
-    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
+vm::Ptr<math::VMTensor> load_mnist_labels(vm::VM *vm, vm::Ptr<vm::String> const &filename)
 {
-  fetch::vm_modules::math::VMTensor::TensorType tensor =
-      fetch::ml::utilities::read_mnist_labels<fetch::vm_modules::math::VMTensor::TensorType>(
-          filename->str);
+  math::VMTensor::TensorType tensor =
+      fetch::ml::utilities::read_mnist_labels<math::VMTensor::TensorType>(filename->str);
   tensor = fetch::ml::utilities::convert_labels_to_onehot(tensor);
 
-  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
+  return vm->CreateNewObject<math::VMTensor>(tensor);
 }
 
-void BindMNISTUtils(fetch::vm::Module &module)
+void BindMNISTUtils(vm::Module &module)
 {
   module.CreateFreeFunction("loadMNISTImages", &load_mnist_images);
   module.CreateFreeFunction("loadMNISTLabels", &load_mnist_labels);
