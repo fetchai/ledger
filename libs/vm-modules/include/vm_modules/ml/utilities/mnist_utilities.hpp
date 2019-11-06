@@ -32,7 +32,7 @@ namespace vm_modules {
 namespace ml {
 namespace utilities {
 
-void BindMnistUtils(fetch::vm::Module &module);
+void BindMNISTUtils(fetch::vm::Module &module);
 
 }  // namespace utilities
 }  // namespace ml

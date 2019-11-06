@@ -34,7 +34,7 @@ class VMTensor;
 namespace ml {
 namespace utilities {
 
-fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> LoadMNISTImages(
+fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> load_mnist_images(
     fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
 {
   fetch::vm_modules::math::VMTensor::TensorType tensor =
@@ -43,7 +43,7 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> LoadMNISTImages(
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
 }
 
-fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> LoadMNISTLabels(
+fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> load_mnist_labels(
     fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
 {
   fetch::vm_modules::math::VMTensor::TensorType tensor =
@@ -54,10 +54,10 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> LoadMNISTLabels(
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
 }
 
-void BindMnistUtils(fetch::vm::Module &module)
+void BindMNISTUtils(fetch::vm::Module &module)
 {
-  module.CreateFreeFunction("loadMnistImages", &LoadMNISTImages);
-  module.CreateFreeFunction("loadMnistLabels", &LoadMNISTLabels);
+  module.CreateFreeFunction("loadMNISTImages", &load_mnist_images);
+  module.CreateFreeFunction("loadMNISTLabels", &load_mnist_labels);
 }
 
 }  // namespace utilities

@@ -55,7 +55,7 @@ void BindML(Module &module)
 
   // utilities
   utilities::VMScaler::Bind(module);
-  utilities::BindMnistUtils(module);
+  utilities::BindMNISTUtils(module);
 }
 
 }  // namespace ml

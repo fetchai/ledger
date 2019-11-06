@@ -23,8 +23,8 @@ g.addCrossEntropyLoss("Error", "Softmax", "Label");
 printLn(System.Argv(1));
 printLn(System.Argv(2));
 var data_loader = DataLoader("tensor");
-var images = loadMnistImages(System.Argv(1));
-var labels = loadMnistLabels(System.Argv(2));
+var images = loadMNISTImages(System.Argv(1));
+var labels = loadMNISTLabels(System.Argv(2));
 data_loader.addData({images}, labels);
 
 // Set up the optimiser
