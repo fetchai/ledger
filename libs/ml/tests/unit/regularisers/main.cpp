@@ -30,7 +30,7 @@ class WeightsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(WeightsTest, math::test::FloatingTypes);
+TYPED_TEST_CASE(WeightsTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(WeightsTest, allocation_test)
 {
@@ -64,7 +64,8 @@ TYPED_TEST(WeightsTest, l1_regulariser_test)
   w.Forward({}, prediction);
 
   // Test actual values
-  ASSERT_TRUE(prediction.AllClose(gt));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(WeightsTest, l2_regulariser_test)
@@ -94,7 +95,8 @@ TYPED_TEST(WeightsTest, l2_regulariser_test)
   w.Forward({}, prediction);
 
   // Test actual values
-  ASSERT_TRUE(prediction.AllClose(gt));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 }  // namespace test

@@ -385,7 +385,7 @@ class BasicTrainingTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(BasicTrainingTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(BasicTrainingTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(BasicTrainingTest, plus_one_relu_test)
 {

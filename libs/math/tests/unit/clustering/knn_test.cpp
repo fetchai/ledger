@@ -37,10 +37,6 @@ TYPED_TEST(ClusteringTest, knn_euclidean_test)
 {
   using ArrayType = TypeParam;
   using DataType  = typename TypeParam::Type;
-<<<<<<< HEAD
-  using SizeType  = typename TypeParam::SizeType;
-=======
->>>>>>> 23f647562598d39cf60f86bc137f15223c33a568
 
   ArrayType A = ArrayType::FromString("1, 2, 3, 4; 2, 3, 4, 5; -1, -2, -3, -4; -2, -3, -4, -5");
   ArrayType v = ArrayType::FromString("3, 4, 5, 6");
@@ -52,12 +48,6 @@ TYPED_TEST(ClusteringTest, knn_euclidean_test)
   EXPECT_EQ(output.at(2).first, SizeType(2));
   EXPECT_EQ(output.at(3).first, SizeType(3));
 
-<<<<<<< HEAD
-  EXPECT_TRUE(output.at(0).second - double(2) < function_tolerance<DataType>());
-  EXPECT_TRUE(output.at(1).second - double(4) < function_tolerance<DataType>());
-  EXPECT_TRUE(output.at(2).second - double(14.6973) < function_tolerance<DataType>());
-  EXPECT_TRUE(output.at(3).second - double(16.6132477) < function_tolerance<DataType>());
-=======
   EXPECT_NEAR(static_cast<double>(output.at(0).second), double(2),
               15.0 * static_cast<double>(function_tolerance<DataType>()));
   EXPECT_NEAR(static_cast<double>(output.at(1).second), double(4),
@@ -66,7 +56,6 @@ TYPED_TEST(ClusteringTest, knn_euclidean_test)
               15.0 * static_cast<double>(function_tolerance<DataType>()));
   EXPECT_NEAR(static_cast<double>(output.at(3).second), double(16.6132477),
               15.0 * static_cast<double>(function_tolerance<DataType>()));
->>>>>>> 23f647562598d39cf60f86bc137f15223c33a568
 }
 
 TYPED_TEST(ClusteringTest, knn_cosine_test)

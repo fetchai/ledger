@@ -39,7 +39,7 @@ class OptimisersTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(OptimisersTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(OptimisersTest, math::test::HighPrecisionTensorFloatingTypes);
 
 //////////////////////////
 /// reusable functions ///
