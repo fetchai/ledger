@@ -48,7 +48,7 @@ public:
 
   Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
             Identity mining_identity, uint64_t aeon_period, uint64_t max_cabinet_size,
-            uint32_t block_interval_ms = 1000);
+            uint64_t block_interval_ms = 1000);
 
   void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
@@ -88,7 +88,7 @@ private:
 
   uint64_t       default_start_time_ = 0;
   CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
-  uint32_t       block_interval_ms_{std::numeric_limits<uint32_t>::max()};
+  uint64_t       block_interval_ms_{std::numeric_limits<uint64_t>::max()};
 
   CabinetPtr GetCabinet(Block const &previous);
   bool       ValidMinerForBlock(Block const &previous, chain::Address const &address);
