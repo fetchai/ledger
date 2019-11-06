@@ -53,6 +53,7 @@ public:
   virtual ~CollectiveLearningClient() = default;
 
   void RunAlgorithms(std::vector<std::thread> &threads);
+  void RunAlgorithms();
 
   std::vector<AlgorithmPtrType> GetAlgorithms();
   DataType                      GetLossAverage();
@@ -108,6 +109,20 @@ void CollectiveLearningClient<TensorType>::RunAlgorithms(std::vector<std::thread
   for (auto &algorithm : algorithms_)
   {
     threads.emplace_back([&algorithm] { algorithm->Run(); });
+  }
+}
+
+/**
+ * Single threaded implementation that runs algorithms sequentially
+ * @tparam TensorType
+ */
+template <class TensorType>
+void CollectiveLearningClient<TensorType>::RunAlgorithms()
+{
+  // begin all client owned algorithms running
+  for (auto &algorithm : algorithms_)
+  {
+    algorithm->Run();
   }
 }
 

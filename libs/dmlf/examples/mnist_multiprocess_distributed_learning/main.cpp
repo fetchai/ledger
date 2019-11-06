@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
 
-    client->Run();
+    client->RunAlgorithms();
   }
 
   return 0;

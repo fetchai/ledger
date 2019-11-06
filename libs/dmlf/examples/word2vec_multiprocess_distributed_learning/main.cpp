@@ -82,8 +82,6 @@ int main(int argc, char **argv)
 
   std::string client_data = fetch::ml::utilities::ReadFile(data_file);
 
-  Word2VecTrainingParams<DataType> cp(*word2vec_client_params);
-  cp.data = {client_data};
 
   // Create networker and assign shuffle algorithm
   auto networker =
@@ -93,8 +91,11 @@ int main(int argc, char **argv)
       std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));
 
   // Create learning client
-  auto client = std::make_shared<Word2VecClient<TensorType>>(std::to_string(instance_number), cp,
-                                                             networker, console_mutex_ptr);
+  Word2VecTrainingParams<DataType> cp(*word2vec_client_params);
+  cp.data = {client_data};
+  auto client = std::make_shared<CollectiveLearningClient<TensorType>>(std::to_string(instance_number), cp,
+                                                             networker, console_mutex_ptr, false);
+  client->BuildAlgorithms<ClientWord2VecAlgorithm<TensorType>>(cp, console_mutex_ptr);
 
   /**
    * Main loop
@@ -105,20 +106,22 @@ int main(int argc, char **argv)
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
 
     // Start client
-    client->Run();
+    client->RunAlgorithms();
 
     std::ofstream lossfile(output_csv_file, std::ofstream::out | std::ofstream::app);
 
     // Write statistic to csv
     std::cout << "Test losses:";
     lossfile << fetch::ml::utilities::GetStrTimestamp();
-    auto *w2v_client = dynamic_cast<Word2VecClient<TensorType> *>(client.get());
+    for (auto &algo : client->GetAlgorithms())
+    {
+      auto *w2v_client = dynamic_cast<ClientWord2VecAlgorithm<TensorType> *>(algo.get());
 
-    std::cout << "\t" << static_cast<double>(client->GetLossAverage()) << "\t"
-              << w2v_client->GetAnalogyScore();
-    lossfile << "\t" << static_cast<double>(client->GetLossAverage()) << "\t"
-             << w2v_client->GetAnalogyScore();
-
+      std::cout << "\t" << static_cast<double>(client->GetLossAverage()) << "\t"
+                << w2v_client->GetAnalogyScore();
+      lossfile << "\t" << static_cast<double>(client->GetLossAverage()) << "\t"
+               << w2v_client->GetAnalogyScore();
+    }
     std::cout << std::endl;
     lossfile << std::endl;
 
