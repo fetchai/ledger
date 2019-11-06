@@ -92,6 +92,7 @@ public:
   using SharedEventManager      = EventManager::SharedEventManager;
   using BeaconSetupService      = beacon::BeaconSetupService;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
+  using DeadlineTimer           = fetch::moment::DeadlineTimer;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
@@ -110,7 +111,7 @@ public:
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
                        uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy);
 
-  void AbortCabinet(uint64_t round_start);
+  void MostRecentSeen(uint64_t round);
   /// @}
 
   /// Beacon runnables
@@ -152,6 +153,11 @@ private:
   Identity        identity_;
   Endpoint &      endpoint_;
   StateMachinePtr state_machine_;
+  DeadlineTimer   timer_to_proceed_{"beacon:main"};
+
+  // Limit run away entropy generation
+  uint64_t entropy_lead_blocks_    = 2;
+  uint64_t most_recent_round_seen_ = 0;
 
   /// General configuration
   /// @{
@@ -165,13 +171,16 @@ private:
 
   /// Variables relating to getting threshold signatures of the seed
   /// @{
+  // Important this is ordered for trimming
   std::map<uint64_t, SignatureInformation> signatures_being_built_;
   std::size_t                              random_number_{0};
   Identity                                 qual_promise_identity_;
   service::Promise                         sig_share_promise_;
 
-  BlockEntropyPtr                     block_entropy_previous_;
-  BlockEntropyPtr                     block_entropy_being_created_;
+  BlockEntropyPtr block_entropy_previous_;
+  BlockEntropyPtr block_entropy_being_created_;
+
+  // Important this is ordered for trimming
   std::map<uint64_t, BlockEntropyPtr> completed_block_entropy_;
   /// @}
 
@@ -195,6 +204,8 @@ private:
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_generated_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_current_round_;
+  telemetry::GaugePtr<uint64_t> beacon_state_gauge_;
+  telemetry::GaugePtr<uint64_t> beacon_most_recent_round_seen_;
 };
 
 }  // namespace beacon
