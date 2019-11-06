@@ -982,6 +982,7 @@ class NiceMockBlockCoordinatorTests : public BlockCoordinatorTests
 protected:
   void SetUp() override
   {
+    fetch::crypto::mcl::details::MCLInitialiser();
     block_generator_.Reset();
 
     // generate a public/private key pair
