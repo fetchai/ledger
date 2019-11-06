@@ -29,7 +29,7 @@
 namespace fetch {
 namespace ml {
 namespace test {
-}
+
 template <typename T>
 class PReluTest : public ::testing::Test
 {
@@ -266,6 +266,6 @@ TYPED_TEST(PReluTest, saveparams_test)
                                    fetch::math::function_tolerance<DataType>()));
 }
 
+}  // namespace test
 }  // namespace ml
 }  // namespace fetch
-}  // fetch
