@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "gtest/gtest.h"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/utilities/graph_builder.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "gtest/gtest.h"
+#include "ml/utilities/graph_builder.hpp"
+#include "test_types.hpp"
 
 namespace fetch {
 namespace ml {
@@ -178,6 +178,6 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
                                    fetch::math::function_tolerance<DataType>()));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

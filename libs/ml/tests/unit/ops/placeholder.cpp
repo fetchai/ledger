@@ -18,11 +18,11 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "test_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -39,18 +39,8 @@ class PlaceholderNonIntTest : public ::testing::Test
 {
 };
 
-using AllTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                  fetch::math::Tensor<double>,
-                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-using NonIntegerTypes =
-    ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(PlaceholderAllTest, AllTypes);
-TYPED_TEST_CASE(PlaceholderNonIntTest, NonIntegerTypes);
+TYPED_TEST_CASE(PlaceholderAllTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_CASE(PlaceholderNonIntTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(PlaceholderAllTest, set_data)
 {

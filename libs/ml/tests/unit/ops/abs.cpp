@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "test_types.hpp"
 #include "ml/ops/abs.hpp"
+#include "test_types.hpp"
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -35,8 +35,6 @@ template <typename T>
 class AbsTest : public ::testing::Test
 {
 };
-
-
 
 TYPED_TEST_CASE(AbsTest, math::test::TensorFloatingTypes);
 

@@ -108,42 +108,41 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
 
   return true;
 }
-} // sequential_details
-
+}  // namespace sequential_details
 
 TYPED_TEST(SequentialModelTest, adagrad_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(
-      sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-4f}, DataType{0.03f}, 400));
+  ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD,
+                                                     DataType{1e-4f}, DataType{0.03f}, 400));
 }
 
 TYPED_TEST(SequentialModelTest, adam_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(
-      sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, DataType{1e-3f}, DataType{0.01f}, 400));
+  ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM,
+                                                     DataType{1e-3f}, DataType{0.01f}, 400));
 }
 
 TYPED_TEST(SequentialModelTest, momentum_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(
-      sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, DataType{1e-4f}, DataType{0.5f}, 200));
+  ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM,
+                                                     DataType{1e-4f}, DataType{0.5f}, 200));
 }
 
 TYPED_TEST(SequentialModelTest, rmsprop_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-2f},
-                                 DataType{0.005f}, 200));
+  ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
+                                                     DataType{1e-2f}, DataType{0.005f}, 200));
 }
 
 TYPED_TEST(SequentialModelTest, sgd_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(
-      sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-4f}, DataType{0.7f}, 400));
+  ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-4f},
+                                                     DataType{0.7f}, 400));
 }
 
 TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
@@ -170,8 +169,8 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
   sequential_details::PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels);
 
   // set up model
-  ModelType model = sequential_details::SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
-                                                               train_data, train_labels);
+  ModelType model = sequential_details::SetupModel<TypeParam, DataType, ModelType>(
+      optimiser_type, model_config, train_data, train_labels);
 
   // test prediction performance
   TypeParam pred1({3, 1});

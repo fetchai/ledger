@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
 #include "ml/ops/slice.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"

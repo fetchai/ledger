@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "test_types.hpp"
 #include "ml/ops/layer_norm.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"

@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-#include "test_types.hpp"
-#include "ml/utilities/min_max_scaler.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "gtest/gtest.h"
+#include "math/base_types.hpp"
+#include "ml/utilities/min_max_scaler.hpp"
+#include "test_types.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <vector>
 
 namespace fetch {
@@ -95,6 +95,6 @@ TYPED_TEST(ScalerTest, min_max_3d_test)
   EXPECT_TRUE(fetch::math::Min(norm_data) >= static_cast<DataType>(0));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

@@ -18,12 +18,12 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "test_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/reduce_mean.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"

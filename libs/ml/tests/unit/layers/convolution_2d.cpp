@@ -144,7 +144,8 @@ TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
   gt.Set(3, 0, 0, 0, static_cast<DataType>(-7.9669202564));
   gt.Set(4, 0, 0, 0, static_cast<DataType>(-16.5230417126));
 
-  ASSERT_TRUE(output.AllClose(gt, math::function_tolerance<DataType>(), math::function_tolerance<DataType>()));
+  ASSERT_TRUE(output.AllClose(gt, math::function_tolerance<DataType>(),
+                              math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
@@ -210,35 +211,89 @@ TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
   ASSERT_EQ(backprop_error[0].shape()[2], input_width);
   ASSERT_EQ(backprop_error[0].shape()[3], 1);
 
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 0, 0, 0)), -4.3077492713928222656, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 0, 0, 0)), 9.162715911865234375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 0, 0, 0)), 0.80360949039459228516, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 1, 0, 0)), 1.2491617202758789062, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 1, 0, 0)), 2.8053097724914550781, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 1, 0, 0)), -4.166011810302734375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 2, 0, 0)), 2.4086174964904785156, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 2, 0, 0)), -0.86411559581756591797, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 2, 0, 0)), -3.5623354911804199219, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 0, 0, 0)), -4.3077492713928222656,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 0, 0, 0)), 9.162715911865234375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 0, 0, 0)), 0.80360949039459228516,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 1, 0, 0)), 1.2491617202758789062,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 1, 0, 0)), 2.8053097724914550781,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 1, 0, 0)), -4.166011810302734375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 2, 0, 0)), 2.4086174964904785156,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 2, 0, 0)), -0.86411559581756591797,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 2, 0, 0)), -3.5623354911804199219,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 0, 1, 0)), -2.9907839298248291016, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 0, 1, 0)), -0.16291338205337524414, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 0, 1, 0)), -2.5308477878570556641, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 1, 1, 0)), -1.2312210798263549805, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 1, 1, 0)), -6.6115474700927734375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 1, 1, 0)), 3.2868711948394775391, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 2, 1, 0)), -4.994899749755859375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 2, 1, 0)), -2.9489955902099609375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 2, 1, 0)), -2.4173920154571533203, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 0, 1, 0)), -2.9907839298248291016,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 0, 1, 0)), -0.16291338205337524414,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 0, 1, 0)), -2.5308477878570556641,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 1, 1, 0)), -1.2312210798263549805,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 1, 1, 0)), -6.6115474700927734375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 1, 1, 0)), 3.2868711948394775391,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 2, 1, 0)), -4.994899749755859375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 2, 1, 0)), -2.9489955902099609375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 2, 1, 0)), -2.4173920154571533203,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 0, 2, 0)), 2.4823324680328369141, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 0, 2, 0)), 2.4479858875274658203, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 0, 2, 0)), -0.3612575531005859375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 1, 2, 0)), -6.4253511428833007812, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 1, 2, 0)), -3.184307098388671875, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 1, 2, 0)), 0.51499307155609130859, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 2, 2, 0)), -1.5936613082885742188, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 2, 2, 0)), -0.41774189472198486328, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 2, 2, 0)), 0.98040378093719482422, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 0, 2, 0)), 2.4823324680328369141,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 0, 2, 0)), 2.4479858875274658203,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 0, 2, 0)), -0.3612575531005859375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 1, 2, 0)), -6.4253511428833007812,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 1, 2, 0)), -3.184307098388671875,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 1, 2, 0)), 0.51499307155609130859,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 2, 2, 0)), -1.5936613082885742188,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 2, 2, 0)), -0.41774189472198486328,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 2, 2, 0)), 0.98040378093719482422,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
@@ -303,8 +358,8 @@ TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
   gt.Set(3, 0, 0, 0, static_cast<DataType>(-7.9669202564));
   gt.Set(4, 0, 0, 0, static_cast<DataType>(-16.5230417126));
 
-  ASSERT_TRUE(
-      prediction.AllClose(gt, math::function_tolerance<DataType>(), math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
@@ -380,35 +435,89 @@ TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
   ASSERT_EQ(err_signal.shape()[2], input_width);
   ASSERT_EQ(err_signal.shape()[3], 1);
 
-  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 0, 0, 0)), -4.3077492713928222656, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 0, 0, 0)), 9.162715911865234375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 0, 0, 0)), 0.80360949039459228516, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 1, 0, 0)), 1.2491617202758789062, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 1, 0, 0)), 2.8053097724914550781, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 1, 0, 0)), -4.166011810302734375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 2, 0, 0)), 2.4086174964904785156, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 2, 0, 0)), -0.86411559581756591797, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 2, 0, 0)), -3.5623354911804199219, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 0, 0, 0)), -4.3077492713928222656,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 0, 0, 0)), 9.162715911865234375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 0, 0, 0)), 0.80360949039459228516,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 1, 0, 0)), 1.2491617202758789062,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 1, 0, 0)), 2.8053097724914550781,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 1, 0, 0)), -4.166011810302734375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 2, 0, 0)), 2.4086174964904785156,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 2, 0, 0)), -0.86411559581756591797,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 2, 0, 0)), -3.5623354911804199219,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 
-  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 0, 1, 0)), -2.9907839298248291016, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 0, 1, 0)), -0.16291338205337524414, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 0, 1, 0)), -2.5308477878570556641, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 1, 1, 0)), -1.2312210798263549805, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 1, 1, 0)), -6.6115474700927734375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 1, 1, 0)), 3.2868711948394775391, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 2, 1, 0)), -4.994899749755859375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 2, 1, 0)), -2.9489955902099609375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 2, 1, 0)), -2.4173920154571533203, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 0, 1, 0)), -2.9907839298248291016,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 0, 1, 0)), -0.16291338205337524414,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 0, 1, 0)), -2.5308477878570556641,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 1, 1, 0)), -1.2312210798263549805,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 1, 1, 0)), -6.6115474700927734375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 1, 1, 0)), 3.2868711948394775391,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 2, 1, 0)), -4.994899749755859375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 2, 1, 0)), -2.9489955902099609375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 2, 1, 0)), -2.4173920154571533203,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 
-  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 0, 2, 0)), 2.4823324680328369141, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 0, 2, 0)), 2.4479858875274658203, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 0, 2, 0)), -0.3612575531005859375, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 1, 2, 0)), -6.4253511428833007812, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 1, 2, 0)), -3.184307098388671875, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 1, 2, 0)), 0.51499307155609130859, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 2, 2, 0)), -1.5936613082885742188, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 2, 2, 0)), -0.41774189472198486328, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 2, 2, 0)), 0.98040378093719482422, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 0, 2, 0)), 2.4823324680328369141,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 0, 2, 0)), 2.4479858875274658203,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 0, 2, 0)), -0.3612575531005859375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 1, 2, 0)), -6.4253511428833007812,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 1, 2, 0)), -3.184307098388671875,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 1, 2, 0)), 0.51499307155609130859,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 2, 2, 0)), -1.5936613082885742188,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 2, 2, 0)), -0.41774189472198486328,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 2, 2, 0)), 0.98040378093719482422,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
@@ -465,14 +574,14 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
   gt.Set(3, 0, 0, 0, static_cast<DataType>(-7.9669202564));
   gt.Set(4, 0, 0, 0, static_cast<DataType>(-16.5230417126));
 
-  ASSERT_TRUE(
-      prediction.AllClose(gt, math::function_tolerance<DataType>(), math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, getStateDict)
 {
   using TensorType = TypeParam;
-  using DataType = typename TypeParam::Type;
+  using DataType   = typename TypeParam::Type;
   using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
@@ -496,9 +605,15 @@ TYPED_TEST(Convolution2DTest, getStateDict)
   EXPECT_EQ(weights_ptr->shape(), std::vector<SizeType>({output_channels, input_channels,
                                                          kernel_height, kernel_height, 1}));
 
-  EXPECT_NEAR(static_cast<double>(weights_ptr->At(0, 0, 0, 0, 0)), -0.970493f, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(weights_ptr->At(1, 1, 1, 1, 0)), -0.85325855f, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(static_cast<double>(weights_ptr->At(4, 2, 2, 2, 0)), -0.096136682f, kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(weights_ptr->At(0, 0, 0, 0, 0)), -0.970493f,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(weights_ptr->At(1, 1, 1, 1, 0)), -0.85325855f,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(weights_ptr->At(4, 2, 2, 2, 0)), -0.096136682f,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, saveparams_test)

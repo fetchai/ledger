@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "test_types.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -33,8 +33,6 @@ template <typename T>
 class MaskFillTest : public ::testing::Test
 {
 };
-
-
 
 TYPED_TEST_CASE(MaskFillTest, math::test::TensorFloatingTypes);
 

@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-#include "ml/ops/weights.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "gtest/gtest.h"
+#include "ml/ops/weights.hpp"
+#include "test_types.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 namespace fetch {
 namespace ml {
 namespace test {
@@ -252,7 +252,6 @@ TYPED_TEST(StateDictTest, nested_merge_list_test)
     }
   }
 }
-} // test
-} // ml
-} // fetch
-
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

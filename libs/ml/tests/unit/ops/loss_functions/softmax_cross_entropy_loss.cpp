@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
-#include "test_types.hpp"
+#include "gtest/gtest.h"
 #include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 #include <memory>
 
 namespace fetch {
@@ -361,6 +361,6 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
       4);
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

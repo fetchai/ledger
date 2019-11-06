@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
+#include "gtest/gtest.h"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
@@ -29,7 +29,7 @@
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 
 namespace fetch {
 namespace ml {
@@ -669,6 +669,6 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
                   static_cast<double>(data.size()));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
+#include "gtest/gtest.h"
 #include "ml/ops/weights.hpp"
 #include "ml/regularisers/regularisation.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -97,6 +97,6 @@ TYPED_TEST(WeightsTest, l2_regulariser_test)
   ASSERT_TRUE(prediction.AllClose(gt));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

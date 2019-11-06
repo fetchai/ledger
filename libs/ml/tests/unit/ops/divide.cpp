@@ -18,9 +18,9 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "test_types.hpp"
 #include "ml/ops/divide.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -37,8 +37,6 @@ template <typename T>
 class DivideTest : public ::testing::Test
 {
 };
-
-
 
 TYPED_TEST_CASE(DivideTest, math::test::TensorFloatingTypes);
 
