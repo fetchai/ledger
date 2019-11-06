@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -28,16 +29,16 @@
 
 #include "gtest/gtest.h"
 
+namespace fetch {
+namespace ml {
+namespace test {
+
 template <typename T>
 class GraphTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
-
-TYPED_TEST_CASE(GraphTest, MyTypes);
+TYPED_TEST_CASE(GraphTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(GraphTest, node_placeholder)
 {
@@ -699,3 +700,8 @@ TYPED_TEST(GraphTest, diamond_graph_getStateDict)
   ASSERT_NE(sd.dict_["Diamond_Weight2"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["Diamond_Weight2"].weights_->shape(), data2.shape());
 }
+
+
+} // test
+} // ml
+} // fetch

@@ -57,6 +57,6 @@ TEST(UnigramTableTest, test_with_zero_counts)
   EXPECT_EQ(table, table_gt);
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch
