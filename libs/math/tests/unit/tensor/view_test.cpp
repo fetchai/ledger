@@ -16,23 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "meta/type_traits.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "gtest/gtest.h"
-
-#include <iomanip>
-#include <iostream>
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class TensorViewTests : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int32_t, uint32_t, int64_t, uint64_t, float, double,
-                                 fetch::fixed_point::FixedPoint<32, 32>>;
-TYPED_TEST_CASE(TensorViewTests, MyTypes);
+TYPED_TEST_CASE(TensorViewTests, FloatIntAndUIntTypes);
 
 using namespace fetch::math;
 
@@ -169,3 +168,7 @@ TYPED_TEST(TensorViewTests, view_copy)
   auto t3 = t1.View().Copy();
   EXPECT_TRUE(t1.AllClose(t3));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

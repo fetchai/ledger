@@ -17,10 +17,6 @@ setup_compiler()
 setup_library(fetch-core)
 target_link_libraries(fetch-core PUBLIC fetch-vectorise fetch-logging)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-core PRIVATE -Wshadow)
-endif ()
-
 # ------------------------------------------------------------------------------
 # Example Targets
 # ------------------------------------------------------------------------------

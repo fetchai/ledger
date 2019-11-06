@@ -110,9 +110,9 @@ public:
   ///}
 
 private:
-  const PrivateKey zeroFr_;   ///< Zero for private key type
-  const Generator  group_g_;  ///< Generator of group used in DKG
-  const Generator  group_h_;  ///< Generator of subgroup used in DKG
+  static Generator const &GetGroupG();
+  static Generator const &GetGroupH();
+  static PrivateKey const &GetZeroFr();
 
   CertificatePtr certificate_;
   uint32_t       cabinet_size_;       ///< Size of cabinet

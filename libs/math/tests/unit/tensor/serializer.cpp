@@ -17,17 +17,20 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/tensor.hpp"
+#include "test_types.hpp"
+
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class SerializersTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int32_t, int64_t, float, double>;
-TYPED_TEST_CASE(SerializersTest, MyTypes);
+TYPED_TEST_CASE(SerializersTest, FloatIntAndUIntTypes);
 
 TYPED_TEST(SerializersTest, serialize_empty_tensor)
 {
@@ -47,7 +50,7 @@ TYPED_TEST(SerializersTest, serialize_tensor)
   for (auto &e : t1)
   {
     e = i;
-    i++;
+    i += TypeParam(1);
   }
   fetch::serializers::MsgPackSerializer b;
 
@@ -59,3 +62,7 @@ TYPED_TEST(SerializersTest, serialize_tensor)
 
   EXPECT_EQ(t1, t2);
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

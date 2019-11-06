@@ -17,25 +17,22 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
 #include "gtest/gtest.h"
+#include "math/matrix_operations.hpp"
+#include "test_types.hpp"
 
-#include <cstddef>
 #include <vector>
 
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class FreeFunctionsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(FreeFunctionsTest, MyTypes);
+TYPED_TEST_CASE(FreeFunctionsTest, TensorFloatingTypes);
 
 TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
 {
@@ -202,19 +199,19 @@ TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
   SizeType  n_features{2};
   TypeParam array1{{n_data, n_features}};
 
-  array1(0, 0) = DataType{-17};
-  array1(1, 0) = DataType{1};
-  array1(2, 0) = DataType{13};
-  array1(3, 0) = DataType{21};
+  array1(0, 0) = DataType(-2);
+  array1(1, 0) = DataType(1);
+  array1(2, 0) = DataType(0.13);
+  array1(3, 0) = DataType(7);
 
-  array1(0, 1) = DataType{21};
-  array1(1, 1) = DataType{1};
-  array1(2, 1) = DataType{10};
-  array1(3, 1) = DataType{-0.5};
+  array1(0, 1) = DataType(11);
+  array1(1, 1) = DataType(1);
+  array1(2, 1) = DataType(3);
+  array1(3, 1) = DataType(-0.5);
 
   DataType output = fetch::math::Product(array1);
-  EXPECT_NEAR(static_cast<double>(output), 487305.0,
-              static_cast<double>(function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(output), 30.03,
+              8 * static_cast<double>(function_tolerance<DataType>()));
 
   array1(1, 1) = 0;
   output       = fetch::math::Product(array1);
@@ -247,7 +244,6 @@ TYPED_TEST(FreeFunctionsTest, Max_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, Max_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -302,7 +298,6 @@ TYPED_TEST(FreeFunctionsTest, Min_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, Min_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -361,7 +356,6 @@ TYPED_TEST(FreeFunctionsTest, PeakToPeak_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, PeakToPeak_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -398,7 +392,6 @@ TYPED_TEST(FreeFunctionsTest, PeakToPeak_TwoDimension)
 
 TYPED_TEST(FreeFunctionsTest, Maximum_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -466,7 +459,6 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -492,7 +484,6 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
 
 TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_off_axis)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -541,7 +532,6 @@ TYPED_TEST(FreeFunctionsTest, Sum_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_0)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -568,7 +558,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_0)
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_1)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -598,7 +587,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_1)
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum3D_axis_0)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_height{4};
@@ -641,7 +629,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum3D_axis_0)
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum3D_axis_2)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_height{4};
@@ -692,7 +679,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum3D_axis_2)
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum_axes_0_2)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_height{4};
@@ -727,7 +713,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum_axes_0_2)
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean_axes_0_2)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_height{4};
@@ -762,7 +747,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axes_0_2)
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_0)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -789,7 +773,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_0)
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -819,7 +802,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean3D_axis_0)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_height{4};
@@ -862,7 +844,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean3D_axis_0)
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean3D_axis_2)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_height{4};
@@ -913,7 +894,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean3D_axis_2)
 
 TYPED_TEST(FreeFunctionsTest, ReduceMax3D_axis_0)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_height{4};
@@ -956,7 +936,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceMax3D_axis_0)
 
 TYPED_TEST(FreeFunctionsTest, ReduceMax3D_axis_2)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_height{4};
@@ -1007,7 +986,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceMax3D_axis_2)
 
 TYPED_TEST(FreeFunctionsTest, ReduceMax3D_axes_0_2)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_height{4};
@@ -1042,7 +1020,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceMax3D_axes_0_2)
 
 TYPED_TEST(FreeFunctionsTest, Dot)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType matrix_one_width{3};
@@ -1102,7 +1079,6 @@ TYPED_TEST(FreeFunctionsTest, Dot)
 
 TYPED_TEST(FreeFunctionsTest, DotTranspose)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType matrix_one_width{3};
@@ -1162,7 +1138,6 @@ TYPED_TEST(FreeFunctionsTest, DotTranspose)
 
 TYPED_TEST(FreeFunctionsTest, TransposeDot)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType matrix_one_width{2};
@@ -1222,7 +1197,6 @@ TYPED_TEST(FreeFunctionsTest, TransposeDot)
 
 TYPED_TEST(FreeFunctionsTest, DynamicStitch)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{6};
@@ -1258,3 +1232,7 @@ TYPED_TEST(FreeFunctionsTest, DynamicStitch)
   EXPECT_NEAR(static_cast<double>(output(5)), -2.,
               static_cast<double>(function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
