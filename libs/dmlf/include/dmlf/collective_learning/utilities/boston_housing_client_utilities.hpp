@@ -27,8 +27,7 @@ namespace dmlf {
 namespace collective_learning {
 namespace utilities {
 
-namespace details
-{
+namespace details {
 
 /**
  * Utility for setting up a single model
