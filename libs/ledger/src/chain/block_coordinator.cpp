@@ -427,7 +427,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     if (!storage_unit_.RevertToHash(common_parent->body.merkle_hash,
                                     common_parent->body.block_number))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block", ToBase64(current_hash));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block: ", current_hash.ToHex());
 
       // delay the state machine in these error cases, to allow the network to catch up if the issue
       // is network related and if nothing else restrict logs being spammed
@@ -537,8 +537,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   bool const is_genesis = current_block_->body.previous_hash == chain::GENESIS_DIGEST;
 
   auto fail{[this](char const *reason) {
-    FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
-                   ToBase64(current_block_->body.hash), ')');
+    FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (0x",
+                   current_block_->body.hash.ToHex(), ')');
 
     chain_.RemoveBlock(current_block_->body.hash);
     return State::RESET;
@@ -644,7 +644,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 
     if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(num_lanes_))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(current_block_->body.hash),
+      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (0x", current_block_->body.hash.ToHex(),
                      ")");
       chain_.RemoveBlock(current_block_->body.hash);
 
@@ -812,8 +812,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 
     if (exec_wait_periodic_.Poll())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for execution to complete for block: ",
-                     current_block_->body.hash.ToBase64());
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for execution to complete for block: 0x",
+                     current_block_->body.hash.ToHex());
     }
 
     // signal that the next execution should not happen immediately

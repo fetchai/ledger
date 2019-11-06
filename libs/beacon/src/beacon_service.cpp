@@ -29,10 +29,25 @@
 #include <chrono>
 #include <iterator>
 
+using namespace std::chrono_literals;
+
 using fetch::generics::MilliTimer;
 
 namespace fetch {
 namespace beacon {
+namespace {
+
+template <typename T>
+void TrimToSize(T &container, std::size_t max_size)
+{
+  auto it = container.begin();
+  while ((it != container.end()) && (container.size() > max_size))
+  {
+    it = container.erase(it);
+  }
+}
+
+}  // namespace
 
 char const *ToString(BeaconService::State state);
 
@@ -62,6 +77,10 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
         "beacon_entropy_last_generated", "The last entropy value able to be generated")}
   , beacon_entropy_current_round_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_entropy_current_round", "The current round attempting to generate for.")}
+  , beacon_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_state_gauge", "State the beacon is in as integer")}
+  , beacon_most_recent_round_seen_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_most_recent_round_seen", "Most recent round the beacon has seen")}
 {
 
   // Attaching beacon ready callback handler
@@ -74,15 +93,13 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
   rpc_server_ = std::make_shared<Server>(endpoint_, SERVICE_DKG, CHANNEL_RPC);
   rpc_server_->Add(RPC_BEACON, &beacon_protocol_);
 
-  state_machine_->RegisterHandler(State::WAIT_FOR_SETUP_COMPLETION, this,
-                                  &BeaconService::OnWaitForSetupCompletionState);
-  state_machine_->RegisterHandler(State::PREPARE_ENTROPY_GENERATION, this,
-                                  &BeaconService::OnPrepareEntropyGeneration);
-  state_machine_->RegisterHandler(State::COLLECT_SIGNATURES, this,
-                                  &BeaconService::OnCollectSignaturesState);
-  state_machine_->RegisterHandler(State::VERIFY_SIGNATURES, this,
-                                  &BeaconService::OnVerifySignaturesState);
+  // clang-format off
+  state_machine_->RegisterHandler(State::WAIT_FOR_SETUP_COMPLETION, this, &BeaconService::OnWaitForSetupCompletionState);
+  state_machine_->RegisterHandler(State::PREPARE_ENTROPY_GENERATION, this, &BeaconService::OnPrepareEntropyGeneration);
+  state_machine_->RegisterHandler(State::COLLECT_SIGNATURES, this, &BeaconService::OnCollectSignaturesState);
+  state_machine_->RegisterHandler(State::VERIFY_SIGNATURES, this, &BeaconService::OnVerifySignaturesState);
   state_machine_->RegisterHandler(State::COMPLETE, this, &BeaconService::OnCompleteState);
+  // clang-format on
 
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(this);
@@ -95,7 +112,7 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
 
 BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, BlockEntropy &entropy)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
+  FETCH_LOG_TRACE(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
   beacon_entropy_last_requested_->set(block_number);
 
   FETCH_LOCK(mutex_);
@@ -109,9 +126,12 @@ BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, Bloc
   return Status::FAILED;
 }
 
-void BeaconService::AbortCabinet(uint64_t round_start)
+void BeaconService::MostRecentSeen(uint64_t round)
 {
-  cabinet_creator_.Abort(round_start);
+  FETCH_LOCK(mutex_);
+  most_recent_round_seen_ = round;
+  beacon_most_recent_round_seen_->set(most_recent_round_seen_);
+  cabinet_creator_.Abort(round);
 }
 
 void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
@@ -159,6 +179,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
 
 BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 {
+  beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
   // Checking whether the next cabinet is ready
@@ -185,6 +206,7 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 
 BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 {
+  beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
   // Set the manager up to generate the signature
@@ -197,7 +219,7 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
-
+  beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
   uint64_t const index = block_entropy_being_created_->block_number;
@@ -212,6 +234,13 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
     signatures_being_built_[index]                          = this_round;
 
     // TODO(HUT): clean historically old sigs + entropy here
+  }
+
+  // Don't proceed from this state if it is ahead of the entropy we are trying to generate
+  if (index > (most_recent_round_seen_ + entropy_lead_blocks_))
+  {
+    state_machine_->Delay(std::chrono::milliseconds(5));
+    return State::COLLECT_SIGNATURES;
   }
 
   // Attempt to get signatures from a peer we do not have the signature of
@@ -242,20 +271,30 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   std::size_t random_member_index = random_number_++ % missing_signatures_from.size();
   auto        it = std::next(missing_signatures_from.begin(), long(random_member_index));
 
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Get Signature shares... (index: ", index, ")");
+
   qual_promise_identity_ = Identity(*it);
   sig_share_promise_ =
       rpc_client_.CallSpecificAddress(qual_promise_identity_.identifier(), RPC_BEACON,
                                       BeaconServiceProtocol::GET_SIGNATURE_SHARES, index);
 
-  // Note: this delay is effectively how long we wait for the network event to resolve
-  state_machine_->Delay(std::chrono::milliseconds(50));
+  // Timer to wait maximally for network events
+  timer_to_proceed_.Restart(std::chrono::milliseconds{50});
 
   return State::VERIFY_SIGNATURES;
 }
 
 BeaconService::State BeaconService::OnVerifySignaturesState()
 {
+  beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   SignatureInformation ret;
+
+  // Block for up to half a second waiting for the promise to resolve
+  if (!timer_to_proceed_.HasExpired() && !sig_share_promise_->IsSuccessful())
+  {
+    state_machine_->Delay(std::chrono::milliseconds(50));
+    return State::VERIFY_SIGNATURES;
+  }
 
   try
   {
@@ -334,6 +373,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
  */
 BeaconService::State BeaconService::OnCompleteState()
 {
+  beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
   uint64_t const index = block_entropy_being_created_->block_number;
@@ -348,6 +388,13 @@ BeaconService::State BeaconService::OnCompleteState()
   assert(dkg::BeaconManager::Verify(block_entropy_being_created_->group_public_key,
                                     block_entropy_previous_->EntropyAsSHA256(),
                                     block_entropy_being_created_->group_signature));
+
+  // Trim maps of unnecessary info
+  auto const max_cache_size =
+      ((active_exe_unit_->aeon.round_end - active_exe_unit_->aeon.round_start) + 1) * 3;
+
+  TrimToSize(completed_block_entropy_, max_cache_size);
+  TrimToSize(signatures_being_built_, max_cache_size);
 
   // Save it for querying
   completed_block_entropy_[index] = block_entropy_being_created_;
