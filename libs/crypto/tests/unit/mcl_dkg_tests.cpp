@@ -238,10 +238,9 @@ TEST(MclDkgTests, GenerateKeys)
 
 TEST(MclNotarisationTests, AggregateSigningVerification)
 {
-  using KeyPair = std::pair<PrivateKey, PublicKey>;
-
   Generator generator;
   SetGenerator(generator);
+
   uint32_t                         cabinet_size = 4;
   std::vector<PublicKey>           public_keys;
   std::vector<AggregatePrivateKey> aggregate_private_keys;
