@@ -82,7 +82,6 @@ int main(int argc, char **argv)
 
   std::string client_data = fetch::ml::utilities::ReadFile(data_file);
 
-
   // Create networker and assign shuffle algorithm
   auto networker =
       std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(networker_config, instance_number);
@@ -92,9 +91,9 @@ int main(int argc, char **argv)
 
   // Create learning client
   Word2VecTrainingParams<DataType> cp(*word2vec_client_params);
-  cp.data = {client_data};
-  auto client = std::make_shared<CollectiveLearningClient<TensorType>>(std::to_string(instance_number), cp,
-                                                             networker, console_mutex_ptr, false);
+  cp.data     = {client_data};
+  auto client = std::make_shared<CollectiveLearningClient<TensorType>>(
+      std::to_string(instance_number), cp, networker, console_mutex_ptr, false);
   client->BuildAlgorithms<ClientWord2VecAlgorithm<TensorType>>(cp, console_mutex_ptr);
 
   /**
