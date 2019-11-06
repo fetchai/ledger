@@ -19,6 +19,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "gtest/gtest.h"
 #include "ml/layers/self_attention_encoder.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
 
@@ -31,7 +32,7 @@ class SelfAttentionEncoder : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SelfAttentionEncoder, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(SelfAttentionEncoder, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class as a part of a graph
 {

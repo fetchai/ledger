@@ -18,24 +18,23 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-
 #include "gtest/gtest.h"
-
 #include <memory>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class ReluTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(ReluTest, MyTypes);
+TYPED_TEST_CASE(ReluTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(ReluTest, forward_all_positive_test)
 {
@@ -271,3 +270,7 @@ TYPED_TEST(ReluTest, saveparams_backward_3d_tensor_test)
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+} // test
+} // ml
+} // fetch
+

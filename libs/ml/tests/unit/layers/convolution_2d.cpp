@@ -88,7 +88,7 @@ TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as 
   gt.Set(3, 0, 0, static_cast<DataType>(-7.9669202564));
   gt.Set(4, 0, 0, static_cast<DataType>(-16.5230417126));
 
-  ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(output.AllClose(gt, math::function_tolerance<DataType>(), math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops

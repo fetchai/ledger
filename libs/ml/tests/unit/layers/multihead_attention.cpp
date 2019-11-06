@@ -31,7 +31,8 @@ class MultiheadAttention : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MultiheadAttention, math::test::TensorFloatingTypes);
+// float32 tends to overflow here
+TYPED_TEST_CASE(MultiheadAttention, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class as a subgraph
 {

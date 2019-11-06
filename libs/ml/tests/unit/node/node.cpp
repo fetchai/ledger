@@ -16,25 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/core/node.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/placeholder.hpp"
-
 #include "gtest/gtest.h"
+
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class NodeTest : public ::testing::Test
 {
 };
 
-using MyTypes =
-    ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<float>,
-                     fetch::math::Tensor<double>, fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                     fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
-
-TYPED_TEST_CASE(NodeTest, MyTypes);
+TYPED_TEST_CASE(NodeTest, math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(NodeTest, node_placeholder)
 {
@@ -84,3 +82,7 @@ TYPED_TEST(NodeTest, node_relu)
   EXPECT_EQ(*(placeholder->Evaluate(true)), data);
   EXPECT_TRUE(relu->Evaluate(true)->Copy().AllClose(gt));
 }
+
+} // test
+} // ml
+} // fetch

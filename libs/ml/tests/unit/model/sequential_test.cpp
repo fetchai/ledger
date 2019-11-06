@@ -16,15 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/model/sequential.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
-
 #include "gtest/gtest.h"
+
+namespace fetch {
+namespace ml {
+namespace test {
 
 using SizeVector = fetch::math::SizeVector;
 
@@ -33,11 +36,8 @@ class SequentialModelTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+TYPED_TEST_CASE(SequentialModelTest, math::test::TensorFloatingTypes);
 
-TYPED_TEST_CASE(SequentialModelTest, MyTypes);
-namespace {
 template <typename TypeParam>
 void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label)
 {
@@ -203,4 +203,8 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
   // Test if both models returns same results after training
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
 }
-}  // namespace
+
+
+} // test
+} // ml
+} // fetch

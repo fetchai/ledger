@@ -16,14 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "gtest/gtest.h"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/model/dnn_classifier.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 
-#include "gtest/gtest.h"
-
+namespace fetch {
+namespace ml {
+namespace test {
 using SizeVector = fetch::math::SizeVector;
 
 template <typename T>
@@ -31,11 +33,8 @@ class DNNClassifierModelTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+TYPED_TEST_CASE(DNNClassifierModelTest, math::test::TensorFloatingTypes);
 
-TYPED_TEST_CASE(DNNClassifierModelTest, MyTypes);
-namespace {
 template <typename TypeParam>
 void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label)
 {
@@ -192,4 +191,7 @@ TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier_serialisation)
   // Test if both models returns same results after training
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
 }
-}  // namespace
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

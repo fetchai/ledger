@@ -79,7 +79,7 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
   gt(3, 0) = static_cast<DataType>(1.763717529829592);
   gt(4, 0) = static_cast<DataType>(-1.8677866039798);
 
-  ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(output.AllClose(gt, math::function_tolerance<DataType>(), math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
@@ -126,7 +126,7 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
   gt(3, 0, 0) = static_cast<DataType>(1.763717529829592);
   gt(4, 0, 0) = static_cast<DataType>(-1.8677866039798);
 
-  ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(output.AllClose(gt, math::function_tolerance<DataType>(), math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
@@ -182,15 +182,15 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
   ASSERT_EQ(backprop_error[0].shape()[1], input_height);
   ASSERT_EQ(backprop_error[0].shape()[2], 1);
 
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 0, 0)), -4.3077492713928222656);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 0, 0)), 9.162715911865234375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 0, 0)), 0.80360949039459228516);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 1, 0)), 1.2491617202758789062);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 1, 0)), 2.8053097724914550781);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 1, 0)), -4.166011810302734375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 2, 0)), 2.4086174964904785156);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 2, 0)), -0.86411559581756591797);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 2, 0)), -3.5623354911804199219);
+  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 0, 0)), -4.3077492713928222656, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 0, 0)), 9.162715911865234375, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 0, 0)), 0.80360949039459228516, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 1, 0)), 1.2491617202758789062, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 1, 0)), 2.8053097724914550781, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 1, 0)), -4.166011810302734375, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(0, 2, 0)), 2.4086174964904785156, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(1, 2, 0)), -0.86411559581756591797, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(backprop_error.at(0).At(2, 2, 0)), -3.5623354911804199219, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
@@ -247,7 +247,7 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
   gt(3, 0, 0) = static_cast<DataType>(1.763717529829592);
   gt(4, 0, 0) = static_cast<DataType>(-1.8677866039798);
 
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(), math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
@@ -312,15 +312,15 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   ASSERT_EQ(err_signal.shape()[1], input_height);
   ASSERT_EQ(err_signal.shape()[2], 1);
 
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 0, 0)), -4.3077492713928222656);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 0, 0)), 9.162715911865234375);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 0, 0)), 0.80360949039459228516);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 1, 0)), 1.2491617202758789062);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 1, 0)), 2.8053097724914550781);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 1, 0)), -4.166011810302734375);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 2, 0)), 2.4086174964904785156);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 2, 0)), -0.86411559581756591797);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 2, 0)), -3.5623354911804199219);
+  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 0, 0)), -4.3077492713928222656, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 0, 0)), 9.162715911865234375, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 0, 0)), 0.80360949039459228516, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 1, 0)), 1.2491617202758789062, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 1, 0)), 2.8053097724914550781, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 1, 0)), -4.166011810302734375, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(err_signal.At(0, 2, 0)), 2.4086174964904785156, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(err_signal.At(1, 2, 0)), -0.86411559581756591797, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(err_signal.At(2, 2, 0)), -3.5623354911804199219, kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
@@ -369,12 +369,13 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   gt(3, 0, 0) = static_cast<DataType>(1.763717529829592);
   gt(4, 0, 0) = static_cast<DataType>(-1.8677866039798);
 
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(), math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution1DTest, getStateDict)
 {
   using TensorType = TypeParam;
+  using DataType = typename TensorType::Type;
   using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
@@ -398,9 +399,9 @@ TYPED_TEST(Convolution1DTest, getStateDict)
   EXPECT_EQ(weights_ptr->shape(),
             std::vector<SizeType>({output_channels, input_channels, kernel_height, 1}));
 
-  EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(0, 0, 0, 0)), -0.970493f);
-  EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(1, 1, 1, 0)), 0.55109727f);
-  EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(4, 2, 2, 0)), -0.97583634f);
+  EXPECT_NEAR(static_cast<double>(weights_ptr->At(0, 0, 0, 0)), -0.970493f, static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(weights_ptr->At(1, 1, 1, 0)), 0.55109727f, static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(static_cast<double>(weights_ptr->At(4, 2, 2, 0)), -0.97583634f, static_cast<double>(math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution1DTest, saveparams_test)
