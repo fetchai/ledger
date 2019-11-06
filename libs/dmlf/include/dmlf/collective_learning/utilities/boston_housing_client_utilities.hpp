@@ -27,7 +27,8 @@ namespace dmlf {
 namespace collective_learning {
 namespace utilities {
 
-namespace {
+namespace details
+{
 
 /**
  * Utility for setting up a single model
@@ -63,7 +64,7 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeBostonModel(Tensor
 
   return model_ptr;
 }
-}  // namespace
+}  // namespace details
 
 template <typename TensorType>
 std::shared_ptr<fetch::dmlf::collective_learning::CollectiveLearningClient<TensorType>>

@@ -28,7 +28,8 @@ namespace dmlf {
 namespace collective_learning {
 namespace utilities {
 
-namespace {
+namespace details
+{
 /**
  * Utility for setting up a single MnistModel
  * @tparam TensorType
@@ -69,7 +70,7 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(
 
   return model_ptr;
 }
-}  // namespace
+}  // namespace details
 
 /**
  * Utility for building a collective learning client with every mnist algorithm
