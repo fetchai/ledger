@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_manager.hpp"
 #include "beacon/block_entropy.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/consensus/consensus.hpp"
@@ -244,7 +245,7 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
  */
 bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) const
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
+  FETCH_LOG_TRACE(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
   Identity const &identity = proposed.body.miner_id;
 
@@ -296,17 +297,36 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
     return false;
   }
 
-  assert(!qualified_cabinet_weighted.empty());
+  uint64_t const previous_block_window_ends = last_block_timestamp_ms + block_interval_ms_;
 
-  // First qual member can always produce
-  if (*qualified_cabinet_weighted.begin() == identity)
+  // Blocks cannot be created within the block interval of the previous, this enforces
+  // the block period
+  if (proposed_block_timestamp_ms < previous_block_window_ends)
   {
-    return true;
+    return false;
   }
 
-  // Until the time slot has elapsed, others can not produce
-  if (last_block_timestamp_ms + block_interval_ms_ < time_now_ms)
+  assert(!qualified_cabinet_weighted.empty());
+
+  // Miners must additionally wait N block periods according to their rank (0 being the best)
+  // Note, this is the identity specified in the block.
+  auto const miner_rank = std::distance(
+      qualified_cabinet_weighted.begin(),
+      std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity));
+
+  if (proposed_block_timestamp_ms >
+      uint64_t(previous_block_window_ends + (uint64_t(miner_rank) * block_interval_ms_)))
   {
+    if (identity == mining_identity_)
+    {
+      FETCH_LOG_DEBUG(
+          LOGGING_NAME, "Minting block. Time now: ", time_now_ms,
+          " Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms,
+          " Prev window ends: ", previous_block_window_ends,
+          " last block TS:  ", last_block_timestamp_ms, " miner rank: ", miner_rank, " target: ",
+          uint64_t(previous_block_window_ends + (uint64_t(miner_rank) * block_interval_ms_)),
+          " block weight: ", proposed.weight, " ident: ", mining_identity_.identifier().ToBase64());
+    }
     return true;
   }
 
@@ -382,47 +402,68 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
   if (ShouldTriggerNewCabinet(current_block_))
   {
+    // attempt to build the cabinet from
+    auto cabinet = stake_->BuildCabinet(current_block_);
+    if (!cabinet)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Failed to build cabinet for block: ", current_block_.body.block_number);
+      return;
+    }
+
     CabinetMemberList cabinet_member_list;
-    cabinet_history_[current.body.block_number] = stake_->BuildCabinet(current_block_);
+    cabinet_history_[current.body.block_number] = cabinet;
 
     TrimToSize(cabinet_history_, HISTORY_LENGTH);
 
+    bool member_of_cabinet{false};
     for (auto const &staker : *cabinet_history_[current.body.block_number])
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
+
+      if (staker == mining_identity_)
+      {
+        member_of_cabinet = true;
+      }
+
       cabinet_member_list.insert(staker.identifier());
     }
 
-    auto threshold = static_cast<uint32_t>(
-                         std::floor(static_cast<double>(cabinet_member_list.size())) * threshold_) +
-                     1;
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_.body.block_number,
-                   " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
-                   " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
-
-    uint64_t last_block_time = current.body.timestamp;
-    auto     current_time =
-        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-
-    if (current.body.block_number == 0)
+    if (member_of_cabinet)
     {
-      last_block_time = default_start_time_;
+      auto threshold =
+          static_cast<uint32_t>(std::floor(static_cast<double>(cabinet_member_list.size())) *
+                                threshold_) +
+          1;
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_.body.block_number,
+                     " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
+                     " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
+
+      uint64_t last_block_time = current.body.timestamp;
+      auto     current_time =
+          GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+
+      if (current.body.block_number == 0)
+      {
+        last_block_time = default_start_time_;
+      }
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG with timestamp: ", last_block_time,
+                     " current: ", current_time,
+                     " diff: ", int64_t(current_time) - int64_t(last_block_time));
+
+      uint64_t block_interval = 1;
+
+      // Safe to call this multiple times
+      cabinet_creator_->StartNewCabinet(
+          cabinet_member_list, threshold, current_block_.body.block_number + 1,
+          current_block_.body.block_number + aeon_period_, last_block_time + block_interval,
+          current.body.block_entropy);
     }
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG with timestamp: ", last_block_time,
-                   " current: ", current_time,
-                   " diff: ", int64_t(current_time) - int64_t(last_block_time));
-
-    uint64_t block_interval = 1;
-
-    // Safe to call this multiple times
-    cabinet_creator_->StartNewCabinet(cabinet_member_list, threshold,
-                                      current_block_.body.block_number + 1,
-                                      current_block_.body.block_number + aeon_period_,
-                                      last_block_time + block_interval, current.body.block_entropy);
   }
 
+  beacon_->MostRecentSeen(current_block_.body.block_number);
   cabinet_creator_->Abort(current_block_.body.block_number);
 }
 

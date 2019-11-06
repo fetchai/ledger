@@ -139,9 +139,11 @@ void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j)
  * Helper functions for computations used in the DKG
  */
 // For DKG
-void SetGenerator(Generator &generator_g, std::string string_to_hash = "");
-void SetGenerators(Generator &generator_g, Generator &generator_h, std::string string_to_hash = "",
-                   std::string string_to_hash2 = "");
+void      SetGenerator(Generator & generator_g,
+                       std::string string_to_hash = "Fetch.ai Elliptic Curve Generator G");
+void      SetGenerators(Generator &generator_g, Generator &generator_h,
+                        std::string string_to_hash  = "Fetch.ai Elliptic Curve Generator G",
+                        std::string string_to_hash2 = "Fetch.ai Elliptic Curve Generator H");
 PublicKey ComputeLHS(PublicKey &tmpG, Generator const &G, Generator const &H,
                      PrivateKey const &share1, PrivateKey const &share2);
 PublicKey ComputeLHS(Generator const &G, Generator const &H, PrivateKey const &share1,

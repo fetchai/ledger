@@ -180,6 +180,11 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
       member->setup_service.StartNewCabinet(cabinet_addresses, i * aeon_period, start_time,
                                             prev_entropy,
                                             dealer.GetDkgKeys(member->identity.identifier()));
+
+      // Note, to avoid limiting the 'look ahead' entropy gen, set the block to ahead of numbers per
+      // aeon
+      member->beacon_service.MostRecentSeen(aeon_period);
+      member->setup_service.Abort(aeon_period);
     }
 
     // Wait for everyone to finish

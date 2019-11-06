@@ -17,16 +17,23 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/notarisation_manager.hpp"
+#include "core/synchronisation/protected.hpp"
 
 namespace fetch {
 namespace ledger {
 
-// To set elliptic curve generator in static verify function
-constexpr char const *generator_string = "Fetch.ai Elliptic Curve Generator G";
+Protected<std::shared_ptr<NotarisationManager::Generator>> generator_;
 
 NotarisationManager::NotarisationManager()
-  : generator_{generator_string}
-{}
+{
+  generator_.ApplyVoid([](std::shared_ptr<Generator> generator) {
+    if (!generator)
+    {
+      generator = std::make_unique<Generator>();
+      SetGenerator(*generator);
+    }
+  });
+}
 
 NotarisationManager::Signature NotarisationManager::Sign(MessagePayload const &message)
 {
@@ -38,7 +45,7 @@ bool NotarisationManager::Verify(MessagePayload const &message, Signature const 
 {
   uint32_t member_index = identity_to_index_[member];
   return crypto::mcl::VerifySign(cabinet_public_keys_[member_index], message, signature,
-                                 generator_);
+                                 GetGenerator());
 }
 
 NotarisationManager::AggregateSignature NotarisationManager::ComputeAggregateSignature(
@@ -62,16 +69,15 @@ bool NotarisationManager::VerifyAggregateSignature(MessagePayload const &    mes
                                                    AggregateSignature const &aggregate_signature,
                                                    std::vector<PublicKey> const &public_keys)
 {
-  Generator generator_tmp{generator_string};
   return crypto::mcl::VerifyAggregateSignature(message, aggregate_signature, public_keys,
-                                               generator_tmp);
+                                               GetGenerator());
 }
 
 NotarisationManager::PublicKey NotarisationManager::GenerateKeys()
 {
   if (private_key_.isZero())
   {
-    auto keys    = crypto::mcl::GenerateKeyPair(generator_);
+    auto keys    = crypto::mcl::GenerateKeyPair(GetGenerator());
     private_key_ = keys.first;
     public_key_  = keys.second;
     return keys.second;
@@ -129,5 +135,18 @@ std::set<NotarisationManager::MuddleAddress> const NotarisationManager::notarisa
 {
   return notarisation_members_;
 }
+
+NotarisationManager::Generator const &NotarisationManager::GetGenerator()
+{
+  return *generator_.Apply([](std::shared_ptr<Generator> &generator) {
+    if (!generator)
+    {
+      generator = std::make_unique<Generator>();
+      SetGenerator(*generator);
+    }
+    return generator;
+  });
+}
+
 }  // namespace ledger
 }  // namespace fetch

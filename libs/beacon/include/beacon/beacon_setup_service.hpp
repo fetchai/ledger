@@ -207,6 +207,7 @@ protected:
   telemetry::GaugePtr<uint64_t> beacon_dkg_state_failed_on_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_time_allocated_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_aeon_setting_up_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_miners_in_qual_;
   telemetry::CounterPtr         beacon_dkg_failures_total_;
   telemetry::CounterPtr         beacon_dkg_aborts_total_;
   telemetry::CounterPtr         beacon_dkg_successes_total_;
