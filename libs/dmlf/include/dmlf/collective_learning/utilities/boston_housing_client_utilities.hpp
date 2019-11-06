@@ -84,7 +84,7 @@ MakeBostonClient(
   for (const auto &algorithm : algorithms)
   {
     // build the model
-    auto model_ptr = MakeBostonModel<TensorType>(data, labels, test_set_ratio);
+    auto model_ptr = details::MakeBostonModel<TensorType>(data, labels, test_set_ratio);
 
     algorithm->SetModel(model_ptr);
   }
