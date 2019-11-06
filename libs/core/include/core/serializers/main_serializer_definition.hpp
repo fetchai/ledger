@@ -110,8 +110,6 @@ public:
   void ReadByteArray(byte_array::ConstByteArray &b, uint64_t const &size);
   void SkipBytes(uint64_t const &size);
 
-  MsgPackSerializer &operator<<(nullptr_t const &);
-
   template <typename T>
   typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const & /*unused*/);
 

@@ -602,7 +602,7 @@ public:
     }
     case Type::Type::NULL_VALUE:
     {
-      serializer << nullptr;
+      serializer.WriteNil();
       return;
     }
     case Type::Type::INTEGER:
