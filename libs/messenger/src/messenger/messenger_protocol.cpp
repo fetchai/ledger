@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "messenger/messenger_protocol.hpp"
 #include "messenger/messenger_api.hpp"
+#include "messenger/messenger_protocol.hpp"
 
 namespace fetch {
 namespace messenger {
