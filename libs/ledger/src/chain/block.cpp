@@ -90,10 +90,15 @@ void Block::UpdateDigest()
 
 void Block::UpdateTimestamp()
 {
-  if (body.previous_hash != chain::GENESIS_DIGEST)
+  if (!IsGenesis())
   {
     body.timestamp = GetTime(clock_);
   }
+}
+
+bool Block::IsGenesis() const
+{
+  return body.previous_hash == chain::GENESIS_DIGEST;
 }
 
 }  // namespace ledger

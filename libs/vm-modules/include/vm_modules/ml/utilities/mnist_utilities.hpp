@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,48 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/utilities/mnist_utilities.hpp"
 #include "vm/module.hpp"
+#include "vm/object.hpp"
 #include "vm_modules/math/tensor.hpp"
-#include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/ml.hpp"
-#include "vm_modules/ml/model/model.hpp"
-#include "vm_modules/ml/optimisation/optimiser.hpp"
-#include "vm_modules/ml/state_dict.hpp"
-#include "vm_modules/ml/training_pair.hpp"
-#include "vm_modules/ml/utilities/mnist_utilities.hpp"
-#include "vm_modules/ml/utilities/scaler.hpp"
-
-using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
 namespace ml {
+namespace utilities {
 
-void BindML(Module &module)
-{
-  // Tensor - required by later functions
-  math::VMTensor::Bind(module);
+void BindMNISTUtils(vm::Module &module);
 
-  // ml fundamentals
-  VMStateDict::Bind(module);
-  VMGraph::Bind(module);
-  VMTrainingPair::Bind(module);
-
-  // dataloader
-  VMDataLoader::Bind(module);
-
-  // optimisers
-  VMOptimiser::Bind(module);
-
-  // model
-  model::VMModel::Bind(module);
-
-  // utilities
-  utilities::VMScaler::Bind(module);
-  utilities::BindMNISTUtils(module);
-}
-
+}  // namespace utilities
 }  // namespace ml
 }  // namespace vm_modules
 }  // namespace fetch

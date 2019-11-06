@@ -243,7 +243,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
   // of a fresh node, or a long series of errors prevents us from reloading previous state. In
   // either case we transition to the restarting the coordination
   assert(static_cast<bool>(current_block_));
-  if (chain::GENESIS_DIGEST != current_block_->body.previous_hash)
+  if (!current_block_->IsGenesis())
   {
     // normal case we have found a block from which point we want to revert. Attempt to revert to it
     bool const revert_success = storage_unit_.RevertToHash(current_block_->body.merkle_hash,
@@ -534,7 +534,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 {
   pre_valid_state_count_->increment();
 
-  bool const is_genesis = current_block_->body.previous_hash == chain::GENESIS_DIGEST;
+  bool const is_genesis = current_block_->IsGenesis();
 
   auto fail{[this](char const *reason) {
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (0x",
@@ -620,7 +620,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 {
   syn_exec_state_count_->count();
 
-  bool const is_genesis = current_block_->body.previous_hash == chain::GENESIS_DIGEST;
+  bool const is_genesis = current_block_->IsGenesis();
 
   // Executing synergetic work
   if ((!is_genesis) && synergetic_exec_mgr_)
@@ -837,7 +837,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   auto const state_hash = storage_unit_.CurrentHash();
 
   bool invalid_block{false};
-  if (chain::GENESIS_DIGEST != current_block_->body.previous_hash)
+  if (!current_block_->IsGenesis())
   {
     if (state_hash != current_block_->body.merkle_hash)
     {

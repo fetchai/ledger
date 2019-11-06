@@ -23,9 +23,7 @@
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 
-#include <algorithm>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -47,7 +45,7 @@ int main(int argc, char **argv)
 
   if (argc != 2)
   {
-    std::cout << "Usage : " << argv[0] << "config_file.json" << std::endl;
+    std::cout << "Usage : " << argv[0] << " config_file.json" << std::endl;
     return 1;
   }
 
