@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "dmlf/update.hpp"
 
@@ -31,7 +33,7 @@ class ClientAlgorithmController
   using MessageControllerInterfacePtr = std::shared_ptr<dmlf::AbstractLearnerNetworker>;
 
 public:
-  ClientAlgorithmController(MessageControllerInterfacePtr mci_ptr);
+  explicit ClientAlgorithmController(MessageControllerInterfacePtr mci_ptr);
   virtual ~ClientAlgorithmController() = default;
 
   template <typename UpdateType>
@@ -48,7 +50,7 @@ private:
 template <typename TensorType>
 ClientAlgorithmController<TensorType>::ClientAlgorithmController(
     MessageControllerInterfacePtr mci_ptr)
-  : mci_ptr_(mci_ptr)
+  : mci_ptr_(std::move(mci_ptr))
 {}
 
 /**

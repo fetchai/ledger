@@ -46,7 +46,7 @@ class CollectiveLearningClient
   using AlgorithmPtrType        = std::shared_ptr<ClientAlgorithm<TensorType>>;
 
 public:
-  CollectiveLearningClient(std::string const &id, ClientParams<DataType> const &client_params,
+  CollectiveLearningClient(std::string id, ClientParams<DataType> const &client_params,
                            std::shared_ptr<dmlf::AbstractLearnerNetworker> networker_ptr,
                            std::shared_ptr<std::mutex>                     console_mutex_ptr,
                            bool                                            build_algorithms = true);
@@ -71,10 +71,10 @@ protected:
 
 template <class TensorType>
 CollectiveLearningClient<TensorType>::CollectiveLearningClient(
-    std::string const &id, ClientParams<DataType> const &client_params,
+    std::string id, ClientParams<DataType> const &client_params,
     std::shared_ptr<dmlf::AbstractLearnerNetworker> networker_ptr,
     std::shared_ptr<std::mutex> console_mutex_ptr, bool build_algorithms)
-  : id_(id)
+  : id_(std::move(id))
 {
   // build algorithm controller
   algorithm_controller_ = std::make_shared<AlgorithmControllerType>(networker_ptr);
@@ -139,7 +139,7 @@ typename CollectiveLearningClient<TensorType>::DataType
 CollectiveLearningClient<TensorType>::GetLossAverage()
 {
   DataType loss_mean(0);
-  for (auto algorithm : algorithms_)
+  for (const auto &algorithm : algorithms_)
   {
     loss_mean += algorithm->GetLossAverage();
   }

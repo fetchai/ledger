@@ -57,9 +57,9 @@ class ClientAlgorithm
   using AlgorithmControllerPtrType = std::shared_ptr<ClientAlgorithmController<TensorType>>;
 
 public:
-  ClientAlgorithm(AlgorithmControllerPtrType algorithm_controller, std::string const &id,
-                  ClientParams<DataType> const &client_params,
-                  std::shared_ptr<std::mutex>   console_mutex_ptr);
+  ClientAlgorithm(AlgorithmControllerPtrType algorithm_controller, std::string id,
+                  ClientParams<DataType>      client_params,
+                  std::shared_ptr<std::mutex> console_mutex_ptr);
 
   /**
    * explicit copy constructor because mutexes can't be copied
@@ -145,13 +145,13 @@ private:
 
 template <class TensorType>
 ClientAlgorithm<TensorType>::ClientAlgorithm(AlgorithmControllerPtrType    algorithm_controller,
-                                             std::string const &           id,
+                                             std::string                   id,
                                              ClientParams<DataType> const &client_params,
                                              std::shared_ptr<std::mutex>   console_mutex_ptr)
-  : id_(id)
+  : id_(std::move(id))
   , console_mutex_ptr_(std::move(console_mutex_ptr))
-  , params_(client_params)
-  , algorithm_controller_(algorithm_controller)
+  , params_(std::move(client_params))
+  , algorithm_controller_(std::move(algorithm_controller))
 {
   //  SetParams(client_params);
   ClearLossFile();

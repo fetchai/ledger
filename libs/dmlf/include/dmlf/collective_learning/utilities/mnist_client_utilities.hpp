@@ -98,7 +98,7 @@ MakeMNISTClient(
 
   // build an mnist model for each algorithm in the client
   auto algorithms = client->GetAlgorithms();
-  for (auto algorithm : algorithms)
+  for (const auto &algorithm : algorithms)
   {
     // build the mnist model
     auto model_ptr = MakeMNistModel<TensorType>(client_params, images, labels, test_set_ratio);
