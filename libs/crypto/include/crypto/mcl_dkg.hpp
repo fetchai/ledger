@@ -153,11 +153,11 @@ void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j)
  * Helper functions for computations used in the DKG
  */
 // For DKG
-void      SetGenerator(Generator & generator_g,
-                       std::string string_to_hash = "Fetch.ai Elliptic Curve Generator G");
+void      SetGenerator(Generator &        generator_g,
+                       std::string const &string_to_hash = "Fetch.ai Elliptic Curve Generator G");
 void      SetGenerators(Generator &generator_g, Generator &generator_h,
-                        std::string string_to_hash  = "Fetch.ai Elliptic Curve Generator G",
-                        std::string string_to_hash2 = "Fetch.ai Elliptic Curve Generator H");
+                        std::string const &string_to_hash  = "Fetch.ai Elliptic Curve Generator G",
+                        std::string const &string_to_hash2 = "Fetch.ai Elliptic Curve Generator H");
 PublicKey ComputeLHS(PublicKey &tmpG, Generator const &G, Generator const &H,
                      PrivateKey const &share1, PrivateKey const &share2);
 PublicKey ComputeLHS(Generator const &G, Generator const &H, PrivateKey const &share1,
@@ -179,9 +179,10 @@ std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator);
 
 // For aggregate signatures. Note only the verification of the signatures is done using VerifySign
 // but one must compute the public key to verify with
-PrivateKey SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
-                                           std::vector<PublicKey> const &cabinet_notarisation_keys);
-Signature  AggregateSign(MessagePayload const &message, AggregatePrivateKey const &private_key);
+PrivateKey         SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
+                                                   std::vector<PublicKey> const &cabinet_notarisation_keys);
+Signature          AggregateSign(MessagePayload const &     message,
+                                 AggregatePrivateKey const &aggregate_private_key);
 AggregateSignature ComputeAggregateSignature(
     std::unordered_map<uint32_t, Signature> const &signatures, uint32_t cabinet_size);
 PublicKey ComputeAggregatePublicKey(SignerRecord const &          signers,

@@ -84,15 +84,15 @@ DkgKeyInformation::DkgKeyInformation(PublicKey              group_public_key1,
   , private_key_share{std::move(secret_key_shares1)}
 {}
 
-void SetGenerator(Generator &generator_g, std::string string_to_hash)
+void SetGenerator(Generator &generator_g, std::string const &string_to_hash)
 {
   assert(!string_to_hash.empty());
   bn::hashAndMapToG2(generator_g, string_to_hash);
   assert(!generator_g.isZero());
 }
 
-void SetGenerators(Generator &generator_g, Generator &generator_h, std::string string_to_hash,
-                   std::string string_to_hash2)
+void SetGenerators(Generator &generator_g, Generator &generator_h,
+                   std::string const &string_to_hash, std::string const &string_to_hash2)
 {
   assert(!string_to_hash.empty() && !string_to_hash2.empty());
   assert(string_to_hash != string_to_hash2);
