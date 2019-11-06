@@ -58,7 +58,7 @@ class ClientAlgorithm
 
 public:
   ClientAlgorithm(AlgorithmControllerPtrType algorithm_controller, std::string id,
-                  ClientParams<DataType>      client_params,
+                  ClientParams<DataType>      const &client_params,
                   std::shared_ptr<std::mutex> console_mutex_ptr);
 
   /**
@@ -153,7 +153,6 @@ ClientAlgorithm<TensorType>::ClientAlgorithm(AlgorithmControllerPtrType    algor
   , params_(std::move(client_params))
   , algorithm_controller_(std::move(algorithm_controller))
 {
-  //  SetParams(client_params);
   ClearLossFile();
 }
 

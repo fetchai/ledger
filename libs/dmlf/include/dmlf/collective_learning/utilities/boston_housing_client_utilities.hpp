@@ -28,12 +28,12 @@ namespace collective_learning {
 namespace utilities {
 
 namespace {
+
 /**
- * Utility for setting up a single MnistModel
+ * Utility for setting up a single model
  * @tparam TensorType
- * @param client_params
- * @param images
- * @param labels
+ * @param data
+ * @param labels 
  * @param test_set_ratio
  * @return
  */
@@ -83,7 +83,7 @@ MakeBostonClient(
   auto algorithms = client->GetAlgorithms();
   for (const auto &algorithm : algorithms)
   {
-    // build the mnist model
+    // build the model
     auto model_ptr = MakeBostonModel<TensorType>(data, labels, test_set_ratio);
 
     algorithm->SetModel(model_ptr);

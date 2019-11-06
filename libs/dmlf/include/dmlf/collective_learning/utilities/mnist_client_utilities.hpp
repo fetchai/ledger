@@ -72,7 +72,7 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(
 }  // namespace
 
 /**
- * Utility for building a collective learning client with every algorithm
+ * Utility for building a collective learning client with every mnist algorithm
  * @tparam TensorType
  * @param id
  * @param client_params
