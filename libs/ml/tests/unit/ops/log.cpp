@@ -18,7 +18,7 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/ops/log.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -29,6 +29,9 @@
 #include <cstdint>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class LogTest : public ::testing::Test
 {
@@ -193,3 +196,7 @@ TYPED_TEST(LogTest, saveparams_backward_test)
       fetch::math::function_tolerance<typename TypeParam::Type>()));
   fetch::math::state_clear<DataType>();
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

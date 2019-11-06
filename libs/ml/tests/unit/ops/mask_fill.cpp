@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -26,16 +26,17 @@
 
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class MaskFillTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
-TYPED_TEST_CASE(MaskFillTest, MyTypes);
+
+TYPED_TEST_CASE(MaskFillTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(MaskFillTest, forward_test)
 {
@@ -264,3 +265,7 @@ TYPED_TEST(MaskFillTest, saveparams_back_test_broadcast_mask)
 
   EXPECT_TRUE(prediction.at(1) == new_prediction.at(1));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

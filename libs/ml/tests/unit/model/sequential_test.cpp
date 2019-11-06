@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
+#include "gtest/gtest.h"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/model/sequential.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 
 namespace fetch {
 namespace ml {
@@ -36,8 +36,8 @@ class SequentialModelTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SequentialModelTest, math::test::TensorFloatingTypes);
-
+TYPED_TEST_CASE(SequentialModelTest, math::test::HighPrecisionTensorFloatingTypes);
+namespace sequential_details {
 template <typename TypeParam>
 void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label)
 {
@@ -108,32 +108,34 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
 
   return true;
 }
+} // sequential_details
+
 
 TYPED_TEST(SequentialModelTest, adagrad_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-4f}, DataType{0.03f}, 400));
+      sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-4f}, DataType{0.03f}, 400));
 }
 
 TYPED_TEST(SequentialModelTest, adam_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, DataType{1e-3f}, DataType{0.01f}, 400));
+      sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, DataType{1e-3f}, DataType{0.01f}, 400));
 }
 
 TYPED_TEST(SequentialModelTest, momentum_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, DataType{1e-4f}, DataType{0.5f}, 200));
+      sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, DataType{1e-4f}, DataType{0.5f}, 200));
 }
 
 TYPED_TEST(SequentialModelTest, rmsprop_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-2f},
+  ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-2f},
                                  DataType{0.005f}, 200));
 }
 
@@ -141,7 +143,7 @@ TYPED_TEST(SequentialModelTest, sgd_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-4f}, DataType{0.7f}, 400));
+      sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-4f}, DataType{0.7f}, 400));
 }
 
 TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
@@ -165,10 +167,10 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
 
   // set up data
   TypeParam train_data, train_labels;
-  PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels);
+  sequential_details::PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels);
 
   // set up model
-  ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
+  ModelType model = sequential_details::SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
                                                                train_data, train_labels);
 
   // test prediction performance
@@ -204,7 +206,6 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
 }
 
-
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

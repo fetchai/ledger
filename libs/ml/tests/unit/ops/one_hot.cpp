@@ -18,7 +18,7 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/ops/one_hot.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -28,15 +28,15 @@
 #include <memory>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class OneHotOpTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(OneHotOpTest, MyTypes);
+TYPED_TEST_CASE(OneHotOpTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(OneHotOpTest, forward_test)
 {
@@ -116,3 +116,7 @@ TYPED_TEST(OneHotOpTest, saveparams_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

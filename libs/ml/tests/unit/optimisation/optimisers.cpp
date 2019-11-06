@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
@@ -29,17 +29,17 @@
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
-
 #include "gtest/gtest.h"
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class OptimisersTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(OptimisersTest, MyTypes);
+TYPED_TEST_CASE(OptimisersTest, math::test::TensorFloatingTypes);
 
 //////////////////////////
 /// reusable functions ///
@@ -668,3 +668,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
+
+} // test
+} // ml
+} // fetch

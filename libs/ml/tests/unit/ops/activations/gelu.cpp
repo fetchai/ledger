@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
-#include "test_types.hpp"
+#include "gtest/gtest.h"
 #include "ml/ops/activations/gelu.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "gtest/gtest.h"
 #include <vector>
 
 namespace fetch {
@@ -190,7 +190,6 @@ TYPED_TEST(GeluTest, saveparams_backward_3d_test)
   fetch::math::state_clear<DataType>();
 }
 
-
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

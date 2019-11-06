@@ -18,7 +18,7 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -28,16 +28,17 @@
 #include <memory>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class AddTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
-TYPED_TEST_CASE(AddTest, MyTypes);
+
+TYPED_TEST_CASE(AddTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(AddTest, forward_test_NB_N1)
 {
@@ -369,3 +370,7 @@ TYPED_TEST(AddTest, saveparams_backward_2D_broadcast_test)
       new_prediction.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

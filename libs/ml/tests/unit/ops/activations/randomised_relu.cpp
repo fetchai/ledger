@@ -17,12 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "gtest/gtest.h"
 #include "math/base_types.hpp"
-#include "test_types.hpp"
 #include "ml/ops/activations/randomised_relu.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -317,6 +317,6 @@ TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

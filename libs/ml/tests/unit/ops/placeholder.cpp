@@ -18,7 +18,7 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
@@ -26,6 +26,9 @@
 
 #include "gtest/gtest.h"
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class PlaceholderAllTest : public ::testing::Test
 {
@@ -187,3 +190,7 @@ TYPED_TEST(PlaceholderAllTest, saveable_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

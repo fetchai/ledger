@@ -18,7 +18,7 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/ops/divide.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -29,17 +29,18 @@
 #include <memory>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 namespace {
 template <typename T>
 class DivideTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
-TYPED_TEST_CASE(DivideTest, MyTypes);
+
+TYPED_TEST_CASE(DivideTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(DivideTest, forward_test)
 {
@@ -220,3 +221,7 @@ TYPED_TEST(DivideTest, saveparams_backward_test)
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 }  // namespace
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

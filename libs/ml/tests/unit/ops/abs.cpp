@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/ops/abs.hpp"
 
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -28,16 +28,17 @@
 #include "ml/serializers/ml_types.hpp"
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class AbsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
-TYPED_TEST_CASE(AbsTest, MyTypes);
+
+TYPED_TEST_CASE(AbsTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(AbsTest, forward_test)
 {
@@ -188,3 +189,7 @@ TYPED_TEST(AbsTest, saveparams_backward_test)
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

@@ -18,24 +18,22 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/constant.hpp"
 #include "ml/serializers/ml_types.hpp"
 
 #include "gtest/gtest.h"
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class ConstantTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(ConstantTest, MyTypes);
+TYPED_TEST_CASE(ConstantTest, math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(ConstantTest, set_data)
 {
@@ -147,3 +145,7 @@ TYPED_TEST(ConstantTest, saveable_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

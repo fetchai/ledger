@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
-#include "test_types.hpp"
+#include "gtest/gtest.h"
 #include "ml/ops/activations/leaky_relu.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "gtest/gtest.h"
 #include <memory>
 
 namespace fetch {
@@ -240,6 +240,6 @@ TYPED_TEST(LeakyReluTest, saveparams_backward_3d_tensor_test)
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

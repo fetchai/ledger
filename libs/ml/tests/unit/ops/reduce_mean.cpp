@@ -18,7 +18,7 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/reduce_mean.hpp"
@@ -32,16 +32,15 @@
 #include <cstdint>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class ReduceMeanTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>,
-                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
-
-TYPED_TEST_CASE(ReduceMeanTest, MyTypes);
+TYPED_TEST_CASE(ReduceMeanTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(ReduceMeanTest, forward_2_2_2_test)
 {
@@ -233,3 +232,7 @@ TYPED_TEST(ReduceMeanTest, ReduceMean_graph_serialization_test)
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

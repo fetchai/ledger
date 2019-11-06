@@ -16,18 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
-
 #include "ml/utilities/graph_builder.hpp"
-
 #include "core/serializers/main_serializer.hpp"
 #include "ml/serializers/ml_types.hpp"
-
 #include "gtest/gtest.h"
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class SerializersTestWithInt : public ::testing::Test
 {
@@ -38,15 +38,8 @@ class SerializersTestNoInt : public ::testing::Test
 {
 };
 
-using WithIntTypes = ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<float>,
-                                      fetch::math::Tensor<double>,
-                                      fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                      fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-using NoIntTypes   = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(SerializersTestWithInt, WithIntTypes);
-TYPED_TEST_CASE(SerializersTestNoInt, NoIntTypes);
+TYPED_TEST_CASE(SerializersTestWithInt, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_CASE(SerializersTestNoInt, math::test::TensorFloatingTypes);
 
 TYPED_TEST(SerializersTestWithInt, serialize_empty_state_dict)
 {
@@ -184,3 +177,7 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
+
+} // test
+} // ml
+} // fetch

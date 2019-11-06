@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
+#include "gtest/gtest.h"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/model/dnn_regressor.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 
 namespace fetch {
 namespace ml {
@@ -35,6 +35,7 @@ class DNNRegressorModelTest : public ::testing::Test
 
 TYPED_TEST_CASE(DNNRegressorModelTest, math::test::TensorFloatingTypes);
 
+namespace regressor_details{
 template <typename TypeParam>
 void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label)
 {
@@ -101,39 +102,41 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   return true;
 }
 
+} // regressor_details
+
 TYPED_TEST(DNNRegressorModelTest, adagrad_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-4f}, DataType{0.03f}, 400));
+      regressor_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-4f}, DataType{0.03f}, 400));
 }
 
 TYPED_TEST(DNNRegressorModelTest, adam_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, DataType{1e-3f}, DataType{0.01f}, 400));
+      regressor_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, DataType{1e-3f}, DataType{0.01f}, 400));
 }
 
 TYPED_TEST(DNNRegressorModelTest, momentum_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, DataType{1e-4f}, DataType{0.5f}, 200));
+      regressor_details::RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, DataType{1e-4f}, DataType{0.5f}, 200));
 }
 
 TYPED_TEST(DNNRegressorModelTest, rmsprop_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-2f}, DataType{0.01f}, 400));
+      regressor_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-2f}, DataType{0.01f}, 400));
 }
 
 TYPED_TEST(DNNRegressorModelTest, sgd_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-4f}, DataType{0.7f}, 400));
+      regressor_details::RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-4f}, DataType{0.7f}, 400));
 }
 
 TYPED_TEST(DNNRegressorModelTest, sgd_dnnregressor_serialisation)
@@ -154,10 +157,10 @@ TYPED_TEST(DNNRegressorModelTest, sgd_dnnregressor_serialisation)
 
   // set up data
   TypeParam train_data, train_labels;
-  PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels);
+  regressor_details::PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels);
 
   // set up model
-  ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
+  ModelType model = regressor_details::SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
                                                                train_data, train_labels);
 
   // test prediction performance
@@ -193,6 +196,6 @@ TYPED_TEST(DNNRegressorModelTest, sgd_dnnregressor_serialisation)
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

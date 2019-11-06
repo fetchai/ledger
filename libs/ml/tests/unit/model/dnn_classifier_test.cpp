@@ -35,6 +35,7 @@ class DNNClassifierModelTest : public ::testing::Test
 
 TYPED_TEST_CASE(DNNClassifierModelTest, math::test::TensorFloatingTypes);
 
+namespace classifier_details {
 template <typename TypeParam>
 void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label)
 {
@@ -102,29 +103,31 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   return true;
 }
 
+} // classifier_details
+
 TYPED_TEST(DNNClassifierModelTest, adagrad_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-2f}, DataType{0.01f}, 400));
+      classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD, DataType{1e-2f}, DataType{0.01f}, 400));
 }
 
 TYPED_TEST(DNNClassifierModelTest, adam_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, DataType{1e-5f}, DataType{0.1f}));
+  ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM, DataType{1e-5f}, DataType{0.1f}));
 }
 
 TYPED_TEST(DNNClassifierModelTest, momentum_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, DataType{1e-5f}));
+  ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, DataType{1e-5f}));
 }
 
 TYPED_TEST(DNNClassifierModelTest, rmsprop_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-4f},
+  ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP, DataType{1e-4f},
                                  DataType{0.002f}, 400));
 }
 
@@ -132,7 +135,7 @@ TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-2f}, DataType{0.7f}, 400));
+      classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-2f}, DataType{0.7f}, 400));
 }
 
 TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier_serialisation)
@@ -153,10 +156,10 @@ TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier_serialisation)
 
   // set up data
   TypeParam train_data, train_labels, test_datum, test_label;
-  PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels);
+  classifier_details::PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels);
 
   // set up model
-  ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
+  ModelType model = classifier_details::SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
                                                                train_data, train_labels);
 
   // test prediction performance

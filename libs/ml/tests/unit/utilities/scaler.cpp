@@ -17,23 +17,22 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/utilities/min_max_scaler.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-
 #include "gtest/gtest.h"
-
 #include <vector>
+
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class ScalerTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(ScalerTest, MyTypes);
+TYPED_TEST_CASE(ScalerTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(ScalerTest, min_max_2d_test)
 {
@@ -95,3 +94,7 @@ TYPED_TEST(ScalerTest, min_max_3d_test)
   EXPECT_TRUE(fetch::math::Max(norm_data) <= static_cast<DataType>(1));
   EXPECT_TRUE(fetch::math::Min(norm_data) >= static_cast<DataType>(0));
 }
+
+} // test
+} // ml
+} // fetch
