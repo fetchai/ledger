@@ -98,6 +98,8 @@ print(tabulate(table, headers=['Benchmark (' + str(num_reps) + ' reps)',
                                'Mean (ns)', 'Std error (ns)', 'Opcodes',
                                'Baseline', 'Net opcodes'], floatfmt=".2f"))
 
+
+    
 param_bm_types = ['String', 'Array', 'Update']
 pfits = {}
 fig = 0
@@ -120,6 +122,5 @@ for param_bm_type in param_bm_types:
 
         if make_plots:
             import benchmark_plots
-
-            benchmark_plots.plot(lengths, times, err=errs, fig=fig, title=arr_bm_type + param_bm_type)
+            benchmark_plots.plot(lengths, times, err=errs, fig=fig, title=arr_bm_type + param_bm_type, savefig=False)
             fig += 1

@@ -117,7 +117,7 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
   std::string error{};
   Variant output{};
   for (auto _ : state) {
-    vm.Execute(executable, "main", error, output);
+    // vm.Execute(executable, "main", error, output);
   }
 
   auto function = executable.FindFunction("main");
@@ -227,7 +227,7 @@ void BasicBenchmarks(benchmark::State &state) {
       DESTRUCT_BASE("DestructBase", FunMain(VarDec(STRING) + For(EMPTY, ONE))),
       DESTRUCT("Destruct", FunMain(For(VarDec(STRING), ONE))),
       FUNC("Function", FunMain(FUN_CALL) + FunUser("")),
-      VAR_DEC_STRING("VariableDeclareString", FunMain(VarDec(STRING)));
+      VAR_DEC_STRING("VariableDeclareStr", FunMain(VarDec(STRING)));
 
   std::unordered_map<std::string, std::string>
       baselineMap({
@@ -246,7 +246,7 @@ void BasicBenchmarks(benchmark::State &state) {
                       {"DestructBase",          "ForLoop"},
                       {"Destruct",              "DestructBase"},
                       {"Function",              "Return"},
-                      {"VariableDeclareString", "Return"}
+                      {"VariableDeclareStr",    "Return"}
                   });
 
   std::vector<std::pair<std::string, std::string>> const
@@ -365,64 +365,64 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
       INP_MOD("x %= x;\n");
 
   const std::pair<std::string, std::string>
-      RET_VAL = std::make_pair("ReturnValue" + prim, FunMainRet("return " + val + ";\n", prim)),
-      VAR_DEC = std::make_pair("VariableDeclare" + prim, FunMain(VarDec(prim))),
-      VAR_DEC_ASS = std::make_pair("VariableDeclareAssign" + prim, FunMain(VarDecAss(prim, val))),
-      PUSH_CONST = std::make_pair("PushConst" + prim, FunMain(val + ";\n")),
-      PUSH_VAR = std::make_pair("PushVariable" + prim, FunMain(VarDecAss(prim, val) + PUSH)),
-      POP_TO_VAR = std::make_pair("PopToVariable" + prim, FunMain(VarDecAss(prim, val) + POP)),
-      PRIM_ADD = std::make_pair("PrimitiveAdd" + prim, FunMain(VarDecAss(prim, val) + ADD)),
-      PRIM_SUB = std::make_pair("PrimitiveSubtract" + prim, FunMain(VarDecAss(prim, val) + SUB)),
-      PRIM_MUL = std::make_pair("PrimitiveMultiply" + prim, FunMain(VarDecAss(prim, val) + MUL)),
-      PRIM_DIV = std::make_pair("PrimitiveDivide" + prim, FunMain(VarDecAss(prim, val) + DIV)),
-      PRIM_MOD = std::make_pair("PrimitiveModulo" + prim, FunMain(VarDecAss(prim, val) + MOD)),
-      PRIM_NEG = std::make_pair("PrimitiveNegate" + prim, FunMain(VarDecAss(prim, val) + NEG)),
-      PRIM_EQ = std::make_pair("PrimitiveEqual" + prim, FunMain(VarDecAss(prim, val) + EQ)),
-      PRIM_NEQ = std::make_pair("PrimitiveNotEqual" + prim, FunMain(VarDecAss(prim, val) + NEQ)),
-      PRIM_LT = std::make_pair("PrimitiveLessThan" + prim, FunMain(VarDecAss(prim, val) + LT)),
-      PRIM_GT = std::make_pair("PrimitiveGreaterThan" + prim, FunMain(VarDecAss(prim, val) + GT)),
-      PRIM_LTE = std::make_pair("PrimitiveLessThanOrEqual" + prim, FunMain(VarDecAss(prim, val) + LTE)),
-      PRIM_GTE = std::make_pair("PrimitiveGreaterThanOrEqual" + prim, FunMain(VarDecAss(prim, val) + GTE)),
-      PRIM_PRE_INC = std::make_pair("VariablePrefixInc" + prim, FunMain(VarDecAss(prim, val) + PRE_INC)),
-      PRIM_PRE_DEC = std::make_pair("VariablePrefixDec" + prim, FunMain(VarDecAss(prim, val) + PRE_DEC)),
-      PRIM_POST_INC = std::make_pair("VariablePostfixInc" + prim, FunMain(VarDecAss(prim, val) + POST_INC)),
-      PRIM_POST_DEC = std::make_pair("VariablePostfixDec" + prim, FunMain(VarDecAss(prim, val) + POST_DEC)),
-      VAR_PRIM_INP_ADD = std::make_pair("VariablePrimitiveInplaceAdd" + prim, FunMain(VarDecAss(prim, val) + INP_ADD)),
-      VAR_PRIM_INP_SUB = std::make_pair("VariablePrimitiveInplaceSubtract" + prim, FunMain(VarDecAss(prim, val) + INP_SUB)),
-      VAR_PRIM_INP_MUL = std::make_pair("VariablePrimitiveInplaceMultiply" + prim, FunMain(VarDecAss(prim, val) + INP_MUL)),
-      VAR_PRIM_INP_DIV = std::make_pair("VariablePrimitiveInplaceDivide" + prim, FunMain(VarDecAss(prim, val) + INP_DIV)),
-      VAR_PRIM_INP_MOD = std::make_pair("VariablePrimitiveInplaceModulo" + prim, FunMain(VarDecAss(prim, val) + INP_MOD));
+      RET_VAL = std::make_pair("PrimReturnValue" + prim, FunMainRet("return " + val + ";\n", prim)),
+      VAR_DEC = std::make_pair("PrimVariableDeclare" + prim, FunMain(VarDec(prim))),
+      VAR_DEC_ASS = std::make_pair("PrimVariableDeclareAssign" + prim, FunMain(VarDecAss(prim, val))),
+      PUSH_CONST = std::make_pair("PrimPushConst" + prim, FunMain(val + ";\n")),
+      PUSH_VAR = std::make_pair("PrimPushVariable" + prim, FunMain(VarDecAss(prim, val) + PUSH)),
+      POP_TO_VAR = std::make_pair("PrimPopToVariable" + prim, FunMain(VarDecAss(prim, val) + POP)),
+      PRIM_ADD = std::make_pair("PrimAdd" + prim, FunMain(VarDecAss(prim, val) + ADD)),
+      PRIM_SUB = std::make_pair("PrimSubtract" + prim, FunMain(VarDecAss(prim, val) + SUB)),
+      PRIM_MUL = std::make_pair("PrimMultiply" + prim, FunMain(VarDecAss(prim, val) + MUL)),
+      PRIM_DIV = std::make_pair("PrimDivide" + prim, FunMain(VarDecAss(prim, val) + DIV)),
+      PRIM_MOD = std::make_pair("PrimModulo" + prim, FunMain(VarDecAss(prim, val) + MOD)),
+      PRIM_NEG = std::make_pair("PrimNegate" + prim, FunMain(VarDecAss(prim, val) + NEG)),
+      PRIM_EQ = std::make_pair("PrimEqual" + prim, FunMain(VarDecAss(prim, val) + EQ)),
+      PRIM_NEQ = std::make_pair("PrimNotEqual" + prim, FunMain(VarDecAss(prim, val) + NEQ)),
+      PRIM_LT = std::make_pair("PrimLessThan" + prim, FunMain(VarDecAss(prim, val) + LT)),
+      PRIM_GT = std::make_pair("PrimGreaterThan" + prim, FunMain(VarDecAss(prim, val) + GT)),
+      PRIM_LTE = std::make_pair("PrimLessThanOrEqual" + prim, FunMain(VarDecAss(prim, val) + LTE)),
+      PRIM_GTE = std::make_pair("PrimGreaterThanOrEqual" + prim, FunMain(VarDecAss(prim, val) + GTE)),
+      PRIM_PRE_INC = std::make_pair("PrimVariablePrefixInc" + prim, FunMain(VarDecAss(prim, val) + PRE_INC)),
+      PRIM_PRE_DEC = std::make_pair("PrimVariablePrefixDec" + prim, FunMain(VarDecAss(prim, val) + PRE_DEC)),
+      PRIM_POST_INC = std::make_pair("PrimVariablePostfixInc" + prim, FunMain(VarDecAss(prim, val) + POST_INC)),
+      PRIM_POST_DEC = std::make_pair("PrimVariablePostfixDec" + prim, FunMain(VarDecAss(prim, val) + POST_DEC)),
+      VAR_PRIM_INP_ADD = std::make_pair("PrimVariableInplaceAdd" + prim, FunMain(VarDecAss(prim, val) + INP_ADD)),
+      VAR_PRIM_INP_SUB = std::make_pair("PrimVariableInplaceSubtract" + prim, FunMain(VarDecAss(prim, val) + INP_SUB)),
+      VAR_PRIM_INP_MUL = std::make_pair("PrimVariableInplaceMultiply" + prim, FunMain(VarDecAss(prim, val) + INP_MUL)),
+      VAR_PRIM_INP_DIV = std::make_pair("PrimVariableInplaceDivide" + prim, FunMain(VarDecAss(prim, val) + INP_DIV)),
+      VAR_PRIM_INP_MOD = std::make_pair("PrimVariableInplaceModulo" + prim, FunMain(VarDecAss(prim, val) + INP_MOD));
 
 //Define{benchmark,baseline}pairs
   std::unordered_map<std::string, std::string>
       baselineMap({
-                      {"ReturnValue" + prim,                      "Return"},
-                      {"VariableDeclare" + prim,                  "Return"},
-                      {"VariableDeclareAssign" + prim,            "Return"},
-                      {"PushConst" + prim,                        "Return"},
-                      {"PushVariable" + prim,                     "PushConst" + prim},
-                      {"PopToVariable" + prim,                    "VariableDeclareAssign" + prim},
-                      {"PrimitiveAdd" + prim,                     "PushVariable" + prim},
-                      {"PrimitiveSubtract" + prim,                "PushVariable" + prim},
-                      {"PrimitiveMultiply" + prim,                "PushVariable" + prim},
-                      {"PrimitiveDivide" + prim,                  "PushVariable" + prim},
-                      {"PrimitiveModulo" + prim,                  "PushVariable" + prim},
-                      {"PrimitiveNegate" + prim,                  "PushVariable" + prim},
-                      {"PrimitiveEqual" + prim,                   "PushVariable" + prim},
-                      {"PrimitiveNotEqual" + prim,                "PushVariable" + prim},
-                      {"PrimitiveLessThan" + prim,                "PushVariable" + prim},
-                      {"PrimitiveGreaterThan" + prim,             "PushVariable" + prim},
-                      {"PrimitiveLessThanOrEqual" + prim,         "PushVariable" + prim},
-                      {"PrimitiveGreaterThanOrEqual" + prim,      "PushVariable" + prim},
-                      {"VariablePrefixInc" + prim,                "VariableDeclareAssign" + prim},
-                      {"VariablePrefixDec" + prim,                "VariableDeclareAssign" + prim},
-                      {"VariablePostfixInc" + prim,               "VariableDeclareAssign" + prim},
-                      {"VariablePostfixDec" + prim,               "VariableDeclareAssign" + prim},
-                      {"VariablePrimitiveInplaceAdd" + prim,      "VariableDeclareAssign" + prim},
-                      {"VariablePrimitiveInplaceSubtract" + prim, "VariableDeclareAssign" + prim},
-                      {"VariablePrimitiveInplaceMultiply" + prim, "VariableDeclareAssign" + prim},
-                      {"VariablePrimitiveInplaceDivide" + prim,   "VariableDeclareAssign" + prim},
-                      {"VariablePrimitiveInplaceModulo" + prim,   "VariableDeclareAssign" + prim}
+                      {"PrimReturnValue" + prim,             "Return"},
+                      {"PrimVariableDeclare" + prim,         "Return"},
+                      {"PrimVariableDeclareAssign" + prim,   "Return"},
+                      {"PrimPushConst" + prim,               "Return"},
+                      {"PrimPushVariable" + prim,            "PrimPushConst" + prim},
+                      {"PrimPopToVariable" + prim,           "PrimVariableDeclareAssign" + prim},
+                      {"PrimAdd" + prim,                     "PrimPushVariable" + prim},
+                      {"PrimSubtract" + prim,                "PrimPushVariable" + prim},
+                      {"PrimMultiply" + prim,                "PrimPushVariable" + prim},
+                      {"PrimDivide" + prim,                  "PrimPushVariable" + prim},
+                      {"PrimModulo" + prim,                  "PrimPushVariable" + prim},
+                      {"PrimNegate" + prim,                  "PrimPushVariable" + prim},
+                      {"PrimEqual" + prim,                   "PrimPushVariable" + prim},
+                      {"PrimNotEqual" + prim,                "PrimPushVariable" + prim},
+                      {"PrimLessThan" + prim,                "PrimPushVariable" + prim},
+                      {"PrimGreaterThan" + prim,             "PrimPushVariable" + prim},
+                      {"PrimLessThanOrEqual" + prim,         "PrimPushVariable" + prim},
+                      {"PrimGreaterThanOrEqual" + prim,      "PrimPushVariable" + prim},
+                      {"PrimVariablePrefixInc" + prim,       "PrimVariableDeclareAssign" + prim},
+                      {"PrimVariablePrefixDec" + prim,       "PrimVariableDeclareAssign" + prim},
+                      {"PrimVariablePostfixInc" + prim,      "PrimVariableDeclareAssign" + prim},
+                      {"PrimVariablePostfixDec" + prim,      "PrimVariableDeclareAssign" + prim},
+                      {"PrimVariableInplaceAdd" + prim,      "PrimVariableDeclareAssign" + prim},
+                      {"PrimVariableInplaceSubtract" + prim, "PrimVariableDeclareAssign" + prim},
+                      {"PrimVariableInplaceMultiply" + prim, "PrimVariableDeclareAssign" + prim},
+                      {"PrimVariableInplaceDivide" + prim,   "PrimVariableDeclareAssign" + prim},
+                      {"PrimVariableInplaceModulo" + prim,   "PrimVariableDeclareAssign" + prim}
                   });
 
   std::vector<std::pair<std::string, std::string>> const
@@ -495,22 +495,22 @@ void MathBenchmarks(benchmark::State &state) {
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
       baselineMap({
-                      {"MathAbs" + prim,   "PushVariable" + prim},
-                      {"MathSin" + prim,   "PushVariable" + prim},
-                      {"MathCos" + prim,   "PushVariable" + prim},
-                      {"MathTan" + prim,   "PushVariable" + prim},
-                      {"MathAsin" + prim,  "PushVariable" + prim},
-                      {"MathAcos" + prim,  "PushVariable" + prim},
-                      {"MathAtan" + prim,  "PushVariable" + prim},
-                      {"MathSinh" + prim,  "PushVariable" + prim},
-                      {"MathCosh" + prim,  "PushVariable" + prim},
-                      {"MathTanh" + prim,  "PushVariable" + prim},
-                      {"MathAsinh" + prim, "PushVariable" + prim},
-                      {"MathAcosh" + prim, "PushVariable" + prim},
-                      {"MathAtanh" + prim, "PushVariable" + prim},
-                      {"MathSqrt" + prim,  "PushVariable" + prim},
-                      {"MathExp" + prim,   "PushVariable" + prim},
-                      {"MathPow" + prim,   "PushVariable" + prim},
+                      {"MathAbs" + prim,   "PrimPushVariable" + prim},
+                      {"MathSin" + prim,   "PrimPushVariable" + prim},
+                      {"MathCos" + prim,   "PrimPushVariable" + prim},
+                      {"MathTan" + prim,   "PrimPushVariable" + prim},
+                      {"MathAsin" + prim,  "PrimPushVariable" + prim},
+                      {"MathAcos" + prim,  "PrimPushVariable" + prim},
+                      {"MathAtan" + prim,  "PrimPushVariable" + prim},
+                      {"MathSinh" + prim,  "PrimPushVariable" + prim},
+                      {"MathCosh" + prim,  "PrimPushVariable" + prim},
+                      {"MathTanh" + prim,  "PrimPushVariable" + prim},
+                      {"MathAsinh" + prim, "PrimPushVariable" + prim},
+                      {"MathAcosh" + prim, "PrimPushVariable" + prim},
+                      {"MathAtanh" + prim, "PrimPushVariable" + prim},
+                      {"MathSqrt" + prim,  "PrimPushVariable" + prim},
+                      {"MathExp" + prim,   "PrimPushVariable" + prim},
+                      {"MathPow" + prim,   "PrimPushVariable" + prim},
                       {"MathRand" + prim,  "Return"}
                   });
 
@@ -567,7 +567,7 @@ void ArrayBenchmarks(benchmark::State &state) {
                       {"CountArray" + length,      "DeclareArray" + length},
                       {"AppendArray" + length,     "DeclareArray" + length},
                       {"DeclareTwoArray" + length, "Return"},
-                      {"ExtendArray" + length,     "DeclareArray" + length},
+                      {"ExtendArray" + length,     "DeclareTwoArray" + length},
                       {"PopBackArray" + length,    "DeclareArray" + length},
                       {"PopFrontArray" + length,   "DeclareArray" + length},
                       {"EraseArray" + length,      "DeclareArray" + length},
