@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "test_types.hpp"
 #include "ml/clustering/tsne.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -104,14 +104,22 @@ TYPED_TEST(TsneTests, tsne_test_2d)
   // since tsne is a training procedure the number of operations is relatively large.
   // here we use 50 as proxy instead of calculating the number of operations
   // 50 is quite strict since there are 100 data points
-  EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323880254290997982025146484375, 50 * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(double(output_matrix.At(1, 0)), -3.17587922653183341026306152343750, 50 * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(double(output_matrix.At(0, 25)), -1.75773554784245789051055908203125, 50 * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(double(output_matrix.At(1, 25)), 2.62657403736375272274017333984375, 50 * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(double(output_matrix.At(0, 50)), 0.23583724093623459339141845703125, 50 * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(double(output_matrix.At(1, 50)), 1.67974892887286841869354248046875, 50 * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(double(output_matrix.At(0, 99)), -0.87261968106031417846679687500000, 50 * static_cast<double>(math::function_tolerance<DataType>()));
-  EXPECT_NEAR(double(output_matrix.At(1, 99)), 3.04633120773360133171081542968750, 50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323880254290997982025146484375,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 0)), -3.17587922653183341026306152343750,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(0, 25)), -1.75773554784245789051055908203125,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 25)), 2.62657403736375272274017333984375,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(0, 50)), 0.23583724093623459339141845703125,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 50)), 1.67974892887286841869354248046875,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(0, 99)), -0.87261968106031417846679687500000,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 99)), 3.04633120773360133171081542968750,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
@@ -138,6 +146,6 @@ TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
   EXPECT_NEAR(double(output_matrix.At(1, 99)), 3.0463356971740722656, tolerance);
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch
