@@ -180,42 +180,32 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
 #endif  // FETCH_LOG_INFO_ENABLED
 
-  if (IsBlockValid(block))
+  FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: 0x", block.body.hash.ToHex(),
+                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
+
+  trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+
+  // add the new block to the chain
+  auto const status = chain_.AddBlock(block);
+
+  switch (status)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: 0x", block.body.hash.ToHex(),
-                   " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
-
-    trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
-
-    // add the new block to the chain
-    auto const status = chain_.AddBlock(block);
-
-    switch (status)
-    {
-    case BlockStatus::ADDED:
-      recv_block_valid_count_->increment();
-      FETCH_LOG_INFO(LOGGING_NAME, "Added new block: 0x", block.body.hash.ToHex());
-      break;
-    case BlockStatus::LOOSE:
-      recv_block_loose_count_->increment();
-      FETCH_LOG_INFO(LOGGING_NAME, "Added loose block: 0x", block.body.hash.ToHex());
-      break;
-    case BlockStatus::DUPLICATE:
-      recv_block_duplicate_count_->increment();
-      FETCH_LOG_INFO(LOGGING_NAME, "Duplicate block: 0x", block.body.hash.ToHex());
-      break;
-    case BlockStatus::INVALID:
-      recv_block_invalid_count_->increment();
-      FETCH_LOG_INFO(LOGGING_NAME, "Attempted to add invalid block: 0x", block.body.hash.ToHex());
-      break;
-    }
-  }
-  else
-  {
+  case BlockStatus::ADDED:
+    recv_block_valid_count_->increment();
+    FETCH_LOG_INFO(LOGGING_NAME, "Added new block: 0x", block.body.hash.ToHex());
+    break;
+  case BlockStatus::LOOSE:
+    recv_block_loose_count_->increment();
+    FETCH_LOG_INFO(LOGGING_NAME, "Added loose block: 0x", block.body.hash.ToHex());
+    break;
+  case BlockStatus::DUPLICATE:
+    recv_block_duplicate_count_->increment();
+    FETCH_LOG_INFO(LOGGING_NAME, "Duplicate block: 0x", block.body.hash.ToHex());
+    break;
+  case BlockStatus::INVALID:
     recv_block_invalid_count_->increment();
-
-    FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: 0x", block.body.hash.ToHex(),
-                   " (from: ", ToBase64(from), ")");
+    FETCH_LOG_INFO(LOGGING_NAME, "Attempted to add invalid block: 0x", block.body.hash.ToHex());
+    break;
   }
 }
 
@@ -483,21 +473,6 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   }
 
   return next_state;
-}
-
-bool MainChainRpcService::IsBlockValid(Block &block) const
-{
-  bool block_valid{false};
-
-  // evaluate if this mining node is correct
-  bool const is_valid_miner =
-      (Mode::PUBLIC_NETWORK == mode_) ? crypto::IsFetchIdentity(block.body.miner.display()) : true;
-  if (is_valid_miner && block.proof())
-  {
-    block_valid = true;
-  }
-
-  return block_valid;
 }
 
 }  // namespace ledger

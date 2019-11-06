@@ -21,6 +21,8 @@
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
 #include "logging/logging.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -34,6 +36,12 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
   : dag_{std::move(dag)}
   , executors_(num_executors)
   , threads_{num_executors, "SynEx"}
+  , no_executor_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_upow_exec_manager_rid_no_executor_total",
+        "The number of cases where ExecuteItem had missing executor.")}
+  , no_executor_loop_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_upow_exec_manager_rid_no_executor_loop_iter_total",
+        "The total number of iterations we had to make when executor was missing in ExecuteItem")}
 {
   if (num_executors != 1)
   {
@@ -55,7 +63,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   auto const &current_epoch  = current.body.dag_epoch;
   auto const &previous_epoch = previous.body.dag_epoch;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
 
   // Step 1. loop through all the solutions which were presented in this epoch
   WorkMap work_map{};
@@ -112,8 +120,8 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     it->second->problem_data.emplace_back(node.contents);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number,
-                 " (complete)");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number,
+                  " (complete)");
 
   // Step 3. Update the final queue
   {
@@ -163,9 +171,33 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
 {
   ExecutorPtr executor;
 
+  bool first = true;
+  for (uint8_t i = 0; i < 5; ++i)
+  {
+    {
+      FETCH_LOCK(lock_);
+      if (!executors_.empty())
+      {
+        break;
+      }
+    }
+    if (first)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Executors empty, can't execute item! Waiting...");
+      no_executor_count_->increment();
+      first = false;
+    }
+    no_executor_loop_count_->increment();
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+  }
+
   // pick up an executor from the stack
   {
     FETCH_LOCK(lock_);
+    if (executors_.empty())
+    {
+      throw std::runtime_error("ExecuteItem: executors empty after 500ms wait!");
+    }
     executor = executors_.back();
     executors_.pop_back();
   }
