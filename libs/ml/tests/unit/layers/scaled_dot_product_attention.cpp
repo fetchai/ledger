@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 
 namespace fetch {
 namespace ml {
@@ -397,6 +397,6 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
                                    fetch::math::function_tolerance<DataType>()));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/multihead_attention.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 
 namespace fetch {
 namespace ml {
@@ -181,6 +181,6 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   b >> *dsp2;
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

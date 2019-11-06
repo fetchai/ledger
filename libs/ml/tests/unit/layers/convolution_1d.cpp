@@ -17,15 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "test_types.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
-
 
 namespace fetch {
 namespace ml {
@@ -520,6 +519,6 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
                                    fetch::math::function_tolerance<DataType>()));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

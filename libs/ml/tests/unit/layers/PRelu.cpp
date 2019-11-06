@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/PRelu.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 
 #include <memory>
 #include <vector>
@@ -29,7 +29,6 @@
 namespace fetch {
 namespace ml {
 namespace test {
-
 }
 template <typename T>
 class PReluTest : public ::testing::Test
@@ -267,6 +266,6 @@ TYPED_TEST(PReluTest, saveparams_test)
                                    fetch::math::function_tolerance<DataType>()));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace ml
+}  // namespace fetch
+}  // fetch

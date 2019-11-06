@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 
 namespace fetch {
 namespace ml {
@@ -153,6 +153,6 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
   b >> *dsp2;
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

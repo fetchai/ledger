@@ -17,19 +17,18 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "test_types.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 
 #include <memory>
 
 namespace fetch {
 namespace ml {
 namespace test {
-
 
 template <typename T>
 class Convolution2DTest : public ::testing::Test
@@ -619,6 +618,6 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
                                    fetch::math::function_tolerance<DataType>()));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

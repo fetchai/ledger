@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -161,6 +161,6 @@ TYPED_TEST(SkipGramTest, saveparams_test)
                                    fetch::math::function_tolerance<DataType>()));
 }
 
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch
