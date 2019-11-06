@@ -101,7 +101,8 @@ MakeMNISTClient(
   for (const auto &algorithm : algorithms)
   {
     // build the mnist model
-    auto model_ptr = details::MakeMNistModel<TensorType>(client_params, images, labels, test_set_ratio);
+    auto model_ptr =
+        details::MakeMNistModel<TensorType>(client_params, images, labels, test_set_ratio);
 
     algorithm->SetModel(model_ptr);
   }
