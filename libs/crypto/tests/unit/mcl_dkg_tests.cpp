@@ -29,6 +29,7 @@ using namespace fetch::byte_array;
 
 TEST(MclTests, BaseMcl)
 {
+  details::MCLInitialiser();
   Generator generator;
   SetGenerator(generator);
   bn::G1 P(-1, 1);
@@ -78,6 +79,8 @@ TEST(MclTests, BaseMcl)
 
 TEST(MclDkgTests, ComputeLhsRhs)
 {
+  details::MCLInitialiser();
+
   // Construct polynomial of degree 2 (threshold = 1)
   uint32_t                threshold = 1;
   std::vector<PrivateKey> vec_a;
@@ -140,6 +143,8 @@ TEST(MclDkgTests, ComputeLhsRhs)
 
 TEST(MclDkgTests, Interpolation)
 {
+  details::MCLInitialiser();
+
   // Construct polynomial of degree 2
   uint32_t                degree = 2;
   std::vector<PrivateKey> vec_a;
@@ -188,6 +193,8 @@ TEST(MclDkgTests, Interpolation)
 
 TEST(MclDkgTests, Signing)
 {
+  details::MCLInitialiser();
+
   uint32_t cabinet_size = 200;
   uint32_t threshold    = 101;
 
@@ -227,6 +234,8 @@ TEST(MclDkgTests, Signing)
 
 TEST(MclDkgTests, GenerateKeys)
 {
+  details::MCLInitialiser();
+
   Generator generator;
   SetGenerator(generator);
 
@@ -238,6 +247,8 @@ TEST(MclDkgTests, GenerateKeys)
 
 TEST(MclNotarisationTests, AggregateSigningVerification)
 {
+  details::MCLInitialiser();
+
   Generator generator;
   SetGenerator(generator);
 

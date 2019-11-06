@@ -35,38 +35,32 @@ std::atomic<bool> details::MCLInitialiser::was_initialised{false};
 
 PublicKey::PublicKey()
 {
-  details::MCLInitialiser();
   clear();
 }
 
 PrivateKey::PrivateKey()
 {
-  details::MCLInitialiser();
   clear();
 }
 
 PrivateKey::PrivateKey(uint32_t value)
 {
-  details::MCLInitialiser();
   clear();
   bn::Fr::add(*this, *this, value);
 }
 
 Signature::Signature()
 {
-  details::MCLInitialiser();
   clear();
 }
 
 Generator::Generator()
 {
-  details::MCLInitialiser();
   clear();
 }
 
 Generator::Generator(std::string const &string_to_hash)
 {
-  details::MCLInitialiser();
   clear();
   bn::hashAndMapToG2(*this, string_to_hash);
 }

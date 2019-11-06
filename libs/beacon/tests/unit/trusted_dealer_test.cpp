@@ -100,6 +100,8 @@ struct TrustedDealerCabinetNode
 void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
                       double threshold = 0.5, uint64_t aeon_period = 10)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   std::cout << "- Setup" << std::endl;
 
   std::vector<std::unique_ptr<TrustedDealerCabinetNode>> cabinet;

@@ -114,6 +114,7 @@ struct BeaconSelfContained
 void EntropyGen(benchmark::State &state)
 {
   SetGlobalLogLevel(LogLevel::ERROR);
+  fetch::crypto::mcl::details::MCLInitialiser();
 
   uint16_t unique_port    = 8000;
   uint16_t test_attempt   = 0;
