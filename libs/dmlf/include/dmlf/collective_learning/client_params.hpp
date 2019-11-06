@@ -21,23 +21,26 @@
 
 namespace fetch {
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 
 template <typename DataType>
 struct ClientParams
 {
   using SizeType = fetch::math::SizeType;
 
+  SizeType n_algorithms_per_client = 1;
   SizeType batch_size{};
   SizeType max_updates;
   DataType learning_rate;
   bool     print_loss = false;
 
-  std::vector<std::string> inputs_names = {"Input"};
-  std::string              label_name   = "Label";
-  std::string              error_name   = "Error";
+  std::vector<std::string> input_names = {"Input"};
+  std::string              label_name  = "Label";
+  std::string              error_name  = "Error";
+
+  std::string results_dir = ".";
 };
 
-}  // namespace distributed_learning
+}  // namespace collective_learning
 }  // namespace dmlf
 }  // namespace fetch
