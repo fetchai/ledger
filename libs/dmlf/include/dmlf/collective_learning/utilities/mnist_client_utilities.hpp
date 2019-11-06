@@ -17,25 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/distributed_learning/distributed_learning_client.hpp"
+#include "dmlf/collective_learning/collective_learning_client.hpp"
+#include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/ops/activations/relu.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "ml/ops/placeholder.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/utilities/mnist_utilities.hpp"
 
 namespace fetch {
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 namespace utilities {
 
+namespace details {
+/**
+ * Utility for setting up a single MnistModel
+ * @tparam TensorType
+ * @param client_params
+ * @param images
+ * @param labels
+ * @param test_set_ratio
+ * @return
+ */
 template <typename TensorType>
-std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>> MakeMNISTClient(
-    std::string const &                                                         id,
-    fetch::dmlf::distributed_learning::ClientParams<typename TensorType::Type> &client_params,
-    std::string const &images, std::string const &labels, float test_set_ratio,
-    std::shared_ptr<std::mutex> console_mutex_ptr)
+std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(
+    fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> &client_params,
+    std::string const &images, std::string const &labels, float test_set_ratio)
 {
   // Initialise model
   auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
@@ -62,15 +69,54 @@ std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>> M
   model_ptr->Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::CROSS_ENTROPY);
 
   // N.B. some names are not set until AFTER the model is compiled
-  client_params.inputs_names = {model_ptr->InputName()};
-  client_params.label_name   = model_ptr->LabelName();
-  client_params.error_name   = model_ptr->ErrorName();
+  client_params.input_names = {model_ptr->InputName()};
+  client_params.label_name  = model_ptr->LabelName();
+  client_params.error_name  = model_ptr->ErrorName();
 
-  return std::make_shared<TrainingClient<TensorType>>(id, model_ptr, client_params,
-                                                      console_mutex_ptr);
+  return model_ptr;
+}
+}  // namespace details
+
+/**
+ * Utility for building a collective learning client with every mnist algorithm
+ * @tparam TensorType
+ * @param id
+ * @param client_params
+ * @param images
+ * @param labels
+ * @param test_set_ratio
+ * @param networker
+ * @param console_mutex_ptr
+ * @return
+ */
+template <typename TensorType>
+std::shared_ptr<fetch::dmlf::collective_learning::CollectiveLearningClient<TensorType>>
+MakeMNISTClient(
+    std::string const &                                                        id,
+    fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> &client_params,
+    std::string const &images, std::string const &labels, float test_set_ratio,
+    std::shared_ptr<AbstractLearnerNetworker> networker,
+    std::shared_ptr<std::mutex>               console_mutex_ptr)
+{
+  // set up the client first
+  auto client = std::make_shared<CollectiveLearningClient<TensorType>>(id, client_params, networker,
+                                                                       console_mutex_ptr);
+
+  // build an mnist model for each algorithm in the client
+  auto algorithms = client->GetAlgorithms();
+  for (const auto &algorithm : algorithms)
+  {
+    // build the mnist model
+    auto model_ptr =
+        details::MakeMNistModel<TensorType>(client_params, images, labels, test_set_ratio);
+
+    algorithm->SetModel(model_ptr);
+  }
+
+  return client;
 }
 
 }  // namespace utilities
-}  // namespace distributed_learning
+}  // namespace collective_learning
 }  // namespace dmlf
 }  // namespace fetch

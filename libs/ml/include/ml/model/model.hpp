@@ -31,10 +31,10 @@
 
 namespace fetch {
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 template <class TensorType>
-class TrainingClient;
-}  // namespace distributed_learning
+class ClientAlgorithm;
+}  // namespace collective_learning
 }  // namespace dmlf
 
 namespace ml {
@@ -114,7 +114,7 @@ protected:
                           DataType test_loss = fetch::math::numeric_max<DataType>());
 
 private:
-  friend class dmlf::distributed_learning::TrainingClient<TensorType>;
+  friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
 
   bool SetOptimiser();
   void TrainImplementation(DataType &loss, SizeType n_rounds = 1);
