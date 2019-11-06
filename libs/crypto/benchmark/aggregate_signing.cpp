@@ -63,7 +63,6 @@ void SignatureAggregationCoefficient(benchmark::State &state)
 
   // Create keys
   auto                   cabinet_size = static_cast<uint32_t>(state.range(0));
-  uint32_t               threshold    = cabinet_size / 2 + 1;
   std::vector<PublicKey> notarisation_public_keys;
 
   for (uint32_t i = 0; i < cabinet_size; ++i)
@@ -92,7 +91,6 @@ void AggregateSign(benchmark::State &state)
 
   // Create keys
   auto                             cabinet_size = static_cast<uint32_t>(state.range(0));
-  uint32_t                         threshold    = cabinet_size / 2 + 1;
   std::vector<AggregatePrivateKey> aggregate_private_keys;
   std::vector<PublicKey>           notarisation_public_keys;
 
