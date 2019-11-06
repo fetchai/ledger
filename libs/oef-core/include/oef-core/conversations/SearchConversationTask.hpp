@@ -98,11 +98,11 @@ public:
   void SetDefaultSendReplyFunc(const char *logging_name, const char *log_message)
   {
     sendReply = [logging_name, log_message](std::shared_ptr<OUT_PROTO>        response,
-                                            std::shared_ptr<OefAgentEndpoint> endpoint) {
+                                            std::shared_ptr<OefAgentEndpoint> e) {
       FETCH_LOG_INFO(logging_name, log_message, response->DebugString());
       auto reply_sender = std::make_shared<
           TSendProtoTask<OefAgentEndpoint, std::shared_ptr<fetch::oef::pb::Server_AgentMessage>>>(
-          response, endpoint);
+          response, e);
       reply_sender->submit();
     };
   }

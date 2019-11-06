@@ -126,9 +126,9 @@ int MtSearch::run()
   FETCH_LOG_INFO(LOGGING_NAME, "tasks_thread_count: ", config_.tasks_thread_count());
   FETCH_LOG_INFO(LOGGING_NAME, "Search config: ", config_.DebugString());
 
-  core       = std::make_shared<Core>();
-  auto tasks = std::make_shared<Taskpool>();
-  tasks->SetDefault();
+  core    = std::make_shared<Core>();
+  auto ts = std::make_shared<Taskpool>();
+  ts->SetDefault();
   outbounds = std::make_shared<OutboundConversations>();
   listeners =
       std::make_shared<OefListenerSet<IOefTaskFactory<OefSearchEndpoint>, OefSearchEndpoint>>();

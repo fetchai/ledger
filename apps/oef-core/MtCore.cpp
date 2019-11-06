@@ -131,9 +131,9 @@ int MtCore::run()
 
   listeners =
       std::make_shared<OefListenerSet<IOefTaskFactory<OefAgentEndpoint>, OefAgentEndpoint>>();
-  core       = std::make_shared<Core>();
-  auto tasks = std::make_shared<Taskpool>();
-  tasks->SetDefault();
+  core    = std::make_shared<Core>();
+  auto ts = std::make_shared<Taskpool>();
+  ts->SetDefault();
   outbounds = std::make_shared<OutboundConversations>();
 
   std::function<void(void)>                      run_comms = std::bind(&Core::run, core.get());

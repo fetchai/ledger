@@ -83,12 +83,12 @@ WorkloadProcessed OutboundConversationWorkerTask::process(WorkloadP workload,
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "Send initiator to ", uri.ToString(), "...");
-  Uri uri(workload->uri_);
-  uri.port  = static_cast<uint32_t>(workload->ident_);
-  auto data = std::make_pair(uri, workload->proto_);
+  Uri u(workload->uri_);
+  u.port    = static_cast<uint32_t>(workload->ident_);
+  auto data = std::make_pair(u, workload->proto_);
   ep->send(data);
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting search ep send loop (uri=", uri.ToString(), ")...");
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting search ep send loop (uri=", u.ToString(), ")...");
   ep->run_sending();
-  FETCH_LOG_INFO(LOGGING_NAME, "done (uri=", uri.ToString(), ")..");
+  FETCH_LOG_INFO(LOGGING_NAME, "done (uri=", u.ToString(), ")..");
   return WorkloadProcessed::COMPLETE;
 }

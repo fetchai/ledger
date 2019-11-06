@@ -25,7 +25,7 @@
 
 const char *what2str[] = {"*", "PROTO", "HOST", "PORT", "PATH"};
 
-void Uri::parse(const std::string &s)
+void Uri::parse(const std::string &value)
 {
   std::regex uri_regex("^([-_a-zA-Z0-9\\.]+://)?([-_a-zA-Z0-9\\.]+)(:[0-9]+)?(/.*)?$",
                        std::regex_constants::icase);
@@ -37,7 +37,7 @@ void Uri::parse(const std::string &s)
   port  = 0;
 
   std::smatch parts_result;
-  if (std::regex_match(s, parts_result, uri_regex))
+  if (std::regex_match(value, parts_result, uri_regex))
   {
     std::vector<std::sub_match<std::string::const_iterator>> v(parts_result.begin(),
                                                                parts_result.end());

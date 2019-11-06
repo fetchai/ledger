@@ -317,13 +317,13 @@ void EndpointBase<TXType>::go()
 }
 
 template <typename TXType>
-void EndpointBase<TXType>::complete_sending(StateTypeP state, std::error_code const &ec,
+void EndpointBase<TXType>::complete_sending(StateTypeP current, std::error_code const &ec,
                                             const size_t &bytes)
 {
   try
   {
     {
-      if (*state > RUNNING_ENDPOINT)
+      if (*current > RUNNING_ENDPOINT)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " complete_sending on already dead socket", ec);
         return;
@@ -333,7 +333,7 @@ void EndpointBase<TXType>::complete_sending(StateTypeP state, std::error_code co
     if (is_eof(ec) || ec == asio::error::operation_aborted)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " MARKED EOF AT complete_sending ", ec.message());
-      *state |= CLOSED_ENDPOINT;
+      *current |= CLOSED_ENDPOINT;
       eof();
       return;  // We are done with this thing!
     }
@@ -370,14 +370,14 @@ void EndpointBase<TXType>::create_messages()
 }
 
 template <typename TXType>
-void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code const &ec,
+void EndpointBase<TXType>::complete_reading(StateTypeP current, std::error_code const &ec,
                                             const size_t &bytes)
 {
   try
   {
     {
       Lock lock(mutex);
-      if (*state > RUNNING_ENDPOINT)
+      if (*current > RUNNING_ENDPOINT)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " complete_reading on already dead socket", ec);
         return;
@@ -406,7 +406,7 @@ void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code co
 
     try
     {
-      if (*state > RUNNING_ENDPOINT)
+      if (*current > RUNNING_ENDPOINT)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "id=", ident, " complete_reading on already dead socket", ec);
         return;

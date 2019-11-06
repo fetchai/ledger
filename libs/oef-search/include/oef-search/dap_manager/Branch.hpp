@@ -100,9 +100,9 @@ public:
     auto pt = std::make_shared<ConstructQueryObjectRequest>();
     pt->set_operator_(proto_->operator_());
     pt->set_node_name(proto_->node_name());
-    for (const std::string &dap_name : dap_names_)
+    for (const std::string &name : dap_names_)
     {
-      pt->add_dap_names(dap_name);
+      pt->add_dap_names(name);
     }
     for (const auto &leaf : leaves_)
     {

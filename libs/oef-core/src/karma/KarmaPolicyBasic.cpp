@@ -145,9 +145,9 @@ std::vector<std::string> KarmaPolicyBasic::getPolicies(const std::string &action
   }
 
   std::vector<std::string> policies;
-  for (auto const &action : actions)
+  for (auto const &a : actions)
   {
-    policies.push_back(getPolicy(action));
+    policies.push_back(getPolicy(a));
   }
 
   return policies;
