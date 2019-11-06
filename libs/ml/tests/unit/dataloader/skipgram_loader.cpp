@@ -31,7 +31,7 @@ using namespace fetch::ml::dataloaders;
 template <typename TensorType>
 struct TrainingParams
 {
-  using SizeType                = typename TensorType::SizeType;
+  using SizeType                = fetch::math::SizeType;
   using DataType                = typename TensorType::Type;
   SizeType max_word_count       = 15;           // maximum number to be trained
   SizeType negative_sample_size = 0;            // number of negative sample per word-context pair
@@ -53,7 +53,7 @@ TYPED_TEST_CASE(SkipGramDataloaderTest, MyTypes);
 TYPED_TEST(SkipGramDataloaderTest, loader_test)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TrainingParams<TensorType> tp;
   tp.max_word_count = 9;
@@ -113,7 +113,7 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
 TYPED_TEST(SkipGramDataloaderTest, test_save_load_vocab)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TrainingParams<TensorType> tp;
   tp.max_word_count      = 100;

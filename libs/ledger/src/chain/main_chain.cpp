@@ -632,7 +632,7 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash) const
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to look up block! Hash: ", hash.ToBase64());
+    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to look up block! Hash: ", hash.ToHex());
   }
 
   return output_block;

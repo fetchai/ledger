@@ -83,7 +83,7 @@ class Graph
 public:
   using TensorType       = T;
   using ArrayPtrType     = std::shared_ptr<TensorType>;
-  using SizeType         = typename TensorType::SizeType;
+  using SizeType         = fetch::math::SizeType;
   using DataType         = typename TensorType::Type;
   using NodePtrType      = typename std::shared_ptr<fetch::ml::Node<TensorType>>;
   using TrainablePtrType = typename std::shared_ptr<fetch::ml::ops::Trainable<TensorType>>;

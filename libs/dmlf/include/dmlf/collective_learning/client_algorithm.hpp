@@ -44,7 +44,7 @@ template <class TensorType>
 class ClientAlgorithm
 {
   using DataType         = typename TensorType::Type;
-  using SizeType         = typename TensorType::SizeType;
+  using SizeType         = fetch::math::SizeType;
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
   using UpdateType       = fetch::dmlf::Update<TensorType>;

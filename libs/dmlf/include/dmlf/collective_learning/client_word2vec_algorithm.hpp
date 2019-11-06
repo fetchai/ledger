@@ -33,7 +33,7 @@ template <class TensorType>
 class ClientWord2VecAlgorithm : public ClientAlgorithm<TensorType>
 {
   using DataType                   = typename TensorType::Type;
-  using SizeType                   = typename TensorType::SizeType;
+  using SizeType                   = fetch::math::SizeType;
   using VectorTensorType           = std::vector<TensorType>;
   using GradientType               = fetch::dmlf::Update<TensorType>;
   using AlgorithmControllerType    = ClientAlgorithmController<TensorType>;
