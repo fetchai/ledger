@@ -122,6 +122,8 @@ struct NotarisationNode
 
 TEST(notarisation, notarise_blocks)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   uint32_t num_nodes    = 6;
   uint32_t cabinet_size = 3;
   double   threshold    = 0.5;
