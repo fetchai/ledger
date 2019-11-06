@@ -34,7 +34,7 @@ class SigmoidTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SigmoidTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(SigmoidTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(SigmoidTest, forward_test)
 {

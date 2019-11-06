@@ -50,8 +50,8 @@ TYPED_TEST(LogSoftmaxTest, forward_test)
 
   // test correct values
   ASSERT_TRUE(
-      prediction.AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(),
-                          static_cast<DataType>(50) * math::function_tolerance<DataType>()));
+      prediction.AllClose(gt, static_cast<DataType>(1000) * math::function_tolerance<DataType>(),
+                          static_cast<DataType>(1000) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
@@ -80,8 +80,8 @@ TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
 
   // test correct values
   ASSERT_TRUE(
-      prediction.AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(),
-                          static_cast<DataType>(50) * math::function_tolerance<DataType>()));
+      prediction.AllClose(gt, static_cast<DataType>(10000) * math::function_tolerance<DataType>(),
+                          static_cast<DataType>(10000) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, backward_test)

@@ -33,7 +33,7 @@ class SoftmaxTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SoftmaxTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(SoftmaxTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(SoftmaxTest, forward_test)
 {

@@ -32,7 +32,7 @@ class EluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(EluTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(EluTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(EluTest, forward_test)
 {

@@ -41,6 +41,7 @@ TYPED_TEST_CASE(PReluOpTest, math::test::TensorFloatingTypes);
 TYPED_TEST(PReluOpTest, forward_test)
 {
   using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
 
   TensorType data =
       TensorType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
@@ -59,8 +60,8 @@ TYPED_TEST(PReluOpTest, forward_test)
   op.Forward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(
-      prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(PReluOpTest, backward_test)

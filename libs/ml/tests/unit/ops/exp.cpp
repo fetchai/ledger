@@ -36,7 +36,7 @@ class ExpTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ExpTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(ExpTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(ExpTest, forward_test)
 {

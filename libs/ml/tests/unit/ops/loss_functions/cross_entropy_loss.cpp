@@ -33,7 +33,7 @@ class CrossEntropyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(CrossEntropyTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(CrossEntropyTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
 {

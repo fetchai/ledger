@@ -37,11 +37,7 @@ class LogTest : public ::testing::Test
 {
 };
 
-using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                   fetch::math::Tensor<fetch::fixed_point::fp64_t>,
-                                   fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
-
-TYPED_TEST_CASE(LogTest, BothTypes);
+TYPED_TEST_CASE(LogTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(LogTest, forward_all_positive_test)
 {

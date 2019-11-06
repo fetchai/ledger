@@ -31,7 +31,7 @@ class SoftmaxCrossEntropyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SoftmaxCrossEntropyTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(SoftmaxCrossEntropyTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
 {

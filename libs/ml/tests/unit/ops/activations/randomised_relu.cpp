@@ -54,7 +54,8 @@ TYPED_TEST(RandomisedReluTest, forward_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 
   // Test after generating new random alpha value
   gt_input = {1, -0.157690314, 3, -0.315380628, 5, -0.47307094, 7, -0.63076125644};
@@ -67,7 +68,8 @@ TYPED_TEST(RandomisedReluTest, forward_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 
   // Test with is_training set to false
   op.SetTraining(false);
@@ -82,7 +84,8 @@ TYPED_TEST(RandomisedReluTest, forward_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
@@ -113,7 +116,8 @@ TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(RandomisedReluTest, backward_test)
@@ -139,7 +143,8 @@ TYPED_TEST(RandomisedReluTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, math::function_tolerance<DataType>(),
+                                     math::function_tolerance<DataType>()));
 
   // Test after generating new random alpha value
   // Forward pass will update random value
@@ -154,7 +159,8 @@ TYPED_TEST(RandomisedReluTest, backward_test)
   prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, math::function_tolerance<DataType>(),
+                                     math::function_tolerance<DataType>()));
 
   // Test with is_training set to false
   op.SetTraining(false);
@@ -167,7 +173,8 @@ TYPED_TEST(RandomisedReluTest, backward_test)
   prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, math::function_tolerance<DataType>(),
+                                     math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
@@ -201,7 +208,8 @@ TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, math::function_tolerance<DataType>(),
+                                     math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(RandomisedReluTest, saveparams_test)

@@ -33,7 +33,7 @@ class GeluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(GeluTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(GeluTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(GeluTest, forward_test_3d)
 {
