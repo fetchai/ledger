@@ -1239,7 +1239,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   if (enable_stutter_removal_)
   {
     auto entropy_determined_weight =
-        Consensus::GetBlockGenerationWeight(*this, *block, block->body.miner);
+        Consensus::GetBlockGenerationWeight(*this, *block, block->body.miner_id);
     if (entropy_determined_weight != block->weight)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Received block with invalid weight");

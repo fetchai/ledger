@@ -68,7 +68,7 @@ public:
   void            SetDefaultStartTime(uint64_t default_start_time);
 
   static uint64_t GetBlockGenerationWeight(MainChain const &chain, Block const &previous,
-                                           chain::Address const &address);
+                                           Identity const &identity);
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;

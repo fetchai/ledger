@@ -23,12 +23,14 @@
 #include "core/containers/set_difference.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/consensus/consensus.hpp"
 #include "ledger/testing/block_generator.hpp"
 
 #include "gtest/gtest.h"
 
 #include <algorithm>
 #include <cstddef>
+#include <iterator>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -73,6 +75,46 @@ auto Generate(BlockGeneratorPtr &gen, BlockPtr genesis, std::size_t amount)
   return retVal;
 }
 
+auto Generate(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &cabinet,
+              MainChainPtr const &chain, BlockPtr const &previous, uint64_t weight = 0)
+{
+  BlockPtr block;
+
+  auto genesis = gen->Generate();
+  block        = gen->Generate(previous);
+  // If first block then fill with cabinet members
+  if (*previous == *genesis)
+  {
+    assert(!cabinet.empty());
+    block->body.block_entropy.qualified = cabinet;
+    // Insert fake confirmatin to trigger aeon beginning
+    block->body.block_entropy.confirmations.insert({"fake", "confirmation"});
+  }
+
+  // If no weight specified pick random miner to make block
+  if (weight == 0)
+  {
+    auto random          = rand() % cabinet.size();
+    block->body.miner_id = crypto::Identity{*std::next(cabinet.begin(), random)};
+    block->weight =
+        fetch::ledger::Consensus::GetBlockGenerationWeight(*chain, *block, block->body.miner_id);
+    return block;
+  }
+
+  assert(weight <= cabinet.size());
+  block->weight = weight;
+  for (auto const &member : cabinet)
+  {
+    auto member_id = crypto::Identity{member};
+    if (weight == fetch::ledger::Consensus::GetBlockGenerationWeight(*chain, *block, member_id))
+    {
+      block->body.miner_id = member_id;
+      break;
+    }
+  }
+  return block;
+}
+
 std::ostream &Print(std::ostream &s, fetch::Digest const &hash)
 {
   s << '#' << std::hex;
@@ -108,38 +150,26 @@ class MainChainTests : public ::testing::TestWithParam<MainChain::Mode>
 protected:
   void SetUp() override
   {
-    static constexpr std::size_t NUM_LANES  = 1;
-    static constexpr std::size_t NUM_SLICES = 2;
-
-    auto const main_chain_mode = GetParam();
-
-    chain_     = std::make_unique<MainChain>(false, main_chain_mode);
-    generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
-  }
-
-  MainChainPtr      chain_;
-  BlockGeneratorPtr generator_;
-};
-
-class MainChainTestsWithRemoval : public ::testing::TestWithParam<MainChain::Mode>
-{
-protected:
-  void SetUp() override
-  {
-    static constexpr std::size_t NUM_LANES  = 1;
-    static constexpr std::size_t NUM_SLICES = 2;
+    static constexpr std::size_t NUM_LANES    = 1;
+    static constexpr std::size_t NUM_SLICES   = 2;
+    static constexpr std::size_t CABINET_SIZE = 5;
 
     auto const main_chain_mode = GetParam();
 
     chain_     = std::make_unique<MainChain>(false, main_chain_mode, true);
     generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
+    for (auto i = 0; i < CABINET_SIZE; ++i)
+    {
+      cabinet_.insert("Miner " + std::to_string(i));
+    }
   }
 
-  MainChainPtr      chain_;
-  BlockGeneratorPtr generator_;
+  MainChainPtr                 chain_;
+  BlockGeneratorPtr            generator_;
+  Block::BlockEntropy::Cabinet cabinet_;
 };
 
-TEST_P(MainChainTestsWithRemoval, EnsureGenesisIsConsistent)
+TEST_P(MainChainTests, EnsureGenesisIsConsistent)
 {
   auto const genesis = generator_->Generate();
   ASSERT_EQ(BlockStatus::DUPLICATE, chain_->AddBlock(*genesis));
@@ -154,7 +184,7 @@ TEST_P(MainChainTests, BuildingOnMainChain)
   for (std::size_t i = 0; i < 3; ++i)
   {
     // create a new sequential block
-    auto const next_block = generator_->Generate(expected_heaviest_block);
+    auto const next_block = Generate(generator_, cabinet_, chain_, expected_heaviest_block);
 
     // add the block to the chain
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*next_block));
@@ -165,7 +195,7 @@ TEST_P(MainChainTests, BuildingOnMainChain)
   }
 
   // Try adding a non-sequential block (prev hash is itself)
-  auto const dummy_block = generator_->Generate(genesis);
+  auto const dummy_block = Generate(generator_, cabinet_, chain_, genesis);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*dummy_block));
 
   // check that the heaviest block has not changed
@@ -884,22 +914,21 @@ TEST_P(MainChainTests, CheckResolvedLooseWeight)
   ASSERT_EQ(chain_->GetBlock(main5->body.hash)->total_weight, main5->total_weight);
 }
 
-TEST_P(MainChainTestsWithRemoval, MultipleBlocksSameHeightSameMiner)
+TEST_P(MainChainTests, MultipleBlocksSameHeightSameMiner)
 {
   auto genesis = generator_->Generate();
 
-  auto chain1_1  = generator_->Generate(genesis, 2);
-  auto chain1_2a = generator_->Generate(chain1_1, 3);
-  auto chain1_2b = generator_->Generate(chain1_1, 3);
-  auto chain1_2c = generator_->Generate(chain1_1, 3);
-  auto chain1_3  = generator_->Generate(chain1_2a, 3);
-
-  auto chain2_1 = generator_->Generate(genesis, 1);
-  auto chain2_2 = generator_->Generate(chain2_1, 2);
+  auto chain1_1 = Generate(generator_, cabinet_, chain_, genesis, 2);
+  auto chain2_1 = Generate(generator_, cabinet_, chain_, genesis, 1);
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_1));
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain2_1));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain1_1->body.hash);
+
+  auto chain1_2a = Generate(generator_, cabinet_, chain_, chain1_1, 3);
+  auto chain1_2b = Generate(generator_, cabinet_, chain_, chain1_1, 3);
+  auto chain1_2c = Generate(generator_, cabinet_, chain_, chain1_1, 3);
+  auto chain2_2  = Generate(generator_, cabinet_, chain_, chain2_1, 2);
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_2a));
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain2_2));
@@ -912,6 +941,8 @@ TEST_P(MainChainTestsWithRemoval, MultipleBlocksSameHeightSameMiner)
   // Should not accept more blocks from invalidated miner at same height
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_2c));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain2_2->body.hash);
+
+  auto chain1_3 = Generate(generator_, cabinet_, chain_, chain1_2a, 3);
 
   // Now receive block that builds on one of the tips removed
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_3));

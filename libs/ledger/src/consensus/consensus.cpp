@@ -225,7 +225,7 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
 }
 
 uint64_t Consensus::GetBlockGenerationWeight(MainChain const &chain, Block const &previous,
-                                             chain::Address const &address)
+                                             Identity const &identity)
 {
   auto beginning_of_aeon = GetBeginningOfAeon(previous, chain);
   auto cabinet           = beginning_of_aeon.body.block_entropy.qualified;
@@ -237,7 +237,7 @@ uint64_t Consensus::GetBlockGenerationWeight(MainChain const &chain, Block const
   // TODO(EJF): Depending on the cabinet sizes this would need to be improved
   for (auto const &member : entropy_shuffled_cabinet)
   {
-    if (address == chain::Address::FromMuddleAddress(member.identifier()))
+    if (identity == member)
     {
       break;
     }
@@ -509,7 +509,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->body.miner_id      = mining_identity_;
   ret->body.timestamp =
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-  ret->weight = GetBlockGenerationWeight(chain_, *ret, mining_address_);
+  ret->weight = GetBlockGenerationWeight(chain_, *ret, mining_identity_);
 
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
