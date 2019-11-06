@@ -115,11 +115,78 @@ TEST(MessengerMailboxTest, BilateralCommsMailbox)
   auto recevied_messages1 = messenger1->messenger->GetMessages(200);
   auto recevied_messages2 = messenger2->messenger->GetMessages(200);
 
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  auto messages1_after = server->mailbox.GetMessages(messenger1->messenger_muddle->GetAddress());
+  auto messages2_after = server->mailbox.GetMessages(messenger2->messenger_muddle->GetAddress());
+
   EXPECT_EQ(ToSet(messages1), ToSet(recevied_messages1));
   EXPECT_EQ(ToSet(messages1), ToSet(sent_messages1));
 
   EXPECT_EQ(ToSet(messages2), ToSet(recevied_messages2));
   EXPECT_EQ(ToSet(messages2), ToSet(sent_messages2));
+
+  EXPECT_EQ(messages1_after.size(), 0);
+  EXPECT_EQ(messages2_after.size(), 0);
+
+  // Shutting down
+  server->http.Stop();
+  server->messenger_muddle->Stop();
+  server->mail_muddle->Stop();
+  server->network_manager.Stop();
+}
+
+TEST(MessengerMailboxTest, DirectComms)
+{
+  auto server = NewServer(0);
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+  // Testing mailbox.
+  auto messenger1 = NewMessenger(1337);
+  auto messenger2 = NewMessenger(1337);
+
+  messenger1->messenger->Register(false);
+  messenger2->messenger->Register(false);
+
+  std::deque<Message> sent_messages1;
+  std::deque<Message> sent_messages2;
+
+  for (uint64_t i = 0; i < 10; ++i)
+  {
+    if ((i & 1) != 0)
+    {
+      Message msg;
+      msg.from.node      = server->mail_muddle->GetAddress();
+      msg.from.messenger = messenger1->messenger_muddle->GetAddress();
+      msg.to.node        = server->mail_muddle->GetAddress();
+      msg.to.messenger   = messenger2->messenger_muddle->GetAddress();
+
+      messenger1->messenger->SendMessage(msg);
+      sent_messages2.push_back(msg);
+    }
+    else
+    {
+      Message msg;
+      msg.from.node      = server->mail_muddle->GetAddress();
+      msg.from.messenger = messenger2->messenger_muddle->GetAddress();
+      msg.to.node        = server->mail_muddle->GetAddress();
+      msg.to.messenger   = messenger1->messenger_muddle->GetAddress();
+
+      messenger2->messenger->SendMessage(msg);
+      sent_messages1.push_back(msg);
+    }
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+
+  auto messages1          = server->mailbox.GetMessages(messenger1->messenger_muddle->GetAddress());
+  auto messages2          = server->mailbox.GetMessages(messenger2->messenger_muddle->GetAddress());
+  auto recevied_messages1 = messenger1->messenger->GetMessages(200);
+  auto recevied_messages2 = messenger2->messenger->GetMessages(200);
+
+  EXPECT_EQ(messages1.size(), 0);
+  EXPECT_EQ(messages2.size(), 0);
+
+  EXPECT_EQ(ToSet(recevied_messages1), ToSet(sent_messages1));
+  EXPECT_EQ(ToSet(recevied_messages2), ToSet(sent_messages2));
 
   // Shutting down
   server->http.Stop();
@@ -147,9 +214,10 @@ TEST(MessengerMailboxTest, MessagesRouting)
     a->mail_muddle->ConnectTo(
         "", fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + i + 1)));
 
-    auto &b = servers[i + 1];
-    b->mail_muddle->ConnectTo("",
-                              fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 + i)));
+        auto &b = servers[i + 1];
+        b->mail_muddle->ConnectTo("",
+                                  fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(6500 +
+       i)));
     */
 
     for (uint16_t j = 0; j < NETWORK_LENGTH; ++j)

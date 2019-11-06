@@ -28,6 +28,7 @@
 #include "muddle/subscription.hpp"
 
 #include <deque>
+#include <functional>
 #include <unordered_map>
 
 namespace fetch {
@@ -42,6 +43,8 @@ public:
   using SubscriptionPtr = muddle::MuddleEndpoint::SubscriptionPtr;
 
   explicit Mailbox(muddle::MuddlePtr &muddle);
+
+  void SetDeliveryFunction(DeliveryFunction const &attempt_delivery) override;
 
   /// Mailbox interface
   /// @{
@@ -72,6 +75,8 @@ private:
 
   Endpoint &      message_endpoint_;
   SubscriptionPtr message_subscription_;
+
+  DeliveryFunction attempt_delivery_;
 };
 
 }  // namespace messenger

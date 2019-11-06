@@ -30,14 +30,16 @@ namespace messenger {
 class MailboxInterface
 {
 public:
-  using MessageList = std::deque<Message>;
-  using Address     = muddle::Address;
+  using MessageList      = std::deque<Message>;
+  using Address          = muddle::Address;
+  using DeliveryFunction = std::function<void(Message const &msg)>;
 
-  virtual void        SendMessage(Message message)                     = 0;
-  virtual MessageList GetMessages(Address messenger)                   = 0;
-  virtual void        ClearMessages(Address messenger, uint64_t count) = 0;
-  virtual void        RegisterMailbox(Address messenger)               = 0;
-  virtual void        UnregisterMailbox(Address messenger)             = 0;
+  virtual void        SetDeliveryFunction(DeliveryFunction const &attempt_delivery) = 0;
+  virtual void        SendMessage(Message message)                                  = 0;
+  virtual MessageList GetMessages(Address messenger)                                = 0;
+  virtual void        ClearMessages(Address messenger, uint64_t count)              = 0;
+  virtual void        RegisterMailbox(Address messenger)                            = 0;
+  virtual void        UnregisterMailbox(Address messenger)                          = 0;
 };
 
 }  // namespace messenger

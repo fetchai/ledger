@@ -34,6 +34,9 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
   rpc_server_ = std::make_shared<Server>(messenger_endpoint_, SERVICE_MESSENGER, CHANNEL_RPC);
   rpc_server_->Add(RPC_MESSENGER_INTERFACE, &messenger_protocol_);
 
+  // Adding routing function for direct delivery
+  mailbox_.SetDeliveryFunction([this](Message const &message) { AttemptDirectDelivery(message); });
+
   // TODO(private issue AEA-126): Move somewhere else
   using Int        = int;
   using Float      = double;
@@ -117,6 +120,11 @@ MessengerAPI::MessageList MessengerAPI::GetMessages(service::CallContext const &
 {
   auto ret = mailbox_.GetMessages(call_context.sender_address);
   return ret;
+}
+
+void MessengerAPI::ClearMessages(service::CallContext const &call_context, uint64_t count)
+{
+  mailbox_.ClearMessages(call_context.sender_address, count);
 }
 
 MessengerAPI::ConstByteArray MessengerAPI::GetAddress() const

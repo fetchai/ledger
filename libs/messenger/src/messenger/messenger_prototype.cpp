@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "messenger/messenger_prototype.hpp"
+#include "logging/logging.hpp"
 
 #include <cassert>
 
@@ -29,12 +30,12 @@ MessengerPrototype::MessengerPrototype(muddle::MuddlePtr &muddle, Addresses node
   , message_subscription_{endpoint_.Subscribe(SERVICE_MESSENGER, CHANNEL_MESSENGER_MESSAGE)}
   , node_addresses_{std::move(node_addresses)}
 {
-  // rpc_server_ = std::make_shared<Server>(endpoint_, SERVICE_MESSENGER, CHANNEL_RPC);
-  // rpc_server_->Add(RPC_NODE_TO_MESSENGER, &protocol_);
+  message_subscription_->SetMessageHandler(this, &MessengerPrototype::OnNewMessagePacket);
 }
 
 void MessengerPrototype::Register(bool require_mailbox)
 {
+  // Registering with all connected nodes
   for (auto &address : node_addresses_)
   {
     rpc_client_.CallSpecificAddress(address, RPC_MESSENGER_INTERFACE,
@@ -92,7 +93,7 @@ void MessengerPrototype::PullMessages()
   {
     auto promise = rpc_client_.CallSpecificAddress(address, RPC_MESSENGER_INTERFACE,
                                                    MessengerProtocol::GET_MESSAGES);
-    promises_.push_back(promise);
+    promises_.push_back({address, promise});
   }
 }
 
@@ -102,14 +103,17 @@ void MessengerPrototype::ResolveMessages()
   PromiseList unresolved{};
 
   // Realising promis one by one
-  for (auto &p : promises_)
+  for (auto &x : promises_)
   {
+    auto &address = x.first;
+    auto &p       = x.second;
+
     switch (p->state())
     {
     case service::PromiseState::WAITING:
       // Those which have not got a response yet
       // are kept for later
-      unresolved.push_back(p);
+      unresolved.push_back(x);
       break;
     case service::PromiseState::SUCCESS:
     {
@@ -122,9 +126,9 @@ void MessengerPrototype::ResolveMessages()
       }
 
       // Removing messages from the mailbox
-      // TODO(tfr): implement
-      // rpc_client_.CallSpecificAddress(address, RPC_MESSENGER_INTERFACE,
-      //                                             MessengerProtocol::GET_MESSAGES);
+      rpc_client_.CallSpecificAddress(address, RPC_MESSENGER_INTERFACE,
+                                      MessengerProtocol::CLEAR_MESSAGES,
+                                      static_cast<uint64_t>(list.size()));
       break;
     }
     case service::PromiseState::FAILED:
@@ -155,11 +159,13 @@ MessengerPrototype::MessageList MessengerPrototype::GetMessages(uint64_t wait)
 
   // Turning all pulled requests into messages
   PromiseList remaining;
-  for (auto &p : promises_)
+  for (auto &x : promises_)
   {
+    auto &p = x.second;
+
     if (p->IsWaiting())
     {
-      remaining.push_back(p);
+      remaining.push_back(x);
     }
     else
     {
@@ -183,6 +189,24 @@ MessengerPrototype::MessageList MessengerPrototype::GetMessages(uint64_t wait)
   std::swap(remaining, promises_);
 
   return ret;
+}
+
+void MessengerPrototype::OnNewMessagePacket(muddle::Packet const &packet,
+                                            Address const & /*last_hop*/)
+{
+  fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
+
+  try
+  {
+    Message message;
+    serialiser >> message;
+    inbox_.push_back(message);
+  }
+  catch (std::exception const &e)
+  {
+    FETCH_LOG_ERROR("MessengerPrototype",
+                    "Retrieved messages malformed: ", static_cast<std::string>(e.what()));
+  }
 }
 
 MessengerPrototype::ResultList MessengerPrototype::FindAgents(ConstByteArray const & /*type*/,

@@ -141,6 +141,38 @@ public:
            return http::CreateJsonResponse(response);
          });
 
+    Post("/api/messenger/clear-messages", "Clears the front messages.",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           // Finding sender
+           auto doc = request.JSON();
+           if ((!doc.Has("sender")) || (!doc["sender"].IsString()))
+           {
+             return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
+           }
+
+           if ((!doc.Has("count")) || (!doc["count"].IsInteger()))
+           {
+             return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
+           }
+
+           // Sender
+           service::CallContext context;
+           context.sender_address =
+               byte_array::FromBase64(doc["sender"].As<byte_array::ConstByteArray>());
+
+           // TODO(private issue AEA-124): Authentication missing.
+           auto messages = messenger_.GetMessages(context);
+
+           // Creating stream with messages
+           serializers::MsgPackSerializer buffer;
+           buffer << messages;
+
+           variant::Variant response = variant::Variant::Object();
+           response["status"]        = "OK";
+           response["messages"]      = byte_array::ToBase64(buffer.data());
+           return http::CreateJsonResponse(response);
+         });
+
     Post("/api/messenger/findagent", "Finds agents matching search criteria.",
          [](http::ViewParameters const &, http::HTTPRequest const &) {
            //  ResultList FindAgents(service::CallContext const & call_context, ConstByteArray const

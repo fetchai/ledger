@@ -52,6 +52,9 @@ public:
   using Address = fetch::muddle::Packet::Address;
   using Message = fetch::messenger::Message;
 
+  void SetDeliveryFunction(DeliveryFunction const & /*attempt_delivery*/) override
+  {}
+
   void SendMessage(Message /*message*/) override
   {
     ++send;
@@ -63,8 +66,10 @@ public:
     return {};
   }
 
-  void ClearMessages(Address /*messenger*/, uint64_t /*count*/) override
-  {}
+  void ClearMessages(Address /*messenger*/, uint64_t count) override
+  {
+    cleared += count;
+  }
 
   void RegisterMailbox(Address /*messenger*/) override
   {
@@ -78,6 +83,7 @@ public:
 
   std::atomic<uint64_t> send{0};
   std::atomic<uint64_t> empty_mailbox{0};
+  std::atomic<uint64_t> cleared{0};
   std::atomic<uint64_t> registered_messengers{0};
   std::atomic<uint64_t> unregistered_messengers{0};
 };

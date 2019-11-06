@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "logging/logging.hpp"
 #include "messenger/messenger_api.hpp"
 #include "messenger/messenger_protocol.hpp"
 
@@ -32,6 +33,11 @@ Mailbox::Mailbox(muddle::MuddlePtr &muddle)
   message_subscription_->SetMessageHandler(this, &Mailbox::OnNewMessagePacket);
 }
 
+void Mailbox::SetDeliveryFunction(DeliveryFunction const &attempt_delivery)
+{
+  attempt_delivery_ = attempt_delivery;
+}
+
 void Mailbox::OnNewMessagePacket(muddle::Packet const &packet, Address const & /*last_hop*/)
 {
   fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
@@ -41,8 +47,10 @@ void Mailbox::OnNewMessagePacket(muddle::Packet const &packet, Address const & /
     serialiser >> message;
     SendMessage(message);
   }
-  catch (std::exception const &)
+  catch (std::exception const &e)
   {
+    FETCH_LOG_ERROR("Mailbox",
+                    "Retrieved messages malformed: ", static_cast<std::string>(e.what()));
   }
 }
 
@@ -159,7 +167,11 @@ void Mailbox::DeliverMessageLockLess(Message const &message)
   if (it == inboxes_.end())
   {
     // Attempting to deliver directly
-    // TODO(private issue AEA-125): Attempt direct delivery
+    if (attempt_delivery_)
+    {
+      attempt_delivery_(message);
+    }
+
     return;
   }
 

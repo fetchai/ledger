@@ -72,6 +72,7 @@ public:
   /// @{
   void        SendMessage(service::CallContext const &call_context, Message msg);
   MessageList GetMessages(service::CallContext const &call_context);
+  void        ClearMessages(service::CallContext const &call_context, uint64_t count);
   /// @}
 
   /// Search interface
@@ -92,6 +93,14 @@ public:
   /// @}
 
 private:
+  void AttemptDirectDelivery(Message const &message)
+  {
+    serializers::MsgPackSerializer serializer;
+    serializer << message;
+    messenger_endpoint_.Send(message.to.messenger, SERVICE_MESSENGER, CHANNEL_MESSENGER_MESSAGE,
+                             serializer.data());
+  }
+
   /// Networking
   /// @{
   Endpoint &        messenger_endpoint_;

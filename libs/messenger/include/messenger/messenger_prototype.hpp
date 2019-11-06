@@ -45,7 +45,6 @@ public:
   using ConnectionType  = std::shared_ptr<network::AbstractConnection>;
   using ServiceClient   = service::ServiceClient;
   using PublicKey       = byte_array::ConstByteArray;
-  using PromiseList     = std::vector<service::Promise>;
   using Client          = muddle::rpc::Client;
   using Server          = muddle::rpc::Server;
   using ServerPtr       = std::shared_ptr<Server>;
@@ -54,6 +53,7 @@ public:
   using MuddleInterface = muddle::MuddleInterface;
   using Address         = muddle::Address;
   using Addresses       = std::unordered_set<Address>;
+  using PromiseList     = std::vector<std::pair<Address, service::Promise>>;
 
   MessengerPrototype(muddle::MuddlePtr &muddle, Addresses node_addresses);
   MessengerPrototype(MessengerPrototype const &other) = delete;
@@ -78,6 +78,11 @@ public:
   ResultList FindAgents(ConstByteArray const & /*type*/, ConstByteArray const & /*query*/);
   /// @}
 private:
+  /// Subcription handlers
+  /// @{
+  void OnNewMessagePacket(muddle::Packet const &packet, Address const &last_hop);
+  /// @}
+
   /// Network components
   /// @{
   Endpoint &      endpoint_;              //< Messenger endpoint.

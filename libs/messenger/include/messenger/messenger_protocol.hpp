@@ -29,10 +29,13 @@ public:
   {
     REGISTER_MESSENGER   = 1,
     UNREGISTER_MESSENGER = 2,
-    SEND_MESSAGE         = 3,
-    GET_MESSAGES         = 4,
-    FIND_MESSENGERS      = 5,
-    ADVERTISE            = 6
+
+    SEND_MESSAGE   = 11,
+    GET_MESSAGES   = 12,
+    CLEAR_MESSAGES = 13,
+
+    FIND_MESSENGERS = 21,
+    ADVERTISE       = 22
   };
 
   explicit MessengerProtocol(MessengerAPI *api);
