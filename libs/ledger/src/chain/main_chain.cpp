@@ -189,7 +189,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
 
   DbRecord record;
 
-  if (block->body.previous_hash != chain::GENESIS_DIGEST)
+  if (!block->IsGenesis())
   {
     // notify stored parent
     if (block_store_->Get(storage::ResourceID(block->body.previous_hash), record))
@@ -422,7 +422,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
   // look up the heaviest block hash
   for (BlockHash current_hash = std::move(start);
        // exit once we have gathered enough blocks or reached genesis
-       result.size() < limit && current_hash != chain::GENESIS_DIGEST;)
+       result.size() < limit;)
   {
     // look up the block
     auto block = GetBlock(current_hash);
@@ -433,10 +433,20 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
     }
 
     // walk the hash
-    current_hash = block->body.previous_hash;
+    bool stop = block->IsGenesis();
+
+    if (!stop)
+    {
+      current_hash = block->body.previous_hash;
+    }
 
     // update the results
     result.push_back(std::move(block));
+
+    if (stop)
+    {
+      break;
+    }
   }
 
   return result;
@@ -868,7 +878,7 @@ void MainChain::WriteToFile()
 
     // This block will now become the head in our file
     // Corner case - block is genesis
-    if (block->body.previous_hash == chain::GENESIS_DIGEST)
+    if (block->IsGenesis())
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
 
