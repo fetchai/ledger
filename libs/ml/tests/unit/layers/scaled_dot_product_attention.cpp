@@ -16,24 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
 #include "gtest/gtest.h"
+
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class ScaledDotProductAttention : public ::testing::Test
 {
 };
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(ScaledDotProductAttention, MyTypes);
+TYPED_TEST_CASE(ScaledDotProductAttention, math::test::TensorFloatingTypes);
 
 TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the class as a subgraph
 {
@@ -396,3 +396,7 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
+
+} // test
+} // ml
+} // fetch

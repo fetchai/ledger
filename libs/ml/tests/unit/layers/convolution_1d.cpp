@@ -17,24 +17,25 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "math/tensor.hpp"
+#include "test_types.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 
+
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class Convolution1DTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(Convolution1DTest, MyTypes);
+TYPED_TEST_CASE(Convolution1DTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
@@ -518,3 +519,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
+
+} // test
+} // ml
+} // fetch

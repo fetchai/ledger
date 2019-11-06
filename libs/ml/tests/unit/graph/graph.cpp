@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "test_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -26,6 +25,7 @@
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -701,7 +701,6 @@ TYPED_TEST(GraphTest, diamond_graph_getStateDict)
   EXPECT_EQ(sd.dict_["Diamond_Weight2"].weights_->shape(), data2.shape());
 }
 
-
-} // test
-} // ml
-} // fetch
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch
