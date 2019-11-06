@@ -107,18 +107,6 @@ TEST_F(MLTests, trivial_commodity_dataloader_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, trivial_mnist_dataloader_test)
-{
-  static char const *dataloader_serialise_src = R"(
-    function main()
-      var dataloader = DataLoader("mnist");
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
-  ASSERT_TRUE(toolkit.Run());
-}
-
 TEST_F(MLTests, dataloader_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(

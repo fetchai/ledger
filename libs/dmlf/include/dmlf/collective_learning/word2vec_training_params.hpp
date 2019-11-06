@@ -25,7 +25,7 @@
 
 namespace fetch {
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 
 template <class DataType>
 struct Word2VecTrainingParams : public ClientParams<DataType>
@@ -77,6 +77,6 @@ struct Word2VecTrainingParams : public ClientParams<DataType>
   std::string save_loc = "./model.fba";  // save file location for exporting graph
 };
 
-}  // namespace distributed_learning
+}  // namespace collective_learning
 }  // namespace dmlf
 }  // namespace fetch

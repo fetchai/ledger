@@ -27,7 +27,7 @@
 
 namespace fetch {
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 
 /** Handles translation of weights and gradients from one vocabulary to another
  *
@@ -128,6 +128,6 @@ private:
   fetch::DigestMap<std::vector<std::string>>     known_vocabs{};
   std::shared_ptr<fetch::ml::dataloaders::Vocab> my_vocab;
 };
-}  // namespace distributed_learning
+}  // namespace collective_learning
 }  // namespace dmlf
 }  // namespace fetch

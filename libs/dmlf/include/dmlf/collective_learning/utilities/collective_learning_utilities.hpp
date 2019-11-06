@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/distributed_learning/distributed_learning_client.hpp"
+#include "dmlf/collective_learning/collective_learning_client.hpp"
 
 namespace fetch {
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 namespace utilities {
 
 /**
@@ -30,7 +30,7 @@ namespace utilities {
  */
 template <typename TensorType>
 void SynchroniseWeights(
-    std::vector<std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>>>
+    std::vector<std::shared_ptr<fetch::dmlf::collective_learning::TrainingClient<TensorType>>>
         clients)
 {
   std::vector<TensorType> new_weights = clients[0]->GetWeights();
@@ -157,6 +157,6 @@ void Shuffle(TensorType &data, TensorType &labels, typename TensorType::SizeType
 }
 
 }  // namespace utilities
-}  // namespace distributed_learning
+}  // namespace collective_learning
 }  // namespace dmlf
 }  // namespace fetch
