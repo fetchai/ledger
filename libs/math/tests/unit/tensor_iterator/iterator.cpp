@@ -89,6 +89,7 @@ TEST(tensor_iterator, simple_iterator_permute_test)
 
 TEST(tensor_iterator, iterator_4dim_copy_test)
 {
+
   // set up an initial array
   Tensor<double> array{Tensor<double>::Arange(0., 1008., 1.)};
   array.Reshape({4, 6, 7, 6});

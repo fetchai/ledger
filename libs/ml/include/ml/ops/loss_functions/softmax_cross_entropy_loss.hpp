@@ -37,7 +37,7 @@ class SoftmaxCrossEntropyLoss : public Ops<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpSoftmaxCrossEntropySaveableParams<T>;
   using MyType        = SoftmaxCrossEntropyLoss<TensorType>;

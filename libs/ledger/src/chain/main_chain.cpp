@@ -632,7 +632,7 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash) const
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to look up block! Hash: ", hash.ToBase64());
+    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to look up block! Hash: ", hash.ToHex());
   }
 
   return output_block;
@@ -1368,8 +1368,8 @@ bool MainChain::DetermineHeaviestTip()
           auto        a_weight{a.second.weight}, b_weight{b.second.weight};
 
           // The weight, which is related to the rank of the miner producing the block is used here
-          // to tie break chains with equivalent total weight giving priority to miners which have
-          // high weight, where the weight is determined by the entropy for a particular block round
+          // to tie break chains with equivalent total weight, choosing the weight of the tips as a
+          // tiebreaker. This is important for consensus.
           return a_total_weight < b_total_weight ||
                  (a_total_weight == b_total_weight && a_weight < b_weight) ||
                  (a_total_weight == b_total_weight && a_weight == b_weight && a_hash < b_hash);

@@ -17,16 +17,23 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/notarisation_manager.hpp"
+#include "core/synchronisation/protected.hpp"
 
 namespace fetch {
 namespace ledger {
 
-// To set elliptic curve generator in static verify function
-constexpr char const *generator_string = "Fetch.ai Elliptic Curve Generator G";
+Protected<std::shared_ptr<NotarisationManager::Generator>> generator_;
 
 NotarisationManager::NotarisationManager()
-  : generator_{generator_string}
-{}
+{
+  generator_.ApplyVoid([](std::shared_ptr<Generator> generator) {
+    if (!generator)
+    {
+      generator = std::make_unique<Generator>();
+      SetGenerator(*generator);
+    }
+  });
+}
 
 NotarisationManager::Signature NotarisationManager::Sign(MessagePayload const &message)
 {
@@ -36,9 +43,9 @@ NotarisationManager::Signature NotarisationManager::Sign(MessagePayload const &m
 bool NotarisationManager::Verify(MessagePayload const &message, Signature const &signature,
                                  MuddleAddress const &member)
 {
-  return crypto::mcl::VerifySign(
-      cabinet_public_keys_[identity_to_index_[member]].aggregate_public_key, message, signature,
-      generator_);
+  uint32_t member_index = identity_to_index_[member];
+  return crypto::mcl::VerifySign(cabinet_public_keys_[member_index].aggregate_public_key, message,
+                                 signature, GetGenerator());
 }
 
 NotarisationManager::AggregateSignature NotarisationManager::ComputeAggregateSignature(
@@ -63,14 +70,13 @@ bool NotarisationManager::VerifyAggregateSignature(MessagePayload const &    mes
   PublicKey aggregate_public_key =
       crypto::mcl::ComputeAggregatePublicKey(aggregate_signature.second, cabinet_public_keys_);
   return crypto::mcl::VerifySign(aggregate_public_key, message, aggregate_signature.first,
-                                 generator_);
+                                 GetGenerator());
 }
 
 bool NotarisationManager::VerifyAggregateSignature(MessagePayload const &    message,
                                                    AggregateSignature const &aggregate_signature,
                                                    std::vector<PublicKey> const &public_keys)
 {
-  Generator generator_tmp{generator_string};
   if (aggregate_signature.second.size() != public_keys.size())
   {
     return false;
@@ -78,14 +84,14 @@ bool NotarisationManager::VerifyAggregateSignature(MessagePayload const &    mes
   PublicKey aggregate_public_key =
       crypto::mcl::ComputeAggregatePublicKey(aggregate_signature.second, public_keys);
   return crypto::mcl::VerifySign(aggregate_public_key, message, aggregate_signature.first,
-                                 generator_tmp);
+                                 GetGenerator());
 }
 
 NotarisationManager::PublicKey NotarisationManager::GenerateKeys()
 {
   if (aggregate_private_key_.private_key.isZero())
   {
-    auto keys                          = crypto::mcl::GenerateKeyPair(generator_);
+    auto keys                          = crypto::mcl::GenerateKeyPair(GetGenerator());
     aggregate_private_key_.private_key = keys.first;
     public_key_                        = keys.second;
     return keys.second;
@@ -157,5 +163,18 @@ std::set<NotarisationManager::MuddleAddress> const NotarisationManager::notarisa
 {
   return notarisation_members_;
 }
+
+NotarisationManager::Generator const &NotarisationManager::GetGenerator()
+{
+  return *generator_.Apply([](std::shared_ptr<Generator> &generator) {
+    if (!generator)
+    {
+      generator = std::make_unique<Generator>();
+      SetGenerator(*generator);
+    }
+    return generator;
+  });
+}
+
 }  // namespace ledger
 }  // namespace fetch

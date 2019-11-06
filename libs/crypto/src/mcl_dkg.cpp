@@ -86,26 +86,20 @@ DkgKeyInformation::DkgKeyInformation(PublicKey              group_public_key1,
 
 void SetGenerator(Generator &generator_g, std::string string_to_hash)
 {
-  if (string_to_hash.empty())
-  {
-    string_to_hash = "Fetch.ai Elliptic Curve Generator G";
-  }
+  assert(!string_to_hash.empty());
   bn::hashAndMapToG2(generator_g, string_to_hash);
+  assert(!generator_g.isZero());
 }
 
 void SetGenerators(Generator &generator_g, Generator &generator_h, std::string string_to_hash,
                    std::string string_to_hash2)
 {
-  if (string_to_hash.empty())
-  {
-    string_to_hash = "Fetch.ai Elliptic Curve Generator G";
-  }
-  if (string_to_hash2.empty())
-  {
-    string_to_hash2 = "Fetch.ai Elliptic Curve Generator H";
-  }
+  assert(!string_to_hash.empty() && !string_to_hash2.empty());
+  assert(string_to_hash != string_to_hash2);
   bn::hashAndMapToG2(generator_g, string_to_hash);
   bn::hashAndMapToG2(generator_h, string_to_hash2);
+  assert(!generator_g.isZero());
+  assert(!generator_h.isZero());
 }
 
 /**
