@@ -866,7 +866,25 @@ TEST_P(MainChainTests, CheckResolvedLooseWeight)
   ASSERT_EQ(chain_->GetBlock(main5->body.hash)->total_weight, main5->total_weight);
 }
 
-TEST_P(MainChainTests, MultipleBlocksSameHeightSameMiner)
+class MainChainTestsWithRemoval : public ::testing::TestWithParam<MainChain::Mode>
+{
+protected:
+  void SetUp() override
+  {
+    static constexpr std::size_t NUM_LANES  = 1;
+    static constexpr std::size_t NUM_SLICES = 2;
+
+    auto const main_chain_mode = GetParam();
+
+    chain_     = std::make_unique<MainChain>(false, main_chain_mode, true);
+    generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
+  }
+
+  MainChainPtr      chain_;
+  BlockGeneratorPtr generator_;
+};
+
+TEST_P(MainChainTestsWithRemoval, MultipleBlocksSameHeightSameMiner)
 {
   auto genesis = generator_->Generate();
 

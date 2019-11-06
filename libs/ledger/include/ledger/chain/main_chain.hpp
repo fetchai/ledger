@@ -116,7 +116,8 @@ public:
   };
 
   // Construction / Destruction
-  explicit MainChain(bool enable_bloom_filter = false, Mode mode = Mode::IN_MEMORY_DB);
+  explicit MainChain(bool enable_bloom_filter = false, Mode mode = Mode::IN_MEMORY_DB,
+                     bool enable_tip_removal = false);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
@@ -244,9 +245,10 @@ public:
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
   // The whole tree of previous-next relations among cached blocks
   mutable References references_;
-  TipsMap            tips_;                      ///< Keep track of the tips
-  HeaviestTip        heaviest_;                  ///< Heaviest block/tip
-  LooseBlockMap      loose_blocks_;              ///< Waiting (loose) blocks
+  TipsMap            tips_;          ///< Keep track of the tips
+  HeaviestTip        heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
+  bool const         enable_tip_removal_;
   ExcludedMinersMap  conflicting_block_miners_;  ///< Miners whose blocks should not be tips
   std::unique_ptr<BasicBloomFilter> bloom_filter_;
   bool const                        enable_bloom_filter_;
