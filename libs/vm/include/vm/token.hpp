@@ -46,6 +46,8 @@ struct Token
     True,
     False,
     Null,
+    Contract,
+    EndContract,
     Function,
     EndFunction,
     While,
