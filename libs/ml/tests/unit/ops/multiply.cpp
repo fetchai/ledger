@@ -65,6 +65,8 @@ TYPED_TEST(MultiplyTest, forward_test)
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
+
+  ASSERT_TRUE(!math::state_overflow<typename TypeParam::Type>());
 }
 
 TYPED_TEST(MultiplyTest, backward_test_NMB_N11)
@@ -334,6 +336,8 @@ TYPED_TEST(MultiplyTest, saveparams_backward_test_NB_NB)
   EXPECT_TRUE(prediction.at(1).AllClose(
       new_prediction.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
+
+  ASSERT_TRUE(!math::state_overflow<typename TypeParam::Type>());
 }
 
 }  // namespace test

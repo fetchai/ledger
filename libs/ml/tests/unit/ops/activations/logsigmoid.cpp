@@ -49,7 +49,7 @@ TYPED_TEST(LogSigmoidTest, forward_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(), static_cast<DataType>(50) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSigmoidTest, forward_3d_tensor_test)
@@ -81,7 +81,7 @@ TYPED_TEST(LogSigmoidTest, forward_3d_tensor_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(), static_cast<DataType>(50) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSigmoidTest, backward_test)
@@ -99,7 +99,7 @@ TYPED_TEST(LogSigmoidTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(), static_cast<DataType>(50) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSigmoidTest, backward_3d_tensor_test)
@@ -134,7 +134,7 @@ TYPED_TEST(LogSigmoidTest, backward_3d_tensor_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(), static_cast<DataType>(50) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSigmoidTest, saveparams_test)
