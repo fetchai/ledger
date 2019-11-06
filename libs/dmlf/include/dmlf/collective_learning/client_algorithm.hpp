@@ -57,7 +57,7 @@ class ClientAlgorithm
   using AlgorithmControllerPtrType = std::shared_ptr<ClientAlgorithmController<TensorType>>;
 
 public:
-  ClientAlgorithm(AlgorithmControllerPtrType algorithm_controller, std::string const & id,
+  ClientAlgorithm(AlgorithmControllerPtrType algorithm_controller, std::string const &id,
                   ClientParams<DataType> const &client_params,
                   std::shared_ptr<std::mutex>   console_mutex_ptr);
 
@@ -65,21 +65,21 @@ public:
    * explicit copy constructor because mutexes can't be copied
    * @param other
    */
-  ClientAlgorithm(ClientAlgorithm & other)
+  ClientAlgorithm(ClientAlgorithm &other)
   {
-    id_ = other.id_;
-    train_loss_ = other.train_loss_;
-    test_loss_ = other.test_loss_;
-    train_loss_sum_ = other.train_loss_sum_;
-    train_loss_cnt_ = other.train_loss_cnt_;
-    model_ptr_ = other.model_ptr_;
-    graph_ptr_ = other.graph_ptr_;
-    optimiser_ptr_ = other.optimiser_ptr_;
-    dataloader_ptr_ = other.dataloader_ptr_;
-    round_counter_ = other.round_counter_;
+    id_              = other.id_;
+    train_loss_      = other.train_loss_;
+    test_loss_       = other.test_loss_;
+    train_loss_sum_  = other.train_loss_sum_;
+    train_loss_cnt_  = other.train_loss_cnt_;
+    model_ptr_       = other.model_ptr_;
+    graph_ptr_       = other.graph_ptr_;
+    optimiser_ptr_   = other.optimiser_ptr_;
+    dataloader_ptr_  = other.dataloader_ptr_;
+    round_counter_   = other.round_counter_;
     updates_applied_ = other.updates_applied_;
 
-    params_ = other.params_;
+    params_               = other.params_;
     algorithm_controller_ = other.algorithm_controller_;
   }
 
@@ -145,7 +145,7 @@ private:
 
 template <class TensorType>
 ClientAlgorithm<TensorType>::ClientAlgorithm(AlgorithmControllerPtrType    algorithm_controller,
-                                             std::string const &id,
+                                             std::string const &           id,
                                              ClientParams<DataType> const &client_params,
                                              std::shared_ptr<std::mutex>   console_mutex_ptr)
   : id_(id)
@@ -153,7 +153,7 @@ ClientAlgorithm<TensorType>::ClientAlgorithm(AlgorithmControllerPtrType    algor
   , params_(client_params)
   , algorithm_controller_(algorithm_controller)
 {
-//  SetParams(client_params);
+  //  SetParams(client_params);
   ClearLossFile();
 }
 

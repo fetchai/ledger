@@ -103,7 +103,7 @@ int main(int argc, char **argv)
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
 
     // Start client
-    client->Run();
+    client->RunAlgorithms();
   }
 
   return 0;

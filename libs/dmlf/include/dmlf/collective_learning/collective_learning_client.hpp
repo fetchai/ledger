@@ -48,7 +48,8 @@ class CollectiveLearningClient
 public:
   CollectiveLearningClient(std::string const &id, ClientParams<DataType> const &client_params,
                            std::shared_ptr<dmlf::AbstractLearnerNetworker> networker_ptr,
-                           std::shared_ptr<std::mutex>                     console_mutex_ptr, bool build_algorithms = true);
+                           std::shared_ptr<std::mutex>                     console_mutex_ptr,
+                           bool                                            build_algorithms = true);
   virtual ~CollectiveLearningClient() = default;
 
   void RunAlgorithms(std::vector<std::thread> &threads);
@@ -56,8 +57,10 @@ public:
   std::vector<AlgorithmPtrType> GetAlgorithms();
   DataType                      GetLossAverage();
 
-  template <typename AlgorithmType = ClientAlgorithm<TensorType>, typename ClientParamsType = ClientParams<TensorType>>
-  void BuildAlgorithms(ClientParamsType const &client_params, std::shared_ptr<std::mutex> console_mutex_ptr);
+  template <typename AlgorithmType    = ClientAlgorithm<TensorType>,
+            typename ClientParamsType = ClientParams<TensorType>>
+  void BuildAlgorithms(ClientParamsType const &    client_params,
+                       std::shared_ptr<std::mutex> console_mutex_ptr);
 
 protected:
   std::string                              id_;
@@ -69,8 +72,7 @@ template <class TensorType>
 CollectiveLearningClient<TensorType>::CollectiveLearningClient(
     std::string const &id, ClientParams<DataType> const &client_params,
     std::shared_ptr<dmlf::AbstractLearnerNetworker> networker_ptr,
-    std::shared_ptr<std::mutex>                     console_mutex_ptr,
-    bool build_algorithms)
+    std::shared_ptr<std::mutex> console_mutex_ptr, bool build_algorithms)
   : id_(id)
 {
   // build algorithm controller
@@ -85,11 +87,13 @@ CollectiveLearningClient<TensorType>::CollectiveLearningClient(
 
 template <class TensorType>
 template <typename AlgorithmType, typename ClientParamsType>
-void CollectiveLearningClient<TensorType>::BuildAlgorithms(ClientParamsType const &client_params, std::shared_ptr<std::mutex> console_mutex_ptr)
+void CollectiveLearningClient<TensorType>::BuildAlgorithms(
+    ClientParamsType const &client_params, std::shared_ptr<std::mutex> console_mutex_ptr)
 {
   for (std::size_t i = 0; i < client_params.n_algorithms_per_client; ++i)
   {
-    AlgorithmType tmp(algorithm_controller_, "client" + id_ + "_algo" + std::to_string(i), client_params, console_mutex_ptr);
+    AlgorithmType tmp(algorithm_controller_, "client" + id_ + "_algo" + std::to_string(i),
+                      client_params, console_mutex_ptr);
 
     algorithms_.emplace_back(std::make_shared<AlgorithmType>(
         algorithm_controller_, "client" + id_ + "_algo" + std::to_string(i), client_params,

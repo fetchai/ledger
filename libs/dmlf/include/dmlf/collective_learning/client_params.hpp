@@ -35,8 +35,8 @@ struct ClientParams
   bool     print_loss = false;
 
   std::vector<std::string> input_names = {"Input"};
-  std::string              label_name   = "Label";
-  std::string              error_name   = "Error";
+  std::string              label_name  = "Label";
+  std::string              error_name  = "Error";
 
   std::string results_dir = ".";
 };

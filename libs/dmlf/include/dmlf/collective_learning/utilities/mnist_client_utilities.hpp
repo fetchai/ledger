@@ -63,9 +63,9 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(
   model_ptr->Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::CROSS_ENTROPY);
 
   // N.B. some names are not set until AFTER the model is compiled
-  client_params.inputs_names = {model_ptr->InputName()};
-  client_params.label_name   = model_ptr->LabelName();
-  client_params.error_name   = model_ptr->ErrorName();
+  client_params.input_names = {model_ptr->InputName()};
+  client_params.label_name  = model_ptr->LabelName();
+  client_params.error_name  = model_ptr->ErrorName();
 
   return model_ptr;
 }
@@ -102,7 +102,6 @@ MakeMNISTClient(
   {
     // build the mnist model
     auto model_ptr = MakeMNistModel<TensorType>(client_params, images, labels, test_set_ratio);
-
 
     algorithm->SetModel(model_ptr);
   }

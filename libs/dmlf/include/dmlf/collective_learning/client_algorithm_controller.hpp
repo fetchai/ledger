@@ -30,7 +30,6 @@ class ClientAlgorithmController
   using UpdateType                    = fetch::dmlf::Update<TensorType>;
   using MessageControllerInterfacePtr = std::shared_ptr<dmlf::AbstractLearnerNetworker>;
 
-
 public:
   ClientAlgorithmController(MessageControllerInterfacePtr mci_ptr);
   virtual ~ClientAlgorithmController() = default;

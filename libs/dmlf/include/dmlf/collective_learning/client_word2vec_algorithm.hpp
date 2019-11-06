@@ -32,16 +32,17 @@ namespace collective_learning {
 template <class TensorType>
 class ClientWord2VecAlgorithm : public ClientAlgorithm<TensorType>
 {
-  using DataType         = typename TensorType::Type;
-  using SizeType         = typename TensorType::SizeType;
-  using VectorTensorType = std::vector<TensorType>;
-  using GradientType     = fetch::dmlf::Update<TensorType>;
+  using DataType                   = typename TensorType::Type;
+  using SizeType                   = typename TensorType::SizeType;
+  using VectorTensorType           = std::vector<TensorType>;
+  using GradientType               = fetch::dmlf::Update<TensorType>;
   using AlgorithmControllerType    = ClientAlgorithmController<TensorType>;
   using AlgorithmControllerPtrType = std::shared_ptr<ClientAlgorithmController<TensorType>>;
 
 public:
-  ClientWord2VecAlgorithm(AlgorithmControllerPtrType algorithm_controller, std::string const &id, Word2VecTrainingParams<DataType> const &tp,
-                 std::shared_ptr<std::mutex> console_mutex_ptr);
+  ClientWord2VecAlgorithm(AlgorithmControllerPtrType algorithm_controller, std::string const &id,
+                          Word2VecTrainingParams<DataType> const &tp,
+                          std::shared_ptr<std::mutex>             console_mutex_ptr);
 
   void Run() override;
 
@@ -72,10 +73,9 @@ private:
 };
 
 template <class TensorType>
-ClientWord2VecAlgorithm<TensorType>::ClientWord2VecAlgorithm(AlgorithmControllerPtrType algorithm_controller,
-        std::string const &id,
-                                           Word2VecTrainingParams<DataType> const &tp,
-                                           std::shared_ptr<std::mutex> console_mutex_ptr)
+ClientWord2VecAlgorithm<TensorType>::ClientWord2VecAlgorithm(
+    AlgorithmControllerPtrType algorithm_controller, std::string const &id,
+    Word2VecTrainingParams<DataType> const &tp, std::shared_ptr<std::mutex> console_mutex_ptr)
   : ClientAlgorithm<TensorType>(algorithm_controller, id, tp, console_mutex_ptr)
   , tp_(tp)
 {
@@ -209,12 +209,13 @@ void ClientWord2VecAlgorithm<TensorType>::PrepareOptimiser()
 
   // Initialise Optimiser
   this->optimiser_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
-      this->graph_ptr_, this->params_.input_names, this->params_.label_name, this->params_.error_name,
-      tp_.learning_rate_param);
+      this->graph_ptr_, this->params_.input_names, this->params_.label_name,
+      this->params_.error_name, tp_.learning_rate_param);
 }
 
 template <class TensorType>
-typename ClientWord2VecAlgorithm<TensorType>::VectorTensorType ClientWord2VecAlgorithm<TensorType>::TranslateUpdate(
+typename ClientWord2VecAlgorithm<TensorType>::VectorTensorType
+ClientWord2VecAlgorithm<TensorType>::TranslateUpdate(
     std::shared_ptr<ClientWord2VecAlgorithm::GradientType> &new_gradients)
 {
   assert(new_gradients->GetGradients().size() ==

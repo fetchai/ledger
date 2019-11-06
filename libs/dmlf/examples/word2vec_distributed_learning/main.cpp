@@ -190,13 +190,12 @@ int main(int argc, char **argv)
   for (SizeType i(0); i < n_clients; ++i)
   {
     Word2VecTrainingParams<DataType> cp(*word2vec_client_params);
-    cp.data    = {client_data.at(i)};
+    cp.data       = {client_data.at(i)};
     clients.at(i) = std::make_shared<CollectiveLearningClient<TensorType>>(
         std::to_string(i), cp, networkers.at(i), console_mutex_ptr, false);
 
     clients.at(i)->BuildAlgorithms<ClientWord2VecAlgorithm<TensorType>>(cp, console_mutex_ptr);
   }
-
 
   /**
    * Main loop
@@ -217,19 +216,21 @@ int main(int argc, char **argv)
       t.join();
     }
 
-    // Write statistic to csv
+    // Gather and write performance statistics
     std::ofstream lossfile(output_csv_file, std::ofstream::out | std::ofstream::app);
-
     std::cout << "Test losses:";
     lossfile << fetch::ml::utilities::GetStrTimestamp();
     for (auto &c : clients)
     {
-      auto *w2v_client = dynamic_cast<ClientWord2VecAlgorithm<TensorType> *>(c.get());
+      for (auto &algo : c->GetAlgorithms())
+      {
+        auto *w2v_client = dynamic_cast<ClientWord2VecAlgorithm<TensorType> *>(algo.get());
 
-      std::cout << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
-                << w2v_client->GetAnalogyScore();
-      lossfile << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
-               << w2v_client->GetAnalogyScore();
+        std::cout << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
+                  << w2v_client->GetAnalogyScore();
+        lossfile << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
+                 << w2v_client->GetAnalogyScore();
+      }
     }
     std::cout << std::endl;
     lossfile << std::endl;
