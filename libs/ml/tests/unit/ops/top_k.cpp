@@ -28,6 +28,10 @@
 #include <memory>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace tests {
+
 template <typename T>
 class TopKOpTest : public ::testing::Test
 {
@@ -65,7 +69,8 @@ TYPED_TEST(TopKOpTest, saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using SizeType      = typename TypeParam::SizeType;
+  using SizeType      = fetch::math::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::TopK<TensorType>::SPType;
   using OpType        = typename fetch::ml::ops::TopK<TensorType>;
@@ -240,3 +245,7 @@ TYPED_TEST(TopKOpTest, saveparams_backward_test)
       fetch::math::function_tolerance<typename TypeParam::Type>()));
   fetch::math::state_clear<DataType>();
 }
+
+}  // namespace tests
+}  // namespace ml
+}  // namespace fetch

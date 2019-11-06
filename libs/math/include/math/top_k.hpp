@@ -43,13 +43,16 @@ void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType 
 
   SizeType axis;
 
+  // Set axis to be data dimension
+  // 2D or higher
   if (data.shape().size() > 1)
   {
     axis = data.shape().size() - 2;
   }
+  // 1D
   else
   {
-    axis = data.shape().size() - 1;
+    axis = 0;
   }
 
   SizeType axis_size = data.shape().at(axis);
@@ -129,13 +132,16 @@ std::pair<ArrayDataType, ArrayIndicesType> TopK(ArrayDataType const &           
 
   SizeType axis;
 
+  // Set axis to be data dimension
+  // 2D or higher
   if (data.shape().size() > 1)
   {
     axis = data.shape().size() - 2;
   }
+  // 1D
   else
   {
-    axis = data.shape().size() - 1;
+    axis = 0;
   }
 
   std::vector<SizeType> ret_shape = data.shape();

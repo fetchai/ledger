@@ -35,7 +35,7 @@ class TopK : public fetch::ml::ops::Ops<T>
 {
 public:
   using TensorType     = T;
-  using SizeType       = typename TensorType::SizeType;
+  using SizeType       = fetch::math::SizeType;
   using TensorSizeType = fetch::math::Tensor<SizeType>;
   using DataType       = typename TensorType::Type;
   using ArrayPtrType   = std::shared_ptr<TensorType>;
@@ -71,8 +71,7 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
-  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override
   {
     FETCH_UNUSED(me);
     assert(me.get() == this);
@@ -130,8 +129,8 @@ public:
       {
         ret_signal.At(indices_.At(i)) = error_signal.At(i);
       }
+      break;
     }
-    break;
 
     // 2D
     case 2:
@@ -143,8 +142,8 @@ public:
           ret_signal.At(indices_.At(i, j), j) = error_signal.At(i, j);
         }
       }
+      break;
     }
-    break;
 
     default:
     {
