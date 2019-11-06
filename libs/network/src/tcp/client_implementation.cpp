@@ -271,11 +271,11 @@ void TCPClientImplementation::ReadBody(byte_array::ByteArray const &header) noex
   auto strand = strand_.lock();
   assert(strand->running_in_this_thread());
 
-  assert(header.size() >= sizeof(networkMagic_));
+  assert(header.size() >= sizeof(NETWORK_MAGIC));
   uint64_t magic = *reinterpret_cast<const uint64_t *>(header.pointer());
   uint64_t size  = *reinterpret_cast<const uint64_t *>(header.pointer() + sizeof(uint64_t));
 
-  if (magic != networkMagic_)
+  if (magic != NETWORK_MAGIC)
   {
     byte_array::ByteArray dummy;
     SetHeader(dummy, 0);
@@ -330,7 +330,7 @@ void TCPClientImplementation::SetHeader(byte_array::ByteArray &header, uint64_t 
 
   for (std::size_t i = 0; i < 8; ++i)
   {
-    header[i] = uint8_t((networkMagic_ >> i * 8) & 0xff);
+    header[i] = uint8_t((NETWORK_MAGIC >> i * 8) & 0xff);
   }
 
   for (std::size_t i = 0; i < 8; ++i)

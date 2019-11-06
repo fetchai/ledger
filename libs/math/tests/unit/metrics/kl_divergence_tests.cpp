@@ -34,8 +34,6 @@ TYPED_TEST_CASE(KlDivergenceTest, TensorFloatingTypes);
 
 TYPED_TEST(KlDivergenceTest, same_tensors_divergence_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
-
   TypeParam A({4, 4});
 
   A.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(0.1));
@@ -67,7 +65,10 @@ TYPED_TEST(KlDivergenceTest, same_tensors_divergence_test)
 TYPED_TEST(KlDivergenceTest, other_divergence_test)
 {
   using DataType = typename TypeParam::Type;
+<<<<<<< HEAD
   using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+=======
+>>>>>>> 23f647562598d39cf60f86bc137f15223c33a568
   TypeParam A({4, 4});
 
   A.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(0.15));

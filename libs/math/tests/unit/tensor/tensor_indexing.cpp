@@ -29,7 +29,7 @@ class TensorIndexingTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorIndexingTest, UnsignedIntAndFloatingTypes);
+TYPED_TEST_CASE(TensorIndexingTest, FloatIntAndUIntTypes);
 
 TYPED_TEST(TensorIndexingTest, empty_tensor_test)
 {
@@ -91,7 +91,7 @@ TYPED_TEST(TensorIndexingTest, index_op_vs_iterator)
 
 TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t({2, 3, 5});
 
@@ -135,7 +135,7 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
 
 TYPED_TEST(TensorIndexingTest, double_slicing_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<TypeParam> t({2, 3, 5});
 
@@ -174,9 +174,9 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_1d)
     e = count;
     count += TypeParam(1);
   }
-  for (uint64_t i(0); i < t.size(); ++i)
+  for (uint64_t j(0); j < t.size(); ++j)
   {
-    EXPECT_EQ(t.At(i), TypeParam(i));
+    EXPECT_EQ(t.At(j), TypeParam(j));
   }
 }
 
@@ -232,6 +232,7 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_4d)
     e = count;
     count += TypeParam(1);
   }
+
   TypeParam val{0};
   for (uint64_t i(0); i < t.shape()[3]; ++i)
   {

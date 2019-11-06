@@ -36,7 +36,6 @@ TYPED_TEST(DistanceTest, cosine_distance)
 {
 
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType A = ArrayType({1, 4});

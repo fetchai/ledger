@@ -30,7 +30,7 @@ class TensorBasicTests : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorBasicTests, UnsignedIntAndFloatingTypes);
+TYPED_TEST_CASE(TensorBasicTests, FloatIntAndUIntTypes);
 
 // template for producing a random array of FixedPoints
 template <uint16_t I, uint16_t F>
@@ -215,7 +215,6 @@ TYPED_TEST(TensorBasicTests, is_equal_test)
 
 TYPED_TEST(TensorBasicTests, is_not_equal_test)
 {
-  using SizeType               = typename Tensor<TypeParam>::SizeType;
   std::size_t       n          = 10000;
   Tensor<TypeParam> test_array = RandomArray(n, TypeParam(0));
   Tensor<TypeParam> test_array_2(n);

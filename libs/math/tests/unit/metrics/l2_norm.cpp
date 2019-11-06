@@ -45,9 +45,13 @@ TYPED_TEST(L2NormTest, value_test)
   test_array[6] = DataType(7);
   test_array[7] = DataType(-8);
 
+<<<<<<< HEAD
   // initialise to non-zero just to avoid correct value at initialisation
   DataType score(0);
   score = fetch::math::L2Norm(test_array);
+=======
+  DataType score = fetch::math::L2Norm(test_array);
+>>>>>>> 23f647562598d39cf60f86bc137f15223c33a568
 
   // test correct values
   EXPECT_NEAR(double(score), double(14.282856857085700852),

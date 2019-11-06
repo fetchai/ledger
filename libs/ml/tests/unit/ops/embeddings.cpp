@@ -43,7 +43,7 @@ TYPED_TEST_CASE(EmbeddingsTest, MyTypes);
 
 TYPED_TEST(EmbeddingsTest, forward_shape)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   fetch::ml::ops::Embeddings<TypeParam> e(SizeType(60), SizeType(100));
   TypeParam                             input(std::vector<uint64_t>({10, 1}));
   for (uint32_t i(0); i < 10; ++i)
@@ -97,7 +97,7 @@ TYPED_TEST(EmbeddingsTest, backward)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   fetch::ml::ops::Embeddings<TypeParam> e(6, 10);
   TypeParam                             weights(std::vector<uint64_t>({6, 10}));

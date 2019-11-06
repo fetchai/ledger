@@ -30,7 +30,7 @@ class SerializersTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SerializersTest, UnsignedIntAndFloatingTypes);
+TYPED_TEST_CASE(SerializersTest, FloatIntAndUIntTypes);
 
 TYPED_TEST(SerializersTest, serialize_empty_tensor)
 {

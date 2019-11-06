@@ -29,7 +29,7 @@ class TensorConcatenationTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorConcatenationTest, UnsignedIntAndFloatingTypes);
+TYPED_TEST_CASE(TensorConcatenationTest, FloatIntAndUIntTypes);
 
 template <typename T>
 fetch::math::Tensor<T> PrepareTensor(std::vector<fetch::math::SizeType> const &shape)

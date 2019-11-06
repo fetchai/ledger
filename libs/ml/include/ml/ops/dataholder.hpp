@@ -39,7 +39,7 @@ class DataHolder : public Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpDataHolderSaveableParams<T>;

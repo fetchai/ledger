@@ -20,9 +20,12 @@
 #include "math/activation_functions/sigmoid.hpp"
 #include "test_types.hpp"
 
+<<<<<<< HEAD
 #include <iomanip>
 #include <iostream>
 
+=======
+>>>>>>> 23f647562598d39cf60f86bc137f15223c33a568
 namespace fetch {
 namespace math {
 namespace test {
@@ -146,7 +149,7 @@ TYPED_TEST(SigmoidTest, exact_values)
 
 TYPED_TEST(SigmoidTest, sigmoid_2x2)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   TypeParam array1{{2, 2}};
 
   array1.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(0.3));
@@ -172,7 +175,7 @@ TYPED_TEST(SigmoidTest, sigmoid_2x2)
 // Test sigmoid function output against numpy output for 2x2 input matrix of random values
 TYPED_TEST(SigmoidTest, sigmoid_11)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   TypeParam input{1};
   TypeParam output{1};
