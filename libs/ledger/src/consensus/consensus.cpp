@@ -108,6 +108,17 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
 {
   assert(stake_);
   FETCH_UNUSED(chain_);
+
+  // if notarising then must have removal of conflicting blocks of the same weight from tips in main
+  // chain
+  if (notarisation_ && !chain_.enable_tip_removal_)
+  {
+    assert(chain_.enable_tip_removal_);
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Notarising enabled when main chain allows multiple blocks of same weight. "
+                   "Notarisation disabled.");
+    notarisation_.reset();
+  }
 }
 
 // TODO(HUT): probably this is not required any more.
