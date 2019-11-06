@@ -210,28 +210,6 @@ bool Consensus::VerifyNotarisation(Block const &block) const
   return true;
 }
 
-uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
-{
-  auto beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
-  auto cabinet           = beginning_of_aeon.body.block_entropy.qualified;
-
-  std::size_t weight{cabinet.size()};
-
-  // TODO(EJF): Depending on the cabinet sizes this would need to be improved
-  for (auto const &member : cabinet)
-  {
-    if (address == chain::Address::FromMuddleAddress(member))
-    {
-      break;
-    }
-
-    weight = SafeDecrement(weight, 1);
-  }
-
-  // Note: weight must always be non zero (indicates failure/not in cabinet)
-  return weight;
-}
-
 Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
                                               uint64_t                                entropy)
 {
@@ -244,6 +222,31 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
   }
 
   return DeterministicShuffle(ret, entropy);
+}
+
+uint64_t Consensus::GetBlockGenerationWeight(MainChain const &chain, Block const &previous,
+                                             chain::Address const &address)
+{
+  auto beginning_of_aeon = GetBeginningOfAeon(previous, chain);
+  auto cabinet           = beginning_of_aeon.body.block_entropy.qualified;
+  auto entropy_shuffled_cabinet =
+      QualWeightedByEntropy(cabinet, previous.body.block_entropy.EntropyAsU64());
+
+  std::size_t weight{entropy_shuffled_cabinet.size()};
+
+  // TODO(EJF): Depending on the cabinet sizes this would need to be improved
+  for (auto const &member : entropy_shuffled_cabinet)
+  {
+    if (address == chain::Address::FromMuddleAddress(member.identifier()))
+    {
+      break;
+    }
+
+    weight = SafeDecrement(weight, 1);
+  }
+
+  // Note: weight must always be non zero (indicates failure/not in cabinet)
+  return weight;
 }
 
 /**
@@ -506,7 +509,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->body.miner_id      = mining_identity_;
   ret->body.timestamp =
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-  ret->weight = GetBlockGenerationWeight(*ret, mining_address_);
+  ret->weight = GetBlockGenerationWeight(chain_, *ret, mining_address_);
 
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))

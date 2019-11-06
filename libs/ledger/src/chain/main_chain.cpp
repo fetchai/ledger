@@ -25,6 +25,7 @@
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block_db_record.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/consensus/consensus.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -1222,6 +1223,14 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   // we expect only non-loose blocks here
   assert(!block->is_loose);
 
+  auto entropy_determined_weight =
+      Consensus::GetBlockGenerationWeight(*this, *block, block->body.miner);
+  if (entropy_determined_weight != block->weight)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Received block with invalid weight");
+    return BlockStatus::INVALID;
+  }
+
   // by definition this also means we expect blocks to have a valid parent block too
   assert(static_cast<bool>(prev_block));
 
@@ -1476,7 +1485,7 @@ bool MainChain::ReindexTips()
   FETCH_LOCK(lock_);
 
   // Tips are hashes of cached non-loose blocks that don't have any forward references
-  TipsMap   new_tips;
+  TipsMap   new_tips{};
   uint64_t  max_total_weight{};
   uint64_t  max_weight{};
   uint64_t  max_block_number{};
@@ -1500,19 +1509,36 @@ bool MainChain::ReindexTips()
       continue;
     }
     // this hash has no next blocks
-    auto const &   block{*block_entry.second};
-    const uint64_t total_weight{block.total_weight};
-    const uint64_t weight{block.weight};
-    const uint64_t block_number{block.body.block_number};
-    new_tips[hash] = Tip{total_weight, weight, block_number};
+    auto &   block{*block_entry.second};
+    uint64_t total_weight{block.total_weight};
+    uint64_t weight{block.weight};
+    uint64_t block_number{block.body.block_number};
 
     // check if it should be excluded
     if (conflicting_block_miners_[block_number].find(weight) !=
         conflicting_block_miners_[block_number].end())
     {
       assert(enable_tip_removal_);
-      continue;
+      bool replaced{false};
+      auto previous_block = GetBlock(block.body.previous_hash);
+      // Check previous is not banned, insert in previous
+      while (!replaced && previous_block)
+      {
+        BlockNumber previous_block_number = previous_block->body.block_number;
+        if (conflicting_block_miners_[previous_block_number].find(previous_block->weight) ==
+            conflicting_block_miners_[previous_block_number].end())
+        {
+          block        = *previous_block;
+          total_weight = block.total_weight;
+          weight       = block.weight;
+          block_number = block.body.block_number;
+          replaced     = true;
+        }
+        previous_block = GetBlock(previous_block->body.previous_hash);
+      }
     }
+
+    new_tips[hash] = Tip{total_weight, weight, block_number};
 
     // check if this tip is the current heaviest
     if (total_weight > max_total_weight ||
