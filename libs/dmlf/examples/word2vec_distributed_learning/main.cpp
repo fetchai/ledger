@@ -83,10 +83,10 @@ void SynchroniseWeights(std::vector<std::shared_ptr<CollectiveLearningClient<Ten
 
   for (SizeType i{0}; i < clients.size(); ++i)
   {
-    clients_weights[i] = client_algorithms[i]->GetWeights();
+    clients_weights.at(i) = client_algorithms.at(i)->GetWeights();
     auto cast_client_i =
-        std::dynamic_pointer_cast<Word2VecClient<TensorType>>(client_algorithms[i]);
-    clients_vocab_hashes[i] = cast_client_i->GetVocab().second;
+        std::dynamic_pointer_cast<ClientWord2VecAlgorithm<TensorType>>(client_algorithms.at(i));
+    clients_vocab_hashes.at(i) = cast_client_i->GetVocab().second;
   }
 
   std::vector<VectorTensorType> clients_new_weights{client_algorithms.size()};
@@ -96,7 +96,7 @@ void SynchroniseWeights(std::vector<std::shared_ptr<CollectiveLearningClient<Ten
     VectorTensorType weights_new;
 
     auto cast_client_i =
-        std::dynamic_pointer_cast<Word2VecClient<TensorType>>(client_algorithms[i]);
+        std::dynamic_pointer_cast<ClientWord2VecAlgorithm<TensorType>>(client_algorithms.at(i));
 
     for (SizeType k{0}; k < clients_weights.at(i).size(); ++k)
     {
@@ -174,28 +174,27 @@ int main(int argc, char **argv)
   // Create networkers
   for (SizeType i(0); i < n_clients; ++i)
   {
-    networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-    networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
+    networkers.at(i) = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
+    networkers.at(i)->Initialize<fetch::dmlf::Update<TensorType>>();
   }
 
   // Add peers to networkers and initialise shuffle algorithm
   for (SizeType i(0); i < n_clients; ++i)
   {
-    networkers[i]->AddPeers(networkers);
-    networkers[i]->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
-        networkers[i]->GetPeerCount(), n_peers));
+    networkers.at(i)->AddPeers(networkers);
+    networkers.at(i)->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
+        networkers.at(i)->GetPeerCount(), n_peers));
   }
 
   // Instantiate n_clients clients
   for (SizeType i(0); i < n_clients; ++i)
   {
     Word2VecTrainingParams<DataType> cp(*word2vec_client_params);
-    cp.data    = {client_data[i]};
-    clients[i] = std::make_shared<CollectiveLearningClient<TensorType>>(
+    cp.data    = {client_data.at(i)};
+    clients.at(i) = std::make_shared<CollectiveLearningClient<TensorType>>(
         std::to_string(i), cp, networkers.at(i), console_mutex_ptr, false);
 
-    // TODO - explicitly build word2vec algorithms in the client
-    clients[i]
+    clients.at(i)->BuildAlgorithms<ClientWord2VecAlgorithm<TensorType>>(cp, console_mutex_ptr);
   }
 
 
@@ -225,7 +224,7 @@ int main(int argc, char **argv)
     lossfile << fetch::ml::utilities::GetStrTimestamp();
     for (auto &c : clients)
     {
-      auto *w2v_client = dynamic_cast<Word2VecClient<TensorType> *>(c.get());
+      auto *w2v_client = dynamic_cast<ClientWord2VecAlgorithm<TensorType> *>(c.get());
 
       std::cout << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
                 << w2v_client->GetAnalogyScore();

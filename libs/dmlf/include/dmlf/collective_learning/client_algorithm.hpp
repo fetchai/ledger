@@ -57,9 +57,31 @@ class ClientAlgorithm
   using AlgorithmControllerPtrType = std::shared_ptr<ClientAlgorithmController<TensorType>>;
 
 public:
-  ClientAlgorithm(AlgorithmControllerPtrType algorithm_controller, std::string id,
+  ClientAlgorithm(AlgorithmControllerPtrType algorithm_controller, std::string const & id,
                   ClientParams<DataType> const &client_params,
                   std::shared_ptr<std::mutex>   console_mutex_ptr);
+
+  /**
+   * explicit copy constructor because mutexes can't be copied
+   * @param other
+   */
+  ClientAlgorithm(ClientAlgorithm & other)
+  {
+    id_ = other.id_;
+    train_loss_ = other.train_loss_;
+    test_loss_ = other.test_loss_;
+    train_loss_sum_ = other.train_loss_sum_;
+    train_loss_cnt_ = other.train_loss_cnt_;
+    model_ptr_ = other.model_ptr_;
+    graph_ptr_ = other.graph_ptr_;
+    optimiser_ptr_ = other.optimiser_ptr_;
+    dataloader_ptr_ = other.dataloader_ptr_;
+    round_counter_ = other.round_counter_;
+    updates_applied_ = other.updates_applied_;
+
+    params_ = other.params_;
+    algorithm_controller_ = other.algorithm_controller_;
+  }
 
   virtual ~ClientAlgorithm() = default;
 
@@ -72,7 +94,6 @@ public:
   ///////////////////////////
 
   void                                SetModel(ModelPtrType model_ptr);
-  ModelPtrType                        GetModel();
   VectorTensorType                    GetWeights() const;
   void                                SetWeights(VectorTensorType const &new_weights);
   void                                SetParams(ClientParams<DataType> const &new_params);
@@ -98,30 +119,16 @@ protected:
   DataloaderPtrType  dataloader_ptr_;
   mutable std::mutex model_mutex_;
 
-  std::vector<std::string> inputs_names_;
-  std::string              label_name_;
-  std::string              error_name_;
-
   // Console mutex pointer
   std::shared_ptr<std::mutex> console_mutex_ptr_;
-
-  // Learning hyperparameters
-  SizeType batch_size_    = 0;
-  DataType learning_rate_ = static_cast<DataType>(0);
 
   // Count for number of batches
   SizeType round_counter_   = 0;
   SizeType updates_applied_ = 0;
-  SizeType max_updates_     = 0;
 
-  std::string results_dir_;
-
-  // Print to console flag
-  bool print_loss_;
+  ClientParams<DataType> params_;
 
   virtual VectorTensorType TranslateUpdate(std::shared_ptr<UpdateType> &new_gradients);
-
-  TimestampType GetTimestamp();
 
   void DoRound();
 
@@ -138,14 +145,15 @@ private:
 
 template <class TensorType>
 ClientAlgorithm<TensorType>::ClientAlgorithm(AlgorithmControllerPtrType    algorithm_controller,
-                                             std::string                   id,
+                                             std::string const &id,
                                              ClientParams<DataType> const &client_params,
                                              std::shared_ptr<std::mutex>   console_mutex_ptr)
-  : id_(std::move(id))
-  , console_mutex_ptr_(console_mutex_ptr)
+  : id_(id)
+  , console_mutex_ptr_(std::move(console_mutex_ptr))
+  , params_(client_params)
   , algorithm_controller_(algorithm_controller)
 {
-  SetParams(client_params);
+//  SetParams(client_params);
   ClearLossFile();
 }
 
@@ -169,14 +177,7 @@ template <class TensorType>
 void ClientAlgorithm<TensorType>::SetParams(
     ClientParams<typename TensorType::Type> const &new_params)
 {
-  inputs_names_  = new_params.inputs_names;
-  label_name_    = new_params.label_name;
-  error_name_    = new_params.error_name;
-  batch_size_    = new_params.batch_size;
-  learning_rate_ = new_params.learning_rate;
-  print_loss_    = new_params.print_loss;
-  max_updates_   = new_params.max_updates;
-  results_dir_   = new_params.results_dir;
+  params_ = new_params;
 }
 
 template <class TensorType>
@@ -202,11 +203,11 @@ void ClientAlgorithm<TensorType>::Run()
   train_loss_sum_ = static_cast<DataType>(0);
   train_loss_cnt_ = 0;
 
-  std::ofstream lossfile(results_dir_ + "losses_" + id_ + ".csv",
+  std::ofstream lossfile(params_.results_dir + "losses_" + id_ + ".csv",
                          std::ofstream::out | std::ofstream::app);
 
   updates_applied_ = 0;
-  while (updates_applied_ < max_updates_)
+  while (updates_applied_ < params_.max_updates)
   {
     // perform a round of training on this client
     DoRound();
@@ -222,7 +223,7 @@ void ClientAlgorithm<TensorType>::Run()
                << "\n";
     }
 
-    if (print_loss_)
+    if (params_.print_loss)
     {
       // Lock console
       FETCH_LOCK(*console_mutex_ptr_);
@@ -242,7 +243,7 @@ void ClientAlgorithm<TensorType>::Run()
     lossfile.close();
   }
 
-  if (print_loss_)
+  if (params_.print_loss)
   {
     // Lock console
     FETCH_LOCK(*console_mutex_ptr_);
@@ -263,29 +264,29 @@ void ClientAlgorithm<TensorType>::Train()
   bool is_done_set = false;
 
   std::pair<TensorType, std::vector<TensorType>> input;
-  input = dataloader_ptr_->PrepareBatch(batch_size_, is_done_set);
+  input = dataloader_ptr_->PrepareBatch(params_.batch_size, is_done_set);
   {
     FETCH_LOCK(model_mutex_);
 
     // Set inputs and label
     auto input_data_it = input.second.begin();
-    auto input_name_it = inputs_names_.begin();
+    auto input_name_it = params_.input_names.begin();
 
-    while (input_name_it != inputs_names_.end())
+    while (input_name_it != params_.input_names.end())
     {
       graph_ptr_->SetInput(*input_name_it, *input_data_it);
       ++input_name_it;
       ++input_data_it;
     }
-    graph_ptr_->SetInput(label_name_, input.first);
+    graph_ptr_->SetInput(params_.label_name, input.first);
 
-    TensorType loss_tensor = graph_ptr_->ForwardPropagate(error_name_);
+    TensorType loss_tensor = graph_ptr_->ForwardPropagate(params_.error_name);
     train_loss_            = *(loss_tensor.begin());
 
     train_loss_sum_ += train_loss_;
     train_loss_cnt_++;
 
-    graph_ptr_->BackPropagate(error_name_);
+    graph_ptr_->BackPropagate(params_.error_name);
   }
   updates_applied_++;
 }
@@ -320,17 +321,17 @@ void ClientAlgorithm<TensorType>::Test()
 
     // Set inputs and label
     auto input_data_it = test_pair.second.begin();
-    auto input_name_it = inputs_names_.begin();
+    auto input_name_it = params_.input_names.begin();
 
-    while (input_name_it != inputs_names_.end())
+    while (input_name_it != params_.input_names.end())
     {
       graph_ptr_->SetInput(*input_name_it, *input_data_it);
       ++input_name_it;
       ++input_data_it;
     }
-    graph_ptr_->SetInput(label_name_, test_pair.first);
+    graph_ptr_->SetInput(params_.label_name, test_pair.first);
 
-    test_loss_ = *(graph_ptr_->Evaluate(error_name_).begin());
+    test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
   }
   dataloader_ptr_->Reset();
 }
@@ -380,15 +381,6 @@ std::vector<TensorType> ClientAlgorithm<TensorType>::TranslateUpdate(
     std::shared_ptr<UpdateType> &new_gradients)
 {
   return new_gradients->GetGradients();
-}
-
-// Timestamp for gradient queue
-template <class TensorType>
-int64_t ClientAlgorithm<TensorType>::GetTimestamp()
-{
-  return std::chrono::duration_cast<std::chrono::milliseconds>(
-             std::chrono::system_clock::now().time_since_epoch())
-      .count();
 }
 
 /**
@@ -456,15 +448,9 @@ template <class TensorType>
 void ClientAlgorithm<TensorType>::ApplyUpdates()
 {
   FETCH_LOCK(model_mutex_);
-  optimiser_ptr_->ApplyGradients(batch_size_);
-  optimiser_ptr_->IncrementBatchCounters(batch_size_);
+  optimiser_ptr_->ApplyGradients(params_.batch_size);
+  optimiser_ptr_->IncrementBatchCounters(params_.batch_size);
   optimiser_ptr_->UpdateLearningRate();
-}
-
-template <class TensorType>
-typename ClientAlgorithm<TensorType>::ModelPtrType ClientAlgorithm<TensorType>::GetModel()
-{
-  return model_ptr_;
 }
 
 }  // namespace collective_learning

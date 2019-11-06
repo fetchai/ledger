@@ -34,7 +34,7 @@ struct ClientParams
   DataType learning_rate;
   bool     print_loss = false;
 
-  std::vector<std::string> inputs_names = {"Input"};
+  std::vector<std::string> input_names = {"Input"};
   std::string              label_name   = "Label";
   std::string              error_name   = "Error";
 

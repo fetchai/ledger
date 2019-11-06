@@ -207,13 +207,13 @@ fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> Client
   {
     client_params.print_loss = doc["print_loss"].As<bool>();
   }
-  if (!doc["inputs_names"].IsUndefined())
+  if (!doc["input_names"].IsUndefined())
   {
-    auto const &inputs_names   = doc["inputs_names"];
-    client_params.inputs_names = std::vector<std::string>(inputs_names.size());
-    for (std::size_t i = 0; i < inputs_names.size(); ++i)
+    auto const &input_names   = doc["input_names"];
+    client_params.input_names = std::vector<std::string>(input_names.size());
+    for (std::size_t i = 0; i < input_names.size(); ++i)
     {
-      client_params.inputs_names.at(i) = inputs_names[i].As<std::string>();
+      client_params.input_names.at(i) = input_names[i].As<std::string>();
     }
   }
   if (!doc["label_name"].IsUndefined())
