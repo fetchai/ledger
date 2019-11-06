@@ -1,9 +1,11 @@
 #include "dmlf/colearn/muddle_learner_networker_impl.hpp"
 
 namespace fetch {
+namespace dmlf {
 namespace colearn {
 
-  MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl()
+  MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud)
+    : mud_(mud)
   {
     taskpool = std::make_shared<Taskpool>();
     tasks_runners = std::make_shared<Threadpool>();
@@ -23,6 +25,7 @@ namespace colearn {
     taskpool -> submit(t);
 
   }
+}
 }
 }
 

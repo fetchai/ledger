@@ -28,6 +28,7 @@
 #include "muddle/muddle_interface.hpp"
 
 namespace fetch {
+namespace dmlf {
 namespace colearn {
 
 class MuddleLearnerNetworkerImpl;
@@ -55,5 +56,6 @@ private:
   MuddlePtr muddle_;
 };
 
+}
 }
 }

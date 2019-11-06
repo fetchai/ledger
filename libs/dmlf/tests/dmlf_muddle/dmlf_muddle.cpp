@@ -38,6 +38,7 @@
 
 namespace fetch {
 namespace dmlf {
+
 using CertificatePtr              = fetch::muddle::ProverPtr;
 using NetworkManager              = fetch::network::NetworkManager;
 using MuddlePtr                   = fetch::muddle::MuddlePtr;

@@ -4,6 +4,7 @@
 #include "dmlf/colearn/muddle_learner_networker_impl.hpp"
 
 namespace fetch {
+namespace dmlf {
 namespace colearn {
 
   MuddleMessageHandler::MuddleMessageHandler(MuddleLearnerNetworkerImpl &impl, MuddlePtr muddle)
@@ -25,5 +26,6 @@ namespace colearn {
 
     return true;
   }
+}
 }
 }

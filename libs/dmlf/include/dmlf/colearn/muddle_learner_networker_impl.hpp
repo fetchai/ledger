@@ -21,8 +21,10 @@
 #include "oef-base/threading/Threadpool.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 #include "dmlf/update_interface.hpp"
+#include "muddle/muddle_interface.hpp"
 
 namespace fetch {
+namespace dmlf {
 namespace colearn {
 
 class MuddleLearnerNetworkerImpl
@@ -30,9 +32,10 @@ class MuddleLearnerNetworkerImpl
 {
 public:
   using TaskP = Taskpool::TaskP;
+  using MuddlePtr = muddle::MuddlePtr;
   using UpdateInterfacePtr = dmlf::UpdateInterfacePtr;
 
-  MuddleLearnerNetworkerImpl();
+  MuddleLearnerNetworkerImpl(MuddlePtr mud);
   ~MuddleLearnerNetworkerImpl() override;
 
   MuddleLearnerNetworkerImpl(MuddleLearnerNetworkerImpl const &other) = delete;
@@ -56,9 +59,11 @@ protected:
 private:
   std::shared_ptr<Taskpool> taskpool;
   std::shared_ptr<Threadpool> tasks_runners;
+  MuddlePtr mud_;
 
   friend class MuddleMessageHandler;
 };
 
+}
 }
 }
