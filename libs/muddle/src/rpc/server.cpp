@@ -53,7 +53,7 @@ void Server::OnMessage(Packet const &packet, Address const &last_hop)
   }
 
   FETCH_LOG_TRACE(LOGGING_NAME, "Server::OnMessage from: ", packet.GetSender().ToBase64(), " mdl ",
-                  &endpoint_, " msg: ", packet.GetPayload().ToHex());
+                  &endpoint_, " msg: 0x", packet.GetPayload().ToHex());
 
   service::CallContext context;
   context.sender_address      = packet.GetSender();

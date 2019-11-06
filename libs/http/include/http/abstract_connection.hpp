@@ -36,6 +36,7 @@ public:
   virtual ~AbstractHTTPConnection() = default;
 
   virtual void        Send(HTTPResponse const &) = 0;
+  virtual void        CloseConnnection()         = 0;
   virtual std::string Address()                  = 0;
 };
 

@@ -17,24 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/distributed_learning/distributed_learning_client.hpp"
+#include "dmlf/collective_learning/collective_learning_client.hpp"
+#include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/ops/activations/relu.hpp"
-#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "ml/ops/placeholder.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 
 namespace fetch {
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 namespace utilities {
 
+namespace details {
+
+/**
+ * Utility for setting up a single model
+ * @tparam TensorType
+ * @param data
+ * @param labels
+ * @param test_set_ratio
+ * @return
+ */
 template <typename TensorType>
-std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>> MakeBostonClient(
-    std::string                                                                 id,
-    fetch::dmlf::distributed_learning::ClientParams<typename TensorType::Type> &client_params,
-    TensorType &data, TensorType &labels, float test_set_ratio,
-    std::shared_ptr<std::mutex> console_mutex_ptr)
+std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeBostonModel(TensorType &data,
+                                                                          TensorType &labels,
+                                                                          float test_set_ratio)
 {
   // Initialise model
   auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
@@ -55,11 +61,38 @@ std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>> M
   model_ptr->SetDataloader(std::move(dataloader_ptr));
   model_ptr->Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
 
-  return std::make_shared<fetch::dmlf::distributed_learning::TrainingClient<TensorType>>(
-      id, model_ptr, client_params, console_mutex_ptr);
+  return model_ptr;
+}
+}  // namespace details
+
+template <typename TensorType>
+std::shared_ptr<fetch::dmlf::collective_learning::CollectiveLearningClient<TensorType>>
+MakeBostonClient(
+    std::string                                                                id,
+    fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> &client_params,
+    TensorType &data, TensorType &labels, float test_set_ratio,
+    std::shared_ptr<AbstractLearnerNetworker> networker,
+    std::shared_ptr<std::mutex>               console_mutex_ptr)
+{
+
+  // set up the client first
+  auto client = std::make_shared<CollectiveLearningClient<TensorType>>(id, client_params, networker,
+                                                                       console_mutex_ptr);
+
+  // build a boston model for each algorithm in the client
+  auto algorithms = client->GetAlgorithms();
+  for (const auto &algorithm : algorithms)
+  {
+    // build the model
+    auto model_ptr = details::MakeBostonModel<TensorType>(data, labels, test_set_ratio);
+
+    algorithm->SetModel(model_ptr);
+  }
+
+  return client;
 }
 
 }  // namespace utilities
-}  // namespace distributed_learning
+}  // namespace collective_learning
 }  // namespace dmlf
 }  // namespace fetch

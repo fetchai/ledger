@@ -38,7 +38,7 @@ TYPED_TEST_CASE(ScaledDotProductAttention, MyTypes);
 TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the class as a subgraph
 {
   using DataType = typename TypeParam::Type;
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -72,7 +72,7 @@ TYPED_TEST(ScaledDotProductAttention,
            self_attention_output_value_test)  // Use the class as a subgraph
 {
   using DataType = typename TypeParam::Type;
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -109,7 +109,7 @@ TYPED_TEST(ScaledDotProductAttention,
            self_attention_backward_exact_value_test)  // Use the class as a layer
 {
   using DataType = typename TypeParam::Type;
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
                                                               DataType(1));
@@ -168,7 +168,7 @@ TYPED_TEST(ScaledDotProductAttention,
            self_attention_output_value_test_with_mask)  // Use the class as a subgraph
 {
   using DataType = typename TypeParam::Type;
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -213,7 +213,7 @@ TYPED_TEST(ScaledDotProductAttention,
            self_attention_backward_exact_value_test_with_mask)  // Use the class as a layer
 {
   using DataType = typename TypeParam::Type;
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
                                                               DataType(1));
@@ -282,7 +282,7 @@ TYPED_TEST(ScaledDotProductAttention,
 TYPED_TEST(ScaledDotProductAttention, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
+  using SizeType  = fetch::math::SizeType;
   using LayerType = typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>;
   using SPType    = typename LayerType::SPType;
 

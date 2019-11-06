@@ -176,6 +176,10 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
           cabinet_addresses, threshold, i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
           GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)),
           prev_entropy, dealer.GetKeys(member->identity.identifier()));
+
+      // Note, to avoid limiting the 'look ahead' entropy gen, set the block to ahead of numbers per
+      // aeon
+      member->beacon_service.MostRecentSeen(numbers_per_aeon);
     }
 
     // Wait for everyone to finish

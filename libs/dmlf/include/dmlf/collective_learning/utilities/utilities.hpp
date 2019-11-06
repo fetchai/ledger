@@ -17,31 +17,42 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/distributed_learning/client_params.hpp"
-#include "dmlf/distributed_learning/distributed_learning_client.hpp"
+#include "dmlf/collective_learning/collective_learning_client.hpp"
 #include "json/document.hpp"
 #include "math/base_types.hpp"
 
 namespace fetch {
 namespace dmlf {
-namespace distributed_learning {
+namespace collective_learning {
 namespace utilities {
 
 /**
- * Averages weights between all clients
+ * A utility function for averaging weights between all client algorithms.
+ * This method is only useful for exploration with local computation because it requires all clients
+ * to return their owned algorithms.
+ * @tparam TensorType
  * @param clients
  */
 template <typename TensorType>
-void SynchroniseWeights(
-    std::vector<std::shared_ptr<fetch::dmlf::distributed_learning::TrainingClient<TensorType>>>
-        clients)
+void SynchroniseWeights(std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> &clients)
 {
-  std::vector<TensorType> new_weights = clients[0]->GetWeights();
+
+  // gather all of the different clients' algorithms
+  std::vector<std::shared_ptr<ClientAlgorithm<TensorType>>> client_algorithms;
+  for (auto &client : clients)
+  {
+    std::vector<std::shared_ptr<ClientAlgorithm<TensorType>>> current_client_algorithms =
+        client->GetAlgorithms();
+    client_algorithms.insert(client_algorithms.end(), current_client_algorithms.begin(),
+                             current_client_algorithms.end());
+  }
+
+  std::vector<TensorType> new_weights = client_algorithms[0]->GetWeights();
 
   // Sum all weights
-  for (typename TensorType::SizeType i{1}; i < clients.size(); ++i)
+  for (typename TensorType::SizeType i{1}; i < client_algorithms.size(); ++i)
   {
-    std::vector<TensorType> other_weights = clients[i]->GetWeights();
+    std::vector<TensorType> other_weights = client_algorithms[i]->GetWeights();
 
     for (typename TensorType::SizeType j{0}; j < other_weights.size(); j++)
     {
@@ -49,15 +60,16 @@ void SynchroniseWeights(
     }
   }
 
-  // Divide weights by number of clients to calculate the average
+  // Divide weights by number of client_algorithms to calculate the average
   for (typename TensorType::SizeType j{0}; j < new_weights.size(); j++)
   {
-    fetch::math::Divide(new_weights.at(j), static_cast<typename TensorType::Type>(clients.size()),
+    fetch::math::Divide(new_weights.at(j),
+                        static_cast<typename TensorType::Type>(client_algorithms.size()),
                         new_weights.at(j));
   }
 
   // Update models of all clients by average model
-  for (auto &c : clients)
+  for (auto &c : client_algorithms)
   {
     c->SetWeights(new_weights);
   }
@@ -160,7 +172,7 @@ void Shuffle(TensorType &data, TensorType &labels, typename TensorType::SizeType
 }
 
 template <typename TensorType>
-fetch::dmlf::distributed_learning::ClientParams<typename TensorType::Type> ClientParamsFromJson(
+fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> ClientParamsFromJson(
     std::string const &fname, fetch::json::JSONDocument &doc)
 {
   using DataType = typename TensorType::Type;
@@ -170,11 +182,15 @@ fetch::dmlf::distributed_learning::ClientParams<typename TensorType::Type> Clien
   std::string text((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
   doc.Parse(text.c_str());
 
-  auto client_params = fetch::dmlf::distributed_learning::ClientParams<DataType>();
+  auto client_params = fetch::dmlf::collective_learning::ClientParams<DataType>();
 
   // try to extract each parameter
   // none are mandatory so it's fine if they're missing
 
+  if (!doc["results"].IsUndefined())
+  {
+    client_params.results_dir = doc["results"].As<std::string>();
+  }
   if (!doc["batch_size"].IsUndefined())
   {
     client_params.batch_size = doc["batch_size"].As<SizeType>();
@@ -191,13 +207,13 @@ fetch::dmlf::distributed_learning::ClientParams<typename TensorType::Type> Clien
   {
     client_params.print_loss = doc["print_loss"].As<bool>();
   }
-  if (!doc["inputs_names"].IsUndefined())
+  if (!doc["input_names"].IsUndefined())
   {
-    auto const &inputs_names   = doc["inputs_names"];
-    client_params.inputs_names = std::vector<std::string>(inputs_names.size());
-    for (std::size_t i = 0; i < inputs_names.size(); ++i)
+    auto const &input_names   = doc["input_names"];
+    client_params.input_names = std::vector<std::string>(input_names.size());
+    for (std::size_t i = 0; i < input_names.size(); ++i)
     {
-      client_params.inputs_names.at(i) = inputs_names[i].As<std::string>();
+      client_params.input_names.at(i) = input_names[i].As<std::string>();
     }
   }
   if (!doc["label_name"].IsUndefined())
@@ -213,6 +229,6 @@ fetch::dmlf::distributed_learning::ClientParams<typename TensorType::Type> Clien
 }
 
 }  // namespace utilities
-}  // namespace distributed_learning
+}  // namespace collective_learning
 }  // namespace dmlf
 }  // namespace fetch
