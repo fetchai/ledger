@@ -151,7 +151,6 @@ class ConstellationTestCase(TestCase):
     def setup_pos_for_nodes(self):
 
         nodes_identities = []
-        nodes_mining_identities = []
 
         # First give each node that is mining a unique identity
         for index in range(self._number_of_nodes):
@@ -162,17 +161,15 @@ class ConstellationTestCase(TestCase):
             node = self._nodes[index]
 
             if node.mining:
-                node_key = node._entity.public_key
-
                 print('Setting up POS for node {}...'.format(index))
-                print('Giving node the identity: {}'.format(node_key))
+                print('Giving node the identity: {}'.format(
+                    node._entity.public_key))
 
-                nodes_mining_identities.append((node._entity, 100))
-
-            nodes_identities.append((node._entity, 100))
+            nodes_identities.append(
+                (node._entity, 100, 10000 if node.mining else 0))
 
         genesis_file = GenesisFile(
-            nodes_identities, nodes_mining_identities, 20, 5, self._block_interval)
+            nodes_identities, 20, 5, self._block_interval)
         genesis_file_location = os.path.abspath(
             os.path.join(self._workspace, "genesis_file.json"))
         genesis_file.dump_to_file(genesis_file_location)
