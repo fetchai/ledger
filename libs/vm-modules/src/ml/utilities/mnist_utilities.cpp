@@ -16,48 +16,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
-#include "vm_modules/math/tensor.hpp"
-#include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/ml.hpp"
-#include "vm_modules/ml/model/model.hpp"
-#include "vm_modules/ml/optimisation/optimiser.hpp"
-#include "vm_modules/ml/state_dict.hpp"
-#include "vm_modules/ml/training_pair.hpp"
 #include "vm_modules/ml/utilities/mnist_utilities.hpp"
-#include "vm_modules/ml/utilities/scaler.hpp"
-
-using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
 namespace ml {
+namespace utilities {
 
-void BindML(Module &module)
+vm::Ptr<math::VMTensor> load_mnist_images(vm::VM *vm, vm::Ptr<vm::String> const &filename)
 {
-  // Tensor - required by later functions
-  math::VMTensor::Bind(module);
-
-  // ml fundamentals
-  VMStateDict::Bind(module);
-  VMGraph::Bind(module);
-  VMTrainingPair::Bind(module);
-
-  // dataloader
-  VMDataLoader::Bind(module);
-
-  // optimisers
-  VMOptimiser::Bind(module);
-
-  // model
-  model::VMModel::Bind(module);
-
-  // utilities
-  utilities::VMScaler::Bind(module);
-  utilities::BindMNISTUtils(module);
+  math::VMTensor::TensorType tensor =
+      fetch::ml::utilities::read_mnist_images<math::VMTensor::TensorType>(filename->str);
+  return vm->CreateNewObject<math::VMTensor>(tensor);
 }
 
+vm::Ptr<math::VMTensor> load_mnist_labels(vm::VM *vm, vm::Ptr<vm::String> const &filename)
+{
+  math::VMTensor::TensorType tensor =
+      fetch::ml::utilities::read_mnist_labels<math::VMTensor::TensorType>(filename->str);
+  tensor = fetch::ml::utilities::convert_labels_to_onehot(tensor);
+
+  return vm->CreateNewObject<math::VMTensor>(tensor);
+}
+
+void BindMNISTUtils(vm::Module &module)
+{
+  module.CreateFreeFunction("loadMNISTImages", &load_mnist_images);
+  module.CreateFreeFunction("loadMNISTLabels", &load_mnist_labels);
+}
+
+}  // namespace utilities
 }  // namespace ml
 }  // namespace vm_modules
 }  // namespace fetch
