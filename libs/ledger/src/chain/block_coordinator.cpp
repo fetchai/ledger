@@ -951,6 +951,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 
   if (synergetic_exec_mgr_ && dag_)
   {
+    assert(!next_block_->IsGenesis());
     // look up the previous block
     BlockPtr previous_block = chain_.GetBlock(next_block_->body.previous_hash);
 

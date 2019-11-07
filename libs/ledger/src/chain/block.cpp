@@ -57,6 +57,13 @@ std::size_t Block::GetTransactionCount() const
  */
 void Block::UpdateDigest()
 {
+  if (IsGenesis())
+  {
+    // genesis block's hash should be already set to a proper value and needs not to be updated
+    assert(body.hash == chain::GENESIS_DIGEST);
+    return;
+  }
+
   crypto::MerkleTree tx_merkle_tree{GetTransactionCount()};
 
   // Populate the merkle tree
