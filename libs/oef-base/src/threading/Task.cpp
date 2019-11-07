@@ -89,7 +89,7 @@ bool Task::submit(std::shared_ptr<Taskpool> const &p)
 
   if (pool)
   {
-    this->pool->remove(shared_from_this());
+    pool->remove(shared_from_this());
     Counter("mt-core.tasks.submit(pool).remove-from-pool")++;
   }
   pool = p;

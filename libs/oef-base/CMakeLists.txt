@@ -21,4 +21,4 @@ target_link_libraries(fetch-oef-base PUBLIC fetch-core fetch-oef-messages fetch-
 
 # Example targets add_subdirectory(examples)
 
-add test_target()
+add_test_target()
