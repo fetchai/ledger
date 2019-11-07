@@ -21,12 +21,9 @@
 #include "ml/ops/sqrt.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
-#include <cmath>
-#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -38,11 +35,7 @@ class SqrtTest : public ::testing::Test
 {
 };
 
-using SqrtTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                   fetch::math::Tensor<fetch::fixed_point::fp64_t>,
-                                   fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
-
-TYPED_TEST_CASE(SqrtTest, SqrtTypes);
+TYPED_TEST_CASE(SqrtTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(SqrtTest, forward_all_positive_test)
 {

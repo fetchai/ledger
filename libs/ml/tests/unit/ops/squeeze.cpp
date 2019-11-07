@@ -24,12 +24,7 @@
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
 #include "gtest/gtest.h"
-
-#include <cmath>
-#include <cstdint>
 #include <vector>
 
 namespace fetch {
@@ -40,11 +35,7 @@ class SqueezeTest : public ::testing::Test
 {
 };
 
-using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                   fetch::math::Tensor<fetch::fixed_point::fp64_t>,
-                                   fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
-
-TYPED_TEST_CASE(SqueezeTest, BothTypes);
+TYPED_TEST_CASE(SqueezeTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(SqueezeTest, forward_1_6_1_test)
 {
