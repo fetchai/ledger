@@ -65,6 +65,8 @@ protected:
 
   void SetUp() override
   {
+    fetch::crypto::mcl::details::MCLInitialiser();
+
     rng_.seed(RANDOM_SEED);
     generator_.Seed(RANDOM_SEED);
     miner_ = std::make_unique<BasicMiner>(uint32_t{LOG2_NUM_LANES});
