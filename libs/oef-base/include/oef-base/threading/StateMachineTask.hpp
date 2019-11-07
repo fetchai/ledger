@@ -56,9 +56,9 @@ public:
     return runnable;
   }
 
-  void SetSubClass(SUBCLASS *ptr)
+  void SetSubClass(SUBCLASS *p)
   {
-    this->ptr = ptr;
+    this->ptr = p;
     runnable  = true;
   }
 

@@ -234,10 +234,10 @@ bool Taskpool::MakeRunnable(TaskP task)
   if (iter != suspended_tasks.end())
   {
     Counter("mt-core.tasks.made-runnable")++;
-    auto suspended_task = *iter;
-    suspended_task->SetTaskState(Task::TaskState::PENDING);
+    auto t = *iter;
+    t->SetTaskState(Task::TaskState::PENDING);
     suspended_tasks.erase(iter);
-    pending_tasks.push_front(suspended_task);
+    pending_tasks.push_front(t);
     work_available.notify_one();
     status = true;
   }

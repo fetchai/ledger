@@ -129,20 +129,20 @@ bool Task::MakeRunnable()
   return status;
 }
 
-bool Task::submit(std::shared_ptr<Taskpool> const &target_pool, std::chrono::milliseconds const &delay)
+bool Task::submit(std::shared_ptr<Taskpool> const &p, std::chrono::milliseconds const &delay)
 {
-  if (this->pool == target_pool)
+  if (pool == p)
   {
     Counter("mt-core.tasks.submit(pool,delay).not-submitted.aleady-in-pool")++;
     return true;
   }
-  if (this->pool)
+  if (pool)
   {
     Counter("mt-core.tasks.submit(pool,delay).remove-from-pool")++;
     this->pool->remove(shared_from_this());
   }
-  this->pool = target_pool;
-  this->pool->after(shared_from_this(), delay);
+  pool = p;
+  pool->after(shared_from_this(), delay);
   return true;
 }
 
