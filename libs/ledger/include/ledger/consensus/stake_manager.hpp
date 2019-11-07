@@ -156,7 +156,7 @@ public:
   using Type       = ledger::StakeManager;
   using DriverType = D;
 
-  static uint8_t const UPDATE_QUQUE        = 2;
+  static uint8_t const UPDATE_QUEUE        = 1;
   static uint8_t const STAKE_HISTORY       = 2;
   static uint8_t const CURRENT_SNAPSHOT    = 3;
   static uint8_t const CURRENT_BLOCK_INDEX = 4;
