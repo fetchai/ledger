@@ -191,7 +191,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
 
   DbRecord record;
 
-  if (block->body.previous_hash != chain::GENESIS_DIGEST)
+  if (!block->IsGenesis())
   {
     // notify stored parent
     if (block_store_->Get(storage::ResourceID(block->body.previous_hash), record))
@@ -424,7 +424,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
   // look up the heaviest block hash
   for (BlockHash current_hash = std::move(start);
        // exit once we have gathered enough blocks or reached genesis
-       result.size() < limit && current_hash != chain::GENESIS_DIGEST;)
+       result.size() < limit;)
   {
     // look up the block
     auto block = GetBlock(current_hash);
@@ -435,10 +435,20 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
     }
 
     // walk the hash
-    current_hash = block->body.previous_hash;
+    bool stop = block->IsGenesis();
+
+    if (!stop)
+    {
+      current_hash = block->body.previous_hash;
+    }
 
     // update the results
     result.push_back(std::move(block));
+
+    if (stop)
+    {
+      break;
+    }
   }
 
   return result;
@@ -870,7 +880,7 @@ void MainChain::WriteToFile()
 
     // This block will now become the head in our file
     // Corner case - block is genesis
-    if (block->body.previous_hash == chain::GENESIS_DIGEST)
+    if (block->IsGenesis())
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
 
@@ -1468,13 +1478,23 @@ bool MainChain::DetermineHeaviestTip()
           auto        a_total_weight{a.second.total_weight}, b_total_weight{b.second.total_weight};
           auto const &a_hash{a.first}, &b_hash{b.first};
           auto        a_weight{a.second.weight}, b_weight{b.second.weight};
+          auto        a_height{a.second.block_number}, b_height{b.second.block_number};
 
-          // The weight, which is related to the rank of the miner producing the block is used here
-          // to tie break chains with equivalent total weight, choosing the weight of the tips as a
-          // tiebreaker. This is important for consensus.
+          // Tips are selected based on the following priority of properties:
+          // 1. total weight
+          // 2. block number (long chain)
+          // 3. weight, which is related to the rank of the miner producing the block
+          // 4. hash - note this case should never be required if stutter blocks are removed from
+          // tips
+          //
+          // Chains of equivalent total weight and length are tie-broken, choosing the weight of the
+          // tips as a tiebreaker. This is important for consensus.
           return a_total_weight < b_total_weight ||
-                 (a_total_weight == b_total_weight && a_weight < b_weight) ||
-                 (a_total_weight == b_total_weight && a_weight == b_weight && a_hash < b_hash);
+                 (a_total_weight == b_total_weight && a_height < b_height) ||
+                 (a_total_weight == b_total_weight && a_height == b_height &&
+                  a_weight < b_weight) ||
+                 (a_total_weight == b_total_weight && a_height == b_height &&
+                  a_weight == b_weight && a_hash < b_hash);
         });
 
     // update the heaviest
@@ -1525,6 +1545,7 @@ bool MainChain::ReindexTips()
       continue;
     }
     // this hash has no next blocks
+<<<<<<< HEAD
     auto &   block{*block_entry.second};
     uint64_t total_weight{block.total_weight};
     uint64_t weight{block.weight};
@@ -1556,10 +1577,19 @@ bool MainChain::ReindexTips()
 
     new_tips[hash] = Tip{total_weight, weight, block_number};
 
+    auto const &   block{*block_entry.second};
+    const BlockWeight total_weight{block.total_weight};
+    const BlockWeight weight{block.weight};
+    const BlockNumber block_number{block.body.block_number};
+    new_tips[hash] = Tip{total_weight, weight};
+
     // check if this tip is the current heaviest
     if (total_weight > max_total_weight ||
-        (total_weight == max_total_weight && weight > max_weight) ||
-        (total_weight == max_total_weight && weight == max_weight && hash > max_hash))
+        (total_weight == max_total_weight && block_number > max_block_number) ||
+        (total_weight == max_total_weight && block_number == max_block_number &&
+         weight > max_weight) ||
+        (total_weight == max_total_weight && block_number == max_block_number &&
+         weight == max_weight && hash > max_hash))
     {
       max_total_weight = total_weight;
       max_weight       = weight;
@@ -1576,6 +1606,7 @@ bool MainChain::ReindexTips()
     heaviest_.weight       = max_weight;
     heaviest_.block_number = max_block_number;
     heaviest_.hash         = max_hash;
+    heaviest_.block_number = max_block_number;
     return true;
   }
 
@@ -1620,9 +1651,11 @@ bool MainChain::HeaviestTip::Update(Block const &block)
   bool updated{false};
 
   if ((block.total_weight > total_weight) ||
-      ((block.total_weight == total_weight) && (block.weight > weight)) ||
-      ((block.total_weight == total_weight) && (block.weight == weight) &&
-       (block.body.hash > hash)))
+      (block.total_weight == total_weight && block.body.block_number > block_number) ||
+      (block.total_weight == total_weight && block.body.block_number == block_number &&
+       block.weight > weight) ||
+      (block.total_weight == total_weight && block.body.block_number == block_number &&
+       block.weight == weight && block.body.hash > hash))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "New heaviest tip: 0x", block.body.hash.ToHex());
 
@@ -1630,6 +1663,7 @@ bool MainChain::HeaviestTip::Update(Block const &block)
     weight       = block.weight;
     block_number = block.body.block_number;
     hash         = block.body.hash;
+    block_number = block.body.block_number;
     updated      = true;
   }
 

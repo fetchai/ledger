@@ -106,6 +106,8 @@ void RunHonestCabinetRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
                              uint16_t number_of_cabinets = 4, uint16_t cabinet_size = 4,
                              uint16_t numbers_per_aeon = 10, double threshold = 0.5)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   std::cout << "- Setup" << std::endl;
   auto number_of_nodes = static_cast<uint16_t>(number_of_cabinets * cabinet_size);
 

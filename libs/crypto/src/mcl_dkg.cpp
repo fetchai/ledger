@@ -35,38 +35,32 @@ std::atomic<bool> details::MCLInitialiser::was_initialised{false};
 
 PublicKey::PublicKey()
 {
-  details::MCLInitialiser();
   clear();
 }
 
 PrivateKey::PrivateKey()
 {
-  details::MCLInitialiser();
   clear();
 }
 
 PrivateKey::PrivateKey(uint32_t value)
 {
-  details::MCLInitialiser();
   clear();
   bn::Fr::add(*this, *this, value);
 }
 
 Signature::Signature()
 {
-  details::MCLInitialiser();
   clear();
 }
 
 Generator::Generator()
 {
-  details::MCLInitialiser();
   clear();
 }
 
 Generator::Generator(std::string const &string_to_hash)
 {
-  details::MCLInitialiser();
   clear();
   bn::hashAndMapToG2(*this, string_to_hash);
 }
@@ -79,15 +73,15 @@ DkgKeyInformation::DkgKeyInformation(PublicKey              group_public_key1,
   , private_key_share{std::move(secret_key_shares1)}
 {}
 
-void SetGenerator(Generator &generator_g, std::string string_to_hash)
+void SetGenerator(Generator &generator_g, std::string const &string_to_hash)
 {
   assert(!string_to_hash.empty());
   bn::hashAndMapToG2(generator_g, string_to_hash);
   assert(!generator_g.isZero());
 }
 
-void SetGenerators(Generator &generator_g, Generator &generator_h, std::string string_to_hash,
-                   std::string string_to_hash2)
+void SetGenerators(Generator &generator_g, Generator &generator_h,
+                   std::string const &string_to_hash, std::string const &string_to_hash2)
 {
   assert(!string_to_hash.empty() && !string_to_hash2.empty());
   assert(string_to_hash != string_to_hash2);

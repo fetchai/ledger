@@ -33,6 +33,7 @@ using DkgOutput      = beacon::DkgOutput;
 
 TEST(beacon_manager, dkg_and_threshold_signing)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
   PublicKey zero;
 
   uint32_t                             cabinet_size = 3;
