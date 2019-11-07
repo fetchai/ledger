@@ -17,21 +17,23 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "gtest/gtest.h"
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class SkipGramTest : public ::testing::Test
 {
 };
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
-TYPED_TEST_CASE(SkipGramTest, MyTypes);
+
+TYPED_TEST_CASE(SkipGramTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(SkipGramTest, saveparams_test)
 {
@@ -158,3 +160,7 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   EXPECT_TRUE(prediction3.AllClose(prediction5, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch
