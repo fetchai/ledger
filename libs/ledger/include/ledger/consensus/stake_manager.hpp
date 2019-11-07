@@ -165,7 +165,7 @@ public:
   static void Serialize(Constructor &map_constructor, Type const &stake_manager)
   {
     auto map = map_constructor(5);
-    map.Append(UPDATE_QUQUE, stake_manager.update_queue_);
+    map.Append(UPDATE_QUEUE, stake_manager.update_queue_);
     map.Append(STAKE_HISTORY, stake_manager.stake_history_);
     map.Append(CURRENT_SNAPSHOT, stake_manager.current_);
     map.Append(CURRENT_BLOCK_INDEX, stake_manager.current_block_index_);
@@ -174,7 +174,7 @@ public:
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &stake_manager)
   {
-    map.ExpectKeyGetValue(UPDATE_QUQUE, stake_manager.update_queue_);
+    map.ExpectKeyGetValue(UPDATE_QUEUE, stake_manager.update_queue_);
     map.ExpectKeyGetValue(STAKE_HISTORY, stake_manager.stake_history_);
     map.ExpectKeyGetValue(CURRENT_SNAPSHOT, stake_manager.current_);
     map.ExpectKeyGetValue(CURRENT_BLOCK_INDEX, stake_manager.current_block_index_);
