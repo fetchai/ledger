@@ -17,21 +17,22 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
+#include "test_types.hpp"
 
-#include "gtest/gtest.h"
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class SelfAttentionEncoder : public ::testing::Test
 {
 };
 
-using Types = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                               fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(SelfAttentionEncoder, Types);
+TYPED_TEST_CASE(SelfAttentionEncoder, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class as a part of a graph
 {
@@ -152,3 +153,7 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

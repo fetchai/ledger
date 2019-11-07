@@ -16,22 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include "ml/ops/weights.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
 #include "gtest/gtest.h"
-
+#include "ml/ops/weights.hpp"
+#include "test_types.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class StateDictTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(StateDictTest, MyTypes);
+TYPED_TEST_CASE(StateDictTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(StateDictTest, empty_merge_test)
 {
@@ -255,3 +252,6 @@ TYPED_TEST(StateDictTest, nested_merge_list_test)
     }
   }
 }
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch
