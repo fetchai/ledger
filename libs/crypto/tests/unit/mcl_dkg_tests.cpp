@@ -247,8 +247,6 @@ TEST(MclDkgTests, GenerateKeys)
 
 TEST(MclNotarisationTests, AggregateSigningVerification)
 {
-  using KeyPair = std::pair<PrivateKey, PublicKey>;
-
   details::MCLInitialiser();
 
   Generator generator;
