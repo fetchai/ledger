@@ -114,7 +114,7 @@ void BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
   else
   {
     duplicate_count_->increment();
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) 0x", layout.digest().ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) ", layout.digest().ToHex());
   }
 }
 

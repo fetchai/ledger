@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/macros.hpp"
 #include "http/json_response.hpp"
 #include "ledger/transaction_status_cache.hpp"
@@ -26,16 +27,16 @@
 
 #include <utility>
 
+static constexpr char const *LOGGING_NAME = "TxStatusHttp";
+
+using fetch::byte_array::FromHex;
+using fetch::byte_array::ToBase64;
+using fetch::variant::Variant;
+
 namespace fetch {
 namespace ledger {
 
 namespace {
-
-constexpr char const *LOGGING_NAME = "TxStatusHttp";
-
-using fetch::byte_array::FromHex;
-using fetch::variant::Variant;
-
 constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_status,
                                  ContractExecutionStatus contract_exec_status)
 {
@@ -99,7 +100,7 @@ Variant ToVariant(Digest const &digest, TransactionStatusCache::TxStatus const &
 {
   auto retval{Variant::Object()};
 
-  retval["tx"]        = digest.ToHex();
+  retval["tx"]        = ToBase64(digest);
   retval["status"]    = ToString(Convert(tx_status.status, tx_status.contract_exec_result.status));
   retval["exit_code"] = tx_status.contract_exec_result.return_value;
   retval["charge"]    = tx_status.contract_exec_result.charge;
@@ -124,10 +125,12 @@ TxStatusHttpInterface::TxStatusHttpInterface(TxStatusCachePtr status_cache)
 
         if (params.Has("digest"))
         {
+          // convert the digest back to binary
           auto const digest = FromHex(params["digest"]);
 
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Querying status of: 0x", digest.ToHex());
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
 
+          // prepare the response
           auto const response{ToVariant(digest, status_cache_->Query(digest))};
 
           return http::CreateJsonResponse(response);
