@@ -40,6 +40,10 @@ using TensorFloatingTypes =
                      fetch::math::Tensor<fetch::fixed_point::fp32_t>,
                      fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
 
+using HighPrecisionTensorFloatingTypes =
+    ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                     fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
+
 using TensorIntAndFloatingTypes =
     ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<int64_t>,
                      fetch::math::Tensor<float>, fetch::math::Tensor<double>,

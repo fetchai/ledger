@@ -24,6 +24,7 @@
 
 namespace fetch {
 namespace ledger {
+
 namespace {
 
 template <typename T>

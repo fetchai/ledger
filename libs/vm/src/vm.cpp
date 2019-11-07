@@ -170,14 +170,18 @@ VM::VM(Module *module)
                 [](VM *vm) { vm->Handler__VariablePrimitiveInplaceModulo(); });
   AddOpcodeInfo(Opcodes::InitialiseArray, "InitialiseArray",
                 [](VM *vm) { vm->Handler__InitialiseArray(); });
+  AddOpcodeInfo(Opcodes::ContractVariableDeclareAssign, "ContractVariableDeclareAssign",
+                [](VM *vm) { vm->Handler__ContractVariableDeclareAssign(); });
+  AddOpcodeInfo(Opcodes::InvokeContractFunction, "InvokeContractFunction",
+                [](VM *vm) { vm->Handler__InvokeContractFunction(); });
 
   opcode_map_.clear();
   for (uint16_t i = 0; i < num_functions; ++i)
   {
     auto        opcode = static_cast<uint16_t>(Opcodes::NumReserved + i);
     auto const &info   = function_info_array[i];
-    AddOpcodeInfo(opcode, info.unique_id, info.handler, info.static_charge);
-    opcode_map_[info.unique_id] = opcode;
+    AddOpcodeInfo(opcode, info.unique_name, info.handler, info.static_charge);
+    opcode_map_[info.unique_name] = opcode;
   }
 
   generator_.Initialise(this, num_types);
@@ -208,17 +212,15 @@ bool VM::Execute(std::string &error, Variant &output)
     instruction_pc_ = pc_;
     instruction_    = &function_->instructions[pc_++];
 
-    current_op_ = &opcode_info_array_[instruction_->opcode];
-
     assert(instruction_->opcode < opcode_info_array_.size());
+
+    current_op_ = &opcode_info_array_[instruction_->opcode];
 
     if (!current_op_->handler)
     {
       RuntimeError("unknown opcode");
       break;
     }
-
-    assert(static_cast<bool>(current_op_->handler));
 
     // update the charge total
     charge_total_ += current_op_->static_charge;
@@ -304,19 +306,19 @@ void VM::SetChargeLimit(ChargeAmount limit)
   charge_limit_ = limit;
 }
 
-void VM::UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_charges)
+void VM::UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_static_charges)
 {
-  for (auto const &entry : opcode_charges)
+  for (auto const &entry : opcode_static_charges)
   {
-    auto const &unique_id = entry.first;
+    auto const &unique_name = entry.first;
 
-    auto opcode_to_update =
+    auto it =
         std::find_if(opcode_info_array_.begin(), opcode_info_array_.end(),
-                     [&unique_id](OpcodeInfo &info) { return info.name == unique_id; });
+                     [&unique_name](OpcodeInfo &info) { return info.unique_name == unique_name; });
 
-    if (opcode_to_update != opcode_info_array_.end())
+    if (it != opcode_info_array_.end())
     {
-      opcode_to_update->static_charge = entry.second;
+      it->static_charge = entry.second;
     }
   }
 }

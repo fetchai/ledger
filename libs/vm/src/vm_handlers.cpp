@@ -716,5 +716,54 @@ void VM::Handler__InitialiseArray()
   Push().Construct(ret_val, instruction_->type_id);
 }
 
+void VM::Handler__ContractVariableDeclareAssign()
+{
+  // The contract id is stored in instruction_->type_id
+  Variant &variable = GetVariable(instruction_->index);
+  variable          = std::move(Pop());
+  assert(variable.type_id == TypeIds::String);
+  LiveObjectInfo &info = live_object_stack_[++live_object_sp_];
+  info.frame_sp        = frame_sp_;
+  info.variable_index  = instruction_->index;
+  info.scope_number    = instruction_->data;
+}
+
+void VM::Handler__InvokeContractFunction()
+{
+  uint16_t                    contract_id = instruction_->data;
+  uint16_t                    function_id = instruction_->index;
+  Executable::Contract const &contract    = executable_->contracts[contract_id];
+  Executable::Function const &function    = contract.functions[function_id];
+  VariantArray                parameters(std::size_t(function.num_parameters));
+  int                         count = function.num_parameters;
+  while (--count >= 0)
+  {
+    parameters[std::size_t(count)] = std::move(Pop());
+  }
+  Variant &   sv       = Pop();
+  std::string identity = Ptr<String>(sv.object)->str;
+  sv.Reset();
+  if (contract_invocation_handler_)
+  {
+    std::string error;
+    Variant     output;
+    bool        ok =
+        contract_invocation_handler_(this, identity, contract, function, parameters, error, output);
+    if (ok)
+    {
+      if (function.return_type_id != TypeIds::Void)
+      {
+        assert(output.type_id == function.return_type_id);
+        Variant &top = Push();
+        top          = std::move(output);
+      }
+      return;
+    }
+    RuntimeError(error);
+    return;
+  }
+  RuntimeError("contract invocation handler is null");
+}
+
 }  // namespace vm
 }  // namespace fetch
