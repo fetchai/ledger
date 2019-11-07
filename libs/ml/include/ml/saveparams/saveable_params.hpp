@@ -726,5 +726,15 @@ struct OpOneHotSaveableParams : public OpsSaveableParams
   fetch::ml::OpType     op_type = OpType::OP_ONE_HOT;
 };
 
+template <typename TensorType>
+struct OpTopKSaveableParams : public OpsSaveableParams
+{
+  using DataType = typename TensorType::Type;
+
+  fetch::math::SizeType k;
+  bool                  sorted;
+  fetch::ml::OpType     op_type = OpType::OP_TOP_K;
+};
+
 }  // namespace ml
 }  // namespace fetch
