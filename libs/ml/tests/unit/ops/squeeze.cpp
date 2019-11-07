@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
+#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/placeholder.hpp"
@@ -24,7 +25,6 @@
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
-#include "gtest/gtest.h"
 #include <vector>
 
 namespace fetch {
