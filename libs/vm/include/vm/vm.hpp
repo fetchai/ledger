@@ -221,19 +221,20 @@ private:
   {
     // add the value to the map
     // TODO(tfr): Check ownership of Ptr.
-    Variant v;
-    v.Construct(value, value->GetTypeId());
+    Variant v(value, value->GetTypeId());
     params_.emplace_back(std::move(v));
 
     return true;
   }
 
-  using VariantArray = std::vector<Variant>;
-
   RegisteredTypes const &registered_types_;
   VariantArray           params_{};
   VM *                   vm_;
 };
+
+using ContractInvocationHandler = std::function<bool(
+    VM *, std::string const &, Executable::Contract const &, Executable::Function const &,
+    VariantArray const &, std::string &, Variant &)>;
 
 class VM
 {
@@ -349,6 +350,11 @@ public:
   Ptr<T> CreateNewObject(Ts &&... args)
   {
     return Ptr<T>{new T(this, GetTypeId<T>(), std::forward<Ts>(args)...)};
+  }
+
+  void SetContractInvocationHandler(ContractInvocationHandler handler)
+  {
+    contract_invocation_handler_ = std::move(handler);
   }
 
   void SetIOObserver(IoObserverInterface &observer)
@@ -642,13 +648,14 @@ private:
   Executable::Instruction const *instruction_{};
   bool                           stop_{};
   std::string                    error_;
+  ContractInvocationHandler      contract_invocation_handler_{};
   std::ostringstream             output_buffer_;
-  IoObserverInterface *          io_observer_{nullptr};
+  IoObserverInterface *          io_observer_{};
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
   CPPCopyConstructorMap          cpp_copy_constructors_;
-  OpcodeInfo *                   current_op_{nullptr};
+  OpcodeInfo *                   current_op_{};
 
   /// @name Charges
   /// @{
