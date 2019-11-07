@@ -35,9 +35,6 @@ TEST(beacon_manager, dkg_and_threshold_signing)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
   PublicKey zero;
-  zero.clear();
-  Generator generator_g, generator_h;
-  SetGenerators(generator_g, generator_h);
 
   uint32_t                             cabinet_size = 3;
   uint32_t                             threshold    = 2;
@@ -155,7 +152,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   coeff_received.insert(malicious);
   auto complaints = beacon_managers[0]->ComputeComplaints(coeff_received);
 
-  std::unordered_set<MuddleAddress> complaints_expected = {malicious};
+  std::set<MuddleAddress> complaints_expected = {malicious};
   EXPECT_EQ(complaints, complaints_expected);
 
   // Submit false complaints answer
@@ -204,7 +201,6 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   {
     manager->ComputeSecretShare();
     PrivateKey secret_key_test;
-    secret_key_test.clear();
     for (auto &mem : qual)
     {
       PrivateKey share = manager->GetReceivedShares(mem).first;

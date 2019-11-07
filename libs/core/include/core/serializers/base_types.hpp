@@ -24,6 +24,7 @@
 #include "vectorise/platform.hpp"
 
 #include <array>
+#include <deque>
 #include <map>
 #include <set>
 #include <string>
@@ -578,6 +579,36 @@ struct ArraySerializer<std::vector<V>, D>
 {
 public:
   using Type       = std::vector<V>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    auto array = array_constructor(input.size());
+
+    for (auto &v : input)
+    {
+      array.Append(v);
+    }
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    output.clear();
+    output.resize(array.size());
+    for (uint32_t i = 0; i < array.size(); ++i)
+    {
+      array.GetNextValue(output[i]);
+    }
+  }
+};
+
+template <typename V, typename D>
+struct ArraySerializer<std::deque<V>, D>
+{
+public:
+  using Type       = std::deque<V>;
   using DriverType = D;
 
   template <typename Constructor>

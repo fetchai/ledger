@@ -147,6 +147,7 @@ private:
   using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
   using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
   using BeaconServicePtr       = std::shared_ptr<fetch::beacon::BeaconService>;
+  using BeaconSetupServicePtr  = std::shared_ptr<fetch::beacon::BeaconSetupService>;
   using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
   using ShardManagementService = shards::ShardManagementService;
   using ShardMgmtServicePtr    = std::shared_ptr<ShardManagementService>;
@@ -190,10 +191,11 @@ private:
 
   /// @name Staking
   /// @{
-  MuddlePtr        beacon_network_;
-  BeaconServicePtr beacon_;
-  StakeManagerPtr  stake_;  ///< The stake system
-  ConsensusPtr     consensus_;
+  MuddlePtr             beacon_network_;
+  BeaconSetupServicePtr beacon_setup_;
+  BeaconServicePtr      beacon_;
+  StakeManagerPtr       stake_;  ///< The stake system
+  ConsensusPtr          consensus_;
   /// @}
 
   /// @name Block Processing

@@ -497,6 +497,7 @@ struct Variant
     type_id = TypeIds::Unknown;
   }
 };
+using VariantArray = std::vector<Variant>;
 
 struct TemplateParameter1 : Variant
 {

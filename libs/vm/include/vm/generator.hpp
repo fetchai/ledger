@@ -202,7 +202,7 @@ struct Executable
 
   std::string              name;
   std::vector<std::string> strings;
-  std::vector<Variant>     constants;
+  VariantArray             constants;
   TypeInfoArray            types;
   ContractArray            contracts;
   FunctionArray            functions;
