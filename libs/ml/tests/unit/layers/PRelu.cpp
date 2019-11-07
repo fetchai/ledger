@@ -16,27 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/PRelu.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 
 #include <memory>
 #include <vector>
+
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class PReluTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
-TYPED_TEST_CASE(PReluTest, MyTypes);
+TYPED_TEST_CASE(PReluTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
@@ -266,3 +265,7 @@ TYPED_TEST(PReluTest, saveparams_test)
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

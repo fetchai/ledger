@@ -267,6 +267,10 @@ def filter_compile_commands(project_root, input_location, target_files, output_l
             if relative_file_path.startswith('vendor'):
                 continue
 
+            # for the time being disable static analysis on the OEF
+            if 'libs/oef-' in relative_file_path or 'apps/oef-' in relative_file_path:
+                continue
+
             if relative_file_path == 'libs/vm/src/tokeniser.cpp':
                 continue
 

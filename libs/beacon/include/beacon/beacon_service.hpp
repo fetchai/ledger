@@ -80,7 +80,6 @@ public:
   using Client                  = muddle::rpc::Client;
   using ClientPtr               = std::shared_ptr<Client>;
   using MuddleAddress           = byte_array::ConstByteArray;
-  using CabinetMemberList       = std::set<MuddleAddress>;
   using ConstByteArray          = byte_array::ConstByteArray;
   using Server                  = fetch::muddle::rpc::Server;
   using ServerPtr               = std::shared_ptr<Server>;
@@ -90,33 +89,24 @@ public:
   using SignatureShare          = AeonExecutionUnit::SignatureShare;
   using Serializer              = serializers::MsgPackSerializer;
   using SharedEventManager      = EventManager::SharedEventManager;
-  using BeaconSetupService      = beacon::BeaconSetupService;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
-  BeaconService(MuddleInterface &muddle, shards::ManifestCacheInterface &manifest_cache,
-                const CertificatePtr &certificate, SharedEventManager event_manager);
+  BeaconService(MuddleInterface &muddle, const CertificatePtr &certificate,
+                BeaconSetupService &beacon_setup, SharedEventManager event_manager);
 
   /// @name Entropy Generator
   /// @{
   Status GenerateEntropy(uint64_t block_number, BlockEntropy &entropy) override;
   /// @}
 
-  /// Maintainance logic
+  /// Beacon runnable
   /// @{
-  /// @brief this function is called when the node is in the cabinet
-  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy);
-
-  void MostRecentSeen(uint64_t round);
-  /// @}
-
-  /// Beacon runnables
-  /// @{
-  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
+  std::weak_ptr<core::Runnable> GetWeakRunnable();
+  void                          MostRecentSeen(uint64_t round);
   /// @}
 
   friend class BeaconServiceProtocol;
@@ -194,7 +184,6 @@ private:
 
   /// Distributed Key Generation
   /// @{
-  BeaconSetupService    cabinet_creator_;
   BeaconServiceProtocol beacon_protocol_;
   /// @}
 

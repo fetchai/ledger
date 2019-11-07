@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "dap_interface.proto";
+
+message NodeInfoRequest {
+}
+
+message NodeInfoResponse {
+    string search_key = 1;
+    string core_key   = 2;
+    string core_uri   = 3;
+    string search_uri = 4;
+}
