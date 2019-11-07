@@ -17,25 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/model_register.hpp"
+#include "semanticsearch/schema/vocabulary_register.hpp"
 #include "semanticsearch/vocabular_advertisement.hpp"
 
 namespace fetch {
 namespace semanticsearch {
 
-class AdvertisementRegister : public ModelRegister
+class AdvertisementRegister : public VocabularyRegister
 {
 public:
-  using Vocabulary          = std::shared_ptr<VocabularyInstance>;
-  using SharedModel         = std::shared_ptr<VocabularyAdvertisement>;
-  using SharedModelRegister = ModelRegister::SharedModelRegister;
-  using Index               = VocabularyAdvertisement::Index;
-  using AgentId             = VocabularyAdvertisement::AgentId;
-  using AgentIdSet          = VocabularyAdvertisement::AgentIdSet;
+  using Vocabulary               = std::shared_ptr<VocabularyInstance>;
+  using SharedModel              = std::shared_ptr<VocabularyAdvertisement>;
+  using SharedVocabularyRegister = VocabularyRegister::SharedVocabularyRegister;
+  using Index                    = VocabularyAdvertisement::Index;
+  using AgentId                  = VocabularyAdvertisement::AgentId;
+  using AgentIdSet               = VocabularyAdvertisement::AgentIdSet;
 
   AdvertisementRegister() = default;
 
-  bool        CreateModel(std::string const &name, VocabularySchema const &object);
+  bool        CreateModel(std::string const &name, VocabularySchemaPtr const &object);
   SharedModel GetAdvertisementModel(std::string const &name);
   void       AdvertiseAgent(AgentId aid, std::string const &name, SemanticPosition const &position);
   AgentIdSet FindAgents(std::string const &name, SemanticPosition const &position,
@@ -43,10 +43,10 @@ public:
   AgentIdSet FindAgents(std::string const &name, Vocabulary const &object,
                         SemanticCoordinateType depth);
 
-  void OnAddModel(std::string const &name, VocabularySchema const &object) override;
+  void OnAddModel(std::string const &name, VocabularySchemaPtr const &object) override;
 
 private:
-  bool CreateModelInternal(std::string const &name, VocabularySchema const &object);
+  bool CreateModelInternal(std::string const &name, VocabularySchemaPtr const &object);
 
   std::map<std::string, SharedModel> model_advertisement_;
 };

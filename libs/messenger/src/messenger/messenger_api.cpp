@@ -61,7 +61,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
 
         cdr.SetValidator<Int>([from, to](Int x) { return (from <= x) && (x <= to); });
 
-        auto instance = DataToSubspaceMap<Int>::New();
+        auto instance = VocabularyTypedField<Int>::New();
         instance->SetSemanticReducer(cdr);
 
         return instance;
@@ -82,7 +82,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
 
         cdr.SetValidator<Float>([from, to](Float x) { return (from <= x) && (x <= to); });
 
-        auto instance = DataToSubspaceMap<Float>::New();
+        auto instance = VocabularyTypedField<Float>::New();
         instance->SetSemanticReducer(cdr);
 
         return instance;

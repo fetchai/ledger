@@ -29,45 +29,72 @@ namespace semanticsearch {
 class VocabularyInstance : public std::enable_shared_from_this<VocabularyInstance>
 {
 public:
-  using Vocabulary  = std::shared_ptr<VocabularyInstance>;
-  using PropertyMap = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
+  using VocabularyInstancePtr = std::shared_ptr<VocabularyInstance>;
+  using PropertyMap           = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
+  using PropertyVisitor       = std::function<void(std::string, VocabularyInstancePtr)>;
 
+  /// Static pointer constructor
+  /// @{
   template <typename T>
-  static Vocabulary New(T data)
-  {
-    // TODO(private issue 143): add destructor
-    Vocabulary ret;
-    ret.reset(new VocabularyInstance(std::type_index(typeid(T)), new T(data)));
+  static VocabularyInstancePtr New(T data);
+  /// @}
 
-    return ret;
-  }
-
+  /// Only constructible by self
+  /// @{
   VocabularyInstance()                                = delete;
   VocabularyInstance(VocabularyInstance const &other) = delete;
   VocabularyInstance &operator=(VocabularyInstance const &other) = delete;
-  std::type_index     type() const
-  {
-    return type_;
-  }
+  /// @}
 
-  void        Walk(std::function<void(std::string, Vocabulary)> const &callback,
-                   std::string const &                                 name = "");
-  Vocabulary &operator[](std::string const &name);
-  void        Insert(std::string const &name, Vocabulary const &value);
+  ~VocabularyInstance();
 
+  /// Object manipulation
+  /// @{
+  void                   Insert(std::string const &name, VocabularyInstancePtr const &value);
+  VocabularyInstancePtr &operator[](std::string const &name);
+  void                   Walk(PropertyVisitor const &callback, std::string const &name = "");
+  /// @}
+
+  /// Properteis
+  /// @{
+  std::type_index type() const;
+  /// @}
 private:
+  /// Private constructor
+  /// @{
   VocabularyInstance(std::type_index type, void *data)
     : type_(type)
     , data_(data)
   {}
+  /// @}
 
-  std::type_index type_;
-  void *          data_{nullptr};
+  /// Data members
+  /// @{
+  std::type_index             type_;
+  void *                      data_{nullptr};
+  std::function<void(void *)> destructor_{nullptr};
+  /// @}
 
+  /// Friends
+  /// @{
   template <typename T>
-  friend class DataToSubspaceMap;
-  friend class PropertiesToSubspace;
+  friend class VocabularyTypedField;
+  friend class VocabularyObjectField;
+  /// @}
 };
+
+template <typename T>
+VocabularyInstance::VocabularyInstancePtr VocabularyInstance::New(T data)
+{
+  VocabularyInstancePtr ret;
+  ret.reset(new VocabularyInstance(std::type_index(typeid(T)), new T(data)));
+  ret->destructor_ = [](void *data) {
+    T *d = static_cast<T *>(data);
+    delete d;
+  };
+
+  return ret;
+}
 
 }  // namespace semanticsearch
 }  // namespace fetch

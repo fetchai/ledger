@@ -23,7 +23,7 @@
 namespace fetch {
 namespace semanticsearch {
 
-bool AdvertisementRegister::CreateModel(std::string const &name, VocabularySchema const &object)
+bool AdvertisementRegister::CreateModel(std::string const &name, VocabularySchemaPtr const &object)
 {
   if (HasModel(name))
   {
@@ -65,13 +65,13 @@ AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(std::string 
   return ad_model->FindAgents(position, depth);
 }
 
-void AdvertisementRegister::OnAddModel(std::string const &name, VocabularySchema const &object)
+void AdvertisementRegister::OnAddModel(std::string const &name, VocabularySchemaPtr const &object)
 {
   CreateModelInternal(name, object);
 }
 
-bool AdvertisementRegister::CreateModelInternal(std::string const &     name,
-                                                VocabularySchema const &object)
+bool AdvertisementRegister::CreateModelInternal(std::string const &        name,
+                                                VocabularySchemaPtr const &object)
 {
 
   SharedModel model          = std::make_shared<VocabularyAdvertisement>(object);

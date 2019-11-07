@@ -57,8 +57,9 @@ public:
   using QueryExecutor            = semanticsearch::QueryExecutor;
   using SemanticReducer          = semanticsearch::SemanticReducer;
   using SemanticPosition         = semanticsearch::SemanticPosition;
+
   template <typename T>
-  using DataToSubspaceMap = semanticsearch::DataToSubspaceMap<T>;
+  using VocabularyTypedField = semanticsearch::VocabularyTypedField<T>;
 
   MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface &mailbox);
 

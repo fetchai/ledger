@@ -16,15 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/model_register.hpp"
+#include "semanticsearch/schema/vocabulary_register.hpp"
 
 #include <cassert>
 
 namespace fetch {
 namespace semanticsearch {
 
-void VocabularyInstance::Walk(std::function<void(std::string, Vocabulary)> const &callback,
-                              std::string const &                                 name)
+VocabularyInstance::~VocabularyInstance()
+{
+  // Invoking detructor
+  if ((destructor_ != nullptr) && (data_ != nullptr))
+  {
+    destructor_(data_);
+  }
+}
+
+void VocabularyInstance::Walk(VocabularyInstance::PropertyVisitor const &callback,
+                              std::string const &                        name)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
@@ -39,7 +48,7 @@ void VocabularyInstance::Walk(std::function<void(std::string, Vocabulary)> const
   }
 }
 
-VocabularyInstance::Vocabulary &VocabularyInstance::operator[](std::string const &name)
+VocabularyInstance::VocabularyInstancePtr &VocabularyInstance::operator[](std::string const &name)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
@@ -52,7 +61,8 @@ VocabularyInstance::Vocabulary &VocabularyInstance::operator[](std::string const
   return map[name];
 }
 
-void VocabularyInstance::Insert(std::string const &name, Vocabulary const &value)
+void VocabularyInstance::Insert(std::string const &                              name,
+                                VocabularyInstance::VocabularyInstancePtr const &value)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
@@ -64,5 +74,9 @@ void VocabularyInstance::Insert(std::string const &name, Vocabulary const &value
   map[name]        = value;
 }
 
+std::type_index VocabularyInstance::type() const
+{
+  return type_;
+}
 }  // namespace semanticsearch
 }  // namespace fetch

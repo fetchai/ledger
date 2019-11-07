@@ -27,10 +27,10 @@ TEST(SemanticSearchIndex, BasicOperations1D)
 
   for (SemanticCoordinateType i = 0; i < 16; ++i)
   {
-    SemanticSubscription rel;
-    rel.position.push_back(width * i + (width >> 1));
-    rel.index = i;
-    database_index.AddRelation(rel);
+    SemanticPosition position;
+    position.push_back(width * i + (width >> 1));
+
+    database_index.AddRelation(i, position);
   }
 
   auto group0 = database_index.Find(0, {width * 8});
@@ -78,11 +78,10 @@ TEST(SemanticSearchIndex, BasicOperations2D)
   {
     for (SemanticCoordinateType j = 0; j < 4; ++j)
     {
-      SemanticSubscription rel;
-      rel.position.push_back(width * i + (width >> 1));
-      rel.position.push_back(width * j + (width >> 1));
-      rel.index = i * 4 + j;
-      database_index.AddRelation(rel);
+      SemanticPosition position;
+      position.push_back(width * i + (width >> 1));
+      position.push_back(width * j + (width >> 1));
+      database_index.AddRelation(i * 4 + j, position);
     }
   }
 

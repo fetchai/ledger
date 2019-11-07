@@ -19,7 +19,6 @@
 
 #include "semanticsearch/index/base_types.hpp"
 #include "semanticsearch/index/database_index_interface.hpp"
-#include "semanticsearch/index/semantic_subscription.hpp"
 #include "semanticsearch/index/subscription_group.hpp"
 
 #include <map>
@@ -52,7 +51,7 @@ namespace semanticsearch {
  *               ╱                                                         ╱
  *              ╱                                                         ╱
  *             ╱                                                         ╱
- *            ╱                                                         ╱
+ *            ╱                    SubscriptionGroup                    ╱
  *           ╱                                                         ╱
  *          ╱─ ─ ─ ─ ─ ─ ─ ─ ─ ─● P                                   ╱
  *         ╱                   ╱                                     ╱
@@ -64,13 +63,13 @@ namespace semanticsearch {
  *             ───────────────────────────────────────────────────────────
  *             ╱                            ╱                            ╱
  *            ╱                            ╱                            ╱
- *           ╱                            ╱                            ╱
+ *           ╱    SubscriptionGroup       ╱     SubscriptionGroup      ╱
  *          ╱                            ╱                            ╱
  *         ╱                            ╱                            ╱
  *        ╱────────────────────────────╳────────────────────────────╱
  *       ╱                            ╱                            ╱
  *      ╱─ ─ ─ ─ ─ ─ ─ ─ ─ ─● P      ╱                            ╱
- *     ╱                   ╱        ╱                            ╱
+ *     ╱                   ╱        ╱      SubscriptionGroup     ╱
  *    ╱                            ╱                            ╱
  *   ╱                   ╱        ╱                            ╱
  *  ╱                            ╱                            ╱
@@ -92,22 +91,42 @@ namespace semanticsearch {
  *  ╱             ╱              ╱             ╱              ╱
  * ───────────────────────────────────────────────────────────   depth = 2
  *
- * The index keeps track of these subscription groups
+ * The index keeps track of these subscription groups and the contents in
+ * them.
  */
 
 class InMemoryDBIndex : public DatabaseIndexInterface
 {
 public:
-  InMemoryDBIndex(std::size_t rank);
-  void          AddRelation(SemanticSubscription const &obj) override;
-  DBIndexSetPtr Find(SemanticCoordinateType depth, SemanticPosition position) const override;
-  std::size_t   rank() const override;
+  using GroupToIndicesMap = std::map<SubscriptionGroup, DBIndexSetPtr>;
 
+  InMemoryDBIndex(std::size_t rank);
+
+  /// Methods to manage the database
+  /// @{
+
+  /* @brief Adds a relation between an index and a sematic position.
+   * @param index Database index containing the record for the subscription.
+   * @param position Position in semantic space.
+   */  
+  void          AddRelation(DBIndexType const &index, SemanticPosition const &position)  override;
+
+  /* @brief Finds a set of indices near a given position.
+   * @param depth The depth level at which we search.
+   * @param position The position for which we need to find a group.
+   */  
+  DBIndexSetPtr Find(SemanticCoordinateType depth, SemanticPosition position) const override;
+  /// @}
+
+  /// Properties
+  /// @{
+  std::size_t   rank() const override;
+  /// @}
 private:
-  std::map<SubscriptionGroup, DBIndexSetPtr> group_content_{};
-  SemanticCoordinateType                     param_depth_start_ = 0;
-  SemanticCoordinateType                     param_depth_end_   = 20;
-  std::size_t                                rank_{0};
+  GroupToIndicesMap      group_content_{};        ///< Mapping of group to set of indices.
+  SemanticCoordinateType param_depth_start_ = 0;  ///< Smallest depth searchable.
+  SemanticCoordinateType param_depth_end_   = 20; ///< Largest depth searchable.
+  std::size_t            rank_{0};                ///< The rank of elements contained in the db.
 };
 
 }  // namespace semanticsearch

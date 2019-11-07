@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/properties_map.hpp"
-#include "semanticsearch/schema/subspace_map_interface.hpp"
+#include "semanticsearch/schema/vocabulary_abstract_field.hpp"
+#include "semanticsearch/schema/vocabulary_object_field.hpp"
 
 #include <memory>
 
@@ -30,10 +30,10 @@ class SemanticSearchModule;
 class ModelInterfaceBuilder
 {
 public:
-  using ModelField       = std::shared_ptr<VocabularyToSubspaceMapInterface>;
-  using VocabularySchema = std::shared_ptr<PropertiesToSubspace>;
+  using ModelField          = std::shared_ptr<VocabularyAbstractField>;
+  using VocabularySchemaPtr = std::shared_ptr<VocabularyObjectField>;
 
-  explicit ModelInterfaceBuilder(VocabularySchema      model   = nullptr,
+  explicit ModelInterfaceBuilder(VocabularySchemaPtr   model   = nullptr,
                                  SemanticSearchModule *factory = nullptr);
 
   explicit               operator bool() const;
@@ -43,13 +43,13 @@ public:
 
   ModelInterfaceBuilder Vocabulary(std::string const &name);
 
-  VocabularySchema const &vocabulary_schema() const
+  VocabularySchemaPtr const &vocabulary_schema() const
   {
     return model_;
   }
 
 private:
-  VocabularySchema      model_;
+  VocabularySchemaPtr   model_;
   SemanticSearchModule *factory_;
 };
 

@@ -40,29 +40,24 @@ public:
   SemanticReducer(SemanticReducer const &other) = default;
   SemanticReducer &operator=(SemanticReducer const &other) = default;
 
+  /// Setup
+  /// @{
   template <typename T>
-  void SetReducer(int32_t rank, Reducer<T> reducer)
-  {
-    rank_    = rank;
-    reducer_ = [reducer](void *data) { return reducer(*reinterpret_cast<T *>(data)); };
-    if (reducer_ == nullptr)
-    {
-      rank_ = 0;
-    }
-  }
-
+  void SetReducer(int32_t rank, Reducer<T> reducer);
   template <typename T>
-  void SetValidator(Validator<T> validator)
-  {
-    constraints_validation_ = [validator](void *data) {
-      return validator(*reinterpret_cast<T *>(data));
-    };
-  }
+  void SetValidator(Validator<T> validator);
+  /// @}
 
+  /// Used for execution
+  /// @{
   bool             Validate(void *data);
   SemanticPosition Reduce(void *data);
-  int32_t          rank() const;
+  /// @}
 
+  /// Properties
+  /// @{
+  int32_t rank() const;
+  /// @}
 private:
   using InternalReducer   = std::function<SemanticPosition(void *)>;
   using InternalValidator = std::function<bool(void *)>;
@@ -72,5 +67,23 @@ private:
   InternalValidator constraints_validation_{nullptr};
 };
 
+template <typename T>
+void SemanticReducer::SetReducer(int32_t rank, Reducer<T> reducer)
+{
+  rank_    = rank;
+  reducer_ = [reducer](void *data) { return reducer(*reinterpret_cast<T *>(data)); };
+  if (reducer_ == nullptr)
+  {
+    rank_ = 0;
+  }
+}
+
+template <typename T>
+void SemanticReducer::SetValidator(Validator<T> validator)
+{
+  constraints_validation_ = [validator](void *data) {
+    return validator(*reinterpret_cast<T *>(data));
+  };
+}
 }  // namespace semanticsearch
 }  // namespace fetch

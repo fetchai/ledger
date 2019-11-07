@@ -19,12 +19,13 @@
 
 #include "semanticsearch/advertisement_register.hpp"
 #include "semanticsearch/agent_directory.hpp"
-#include "semanticsearch/module/args_resolver.hpp"
+#include "semanticsearch/module/arguments_to_type_vector.hpp"
 #include "semanticsearch/module/builtin_query_function.hpp"
 #include "semanticsearch/module/model_interface_builder.hpp"
+#include "semanticsearch/module/vector_to_arguments.hpp"
 #include "semanticsearch/query/abstract_query_variant.hpp"
-#include "semanticsearch/schema/data_map.hpp"
 #include "semanticsearch/schema/semantic_reducer.hpp"
+#include "semanticsearch/schema/vocabulary_typed_field.hpp"
 
 #include <typeindex>
 #include <unordered_map>
@@ -47,10 +48,10 @@ public:
     return SharedSemanticSearchModule(new SemanticSearchModule(std::move(advertisement_register)));
   }
 
-  using ModelField       = std::shared_ptr<VocabularyToSubspaceMapInterface>;
-  using VocabularySchema = std::shared_ptr<PropertiesToSubspace>;
-  using Allocator        = std::function<void()>;
-  using AgentId          = AgentDirectory::AgentId;
+  using ModelField          = std::shared_ptr<VocabularyAbstractField>;
+  using VocabularySchemaPtr = std::shared_ptr<VocabularyObjectField>;
+  using Allocator           = std::function<void()>;
+  using AgentId             = AgentDirectory::AgentId;
 
   template <typename T>
   using Reducer = std::function<SemanticPosition(T const &)>;
@@ -61,7 +62,7 @@ public:
   {
     if (!hidden)
     {
-      auto instance = DataToSubspaceMap<T>::New();
+      auto instance = VocabularyTypedField<T>::New();
       instance->SetSemanticReducer(std::move(cdr));
       types_[name] = instance;
     }
@@ -76,7 +77,7 @@ public:
 
   ModelInterfaceBuilder NewModel(std::string const &name)
   {
-    auto model = PropertiesToSubspace::New();
+    auto model = VocabularyObjectField::New();
     advertisement_register_->AddModel(name, model);
     types_[name] = model;
     return ModelInterfaceBuilder{model, this};
@@ -89,7 +90,7 @@ public:
     return proxy;
   }
 
-  void AddModel(std::string const &name, VocabularySchema const &object)
+  void AddModel(std::string const &name, VocabularySchemaPtr const &object)
   {
     advertisement_register_->AddModel(name, object);
     types_[name] = object;
@@ -97,7 +98,7 @@ public:
 
   ModelInterfaceBuilder NewProxy()
   {
-    auto model = PropertiesToSubspace::New();
+    auto model = VocabularyObjectField::New();
     return ModelInterfaceBuilder{model, this};
   }
 
@@ -116,7 +117,7 @@ public:
     return types_[name];
   }
 
-  VocabularySchema GetModel(std::string const &name)
+  VocabularySchemaPtr GetModel(std::string const &name)
   {
     return advertisement_register_->GetModel(name);
   }

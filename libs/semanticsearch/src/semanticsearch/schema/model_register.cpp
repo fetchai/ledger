@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/model_register.hpp"
+#include "semanticsearch/schema/vocabulary_register.hpp"
 
 #include <cassert>
 
 namespace fetch {
 namespace semanticsearch {
 
-void ModelRegister::AddModel(std::string const &name, VocabularySchema const &object)
+void VocabularyRegister::AddModel(std::string const &name, VocabularySchemaPtr const &object)
 {
   if (models_.find(name) != models_.end())
   {
@@ -40,7 +40,7 @@ void ModelRegister::AddModel(std::string const &name, VocabularySchema const &ob
   OnAddModel(name, object);
 }
 
-ModelRegister::VocabularySchema ModelRegister::GetModel(std::string const &name)
+VocabularyRegister::VocabularySchemaPtr VocabularyRegister::GetModel(std::string const &name)
 {
   if (models_.find(name) == models_.end())
   {
@@ -49,7 +49,7 @@ ModelRegister::VocabularySchema ModelRegister::GetModel(std::string const &name)
   return models_[name];
 }
 
-bool ModelRegister::HasModel(std::string const &name)
+bool VocabularyRegister::HasModel(std::string const &name)
 {
   return models_.find(name) != models_.end();
 }

@@ -17,7 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/module/args_resolver.hpp"
+#include "semanticsearch/module/arguments_to_type_vector.hpp"
+#include "semanticsearch/module/vector_to_arguments.hpp"
 #include "semanticsearch/query/abstract_query_variant.hpp"
 
 #include <functional>

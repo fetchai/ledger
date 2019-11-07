@@ -16,8 +16,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
-#include "semanticsearch/index/semantic_subscription.hpp"
+#include "semanticsearch/index/base_types.hpp"
 
 namespace fetch {
 namespace semanticsearch {
@@ -27,9 +26,16 @@ class DatabaseIndexInterface
 public:
   virtual ~DatabaseIndexInterface() = default;
 
-  virtual void          AddRelation(SemanticSubscription const &obj)                        = 0;
-  virtual DBIndexSetPtr Find(SemanticCoordinateType depth, SemanticPosition position) const = 0;
-  virtual std::size_t   rank() const                                                        = 0;
+  /// Methods to manage the database
+  /// @{
+  virtual void          AddRelation(DBIndexType const &index, SemanticPosition const &position) = 0;
+  virtual DBIndexSetPtr Find(SemanticCoordinateType depth, SemanticPosition position) const     = 0;
+  /// @}
+
+  /// Properties
+  /// @{
+  virtual std::size_t rank() const = 0;
+  /// @}
 };
 
 }  // namespace semanticsearch

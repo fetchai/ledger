@@ -17,16 +17,43 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/index/base_types.hpp"
+#include <functional>
+#include <typeindex>
+#include <vector>
 
 namespace fetch {
 namespace semanticsearch {
 
-struct SemanticSubscription
+namespace details {
+/* This code converts C++ arguments into a
+ * vector of types
+ */
+template <typename R, typename A, typename... Args>
+struct ArgumentsToTypeVector
 {
-  SemanticPosition position{};  ///< Position in semantic space
-  DBIndexType      index{};     ///< Database index containing the record for the subscription
+  static void Apply(std::vector<std::type_index> &args)
+  {
+    args.push_back(std::type_index(typeid(A)));
+    ArgumentsToTypeVector<R, Args...>::Apply(args);
+  }
 };
+
+template <typename R, typename A>
+struct ArgumentsToTypeVector<R, A>
+{
+  static void Apply(std::vector<std::type_index> &args)
+  {
+    args.push_back(std::type_index(typeid(A)));
+  }
+};
+
+template <typename R>
+struct ArgumentsToTypeVector<R, void>
+{
+  static void Apply(std::vector<std::type_index> & /*args*/)
+  {}
+};
+}  // namespace details
 
 }  // namespace semanticsearch
 }  // namespace fetch

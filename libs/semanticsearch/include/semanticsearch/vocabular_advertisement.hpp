@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/index/in_memory_db_index.hpp"
-#include "semanticsearch/schema/properties_map.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
+#include "semanticsearch/schema/vocabulary_object_field.hpp"
 
 #include <string>
 
@@ -29,24 +29,20 @@ namespace semanticsearch {
 class VocabularyAdvertisement
 {
 public:
-  using Vocabulary       = std::shared_ptr<VocabularyInstance>;
-  using Index            = uint64_t;
-  using VocabularySchema = std::shared_ptr<PropertiesToSubspace>;
-  using AgentId          = uint64_t;
-  using AgentIdSet       = std::shared_ptr<std::set<AgentId>>;
+  using Vocabulary          = std::shared_ptr<VocabularyInstance>;
+  using Index               = uint64_t;
+  using VocabularySchemaPtr = std::shared_ptr<VocabularyObjectField>;
+  using AgentId             = uint64_t;
+  using AgentIdSet          = std::shared_ptr<std::set<AgentId>>;
 
-  explicit VocabularyAdvertisement(VocabularySchema vocabulary_schema)
+  explicit VocabularyAdvertisement(VocabularySchemaPtr vocabulary_schema)
     : vocabulary_schema_(std::move(vocabulary_schema))
     , index_{static_cast<std::size_t>(vocabulary_schema->rank())}
   {}
 
   void SubscribeAgent(AgentId aid, SemanticPosition position)
   {
-    SemanticSubscription rel;
-    rel.position = std::move(position);
-    rel.index    = aid;  // TODO(private issue AEA-129): Change to agent id
-
-    index_.AddRelation(rel);
+    index_.AddRelation(aid, std::move(position));
   }
 
   AgentIdSet FindAgents(SemanticPosition position, SemanticCoordinateType depth)
@@ -54,14 +50,14 @@ public:
     return index_.Find(depth, std::move(position));
   }
 
-  VocabularySchema const &vocabulary_schema() const
+  VocabularySchemaPtr const &vocabulary_schema() const
   {
     return vocabulary_schema_;
   }
 
 private:
-  VocabularySchema vocabulary_schema_;
-  InMemoryDBIndex  index_;
+  VocabularySchemaPtr vocabulary_schema_;
+  InMemoryDBIndex     index_;
 };
 
 }  // namespace semanticsearch

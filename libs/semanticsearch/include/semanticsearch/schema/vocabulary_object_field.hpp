@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/index/base_types.hpp"
-#include "semanticsearch/schema/subspace_map_interface.hpp"
+#include "semanticsearch/schema/vocabulary_abstract_field.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
 
 #include <functional>
@@ -27,22 +27,22 @@
 
 namespace fetch {
 namespace semanticsearch {
-class PropertiesToSubspace : public VocabularyToSubspaceMapInterface
+class VocabularyObjectField : public VocabularyAbstractField
 {
 public:
   using Vocabulary = std::shared_ptr<VocabularyInstance>;
   using Type       = std::map<std::string, Vocabulary>;
 
-  using ModelInterface = std::shared_ptr<VocabularyToSubspaceMapInterface>;
-  using FieldModel     = std::shared_ptr<PropertiesToSubspace>;
+  using ModelInterface = std::shared_ptr<VocabularyAbstractField>;
+  using FieldModel     = std::shared_ptr<VocabularyObjectField>;
   using ModelMap       = std::map<std::string, ModelInterface>;
 
-  PropertiesToSubspace(PropertiesToSubspace const &) = delete;
-  PropertiesToSubspace &operator=(PropertiesToSubspace const &) = delete;
+  VocabularyObjectField(VocabularyObjectField const &) = delete;
+  VocabularyObjectField &operator=(VocabularyObjectField const &) = delete;
 
   static FieldModel New(ModelMap m = {})
   {
-    FieldModel ret = FieldModel(new PropertiesToSubspace(std::move(m)));
+    FieldModel ret = FieldModel(new VocabularyObjectField(std::move(m)));
 
     return ret;
   }
@@ -174,7 +174,8 @@ public:
       return false;
     }
 
-    PropertiesToSubspace const &other = *reinterpret_cast<PropertiesToSubspace const *>(optr.get());
+    VocabularyObjectField const &other =
+        *reinterpret_cast<VocabularyObjectField const *>(optr.get());
 
     if (array_.size() != other.array_.size())
     {
@@ -201,7 +202,7 @@ public:
   }
 
 private:
-  explicit PropertiesToSubspace(ModelMap m)
+  explicit VocabularyObjectField(ModelMap m)
     : array_(std::move(m))
   {
     rank_ = 0;

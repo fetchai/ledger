@@ -25,7 +25,8 @@
 namespace fetch {
 namespace semanticsearch {
 
-ModelInterfaceBuilder::ModelInterfaceBuilder(VocabularySchema model, SemanticSearchModule *factory)
+ModelInterfaceBuilder::ModelInterfaceBuilder(VocabularySchemaPtr   model,
+                                             SemanticSearchModule *factory)
   : model_{std::move(model)}
   , factory_(factory)
 {}
@@ -62,7 +63,7 @@ ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &name,
 
 ModelInterfaceBuilder ModelInterfaceBuilder::Vocabulary(std::string const &name)
 {
-  auto new_model = PropertiesToSubspace::New();
+  auto new_model = VocabularyObjectField::New();
   model_->Insert(name, new_model);
 
   return ModelInterfaceBuilder(new_model, factory_);

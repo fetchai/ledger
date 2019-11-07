@@ -25,35 +25,6 @@ namespace fetch {
 namespace semanticsearch {
 
 namespace details {
-/* This code converts C++ arguments into a
- * vector of types
- */
-template <typename R, typename A, typename... Args>
-struct ArgumentsToTypeVector
-{
-  static void Apply(std::vector<std::type_index> &args)
-  {
-    args.push_back(std::type_index(typeid(A)));
-    ArgumentsToTypeVector<R, Args...>::Apply(args);
-  }
-};
-
-template <typename R, typename A>
-struct ArgumentsToTypeVector<R, A>
-{
-  static void Apply(std::vector<std::type_index> &args)
-  {
-    args.push_back(std::type_index(typeid(A)));
-  }
-};
-
-template <typename R>
-struct ArgumentsToTypeVector<R, void>
-{
-  static void Apply(std::vector<std::type_index> & /*args*/)
-  {}
-};
-
 /* This code converts  a vector of type-erased types
  * into the types matching the argument types.
  */

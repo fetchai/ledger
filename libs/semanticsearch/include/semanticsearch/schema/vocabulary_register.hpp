@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/properties_map.hpp"
+#include "semanticsearch/schema/vocabulary_object_field.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -25,23 +25,23 @@
 namespace fetch {
 namespace semanticsearch {
 
-class ModelRegister
+class VocabularyRegister
 {
 public:
-  using VocabularySchema    = std::shared_ptr<PropertiesToSubspace>;
-  using SharedModelRegister = std::shared_ptr<ModelRegister>;
+  using VocabularySchemaPtr      = std::shared_ptr<VocabularyObjectField>;
+  using SharedVocabularyRegister = std::shared_ptr<VocabularyRegister>;
 
-  ModelRegister()          = default;
-  virtual ~ModelRegister() = default;
+  VocabularyRegister()          = default;
+  virtual ~VocabularyRegister() = default;
 
-  void             AddModel(std::string const &name, VocabularySchema const &object);
-  VocabularySchema GetModel(std::string const &name);
-  bool             HasModel(std::string const &name);
+  void                AddModel(std::string const &name, VocabularySchemaPtr const &object);
+  VocabularySchemaPtr GetModel(std::string const &name);
+  bool                HasModel(std::string const &name);
 
-  virtual void OnAddModel(std::string const &name, VocabularySchema const &object) = 0;
+  virtual void OnAddModel(std::string const &name, VocabularySchemaPtr const &object) = 0;
 
 private:
-  std::unordered_map<std::string, VocabularySchema> models_;
+  std::unordered_map<std::string, VocabularySchemaPtr> models_;
 };
 
 }  // namespace semanticsearch

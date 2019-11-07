@@ -26,11 +26,11 @@ InMemoryDBIndex::InMemoryDBIndex(std::size_t rank)
   : rank_{rank}
 {}
 
-void InMemoryDBIndex::AddRelation(SemanticSubscription const &obj)
+void InMemoryDBIndex::AddRelation(DBIndexType const &index, SemanticPosition const &position)
 {
   // We require that only relations with same rank as the predefined
   // rank can be used. This is to prevent trivial mistakes in the code.
-  if (obj.position.size() != rank_)
+  if (position.size() != rank_)
   {
     throw std::runtime_error("Rank of position differs from index.");
   }
@@ -38,18 +38,18 @@ void InMemoryDBIndex::AddRelation(SemanticSubscription const &obj)
   // Next we create subscriptions at a number of desired depths.
   for (SemanticCoordinateType s = param_depth_start_; s < param_depth_end_; ++s)
   {
-    SubscriptionGroup idx{s, obj.position};
+    SubscriptionGroup idx{s, position};
     auto              it = group_content_.find(idx);
 
     if (it == group_content_.end())
     {
       DBIndexSetPtr c = std::make_shared<DBIndexSet>();
-      c->insert(obj.index);
+      c->insert(index);
       group_content_.insert({idx, c});
     }
     else
     {
-      it->second->insert(obj.index);
+      it->second->insert(index);
     }
   }
 }

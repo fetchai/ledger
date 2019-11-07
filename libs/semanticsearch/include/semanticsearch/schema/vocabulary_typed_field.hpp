@@ -19,28 +19,28 @@
 
 #include "semanticsearch/index/base_types.hpp"
 #include "semanticsearch/schema/semantic_reducer.hpp"
-#include "semanticsearch/schema/subspace_map_interface.hpp"
+#include "semanticsearch/schema/vocabulary_abstract_field.hpp"
 #include <functional>
 
 namespace fetch {
 namespace semanticsearch {
 
 template <typename T>
-class DataToSubspaceMap : public VocabularyToSubspaceMapInterface
+class VocabularyTypedField : public VocabularyAbstractField
 {
 public:
   using Type       = T;
-  using FieldModel = std::shared_ptr<DataToSubspaceMap>;
+  using FieldModel = std::shared_ptr<VocabularyTypedField>;
   using Variant    = std::shared_ptr<VocabularyInstance>;
 
-  DataToSubspaceMap()                          = delete;
-  DataToSubspaceMap(DataToSubspaceMap const &) = delete;
-  DataToSubspaceMap &operator=(DataToSubspaceMap const &) = delete;
-  ~DataToSubspaceMap() override                           = default;
+  VocabularyTypedField()                             = delete;
+  VocabularyTypedField(VocabularyTypedField const &) = delete;
+  VocabularyTypedField &operator=(VocabularyTypedField const &) = delete;
+  ~VocabularyTypedField() override                              = default;
 
   static FieldModel New()
   {
-    FieldModel ret = FieldModel(new DataToSubspaceMap<T>(std::type_index(typeid(T))));
+    FieldModel ret = FieldModel(new VocabularyTypedField<T>(std::type_index(typeid(T))));
     return ret;
   }
 
@@ -98,7 +98,7 @@ public:
   }
 
 private:
-  explicit DataToSubspaceMap(std::type_index type)
+  explicit VocabularyTypedField(std::type_index type)
     : type_{type}
   {}
 
