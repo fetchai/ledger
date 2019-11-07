@@ -152,8 +152,8 @@ protected:
   {
     fetch::crypto::mcl::details::MCLInitialiser();
 
-    static constexpr std::size_t NUM_LANES  = 1;
-    static constexpr std::size_t NUM_SLICES = 2;
+    static constexpr std::size_t NUM_LANES    = 1;
+    static constexpr std::size_t NUM_SLICES   = 2;
     static constexpr std::size_t CABINET_SIZE = 5;
 
     auto const main_chain_mode = GetParam();

@@ -1521,7 +1521,7 @@ bool MainChain::ReindexTips()
   FETCH_LOCK(lock_);
 
   // Tips are hashes of cached non-loose blocks that don't have any forward references
-  TipsMap   new_tips{};
+  TipsMap   new_tips;
   uint64_t  max_total_weight{};
   uint64_t  max_weight{};
   uint64_t  max_block_number{};
@@ -1545,7 +1545,6 @@ bool MainChain::ReindexTips()
       continue;
     }
     // this hash has no next blocks
-<<<<<<< HEAD
     auto &   block{*block_entry.second};
     uint64_t total_weight{block.total_weight};
     uint64_t weight{block.weight};
@@ -1577,12 +1576,6 @@ bool MainChain::ReindexTips()
 
     new_tips[hash] = Tip{total_weight, weight, block_number};
 
-    auto const &   block{*block_entry.second};
-    const BlockWeight total_weight{block.total_weight};
-    const BlockWeight weight{block.weight};
-    const BlockNumber block_number{block.body.block_number};
-    new_tips[hash] = Tip{total_weight, weight};
-
     // check if this tip is the current heaviest
     if (total_weight > max_total_weight ||
         (total_weight == max_total_weight && block_number > max_block_number) ||
@@ -1604,7 +1597,6 @@ bool MainChain::ReindexTips()
     // finally update the heaviest tip
     heaviest_.total_weight = max_total_weight;
     heaviest_.weight       = max_weight;
-    heaviest_.block_number = max_block_number;
     heaviest_.hash         = max_hash;
     heaviest_.block_number = max_block_number;
     return true;
@@ -1661,7 +1653,6 @@ bool MainChain::HeaviestTip::Update(Block const &block)
 
     total_weight = block.total_weight;
     weight       = block.weight;
-    block_number = block.body.block_number;
     hash         = block.body.hash;
     block_number = block.body.block_number;
     updated      = true;
