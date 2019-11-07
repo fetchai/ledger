@@ -9,7 +9,6 @@ setup_conditions:
   number_of_nodes: 3
   node_connections: [[0, 1], [0, 2], [1, 2]]
   mining_nodes: [0, 1, 2]
-  pos_mode: True
   max_test_time: 600
 
 steps:
