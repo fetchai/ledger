@@ -98,13 +98,16 @@ namespace semanticsearch {
 class InMemoryDBIndex : public DatabaseIndexInterface
 {
 public:
+  InMemoryDBIndex(std::size_t rank);
   void          AddRelation(SemanticSubscription const &obj) override;
-  DBIndexSetPtr Find(SemanticCoordinateType g, SemanticPosition position) const override;
+  DBIndexSetPtr Find(SemanticCoordinateType depth, SemanticPosition position) const override;
+  std::size_t rank() const override;
 
 private:
-  std::map<SubscriptionGroup, DBIndexSetPtr> group_content_;
-  SemanticCoordinateType                     hc_width_param_start_ = 0;
-  SemanticCoordinateType                     hc_width_param_end_   = 20;
+  std::map<SubscriptionGroup, DBIndexSetPtr> group_content_{};
+  SemanticCoordinateType                     param_depth_start_ = 0;
+  SemanticCoordinateType                     param_depth_end_   = 20;
+  std::size_t rank_{0};
 };
 
 }  // namespace semanticsearch

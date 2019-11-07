@@ -60,7 +60,7 @@ AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(std::string 
                                                                     SemanticCoordinateType depth)
 {
   auto ad_model = GetAdvertisementModel(name);
-  auto position = ad_model->model()->Reduce(object);
+  auto position = ad_model->vocabulary_schema()->Reduce(object);
 
   return ad_model->FindAgents(position, depth);
 }

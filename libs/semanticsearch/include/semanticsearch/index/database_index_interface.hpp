@@ -27,8 +27,9 @@ class DatabaseIndexInterface
 public:
   virtual ~DatabaseIndexInterface() = default;
 
-  virtual void          AddRelation(SemanticSubscription const &obj)                    = 0;
-  virtual DBIndexSetPtr Find(SemanticCoordinateType g, SemanticPosition position) const = 0;
+  virtual void          AddRelation(SemanticSubscription const &obj)                        = 0;
+  virtual DBIndexSetPtr Find(SemanticCoordinateType depth, SemanticPosition position) const = 0;
+  virtual std::size_t   rank() const                                                        = 0;
 };
 
 }  // namespace semanticsearch

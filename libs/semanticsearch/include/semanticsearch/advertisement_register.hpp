@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/model_advertisement.hpp"
 #include "semanticsearch/schema/model_register.hpp"
+#include "semanticsearch/vocabular_advertisement.hpp"
 
 namespace fetch {
 namespace semanticsearch {
