@@ -16,22 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "gtest/gtest.h"
 #include "ml/ops/weights.hpp"
 #include "ml/regularisers/regularisation.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "gtest/gtest.h"
-
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class WeightsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(WeightsTest, MyTypes);
+TYPED_TEST_CASE(WeightsTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(WeightsTest, allocation_test)
 {
@@ -65,7 +64,8 @@ TYPED_TEST(WeightsTest, l1_regulariser_test)
   w.Forward({}, prediction);
 
   // Test actual values
-  ASSERT_TRUE(prediction.AllClose(gt));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(WeightsTest, l2_regulariser_test)
@@ -95,5 +95,10 @@ TYPED_TEST(WeightsTest, l2_regulariser_test)
   w.Forward({}, prediction);
 
   // Test actual values
-  ASSERT_TRUE(prediction.AllClose(gt));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

@@ -18,9 +18,9 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -28,16 +28,15 @@
 #include <memory>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class MultiplyTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
-
-TYPED_TEST_CASE(MultiplyTest, MyTypes);
+TYPED_TEST_CASE(MultiplyTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(MultiplyTest, forward_test)
 {
@@ -66,6 +65,8 @@ TYPED_TEST(MultiplyTest, forward_test)
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
+
+  ASSERT_TRUE(!math::state_overflow<typename TypeParam::Type>());
 }
 
 TYPED_TEST(MultiplyTest, backward_test_NMB_N11)
@@ -335,4 +336,10 @@ TYPED_TEST(MultiplyTest, saveparams_backward_test_NB_NB)
   EXPECT_TRUE(prediction.at(1).AllClose(
       new_prediction.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
+
+  ASSERT_TRUE(!math::state_overflow<typename TypeParam::Type>());
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

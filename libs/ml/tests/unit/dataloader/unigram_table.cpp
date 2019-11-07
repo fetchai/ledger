@@ -21,7 +21,9 @@
 
 #include "gtest/gtest.h"
 
-using namespace fetch::ml;
+namespace fetch {
+namespace ml {
+namespace test {
 
 TEST(UnigramTableTest, simple_test)
 {
@@ -54,3 +56,7 @@ TEST(UnigramTableTest, test_with_zero_counts)
 
   EXPECT_EQ(table, table_gt);
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch
