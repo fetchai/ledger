@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package fetch.oef.pb;
+
+import "query.proto";
+import "dap_interface.proto";
+
+message SearchQuery {
+
+    message DirectedSearch {
+        message PlaneDistance {
+            double geo = 1; // distance in meters
+            double topic = 2;
+        }
+
+        message PlaneTarget {
+            Location geo = 1;
+            ValueMessage topic = 2;
+        }
+        PlaneDistance distance = 1;
+        PlaneTarget target = 2;
+    }
+
+    bytes source_key = 1;
+    fetch.oef.pb.Query.Model model = 2;
+    //TTL = 0 query will be handled by the current node, but query won't be broadcasted
+    //TTL > 0 query will be broadcasted
+    //TTL > 1024 query will be ignored
+    uint32 ttl = 3;
+    DirectedSearch directed_search = 4;
+    ConstructQueryObjectRequest query_v2 = 5;
+    uint64 id = 6;
+}
