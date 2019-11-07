@@ -915,6 +915,12 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     // update the telemetry
     executed_block_count_->increment();
     executed_tx_count_->add(current_block_->GetTransactionCount());
+
+    // Update consensus so block can be notarised
+    if (consensus_)
+    {
+      consensus_->UpdateCurrentBlock(*current_block_);
+    }
   }
 
   return State::RESET;
