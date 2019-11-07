@@ -108,6 +108,8 @@ class MainChainTests : public ::testing::TestWithParam<MainChain::Mode>
 protected:
   void SetUp() override
   {
+    fetch::crypto::mcl::details::MCLInitialiser();
+
     static constexpr std::size_t NUM_LANES  = 1;
     static constexpr std::size_t NUM_SLICES = 2;
 
