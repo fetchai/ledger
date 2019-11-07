@@ -71,6 +71,7 @@ struct CabinetNode
   ProverPtr                        muddle_certificate;
   Muddle                           muddle;
   DummyManifesttCache              manifest_cache;
+  BeaconSetupService               beacon_setup_service;
   BeaconService                    beacon_service;
   crypto::Identity                 identity;
   BlockEntropy                     genesis_block_entropy;
@@ -82,7 +83,8 @@ struct CabinetNode
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
+    , beacon_setup_service{*muddle, manifest_cache, muddle_certificate}
+    , beacon_service{*muddle, muddle_certificate, beacon_setup_service, event_manager}
     , identity{muddle_certificate->identity()}
   {
     network_manager.Start();
@@ -104,6 +106,8 @@ void RunHonestCabinetRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
                              uint16_t number_of_cabinets = 4, uint16_t cabinet_size = 4,
                              uint16_t numbers_per_aeon = 10, double threshold = 0.5)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   std::cout << "- Setup" << std::endl;
   auto number_of_nodes = static_cast<uint16_t>(number_of_cabinets * cabinet_size);
 
@@ -152,7 +156,7 @@ void RunHonestCabinetRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   }
 
   // Creating n cabinets
-  std::vector<BeaconService::CabinetMemberList> all_cabinets;
+  std::vector<BeaconSetupService::CabinetMemberList> all_cabinets;
   all_cabinets.resize(number_of_cabinets);
 
   uint64_t i = 0;
@@ -166,12 +170,8 @@ void RunHonestCabinetRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   // Attaching the cabinet logic
   for (auto &member : cabinet)
   {
-    auto runnables = member->beacon_service.GetWeakRunnables();
-
-    for (auto const &j : runnables)
-    {
-      member->reactor.Attach(j);
-    }
+    auto runnable = member->beacon_service.GetWeakRunnable();
+    member->reactor.Attach(runnable);
   }
 
   // Starting the beacon
@@ -198,13 +198,14 @@ void RunHonestCabinetRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
     if (i < total_renewals)
     {
       std::cout << "- Scheduling round " << i << std::endl;
+      uint64_t start_time =
+          GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
       for (auto &member : cabinet)
       {
-        member->beacon_service.StartNewCabinet(
+        member->beacon_setup_service.StartNewCabinet(
             cabinet_select,
             static_cast<uint32_t>(static_cast<double>(cabinet_select.size()) * threshold),
-            i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
-            GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)),
+            i * numbers_per_aeon, (i + 1) * numbers_per_aeon, start_time,
             member->genesis_block_entropy);
       }
     }
@@ -247,7 +248,6 @@ void RunHonestCabinetRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
 
 TEST(beacon, DISABLED_full_cycle)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
   //  SetGlobalLogLevel(LogLevel::CRITICAL);
   // TODO(tfr): Heuristically fails atm. RunHonestCabinetRenewal(100, 4, 4, 4, 10, 0.5);
   RunHonestCabinetRenewal(100, 4, 2, 2, 10, 0.5);

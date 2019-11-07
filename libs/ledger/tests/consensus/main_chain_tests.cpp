@@ -71,6 +71,7 @@ std::map<std::size_t, std::size_t> GetRandomIndexes(std::size_t size)
 
 TEST(ledger_main_chain_gtest, Test_mining_proof)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
   Blocks      blocks;
   std::size_t blockIterations = 10;
   DummyMiner  miner;
@@ -110,6 +111,7 @@ TEST(ledger_main_chain_gtest, Test_mining_proof)
 
 TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
   Blocks     blocks;
   DummyMiner miner;
 
