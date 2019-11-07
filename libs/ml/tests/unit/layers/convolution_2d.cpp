@@ -17,31 +17,31 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "math/tensor.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 
 #include <memory>
+
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class Convolution2DTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(Convolution2DTest, MyTypes);
+TYPED_TEST_CASE(Convolution2DTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -88,14 +88,15 @@ TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as 
   gt.Set(3, 0, 0, static_cast<DataType>(-7.9669202564));
   gt.Set(4, 0, 0, static_cast<DataType>(-16.5230417126));
 
-  ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(output.AllClose(gt, math::function_tolerance<DataType>(),
+                              math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -143,14 +144,15 @@ TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
   gt.Set(3, 0, 0, 0, static_cast<DataType>(-7.9669202564));
   gt.Set(4, 0, 0, 0, static_cast<DataType>(-16.5230417126));
 
-  ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(output.AllClose(gt, math::function_tolerance<DataType>(),
+                              math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -209,42 +211,96 @@ TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
   ASSERT_EQ(backprop_error[0].shape()[2], input_width);
   ASSERT_EQ(backprop_error[0].shape()[3], 1);
 
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 0, 0, 0)), -4.3077492713928222656);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 0, 0, 0)), 9.162715911865234375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 0, 0, 0)), 0.80360949039459228516);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 1, 0, 0)), 1.2491617202758789062);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 1, 0, 0)), 2.8053097724914550781);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 1, 0, 0)), -4.166011810302734375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 2, 0, 0)), 2.4086174964904785156);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 2, 0, 0)), -0.86411559581756591797);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 2, 0, 0)), -3.5623354911804199219);
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 0, 0, 0)), -4.3077492713928222656,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 0, 0, 0)), 9.162715911865234375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 0, 0, 0)), 0.80360949039459228516,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 1, 0, 0)), 1.2491617202758789062,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 1, 0, 0)), 2.8053097724914550781,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 1, 0, 0)), -4.166011810302734375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 2, 0, 0)), 2.4086174964904785156,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 2, 0, 0)), -0.86411559581756591797,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 2, 0, 0)), -3.5623354911804199219,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 0, 1, 0)), -2.9907839298248291016);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 0, 1, 0)), -0.16291338205337524414);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 0, 1, 0)), -2.5308477878570556641);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 1, 1, 0)), -1.2312210798263549805);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 1, 1, 0)), -6.6115474700927734375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 1, 1, 0)), 3.2868711948394775391);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 2, 1, 0)), -4.994899749755859375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 2, 1, 0)), -2.9489955902099609375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 2, 1, 0)), -2.4173920154571533203);
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 0, 1, 0)), -2.9907839298248291016,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 0, 1, 0)), -0.16291338205337524414,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 0, 1, 0)), -2.5308477878570556641,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 1, 1, 0)), -1.2312210798263549805,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 1, 1, 0)), -6.6115474700927734375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 1, 1, 0)), 3.2868711948394775391,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 2, 1, 0)), -4.994899749755859375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 2, 1, 0)), -2.9489955902099609375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 2, 1, 0)), -2.4173920154571533203,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 0, 2, 0)), 2.4823324680328369141);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 0, 2, 0)), 2.4479858875274658203);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 0, 2, 0)), -0.3612575531005859375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 1, 2, 0)), -6.4253511428833007812);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 1, 2, 0)), -3.184307098388671875);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 1, 2, 0)), 0.51499307155609130859);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 2, 2, 0)), -1.5936613082885742188);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 2, 2, 0)), -0.41774189472198486328);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 2, 2, 0)), 0.98040378093719482422);
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 0, 2, 0)), 2.4823324680328369141,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 0, 2, 0)), 2.4479858875274658203,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 0, 2, 0)), -0.3612575531005859375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 1, 2, 0)), -6.4253511428833007812,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 1, 2, 0)), -3.184307098388671875,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 1, 2, 0)), 0.51499307155609130859,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(0, 2, 2, 0)), -1.5936613082885742188,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(1, 2, 2, 0)), -0.41774189472198486328,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(backprop_error.at(0).At(2, 2, 2, 0)), 0.98040378093719482422,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -302,14 +358,15 @@ TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
   gt.Set(3, 0, 0, 0, static_cast<DataType>(-7.9669202564));
   gt.Set(4, 0, 0, 0, static_cast<DataType>(-16.5230417126));
 
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -378,42 +435,96 @@ TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
   ASSERT_EQ(err_signal.shape()[2], input_width);
   ASSERT_EQ(err_signal.shape()[3], 1);
 
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 0, 0, 0)), -4.3077492713928222656);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 0, 0, 0)), 9.162715911865234375);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 0, 0, 0)), 0.80360949039459228516);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 1, 0, 0)), 1.2491617202758789062);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 1, 0, 0)), 2.8053097724914550781);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 1, 0, 0)), -4.166011810302734375);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 2, 0, 0)), 2.4086174964904785156);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 2, 0, 0)), -0.86411559581756591797);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 2, 0, 0)), -3.5623354911804199219);
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 0, 0, 0)), -4.3077492713928222656,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 0, 0, 0)), 9.162715911865234375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 0, 0, 0)), 0.80360949039459228516,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 1, 0, 0)), 1.2491617202758789062,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 1, 0, 0)), 2.8053097724914550781,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 1, 0, 0)), -4.166011810302734375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 2, 0, 0)), 2.4086174964904785156,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 2, 0, 0)), -0.86411559581756591797,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 2, 0, 0)), -3.5623354911804199219,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 0, 1, 0)), -2.9907839298248291016);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 0, 1, 0)), -0.16291338205337524414);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 0, 1, 0)), -2.5308477878570556641);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 1, 1, 0)), -1.2312210798263549805);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 1, 1, 0)), -6.6115474700927734375);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 1, 1, 0)), 3.2868711948394775391);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 2, 1, 0)), -4.994899749755859375);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 2, 1, 0)), -2.9489955902099609375);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 2, 1, 0)), -2.4173920154571533203);
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 0, 1, 0)), -2.9907839298248291016,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 0, 1, 0)), -0.16291338205337524414,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 0, 1, 0)), -2.5308477878570556641,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 1, 1, 0)), -1.2312210798263549805,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 1, 1, 0)), -6.6115474700927734375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 1, 1, 0)), 3.2868711948394775391,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 2, 1, 0)), -4.994899749755859375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 2, 1, 0)), -2.9489955902099609375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 2, 1, 0)), -2.4173920154571533203,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 0, 2, 0)), 2.4823324680328369141);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 0, 2, 0)), 2.4479858875274658203);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 0, 2, 0)), -0.3612575531005859375);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 1, 2, 0)), -6.4253511428833007812);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 1, 2, 0)), -3.184307098388671875);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 1, 2, 0)), 0.51499307155609130859);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(0, 2, 2, 0)), -1.5936613082885742188);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(1, 2, 2, 0)), -0.41774189472198486328);
-  EXPECT_FLOAT_EQ(static_cast<float>(err_signal.At(2, 2, 2, 0)), 0.98040378093719482422);
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 0, 2, 0)), 2.4823324680328369141,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 0, 2, 0)), 2.4479858875274658203,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 0, 2, 0)), -0.3612575531005859375,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 1, 2, 0)), -6.4253511428833007812,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 1, 2, 0)), -3.184307098388671875,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 1, 2, 0)), 0.51499307155609130859,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(0, 2, 2, 0)), -1.5936613082885742188,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(1, 2, 2, 0)), -0.41774189472198486328,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(err_signal.At(2, 2, 2, 0)), 0.98040378093719482422,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -463,13 +574,15 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
   gt.Set(3, 0, 0, 0, static_cast<DataType>(-7.9669202564));
   gt.Set(4, 0, 0, 0, static_cast<DataType>(-16.5230417126));
 
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, getStateDict)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -492,15 +605,21 @@ TYPED_TEST(Convolution2DTest, getStateDict)
   EXPECT_EQ(weights_ptr->shape(), std::vector<SizeType>({output_channels, input_channels,
                                                          kernel_height, kernel_height, 1}));
 
-  EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(0, 0, 0, 0, 0)), -0.970493f);
-  EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(1, 1, 1, 1, 0)), -0.85325855f);
-  EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(4, 2, 2, 2, 0)), -0.096136682f);
+  EXPECT_NEAR(
+      static_cast<double>(weights_ptr->At(0, 0, 0, 0, 0)), -0.970493f,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(weights_ptr->At(1, 1, 1, 1, 0)), -0.85325855f,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(
+      static_cast<double>(weights_ptr->At(4, 2, 2, 2, 0)), -0.096136682f,
+      kernel_height * kernel_height * static_cast<double>(math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
+  using SizeType  = fetch::math::SizeType;
   using LayerType = fetch::ml::layers::Convolution2D<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
@@ -617,3 +736,7 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

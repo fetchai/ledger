@@ -88,9 +88,9 @@ TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover cons
     it->signature = prover.Sign(serialized_payload_);
     if (!it->signature.empty())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Signed: ", it->signature.ToHex(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Signed: 0x", it->signature.ToHex(),
                       " len: ", it->signature.size());
-      FETCH_LOG_DEBUG(LOGGING_NAME, "- Payload: ", serialized_payload_.ToHex());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "- Payload: 0x", serialized_payload_.ToHex());
     }
     else
     {

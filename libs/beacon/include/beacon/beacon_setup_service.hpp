@@ -190,6 +190,7 @@ protected:
   telemetry::GaugePtr<uint64_t> beacon_dkg_state_failed_on_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_time_allocated_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_aeon_setting_up_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_miners_in_qual_;
   telemetry::CounterPtr         beacon_dkg_failures_total_;
   telemetry::CounterPtr         beacon_dkg_aborts_total_;
   telemetry::CounterPtr         beacon_dkg_successes_total_;
@@ -215,6 +216,7 @@ private:
   uint64_t      state_deadline_        = 0;
   uint64_t      seconds_for_state_     = 0;
   uint64_t      expected_dkg_timespan_ = 0;
+  double        time_per_slot_         = 0.;
   bool          condition_to_proceed_  = false;
   const std::map<BeaconSetupService::State, uint64_t> time_slot_map_;
   uint64_t                                            time_slots_in_dkg_ = 0;

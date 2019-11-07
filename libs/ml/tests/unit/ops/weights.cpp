@@ -18,26 +18,24 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class WeightsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(WeightsTest, MyTypes);
+TYPED_TEST_CASE(WeightsTest, math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(WeightsTest, allocation_test)
 {
@@ -48,7 +46,7 @@ TYPED_TEST(WeightsTest, gradient_step_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType       data(8);
   TensorType       error(8);
@@ -160,7 +158,7 @@ TYPED_TEST(WeightsTest, saveparams_gradient_step_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using OpType     = typename fetch::ml::ops::Weights<TensorType>;
   using SPType     = typename OpType::SPType;
 
@@ -225,3 +223,7 @@ TYPED_TEST(WeightsTest, saveparams_gradient_step_test)
                                   fetch::math::function_tolerance<typename TypeParam::Type>(),
                                   fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

@@ -34,6 +34,9 @@ static constexpr uint16_t SERVICE_DKG        = 6001;
 static constexpr uint16_t SERVICE_PBC        = 7001;
 static constexpr uint16_t SERVICE_DMLF       = 8001;
 
+static constexpr uint16_t SERVICE_MESSENGER     = 9001;
+static constexpr uint16_t SERVICE_MSG_TRANSPORT = 10001;
+
 // Common Service Channels
 static constexpr uint16_t CHANNEL_RPC = 1;  // for convenience we essentially
                                             // reserve channel 1 of any service
@@ -61,6 +64,9 @@ static constexpr uint16_t CHANNEL_CONNECTIONS_SETUP = 403;
 
 static constexpr uint16_t CHANNEL_ID_DISTRIBUTION = 450;
 
+static constexpr uint64_t CHANNEL_MESSENGER_MESSAGE   = 600;
+static constexpr uint64_t CHANNEL_MESSENGER_TRANSPORT = 601;
+
 // RPC Protocol identifiers
 static constexpr uint64_t RPC_SHARD_MGMT        = 10;
 static constexpr uint64_t RPC_MUDDLE_DISCOVERY  = 100;
@@ -84,4 +90,5 @@ static constexpr uint64_t RPC_BEACON       = 251;
 static constexpr uint64_t RPC_DMLF         = 252;
 static constexpr uint64_t RPC_COLEARN      = 253;
 
+static constexpr uint64_t RPC_MESSENGER_INTERFACE = 150;
 }  // namespace fetch

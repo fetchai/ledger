@@ -16,24 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "ml/ops/slice.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class SliceTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(SliceTest, MyTypes);
+TYPED_TEST_CASE(SliceTest, math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(SliceTest, multi_axes_forward_shape_test)
 {
@@ -75,7 +74,7 @@ TYPED_TEST(SliceTest, single_axis_forward_shape_test)
 
 TYPED_TEST(SliceTest, single_axis_forward_2D_value_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   TypeParam a = TypeParam::FromString("1, 2, 3; 4, 5, 6");
   SizeType  axis(0u);
@@ -95,7 +94,7 @@ TYPED_TEST(SliceTest, single_axis_forward_2D_value_test)
 
 TYPED_TEST(SliceTest, single_axis_forward_3D_value_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   TypeParam a = TypeParam::FromString("1, 2, 3, 4; 4, 5, 6, 7; -1, -2, -3, -4");
   a.Reshape({3, 2, 2});
@@ -137,7 +136,7 @@ TYPED_TEST(SliceTest, multi_axes_forward_3D_value_test)
 
 TYPED_TEST(SliceTest, single_axis_backward_3D_value_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   TypeParam a = TypeParam::FromString("1, 1, 3, 141; 4, 52, 6, 72; -1, -2, -19, -4");
   a.Reshape({3, 2, 2});
@@ -165,7 +164,7 @@ TYPED_TEST(SliceTest, single_axis_backward_3D_value_test)
 
 TYPED_TEST(SliceTest, ranged_forward_shape_test)
 {
-  using SizeType     = typename TypeParam::SizeType;
+  using SizeType     = fetch::math::SizeType;
   using SizePairType = std::pair<SizeType, SizeType>;
 
   TypeParam    a({5, 30, 6});
@@ -185,7 +184,7 @@ TYPED_TEST(SliceTest, ranged_forward_shape_test)
 
 TYPED_TEST(SliceTest, ranged_forward_3D_value_test)
 {
-  using SizeType     = typename TypeParam::SizeType;
+  using SizeType     = fetch::math::SizeType;
   using SizePairType = std::pair<SizeType, SizeType>;
 
   TypeParam a = TypeParam::FromString("1, 2, 3, 4; 4, 5, 6, 7; -1, -2, -3, -4");
@@ -209,7 +208,7 @@ TYPED_TEST(SliceTest, ranged_forward_3D_value_test)
 
 TYPED_TEST(SliceTest, ranged_backward_3D_value_test)
 {
-  using SizeType     = typename TypeParam::SizeType;
+  using SizeType     = fetch::math::SizeType;
   using SizePairType = std::pair<SizeType, SizeType>;
 
   TypeParam a = TypeParam::FromString("1, 1, 3, 141; 4, 52, 6, 72; -1, -2, -19, -4");
@@ -237,3 +236,7 @@ TYPED_TEST(SliceTest, ranged_backward_3D_value_test)
   // test correct values
   EXPECT_TRUE(backpropagated_signals[0].AllClose(gt));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

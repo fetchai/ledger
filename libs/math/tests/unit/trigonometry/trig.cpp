@@ -16,36 +16,43 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "math/trigonometry.hpp"
+#include "test_types.hpp"
 
-#include "gtest/gtest.h"
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class TrigTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<float, double, fetch::fixed_point::FixedPoint<32, 32>>;
-TYPED_TEST_CASE(TrigTest, MyTypes);
+TYPED_TEST_CASE(TrigTest, HighPrecisionFloatingTypes);
 
 TYPED_TEST(TrigTest, sin)
 {
   auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::Sin(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.29552022));
+  EXPECT_NEAR(double(ret), double(0.29552022),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(1.2);
   ret = fetch::math::Sin(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.93203908));
+  EXPECT_NEAR(double(ret), double(0.93203908),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(0.7);
   ret = fetch::math::Sin(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.64421767));
+  EXPECT_NEAR(double(ret), double(0.64421767),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(22);
   ret = fetch::math::Sin(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-0.0088513093));
+  EXPECT_NEAR(double(ret), double(-0.0088513093),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, sin_22)
@@ -71,26 +78,31 @@ TYPED_TEST(TrigTest, sin_22)
   numpy_output.Set(one, zero, TypeParam(0.64421767));
   numpy_output.Set(one, one, TypeParam(-0.0088513093));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, function_tolerance<TypeParam>(),
+                              function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, cos)
 {
   auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::Cos(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.95533651));
+  EXPECT_NEAR(double(ret), double(0.95533651),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(1.2);
   ret = fetch::math::Cos(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.36235771));
+  EXPECT_NEAR(double(ret), double(0.36235771),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(0.7);
   ret = fetch::math::Cos(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.76484221));
+  EXPECT_NEAR(double(ret), double(0.76484221),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(22);
   ret = fetch::math::Cos(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-0.99996084));
+  EXPECT_NEAR(double(ret), double(-0.99996084),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, cos_22)
@@ -116,26 +128,31 @@ TYPED_TEST(TrigTest, cos_22)
   numpy_output.Set(one, zero, TypeParam(0.76484221));
   numpy_output.Set(one, one, TypeParam(-0.99996084));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, function_tolerance<TypeParam>(),
+                              function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, tan)
 {
   auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::Tan(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.30933625));
+  EXPECT_NEAR(double(ret), double(0.30933625),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(1.2);
   ret = fetch::math::Tan(val);
-  EXPECT_FLOAT_EQ(float(ret), float(2.5721519));
+  EXPECT_NEAR(double(ret), double(2.5721519),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(0.7);
   ret = fetch::math::Tan(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.84228837));
+  EXPECT_NEAR(double(ret), double(0.84228837),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(22);
   ret = fetch::math::Tan(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.0088516558));
+  EXPECT_NEAR(double(ret), double(0.0088516558),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, tan_22)
@@ -161,26 +178,31 @@ TYPED_TEST(TrigTest, tan_22)
   numpy_output.Set(one, zero, TypeParam(0.84228837));
   numpy_output.Set(one, one, TypeParam(0.0088516558));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, function_tolerance<TypeParam>(),
+                              function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, asin)
 {
   auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::ASin(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.30469266));
+  EXPECT_NEAR(double(ret), double(0.30469266),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.1);
   ret = fetch::math::ASin(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-0.10016742));
+  EXPECT_NEAR(double(ret), double(-0.10016742),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(0.7);
   ret = fetch::math::ASin(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.77539748));
+  EXPECT_NEAR(double(ret), double(0.77539748),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.9);
   ret = fetch::math::ASin(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-1.1197695));
+  EXPECT_NEAR(double(ret), double(-1.1197695),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, asin_22)
@@ -206,26 +228,31 @@ TYPED_TEST(TrigTest, asin_22)
   numpy_output.Set(one, zero, TypeParam(0.77539748));
   numpy_output.Set(one, one, TypeParam(-1.1197695));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, function_tolerance<TypeParam>(),
+                              function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, acos)
 {
   auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::ACos(val);
-  EXPECT_FLOAT_EQ(float(ret), float(1.2661037));
+  EXPECT_NEAR(double(ret), double(1.2661037),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.1);
   ret = fetch::math::ACos(val);
-  EXPECT_FLOAT_EQ(float(ret), float(1.6709638));
+  EXPECT_NEAR(double(ret), double(1.6709638),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(0.7);
   ret = fetch::math::ACos(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.79539883));
+  EXPECT_NEAR(double(ret), double(0.79539883),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.9);
   ret = fetch::math::ACos(val);
-  EXPECT_FLOAT_EQ(float(ret), float(2.6905658));
+  EXPECT_NEAR(double(ret), double(2.6905658),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, acos_22)
@@ -251,26 +278,31 @@ TYPED_TEST(TrigTest, acos_22)
   numpy_output.Set(one, zero, TypeParam(0.79539883));
   numpy_output.Set(one, one, TypeParam(2.6905658));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, function_tolerance<TypeParam>(),
+                              function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, atan)
 {
   auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::ATan(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.29145679));
+  EXPECT_NEAR(double(ret), double(0.29145679),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.1);
   ret = fetch::math::ATan(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-0.099668652));
+  EXPECT_NEAR(double(ret), double(-0.099668652),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(0.7);
   ret = fetch::math::ATan(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.61072594));
+  EXPECT_NEAR(double(ret), double(0.61072594),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.9);
   ret = fetch::math::ATan(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-0.73281509));
+  EXPECT_NEAR(double(ret), double(-0.73281509),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, atan_22)
@@ -296,26 +328,31 @@ TYPED_TEST(TrigTest, atan_22)
   numpy_output.Set(one, zero, TypeParam(0.61072594));
   numpy_output.Set(one, one, TypeParam(-0.73281509));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, function_tolerance<TypeParam>(),
+                              function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, sinh)
 {
   auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::SinH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.30452031));
+  EXPECT_NEAR(double(ret), double(0.30452031),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.1);
   ret = fetch::math::SinH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-0.10016675));
+  EXPECT_NEAR(double(ret), double(-0.10016675),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(0.7);
   ret = fetch::math::SinH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.75858366));
+  EXPECT_NEAR(double(ret), double(0.75858366),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.9);
   ret = fetch::math::SinH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-1.0265167));
+  EXPECT_NEAR(double(ret), double(-1.0265167),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, sinh_22)
@@ -341,26 +378,31 @@ TYPED_TEST(TrigTest, sinh_22)
   numpy_output.Set(one, zero, TypeParam(0.75858366));
   numpy_output.Set(one, one, TypeParam(-1.0265167));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, function_tolerance<TypeParam>(),
+                              function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, cosh)
 {
   auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::CosH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(1.0453385));
+  EXPECT_NEAR(double(ret), double(1.0453385),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.1);
   ret = fetch::math::CosH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(1.0050042));
+  EXPECT_NEAR(double(ret), double(1.0050042),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(0.7);
   ret = fetch::math::CosH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(1.255169));
+  EXPECT_NEAR(double(ret), double(1.255169),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.9);
   ret = fetch::math::CosH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(1.4330864));
+  EXPECT_NEAR(double(ret), double(1.4330864),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, cosh_22)
@@ -386,26 +428,31 @@ TYPED_TEST(TrigTest, cosh_22)
   numpy_output.Set(one, zero, TypeParam(1.255169));
   numpy_output.Set(one, one, TypeParam(1.4330864));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, function_tolerance<TypeParam>(),
+                              function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, tanh)
 {
   auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::TanH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.29131263));
+  EXPECT_NEAR(double(ret), double(0.29131263),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.1);
   ret = fetch::math::TanH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-0.099667996));
+  EXPECT_NEAR(double(ret), double(-0.099667996),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(0.7);
   ret = fetch::math::TanH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.60436779));
+  EXPECT_NEAR(double(ret), double(0.60436779),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.9);
   ret = fetch::math::TanH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-0.71629786));
+  EXPECT_NEAR(double(ret), double(-0.71629786),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, tanh_22)
@@ -431,26 +478,31 @@ TYPED_TEST(TrigTest, tanh_22)
   numpy_output.Set(one, zero, TypeParam(0.60436779));
   numpy_output.Set(one, one, TypeParam(-0.71629786));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, function_tolerance<TypeParam>(),
+                              function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, asinh)
 {
   auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::ASinH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.29567307));
+  EXPECT_NEAR(double(ret), double(0.29567307),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.1);
   ret = fetch::math::ASinH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-0.099834077));
+  EXPECT_NEAR(double(ret), double(-0.099834077),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(0.7);
   ret = fetch::math::ASinH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.65266657));
+  EXPECT_NEAR(double(ret), double(0.65266657),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.9);
   ret = fetch::math::ASinH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-0.80886692));
+  EXPECT_NEAR(double(ret), double(-0.80886692),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, asinh_22)
@@ -476,26 +528,31 @@ TYPED_TEST(TrigTest, asinh_22)
   numpy_output.Set(one, zero, TypeParam(0.65266657));
   numpy_output.Set(one, one, TypeParam(-0.80886692));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, function_tolerance<TypeParam>(),
+                              function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, acosh)
 {
   auto      val = TypeParam(1.1);
   TypeParam ret = fetch::math::ACosH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.44356832));
+  EXPECT_NEAR(double(ret), double(0.44356832),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(7.1);
   ret = fetch::math::ACosH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(2.6482453));
+  EXPECT_NEAR(double(ret), double(2.6482453),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(23);
   ret = fetch::math::ACosH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(3.8281684));
+  EXPECT_NEAR(double(ret), double(3.8281684),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(197);
   ret = fetch::math::ACosH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(5.9763446));
+  EXPECT_NEAR(double(ret), double(5.9763446),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, acosh_22)
@@ -521,26 +578,31 @@ TYPED_TEST(TrigTest, acosh_22)
   numpy_output.Set(one, zero, TypeParam(3.8281684));
   numpy_output.Set(one, one, TypeParam(5.9763446));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, function_tolerance<TypeParam>(),
+                              function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, atanh)
 {
   auto      val = TypeParam(0.3);
   TypeParam ret = fetch::math::ATanH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.30951962));
+  EXPECT_NEAR(double(ret), double(0.30951962),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.1);
   ret = fetch::math::ATanH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-0.10033535));
+  EXPECT_NEAR(double(ret), double(-0.10033535),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(0.7);
   ret = fetch::math::ATanH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(0.86730051));
+  EXPECT_NEAR(double(ret), double(0.86730051),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 
   val = TypeParam(-0.9);
   ret = fetch::math::ATanH(val);
-  EXPECT_FLOAT_EQ(float(ret), float(-1.4722193));
+  EXPECT_NEAR(double(ret), double(-1.4722193),
+              4 * static_cast<double>(function_tolerance<TypeParam>()));
 }
 
 TYPED_TEST(TrigTest, atanh_22)
@@ -566,5 +628,10 @@ TYPED_TEST(TrigTest, atanh_22)
   numpy_output.Set(one, zero, TypeParam(0.86730051));
   numpy_output.Set(one, one, TypeParam(-1.4722193));
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, TypeParam(4) * function_tolerance<TypeParam>(),
+                              TypeParam(4) * function_tolerance<TypeParam>()));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

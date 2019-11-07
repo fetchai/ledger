@@ -81,6 +81,8 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
         "beacon_dkg_time_allocated", "Time allocated for the DKG to complete")}
   , beacon_dkg_aeon_setting_up_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_aeon_setting_up", "The aeon currently under setup.")}
+  , beacon_dkg_miners_in_qual_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_miners_in_qual", "Number of miners that have made it into qual")}
   , beacon_dkg_failures_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_failures_total", "The total number of DKG failures")}
   , beacon_dkg_aborts_total_{telemetry::Registry::Instance().CreateCounter(
@@ -404,9 +406,10 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 
   if (!condition_to_proceed_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to be ready before starting DKG. We have: ",
-                   can_see.size(), " expect: ", require_connections,
-                   " Other ready peers: ", ready_connections_.size());
+    FETCH_LOG_DEBUG(
+        LOGGING_NAME,
+        "Waiting for all peers to be ready before starting DKG. We have: ", can_see.size(),
+        " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());
   }
 
   state_machine_->Delay(std::chrono::milliseconds(100));
@@ -757,6 +760,7 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
   FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::BEACON_READY));
   beacon_dkg_successes_total_->add(1);
+  beacon_dkg_miners_in_qual_->set(beacon_->manager.qual().size());
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                  " ******* New beacon generated! ******* Qual: ", beacon_->manager.qual().size(),
@@ -1047,6 +1051,13 @@ void BeaconSetupService::OnNewShares(const MuddleAddress &                      
                                      std::pair<MessageShare, MessageShare> const &shares)
 {
   FETCH_LOCK(mutex_);
+
+  // This can occur if someone were to send you shares before you load the beacon
+  if (!beacon_)
+  {
+    return;
+  }
+
   // Check if sender is in cabinet
   bool in_cabinet{false};
   for (auto &member : beacon_->aeon.members)
@@ -1281,6 +1292,11 @@ void BeaconSetupService::CheckQualComplaints()
 bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
                                        std::shared_ptr<DKGMessage> const &msg_ptr)
 {
+  if (!beacon_)
+  {
+    return false;
+  }
+
   // Check if sender is in cabinet
   bool in_cabinet{false};
   for (auto &member : beacon_->aeon.members)
@@ -1412,21 +1428,23 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     // Easy case where the start point is ahead in time
     // If not ahead in time, the DKG must have failed before. Algorithmically decide how long
     // to increase the allotted DKG time (scheme 2x)
-    uint64_t next_start_point = beacon_->aeon.start_reference_timepoint;
-    uint64_t dkg_time         = expected_dkg_time_s;
-    uint16_t failures         = 0;
+    uint64_t next_start_point       = beacon_->aeon.start_reference_timepoint;
+    uint64_t dkg_time               = expected_dkg_time_s;
+    uint16_t failures               = 0;
+    double   adjusted_time_per_slot = time_per_slot;
 
     while (next_start_point < current_time)
     {
       failures++;
       next_start_point += dkg_time;
-      time_per_slot += 0.5 * time_per_slot;
+      adjusted_time_per_slot += 0.5 * adjusted_time_per_slot;
       dkg_time =
           dkg_time + static_cast<uint64_t>(time_per_slot * static_cast<double>(time_slots_in_dkg_));
     }
 
     expected_dkg_timespan_ = dkg_time;
     reference_timepoint_   = next_start_point;
+    time_per_slot_         = adjusted_time_per_slot;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " DKG round: ", beacon_->aeon.round_start, " failures so far: ", failures,
@@ -1448,8 +1466,12 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   SetTimeBySlots(state, time_slots_total, time_slot_for_state);
 
-  seconds_for_state_ = uint64_t(double(time_slot_for_state) * time_per_slot);
-  state_deadline_    = reference_timepoint_ + uint64_t(double(time_slots_total) * time_per_slot);
+  FETCH_LOG_DEBUG(
+      LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), "Time per slot: ", time_per_slot_,
+      ", time slots for state: ", time_slot_for_state, ", time slots total: ", time_slots_total);
+
+  seconds_for_state_ = uint64_t(double(time_slot_for_state) * time_per_slot_);
+  state_deadline_    = reference_timepoint_ + uint64_t(double(time_slots_total) * time_per_slot_);
 
   if (state_deadline_ < current_time)
   {

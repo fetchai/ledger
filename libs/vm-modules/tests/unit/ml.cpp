@@ -107,18 +107,6 @@ TEST_F(MLTests, trivial_commodity_dataloader_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, trivial_mnist_dataloader_test)
-{
-  static char const *dataloader_serialise_src = R"(
-    function main()
-      var dataloader = DataLoader("mnist");
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
-  ASSERT_TRUE(toolkit.Run());
-}
-
 TEST_F(MLTests, dataloader_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
@@ -127,13 +115,15 @@ TEST_F(MLTests, dataloader_serialisation_test)
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 10u64;
-      var data_tensor = Tensor(tensor_shape);
+      var data_tensor_1 = Tensor(tensor_shape);
+      var data_tensor_2 = Tensor(tensor_shape);
       var label_tensor = Tensor(tensor_shape);
-      data_tensor.fill(7.0fp64);
+      data_tensor_1.fill(7.0fp64);
+      data_tensor_2.fill(7.0fp64);
       label_tensor.fill(7.0fp64);
 
       var dataloader = DataLoader("tensor");
-      dataloader.addData(data_tensor, label_tensor);
+      dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
 
       var state = State<DataLoader>("dataloader");
       state.set(dataloader);
@@ -338,23 +328,26 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 10u64;
-      var data_tensor = Tensor(tensor_shape);
+      var data_tensor_1 = Tensor(tensor_shape);
+      var data_tensor_2 = Tensor(tensor_shape);
       var label_tensor = Tensor(tensor_shape);
-      data_tensor.fill(7.0fp64);
+      data_tensor_1.fill(7.0fp64);
+      data_tensor_2.fill(7.0fp64);
       label_tensor.fill(7.0fp64);
 
       var graph = Graph();
-      graph.addPlaceholder("Input");
+      graph.addPlaceholder("Input_1");
+      graph.addPlaceholder("Input_2");
       graph.addPlaceholder("Label");
-      graph.addFullyConnected("FC1", "Input", 2, 2);
+      graph.addFullyConnected("FC1", "Input_2", 2, 2);
       graph.addRelu("Output", "FC1");
       graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
       var dataloader = DataLoader("tensor");
-      dataloader.addData(data_tensor, label_tensor);
+      dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
 
       var batch_size = 8u64;
-      var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
+      var optimiser = Optimiser("sgd", graph, dataloader, {"Input_1","Input_2"}, "Label", "Error");
 
       var state = State<Optimiser>("optimiser");
       state.set(optimiser);
@@ -398,30 +391,34 @@ TEST_F(MLTests, serialisation_several_components_test)
   static char const *several_serialise_src = R"(
       function main()
 
-        var tensor_shape = Array<UInt64>(2);
-        tensor_shape[0] = 2u64;
-        tensor_shape[1] = 10u64;
-        var data_tensor = Tensor(tensor_shape);
-        var label_tensor = Tensor(tensor_shape);
-        data_tensor.fill(7.0fp64);
-        label_tensor.fill(7.0fp64);
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor_1 = Tensor(tensor_shape);
+      var data_tensor_2 = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor_1.fill(7.0fp64);
+      data_tensor_2.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
 
         var graph = Graph();
-        graph.addPlaceholder("Input");
+        graph.addPlaceholder("Input_1");
+        graph.addPlaceholder("Input_2");
         graph.addPlaceholder("Label");
-        graph.addFullyConnected("FC1", "Input", 2, 2);
+        graph.addFullyConnected("FC1", "Input_2", 2, 2);
         graph.addRelu("Output", "FC1");
         graph.addMeanSquareErrorLoss("Error", "Output", "Label");
         var graph_state = State<Graph>("graph");
         graph_state.set(graph);
 
         var dataloader = DataLoader("tensor");
-        dataloader.addData(data_tensor, label_tensor);
+
+        dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
         var dataloader_state = State<DataLoader>("dataloader");
         dataloader_state.set(dataloader);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input_1","Input_2"}, "Label", "Error");
         var optimiser_state = State<Optimiser>("optimiser");
         optimiser_state.set(optimiser);
 
@@ -694,23 +691,26 @@ TEST_F(MLTests, optimiser_set_graph_test)
         var tensor_shape = Array<UInt64>(2);
         tensor_shape[0] = 2u64;
         tensor_shape[1] = 10u64;
-        var data_tensor = Tensor(tensor_shape);
+        var data_tensor_1 = Tensor(tensor_shape);
+        var data_tensor_2 = Tensor(tensor_shape);
         var label_tensor = Tensor(tensor_shape);
-        data_tensor.fill(7.0fp64);
+        data_tensor_1.fill(7.0fp64);
+        data_tensor_2.fill(7.0fp64);
         label_tensor.fill(7.0fp64);
 
         var graph = Graph();
-        graph.addPlaceholder("Input");
+        graph.addPlaceholder("Input_1");
+        graph.addPlaceholder("Input_2");
         graph.addPlaceholder("Label");
-        graph.addFullyConnected("FC1", "Input", 2, 2);
+        graph.addFullyConnected("FC1", "Input_2", 2, 2);
         graph.addRelu("Output", "FC1");
         graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
         var dataloader = DataLoader("tensor");
-        dataloader.addData(data_tensor, label_tensor);
+        dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input_1","Input_2"}, "Label", "Error");
 
         optimiser.setGraph(graph);
         optimiser.setDataloader(dataloader);

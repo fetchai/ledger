@@ -72,6 +72,7 @@ public:
         thread->join();
       }
     }
+    threads.empty();
   }
 
 protected:

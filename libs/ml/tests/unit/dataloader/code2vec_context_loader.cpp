@@ -16,17 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
-
 #include <string>
 
-using namespace fetch::ml;
-using namespace fetch::ml::dataloaders;
+namespace fetch {
+namespace ml {
+namespace test {
 
 TEST(C2vLoaderTest, loader_test)
 {
@@ -57,7 +56,7 @@ TEST(C2vLoaderTest, loader_test)
 
   SizeType max_contexts = 10;
 
-  C2VLoader<LabelType, ContextType> loader(max_contexts);
+  dataloaders::C2VLoader<LabelType, ContextType> loader(max_contexts);
 
   loader.AddDataAsString(training_data);
 
@@ -74,7 +73,8 @@ TEST(C2vLoaderTest, loader_test)
   EXPECT_EQ(loader.umap_idx_to_functionname()[6], "");
   EXPECT_EQ(loader.umap_idx_to_functionname()[7], "");
 
-  C2VLoader<LabelType, ContextType>::ContextTensorsLabelPair training_pair = loader.GetNext();
+  dataloaders::C2VLoader<LabelType, ContextType>::ContextTensorsLabelPair training_pair =
+      loader.GetNext();
 
   EXPECT_EQ(training_pair.second.at(0).size(), max_contexts);
   EXPECT_EQ(training_pair.second.at(1).size(), max_contexts);
@@ -113,3 +113,7 @@ TEST(C2vLoaderTest, loader_test)
   EXPECT_EQ(training_pair.second.at(2).At(8, 0), 0);
   EXPECT_EQ(training_pair.second.at(2).At(9, 0), 0);
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

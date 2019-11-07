@@ -78,7 +78,8 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       BitVector shard_mask{num_lanes};
       shard_mask.SetAllOne();
 
-      Identifier contract_id(solution->contract_digest() + "." + solution->address().display());
+      Identifier contract_id(solution->contract_digest().ToHex() + "." +
+                             solution->address().display());
 
       StateSentinelAdapter storage_adapter{storage_, contract_id, shard_mask};
 
