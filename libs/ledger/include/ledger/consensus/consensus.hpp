@@ -90,7 +90,7 @@ private:
   // Global variables relating to consensus
   uint64_t aeon_period_      = 0;
   uint64_t max_cabinet_size_ = 0;
-  double   threshold_        = 1.0;
+  double   threshold_        = 0.51;
 
   // Consensus' view on the heaviest block etc.
   Block  current_block_;
