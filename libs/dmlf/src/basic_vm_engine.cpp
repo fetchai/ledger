@@ -241,9 +241,78 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack &result, Params 
     if (type_id <= vm::TypeIds::PrimitiveMaxId)
     {
       VmVariant param;
-
-      serializer >> param.primitive.i64;
       param.type_id = type_id;
+
+      switch (type_id)
+      {
+      case fetch::vm::TypeIds::Bool:
+      {
+        serializer >> param.primitive.i8;
+        break;
+      }
+      case fetch::vm::TypeIds::Int8:
+      {
+        serializer >> param.primitive.i8;
+        break;
+      }
+      case fetch::vm::TypeIds::UInt8:
+      {
+        serializer >> param.primitive.ui8;
+        break;
+      }
+      case fetch::vm::TypeIds::Int16:
+      {
+        serializer >> param.primitive.i16;
+        break;
+      }
+      case fetch::vm::TypeIds::UInt16:
+      {
+        serializer >> param.primitive.ui16;
+        break;
+      }
+      case fetch::vm::TypeIds::Int32:
+      {
+        serializer >> param.primitive.i32;
+        break;
+      }
+      case fetch::vm::TypeIds::UInt32:
+      {
+        serializer >> param.primitive.ui32;
+        break;
+      }
+      case fetch::vm::TypeIds::Int64:
+      {
+        serializer >> param.primitive.i64;
+        break;
+      }
+      case fetch::vm::TypeIds::Float32:
+      {
+        serializer >> param.primitive.f32;
+        break;
+      }
+      case fetch::vm::TypeIds::Float64:
+      {
+        serializer >> param.primitive.f64;
+        break;
+      }
+      case fetch::vm::TypeIds::Fixed32:
+      {
+        serializer >> param.primitive.i32;
+        break;
+      }
+      case fetch::vm::TypeIds::Fixed64:
+      {
+        serializer >> param.primitive.i64;
+        break;
+      }
+      case vm::TypeIds::Void:
+      case vm::TypeIds::Unknown:
+      {
+        break;
+      }
+      default:
+        break;
+      }
 
       result.AddSingle(param);
     }
@@ -298,14 +367,38 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
       break;
     }
     case fetch::vm::TypeIds::Int8:
+    {
+      output = vmVariant.Get<int8_t>();
+      break;
+    }
     case fetch::vm::TypeIds::UInt8:
+    {
+      output = vmVariant.Get<uint8_t>();
+      break;
+    }
     case fetch::vm::TypeIds::Int16:
+    {
+      output = vmVariant.Get<int16_t>();
+      break;
+    }
     case fetch::vm::TypeIds::UInt16:
+    {
+      output = vmVariant.Get<uint16_t>();
+      break;
+    }
     case fetch::vm::TypeIds::Int32:
+    {
+      output = vmVariant.Get<int32_t>();
+      break;
+    }
     case fetch::vm::TypeIds::UInt32:
+    {
+      output = vmVariant.Get<uint32_t>();
+      break;
+    }
     case fetch::vm::TypeIds::Int64:
     {
-      output = vmVariant.Get<int>();
+      output = vmVariant.Get<int64_t>();
       break;
     }
     case fetch::vm::TypeIds::Float32:
