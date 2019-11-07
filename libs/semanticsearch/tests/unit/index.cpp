@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,21 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-#include <set>
-#include <vector>
+#include "gtest/gtest.h"
+#include "semanticsearch/index/in_memory_db_index.hpp"
+using namespace fetch::semanticsearch;
 
-namespace fetch {
-namespace semanticsearch {
+TEST(SemanticSearchIndex, BasicOperations)
+{
 
-using DBIndexType            = uint64_t;  ///< Database index type. Essentially pointer to record.
-using SemanticCoordinateType = uint64_t;  ///< Base coordinate type semantic position.
-                                          ///  Always internal 0 -> 1
-
-using SemanticPosition = std::vector<SemanticCoordinateType>;  ///< Position in semantic space.
-
-using DBIndexSet    = std::set<DBIndexType>;  ///< Set of indices used to return search results.
-using DBIndexSetPtr = std::shared_ptr<DBIndexSet>;
-
-}  // namespace semanticsearch
-}  // namespace fetch
+  //  InMemoryDBIndex   database_index;
+  //  SubscriptionGroup subscription{};
+}

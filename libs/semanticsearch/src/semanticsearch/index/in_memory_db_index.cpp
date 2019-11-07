@@ -28,13 +28,13 @@ void InMemoryDBIndex::AddRelation(SemanticSubscription const &obj)
   for (SemanticCoordinateType s = hc_width_param_start_; s < hc_width_param_end_; ++s)
   {
     SubscriptionGroup idx{s, obj.position};
-    auto              it = compartments_.find(idx);
+    auto              it = group_content_.find(idx);
 
-    if (it == compartments_.end())
+    if (it == group_content_.end())
     {
-      DBIndexListPtr c = std::make_shared<DBIndexList>();
+      DBIndexSetPtr c = std::make_shared<DBIndexSet>();
       c->insert(obj.index);
-      compartments_.insert({idx, c});
+      group_content_.insert({idx, c});
     }
     else
     {
@@ -43,12 +43,12 @@ void InMemoryDBIndex::AddRelation(SemanticSubscription const &obj)
   }
 }
 
-DBIndexListPtr InMemoryDBIndex::Find(SemanticCoordinateType g, SemanticPosition position) const
+DBIndexSetPtr InMemoryDBIndex::Find(SemanticCoordinateType g, SemanticPosition position) const
 {
   SubscriptionGroup idx{g, position};
 
-  auto it = compartments_.find(idx);
-  if (it == compartments_.end())
+  auto it = group_content_.find(idx);
+  if (it == group_content_.end())
   {
     return nullptr;
   }

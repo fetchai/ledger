@@ -27,16 +27,84 @@
 namespace fetch {
 namespace semanticsearch {
 
+/* Semantic search implements a reduction system that maps a datapoint
+ * into a reduced dataspace. One such example is Word2Vec. The database index
+ * maps these points in N dimensions to relevant data. The database index
+ * implements search in an N-dimenensional hypercube. The search algorithm
+ * uses hierachically related subscription groups as the data structure used
+ * to perform the search. This makes search efficient if the radius for which
+ * you are searching is known.
+ *
+ * The easiest way to understand the implementation is through a two-dimensional
+ * example: If the 2D plane is bounded we can subdivide it into minor bounded planes
+ * recursively. We have designed the system such that any axis for top-level plane is
+ * always defined on the interval [0, 1] using unsigned integers to represent a
+ * position along the axis. We refer to a plane or a subdivided plane as a
+ * subscription group as these will hold information about the subscriptions
+ * associated with this world segment.
+ *
+ * Given a position P, we can identify a number of subscription groups to which P
+ * belong:
+ *
+ *                 ───────────────────────────────────────────────────────────
+ *                 ╱                                                         ╱
+ *                ╱                                                         ╱
+ *               ╱                                                         ╱
+ *              ╱                                                         ╱
+ *             ╱                                                         ╱
+ *            ╱                                                         ╱
+ *           ╱                                                         ╱
+ *          ╱─ ─ ─ ─ ─ ─ ─ ─ ─ ─● P                                   ╱
+ *         ╱                   ╱                                     ╱
+ *        ╱                                                         ╱
+ *       ╱                   ╱                                     ╱
+ *      ╱                                                         ╱
+ *     ───────────────────────────────────────────────────────────   depth = 0
+ *
+ *             ───────────────────────────────────────────────────────────
+ *             ╱                            ╱                            ╱
+ *            ╱                            ╱                            ╱
+ *           ╱                            ╱                            ╱
+ *          ╱                            ╱                            ╱
+ *         ╱                            ╱                            ╱
+ *        ╱────────────────────────────╳────────────────────────────╱
+ *       ╱                            ╱                            ╱
+ *      ╱─ ─ ─ ─ ─ ─ ─ ─ ─ ─● P      ╱                            ╱
+ *     ╱                   ╱        ╱                            ╱
+ *    ╱                            ╱                            ╱
+ *   ╱                   ╱        ╱                            ╱
+ *  ╱                            ╱                            ╱
+ * ───────────────────────────────────────────────────────────   depth = 1
+ *
+ *
+ *             ───────────────────────────────────────────────────────────
+ *             ╱             ╱              ╱             ╱              ╱
+ *            ╱             ╱              ╱             ╱              ╱
+ *           ╱─────────────╳──────────────╳─────────────╳──────────────╱
+ *          ╱             ╱              ╱             ╱              ╱
+ *         ╱             ╱              ╱             ╱              ╱
+ *        ╱─────────────╳──────────────╳─────────────╳──────────────╱
+ *       ╱             ╱              ╱             ╱              ╱
+ *      ╱─ ─ ─ ─ ─ ─ ─╱─ ─ ─● P      ╱             ╱              ╱
+ *     ╱─────────────╳─────╳────────╳─────────────╳──────────────╱
+ *    ╱             ╱              ╱             ╱              ╱
+ *   ╱             ╱     ╱        ╱             ╱              ╱
+ *  ╱             ╱              ╱             ╱              ╱
+ * ───────────────────────────────────────────────────────────   depth = 2
+ *
+ * The index keeps track of these subscription groups
+ */
+
 class InMemoryDBIndex : public DatabaseIndexInterface
 {
 public:
-  void           AddRelation(SemanticSubscription const &obj) override;
-  DBIndexListPtr Find(SemanticCoordinateType g, SemanticPosition position) const override;
+  void          AddRelation(SemanticSubscription const &obj) override;
+  DBIndexSetPtr Find(SemanticCoordinateType g, SemanticPosition position) const override;
 
 private:
-  std::map<SubscriptionGroup, DBIndexListPtr> compartments_;
-  SemanticCoordinateType                      hc_width_param_start_ = 0;
-  SemanticCoordinateType                      hc_width_param_end_   = 20;
+  std::map<SubscriptionGroup, DBIndexSetPtr> group_content_;
+  SemanticCoordinateType                     hc_width_param_start_ = 0;
+  SemanticCoordinateType                     hc_width_param_end_   = 20;
 };
 
 }  // namespace semanticsearch

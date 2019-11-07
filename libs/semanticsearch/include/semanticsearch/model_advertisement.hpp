@@ -48,9 +48,9 @@ public:
     index_.AddRelation(rel);
   }
 
-  AgentIdSet FindAgents(SemanticPosition position, SemanticCoordinateType granularity)
+  AgentIdSet FindAgents(SemanticPosition position, SemanticCoordinateType depth)
   {
-    return index_.Find(granularity, std::move(position));
+    return index_.Find(depth, std::move(position));
   }
 
   VocabularySchema model() const

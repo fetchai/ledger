@@ -49,19 +49,20 @@ void AdvertisementRegister::AdvertiseAgent(AgentId aid, std::string const &name,
 }
 
 AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(
-    std::string const &name, SemanticPosition const &position, SemanticCoordinateType granularity)
+    std::string const &name, SemanticPosition const &position, SemanticCoordinateType depth)
 {
   auto ad_model = GetAdvertisementModel(name);
-  return ad_model->FindAgents(position, granularity);
+  return ad_model->FindAgents(position, depth);
 }
 
-AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(
-    std::string const &name, Vocabulary const &object, SemanticCoordinateType granularity)
+AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(std::string const &    name,
+                                                                    Vocabulary const &     object,
+                                                                    SemanticCoordinateType depth)
 {
   auto ad_model = GetAdvertisementModel(name);
   auto position = ad_model->model()->Reduce(object);
 
-  return ad_model->FindAgents(position, granularity);
+  return ad_model->FindAgents(position, depth);
 }
 
 void AdvertisementRegister::OnAddModel(std::string const &name, VocabularySchema const &object)
