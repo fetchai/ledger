@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/combinatorics.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/combinatorics.hpp"
+#include "test_types.hpp"
 
 #include <cstdint>
 
-using namespace fetch::math::combinatorics;
-
+namespace fetch {
+namespace math {
+namespace test {
 using DataType   = double;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = uint64_t;
@@ -34,16 +34,13 @@ class CombinatoricsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<int64_t>,
-                                 fetch::math::Tensor<uint32_t>, fetch::math::Tensor<uint64_t>,
-                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
-TYPED_TEST_CASE(CombinatoricsTest, MyTypes);
+TYPED_TEST_CASE(CombinatoricsTest, TensorFloatingTypes);
 
 // Factorial function - test edge case (0!)
 TYPED_TEST(CombinatoricsTest, test_factorial_zero)
 {
   SizeType input  = 0;
-  SizeType output = factorial(input);
+  SizeType output = combinatorics::Factorial(input);
   ASSERT_EQ(output, 1);
 }
 
@@ -51,7 +48,7 @@ TYPED_TEST(CombinatoricsTest, test_factorial_zero)
 TYPED_TEST(CombinatoricsTest, test_factorial_standard_input)
 {
   SizeType input        = 12;
-  SizeType output       = factorial(input);
+  SizeType output       = combinatorics::Factorial(input);
   SizeType numpy_output = 479001600;
   ASSERT_EQ(output, numpy_output);
 }
@@ -62,27 +59,28 @@ TYPED_TEST(CombinatoricsTest, test_num_combinations_standard_input)
   SizeType n = 5;
   SizeType r = 2;
 
-  SizeType fetch_output  = calculateNumCombinations(n, r);
+  SizeType fetch_output  = combinatorics::CalculateNumCombinations(n, r);
   SizeType python_output = 10;
 
   ASSERT_EQ(fetch_output, python_output);
 
-  fetch_output = calculateNumCombinations(SizeType(9), SizeType(4));
+  fetch_output = combinatorics::CalculateNumCombinations(SizeType(9), SizeType(4));
 
   ASSERT_EQ(fetch_output, 126);
 
-  n                 = (1 << 24) + 1;
-  auto matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(1)));
+  n = (1 << 24) + 1;
+  auto matrixHeight =
+      static_cast<SizeType>(combinatorics::CalculateNumCombinations(n, SizeType(1)));
   EXPECT_EQ(matrixHeight, n);
 
   if (sizeof(n) > 7u)
   {
     n            = (1llu << 63) - 1;
-    matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(1)));
+    matrixHeight = static_cast<SizeType>(combinatorics::CalculateNumCombinations(n, SizeType(1)));
     EXPECT_EQ(matrixHeight, n);
 
     n            = (1llu << 30) - 1;
-    matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(2)));
+    matrixHeight = static_cast<SizeType>(combinatorics::CalculateNumCombinations(n, SizeType(2)));
     EXPECT_EQ(matrixHeight, n * (n - 1) / 2);
   }
 }
@@ -93,7 +91,7 @@ TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case1)
   SizeType n = 5;
   SizeType r = 5;
 
-  SizeType fetch_output  = calculateNumCombinations(n, r);
+  SizeType fetch_output  = combinatorics::CalculateNumCombinations(n, r);
   SizeType python_output = 1;
 
   ASSERT_EQ(fetch_output, python_output);
@@ -105,7 +103,7 @@ TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case2)
   SizeType n = 1;
   SizeType r = 1;
 
-  SizeType fetch_output  = calculateNumCombinations(n, r);
+  SizeType fetch_output  = combinatorics::CalculateNumCombinations(n, r);
   SizeType python_output = 1;
 
   ASSERT_EQ(fetch_output, python_output);
@@ -117,7 +115,7 @@ TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case3)
   SizeType n = 12;
   SizeType r = 0;
 
-  SizeType fetch_output  = calculateNumCombinations(n, r);
+  SizeType fetch_output  = combinatorics::CalculateNumCombinations(n, r);
   SizeType python_output = 1;
 
   ASSERT_EQ(fetch_output, python_output);
@@ -172,7 +170,7 @@ TYPED_TEST(CombinatoricsTest, test_combinations_standard_input)
   python_output.Set(SizeType{0}, SizeType{9}, 1);
   python_output.Set(SizeType{1}, SizeType{9}, 2);
 
-  fetch_output = combinations<TensorType>(n, r);
+  fetch_output = combinatorics::Combinations<TensorType>(n, r);
 
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
@@ -193,7 +191,7 @@ TYPED_TEST(CombinatoricsTest, test_combinations_edge_case1)
   python_output.Set(SizeType{3}, SizeType{0}, 4);
   python_output.Set(SizeType{4}, SizeType{0}, 5);
 
-  fetch_output = combinations<TensorType>(n, r);
+  fetch_output = combinatorics::Combinations<TensorType>(n, r);
 
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
@@ -210,7 +208,7 @@ TYPED_TEST(CombinatoricsTest, test_combinations_edge_case2)
   // Row 1
   python_output.Set(SizeType{0}, SizeType{0}, 1);
 
-  fetch_output = combinations<TensorType>(n, r);
+  fetch_output = combinatorics::Combinations<TensorType>(n, r);
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
 
@@ -223,6 +221,10 @@ TYPED_TEST(CombinatoricsTest, test_combinations_edge_case3)
   TensorType python_output{};
   TensorType fetch_output{};
 
-  fetch_output = combinations<TensorType>(n, r);
+  fetch_output = combinatorics::Combinations<TensorType>(n, r);
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

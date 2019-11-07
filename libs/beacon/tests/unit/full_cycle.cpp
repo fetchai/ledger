@@ -168,9 +168,9 @@ void RunHonestCabinetRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   {
     auto runnables = member->beacon_service.GetWeakRunnables();
 
-    for (auto const &i : runnables)
+    for (auto const &j : runnables)
     {
-      member->reactor.Attach(i);
+      member->reactor.Attach(j);
     }
   }
 

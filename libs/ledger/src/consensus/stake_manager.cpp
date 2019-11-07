@@ -59,8 +59,16 @@ void StakeManager::UpdateCurrentBlock(BlockIndex block_index)
 
 StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current, uint64_t cabinet_size)
 {
-  return BuildCabinet(current.body.block_number, current.body.block_entropy.EntropyAsU64(),
+  CabinetPtr cabinet{};
+
+  auto snapshot = LookupStakeSnapshot(current.body.block_number);
+  if (snapshot)
+  {
+    cabinet = snapshot->BuildCabinet(current.body.block_number, current.body.block_entropy.EntropyAsU64(),
                       cabinet_size);
+  }
+
+  return cabinet;
 }
 
 StakeManager::CabinetPtr StakeManager::BuildCabinet(uint64_t block_number, uint64_t entropy,

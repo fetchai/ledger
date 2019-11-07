@@ -99,6 +99,9 @@ public:
   std::size_t GetTransactionCount() const;
   void        UpdateDigest();
   void        UpdateTimestamp();
+  bool        IsGenesis() const;
+
+private:
   SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
 };
 }  // namespace ledger

@@ -204,7 +204,7 @@ bool GenesisFileCreator::LoadState(Variant const &object)
   // Commit this state
   auto merkle_commit_hash = storage_unit_.Commit(0);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Committed genesis merkle hash: ", merkle_commit_hash.ToBase64());
+  FETCH_LOG_INFO(LOGGING_NAME, "Committed genesis merkle hash: 0x", merkle_commit_hash.ToHex());
 
   ledger::Block genesis_block;
 
@@ -214,7 +214,7 @@ bool GenesisFileCreator::LoadState(Variant const &object)
   genesis_block.body.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
   genesis_block.UpdateDigest();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: ", genesis_block.body.hash.ToBase64());
+  FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block.body.hash.ToHex());
 
   chain::GENESIS_MERKLE_ROOT = merkle_commit_hash;
   chain::GENESIS_DIGEST      = genesis_block.body.hash;

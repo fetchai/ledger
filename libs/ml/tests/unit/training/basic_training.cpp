@@ -65,7 +65,7 @@ TensorType GenerateXorGt(typename TensorType::SizeType dims)
 template <typename TypeParam, typename CriterionType, typename ActivationType>
 void PlusOneTest()
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   auto alpha       = DataType(0.005);
@@ -168,7 +168,7 @@ void PlusOneTest()
 template <typename TypeParam, typename CriterionType, typename ActivationType>
 void CategoricalPlusOneTest(bool add_softmax = false)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -279,7 +279,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 template <typename TypeParam, typename CriterionType, typename ActivationType>
 void CategoricalXorTest(bool add_softmax = false)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};

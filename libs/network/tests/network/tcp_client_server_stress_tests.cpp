@@ -317,7 +317,7 @@ void TestCase5(std::string host, uint16_t port)
       }
     };
 
-    for (std::size_t i = 0; i < to_send.size(); ++i)
+    for (std::size_t j = 0; j < to_send.size(); ++j)
     {
       auto dummy0 =
           std::async(std::launch::async, cb);  // dummy is important to force async execution
@@ -350,9 +350,9 @@ void TestCase5(std::string host, uint16_t port)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Received: ");
 
-      for (auto const &i : globalMessagesFromServer_)
+      for (auto const &j : globalMessagesFromServer_)
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, i);
+        FETCH_LOG_ERROR(LOGGING_NAME, j);
       }
     }
   }
@@ -416,7 +416,7 @@ void TestCase6(std::string host, uint16_t port)
       }
     };
 
-    for (std::size_t i = 0; i < to_send.size(); ++i)
+    for (std::size_t j = 0; j < to_send.size(); ++j)
     {
       auto dummy0 =
           std::async(std::launch::async, cb);  // dummy is important to force async execution
@@ -448,9 +448,9 @@ void TestCase6(std::string host, uint16_t port)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Received: ");
 
-      for (auto const &i : globalMessagesFromServer_)
+      for (auto const &j : globalMessagesFromServer_)
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, i);
+        FETCH_LOG_ERROR(LOGGING_NAME, j);
       }
     }
   }
@@ -540,7 +540,7 @@ void TestCase7(std::string host, uint16_t port)
       }
     };
 
-    for (std::size_t i = 0; i < to_send_from_client.size(); ++i)
+    for (std::size_t j = 0; j < to_send_from_client.size(); ++j)
     {
       auto dummy0 = std::async(std::launch::async, cb_server);
       auto dummy1 = std::async(std::launch::async, cb_client);
