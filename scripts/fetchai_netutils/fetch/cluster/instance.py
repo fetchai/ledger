@@ -3,6 +3,8 @@ import subprocess
 import fnmatch
 import json
 
+from fetchai.ledger.crypto import Entity
+
 
 class Instance(object):
     def __init__(self, cmd, root):
@@ -63,6 +65,7 @@ class ConstellationInstance(Instance):
         self._standalone = False
         self._lanes = None
         self._slices = None
+        self._entity = Entity()
 
         # fake construct the instances
         super().__init__([], root)
@@ -75,6 +78,10 @@ class ConstellationInstance(Instance):
             for ext in ('*.db', '*.log'):
                 for item in fnmatch.filter(os.listdir(root), ext):
                     os.remove(os.path.join(root, item))
+
+        # Set the miner up with a predefined identity by default
+        with open(os.path.join(root, "p2p.key"), 'wb+') as f:
+            f.write(self._entity.private_key_bytes)
 
     def add_peer(self, peer):
         print(self.p2p_address, '<=>', peer.p2p_address)
