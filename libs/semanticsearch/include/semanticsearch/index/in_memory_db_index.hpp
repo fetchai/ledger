@@ -98,7 +98,7 @@ namespace semanticsearch {
 class InMemoryDBIndex : public DatabaseIndexInterface
 {
 public:
-  InMemoryDBIndex(std::size_t rank);
+  explicit InMemoryDBIndex(std::size_t rank);
   void          AddRelation(SemanticSubscription const &obj) override;
   DBIndexSetPtr Find(SemanticCoordinateType depth, SemanticPosition position) const override;
   std::size_t   rank() const override;
