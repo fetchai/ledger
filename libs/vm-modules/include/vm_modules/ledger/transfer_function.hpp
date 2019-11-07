@@ -32,7 +32,7 @@ void BindTransferFunction(vm::Module &module, Contract const &contract)
       [&contract](vm::VM *, vm::Ptr<vm::Address> const &target, uint64_t amount) -> bool {
         decltype(auto) c = contract.context();
 
-        fetch::ledger::ContractAttachHelper raii(*c.token_contract, c);
+        fetch::ledger::ContractContextAttacher raii(*c.token_contract, c);
         c.state_adapter->PushContext("fetch.token");
 
         auto const success = c.token_contract->SubtractTokens(c.contract_address, amount) &&

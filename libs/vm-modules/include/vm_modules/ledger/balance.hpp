@@ -29,7 +29,7 @@ void BindBalanceFunction(vm::Module &module, Contract const &contract)
   module.CreateFreeFunction("balance", [&contract](vm::VM *) -> uint64_t {
     decltype(auto) c = contract.context();
 
-    fetch::ledger::ContractAttachHelper raii(*c.token_contract, c);
+    fetch::ledger::ContractContextAttacher raii(*c.token_contract, c);
     c.state_adapter->PushContext("fetch.token");
 
     auto const balance = c.token_contract->GetBalance(c.contract_address);

@@ -198,7 +198,7 @@ void Executor::SettleFees(chain::Address const &miner, TokenAmount amount, uint3
 
     ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
                             block_};
-    ContractAttachHelper raii(token_contract_, context);
+    ContractContextAttacher raii(token_contract_, context);
     token_contract_.AddTokens(miner, amount);
   }
 }
@@ -252,7 +252,7 @@ bool Executor::ValidationChecks(Result &result)
   {
     ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
                             block_};
-    ContractAttachHelper raii(token_contract_, context);
+    ContractContextAttacher raii(token_contract_, context);
     balance = token_contract_.GetBalance(current_tx_->from());
   }
 
@@ -319,7 +319,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     {
       ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
                               block_};
-      ContractAttachHelper raii(*contract, context);
+      ContractContextAttacher raii(*contract, context);
       contract_status = contract->DispatchTransaction(*current_tx_);
     }
 
@@ -413,7 +413,7 @@ bool Executor::ProcessTransfers(Result &result)
 
     ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
                             block_};
-    ContractAttachHelper raii(token_contract_, context);
+    ContractContextAttacher raii(token_contract_, context);
 
     // only process transfers if the previous steps have been successful
     if (Status::SUCCESS == result.status)
@@ -447,10 +447,10 @@ void Executor::DeductFees(Result &result)
 
   auto const &from = current_tx_->from();
 
-  ContractContext      context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
+  ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
                           block_};
-  ContractAttachHelper raii(token_contract_, context);
-  uint64_t const       balance = token_contract_.GetBalance(from);
+  ContractContextAttacher raii(token_contract_, context);
+  uint64_t const          balance = token_contract_.GetBalance(from);
 
   // calculate the fee to deduct
   TokenAmount tx_fee = result.charge * current_tx_->charge();

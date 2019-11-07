@@ -197,10 +197,10 @@ ContractContext const &Contract::context() const
   return *context_;
 }
 
-void Contract::Attach(ContractContext const &context)
+void Contract::Attach(ContractContext context)
 {
   detailed_assert(context_ == nullptr);
-  context_ = std::make_unique<ContractContext>(context);
+  context_ = std::make_unique<ContractContext>(std::move(context));
 }
 
 void Contract::Detach()
@@ -226,6 +226,17 @@ Contract::QueryHandlerMap const &Contract::query_handlers() const
 Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
 {
   return transaction_handlers_;
+}
+
+ContractContextAttacher::ContractContextAttacher(Contract &contract, ContractContext context)
+  : contract_{contract}
+{
+  contract_.Attach(std::move(context));
+}
+
+ContractContextAttacher::~ContractContextAttacher()
+{
+  contract_.Detach();
 }
 
 }  // namespace ledger

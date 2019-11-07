@@ -20,6 +20,7 @@
 #include "chain/address.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -44,8 +45,6 @@ class Transaction;
 }  // namespace chain
 
 namespace ledger {
-
-struct ContractContext;
 
 /**
  * Contract - Base class for all smart contract and chain code instances
@@ -148,7 +147,7 @@ protected:
   /// @}
 
 private:
-  void Attach(ContractContext const &context);
+  void Attach(ContractContext context);
   void Detach();
 
   std::unique_ptr<ContractContext> context_{};
@@ -167,7 +166,7 @@ private:
   CounterMap query_counters_{};
   /// @}
 
-  friend class ContractAttachHelper;
+  friend class ContractContextAttacher;
 };
 
 /**
@@ -293,19 +292,11 @@ StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray co
   return state().Write(std::string{key}, data.pointer(), data.size());
 }
 
-class ContractAttachHelper
+class ContractContextAttacher
 {
 public:
-  ContractAttachHelper(Contract &contract, ContractContext const &context)
-    : contract_{contract}
-  {
-    contract_.Attach(context);
-  }
-
-  ~ContractAttachHelper()
-  {
-    contract_.Detach();
-  }
+  ContractContextAttacher(Contract &contract, ContractContext context);
+  ~ContractContextAttacher();
 
 private:
   Contract &contract_;
