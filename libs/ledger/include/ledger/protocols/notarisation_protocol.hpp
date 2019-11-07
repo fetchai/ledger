@@ -17,31 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/mcl_dkg.hpp"
+#include "network/service/protocol.hpp"
 
 namespace fetch {
-namespace beacon {
+namespace ledger {
+class NotarisationService;
 
-struct DkgOutput
+class NotarisationServiceProtocol : public service::Protocol
 {
-  using PublicKey         = crypto::mcl::PublicKey;
-  using PrivateKey        = crypto::mcl::PrivateKey;
-  using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using CabinetList       = std::set<MuddleAddress>;
+public:
+  enum
+  {
+    GET_NOTARISATIONS = 1
+  };
 
-  DkgOutput() = default;
+  // Construction / Destruction
+  explicit NotarisationServiceProtocol(NotarisationService &service);
 
-  DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares, PrivateKey secret_share,
-            CabinetList qual_members);
+  NotarisationServiceProtocol(NotarisationServiceProtocol const &) = delete;
+  NotarisationServiceProtocol(NotarisationServiceProtocol &&)      = delete;
+  ~NotarisationServiceProtocol() override                          = default;
 
-  DkgOutput(DkgKeyInformation const &keys, CabinetList qual_members);
+  // Operators
+  NotarisationServiceProtocol &operator=(NotarisationServiceProtocol const &) = delete;
+  NotarisationServiceProtocol &operator=(NotarisationServiceProtocol &&) = delete;
 
-  CabinetList            qual{};
-  PublicKey              group_public_key;
-  std::vector<PublicKey> public_key_shares{};
-  PrivateKey             private_key_share;
+private:
+  NotarisationService &service_;
 };
-
-}  // namespace beacon
+}  // namespace ledger
 }  // namespace fetch
