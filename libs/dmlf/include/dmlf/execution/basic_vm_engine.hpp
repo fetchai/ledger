@@ -69,6 +69,7 @@ private:
   public:
     ExecutionContext(VM *vm, Executable *executable);
     ~ExecutionContext();
+
   private:
     VM *vm_;
   };

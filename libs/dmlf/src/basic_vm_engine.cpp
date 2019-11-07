@@ -280,10 +280,11 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
                                           std::string const &console, std::string &&id) const
 {
   auto serializationError = [&](std::string &&errorMessage) {
-    return ExecutionResult{LedgerVariant{},
-                           Error{Error::Stage::ENGINE, Error::Code::SERIALIZATION_ERROR,
-                                 "Error(" + id + ") in output after running. " + std::move(errorMessage)},
-                           console};
+    return ExecutionResult{
+        LedgerVariant{},
+        Error{Error::Stage::ENGINE, Error::Code::SERIALIZATION_ERROR,
+              "Error(" + id + ") in output after running. " + std::move(errorMessage)},
+        console};
   };
 
   LedgerVariant output;
@@ -379,17 +380,16 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
     if (output.IsArray())  // Convert inner type from int to fixedpoint if necessary
     {
       auto GetInnermostTypeId = [&vm](LedgerVariant const &ledgerVariant,
-                                      VmVariant const &    vmVariant) 
-      {
-        LedgerVariant const *ledgerCurrent = &(ledgerVariant[0]); // Starts one deeper
+                                      VmVariant const &    vmVariant) {
+        LedgerVariant const *ledgerCurrent = &(ledgerVariant[0]);  // Starts one deeper
         auto                 currentTypeId = vmVariant.type_id;
-        auto                 result        = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
+        auto                 result = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
 
         while (ledgerCurrent->IsArray())
         {
           ledgerCurrent = &(*ledgerCurrent)[0];
           currentTypeId = result;
-          result = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
+          result        = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
         }
 
         return result;
