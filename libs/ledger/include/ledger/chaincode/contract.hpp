@@ -89,9 +89,6 @@ public:
 
   /// @name Contract Lifecycle Handlers
   /// @{
-  void Attach(ContractContext const &context);
-  void Detach();
-
   Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
   Result DispatchTransaction(chain::Transaction const &tx);
@@ -151,6 +148,9 @@ protected:
   /// @}
 
 private:
+  void Attach(ContractContext const &context);
+  void Detach();
+
   std::unique_ptr<ContractContext> context_{};
 
   static constexpr std::size_t DEFAULT_BUFFER_SIZE = 512;
@@ -166,6 +166,8 @@ private:
   CounterMap transaction_counters_{};
   CounterMap query_counters_{};
   /// @}
+
+  friend class ContractAttachHelper;
 };
 
 /**
@@ -290,6 +292,24 @@ StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray co
   // store the buffer
   return state().Write(std::string{key}, data.pointer(), data.size());
 }
+
+class ContractAttachHelper
+{
+public:
+  ContractAttachHelper(Contract &contract, ContractContext const &context)
+    : contract_{contract}
+  {
+    contract_.Attach(context);
+  }
+
+  ~ContractAttachHelper()
+  {
+    contract_.Detach();
+  }
+
+private:
+  Contract &contract_;
+};
 
 }  // namespace ledger
 }  // namespace fetch

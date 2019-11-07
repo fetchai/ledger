@@ -238,12 +238,15 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     // adapt the storage engine so that that get and sets are sandboxed for the contract
     StateAdapter storage_adapter{storage_, contract_id};
 
-    chain::Address address;
-    chain::Address::Parse(contract_id.name(), address);
     // Current block index does not apply to queries - set to 0
-    contract->Attach({&token_contract_, std::move(address), &storage_adapter, 0});
-    auto const status = contract->DispatchQuery(query, doc.root(), response);
-    contract->Detach();
+    Contract::Status status;
+    {
+      chain::Address address;
+      chain::Address::Parse(contract_id.name(), address);
+      ContractContext      context{&token_contract_, std::move(address), &storage_adapter, 0};
+      ContractAttachHelper raii(*contract, context);
+      status = contract->DispatchQuery(query, doc.root(), response);
+    }
 
     if (Contract::Status::OK == status)
     {

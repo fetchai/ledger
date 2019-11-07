@@ -199,7 +199,7 @@ ContractContext const &Contract::context() const
 
 void Contract::Attach(ContractContext const &context)
 {
-  // TODO(WK) detailed_assert(context_ == nullptr);
+  detailed_assert(context_ == nullptr);
   context_ = std::make_unique<ContractContext>(context);
 }
 

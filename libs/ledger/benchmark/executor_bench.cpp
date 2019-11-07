@@ -80,9 +80,9 @@ void Executor_BasicBenchmark(benchmark::State &state)
 
     TokenContract tokens{};
 
-    tokens.Attach({&tokens, tx->contract_address(), &adapter, 0});
+    fetch::ledger::ContractContext      context{&tokens, tx->contract_address(), &adapter, 0};
+    fetch::ledger::ContractAttachHelper raii(tokens, context);
     tokens.AddTokens(tx->from(), 500000);
-    tokens.Detach();
   }
 
   for (auto _ : state)
