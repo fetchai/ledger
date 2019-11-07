@@ -73,9 +73,8 @@ struct SubscriptionGroup
     return SemanticCoordinateType(-1) >> depth;
   }
 
-  SemanticPosition indices;
-  SemanticCoordinateType
-      depth;  ///< Parameter that determines the depth of the subscription
+  SemanticPosition       indices;
+  SemanticCoordinateType depth;  ///< Parameter that determines the depth of the subscription
 
   bool operator<(SubscriptionGroup const &other) const;
   bool operator==(SubscriptionGroup const &other) const;
