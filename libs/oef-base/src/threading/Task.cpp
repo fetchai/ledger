@@ -79,21 +79,21 @@ Task::~Task()
   // Counter(std::string("mt-core.taskgroup.")+std::to_string(group_id)+".destroyed")++;
 }
 
-bool Task::submit(std::shared_ptr<Taskpool> const &target_pool)
+bool Task::submit(std::shared_ptr<Taskpool> const &p)
 {
-  if (this->pool == target_pool)
+  if (pool == p)
   {
     Counter("mt-core.tasks.submit(pool).not-submitted.aleady-in-pool")++;
     return true;
   }
 
-  if (this->pool)
+  if (pool)
   {
     this->pool->remove(shared_from_this());
     Counter("mt-core.tasks.submit(pool).remove-from-pool")++;
   }
-  this->pool = target_pool;
-  this->pool->submit(shared_from_this());
+  pool = p;
+  pool->submit(shared_from_this());
   return true;
 }
 
@@ -139,7 +139,7 @@ bool Task::submit(std::shared_ptr<Taskpool> const &p, std::chrono::milliseconds 
   if (pool)
   {
     Counter("mt-core.tasks.submit(pool,delay).remove-from-pool")++;
-    this->pool->remove(shared_from_this());
+    pool->remove(shared_from_this());
   }
   pool = p;
   pool->after(shared_from_this(), delay);
