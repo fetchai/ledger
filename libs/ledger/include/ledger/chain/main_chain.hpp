@@ -174,7 +174,7 @@ public:
 
   struct HeaviestTip
   {
-    uint64_t  weight{0};
+    uint64_t weight{0};
     // assuming every chain has a proper genesis
     BlockHash hash{chain::GENESIS_DIGEST};
 
