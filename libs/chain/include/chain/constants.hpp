@@ -24,7 +24,7 @@
 namespace fetch {
 namespace chain {
 
-constexpr uint64_t FINALITY_PERIOD = 10;
+constexpr uint64_t FINALITY_PERIOD = 80;
 
 // consensus related
 extern uint64_t STAKE_WARM_UP_PERIOD;

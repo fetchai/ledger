@@ -814,7 +814,7 @@ void MainChain::RecoverFromFile(Mode mode)
       }
 
       // Sanity check
-      uint64_t heaviest_block_num = GetHeaviestBlock()->body.block_number;
+      BlockNumber heaviest_block_num = GetHeaviestBlock()->body.block_number;
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block: ", heaviest_block_num);
 
       DetermineHeaviestTip();
@@ -895,7 +895,33 @@ void MainChain::WriteToFile()
       IntBlockPtr current_file_head = std::make_shared<Block>();
       IntBlockPtr block_head        = block;
 
-      LoadBlock(GetHeadHash(), *current_file_head);
+      BlockHash head_hash = GetHeadHash();
+      if (head_hash.empty())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME,
+                       "No head block found in chain data store! Set head to genesis.");
+        bool        failed_genesis{false};
+        IntBlockPtr block_tmp = block;
+        while (!block_tmp->IsGenesis())
+        {
+          if (!LookupBlock(block_tmp->body.previous_hash, block_tmp))
+          {
+            failed_genesis = true;
+            break;
+          }
+        }
+        if (failed_genesis)
+        {
+          FETCH_LOG_WARN(LOGGING_NAME,
+                         "Failed to walk back to genesis when writing to file! Block head: ",
+                         block_chain_.at(heaviest_.hash)->body.block_number);
+          return;
+        }
+        assert(block_tmp->IsGenesis());
+        head_hash = block_tmp->body.hash;
+        KeepBlock(block_tmp);
+      }
+      LoadBlock(head_hash, *current_file_head);
 
       // Now keep adding the block and its prev to the file until we are certain the file contains
       // an unbroken chain. Assuming that the current_file_head is unbroken we can write until we
@@ -942,18 +968,18 @@ void MainChain::WriteToFile()
  */
 void MainChain::TrimCache()
 {
-  static const uint64_t CACHE_TRIM_THRESHOLD = 2 * chain::FINALITY_PERIOD;
+  static const BlockNumber CACHE_TRIM_THRESHOLD = 2 * chain::FINALITY_PERIOD;
   assert(static_cast<bool>(block_store_));
 
   MilliTimer myTimer("MainChain::TrimCache");
 
   FETCH_LOCK(lock_);
 
-  uint64_t const heaviest_block_num = GetHeaviestBlock()->body.block_number;
+  BlockNumber const heaviest_block_num = GetHeaviestBlock()->body.block_number;
 
   if (CACHE_TRIM_THRESHOLD < heaviest_block_num)
   {
-    uint64_t const trim_threshold = heaviest_block_num - CACHE_TRIM_THRESHOLD;
+    BlockNumber const trim_threshold = heaviest_block_num - CACHE_TRIM_THRESHOLD;
 
     // Loop through the block chain store looking for blocks which are outside of our finality
     // period. This is needed to ensure that the block chain map does not grow forever
@@ -998,8 +1024,8 @@ void MainChain::TrimCache()
   auto stutter_map_back = stutter_blocks_.rbegin();
   if (stutter_map_back != stutter_blocks_.rend())
   {
-    uint64_t const stutter_threshold = stutter_map_back->first - CACHE_TRIM_THRESHOLD;
-    auto           stutter_map_iter  = stutter_blocks_.begin();
+    BlockNumber const stutter_threshold = stutter_map_back->first - CACHE_TRIM_THRESHOLD;
+    auto              stutter_map_iter  = stutter_blocks_.begin();
     while (stutter_threshold >= stutter_map_iter->first)
     {
       stutter_map_iter = stutter_blocks_.erase(stutter_map_iter);
@@ -1137,8 +1163,9 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
 
     // if tip is from miner who has previously produced stutter blocks for this round
     // do not add new block to tips
-    if (stutter_blocks_[block->body.block_number].find(block->weight) !=
-        stutter_blocks_[block->body.block_number].end())
+    if (stutter_blocks_.find(block->body.block_number) != stutter_blocks_.end() &&
+        stutter_blocks_.at(block->body.block_number).find(block->weight) !=
+            stutter_blocks_.at(block->body.block_number).end())
     {
       return false;
     }
@@ -1418,8 +1445,9 @@ bool MainChain::AddTip(IntBlockPtr const &block)
 
     // if tip is from miner who has previously produced stutter blocks for this round
     // then do not include in tips
-    if (stutter_blocks_[block->body.block_number].find(block->weight) !=
-        stutter_blocks_[block->body.block_number].end())
+    if (stutter_blocks_.find(block->body.block_number) != stutter_blocks_.end() &&
+        stutter_blocks_.at(block->body.block_number).find(block->weight) !=
+            stutter_blocks_.at(block->body.block_number).end())
     {
       return DetermineHeaviestTip();
     }
@@ -1448,8 +1476,9 @@ bool MainChain::RemoveTip(IntBlockPtr const &block)
     while (!replaced && previous_block)
     {
       BlockNumber previous_block_number = previous_block->body.block_number;
-      if (stutter_blocks_[previous_block_number].find(previous_block->weight) ==
-          stutter_blocks_[previous_block_number].end())
+      if (stutter_blocks_.find(previous_block_number) == stutter_blocks_.end() ||
+          stutter_blocks_.at(previous_block_number).find(previous_block->weight) ==
+              stutter_blocks_.at(previous_block_number).end())
       {
         tips_[previous_block->body.hash] =
             Tip{previous_block->total_weight, previous_block->weight, previous_block_number};
@@ -1521,11 +1550,11 @@ bool MainChain::ReindexTips()
   FETCH_LOCK(lock_);
 
   // Tips are hashes of cached non-loose blocks that don't have any forward references
-  TipsMap   new_tips;
-  uint64_t  max_total_weight{};
-  uint64_t  max_weight{};
-  uint64_t  max_block_number{};
-  BlockHash max_hash;
+  TipsMap     new_tips;
+  BlockWeight max_total_weight{};
+  BlockWeight max_weight{};
+  BlockWeight max_block_number{};
+  BlockHash   max_hash;
 
   for (auto const &block_entry : block_chain_)
   {
@@ -1545,14 +1574,15 @@ bool MainChain::ReindexTips()
       continue;
     }
     // this hash has no next blocks
-    auto &   block{*block_entry.second};
-    uint64_t total_weight{block.total_weight};
-    uint64_t weight{block.weight};
-    uint64_t block_number{block.body.block_number};
+    auto &      block{*block_entry.second};
+    BlockWeight total_weight{block.total_weight};
+    BlockWeight weight{block.weight};
+    BlockNumber block_number{block.body.block_number};
 
     // check if block is stutter block and if so loop until a non-stutter block is found and replace
     // as tip
-    if (stutter_blocks_[block_number].find(weight) != stutter_blocks_[block_number].end())
+    if (stutter_blocks_.find(block_number) != stutter_blocks_.end() &&
+        stutter_blocks_.at(block_number).find(weight) != stutter_blocks_.at(block_number).end())
     {
       assert(enable_stutter_removal_);
       bool replaced{false};
@@ -1561,8 +1591,9 @@ bool MainChain::ReindexTips()
       while (!replaced && previous_block)
       {
         BlockNumber previous_block_number = previous_block->body.block_number;
-        if (stutter_blocks_[previous_block_number].find(previous_block->weight) ==
-            stutter_blocks_[previous_block_number].end())
+        if (stutter_blocks_.find(previous_block_number) == stutter_blocks_.end() ||
+            stutter_blocks_.at(previous_block_number).find(previous_block->weight) ==
+                stutter_blocks_.at(previous_block_number).end())
         {
           block        = *previous_block;
           total_weight = block.total_weight;

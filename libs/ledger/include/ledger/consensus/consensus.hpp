@@ -69,6 +69,8 @@ public:
 
   static uint64_t GetBlockGenerationWeight(MainChain const &chain, Block const &previous,
                                            Identity const &identity);
+  static uint64_t ShuffledCabinetRank(BlockEntropy::Cabinet cabinet, Block const &previous,
+                                      Identity const &identity);
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;

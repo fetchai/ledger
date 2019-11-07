@@ -224,11 +224,9 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
   return DeterministicShuffle(ret, entropy);
 }
 
-uint64_t Consensus::GetBlockGenerationWeight(MainChain const &chain, Block const &previous,
-                                             Identity const &identity)
+uint64_t Consensus::ShuffledCabinetRank(BlockEntropy::Cabinet cabinet, Block const &previous,
+                                        Identity const &identity)
 {
-  auto beginning_of_aeon = GetBeginningOfAeon(previous, chain);
-  auto cabinet           = beginning_of_aeon.body.block_entropy.qualified;
   auto entropy_shuffled_cabinet =
       QualWeightedByEntropy(cabinet, previous.body.block_entropy.EntropyAsU64());
 
@@ -247,6 +245,14 @@ uint64_t Consensus::GetBlockGenerationWeight(MainChain const &chain, Block const
 
   // Note: weight must always be non zero (indicates failure/not in cabinet)
   return weight;
+}
+
+uint64_t Consensus::GetBlockGenerationWeight(MainChain const &chain, Block const &previous,
+                                             Identity const &identity)
+{
+  auto beginning_of_aeon = GetBeginningOfAeon(previous, chain);
+  auto cabinet           = beginning_of_aeon.body.block_entropy.qualified;
+  return ShuffledCabinetRank(cabinet, previous, identity);
 }
 
 /**
