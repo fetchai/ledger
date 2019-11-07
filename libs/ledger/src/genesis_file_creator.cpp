@@ -235,16 +235,16 @@ void GenesisFileCreator::LoadState(Variant const &object)
 
   ledger::Block genesis_block;
 
-  genesis_block.body.timestamp    = start_time_;
-  genesis_block.body.merkle_hash  = merkle_commit_hash;
-  genesis_block.body.block_number = 0;
-  genesis_block.body.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
+  genesis_block.timestamp    = start_time_;
+  genesis_block.merkle_hash  = merkle_commit_hash;
+  genesis_block.block_number = 0;
+  genesis_block.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
   genesis_block.UpdateDigest();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block.body.hash.ToHex());
+  FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block.hash.ToHex());
 
   chain::GENESIS_MERKLE_ROOT = merkle_commit_hash;
-  chain::GENESIS_DIGEST      = genesis_block.body.hash;
+  chain::GENESIS_DIGEST      = genesis_block.hash;
 
   block_coordinator_.Reset();
 }

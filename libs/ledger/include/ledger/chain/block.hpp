@@ -57,27 +57,21 @@ public:
 
   bool operator==(Block const &rhs) const;
 
-  struct Body
-  {
-    Digest         hash;               ///< The hash of the block
-    Digest         previous_hash;      ///< The hash of the previous block
-    Digest         merkle_hash;        ///< The merkle state hash across all shards
-    uint64_t       block_number{0};    ///< The height of the block from genesis
-    chain::Address miner;              ///< The identity of the generated miner
-    Identity       miner_id;           ///< The identity of the generated miner
-    uint32_t       log2_num_lanes{0};  ///< The log2(number of lanes)
-    Slices         slices;             ///< The slice lists
-    DAGEpoch       dag_epoch;          ///< DAG epoch containing information on new dag_nodes
-    uint64_t       timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
-    BlockEntropy   block_entropy;  ///< Entropy that determines miner priority for the next block
-  };
+  // Block core information
+  Digest         hash;               ///< The hash of the block
+  Digest         previous_hash;      ///< The hash of the previous block
+  Digest         merkle_hash;        ///< The merkle state hash across all shards
+  uint64_t       block_number{0};    ///< The height of the block from genesis
+  chain::Address miner;              ///< The identity of the generated miner
+  Identity       miner_id;           ///< The identity of the generated miner
+  uint32_t       log2_num_lanes{0};  ///< The log2(number of lanes)
+  Slices         slices;             ///< The slice lists
+  DAGEpoch       dag_epoch;          ///< DAG epoch containing information on new dag_nodes
+  uint64_t       timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
+  BlockEntropy   block_entropy;      ///< Entropy that determines miner priority for the next block
+  Weight         weight = 1;         ///< Block weight
 
-  /// @name Block Contents
-  /// @{
-  Body body;  ///< The core fields that make up a block
-  /// @}
-
-  // Miners in qual must sign the block.
+  // The qual miner must sign the block
   Digest miner_signature;
 
   /// @name Proof of Work specifics
@@ -86,10 +80,7 @@ public:
   Proof    proof;     ///< The consensus proof
   /// @}
 
-  // TODO(HUT): This should be part of body since it's no longer going to be metadata
-  Weight weight = 1;
-
-  /// @name Metadata for block management
+  /// @name Metadata for block management (not serialized)
   /// @{
   Weight total_weight = 1;
   bool   is_loose     = false;
@@ -109,59 +100,6 @@ private:
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<ledger::Block::Body, D>
-{
-public:
-  using Type       = ledger::Block::Body;
-  using DriverType = D;
-
-  static uint8_t const HASH           = 1;
-  static uint8_t const PREVIOUS_HASH  = 2;
-  static uint8_t const MERKLE_HASH    = 3;
-  static uint8_t const BLOCK_NUMBER   = 4;
-  static uint8_t const MINER          = 5;
-  static uint8_t const MINER_ID       = 6;
-  static uint8_t const LOG2_NUM_LANES = 7;
-  static uint8_t const SLICES         = 8;
-  static uint8_t const DAG_EPOCH      = 9;
-  static uint8_t const TIMESTAMP      = 10;
-  static uint8_t const ENTROPY        = 11;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &body)
-  {
-    auto map = map_constructor(11);
-    map.Append(HASH, body.hash);
-    map.Append(PREVIOUS_HASH, body.previous_hash);
-    map.Append(MERKLE_HASH, body.merkle_hash);
-    map.Append(BLOCK_NUMBER, body.block_number);
-    map.Append(MINER, body.miner);
-    map.Append(MINER_ID, body.miner_id);
-    map.Append(LOG2_NUM_LANES, body.log2_num_lanes);
-    map.Append(SLICES, body.slices);
-    map.Append(DAG_EPOCH, body.dag_epoch);
-    map.Append(TIMESTAMP, body.timestamp);
-    map.Append(ENTROPY, body.block_entropy);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &body)
-  {
-    map.ExpectKeyGetValue(HASH, body.hash);
-    map.ExpectKeyGetValue(PREVIOUS_HASH, body.previous_hash);
-    map.ExpectKeyGetValue(MERKLE_HASH, body.merkle_hash);
-    map.ExpectKeyGetValue(BLOCK_NUMBER, body.block_number);
-    map.ExpectKeyGetValue(MINER, body.miner);
-    map.ExpectKeyGetValue(MINER_ID, body.miner_id);
-    map.ExpectKeyGetValue(LOG2_NUM_LANES, body.log2_num_lanes);
-    map.ExpectKeyGetValue(SLICES, body.slices);
-    map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);
-    map.ExpectKeyGetValue(TIMESTAMP, body.timestamp);
-    map.ExpectKeyGetValue(ENTROPY, body.block_entropy);
-  }
-};
-
-template <typename D>
 struct MapSerializer<ledger::Block, D>
 {
 public:
@@ -174,28 +112,61 @@ public:
   static uint8_t const WEIGHT          = 4;
   static uint8_t const TOTAL_WEIGHT    = 5;
   static uint8_t const MINER_SIGNATURE = 6;
+  static uint8_t const HASH            = 7;
+  static uint8_t const PREVIOUS_HASH   = 8;
+  static uint8_t const MERKLE_HASH     = 9;
+  static uint8_t const BLOCK_NUMBER    = 10;
+  static uint8_t const MINER           = 11;
+  static uint8_t const MINER_ID        = 12;
+  static uint8_t const LOG2_NUM_LANES  = 13;
+  static uint8_t const SLICES          = 14;
+  static uint8_t const DAG_EPOCH       = 15;
+  static uint8_t const TIMESTAMP       = 16;
+  static uint8_t const ENTROPY         = 17;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &block)
   {
-    auto map = map_constructor(6);
-    map.Append(BODY, block.body);
+    auto map = map_constructor(17);
+    map.Append(BODY, block);
     map.Append(NONCE, block.nonce);
     map.Append(PROOF, block.proof);
     map.Append(WEIGHT, block.weight);
     map.Append(TOTAL_WEIGHT, block.total_weight);
     map.Append(MINER_SIGNATURE, block.miner_signature);
+    map.Append(HASH, block.hash);
+    map.Append(PREVIOUS_HASH, block.previous_hash);
+    map.Append(MERKLE_HASH, block.merkle_hash);
+    map.Append(BLOCK_NUMBER, block.block_number);
+    map.Append(MINER, block.miner);
+    map.Append(MINER_ID, block.miner_id);
+    map.Append(LOG2_NUM_LANES, block.log2_num_lanes);
+    map.Append(SLICES, block.slices);
+    map.Append(DAG_EPOCH, block.dag_epoch);
+    map.Append(TIMESTAMP, block.timestamp);
+    map.Append(ENTROPY, block.block_entropy);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &block)
   {
-    map.ExpectKeyGetValue(BODY, block.body);
+    map.ExpectKeyGetValue(BODY, block);
     map.ExpectKeyGetValue(NONCE, block.nonce);
     map.ExpectKeyGetValue(PROOF, block.proof);
     map.ExpectKeyGetValue(WEIGHT, block.weight);
     map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
     map.ExpectKeyGetValue(MINER_SIGNATURE, block.miner_signature);
+    map.ExpectKeyGetValue(HASH, block.hash);
+    map.ExpectKeyGetValue(PREVIOUS_HASH, block.previous_hash);
+    map.ExpectKeyGetValue(MERKLE_HASH, block.merkle_hash);
+    map.ExpectKeyGetValue(BLOCK_NUMBER, block.block_number);
+    map.ExpectKeyGetValue(MINER, block.miner);
+    map.ExpectKeyGetValue(MINER_ID, block.miner_id);
+    map.ExpectKeyGetValue(LOG2_NUM_LANES, block.log2_num_lanes);
+    map.ExpectKeyGetValue(SLICES, block.slices);
+    map.ExpectKeyGetValue(DAG_EPOCH, block.dag_epoch);
+    map.ExpectKeyGetValue(TIMESTAMP, block.timestamp);
+    map.ExpectKeyGetValue(ENTROPY, block.block_entropy);
   }
 };
 

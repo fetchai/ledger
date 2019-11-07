@@ -114,22 +114,21 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
 Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous) const
 {
   // Calculate the last relevant snapshot
-  uint64_t const last_snapshot =
-      previous.body.block_number - (previous.body.block_number % aeon_period_);
+  uint64_t const last_snapshot = previous.block_number - (previous.block_number % aeon_period_);
 
   // Invalid to request a cabinet too far ahead in time
   assert(cabinet_history_.find(last_snapshot) != cabinet_history_.end());
 
   if (cabinet_history_.find(last_snapshot) == cabinet_history_.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block: ", previous.body.block_number,
+    FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block: ", previous.block_number,
                    " AKA ", last_snapshot);
     return nullptr;
   }
 
   // If the last cabinet was the valid cabinet, return this. Otherwise, deterministically
   // shuffle the cabinet using the random beacon
-  if (last_snapshot == previous.body.block_number)
+  if (last_snapshot == previous.block_number)
   {
     return cabinet_history_.at(last_snapshot);
   }
@@ -139,7 +138,7 @@ Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous) const
 
   Cabinet cabinet_copy = *(cabinet_ptr->second);
 
-  DeterministicShuffle(cabinet_copy, previous.body.block_entropy.EntropyAsU64());
+  DeterministicShuffle(cabinet_copy, previous.block_entropy.EntropyAsU64());
 
   return std::make_shared<Cabinet>(cabinet_copy);
 }
@@ -152,7 +151,7 @@ uint32_t Consensus::GetThreshold(Block const &block) const
 
 Block GetBlockPriorTo(Block const &current, MainChain const &chain)
 {
-  return *chain.GetBlock(current.body.previous_hash);
+  return *chain.GetBlock(current.previous_hash);
 }
 
 Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
@@ -161,7 +160,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
   // Walk back the chain until we see a block specifying an aeon beginning (corner
   // case for true genesis)
-  while (!ret.body.block_entropy.IsAeonBeginning() && current.body.block_number != 0)
+  while (!ret.block_entropy.IsAeonBeginning() && current.block_number != 0)
   {
     ret = GetBlockPriorTo(ret, chain);
   }
@@ -173,22 +172,22 @@ bool Consensus::VerifyNotarisation(Block const &block) const
 {
   // Genesis is not notarised so the body of blocks with block number 1 do
   // not contain a notarisation
-  if (notarisation_ && block.body.block_number > 1)
+  if (notarisation_ && block.block_number > 1)
   {
     // Try to verify with notarisation units in notarisation_
-    auto previous_notarised_block = chain_.GetBlock(block.body.previous_hash);
-    auto result = notarisation_->Verify(previous_notarised_block->body.block_number,
-                                        previous_notarised_block->body.hash,
-                                        block.body.block_entropy.block_notarisation);
+    auto previous_notarised_block = chain_.GetBlock(block.previous_hash);
+    auto result                   = notarisation_->Verify(previous_notarised_block->block_number,
+                                        previous_notarised_block->hash,
+                                        block.block_entropy.block_notarisation);
     if (result == NotarisationResult::CAN_NOT_VERIFY)
     {
       // If block is too old then get aeon beginning
       auto aeon_block                = GetBeginningOfAeon(*previous_notarised_block, chain_);
       auto threshold                 = GetThreshold(*previous_notarised_block);
-      auto ordered_notarisation_keys = aeon_block.body.block_entropy.aeon_notarisation_keys;
+      auto ordered_notarisation_keys = aeon_block.block_entropy.aeon_notarisation_keys;
 
-      return notarisation_->Verify(previous_notarised_block->body.hash,
-                                   block.body.block_entropy.block_notarisation,
+      return notarisation_->Verify(previous_notarised_block->hash,
+                                   block.block_entropy.block_notarisation,
                                    ordered_notarisation_keys, threshold);
     }
     if (result == NotarisationResult::FAIL_VERIFICATION)
@@ -202,7 +201,7 @@ bool Consensus::VerifyNotarisation(Block const &block) const
 uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
 {
   auto beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
-  auto cabinet           = beginning_of_aeon.body.block_entropy.qualified;
+  auto cabinet           = beginning_of_aeon.block_entropy.qualified;
 
   std::size_t weight{cabinet.size()};
 
@@ -245,22 +244,22 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
  */
 bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) const
 {
-  FETCH_LOG_TRACE(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
+  FETCH_LOG_TRACE(LOGGING_NAME, "Should generate block? Prev: ", previous.block_number);
 
-  Identity const &identity = proposed.body.miner_id;
+  Identity const &identity = proposed.miner_id;
 
   // Have to use the proposed block for this fn in case the block would be a new
   // aeon beginning.
   Block beginning_of_aeon = GetBeginningOfAeon(proposed, chain_);
 
-  BlockEntropy::Cabinet qualified_cabinet = beginning_of_aeon.body.block_entropy.qualified;
+  BlockEntropy::Cabinet qualified_cabinet = beginning_of_aeon.block_entropy.qualified;
   auto                  qualified_cabinet_weighted =
-      QualWeightedByEntropy(qualified_cabinet, previous.body.block_entropy.EntropyAsU64());
+      QualWeightedByEntropy(qualified_cabinet, previous.block_entropy.EntropyAsU64());
 
   if (qualified_cabinet.find(identity.identifier()) == qualified_cabinet.end())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Miner ", identity.identifier().ToBase64(),
-                   " attempted to mine block ", previous.body.block_number + 1,
+                   " attempted to mine block ", previous.block_number + 1,
                    " but was not part of qual:");
 
     for (auto const &member : qualified_cabinet)
@@ -275,8 +274,8 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
 
   // Time slot protocol: within the block period, only the heaviest weighted miner may produce a
   // block, outside this interval, any miner may produce a block.
-  uint64_t last_block_timestamp_ms     = previous.body.timestamp * 1000;
-  uint64_t proposed_block_timestamp_ms = proposed.body.timestamp * 1000;
+  uint64_t last_block_timestamp_ms     = previous.timestamp * 1000;
+  uint64_t proposed_block_timestamp_ms = proposed.timestamp * 1000;
   uint64_t time_now_ms =
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) * 1000;
 
@@ -349,11 +348,11 @@ bool ShouldTriggerAeon(uint64_t block_number, uint64_t aeon_period)
  */
 bool Consensus::ShouldTriggerNewCabinet(Block const &block)
 {
-  bool const trigger_point = ShouldTriggerAeon(block.body.block_number, aeon_period_);
+  bool const trigger_point = ShouldTriggerAeon(block.block_number, aeon_period_);
 
-  if (last_triggered_cabinet_ != block.body.hash && trigger_point)
+  if (last_triggered_cabinet_ != block.hash && trigger_point)
   {
-    last_triggered_cabinet_ = block.body.hash;
+    last_triggered_cabinet_ = block.hash;
     return true;
   }
 
@@ -362,18 +361,18 @@ bool Consensus::ShouldTriggerNewCabinet(Block const &block)
 
 void Consensus::UpdateCurrentBlock(Block const &current)
 {
-  bool const one_ahead = current.body.block_number == current_block_.body.block_number + 1;
+  bool const one_ahead = current.block_number == current_block_.block_number + 1;
 
-  if (current.body.block_number > current_block_.body.block_number && !one_ahead)
+  if (current.block_number > current_block_.block_number && !one_ahead)
   {
     FETCH_LOG_ERROR(LOGGING_NAME,
                     "Updating the current block more than one block ahead is invalid! current: ",
-                    current_block_.body.block_number, " Attempt: ", current.body.block_number);
+                    current_block_.block_number, " Attempt: ", current.block_number);
     return;
   }
 
   // Don't try to set previous when we see genesis!
-  if (current.body.block_number == 0)
+  if (current.block_number == 0)
   {
     current_block_ = current;
   }
@@ -389,14 +388,14 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   // Notify notarisation of new valid block
   if (notarisation_)
   {
-    notarisation_->NotariseBlock(current_block_.body);
-    if (current.body.block_entropy.IsAeonBeginning())
+    notarisation_->NotariseBlock(current_block_);
+    if (current.block_entropy.IsAeonBeginning())
     {
-      uint64_t round_start = current_block_.body.block_number;
-      assert(!current_block_.body.block_entropy.aeon_notarisation_keys.empty());
+      uint64_t round_start = current_block_.block_number;
+      assert(!current_block_.block_entropy.aeon_notarisation_keys.empty());
       notarisation_->SetAeonDetails(round_start, round_start + aeon_period_ - 1,
                                     GetThreshold(current_block_),
-                                    current_block_.body.block_entropy.aeon_notarisation_keys);
+                                    current_block_.block_entropy.aeon_notarisation_keys);
     }
   }
 
@@ -407,17 +406,17 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     if (!cabinet)
     {
       FETCH_LOG_ERROR(LOGGING_NAME,
-                      "Failed to build cabinet for block: ", current_block_.body.block_number);
+                      "Failed to build cabinet for block: ", current_block_.block_number);
       return;
     }
 
     CabinetMemberList cabinet_member_list;
-    cabinet_history_[current.body.block_number] = cabinet;
+    cabinet_history_[current.block_number] = cabinet;
 
     TrimToSize(cabinet_history_, HISTORY_LENGTH);
 
     bool member_of_cabinet{false};
-    for (auto const &staker : *cabinet_history_[current.body.block_number])
+    for (auto const &staker : *cabinet_history_[current.block_number])
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
 
@@ -436,15 +435,15 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                                 threshold_) +
           1;
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_.body.block_number,
+      FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_.block_number,
                      " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
                      " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
 
-      uint64_t last_block_time = current.body.timestamp;
+      uint64_t last_block_time = current.timestamp;
       auto     current_time =
           GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
-      if (current.body.block_number == 0)
+      if (current.block_number == 0)
       {
         last_block_time = default_start_time_;
       }
@@ -456,15 +455,15 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       uint64_t block_interval = 1;
 
       // Safe to call this multiple times
-      cabinet_creator_->StartNewCabinet(
-          cabinet_member_list, threshold, current_block_.body.block_number + 1,
-          current_block_.body.block_number + aeon_period_, last_block_time + block_interval,
-          current.body.block_entropy);
+      cabinet_creator_->StartNewCabinet(cabinet_member_list, threshold,
+                                        current_block_.block_number + 1,
+                                        current_block_.block_number + aeon_period_,
+                                        last_block_time + block_interval, current.block_entropy);
     }
   }
 
-  beacon_->MostRecentSeen(current_block_.body.block_number);
-  cabinet_creator_->Abort(current_block_.body.block_number);
+  beacon_->MostRecentSeen(current_block_.block_number);
+  cabinet_creator_->Abort(current_block_.block_number);
 }
 
 // TODO(HUT): put block number confirmation/check here (?)
@@ -473,7 +472,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   NextBlockPtr ret;
 
   // Number of block we want to generate
-  uint64_t const block_number = current_block_.body.block_number + 1;
+  uint64_t const block_number = current_block_.block_number + 1;
 
   ret = std::make_unique<Block>();
 
@@ -482,20 +481,19 @@ NextBlockPtr Consensus::GenerateNextBlock()
   // into GetBlockGenerationWeight (important for first block of each aeon which specifies the
   // qual for this aeon)
   if (EntropyGeneratorInterface::Status::OK !=
-      beacon_->GenerateEntropy(block_number, ret->body.block_entropy))
+      beacon_->GenerateEntropy(block_number, ret->block_entropy))
   {
     return {};
   }
 
   // Note, it is important to do this here so the block when passed to ValidBlockTiming
   // is well formed
-  ret->body.previous_hash = current_block_.body.hash;
-  ret->body.block_number  = block_number;
-  ret->body.miner         = mining_address_;
-  ret->body.miner_id      = mining_identity_;
-  ret->body.timestamp =
-      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-  ret->weight = GetBlockGenerationWeight(*ret, mining_address_);
+  ret->previous_hash = current_block_.hash;
+  ret->block_number  = block_number;
+  ret->miner         = mining_address_;
+  ret->miner_id      = mining_identity_;
+  ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+  ret->weight    = GetBlockGenerationWeight(*ret, mining_address_);
 
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
@@ -506,16 +504,16 @@ NextBlockPtr Consensus::GenerateNextBlock()
   if (notarisation_)
   {
     // Add notarisation to block
-    auto notarisation = notarisation_->GetAggregateNotarisation(current_block_.body);
-    if (current_block_.body.block_number != 0 && notarisation.first.isZero())
+    auto notarisation = notarisation_->GetAggregateNotarisation(current_block_);
+    if (current_block_.block_number != 0 && notarisation.first.isZero())
     {
       // Notarisation for head of chain is not ready yet so wait
       return {};
     }
-    ret->body.block_entropy.block_notarisation = notarisation;
+    ret->block_entropy.block_notarisation = notarisation;
 
     // Notify notarisation of new valid block
-    notarisation_->NotariseBlock(ret->body);
+    notarisation_->NotariseBlock(*ret);
   }
 
   return ret;
@@ -524,17 +522,16 @@ NextBlockPtr Consensus::GenerateNextBlock()
 // Helper function to determine whether the block has been signed correctly
 bool BlockSignedByQualMember(fetch::ledger::Block const &block)
 {
-  assert(!block.body.hash.empty());
+  assert(!block.hash.empty());
 
   // Is in qual check
-  if (block.body.block_entropy.qualified.find(block.body.miner_id.identifier()) ==
-      block.body.block_entropy.qualified.end())
+  if (block.block_entropy.qualified.find(block.miner_id.identifier()) ==
+      block.block_entropy.qualified.end())
   {
     return false;
   }
 
-  return fetch::crypto::Verifier::Verify(block.body.miner_id, block.body.hash,
-                                         block.miner_signature);
+  return fetch::crypto::Verifier::Verify(block.miner_id, block.hash, block.miner_signature);
 }
 
 /**
@@ -576,7 +573,7 @@ Status Consensus::ValidBlock(Block const &current) const
   Status ret = Status::YES;
 
   // TODO(HUT): more thorough checks for genesis needed
-  if (current.body.block_number == 0)
+  if (current.block_number == 0)
   {
     return Status::YES;
   }
@@ -584,7 +581,7 @@ Status Consensus::ValidBlock(Block const &current) const
   if (!BlockSignedByQualMember(current))
   {
     FETCH_LOG_WARN(LOGGING_NAME,
-                   "Saw block not signed by a member of qual! Block: ", current.body.block_number);
+                   "Saw block not signed by a member of qual! Block: ", current.block_number);
     return Status::NO;
   }
 
@@ -594,9 +591,9 @@ Status Consensus::ValidBlock(Block const &current) const
   BlockEntropy::GroupPublicKey group_pub_key;
 
   // If this block would be the start of a new aeon, need to check the stakers for the prev. block
-  if (ShouldTriggerAeon(block_preceeding.body.block_number, aeon_period_))
+  if (ShouldTriggerAeon(block_preceeding.block_number, aeon_period_))
   {
-    auto const &block_entropy = current.body.block_entropy;
+    auto const &block_entropy = current.block_entropy;
 
     if (!block_entropy.IsAeonBeginning())
     {
@@ -626,13 +623,12 @@ Status Consensus::ValidBlock(Block const &current) const
   else
   {
     auto beginning_of_aeon = GetBeginningOfAeon(current, chain_);
-    qualified_cabinet      = beginning_of_aeon.body.block_entropy.qualified;
-    group_pub_key          = beginning_of_aeon.body.block_entropy.group_public_key;
+    qualified_cabinet      = beginning_of_aeon.block_entropy.qualified;
+    group_pub_key          = beginning_of_aeon.block_entropy.group_public_key;
   }
 
-  if (!dkg::BeaconManager::Verify(group_pub_key,
-                                  block_preceeding.body.block_entropy.EntropyAsSHA256(),
-                                  current.body.block_entropy.group_signature))
+  if (!dkg::BeaconManager::Verify(group_pub_key, block_preceeding.block_entropy.EntropyAsSHA256(),
+                                  current.block_entropy.group_signature))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
     return Status::NO;
