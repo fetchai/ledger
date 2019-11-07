@@ -18,24 +18,24 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/max_pool.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class MaxPoolTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(MaxPoolTest, MyTypes);
+TYPED_TEST_CASE(MaxPoolTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(MaxPoolTest, forward_test_1d_3_2_2)
 {
@@ -741,3 +741,7 @@ TYPED_TEST(MaxPoolTest, saveparams_backward_2_channels_test_2d)
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

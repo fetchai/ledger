@@ -243,7 +243,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
   // of a fresh node, or a long series of errors prevents us from reloading previous state. In
   // either case we transition to the restarting the coordination
   assert(static_cast<bool>(current_block_));
-  if (chain::GENESIS_DIGEST != current_block_->body.previous_hash)
+  if (!current_block_->IsGenesis())
   {
     // normal case we have found a block from which point we want to revert. Attempt to revert to it
     bool const revert_success = storage_unit_.RevertToHash(current_block_->body.merkle_hash,
@@ -427,7 +427,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     if (!storage_unit_.RevertToHash(common_parent->body.merkle_hash,
                                     common_parent->body.block_number))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block", ToBase64(current_hash));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block: ", current_hash.ToHex());
 
       // delay the state machine in these error cases, to allow the network to catch up if the issue
       // is network related and if nothing else restrict logs being spammed
@@ -534,11 +534,11 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 {
   pre_valid_state_count_->increment();
 
-  bool const is_genesis = current_block_->body.previous_hash == chain::GENESIS_DIGEST;
+  bool const is_genesis = current_block_->IsGenesis();
 
   auto fail{[this](char const *reason) {
-    FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
-                   ToBase64(current_block_->body.hash), ')');
+    FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (0x",
+                   current_block_->body.hash.ToHex(), ')');
 
     chain_.RemoveBlock(current_block_->body.hash);
     return State::RESET;
@@ -620,7 +620,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 {
   syn_exec_state_count_->count();
 
-  bool const is_genesis = current_block_->body.previous_hash == chain::GENESIS_DIGEST;
+  bool const is_genesis = current_block_->IsGenesis();
 
   // Executing synergetic work
   if ((!is_genesis) && synergetic_exec_mgr_)
@@ -644,7 +644,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 
     if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(num_lanes_))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(current_block_->body.hash),
+      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (0x", current_block_->body.hash.ToHex(),
                      ")");
       chain_.RemoveBlock(current_block_->body.hash);
 
@@ -812,8 +812,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 
     if (exec_wait_periodic_.Poll())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for execution to complete for block: ",
-                     current_block_->body.hash.ToBase64());
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for execution to complete for block: 0x",
+                     current_block_->body.hash.ToHex());
     }
 
     // signal that the next execution should not happen immediately
@@ -837,7 +837,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   auto const state_hash = storage_unit_.CurrentHash();
 
   bool invalid_block{false};
-  if (chain::GENESIS_DIGEST != current_block_->body.previous_hash)
+  if (!current_block_->IsGenesis())
   {
     if (state_hash != current_block_->body.merkle_hash)
     {
@@ -915,6 +915,12 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     // update the telemetry
     executed_block_count_->increment();
     executed_tx_count_->add(current_block_->GetTransactionCount());
+
+    // Update consensus so block can be notarised
+    if (consensus_)
+    {
+      consensus_->UpdateCurrentBlock(*current_block_);
+    }
   }
 
   return State::RESET;

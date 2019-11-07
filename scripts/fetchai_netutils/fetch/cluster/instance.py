@@ -30,6 +30,7 @@ class Instance(object):
             # tear down the log file
             self._logfile.close()
             self._logfile = None
+            self._process = None
 
     def poll(self):
         if self._exit_code is not None:
@@ -47,6 +48,10 @@ class Instance(object):
     @property
     def log_path(self):
         return self._log_path
+
+    @property
+    def started(self):
+        return self._process is not None
 
 
 class ConstellationInstance(Instance):

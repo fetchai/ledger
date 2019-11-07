@@ -16,18 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
-
+#include "test_types.hpp"
 #include <memory>
-
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename GraphType, typename TensorType, typename DataType>
 std::shared_ptr<GraphType> BuildGraph(bool shared = false, bool time_distributed = false)
 {
@@ -66,16 +65,7 @@ class FullyConnectedTest : public ::testing::Test
 {
 };
 
-template <typename T>
-class FullyConnectedTestNoInt : public ::testing::Test
-{
-};
-
-using NoIntTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
-                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
-
-TYPED_TEST_CASE(FullyConnectedTest, NoIntTypes);
+TYPED_TEST_CASE(FullyConnectedTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
@@ -709,3 +699,7 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch
