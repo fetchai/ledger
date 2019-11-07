@@ -64,11 +64,12 @@ public:
 private:
   using Serializer = serializers::MsgPackSerializer;
 
-  struct ExecutionContext
+  class ExecutionContext
   {
+  public:
     ExecutionContext(VM *vm, Executable *executable);
     ~ExecutionContext();
-
+  private:
     VM *vm_;
   };
 

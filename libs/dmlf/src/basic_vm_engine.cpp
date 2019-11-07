@@ -33,8 +33,8 @@ namespace fetch {
 namespace dmlf {
 
 // This must match the type as defined in variant::variant.hpp
-using fp64_t = fixed_point::fp64_t;
-using fp32_t = fixed_point::fp32_t;
+using fixed_point::fp64_t;
+using fixed_point::fp32_t;
 
 ExecutionResult BasicVmEngine::CreateExecutable(Name const &execName, SourceFiles const &sources)
 {
@@ -138,7 +138,7 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
   auto const *func  = exec->FindFunction(entrypoint);
   if (func == nullptr)
   {
-    return EngineError(Error::Code::RUNTIME_ERROR, entrypoint + " does not exist");
+    return EngineError(Error::Code::RUNTIME_ERROR, "Error: " + entrypoint + " does not exist");
   }
 
   // We create a a VM for each execution. It might be better to create a single VM and reuse it, but
@@ -220,7 +220,7 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack &result, Params 
       serializer << p;
     }
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     return Error(
         Error::Stage::ENGINE, Error::Code::SERIALIZATION_ERROR,
@@ -282,7 +282,7 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
   auto serializationError = [&](std::string &&errorMessage) {
     return ExecutionResult{LedgerVariant{},
                            Error{Error::Stage::ENGINE, Error::Code::SERIALIZATION_ERROR,
-                                 "Error(" + id + ") in output after running. " + errorMessage},
+                                 "Error(" + id + ") in output after running. " + std::move(errorMessage)},
                            console};
   };
 
@@ -353,7 +353,7 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
       inside->SerializeTo(serializer);
       serializer.seek(0);
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       return serializationError("Serializing output threw error " + std::string(ex.what()));
     }
@@ -366,7 +366,7 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
     {
       serializer >> output;
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       return serializationError(" Deserializing output after running. Threw error " +
                                 std::string(ex.what()));
@@ -379,23 +379,16 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
     if (output.IsArray())  // Convert inner type from int to fixedpoint if necessary
     {
       auto GetInnermostTypeId = [&vm](LedgerVariant const &ledgerVariant,
-                                      VmVariant const &    vmVariant) {
-        int                  depth   = 0;
-        LedgerVariant const *current = &ledgerVariant;
-        while (current->IsArray())
-        {
-          ++depth;
-          current = &(*current)[0];
-        }
+                                      VmVariant const &    vmVariant) 
+      {
+        LedgerVariant const *ledgerCurrent = &(ledgerVariant[0]); // Starts one deeper
+        auto                 currentTypeId = vmVariant.type_id;
+        auto                 result        = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
 
-        auto result = vmVariant.type_id;
-        if (depth >= 1)
+        while (ledgerCurrent->IsArray())
         {
-          auto currentTypeId = vmVariant.type_id;
-          for (int i = 0; i < depth - 1; ++i)
-          {
-            currentTypeId = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
-          }
+          ledgerCurrent = &(*ledgerCurrent)[0];
+          currentTypeId = result;
           result = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
         }
 
