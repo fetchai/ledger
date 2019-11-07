@@ -175,7 +175,8 @@ public:
   struct HeaviestTip
   {
     uint64_t  weight{0};
-    BlockHash hash{chain::ZERO_HASH};
+    // assuming every chain has a proper genesis
+    BlockHash hash{chain::GENESIS_DIGEST};
 
     bool Update(Block const &block);
   };
