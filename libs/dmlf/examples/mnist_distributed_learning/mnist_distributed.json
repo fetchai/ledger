@@ -1,0 +1,18 @@
+{
+	"data": "/home/emmasmith/Development/datasets/mnist_federated/mnist_images_",
+	"labels": "/home/emmasmith/Development/datasets/mnist_federated/mnist_labels_",
+	"n_clients": 30,
+	"n_peers": 0,
+	"n_rounds": 10,
+	"synchronise": false,
+	"test_set_ratio": 0.1,
+	"results": "/home/emmasmith/Development/ledger-vm-misc/TFF_MNIST/",
+	"batch_size": 32,
+	"max_updates": 31000000,
+	"max_epochs": 20,
+	"learning_rate": 0.02,
+	"print_loss": false,
+	"input_names": ["Input"],
+	"label_name": "Label",
+	"error_name": "Error"
+}

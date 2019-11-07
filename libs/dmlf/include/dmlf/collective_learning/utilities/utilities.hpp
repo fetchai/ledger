@@ -179,6 +179,11 @@ fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> Client
   using SizeType = fetch::math::SizeType;
 
   std::ifstream config_file(fname);
+  if (!config_file.is_open())
+  {
+    throw std::runtime_error("File " + fname + " cannot be opened");
+  }
+
   std::string text((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
   doc.Parse(text.c_str());
 
@@ -198,6 +203,10 @@ fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> Client
   if (!doc["max_updates"].IsUndefined())
   {
     client_params.max_updates = doc["max_updates"].As<SizeType>();
+  }
+  if (!doc["max_epochs"].IsUndefined())
+  {
+    client_params.max_epochs = doc["max_epochs"].As<SizeType>();
   }
   if (!doc["learning_rate"].IsUndefined())
   {

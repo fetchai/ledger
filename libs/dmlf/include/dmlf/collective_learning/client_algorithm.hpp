@@ -77,8 +77,8 @@ public:
     graph_ptr_       = other.graph_ptr_;
     optimiser_ptr_   = other.optimiser_ptr_;
     dataloader_ptr_  = other.dataloader_ptr_;
-    round_counter_   = other.round_counter_;
-    updates_applied_ = other.updates_applied_;
+    batch_counter_   = other.batch_counter_;
+    updates_applied_this_round_ = other.updates_applied_this_round_;
 
     params_               = other.params_;
     algorithm_controller_ = other.algorithm_controller_;
@@ -124,8 +124,12 @@ protected:
   std::shared_ptr<std::mutex> console_mutex_ptr_;
 
   // Count for number of batches
-  SizeType round_counter_   = 0;
-  SizeType updates_applied_ = 0;
+  SizeType batch_counter_   = 0;
+  SizeType epoch_counter_   = 0;
+  SizeType update_counter_  = 0;
+
+  SizeType updates_applied_this_round_ = 0;
+  SizeType epochs_done_this_round_ = 0;
 
   ClientParams<DataType> params_;
 
@@ -157,6 +161,7 @@ ClientAlgorithm<TensorType>::ClientAlgorithm(AlgorithmControllerPtrType    algor
   , algorithm_controller_(std::move(algorithm_controller))
 {
   ClearLossFile();
+  start_time_ = std::chrono::steady_clock::now();
 }
 
 template <typename TensorType>
@@ -171,7 +176,7 @@ void ClientAlgorithm<TensorType>::SetModel(ModelPtrType model_ptr)
 template <class TensorType>
 void ClientAlgorithm<TensorType>::ClearLossFile()
 {
-  std::ofstream lossfile("/home/emmasmith/Development/ledger-vm-misc/TFF_MNIST/fetch_results_" + id_ + ".csv",
+  std::ofstream lossfile(params_.results_dir + "losses_" + id_ + ".csv",
       std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
 }
@@ -209,8 +214,10 @@ void ClientAlgorithm<TensorType>::Run()
   std::ofstream lossfile(params_.results_dir + "losses_" + id_ + ".csv",
                          std::ofstream::out | std::ofstream::app);
 
-  updates_applied_ = 0;
-  while (updates_applied_ < params_.max_updates)
+  updates_applied_this_round_ = 0;
+//  dataloader_is_done_ = false;
+  epochs_done_this_round_ = 0;
+  while ((updates_applied_this_round_ < params_.max_updates) && (epochs_done_this_round_ < params_.max_epochs))
   {
     // perform a round of training on this client
     DoRound();
@@ -219,12 +226,13 @@ void ClientAlgorithm<TensorType>::Run()
     Test();
 
     // Save loss data
-    if (lossfile)
-    {
-      lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
-               << static_cast<double>(train_loss_) << ", " << static_cast<double>(test_loss_)
-               << "\n";
-    }
+//    if (lossfile)
+//    {
+//      lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
+//               << static_cast<double>(train_loss_) << ", " << static_cast<double>(test_loss_)
+//               << "\n";
+//      lossfile.flush();
+//    }
 
     if (params_.print_loss)
     {
@@ -245,20 +253,14 @@ void ClientAlgorithm<TensorType>::Run()
   {
     double seconds = fetch::ToSeconds(std::chrono::steady_clock::now() - start_time_);
     lossfile << "Time: " << seconds
-             << " Epoch: " << static_cast<int>(batch_counter_ / max_updates_)
+             << " Epochs: " << epoch_counter_
              << " Loss: " << static_cast<double>(train_loss_)
              << " Test_loss: " << static_cast<double>(test_loss_)
+             << " Updates: " << update_counter_
+             << " Batches: " << batch_counter_
              << "\n";
-//    lossfile.flush();
     lossfile.close();
   }
-//  if (lossfile)
-//  {
-//    lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
-//             << "STOPPED"
-//             << "\n";
-//    lossfile.close();
-//  }
 
   if (params_.print_loss)
   {
@@ -278,10 +280,13 @@ void ClientAlgorithm<TensorType>::Train()
   dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
   dataloader_ptr_->SetRandomMode(true);
 
-  bool is_done_set = false;
+  bool dataloader_is_done_ = false;
 
   std::pair<TensorType, std::vector<TensorType>> input;
-  input = dataloader_ptr_->PrepareBatch(params_.batch_size, is_done_set);
+  input = dataloader_ptr_->PrepareBatch(params_.batch_size, dataloader_is_done_);
+
+
+//  std::cout << "input.first.ToString(): " << input.first.ToString() << std::endl;
   {
     FETCH_LOCK(model_mutex_);
 
@@ -305,7 +310,15 @@ void ClientAlgorithm<TensorType>::Train()
 
     graph_ptr_->BackPropagate(params_.error_name);
   }
-  updates_applied_++;
+
+  if (dataloader_is_done_)
+  {
+    epochs_done_this_round_++;
+    epoch_counter_++;
+  }
+  batch_counter_++;
+  updates_applied_this_round_++;
+  update_counter_++;
 }
 
 /**
@@ -315,42 +328,41 @@ void ClientAlgorithm<TensorType>::Train()
 template <class TensorType>
 void ClientAlgorithm<TensorType>::Test()
 {
-  // If test set is not available we run test on whole training set
   if (dataloader_ptr_->IsModeAvailable(fetch::ml::dataloaders::DataLoaderMode::TEST))
   {
     dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
+    // Disable random to run model on whole test set
+    dataloader_ptr_->SetRandomMode(false);
+
+    SizeType test_set_size = dataloader_ptr_->Size();
+
+    dataloader_ptr_->Reset();
+    bool is_done_set;
+    auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
+    {
+      FETCH_LOCK(model_mutex_);
+
+      // Set inputs and label
+      auto input_data_it = test_pair.second.begin();
+      auto input_name_it = params_.input_names.begin();
+
+      while (input_name_it != params_.input_names.end())
+      {
+        graph_ptr_->SetInput(*input_name_it, *input_data_it);
+        ++input_name_it;
+        ++input_data_it;
+      }
+      graph_ptr_->SetInput(params_.label_name, test_pair.first);
+
+      test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
+    }
   }
   else
   {
-    dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+    test_loss_ = 0;
   }
 
-  // Disable random to run model on whole test set
-  dataloader_ptr_->SetRandomMode(false);
 
-  SizeType test_set_size = dataloader_ptr_->Size();
-
-  dataloader_ptr_->Reset();
-  bool is_done_set;
-  auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
-  {
-    FETCH_LOCK(model_mutex_);
-
-    // Set inputs and label
-    auto input_data_it = test_pair.second.begin();
-    auto input_name_it = params_.input_names.begin();
-
-    while (input_name_it != params_.input_names.end())
-    {
-      graph_ptr_->SetInput(*input_name_it, *input_data_it);
-      ++input_name_it;
-      ++input_data_it;
-    }
-    graph_ptr_->SetInput(params_.label_name, test_pair.first);
-
-    test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
-  }
-  dataloader_ptr_->Reset();
 }
 
 /**
@@ -426,13 +438,12 @@ void ClientAlgorithm<TensorType>::DoRound()
     AggregateUpdate(TranslateUpdate(new_update));
 
     // track number of total updates applied for evaluation
-    updates_applied_++;
+    updates_applied_this_round_++;
+    update_counter_++;
   }
 
   // apply aggregated local and remote updates
   ApplyUpdates();
-
-  round_counter_++;
 }
 
 ///////////////////////
