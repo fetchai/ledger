@@ -42,7 +42,7 @@ class Trainable
 public:
   using TensorType   = T;
   using ArrayPtrType = std::shared_ptr<TensorType>;
-    using SizeVector = fetch::math::SizeVector;
+  using SizeSet      = std::unordered_set<fetch::math::SizeType>;
   using DataType     = typename TensorType::Type;
   using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
@@ -53,12 +53,11 @@ public:
   virtual TensorType const &      GetGradientsReferences() const                     = 0;
   virtual TensorType              GetGradients() const                               = 0;
 
-    virtual std::pair<TensorType const &, SizeVector const &>      GetSparseGradientsReferences() const                     = 0;
+  virtual std::pair<TensorType const, SizeSet const> GetSparseGradientsReferences() const = 0;
 
-
-    virtual void                    ResetGradients()                                   = 0;
-  virtual void                    ApplyGradient(TensorType const &grad, SizeVector &update_rows)              = 0;
-  virtual void                    ApplyRegularisation()                              = 0;
+  virtual void ResetGradients()                                            = 0;
+  virtual void ApplyGradient(TensorType const &grad, SizeSet &update_rows) = 0;
+  virtual void ApplyRegularisation()                                       = 0;
 
   void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
   {

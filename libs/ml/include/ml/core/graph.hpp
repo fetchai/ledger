@@ -84,7 +84,7 @@ public:
   using TensorType       = T;
   using ArrayPtrType     = std::shared_ptr<TensorType>;
   using SizeType         = fetch::math::SizeType;
-    using SizeVector = fetch::math::SizeVector;
+  using SizeSet          = std::unordered_set<SizeType>;
   using DataType         = typename TensorType::Type;
   using NodePtrType      = typename std::shared_ptr<fetch::ml::Node<TensorType>>;
   using TrainablePtrType = typename std::shared_ptr<fetch::ml::ops::Trainable<TensorType>>;
@@ -126,7 +126,7 @@ public:
   void       SetInput(std::string const &node_name, TensorType const &data);
   TensorType Evaluate(std::string const &node_name, bool is_training = true);
   void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
-  void       ApplyGradients(std::vector<TensorType> &grad, std::vector<SizeVector> &update_rows);
+  void       ApplyGradients(std::vector<TensorType> &grad, std::vector<SizeSet> &update_rows);
 
   //////////////////////////////////////////////////////
   /// public serialisation & weight export functions ///
@@ -198,7 +198,7 @@ private:
   void GetWeightsReferences(std::vector<TensorType> &ret) const;
   void GetGradientsReferences(std::vector<TensorType> &ret) const;
 
-    template <typename TensorIteratorType, typename VectorIteratorType>
+  template <typename TensorIteratorType, typename VectorIteratorType>
   void ApplyGradients(TensorIteratorType &grad_it, VectorIteratorType &rows_it);
 
   template <typename ValType, typename NodeFunc, typename GraphFunc>
@@ -209,15 +209,12 @@ private:
   //                      void (Graph<TensorType>::*subgraph_func)(ValType &) const) const;
   void RecursiveApply(ValType &val, GraphFunc graph_func) const;
 
+  template <typename Val1Type, typename Val2Type, typename NodeFunc, typename GraphFunc>
+  void RecursiveApply2(Val1Type &val_1, Val2Type &val_2, NodeFunc node_func,
+                       GraphFunc graph_func) const;
 
-
-    template <typename Val1Type, typename Val2Type, typename NodeFunc, typename GraphFunc>
-    void RecursiveApply2(Val1Type &val_1, Val2Type &val_2, NodeFunc node_func, GraphFunc graph_func) const;
-
-    template <typename Val1Type,typename Val2Type, typename GraphFunc>
-    void RecursiveApply3(Val1Type &val_1,Val2Type &val_2, GraphFunc graph_func) const;
-
-
+  template <typename Val1Type, typename Val2Type, typename GraphFunc>
+  void RecursiveApply3(Val1Type &val_1, Val2Type &val_2, GraphFunc graph_func) const;
 };
 
 //////////////////////
@@ -589,7 +586,8 @@ bool Graph<TensorType>::SetFrozenState(std::string const &node_name, bool frozen
  * @param grad vector of gradient values for each trainable stored in TensorType
  */
 template <typename TensorType>
-void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad, std::vector<SizeVector> &update_rows)
+void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad,
+                                       std::vector<SizeSet> &   update_rows)
 {
   Compile();
 
@@ -1105,7 +1103,8 @@ template <typename TensorType>
 template <typename TensorIteratorType, typename VectorIteratorType>
 void Graph<TensorType>::ApplyGradients(TensorIteratorType &grad_it, VectorIteratorType &rows_it)
 {
-  using graph_func_signature = void (Graph<TensorType>::*)(TensorIteratorType &, VectorIteratorType &);
+  using graph_func_signature =
+      void (Graph<TensorType>::*)(TensorIteratorType &, VectorIteratorType &);
 
   for (auto const &t : trainable_lookup_)
   {
@@ -1114,8 +1113,9 @@ void Graph<TensorType>::ApplyGradients(TensorIteratorType &grad_it, VectorIterat
     ++grad_it;
   }
 
-  //RecursiveApply<IteratorType, graph_func_signaturegrad_it, &Graph<TensorType>::ApplyGradients);
-  RecursiveApply3<TensorIteratorType, VectorIteratorType, graph_func_signature>(grad_it, rows_it, &Graph<TensorType>::ApplyGradients);
+  // RecursiveApply<IteratorType, graph_func_signaturegrad_it, &Graph<TensorType>::ApplyGradients);
+  RecursiveApply3<TensorIteratorType, VectorIteratorType, graph_func_signature>(
+      grad_it, rows_it, &Graph<TensorType>::ApplyGradients);
 }
 
 /**
@@ -1170,39 +1170,39 @@ void Graph<TensorType>::RecursiveApply(ValType &val, GraphFunc graph_func) const
   }
 }
 
+template <typename TensorType>
+template <typename Val1Type, typename Val2Type, typename NodeFunc, typename GraphFunc>
+void Graph<TensorType>::RecursiveApply2(Val1Type &val_1, Val2Type &val_2, NodeFunc node_func,
+                                        GraphFunc graph_func) const
+{
+  for (auto const &t : trainable_lookup_)
+  {
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
+    auto tensor        = ((*trainable_ptr).*node_func)();
+    val_1.emplace_back(tensor);
+  }
 
-        template <typename TensorType>
-        template <typename Val1Type, typename Val2Type, typename NodeFunc, typename GraphFunc>
-        void Graph<TensorType>::RecursiveApply2(Val1Type &val_1, Val2Type &val_2, NodeFunc node_func, GraphFunc graph_func) const
-        {
-            for (auto const &t : trainable_lookup_)
-            {
-                auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
-                auto tensor        = ((*trainable_ptr).*node_func)();
-                val_1.emplace_back(tensor);
-            }
+  RecursiveApply2<Val1Type, Val2Type, GraphFunc>(val_1, val_2, graph_func);
+}
 
-            RecursiveApply2<Val1Type, Val2Type, GraphFunc>(val_1,val_2, graph_func);
-        }
+template <typename TensorType>
+template <typename Val1Type, typename Val2Type, typename GraphFunc>
+void Graph<TensorType>::RecursiveApply3(Val1Type &val_1, Val2Type &val_2,
+                                        GraphFunc graph_func) const
+{
+  // get gradients from subgraphs
+  for (auto &node_pair : nodes_)
+  {
+    auto op_ptr    = node_pair.second->GetOp();
+    auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
 
-        template <typename TensorType>
-        template <typename Val1Type,typename Val2Type, typename GraphFunc>
-        void Graph<TensorType>::RecursiveApply3(Val1Type &val_1,Val2Type &val_2, GraphFunc graph_func) const
-        {
-            // get gradients from subgraphs
-            for (auto &node_pair : nodes_)
-            {
-                auto op_ptr    = node_pair.second->GetOp();
-                auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
-
-                // if it's a graph
-                if (graph_ptr)
-                {
-                    ((*graph_ptr).*graph_func)(val_1,val_2);
-                }
-            }
-        }
-
+    // if it's a graph
+    if (graph_ptr)
+    {
+      ((*graph_ptr).*graph_func)(val_1, val_2);
+    }
+  }
+}
 
 }  // namespace ml
 }  // namespace fetch

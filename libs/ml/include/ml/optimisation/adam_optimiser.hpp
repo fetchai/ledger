@@ -42,7 +42,7 @@ public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
   using SizeType   = fetch::math::SizeType;
-    using SizeVector = fetch::math::SizeVector;
+  using SizeSet    = std::unordered_set<SizeType>;
 
   AdamOptimiser() = default;
 
@@ -152,14 +152,15 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
   fetch::math::Pow(beta1_, static_cast<DataType>(this->epoch_ + 1), beta1_t_);
   fetch::math::Pow(beta2_, static_cast<DataType>(this->epoch_ + 1), beta2_t_);
 
-  std::vector<SizeVector> rows;
+  std::vector<SizeSet> rows;
 
   while (gradient_it != this->gradients_.end())
   {
     // Skip frozen trainables
     if (!(*trainable_it)->GetFrozenState())
     {
-      std::pair<TensorType const &, SizeVector const &> gradient_pair=(*trainable_it)->GetSparseGradientsReferences();
+      std::pair<TensorType const &, SizeSet const &> gradient_pair =
+          (*trainable_it)->GetSparseGradientsReferences();
       rows.push_back(gradient_pair.second);
 
       // cache[i] = (beta1_t_ * cache[i]) + ((1.0 - beta1_t_) * (input_gradients[i]/batch_size));
@@ -206,7 +207,7 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
   }
 
   // calling apply gradients on the graph ensures that the node caches are reset properly
-  this->graph_->ApplyGradients(this->gradients_,rows);
+  this->graph_->ApplyGradients(this->gradients_, rows);
 }
 
 template <class T>

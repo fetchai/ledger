@@ -38,7 +38,7 @@ public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
   using SizeType   = fetch::math::SizeType;
-    using SizeVector = fetch::math::SizeVector;
+  using SizeSet    = std::unordered_set<SizeType>;
 
   RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
                    std::vector<std::string> const &input_node_names,
@@ -120,14 +120,15 @@ void RMSPropOptimiser<T>::ApplyGradients(SizeType batch_size)
   auto gradient_it      = this->gradients_.begin();
   auto trainable_it     = this->graph_trainables_.begin();
 
-  std::vector<SizeVector> rows;
+  std::vector<SizeSet> rows;
 
   while (gradient_it != this->gradients_.end())
   {
     // Skip frozen trainables
     if (!(*trainable_it)->GetFrozenState())
     {
-      std::pair<TensorType const &, SizeVector const &> gradient_pair=(*trainable_it)->GetSparseGradientsReferences();
+      std::pair<TensorType const &, SizeSet const &> gradient_pair =
+          (*trainable_it)->GetSparseGradientsReferences();
       rows.push_back(gradient_pair.second);
 
       // cache[i] = decay_rate * cache[i] + (1 - decay_rate) * ((input_grad[i]/batch_size)^2)
