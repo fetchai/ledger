@@ -50,6 +50,17 @@ std::size_t AbstractLearnerNetworker::GetUpdateTypeCount(const std::string &key)
   throw std::runtime_error{"Requesting UpdateCount for unregistered type"};
 }
 
+AbstractLearnerNetworker::Bytes AbstractLearnerNetworker::GetUpdateAsBytes(const std::string &key)
+{
+  FETCH_LOCK(queue_map_m_);
+  auto iter = queue_map_.find(key);
+  if (iter != queue_map_.end())
+  {
+    return iter->second->PopAsBytes();
+  }
+  throw std::runtime_error{"Requesting GetUpdateAsBytes for unregistered type"};
+}
+
 void AbstractLearnerNetworker::NewMessage(Bytes const &msg)
 {
   FETCH_LOCK(queue_m_);
@@ -60,6 +71,7 @@ void AbstractLearnerNetworker::NewMessage(Bytes const &msg)
 void AbstractLearnerNetworker::NewMessage(const std::string &key, Bytes const &update)
 {
   FETCH_LOCK(queue_map_m_);
+  std::cout << "NewMessage(" << key << std::endl;
   auto iter = queue_map_.find(key);
   if (iter != queue_map_.end())
   {

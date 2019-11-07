@@ -17,32 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-
-#include "core/byte_array/byte_array.hpp"
+#include "network/service/protocol.hpp"
 
 namespace fetch {
 namespace dmlf {
+namespace colearn {
 
-class QueueInterface
+class MuddleLearnerNetworkerImpl;
+
+class ColearnProtocol: public fetch::service::Protocol
 {
 public:
-  using Bytes = byte_array::ByteArray;
-
-  QueueInterface()          = default;
-  virtual ~QueueInterface() = default;
-
-  virtual void        PushNewMessage(Bytes msg) = 0;
-  virtual std::size_t size() const              = 0;
-  virtual Bytes        PopAsBytes()             = 0;
-
-  QueueInterface(QueueInterface const &other) = delete;
-  QueueInterface &operator=(QueueInterface const &other)  = delete;
-  bool            operator==(QueueInterface const &other) = delete;
-  bool            operator<(QueueInterface const &other)  = delete;
-
+  enum
+  {
+    RPC_COLEARN_UPDATE,
+  };
+  explicit ColearnProtocol(MuddleLearnerNetworkerImpl &exec);
+protected:
 private:
 };
 
-}  // namespace dmlf
-}  // namespace fetch
+}
+}
+}
+

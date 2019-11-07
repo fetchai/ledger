@@ -1,8 +1,14 @@
 #include "dmlf/colearn/muddle_learner_networker_impl.hpp"
+#include "muddle/rpc/client.hpp"
+#include "dmlf/colearn/muddle_outbound_update_task.hpp"
 
 namespace fetch {
 namespace dmlf {
 namespace colearn {
+  void MuddleLearnerNetworkerImpl::addTarget(const std::string peer)
+  {
+    peers_.insert(peer);
+  }
 
   MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud)
     : mud_(mud)
@@ -12,6 +18,11 @@ namespace colearn {
     std::function<void(std::size_t thread_number)> run_tasks =
       std::bind(&Taskpool::run, taskpool.get(), std::placeholders::_1);
     tasks_runners -> start(5, run_tasks);
+
+    client_ = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+    proto_ = std::make_shared<ColearnProtocol>(*this);
+    server_ = std::make_shared<RpcServer>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+    server_->Add(RPC_COLEARN, proto_.get());
   }
   MuddleLearnerNetworkerImpl::~MuddleLearnerNetworkerImpl()
   {
@@ -23,7 +34,38 @@ namespace colearn {
   void MuddleLearnerNetworkerImpl::submit(const TaskP&t)
   {
     taskpool -> submit(t);
+  }
 
+  void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &key, const UpdateInterfacePtr &update)
+  {
+    std::cout << "UPDATE(" << key << std::endl;
+    auto bytes = update -> Serialise();
+    PushUpdateBytes(key, bytes);
+  }
+  void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &key, const Bytes &update)
+  {
+    std::cout << "UPDATE BYTES(" << key << std::endl;
+    for(const auto &peer : peers_)
+    {
+      std::cout << "TASKING SEND ("<<key<<")TO:" << peer << std::endl;
+      auto task = std::make_shared<MuddleOutboundUpdateTask>(peer, key, update, client_);
+      taskpool -> submit(task);
+    }
+  }
+
+  void MuddleLearnerNetworkerImpl::PushUpdate(const UpdateInterfacePtr &update)
+  {
+    PushUpdateType("", update);
+  }
+
+  uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(
+    service::CallContext const &context,
+    const std::string &type_name,
+    const byte_array::ByteArray &bytes)
+  {
+    std::cout << "NetworkColearnUpdate from "<< context.sender_address << std::endl;
+    NewMessage(type_name, bytes);
+    return 1;
   }
 }
 }

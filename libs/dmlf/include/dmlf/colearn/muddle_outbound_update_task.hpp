@@ -17,18 +17,45 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-base/threading/Task.hpp"
+#include "dmlf/update_interface.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "muddle/rpc/client.hpp"
+
 namespace fetch {
+namespace dmlf {
 namespace colearn {
-  
+
 class MuddleOutboundUpdateTask
+  : public Task
 {
 public:
-  MuddleOutboundUpdateTask()
+  using MuddlePtr = muddle::MuddlePtr;
+  using RpcClient       = fetch::muddle::rpc::Client;
+  using RpcClientPtr = std::shared_ptr<RpcClient>;
+  using Bytes = byte_array::ByteArray;
+
+  std::string target_;
+  std::string type_name_;
+  Bytes update_;
+  RpcClientPtr client_;
+
+  MuddleOutboundUpdateTask(const std::string &target,
+                           const std::string &type_name,
+                           const Bytes &update,
+                           RpcClientPtr client)
+    : target_(std::move(target))
+    , type_name_(type_name)
+    , update_(std::move(update))
+    , client_(client)
   {
   }
   virtual ~MuddleOutboundUpdateTask()
   {
   }
+
+  ExitState run() override;
+  bool      IsRunnable() const override;
 
   MuddleOutboundUpdateTask(MuddleOutboundUpdateTask const &other) = delete;
   MuddleOutboundUpdateTask &operator=(MuddleOutboundUpdateTask const &other) = delete;
@@ -38,5 +65,6 @@ protected:
 private:
 };
 
+}
 }
 }

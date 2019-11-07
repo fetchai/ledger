@@ -66,12 +66,14 @@ namespace {
     LNBaseP  interface;
     NetManP         netm_;
     MuddlePtr                                mud_;
+    std::string pub_;
 
-    LearnerTypedUpdates(const std::string &/*pub*/,
+    LearnerTypedUpdates(const std::string &pub,
                         const std::string &priv,
                         unsigned short int port,
                         unsigned short int remote = 0)
     {
+      pub_ = pub;
       auto ident = LoadIdentity(priv);
       netm_      = std::make_shared<NetMan>("LrnrNet", 4);
       netm_->Start();
@@ -97,6 +99,7 @@ namespace {
 
     void PretendToLearn()
     {
+      std::cout << "LEARN" << std::endl;
       static int sequence_number = 1;
       auto       t               = TensorType(TensorType::SizeType(2));
       t.Fill(DataType(sequence_number++));
@@ -146,6 +149,8 @@ namespace {
 TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
 {
   sleep(1);
+  server -> actual -> addTarget(client -> pub_);
+
   server->PretendToLearn();
 
   sleep(1);

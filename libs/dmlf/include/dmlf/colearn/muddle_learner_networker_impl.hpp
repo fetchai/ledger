@@ -22,6 +22,11 @@
 #include "oef-base/threading/Taskpool.hpp"
 #include "dmlf/update_interface.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "core/service_ids.hpp"
+#include "network/service/call_context.hpp"
+#include "dmlf/colearn/colearn_protocol.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -34,6 +39,13 @@ public:
   using TaskP = Taskpool::TaskP;
   using MuddlePtr = muddle::MuddlePtr;
   using UpdateInterfacePtr = dmlf::UpdateInterfacePtr;
+  using RpcClient       = fetch::muddle::rpc::Client;
+  using RpcClientPtr = std::shared_ptr<RpcClient>;
+  using Proto = ColearnProtocol;
+  using ProtoP = std::shared_ptr<ColearnProtocol>;
+  using RpcServer       = fetch::muddle::rpc::Server;
+  using RpcServerPtr = std::shared_ptr<RpcServer>;
+  using Bytes = byte_array::ByteArray;
 
   MuddleLearnerNetworkerImpl(MuddlePtr mud);
   ~MuddleLearnerNetworkerImpl() override;
@@ -43,10 +55,11 @@ public:
   bool operator==(MuddleLearnerNetworkerImpl const &other) = delete;
   bool operator<(MuddleLearnerNetworkerImpl const &other) = delete;
 
-  void PushUpdate(const UpdateInterfacePtr &/*update*/) override
-  {
-    // TODO
-  }
+  void addTarget(const std::string peer);
+
+  void PushUpdate(const UpdateInterfacePtr &update) override;
+  void PushUpdateType(const std::string &key, const UpdateInterfacePtr &update) override;
+  void PushUpdateBytes(const std::string &type_name, const Bytes &update);
 
   std::size_t GetPeerCount() const override
   {
@@ -55,11 +68,23 @@ public:
 
   virtual void submit(const TaskP&t);
 
+  // This is the exposed interface
+
+  uint64_t NetworkColearnUpdate(
+    service::CallContext const &context,
+    const std::string &type_name,
+    const byte_array::ByteArray &bytes);
+
 protected:
 private:
   std::shared_ptr<Taskpool> taskpool;
   std::shared_ptr<Threadpool> tasks_runners;
   MuddlePtr mud_;
+  RpcClientPtr client_;
+  RpcServerPtr server_;
+  ProtoP proto_;
+
+  std::unordered_set<std::string> peers_;
 
   friend class MuddleMessageHandler;
 };

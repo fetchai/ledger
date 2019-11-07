@@ -91,6 +91,8 @@ public:
 
   std::size_t GetUpdateTypeCount(const std::string &key) const;
 
+  Bytes GetUpdateAsBytes(const std::string &key);
+
   template <typename T>
   std::shared_ptr<T> GetUpdateType()
   {
