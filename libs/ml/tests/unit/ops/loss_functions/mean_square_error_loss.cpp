@@ -17,23 +17,22 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
-#include "math/tensor.hpp"
+#include "gtest/gtest.h"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
-
 #include <memory>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class MeanSquareErrorTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(MeanSquareErrorTest, MyTypes);
+TYPED_TEST_CASE(MeanSquareErrorTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
 {
@@ -225,3 +224,7 @@ TYPED_TEST(MeanSquareErrorTest, saveparams_two_dimensional_backward_test_with_we
                                fetch::math::function_tolerance<typename TypeParam::Type>()) *
       4);
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch
