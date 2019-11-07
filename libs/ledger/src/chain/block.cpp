@@ -29,8 +29,6 @@
 namespace fetch {
 namespace ledger {
 
-// Block::Block() = default;
-
 bool Block::operator==(Block const &rhs) const
 {
   // Invalid to compare blocks with no block hash
