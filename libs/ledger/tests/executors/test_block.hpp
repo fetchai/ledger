@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/constants.hpp"
+#include "ledger/chain/block.hpp"
 #include "ledger/execution_manager.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -172,7 +173,7 @@ struct TestBlock
   }
 
   static TestBlock Generate(std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
-                            Digest const &previous_hash = fetch::chain::GENESIS_DIGEST)
+                            Digest const &previous_hash = fetch::Block::zero)
   {
     TestBlock block;
     block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices, previous_hash);

@@ -576,7 +576,7 @@ private:
       }
       else
       {
-        if (node.first != chain::GENESIS_DIGEST)
+        if (node.first != Block::zero)
         {
           ++md.num_of_empty_blocks;
         }

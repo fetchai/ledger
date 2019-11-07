@@ -92,7 +92,7 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
   else
   {
     // update the previous hash
-    block->body.previous_hash = chain::GENESIS_DIGEST;
+    block->body.previous_hash = Block::zero;
     block->body.merkle_hash   = chain::GENESIS_MERKLE_ROOT;
     block->body.miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
   }
