@@ -29,7 +29,7 @@
 namespace fetch {
 namespace ledger {
 
-//Block::Block() = default;
+// Block::Block() = default;
 
 bool Block::operator==(Block const &rhs) const
 {
