@@ -10,4 +10,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-fetch_add_test(fetch-messenger-tests fetch-messenger unittests)
+fetch_add_slow_test(fetch-messenger-tests fetch-messenger unittests)

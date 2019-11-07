@@ -14,4 +14,4 @@ setup_compiler()
 # Test Targets
 # ------------------------------------------------------------------------------
 
-fetch_add_test(http-unit-tests fetch-http unit/)
+fetch_add_slow_test(http-unit-tests fetch-http unit/)

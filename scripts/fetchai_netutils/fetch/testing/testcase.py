@@ -13,6 +13,7 @@ from fetch.cluster.chain import ChainSyncTesting
 from fetchai.ledger.api.common import ApiEndpoint
 from fetchai.ledger.api import LedgerApi
 from fetchai.ledger.crypto import Entity
+from fetchai.ledger.genesis import *
 from fetch.cluster.chain import ChainSyncTesting
 
 
@@ -171,25 +172,7 @@ class ConstellationTestCase(TestCase):
 
     def setup_pos_for_nodes(self):
 
-        # Path to config files
-        expected_ouptut_dir = os.path.abspath(
-            os.path.dirname(self._yaml_file) + "/input_files")
-
-        # Create required files for this test
-        file_gen = os.path.abspath(
-            "./scripts/end_to_end_test/input_files/create-input-files.py")
-        verify_file(file_gen)
-        exit_code = subprocess.call([file_gen, str(self._number_of_nodes)])
-
-        infofile = expected_ouptut_dir + "/info.txt"
-
-        # Required files for this operation
-        verify_file(infofile)
-
-        # infofile specifies the address of each numbered key
-        all_lines_in_file = open(infofile, "r").readlines()
-
-        nodes_mining_identities = []
+        nodes_identities = []
 
         # First give each node that is mining a unique identity
         for index in range(self._number_of_nodes):
@@ -200,30 +183,18 @@ class ConstellationTestCase(TestCase):
             node = self._nodes[index]
 
             if node.mining:
-                node_key = all_lines_in_file[index].strip().split()[-1]
-
                 print('Setting up POS for node {}...'.format(index))
-                print('Giving node the identity: {}'.format(node_key))
+                print('Giving node the identity: {}'.format(
+                    node._entity.public_key))
 
-                nodes_mining_identities.append(node_key)
+            nodes_identities.append(
+                (node._entity, 100, 10000 if node.mining else 0))
 
-                key_path = expected_ouptut_dir + "/{}.key".format(index)
-                verify_file(key_path)
-
-                # Copy the keyfile from its location to the node's cwd
-                shutil.copy(key_path, node.root + "/p2p.key")
-
-        stake_gen = os.path.abspath("./scripts/generate-genesis-file.py")
-        verify_file(stake_gen)
-
-        # Create a stake file into the logging directory for all nodes
-        # Importantly, set the time to start
-        genesis_file_location = self._workspace + "/genesis_file.json"
-        cmd = [stake_gen, *nodes_mining_identities,
-               "-o", genesis_file_location, "-w", "10"]
-
-        # After giving the relevant nodes identities, make a stake file
-        exit_code = subprocess.call(cmd)
+        genesis_file = GenesisFile(
+            nodes_identities, 20, 5, self._block_interval)
+        genesis_file_location = os.path.abspath(
+            os.path.join(self._workspace, "genesis_file.json"))
+        genesis_file.dump_to_file(genesis_file_location)
 
         # Give all nodes this stake file, plus append POS flag for when node starts
         for index in range(self._number_of_nodes):
