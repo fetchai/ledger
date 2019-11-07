@@ -88,19 +88,21 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
     block->body.miner          = chain::Address{ident};
     block->body.log2_num_lanes = log2_num_lanes_;
     block->body.slices.resize(num_slices_);
+
+    block->UpdateTimestamp();
+
+    // compute the digest for the block
+    block->UpdateDigest();
   }
   else
   {
     // update the previous hash
     block->body.previous_hash = chain::ZERO_HASH;
+    block->body.hash          = chain::GENESIS_DIGEST;
     block->body.merkle_hash   = chain::GENESIS_MERKLE_ROOT;
     block->body.miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
+    block->UpdateTimestamp();
   }
-
-  block->UpdateTimestamp();
-
-  // compute the digest for the block
-  block->UpdateDigest();
 
   return block;
 }
