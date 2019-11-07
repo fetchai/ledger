@@ -61,6 +61,7 @@ public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
   using SizeType      = fetch::math::SizeType;
+    using SizeVector = fetch::math::SizeVector;
   using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpVariableSaveableParams<TensorType>;
@@ -139,8 +140,9 @@ public:
     return {error_signal};
   }
 
-  void AddToGradient(TensorType const &extern_grad)
+  void AddToGradient(TensorType const &extern_grad, SizeVector const &rows_updated)
   {
+    FETCH_UNUSED(rows_updated);
     if (!this->value_frozen_)
     {
       gradient_accumulation_->InlineAdd(extern_grad);
@@ -166,8 +168,9 @@ public:
     return false;
   }
 
-  void ApplyGradient(TensorType const &grad) override
+  void ApplyGradient(TensorType const &grad, SizeVector &update_rows) override
   {
+      FETCH_UNUSED(update_rows);
     if (!this->value_frozen_)
     {
       ApplyRegularisation();
@@ -209,6 +212,7 @@ public:
 protected:
   bool               reset_gradients_ = false;
   TensorPtrType      gradient_accumulation_;
+  SizeVector      updated_rows_;
   RegularisationType regularisation_type = RegularisationType::NONE;
   DataType           regularisation_rate = fetch::math::numeric_max<DataType>();
 

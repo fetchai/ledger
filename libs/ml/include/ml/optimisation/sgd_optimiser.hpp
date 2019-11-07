@@ -36,6 +36,7 @@ public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
   using SizeType   = fetch::math::SizeType;
+    using SizeVector = fetch::math::SizeVector;
 
   SGDOptimiser() = default;
   SGDOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
@@ -96,14 +97,22 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
   DataType neg_learning_rate_div_batch_size =
       (-this->learning_rate_) / static_cast<DataType>(batch_size);
 
+
+  std::vector<SizeVector> rows;
+
   while (gradient_it != this->gradients_.end())
   {
     // Skip frozen trainables
     if (!(*trainable_it)->GetFrozenState())
     {
 
+      std::pair<TensorType const &, SizeVector const &> gradient_pair=(*trainable_it)->GetSparseGradientsReferences();
+      rows.push_back(gradient_pair.second);
+
+      // TODO: Do Slicing and apply for each slice
+
       // output_grad[i] = (input_grad[i] / batch_size) * -learning_rate
-      fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
+      fetch::math::Multiply(gradient_pair.first,
                             neg_learning_rate_div_batch_size, *gradient_it);
 
       // we need to explicitly reset the gradients for this shared op to avoid double counting
@@ -115,7 +124,7 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
   }
 
   // calling apply gradients on the graph ensures that the node caches are reset properly
-  this->graph_->ApplyGradients(this->gradients_);
+  this->graph_->ApplyGradients(this->gradients_,rows);
 }
 
 }  // namespace optimisers
