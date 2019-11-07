@@ -29,11 +29,7 @@
 namespace fetch {
 namespace ledger {
 
-constexpr std::size_t Block::hash_size;
-
-const Block::zero = Block::Hash(Block::hash_size);
-
-Block::Block() = default;
+//Block::Block() = default;
 
 bool Block::operator==(Block const &rhs) const
 {
@@ -102,7 +98,7 @@ void Block::UpdateTimestamp()
 
 bool Block::IsGenesis() const
 {
-  return body.previous_hash == zero;
+  return body.previous_hash == chain::ZERO_HASH;
 }
 
 }  // namespace ledger

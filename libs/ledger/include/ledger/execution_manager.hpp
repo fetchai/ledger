@@ -106,7 +106,7 @@ private:
   struct Summary
   {
     State          state{State::IDLE};
-    Digest         last_block_hash{Block::zero};
+    Digest         last_block_hash{chain::ZERO_HASH};
     chain::Address last_block_miner{};
   };
 

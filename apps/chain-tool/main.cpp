@@ -124,15 +124,15 @@ struct ChainHeadStore
 
 struct BlockNode
 {
-  using BlockChilds = Blocks;
+  using BlockChildren = Blocks;
 
   BlockDbRecord db_record;
-  BlockChilds   childs;
+  BlockChildren children;
   bool          is_block_set;
 
-  BlockNode(BlockDbRecord block_, BlockChilds childs_, bool is_block_set)
-    : db_record{std::move(block_)}
-    , childs{std::move(childs_)}
+  BlockNode(BlockDbRecord block, BlockChildren children, bool is_block_set)
+    : db_record{std::move(block)}
+    , children{std::move(children)}
     , is_block_set{is_block_set}
   {}
 
@@ -211,7 +211,7 @@ class BlockChainForwardTree
 
     RecursionContext(BlockNode const &node_, BlockChain const &parent_chain)
       : node{&node_}
-      , curr_child_itr{node_.childs.cbegin()}
+      , curr_child_itr{node_.children.cbegin()}
       , chain{parent_chain, node_}
     {}
 
@@ -504,9 +504,9 @@ private:
     auto const  end{block_store.end()};
     for (auto it{block_store.begin()}; it != end; ++it)
     {
-      BlockNode  new_node{*it, BlockNode::BlockChilds{}, true};
+      BlockNode  new_node{*it, BlockNode::BlockChildren{}, true};
       auto const new_node_hash{new_node.db_record.hash()};
-      auto       node_it{bch.find(new_node.db_record.hash())};
+      auto       node_it{bch.find(new_node_hash)};
 
       if (node_it != bch.cend())
       {
@@ -530,14 +530,14 @@ private:
       auto parent_it{bch.find(node_it->second.db_record.block.body.previous_hash)};
       if (parent_it != bch.cend())
       {
-        parent_it->second.childs.emplace(new_node_hash);
+        parent_it->second.children.insert(new_node_hash);
       }
       else
       {
         // parent_it = bch.emplace(node_it->second.db_record.block.body.previous_hash,
-        // BlockNode{BlockDbRecord{}, BlockNode::BlockChilds{new_node_hash}, false}).first;
+        // BlockNode{BlockDbRecord{}, BlockNode::BlockChildren{new_node_hash}, false}).first;
         bch.emplace(node_it->second.db_record.block.body.previous_hash,
-                    BlockNode{BlockDbRecord{}, BlockNode::BlockChilds{new_node_hash}, false});
+                    BlockNode{BlockDbRecord{}, BlockNode::BlockChildren{new_node_hash}, false});
       }
 
       // TODO(pb): This check is supposed to be compiled in, but it can't, since ledger node sets
@@ -576,7 +576,7 @@ private:
       }
       else
       {
-        if (node.first != chain::GENESIS_DIGEST)
+        if (node.first != chain::ZERO_HASH)
         {
           ++md.num_of_empty_blocks;
         }
@@ -637,7 +637,7 @@ bool BlockChainForwardTree::RecursionContext::RecurseInternal(
   auto &                                      curr{stack.back()};
   BlockChainForwardTree::Tree::const_iterator child_block_itr;
 
-  if (curr.curr_child_itr != curr.node->childs.cend() &&
+  if (curr.curr_child_itr != curr.node->children.cend() &&
       (child_block_itr = block_tree.tree.find(*curr.curr_child_itr)) != block_tree.tree.cend())
   {
     stack.emplace_back(child_block_itr->second, curr.chain);
@@ -654,7 +654,7 @@ bool BlockChainForwardTree::RecursionContext::RecurseInternal(
       std::cerr.flush();
     }
 
-    if (curr.node->childs.empty())
+    if (curr.node->children.empty())
     {
       chains.emplace(curr.chain);
     }

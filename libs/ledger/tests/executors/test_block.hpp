@@ -173,7 +173,7 @@ struct TestBlock
   }
 
   static TestBlock Generate(std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
-                            Digest const &previous_hash = fetch::Block::zero)
+                            Digest const &previous_hash = fetch::chain::ZERO_HASH)
   {
     TestBlock block;
     block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices, previous_hash);

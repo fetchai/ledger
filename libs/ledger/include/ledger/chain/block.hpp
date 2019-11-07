@@ -53,10 +53,7 @@ public:
   using Identity     = crypto::Identity;
   using SystemClock  = moment::ClockPtr;
 
-  static constexpr std::size_t hash_size = 32;
-  static const Hash zero;
-
-  Block();
+  Block() = default;
 
   bool operator==(Block const &rhs) const;
 

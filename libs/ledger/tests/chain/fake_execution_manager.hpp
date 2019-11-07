@@ -47,6 +47,6 @@ private:
 
   Digest      current_hash_;
   Digest      current_merkle_root_;
-  Digest      last_processed_{fetch::Block::zero};
+  Digest      last_processed_{fetch::chain::ZERO_HASH};
   std::size_t current_polls_{0};
 };

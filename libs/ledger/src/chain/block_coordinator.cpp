@@ -95,7 +95,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , block_sink_{block_sink}
   , periodic_print_{STATE_NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
-  , last_executed_block_{Block::zero}
+  , last_executed_block_{chain::ZERO_HASH}
   , certificate_{std::move(prover)}
   , mining_address_{certificate_->identity()}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
@@ -319,11 +319,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   FETCH_UNUSED(current_dag_epoch);
 
   // initial condition, the last processed block is empty
-  if (Block::zero == last_processed_block)
+  if (chain::ZERO_HASH == last_processed_block)
   {
     // start up - we need to work out which of the blocks has been executed previously
 
-    if (Block::zero == previous_hash)
+    if (chain::ZERO_HASH == previous_hash)
     {
       // once we have got back to genesis then we need to start executing from the beginning
       return State::PRE_EXEC_BLOCK_VALIDATION;
@@ -405,7 +405,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
                       " merkle hash: 0x", common_parent->body.merkle_hash.ToHex());
 
       // this is a bad situation so the easiest solution is to revert back to genesis
-      execution_manager_.SetLastProcessedBlock(Block::zero);
+      execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
       if (!storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0))
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
@@ -892,7 +892,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
         dag_->RevertToEpoch(0);
       }
       storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0);
-      execution_manager_.SetLastProcessedBlock(Block::zero);
+      execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
     }
 
     // finally mark the block as invalid and purge it from the chain
@@ -1318,8 +1318,8 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
 
 void BlockCoordinator::Reset()
 {
-  last_executed_block_.ApplyVoid([](auto &digest) { digest = Block::zero; });
-  execution_manager_.SetLastProcessedBlock(Block::zero);
+  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::ZERO_HASH; });
+  execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
   chain_.Reset();
 }
 

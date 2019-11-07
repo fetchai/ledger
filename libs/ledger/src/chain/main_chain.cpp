@@ -1453,7 +1453,7 @@ bool MainChain::ReindexTips()
 MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 {
   auto genesis                = std::make_shared<Block>();
-  genesis->body.previous_hash = Block::zero;
+  genesis->body.previous_hash = chain::ZERO_HASH;
   genesis->body.hash          = chain::GENESIS_DIGEST;
   genesis->body.merkle_hash   = chain::GENESIS_MERKLE_ROOT;
   genesis->body.miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
@@ -1518,7 +1518,7 @@ MainChain::BlockHash MainChain::GetHeadHash()
 
 void MainChain::SetHeadHash(BlockHash const &hash)
 {
-  assert(hash.size() == Block::hash_size);
+  assert(hash.size() == chain::HASH_SIZE);
 
   // move to the beginning of the file and write out the hash
   head_store_.seekp(0);
