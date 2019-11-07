@@ -47,7 +47,6 @@ public:
   {
     NONE,
     TENSOR,
-    MNIST,
     COMMODITY
   };
 
@@ -87,14 +86,6 @@ public:
    */
   void AddCommodityData(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
                         fetch::vm::Ptr<fetch::vm::String> const &yfilename);
-
-  /**
-   * Add data to mnist data loader
-   * @param xfilename
-   * @param yfilename
-   */
-  void AddMnistData(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
-                    fetch::vm::Ptr<fetch::vm::String> const &yfilename);
 
   /**
    * Add data to tensor data loader
@@ -164,10 +155,6 @@ struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
       {
         throw std::runtime_error("commodity dataloader serialization not yet implemented");
       }
-      case vm_modules::ml::VMDataLoader::DataLoaderMode::MNIST:
-      {
-        throw std::runtime_error("mnist dataloader serialization not yet implemented");
-      }
       case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
       {
         auto tdl_ptr = std::static_pointer_cast<fetch::ml::dataloaders::TensorDataLoader<
@@ -205,10 +192,6 @@ struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
       case vm_modules::ml::VMDataLoader::DataLoaderMode::COMMODITY:
       {
         throw std::runtime_error("commodity dataloader deserialization not yet implemented");
-      }
-      case vm_modules::ml::VMDataLoader::DataLoaderMode::MNIST:
-      {
-        throw std::runtime_error("mnist dataloader deserialization not yet implemented");
       }
       case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
       {

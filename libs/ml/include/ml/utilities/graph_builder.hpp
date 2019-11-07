@@ -69,6 +69,7 @@
 #include "ml/ops/subtract.hpp"
 #include "ml/ops/switch.hpp"
 #include "ml/ops/tanh.hpp"
+#include "ml/ops/top_k.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/saveparams/saveable_params.hpp"
@@ -454,6 +455,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case ops::OneHot<T>::OpCode():
   {
     op_ptr = GetOp<ops::OneHot<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::TopK<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::TopK<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;

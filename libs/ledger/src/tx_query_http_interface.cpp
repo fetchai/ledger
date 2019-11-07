@@ -59,7 +59,7 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
         // convert the digest back to binary
         auto const digest = FromHex(params["digest"]);
 
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Querying tx: 0x", digest.ToHex());
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Querying tx: ", digest.ToBase64());
 
         // attempt to look up the transaction
         Transaction tx;
