@@ -45,12 +45,13 @@ namespace {
 
 // Benchmark categories can be selectively suppressed using environment variables
 const bool
-    run_basic = strcmp(std::getenv("FETCH_VM_BENCHMARK_NO_BASIC"), "true"),
-    run_object = strcmp(std::getenv("FETCH_VM_BENCHMARK_NO_OBJECT"), "true"),
-    run_prim_ops = strcmp(std::getenv("FETCH_VM_BENCHMARK_NO_PRIM_OPS"), "true"),
-    run_math = strcmp(std::getenv("FETCH_VM_BENCHMARK_NO_MATH"), "true"),
-    run_array = strcmp(std::getenv("FETCH_VM_BENCHMARK_NO_ARRAY"), "true"),
-    run_crypto = strcmp(std::getenv("FETCH_VM_BENCHMARK_NO_CRYPTO"), "true");
+    run_basic = std::getenv("FETCH_VM_BENCHMARK_NO_BASIC") == nullptr,
+    run_object = std::getenv("FETCH_VM_BENCHMARK_NO_OBJECT") == nullptr,
+    run_prim_ops = std::getenv("FETCH_VM_BENCHMARK_NO_PRIM_OPS") == nullptr,
+    run_math = std::getenv("FETCH_VM_BENCHMARK_NO_MATH") == nullptr,
+    run_array = std::getenv("FETCH_VM_BENCHMARK_NO_ARRAY") == nullptr,
+    run_tensor = std::getenv("FETCH_VM_BENCHMARK_NO_TENSOR") == nullptr,
+    run_crypto = std::getenv("FETCH_VM_BENCHMARK_NO_CRYPTO") == nullptr;
 
 // Number of benchmarks in each category
 const u_int
@@ -59,6 +60,7 @@ const u_int
     n_prim_bms = 25,
     n_math_bms = 16,
     n_array_bms = 10,
+    n_tensor_bms = 4,
     n_crypto_bms = 4;
 
 // Size of parameter lists for parameterized benchmarks
@@ -66,7 +68,8 @@ const u_int
     n_primitives = 12,
     n_dec_primitives = 4,
     n_str_lens = 10,
-    n_array_lens = 12;
+    n_array_lens = 12,
+    n_tensor_sizes = 24;
 
 // Index benchmarks for interpretation by "scripts/benchmark/opcode_timing.py"
 const u_int
@@ -80,7 +83,9 @@ const u_int
     math_end = math_begin + n_math_bms * n_dec_primitives,
     array_begin = math_end,
     array_end = array_begin + n_array_bms * n_array_lens,
-    crypto_begin = array_end,
+    tensor_begin = array_end,
+    tensor_end = tensor_begin + n_tensor_bms * n_tensor_sizes,
+    crypto_begin = tensor_end,
     crypto_end = crypto_begin + n_crypto_bms - 1 + n_str_lens;
 
 // Main benchmark function - compiles and runs Etch code snippets and saves opcodes to file
@@ -117,7 +122,7 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
   std::string error{};
   Variant output{};
   for (auto _ : state) {
-    // vm.Execute(executable, "main", error, output);
+    vm.Execute(executable, "main", error, output);
   }
 
   auto function = executable.FindFunction("main");
@@ -189,6 +194,16 @@ std::string ArrayExtend(std::string const &arr1, std::string const &arr2) {
 
 std::string ArrayErase(std::string const &arr, std::string const &ind) {
   return arr + ".erase(" + ind + ");\n";
+}
+
+std::string TensorDec(std::string const &tensor, std::string const &prim, std::string const &tensor_shape,
+                      std::string const &tensor_size, const u_int tensor_dim) {
+  auto tensor_dec = ArrayDec(tensor_shape, prim, std::to_string(tensor_dim));
+  for (u_int i = 0; i != tensor_dim; ++i) {
+    tensor_dec += ArrayAss(tensor_shape, std::to_string(i), tensor_size);
+  }
+  tensor_dec += "var " + tensor + " = Tensor(" + tensor_shape + ");\n";
+  return tensor_dec;
 }
 
 std::string Sha256Update(u_int str_len) {
@@ -287,30 +302,30 @@ void ObjectBenchmarks(benchmark::State &state) {
       GTE("x >= x;\n");
 
   const std::pair<std::string, std::string>
-      PUSH_STRING("PushString" + length, FunMain(str + ";\n")),
-      VAR_DEC_ASS_STRING("VariableDeclareAssignString" + length, FunMain(VarDecAss(STRING, str))),
-      PUSH_VAR_STRING("PushVariableString" + length, FunMain(VarDecAss(STRING, str) + PUSH)),
-      OBJ_EQ("ObjectEqualString" + length, FunMain(VarDecAss(STRING, str) + EQ)),
-      OBJ_NEQ("ObjectNotEqualString" + length, FunMain(VarDecAss(STRING, str) + NEQ)),
-      OBJ_LT("ObjectLessThanString" + length, FunMain(VarDecAss(STRING, str) + LT)),
-      OBJ_GT("ObjectGreaterThanString" + length, FunMain(VarDecAss(STRING, str) + GT)),
-      OBJ_LTE("ObjectLessThanOrEqualString" + length, FunMain(VarDecAss(STRING, str) + LTE)),
-      OBJ_GTE("ObjectGreaterThanOrEqualString" + length, FunMain(VarDecAss(STRING, str) + GTE)),
-      OBJ_ADD("ObjectAddString" + length, FunMain(VarDecAss(STRING, str) + ADD));
+      PUSH_STRING("PushString_" + length, FunMain(str + ";\n")),
+      VAR_DEC_ASS_STRING("VariableDeclareAssignString_" + length, FunMain(VarDecAss(STRING, str))),
+      PUSH_VAR_STRING("PushVariableString_" + length, FunMain(VarDecAss(STRING, str) + PUSH)),
+      OBJ_EQ("ObjectEqualString_" + length, FunMain(VarDecAss(STRING, str) + EQ)),
+      OBJ_NEQ("ObjectNotEqualString_" + length, FunMain(VarDecAss(STRING, str) + NEQ)),
+      OBJ_LT("ObjectLessThanString_" + length, FunMain(VarDecAss(STRING, str) + LT)),
+      OBJ_GT("ObjectGreaterThanString_" + length, FunMain(VarDecAss(STRING, str) + GT)),
+      OBJ_LTE("ObjectLessThanOrEqualString_" + length, FunMain(VarDecAss(STRING, str) + LTE)),
+      OBJ_GTE("ObjectGreaterThanOrEqualString_" + length, FunMain(VarDecAss(STRING, str) + GTE)),
+      OBJ_ADD("ObjectAddString_" + length, FunMain(VarDecAss(STRING, str) + ADD));
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
       baselineMap({
-                      {"PushString" + length,                     "Return"},
-                      {"VariableDeclareAssignString" + length,    "Return"},
-                      {"PushVariableString" + length,             "VariableDeclareAssignString" + length},
-                      {"ObjectEqualString" + length,              "PushVariableString" + length},
-                      {"ObjectNotEqualString" + length,           "PushVariableString" + length},
-                      {"ObjectLessThanString" + length,           "PushVariableString" + length},
-                      {"ObjectLessThanOrEqualString" + length,    "PushVariableString" + length},
-                      {"ObjectGreaterThanString" + length,        "PushVariableString" + length},
-                      {"ObjectGreaterThanOrEqualString" + length, "PushVariableString" + length},
-                      {"ObjectAddString" + length,                "PushVariableString" + length}
+                      {"PushString_" + length,                     "Return"},
+                      {"VariableDeclareAssignString_" + length,    "Return"},
+                      {"PushVariableString_" + length,             "VariableDeclareAssignString_" + length},
+                      {"ObjectEqualString_" + length,              "PushVariableString_" + length},
+                      {"ObjectNotEqualString_" + length,           "PushVariableString_" + length},
+                      {"ObjectLessThanString_" + length,           "PushVariableString_" + length},
+                      {"ObjectLessThanOrEqualString_" + length,    "PushVariableString_" + length},
+                      {"ObjectGreaterThanString_" + length,        "PushVariableString_" + length},
+                      {"ObjectGreaterThanOrEqualString_" + length, "PushVariableString_" + length},
+                      {"ObjectAddString_" + length,                "PushVariableString_" + length}
                   });
 
   std::vector<std::pair<std::string, std::string>> const
@@ -365,64 +380,64 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
       INP_MOD("x %= x;\n");
 
   const std::pair<std::string, std::string>
-      RET_VAL = std::make_pair("PrimReturnValue" + prim, FunMainRet("return " + val + ";\n", prim)),
-      VAR_DEC = std::make_pair("PrimVariableDeclare" + prim, FunMain(VarDec(prim))),
-      VAR_DEC_ASS = std::make_pair("PrimVariableDeclareAssign" + prim, FunMain(VarDecAss(prim, val))),
-      PUSH_CONST = std::make_pair("PrimPushConst" + prim, FunMain(val + ";\n")),
-      PUSH_VAR = std::make_pair("PrimPushVariable" + prim, FunMain(VarDecAss(prim, val) + PUSH)),
-      POP_TO_VAR = std::make_pair("PrimPopToVariable" + prim, FunMain(VarDecAss(prim, val) + POP)),
-      PRIM_ADD = std::make_pair("PrimAdd" + prim, FunMain(VarDecAss(prim, val) + ADD)),
-      PRIM_SUB = std::make_pair("PrimSubtract" + prim, FunMain(VarDecAss(prim, val) + SUB)),
-      PRIM_MUL = std::make_pair("PrimMultiply" + prim, FunMain(VarDecAss(prim, val) + MUL)),
-      PRIM_DIV = std::make_pair("PrimDivide" + prim, FunMain(VarDecAss(prim, val) + DIV)),
-      PRIM_MOD = std::make_pair("PrimModulo" + prim, FunMain(VarDecAss(prim, val) + MOD)),
-      PRIM_NEG = std::make_pair("PrimNegate" + prim, FunMain(VarDecAss(prim, val) + NEG)),
-      PRIM_EQ = std::make_pair("PrimEqual" + prim, FunMain(VarDecAss(prim, val) + EQ)),
-      PRIM_NEQ = std::make_pair("PrimNotEqual" + prim, FunMain(VarDecAss(prim, val) + NEQ)),
-      PRIM_LT = std::make_pair("PrimLessThan" + prim, FunMain(VarDecAss(prim, val) + LT)),
-      PRIM_GT = std::make_pair("PrimGreaterThan" + prim, FunMain(VarDecAss(prim, val) + GT)),
-      PRIM_LTE = std::make_pair("PrimLessThanOrEqual" + prim, FunMain(VarDecAss(prim, val) + LTE)),
-      PRIM_GTE = std::make_pair("PrimGreaterThanOrEqual" + prim, FunMain(VarDecAss(prim, val) + GTE)),
-      PRIM_PRE_INC = std::make_pair("PrimVariablePrefixInc" + prim, FunMain(VarDecAss(prim, val) + PRE_INC)),
-      PRIM_PRE_DEC = std::make_pair("PrimVariablePrefixDec" + prim, FunMain(VarDecAss(prim, val) + PRE_DEC)),
-      PRIM_POST_INC = std::make_pair("PrimVariablePostfixInc" + prim, FunMain(VarDecAss(prim, val) + POST_INC)),
-      PRIM_POST_DEC = std::make_pair("PrimVariablePostfixDec" + prim, FunMain(VarDecAss(prim, val) + POST_DEC)),
-      VAR_PRIM_INP_ADD = std::make_pair("PrimVariableInplaceAdd" + prim, FunMain(VarDecAss(prim, val) + INP_ADD)),
-      VAR_PRIM_INP_SUB = std::make_pair("PrimVariableInplaceSubtract" + prim, FunMain(VarDecAss(prim, val) + INP_SUB)),
-      VAR_PRIM_INP_MUL = std::make_pair("PrimVariableInplaceMultiply" + prim, FunMain(VarDecAss(prim, val) + INP_MUL)),
-      VAR_PRIM_INP_DIV = std::make_pair("PrimVariableInplaceDivide" + prim, FunMain(VarDecAss(prim, val) + INP_DIV)),
-      VAR_PRIM_INP_MOD = std::make_pair("PrimVariableInplaceModulo" + prim, FunMain(VarDecAss(prim, val) + INP_MOD));
+      RET_VAL = std::make_pair("PrimReturnValue_" + prim, FunMainRet("return " + val + ";\n", prim)),
+      VAR_DEC = std::make_pair("PrimVariableDeclare_" + prim, FunMain(VarDec(prim))),
+      VAR_DEC_ASS = std::make_pair("PrimVariableDeclareAssign_" + prim, FunMain(VarDecAss(prim, val))),
+      PUSH_CONST = std::make_pair("PrimPushConst_" + prim, FunMain(val + ";\n")),
+      PUSH_VAR = std::make_pair("PrimPushVariable_" + prim, FunMain(VarDecAss(prim, val) + PUSH)),
+      POP_TO_VAR = std::make_pair("PrimPopToVariable_" + prim, FunMain(VarDecAss(prim, val) + POP)),
+      PRIM_ADD = std::make_pair("PrimAdd_" + prim, FunMain(VarDecAss(prim, val) + ADD)),
+      PRIM_SUB = std::make_pair("PrimSubtract_" + prim, FunMain(VarDecAss(prim, val) + SUB)),
+      PRIM_MUL = std::make_pair("PrimMultiply_" + prim, FunMain(VarDecAss(prim, val) + MUL)),
+      PRIM_DIV = std::make_pair("PrimDivide_" + prim, FunMain(VarDecAss(prim, val) + DIV)),
+      PRIM_MOD = std::make_pair("PrimModulo_" + prim, FunMain(VarDecAss(prim, val) + MOD)),
+      PRIM_NEG = std::make_pair("PrimNegate_" + prim, FunMain(VarDecAss(prim, val) + NEG)),
+      PRIM_EQ = std::make_pair("PrimEqual_" + prim, FunMain(VarDecAss(prim, val) + EQ)),
+      PRIM_NEQ = std::make_pair("PrimNotEqual_" + prim, FunMain(VarDecAss(prim, val) + NEQ)),
+      PRIM_LT = std::make_pair("PrimLessThan_" + prim, FunMain(VarDecAss(prim, val) + LT)),
+      PRIM_GT = std::make_pair("PrimGreaterThan_" + prim, FunMain(VarDecAss(prim, val) + GT)),
+      PRIM_LTE = std::make_pair("PrimLessThanOrEqual_" + prim, FunMain(VarDecAss(prim, val) + LTE)),
+      PRIM_GTE = std::make_pair("PrimGreaterThanOrEqual_" + prim, FunMain(VarDecAss(prim, val) + GTE)),
+      PRIM_PRE_INC = std::make_pair("PrimVariablePrefixInc_" + prim, FunMain(VarDecAss(prim, val) + PRE_INC)),
+      PRIM_PRE_DEC = std::make_pair("PrimVariablePrefixDec_" + prim, FunMain(VarDecAss(prim, val) + PRE_DEC)),
+      PRIM_POST_INC = std::make_pair("PrimVariablePostfixInc_" + prim, FunMain(VarDecAss(prim, val) + POST_INC)),
+      PRIM_POST_DEC = std::make_pair("PrimVariablePostfixDec_" + prim, FunMain(VarDecAss(prim, val) + POST_DEC)),
+      VAR_PRIM_INP_ADD = std::make_pair("PrimVariableInplaceAdd_" + prim, FunMain(VarDecAss(prim, val) + INP_ADD)),
+      VAR_PRIM_INP_SUB = std::make_pair("PrimVariableInplaceSubtract_" + prim, FunMain(VarDecAss(prim, val) + INP_SUB)),
+      VAR_PRIM_INP_MUL = std::make_pair("PrimVariableInplaceMultiply_" + prim, FunMain(VarDecAss(prim, val) + INP_MUL)),
+      VAR_PRIM_INP_DIV = std::make_pair("PrimVariableInplaceDivide_" + prim, FunMain(VarDecAss(prim, val) + INP_DIV)),
+      VAR_PRIM_INP_MOD = std::make_pair("PrimVariableInplaceModulo_" + prim, FunMain(VarDecAss(prim, val) + INP_MOD));
 
 //Define{benchmark,baseline}pairs
   std::unordered_map<std::string, std::string>
       baselineMap({
-                      {"PrimReturnValue" + prim,             "Return"},
-                      {"PrimVariableDeclare" + prim,         "Return"},
-                      {"PrimVariableDeclareAssign" + prim,   "Return"},
-                      {"PrimPushConst" + prim,               "Return"},
-                      {"PrimPushVariable" + prim,            "PrimPushConst" + prim},
-                      {"PrimPopToVariable" + prim,           "PrimVariableDeclareAssign" + prim},
-                      {"PrimAdd" + prim,                     "PrimPushVariable" + prim},
-                      {"PrimSubtract" + prim,                "PrimPushVariable" + prim},
-                      {"PrimMultiply" + prim,                "PrimPushVariable" + prim},
-                      {"PrimDivide" + prim,                  "PrimPushVariable" + prim},
-                      {"PrimModulo" + prim,                  "PrimPushVariable" + prim},
-                      {"PrimNegate" + prim,                  "PrimPushVariable" + prim},
-                      {"PrimEqual" + prim,                   "PrimPushVariable" + prim},
-                      {"PrimNotEqual" + prim,                "PrimPushVariable" + prim},
-                      {"PrimLessThan" + prim,                "PrimPushVariable" + prim},
-                      {"PrimGreaterThan" + prim,             "PrimPushVariable" + prim},
-                      {"PrimLessThanOrEqual" + prim,         "PrimPushVariable" + prim},
-                      {"PrimGreaterThanOrEqual" + prim,      "PrimPushVariable" + prim},
-                      {"PrimVariablePrefixInc" + prim,       "PrimVariableDeclareAssign" + prim},
-                      {"PrimVariablePrefixDec" + prim,       "PrimVariableDeclareAssign" + prim},
-                      {"PrimVariablePostfixInc" + prim,      "PrimVariableDeclareAssign" + prim},
-                      {"PrimVariablePostfixDec" + prim,      "PrimVariableDeclareAssign" + prim},
-                      {"PrimVariableInplaceAdd" + prim,      "PrimVariableDeclareAssign" + prim},
-                      {"PrimVariableInplaceSubtract" + prim, "PrimVariableDeclareAssign" + prim},
-                      {"PrimVariableInplaceMultiply" + prim, "PrimVariableDeclareAssign" + prim},
-                      {"PrimVariableInplaceDivide" + prim,   "PrimVariableDeclareAssign" + prim},
-                      {"PrimVariableInplaceModulo" + prim,   "PrimVariableDeclareAssign" + prim}
+                      {"PrimReturnValue_" + prim,             "Return"},
+                      {"PrimVariableDeclare_" + prim,         "Return"},
+                      {"PrimVariableDeclareAssign_" + prim,   "Return"},
+                      {"PrimPushConst_" + prim,               "Return"},
+                      {"PrimPushVariable_" + prim,            "PrimPushConst_" + prim},
+                      {"PrimPopToVariable_" + prim,           "PrimVariableDeclareAssign_" + prim},
+                      {"PrimAdd_" + prim,                     "PrimPushVariable_" + prim},
+                      {"PrimSubtract_" + prim,                "PrimPushVariable_" + prim},
+                      {"PrimMultiply_" + prim,                "PrimPushVariable_" + prim},
+                      {"PrimDivide_" + prim,                  "PrimPushVariable_" + prim},
+                      {"PrimModulo_" + prim,                  "PrimPushVariable_" + prim},
+                      {"PrimNegate_" + prim,                  "PrimPushVariable_" + prim},
+                      {"PrimEqual_" + prim,                   "PrimPushVariable_" + prim},
+                      {"PrimNotEqual_" + prim,                "PrimPushVariable_" + prim},
+                      {"PrimLessThan_" + prim,                "PrimPushVariable_" + prim},
+                      {"PrimGreaterThan_" + prim,             "PrimPushVariable_" + prim},
+                      {"PrimLessThanOrEqual_" + prim,         "PrimPushVariable_" + prim},
+                      {"PrimGreaterThanOrEqual_" + prim,      "PrimPushVariable_" + prim},
+                      {"PrimVariablePrefixInc_" + prim,       "PrimVariableDeclareAssign_" + prim},
+                      {"PrimVariablePrefixDec_" + prim,       "PrimVariableDeclareAssign_" + prim},
+                      {"PrimVariablePostfixInc_" + prim,      "PrimVariableDeclareAssign_" + prim},
+                      {"PrimVariablePostfixDec_" + prim,      "PrimVariableDeclareAssign_" + prim},
+                      {"PrimVariableInplaceAdd_" + prim,      "PrimVariableDeclareAssign_" + prim},
+                      {"PrimVariableInplaceSubtract_" + prim, "PrimVariableDeclareAssign_" + prim},
+                      {"PrimVariableInplaceMultiply_" + prim, "PrimVariableDeclareAssign_" + prim},
+                      {"PrimVariableInplaceDivide_" + prim,   "PrimVariableDeclareAssign_" + prim},
+                      {"PrimVariableInplaceModulo_" + prim,   "PrimVariableDeclareAssign_" + prim}
                   });
 
   std::vector<std::pair<std::string, std::string>> const
@@ -474,44 +489,44 @@ void MathBenchmarks(benchmark::State &state) {
       POW("pow(x,x);\n");
 
   std::pair<std::string, std::string>
-      PRIM_ABS = std::make_pair("MathAbs" + prim, FunMain(VarDecAss(prim, val) + ABS)),
-      PRIM_SIN = std::make_pair("MathSin" + prim, FunMain(VarDecAss(prim, val) + SIN)),
-      PRIM_COS = std::make_pair("MathCos" + prim, FunMain(VarDecAss(prim, val) + COS)),
-      PRIM_TAN = std::make_pair("MathTan" + prim, FunMain(VarDecAss(prim, val) + TAN)),
-      PRIM_ASIN = std::make_pair("MathAsin" + prim, FunMain(VarDecAss(prim, val) + ASIN)),
-      PRIM_ACOS = std::make_pair("MathAcos" + prim, FunMain(VarDecAss(prim, val) + ACOS)),
-      PRIM_ATAN = std::make_pair("MathAtan" + prim, FunMain(VarDecAss(prim, val) + ATAN)),
-      PRIM_SINH = std::make_pair("MathSinh" + prim, FunMain(VarDecAss(prim, val) + SINH)),
-      PRIM_COSH = std::make_pair("MathCosh" + prim, FunMain(VarDecAss(prim, val) + COSH)),
-      PRIM_TANH = std::make_pair("MathTanh" + prim, FunMain(VarDecAss(prim, val) + TANH)),
-      PRIM_ASINH = std::make_pair("MathAsinh" + prim, FunMain(VarDecAss(prim, val) + ASINH)),
-      PRIM_ACOSH = std::make_pair("MathAcosh" + prim, FunMain(VarDecAss(prim, alt_val) + ACOSH)),
-      PRIM_ATANH = std::make_pair("MathAtanh" + prim, FunMain(VarDecAss(prim, val) + ATANH)),
-      PRIM_SQRT = std::make_pair("MathSqrt" + prim, FunMain(VarDecAss(prim, val) + SQRT)),
-      PRIM_EXP = std::make_pair("MathExp" + prim, FunMain(VarDecAss(prim, val) + EXP)),
-      PRIM_POW = std::make_pair("MathPow" + prim, FunMain(VarDecAss(prim, val) + POW)),
-      PRIM_RAND = std::make_pair("MathRand" + prim, FunMain(Rand(val, alt_val)));
+      PRIM_ABS = std::make_pair("MathAbs_" + prim, FunMain(VarDecAss(prim, val) + ABS)),
+      PRIM_SIN = std::make_pair("MathSin_" + prim, FunMain(VarDecAss(prim, val) + SIN)),
+      PRIM_COS = std::make_pair("MathCos_" + prim, FunMain(VarDecAss(prim, val) + COS)),
+      PRIM_TAN = std::make_pair("MathTan_" + prim, FunMain(VarDecAss(prim, val) + TAN)),
+      PRIM_ASIN = std::make_pair("MathAsin_" + prim, FunMain(VarDecAss(prim, val) + ASIN)),
+      PRIM_ACOS = std::make_pair("MathAcos_" + prim, FunMain(VarDecAss(prim, val) + ACOS)),
+      PRIM_ATAN = std::make_pair("MathAtan_" + prim, FunMain(VarDecAss(prim, val) + ATAN)),
+      PRIM_SINH = std::make_pair("MathSinh_" + prim, FunMain(VarDecAss(prim, val) + SINH)),
+      PRIM_COSH = std::make_pair("MathCosh_" + prim, FunMain(VarDecAss(prim, val) + COSH)),
+      PRIM_TANH = std::make_pair("MathTanh_" + prim, FunMain(VarDecAss(prim, val) + TANH)),
+      PRIM_ASINH = std::make_pair("MathAsinh_" + prim, FunMain(VarDecAss(prim, val) + ASINH)),
+      PRIM_ACOSH = std::make_pair("MathAcosh_" + prim, FunMain(VarDecAss(prim, alt_val) + ACOSH)),
+      PRIM_ATANH = std::make_pair("MathAtanh_" + prim, FunMain(VarDecAss(prim, val) + ATANH)),
+      PRIM_SQRT = std::make_pair("MathSqrt_" + prim, FunMain(VarDecAss(prim, val) + SQRT)),
+      PRIM_EXP = std::make_pair("MathExp_" + prim, FunMain(VarDecAss(prim, val) + EXP)),
+      PRIM_POW = std::make_pair("MathPow_" + prim, FunMain(VarDecAss(prim, val) + POW)),
+      PRIM_RAND = std::make_pair("MathRand_" + prim, FunMain(Rand(val, alt_val)));
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
       baselineMap({
-                      {"MathAbs" + prim,   "PrimPushVariable" + prim},
-                      {"MathSin" + prim,   "PrimPushVariable" + prim},
-                      {"MathCos" + prim,   "PrimPushVariable" + prim},
-                      {"MathTan" + prim,   "PrimPushVariable" + prim},
-                      {"MathAsin" + prim,  "PrimPushVariable" + prim},
-                      {"MathAcos" + prim,  "PrimPushVariable" + prim},
-                      {"MathAtan" + prim,  "PrimPushVariable" + prim},
-                      {"MathSinh" + prim,  "PrimPushVariable" + prim},
-                      {"MathCosh" + prim,  "PrimPushVariable" + prim},
-                      {"MathTanh" + prim,  "PrimPushVariable" + prim},
-                      {"MathAsinh" + prim, "PrimPushVariable" + prim},
-                      {"MathAcosh" + prim, "PrimPushVariable" + prim},
-                      {"MathAtanh" + prim, "PrimPushVariable" + prim},
-                      {"MathSqrt" + prim,  "PrimPushVariable" + prim},
-                      {"MathExp" + prim,   "PrimPushVariable" + prim},
-                      {"MathPow" + prim,   "PrimPushVariable" + prim},
-                      {"MathRand" + prim,  "Return"}
+                      {"MathAbs_" + prim,   "PrimPushVariable_" + prim},
+                      {"MathSin_" + prim,   "PrimPushVariable_" + prim},
+                      {"MathCos_" + prim,   "PrimPushVariable_" + prim},
+                      {"MathTan_" + prim,   "PrimPushVariable_" + prim},
+                      {"MathAsin_" + prim,  "PrimPushVariable_" + prim},
+                      {"MathAcos_" + prim,  "PrimPushVariable_" + prim},
+                      {"MathAtan_" + prim,  "PrimPushVariable_" + prim},
+                      {"MathSinh_" + prim,  "PrimPushVariable_" + prim},
+                      {"MathCosh_" + prim,  "PrimPushVariable_" + prim},
+                      {"MathTanh_" + prim,  "PrimPushVariable_" + prim},
+                      {"MathAsinh_" + prim, "PrimPushVariable_" + prim},
+                      {"MathAcosh_" + prim, "PrimPushVariable_" + prim},
+                      {"MathAtanh_" + prim, "PrimPushVariable_" + prim},
+                      {"MathSqrt_" + prim,  "PrimPushVariable_" + prim},
+                      {"MathExp_" + prim,   "PrimPushVariable_" + prim},
+                      {"MathPow_" + prim,   "PrimPushVariable_" + prim},
+                      {"MathRand_" + prim,  "Return"}
                   });
 
   std::vector<std::pair<std::string, std::string>> const
@@ -526,8 +541,7 @@ void ArrayBenchmarks(benchmark::State &state) {
 
   auto bm_ind = static_cast<u_int>(state.range(0));
 
-  std::vector<u_int> const array_len{32, 64, 128, 256, 512, 1024, 2048, 4196, 8192, 16384, 32758, 65536, 131072,
-                                     262144};
+  std::vector<u_int> const array_len{32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32758, 65536, 131072, 262144};
 
   const u_int len_ind = (bm_ind - array_begin) / n_array_bms;
   const u_int etch_ind = (bm_ind - array_begin) % n_array_bms;
@@ -548,35 +562,83 @@ void ArrayBenchmarks(benchmark::State &state) {
       POPFRONT("x.popFront();\n");
 
   const std::pair<std::string, std::string>
-      ARRAY_DEC = std::make_pair("DeclareArray" + length, FunMain(ArrayDec(arr1, prim, length))),
-      ARRAY_ASS = std::make_pair("AssignArray" + length, FunMain(ArrayDec(arr1, prim, length) + ArrayAss(arr1, ind, val))),
-      ARRAY_COUNT = std::make_pair("CountArray" + length, FunMain(ArrayDec(arr1, prim, length) + COUNT)),
-      ARRAY_APP = std::make_pair("AppendArray" + length, FunMain(ArrayDec(arr1, prim, length) + ArrayAppend(arr1, val))),
-      ARRAY_DEC_2 = std::make_pair("DeclareTwoArray" + length, FunMain(ArrayDec(arr1, prim, length) + ArrayDec(arr2, prim, length))),
-      ARRAY_EXT = std::make_pair("ExtendArray" + length, FunMain(ArrayDec(arr1, prim, length) + ArrayDec(arr2, prim, length) + ArrayExtend(arr1, arr2))),
-      ARRAY_POPBACK = std::make_pair("PopBackArray" + length, FunMain(ArrayDec(arr1, prim, length) + POPBACK)),
-      ARRAY_POPFRONT = std::make_pair("PopFrontArray" + length, FunMain(ArrayDec(arr1, prim, length) + POPFRONT)),
-      ARRAY_ERASE = std::make_pair("EraseArray" + length, FunMain(ArrayDec(arr1, prim, length) + ArrayErase(arr1, ind))),
-      ARRAY_REV = std::make_pair("ReverseArray" + length, FunMain(ArrayDec(arr1, prim, length) + REV));
+      ARRAY_DEC = std::make_pair("DeclareArray_" + length, FunMain(ArrayDec(arr1, prim, length))),
+      ARRAY_ASS = std::make_pair("AssignArray_" + length, FunMain(ArrayDec(arr1, prim, length) + ArrayAss(arr1, ind, val))),
+      ARRAY_COUNT = std::make_pair("CountArray_" + length, FunMain(ArrayDec(arr1, prim, length) + COUNT)),
+      ARRAY_APP = std::make_pair("AppendArray_" + length, FunMain(ArrayDec(arr1, prim, length) + ArrayAppend(arr1, val))),
+      ARRAY_DEC_2 = std::make_pair("DeclareTwoArray_" + length, FunMain(ArrayDec(arr1, prim, length) + ArrayDec(arr2, prim, length))),
+      ARRAY_EXT = std::make_pair("ExtendArray_" + length, FunMain(ArrayDec(arr1, prim, length) + ArrayDec(arr2, prim, length) + ArrayExtend(arr1, arr2))),
+      ARRAY_POPBACK = std::make_pair("PopBackArray_" + length, FunMain(ArrayDec(arr1, prim, length) + POPBACK)),
+      ARRAY_POPFRONT = std::make_pair("PopFrontArray_" + length, FunMain(ArrayDec(arr1, prim, length) + POPFRONT)),
+      ARRAY_ERASE = std::make_pair("EraseArray_" + length, FunMain(ArrayDec(arr1, prim, length) + ArrayErase(arr1, ind))),
+      ARRAY_REV = std::make_pair("ReverseArray_" + length, FunMain(ArrayDec(arr1, prim, length) + REV));
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
       baselineMap({
-                      {"DeclareArray" + length,    "Return"},
-                      {"AssignArray" + length,     "DeclareArray" + length},
-                      {"CountArray" + length,      "DeclareArray" + length},
-                      {"AppendArray" + length,     "DeclareArray" + length},
-                      {"DeclareTwoArray" + length, "Return"},
-                      {"ExtendArray" + length,     "DeclareTwoArray" + length},
-                      {"PopBackArray" + length,    "DeclareArray" + length},
-                      {"PopFrontArray" + length,   "DeclareArray" + length},
-                      {"EraseArray" + length,      "DeclareArray" + length},
-                      {"ReverseArray" + length,    "DeclareArray" + length}
+                      {"DeclareArray_" + length,    "Return"},
+                      {"AssignArray_" + length,     "DeclareArray_" + length},
+                      {"CountArray_" + length,      "DeclareArray_" + length},
+                      {"AppendArray_" + length,     "DeclareArray_" + length},
+                      {"DeclareTwoArray_" + length, "Return"},
+                      {"ExtendArray_" + length,     "DeclareTwoArray_" + length},
+                      {"PopBackArray_" + length,    "DeclareArray_" + length},
+                      {"PopFrontArray_" + length,   "DeclareArray_" + length},
+                      {"EraseArray_" + length,      "DeclareArray_" + length},
+                      {"ReverseArray_" + length,    "DeclareArray_" + length}
                   });
 
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {ARRAY_DEC, ARRAY_ASS, ARRAY_COUNT, ARRAY_APP, ARRAY_DEC_2, ARRAY_EXT, ARRAY_POPBACK, ARRAY_POPFRONT,
                     ARRAY_ERASE, ARRAY_REV};
+
+  EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
+                    baselineMap[etch_codes[etch_ind].first], bm_ind);
+}
+
+void TensorBenchmarks(benchmark::State &state) {
+
+  auto bm_ind = static_cast<u_int>(state.range(0));
+
+  std::vector<u_int> const tensor_dims{2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4};
+  std::vector<u_int> const tensor_sizes{1, 64, 256, 729, 1024, 2048, 3072, 4096, 1, 16, 48, 81, 128, 180, 216, 256, 1, 8, 16, 27, 36, 45, 54, 64};
+
+  const u_int size_ind = (bm_ind - tensor_begin) / n_tensor_bms;
+  const u_int etch_ind = (bm_ind - tensor_begin) % n_tensor_bms;
+
+  std::string const prim("UInt64");
+  std::string const tensor_shape("shape");
+  std::string const tensor("tensor");
+  std::string const val("1");
+
+  std::string const size(std::to_string(tensor_sizes[size_ind]));
+  std::string const size_u64(size + "u64");
+  const u_int dim (tensor_dims[size_ind]);
+  auto const dim_str (std::to_string(dim));
+
+  // Operations
+  static std::string
+      SIZE(tensor + ".size();\n"),
+      FILL(tensor + ".fill(1.0fp64);\n"),
+      FILL_RAND(tensor + ".fillRandom();\n");
+
+  const std::pair<std::string, std::string>
+      TENSOR_DEC = std::make_pair("DeclareTensor_" + dim_str + "-" + size, FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim))),
+      TENSOR_SIZE = std::make_pair("SizeTensor_" + dim_str + "-" + size, FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + SIZE)),
+      TENSOR_FILL = std::make_pair("FillTensor_" + dim_str + "-" + size, FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + FILL)),
+      TENSOR_FILL_RAND = std::make_pair("FillRandTensor_" + dim_str + "-" + size, FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + FILL_RAND));
+
+  // Define {benchmark,baseline} pairs
+  std::unordered_map<std::string, std::string>
+      baselineMap({
+                      {"DeclareTensor_" + dim_str + "-" + size,  "Return"},
+                      {"SizeTensor_" + dim_str + "-" + size,     "DeclareTensor_" + dim_str + "-" + size},
+                      {"FillTensor_" + dim_str + "-" + size,     "DeclareTensor_" + dim_str + "-" + size},
+                      {"FillRandTensor_" + dim_str + "-" + size, "DeclareTensor_" + dim_str + "-" + size}
+                  });
+
+  std::vector<std::pair<std::string, std::string>> const
+      etch_codes = {TENSOR_DEC, TENSOR_SIZE, TENSOR_FILL, TENSOR_FILL_RAND};
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
                     baselineMap[etch_codes[etch_ind].first], bm_ind);
@@ -603,15 +665,15 @@ void CryptoBenchmarks(benchmark::State &state) {
       SHA256_DEC = std::make_pair("Sha256Declare", FunMain(DEC)),
       SHA256_RESET = std::make_pair("Sha256Reset", FunMain(DEC + RESET)),
       SHA256_FINAL = std::make_pair("Sha256Final", FunMain(DEC + FINAL)),
-      SHA256_UPDATE = std::make_pair("Sha256Update" + length, FunMain(DEC + Sha256Update(str_len[len_ind])));
+      SHA256_UPDATE = std::make_pair("Sha256Update_" + length, FunMain(DEC + Sha256Update(str_len[len_ind])));
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
       baselineMap({
-                      {"Sha256Declare",         "Return"},
-                      {"Sha256Reset",           "Sha256Declare"},
-                      {"Sha256Final",           "Sha256Declare"},
-                      {"Sha256Update" + length, "Sha256Declare"}
+                      {"Sha256Declare",          "Return"},
+                      {"Sha256Reset",            "Sha256Declare"},
+                      {"Sha256Final",            "Sha256Declare"},
+                      {"Sha256Update_" + length, "Sha256Declare"}
                   });
 
   std::vector<std::pair<std::string, std::string>> const
@@ -627,6 +689,7 @@ bool RegisterBenchmarks() {
   if (run_prim_ops) { BENCHMARK(PrimitiveOpBenchmarks)->DenseRange(prim_begin, prim_end - 1, 1); }
   if (run_math) { BENCHMARK(MathBenchmarks)->DenseRange(math_begin, math_end - 1, 1); }
   if (run_array) { BENCHMARK(ArrayBenchmarks)->DenseRange(array_begin, array_end - 1, 1); }
+  if (run_tensor) { BENCHMARK(TensorBenchmarks)->DenseRange(tensor_begin, tensor_end - 1, 1); }
   if (run_crypto) { BENCHMARK(CryptoBenchmarks)->DenseRange(crypto_begin, crypto_end - 1, 1); }
   return true;
 }
