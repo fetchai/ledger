@@ -1296,7 +1296,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
         Consensus::GetBlockGenerationWeight(*this, *block, block->body.miner_id);
     if (entropy_determined_weight != block->weight)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Received block with invalid weight");
+      FETCH_LOG_WARN(LOGGING_NAME, "Received block with invalid weight ", block->weight,
+                     ", correct weight ", entropy_determined_weight);
       return BlockStatus::INVALID;
     }
   }
