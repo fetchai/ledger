@@ -51,22 +51,22 @@ MuddleLearnerNetworkerImpl::~MuddleLearnerNetworkerImpl()
   tasks_runners->stop();
 }
 
-void MuddleLearnerNetworkerImpl::submit(const TaskP &t)
+void MuddleLearnerNetworkerImpl::submit(TaskP const &t)
 {
   taskpool->submit(t);
 }
 
 void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &       type_name,
-                                                const UpdateInterfacePtr &update)
+                                                UpdateInterfacePtr const &update)
 {
   std::cout << "UPDATE(" << type_name << std::endl;
   auto bytes = update->Serialise();
   PushUpdateBytes(type_name, bytes);
 }
-void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, const Bytes &update)
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
 {
   std::cout << "UPDATE BYTES(" << type_name << std::endl;
-  for (const auto &peer : peers_)
+  for (auto const &peer : peers_)
   {
     std::cout << "TASKING SEND (" << type_name << ")TO:" << peer << std::endl;
     auto task = std::make_shared<MuddleOutboundUpdateTask>(peer, type_name, update, client_);
@@ -74,7 +74,7 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, c
   }
 }
 
-void MuddleLearnerNetworkerImpl::PushUpdate(const UpdateInterfacePtr &update)
+void MuddleLearnerNetworkerImpl::PushUpdate(UpdateInterfacePtr const &update)
 {
   PushUpdateType("", update);
 }

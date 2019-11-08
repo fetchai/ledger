@@ -255,12 +255,12 @@ ExecutionResult BasicVmEngine::RunSerialisedParameterPassing(Name const &       
       type_info.template_type_id << ")" << std::endl;
       }
 
-      for (const auto &foo : module_ -> type_info_map_)
+      for (auto const &foo : module_ -> type_info_map_)
       {
         std::cout << "M(map):" << foo.first << " -> " << foo.second << std::endl;
       }
 
-      for (const auto &foo : module_ -> GetDeserializationConstructors())
+      for (auto const &foo : module_ -> GetDeserializationConstructors())
       {
       //std::cout << "M(dc map):" << foo.first << " -> " << foo.second << std::endl;
       }

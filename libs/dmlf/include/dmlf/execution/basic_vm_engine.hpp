@@ -37,8 +37,8 @@ public:
   BasicVmEngine()           = default;
   ~BasicVmEngine() override = default;
 
-  BasicVmEngine(const BasicVmEngine &other) = delete;
-  BasicVmEngine &operator=(const BasicVmEngine &other) = delete;
+  BasicVmEngine(BasicVmEngine const &other) = delete;
+  BasicVmEngine &operator=(BasicVmEngine const &other) = delete;
 
   using Executable    = fetch::vm::Executable;
   using LedgerVariant = ExecutionEngineInterface::Variant;

@@ -56,16 +56,16 @@ public:
 
   void addTarget(const std::string &peer);
 
-  void PushUpdate(const UpdateInterfacePtr &update) override;
-  void PushUpdateType(const std::string &type_name, const UpdateInterfacePtr &update) override;
-  void PushUpdateBytes(const std::string &type_name, const Bytes &update);
+  void PushUpdate(UpdateInterfacePtr const &update) override;
+  void PushUpdateType(const std::string &type_name, UpdateInterfacePtr const &update) override;
+  void PushUpdateBytes(const std::string &type_name, Bytes const &update);
 
   std::size_t GetPeerCount() const override
   {
     return 0;  // TODO(kll)
   }
 
-  virtual void submit(const TaskP &t);
+  virtual void submit(TaskP const &t);
 
   // This is the exposed interface
 
