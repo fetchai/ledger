@@ -63,6 +63,12 @@ struct String : public Object
   std::string str;
   bool        is_literal;
   int32_t     length;
+
+private:
+  bool is_modifiable()
+  {
+    return RefCount() == 1;
+  }
 };
 
 }  // namespace vm

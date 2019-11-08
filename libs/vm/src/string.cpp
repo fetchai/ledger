@@ -49,9 +49,7 @@ String::String(VM *vm, std::string str__, bool is_literal__)
 
 Ptr<String> String::Trim()
 {
-  bool const is_modifiable = RefCount() == 1;
-
-  if (is_modifiable)
+  if (is_modifiable())
   {
     fetch::string::Trim(str);
 
@@ -117,9 +115,7 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
 
 Ptr<String> String::Reverse()
 {
-  bool const is_modifiable = RefCount() == 1;
-
-  if (is_modifiable)
+  if (is_modifiable())
   {
     // TODO(WK) swap UTF-8 chars in place
     return Ptr<String>::PtrFromThis(this);
@@ -250,10 +246,10 @@ bool String::IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rh
 
 void String::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
 {
-  bool const  lhs_is_modifiable = lhso.RefCount() == 1;
-  Ptr<String> lhs               = lhso;
-  Ptr<String> rhs               = rhso;
-  if (lhs_is_modifiable)
+  Ptr<String> lhs = lhso;
+  Ptr<String> rhs = rhso;
+
+  if (lhs->is_modifiable())
   {
     lhs->str += rhs->str;
   }
