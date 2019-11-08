@@ -39,14 +39,14 @@ public:
   Bytes        update_;
   RpcClientPtr client_;
 
-  MuddleOutboundUpdateTask(std::string target, std::string type_name,
-                           Bytes update, RpcClientPtr client)
+  MuddleOutboundUpdateTask(std::string target, std::string type_name, Bytes update,
+                           RpcClientPtr client)
     : target_(std::move(target))
     , type_name_(std::move(type_name))
     , update_(std::move(update))
     , client_(std::move(client))
   {}
-   ~MuddleOutboundUpdateTask() override = default;
+  ~MuddleOutboundUpdateTask() override = default;
 
   ExitState run() override;
   bool      IsRunnable() const override;

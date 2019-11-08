@@ -25,7 +25,7 @@ namespace colearn {
 class MuddleUpdateTask : public MuddleMessageTask
 {
 public:
-  MuddleUpdateTask() = default;
+  MuddleUpdateTask()           = default;
   ~MuddleUpdateTask() override = default;
 
   MuddleUpdateTask(MuddleUpdateTask const &other) = delete;

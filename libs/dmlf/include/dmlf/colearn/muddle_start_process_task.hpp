@@ -25,7 +25,7 @@ namespace colearn {
 class MuddleStartProcessTask : public MuddleMessageTask
 {
 public:
-  MuddleStartProcessTask() = default;
+  MuddleStartProcessTask()           = default;
   ~MuddleStartProcessTask() override = default;
 
   MuddleStartProcessTask(MuddleStartProcessTask const &other) = delete;

@@ -79,6 +79,7 @@ public:
   Taskpool &operator=(const Taskpool &other)  = delete;
   bool      operator==(const Taskpool &other) = delete;
   bool      operator<(const Taskpool &other)  = delete;
+
 protected:
 private:
   Timestamp lockless_getNextWakeTime(const Timestamp &current_time, const Milliseconds &deflt);
@@ -108,5 +109,4 @@ private:
   using FutureTasks = std::priority_queue<FutureTask, std::vector<FutureTask>, FutureTaskOrdering>;
 
   FutureTasks future_tasks;
-
 };

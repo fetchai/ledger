@@ -50,7 +50,8 @@ public:
     }
   }
 
-  void start(std::size_t threadcount, const std::function<void(std::size_t thread_number)> &runnable)
+  void start(std::size_t                                           threadcount,
+             const std::function<void(std::size_t thread_number)> &runnable)
   {
     threads.reserve(threadcount);
     for (std::size_t thread_number = 0; thread_number < threadcount; ++thread_number)
@@ -78,6 +79,7 @@ public:
   Threadpool &operator=(const Threadpool &other)  = delete;
   bool        operator==(const Threadpool &other) = delete;
   bool        operator<(const Threadpool &other)  = delete;
+
 protected:
 private:
   Threads threads;
