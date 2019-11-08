@@ -375,7 +375,7 @@ void ToFixed32(BasicVmEngine::LedgerVariant &var)
     fp64_t val64{fp64_t::FromBase(static_cast<int64_t>(val32.Data()) << 16)};
     var = BasicVmEngine::LedgerVariant{val64};
   }
-};
+}
 
 ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant const &vmVariant,
                                           std::string const &console, std::string &&id) const
