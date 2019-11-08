@@ -248,9 +248,12 @@ public:
   TipsMap            tips_;          ///< Keep track of the tips
   HeaviestTip        heaviest_;      ///< Heaviest block/tip
   LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
-  bool const         enable_stutter_removal_;
+
+  bool const
+      enable_stutter_removal_;  ///< Whether blocks of equal height and weight are removed from tips
   StutterBlockMap
-                                    stutter_blocks_;  ///< Block weights seen by height and whether they are stutter weights
+      stutter_blocks_;  ///< Block weights seen by height and whether they are stutter blocks
+
   std::unique_ptr<BasicBloomFilter> bloom_filter_;
   bool const                        enable_bloom_filter_;
   telemetry::GaugePtr<std::size_t>  bloom_filter_queried_bit_count_;
