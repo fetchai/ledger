@@ -22,19 +22,30 @@
 
 namespace fetch {
 namespace semanticsearch {
+InMemoryDBIndex::InMemoryDBIndex(std::size_t rank)
+  : rank_{rank}
+{}
 
 void InMemoryDBIndex::AddRelation(SemanticSubscription const &obj)
 {
-  for (SemanticCoordinateType s = hc_width_param_start_; s < hc_width_param_end_; ++s)
+  // We require that only relations with same rank as the predefined
+  // rank can be used. This is to prevent trivial mistakes in the code.
+  if (obj.position.size() != rank_)
+  {
+    throw std::runtime_error("Rank of position differs from index.");
+  }
+
+  // Next we create subscriptions at a number of desired depths.
+  for (SemanticCoordinateType s = param_depth_start_; s < param_depth_end_; ++s)
   {
     SubscriptionGroup idx{s, obj.position};
-    auto              it = compartments_.find(idx);
+    auto              it = group_content_.find(idx);
 
-    if (it == compartments_.end())
+    if (it == group_content_.end())
     {
-      DBIndexListPtr c = std::make_shared<DBIndexList>();
+      DBIndexSetPtr c = std::make_shared<DBIndexSet>();
       c->insert(obj.index);
-      compartments_.insert({idx, c});
+      group_content_.insert({idx, c});
     }
     else
     {
@@ -43,17 +54,28 @@ void InMemoryDBIndex::AddRelation(SemanticSubscription const &obj)
   }
 }
 
-DBIndexListPtr InMemoryDBIndex::Find(SemanticCoordinateType g, SemanticPosition position) const
+DBIndexSetPtr InMemoryDBIndex::Find(SemanticCoordinateType depth, SemanticPosition position) const
 {
-  SubscriptionGroup idx{g, position};
+  // Again, only operations with same rank as index is allowed.
+  if (position.size() != rank_)
+  {
+    throw std::runtime_error("Rank of position differs from index.");
+  }
 
-  auto it = compartments_.find(idx);
-  if (it == compartments_.end())
+  SubscriptionGroup idx{depth, position};
+
+  auto it = group_content_.find(idx);
+  if (it == group_content_.end())
   {
     return nullptr;
   }
 
   return it->second;
+}
+
+std::size_t InMemoryDBIndex::rank() const
+{
+  return rank_;
 }
 
 }  // namespace semanticsearch

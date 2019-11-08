@@ -19,6 +19,7 @@
 
 #include "beacon/beacon_manager.hpp"
 #include "beacon/block_entropy_interface.hpp"
+#include "beacon/notarisation_manager.hpp"
 #include "core/digest.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
@@ -28,19 +29,25 @@ namespace beacon {
 
 struct BlockEntropy : public BlockEntropyInterface
 {
-  using MuddleAddress   = byte_array::ConstByteArray;
-  using GroupPublicKey  = byte_array::ConstByteArray;
-  using MemberPublicKey = byte_array::ConstByteArray;
-  using MemberSignature = byte_array::ConstByteArray;
-  using Confirmations   = std::map<MemberPublicKey, MemberSignature>;
-  using GroupSignature  = byte_array::ConstByteArray;
-  using Cabinet         = std::set<MuddleAddress>;
+  using MuddleAddress         = byte_array::ConstByteArray;
+  using GroupPublicKey        = byte_array::ConstByteArray;
+  using MemberPublicKey       = byte_array::ConstByteArray;
+  using MemberSignature       = byte_array::ConstByteArray;
+  using Confirmations         = std::map<MemberPublicKey, MemberSignature>;
+  using GroupSignature        = byte_array::ConstByteArray;
+  using ECDSASignature        = byte_array::ConstByteArray;
+  using NotarisationKey       = ledger::NotarisationManager::PublicKey;
+  using AggregateSignature    = ledger::NotarisationManager::AggregateSignature;
+  using Cabinet               = std::set<MuddleAddress>;
+  using SignedNotarisationKey = std::pair<NotarisationKey, ECDSASignature>;
+  using AeonNotarisationKeys  = std::map<MuddleAddress, SignedNotarisationKey>;
 
-  BlockEntropy();
-  BlockEntropy(BlockEntropy const &rhs);
+  BlockEntropy() = default;
 
-  // The members who succeeded DKG and are qualified to produce blocks (when new cabinet)
-  Cabinet qualified;
+  // When new committee, block contains muddle address of those who suceeded the DKG and
+  // are qualified to produce blocks, and notarisation key (signed)
+  Cabinet              qualified;
+  AeonNotarisationKeys aeon_notarisation_keys{};
 
   // The group public key (when new cabinet)
   GroupPublicKey group_public_key;
@@ -58,6 +65,10 @@ struct BlockEntropy : public BlockEntropyInterface
   // Signature of the previous entropy, used as the entropy
   GroupSignature group_signature{};
 
+  // Notarisation of block
+  AggregateSignature block_notarisation;
+
+  void   SelectCopy(BlockEntropy const &rhs);
   Digest EntropyAsSHA256() const override;
 
   // This will always be safe so long as the entropy function is properly sha256-ing
@@ -77,22 +88,28 @@ public:
   using Type       = beacon::BlockEntropy;
   using DriverType = D;
 
-  static uint8_t const QUALIFIED        = 1;
-  static uint8_t const GROUP_PUBLIC_KEY = 2;
-  static uint8_t const BLOCK_NUMBER     = 3;
-  static uint8_t const CONFIRMATIONS    = 4;
-  static uint8_t const GROUP_SIGNATURE  = 5;
+  static uint8_t const QUALIFIED            = 1;
+  static uint8_t const GROUP_PUBLIC_KEY     = 2;
+  static uint8_t const BLOCK_NUMBER         = 3;
+  static uint8_t const CONFIRMATIONS        = 4;
+  static uint8_t const GROUP_SIGNATURE      = 5;
+  static uint8_t const NOTARISATION_KEYS    = 6;
+  static uint8_t const NOTARISATION         = 7;
+  static uint8_t const NOTARISATION_MEMBERS = 8;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &member)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(8);
 
     map.Append(QUALIFIED, member.qualified);
     map.Append(GROUP_PUBLIC_KEY, member.group_public_key);
     map.Append(BLOCK_NUMBER, member.block_number);
     map.Append(CONFIRMATIONS, member.confirmations);
     map.Append(GROUP_SIGNATURE, member.group_signature);
+    map.Append(NOTARISATION_KEYS, member.aeon_notarisation_keys);
+    map.Append(NOTARISATION, member.block_notarisation.first);
+    map.Append(NOTARISATION_MEMBERS, member.block_notarisation.second);
   }
 
   template <typename MapDeserializer>
@@ -103,6 +120,9 @@ public:
     map.ExpectKeyGetValue(BLOCK_NUMBER, member.block_number);
     map.ExpectKeyGetValue(CONFIRMATIONS, member.confirmations);
     map.ExpectKeyGetValue(GROUP_SIGNATURE, member.group_signature);
+    map.ExpectKeyGetValue(NOTARISATION_KEYS, member.aeon_notarisation_keys);
+    map.ExpectKeyGetValue(NOTARISATION, member.block_notarisation.first);
+    map.ExpectKeyGetValue(NOTARISATION_MEMBERS, member.block_notarisation.second);
   }
 };
 }  // namespace serializers
