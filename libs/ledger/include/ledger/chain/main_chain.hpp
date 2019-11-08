@@ -56,7 +56,7 @@ namespace ledger {
  *
  * Loose blocks are blocks where the previous hash/block isn't found.
  * Tips keep track of all non loose chains. Has the property that the chain will not present a
- * heaviest block that it sees as having a duplicated weight
+ * heaviest block that it sees as having a duplicated weight (stutter blocks)
  */
 struct Tip
 {
@@ -178,7 +178,7 @@ public:
   using BlockStorePtr   = std::unique_ptr<BlockStore>;
   using RMutex          = std::recursive_mutex;
   using RLock           = std::unique_lock<RMutex>;
-  using StutterBlockMap = std::map<BlockNumber, std::unordered_set<BlockWeight>>;
+  using StutterBlockMap = std::map<BlockNumber, std::unordered_map<BlockWeight, bool>>;
 
   struct HeaviestTip
   {
@@ -244,12 +244,13 @@ public:
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
   // The whole tree of previous-next relations among cached blocks
-  mutable References                references_;
-  TipsMap                           tips_;          ///< Keep track of the tips
-  HeaviestTip                       heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks
-  bool const                        enable_stutter_removal_;
-  StutterBlockMap                   stutter_blocks_;  ///< Miners whose blocks should not be tips
+  mutable References references_;
+  TipsMap            tips_;          ///< Keep track of the tips
+  HeaviestTip        heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
+  bool const         enable_stutter_removal_;
+  StutterBlockMap
+                                    stutter_blocks_;  ///< Block weights seen by height and whether they are stutter weights
   std::unique_ptr<BasicBloomFilter> bloom_filter_;
   bool const                        enable_bloom_filter_;
   telemetry::GaugePtr<std::size_t>  bloom_filter_queried_bit_count_;

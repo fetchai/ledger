@@ -896,6 +896,7 @@ void MainChain::WriteToFile()
       IntBlockPtr block_head        = block;
 
       BlockHash head_hash = GetHeadHash();
+      // Can reach here without head hash being set
       if (head_hash.empty())
       {
         FETCH_LOG_INFO(LOGGING_NAME,
@@ -1022,7 +1023,7 @@ void MainChain::TrimCache()
 
   // Trim stutter map
   auto stutter_map_back = stutter_blocks_.rbegin();
-  if (stutter_map_back != stutter_blocks_.rend())
+  if (stutter_map_back != stutter_blocks_.rend() && stutter_map_back->first > CACHE_TRIM_THRESHOLD)
   {
     BlockNumber const stutter_threshold = stutter_map_back->first - CACHE_TRIM_THRESHOLD;
     auto              stutter_map_iter  = stutter_blocks_.begin();
@@ -1148,27 +1149,30 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
 
   if (enable_stutter_removal_)
   {
-    // if block with same height and weight exist by the same miner then do not include
-    // either in tips
-    for (auto const &tip : tips_)
-    {
-      if (tip.second.block_number == block->body.block_number && tip.second.weight == block->weight)
-      {
-        auto old_heaviest = heaviest_;
-        stutter_blocks_[tip.second.block_number].insert(tip.second.weight);
-        RemoveTip(std::make_shared<Block>(*GetBlock(tip.first)));
-        return old_heaviest.hash == heaviest_.hash;
-      }
-    }
-
-    // if tip is from miner who has previously produced stutter blocks for this round
+    // if tip is from miner who has previously produced a block for this round
     // do not add new block to tips
     if (stutter_blocks_.find(block->body.block_number) != stutter_blocks_.end() &&
         stutter_blocks_.at(block->body.block_number).find(block->weight) !=
             stutter_blocks_.at(block->body.block_number).end())
     {
+      // Mark that duplicate has been seen
+      stutter_blocks_.at(block->body.block_number).at(block->weight) = true;
+
+      // Remove any existing tips with same height and weight
+      for (auto const &tip : tips_)
+      {
+        if (tip.second.block_number == block->body.block_number &&
+            tip.second.weight == block->weight)
+        {
+          auto old_heaviest = heaviest_;
+          RemoveTip(std::make_shared<Block>(*GetBlock(tip.first)));
+          return old_heaviest.hash == heaviest_.hash;
+        }
+      }
       return false;
     }
+    // Add block to map of blocks weights seen by height
+    stutter_blocks_[block->body.block_number][block->weight] = false;
   }
 
   // remove the tip if exists and add the new one
@@ -1433,24 +1437,29 @@ bool MainChain::AddTip(IntBlockPtr const &block)
 
   if (enable_stutter_removal_)
   {
-    // if block has same height and weight as another tip then do not include either in tips
-    for (auto const &tip : tips_)
-    {
-      if (tip.second.block_number == block->body.block_number && tip.second.weight == block->weight)
-      {
-        stutter_blocks_[tip.second.block_number].insert(tip.second.weight);
-        return RemoveTip(std::make_shared<Block>(*GetBlock(tip.first)));
-      }
-    }
-
-    // if tip is from miner who has previously produced stutter blocks for this round
-    // then do not include in tips
+    // if tip is from miner who has previously produced a block for this round
+    // do not add new block to tips
     if (stutter_blocks_.find(block->body.block_number) != stutter_blocks_.end() &&
         stutter_blocks_.at(block->body.block_number).find(block->weight) !=
             stutter_blocks_.at(block->body.block_number).end())
     {
+      // Mark that duplicate has been seen
+      stutter_blocks_.at(block->body.block_number).at(block->weight) = true;
+
+      // Remove any existing tips with same height and weight
+      for (auto const &tip : tips_)
+      {
+        if (tip.second.block_number == block->body.block_number &&
+            tip.second.weight == block->weight)
+        {
+          auto old_heaviest = heaviest_;
+          return RemoveTip(std::make_shared<Block>(*GetBlock(tip.first)));
+        }
+      }
       return DetermineHeaviestTip();
     }
+    // Add block to map of blocks weights seen by height
+    stutter_blocks_[block->body.block_number][block->weight] = false;
   }
 
   // record the tip weight
@@ -1473,18 +1482,25 @@ bool MainChain::RemoveTip(IntBlockPtr const &block)
   {
     auto previous_block = GetBlock(block->body.previous_hash);
     // Check previous is not banned, insert in previous
-    while (!replaced && previous_block)
+    while (!replaced)
     {
       BlockNumber previous_block_number = previous_block->body.block_number;
-      if (stutter_blocks_.find(previous_block_number) == stutter_blocks_.end() ||
-          stutter_blocks_.at(previous_block_number).find(previous_block->weight) ==
-              stutter_blocks_.at(previous_block_number).end())
+      assert(stutter_blocks_.find(previous_block_number) != stutter_blocks_.end() &&
+             stutter_blocks_.at(previous_block_number).find(previous_block->weight) !=
+                 stutter_blocks_.at(previous_block_number).end());
+      if (previous_block->IsGenesis() ||
+          !stutter_blocks_[previous_block_number][previous_block->weight])
       {
         tips_[previous_block->body.hash] =
             Tip{previous_block->total_weight, previous_block->weight, previous_block_number};
         replaced = true;
       }
       previous_block = GetBlock(previous_block->body.previous_hash);
+      if (!previous_block)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Main chain failed to replace stutter tip with previous.");
+        break;
+      }
     }
   }
   return DetermineHeaviestTip();
@@ -1562,7 +1578,7 @@ bool MainChain::ReindexTips()
     {
       continue;
     }
-    auto const &hash{block_entry.first};
+    auto hash{block_entry.first};
     // check if this has has any live forward reference
     auto children{references_.equal_range(hash)};
     auto child{std::find_if(children.first, children.second, [this](auto const &ref) {
@@ -1581,44 +1597,60 @@ bool MainChain::ReindexTips()
 
     // check if block is stutter block and if so loop until a non-stutter block is found and replace
     // as tip
-    if (stutter_blocks_.find(block_number) != stutter_blocks_.end() &&
-        stutter_blocks_.at(block_number).find(weight) != stutter_blocks_.at(block_number).end())
+    bool replaced{true};
+    if (enable_stutter_removal_)
     {
-      assert(enable_stutter_removal_);
-      bool replaced{false};
-      auto previous_block = GetBlock(block.body.previous_hash);
-
-      while (!replaced && previous_block)
+      assert(stutter_blocks_.find(block_number) != stutter_blocks_.end() &&
+             stutter_blocks_.at(block_number).find(weight) !=
+                 stutter_blocks_.at(block_number).end());
+      if (stutter_blocks_[block_number][weight])
       {
-        BlockNumber previous_block_number = previous_block->body.block_number;
-        if (stutter_blocks_.find(previous_block_number) == stutter_blocks_.end() ||
-            stutter_blocks_.at(previous_block_number).find(previous_block->weight) ==
-                stutter_blocks_.at(previous_block_number).end())
+        replaced            = false;
+        auto previous_block = GetBlock(block.body.previous_hash);
+
+        while (!replaced)
         {
-          block        = *previous_block;
-          total_weight = block.total_weight;
-          weight       = block.weight;
-          block_number = block.body.block_number;
-          replaced     = true;
+          BlockNumber previous_block_number = previous_block->body.block_number;
+          assert(stutter_blocks_.find(previous_block_number) != stutter_blocks_.end() &&
+                 stutter_blocks_.at(previous_block_number).find(previous_block->weight) !=
+                     stutter_blocks_.at(previous_block_number).end());
+          if (previous_block->IsGenesis() ||
+              !stutter_blocks_[previous_block_number][previous_block->weight])
+          {
+            block        = *previous_block;
+            hash         = block.body.hash;
+            total_weight = block.total_weight;
+            weight       = block.weight;
+            block_number = block.body.block_number;
+            replaced     = true;
+          }
+          previous_block = GetBlock(previous_block->body.previous_hash);
+          if (!previous_block)
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "Main chain failed to replace stutter tip previous");
+            break;
+          }
         }
-        previous_block = GetBlock(previous_block->body.previous_hash);
       }
     }
 
-    new_tips[hash] = Tip{total_weight, weight, block_number};
-
-    // check if this tip is the current heaviest
-    if (total_weight > max_total_weight ||
-        (total_weight == max_total_weight && block_number > max_block_number) ||
-        (total_weight == max_total_weight && block_number == max_block_number &&
-         weight > max_weight) ||
-        (total_weight == max_total_weight && block_number == max_block_number &&
-         weight == max_weight && hash > max_hash))
+    if (replaced)
     {
-      max_total_weight = total_weight;
-      max_weight       = weight;
-      max_hash         = hash;
-      max_block_number = block_number;
+      new_tips[hash] = Tip{total_weight, weight, block_number};
+
+      // check if this tip is the current heaviest
+      if (total_weight > max_total_weight ||
+          (total_weight == max_total_weight && block_number > max_block_number) ||
+          (total_weight == max_total_weight && block_number == max_block_number &&
+           weight > max_weight) ||
+          (total_weight == max_total_weight && block_number == max_block_number &&
+           weight == max_weight && hash > max_hash))
+      {
+        max_total_weight = total_weight;
+        max_weight       = weight;
+        max_hash         = hash;
+        max_block_number = block_number;
+      }
     }
   }
   tips_ = std::move(new_tips);

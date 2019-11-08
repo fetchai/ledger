@@ -21,6 +21,7 @@
 #include "chain/transaction_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/containers/set_difference.hpp"
+#include "core/containers/set_intersection.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
@@ -50,6 +51,7 @@ using Rng               = std::mt19937_64;
 using MainChainPtr      = std::unique_ptr<MainChain>;
 using BlockGeneratorPtr = std::unique_ptr<BlockGenerator>;
 using BlockPtr          = BlockGenerator::BlockPtr;
+using BlockHash         = MainChain::BlockHash;
 
 static bool IsSameBlock(Block const &a, Block const &b)
 {
@@ -65,16 +67,6 @@ template <typename Container, typename Value>
 static bool Contains(Container const &collection, Value const &value)
 {
   return std::find(collection.begin(), collection.end(), value) != collection.end();
-}
-
-auto Generate(BlockGeneratorPtr &gen, BlockPtr genesis, std::size_t amount)
-{
-  std::vector<BlockPtr> retVal(amount);
-  for (auto &block : retVal)
-  {
-    genesis = block = gen->Generate(genesis);
-  }
-  return retVal;
 }
 
 auto Generate(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &cabinet,
@@ -117,12 +109,10 @@ auto Generate(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &cabine
 }
 
 auto GenerateChain(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &cabinet,
-                   BlockPtr const &start, uint64_t min_weight,
-                   std::vector<std::vector<BlockPtr>> const &side_chain_list = {})
+                   BlockPtr const &start, uint64_t length,
+                   std::vector<std::vector<BlockPtr>> const &side_chain_list)
 {
-  assert(min_weight > 1);
-
-  std::vector<BlockPtr> retVal;
+  std::vector<BlockPtr> retVal(length);
 
   // Initialise to the chain position to the first element of all side chains
   std::vector<uint8_t> chain_position(side_chain_list.size(), 0);
@@ -130,39 +120,47 @@ auto GenerateChain(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &c
   // Generate blocks
   assert(!cabinet.empty());
   auto previous = start;
-  while (previous->total_weight < min_weight)
+  for (auto &block : retVal)
   {
-    auto block = gen->Generate(previous);
-
-    // If first block from genesis then insert cabinet
-    if (previous->body.block_number == 0)
-    {
-      block->body.block_entropy.qualified = cabinet;
-      // Insert fake confirmation to trigger aeon beginning
-      block->body.block_entropy.confirmations.insert({"fake", "confirmation"});
-    }
-
     // Generate weights which need to be coordinated with side chains if there is one
-    auto identity = crypto::Identity{*std::next(cabinet.begin(), rand() % cabinet.size())};
-    std::set<crypto::Identity> side_miners{};
+    std::unordered_set<uint64_t> side_miners{};
     for (auto i = 0; i < side_chain_list.size(); ++i)
     {
       if (chain_position[i] < side_chain_list[i].size())
       {
-        side_miners.insert(side_chain_list[i][chain_position[i]]->body.miner_id);
+        side_miners.insert(side_chain_list[i][chain_position[i]]->weight);
         ++chain_position[i];
       }
     }
-    while (side_miners.find(identity) != side_miners.end())
-    {
-      identity = crypto::Identity{*std::next(cabinet.begin(), rand() % cabinet.size())};
-    }
 
-    block->body.miner_id = identity;
-    block->weight        = Consensus::ShuffledCabinetRank(cabinet, *block, block->body.miner_id);
-    block->total_weight  = previous->total_weight + block->weight;
-    retVal.push_back(block);
-    previous = retVal.back();
+    // Choose a random weight not in side miners
+    std::unordered_set<uint64_t> all_weights;
+    for (uint64_t i = 1; i <= cabinet.size(); ++i)
+    {
+      all_weights.insert(all_weights.end(), i);
+    }
+    auto diff = all_weights - side_miners;
+
+    block    = Generate(gen, cabinet, previous,
+                     *std::next(diff.begin(), static_cast<uint64>(rand() % diff.size())));
+    previous = block;
+  }
+
+  return retVal;
+}
+
+auto GenerateChain(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &cabinet,
+                   BlockPtr const &start, uint64_t length = 1, uint64_t block_weight = 0)
+{
+  std::vector<BlockPtr> retVal(length);
+
+  // Generate blocks
+  assert(!cabinet.empty());
+  auto previous = start;
+  for (auto &block : retVal)
+  {
+    block    = Generate(gen, cabinet, previous, block_weight);
+    previous = block;
   }
 
   return retVal;
@@ -276,7 +274,7 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
   auto const genesis = generator_->Generate();
 
   // build a small side chain
-  auto const side{GenerateChain(generator_, cabinet_, genesis, cabinet_.size() + 2)};
+  auto const side{GenerateChain(generator_, cabinet_, genesis, 9)};
   // add the side chain blocks
   for (auto const &block : side)
   {
@@ -285,8 +283,8 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
         << "when adding side block no. " << block->body.block_number << "; side: " << Hashes(side);
   }
 
-  // build a heavier main chain which consists of at least 3 blocks including genesis
-  auto const main{GenerateChain(generator_, cabinet_, genesis, cabinet_.size() * 3, {side})};
+  // build a heavier main chain which must always be heavier than the side chain
+  auto const main{GenerateChain(generator_, cabinet_, genesis, 72, {side})};
 
   // add the main chain blocks
   for (auto i = 0; i < main.size(); ++i)
@@ -316,21 +314,18 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   auto const genesis = generator_->Generate();
 
   // build a few branches
-  auto const branch3{GenerateChain(generator_, cabinet_, genesis, cabinet_.size())};
-  auto const branch5{GenerateChain(generator_, cabinet_, genesis, cabinet_.size() * 4, {branch3})};
-  auto const branch9{
-      GenerateChain(generator_, cabinet_, genesis, cabinet_.size() * 7, {branch3, branch5})};
+  auto const branch3{GenerateChain(generator_, cabinet_, genesis, 3, 1)};
+  auto const branch5{GenerateChain(generator_, cabinet_, genesis, 5, 2)};
+  auto const branch9{GenerateChain(generator_, cabinet_, genesis, 9, 5)};
 
   // an offspring of branch9
   std::vector<BlockGenerator::BlockPtr> branch7(branch9.cbegin(), branch9.cbegin() + 3);
-  for (auto &&other_direction : GenerateChain(generator_, cabinet_, branch7.back(),
-                                              cabinet_.size() * 6, {branch3, branch5, branch9}))
+  for (auto &&other_direction : GenerateChain(generator_, cabinet_, branch7.back(), 4, 4))
   {
     branch7.emplace_back(std::move(other_direction));
   }
 
-  auto const branch6{GenerateChain(generator_, cabinet_, genesis, cabinet_.size() * 5,
-                                   {branch3, branch5, branch9, branch7})};
+  auto const branch6{GenerateChain(generator_, cabinet_, genesis, 6, 3)};
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
   FETCH_LOG_DEBUG(LOGGING_NAME, "Genesis : ", fetch::byte_array::ToBase64(genesis->body.hash));
@@ -349,7 +344,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
         << "; branch3: " << Hashes(branch3);
   }
 
-  // and the two more branches growing in length
+  // and the two more branches growing in weight
   auto youngest_block_age{branch3.size() - 1};
   auto best_block{branch3.back()};
 
@@ -843,17 +838,11 @@ TEST_P(MainChainTests, CheckMultipleMissing)
   auto genesis = generator_->Generate();
   auto common1 = Generate(generator_, cabinet_, genesis);
 
-  // Want 5 chains of at least 2 additional blocks on top of common1
-  auto side1 = GenerateChain(generator_, cabinet_, common1, cabinet_.size() * 3 + 1);
-  auto side2 = GenerateChain(generator_, cabinet_, common1, cabinet_.size() * 3 + 1, {side1});
-  auto side3 =
-      GenerateChain(generator_, cabinet_, common1, cabinet_.size() * 3 + 1, {side1, side2});
-  auto side4 =
-      GenerateChain(generator_, cabinet_, common1, cabinet_.size() * 3 + 1, {side1, side2, side3});
-  auto side5 = GenerateChain(generator_, cabinet_, common1, cabinet_.size() * 3 + 1,
-                             {side1, side2, side3, side4});
-  assert(side1.size() > 1 && side2.size() > 1 && side3.size() > 1 && side4.size() > 1 &&
-         side5.size() > 1);
+  auto side1 = GenerateChain(generator_, cabinet_, common1, 2);
+  auto side2 = GenerateChain(generator_, cabinet_, common1, 2, {side1});
+  auto side3 = GenerateChain(generator_, cabinet_, common1, 2, {side1, side2});
+  auto side4 = GenerateChain(generator_, cabinet_, common1, 2, {side1, side2, side3});
+  auto side5 = GenerateChain(generator_, cabinet_, common1, 2, {side1, side2, side3, side4});
 
   // add the common block
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*common1));
@@ -993,15 +982,16 @@ TEST_P(MainChainTests, CheckResolvedLooseWeight)
   ASSERT_EQ(chain_->GetBlock(main5->body.hash)->total_weight, main5->total_weight);
 }
 
-TEST_P(MainChainTests, MultipleBlocksSameHeightSameMiner)
+TEST_P(MainChainTests, CheckTipsWithStutter)
 {
   auto genesis = generator_->Generate();
 
-  auto chain1_1  = Generate(generator_, cabinet_, genesis, 2);
+  auto chain1_1 = Generate(generator_, cabinet_, genesis, 2);
+  // Generate 3 stutter blocks for chain 1
   auto chain1_2a = Generate(generator_, cabinet_, chain1_1, 3);
   auto chain1_2b = Generate(generator_, cabinet_, chain1_1, 3);
   auto chain1_2c = Generate(generator_, cabinet_, chain1_1, 3);
-  auto chain1_3  = Generate(generator_, cabinet_, chain1_2a, 3);
+  auto chain1_3  = Generate(generator_, cabinet_, chain1_2a, 3);  // normal
 
   auto chain2_1 = Generate(generator_, cabinet_, genesis, 1);
   auto chain2_2 = Generate(generator_, cabinet_, chain2_1, 2);
@@ -1025,6 +1015,148 @@ TEST_P(MainChainTests, MultipleBlocksSameHeightSameMiner)
   // Now receive block that builds on one of the tips removed
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_3));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain1_3->body.hash);
+}
+
+TEST_P(MainChainTests, StutterChain)
+{
+  auto genesis = generator_->Generate();
+
+  // Build chain with stutter blocks at each height
+  auto chain1_1a = Generate(generator_, cabinet_, genesis, 2);
+  auto chain1_1b = Generate(generator_, cabinet_, genesis, 2);
+  auto chain1_2a = Generate(generator_, cabinet_, chain1_1a, 3);
+  auto chain1_2b = Generate(generator_, cabinet_, chain1_1a, 3);
+  auto chain1_3a = Generate(generator_, cabinet_, chain1_2a, 3);
+  auto chain1_3b = Generate(generator_, cabinet_, chain1_2a, 3);
+
+  auto chain2_1 = Generate(generator_, cabinet_, genesis, 1);
+  auto chain2_2 = Generate(generator_, cabinet_, chain2_1, 2);
+
+  // Add blocks in chain 1a
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_1a));
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_2a));
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_3a));
+
+  // Add chain 2
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain2_1));
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain2_2));
+
+  // Heaviest is tip of 1a
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain1_3a->body.hash);
+
+  // Add stutter blocks 1b
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_1b));
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_2b));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain1_3a->body.hash);
+
+  // Add stutter tip and heaviest switches to chain 2
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_3b));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain2_2->body.hash);
+
+  // Tips should now only contain genesis and heaviest tip
+  auto                          tips       = chain_->GetTips();
+  std::unordered_set<BlockHash> check_tips = {chain2_2->body.hash, genesis->body.hash};
+  ASSERT_EQ(tips, check_tips);
+}
+
+TEST_P(MainChainTests, CheckReindexingOfTipsWithStutter)
+{
+  // Complicates graph structure
+  //                                                           ┌────┐
+  //                                                        ┌─▶│ B9 │
+  //                                                ┌────┐  │  └────┘
+  //                                            ┌──▶│ B5 │──┤
+  //                                            │   └────┘  │  ┌────┐
+  //                                            │           └─▶│B10 │
+  //                                   ┌────┐   │              └────┘
+  //                                ┌─▶│ B3 │───┤
+  //                                │  └────┘   │              ┌────┐
+  //                                │           │           ┌─▶│B11 │
+  //                                │           │   ┌────┐  │  └────┘
+  //                                │           └──▶│ B6 │──┤
+  //                                │               └────┘  │  ┌────┐
+  //                                │                       └─▶│B12 │
+  // ┌────┐      ┌────┐     ┌────┐  │                          └────┘
+  // │ GN │ ────▶│ B1 │────▶│ B2 │──┤
+  // └────┘      └────┘     └────┘  │                          ┌────┐
+  //                                │                       ┌─▶│B13 │
+  //                                │               ┌────┐  │  └────┘
+  //                                │           ┌──▶│ B7 │──┤
+  //                                │           │   └────┘  │  ┌────┐
+  //                                │           │           └─▶│B14 │
+  //                                │  ┌────┐   │              └────┘
+  //                                └─▶│ B4 │───┤
+  //                                   └────┘   │              ┌────┐
+  //                                            │           ┌─▶│B15 │
+  //                                            │   ┌────┐  │  └────┘
+  //                                            └──▶│ B8 │──┤
+  //                                                └────┘  │  ┌────┐
+  //                                                        └─▶│B16 │
+  //                                                           └────┘
+  //
+  std::vector<BlockPtr> chain(17);
+  // Need to give blocks with the same block number different weights
+  chain[0]  = generator_->Generate();
+  chain[1]  = Generate(generator_, cabinet_, chain[0]);
+  chain[2]  = Generate(generator_, cabinet_, chain[1]);
+  chain[3]  = Generate(generator_, cabinet_, chain[2], 3);
+  chain[4]  = Generate(generator_, cabinet_, chain[2], 4);
+  chain[5]  = Generate(generator_, cabinet_, chain[3], 3);
+  chain[6]  = Generate(generator_, cabinet_, chain[3], 4);
+  chain[7]  = Generate(generator_, cabinet_, chain[4], 5);
+  chain[8]  = Generate(generator_, cabinet_, chain[4], 6);
+  chain[9]  = Generate(generator_, cabinet_, chain[5], 1);
+  chain[10] = Generate(generator_, cabinet_, chain[5], 2);
+  chain[11] = Generate(generator_, cabinet_, chain[6], 3);
+  chain[12] = Generate(generator_, cabinet_, chain[6], 4);
+  chain[13] = Generate(generator_, cabinet_, chain[7], 5);
+  chain[14] = Generate(generator_, cabinet_, chain[7], 6);
+  chain[15] = Generate(generator_, cabinet_, chain[8], 7);
+  chain[16] = Generate(generator_, cabinet_, chain[8], 8);
+
+  // add all the tips
+  for (std::size_t i = 1; i < chain.size(); ++i)
+  {
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain[i]));
+  }
+
+  // cache the state of the original tips
+  auto const original_tips = chain_->GetTips();
+
+  // Generate stutter blocks for some tips
+  std::vector<BlockPtr>         stutter(3);
+  std::unordered_set<BlockHash> stutter_tips;
+  std::unordered_set<BlockHash> previous_to_stutter;
+  stutter[0] = Generate(generator_, cabinet_, chain[5], 1);
+  stutter[1] = Generate(generator_, cabinet_, chain[6], 4);
+  stutter[2] = Generate(generator_, cabinet_, chain[8], 8);
+
+  for (std::size_t i = 0; i < stutter.size(); ++i)
+  {
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*stutter[i]));
+    stutter_tips.insert(stutter[i]->body.hash);
+    previous_to_stutter.insert(stutter[i]->body.previous_hash);
+  }
+
+  // check tips contain no stutter blocks but have replaced them with their previous
+  auto const new_tips                 = chain_->GetTips();
+  auto const stutter_in_tips          = new_tips & stutter_tips;
+  auto const stutter_previous_in_tips = new_tips & previous_to_stutter;
+  ASSERT_TRUE(stutter_in_tips.empty());
+  ASSERT_EQ(previous_to_stutter, stutter_previous_in_tips);
+  ASSERT_TRUE(chain_->GetHeaviestBlockHash() == chain[15]->body.hash);
+
+  // force the chain to index its tips again
+  ASSERT_TRUE(chain_->ReindexTips());
+  auto const new_reindexed_tips = chain_->GetTips();
+
+  // compare the two sets and determine what if any nodes have been added or removed as compared
+  // with original
+  auto const new_missing_tips = new_tips - new_reindexed_tips;
+  auto const new_added_tips   = new_reindexed_tips - new_tips;
+
+  ASSERT_TRUE(new_missing_tips.empty());
+  ASSERT_TRUE(new_added_tips.empty());
 }
 
 INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,
