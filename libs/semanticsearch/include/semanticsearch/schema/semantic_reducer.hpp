@@ -30,15 +30,17 @@ namespace semanticsearch {
 class SemanticReducer
 {
 public:
-  using Vocabulary = std::shared_ptr<VocabularyInstance>;
   template <typename T>
   using Reducer = std::function<SemanticPosition(T const &)>;
   template <typename T>
   using Validator = std::function<bool(T const &)>;
 
+  /// Constructors
+  /// @{
   SemanticReducer()                             = default;
   SemanticReducer(SemanticReducer const &other) = default;
   SemanticReducer &operator=(SemanticReducer const &other) = default;
+  /// @}
 
   /// Setup
   /// @{
@@ -62,19 +64,26 @@ private:
   using InternalReducer   = std::function<SemanticPosition(void *)>;
   using InternalValidator = std::function<bool(void *)>;
 
-  int32_t           rank_{0};
-  InternalReducer   reducer_{nullptr};
-  InternalValidator constraints_validation_{nullptr};
+  /// Data members
+  /// @{
+  int32_t           rank_{0};                          ///< Rank of the reducer
+  InternalReducer   reducer_{nullptr};                 ///< Reducer that produces a vector
+  InternalValidator constraints_validation_{nullptr};  ///< Constraint validator
+  /// @}
 };
 
 template <typename T>
 void SemanticReducer::SetReducer(int32_t rank, Reducer<T> reducer)
 {
-  rank_    = rank;
-  reducer_ = [reducer](void *data) { return reducer(*reinterpret_cast<T *>(data)); };
-  if (reducer_ == nullptr)
+  if (reducer == nullptr)
   {
-    rank_ = 0;
+    rank_    = 0;
+    reducer_ = nullptr;
+  }
+  else
+  {
+    rank_    = rank;
+    reducer_ = [reducer](void *data) { return reducer(*reinterpret_cast<T *>(data)); };
   }
 }
 

@@ -102,7 +102,7 @@ void QueryExecutor::ExecuteStore(CompiledStatement const &stmt)
     return;
   }
 
-  model->VisitSubmodelsWithVocabulary(
+  model->VisitFields(
       [this, stmt](std::string, std::string mname, Vocabulary obj) {
         auto model = semantic_search_module_->GetModel(mname);
         if (model == nullptr)

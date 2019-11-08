@@ -29,14 +29,19 @@ template <typename T>
 class VocabularyTypedField : public VocabularyAbstractField
 {
 public:
-  using Type       = T;
-  using FieldModel = std::shared_ptr<VocabularyTypedField>;
-  using Variant    = std::shared_ptr<VocabularyInstance>;
+  using Type         = T;
+  using FieldModel   = std::shared_ptr<VocabularyTypedField>;
+  using Variant      = std::shared_ptr<VocabularyInstance>;
+  using FieldVisitor = std::function<void(std::string, std::string, VocabularyInstancePtr)>;
 
+  ///
+  /// @{
   VocabularyTypedField()                             = delete;
   VocabularyTypedField(VocabularyTypedField const &) = delete;
   VocabularyTypedField &operator=(VocabularyTypedField const &) = delete;
-  ~VocabularyTypedField() override                              = default;
+  /// @}
+
+  ~VocabularyTypedField() override = default;
 
   static FieldModel New()
   {
@@ -44,7 +49,7 @@ public:
     return ret;
   }
 
-  SemanticPosition Reduce(Vocabulary const &v) override
+  SemanticPosition Reduce(VocabularyInstancePtr const &v) override
   {
     if (std::type_index(typeid(T)) != type_)
     {
@@ -54,7 +59,7 @@ public:
     return constrained_data_reducer_.Reduce(v->data_);
   }
 
-  bool Validate(Vocabulary const &v) override
+  bool Validate(VocabularyInstancePtr const &v) override
   {
     if (type_ != v->type())
     {
@@ -80,10 +85,11 @@ public:
     // TODO(private issue AEA-130): Check reducers and validators - they are currently ignored.
   }
 
-  bool VisitSubmodelsWithVocabulary(
-      std::function<void(std::string, std::string, Vocabulary)> /*callback*/, Vocabulary /*obj*/,
-      std::string /*name*/ = "") override
+  bool VisitFields(FieldVisitor /*callback*/, VocabularyInstancePtr /*obj*/,
+                   std::string /*name*/ = "") override
   {
+    // A typed field does not have any sub fields, hence we just
+    // return
     return true;
   }
 

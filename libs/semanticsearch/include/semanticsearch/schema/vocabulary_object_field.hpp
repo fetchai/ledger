@@ -36,7 +36,7 @@ public:
   using ModelInterface = std::shared_ptr<VocabularyAbstractField>;
   using FieldModel     = std::shared_ptr<VocabularyObjectField>;
   using ModelMap       = std::map<std::string, ModelInterface>;
-
+  using FieldVisitor   = std::function<void(std::string, std::string, Vocabulary)>;
   VocabularyObjectField(VocabularyObjectField const &) = delete;
   VocabularyObjectField &operator=(VocabularyObjectField const &) = delete;
 
@@ -117,9 +117,7 @@ public:
     return rank_;
   }
 
-  bool VisitSubmodelsWithVocabulary(
-      std::function<void(std::string, std::string, Vocabulary)> callback, Vocabulary obj,
-      std::string name = "") override
+  bool VisitFields(FieldVisitor callback, Vocabulary obj, std::string name = "") override
   {
 
     if (type() != obj->type())
@@ -146,7 +144,7 @@ public:
         return false;
       }
 
-      if (!it1->second->VisitSubmodelsWithVocabulary(callback, it2->second, it1->first))
+      if (!it1->second->VisitFields(callback, it2->second, it1->first))
       {
         return false;
       }

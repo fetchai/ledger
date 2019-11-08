@@ -28,11 +28,12 @@ namespace semanticsearch {
 class QueryExecutor
 {
 public:
-  using VocabularySchemaPtr      = SemanticSearchModule::VocabularySchemaPtr;
-  using ModelField               = SemanticSearchModule::ModelField;
-  using Token                    = fetch::byte_array::Token;
-  using Vocabulary               = std::shared_ptr<VocabularyInstance>;
-  using SharedVocabularyRegister = VocabularyRegister::SharedVocabularyRegister;
+  using VocabularySchemaPtr = SemanticSearchModule::VocabularySchemaPtr;
+  using ModelField          = SemanticSearchModule::ModelField;
+  using Token               = fetch::byte_array::Token;
+  using Vocabulary          = std::shared_ptr<VocabularyInstance>;
+  using SharedAbstractVocabularyRegister =
+      AbstractVocabularyRegister::SharedAbstractVocabularyRegister;
 
   using Int    = int;  // TODO(private issue AEA-126): Get rid of these
   using Float  = double;

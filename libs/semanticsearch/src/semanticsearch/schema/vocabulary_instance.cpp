@@ -23,6 +23,11 @@
 namespace fetch {
 namespace semanticsearch {
 
+VocabularyInstance::VocabularyInstance(std::type_index type, void *data)
+  : type_(type)
+  , data_(data)
+{}
+
 VocabularyInstance::~VocabularyInstance()
 {
   // Invoking detructor

@@ -62,10 +62,7 @@ public:
 private:
   /// Private constructor
   /// @{
-  VocabularyInstance(std::type_index type, void *data)
-    : type_(type)
-    , data_(data)
-  {}
+  VocabularyInstance(std::type_index type, void *data);
   /// @}
 
   /// Data members
@@ -88,6 +85,10 @@ VocabularyInstance::VocabularyInstancePtr VocabularyInstance::New(T data)
 {
   VocabularyInstancePtr ret;
   ret.reset(new VocabularyInstance(std::type_index(typeid(T)), new T(data)));
+
+  // Creating a destructor for the obejct of type T
+  // since it is type erased and we don't know the type
+  // when VocabularyInstance is destructed.
   ret->destructor_ = [](void *data) {
     T *d = static_cast<T *>(data);
     delete d;

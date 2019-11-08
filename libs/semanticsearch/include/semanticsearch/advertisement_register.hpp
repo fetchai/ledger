@@ -23,15 +23,16 @@
 namespace fetch {
 namespace semanticsearch {
 
-class AdvertisementRegister : public VocabularyRegister
+class AdvertisementRegister : public AbstractVocabularyRegister
 {
 public:
-  using Vocabulary               = std::shared_ptr<VocabularyInstance>;
-  using SharedModel              = std::shared_ptr<VocabularyAdvertisement>;
-  using SharedVocabularyRegister = VocabularyRegister::SharedVocabularyRegister;
-  using Index                    = VocabularyAdvertisement::Index;
-  using AgentId                  = VocabularyAdvertisement::AgentId;
-  using AgentIdSet               = VocabularyAdvertisement::AgentIdSet;
+  using Vocabulary  = std::shared_ptr<VocabularyInstance>;
+  using SharedModel = std::shared_ptr<VocabularyAdvertisement>;
+  using SharedAbstractVocabularyRegister =
+      AbstractVocabularyRegister::SharedAbstractVocabularyRegister;
+  using Index      = VocabularyAdvertisement::Index;
+  using AgentId    = VocabularyAdvertisement::AgentId;
+  using AgentIdSet = VocabularyAdvertisement::AgentIdSet;
 
   AdvertisementRegister() = default;
 

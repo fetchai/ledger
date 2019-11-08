@@ -30,9 +30,9 @@ namespace semanticsearch {
 class VocabularyAbstractField
 {
 public:
-  using Vocabulary      = std::shared_ptr<VocabularyInstance>;
-  using ModelInterface  = std::shared_ptr<VocabularyAbstractField>;
-  using FunctionVisitor = std::function<void(std::string, std::string, Vocabulary)>;
+  using VocabularyInstancePtr = std::shared_ptr<VocabularyInstance>;
+  using ModelInterface        = std::shared_ptr<VocabularyAbstractField>;
+  using FieldVisitor = std::function<void(std::string, std::string, VocabularyInstancePtr)>;
 
   virtual ~VocabularyAbstractField() = default;
 
@@ -46,13 +46,13 @@ public:
 
   /// Used for reduction and validation
   /// @{
-  virtual SemanticPosition Reduce(Vocabulary const &v)   = 0;
-  virtual bool             Validate(Vocabulary const &v) = 0;
+  virtual SemanticPosition Reduce(VocabularyInstancePtr const &v)   = 0;
+  virtual bool             Validate(VocabularyInstancePtr const &v) = 0;
   /// @}
 
-  virtual bool VisitSubmodelsWithVocabulary(FunctionVisitor callback, Vocabulary,
-                                            std::string     name = "") = 0;
-  virtual bool IsSame(ModelInterface const &) const                = 0;
+  virtual bool VisitFields(FieldVisitor callback, VocabularyInstancePtr instance,
+                           std::string name = "")   = 0;
+  virtual bool IsSame(ModelInterface const &) const = 0;
 
   /// Properties
   /// @{
