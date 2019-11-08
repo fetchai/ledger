@@ -37,13 +37,12 @@ TYPED_TEST_CASE(TensorDataloaderTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 {
-  TypeParam label_tensor = TypeParam::UniformRandom(4);  // todo: for int types this is all zero!
-  TypeParam data1_tensor = TypeParam::UniformRandom(24);
-  TypeParam data2_tensor = TypeParam::UniformRandom(32);
+  TypeParam label_tensor = TypeParam::UniformRandomIntegers(4, 0, 100);
+  TypeParam data1_tensor = TypeParam::UniformRandomIntegers(24, 0, 100);
+  TypeParam data2_tensor = TypeParam::UniformRandomIntegers(32, 0, 100);
   label_tensor.Reshape({1, 4});
   data1_tensor.Reshape({2, 3, 4});
   data2_tensor.Reshape({8, 2, 4});
-//  std::cout << "label_tensor.ToString(): " << label_tensor.ToString() << std::endl;
 
   // generate a plausible tensor data loader
   auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>();
@@ -51,22 +50,8 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
   // add some data
   tdl.AddData({data1_tensor, data2_tensor}, label_tensor);
   tdl.SetRandomMode(true);
+  // calling GetNext ensures that internal parameters are not default
   auto next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
-//  std::cout << "next0.first: " << next0.first.ToString() << std::endl;
-//  std::cout << "next0.second: " << next0.second.at(0).View().Copy().ToString() << std::endl;
-  next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
-  next0 = tdl.GetNext();
 
   fetch::serializers::MsgPackSerializer b;
   b << tdl;
@@ -78,7 +63,6 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 
   b >> tdl_2;
 
-  std::cout << "Comparing identical dataloaders: " << std::endl;
   EXPECT_EQ(tdl.Size(), tdl_2.Size());
   EXPECT_EQ(tdl.IsDone(), tdl_2.IsDone());
 

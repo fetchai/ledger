@@ -85,18 +85,18 @@ public:
   }
 
 private:
-  SizeType                                  current_sentence_;
-  SizeType                                  current_word_;
-  SizeType                                  window_size_;
-  SizeType                                  negative_samples_;
-  DataType                                  freq_thresh_;
-  VocabPtrType                              vocab_ = std::make_shared<VocabType>();
-  std::vector<std::vector<SizeType>>        data_;
-  std::vector<SizeType>                     word_id_counts_;
-  UnigramTable                              unigram_table_;
-  SizeType                                  max_word_count_;
-  SizeType                                  size_        = 0;
-  SizeType                                  reset_count_ = 0;
+  SizeType                           current_sentence_;
+  SizeType                           current_word_;
+  SizeType                           window_size_;
+  SizeType                           negative_samples_;
+  DataType                           freq_thresh_;
+  VocabPtrType                       vocab_ = std::make_shared<VocabType>();
+  std::vector<std::vector<SizeType>> data_;
+  std::vector<SizeType>              word_id_counts_;
+  UnigramTable                       unigram_table_;
+  SizeType                           max_word_count_;
+  SizeType                           size_        = 0;
+  SizeType                           reset_count_ = 0;
 
   // temporary sample and labels for buffering samples
   InputType                     input_words_, output_words_, labels_;

@@ -64,7 +64,7 @@ public:
   void             SetMode(DataLoaderMode new_mode);
   virtual bool     IsModeAvailable(DataLoaderMode mode) = 0;
   void             SetRandomMode(bool random_mode_state);
-  void SetSeed(SizeType seed = 123);
+  void             SetSeed(SizeType seed = 123);
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
@@ -78,8 +78,8 @@ protected:
   SizeType                  current_max_{};
   SizeType                  current_size_{};
 
-  bool           random_mode_ = false;
-  DataLoaderMode mode_        = DataLoaderMode::TRAIN;
+  bool                                      random_mode_ = false;
+  DataLoaderMode                            mode_        = DataLoaderMode::TRAIN;
   fetch::random::LaggedFibonacciGenerator<> rand{};
 
 private:
@@ -207,8 +207,9 @@ void DataLoader<LabelType, DataType>::SetRandomMode(bool random_mode_state)
   random_mode_ = random_mode_state;
 }
 
-template<typename LabelType, typename InputType>
-void DataLoader<LabelType, InputType>::SetSeed(DataLoader::SizeType seed) {
+template <typename LabelType, typename InputType>
+void DataLoader<LabelType, InputType>::SetSeed(DataLoader::SizeType seed)
+{
   rand.Seed(seed);
 }
 
@@ -258,10 +259,10 @@ struct MapSerializer<fetch::ml::dataloaders::DataLoader<LabelType, InputType>, D
   using DriverType = D;
 
   static uint8_t const RANDOM_MODE              = 1;
-  static uint8_t const MODE = 2;
-  static uint8_t const RAND_SEED = 3;
-  static uint8_t const RAND_BUFFER = 4;
-  static uint8_t const RAND_INDEX = 5;
+  static uint8_t const MODE                     = 2;
+  static uint8_t const RAND_SEED                = 3;
+  static uint8_t const RAND_BUFFER              = 4;
+  static uint8_t const RAND_INDEX               = 5;
   static uint8_t const SIZE_NOT_SET             = 6;
   static uint8_t const CUR_TRAINING_PAIR_FIRST  = 7;
   static uint8_t const CUR_TRAINING_PAIR_SECOND = 8;
@@ -292,9 +293,9 @@ struct MapSerializer<fetch::ml::dataloaders::DataLoader<LabelType, InputType>, D
     map.ExpectKeyGetValue(RANDOM_MODE, sp.random_mode_);
     map.ExpectKeyGetValue(MODE, sp.mode_);
 
-    fetch::math::SizeType             random_seed{};
+    fetch::math::SizeType random_seed{};
     std::vector<uint64_t> buffer{};
-    auto              index = fetch::math::numeric_max<uint64_t>();
+    auto                  index = fetch::math::numeric_max<uint64_t>();
     map.ExpectKeyGetValue(RAND_SEED, random_seed);
     map.ExpectKeyGetValue(RAND_BUFFER, buffer);
     map.ExpectKeyGetValue(RAND_INDEX, index);

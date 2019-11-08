@@ -89,7 +89,7 @@ protected:
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
 
-  SizeType       count_ = 0;
+  SizeType count_ = 0;
 
   void UpdateRanges();
   void UpdateCursor() override;
@@ -110,11 +110,7 @@ TensorDataLoader<LabelType, InputType>::GetNext()
 
   if (this->random_mode_)
   {
-    auto random_num = this->rand();
-    std::cout << "fetch::Random::rand(): " << random_num << std::endl;
-    std::cout << "random_num % 4: "
-              << (static_cast<SizeType>(random_num) % this->current_size_) << std::endl;
-    *this->current_cursor_ = this->current_min_ + (static_cast<SizeType>(random_num) % this->current_size_);
+    *this->current_cursor_ = this->current_min_ + SizeType{this->rand()} % this->current_size_;
     ++count_;
   }
   else
@@ -342,7 +338,7 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
 
   static uint8_t const BATCH_LABEL_DIM = 17;
   static uint8_t const BATCH_DATA_DIM  = 18;
-  static uint8_t const COUNT = 19;
+  static uint8_t const COUNT           = 19;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)

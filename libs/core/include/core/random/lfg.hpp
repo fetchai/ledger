@@ -51,7 +51,7 @@ public:
 
     for (uint64_t i = 0; i < Q; ++i)
     {
-      buffer_[i] = lcg_();
+      buffer_[i] = (lcg_() >> 19) ^ lcg_();
     }
 
     FillBuffer();
