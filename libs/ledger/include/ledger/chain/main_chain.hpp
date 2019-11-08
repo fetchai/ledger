@@ -55,8 +55,8 @@ namespace ledger {
  *     All blocks added MUST have a valid hash and previous hash
  *
  * Loose blocks are blocks where the previous hash/block isn't found.
- * Tips keep track of all non loose chains. Has the property that the chain will not present a
- * heaviest block that it sees as having a duplicated weight (stutter blocks)
+ * Tips keep track of all non loose chains. Option to have the property that the chain will not
+ * present a heaviest block that it sees as having a duplicated height and weight (stutter blocks)
  */
 struct Tip
 {

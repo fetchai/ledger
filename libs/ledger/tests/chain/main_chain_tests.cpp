@@ -283,7 +283,7 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
         << "when adding side block no. " << block->body.block_number << "; side: " << Hashes(side);
   }
 
-  // build a heavier main chain which must always be heavier than the side chain
+  // build a heavier main chain (length chosen so that it is always heavier)
   auto const main{GenerateChain(generator_, cabinet_, genesis, 72, {side})};
 
   // add the main chain blocks
@@ -410,7 +410,6 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   }
 
   // invalidate the middle of the longest branch, now branch7 is the best
-  assert(branch9.size() > 6);
   ASSERT_TRUE(chain_->RemoveBlock(branch9[6]->body.hash))
       << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
       << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
@@ -439,7 +438,6 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   }
 
   // go on cutting branches
-  assert(branch7.size() > 2);
   ASSERT_TRUE(chain_->RemoveBlock(branch7[2]->body.hash))
       << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
       << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
@@ -474,10 +472,9 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
         << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
         << "; branch9: " << Hashes(branch9);
   }
-  assert(branch6.size() > 3);
-  ASSERT_TRUE(chain_->RemoveBlock(branch6[3]->body.hash));
+  ASSERT_TRUE(chain_->RemoveBlock(branch6[4]->body.hash));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), GetHeaviestHash(branch5.back(), branch6[2]));
-  for (std::size_t i{}; i < 3; ++i)
+  for (std::size_t i{}; i < 4; ++i)
   {
     ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch6[i]->body.hash)))
         << "when searching block no. " << i << " of branch9"
@@ -485,7 +482,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
         << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
         << "; branch9: " << Hashes(branch9);
   }
-  for (std::size_t i{3}; i < branch6.size(); ++i)
+  for (std::size_t i{4}; i < branch6.size(); ++i)
   {
     ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch6[i]->body.hash)))
         << "when searching block no. " << i << " of branch9"
@@ -848,7 +845,7 @@ TEST_P(MainChainTests, CheckMultipleMissing)
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*common1));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->body.hash);
 
-  // add all the second blocks in the side chains
+  // add all the side chain tips
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*side1[1]));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->body.hash);
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*side2[1]));
