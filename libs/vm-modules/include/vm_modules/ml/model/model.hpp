@@ -72,10 +72,10 @@ public:
                                math::SizeType const &inputs, math::SizeType const &hidden_nodes,
                                fetch::vm::Ptr<fetch::vm::String> const &activation);
 
-  void LayerAddConv1D(fetch::vm::Ptr<fetch::vm::String> const &layer,
+  void LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
                       math::SizeType const &output_channels, math::SizeType const &input_channels,
                       math::SizeType const &kernel_size, math::SizeType const &stride_size);
-  void LayerAddConv1DActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+  void LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                 math::SizeType const &                   output_channels,
                                 math::SizeType const &                   input_channels,
                                 math::SizeType const &                   kernel_size,

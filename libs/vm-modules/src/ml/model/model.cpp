@@ -143,62 +143,74 @@ void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &l
   }
 }
 
-void VMModel::LayerAddConv1D(fetch::vm::Ptr<fetch::vm::String> const &layer,
+void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
                              math::SizeType const &                   output_channels,
                              math::SizeType const &                   input_channels,
                              math::SizeType const &kernel_size, math::SizeType const &stride_size)
 {
-  // guarantee it's a conv1d layer
-  if (!(layer->str == "conv1d"))
+  if (!(model_category_ == ModelCategory::SEQUENTIAL))
   {
-    throw std::runtime_error("invalid params specified for " + layer->str + " layer");
+    throw std::runtime_error("no add method for non-sequential methods");
   }
 
-  if (model_category_ == ModelCategory::SEQUENTIAL)
+  auto model_ptr = std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
+
+  if (layer->str == "conv1d")
   {
-    auto model_ptr = std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
     model_ptr->Add<fetch::ml::layers::Convolution1D<TensorType>>(
+        output_channels, input_channels, kernel_size, stride_size,
+        fetch::ml::details::ActivationType::NOTHING);
+  }
+  else if (layer->str == "conv2d")
+  {
+    model_ptr->Add<fetch::ml::layers::Convolution2D<TensorType>>(
         output_channels, input_channels, kernel_size, stride_size,
         fetch::ml::details::ActivationType::NOTHING);
   }
   else
   {
-    throw std::runtime_error("no add method for non-sequential methods");
+    throw std::runtime_error("invalid params specified for " + layer->str + " layer");
   }
 }
 
-void VMModel::LayerAddConv1DActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                        math::SizeType const &                   output_channels,
                                        math::SizeType const &                   input_channels,
                                        math::SizeType const &                   kernel_size,
                                        math::SizeType const &                   stride_size,
                                        fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
-  // guarantee it's a conv1d layer
-  if (!(layer->str == "conv1d"))
+  if (!(model_category_ == ModelCategory::SEQUENTIAL))
   {
-    throw std::runtime_error("invalid params specified for " + layer->str + " layer");
+    throw std::runtime_error("no add method for non-sequential methods");
   }
 
-  if (model_category_ == ModelCategory::SEQUENTIAL)
+  fetch::ml::details::ActivationType activation_type = fetch::ml::details::ActivationType::NOTHING;
+  if (activation->str == "relu")
   {
-    fetch::ml::details::ActivationType activation_type =
-        fetch::ml::details::ActivationType::NOTHING;
-    if (activation->str == "relu")
-    {
-      activation_type = fetch::ml::details::ActivationType::RELU;
-    }
-    else
-    {
-      throw std::runtime_error("attempted to add unknown layer with unknown activation type");
-    }
-    auto model_ptr = std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
-    model_ptr->Add<fetch::ml::layers::Convolution1D<TensorType>>(
-        output_channels, input_channels, kernel_size, stride_size, activation_type);
+    activation_type = fetch::ml::details::ActivationType::RELU;
   }
   else
   {
-    throw std::runtime_error("no add method for non-sequential methods");
+    throw std::runtime_error("attempted to add unknown layer with unknown activation type");
+  }
+
+  auto model_ptr = std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
+  if (layer->str == "conv1d")
+  {
+    model_ptr->Add<fetch::ml::layers::Convolution1D<TensorType>>(
+        output_channels, input_channels, kernel_size, stride_size,
+        activation_type);
+  }
+  else if (layer->str == "conv2d")
+  {
+    model_ptr->Add<fetch::ml::layers::Convolution2D<TensorType>>(
+        output_channels, input_channels, kernel_size, stride_size,
+        activation_type);
+  }
+  else
+  {
+    throw std::runtime_error("invalid params specified for " + layer->str + " layer");
   }
 }
 
@@ -333,9 +345,9 @@ void VMModel::Bind(Module &module)
         return Ptr<VMModel>{new VMModel(vm, type_id)};
       })
       .CreateMemberFunction("add", &VMModel::LayerAddDense)
-      .CreateMemberFunction("add", &VMModel::LayerAddConv1D)
+      .CreateMemberFunction("add", &VMModel::LayerAddConv)
       .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation)
-      .CreateMemberFunction("add", &VMModel::LayerAddConv1DActivation)
+      .CreateMemberFunction("add", &VMModel::LayerAddConvActivation)
       .CreateMemberFunction("compile", &VMModel::CompileSequential)
       .CreateMemberFunction("compile", &VMModel::CompileSimple)
       .CreateMemberFunction("fit", &VMModel::Fit)

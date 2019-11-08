@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/math/type.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
@@ -862,8 +861,9 @@ TEST_F(MLTests, conv1d_sequential_model_test)
   gt(3, 0) = static_cast<DataType>(1.763717529829592);
   gt(4, 0) = static_cast<DataType>(-1.8677866039798);
 
-  ASSERT_TRUE((prediction->GetTensor()).AllClose(gt, fetch::math::function_tolerance<DataType>(), fetch::math::function_tolerance<DataType>()));
-
+  ASSERT_TRUE((prediction->GetTensor())
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
 }
 
 TEST_F(MLTests, classifier_model_test)
