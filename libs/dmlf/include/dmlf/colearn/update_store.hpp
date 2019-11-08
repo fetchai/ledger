@@ -28,48 +28,48 @@
 
 namespace fetch {
 namespace dmlf {
-namespace colearn{
+namespace colearn {
 
 class UpdateStore
 {
 public:
-  using Update     = ColearnUpdate;
-  using UpdatePtr  = std::shared_ptr<Update>;
-  using Algorithm  = std::string;
+  using Update    = ColearnUpdate;
+  using UpdatePtr = std::shared_ptr<Update>;
+  using Algorithm = std::string;
 
   using UpdateType = Update::UpdateType;
   using Data       = Update::Data;
   using Source     = Update::Source;
 
-  UpdateStore()                                      = default;
-  ~UpdateStore()                             = default;
+  UpdateStore()                         = default;
+  ~UpdateStore()                        = default;
   UpdateStore(UpdateStore const &other) = delete;
-  UpdateStore &operator=(UpdateStore const &other)  = delete;
+  UpdateStore &operator=(UpdateStore const &other) = delete;
 
-  void        PushUpdate(Algorithm const& algo, UpdateType type, Data data, Source source);
-  UpdatePtr   GetUpdate(Algorithm const& algo, UpdateType const& type);
+  void        PushUpdate(Algorithm const &algo, UpdateType type, Data data, Source source);
+  UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type);
   std::size_t GetUpdateCount() const;
-  std::size_t GetUpdateCount(Algorithm const& algo, UpdateType const& type) const;
+  std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const;
 
 private:
   using QueueId = std::string;
-  QueueId Id(Algorithm const& algo, UpdateType const& type) const;
+  QueueId Id(Algorithm const &algo, UpdateType const &type) const;
 
   struct QueueOrder
   {
-    bool operator()(UpdatePtr const& l, UpdatePtr const& r)
+    bool operator()(UpdatePtr const &l, UpdatePtr const &r)
     {
       return l->time_stamp > r->time_stamp;
     }
   };
 
-  using Mutex             = fetch::Mutex;
-  using Lock              = std::unique_lock<Mutex>;
-  using Queue = std::priority_queue<UpdatePtr, std::vector<UpdatePtr>, QueueOrder>;
+  using Mutex   = fetch::Mutex;
+  using Lock    = std::unique_lock<Mutex>;
+  using Queue   = std::priority_queue<UpdatePtr, std::vector<UpdatePtr>, QueueOrder>;
   using AlgoMap = std::unordered_map<QueueId, Queue>;
 
-  AlgoMap algo_map_;
-  mutable Mutex     global_m_;
+  AlgoMap       algo_map_;
+  mutable Mutex global_m_;
 };
 
 }  // namespace colearn

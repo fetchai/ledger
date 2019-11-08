@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include <numeric>
 #include <stdexcept>
 
@@ -24,9 +23,9 @@
 
 namespace fetch {
 namespace dmlf {
-namespace colearn{
+namespace colearn {
 
-UpdateStore::QueueId UpdateStore::Id(Algorithm const& algo, UpdateType const& type) const
+UpdateStore::QueueId UpdateStore::Id(Algorithm const &algo, UpdateType const &type) const
 {
   return algo + "->" + type;
 }
@@ -42,13 +41,13 @@ std::size_t UpdateStore::GetUpdateCount() const
   }
   return sum;
 }
-std::size_t UpdateStore::GetUpdateCount(Algorithm const& algo, UpdateType const& type) const
+std::size_t UpdateStore::GetUpdateCount(Algorithm const &algo, UpdateType const &type) const
 {
   FETCH_LOCK(global_m_);
-  QueueId id = Id(algo,type);
+  QueueId id = Id(algo, type);
 
   auto it = algo_map_.find(id);
-  if (it == algo_map_.end()) 
+  if (it == algo_map_.end())
   {
     return 0;
   }
@@ -58,25 +57,26 @@ std::size_t UpdateStore::GetUpdateCount(Algorithm const& algo, UpdateType const&
   }
 }
 
-void UpdateStore::PushUpdate(Algorithm const& algo, UpdateType type, Data data, Source source)
+void UpdateStore::PushUpdate(Algorithm const &algo, UpdateType type, Data data, Source source)
 {
   FETCH_LOCK(global_m_);
 
-  QueueId id = Id(algo,type);
-  auto queue_it = algo_map_.find(id);
+  QueueId id       = Id(algo, type);
+  auto    queue_it = algo_map_.find(id);
 
   if (queue_it == algo_map_.end())
   {
     queue_it = algo_map_.emplace(id, Queue()).first;
   }
 
-  queue_it->second.push(std::make_shared<Update>(std::move(type), std::move(data), std::move(source)));
+  queue_it->second.push(
+      std::make_shared<Update>(std::move(type), std::move(data), std::move(source)));
 }
-UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const& algo, UpdateType const& type)
+UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType const &type)
 {
   FETCH_LOCK(global_m_);
-  QueueId id = Id(algo,type);
-  auto queue_it = algo_map_.find(id);
+  QueueId id       = Id(algo, type);
+  auto    queue_it = algo_map_.find(id);
 
   if (queue_it == algo_map_.end() || queue_it->second.empty())
   {
@@ -85,10 +85,9 @@ UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const& algo, UpdateType 
 
   auto result = queue_it->second.top();
   queue_it->second.pop();
-  
+
   return result;
 }
-
 
 }  // namespace colearn
 }  // namespace dmlf
