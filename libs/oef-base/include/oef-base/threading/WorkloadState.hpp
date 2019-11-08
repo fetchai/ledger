@@ -35,6 +35,6 @@ enum class WorkloadState
 };
 
 extern const char *const workloadProcessedNames[];
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

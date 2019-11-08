@@ -73,6 +73,6 @@ private:
 
 void swap(Waitable &v1, Waitable &v2);
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

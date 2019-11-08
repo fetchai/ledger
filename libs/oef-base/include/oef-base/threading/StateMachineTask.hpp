@@ -128,6 +128,6 @@ private:
   bool operator<(const StateMachineTask &other)  = delete;  // const { return compare(other)==-1; }
 };
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

@@ -193,6 +193,6 @@ ExitState MonitoringTask::run()
   return COMPLETE;
 }
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

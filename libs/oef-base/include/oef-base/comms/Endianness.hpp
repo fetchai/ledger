@@ -29,6 +29,6 @@ enum Endianness
   BAD
 };
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

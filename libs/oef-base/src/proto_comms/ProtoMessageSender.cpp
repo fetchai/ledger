@@ -57,7 +57,7 @@ ProtoMessageSender::consumed_needed_pair ProtoMessageSender::CheckForSpace(
 
       switch (endianness)
       {
-        case fetch::oef::base::Endianness::DUNNO:
+      case fetch::oef::base::Endianness::DUNNO:
         throw std::invalid_argument("Refusing to send when endianness is DUNNO.");
         break;
       case fetch::oef::base::Endianness::LITTLE:

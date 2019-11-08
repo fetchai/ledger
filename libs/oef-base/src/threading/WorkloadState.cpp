@@ -24,6 +24,6 @@ namespace base {
 
 extern const char *const workloadProcessedNames[] = {"COMPLETE", "NOT_COMPLETE", "NOT_STARTED"};
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

@@ -47,6 +47,6 @@ private:
   bool operator<(const MonitoringTask &other)  = delete;  // const { return compare(other)==-1; }
 };
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

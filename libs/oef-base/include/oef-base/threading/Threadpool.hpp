@@ -87,6 +87,6 @@ private:
   bool        operator<(const Threadpool &other)  = delete;
 };
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

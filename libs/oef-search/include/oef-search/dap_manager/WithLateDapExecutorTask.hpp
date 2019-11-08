@@ -28,12 +28,14 @@
 
 class DapManager;
 
-class WithLateDapExecutorTask : virtual public fetch::oef::base::StateMachineTask<WithLateDapExecutorTask>,
-                                virtual public NodeExecutorTask
+class WithLateDapExecutorTask
+  : virtual public fetch::oef::base::StateMachineTask<WithLateDapExecutorTask>,
+    virtual public NodeExecutorTask
 {
 public:
-  using StateResult    = typename fetch::oef::base::StateMachineTask<WithLateDapExecutorTask>::Result;
-  using EntryPoint     = typename fetch::oef::base::StateMachineTask<WithLateDapExecutorTask>::EntryPoint;
+  using StateResult = typename fetch::oef::base::StateMachineTask<WithLateDapExecutorTask>::Result;
+  using EntryPoint =
+      typename fetch::oef::base::StateMachineTask<WithLateDapExecutorTask>::EntryPoint;
   using MessageHandler = std::function<void(std::shared_ptr<IdentifierSequence>)>;
   using ErrorHandler =
       std::function<void(const std::string &, const std::string &, const std::string &)>;

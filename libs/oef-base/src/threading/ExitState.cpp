@@ -27,6 +27,6 @@ extern const char *const exitStateNames[] = {
     "ERRORED",
 };
 
-} //base
-} //oef
-} //fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

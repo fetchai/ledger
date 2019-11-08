@@ -57,7 +57,7 @@ public:
 
 protected:
 private:
-  Mutex      mutex;
+  Mutex                        mutex;
   fetch::oef::base::Endianness endianness = fetch::oef::base::Endianness::DUNNO;
   std::weak_ptr<ProtoMessageEndpoint<TXType, ProtoMessageReader, ProtoMessageSender>> endpoint;
 

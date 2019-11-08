@@ -34,8 +34,8 @@ class DapConversationTask
     virtual public fetch::oef::base::Waitable
 {
 public:
-  using StateResult    = typename fetch::oef::base::StateMachineTask<DapConversationTask>::Result;
-  using EntryPoint     = typename fetch::oef::base::StateMachineTask<DapConversationTask>::EntryPoint;
+  using StateResult = typename fetch::oef::base::StateMachineTask<DapConversationTask>::Result;
+  using EntryPoint  = typename fetch::oef::base::StateMachineTask<DapConversationTask>::EntryPoint;
   using MessageHandler = std::function<void(std::shared_ptr<OUT_PROTO>)>;
   using ErrorHandler =
       std::function<void(const std::string &, const std::string &, const std::string &)>;
@@ -100,7 +100,7 @@ public:
 
       FETCH_LOG_INFO(LOGGING_NAME, "Conversation created with ", uri.ToString());
 
-      auto                this_sp                   = this->template shared_from_base<DapConversationTask>();
+      auto this_sp = this->template shared_from_base<DapConversationTask>();
       std::weak_ptr<fetch::oef::base::Task> this_wp = this_sp;
 
       if (conversation->MakeNotification()

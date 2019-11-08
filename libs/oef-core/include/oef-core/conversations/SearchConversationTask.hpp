@@ -63,7 +63,7 @@ public:
 
   StateResult CreateConversation()
   {
-    auto                this_sp = get_shared();
+    auto                                  this_sp = get_shared();
     std::weak_ptr<fetch::oef::base::Task> this_wp = this_sp;
     FETCH_LOG_INFO(LOGGING_NAME, "Start");
     FETCH_LOG_INFO(LOGGING_NAME, "***PATH: ", path_);
@@ -87,9 +87,9 @@ public:
     return SearchConversationTask::StateResult(1, fetch::oef::base::COMPLETE);
   }
 
-  virtual StateResult                    HandleResponse()      = 0;
-  virtual std::shared_ptr<fetch::oef::base::Task> get_shared() = 0;
-  virtual std::shared_ptr<REQUEST_PROTO> make_request_proto()  = 0;
+  virtual StateResult                             HandleResponse()     = 0;
+  virtual std::shared_ptr<fetch::oef::base::Task> get_shared()         = 0;
+  virtual std::shared_ptr<REQUEST_PROTO>          make_request_proto() = 0;
 
   using SendFunc =
       std::function<void(std::shared_ptr<OUT_PROTO>, std::shared_ptr<OefAgentEndpoint> endpoint)>;

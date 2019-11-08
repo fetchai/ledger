@@ -22,7 +22,8 @@
 
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 
-fetch::oef::base::Notification::NotificationBuilder Agent::send(std::shared_ptr<google::protobuf::Message> s)
+fetch::oef::base::Notification::NotificationBuilder Agent::send(
+    std::shared_ptr<google::protobuf::Message> s)
 {
   return endpoint->send(std::move(s));
 }

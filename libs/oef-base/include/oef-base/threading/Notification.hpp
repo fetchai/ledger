@@ -184,7 +184,7 @@ private:
 Notification        create();
 NotificationBuilder builder(Notification n);
 
-} // namespace Notification
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace Notification
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

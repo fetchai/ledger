@@ -55,7 +55,7 @@ public:
 protected:
 private:
   std::shared_ptr<Core>                                                                  core;
-  std::shared_ptr<fetch::oef::base::Taskpool>                                                              tasks;
+  std::shared_ptr<fetch::oef::base::Taskpool>                                            tasks;
   std::shared_ptr<OefListenerSet<IOefTaskFactory<OefSearchEndpoint>, OefSearchEndpoint>> listeners;
   std::shared_ptr<OutboundConversations>                                                 outbounds;
   std::shared_ptr<DapStore>                                                              dap_store_;

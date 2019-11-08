@@ -226,6 +226,6 @@ protected:
   std::vector<EntryPoint> entryPoint{};
   std::atomic<bool>       last_task_done{true};
 };
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

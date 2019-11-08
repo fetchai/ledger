@@ -26,12 +26,13 @@
 
 class BranchSerialExecutorTask
   : virtual public BranchExecutorTask,
-    virtual public fetch::oef::base::TaskChainSerial<IdentifierSequence, IdentifierSequence,
-                                   BranchExecutorTask::NodeDataType, NodeExecutorTask>
+    virtual public fetch::oef::base::TaskChainSerial<
+        IdentifierSequence, IdentifierSequence, BranchExecutorTask::NodeDataType, NodeExecutorTask>
 {
 public:
-  using BaseTask       = fetch::oef::base::TaskChainSerial<IdentifierSequence, IdentifierSequence,
-                                   BranchExecutorTask::NodeDataType, NodeExecutorTask>;
+  using BaseTask =
+      fetch::oef::base::TaskChainSerial<IdentifierSequence, IdentifierSequence,
+                                        BranchExecutorTask::NodeDataType, NodeExecutorTask>;
   using MessageHandler = BaseTask ::MessageHandler;
   using ErrorHandler   = BaseTask ::ErrorHandler;
 

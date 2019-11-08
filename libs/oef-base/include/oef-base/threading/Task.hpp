@@ -106,6 +106,6 @@ private:
   std::atomic<uint16_t>     made_runnable_;
 };
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

@@ -87,6 +87,6 @@ Notification::Notification Notification::create()
   return std::make_shared<NotificationImplementation>();
 }
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

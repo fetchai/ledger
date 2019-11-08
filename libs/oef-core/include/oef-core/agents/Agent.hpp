@@ -42,7 +42,8 @@ public:
 
   ~Agent() = default;
 
-  fetch::oef::base::Notification::NotificationBuilder send(std::shared_ptr<google::protobuf::Message> s);
+  fetch::oef::base::Notification::NotificationBuilder send(
+      std::shared_ptr<google::protobuf::Message> s);
 
   void run_sending();
 

@@ -38,13 +38,14 @@ struct DapInputDataType
 
 template <typename IN_PROTO, typename OUT_PROTO>
 class DapParallelConversationTask
-  : virtual public fetch::oef::base::TaskChainParallel<IN_PROTO, OUT_PROTO, DapInputDataType<IN_PROTO>,
-                                     DapConversationTask<IN_PROTO, OUT_PROTO>>
+  : virtual public fetch::oef::base::TaskChainParallel<
+        IN_PROTO, OUT_PROTO, DapInputDataType<IN_PROTO>, DapConversationTask<IN_PROTO, OUT_PROTO>>
 {
 public:
   using TaskType = DapConversationTask<IN_PROTO, OUT_PROTO>;
-  using Parent   = fetch::oef::base::TaskChainParallel<IN_PROTO, OUT_PROTO, DapInputDataType<IN_PROTO>,
-                                   DapConversationTask<IN_PROTO, OUT_PROTO>>;
+  using Parent =
+      fetch::oef::base::TaskChainParallel<IN_PROTO, OUT_PROTO, DapInputDataType<IN_PROTO>,
+                                          DapConversationTask<IN_PROTO, OUT_PROTO>>;
   static constexpr char const *LOGGING_NAME = "DapParallelConversationTask";
 
   DapParallelConversationTask(uint32_t msg_id, std::shared_ptr<OutboundConversations> outbounds,

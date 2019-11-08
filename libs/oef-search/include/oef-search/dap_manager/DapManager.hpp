@@ -83,10 +83,11 @@ public:
     }
   }
 
-  std::shared_ptr<fetch::oef::base::FutureComplexType<std::shared_ptr<Successfulness>>> parallelCall(
-      const std::string &path, Actions &update)
+  std::shared_ptr<fetch::oef::base::FutureComplexType<std::shared_ptr<Successfulness>>>
+  parallelCall(const std::string &path, Actions &update)
   {
-    auto future = std::make_shared<fetch::oef::base::FutureComplexType<std::shared_ptr<Successfulness>>>();
+    auto future =
+        std::make_shared<fetch::oef::base::FutureComplexType<std::shared_ptr<Successfulness>>>();
 
     auto convTask = std::make_shared<
         DapParallelConversationTask<ConstructQueryConstraintObjectRequest, Successfulness>>(
@@ -140,14 +141,16 @@ public:
   std::shared_ptr<fetch::oef::base::FutureComplexType<std::shared_ptr<OUT_PROTO>>> SingleDapCall(
       std::string const &dap_name, std::string const &path, std::shared_ptr<IN_PROTO> in_proto)
   {
-    auto future = std::make_shared<fetch::oef::base::FutureComplexType<std::shared_ptr<OUT_PROTO>>>();
+    auto future =
+        std::make_shared<fetch::oef::base::FutureComplexType<std::shared_ptr<OUT_PROTO>>>();
 
     auto convTask = std::make_shared<DapConversationTask<IN_PROTO, OUT_PROTO>>(
         dap_name, path, ++single_call_msg_id, in_proto, outbounds_);
 
     convTask->submit();
 
-    std::weak_ptr<fetch::oef::base::FutureComplexType<std::shared_ptr<OUT_PROTO>>> future_wp = future;
+    std::weak_ptr<fetch::oef::base::FutureComplexType<std::shared_ptr<OUT_PROTO>>> future_wp =
+        future;
 
     convTask->messageHandler = [future_wp](std::shared_ptr<OUT_PROTO> response) {
       auto sp = future_wp.lock();
@@ -198,7 +201,8 @@ public:
     return ++serial_call_msg_id;
   }
 
-  std::shared_ptr<fetch::oef::base::Future<bool>> ShouldQueryBeHandled(fetch::oef::pb::SearchQuery &query)
+  std::shared_ptr<fetch::oef::base::Future<bool>> ShouldQueryBeHandled(
+      fetch::oef::pb::SearchQuery &query)
   {
     auto result = std::make_shared<fetch::oef::base::Future<bool>>();
 
@@ -249,7 +253,8 @@ public:
   std::shared_ptr<fetch::oef::base::FutureComplexType<std::shared_ptr<IdentifierSequence>>> execute(
       std::shared_ptr<Branch> root, const fetch::oef::pb::SearchQuery &query)
   {
-    auto result    = std::make_shared<fetch::oef::base::FutureComplexType<std::shared_ptr<IdentifierSequence>>>();
+    auto result = std::make_shared<
+        fetch::oef::base::FutureComplexType<std::shared_ptr<IdentifierSequence>>>();
     auto visit_res = VisitQueryTreeNetwork(root);
 
     auto identifier_sequence = std::make_shared<IdentifierSequence>();
@@ -343,13 +348,14 @@ public:
     return 0.0;
   }
 
-  std::shared_ptr<fetch::oef::base::FutureComplexType<std::shared_ptr<IdentifierSequence>>> broadcast(
-      const fetch::oef::pb::SearchQuery &query)
+  std::shared_ptr<fetch::oef::base::FutureComplexType<std::shared_ptr<IdentifierSequence>>>
+  broadcast(const fetch::oef::pb::SearchQuery &query)
   {
     query_id_cache_->Add(query.id());
 
-    auto result  = std::make_shared<fetch::oef::base::FutureComplexType<std::shared_ptr<IdentifierSequence>>>();
-    auto this_sp = this->shared_from_this();
+    auto result = std::make_shared<
+        fetch::oef::base::FutureComplexType<std::shared_ptr<IdentifierSequence>>>();
+    auto                      this_sp = this->shared_from_this();
     std::weak_ptr<DapManager> this_wp = this_sp;
     FETCH_LOG_INFO(LOGGING_NAME, "Broadcast started");
     auto q = std::make_shared<fetch::oef::pb::SearchQuery>(query);
@@ -379,9 +385,11 @@ public:
     return result;
   }
 
-  std::shared_ptr<fetch::oef::base::FutureComplexType<std::pair<std::string, std::string>>> GetCoreInfo()
+  std::shared_ptr<fetch::oef::base::FutureComplexType<std::pair<std::string, std::string>>>
+  GetCoreInfo()
   {
-    auto response = std::make_shared<fetch::oef::base::FutureComplexType<std::pair<std::string, std::string>>>();
+    auto response = std::make_shared<
+        fetch::oef::base::FutureComplexType<std::pair<std::string, std::string>>>();
 
     auto request = std::make_shared<ConstructQueryConstraintObjectRequest>();
     request->set_operator_("LIST_CORES");
@@ -448,7 +456,8 @@ public:
   }
 
 protected:
-  std::shared_ptr<fetch::oef::base::Future<bool>> VisitQueryTreeNetwork(std::shared_ptr<Branch> root)
+  std::shared_ptr<fetch::oef::base::Future<bool>> VisitQueryTreeNetwork(
+      std::shared_ptr<Branch> root)
   {
     auto result = std::make_shared<fetch::oef::base::Future<bool>>();
     auto sp     = shared_from_this();
@@ -462,7 +471,7 @@ protected:
 
   void PlaneDistanceCheck(const std::string &                               plane,
                           const fetch::oef::pb::SearchQuery_DirectedSearch &header,
-                          std::shared_ptr<fetch::oef::base::Future<bool>> &                   future)
+                          std::shared_ptr<fetch::oef::base::Future<bool>> & future)
   {
     std::weak_ptr<fetch::oef::base::Future<bool>> future_wp = future;
 
@@ -593,8 +602,10 @@ protected:
     }
   }
 
-  void DoBroadcast(std::shared_ptr<fetch::oef::base::FutureComplexType<std::shared_ptr<IdentifierSequence>>> &future,
-                   std::shared_ptr<fetch::oef::pb::SearchQuery>                             query)
+  void DoBroadcast(
+      std::shared_ptr<fetch::oef::base::FutureComplexType<std::shared_ptr<IdentifierSequence>>>
+          &                                        future,
+      std::shared_ptr<fetch::oef::pb::SearchQuery> query)
   {
     auto convTask = std::make_shared<
         DapParallelConversationTask<fetch::oef::pb::SearchQuery, IdentifierSequence>>(

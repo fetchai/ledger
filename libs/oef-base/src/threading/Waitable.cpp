@@ -65,6 +65,6 @@ void Waitable::cancel()
   }
 }
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

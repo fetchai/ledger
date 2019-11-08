@@ -63,8 +63,8 @@ bool OutboundConversationWorkerTask::connect()
   return false;
 }
 
-fetch::oef::base::WorkloadProcessed OutboundConversationWorkerTask::process(WorkloadP workload,
-                                                                            fetch::oef::base::WorkloadState /*state*/)
+fetch::oef::base::WorkloadProcessed OutboundConversationWorkerTask::process(
+    WorkloadP workload, fetch::oef::base::WorkloadState /*state*/)
 {
   if (connect_failures_ > CONNECT_FAILURE_LIMIT)
   {

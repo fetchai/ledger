@@ -122,6 +122,6 @@ private:
   bool      operator==(const Taskpool &other) = delete;  // const { return compare(other)==0; }
   bool      operator<(const Taskpool &other)  = delete;  // const { return compare(other)==-1; }
 };
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

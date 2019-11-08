@@ -39,7 +39,8 @@
 #endif
 
 class OutboundConversationWorkerTask
-: public fetch::oef::base::TNonBlockingWorkerTask<OutboundConversation, TNONBLOCKINGWORKERTASK_SIZE>
+  : public fetch::oef::base::TNonBlockingWorkerTask<OutboundConversation,
+                                                    TNONBLOCKINGWORKERTASK_SIZE>
 {
 public:
   using Parent       = TNonBlockingWorkerTask<OutboundConversation, TNONBLOCKINGWORKERTASK_SIZE>;
@@ -60,7 +61,8 @@ public:
 
   ~OutboundConversationWorkerTask() override = default;
 
-  fetch::oef::base::WorkloadProcessed process(WorkloadP workload, fetch::oef::base::WorkloadState state) override;
+  fetch::oef::base::WorkloadProcessed process(WorkloadP                       workload,
+                                              fetch::oef::base::WorkloadState state) override;
 
 protected:
   virtual bool connect();

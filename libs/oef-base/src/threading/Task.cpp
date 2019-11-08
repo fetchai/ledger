@@ -21,7 +21,6 @@
 #include "oef-base/threading/Task.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 
-
 namespace fetch {
 namespace oef {
 namespace base {
@@ -162,6 +161,6 @@ bool Task::submit(const std::chrono::milliseconds &delay)
   return false;
 }
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

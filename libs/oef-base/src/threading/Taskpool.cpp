@@ -427,6 +427,6 @@ void Taskpool::CancelTaskGroup(std::size_t group_id)
   }
 }
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

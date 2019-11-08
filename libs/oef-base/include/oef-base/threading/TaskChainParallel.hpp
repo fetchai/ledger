@@ -213,6 +213,6 @@ protected:
 
   std::vector<EntryPoint> entryPoint;
 };
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

@@ -32,6 +32,6 @@ enum ExitState
 
 extern const char *const exitStateNames[];
 
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

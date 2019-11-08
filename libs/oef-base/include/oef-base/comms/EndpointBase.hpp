@@ -183,5 +183,5 @@ protected:
 
 private:
   std::vector<fetch::oef::base::Notification::Notification> waiting;
-  std::list<TXType>                       txq;
+  std::list<TXType>                                         txq;
 };

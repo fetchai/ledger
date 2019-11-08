@@ -183,6 +183,6 @@ private:
 
 // namespace std { template<> void swap(TWorkerTask& lhs, TWorkerTask& rhs) { lhs.swap(rhs); } }
 // std::ostream& operator<<(std::ostream& os, const TWorkerTask &output) {}
-} //namespace base
-} //namespace oef
-} //namespace fetch
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch
