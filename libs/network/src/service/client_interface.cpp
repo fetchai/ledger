@@ -67,7 +67,15 @@ bool ServiceClientInterface::ProcessServerMessage(network::MessageType const &ms
 
     // look up the promise and fail it
     Promise p = ExtractPromise(id);
-    p->Fail(e);
+
+    if (!p)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to look up a network promise but it was already deleted");
+    }
+    else
+    {
+      p->Fail(e);
+    }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id,
                     " due to finishing delivering the response (error)");
