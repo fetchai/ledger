@@ -309,13 +309,6 @@ function (configure_library_targets)
 
   file(GLOB children RELATIVE ${library_root} ${library_root}/*)
 
-  # Temporarily disable oef builds
-  list(FILTER
-       children
-       EXCLUDE
-       REGEX
-       ".*oef.*")
-
   set(dirlist "")
   foreach (child ${children})
     set(element_path ${library_root}/${child})
