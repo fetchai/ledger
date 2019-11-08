@@ -84,8 +84,8 @@ public:
 
   ModelInterfaceBuilder NewModel(std::string const &name, ModelInterfaceBuilder const &proxy)
   {
-    advertisement_register_->AddModel(name, proxy.model());
-    types_[name] = proxy.model();
+    advertisement_register_->AddModel(name, proxy.vocabulary_schema());
+    types_[name] = proxy.vocabulary_schema();
     return proxy;
   }
 
