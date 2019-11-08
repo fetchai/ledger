@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "math/base_types.hpp"
 #include "ml/exceptions/exceptions.hpp"
@@ -31,7 +32,7 @@ namespace fetch {
 namespace ml {
 namespace dataloaders {
 
-enum class DataLoaderMode
+enum class DataLoaderMode : uint16_t
 {
   TRAIN,
   VALIDATE,
@@ -63,6 +64,7 @@ public:
   void             SetMode(DataLoaderMode new_mode);
   virtual bool     IsModeAvailable(DataLoaderMode mode) = 0;
   void             SetRandomMode(bool random_mode_state);
+  void SetSeed(SizeType seed = 123);
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
@@ -78,6 +80,7 @@ protected:
 
   bool           random_mode_ = false;
   DataLoaderMode mode_        = DataLoaderMode::TRAIN;
+  fetch::random::LaggedFibonacciGenerator<> rand{};
 
 private:
   bool       size_not_set_ = true;
@@ -204,10 +207,45 @@ void DataLoader<LabelType, DataType>::SetRandomMode(bool random_mode_state)
   random_mode_ = random_mode_state;
 }
 
+template<typename LabelType, typename InputType>
+void DataLoader<LabelType, InputType>::SetSeed(DataLoader::SizeType seed) {
+  rand.Seed(seed);
+}
+
 }  // namespace dataloaders
 }  // namespace ml
 
 namespace serializers {
+
+/**
+ * serializer for DataLoaderMode
+ * @tparam TensorType
+ */
+template <typename D>
+struct MapSerializer<ml::dataloaders::DataLoaderMode, D>
+{
+  using Type       = ml::dataloaders::DataLoaderMode;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &body)
+  {
+    auto map      = map_constructor(1);
+    auto enum_val = static_cast<uint16_t>(body);
+    map.Append(OP_CODE, enum_val);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &body)
+  {
+    uint16_t op_code_int = 0;
+    map.ExpectKeyGetValue(OP_CODE, op_code_int);
+
+    body = static_cast<Type>(op_code_int);
+  }
+};
 
 /**
  * serializer for Dataloader
@@ -220,18 +258,27 @@ struct MapSerializer<fetch::ml::dataloaders::DataLoader<LabelType, InputType>, D
   using DriverType = D;
 
   static uint8_t const RANDOM_MODE              = 1;
-  static uint8_t const SIZE_NOT_SET             = 2;
-  static uint8_t const CUR_TRAINING_PAIR_FIRST  = 3;
-  static uint8_t const CUR_TRAINING_PAIR_SECOND = 4;
-  static uint8_t const RET_PAIR_FIRST           = 5;
-  static uint8_t const RET_PAIR_SECOND          = 6;
+  static uint8_t const MODE = 2;
+  static uint8_t const RAND_SEED = 3;
+  static uint8_t const RAND_BUFFER = 4;
+  static uint8_t const RAND_INDEX = 5;
+  static uint8_t const SIZE_NOT_SET             = 6;
+  static uint8_t const CUR_TRAINING_PAIR_FIRST  = 7;
+  static uint8_t const CUR_TRAINING_PAIR_SECOND = 8;
+  static uint8_t const RET_PAIR_FIRST           = 9;
+  static uint8_t const RET_PAIR_SECOND          = 10;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(10);
 
     map.Append(RANDOM_MODE, sp.random_mode_);
+    map.Append(MODE, sp.mode_);
+    map.Append(RAND_SEED, sp.rand.Seed());
+    auto tmp = (sp.rand).GetBuffer();
+    map.Append(RAND_BUFFER, tmp);
+    map.Append(RAND_INDEX, sp.rand.GetIndex());
     map.Append(SIZE_NOT_SET, sp.size_not_set_);
     map.Append(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
     map.Append(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);
@@ -243,6 +290,18 @@ struct MapSerializer<fetch::ml::dataloaders::DataLoader<LabelType, InputType>, D
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
     map.ExpectKeyGetValue(RANDOM_MODE, sp.random_mode_);
+    map.ExpectKeyGetValue(MODE, sp.mode_);
+
+    fetch::math::SizeType             random_seed{};
+    std::vector<uint64_t> buffer{};
+    auto              index = fetch::math::numeric_max<uint64_t>();
+    map.ExpectKeyGetValue(RAND_SEED, random_seed);
+    map.ExpectKeyGetValue(RAND_BUFFER, buffer);
+    map.ExpectKeyGetValue(RAND_INDEX, index);
+    sp.rand.Seed(random_seed);
+    sp.rand.SetBuffer(buffer);
+    sp.rand.SetIndex(index);
+
     map.ExpectKeyGetValue(SIZE_NOT_SET, sp.size_not_set_);
     map.ExpectKeyGetValue(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
     map.ExpectKeyGetValue(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);
