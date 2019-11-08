@@ -20,11 +20,11 @@
 #include "oef-base/threading/Task.hpp"
 
 template <class ENDPOINT, class DATA_TYPE>
-class TSendProtoTask : public Task
+class TSendProtoTask : public fetch::oef::base::Task
 {
 public:
   TSendProtoTask(DATA_TYPE pb, std::shared_ptr<ENDPOINT> endpoint)
-    : Task()
+    : fetch::oef::base::Task()
     , endpoint{std::move(endpoint)}
     , pb{std::move(pb)}
   {}
@@ -41,17 +41,17 @@ public:
     return true;
   }
 
-  ExitState run() override
+  fetch::oef::base::ExitState run() override
   {
     // TODO(kll): it's possible there's a race hazard here. Need to think about this.
     if (endpoint->send(pb).Then([this]() { this->MakeRunnable(); }).Waiting())
     {
-      return ExitState::DEFER;
+      return fetch::oef::base::ExitState::DEFER;
     }
 
     endpoint->run_sending();
     pb = DATA_TYPE{};
-    return ExitState::COMPLETE;
+    return fetch::oef::base::ExitState::COMPLETE;
   }
 
 private:
