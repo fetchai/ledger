@@ -55,7 +55,7 @@ public:
 protected:
 private:
   std::shared_ptr<Core>                                                                  core;
-  std::shared_ptr<Taskpool>                                                              tasks;
+  std::shared_ptr<fetch::oef::base::Taskpool>                                                              tasks;
   std::shared_ptr<OefListenerSet<IOefTaskFactory<OefSearchEndpoint>, OefSearchEndpoint>> listeners;
   std::shared_ptr<OutboundConversations>                                                 outbounds;
   std::shared_ptr<DapStore>                                                              dap_store_;
@@ -63,8 +63,8 @@ private:
   std::shared_ptr<SearchPeerStore> search_peer_store_;
   fetch::oef::pb::SearchConfig     config_;
 
-  Threadpool comms_runners;
-  Threadpool tasks_runners;
+  fetch::oef::base::Threadpool comms_runners;
+  fetch::oef::base::Threadpool tasks_runners;
 
   void startListeners();
   bool configureFromJsonFile(const std::string &config_file);

@@ -28,12 +28,12 @@
 
 class DapManager;
 
-class WithLateDapExecutorTask : virtual public StateMachineTask<WithLateDapExecutorTask>,
+class WithLateDapExecutorTask : virtual public fetch::oef::base::StateMachineTask<WithLateDapExecutorTask>,
                                 virtual public NodeExecutorTask
 {
 public:
-  using StateResult    = typename StateMachineTask<WithLateDapExecutorTask>::Result;
-  using EntryPoint     = typename StateMachineTask<WithLateDapExecutorTask>::EntryPoint;
+  using StateResult    = typename fetch::oef::base::StateMachineTask<WithLateDapExecutorTask>::Result;
+  using EntryPoint     = typename fetch::oef::base::StateMachineTask<WithLateDapExecutorTask>::EntryPoint;
   using MessageHandler = std::function<void(std::shared_ptr<IdentifierSequence>)>;
   using ErrorHandler =
       std::function<void(const std::string &, const std::string &, const std::string &)>;
@@ -139,11 +139,11 @@ public:
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), "), will be woken by task ",
                      main_task_->GetTaskId());
-      return StateResult(1, DEFER);
+      return StateResult(1, fetch::oef::base::DEFER);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping id=(", this->GetTaskId(), ")");
-    return StateResult(1, COMPLETE);
+    return StateResult(1, fetch::oef::base::COMPLETE);
   }
 
   StateResult DoLateMementos()
@@ -152,13 +152,13 @@ public:
     {
       FETCH_LOG_INFO(LOGGING_NAME,
                      "Spurious wakeup in DoLateMementos(). Sleeping (id=", this->GetTaskId(), ")");
-      return StateResult(1, DEFER);
+      return StateResult(1, fetch::oef::base::DEFER);
     }
     if (!last_output_)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "No last output set (id=", this->GetTaskId(), ")");
       wake();
-      return StateResult(0, ERRORED);
+      return StateResult(0, fetch::oef::base::ERRORED);
     }
 
     auto task = std::make_shared<MementoExecutorTask>(late_mementos_, last_output_, dap_manager_);
@@ -184,11 +184,11 @@ public:
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(),
                      ", do late mementos), will be woken by task ", task->GetTaskId());
-      return StateResult(2, DEFER);
+      return StateResult(2, fetch::oef::base::DEFER);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping id=(", this->GetTaskId(), ")");
-    return StateResult(2, COMPLETE);
+    return StateResult(2, fetch::oef::base::COMPLETE);
   }
 
   StateResult Done()
@@ -197,14 +197,14 @@ public:
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Spurious wakeup in Done(). Sleeping (id=", this->GetTaskId(),
                      ")");
-      return StateResult(2, DEFER);
+      return StateResult(2, fetch::oef::base::DEFER);
     }
     if (messageHandler)
     {
       messageHandler(last_output_);
     }
     wake();
-    return StateResult(0, COMPLETE);
+    return StateResult(0, fetch::oef::base::COMPLETE);
   }
 
   void SetMessageHandler(MessageHandler msgHandler) override

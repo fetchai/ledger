@@ -20,6 +20,10 @@
 
 #include <cassert>
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 void Notification::NotificationImplementation::DispatchCallbacks()
 {
   Callback *handler = nullptr;
@@ -82,3 +86,7 @@ Notification::Notification Notification::create()
 {
   return std::make_shared<NotificationImplementation>();
 }
+
+} //namespace base
+} //namespace oef
+} //namespace fetch

@@ -24,6 +24,10 @@
 
 #include <algorithm>
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 static std::weak_ptr<Taskpool> gDefaultTaskPool;
 
 static Gauge gauge_pending("mt-core.taskpool.gauge.runnable_tasks");
@@ -422,3 +426,7 @@ void Taskpool::CancelTaskGroup(std::size_t group_id)
     t->cancel();
   }
 }
+
+} //namespace base
+} //namespace oef
+} //namespace fetch

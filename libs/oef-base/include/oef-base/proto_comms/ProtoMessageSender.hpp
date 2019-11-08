@@ -50,7 +50,7 @@ public:
 
   consumed_needed_pair CheckForSpace(const mutable_buffers &      data,
                                      IMessageWriter<TXType>::TXQ &txq) override;
-  void                 SetEndianness(Endianness newstate)
+  void                 SetEndianness(fetch::oef::base::Endianness newstate)
   {
     endianness = newstate;
   }
@@ -58,7 +58,7 @@ public:
 protected:
 private:
   Mutex      mutex;
-  Endianness endianness = DUNNO;
+  fetch::oef::base::Endianness endianness = fetch::oef::base::Endianness::DUNNO;
   std::weak_ptr<ProtoMessageEndpoint<TXType, ProtoMessageReader, ProtoMessageSender>> endpoint;
 
   ProtoMessageSender(const ProtoMessageSender &other) = delete;

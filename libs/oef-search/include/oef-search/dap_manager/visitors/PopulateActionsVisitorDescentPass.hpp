@@ -42,7 +42,7 @@ public:
 protected:
   std::unordered_set<std::string>                                                    dap_names_;
   std::string                                                                        current_dap_;
-  std::shared_ptr<FutureComplexType<std::shared_ptr<ConstructQueryMementoResponse>>> future_ =
+  std::shared_ptr<fetch::oef::base::FutureComplexType<std::shared_ptr<ConstructQueryMementoResponse>>> future_ =
       nullptr;
 
   std::shared_ptr<DapManager> dap_manager_;

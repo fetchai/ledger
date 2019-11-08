@@ -30,12 +30,12 @@
 
 template <typename IN_PROTO, typename OUT_PROTO>
 class DapConversationTask
-  : virtual public StateMachineTask<DapConversationTask<IN_PROTO, OUT_PROTO>>,
-    virtual public Waitable
+  : virtual public fetch::oef::base::StateMachineTask<DapConversationTask<IN_PROTO, OUT_PROTO>>,
+    virtual public fetch::oef::base::Waitable
 {
 public:
-  using StateResult    = typename StateMachineTask<DapConversationTask>::Result;
-  using EntryPoint     = typename StateMachineTask<DapConversationTask>::EntryPoint;
+  using StateResult    = typename fetch::oef::base::StateMachineTask<DapConversationTask>::Result;
+  using EntryPoint     = typename fetch::oef::base::StateMachineTask<DapConversationTask>::EntryPoint;
   using MessageHandler = std::function<void(std::shared_ptr<OUT_PROTO>)>;
   using ErrorHandler =
       std::function<void(const std::string &, const std::string &, const std::string &)>;
@@ -47,7 +47,7 @@ public:
                       std::shared_ptr<IN_PROTO>              initiator,
                       std::shared_ptr<OutboundConversations> outbounds,
                       std::string const &                    protocol = "dap")
-    : StateMachineTask<SelfType>(this, nullptr)
+    : fetch::oef::base::StateMachineTask<SelfType>(this, nullptr)
     , initiator(std::move(initiator))
     , outbounds(std::move(outbounds))
     , dap_name_{std::move(dap_name)}
@@ -100,8 +100,8 @@ public:
 
       FETCH_LOG_INFO(LOGGING_NAME, "Conversation created with ", uri.ToString());
 
-      auto                this_sp = this->template shared_from_base<DapConversationTask>();
-      std::weak_ptr<Task> this_wp = this_sp;
+      auto                this_sp                   = this->template shared_from_base<DapConversationTask>();
+      std::weak_ptr<fetch::oef::base::Task> this_wp = this_sp;
 
       if (conversation->MakeNotification()
               .Then([this_wp]() {
@@ -115,10 +115,10 @@ public:
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(), ", uri=", uri.ToString(),
                        ")");
-        return DapConversationTask::StateResult(1, DEFER);
+        return DapConversationTask::StateResult(1, fetch::oef::base::DEFER);
       }
       FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping (", uri.ToString(), ")");
-      return DapConversationTask::StateResult(1, COMPLETE);
+      return DapConversationTask::StateResult(1, fetch::oef::base::COMPLETE);
     }
     catch (std::exception &e)
     {
@@ -131,7 +131,7 @@ public:
                      std::string{"Exception in creating conversation: "} + e.what());
       }
       wake();
-      return DapConversationTask::StateResult(0, ERRORED);
+      return DapConversationTask::StateResult(0, fetch::oef::base::ERRORED);
     }
   }
 
@@ -149,7 +149,7 @@ public:
         errorHandler(dap_name_, path_, "No response");
       }
       wake();
-      return DapConversationTask::StateResult(0, ERRORED);
+      return DapConversationTask::StateResult(0, fetch::oef::base::ERRORED);
     }
 
     auto resp = conversation->GetReply(0);
@@ -162,7 +162,7 @@ public:
         errorHandler(dap_name_, path_, "nullptr as reply");
       }
       wake();
-      return DapConversationTask::StateResult(0, ERRORED);
+      return DapConversationTask::StateResult(0, fetch::oef::base::ERRORED);
     }
     auto response = std::static_pointer_cast<OUT_PROTO>(resp);
     if (messageHandler)
@@ -179,12 +179,12 @@ public:
         errorHandler(dap_name_, path_, "no messageHandler");
       }
       wake();
-      return DapConversationTask::StateResult(0, ERRORED);
+      return DapConversationTask::StateResult(0, fetch::oef::base::ERRORED);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "COMPLETE (", dap_name_, ")");
 
-    return DapConversationTask::StateResult(0, COMPLETE);
+    return DapConversationTask::StateResult(0, fetch::oef::base::COMPLETE);
   }
 
   virtual void SetMessageHandler(MessageHandler mH)

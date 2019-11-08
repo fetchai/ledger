@@ -58,7 +58,7 @@ SearchUpdateTask::StateResult SearchUpdateTask::HandleResponse()
   if (conversation->GetAvailableReplyCount() == 0)
   {
     update_task_errored++;
-    return SearchUpdateTask::StateResult(0, ERRORED);
+    return SearchUpdateTask::StateResult(0, fetch::oef::base::ERRORED);
   }
 
   auto resp = conversation->GetReply(0);
@@ -66,7 +66,7 @@ SearchUpdateTask::StateResult SearchUpdateTask::HandleResponse()
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Got nullptr as reply");
     update_task_errored++;
-    return SearchUpdateTask::StateResult(0, ERRORED);
+    return SearchUpdateTask::StateResult(0, fetch::oef::base::ERRORED);
   }
   auto response = std::static_pointer_cast<Successfulness>(resp);
 
@@ -102,7 +102,7 @@ SearchUpdateTask::StateResult SearchUpdateTask::HandleResponse()
 
   FETCH_LOG_INFO(LOGGING_NAME, "COMPLETE");
 
-  return SearchUpdateTask::StateResult(0, COMPLETE);
+  return SearchUpdateTask::StateResult(0, fetch::oef::base::COMPLETE);
 }
 
 std::shared_ptr<SearchUpdateTask::REQUEST_PROTO> SearchUpdateTask::make_request_proto()

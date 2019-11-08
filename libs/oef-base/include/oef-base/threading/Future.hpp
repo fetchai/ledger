@@ -20,6 +20,10 @@
 #include "oef-base/threading/Waitable.hpp"
 #include <atomic>
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 template <class T>
 class Future : public Waitable
 {
@@ -87,3 +91,7 @@ private:
   bool operator==(const FutureComplexType &other) = delete;  // const { return compare(other)==0; }
   bool operator<(const FutureComplexType &other)  = delete;  // const { return compare(other)==-1; }
 };
+
+} //namespace base
+} //namespace oef
+} //namespace fetch

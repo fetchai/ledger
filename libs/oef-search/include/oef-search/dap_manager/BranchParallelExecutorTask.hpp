@@ -25,11 +25,11 @@
 
 class BranchParallelExecutorTask
   : virtual public BranchExecutorTask,
-    virtual public TaskChainParallel<IdentifierSequence, IdentifierSequence,
+    virtual public fetch::oef::base::TaskChainParallel<IdentifierSequence, IdentifierSequence,
                                      BranchExecutorTask::NodeDataType, NodeExecutorTask>
 {
 public:
-  using BaseTask       = TaskChainParallel<IdentifierSequence, IdentifierSequence,
+  using BaseTask       = fetch::oef::base::TaskChainParallel<IdentifierSequence, IdentifierSequence,
                                      BranchExecutorTask::NodeDataType, NodeExecutorTask>;
   using MessageHandler = BaseTask ::MessageHandler;
   using ErrorHandler   = BaseTask ::ErrorHandler;

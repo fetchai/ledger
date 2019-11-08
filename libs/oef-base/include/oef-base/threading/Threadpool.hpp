@@ -22,6 +22,10 @@
 #include <thread>
 #include <vector>
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 class Threadpool
 {
 public:
@@ -82,3 +86,7 @@ private:
   bool        operator==(const Threadpool &other) = delete;
   bool        operator<(const Threadpool &other)  = delete;
 };
+
+} //namespace base
+} //namespace oef
+} //namespace fetch

@@ -23,6 +23,11 @@
 #include <functional>
 #include <mutex>
 #include <utility>
+
+namespace fetch {
+namespace oef {
+namespace base {
+
 namespace Notification {
 
 class NotificationBuilder;
@@ -179,4 +184,7 @@ private:
 Notification        create();
 NotificationBuilder builder(Notification n);
 
-}  // namespace Notification
+} // namespace Notification
+} //namespace base
+} //namespace oef
+} //namespace fetch

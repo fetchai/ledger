@@ -100,7 +100,7 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
       Lock lock(myself_sp->mutex);
       Counter("mt-core.network.OefAgentEndpoint.OnCompleteHandler")++;
       myself_sp->karma.perform("message");
-      Task::SetThreadGroupId(myGroupId);
+      fetch::oef::base::Task::SetThreadGroupId(myGroupId);
       myself_sp->factory->ProcessMessage(buffers);
     }
   });
@@ -113,7 +113,7 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
       myself_sp->karma.perform("error.comms");
       myself_sp->factory->EndpointClosed();
       myself_sp->factory.reset();
-      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
+      fetch::oef::base::Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
       FETCH_LOG_INFO(LOGGING_NAME, "OnErrorHandler.CancelTaskGroup group=", myGroupId,
                      " , ec=", ec);
     }
@@ -127,7 +127,7 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
       myself_sp->karma.perform("eof");
       myself_sp->factory->EndpointClosed();
       myself_sp->factory.reset();
-      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
+      fetch::oef::base::Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
       FETCH_LOG_INFO(LOGGING_NAME, "OnEofHandler.CancelTaskGroup group=", myGroupId);
     }
   });
@@ -140,7 +140,7 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
       myself_sp->karma.perform("error.proto");
       myself_sp->factory->EndpointClosed();
       myself_sp->factory.reset();
-      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
+      fetch::oef::base::Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
       FETCH_LOG_INFO(LOGGING_NAME, "OnProtoErrorHandler.CancelTaskGroup group=", myGroupId,
                      ", message=", message);
     }

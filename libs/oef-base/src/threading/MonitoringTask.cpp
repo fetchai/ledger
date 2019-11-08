@@ -27,6 +27,10 @@
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 struct mem_usage_result
 {
   double vsize = 0.0;
@@ -188,3 +192,7 @@ ExitState MonitoringTask::run()
   submit(std::chrono::milliseconds(10000));
   return COMPLETE;
 }
+
+} //namespace base
+} //namespace oef
+} //namespace fetch

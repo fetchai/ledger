@@ -18,6 +18,10 @@
 
 #include "oef-base/threading/Waitable.hpp"
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 Notification::NotificationBuilder Waitable::MakeNotification()
 {
   Lock lock(mutex);
@@ -60,3 +64,7 @@ void Waitable::cancel()
     waiter->Fail();
   }
 }
+
+} //namespace base
+} //namespace oef
+} //namespace fetch

@@ -53,14 +53,14 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::CheckForMessage(con
 
     switch (endianness)
     {
-    case BAD:
+    case fetch::oef::base::Endianness::BAD:
       throw std::invalid_argument("Read attempted while endianness determined to be BAD.");
-    case DUNNO:
+    case fetch::oef::base::Endianness::DUNNO:
       chars.read_little_endian(body_size_u32);
       if (body_size_u32 < 65535)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "detected LITTLE ENDIAN CONNECTION");
-        setDetectedEndianness(LITTLE);
+        setDetectedEndianness(fetch::oef::base::Endianness::LITTLE);
       }
       else
       {
@@ -68,7 +68,7 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::CheckForMessage(con
         if (body_size_u32 < 65535)
         {
           FETCH_LOG_INFO(LOGGING_NAME, "detected NETWORK/BIG ENDIAN CONNECTION");
-          setDetectedEndianness(NETWORK);
+          setDetectedEndianness(fetch::oef::base::Endianness::NETWORK);
         }
         else
         {
@@ -76,10 +76,10 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::CheckForMessage(con
         }
       }
       break;
-    case LITTLE:
+    case fetch::oef::base::Endianness::LITTLE:
       chars.read_little_endian(body_size_u32);
       break;
-    case NETWORK:
+    case fetch::oef::base::Endianness::NETWORK:
       chars.read(body_size_u32);
       break;
     }
@@ -118,7 +118,7 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::CheckForMessage(con
   return consumed_needed_pair(consumed, needed);
 }
 
-void ProtoMessageReader::setDetectedEndianness(Endianness newstate)
+void ProtoMessageReader::setDetectedEndianness(fetch::oef::base::Endianness newstate)
 {
   if (auto endpoint_sp = endpoint.lock())
   {
@@ -126,7 +126,7 @@ void ProtoMessageReader::setDetectedEndianness(Endianness newstate)
   }
 }
 
-void ProtoMessageReader::SetEndianness(Endianness newstate)
+void ProtoMessageReader::SetEndianness(fetch::oef::base::Endianness newstate)
 {
   endianness = newstate;
 }
