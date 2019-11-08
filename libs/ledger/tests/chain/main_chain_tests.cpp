@@ -1059,6 +1059,47 @@ TEST_P(MainChainTests, StutterChain)
   ASSERT_EQ(tips, check_tips);
 }
 
+TEST_P(MainChainTests, LooseStutterBlocks)
+{
+  auto genesis = generator_->Generate();
+
+  // Build chain with stutter blocks at each height
+  auto chain1_1  = Generate(generator_, cabinet_, genesis, 2);
+  auto chain1_2a = Generate(generator_, cabinet_, chain1_1, 3);
+  auto chain1_2b = Generate(generator_, cabinet_, chain1_1, 3);
+  auto chain1_3  = Generate(generator_, cabinet_, chain1_2a, 3);
+
+  // Normal chain
+  auto chain2_1 = Generate(generator_, cabinet_, genesis, 1);
+
+  // Add two loose stutter blocks
+  ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*chain1_2a));
+  ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*chain1_2b));
+
+  // Add missing block and it should be the new head
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_1));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain1_1->body.hash);
+
+  // Remove missing block, which should remove the loose blocks as well
+  ASSERT_TRUE(chain_->RemoveBlock(chain1_1->body.hash));
+  ASSERT_FALSE(chain_->GetBlock(chain1_1->body.hash));
+  ASSERT_FALSE(chain_->GetBlock(chain1_2a->body.hash));
+  ASSERT_FALSE(chain_->GetBlock(chain1_2b->body.hash));
+
+  // Re-add two loose stutter blocks
+  ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*chain1_2a));
+  ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*chain1_2b));
+
+  // Add another loose block on top of a stutter block
+  ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*chain1_3));
+
+  // Re-add missing block and head should now be chain1_3
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_1));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain1_3->body.hash);
+  std::unordered_set<BlockHash> check_tips = {chain1_3->body.hash, chain1_1->body.hash};
+  ASSERT_EQ(chain_->GetTips(), check_tips);
+}
+
 TEST_P(MainChainTests, CheckReindexingOfTipsWithStutter)
 {
   // Complicates graph structure

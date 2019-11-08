@@ -310,6 +310,13 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
       // mark hash as being invalidated
       invalidated_blocks.insert(hash);
 
+      // delete data of this block in stutter block map
+      if (enable_stutter_removal_)
+      {
+        auto block = GetBlock(hash);
+        stutter_blocks_[block->body.block_number].erase(block->weight);
+      }
+
       // first remember to remove all the progeny breadth-first
       // this way any hash that could potentially stem from this one,
       // reference tree-wise, is completely wiped out
