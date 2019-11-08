@@ -36,6 +36,7 @@
 #include <utility>
 #include <vector>
 #include <core/time/to_seconds.hpp>
+#include <math/metrics/mean_absolute_error.hpp>
 
 namespace fetch {
 namespace dmlf {
@@ -109,6 +110,7 @@ protected:
   // Latest loss
   DataType train_loss_ = fetch::math::numeric_max<DataType>();
   DataType test_loss_  = fetch::math::numeric_max<DataType>();
+  DataType test_accuracy_ = DataType{0};
 
   DataType train_loss_sum_ = static_cast<DataType>(0);
   SizeType train_loss_cnt_ = 0;
@@ -258,6 +260,7 @@ void ClientAlgorithm<TensorType>::Run()
              << " Test_loss: " << static_cast<double>(test_loss_)
              << " Updates: " << update_counter_
              << " Batches: " << batch_counter_
+             << " Test_accuracy: " << test_accuracy_
              << "\n";
     lossfile.close();
   }
@@ -355,6 +358,8 @@ void ClientAlgorithm<TensorType>::Test()
       graph_ptr_->SetInput(params_.label_name, test_pair.first);
 
       test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
+      TensorType test_results = graph_ptr_->Evaluate("FullyConnected_0");
+      test_accuracy_ = DataType{1} - fetch::math::MeanAbsoluteError(test_results, test_pair.first);
     }
   }
   else
