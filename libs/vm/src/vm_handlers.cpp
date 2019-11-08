@@ -719,9 +719,18 @@ void VM::Handler__InitialiseArray()
 void VM::Handler__ContractVariableDeclareAssign()
 {
   // The contract id is stored in instruction_->type_id
-  Variant &variable = GetVariable(instruction_->index);
-  variable          = std::move(Pop());
-  assert(variable.type_id == TypeIds::String);
+  Variant sv = std::move(Pop());
+  assert(sv.type_id == TypeIds::String);
+  if (!sv.object)
+  {
+    RuntimeError("null reference");
+    return;
+  }
+  std::string identity = Ptr<String>(sv.object)->str;
+  // Clone the identity string
+  sv.object            = Ptr<String>(new String(this, identity));
+  Variant &variable    = GetVariable(instruction_->index);
+  variable             = std::move(sv);
   LiveObjectInfo &info = live_object_stack_[++live_object_sp_];
   info.frame_sp        = frame_sp_;
   info.variable_index  = instruction_->index;
