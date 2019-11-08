@@ -51,10 +51,7 @@ std::size_t UpdateStore::GetUpdateCount(Algorithm const &algo, UpdateType const 
   {
     return 0;
   }
-  else
-  {
-    return it->second.size();
-  }
+  return it->second.size();
 }
 
 void UpdateStore::PushUpdate(Algorithm const &algo, UpdateType type, Data data, Source source)
