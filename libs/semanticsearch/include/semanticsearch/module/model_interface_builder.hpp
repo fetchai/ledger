@@ -43,7 +43,7 @@ public:
 
   ModelInterfaceBuilder Vocabulary(std::string const &name);
 
-  VocabularySchema const &model() const
+  VocabularySchema const &vocabulary_schema() const
   {
     return model_;
   }
