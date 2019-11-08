@@ -54,7 +54,7 @@ using fetch::storage::ResourceID;
 using fetch::variant::Variant;
 
 constexpr char const *LOGGING_NAME = "GenesisFile";
-constexpr int         VERSION      = 2;
+constexpr int         VERSION      = 3;
 
 /**
  * Load the entire file into a buffer

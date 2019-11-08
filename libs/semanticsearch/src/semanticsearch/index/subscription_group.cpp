@@ -23,10 +23,10 @@
 namespace fetch {
 namespace semanticsearch {
 
-SubscriptionGroup::SubscriptionGroup(SemanticCoordinateType g, SemanticPosition position)
-  : width_parameter(g)
+SubscriptionGroup::SubscriptionGroup(SemanticCoordinateType d, SemanticPosition position)
+  : depth(d)
 {
-  auto cs = SubscriptionGroupSize(width_parameter);
+  auto cs = CalculateWidthFromDepth(depth);
   for (auto const &p : position)
   {
     indices.push_back(p / cs);
@@ -37,12 +37,12 @@ bool SubscriptionGroup::operator<(SubscriptionGroup const &other) const
 {
   if (indices.size() != other.indices.size())
   {
-    throw std::runtime_error("DBIndexListPtrs below to different vector spaces.");
+    throw std::runtime_error("SubscriptionGroup below to different vector space.");
   }
 
-  if (width_parameter != other.width_parameter)
+  if (depth != other.depth)
   {
-    return width_parameter < other.width_parameter;
+    return depth < other.depth;
   }
 
   std::size_t i = 0;
@@ -63,7 +63,7 @@ bool SubscriptionGroup::operator==(SubscriptionGroup const &other) const
 {
   if (indices.size() != other.indices.size())
   {
-    throw std::runtime_error("DBIndexListPtrs below to different vector spaces.");
+    throw std::runtime_error("SubscriptionGroup below to different vector space.");
   }
 
   std::size_t i = 0;
@@ -72,7 +72,7 @@ bool SubscriptionGroup::operator==(SubscriptionGroup const &other) const
     ++i;
   }
 
-  return (width_parameter == other.width_parameter) && (i == indices.size());
+  return (depth == other.depth) && (i == indices.size());
 }
 
 }  // namespace semanticsearch
