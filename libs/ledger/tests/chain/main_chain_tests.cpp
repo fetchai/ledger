@@ -87,9 +87,10 @@ auto Generate(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &cabine
   // If no weight specified pick random miner to make block
   if (weight == 0)
   {
-    block->body.miner_id = crypto::Identity{*std::next(cabinet.begin(), rand() % cabinet.size())};
-    block->weight        = Consensus::ShuffledCabinetRank(cabinet, *block, block->body.miner_id);
-    block->total_weight  = previous->total_weight + block->weight;
+    block->body.miner_id = crypto::Identity{
+        *std::next(cabinet.begin(), static_cast<uint32_t>(rand()) % cabinet.size())};
+    block->weight       = Consensus::ShuffledCabinetRank(cabinet, *block, block->body.miner_id);
+    block->total_weight = previous->total_weight + block->weight;
     return block;
   }
 
@@ -124,7 +125,7 @@ auto GenerateChain(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &c
   {
     // Generate weights which need to be coordinated with side chains if there is one
     std::unordered_set<uint64_t> side_miners{};
-    for (auto i = 0; i < side_chain_list.size(); ++i)
+    for (std::size_t i = 0; i < side_chain_list.size(); ++i)
     {
       if (chain_position[i] < side_chain_list[i].size())
       {
@@ -135,14 +136,14 @@ auto GenerateChain(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &c
 
     // Choose a random weight not in side miners
     std::unordered_set<uint64_t> all_weights;
-    for (uint64_t i = 1; i <= cabinet.size(); ++i)
+    for (std::size_t i = 1; i <= cabinet.size(); ++i)
     {
       all_weights.insert(all_weights.end(), i);
     }
     auto diff = all_weights - side_miners;
 
     block    = Generate(gen, cabinet, previous,
-                     *std::next(diff.begin(), static_cast<uint64_t>(rand() % diff.size())));
+                     *std::next(diff.begin(), static_cast<uint32_t>(rand()) % diff.size()));
     previous = block;
   }
 
@@ -225,7 +226,7 @@ protected:
 
     chain_     = std::make_unique<MainChain>(false, main_chain_mode, true);
     generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
-    for (auto i = 0; i < CABINET_SIZE; ++i)
+    for (std::size_t i = 0; i < CABINET_SIZE; ++i)
     {
       cabinet_.insert("Miner " + std::to_string(i));
     }
@@ -287,7 +288,7 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
   auto const main{GenerateChain(generator_, cabinet_, genesis, 72, {side})};
 
   // add the main chain blocks
-  for (auto i = 0; i < main.size(); ++i)
+  for (std::size_t i = 0; i < main.size(); ++i)
   {
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main[i]))
         << "; side: " << Hashes(side) << "; main: " << Hashes(main);
@@ -473,7 +474,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
         << "; branch9: " << Hashes(branch9);
   }
   ASSERT_TRUE(chain_->RemoveBlock(branch6[4]->body.hash));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), GetHeaviestHash(branch5.back(), branch6[2]));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), GetHeaviestHash(branch5.back(), branch6[3]));
   for (std::size_t i{}; i < 4; ++i)
   {
     ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch6[i]->body.hash)))
