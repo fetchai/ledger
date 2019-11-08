@@ -37,7 +37,7 @@ public:
   {
     // TODO(private issue 143): add destructor
     Vocabulary ret;
-    ret = std::make_shared<VocabularyInstance>(std::type_index(typeid(T)), new T(data));
+    ret.reset(new VocabularyInstance(std::type_index(typeid(T)), new T(data)));
 
     return ret;
   }
