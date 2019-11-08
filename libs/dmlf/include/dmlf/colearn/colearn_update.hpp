@@ -23,7 +23,7 @@
 
 namespace fetch {
 namespace dmlf {
-namespace colearn{
+namespace colearn {
 
 struct ColearnUpdate
 {
@@ -32,12 +32,12 @@ struct ColearnUpdate
   using TimeStampType = std::uint64_t;
   using Source        = std::string;
 
-  ColearnUpdate(UpdateType updateType, Data&& data, Source source);
+  ColearnUpdate(UpdateType updateType, Data &&data, Source source);
 
-  UpdateType update_type;
-  Data data;
+  UpdateType    update_type;
+  Data          data;
   TimeStampType time_stamp;
-  Source source;
+  Source        source;
 };
 
 }  // namespace colearn

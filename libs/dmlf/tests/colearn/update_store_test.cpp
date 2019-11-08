@@ -26,15 +26,13 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
+namespace {
+using fetch::byte_array::ConstByteArray;
 
-namespace
-{
-  using fetch::byte_array::ConstByteArray;
-
-  ConstByteArray a("a");
-  ConstByteArray b("b");
-  ConstByteArray c("c");
-}
+ConstByteArray a("a");
+ConstByteArray b("b");
+ConstByteArray c("c");
+}  // namespace
 
 TEST(Colearn_UpdateStore, pushPop)
 {

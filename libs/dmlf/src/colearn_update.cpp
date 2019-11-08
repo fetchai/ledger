@@ -35,13 +35,14 @@ TimeStampType CurrentTime()
                                         .count());
 }
 
-}
+}  // namespace
 
-ColearnUpdate::ColearnUpdate(std::string updateType, Data&& data, Source source)
-: update_type{std::move(updateType)}, data{std::move(data)}
-, time_stamp{CurrentTime()}, source{std::move(source)}
-{
-}
+ColearnUpdate::ColearnUpdate(std::string updateType, Data &&data, Source source)
+  : update_type{std::move(updateType)}
+  , data{std::move(data)}
+  , time_stamp{CurrentTime()}
+  , source{std::move(source)}
+{}
 
 }  // namespace colearn
 }  // namespace dmlf
