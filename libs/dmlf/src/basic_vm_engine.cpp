@@ -345,6 +345,38 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack &result, Params 
   return Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""};
 }
 
+void toFixed64(BasicVmEngine::LedgerVariant &var) 
+{
+  if (var.IsArray())
+  {
+    for (std::size_t i = 0; i < var.size(); ++i)
+    {
+      toFixed64(var[i]);
+    }
+  }
+  else
+  {
+    var = BasicVmEngine::LedgerVariant(fp64_t::FromBase(var.As<int64_t>()));
+  }
+}
+void toFixed32(BasicVmEngine::LedgerVariant &var)
+{
+  if (var.IsArray())
+  {
+    for (std::size_t i = 0; i < var.size(); ++i)
+    {
+      toFixed32(var[i]);
+    }
+  }
+  else
+  {
+    fp32_t val32;
+    val32.Data() = var.As<int>();
+    fp64_t val64{fp64_t::FromBase(static_cast<int64_t>(val32.Data()) << 16)};
+    var = BasicVmEngine::LedgerVariant{val64};
+  }
+};
+
 ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant const &vmVariant,
                                           std::string const &console, std::string &&id) const
 {
@@ -472,66 +504,28 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
 
     if (output.IsArray())  // Convert inner type from int to fixedpoint if necessary
     {
-      auto GetInnermostTypeId = [&vm](LedgerVariant const &ledgerVariant,
-                                      VmVariant const &    vmVariant) {
-        LedgerVariant const *ledgerCurrent = &(ledgerVariant[0]);  // Starts one deeper
-        auto                 currentTypeId = vmVariant.type_id;
-        auto                 result = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
+      LedgerVariant const *ledgerCurrent = &(output[0]);  // Starts one deeper
+      auto                 currentTypeId = vmVariant.type_id;
+      auto                 innermostType = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
 
-        while (ledgerCurrent->IsArray())
-        {
-          ledgerCurrent = &(*ledgerCurrent)[0];
-          currentTypeId = result;
-          result        = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
-        }
-
-        return result;
-      };
-
-      auto const innermostType = GetInnermostTypeId(output, vmVariant);
+      while (ledgerCurrent->IsArray())
+      {
+        ledgerCurrent = &(*ledgerCurrent)[0];
+        currentTypeId = innermostType;
+        innermostType = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
+      }
 
       if (innermostType == vm::TypeIds::Fixed64)
       {
-        std::function<void(LedgerVariant &)> toFixed64;
-        toFixed64 = [&toFixed64](LedgerVariant &var) {
-          if (var.IsArray())
-          {
-            for (std::size_t i = 0; i < var.size(); ++i)
-            {
-              toFixed64(var[i]);
-            }
-          }
-          else
-          {
-            var = LedgerVariant(fp64_t::FromBase(var.As<int64_t>()));
-          }
-        };
         toFixed64(output);
       }
       else if (innermostType == vm::TypeIds::Fixed32)
       {
-        std::function<void(LedgerVariant &)> toFixed32;
-        toFixed32 = [&toFixed32](LedgerVariant &var) {
-          if (var.IsArray())
-          {
-            for (std::size_t i = 0; i < var.size(); ++i)
-            {
-              toFixed32(var[i]);
-            }
-          }
-          else
-          {
-            fp32_t val32;
-            val32.Data() = var.As<int>();
-            fp64_t val64{fp64_t::FromBase(static_cast<int64_t>(val32.Data()) << 16)};
-            var = LedgerVariant{val64};
-          }
-        };
         toFixed32(output);
       }
     }
   }
-  return ExecutionResult{
+  return ExecutionResult {
       output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS, "Ran " + std::move(id)}, console};
 }
 
