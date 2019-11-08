@@ -28,6 +28,7 @@
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/dag/dag_hash.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -41,10 +42,13 @@ struct DAGNode
   using ConstByteArray = byte_array::ConstByteArray;
   using Digest         = ConstByteArray;
   using Signature      = ConstByteArray;
-  using DigestList     = std::vector<Digest>;
+  using DAGHashList    = std::vector<DAGHash>;
   using HasherType     = crypto::SHA256;
 
-  DAGNode()                   = default;
+  DAGNode()
+  {
+    hash.type = 'N';
+  }
   DAGNode(DAGNode const &rhs) = default;
   DAGNode(DAGNode &&rhs)      = default;
   DAGNode &operator=(DAGNode const &rhs) = default;
@@ -63,7 +67,7 @@ struct DAGNode
   /// Serialisable state-variables
   /// @{
   uint64_t         type{INVALID_NODE};  ///< type of the DAG node
-  DigestList       previous;            ///< previous nodes.
+  DAGHashList      previous;            ///< previous nodes.
   ConstByteArray   contents;            ///< payload to be deserialised.
   Digest           contract_digest;     ///< The contract which this node is associated with.
   chain::Address   contract_address;    ///< The address of the associated contract
@@ -71,7 +75,7 @@ struct DAGNode
 
   /// Serialisable entries to verify state
   /// @{
-  Digest    hash;       ///< DAG hash.
+  DAGHash   hash;       ///< DAG hash.
   Signature signature;  ///< creators signature
   /// }
 
@@ -109,7 +113,8 @@ struct DAGNode
     HasherType hasher;
     hasher.Reset();
     hasher.Update(buf.data());
-    this->hash = hasher.Final();
+    this->hash.type = 'N';
+    this->hash.hash = hasher.Final();
   }
 
   bool Verify() const
@@ -119,7 +124,7 @@ struct DAGNode
       return false;
     }
 
-    return crypto::Verifier::Verify(identity, hash, signature);
+    return crypto::Verifier::Verify(identity, hash.hash, signature);
   }
 
   bool operator>(DAGNode const &rhs) const

@@ -28,7 +28,7 @@
 namespace fetch {
 namespace ledger {
 
-bool DAGEpoch::Contains(ConstByteArray const &digest) const
+bool DAGEpoch::Contains(DAGHash const &digest) const
 {
   return all_nodes.find(digest) != all_nodes.end();
 }
@@ -40,7 +40,8 @@ void DAGEpoch::Finalise()
   serializers::MsgPackSerializer buf;
   buf << *this;
 
-  this->hash = crypto::Hash<crypto::SHA256>(buf.data());
+  this->hash.type = 'E';
+  this->hash.hash = crypto::Hash<crypto::SHA256>(buf.data());
 }
 
 }  // namespace ledger

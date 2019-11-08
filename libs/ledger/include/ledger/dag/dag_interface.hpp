@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/dag/dag_epoch.hpp"
+#include "ledger/dag/dag_hash.hpp"
 #include "ledger/dag/dag_node.hpp"
 #include "ledger/upow/work.hpp"
 
@@ -38,8 +39,8 @@ class DAGInterface
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using NodeHash       = ConstByteArray;
-  using EpochHash      = ConstByteArray;
+  using NodeHash       = DAGHash;
+  using EpochHash      = DAGHash;
   using CertificatePtr = std::shared_ptr<crypto::Prover>;
 
   // TODO(HUT): cleanly define things here
@@ -70,8 +71,8 @@ public:
   // Functions used for syncing
   virtual std::vector<DAGNode> GetRecentlyAdded()                                    = 0;
   virtual MissingTXs           GetRecentlyMissing()                                  = 0;
-  virtual bool                 GetDAGNode(ConstByteArray const &hash, DAGNode &node) = 0;
-  virtual bool                 GetWork(ConstByteArray const &hash, Work &work)       = 0;
+  virtual bool                 GetDAGNode(DAGHash const &hash, DAGNode &node) = 0;
+  virtual bool                 GetWork(DAGHash const &hash, Work &work)       = 0;
   virtual bool                 AddDAGNode(DAGNode node)                              = 0;
 };
 
