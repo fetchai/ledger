@@ -815,6 +815,12 @@ void MainChain::RecoverFromFile(Mode mode)
       bool const result      = heaviest_.Update(*head);
       tips_[head->body.hash] = Tip{head->total_weight, head->weight, head->body.block_number};
 
+      // Add to stutter map
+      if (enable_stutter_removal_)
+      {
+        stutter_blocks_[head->body.block_number][head->weight] = false;
+      }
+
       if (!result)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to update heaviest when loading from file.");
