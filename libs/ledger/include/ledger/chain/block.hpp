@@ -106,29 +106,27 @@ public:
   using Type       = ledger::Block;
   using DriverType = D;
 
-  static uint8_t const BODY            = 1;
-  static uint8_t const NONCE           = 2;
-  static uint8_t const PROOF           = 3;
-  static uint8_t const WEIGHT          = 4;
-  static uint8_t const TOTAL_WEIGHT    = 5;
-  static uint8_t const MINER_SIGNATURE = 6;
-  static uint8_t const HASH            = 7;
-  static uint8_t const PREVIOUS_HASH   = 8;
-  static uint8_t const MERKLE_HASH     = 9;
-  static uint8_t const BLOCK_NUMBER    = 10;
-  static uint8_t const MINER           = 11;
-  static uint8_t const MINER_ID        = 12;
-  static uint8_t const LOG2_NUM_LANES  = 13;
-  static uint8_t const SLICES          = 14;
-  static uint8_t const DAG_EPOCH       = 15;
-  static uint8_t const TIMESTAMP       = 16;
-  static uint8_t const ENTROPY         = 17;
+  static uint8_t const NONCE           = 1;
+  static uint8_t const PROOF           = 2;
+  static uint8_t const WEIGHT          = 3;
+  static uint8_t const TOTAL_WEIGHT    = 4;
+  static uint8_t const MINER_SIGNATURE = 5;
+  static uint8_t const HASH            = 6;
+  static uint8_t const PREVIOUS_HASH   = 7;
+  static uint8_t const MERKLE_HASH     = 8;
+  static uint8_t const BLOCK_NUMBER    = 9;
+  static uint8_t const MINER           = 10;
+  static uint8_t const MINER_ID        = 11;
+  static uint8_t const LOG2_NUM_LANES  = 12;
+  static uint8_t const SLICES          = 13;
+  static uint8_t const DAG_EPOCH       = 14;
+  static uint8_t const TIMESTAMP       = 15;
+  static uint8_t const ENTROPY         = 16;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &block)
   {
-    auto map = map_constructor(17);
-    map.Append(BODY, block);
+    auto map = map_constructor(16);
     map.Append(NONCE, block.nonce);
     map.Append(PROOF, block.proof);
     map.Append(WEIGHT, block.weight);
@@ -150,7 +148,6 @@ public:
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &block)
   {
-    map.ExpectKeyGetValue(BODY, block);
     map.ExpectKeyGetValue(NONCE, block.nonce);
     map.ExpectKeyGetValue(PROOF, block.proof);
     map.ExpectKeyGetValue(WEIGHT, block.weight);
