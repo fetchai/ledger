@@ -21,24 +21,60 @@
 
 namespace fetch {
 namespace semanticsearch {
+/*
+ *      Semantic space (Two dimensional example)
+ *
+ *                    ───────────────────────────────────────────────────────────
+ *                    ╱                                                         ╱
+ *                   ╱                                                         ╱
+ *                  ╱                                                         ╱
+ *                 ╱                                                         ╱
+ *                ╱                   SubscriptionGroup                     ╱
+ *               ╱                                                         ╱
+ *              ╱                    position = (0,0)                     ╱
+ *             ╱                                                         ╱
+ *            ╱                                                         ╱
+ *           ╱                                                         ╱
+ *          ╱                                                         ╱
+ *         ╱                                                         ╱
+ *        ───────────────────────────────────────────────────────────   depth = 0
+ *
+ *           ──── ───────────────────────────────────────────────────────────
+ *     w      ╱   ╱                            ╱                            ╱
+ *     i     ╱   ╱      SubscriptionGroup     ╱     SubscriptionGroup      ╱
+ *     d    ╱   ╱                            ╱                            ╱
+ *     t   ╱   ╱      position = (0,0)      ╱     position = (1,0)       ╱
+ *     h  ╱   ╱                            ╱                            ╱
+ *      ──── ╱────────────────────────────╳────────────────────────────╱
+ *          ╱                            ╱                            ╱
+ *         ╱       SubscriptionGroup    ╱      SubscriptionGroup     ╱
+ *        ╱                            ╱                            ╱
+ *       ╱       position = (0,1)     ╱      position = (1,1)      ╱
+ *      ╱                            ╱                            ╱
+ *     ╱                            ╱                            ╱
+ *    ───────────────────────────────────────────────────────────   depth = 1
+ *                                 │                            │
+ *                                 │──────────  width  ─────────│
+ *                                 │                            │
+ */
 
 struct SubscriptionGroup
 {
   SubscriptionGroup() = default;
-  SubscriptionGroup(SemanticCoordinateType g, SemanticPosition position);
+  SubscriptionGroup(SemanticCoordinateType d, SemanticPosition position);
 
   /*
    * @brief computes the size of group number g
    *
    * The larger the group number, the smaller the size.
    */
-  static constexpr SemanticCoordinateType SubscriptionGroupSize(SemanticCoordinateType g)
+  static constexpr SemanticCoordinateType CalculateWidthFromDepth(SemanticCoordinateType depth)
   {
-    return SemanticCoordinateType(-1) >> g;
+    return SemanticCoordinateType(-1) >> depth;
   }
 
   SemanticPosition       indices;
-  SemanticCoordinateType width_parameter;  ///< Parameter that determines the witdth
+  SemanticCoordinateType depth;  ///< Parameter that determines the depth of the subscription
 
   bool operator<(SubscriptionGroup const &other) const;
   bool operator==(SubscriptionGroup const &other) const;

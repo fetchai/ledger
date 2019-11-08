@@ -335,7 +335,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
       scope_models.pop_back();
 
       {
-        QueryVariant s = NewQueryVariant(last.model(), TYPE_MODEL, x.token);
+        QueryVariant s = NewQueryVariant(last.vocabulary_schema(), TYPE_MODEL, x.token);
         stack_.push_back(s);
       }
 
@@ -368,7 +368,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
         break;
       }
 
-      if (model.model() == nullptr)
+      if (model.vocabulary_schema() == nullptr)
       {
         error_tracker_.RaiseInternalError("Model is null.", x.token);
         break;
@@ -527,12 +527,13 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
     stack_.pop_back();
 
     // TODO(private issue AEA-137): add some sanity checks here
-    semantic_search_module_->AddModel(static_cast<std::string>(key->As<Token>()), last.model());
+    semantic_search_module_->AddModel(static_cast<std::string>(key->As<Token>()),
+                                      last.vocabulary_schema());
   }
   else
   {
     // TODO(private issue AEA-140): Handle this case
-    std::cout << "NOT READY: " << last.model() << std::endl;
+    std::cout << "NOT READY: " << last.vocabulary_schema() << std::endl;
   }
 }
 

@@ -40,6 +40,8 @@ public:
     return true;
   }
   virtual void Execute() = 0;
+
+  virtual char const *GetId() const = 0;
   /// @}
 
   // Helper operators
