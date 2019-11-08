@@ -142,7 +142,7 @@ auto GenerateChain(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &c
     auto diff = all_weights - side_miners;
 
     block    = Generate(gen, cabinet, previous,
-                     *std::next(diff.begin(), static_cast<uint64>(rand() % diff.size())));
+                     *std::next(diff.begin(), static_cast<uint64_t>(rand() % diff.size())));
     previous = block;
   }
 
