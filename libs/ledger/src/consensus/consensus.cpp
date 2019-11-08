@@ -224,7 +224,7 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
   return DeterministicShuffle(ret, entropy);
 }
 
-uint64_t Consensus::ShuffledCabinetRank(BlockEntropy::Cabinet cabinet, Block const &previous,
+uint64_t Consensus::ShuffledCabinetRank(BlockEntropy::Cabinet const &cabinet, Block const &previous,
                                         Identity const &identity)
 {
   auto entropy_shuffled_cabinet =

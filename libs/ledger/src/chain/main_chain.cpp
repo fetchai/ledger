@@ -1469,7 +1469,7 @@ bool MainChain::RemoveTip(IntBlockPtr const &block)
   FETCH_LOCK(lock_);
   assert(enable_stutter_removal_);
   bool replaced{false};
-  if (tips_.erase(block->body.hash))
+  if (tips_.erase(block->body.hash) != 0u)
   {
     auto previous_block = GetBlock(block->body.previous_hash);
     // Check previous is not banned, insert in previous
