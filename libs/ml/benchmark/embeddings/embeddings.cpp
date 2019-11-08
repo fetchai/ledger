@@ -80,6 +80,21 @@ void BM_Setup_And_Train_Embeddings(benchmark::State &state)
   }
 }
 
+BENCHMARK_TEMPLATE(BM_Setup_And_Train_Embeddings, float, 1, 100, 1000000, 1)
+->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Train_Embeddings, float, 10, 100, 1000000, 1)
+->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Train_Embeddings, float, 100, 100, 1000000, 1)
+->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Train_Embeddings, float, 1000, 100, 1000000, 1)
+->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Train_Embeddings, float, 10000, 100, 1000000, 1)
+->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Train_Embeddings, float, 100000, 100, 1000000, 1)
+->Unit(benchmark::kMillisecond);
+
+
+/*
 BENCHMARK_TEMPLATE(BM_Setup_And_Train_Embeddings, float, 1, 10, 10, 100000)
     ->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Setup_And_Train_Embeddings, float, 10, 10, 10, 100000)
@@ -223,5 +238,6 @@ BENCHMARK_TEMPLATE(BM_Setup_And_Train_Embeddings, float, 1000, 1000, 10000, 10)
     ->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Setup_And_Train_Embeddings, float, 10000, 1000, 10000, 1)
     ->Unit(benchmark::kMillisecond);
+*/
 
 BENCHMARK_MAIN();
