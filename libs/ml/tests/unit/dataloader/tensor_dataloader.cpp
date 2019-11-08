@@ -52,22 +52,14 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
   tdl.AddData({data1_tensor, data2_tensor}, label_tensor);
   tdl.SetRandomMode(true);
   auto next0 = tdl.GetNext();
-//  std::cout << "next0.first: " << next0.first.ToString() << std::endl;
   next0 = tdl.GetNext();
 //  std::cout << "next0.first: " << next0.first.ToString() << std::endl;
 //  std::cout << "next0.second: " << next0.second.at(0).View().Copy().ToString() << std::endl;
   next0 = tdl.GetNext();
-//  std::cout << "next0.first: " << next0.first.ToString() << std::endl;
-//  std::cout << "next0.second: " << next0.second.at(0).View().Copy().ToString() << std::endl;
   next0 = tdl.GetNext();
-//  std::cout << "next0.first: " << next0.first.ToString() << std::endl;
-//  std::cout << "next0.second: " << next0.second.at(0).View().Copy().ToString() << std::endl;
   next0 = tdl.GetNext();
-//  std::cout << "next0.first: " << next0.first.ToString() << std::endl;
   next0 = tdl.GetNext();
-//  std::cout << "next0.first: " << next0.first.ToString() << std::endl;
   next0 = tdl.GetNext();
-//  std::cout << "next0.first: " << next0.first.ToString() << std::endl;
   next0 = tdl.GetNext();
   next0 = tdl.GetNext();
   next0 = tdl.GetNext();
@@ -86,16 +78,13 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 
   b >> tdl_2;
 
+  std::cout << "Comparing identical dataloaders: " << std::endl;
   EXPECT_EQ(tdl.Size(), tdl_2.Size());
   EXPECT_EQ(tdl.IsDone(), tdl_2.IsDone());
-  
+
   auto next1 = tdl.GetNext();
   auto next2 = tdl_2.GetNext();
-//  std::cout << "next1: " << next1.first.ToString() << std::endl;
-//  std::cout << "next2: " << next2.first.ToString() << std::endl;
-//  std::cout << "next1.second.at(0).Slice().Copy().ToString(): " << next1.second.at(0).View().Copy().ToString() << std::endl;
-//  std::cout << "next2.second.at(0).Slice().Copy().ToString(): " << next2.second.at(0).View().Copy().ToString() << std::endl;
-//  EXPECT_EQ(tdl.GetNext(), tdl_2.GetNext());
+
   EXPECT_TRUE(next1.first.AllClose(next2.first));
   EXPECT_TRUE(next1.second.at(0).AllClose(next2.second.at(0)));
   EXPECT_TRUE(next1.second.at(1).AllClose(next2.second.at(1)));
@@ -112,7 +101,12 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 
   EXPECT_EQ(tdl.Size(), tdl_2.Size());
   EXPECT_EQ(tdl.IsDone(), tdl_2.IsDone());
-  EXPECT_EQ(tdl.GetNext(), tdl_2.GetNext());
+
+  next1 = tdl.GetNext();
+  next2 = tdl_2.GetNext();
+  EXPECT_TRUE(next1.first.AllClose(next2.first));
+  EXPECT_TRUE(next1.second.at(0).AllClose(next2.second.at(0)));
+  EXPECT_TRUE(next1.second.at(1).AllClose(next2.second.at(1)));
 }
 
 TYPED_TEST(TensorDataloaderTest, test_validation_splitting_dataloader_test)
