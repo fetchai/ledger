@@ -75,6 +75,10 @@ public:
 
   void CancelTaskGroup(std::size_t group_id);
 
+  Taskpool(const Taskpool &other) = delete;
+  Taskpool &operator=(const Taskpool &other)  = delete;
+  bool      operator==(const Taskpool &other) = delete;
+  bool      operator<(const Taskpool &other)  = delete;
 protected:
 private:
   Timestamp lockless_getNextWakeTime(const Timestamp &current_time, const Milliseconds &deflt);
@@ -97,15 +101,7 @@ private:
   {
     bool operator()(const FutureTask &a, const FutureTask &b)
     {
-      // Needs to be a > because the PriQ outputs largest elements first.
-      // so if a's due is before b's
-      // we need to say "false".
-      if (a.due < b.due)
-      {
-        return false;
-      }
-
-      return true;
+      return (a.due > b.due);
     }
   };
 
@@ -113,8 +109,4 @@ private:
 
   FutureTasks future_tasks;
 
-  Taskpool(const Taskpool &other) = delete;              // { copy(other); }
-  Taskpool &operator=(const Taskpool &other)  = delete;  // { copy(other); return *this; }
-  bool      operator==(const Taskpool &other) = delete;  // const { return compare(other)==0; }
-  bool      operator<(const Taskpool &other)  = delete;  // const { return compare(other)==-1; }
 };

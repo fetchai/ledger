@@ -28,8 +28,7 @@ public:
   using ThreadP = std::shared_ptr<std::thread>;
   using Threads = std::vector<ThreadP>;
 
-  Threadpool()
-  {}
+  Threadpool() = default;
   virtual ~Threadpool()
   {
     try
@@ -42,7 +41,7 @@ public:
     }
   }
 
-  void start(std::size_t threadcount, std::function<void(void)> runnable)
+  void start(std::size_t threadcount, const std::function<void(void)> &runnable)
   {
     threads.reserve(threadcount);
     for (std::size_t thread_idx = 0; thread_idx < threadcount; ++thread_idx)
@@ -51,7 +50,7 @@ public:
     }
   }
 
-  void start(std::size_t threadcount, std::function<void(std::size_t thread_number)> runnable)
+  void start(std::size_t threadcount, const std::function<void(std::size_t thread_number)> &runnable)
   {
     threads.reserve(threadcount);
     for (std::size_t thread_number = 0; thread_number < threadcount; ++thread_number)
@@ -75,12 +74,11 @@ public:
     threads.empty();
   }
 
-protected:
-private:
-  Threads threads;
-
   Threadpool(const Threadpool &other) = delete;
   Threadpool &operator=(const Threadpool &other)  = delete;
   bool        operator==(const Threadpool &other) = delete;
   bool        operator<(const Threadpool &other)  = delete;
+protected:
+private:
+  Threads threads;
 };

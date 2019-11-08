@@ -46,7 +46,7 @@ public:
   using RpcServerPtr       = std::shared_ptr<RpcServer>;
   using Bytes              = byte_array::ByteArray;
 
-  MuddleLearnerNetworkerImpl(MuddlePtr mud);
+  explicit MuddleLearnerNetworkerImpl(MuddlePtr mud);
   ~MuddleLearnerNetworkerImpl() override;
 
   MuddleLearnerNetworkerImpl(MuddleLearnerNetworkerImpl const &other) = delete;
@@ -54,15 +54,15 @@ public:
   bool                        operator==(MuddleLearnerNetworkerImpl const &other) = delete;
   bool                        operator<(MuddleLearnerNetworkerImpl const &other)  = delete;
 
-  void addTarget(const std::string peer);
+  void addTarget(const std::string &peer);
 
   void PushUpdate(const UpdateInterfacePtr &update) override;
-  void PushUpdateType(const std::string &key, const UpdateInterfacePtr &update) override;
+  void PushUpdateType(const std::string &type_name, const UpdateInterfacePtr &update) override;
   void PushUpdateBytes(const std::string &type_name, const Bytes &update);
 
   std::size_t GetPeerCount() const override
   {
-    return 0;  // TODO
+    return 0;  // TODO(kll)
   }
 
   virtual void submit(const TaskP &t);

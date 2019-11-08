@@ -23,13 +23,14 @@
 namespace fetch {
 namespace dmlf {
 namespace colearn {
-void MuddleLearnerNetworkerImpl::addTarget(const std::string peer)
+
+void MuddleLearnerNetworkerImpl::addTarget(const std::string &peer)
 {
   peers_.insert(peer);
 }
 
 MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud)
-  : mud_(mud)
+  : mud_(std::move(mud))
 {
   taskpool      = std::make_shared<Taskpool>();
   tasks_runners = std::make_shared<Threadpool>();
@@ -42,6 +43,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud)
   server_ = std::make_shared<RpcServer>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   server_->Add(RPC_COLEARN, proto_.get());
 }
+
 MuddleLearnerNetworkerImpl::~MuddleLearnerNetworkerImpl()
 {
   taskpool->stop();
@@ -54,20 +56,20 @@ void MuddleLearnerNetworkerImpl::submit(const TaskP &t)
   taskpool->submit(t);
 }
 
-void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &       key,
+void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &       type_name,
                                                 const UpdateInterfacePtr &update)
 {
-  std::cout << "UPDATE(" << key << std::endl;
+  std::cout << "UPDATE(" << type_name << std::endl;
   auto bytes = update->Serialise();
-  PushUpdateBytes(key, bytes);
+  PushUpdateBytes(type_name, bytes);
 }
-void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &key, const Bytes &update)
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, const Bytes &update)
 {
-  std::cout << "UPDATE BYTES(" << key << std::endl;
+  std::cout << "UPDATE BYTES(" << type_name << std::endl;
   for (const auto &peer : peers_)
   {
-    std::cout << "TASKING SEND (" << key << ")TO:" << peer << std::endl;
-    auto task = std::make_shared<MuddleOutboundUpdateTask>(peer, key, update, client_);
+    std::cout << "TASKING SEND (" << type_name << ")TO:" << peer << std::endl;
+    auto task = std::make_shared<MuddleOutboundUpdateTask>(peer, type_name, update, client_);
     taskpool->submit(task);
   }
 }

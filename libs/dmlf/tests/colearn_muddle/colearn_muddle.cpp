@@ -79,7 +79,7 @@ public:
     actual = std::make_shared<LN>(mud_);
 
     std::unordered_set<std::string> remotes;
-    if (remote)
+    if (remote != 0)
     {
       std::string server = "tcp://127.0.0.1:";
       server += std::to_string(remote);
