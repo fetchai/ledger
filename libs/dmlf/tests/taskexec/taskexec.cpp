@@ -33,8 +33,8 @@
 #include "gtest/gtest.h"
 #include "oef-base/threading/Threadpool.hpp"
 
-#include "oef-base/threading/Taskpool.hpp"
 #include "dmlf/colearn/muddle_learner_networker_impl.hpp"
+#include "oef-base/threading/Taskpool.hpp"
 
 #include <iomanip>
 
@@ -43,11 +43,10 @@ namespace dmlf {
 
 std::atomic<int> fooper(0);
 
-class Fooper
-  : public Task
+class Fooper : public Task
 {
 public:
-  virtual bool      IsRunnable() const
+  virtual bool IsRunnable() const
   {
     return true;
   }
@@ -55,7 +54,7 @@ public:
   virtual ExitState run()
   {
     fooper++;
-    if (fooper<5)
+    if (fooper < 5)
     {
       return ExitState::RERUN;
     }

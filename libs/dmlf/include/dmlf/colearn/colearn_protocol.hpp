@@ -25,7 +25,7 @@ namespace colearn {
 
 class MuddleLearnerNetworkerImpl;
 
-class ColearnProtocol: public fetch::service::Protocol
+class ColearnProtocol : public fetch::service::Protocol
 {
 public:
   enum
@@ -33,11 +33,11 @@ public:
     RPC_COLEARN_UPDATE,
   };
   explicit ColearnProtocol(MuddleLearnerNetworkerImpl &exec);
+
 protected:
 private:
 };
 
-}
-}
-}
-
+}  // namespace colearn
+}  // namespace dmlf
+}  // namespace fetch

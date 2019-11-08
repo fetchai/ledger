@@ -106,9 +106,9 @@ public:
 protected:
   std::shared_ptr<ShuffleAlgorithmInterface> alg_;  // used by descendents
 
-  virtual void NewMessage(Bytes const &msg);      // called by descendents
-  virtual void NewDmlfMessage(Bytes const &msg);  // called by descendents
-  virtual void NewMessage(const std::string &key, Bytes const &update);      // called by descendents
+  virtual void NewMessage(Bytes const &msg);                             // called by descendents
+  virtual void NewDmlfMessage(Bytes const &msg);                         // called by descendents
+  virtual void NewMessage(const std::string &key, Bytes const &update);  // called by descendents
 
 private:
   using Mutex             = fetch::Mutex;

@@ -17,43 +17,42 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/service_ids.hpp"
+#include "dmlf/colearn/colearn_protocol.hpp"
 #include "dmlf/networkers/abstract_learner_networker.hpp"
-#include "oef-base/threading/Threadpool.hpp"
-#include "oef-base/threading/Taskpool.hpp"
 #include "dmlf/update_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
-#include "core/service_ids.hpp"
 #include "network/service/call_context.hpp"
-#include "dmlf/colearn/colearn_protocol.hpp"
+#include "oef-base/threading/Taskpool.hpp"
+#include "oef-base/threading/Threadpool.hpp"
 
 namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-class MuddleLearnerNetworkerImpl
-  : public dmlf::AbstractLearnerNetworker
+class MuddleLearnerNetworkerImpl : public dmlf::AbstractLearnerNetworker
 {
 public:
-  using TaskP = Taskpool::TaskP;
-  using MuddlePtr = muddle::MuddlePtr;
+  using TaskP              = Taskpool::TaskP;
+  using MuddlePtr          = muddle::MuddlePtr;
   using UpdateInterfacePtr = dmlf::UpdateInterfacePtr;
-  using RpcClient       = fetch::muddle::rpc::Client;
-  using RpcClientPtr = std::shared_ptr<RpcClient>;
-  using Proto = ColearnProtocol;
-  using ProtoP = std::shared_ptr<ColearnProtocol>;
-  using RpcServer       = fetch::muddle::rpc::Server;
-  using RpcServerPtr = std::shared_ptr<RpcServer>;
-  using Bytes = byte_array::ByteArray;
+  using RpcClient          = fetch::muddle::rpc::Client;
+  using RpcClientPtr       = std::shared_ptr<RpcClient>;
+  using Proto              = ColearnProtocol;
+  using ProtoP             = std::shared_ptr<ColearnProtocol>;
+  using RpcServer          = fetch::muddle::rpc::Server;
+  using RpcServerPtr       = std::shared_ptr<RpcServer>;
+  using Bytes              = byte_array::ByteArray;
 
   MuddleLearnerNetworkerImpl(MuddlePtr mud);
   ~MuddleLearnerNetworkerImpl() override;
 
   MuddleLearnerNetworkerImpl(MuddleLearnerNetworkerImpl const &other) = delete;
-  MuddleLearnerNetworkerImpl &operator=(MuddleLearnerNetworkerImpl const &other) = delete;
-  bool operator==(MuddleLearnerNetworkerImpl const &other) = delete;
-  bool operator<(MuddleLearnerNetworkerImpl const &other) = delete;
+  MuddleLearnerNetworkerImpl &operator=(MuddleLearnerNetworkerImpl const &other)  = delete;
+  bool                        operator==(MuddleLearnerNetworkerImpl const &other) = delete;
+  bool                        operator<(MuddleLearnerNetworkerImpl const &other)  = delete;
 
   void addTarget(const std::string peer);
 
@@ -63,32 +62,30 @@ public:
 
   std::size_t GetPeerCount() const override
   {
-    return 0; // TODO
+    return 0;  // TODO
   }
 
-  virtual void submit(const TaskP&t);
+  virtual void submit(const TaskP &t);
 
   // This is the exposed interface
 
-  uint64_t NetworkColearnUpdate(
-    service::CallContext const &context,
-    const std::string &type_name,
-    const byte_array::ByteArray &bytes);
+  uint64_t NetworkColearnUpdate(service::CallContext const &context, const std::string &type_name,
+                                const byte_array::ByteArray &bytes);
 
 protected:
 private:
-  std::shared_ptr<Taskpool> taskpool;
+  std::shared_ptr<Taskpool>   taskpool;
   std::shared_ptr<Threadpool> tasks_runners;
-  MuddlePtr mud_;
-  RpcClientPtr client_;
-  RpcServerPtr server_;
-  ProtoP proto_;
+  MuddlePtr                   mud_;
+  RpcClientPtr                client_;
+  RpcServerPtr                server_;
+  ProtoP                      proto_;
 
   std::unordered_set<std::string> peers_;
 
   friend class MuddleMessageHandler;
 };
 
-}
-}
-}
+}  // namespace colearn
+}  // namespace dmlf
+}  // namespace fetch

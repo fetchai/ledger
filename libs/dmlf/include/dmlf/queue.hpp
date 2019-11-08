@@ -33,7 +33,7 @@ template <typename T>
 class Queue : public QueueInterface
 {
 public:
-  using UpdateType   = T;
+  using UpdateType = T;
 
   using UpdatePtr    = std::shared_ptr<UpdateType>;
   using StoredType   = std::pair<UpdatePtr, Bytes>;
@@ -58,7 +58,7 @@ public:
     return updates_.size();
   }
 
-  Bytes        PopAsBytes() override
+  Bytes PopAsBytes() override
   {
     FETCH_LOCK(updates_m_);
     if (!updates_.empty())

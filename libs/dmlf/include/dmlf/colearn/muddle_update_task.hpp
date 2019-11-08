@@ -22,24 +22,22 @@
 namespace fetch {
 namespace colearn {
 
-class MuddleUpdateTask
-  : public MuddleMessageTask
+class MuddleUpdateTask : public MuddleMessageTask
 {
 public:
   MuddleUpdateTask()
-  {
-  }
+  {}
   virtual ~MuddleUpdateTask()
-  {
-  }
+  {}
 
   MuddleUpdateTask(MuddleUpdateTask const &other) = delete;
-  MuddleUpdateTask &operator=(MuddleUpdateTask const &other) = delete;
-  bool operator==(MuddleUpdateTask const &other) = delete;
-  bool operator<(MuddleUpdateTask const &other) = delete;
+  MuddleUpdateTask &operator=(MuddleUpdateTask const &other)  = delete;
+  bool              operator==(MuddleUpdateTask const &other) = delete;
+  bool              operator<(MuddleUpdateTask const &other)  = delete;
+
 protected:
 private:
 };
 
-}
-}
+}  // namespace colearn
+}  // namespace fetch
