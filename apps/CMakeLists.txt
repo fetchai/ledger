@@ -10,5 +10,8 @@ add_subdirectory(tx-generator)
 add_subdirectory(muddle-node)
 add_subdirectory(muddle-probe)
 add_subdirectory(chain-tool)
+
+if(NOT APPLE)
 add_subdirectory(oef-core)
 add_subdirectory(oef-search)
+endif()
