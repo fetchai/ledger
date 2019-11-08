@@ -42,10 +42,10 @@ struct String : public Object
 
   int32_t                 Length() const;
   int32_t                 SizeInBytes() const;
-  void                    Trim();
+  Ptr<String>             Trim();
   int32_t                 Find(Ptr<String> const &substring) const;
   Ptr<String>             Substring(int32_t start_index, int32_t end_index);
-  void                    Reverse();
+  Ptr<String>             Reverse();
   Ptr<Array<Ptr<String>>> Split(Ptr<String> const &separator) const;
 
   std::size_t GetHashCode() override;

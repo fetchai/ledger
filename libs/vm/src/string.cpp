@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/string/trim.hpp"
 #include "vm/array.hpp"
 #include "vm/string.hpp"
 
@@ -32,21 +33,6 @@ namespace vm {
 
 namespace {
 
-bool is_not_whitespace(int ch)
-{
-  return std::isspace(ch) == 0;
-}
-
-void trim_left(std::string &s)
-{
-  s.erase(s.begin(), std::find_if(s.begin(), s.end(), is_not_whitespace));
-}
-
-void trim_right(std::string &s)
-{
-  s.erase(std::find_if(s.rbegin(), s.rend(), is_not_whitespace).base(), s.end());
-}
-
 int32_t utf8_length(std::string const &str)
 {
   return static_cast<int32_t>(utf8::distance(str.cbegin(), str.cend()));
@@ -61,10 +47,21 @@ String::String(VM *vm, std::string str__, bool is_literal__)
   , length{utf8_length(str)}
 {}
 
-void String::Trim()
+Ptr<String> String::Trim()
 {
-  trim_left(str);
-  trim_right(str);
+  bool const is_modifiable = RefCount() == 1;
+
+  if (is_modifiable)
+  {
+    fetch::string::Trim(str);
+
+    return Ptr<String>::PtrFromThis(this);
+  }
+
+  std::string new_string{str};
+  fetch::string::Trim(new_string);
+
+  return Ptr<String>{new String(vm_, new_string)};
 }
 
 int32_t String::Find(Ptr<String> const &substring) const
@@ -118,10 +115,18 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
   return Ptr<String>{new String(vm_, std::string{start, end})};
 }
 
-void String::Reverse()
+Ptr<String> String::Reverse()
 {
-  utf8::iterator<std::string::iterator> it{str.end(), str.begin(), str.end()};
-  utf8::iterator<std::string::iterator> end{str.begin(), str.begin(), str.end()};
+  bool const is_modifiable = RefCount() == 1;
+
+  if (is_modifiable)
+  {
+    // TODO(WK) swap UTF-8 chars in place
+    return Ptr<String>::PtrFromThis(this);
+  }
+
+  utf8::iterator<std::string::const_iterator> it{str.cend(), str.cbegin(), str.cend()};
+  utf8::iterator<std::string::const_iterator> end{str.cbegin(), str.cbegin(), str.cend()};
 
   std::string reversed;
   reversed.reserve(str.length());
@@ -131,7 +136,7 @@ void String::Reverse()
     utf8::append(*(--it), reversed);
   }
 
-  str = reversed;
+  return Ptr<String>{new String(vm_, reversed)};
 }
 
 Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const

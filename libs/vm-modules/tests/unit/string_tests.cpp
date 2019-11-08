@@ -66,8 +66,7 @@ TEST_F(StringTests, trim_removes_leading_whitespace)
   static char const *TEXT = R"(
     function main()
       var text = '   abc def';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
@@ -82,8 +81,7 @@ TEST_F(StringTests, trim_removes_trailing_whitespace)
   static char const *TEXT = R"(
     function main()
       var text = 'abc def  ';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
@@ -98,8 +96,7 @@ TEST_F(StringTests, trim_removes_both_leading_and_trailing_whitespace)
   static char const *TEXT = R"(
     function main()
       var text = '   abc def  ';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
@@ -146,8 +143,7 @@ TEST_F(StringTests, trim_leaves_string_empty_if_it_contains_only_whitespace)
   static char const *TEXT = R"(
     function main()
       var text = '   ';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
@@ -239,8 +235,7 @@ TEST_F(StringTests, reverse_changes_string_contents_to_the_original_characters_b
   static char const *TEXT = R"(
     function main()
       var text = 'xyz';
-      text.reverse();
-      print(text);
+      print(text.reverse());
     endfunction
   )";
 
@@ -624,8 +619,7 @@ TEST_F(StringTests, utf8_basic_reverse_test)
   static char const *TEXT = R"(
     function main()
       var text = '他身旁放着，脚边卧着';
-      text.reverse();
-      print(text);
+      print(text.reverse());
     endfunction
   )";
 
