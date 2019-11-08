@@ -233,8 +233,9 @@ private:
 };
 
 using ContractInvocationHandler = std::function<bool(
-    VM *, std::string const &, Executable::Contract const &, Executable::Function const &,
-    VariantArray const &, std::string &, Variant &)>;
+    VM * /* vm */, std::string const & /* identity */, Executable::Contract const & /* contract */,
+    Executable::Function const & /* function */, VariantArray const & /* parameters */,
+    std::string & /* error */, Variant & /* output */)>;
 
 class VM
 {

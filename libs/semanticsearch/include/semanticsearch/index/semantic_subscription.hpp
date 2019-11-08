@@ -24,8 +24,8 @@ namespace semanticsearch {
 
 struct SemanticSubscription
 {
-  SemanticPosition position{};
-  DBIndexType      index{};
+  SemanticPosition position{};  ///< Position in semantic space
+  DBIndexType      index{};     ///< Database index containing the record for the subscription
 };
 
 }  // namespace semanticsearch
