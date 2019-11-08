@@ -142,7 +142,9 @@ public:
 
   void AddToGradient(TensorType const &extern_grad, SizeSet const &rows_updated)
   {
-    FETCH_UNUSED(rows_updated);
+    // Add external information about row updates
+    this->rows_updated_.insert(rows_updated.begin(), rows_updated.end());
+
     if (!this->value_frozen_)
     {
       gradient_accumulation_->InlineAdd(extern_grad);
@@ -189,7 +191,7 @@ public:
       gradient_accumulation_->Fill(typename T::Type(0));
       reset_gradients_ = false;
 
-     // Clear updates
+      // Clear updates
       updated_rows_.clear();
     }
   }

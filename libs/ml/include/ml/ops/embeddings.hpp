@@ -37,6 +37,7 @@ public:
   using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using SizeType      = fetch::math::SizeType;
+  using SizeSet       = std::unordered_set<SizeType>;
   using VecTensorType = typename Weights<T>::VecTensorType;
   using SPType        = OpEmbeddingsSaveableParams<TensorType>;
   using MyType        = Embeddings<TensorType>;
@@ -132,7 +133,7 @@ public:
           // Mark update
           this->updated_rows_.insert(trailing_indices2_.at(0));
 
-          auto gradient_view       = this->gradient_accumulation_->View(trailing_indices2_);
+          auto gradient_view = this->gradient_accumulation_->View(trailing_indices2_);
 
           auto error_view_it    = error_view.cbegin();
           auto gradient_view_it = gradient_view.begin();
@@ -149,6 +150,40 @@ public:
     }
 
     return {TensorType(error_signal.shape())};
+  }
+
+  void ApplyGradient(TensorType const &grad, SizeSet &update_rows) override
+  {
+    if (!this->value_frozen_)
+    {
+      this->ApplyRegularisation();
+
+      // Normal apply
+      if (update_rows.empty() ||
+          update_rows.size() > (this->gradient_accumulation_->shape().at(1) / 4))
+      {
+        this->data_->InlineAdd(grad);
+      }
+      // Sparse apply
+      else
+      {
+        memory::Range range(0, std::size_t(this->data_->height()));
+
+        for (SizeType update_index : update_rows)
+        {
+          auto data_slice = this->data_->data().slice(this->data_->padded_height() * update_index,
+                                                      this->data_->padded_height());
+          auto gradient_slice =
+              grad.data().slice(grad.padded_height() * update_index, grad.padded_height());
+
+          data_slice.in_parallel().RangedApplyMultiple(
+              range, [](auto const &a, auto const &b, auto &c) { c = b + a; }, data_slice,
+              gradient_slice);
+        }
+      }
+
+      this->ResetGradients();
+    }
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
