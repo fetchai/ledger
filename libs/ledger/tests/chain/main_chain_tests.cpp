@@ -1170,11 +1170,11 @@ TEST_P(MainChainTests, CheckReindexingOfTipsWithStutter)
   stutter[1] = Generate(generator_, cabinet_, chain[6], 4);
   stutter[2] = Generate(generator_, cabinet_, chain[8], 8);
 
-  for (std::size_t i = 0; i < stutter.size(); ++i)
+  for (auto const &block : stutter)
   {
-    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*stutter[i]));
-    stutter_tips.insert(stutter[i]->body.hash);
-    previous_to_stutter.insert(stutter[i]->body.previous_hash);
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
+    stutter_tips.insert(block->body.hash);
+    previous_to_stutter.insert(block->body.previous_hash);
   }
 
   // check tips contain no stutter blocks but have replaced them with their previous
