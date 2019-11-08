@@ -66,7 +66,7 @@ public:
 
     TensorType weights_in({embedding_size_, vocab_size_});
     this->Initialise(weights_in, init_mode);
-    TensorType weights_ctx({embedding_size_, vocab_size_});
+    TensorType weights_ctx({vocab_size_, embedding_size_});
     this->Initialise(weights_ctx, init_mode);
 
     // embed both inputs
@@ -76,11 +76,8 @@ public:
         name + "_Embed_Context", {context}, weights_ctx);
 
     // dot product input and context embeddings
-    std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<TensorType>>(
-        name + "_TransposeCtx", {embed_ctx});
-
     std::string in_ctx_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
-        name + "_In_Ctx_MatMul", {transpose_ctx, embed_in_});
+        name + "_In_Ctx_MatMul", {embed_ctx, embed_in_});
 
     std::string in_ctx_matmul_flat = this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(
         name + "_In_Ctx_MatMul_Flat", {in_ctx_matmul});
