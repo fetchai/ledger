@@ -128,6 +128,10 @@ public:
           trailing_indices1_.at(1) = n;
           auto error_view          = error_signal.View(trailing_indices1_);
           trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
+
+          // Mark update
+          this->updated_rows_.insert(trailing_indices2_.at(0));
+
           auto gradient_view       = this->gradient_accumulation_->View(trailing_indices2_);
 
           auto error_view_it    = error_view.cbegin();

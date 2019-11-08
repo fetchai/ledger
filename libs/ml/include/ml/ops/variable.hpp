@@ -188,6 +188,9 @@ public:
     {
       gradient_accumulation_->Fill(typename T::Type(0));
       reset_gradients_ = false;
+
+     // Clear updates
+      updated_rows_.clear();
     }
   }
 
