@@ -73,14 +73,13 @@ public:
                                fetch::vm::Ptr<fetch::vm::String> const &activation);
 
   void LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                      math::SizeType const &output_channels, math::SizeType const &input_channels,
-                      math::SizeType const &kernel_size, math::SizeType const &stride_size);
+                    math::SizeType const &output_channels, math::SizeType const &input_channels,
+                    math::SizeType const &kernel_size, math::SizeType const &stride_size);
   void LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                                math::SizeType const &                   output_channels,
-                                math::SizeType const &                   input_channels,
-                                math::SizeType const &                   kernel_size,
-                                math::SizeType const &                   stride_size,
-                                fetch::vm::Ptr<fetch::vm::String> const &activation);
+                              math::SizeType const &                   output_channels,
+                              math::SizeType const &                   input_channels,
+                              math::SizeType const &kernel_size, math::SizeType const &stride_size,
+                              fetch::vm::Ptr<fetch::vm::String> const &activation);
 
   void CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                          fetch::vm::Ptr<fetch::vm::String> const &optimiser);

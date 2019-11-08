@@ -144,9 +144,9 @@ void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &l
 }
 
 void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                             math::SizeType const &                   output_channels,
-                             math::SizeType const &                   input_channels,
-                             math::SizeType const &kernel_size, math::SizeType const &stride_size)
+                           math::SizeType const &                   output_channels,
+                           math::SizeType const &input_channels, math::SizeType const &kernel_size,
+                           math::SizeType const &stride_size)
 {
   if (!(model_category_ == ModelCategory::SEQUENTIAL))
   {
@@ -174,11 +174,11 @@ void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
 }
 
 void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                                       math::SizeType const &                   output_channels,
-                                       math::SizeType const &                   input_channels,
-                                       math::SizeType const &                   kernel_size,
-                                       math::SizeType const &                   stride_size,
-                                       fetch::vm::Ptr<fetch::vm::String> const &activation)
+                                     math::SizeType const &                   output_channels,
+                                     math::SizeType const &                   input_channels,
+                                     math::SizeType const &                   kernel_size,
+                                     math::SizeType const &                   stride_size,
+                                     fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
   if (!(model_category_ == ModelCategory::SEQUENTIAL))
   {
@@ -199,14 +199,12 @@ void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &la
   if (layer->str == "conv1d")
   {
     model_ptr->Add<fetch::ml::layers::Convolution1D<TensorType>>(
-        output_channels, input_channels, kernel_size, stride_size,
-        activation_type);
+        output_channels, input_channels, kernel_size, stride_size, activation_type);
   }
   else if (layer->str == "conv2d")
   {
     model_ptr->Add<fetch::ml::layers::Convolution2D<TensorType>>(
-        output_channels, input_channels, kernel_size, stride_size,
-        activation_type);
+        output_channels, input_channels, kernel_size, stride_size, activation_type);
   }
   else
   {
