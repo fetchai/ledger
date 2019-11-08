@@ -43,6 +43,8 @@ std::shared_ptr<DKGMessage> DKGEnvelope::Message() const
     return std::make_shared<SharesMessage>(serialiser);
   case MessageType::COMPLAINT:
     return std::make_shared<ComplaintsMessage>(serialiser);
+  case MessageType::NOTARISATION_KEY:
+    return std::make_shared<NotarisationKeyMessage>(serialiser);
   case MessageType::FINAL_STATE:
     return std::make_shared<FinalStateMessage>(serialiser);
   default:

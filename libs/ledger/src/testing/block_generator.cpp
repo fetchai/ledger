@@ -45,7 +45,7 @@ void BlockGenerator::Reset()
   block_count_ = 0;
 }
 
-BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t weight)
+BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uint64_t weight)
 {
   using fetch::byte_array::ByteArray;
 
@@ -105,7 +105,7 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
   return block;
 }
 
-BlockGenerator::BlockPtr BlockGenerator::operator()(BlockPtr const &from, uint64_t weight)
+BlockGenerator::BlockPtr BlockGenerator::operator()(BlockPtrConst const &from, uint64_t weight)
 {
   return Generate(from, weight);
 }

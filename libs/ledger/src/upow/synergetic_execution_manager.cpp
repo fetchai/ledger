@@ -42,6 +42,9 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
   , no_executor_loop_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_upow_exec_manager_rid_no_executor_loop_iter_total",
         "The total number of iterations we had to make when executor was missing in ExecuteItem")}
+  , execute_item_failed_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_upow_exec_manager_rid_no_executor_loop_fails_total",
+        "Counts how many times ExecuteItem failed, because executor not available after wait.")}
 {
   if (num_executors != 1)
   {
@@ -196,7 +199,9 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
     FETCH_LOCK(lock_);
     if (executors_.empty())
     {
-      throw std::runtime_error("ExecuteItem: executors empty after 500ms wait!");
+      FETCH_LOG_ERROR(LOGGING_NAME, "ExecuteItem: executors empty after 500ms wait!");
+      execute_item_failed_count_->increment();
+      return;
     }
     executor = executors_.back();
     executors_.pop_back();

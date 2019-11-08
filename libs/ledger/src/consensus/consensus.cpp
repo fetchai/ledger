@@ -68,7 +68,6 @@ using StakeManagerPtr = Consensus::StakeManagerPtr;
 
 using fetch::ledger::MainChain;
 using fetch::ledger::Block;
-using fetch::beacon::BlockEntropy;
 
 using DRNG = fetch::random::LinearCongruentialGenerator;
 
@@ -92,10 +91,12 @@ T DeterministicShuffle(T &container, uint64_t entropy)
 
 }  // namespace
 
-Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
-                     Identity mining_identity, uint64_t aeon_period, uint64_t max_cabinet_size,
-                     uint64_t block_interval_ms)
+Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
+                     BeaconServicePtr beacon, MainChain const &chain, Identity mining_identity,
+                     uint64_t aeon_period, uint64_t max_cabinet_size, uint32_t block_interval_ms,
+                     NotarisationPtr notarisation)
   : stake_{std::move(stake)}
+  , cabinet_creator_{std::move(beacon_setup)}
   , beacon_{std::move(beacon)}
   , chain_{chain}
   , mining_identity_{std::move(mining_identity)}
@@ -103,13 +104,14 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain c
   , aeon_period_{aeon_period}
   , max_cabinet_size_{max_cabinet_size}
   , block_interval_ms_{block_interval_ms}
+  , notarisation_{std::move(notarisation)}
 {
   assert(stake_);
   FETCH_UNUSED(chain_);
 }
 
 // TODO(HUT): probably this is not required any more.
-Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous)
+Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous) const
 {
   // Calculate the last relevant snapshot
   uint64_t const last_snapshot =
@@ -132,29 +134,20 @@ Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous)
     return cabinet_history_.at(last_snapshot);
   }
 
-  CabinetPtr cabinet_ptr = cabinet_history_[last_snapshot];
-  assert(!cabinet_ptr->empty());
+  auto cabinet_ptr = cabinet_history_.find(last_snapshot);
+  assert(cabinet_ptr != cabinet_history_.end());
 
-  Cabinet cabinet_copy = *cabinet_ptr;
+  Cabinet cabinet_copy = *(cabinet_ptr->second);
 
   DeterministicShuffle(cabinet_copy, previous.body.block_entropy.EntropyAsU64());
 
   return std::make_shared<Cabinet>(cabinet_copy);
 }
 
-bool Consensus::ValidMinerForBlock(Block const &previous, chain::Address const &address)
+uint32_t Consensus::GetThreshold(Block const &block) const
 {
-  auto const cabinet = GetCabinet(previous);
-
-  if (!cabinet || cabinet->empty())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine cabinet for block validation");
-    return false;
-  }
-
-  return std::find_if((*cabinet).begin(), (*cabinet).end(), [&address](Identity const &identity) {
-           return address == chain::Address(identity);
-         }) != (*cabinet).end();
+  auto cabinet_size = static_cast<double>(GetCabinet(block)->size());
+  return static_cast<uint32_t>(std::floor(cabinet_size * threshold_)) + 1;
 }
 
 Block GetBlockPriorTo(Block const &current, MainChain const &chain)
@@ -168,7 +161,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
   // Walk back the chain until we see a block specifying an aeon beginning (corner
   // case for true genesis)
-  while (!ret.body.block_entropy.IsAeonBeginning() && !(current.body.block_number == 0))
+  while (!ret.body.block_entropy.IsAeonBeginning() && current.body.block_number != 0)
   {
     ret = GetBlockPriorTo(ret, chain);
   }
@@ -176,22 +169,47 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
   return ret;
 }
 
+bool Consensus::VerifyNotarisation(Block const &block) const
+{
+  // Genesis is not notarised so the body of blocks with block number 1 do
+  // not contain a notarisation
+  if (notarisation_ && block.body.block_number > 1)
+  {
+    // Try to verify with notarisation units in notarisation_
+    auto previous_notarised_block = chain_.GetBlock(block.body.previous_hash);
+    auto result = notarisation_->Verify(previous_notarised_block->body.block_number,
+                                        previous_notarised_block->body.hash,
+                                        block.body.block_entropy.block_notarisation);
+    if (result == NotarisationResult::CAN_NOT_VERIFY)
+    {
+      // If block is too old then get aeon beginning
+      auto aeon_block                = GetBeginningOfAeon(*previous_notarised_block, chain_);
+      auto threshold                 = GetThreshold(*previous_notarised_block);
+      auto ordered_notarisation_keys = aeon_block.body.block_entropy.aeon_notarisation_keys;
+
+      return notarisation_->Verify(previous_notarised_block->body.hash,
+                                   block.body.block_entropy.block_notarisation,
+                                   ordered_notarisation_keys, threshold);
+    }
+    if (result == NotarisationResult::FAIL_VERIFICATION)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
 uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
 {
-  auto const cabinet = GetCabinet(previous);
+  auto beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
+  auto cabinet           = beginning_of_aeon.body.block_entropy.qualified;
 
-  if (!cabinet)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine block generation weight");
-    return 0;
-  }
-
-  std::size_t weight{cabinet->size()};
+  std::size_t weight{cabinet.size()};
 
   // TODO(EJF): Depending on the cabinet sizes this would need to be improved
-  for (auto const &member : *cabinet)
+  for (auto const &member : cabinet)
   {
-    if (address == chain::Address(member))
+    if (address == chain::Address::FromMuddleAddress(member))
     {
       break;
     }
@@ -203,8 +221,8 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Addre
   return weight;
 }
 
-Consensus::WeightedQual QualWeightedByEntropy(BlockEntropy::Cabinet const &cabinet,
-                                              uint64_t                     entropy)
+Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
+                                              uint64_t                                entropy)
 {
   Consensus::WeightedQual ret;
   ret.reserve(cabinet.size());
@@ -368,6 +386,20 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
   stake_->UpdateCurrentBlock(current_block_);
 
+  // Notify notarisation of new valid block
+  if (notarisation_)
+  {
+    notarisation_->NotariseBlock(current_block_.body);
+    if (current.body.block_entropy.IsAeonBeginning())
+    {
+      uint64_t round_start = current_block_.body.block_number;
+      assert(!current_block_.body.block_entropy.aeon_notarisation_keys.empty());
+      notarisation_->SetAeonDetails(round_start, round_start + aeon_period_ - 1,
+                                    GetThreshold(current_block_),
+                                    current_block_.body.block_entropy.aeon_notarisation_keys);
+    }
+  }
+
   if (ShouldTriggerNewCabinet(current_block_))
   {
     // attempt to build the cabinet from
@@ -399,8 +431,10 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
     if (member_of_cabinet)
     {
-      auto threshold = static_cast<uint32_t>(
-          std::ceil(static_cast<double>(cabinet_member_list.size()) * threshold_));
+      auto threshold =
+          static_cast<uint32_t>(std::floor(static_cast<double>(cabinet_member_list.size())) *
+                                threshold_) +
+          1;
 
       FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_.body.block_number,
                      " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
@@ -422,13 +456,15 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       uint64_t block_interval = 1;
 
       // Safe to call this multiple times
-      beacon_->StartNewCabinet(cabinet_member_list, threshold, current_block_.body.block_number + 1,
-                               current_block_.body.block_number + aeon_period_,
-                               last_block_time + block_interval, current.body.block_entropy);
+      cabinet_creator_->StartNewCabinet(
+          cabinet_member_list, threshold, current_block_.body.block_number + 1,
+          current_block_.body.block_number + aeon_period_, last_block_time + block_interval,
+          current.body.block_entropy);
     }
   }
 
   beacon_->MostRecentSeen(current_block_.body.block_number);
+  cabinet_creator_->Abort(current_block_.body.block_number);
 }
 
 // TODO(HUT): put block number confirmation/check here (?)
@@ -441,6 +477,16 @@ NextBlockPtr Consensus::GenerateNextBlock()
 
   ret = std::make_unique<Block>();
 
+  // Try to get entropy for the block we are generating - is allowed to fail if we request too
+  // early. Need to do entropy generation first so that we can pass the block we are generating
+  // into GetBlockGenerationWeight (important for first block of each aeon which specifies the
+  // qual for this aeon)
+  if (EntropyGeneratorInterface::Status::OK !=
+      beacon_->GenerateEntropy(block_number, ret->body.block_entropy))
+  {
+    return {};
+  }
+
   // Note, it is important to do this here so the block when passed to ValidBlockTiming
   // is well formed
   ret->body.previous_hash = current_block_.body.hash;
@@ -449,20 +495,27 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->body.miner_id      = mining_identity_;
   ret->body.timestamp =
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-  ret->weight = GetBlockGenerationWeight(current_block_, mining_address_);
-
-  // Try to get entropy for the block we are generating - is allowed to fail if we request too
-  // early
-  if (EntropyGeneratorInterface::Status::OK !=
-      beacon_->GenerateEntropy(block_number, ret->body.block_entropy))
-  {
-    return {};
-  }
+  ret->weight = GetBlockGenerationWeight(*ret, mining_address_);
 
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
   {
     return {};
+  }
+
+  if (notarisation_)
+  {
+    // Add notarisation to block
+    auto notarisation = notarisation_->GetAggregateNotarisation(current_block_.body);
+    if (current_block_.body.block_number != 0 && notarisation.first.isZero())
+    {
+      // Notarisation for head of chain is not ready yet so wait
+      return {};
+    }
+    ret->body.block_entropy.block_notarisation = notarisation;
+
+    // Notify notarisation of new valid block
+    notarisation_->NotariseBlock(ret->body);
   }
 
   return ret;
@@ -482,6 +535,25 @@ bool BlockSignedByQualMember(fetch::ledger::Block const &block)
 
   return fetch::crypto::Verifier::Verify(block.body.miner_id, block.body.hash,
                                          block.miner_signature);
+}
+
+/**
+ * Checks all cabinet members have submitted a notarisation key which has been signed correctly
+ */
+bool ValidNotarisationKeys(Consensus::BlockEntropy::Cabinet const &             cabinet,
+                           Consensus::BlockEntropy::AeonNotarisationKeys const &notarisation_keys)
+{
+  for (auto const &member : cabinet)
+  {
+    if (notarisation_keys.find(member) == notarisation_keys.end() ||
+        !fetch::crypto::Verifier::Verify(fetch::crypto::Identity(member),
+                                         notarisation_keys.at(member).first.getStr(),
+                                         notarisation_keys.at(member).second))
+    {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -543,6 +615,13 @@ Status Consensus::ValidBlock(Block const &current) const
 
     qualified_cabinet = block_entropy.qualified;
     group_pub_key     = block_entropy.group_public_key;
+
+    if (notarisation_ &&
+        !ValidNotarisationKeys(qualified_cabinet, block_entropy.aeon_notarisation_keys))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Found block whose notarisation keys are not valid");
+      return Status::NO;
+    }
   }
   else
   {
@@ -556,6 +635,12 @@ Status Consensus::ValidBlock(Block const &current) const
                                   current.body.block_entropy.group_signature))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
+    return Status::NO;
+  }
+
+  if (!VerifyNotarisation(current))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Found block whose notarisation is not valid");
     return Status::NO;
   }
 
