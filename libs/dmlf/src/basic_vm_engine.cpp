@@ -345,13 +345,13 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack &result, Params 
   return Error{Error::Stage::ENGINE, Error::Code::SUCCESS, ""};
 }
 
-void toFixed64(BasicVmEngine::LedgerVariant &var) 
+void ToFixed64(BasicVmEngine::LedgerVariant &var)
 {
   if (var.IsArray())
   {
     for (std::size_t i = 0; i < var.size(); ++i)
     {
-      toFixed64(var[i]);
+      ToFixed64(var[i]);
     }
   }
   else
@@ -359,13 +359,13 @@ void toFixed64(BasicVmEngine::LedgerVariant &var)
     var = BasicVmEngine::LedgerVariant(fp64_t::FromBase(var.As<int64_t>()));
   }
 }
-void toFixed32(BasicVmEngine::LedgerVariant &var)
+void ToFixed32(BasicVmEngine::LedgerVariant &var)
 {
   if (var.IsArray())
   {
     for (std::size_t i = 0; i < var.size(); ++i)
     {
-      toFixed32(var[i]);
+      ToFixed32(var[i]);
     }
   }
   else
@@ -506,7 +506,7 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
     {
       LedgerVariant const *ledgerCurrent = &(output[0]);  // Starts one deeper
       auto                 currentTypeId = vmVariant.type_id;
-      auto                 innermostType = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
+      auto innermostType = vm.GetTypeInfo(currentTypeId).template_parameter_type_ids[0];
 
       while (ledgerCurrent->IsArray())
       {
@@ -517,15 +517,15 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
 
       if (innermostType == vm::TypeIds::Fixed64)
       {
-        toFixed64(output);
+        ToFixed64(output);
       }
       else if (innermostType == vm::TypeIds::Fixed32)
       {
-        toFixed32(output);
+        ToFixed32(output);
       }
     }
   }
-  return ExecutionResult {
+  return ExecutionResult{
       output, Error{Error::Stage::RUNNING, Error::Code::SUCCESS, "Ran " + std::move(id)}, console};
 }
 
