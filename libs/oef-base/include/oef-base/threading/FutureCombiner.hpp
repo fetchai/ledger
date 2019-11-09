@@ -20,6 +20,10 @@
 #include "oef-base/threading/Waitable.hpp"
 #include <atomic>
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 template <class T, typename RESULT_TYPE>
 class FutureCombiner : public Waitable,
                        public std::enable_shared_from_this<FutureCombiner<T, RESULT_TYPE>>
@@ -114,3 +118,7 @@ private:
   bool operator==(const FutureCombiner &other) = delete;  // const { return compare(other)==0; }
   bool operator<(const FutureCombiner &other)  = delete;  // const { return compare(other)==-1; }
 };
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

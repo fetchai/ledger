@@ -21,5 +21,5 @@ target_link_libraries(fetch-semanticsearch
                              fetch-crypto
                              fetch-math)
 
-# Example targets
+add_test_target()
 add_subdirectory(examples)

@@ -29,12 +29,14 @@
 
 template <typename IN_PROTO, typename OUT_PROTO, typename MIDDLE_PROTO>
 class DapSerialConversationTask
-  : virtual public TaskChainSerial<IN_PROTO, OUT_PROTO, DapInputDataType<MIDDLE_PROTO>,
-                                   DapConversationTask<IN_PROTO, OUT_PROTO>>
+  : virtual public fetch::oef::base::TaskChainSerial<IN_PROTO, OUT_PROTO,
+                                                     DapInputDataType<MIDDLE_PROTO>,
+                                                     DapConversationTask<IN_PROTO, OUT_PROTO>>
 {
 public:
-  using Parent   = TaskChainSerial<IN_PROTO, OUT_PROTO, DapInputDataType<MIDDLE_PROTO>,
-                                 DapConversationTask<IN_PROTO, OUT_PROTO>>;
+  using Parent =
+      fetch::oef::base::TaskChainSerial<IN_PROTO, OUT_PROTO, DapInputDataType<MIDDLE_PROTO>,
+                                        DapConversationTask<IN_PROTO, OUT_PROTO>>;
   using TaskType = DapConversationTask<IN_PROTO, OUT_PROTO>;
 
   static constexpr char const *LOGGING_NAME = "DapSerialConversationTask";

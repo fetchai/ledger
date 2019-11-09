@@ -16,9 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 extern const char *const exitStateNames[] = {
     "COMPLETE",
     "DEFER",
     "CANCELLED",
     "ERRORED",
 };
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch
