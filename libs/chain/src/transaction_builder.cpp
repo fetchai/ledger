@@ -242,6 +242,18 @@ TransactionBuilder &TransactionBuilder::ChargeLimit(TokenAmount amount)
 }
 
 /**
+ * Set the counter value for the transaction
+ *
+ * @param counter The value for the counter
+ * @return The current builder instance
+ */
+TransactionBuilder &TransactionBuilder::Counter(CounterValue counter)
+{
+  partial_transaction_->counter_ = counter;
+  return *this;
+}
+
+/**
  * Set the target smart contract
  *
  * @param digest The target contract digest
