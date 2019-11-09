@@ -38,6 +38,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using TokenAmount    = uint64_t;
   using BlockIndex     = uint64_t;
+  using Counter        = uint64_t;
 
   /**
    * Represents a single target and token about. The transaction format allows any number of
@@ -93,6 +94,7 @@ public:
   /// @name Identification
   /// @{
   Digest const &digest() const;
+  Counter counter() const;
   /// @}
 
   /// @name Transfer Accessors
@@ -155,6 +157,7 @@ private:
   ConstByteArray action_{};                                  ///< The name of the action invoked
   ConstByteArray data_{};                                    ///< The payload of the transaction
   Signatories    signatories_{};                             ///< The signatories for this tx
+  Counter        counter_{0};
   /// @}
 
   /// @name Metadata
