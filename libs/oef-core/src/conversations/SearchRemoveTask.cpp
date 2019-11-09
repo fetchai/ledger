@@ -58,7 +58,7 @@ SearchRemoveTask::StateResult SearchRemoveTask::HandleResponse()
   if (conversation->GetAvailableReplyCount() == 0)
   {
     remove_task_errored++;
-    return SearchRemoveTask::StateResult(0, ERRORED);
+    return SearchRemoveTask::StateResult(0, fetch::oef::base::ERRORED);
   }
 
   auto response = std::static_pointer_cast<Successfulness>(conversation->GetReply(0));
@@ -97,7 +97,7 @@ SearchRemoveTask::StateResult SearchRemoveTask::HandleResponse()
 
   FETCH_LOG_INFO(LOGGING_NAME, "COMPLETE");
 
-  return SearchRemoveTask::StateResult(0, COMPLETE);
+  return SearchRemoveTask::StateResult(0, fetch::oef::base::COMPLETE);
 }
 
 std::shared_ptr<SearchRemoveTask::REQUEST_PROTO> SearchRemoveTask::make_request_proto()
