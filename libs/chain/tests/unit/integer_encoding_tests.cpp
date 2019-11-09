@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "ledger/chain/transaction_encoding.hpp"
+#include "chain/transaction_encoding.hpp"
 
 #include "gtest/gtest.h"
 
@@ -25,8 +25,8 @@ namespace {
 
 using fetch::byte_array::FromHex;
 using fetch::serializers::MsgPackSerializer;
-using fetch::ledger::detail::EncodeInteger;
-using fetch::ledger::detail::DecodeInteger;
+using fetch::chain::detail::EncodeInteger;
+using fetch::chain::detail::DecodeInteger;
 
 MsgPackSerializer CreateEncodedBuffer(char const *hex)
 {

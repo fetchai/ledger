@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "address/address.hpp"
+#include "chain/address.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_builder.hpp"
-#include "ledger/chain/transaction_serializer.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
+#include "chain/transaction_serializer.hpp"
 
 #include "gtest/gtest.h"
 
