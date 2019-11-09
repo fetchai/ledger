@@ -38,7 +38,7 @@ struct String : public Object
   String()           = delete;
   ~String() override = default;
 
-  String(VM *vm, std::string str__, bool is_literal__ = false);
+  String(VM *vm, std::string str__);
 
   int32_t                 Length() const;
   int32_t                 SizeInBytes() const;
@@ -61,7 +61,6 @@ struct String : public Object
   bool DeserializeFrom(MsgPackSerializer &buffer) override;
 
   std::string str;
-  bool        is_literal;
   int32_t     length;
 };
 
