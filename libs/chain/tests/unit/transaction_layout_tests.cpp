@@ -17,12 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
-#include "core/bitvector.hpp"
-#include "core/byte_array/decoders.hpp"
-#include "crypto/ecdsa.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
 #include "chain/transaction_layout.hpp"
+#include "core/bitvector.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "crypto/ecdsa.hpp"
 
 #include "gtest/gtest.h"
 

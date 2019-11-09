@@ -94,7 +94,7 @@ public:
   /// @name Identification
   /// @{
   Digest const &digest() const;
-  Counter counter() const;
+  Counter       counter() const;
   /// @}
 
   /// @name Transfer Accessors

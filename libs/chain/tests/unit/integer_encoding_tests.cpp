@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/decoders.hpp"
 #include "chain/transaction_encoding.hpp"
+#include "core/byte_array/decoders.hpp"
 
 #include "gtest/gtest.h"
 

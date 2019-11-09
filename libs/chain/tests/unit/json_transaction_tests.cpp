@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
-#include "crypto/ecdsa.hpp"
 #include "chain/json_transaction.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
+#include "crypto/ecdsa.hpp"
 #include "variant/variant.hpp"
 
 #include "gtest/gtest.h"
