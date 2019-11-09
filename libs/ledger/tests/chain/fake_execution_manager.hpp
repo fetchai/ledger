@@ -21,13 +21,20 @@
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
+namespace fetch {
+namespace ledger {
+
 class FakeStorageUnit;
+
+} // namespace ledger
+} // namespace fetch
 
 class FakeExecutionManager : public fetch::ledger::ExecutionManagerInterface
 {
 public:
-  using Block  = fetch::ledger::Block;
-  using Digest = fetch::Digest;
+  using Block           = fetch::ledger::Block;
+  using Digest          = fetch::Digest;
+  using FakeStorageUnit = fetch::ledger::FakeStorageUnit;
 
   explicit FakeExecutionManager(FakeStorageUnit &storage);
   ~FakeExecutionManager() override = default;

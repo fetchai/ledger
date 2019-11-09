@@ -52,10 +52,14 @@ public:
   using NotarisationPtr       = std::shared_ptr<ledger::NotarisationService>;
   using NotarisationResult    = NotarisationService::NotarisationResult;
 
+  // Construction / Destruction
   Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,
-            MainChain const &chain, Identity mining_identity, uint64_t aeon_period,
-            uint64_t max_cabinet_size, uint32_t block_interval_ms = 1000,
-            NotarisationPtr notarisation = nullptr);
+            MainChain const &chain, StorageInterface &storage, Identity mining_identity,
+            uint64_t aeon_period, uint64_t max_cabinet_size, uint64_t block_interval_ms = 1000,
+            NotarisationPtr notarisation = NotarisationPtr{});
+  Consensus(Consensus const &) = delete;
+  Consensus(Consensus &&)      = delete;
+  ~Consensus() override        = default;
 
   void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
@@ -69,6 +73,10 @@ public:
   void            SetCabinetSize(uint64_t size);
   void            SetDefaultStartTime(uint64_t default_start_time);
 
+  // Operators
+  Consensus &operator=(Consensus const &) = delete;
+  Consensus &operator=(Consensus &&) = delete;
+
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
 
@@ -77,6 +85,7 @@ private:
   using BlockIndex     = uint64_t;
   using CabinetHistory = std::map<BlockIndex, CabinetPtr>;
 
+  StorageInterface &    storage_;
   StakeManagerPtr       stake_;
   BeaconSetupServicePtr cabinet_creator_;
   BeaconServicePtr      beacon_;

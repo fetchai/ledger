@@ -29,6 +29,7 @@
 #include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "shards/manifest_cache_interface.hpp"
+#include "ledger/storage_unit/fake_storage_unit.hpp"
 
 #include "gtest/gtest.h"
 
@@ -66,6 +67,7 @@ struct NotarisationNode
   Muddle                                     muddle;
   DummyManifestCache                         manifest_cache;
   MainChain                                  chain;
+  FakeStorageUnit                            storage_unit;
   std::shared_ptr<TrustedDealerSetupService> beacon_setup_service;
   std::shared_ptr<BeaconService>             beacon_service;
   std::shared_ptr<NotarisationService>       notarisation_service;
@@ -87,11 +89,12 @@ struct NotarisationNode
                                        event_manager}}
     , notarisation_service{new NotarisationService{*muddle, muddle_certificate,
                                                    *beacon_setup_service}}
-    , stake_manager{new StakeManager{cabinet_size}}
+    , stake_manager{new StakeManager{}}
     , consensus{stake_manager,
                 beacon_setup_service,
                 beacon_service,
                 chain,
+                storage_unit,
                 muddle_certificate->identity(),
                 aeon_period,
                 cabinet_size,
@@ -196,7 +199,7 @@ TEST(notarisation, notarise_blocks)
   // Completely change over committee and queue updates
   for (auto &node : nodes)
   {
-    node->consensus.Reset(snapshot);
+    node->consensus.Reset(snapshot, node->storage_unit);
     for (uint32_t j = 0; j < num_nodes; ++j)
     {
       if (j >= cabinet_size)

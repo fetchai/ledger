@@ -64,8 +64,7 @@ StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current, uint64
   auto snapshot = LookupStakeSnapshot(current.body.block_number);
   if (snapshot)
   {
-    cabinet = snapshot->BuildCabinet(current.body.block_number, current.body.block_entropy.EntropyAsU64(),
-                      cabinet_size);
+    cabinet = snapshot->BuildCabinet(current.body.block_entropy.EntropyAsU64(), cabinet_size);
   }
 
   return cabinet;

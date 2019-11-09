@@ -91,15 +91,10 @@ T DeterministicShuffle(T &container, uint64_t entropy)
 
 }  // namespace
 
-Consensus::Consensus(StakeManagerPtr stake,
-    BeaconSetupServicePtr beacon_setup,
-    BeaconServicePtr beacon,
-    MainChain const &chain,
-    StorageInterface &storage,
-    Identity mining_identity,
-    uint64_t aeon_period,
-   uint64_t max_cabinet_size,
-   uint64_t block_interval_ms, NotarisationPtr notarisation)
+Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
+                     BeaconServicePtr beacon, MainChain const &chain, StorageInterface &storage,
+                     Identity mining_identity, uint64_t aeon_period, uint64_t max_cabinet_size,
+                     uint64_t block_interval_ms, NotarisationPtr notarisation)
   : storage_{storage}
   , stake_{std::move(stake)}
   , cabinet_creator_{std::move(beacon_setup)}

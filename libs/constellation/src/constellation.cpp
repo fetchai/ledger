@@ -203,14 +203,15 @@ StakeManagerPtr CreateStakeManager(constellation::Constellation::Config const &c
 
 ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, StakeManagerPtr stake,
                              BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,
-                             MainChain const &chain, Identity const &identity)
+                             MainChain const &chain, StorageInterface &storage,
+                             Identity const &identity)
 {
   ConsensusPtr consensus{};
 
   if (stake)
   {
-    consensus = std::make_shared<ledger::Consensus>(stake, beacon_setup, beacon, chain, identity,
-                                                    cfg.aeon_period, cfg.max_cabinet_size,
+    consensus = std::make_shared<ledger::Consensus>(stake, beacon_setup, beacon, chain, storage,
+                                                    identity, cfg.aeon_period, cfg.max_cabinet_size,
                                                     cfg.block_interval_ms);
   }
 
@@ -274,7 +275,7 @@ BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const 
  * @param interface_address The current interface address TODO(EJF): This should be more integrated
  * @param db_prefix The database file(s) prefix
  */
-Constellation::Constellation(CertificatePtr certificate, Config config)
+Constellation::Constellation(CertificatePtr const &certificate, Config config)
   : active_{true}
   , cfg_{std::move(config)}
   , p2p_port_(LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::CORE))
@@ -301,14 +302,11 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , beacon_setup_{CreateBeaconSetupService(cfg_, *beacon_network_, *shard_management_, certificate)}
   , beacon_{CreateBeaconService(cfg_, *beacon_network_, certificate, beacon_setup_)}
   , stake_{CreateStakeManager(cfg_)}
-  , consensus_{CreateConsensus(cfg_, stake_, beacon_setup_, beacon_, chain_,
+  , consensus_{CreateConsensus(cfg_, stake_, beacon_setup_, beacon_, chain_, *storage_,
                                certificate->identity())}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
-        [this] {
-          return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
-        },
-        tx_status_cache_)}
+        [this] { return std::make_shared<Executor>(storage_); }, tx_status_cache_)}
   , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
