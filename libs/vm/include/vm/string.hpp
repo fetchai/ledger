@@ -65,10 +65,7 @@ struct String : public Object
   int32_t     length;
 
 private:
-  bool is_modifiable()
-  {
-    return RefCount() == 1;
-  }
+  bool IsTemporary() const;
 };
 
 }  // namespace vm

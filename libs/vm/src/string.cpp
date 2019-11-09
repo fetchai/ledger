@@ -38,6 +38,22 @@ int32_t utf8_length(std::string const &str)
   return static_cast<int32_t>(utf8::distance(str.cbegin(), str.cend()));
 }
 
+std::string reverse_utf8_string_by_copy(std::string const &str)
+{
+  utf8::iterator<std::string::const_iterator> it{str.cend(), str.cbegin(), str.cend()};
+  utf8::iterator<std::string::const_iterator> end{str.cbegin(), str.cbegin(), str.cend()};
+
+  std::string reversed;
+  reversed.reserve(str.size());
+
+  for (; it != end;)
+  {
+    utf8::append(*(--it), reversed);
+  }
+
+  return reversed;
+}
+
 }  // namespace
 
 String::String(VM *vm, std::string str__, bool is_literal__)
@@ -49,7 +65,7 @@ String::String(VM *vm, std::string str__, bool is_literal__)
 
 Ptr<String> String::Trim()
 {
-  if (is_modifiable())
+  if (IsTemporary())
   {
     fetch::string::Trim(str);
 
@@ -115,22 +131,14 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
 
 Ptr<String> String::Reverse()
 {
-  if (is_modifiable())
+  if (length < 2)
   {
-    // TODO(WK) swap UTF-8 chars in place
     return Ptr<String>::PtrFromThis(this);
   }
 
-  utf8::iterator<std::string::const_iterator> it{str.cend(), str.cbegin(), str.cend()};
-  utf8::iterator<std::string::const_iterator> end{str.cbegin(), str.cbegin(), str.cend()};
+  // TODO(LDGR-534) Consider in-place reversal if IsTemporary() == true
 
-  std::string reversed;
-  reversed.reserve(str.length());
-
-  for (; it != end;)
-  {
-    utf8::append(*(--it), reversed);
-  }
+  auto const reversed = reverse_utf8_string_by_copy(str);
 
   return Ptr<String>{new String(vm_, reversed)};
 }
@@ -249,7 +257,7 @@ void String::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
   Ptr<String> lhs = lhso;
   Ptr<String> rhs = rhso;
 
-  if (lhs->is_modifiable())
+  if (lhs->IsTemporary())
   {
     lhs->str += rhs->str;
   }
@@ -270,6 +278,11 @@ bool String::DeserializeFrom(MsgPackSerializer &buffer)
 {
   buffer >> str;
   return true;
+}
+
+bool String::IsTemporary() const
+{
+  return RefCount() == 1;
 }
 
 }  // namespace vm

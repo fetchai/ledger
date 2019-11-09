@@ -35,20 +35,22 @@ endfunction
 
 function temporaries()
 
+    assert(("e" + "llo").reverse() == "olle");
     assert(("he" + "llo").reverse() == "olleh");
 
     assert(("磨支一着" + "放旁身他").reverse() == "他身旁放着一支磨");
     assert(("𩶘𢵧𢺳𣲷" + "𤓓𤶸𤷪𥄫𩶘").reverse() == "𩶘𥄫𤷪𤶸𤓓𣲷𢺳𢵧𩶘");
 
+    assert(("磨支一ab" + "𩶘𢵧𢺳𣲷𤓓𤶸𤷪cdef" + "𥄫𩶘").reverse() == "𩶘𥄫fedc𤷪𤶸𤓓𣲷𢺳𢵧𩶘ba一支磨");
+    assert(("磨支一ab" + "𩶘𢵧𢺳𣲷𤓓𤶸𤷪cdefg" + "𥄫𩶘").reverse() == "𩶘𥄫gfedc𤷪𤶸𤓓𣲷𢺳𢵧𩶘ba一支磨");
+
 endfunction
 
 function main()
 
-   ascii();
-   utf8();
-   literals();
-
-   // TODO(WK) enable when in-place optimisation is odne
-   // temporaries();
+    ascii();
+    utf8();
+    literals();
+    temporaries();
 
 endfunction
