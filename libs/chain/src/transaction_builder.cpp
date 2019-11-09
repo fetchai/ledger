@@ -120,16 +120,14 @@ TransactionBuilder::TransactionPtr TransactionBuilder::Sealer::Build()
   if (!signatories.empty())
   {
     // ensure that none of the signatories have an empty signature field
-    valid =
-        std::all_of(signatories.begin(), signatories.end(), [&hash_function](Signatory const &s) {
-          bool success{false};
-          if (!s.signature.empty())
-          {
-            hash_function.Update(s.signature);
-            success = true;
-          }
-          return success;
-        });
+    valid = std::all_of(signatories.begin(), signatories.end(), [](Signatory const &s) {
+      bool success{false};
+      if (!s.signature.empty())
+      {
+        success = true;
+      }
+      return success;
+    });
   }
 
   // if valid, extract the transaction

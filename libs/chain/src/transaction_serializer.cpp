@@ -598,9 +598,6 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
   for (std::size_t i = 0; i < num_signatures; ++i)
   {
     Decode(buffer, tx.signatories_[i].signature);
-
-    // update signatories
-    hash_function.Update(tx.signatories_[i].signature);
   }
 
   // compute the hash function
