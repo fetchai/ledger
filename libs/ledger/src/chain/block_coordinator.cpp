@@ -541,7 +541,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     if (!previous)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: No previous block in chain (0x",
-               current_block_->hash.ToHex(), ')');
+                     current_block_->hash.ToHex(), ')');
 
       chain_.RemoveBlock(current_block_->hash);
       return State::RESET;
@@ -555,7 +555,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       if (!(result == ConsensusInterface::Status::YES ||
             result == ConsensusInterface::Status::UNKNOWN))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Consensus failed to verify block (0x",
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Block validation failed: Consensus failed to verify block (0x",
                        current_block_->hash.ToHex(), ')');
 
         chain_.RemoveBlock(current_block_->hash);
