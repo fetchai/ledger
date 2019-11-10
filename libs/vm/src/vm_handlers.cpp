@@ -726,7 +726,7 @@ void VM::Handler__ContractVariableDeclareAssign()
     RuntimeError("null reference");
     return;
   }
-  std::string identity = Ptr<String>(sv.object)->str;
+  std::string identity = Ptr<String>(sv.object)->string();
   // Clone the identity string
   sv.object            = Ptr<String>(new String(this, identity));
   Variant &variable    = GetVariable(instruction_->index);
@@ -750,7 +750,7 @@ void VM::Handler__InvokeContractFunction()
     parameters[std::size_t(count)] = std::move(Pop());
   }
   Variant &   sv       = Pop();
-  std::string identity = Ptr<String>(sv.object)->str;
+  std::string identity = Ptr<String>(sv.object)->string();
   sv.Reset();
   if (contract_invocation_handler_)
   {
