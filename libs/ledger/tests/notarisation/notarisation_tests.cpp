@@ -242,15 +242,15 @@ TEST(notarisation, notarise_blocks)
           // Set block hash and ficticious weight for first block
           if (block_number == 1)
           {
-            next_block->body.previous_hash = node->chain.GetHeaviestBlock()->body.hash;
-            next_block->weight             = static_cast<uint64_t>(
+            next_block->previous_hash = node->chain.GetHeaviestBlock()->hash;
+            next_block->weight        = static_cast<uint64_t>(
                 cabinet_size -
                 std::distance(nodes.begin(), std::find(nodes.begin(), nodes.end(), node)));
           }
 
           next_block->UpdateDigest();
           next_block->UpdateTimestamp();
-          next_block->miner_signature = node->muddle_certificate->Sign(next_block->body.hash);
+          next_block->miner_signature = node->muddle_certificate->Sign(next_block->hash);
           assert(next_block->weight != 0);
 
           blocks_this_round.push_back(std::move(next_block));

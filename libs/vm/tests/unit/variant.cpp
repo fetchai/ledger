@@ -80,7 +80,7 @@ public:
     serializer << variant_in;
     deserializer = MsgPackSerializer(serializer.data());
     deserializer >> variant_out;
-    return variant_out.Get<Ptr<String>>()->str == str;
+    return variant_out.Get<Ptr<String>>()->string() == str;
   }
 };
 

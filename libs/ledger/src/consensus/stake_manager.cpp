@@ -39,7 +39,7 @@ storage::ResourceAddress const STAKE_STORAGE_ADDRESS{"fetch.token.state.aggregat
 
 void StakeManager::UpdateCurrentBlock(BlockIndex block_index)
 {
-  // this should never be called for the genesis block
+  // The first stake can only be set through a reset event
   if (block_index == 0)
   {
     return;
@@ -64,10 +64,10 @@ StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current, uint64
 {
   CabinetPtr cabinet{};
 
-  auto snapshot = LookupStakeSnapshot(current.body.block_number);
+  auto snapshot = LookupStakeSnapshot(current.block_number);
   if (snapshot)
   {
-    cabinet = snapshot->BuildCabinet(current.body.block_entropy.EntropyAsU64(), cabinet_size);
+    cabinet = snapshot->BuildCabinet(current.block_entropy.EntropyAsU64(), cabinet_size);
   }
 
   return cabinet;

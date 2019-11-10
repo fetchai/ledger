@@ -151,7 +151,7 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_
  * @param block The block to be executed
  * @return the status of the execution
  */
-ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &block)
+ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
 {
   // if the execution manager is not running then no further transactions
   // should be scheduled
@@ -199,7 +199,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
  * @param block The input block to plan
  * @return true if successful, otherwise false
  */
-bool ExecutionManager::PlanExecution(Block::Body const &block)
+bool ExecutionManager::PlanExecution(Block const &block)
 {
   FETCH_LOCK(execution_plan_lock_);
 

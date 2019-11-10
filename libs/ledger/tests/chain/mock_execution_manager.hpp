@@ -44,7 +44,7 @@ public:
     ON_CALL(*this, Abort()).WillByDefault(Invoke(&fake, &FakeExecutionManager::Abort));
   }
 
-  MOCK_METHOD1(Execute, ScheduleStatus(Block::Body const &));
+  MOCK_METHOD1(Execute, ScheduleStatus(Block const &));
   MOCK_METHOD1(SetLastProcessedBlock, void(Digest));
   MOCK_CONST_METHOD0(LastProcessedBlock, Digest());
   MOCK_METHOD0(GetState, State());
