@@ -40,7 +40,10 @@ storage::ResourceAddress const STAKE_STORAGE_ADDRESS{"fetch.token.state.aggregat
 void StakeManager::UpdateCurrentBlock(BlockIndex block_index)
 {
   // this should never be called for the genesis block
-  assert(block_index != 0);
+  if (block_index == 0)
+  {
+    return;
+  }
 
   // need to evaluate any of the updates from the update queue
   StakeSnapshotPtr next{};
