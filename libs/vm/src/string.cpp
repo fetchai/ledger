@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/string/trim.hpp"
 #include "vm/array.hpp"
 #include "vm/string.hpp"
 
@@ -32,24 +33,57 @@ namespace vm {
 
 namespace {
 
-bool is_not_whitespace(int ch)
-{
-  return std::isspace(ch) == 0;
-}
-
-void trim_left(std::string &s)
-{
-  s.erase(s.begin(), std::find_if(s.begin(), s.end(), is_not_whitespace));
-}
-
-void trim_right(std::string &s)
-{
-  s.erase(std::find_if(s.rbegin(), s.rend(), is_not_whitespace).base(), s.end());
-}
-
 int32_t utf8_length(std::string const &str)
 {
   return static_cast<int32_t>(utf8::distance(str.cbegin(), str.cend()));
+}
+
+std::string reverse_utf8_string_by_copy(std::string const &str)
+{
+  utf8::iterator<std::string::const_iterator> it{str.cend(), str.cbegin(), str.cend()};
+  utf8::iterator<std::string::const_iterator> end{str.cbegin(), str.cbegin(), str.cend()};
+
+  std::string reversed;
+  reversed.reserve(str.size());
+
+  for (; it != end;)
+  {
+    utf8::append(*(--it), reversed);
+  }
+
+  return reversed;
+}
+
+void reverse_utf8_string_in_place(std::string &str)
+{
+  // Reverse all bytes in place
+  std::reverse(str.begin(), str.end());
+
+  // Repair the mangled UTF-8 code units
+  auto start = str.begin();
+  auto end   = str.begin();
+
+  while (end != str.end())
+  {
+    end = std::find_if(start, str.end(), [](auto c) {
+      // a == 0b00000000 if the current byte represents a single-byte UTF-8 code unit.
+      // a == 0b11000000 if the byte belongs at the beginning of a multibyte UTF-8 code unit.
+      // Otherwise, a == 0b10000000
+      auto const a = c & 0b11000000;
+      return a != 0b10000000;
+    });
+    if (start == end)
+    {
+      // Skipping single-byte character
+      ++start;
+    }
+    else
+    {
+      ++end;
+      std::reverse(start, end);
+      start = end;
+    }
+  }
 }
 
 }  // namespace
@@ -61,10 +95,19 @@ String::String(VM *vm, std::string str__, bool is_literal__)
   , length{utf8_length(str)}
 {}
 
-void String::Trim()
+Ptr<String> String::Trim()
 {
-  trim_left(str);
-  trim_right(str);
+  if (IsTemporary())
+  {
+    fetch::string::Trim(str);
+
+    return Ptr<String>::PtrFromThis(this);
+  }
+
+  std::string new_string{str};
+  fetch::string::Trim(new_string);
+
+  return Ptr<String>{new String(vm_, new_string)};
 }
 
 int32_t String::Find(Ptr<String> const &substring) const
@@ -118,20 +161,23 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
   return Ptr<String>{new String(vm_, std::string{start, end})};
 }
 
-void String::Reverse()
+Ptr<String> String::Reverse()
 {
-  utf8::iterator<std::string::iterator> it{str.end(), str.begin(), str.end()};
-  utf8::iterator<std::string::iterator> end{str.begin(), str.begin(), str.end()};
-
-  std::string reversed;
-  reversed.reserve(str.length());
-
-  for (; it != end;)
+  if (length < 2)
   {
-    utf8::append(*(--it), reversed);
+    return Ptr<String>::PtrFromThis(this);
   }
 
-  str = reversed;
+  if (IsTemporary())
+  {
+    reverse_utf8_string_in_place(str);
+
+    return Ptr<String>::PtrFromThis(this);
+  }
+
+  auto const reversed = reverse_utf8_string_by_copy(str);
+
+  return Ptr<String>{new String(vm_, reversed)};
 }
 
 Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
@@ -245,10 +291,10 @@ bool String::IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rh
 
 void String::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
 {
-  bool const  lhs_is_modifiable = lhso.RefCount() == 1;
-  Ptr<String> lhs               = lhso;
-  Ptr<String> rhs               = rhso;
-  if (lhs_is_modifiable)
+  Ptr<String> lhs = lhso;
+  Ptr<String> rhs = rhso;
+
+  if (lhs->IsTemporary())
   {
     lhs->str += rhs->str;
   }
@@ -269,6 +315,11 @@ bool String::DeserializeFrom(MsgPackSerializer &buffer)
 {
   buffer >> str;
   return true;
+}
+
+bool String::IsTemporary() const
+{
+  return RefCount() == 1;
 }
 
 }  // namespace vm
