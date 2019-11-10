@@ -100,7 +100,7 @@ private:
   void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> const &acceptor);
 
   NetworkManagerType                        network_manager_;
-  uint16_t                                  port_;
+  std::atomic<uint16_t>                     port_{0};
   std::deque<Request>                       requests_;
   MutexType                                 request_mutex_;
   std::weak_ptr<AbstractConnectionRegister> connection_register_;

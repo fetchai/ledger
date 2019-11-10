@@ -21,6 +21,10 @@
 #include "oef-base/threading/Task.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 Counter created_count("mt-core.tasks.created");
 Counter destroyed_count("mt-core.tasks.destroyed");
 
@@ -156,3 +160,7 @@ bool Task::submit(const std::chrono::milliseconds &delay)
   Counter("mt-core.tasks.submit(delay).not-submitted.no-default-taskpool")++;
   return false;
 }
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch
