@@ -33,6 +33,30 @@ class VM;
 template <typename T>
 struct Array;
 
+class Utf8String
+{
+public:
+  explicit Utf8String(std::string str);
+
+  Utf8String &operator+=(Utf8String const &other);
+  bool        operator==(Utf8String const &other) const;
+  bool        operator!=(Utf8String const &other) const;
+  bool        operator>=(Utf8String const &other) const;
+  bool        operator<=(Utf8String const &other) const;
+  bool        operator>(Utf8String const &other) const;
+  bool        operator<(Utf8String const &other) const;
+
+  int32_t            size() const;
+  bool               empty() const;
+  std::string const &string() const;
+
+private:
+  std::string str_;
+  int32_t     size_;
+
+  friend struct String;
+};
+
 struct String : public Object
 {
   String()           = delete;
@@ -60,11 +84,13 @@ struct String : public Object
   bool SerializeTo(MsgPackSerializer &buffer) override;
   bool DeserializeFrom(MsgPackSerializer &buffer) override;
 
-  std::string str;
-  int32_t     length;
+  std::string const &string() const;
+  void               UpdateString(std::string str);
 
 private:
   bool IsTemporary() const;
+
+  Utf8String utf8_str_;
 };
 
 }  // namespace vm

@@ -47,7 +47,7 @@ VMModel::VMModel(VM *vm, TypeId type_id)
 VMModel::VMModel(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &model_category)
   : Object(vm, type_id)
 {
-  Init(model_category->str);
+  Init(model_category->string());
 }
 
 VMModel::VMModel(VM *vm, TypeId type_id, std::string const &model_category)
@@ -93,9 +93,9 @@ void VMModel::LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
                             math::SizeType const &inputs, math::SizeType const &hidden_nodes)
 {
   // guarantee it's a dense layer
-  if (!(layer->str == "dense"))
+  if (!(layer->string() == "dense"))
   {
-    throw std::runtime_error("invalid params specified for " + layer->str + " layer");
+    throw std::runtime_error("invalid params specified for " + layer->string() + " layer");
   }
 
   if (model_category_ == ModelCategory::SEQUENTIAL)
@@ -116,16 +116,16 @@ void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &l
                                       fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
   // guarantee it's a dense layer
-  if (!(layer->str == "dense"))
+  if (!(layer->string() == "dense"))
   {
-    throw std::runtime_error("invalid params specified for " + layer->str + " layer");
+    throw std::runtime_error("invalid params specified for " + layer->string() + " layer");
   }
 
   if (model_category_ == ModelCategory::SEQUENTIAL)
   {
     fetch::ml::details::ActivationType activation_type =
         fetch::ml::details::ActivationType::NOTHING;
-    if (activation->str == "relu")
+    if (activation->string() == "relu")
     {
       activation_type = fetch::ml::details::ActivationType::RELU;
     }
@@ -155,13 +155,13 @@ void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
 
   auto model_ptr = std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
 
-  if (layer->str == "conv1d")
+  if (layer->string() == "conv1d")
   {
     model_ptr->Add<fetch::ml::layers::Convolution1D<TensorType>>(
         output_channels, input_channels, kernel_size, stride_size,
         fetch::ml::details::ActivationType::NOTHING);
   }
-  else if (layer->str == "conv2d")
+  else if (layer->string() == "conv2d")
   {
     model_ptr->Add<fetch::ml::layers::Convolution2D<TensorType>>(
         output_channels, input_channels, kernel_size, stride_size,
@@ -169,7 +169,7 @@ void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
   }
   else
   {
-    throw std::runtime_error("invalid params specified for " + layer->str + " layer");
+    throw std::runtime_error("invalid params specified for " + layer->string() + " layer");
   }
 }
 
@@ -186,7 +186,7 @@ void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &la
   }
 
   fetch::ml::details::ActivationType activation_type = fetch::ml::details::ActivationType::NOTHING;
-  if (activation->str == "relu")
+  if (activation->string() == "relu")
   {
     activation_type = fetch::ml::details::ActivationType::RELU;
   }
@@ -196,19 +196,19 @@ void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &la
   }
 
   auto model_ptr = std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
-  if (layer->str == "conv1d")
+  if (layer->string() == "conv1d")
   {
     model_ptr->Add<fetch::ml::layers::Convolution1D<TensorType>>(
         output_channels, input_channels, kernel_size, stride_size, activation_type);
   }
-  else if (layer->str == "conv2d")
+  else if (layer->string() == "conv2d")
   {
     model_ptr->Add<fetch::ml::layers::Convolution2D<TensorType>>(
         output_channels, input_channels, kernel_size, stride_size, activation_type);
   }
   else
   {
-    throw std::runtime_error("invalid params specified for " + layer->str + " layer");
+    throw std::runtime_error("invalid params specified for " + layer->string() + " layer");
   }
 }
 
@@ -218,15 +218,15 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
   fetch::ml::ops::LossType loss_type;
   fetch::ml::OptimiserType optimiser_type;
 
-  if (loss->str == "mse")
+  if (loss->string() == "mse")
   {
     loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
   }
-  else if (loss->str == "cel")
+  else if (loss->string() == "cel")
   {
     loss_type = fetch::ml::ops::LossType::CROSS_ENTROPY;
   }
-  else if (loss->str == "scel")
+  else if (loss->string() == "scel")
   {
     loss_type = fetch::ml::ops::LossType::SOFTMAX_CROSS_ENTROPY;
   }
@@ -236,23 +236,23 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
   }
 
   // dense / fully connected layer
-  if (optimiser->str == "adagrad")
+  if (optimiser->string() == "adagrad")
   {
     optimiser_type = fetch::ml::OptimiserType::ADAGRAD;
   }
-  else if (optimiser->str == "adam")
+  else if (optimiser->string() == "adam")
   {
     optimiser_type = fetch::ml::OptimiserType::ADAM;
   }
-  else if (optimiser->str == "momentum")
+  else if (optimiser->string() == "momentum")
   {
     optimiser_type = fetch::ml::OptimiserType::MOMENTUM;
   }
-  else if (optimiser->str == "rmsprop")
+  else if (optimiser->string() == "rmsprop")
   {
     optimiser_type = fetch::ml::OptimiserType::RMSPROP;
   }
-  else if (optimiser->str == "sgd")
+  else if (optimiser->string() == "sgd")
   {
     optimiser_type = fetch::ml::OptimiserType::SGD;
   }
@@ -295,7 +295,7 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
 
   // set up the optimiser and compile
   fetch::ml::OptimiserType optimiser_type;
-  if (optimiser->str == "adam")
+  if (optimiser->string() == "adam")
   {
     optimiser_type = fetch::ml::OptimiserType::ADAM;
   }
@@ -442,7 +442,7 @@ fetch::vm::Ptr<fetch::vm::String> VMModel::SerializeToString()
 fetch::vm::Ptr<VMModel> VMModel::DeserializeFromString(
     fetch::vm::Ptr<fetch::vm::String> const &model_string)
 {
-  byte_array::ConstByteArray b(model_string->str);
+  byte_array::ConstByteArray b(model_string->string());
   b = byte_array::FromBase64(b);
   MsgPackSerializer buffer(b);
   DeserializeFrom(buffer);

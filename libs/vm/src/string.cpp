@@ -23,7 +23,6 @@
 #include "utf8.h"
 
 #include <algorithm>
-#include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -33,7 +32,7 @@ namespace vm {
 
 namespace {
 
-int32_t utf8_length(std::string const &str)
+int32_t Utf8StringLength(std::string const &str)
 {
   return static_cast<int32_t>(utf8::distance(str.cbegin(), str.cend()));
 }
@@ -66,7 +65,7 @@ void reverse_utf8_string_in_place(std::string &str)
   while (end != str.end())
   {
     end = std::find_if(start, str.end(), [](auto c) {
-      // a == 0b00000000 if the current byte represents a single-byte UTF-8 code unit.
+      // a == 0b00000000 or 0b01000000 if the current byte represents a single-byte UTF-8 code unit.
       // a == 0b11000000 if the byte belongs at the beginning of a multibyte UTF-8 code unit.
       // Otherwise, a == 0b10000000
       auto const a = c & 0b11000000;
@@ -90,20 +89,19 @@ void reverse_utf8_string_in_place(std::string &str)
 
 String::String(VM *vm, std::string str__)
   : Object(vm, TypeIds::String)
-  , str(std::move(str__))
-  , length{utf8_length(str)}
+  , utf8_str_(std::move(str__))
 {}
 
 Ptr<String> String::Trim()
 {
   if (IsTemporary())
   {
-    fetch::string::Trim(str);
+    fetch::string::Trim(utf8_str_.str_);
 
     return Ptr<String>::PtrFromThis(this);
   }
 
-  std::string new_string{str};
+  std::string new_string{utf8_str_.string()};
   fetch::string::Trim(new_string);
 
   return Ptr<String>{new String(vm_, new_string)};
@@ -114,19 +112,20 @@ int32_t String::Find(Ptr<String> const &substring) const
   constexpr int32_t NOT_FOUND = -1;
 
   // No string contains the empty string (incl. the empty string itself)
-  if (str.empty() || substring->str.empty())
+  if (utf8_str_.empty() || substring->utf8_str_.empty())
   {
     return NOT_FOUND;
   }
 
-  auto const first = str.find(substring->str);
+  auto const first = utf8_str_.string().find(substring->utf8_str_.string());
   if (first == std::string::npos)
   {
     return NOT_FOUND;
   }
 
-  auto distance{
-      utf8::distance(str.begin(), str.begin() + static_cast<std::string::difference_type>(first))};
+  auto distance{utf8::distance(
+      utf8_str_.string().begin(),
+      utf8_str_.string().begin() + static_cast<std::string::difference_type>(first))};
 
   return static_cast<int32_t>(distance);
 }
@@ -143,17 +142,17 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
     RuntimeError("substring start index must not exceed end index");
     return {};
   }
-  if (static_cast<std::size_t>(end_index) > str.size())
+  if (static_cast<std::size_t>(end_index) > utf8_str_.string().size())
   {
     RuntimeError("substring end index exceeds length of string");
     return {};
   }
 
-  auto start{str.begin()};
+  auto start{utf8_str_.string().begin()};
   // using *unchecked* version to enable index to point at the str.end()
   utf8::unchecked::advance(start, start_index);
 
-  auto end{str.begin()};
+  auto end{utf8_str_.string().begin()};
   // using *unchecked* version to enable index to point at the str.end()
   utf8::unchecked::advance(end, end_index);  // unchecked
 
@@ -162,19 +161,19 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
 
 Ptr<String> String::Reverse()
 {
-  if (length < 2)
+  if (utf8_str_.size() < 2)
   {
     return Ptr<String>::PtrFromThis(this);
   }
 
   if (IsTemporary())
   {
-    reverse_utf8_string_in_place(str);
+    reverse_utf8_string_in_place(utf8_str_.str_);
 
     return Ptr<String>::PtrFromThis(this);
   }
 
-  auto const reversed = reverse_utf8_string_by_copy(str);
+  auto const reversed = reverse_utf8_string_by_copy(utf8_str_.string());
 
   return Ptr<String>{new String(vm_, reversed)};
 }
@@ -188,7 +187,7 @@ Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
         new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_, 0)};
   }
 
-  if (separator->str.empty())
+  if (separator->utf8_str_.empty())
   {
     vm_->RuntimeError("split: argument must not be the empty string");
     return Ptr<Array<Ptr<String>>>{
@@ -197,10 +196,12 @@ Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
 
   std::vector<std::size_t> segment_boundaries{0};
 
-  for (std::size_t i = str.find(separator->str); i != std::string::npos;
-       i             = str.find(separator->str, i + separator->str.length()))
+  for (std::size_t i = utf8_str_.string().find(separator->utf8_str_.string());
+       i != std::string::npos;
+       i = utf8_str_.string().find(separator->utf8_str_.string(),
+                                   i + separator->utf8_str_.string().size()))
   {
-    segment_boundaries.emplace_back(i + separator->str.length());
+    segment_boundaries.emplace_back(i + separator->utf8_str_.string().size());
   }
 
   // separator not found
@@ -208,12 +209,12 @@ Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
   {
     auto ret = Ptr<Array<Ptr<String>>>{
         new Array<Ptr<String>>(vm_, vm_->GetTypeId<Array<Ptr<String>>>(), type_id_, 1)};
-    ret->elements[0] = Ptr<String>{new String(vm_, str)};
+    ret->elements[0] = Ptr<String>{new String(vm_, utf8_str_.string())};
 
     return ret;
   }
 
-  segment_boundaries.push_back(str.length() + separator->str.length());
+  segment_boundaries.push_back(utf8_str_.string().size() + separator->utf8_str_.string().size());
 
   assert(segment_boundaries.size() > 2u);
 
@@ -224,8 +225,8 @@ Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
   for (std::size_t i = 0; i + 1 < segment_boundaries.size(); ++i)
   {
     std::size_t begin = segment_boundaries[i];
-    std::size_t len   = segment_boundaries[i + 1] - begin - separator->str.length();
-    ret->elements[i]  = Ptr<String>{new String(vm_, str.substr(begin, len))};
+    std::size_t len   = segment_boundaries[i + 1] - begin - separator->utf8_str_.string().size();
+    ret->elements[i]  = Ptr<String>{new String(vm_, utf8_str_.string().substr(begin, len))};
   }
 
   return ret;
@@ -233,59 +234,59 @@ Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
 
 int32_t String::Length() const
 {
-  return length;
+  return utf8_str_.size();
 }
 
 int32_t String::SizeInBytes() const
 {
-  return static_cast<int32_t>(str.size());
+  return static_cast<int32_t>(utf8_str_.string().size());
 }
 
 std::size_t String::GetHashCode()
 {
-  return std::hash<std::string>()(str);
+  return std::hash<std::string>()(utf8_str_.string());
 }
 
 bool String::IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
   Ptr<String> lhs = lhso;
   Ptr<String> rhs = rhso;
-  return lhs->str == rhs->str;
+  return lhs->utf8_str_ == rhs->utf8_str_;
 }
 
 bool String::IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
   Ptr<String> lhs = lhso;
   Ptr<String> rhs = rhso;
-  return lhs->str != rhs->str;
+  return lhs->utf8_str_ != rhs->utf8_str_;
 }
 
 bool String::IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
   Ptr<String> lhs = lhso;
   Ptr<String> rhs = rhso;
-  return lhs->str < rhs->str;
+  return lhs->utf8_str_ < rhs->utf8_str_;
 }
 
 bool String::IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
   Ptr<String> lhs = lhso;
   Ptr<String> rhs = rhso;
-  return lhs->str <= rhs->str;
+  return lhs->utf8_str_ <= rhs->utf8_str_;
 }
 
 bool String::IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
   Ptr<String> lhs = lhso;
   Ptr<String> rhs = rhso;
-  return lhs->str > rhs->str;
+  return lhs->utf8_str_ > rhs->utf8_str_;
 }
 
 bool String::IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
   Ptr<String> lhs = lhso;
   Ptr<String> rhs = rhso;
-  return lhs->str >= rhs->str;
+  return lhs->utf8_str_ >= rhs->utf8_str_;
 }
 
 void String::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
@@ -295,30 +296,107 @@ void String::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
 
   if (lhs->IsTemporary())
   {
-    lhs->str += rhs->str;
+    lhs->utf8_str_ += rhs->utf8_str_;
   }
   else
   {
-    Ptr<String> s(new String(vm_, lhs->str + rhs->str));
+    Ptr<String> s(new String(vm_, lhs->utf8_str_.string() + rhs->utf8_str_.string()));
     lhso = std::move(s);
   }
 }
 
 bool String::SerializeTo(MsgPackSerializer &buffer)
 {
-  buffer << str;
+  buffer << utf8_str_.string();
   return true;
 }
 
 bool String::DeserializeFrom(MsgPackSerializer &buffer)
 {
+  std::string str;
   buffer >> str;
+
+  UpdateString(str);
+
   return true;
 }
 
 bool String::IsTemporary() const
 {
   return RefCount() == 1;
+}
+
+void String::UpdateString(std::string str)
+{
+  utf8_str_ = Utf8String{std::move(str)};
+}
+
+std::string const &String::string() const
+{
+  return utf8_str_.string();
+}
+
+Utf8String::Utf8String(std::string str)
+  : str_{std::move(str)}
+  , size_{Utf8StringLength(str_)}
+{}
+
+Utf8String &Utf8String::operator+=(Utf8String const &other)
+{
+  str_ += other.str_;
+  size_ += other.size_;
+
+  return *this;
+}
+
+bool Utf8String::operator==(Utf8String const &other) const
+{
+  if (size_ != other.size_)
+  {
+    return false;
+  }
+
+  return str_ == other.str_;
+}
+
+bool Utf8String::operator!=(Utf8String const &other) const
+{
+  return !operator==(other);
+}
+
+bool Utf8String::operator>=(Utf8String const &other) const
+{
+  return str_ >= other.str_;
+}
+
+bool Utf8String::operator<=(Utf8String const &other) const
+{
+  return str_ <= other.str_;
+}
+
+bool Utf8String::operator>(Utf8String const &other) const
+{
+  return str_ > other.str_;
+}
+
+bool Utf8String::operator<(Utf8String const &other) const
+{
+  return str_ < other.str_;
+}
+
+int32_t Utf8String::size() const
+{
+  return size_;
+}
+
+bool Utf8String::empty() const
+{
+  return size_ == 0;
+}
+
+std::string const &Utf8String::string() const
+{
+  return str_;
 }
 
 }  // namespace vm
