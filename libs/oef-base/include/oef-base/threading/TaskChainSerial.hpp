@@ -24,6 +24,10 @@
 #include "logging/logging.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 template <typename IN_PROTO, typename OUT_PROTO, typename PipeDataType, class TaskType>
 class TaskChainSerial
   : virtual public StateMachineTask<TaskChainSerial<IN_PROTO, OUT_PROTO, PipeDataType, TaskType>>,
@@ -222,3 +226,6 @@ protected:
   std::vector<EntryPoint> entryPoint{};
   std::atomic<bool>       last_task_done{true};
 };
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

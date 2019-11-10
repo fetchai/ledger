@@ -32,7 +32,7 @@ class ConstCharArrayBuffer;
 
 class Task;
 
-class OutboundConversation : public Waitable
+class OutboundConversation : public fetch::oef::base::Waitable
 {
 protected:
   OutboundConversation() = default;

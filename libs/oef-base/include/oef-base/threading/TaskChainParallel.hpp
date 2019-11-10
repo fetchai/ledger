@@ -26,6 +26,9 @@
 #include "logging/logging.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 
+namespace fetch {
+namespace oef {
+namespace base {
 template <typename IN_PROTO, typename OUT_PROTO, typename TaskInputDataType, class TaskType>
 class TaskChainParallel : virtual public StateMachineTask<
                               TaskChainParallel<IN_PROTO, OUT_PROTO, TaskInputDataType, TaskType>>,
@@ -210,3 +213,6 @@ protected:
 
   std::vector<EntryPoint> entryPoint;
 };
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

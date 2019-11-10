@@ -57,7 +57,7 @@ public:
   {
     return true;
   }
-  ExitState run() override;
+  fetch::oef::base::ExitState run() override;
 
 protected:
 private:

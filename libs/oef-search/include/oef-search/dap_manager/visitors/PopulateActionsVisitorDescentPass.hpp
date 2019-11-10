@@ -40,10 +40,11 @@ public:
   virtual VisitNodeExitStates VisitLeaf(Leaf &leaf, uint32_t depth) override;
 
 protected:
-  std::unordered_set<std::string>                                                    dap_names_;
-  std::string                                                                        current_dap_;
-  std::shared_ptr<FutureComplexType<std::shared_ptr<ConstructQueryMementoResponse>>> future_ =
-      nullptr;
+  std::unordered_set<std::string> dap_names_;
+  std::string                     current_dap_;
+  std::shared_ptr<
+      fetch::oef::base::FutureComplexType<std::shared_ptr<ConstructQueryMementoResponse>>>
+      future_ = nullptr;
 
   std::shared_ptr<DapManager> dap_manager_;
   std::shared_ptr<DapStore>   dap_store_;
