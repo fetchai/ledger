@@ -111,8 +111,7 @@ TEST_F(StringTests, trim_is_noop_if_string_has_no_leading_or_trailing_whitespace
   static char const *TEXT = R"(
     function main()
       var text = 'abc def';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
@@ -127,8 +126,7 @@ TEST_F(StringTests, trim_is_noop_if_string_is_empty)
   static char const *TEXT = R"(
     function main()
       var text = '';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
