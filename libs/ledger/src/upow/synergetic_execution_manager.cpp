@@ -63,8 +63,8 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
 {
   using WorkMap = std::unordered_map<ProblemId, WorkItemPtr>;
 
-  auto const &current_epoch  = current.body.dag_epoch;
-  auto const &previous_epoch = previous.body.dag_epoch;
+  auto const &current_epoch  = current.dag_epoch;
+  auto const &previous_epoch = previous.dag_epoch;
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
 
