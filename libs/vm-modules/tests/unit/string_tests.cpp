@@ -66,8 +66,7 @@ TEST_F(StringTests, trim_removes_leading_whitespace)
   static char const *TEXT = R"(
     function main()
       var text = '   abc def';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
@@ -82,8 +81,7 @@ TEST_F(StringTests, trim_removes_trailing_whitespace)
   static char const *TEXT = R"(
     function main()
       var text = 'abc def  ';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
@@ -98,8 +96,7 @@ TEST_F(StringTests, trim_removes_both_leading_and_trailing_whitespace)
   static char const *TEXT = R"(
     function main()
       var text = '   abc def  ';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
@@ -114,8 +111,7 @@ TEST_F(StringTests, trim_is_noop_if_string_has_no_leading_or_trailing_whitespace
   static char const *TEXT = R"(
     function main()
       var text = 'abc def';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
@@ -130,8 +126,7 @@ TEST_F(StringTests, trim_is_noop_if_string_is_empty)
   static char const *TEXT = R"(
     function main()
       var text = '';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
@@ -146,8 +141,7 @@ TEST_F(StringTests, trim_leaves_string_empty_if_it_contains_only_whitespace)
   static char const *TEXT = R"(
     function main()
       var text = '   ';
-      text.trim();
-      print(text);
+      print(text.trim());
     endfunction
   )";
 
@@ -239,8 +233,7 @@ TEST_F(StringTests, reverse_changes_string_contents_to_the_original_characters_b
   static char const *TEXT = R"(
     function main()
       var text = 'xyz';
-      text.reverse();
-      print(text);
+      print(text.reverse());
     endfunction
   )";
 
@@ -255,8 +248,7 @@ TEST_F(StringTests, reverse_is_noop_if_string_is_empty)
   static char const *TEXT = R"(
     function main()
       var text = '';
-      text.reverse();
-      print(text);
+      print(text.reverse());
     endfunction
   )";
 
@@ -264,6 +256,21 @@ TEST_F(StringTests, reverse_is_noop_if_string_is_empty)
   ASSERT_TRUE(toolkit.Run());
 
   ASSERT_EQ(stdout.str(), "");
+}
+
+TEST_F(StringTests, reverse_is_noop_if_string_is_one_character)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = '着';
+      print(text.reverse());
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "着");
 }
 
 TEST_F(
@@ -624,8 +631,7 @@ TEST_F(StringTests, utf8_basic_reverse_test)
   static char const *TEXT = R"(
     function main()
       var text = '他身旁放着，脚边卧着';
-      text.reverse();
-      print(text);
+      print(text.reverse());
     endfunction
   )";
 
@@ -633,6 +639,20 @@ TEST_F(StringTests, utf8_basic_reverse_test)
   ASSERT_TRUE(toolkit.Run());
 
   ASSERT_EQ(stdout.str(), "着卧边脚，着放旁身他");
+}
+
+TEST_F(StringTests, reverse_of_mixed_size_utf8_temporary)
+{
+  static char const *TEXT = R"(
+    function main()
+      print(('他身旁放' + 'hello' + '𢵧𢺳𣲷𤓓𤶸𤷪𥄫' + 'world' + '边卧着').reverse());
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "着卧边dlrow𥄫𤷪𤶸𤓓𣲷𢺳𢵧olleh放旁身他");
 }
 
 }  // namespace
