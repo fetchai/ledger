@@ -83,7 +83,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &block_sink, ProverPtr prover,
-                                   std::size_t num_lanes, std::size_t num_slices,
+                                   uint32_t log2_num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty, ConsensusPtr consensus,
                                    SynergeticExecMgrPtr synergetic_exec_manager)
   : chain_{chain}
@@ -101,7 +101,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
                                                   [](State state) { return ToString(state); })}
   , block_difficulty_{block_difficulty}
-  , num_lanes_{num_lanes}
+  , log2_num_lanes_{log2_num_lanes}
   , num_slices_{num_slices}
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
@@ -483,6 +483,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     if (consensus_)
     {
       consensus_->UpdateCurrentBlock(*current_block_);
+
       // Failure will set this to a nullptr
       next_block_ = consensus_->GenerateNextBlock();
     }
@@ -498,9 +499,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
       return State::SYNCHRONISED;
     }
 
-    next_block_->previous_hash = current_block_->hash;
-    next_block_->block_number  = current_block_->block_number + 1;
-    next_block_->miner         = mining_address_;
+    next_block_->previous_hash  = current_block_->hash;
+    next_block_->block_number   = current_block_->block_number + 1;
+    next_block_->miner          = mining_address_;
+    next_block_->log2_num_lanes = log2_num_lanes_;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->block_number,
                    " beacon: ", next_block_->block_entropy.EntropyAsU64());
@@ -573,12 +575,20 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     // Check: Ensure the number of lanes is correct
     if (num_lanes_ != (1u << current_block_->log2_num_lanes))
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Lane count mismatch ", num_lanes_,
+                     " vs ", (1u << current_block_->log2_num_lanes), " (0x",
+                     current_block_->hash.ToHex(), ')');
+
       return fail("Lane count mismatch");
     }
 
     // Check: Ensure the number of slices is correct
     if (num_slices_ != current_block_->slices.size())
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Slice count mismatch ", num_slices_,
+                     " vs ", current_block_->slices.size(), " (0x", current_block_->hash.ToHex(),
+                     ')');
+
       return fail("Slice count mismatch");
     }
   }
