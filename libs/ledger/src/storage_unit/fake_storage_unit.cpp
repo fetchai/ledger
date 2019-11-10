@@ -243,6 +243,5 @@ void FakeStorageUnit::Reset()
   transaction_store_.clear();
 }
 
-} // namespace ledger
-} // namespace fetch
-
+}  // namespace ledger
+}  // namespace fetch

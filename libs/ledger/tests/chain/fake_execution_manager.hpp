@@ -26,8 +26,8 @@ namespace ledger {
 
 class FakeStorageUnit;
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
 
 class FakeExecutionManager : public fetch::ledger::ExecutionManagerInterface
 {

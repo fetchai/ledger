@@ -24,9 +24,9 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
-#include <mutex>
 
 namespace fetch {
 namespace ledger {
@@ -96,7 +96,5 @@ private:
   Hash                 current_hash_{fetch::chain::GENESIS_MERKLE_ROOT};
 };
 
-
-} // namespace ledger
-} // namespace fetch
-
+}  // namespace ledger
+}  // namespace fetch
