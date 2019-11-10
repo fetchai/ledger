@@ -250,8 +250,7 @@ TEST_F(StringTests, reverse_is_noop_if_string_is_empty)
   static char const *TEXT = R"(
     function main()
       var text = '';
-      text.reverse();
-      print(text);
+      print(text.reverse());
     endfunction
   )";
 
@@ -259,6 +258,21 @@ TEST_F(StringTests, reverse_is_noop_if_string_is_empty)
   ASSERT_TRUE(toolkit.Run());
 
   ASSERT_EQ(stdout.str(), "");
+}
+
+TEST_F(StringTests, reverse_is_noop_if_string_is_one_character)
+{
+  static char const *TEXT = R"(
+    function main()
+      var text = '着';
+      print(text.reverse());
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "着");
 }
 
 TEST_F(
@@ -627,6 +641,20 @@ TEST_F(StringTests, utf8_basic_reverse_test)
   ASSERT_TRUE(toolkit.Run());
 
   ASSERT_EQ(stdout.str(), "着卧边脚，着放旁身他");
+}
+
+TEST_F(StringTests, reverse_of_mixed_size_utf8_temporary)
+{
+  static char const *TEXT = R"(
+    function main()
+      print(('他身旁放' + 'hello' + '𢵧𢺳𣲷𤓓𤶸𤷪𥄫' + 'world' + '边卧着').reverse());
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(stdout.str(), "着卧边dlrow𥄫𤷪𤶸𤓓𣲷𢺳𢵧olleh放旁身他");
 }
 
 }  // namespace

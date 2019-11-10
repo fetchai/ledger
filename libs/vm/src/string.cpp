@@ -54,6 +54,38 @@ std::string reverse_utf8_string_by_copy(std::string const &str)
   return reversed;
 }
 
+void reverse_utf8_string_in_place(std::string &str)
+{
+  // Reverse all bytes in place
+  std::reverse(str.begin(), str.end());
+
+  // Repair the mangled UTF-8 code units
+  auto start = str.begin();
+  auto end   = str.begin();
+
+  while (end != str.end())
+  {
+    end = std::find_if(start, str.end(), [](auto c) {
+      // a == 0b00000000 if the current byte represents a single-byte UTF-8 code unit.
+      // a == 0b11000000 if the byte belongs at the beginning of a multibyte UTF-8 code unit.
+      // Otherwise, a == 0b10000000
+      auto const a = c & 0b11000000;
+      return a != 0b10000000;
+    });
+    if (start == end)
+    {
+      // Skipping single-byte character
+      ++start;
+    }
+    else
+    {
+      ++end;
+      std::reverse(start, end);
+      start = end;
+    }
+  }
+}
+
 }  // namespace
 
 String::String(VM *vm, std::string str__, bool is_literal__)
@@ -136,7 +168,12 @@ Ptr<String> String::Reverse()
     return Ptr<String>::PtrFromThis(this);
   }
 
-  // TODO(LDGR-534) Consider in-place reversal if IsTemporary() == true
+  if (IsTemporary())
+  {
+    reverse_utf8_string_in_place(str);
+
+    return Ptr<String>::PtrFromThis(this);
+  }
 
   auto const reversed = reverse_utf8_string_by_copy(str);
 
