@@ -88,10 +88,9 @@ void reverse_utf8_string_in_place(std::string &str)
 
 }  // namespace
 
-String::String(VM *vm, std::string str__, bool is_literal__)
+String::String(VM *vm, std::string str__)
   : Object(vm, TypeIds::String)
   , str(std::move(str__))
-  , is_literal(is_literal__)
   , length{utf8_length(str)}
 {}
 
