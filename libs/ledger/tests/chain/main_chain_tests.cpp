@@ -49,12 +49,11 @@ using BlockPtr          = BlockGenerator::BlockPtr;
 
 static bool IsSameBlock(Block const &a, Block const &b)
 {
-  return (a.body.hash == b.body.hash) && (a.body.previous_hash == b.body.previous_hash) &&
-         (a.body.merkle_hash == b.body.merkle_hash) &&
-         (a.body.block_number == b.body.block_number) && (a.body.miner == b.body.miner) &&
-         (a.body.log2_num_lanes == b.body.log2_num_lanes) &&
-         (a.body.timestamp == b.body.timestamp) && (a.body.slices == b.body.slices) &&
-         (a.proof == b.proof) && (a.nonce == b.nonce);
+  return (a.hash == b.hash) && (a.previous_hash == b.previous_hash) &&
+         (a.merkle_hash == b.merkle_hash) && (a.block_number == b.block_number) &&
+         (a.miner == b.miner) && (a.log2_num_lanes == b.log2_num_lanes) &&
+         (a.timestamp == b.timestamp) && (a.slices == b.slices) && (a.proof == b.proof) &&
+         (a.nonce == b.nonce);
 }
 
 template <typename Container, typename Value>
@@ -95,10 +94,10 @@ std::string Hashes(std::vector<BlockPtr> const &v)
   }
   std::ostringstream ret_val;
   auto               block{v.begin()};
-  Print(ret_val, (*block)->body.hash);
+  Print(ret_val, (*block)->hash);
   for (++block; block != v.end(); ++block)
   {
-    Print(ret_val << ", ", (*block)->body.hash);
+    Print(ret_val << ", ", (*block)->hash);
   }
   return ret_val.str();
 }
@@ -144,7 +143,7 @@ TEST_P(MainChainTests, BuildingOnMainChain)
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*next_block));
 
     // ensure that this block has become the heaviest
-    ASSERT_EQ(chain_->GetHeaviestBlockHash(), next_block->body.hash);
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), next_block->hash);
     expected_heaviest_block = next_block;
   }
 
@@ -153,7 +152,7 @@ TEST_P(MainChainTests, BuildingOnMainChain)
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*dummy_block));
 
   // check that the heaviest block has not changed
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), expected_heaviest_block->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), expected_heaviest_block->hash);
 }
 
 TEST_P(MainChainTests, CheckSideChainSwitching)
@@ -170,24 +169,24 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
   for (auto const &block : side)
   {
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block)) << "; side: " << Hashes(side);
-    ASSERT_EQ(chain_->GetHeaviestBlockHash(), block->body.hash)
-        << "when adding side block no. " << block->body.block_number << "; side: " << Hashes(side);
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), block->hash)
+        << "when adding side block no. " << block->block_number << "; side: " << Hashes(side);
   }
 
   // add the main chain blocks
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main.front()))
       << "; side: " << Hashes(side) << "; main: " << Hashes(main);
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), side.back()->body.hash)
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), side.back()->hash)
       << "; side: " << Hashes(side) << "; main: " << Hashes(main);
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main[1]))
       << "; side: " << Hashes(side) << "; main: " << Hashes(main);
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), std::max(main[1]->body.hash, side.back()->body.hash))
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), std::max(main[1]->hash, side.back()->hash))
       << "; side: " << Hashes(side) << "; main: " << Hashes(main);
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main.back()))
       << "; side: " << Hashes(side) << "; main: " << Hashes(main);
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main.back()->body.hash)
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main.back()->hash)
       << "; side: " << Hashes(side) << "; main: " << Hashes(main);
 }
 
@@ -210,7 +209,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   auto const branch6{Generate(generator_, genesis, 6)};
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Genesis : ", fetch::byte_array::ToBase64(genesis->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Genesis : ", fetch::byte_array::ToBase64(genesis->hash));
   for (auto const &branch : {branch3, branch5, branch9, branch7, branch6})
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Branch", branch.size(), ": ", Hashes(branch));
@@ -221,9 +220,8 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   for (auto const &block : branch3)
   {
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block)) << "branch3: " << Hashes(branch3);
-    ASSERT_EQ(chain_->GetHeaviestBlockHash(), block->body.hash)
-        << "when adding branch3's block no. " << block->body.hash
-        << "; branch3: " << Hashes(branch3);
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), block->hash)
+        << "when adding branch3's block no. " << block->hash << "; branch3: " << Hashes(branch3);
   }
 
   // and the two more branches growing in length
@@ -237,7 +235,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
       ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*branch[i]))
           << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
           << "; branch9: " << Hashes(branch9);
-      ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->body.hash)
+      ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->hash)
           << "when adding branch" << branch.size() << "'s block no. " << i
           << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
           << "; branch9: " << Hashes(branch9);
@@ -246,13 +244,13 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch9: " << Hashes(branch9);
     ASSERT_EQ(chain_->GetHeaviestBlockHash(),
-              std::max(best_block->body.hash, branch[youngest_block_age]->body.hash));
+              std::max(best_block->hash, branch[youngest_block_age]->hash));
     for (std::size_t i{youngest_block_age + 1}; i < branch.size(); ++i)
     {
       ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*branch[i]))
           << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
           << "; branch9: " << Hashes(branch9);
-      ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch[i]->body.hash)
+      ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch[i]->hash)
           << "when adding branch" << branch.size() << "'s block no. " << i
           << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
           << "; branch9: " << Hashes(branch9);
@@ -273,8 +271,8 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*branch7[i]))
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch7: " << Hashes(branch7) << "; branch9: " << Hashes(branch9);
-    ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->body.hash)
-        << "when adding branch7's block no. " << branch7[i]->body.block_number
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->hash)
+        << "when adding branch7's block no. " << branch7[i]->block_number
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch7: " << Hashes(branch7) << "; branch9: " << Hashes(branch9);
   }
@@ -284,19 +282,19 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
         << "; branch9: " << Hashes(branch9);
-    ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->body.hash)
-        << "when adding branch6's block no. " << block->body.block_number
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->hash)
+        << "when adding branch6's block no. " << block->block_number
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
         << "; branch9: " << Hashes(branch9);
   }
 
   // invalidate the middle of the longest branch, now branch7 is the best
-  ASSERT_TRUE(chain_->RemoveBlock(branch9[6]->body.hash))
+  ASSERT_TRUE(chain_->RemoveBlock(branch9[6]->hash))
       << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
       << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
       << "; branch9: " << Hashes(branch9);
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch7.back()->body.hash)
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch7.back()->hash)
       << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
       << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
       << "; branch9: " << Hashes(branch9);
@@ -304,7 +302,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   // check that three blocks have been removed
   for (std::size_t i{}; i < 6; ++i)
   {
-    ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash)))
+    ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch9[i]->hash)))
         << "when searching block no. " << i << " of branch9"
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
@@ -312,7 +310,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   }
   for (std::size_t i{6}; i < branch9.size(); ++i)
   {
-    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash)))
+    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch9[i]->hash)))
         << "when searching block no. " << i << " of branch9"
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
@@ -320,19 +318,19 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   }
 
   // go on cutting branches
-  ASSERT_TRUE(chain_->RemoveBlock(branch7[2]->body.hash))
+  ASSERT_TRUE(chain_->RemoveBlock(branch7[2]->hash))
       << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
       << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
       << "; branch9: " << Hashes(branch9);
   // now both branch7 and branch9 have almost been wiped out of the chain and branch6 is the
   // heaviest
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch6.back()->body.hash)
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch6.back()->hash)
       << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
       << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
       << "; branch9: " << Hashes(branch9);
   for (std::size_t i{}; i < 2; ++i)
   {
-    ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash)))
+    ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch9[i]->hash)))
         << "when searching block no. " << i << " of branch9"
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
@@ -340,7 +338,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   }
   for (std::size_t i{2}; i < branch9.size(); ++i)
   {
-    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash)))
+    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch9[i]->hash)))
         << "when searching block no. " << i << " of branch9"
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
@@ -348,17 +346,17 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   }
   for (std::size_t i{2}; i < branch7.size(); ++i)
   {
-    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch7[i]->body.hash)))
+    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch7[i]->hash)))
         << "when searching block no. " << i << " of branch7"
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
         << "; branch9: " << Hashes(branch9);
   }
-  ASSERT_TRUE(chain_->RemoveBlock(branch6[4]->body.hash));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch5.back()->body.hash);
+  ASSERT_TRUE(chain_->RemoveBlock(branch6[4]->hash));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch5.back()->hash);
   for (std::size_t i{}; i < 4; ++i)
   {
-    ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch6[i]->body.hash)))
+    ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch6[i]->hash)))
         << "when searching block no. " << i << " of branch9"
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
@@ -366,7 +364,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   }
   for (std::size_t i{4}; i < branch6.size(); ++i)
   {
-    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch6[i]->body.hash)))
+    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch6[i]->hash)))
         << "when searching block no. " << i << " of branch9"
         << "; branch3: " << Hashes(branch3) << "; branch5: " << Hashes(branch5)
         << "; branch6: " << Hashes(branch6) << "; branch7: " << Hashes(branch7)
@@ -555,37 +553,37 @@ TEST_P(MainChainTests, BuilingOnMainChain)
   auto main3 = generator_->Generate(main2);
 
   // ensure the genesis block is valid
-  EXPECT_EQ(genesis->body.block_number, 0);
+  EXPECT_EQ(genesis->block_number, 0);
 
   // add all the blocks
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main2));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main2->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main2->hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main3));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->hash);
 
   // side chain
   auto side1 = generator_->Generate(genesis);
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*side1));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->hash);
 }
 
 TEST_P(MainChainTests, AdditionOfBlocksOutOfOrder)
 {
   auto genesis = generator_->Generate();
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), genesis->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), genesis->hash);
 
   // Try adding a non-sequential block (prev hash is itself)
   Block dummy;
-  dummy.body.block_number = 2;
-  dummy.body.miner        = chain::Address{chain::Address::RawAddress{}};
+  dummy.block_number = 2;
+  dummy.miner        = chain::Address{chain::Address::RawAddress{}};
   dummy.UpdateDigest();
-  dummy.body.previous_hash = dummy.body.hash;
+  dummy.previous_hash = dummy.hash;
 
   ASSERT_EQ(BlockStatus::INVALID, chain_->AddBlock(dummy));
-  EXPECT_EQ(chain_->GetHeaviestBlockHash(), genesis->body.hash);
+  EXPECT_EQ(chain_->GetHeaviestBlockHash(), genesis->hash);
 
   // build a main chain
   auto main1 = generator_->Generate(genesis);
@@ -593,11 +591,11 @@ TEST_P(MainChainTests, AdditionOfBlocksOutOfOrder)
   auto main3 = generator_->Generate(main2);
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main2));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main2->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main2->hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main3));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->hash);
 }
 
 TEST_P(MainChainTests, AdditionOfBlocksWithABreak)
@@ -614,22 +612,22 @@ TEST_P(MainChainTests, AdditionOfBlocksWithABreak)
   auto main9   = generator_->Generate(main8);
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main2));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main2->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main2->hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main3));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main4));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->hash);
 
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main6));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->hash);
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main7));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->hash);
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main8));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->hash);
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main9));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->hash);
 }
 
 TEST_P(MainChainTests, CheckChainPreceeding)
@@ -641,37 +639,37 @@ TEST_P(MainChainTests, CheckChainPreceeding)
   auto main4   = generator_->Generate(main3);
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main2));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main2->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main2->hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main3));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main4));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->hash);
 
   {
-    auto const preceding = chain_->GetChainPreceding(main4->body.hash, 2);
+    auto const preceding = chain_->GetChainPreceding(main4->hash, 2);
     ASSERT_EQ(preceding.size(), 2);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main4));
     EXPECT_TRUE(IsSameBlock(*preceding[1], *main3));
   }
 
   {
-    auto const preceding = chain_->GetChainPreceding(main3->body.hash, 2);
+    auto const preceding = chain_->GetChainPreceding(main3->hash, 2);
     ASSERT_EQ(preceding.size(), 2);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main3));
     EXPECT_TRUE(IsSameBlock(*preceding[1], *main2));
   }
 
   {
-    auto const preceding = chain_->GetChainPreceding(main2->body.hash, 2);
+    auto const preceding = chain_->GetChainPreceding(main2->hash, 2);
     ASSERT_EQ(preceding.size(), 2);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main2));
     EXPECT_TRUE(IsSameBlock(*preceding[1], *main1));
   }
 
   {
-    auto const preceding = chain_->GetChainPreceding(main1->body.hash, 3);
+    auto const preceding = chain_->GetChainPreceding(main1->hash, 3);
     ASSERT_EQ(preceding.size(), 2);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main1));
     EXPECT_TRUE(IsSameBlock(*preceding[1], *genesis));
@@ -694,20 +692,20 @@ TEST_P(MainChainTests, CheckMissingLooseBlocks)
   auto main4   = generator_->Generate(main3);
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->hash);
 
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main3));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->hash);
 
   ASSERT_TRUE(chain_->HasMissingBlocks());
   auto const missing_hashes = chain_->GetMissingBlockHashes(MainChain::UPPER_BOUND);
 
   ASSERT_EQ(missing_hashes.size(), 1);
-  ASSERT_EQ(missing_hashes[0], main2->body.hash);
+  ASSERT_EQ(missing_hashes[0], main2->hash);
 
   auto const tips = chain_->GetTips();
   ASSERT_EQ(tips.size(), 1);
-  ASSERT_EQ(*tips.cbegin(), main1->body.hash);
+  ASSERT_EQ(*tips.cbegin(), main1->hash);
 }
 
 TEST_P(MainChainTests, CheckMultipleMissing)
@@ -732,29 +730,29 @@ TEST_P(MainChainTests, CheckMultipleMissing)
 
   // add the common block
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*common1));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->hash);
 
   // add all the side chain tips
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*side1_2));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->hash);
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*side2_2));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->hash);
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*side3_2));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->hash);
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*side4_2));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->hash);
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*side5_2));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), common1->hash);
 
   // check the missing hashes
   auto const all_missing = chain_->GetMissingBlockHashes();
 
   ASSERT_EQ(all_missing.size(), 5);
-  ASSERT_TRUE(Contains(all_missing, side1_1->body.hash));
-  ASSERT_TRUE(Contains(all_missing, side2_1->body.hash));
-  ASSERT_TRUE(Contains(all_missing, side3_1->body.hash));
-  ASSERT_TRUE(Contains(all_missing, side4_1->body.hash));
-  ASSERT_TRUE(Contains(all_missing, side5_1->body.hash));
+  ASSERT_TRUE(Contains(all_missing, side1_1->hash));
+  ASSERT_TRUE(Contains(all_missing, side2_1->hash));
+  ASSERT_TRUE(Contains(all_missing, side3_1->hash));
+  ASSERT_TRUE(Contains(all_missing, side4_1->hash));
+  ASSERT_TRUE(Contains(all_missing, side5_1->hash));
 
   // ensure that this is a subset of the missing blocks
   auto const subset_missing = chain_->GetMissingBlockHashes(3);
@@ -788,9 +786,9 @@ TEST_P(MainChainTests, CheckLongChainWrite)
 
   for (auto const &block : blocks)
   {
-    auto const retrived_block = chain_->GetBlock(block->body.hash);
+    auto const retrived_block = chain_->GetBlock(block->hash);
     ASSERT_TRUE(retrived_block);
-    ASSERT_EQ(retrived_block->body.hash, block->body.hash);
+    ASSERT_EQ(retrived_block->hash, block->hash);
   }
 }
 
@@ -819,11 +817,11 @@ TEST_P(MainChainTests, CheckInOrderWeights)
   ASSERT_FALSE(chain_->HasMissingBlocks());
 
   // check the weights
-  ASSERT_EQ(chain_->GetBlock(main1->body.hash)->total_weight, main1->total_weight);
-  ASSERT_EQ(chain_->GetBlock(main2->body.hash)->total_weight, main2->total_weight);
-  ASSERT_EQ(chain_->GetBlock(main3->body.hash)->total_weight, main3->total_weight);
-  ASSERT_EQ(chain_->GetBlock(main4->body.hash)->total_weight, main4->total_weight);
-  ASSERT_EQ(chain_->GetBlock(main5->body.hash)->total_weight, main5->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main1->hash)->total_weight, main1->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main2->hash)->total_weight, main2->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main3->hash)->total_weight, main3->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main4->hash)->total_weight, main4->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main5->hash)->total_weight, main5->total_weight);
 }
 
 TEST_P(MainChainTests, CheckResolvedLooseWeight)
@@ -838,34 +836,34 @@ TEST_P(MainChainTests, CheckResolvedLooseWeight)
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*other));
   ASSERT_FALSE(chain_->HasMissingBlocks());
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->hash);
 
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main5));
   ASSERT_TRUE(chain_->HasMissingBlocks());
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->hash);
 
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main4));
   ASSERT_TRUE(chain_->HasMissingBlocks());
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->hash);
 
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main3));
   ASSERT_TRUE(chain_->HasMissingBlocks());
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->hash);
 
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main2));
   ASSERT_TRUE(chain_->HasMissingBlocks());
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->hash);
 
   // this block resolves all the loose blocks
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
   ASSERT_FALSE(chain_->HasMissingBlocks());
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main5->body.hash);
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main5->hash);
 
-  ASSERT_EQ(chain_->GetBlock(main1->body.hash)->total_weight, main1->total_weight);
-  ASSERT_EQ(chain_->GetBlock(main2->body.hash)->total_weight, main2->total_weight);
-  ASSERT_EQ(chain_->GetBlock(main3->body.hash)->total_weight, main3->total_weight);
-  ASSERT_EQ(chain_->GetBlock(main4->body.hash)->total_weight, main4->total_weight);
-  ASSERT_EQ(chain_->GetBlock(main5->body.hash)->total_weight, main5->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main1->hash)->total_weight, main1->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main2->hash)->total_weight, main2->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main3->hash)->total_weight, main3->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main4->hash)->total_weight, main4->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main5->hash)->total_weight, main5->total_weight);
 }
 
 INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,

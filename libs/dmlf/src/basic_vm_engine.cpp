@@ -494,7 +494,7 @@ BasicVmEngine::LedgerVariant BasicVmEngine::Convert(VmVariant const &vmVariant) 
   }
   case fetch::vm::TypeIds::String:
   {
-    std::string temp{vmVariant.Get<vm::Ptr<vm::String>>()->str};
+    std::string temp{vmVariant.Get<vm::Ptr<vm::String>>()->string()};
     return LedgerVariant{std::move(temp)};
   }
   default:

@@ -29,6 +29,10 @@
 #include "oef-base/threading/ExitState.hpp"
 #include "oef-base/threading/Task.hpp"
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 class Taskpool : public std::enable_shared_from_this<Taskpool>
 {
 public:
@@ -110,3 +114,6 @@ private:
 
   FutureTasks future_tasks;
 };
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

@@ -449,13 +449,13 @@ void EndpointBase<TXType>::complete_reading(StateTypeP current, std::error_code 
 }
 
 template <typename TXType>
-Notification::NotificationBuilder EndpointBase<TXType>::send(TXType s)
+fetch::oef::base::Notification::NotificationBuilder EndpointBase<TXType>::send(TXType s)
 {
   Lock lock(txq_mutex);
   if (txq.size() < BUFFER_SIZE_LIMIT)
   {
     txq.push_back(s);
-    return Notification::NotificationBuilder();
+    return fetch::oef::base::Notification::NotificationBuilder();
   }
 
   return MakeNotification();

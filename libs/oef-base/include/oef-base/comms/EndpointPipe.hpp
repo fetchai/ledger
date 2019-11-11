@@ -34,7 +34,7 @@ public:
 
   ~EndpointPipe() override = default;
 
-  virtual Notification::NotificationBuilder send(SendType s)
+  virtual fetch::oef::base::Notification::NotificationBuilder send(SendType s)
   {
     return endpoint->send(s);
   }

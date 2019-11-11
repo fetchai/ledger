@@ -22,6 +22,10 @@
 #include <thread>
 #include <vector>
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 class Threadpool
 {
 public:
@@ -84,3 +88,7 @@ protected:
 private:
   Threads threads;
 };
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

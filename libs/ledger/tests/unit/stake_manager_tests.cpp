@@ -79,9 +79,9 @@ protected:
       stats.at(cabinet->at(0)) += 1;
 
       // "forge" the next block
-      block.body.previous_hash = block.body.hash;
-      block.body.hash          = GenerateRandomAddress(rng_).address();
-      block.body.block_number += 1;
+      block.previous_hash = block.hash;
+      block.hash          = GenerateRandomAddress(rng_).address();
+      block.block_number += 1;
 
       stake_manager_->UpdateCurrentBlock(block);
     }
@@ -111,8 +111,8 @@ TEST_F(StakeManagerTests, DISABLED_CheckBasicStakeChangeScenarios)
 
   // create the starting blocks (note block contains an address, not an identity)
   Block block;
-  block.body.hash         = GenerateRandomAddress(rng_).address();
-  block.body.block_number = 0;
+  block.hash         = GenerateRandomAddress(rng_).address();
+  block.block_number = 0;
 
   // simulate a number of rounds
   RoundStats stats{};

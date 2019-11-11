@@ -25,7 +25,8 @@
 #include "oef-search/dap_comms/DapSerialConversationTask.hpp"
 
 // DapExecute, IdentifierSequence
-class NodeExecutorTask : virtual public Task, virtual public Waitable
+class NodeExecutorTask : virtual public fetch::oef::base::Task,
+                         virtual public fetch::oef::base::Waitable
 {
 public:
   static constexpr char const *LOGGING_NAME = "NodeExecutorTask";

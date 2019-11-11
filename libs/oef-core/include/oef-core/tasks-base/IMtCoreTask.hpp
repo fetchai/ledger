@@ -21,7 +21,7 @@
 
 // All tasks in the MT core should inherit from this common one.
 
-class IMtCoreTask : public Task
+class IMtCoreTask : public fetch::oef::base::Task
 {
 public:
   IMtCoreTask()           = default;
