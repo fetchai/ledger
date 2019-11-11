@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <string>
+#include <unordered_map>
 
 #include "core/byte_array/byte_array.hpp"
 
@@ -25,19 +26,53 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-struct ColearnUpdate
+class ColearnUpdate
 {
+public:
+  using Algorithm     = std::string;
   using UpdateType    = std::string;
   using Data          = byte_array::ConstByteArray;
-  using TimeStampType = std::uint64_t;
   using Source        = std::string;
+  using TimeStamp     = std::uint64_t;
+  using MetaKey       = std::string;
+  using MetaValue     = std::string;
+  using Metadata      = std::unordered_map<MetaKey,MetaValue>;
 
-  ColearnUpdate(UpdateType updateType, Data &&data, Source source);
+  ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &&data, 
+      Source source, Metadata metadata);
 
-  UpdateType    update_type;
-  Data          data;
-  TimeStampType time_stamp;
-  Source        source;
+  Algorithm const& algorithm() const
+  {
+    return algorithm_;
+  }
+  UpdateType const& update_type() const
+  {
+    return update_type_;
+  }
+  Data const& data() const
+  {
+    return data_;
+  }
+  Source const &source() const
+  {
+    return source_;
+  }
+  TimeStamp const &time_stamp() const
+  {
+    return time_stamp_;
+  }
+  Metadata const &metadata() const
+  {
+    return metadata_;
+  }
+
+private:
+  Algorithm     algorithm_;
+  UpdateType    update_type_;
+  Data          data_;
+  Source        source_;
+  TimeStamp time_stamp_;
+  Metadata      metadata_;
 };
 
 }  // namespace colearn
