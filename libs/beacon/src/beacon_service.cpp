@@ -98,6 +98,9 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
   state_machine_->RegisterHandler(State::COMPLETE, this, &BeaconService::OnCompleteState);
   // clang-format on
 
+  old_state_.Load("beacon_state.db", "beacon_state.index.db");
+  ReloadState();
+
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(this);
     FETCH_UNUSED(current);
@@ -105,6 +108,30 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
     FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
                     " (previous: ", ToString(previous), ")");
   });
+}
+
+// Note these are not locked since there should be no race against the constructor
+void BeaconService::SaveState()
+{
+  assert(active_exe_unit_);
+  old_state_.Set(storage::ResourceID("HEAD"), *active_exe_unit_);
+}
+
+void BeaconService::ReloadState()
+{
+  SharedAeonExecutionUnit ret = std::make_shared<AeonExecutionUnit>();
+
+  if (old_state_.Get(storage::ResourceID("HEAD"), *ret))
+  {
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Found aeon keys during beacon construction, recovering. Valid from: ",
+                   ret->aeon.round_start);
+    aeon_exe_queue_.push_back(ret);
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "On re-loading beacon, no keys found");
+  }
 }
 
 BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, BlockEntropy &entropy)
@@ -149,6 +176,8 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
         std::make_shared<BlockEntropy>(active_exe_unit_->aeon.block_entropy_previous);
     block_entropy_being_created_ = std::make_shared<BlockEntropy>(active_exe_unit_->block_entropy);
 
+    SaveState();
+
     // TODO(HUT): re-enable this check after fixing the dealer test
     /* assert(block_entropy_being_created_->IsAeonBeginning()); */
 
@@ -159,10 +188,22 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
   return State::WAIT_FOR_SETUP_COMPLETION;
 }
 
+// Attempt to determine whether the node is attempting to generate entropy that is far in the past
+// (possible on start up when syncing)
+bool BeaconService::OutOfSync()
+{
+  return most_recent_round_seen_ > active_exe_unit_->aeon.round_end;
+}
+
 BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
+
+  if (OutOfSync())
+  {
+    return State::WAIT_FOR_SETUP_COMPLETION;
+  }
 
   // Set the manager up to generate the signature
   active_exe_unit_->manager.SetMessage(block_entropy_previous_->EntropyAsSHA256());
@@ -176,6 +217,11 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
+
+  if (OutOfSync())
+  {
+    return State::WAIT_FOR_SETUP_COMPLETION;
+  }
 
   uint64_t const index = block_entropy_being_created_->block_number;
   beacon_entropy_current_round_->set(index);
@@ -243,6 +289,11 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   SignatureInformation ret;
+
+  if (OutOfSync())
+  {
+    return State::WAIT_FOR_SETUP_COMPLETION;
+  }
 
   // Block for up to half a second waiting for the promise to resolve
   if (!timer_to_proceed_.HasExpired() && !sig_share_promise_->IsSuccessful())
@@ -330,6 +381,11 @@ BeaconService::State BeaconService::OnCompleteState()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
+
+  if (OutOfSync())
+  {
+    return State::WAIT_FOR_SETUP_COMPLETION;
+  }
 
   uint64_t const index = block_entropy_being_created_->block_number;
   beacon_entropy_last_generated_->set(index);

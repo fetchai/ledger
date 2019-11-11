@@ -32,6 +32,7 @@
 #include "beacon/events.hpp"
 #include "beacon/public_key_message.hpp"
 #include "core/digest.hpp"
+#include "storage/object_store.hpp"
 
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -91,6 +92,7 @@ public:
   using SharedEventManager      = EventManager::SharedEventManager;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
+  using OldStateStore           = fetch::storage::ObjectStore<AeonExecutionUnit>;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
@@ -132,6 +134,8 @@ protected:
   /// @{
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
+
+  //
 
   mutable std::mutex                  mutex_;
   CertificatePtr                      certificate_;
@@ -185,6 +189,14 @@ private:
   /// Distributed Key Generation
   /// @{
   BeaconServiceProtocol beacon_protocol_;
+  /// @}
+
+  /// Save keys so that recovery is possible in a crash situation
+  /// @{
+  OldStateStore old_state_;
+  bool          OutOfSync();
+  void          ReloadState();
+  void          SaveState();
   /// @}
 
   telemetry::CounterPtr         beacon_entropy_generated_total_;
