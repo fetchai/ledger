@@ -43,7 +43,7 @@ void Gelu(ArrayType const &t, ArrayType &ret)
 
   DataType one{1}, half{static_cast<DataType>(0.5)}, three{static_cast<DataType>(3)},
       coeff1{static_cast<DataType>(0.797885)}, coeff2{static_cast<DataType>(0.035677)};
-  ArrayType intermediate{t.size()};
+  ArrayType intermediate{t.Copy()};
 
   Multiply(t, coeff1, intermediate);
   Pow(t, three, ret);
