@@ -186,6 +186,5 @@ struct MapSerializer<ml::optimisers::SGDOptimiser<TensorType>, D>
     map.ExpectKeyGetValue(BASE_OPTIMISER, *base_pointer);
   }
 };
-
 }  // namespace serializers
 }  // namespace fetch

@@ -631,8 +631,10 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
 }
 
 /**
- * Add gradient values to weight for each trainable
+ * Add sparse gradient values to weight for each trainable
+ * @tparam TensorType
  * @param grad vector of gradient values for each trainable stored in TensorType
+ * @param update_rows vector of sets of rows to update for each trainable stored in SizeSet
  */
 template <typename TensorType>
 void Graph<TensorType>::ApplySparseGradients(std::vector<TensorType> &grad,

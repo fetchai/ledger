@@ -25,6 +25,16 @@ namespace fetch {
 namespace ml {
 namespace utilities {
 
+/**
+ * Add update_rows from src Tensor to dst Tensor if number of required slices is lower than
+ * threshold. If number of required slices is higher than threshold, function just inlineAdd src to
+ * dst.
+ * @tparam TensorType
+ * @param src source tensor
+ * @param dst destination tensor
+ * @param update_rows set of rows to be updated
+ * @param sparsity_threshold
+ */
 template <class TensorType>
 void SparseAdd(TensorType const &src, TensorType &dst,
                std::unordered_set<fetch::math::SizeType> const &update_rows,

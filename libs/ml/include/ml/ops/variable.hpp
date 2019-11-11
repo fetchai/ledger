@@ -23,6 +23,7 @@
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/saveparams/saveable_params.hpp"
+#include "ml/utilities/sparse_tensor_utilities.hpp"
 
 #include <cassert>
 #include <memory>
@@ -158,13 +159,25 @@ public:
     return false;
   }
 
+  /**
+   * Function for applying gradient for specific rows only
+   * @param grad
+   * @param update_rows
+   */
   void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows) override
   {
-    if (!update_rows.empty())
+    if (!this->value_frozen_)
     {
-      throw fetch::ml::exceptions::InvalidMode("Sparse gradient not supported.");
+
+      if (!update_rows.empty() && this->data_->shape().size() != 2)
+      {
+        throw fetch::ml::exceptions::InvalidMode("Sparse gradient not supported.");
+      }
+
+      // Apply gradient only to updated rows
+      utilities::SparseAdd(grad, *this->data_, update_rows);
+      this->ResetGradients();
     }
-    ApplyGradient(grad);
   }
 
   void ApplyGradient(TensorType const &grad) override
@@ -177,8 +190,45 @@ public:
     }
   }
 
+  virtual void AddToGradient(TensorType const &extern_grad)
+  {
+    // Make sure that all rows will get updated
+    if (!updated_rows_.empty())
+    {
+      throw fetch::ml::exceptions::InvalidMode("Sparse gradient not supported.");
+    }
+
+    if (!this->value_frozen_)
+    {
+      gradient_accumulation_->InlineAdd(extern_grad);
+      reset_gradients_ = true;
+    }
+  }
+
   /**
-   * Set all gradient values to 0
+   * Add external gradient for specified rows from update_rows set to gradient gradient accumulation
+   * @param grad TensorType gradient
+   * @param update_rows SizeSet
+   */
+  void AddToGradient(TensorType const &extern_grad, SizeSet const &rows_updated)
+  {
+    if (!this->value_frozen_)
+    {
+      if (!rows_updated.empty() && this->data_->shape().size() != 2)
+      {
+        throw fetch::ml::exceptions::InvalidMode("Sparse gradient not supported.");
+      }
+
+      // Add external information about row updates
+      this->updated_rows_.insert(rows_updated.begin(), rows_updated.end());
+      // Add gradient only to updated rows
+      utilities::SparseAdd(extern_grad, *this->gradient_accumulation_, rows_updated);
+      this->reset_gradients_ = true;
+    }
+  }
+
+  /**
+   * Set all gradient values to 0 and clear updated rows set
    */
   void ResetGradients() override
   {
@@ -223,25 +273,6 @@ protected:
     {
       this->regulariser_->ApplyRegularisation(*this->data_, this->regularisation_rate_);
     }
-  }
-
-  virtual void AddToGradient(TensorType const &extern_grad)
-  {
-    if (!this->value_frozen_)
-    {
-      gradient_accumulation_->InlineAdd(extern_grad);
-      reset_gradients_ = true;
-    }
-  }
-
-  virtual void AddToGradient(TensorType const &extern_grad, SizeSet const &rows_updated)
-  {
-    if (!rows_updated.empty())
-    {
-      throw fetch::ml::exceptions::InvalidMode("Sparse gradient not supported.");
-    }
-
-    AddToGradient(extern_grad);
   }
 };
 }  // namespace ops

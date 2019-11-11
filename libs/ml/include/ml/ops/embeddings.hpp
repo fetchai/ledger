@@ -153,29 +153,6 @@ public:
     return {TensorType(error_signal.shape())};
   }
 
-  void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows) override
-  {
-    if (!this->value_frozen_)
-    {
-      // Apply gradient only to updated rows
-      utilities::SparseAdd(grad, *this->data_, update_rows);
-      this->ResetGradients();
-    }
-  }
-
-  void AddToGradient(TensorType const &extern_grad, SizeSet const &rows_updated) override
-  {
-    if (!this->value_frozen_)
-    {
-      // Add external information about row updates
-      this->updated_rows_.insert(rows_updated.begin(), rows_updated.end());
-      // Add gradient only to updated rows
-      utilities::SparseAdd(extern_grad, *this->gradient_accumulation_, rows_updated,
-                           sparsity_threshold_);
-      this->reset_gradients_ = true;
-    }
-  }
-
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     std::vector<SizeType> output_shape = {this->data_->shape().at(0), inputs.front()->shape().at(0),
@@ -190,9 +167,8 @@ public:
   static constexpr char const *DESCRIPTOR = "Embedding";
 
 private:
-  std::vector<SizeType> trailing_indices1_  = {0, 0};
-  std::vector<SizeType> trailing_indices2_  = {0};
-  SizeType              sparsity_threshold_ = 4;
+  std::vector<SizeType> trailing_indices1_ = {0, 0};
+  std::vector<SizeType> trailing_indices2_ = {0};
 };
 
 }  // namespace ops
