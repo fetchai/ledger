@@ -46,8 +46,7 @@ public:
     pending_queue_.push_back(stx);
   }
 
-  void GenerateBlock(ledger::BlockBody &block, std::size_t num_lanes,
-                     std::size_t num_slices) override
+  void GenerateBlock(ledger::Block &block, std::size_t num_lanes, std::size_t num_slices) override
   {
 
     // push the currently pending elements into the generator
@@ -80,7 +79,7 @@ public:
   }
 
 private:
-  void FillBlock(ledger::BlockBody &block, std::size_t num_lanes, std::size_t num_slices)
+  void FillBlock(ledger::Block &block, std::size_t num_lanes, std::size_t num_slices)
   {
     block.slices.clear();
     block.slices.resize(num_slices);
@@ -94,7 +93,7 @@ private:
     }
   }
 
-  void PopulateBlock(ledger::BlockBody &block, std::size_t num_lanes, std::size_t num_slices)
+  void PopulateBlock(ledger::Block &block, std::size_t num_lanes, std::size_t num_slices)
   {
     using Strategy = GeneratorType::Strategy;
 

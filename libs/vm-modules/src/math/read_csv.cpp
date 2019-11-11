@@ -36,8 +36,8 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ReadCSV(
     fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
 {
   fetch::vm_modules::math::VMTensor::TensorType tensor =
-      fetch::math::utilities::ReadCSV<fetch::vm_modules::math::VMTensor::TensorType>(filename->str,
-                                                                                     0, 0);
+      fetch::math::utilities::ReadCSV<fetch::vm_modules::math::VMTensor::TensorType>(
+          filename->string(), 0, 0);
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
 }
 

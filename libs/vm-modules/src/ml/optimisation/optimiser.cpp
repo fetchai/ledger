@@ -121,12 +121,12 @@ Ptr<VMOptimiser> VMOptimiser::Constructor(
   for (fetch::math::SizeType i{0}; i < n_elements; i++)
   {
     Ptr<fetch::vm::String> ptr_string = input_node_names->elements.at(i);
-    input_names.at(i)                 = (ptr_string)->str;
+    input_names.at(i)                 = (ptr_string)->string();
   }
 
-  return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id, mode->str, graph->GetGraph(), loader,
-                                          input_names, label_node_name->str,
-                                          output_node_names->str)};
+  return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id, mode->string(), graph->GetGraph(), loader,
+                                          input_names, label_node_name->string(),
+                                          output_node_names->string())};
 }
 
 VMOptimiser::DataType VMOptimiser::RunData(Ptr<fetch::vm_modules::math::VMTensor> const &data,

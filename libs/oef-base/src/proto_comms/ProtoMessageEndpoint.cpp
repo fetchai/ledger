@@ -43,7 +43,8 @@ void ProtoMessageEndpoint<TXType, Reader, Sender>::setup(
 }
 
 template <typename TXType, typename Reader, typename Sender>
-void ProtoMessageEndpoint<TXType, Reader, Sender>::SetEndianness(Endianness newstate)
+void ProtoMessageEndpoint<TXType, Reader, Sender>::SetEndianness(
+    fetch::oef::base::Endianness newstate)
 {
   protoMessageReader->SetEndianness(newstate);
   protoMessageSender->SetEndianness(newstate);

@@ -24,7 +24,7 @@
 
 class IKarmaPolicy;
 
-class KarmaRefreshTask : public Task
+class KarmaRefreshTask : public fetch::oef::base::Task
 {
 public:
   static constexpr char const *LOGGING_NAME = "KarmaRefreshTask";
@@ -42,7 +42,7 @@ public:
   {
     return true;
   }
-  ExitState run() override;
+  fetch::oef::base::ExitState run() override;
 
 protected:
   std::chrono::high_resolution_clock::time_point last_execute;

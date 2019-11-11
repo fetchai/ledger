@@ -31,6 +31,10 @@
 #include <queue>
 #include <utility>
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 template <class WORKLOAD>
 class TWorkerTask : public Task
 {
@@ -149,3 +153,6 @@ private:
 
 // namespace std { template<> void swap(TWorkerTask& lhs, TWorkerTask& rhs) { lhs.swap(rhs); } }
 // std::ostream& operator<<(std::ostream& os, const TWorkerTask &output) {}
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

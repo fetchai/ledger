@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 enum ExitState
 {
   COMPLETE,
@@ -27,3 +31,7 @@ enum ExitState
 };
 
 extern const char *const exitStateNames[];
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch
