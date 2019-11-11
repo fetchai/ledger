@@ -121,6 +121,8 @@ void BeaconService::ReloadState()
 {
   SharedAeonExecutionUnit ret = std::make_shared<AeonExecutionUnit>();
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Reloading... Size: ", old_state_.size());
+
   if (old_state_.Get(storage::ResourceID("HEAD"), *ret))
   {
     FETCH_LOG_INFO(LOGGING_NAME,
