@@ -198,7 +198,7 @@ private:
   static chain::Address StringToAddress(VM *vm, Ptr<String> const &address_str)
   {
     chain::Address address;
-    if (address_str && !chain::Address::Parse(address_str->str.c_str(), address))
+    if (address_str && !chain::Address::Parse(address_str->string(), address))
     {
       vm->RuntimeError("Unable to parse address");
     }

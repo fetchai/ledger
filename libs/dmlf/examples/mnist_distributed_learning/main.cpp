@@ -16,17 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/distributed_learning/distributed_learning_client.hpp"
-
-#include "dmlf/distributed_learning/utilities/mnist_client_utilities.hpp"
-#include "dmlf/distributed_learning/utilities/utilities.hpp"
+#include "dmlf/collective_learning/collective_learning_client.hpp"
+#include "dmlf/collective_learning/utilities/mnist_client_utilities.hpp"
+#include "dmlf/collective_learning/utilities/utilities.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 
-#include <algorithm>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -34,7 +31,7 @@
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-using namespace fetch::dmlf::distributed_learning;
+using namespace fetch::dmlf::collective_learning;
 
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
@@ -48,13 +45,16 @@ int main(int argc, char **argv)
 
   if (argc != 2)
   {
-    std::cout << "Usage : " << argv[0] << "config_file.json" << std::endl;
+    std::cout << "Usage : " << argv[0] << " config_file.json" << std::endl;
     return 1;
   }
 
-  fetch::json::JSONDocument                                 doc;
-  fetch::dmlf::distributed_learning::ClientParams<DataType> client_params =
-      fetch::dmlf::distributed_learning::utilities::ClientParamsFromJson<TensorType>(
+  std::cout << "FETCH Distributed MNIST Demo" << std::endl;
+
+  // handle config params
+  fetch::json::JSONDocument                                doc;
+  fetch::dmlf::collective_learning::ClientParams<DataType> client_params =
+      fetch::dmlf::collective_learning::utilities::ClientParamsFromJson<TensorType>(
           std::string(argv[1]), doc);
   auto data_file      = doc["data"].As<std::string>();
   auto labels_file    = doc["labels"].As<std::string>();
@@ -66,42 +66,27 @@ int main(int argc, char **argv)
 
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
+  // Set up networkers
   std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(n_clients);
-
-  std::cout << "FETCH Distributed MNIST Demo" << std::endl;
-
-  // Create networkers
-
   for (SizeType i(0); i < n_clients; ++i)
   {
-    networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-    networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
+    networkers.at(i) = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
+    networkers.at(i)->Initialize<fetch::dmlf::Update<TensorType>>();
   }
-
   for (SizeType i(0); i < n_clients; ++i)
   {
-    networkers[i]->AddPeers(networkers);
-    networkers[i]->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
-        networkers[i]->GetPeerCount(), n_peers));
+    networkers.at(i)->AddPeers(networkers);
+    networkers.at(i)->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
+        networkers.at(i)->GetPeerCount(), n_peers));
   }
 
   // Create training clients
-
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(n_clients);
+  std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> clients(n_clients);
   for (SizeType i{0}; i < n_clients; ++i)
   {
-    // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = fetch::dmlf::distributed_learning::utilities::MakeMNISTClient<TensorType>(
-        std::to_string(i), client_params, data_file, labels_file, test_set_ratio,
+    clients.at(i) = fetch::dmlf::collective_learning::utilities::MakeMNISTClient<TensorType>(
+        std::to_string(i), client_params, data_file, labels_file, test_set_ratio, networkers.at(i),
         console_mutex_ptr);
-  }
-
-  // Give each client pointer to its networker
-
-  for (SizeType i{0}; i < n_clients; ++i)
-  {
-    // Give each client pointer to its networker
-    clients[i]->SetNetworker(networkers[i]);
   }
 
   /**
@@ -112,10 +97,10 @@ int main(int argc, char **argv)
   {
     // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
-    std::list<std::thread> threads;
+    std::vector<std::thread> threads;
     for (auto &c : clients)
     {
-      threads.emplace_back([&c] { c->Run(); });
+      c->RunAlgorithms(threads);
     }
 
     // Wait for everyone to finish
@@ -128,7 +113,7 @@ int main(int argc, char **argv)
     if (synchronise)
     {
       std::cout << std::endl << "Synchronising weights" << std::endl;
-      fetch::dmlf::distributed_learning::utilities::SynchroniseWeights<TensorType>(clients);
+      fetch::dmlf::collective_learning::utilities::SynchroniseWeights<TensorType>(clients);
     }
   }
 

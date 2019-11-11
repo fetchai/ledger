@@ -18,30 +18,30 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class MaxPool1DTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(MaxPool1DTest, MyTypes);
+TYPED_TEST_CASE(MaxPool1DTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(MaxPool1DTest, forward_test_3_2_2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({1, 10, 2});
   TensorType          gt({1, 4, 2});
@@ -73,7 +73,7 @@ TYPED_TEST(MaxPool1DTest, backward_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({1, 10, 2});
   TensorType          error({1, 4, 2});
@@ -113,7 +113,7 @@ TYPED_TEST(MaxPool1DTest, backward_test_2_channels)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 5, 2});
   TensorType          error({2, 2, 2});
@@ -151,7 +151,7 @@ TYPED_TEST(MaxPool1DTest, forward_test_4_2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({1, 10, 1});
   TensorType          gt({1, 4, 1});
@@ -180,7 +180,7 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1_2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 5, 2});
   TensorType          gt({2, 2, 2});
@@ -221,7 +221,7 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_4_2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({1, 10, 2});
   TensorType          gt({1, 3, 2});
@@ -253,7 +253,7 @@ TYPED_TEST(MaxPool1DTest, saveparams_test)
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::MaxPool1D<TensorType>::SPType;
   using OpType        = typename fetch::ml::ops::MaxPool1D<TensorType>;
-  using SizeType      = typename TypeParam::SizeType;
+  using SizeType      = fetch::math::SizeType;
 
   TensorType          data({2, 5, 2});
   TensorType          gt({2, 2, 2});
@@ -319,7 +319,7 @@ TYPED_TEST(MaxPool1DTest, saveparams_backward_test_2_channels)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using OpType     = typename fetch::ml::ops::MaxPool1D<TensorType>;
   using SPType     = typename OpType::SPType;
 
@@ -378,3 +378,7 @@ TYPED_TEST(MaxPool1DTest, saveparams_backward_test_2_channels)
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

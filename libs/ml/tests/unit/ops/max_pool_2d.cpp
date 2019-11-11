@@ -18,9 +18,9 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/max_pool_2d.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -28,21 +28,21 @@
 #include <memory>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class MaxPool2DTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(MaxPool2DTest, MyTypes);
+TYPED_TEST_CASE(MaxPool2DTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(MaxPool2DTest, forward_test_3_2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_width  = 10;
   SizeType const input_height = 5;
@@ -84,7 +84,7 @@ TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const channels_size = 2;
   SizeType const input_width   = 10;
@@ -134,7 +134,7 @@ TYPED_TEST(MaxPool2DTest, backward_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_width   = 5;
   SizeType const input_height  = 5;
@@ -180,7 +180,7 @@ TYPED_TEST(MaxPool2DTest, backward_2_channels_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const channels_size = 2;
   SizeType const input_width   = 5;
@@ -240,7 +240,7 @@ TYPED_TEST(MaxPool2DTest, saveparams_test)
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::MaxPool2D<TensorType>::SPType;
   using OpType        = typename fetch::ml::ops::MaxPool2D<TensorType>;
-  using SizeType      = typename TypeParam::SizeType;
+  using SizeType      = fetch::math::SizeType;
 
   SizeType const channels_size = 2;
   SizeType const input_width   = 10;
@@ -316,7 +316,7 @@ TYPED_TEST(MaxPool2DTest, saveparams_backward_2_channels_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using OpType     = typename fetch::ml::ops::MaxPool2D<TensorType>;
   using SPType     = typename OpType::SPType;
 
@@ -386,3 +386,7 @@ TYPED_TEST(MaxPool2DTest, saveparams_backward_2_channels_test)
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

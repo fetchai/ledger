@@ -1,30 +1,56 @@
 function ascii()
 
-    var myString : String = "Hello World";
-    myString.reverse();
+    var s1 = "Hello World";
+    var s2 = "Hello World";
 
-    assert(myString == "dlroW olleH");
+    var reversed = s1.reverse();
+
+    assert(s1 == "Hello World");
+    assert(s1 == s2);
+    assert(reversed == "dlroW olleH");
 
 endfunction
-
 
 function utf8()
 
     var myString1 : String = "他身旁放着一支磨";
     var myString2_4byte_characters : String = "𩶘𢵧𢺳𣲷𤓓𤶸𤷪𥄫𩶘";
 
-    myString1.reverse();
-    myString2_4byte_characters.reverse();
+    var reversed1 = myString1.reverse();
+    var reversed2 = myString2_4byte_characters.reverse();
 
-    assert(myString1 == "磨支一着放旁身他");
-    assert(myString2_4byte_characters == "𩶘𥄫𤷪𤶸𤓓𣲷𢺳𢵧𩶘");
+    assert(reversed1 == "磨支一着放旁身他");
+    assert(reversed2 == "𩶘𥄫𤷪𤶸𤓓𣲷𢺳𢵧𩶘");
 
 endfunction
 
+function literals()
+
+    assert("hello".reverse() == "olleh");
+
+    assert("他身旁放着一支磨".reverse() == "磨支一着放旁身他");
+    assert("𩶘𢵧𢺳𣲷𤓓𤶸𤷪𥄫𩶘".reverse() == "𩶘𥄫𤷪𤶸𤓓𣲷𢺳𢵧𩶘");
+
+endfunction
+
+function temporaries()
+
+    assert(("e" + "llo").reverse() == "olle");
+    assert(("he" + "llo").reverse() == "olleh");
+
+    assert(("磨支一着" + "放旁身他").reverse() == "他身旁放着一支磨");
+    assert(("𩶘𢵧𢺳𣲷" + "𤓓𤶸𤷪𥄫𩶘").reverse() == "𩶘𥄫𤷪𤶸𤓓𣲷𢺳𢵧𩶘");
+
+    assert(("磨支一ab" + "𩶘𢵧𢺳𣲷𤓓𤶸𤷪cdef" + "𥄫𩶘").reverse() == "𩶘𥄫fedc𤷪𤶸𤓓𣲷𢺳𢵧𩶘ba一支磨");
+    assert(("磨支一ab" + "𩶘𢵧𢺳𣲷𤓓𤶸𤷪cdefg" + "𥄫𩶘").reverse() == "𩶘𥄫gfedc𤷪𤶸𤓓𣲷𢺳𢵧𩶘ba一支磨");
+
+endfunction
 
 function main()
 
-   ascii();
-   utf8();
+    ascii();
+    utf8();
+    literals();
+    temporaries();
 
 endfunction

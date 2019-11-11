@@ -53,6 +53,7 @@ public:
     COEFFICIENT,
     SHARE,
     COMPLAINT,
+    NOTARISATION_KEY,
     FINAL_STATE
   };
 
@@ -204,7 +205,8 @@ public:
 
 class ComplaintsMessage : public DKGMessage
 {
-  std::unordered_set<CabinetId> complaints_;  ///< Cabinet members that you are complaining against
+  using ComplaintsList = std::set<CabinetId>;
+  ComplaintsList complaints_;  ///< Cabinet members that you are complaining against
 public:
   // Construction/Destruction
   explicit ComplaintsMessage(DKGSerializer &serialiser)
@@ -212,7 +214,7 @@ public:
   {
     serialiser >> complaints_;
   }
-  explicit ComplaintsMessage(std::unordered_set<CabinetId> complaints)
+  explicit ComplaintsMessage(ComplaintsList complaints)
     : DKGMessage{MessageType::COMPLAINT}
     , complaints_{std::move(complaints)}
   {}
@@ -227,11 +229,48 @@ public:
 
   /// @name Getter functions
   /// @{
-  std::unordered_set<CabinetId> const &complaints() const
+  ComplaintsList const &complaints() const
   {
     return complaints_;
   }
   ///@}
+};
+
+class NotarisationKeyMessage : public DKGMessage
+{
+  using NotarisationKey       = crypto::mcl::PublicKey;
+  using ECDSASignature        = byte_array::ConstByteArray;
+  using SignedNotarisationKey = std::pair<NotarisationKey, ECDSASignature>;
+
+  SignedNotarisationKey payload_;
+
+public:
+  explicit NotarisationKeyMessage(DKGSerializer &serialiser)
+    : DKGMessage{MessageType::NOTARISATION_KEY}
+  {
+    serialiser >> payload_;
+  }
+  explicit NotarisationKeyMessage(SignedNotarisationKey payload)
+    : DKGMessage{MessageType::NOTARISATION_KEY}
+    , payload_{std::move(payload)}
+  {}
+  ~NotarisationKeyMessage() override = default;
+
+  DKGSerializer Serialize() const override
+  {
+    DKGSerializer serializer;
+    serializer << payload_;
+    return serializer;
+  }
+
+  NotarisationKey PublicKey() const
+  {
+    return payload_.first;
+  }
+  ECDSASignature Signature() const
+  {
+    return payload_.second;
+  };
 };
 
 class DKGEnvelope

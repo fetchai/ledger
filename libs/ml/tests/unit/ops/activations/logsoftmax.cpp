@@ -17,25 +17,23 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
+#include "gtest/gtest.h"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
-
 #include <memory>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class LogSoftmaxTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(LogSoftmaxTest, MyTypes);
+TYPED_TEST_CASE(LogSoftmaxTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(LogSoftmaxTest, forward_test)
 {
@@ -51,20 +49,23 @@ TYPED_TEST(LogSoftmaxTest, forward_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-3f}, DataType{1e-3f}));
+  ASSERT_TRUE(
+      prediction.AllClose(gt, static_cast<DataType>(1000) * math::function_tolerance<DataType>(),
+                          static_cast<DataType>(1000) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({3, 3, 1});
   TensorType          gt({3, 3, 1});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9});
-  std::vector<double> gt_input({-2.1328e+00, -5.1328e+00, -1.3285e-01, -9.0001e+00, -1.4008e-04,
-                                -1.1000e+01, -2.1269e+00, -1.7127e+01, -1.2693e-01});
+  std::vector<double> gt_input({-2.13284524, -5.13284527, -0.13284524, -9.00014165, -0.00014012,
+                                -11.00015697, -2.12692806, -17.13728466, -0.12692805});
+
   for (SizeType i{0}; i < 3; ++i)
   {
     for (SizeType j{0}; j < 3; ++j)
@@ -79,7 +80,9 @@ TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-3f}, DataType{1e-3f}));
+  ASSERT_TRUE(
+      prediction.AllClose(gt, static_cast<DataType>(1000) * math::function_tolerance<DataType>(),
+                          static_cast<DataType>(1000) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, backward_test)
@@ -98,14 +101,16 @@ TYPED_TEST(LogSoftmaxTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(
+      prediction[0].AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(),
+                             static_cast<DataType>(50) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, backward_3d_tensor_axis_0_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({3, 3, 1});
   TensorType          error({3, 3, 1});
@@ -128,7 +133,9 @@ TYPED_TEST(LogSoftmaxTest, backward_3d_tensor_axis_0_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(
+      prediction[0].AllClose(gt, static_cast<DataType>(50) * math::function_tolerance<DataType>(),
+                             static_cast<DataType>(50) * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, saveparams_test)
@@ -180,7 +187,7 @@ TYPED_TEST(LogSoftmaxTest, saveparams_backward_3d_tensor_axis_0_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using OpType     = fetch::ml::ops::LogSoftmax<TensorType>;
   using SPType     = typename OpType::SPType;
 
@@ -236,3 +243,7 @@ TYPED_TEST(LogSoftmaxTest, saveparams_backward_3d_tensor_axis_0_test)
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

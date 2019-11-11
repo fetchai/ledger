@@ -47,7 +47,7 @@ class TSNE
 public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using SizeVector = typename TensorType::SizeVector;
   using RNG        = fetch::random::LaggedFibonacciGenerator<>;
 
