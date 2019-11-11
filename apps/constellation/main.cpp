@@ -258,7 +258,14 @@ int main(int argc, char **argv)
       std::signal(SIGTERM, InterruptHandler);
 
       // run the application
-      constellation->Run(initial_peers, ExtractRunnable(bootstrap));
+      try
+      {
+        constellation->Run(initial_peers, ExtractRunnable(bootstrap));
+      }
+      catch (std::runtime_error const &ex)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to run constellation with exception: ", ex.what());
+      }
 
       exit_code = EXIT_SUCCESS;
     }
