@@ -27,7 +27,7 @@
 #include "oef-core/comms/Oefv1Listener.hpp"
 
 template <template <typename> class EndpointType>
-ExitState OefListenerStarterTask<EndpointType>::run()
+fetch::oef::base::ExitState OefListenerStarterTask<EndpointType>::run()
 {
   // open port here.
   auto result = std::make_shared<Oefv1Listener<EndpointType>>(core, p, karmaPolicy, endpointConfig);
@@ -38,7 +38,7 @@ ExitState OefListenerStarterTask<EndpointType>::run()
 
   // when done add to the listeners
   listeners->add(p, result);
-  return ExitState::COMPLETE;
+  return fetch::oef::base::ExitState::COMPLETE;
 }
 
 template class OefListenerStarterTask<Endpoint>;

@@ -75,7 +75,6 @@ public:
   using Block                         = ledger::Block;
   using BlockHash                     = Block::Hash;
   using Identity                      = Block::Identity;
-  using BlockBody                     = Block::Body;
   using BlockNumber                   = uint64_t;
   using BlockWeight                   = Block::Weight;
   using BlockEntropy                  = beacon::BlockEntropy;
@@ -120,10 +119,10 @@ public:
 
   /// Calls from other services
   /// @{
-  void               NotariseBlock(BlockBody const &block);
+  void               NotariseBlock(Block const &block);
   void               SetAeonDetails(uint64_t round_start, uint64_t round_end, uint32_t threshold,
                                     AeonNotarisationKeys const &cabinet_public_keys);
-  AggregateSignature GetAggregateNotarisation(BlockBody const &block);
+  AggregateSignature GetAggregateNotarisation(Block const &block);
   /// @}
 
   /// Verifying notarised blocks

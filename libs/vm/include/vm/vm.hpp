@@ -233,8 +233,9 @@ private:
 };
 
 using ContractInvocationHandler = std::function<bool(
-    VM *, std::string const &, Executable::Contract const &, Executable::Function const &,
-    VariantArray const &, std::string &, Variant &)>;
+    VM * /* vm */, std::string const & /* identity */, Executable::Contract const & /* contract */,
+    Executable::Function const & /* function */, VariantArray const & /* parameters */,
+    std::string & /* error */, Variant & /* output */)>;
 
 class VM
 {
@@ -460,7 +461,7 @@ public:
     for (std::size_t i = 0; i < num_strings; ++i)
     {
       std::string const &str = executable_->strings[i];
-      strings_[i]            = Ptr<String>(new String(this, str, true));
+      strings_[i]            = Ptr<String>(new String(this, str));
     }
 
     std::size_t const num_local_types = executable_->types.size();

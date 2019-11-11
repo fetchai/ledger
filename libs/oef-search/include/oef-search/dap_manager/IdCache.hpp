@@ -23,7 +23,7 @@
 #include <chrono>
 #include <unordered_map>
 
-class IdCache : public Task
+class IdCache : public fetch::oef::base::Task
 {
 public:
   using Mutex = std::mutex;
@@ -78,7 +78,7 @@ public:
     return true;
   }
 
-  ExitState run() override
+  fetch::oef::base::ExitState run() override
   {
     {
       Lock lg(mutex_);
@@ -103,7 +103,7 @@ public:
     {
       this->submit(cleaner_pool_period_);
     }
-    return ExitState ::COMPLETE;
+    return fetch::oef::base::ExitState ::COMPLETE;
   }
 
 protected:

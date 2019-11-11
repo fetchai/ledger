@@ -308,7 +308,7 @@ NotarisationService::BlockNotarisationShares NotarisationService::GetNotarisatio
   return notarisations_being_built_.at(block_number);
 }
 
-void NotarisationService::NotariseBlock(BlockBody const &block)
+void NotarisationService::NotariseBlock(Block const &block)
 {
   FETCH_LOCK(mutex_);
 
@@ -390,7 +390,7 @@ void NotarisationService::SetAeonDetails(uint64_t round_start, uint64_t round_en
 }
 
 NotarisationService::AggregateSignature NotarisationService::GetAggregateNotarisation(
-    BlockBody const &block)
+    Block const &block)
 {
   FETCH_LOCK(mutex_);
   AggregateSignature notarisation;
