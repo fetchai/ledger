@@ -21,11 +21,17 @@
 #include "math/trigonometry.hpp"
 #include "vectorise/math/standard_functions.hpp"
 #include "vectorise/vectorise.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
 #include <functional>
 #include <memory>
+#include <cstdlib>
+
+namespace fetch {
+namespace math {
+namespace test {
 
 using namespace fetch::vectorise;
 
@@ -129,11 +135,11 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   type real_max{type(0)}, real_min{fetch::math::numeric_max<type>()};
   for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
-    // We don't want to check overflows right now, so we pick random numbers, but well within the
+    // We don't want to check overflows right now, so we pick std::rand numbers, but well within the
     // type's limits
-    a[i]     = static_cast<type>((static_cast<double>(random()) / static_cast<double>(RAND_MAX)) *
+    a[i]     = static_cast<type>((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
                              static_cast<double>(fetch::math::numeric_max<type>()) / 2.0);
-    b[i]     = static_cast<type>((static_cast<double>(random()) / static_cast<double>(RAND_MAX)) *
+    b[i]     = static_cast<type>((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
                              static_cast<double>(fetch::math::numeric_max<type>()) / 2.0);
     sum[i]   = a[i] + b[i];
     diff[i]  = a[i] - b[i];
@@ -437,3 +443,8 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
     }
   }
 }
+
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch
