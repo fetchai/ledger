@@ -102,6 +102,14 @@ template class Blas<float, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
+template class Blas<fetch::fixed_point::FixedPoint<16, 16>, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
+                    platform::Parallelisation::NOT_PARALLEL>;
+
+template class Blas<fetch::fixed_point::FixedPoint<32, 32>, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
+                    platform::Parallelisation::NOT_PARALLEL>;
+
 }  // namespace linalg
 }  // namespace math
 }  // namespace fetch
