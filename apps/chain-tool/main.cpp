@@ -886,6 +886,8 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
 
 int main(int argc, char **argv)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   bool print_missing_txs{false};
   bool create_trimmed_tx_store{false};
   bool create_repaired_block_store{false};
