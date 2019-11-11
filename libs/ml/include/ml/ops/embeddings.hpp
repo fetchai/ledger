@@ -57,10 +57,7 @@ public:
 
   explicit Embeddings(SPType const &sp)
     : Weights<T>(sp)
-  {
-    trailing_indices1_ = sp.trailing_indices1;
-    trailing_indices2_ = sp.trailing_indices2;
-  }
+  {}
 
   ~Embeddings() override = default;
 
@@ -71,9 +68,6 @@ public:
 
     auto cast_sp = std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(sp);
     *cast_sp     = *(std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(w_sp));
-
-    sp->trailing_indices1 = trailing_indices1_;
-    sp->trailing_indices2 = trailing_indices2_;
 
     return sp;
   }
@@ -86,25 +80,20 @@ public:
 
     SizeType batch_size = inputs.front()->shape().at(1);
 
-    assert(output.shape().at(0) == this->data_->shape().at(0));
     assert(output.shape().at(1) == inputs.front()->shape().at(0));
+    assert(output.shape().at(0) == this->data_->shape().at(0));
     assert(output.shape().at(2) == batch_size);
 
-    TensorType transposed_input = inputs.front()->Transpose();
-    auto       e_it             = transposed_input.begin();
-
-    for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
+    auto indices  = inputs.front()->shape().at(0);
+    auto input_it = inputs.front()->begin();
+    for (SizeType i{0}; i < indices; i++)
     {
       for (SizeType n{0}; n < batch_size; n++)
       {
-        trailing_indices1_.at(0) = i;
-        trailing_indices1_.at(1) = n;
-        auto embedding_view      = output.View(trailing_indices1_);
-        trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
-        auto output_view         = this->data_->View(trailing_indices2_);
-
-        embedding_view.Assign(output_view);
-        ++e_it;
+        auto output_view    = output.View({i, n});
+        auto embedding_view = this->data_->View(static_cast<SizeType>(*input_it));
+        output_view.Assign(embedding_view);
+        ++input_it;
       }
     }
   }
@@ -119,22 +108,18 @@ public:
     {
       SizeType batch_size = inputs.front()->shape(1);
 
-      TensorType transposed_input = inputs.front()->Transpose();
-      auto       e_it             = transposed_input.begin();
-      for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
+      auto indices  = inputs.front()->shape().at(0);
+      auto input_it = inputs.front()->begin();
+
+      for (SizeType i{0}; i < indices; i++)
       {
         for (SizeType n{0}; n < batch_size; n++)
         {
-
-          trailing_indices1_.at(0) = i;
-          trailing_indices1_.at(1) = n;
-          auto error_view          = error_signal.View(trailing_indices1_);
-          trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
+          auto error_view    = error_signal.View({i, n});
+          auto gradient_view = this->gradient_accumulation_->View(static_cast<SizeType>(*input_it));
 
           // Mark update
-          this->updated_rows_.insert(trailing_indices2_.at(0));
-
-          auto gradient_view = this->gradient_accumulation_->View(trailing_indices2_);
+          this->updated_rows_.insert(static_cast<SizeType>(*input_it));
 
           auto error_view_it    = error_view.cbegin();
           auto gradient_view_it = gradient_view.begin();
@@ -144,9 +129,10 @@ public:
             ++error_view_it;
             ++gradient_view_it;
           }
-          ++e_it;
+          ++input_it;
         }
       }
+
       this->reset_gradients_ = true;
     }
 
@@ -155,8 +141,9 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    std::vector<SizeType> output_shape = {this->data_->shape().at(0), inputs.front()->shape().at(0),
-                                          inputs.front()->shape().at(1)};
+    auto                  feature_size = this->data_->shape().at(0);
+    std::vector<SizeType> output_shape{feature_size, inputs.front()->shape().at(0),
+                                       inputs.front()->shape().at(1)};
     return output_shape;
   }
 
@@ -165,10 +152,6 @@ public:
     return OpType::OP_EMBEDDINGS;
   }
   static constexpr char const *DESCRIPTOR = "Embedding";
-
-private:
-  std::vector<SizeType> trailing_indices1_ = {0, 0};
-  std::vector<SizeType> trailing_indices2_ = {0};
 };
 
 }  // namespace ops
