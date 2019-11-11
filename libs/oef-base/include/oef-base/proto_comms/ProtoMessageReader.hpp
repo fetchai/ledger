@@ -50,15 +50,15 @@ public:
   CompleteNotification onComplete;
   ErrorNotification    onError;
 
-  void SetEndianness(Endianness newstate);
+  void SetEndianness(fetch::oef::base::Endianness newstate);
 
 protected:
 private:
   std::weak_ptr<ProtoMessageEndpoint<TXType, ProtoMessageReader, ProtoMessageSender>> endpoint;
 
-  void setDetectedEndianness(Endianness newstate);
+  void setDetectedEndianness(fetch::oef::base::Endianness newstate);
 
-  Endianness endianness = DUNNO;
+  fetch::oef::base::Endianness endianness = fetch::oef::base::Endianness::DUNNO;
 
   ProtoMessageReader(const ProtoMessageReader &other) = delete;
   ProtoMessageReader &operator=(const ProtoMessageReader &other)  = delete;

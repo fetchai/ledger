@@ -30,7 +30,7 @@ class SearchQueryTask
                                   fetch::oef::pb::SearchQuery, SearchQueryTask>
 {
 public:
-  using StateResult   = StateMachineTask<SearchQueryTask>::Result;
+  using StateResult   = fetch::oef::base::StateMachineTask<SearchQueryTask>::Result;
   using IN_PROTO      = fetch::oef::pb::AgentSearch;
   using OUT_PROTO     = fetch::oef::pb::Server_AgentMessage;
   using REQUEST_PROTO = fetch::oef::pb::SearchQuery;
@@ -43,7 +43,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "SearchQueryTask";
 
-  std::shared_ptr<Task> get_shared() override
+  std::shared_ptr<fetch::oef::base::Task> get_shared() override
   {
     return shared_from_this();
   }

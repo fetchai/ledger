@@ -75,7 +75,7 @@ TEST_F(StateTests, AddressSerialisationTest)
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const addr = res.Get<Ptr<Address>>();
-  EXPECT_EQ("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB", addr->AsString()->str);
+  EXPECT_EQ("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB", addr->AsString()->string());
 }
 
 TEST_F(StateTests, MapDeserializeTest)
@@ -236,9 +236,9 @@ TEST_F(StateTests, test_serialisation_of_complex_type)
   auto retval{output.Get<Ptr<IArray>>()};
   ASSERT_TRUE(static_cast<bool>(retval));
   ASSERT_EQ(int32_t{3}, retval->Count());
-  EXPECT_EQ(std::string{"aaa"}, retval->PopFrontOne().Get<Ptr<String>>()->str);
-  EXPECT_EQ(std::string{"bbb"}, retval->PopFrontOne().Get<Ptr<String>>()->str);
-  EXPECT_EQ(std::string{"ccc"}, retval->PopFrontOne().Get<Ptr<String>>()->str);
+  EXPECT_EQ(std::string{"aaa"}, retval->PopFrontOne().Get<Ptr<String>>()->string());
+  EXPECT_EQ(std::string{"bbb"}, retval->PopFrontOne().Get<Ptr<String>>()->string());
+  EXPECT_EQ(std::string{"ccc"}, retval->PopFrontOne().Get<Ptr<String>>()->string());
 }
 
 template <typename T>
@@ -329,12 +329,12 @@ TEST_F(StateTests, test_serialisation_of_complex_type_2)
   Ptr<Array<Ptr<IArray>>> arr_1_1;
   ArrayFromVariant(arr_1->PopFrontOne(), int32_t{2}, arr_1_1);
 
-  EXPECT_EQ(std::string{"aaa"}, arr_0_0->PopFrontOne().Get<Ptr<String>>()->str);
-  EXPECT_EQ(std::string{"bbb"}, arr_0_1->PopFrontOne().Get<Ptr<String>>()->str);
-  EXPECT_EQ(std::string{"ccc"}, arr_1_0->PopFrontOne().Get<Ptr<String>>()->str);
-  EXPECT_EQ(std::string{"ddd"}, arr_1_0->PopFrontOne().Get<Ptr<String>>()->str);
-  EXPECT_EQ(std::string{"eee"}, arr_1_1->PopFrontOne().Get<Ptr<String>>()->str);
-  EXPECT_EQ(std::string{"fff"}, arr_1_1->PopFrontOne().Get<Ptr<String>>()->str);
+  EXPECT_EQ(std::string{"aaa"}, arr_0_0->PopFrontOne().Get<Ptr<String>>()->string());
+  EXPECT_EQ(std::string{"bbb"}, arr_0_1->PopFrontOne().Get<Ptr<String>>()->string());
+  EXPECT_EQ(std::string{"ccc"}, arr_1_0->PopFrontOne().Get<Ptr<String>>()->string());
+  EXPECT_EQ(std::string{"ddd"}, arr_1_0->PopFrontOne().Get<Ptr<String>>()->string());
+  EXPECT_EQ(std::string{"eee"}, arr_1_1->PopFrontOne().Get<Ptr<String>>()->string());
+  EXPECT_EQ(std::string{"fff"}, arr_1_1->PopFrontOne().Get<Ptr<String>>()->string());
 }
 
 TEST_F(StateTests, test_serialisation_of_structured_data)

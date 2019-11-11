@@ -64,7 +64,7 @@ public:
     return true;
   }
 
-  ExitState run() override
+  fetch::oef::base::ExitState run() override
   {
     if (conv_task_ == nullptr)
     {
@@ -151,17 +151,17 @@ public:
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Sleeping (id=", this->GetTaskId(),
                        "), will be woken by conv task ", conv_task_->GetTaskId());
-        return ExitState ::DEFER;
+        return fetch::oef::base::ExitState ::DEFER;
       }
     }
     if (!task_done.load())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Spurious wakeup. Sleeping (id=", this->GetTaskId(),
                      "), will be woken by conv task ", conv_task_->GetTaskId());
-      return ExitState ::DEFER;
+      return fetch::oef::base::ExitState ::DEFER;
     }
     FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping (id=", this->GetTaskId(), ")");
-    return ExitState ::COMPLETE;
+    return fetch::oef::base::ExitState ::COMPLETE;
   }
 
   void SetMessageHandler(MessageHandler mH) override
