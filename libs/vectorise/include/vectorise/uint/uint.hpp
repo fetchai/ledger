@@ -17,8 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/array.hpp"
-#include "core/serializers/group_definitions.hpp"
+#include "vectorise/containers/array.hpp"
 #include "meta/has_index.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
@@ -639,8 +638,6 @@ constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
   terms[2] = products[0][2] + products[1][1] + products[2][0] + carry;
   carry    = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
   terms[3] = products[0][3] + products[1][2] + products[2][1] + products[3][0] + carry;
-  // TODO(?): decide what to do with overflow if carry > 0
-  // carry    = static_cast<WideType>(terms[3] >> WIDE_ELEMENT_SIZE);
 
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -1122,39 +1119,5 @@ inline double ToDouble(UInt<256> const &x)
 }
 
 }  // namespace vectorise
-
-namespace serializers {
-template <typename D, uint16_t S>
-struct ArraySerializer<vectorise::UInt<S>, D>
-{
-public:
-  using Type       = vectorise::UInt<S>;
-  using DriverType = D;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &u)
-  {
-    // TODO(issue 1425): Add WideType size to serialisation
-    auto array = array_constructor(u.elements());
-    for (std::size_t i = 0; i < u.elements(); i++)
-    {
-      array.Append(u.ElementAt(i));
-    }
-  }
-
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &u)
-  {
-    if (array.size() != u.elements())
-    {
-      // TODO(?): Throw
-    }
-    for (std::size_t i = 0; i < u.elements(); i++)
-    {
-      array.GetNextValue(u.ElementAt(i));
-    }
-  }
-};
-}  // namespace serializers
 
 }  // namespace fetch
