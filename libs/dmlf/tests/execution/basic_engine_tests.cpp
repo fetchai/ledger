@@ -1442,7 +1442,7 @@ TEST(BasicVmEngineDmlfTests, AddFixed)
       "add", "state", "add", Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
   EXPECT_TRUE(result.succeeded());
   // std::cout << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
+  EXPECT_EQ(result.output().As<fp64_t>(), 10.0);
 }
 
 TEST(BasicVmEngineDmlfTests, TrueIntToFloatCompare)
