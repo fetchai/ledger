@@ -112,6 +112,8 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 
   FETCH_LOG_INFO(LOGGING_NAME, "Loaded file contents.");
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Buffer is: ", buffer);
+
   if (!buffer.empty())
   {
     try
