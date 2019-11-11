@@ -292,15 +292,5 @@ StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray co
   return state().Write(std::string{key}, data.pointer(), data.size());
 }
 
-class ContractContextAttacher
-{
-public:
-  ContractContextAttacher(Contract &contract, ContractContext context);
-  ~ContractContextAttacher();
-
-private:
-  Contract &contract_;
-};
-
 }  // namespace ledger
 }  // namespace fetch

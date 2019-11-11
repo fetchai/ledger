@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "vm/address.hpp"
 #include "vm/module.hpp"
 

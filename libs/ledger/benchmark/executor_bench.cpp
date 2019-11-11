@@ -22,6 +22,7 @@
 #include "crypto/ecdsa.hpp"
 #include "in_memory_storage.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/identifier.hpp"
