@@ -301,7 +301,7 @@ void LazyAdamOptimiser<T>::ResetCache()
 
 namespace serializers {
 /**
- * serializer for SGDOptimiser
+ * serializer for LazyAdamOptimiser
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
