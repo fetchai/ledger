@@ -32,7 +32,7 @@ namespace ledger {
 bool Block::operator==(Block const &rhs) const
 {
   // Invalid to compare blocks with no block hash
-  return (!this->body.hash.empty()) && (this->body.hash == rhs.body.hash);
+  return (!this->hash.empty()) && (this->hash == rhs.hash);
 }
 
 /**
@@ -44,7 +44,7 @@ std::size_t Block::GetTransactionCount() const
 {
   std::size_t count{0};
 
-  for (auto const &slice : body.slices)
+  for (auto const &slice : slices)
   {
     count += slice.size();
   }
@@ -68,7 +68,7 @@ void Block::UpdateDigest()
 
   // Populate the merkle tree
   std::size_t index{0};
-  for (auto const &slice : body.slices)
+  for (auto const &slice : slices)
   {
     for (auto const &tx : slice)
     {
@@ -81,29 +81,29 @@ void Block::UpdateDigest()
 
   // Generate hash stream
   serializers::MsgPackSerializer buf;
-  buf << body.previous_hash << body.merkle_hash << body.block_number << body.miner
-      << body.log2_num_lanes << body.timestamp << tx_merkle_tree.root() << nonce;
+  buf << previous_hash << merkle_hash << block_number << miner << log2_num_lanes << timestamp
+      << tx_merkle_tree.root() << nonce;
 
   // Generate the hash
-  crypto::SHA256 hash;
-  hash.Reset();
-  hash.Update(buf.data());
-  body.hash = hash.Final();
+  crypto::SHA256 hash_builder;
+  hash_builder.Reset();
+  hash_builder.Update(buf.data());
+  hash = hash_builder.Final();
 
-  proof.SetHeader(body.hash);
+  proof.SetHeader(hash);
 }
 
 void Block::UpdateTimestamp()
 {
   if (!IsGenesis())
   {
-    body.timestamp = GetTime(clock_);
+    timestamp = GetTime(clock_);
   }
 }
 
 bool Block::IsGenesis() const
 {
-  return body.previous_hash == chain::ZERO_HASH;
+  return previous_hash == chain::ZERO_HASH;
 }
 
 }  // namespace ledger

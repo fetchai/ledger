@@ -82,12 +82,12 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
 
     block->nonce               = ++block_count_;
     block->total_weight        = from->total_weight + block->weight;
-    block->body.previous_hash  = from->body.hash;
-    block->body.merkle_hash    = merkle_root;
-    block->body.block_number   = from->body.block_number + 1u;
-    block->body.miner          = chain::Address{ident};
-    block->body.log2_num_lanes = log2_num_lanes_;
-    block->body.slices.resize(num_slices_);
+    block->previous_hash  = from->hash;
+    block->merkle_hash    = merkle_root;
+    block->block_number   = from->block_number + 1u;
+    block->miner          = chain::Address{ident};
+    block->log2_num_lanes = log2_num_lanes_;
+    block->slices.resize(num_slices_);
 
     block->UpdateTimestamp();
 
@@ -96,11 +96,11 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
   }
   else
   {
-    // update the previous hash
-    block->body.previous_hash = chain::ZERO_HASH;
-    block->body.hash          = chain::GENESIS_DIGEST;
-    block->body.merkle_hash   = chain::GENESIS_MERKLE_ROOT;
-    block->body.miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
+    // update the hashes
+    block->previous_hash = chain::ZERO_HASH;
+    block->hash          = chain::GENESIS_DIGEST;
+    block->merkle_hash   = chain::GENESIS_MERKLE_ROOT;
+    block->miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
     block->UpdateTimestamp();
   }
 

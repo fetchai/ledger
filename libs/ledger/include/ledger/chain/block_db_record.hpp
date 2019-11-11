@@ -34,7 +34,7 @@ struct BlockDbRecord
 
   Block::Hash hash() const
   {
-    return block.body.hash;
+    return block.hash;
   }
 };
 

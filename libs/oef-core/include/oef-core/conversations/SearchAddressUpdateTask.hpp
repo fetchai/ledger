@@ -31,7 +31,7 @@ class SearchAddressUpdateTask
                                   SearchAddressUpdateTask>
 {
 public:
-  using StateResult   = StateMachineTask<SearchAddressUpdateTask>::Result;
+  using StateResult   = fetch::oef::base::StateMachineTask<SearchAddressUpdateTask>::Result;
   using IN_PROTO      = Address;
   using OUT_PROTO     = fetch::oef::pb::Server_AgentMessage;
   using REQUEST_PROTO = fetch::oef::pb::Update;
@@ -43,7 +43,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "SearchAddressUpdateTask";
 
-  std::shared_ptr<Task> get_shared() override
+  std::shared_ptr<fetch::oef::base::Task> get_shared() override
   {
     return shared_from_this();
   }

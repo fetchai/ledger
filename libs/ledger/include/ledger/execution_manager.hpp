@@ -62,7 +62,7 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  ScheduleStatus Execute(Block::Body const &block) override;
+  ScheduleStatus Execute(Block const &block) override;
   void           SetLastProcessedBlock(Digest hash) override;
   Digest         LastProcessedBlock() const override;
   State          GetState() override;
@@ -147,7 +147,7 @@ private:
 
   void MonitorThreadEntrypoint();
 
-  bool PlanExecution(Block::Body const &block);
+  bool PlanExecution(Block const &block);
   void DispatchExecution(ExecutionItem &item);
 };
 
