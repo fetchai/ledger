@@ -116,7 +116,9 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
   {
     try
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "parsing");
       document.Parse(buffer);
+      FETCH_LOG_INFO(LOGGING_NAME, "parsed");
 
       success = true;
     }
@@ -164,7 +166,9 @@ void GenesisFileCreator::LoadFile(std::string const &name)
       {
         try
         {
+          FETCH_LOG_INFO(LOGGING_NAME, "loading con.");
           LoadConsensus(doc["consensus"]);
+          FETCH_LOG_INFO(LOGGING_NAME, "loaded con.");
         }
         catch (std::runtime_error const &ex)
         {
@@ -178,7 +182,9 @@ void GenesisFileCreator::LoadFile(std::string const &name)
 
       try
       {
+          FETCH_LOG_INFO(LOGGING_NAME, "loading accts.");
         LoadState(doc["accounts"]);
+          FETCH_LOG_INFO(LOGGING_NAME, "loaded accts.");
       }
       catch (std::runtime_error const &ex)
       {
