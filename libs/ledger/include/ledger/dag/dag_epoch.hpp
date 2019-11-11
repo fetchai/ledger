@@ -34,9 +34,8 @@ struct DAGEpoch
   using ConstByteArray = byte_array::ConstByteArray;
 
   DAGEpoch()
-  : hash{{}, 'E'}
-  {
-  }
+    : hash{{}, 'E'}
+  {}
 
   uint64_t block_number{0};
 

@@ -62,10 +62,10 @@ struct DAGTip
     id                  = ids++;
   }
 
-  DAGHash        dag_node_reference;  // Refers to a DagNode that has no references to it
-  uint64_t       oldest_epoch_referenced = 0;
-  uint64_t       weight                  = 0;
-  uint64_t       id                      = 0;
+  DAGHash  dag_node_reference;  // Refers to a DagNode that has no references to it
+  uint64_t oldest_epoch_referenced = 0;
+  uint64_t weight                  = 0;
+  uint64_t id                      = 0;
 };
 
 /**
@@ -185,7 +185,7 @@ private:
   bool       NodeInvalidInternal(DAGNodePtr const &node);
   DAGNodePtr GetDAGNodeInternal(DAGHash const &hash, bool including_loose,
                                 bool &was_loose);  // const
-  void       TraverseFromTips(std::set<DAGHash> const &     tip_hashes,
+  void       TraverseFromTips(std::set<DAGHash> const &            tip_hashes,
                               std::function<void(NodeHash)> const &on_node,
                               std::function<bool(NodeHash)> const &terminating_condition);
   bool       GetEpochFromStorage(std::string const &identifier, DAGEpoch &epoch);

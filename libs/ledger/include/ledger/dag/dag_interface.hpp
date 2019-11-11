@@ -69,11 +69,11 @@ public:
   virtual std::vector<DAGNode> GetLatest(bool previous_epoch_only) = 0;
 
   // Functions used for syncing
-  virtual std::vector<DAGNode> GetRecentlyAdded()                                    = 0;
-  virtual MissingTXs           GetRecentlyMissing()                                  = 0;
+  virtual std::vector<DAGNode> GetRecentlyAdded()                             = 0;
+  virtual MissingTXs           GetRecentlyMissing()                           = 0;
   virtual bool                 GetDAGNode(DAGHash const &hash, DAGNode &node) = 0;
   virtual bool                 GetWork(DAGHash const &hash, Work &work)       = 0;
-  virtual bool                 AddDAGNode(DAGNode node)                              = 0;
+  virtual bool                 AddDAGNode(DAGNode node)                       = 0;
 };
 
 }  // namespace ledger
