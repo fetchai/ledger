@@ -52,10 +52,8 @@ public:
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
            std::string const &name      = "SkipGram",
            WeightsInit        init_mode = WeightsInit::XAVIER_FAN_OUT)
-    //    : in_size_(in_size)
     : out_size_(out)
     , vocab_size_(vocab_size)
-  //    , embedding_size_(embedding_size)
   {
 
     // define input and context placeholders
@@ -104,11 +102,9 @@ public:
     *sg_ptr2     = *sg_ptr1;
 
     // assign layer specific params
-    //    ret->in_size        = in_size_;
     ret->out_size   = out_size_;
     ret->embed_in   = embed_in_;
     ret->vocab_size = vocab_size_;
-    //    ret->embedding_size = embedding_size_;
 
     return ret;
   }
@@ -116,11 +112,9 @@ public:
   void SetOpSaveableParams(SPType const &sp)
   {
     // assign layer specific params
-    //    in_size_        = sp.in_size;
     out_size_   = sp.out_size;
     embed_in_   = sp.embed_in;
     vocab_size_ = sp.vocab_size;
-    //    embedding_size_ = sp.embedding_size;
   }
 
   std::shared_ptr<ops::Embeddings<TensorType>> GetEmbeddings(
@@ -148,10 +142,8 @@ public:
 
 private:
   std::string embed_in_ = "";
-  //  SizeType    in_size_{};
-  SizeType out_size_{};
-  SizeType vocab_size_{};
-  //  SizeType    embedding_size_{};
+  SizeType    out_size_{};
+  SizeType    vocab_size_{};
 
   void Initialise(TensorType &weights, WeightsInit init_mode, SizeType dim_1_size,
                   SizeType dim_2_size)

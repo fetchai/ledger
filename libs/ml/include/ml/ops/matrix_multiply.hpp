@@ -331,15 +331,18 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
   {
     if (!transpose_a_ && !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(0)->shape().at(2)};
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
+                      inputs.at(0)->shape().at(2)};
     }
     if (transpose_a_ & !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1), inputs.at(0)->shape().at(2)};
+      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1),
+                      inputs.at(0)->shape().at(2)};
     }
     else
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0), inputs.at(0)->shape().at(2)};
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0),
+                      inputs.at(0)->shape().at(2)};
     }
   }
   else
@@ -347,15 +350,18 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
     // 2D @ 3D broadcast matmul
     if (!transpose_a_ && !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
+                      inputs.at(1)->shape().at(2)};
     }
     if (transpose_a_ & !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
+      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1),
+                      inputs.at(1)->shape().at(2)};
     }
     else
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0), inputs.at(1)->shape().at(2)};
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0),
+                      inputs.at(1)->shape().at(2)};
     }
   }
 
