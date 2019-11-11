@@ -27,14 +27,14 @@
 namespace fetch {
 namespace semanticsearch {
 
-class VocabularyAbstractField
+class AbstractSchemaField
 {
 public:
   using VocabularyInstancePtr = std::shared_ptr<VocabularyInstance>;
-  using ModelInterface        = std::shared_ptr<VocabularyAbstractField>;
+  using ModelInterface        = std::shared_ptr<AbstractSchemaField>;
   using FieldVisitor = std::function<void(std::string, std::string, VocabularyInstancePtr)>;
 
-  virtual ~VocabularyAbstractField() = default;
+  virtual ~AbstractSchemaField() = default;
 
   /// Setup
   /// @{

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/index/in_memory_db_index.hpp"
+#include "semanticsearch/schema/object_schema_field.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
-#include "semanticsearch/schema/vocabulary_object_field.hpp"
 
 #include <string>
 
@@ -31,7 +31,7 @@ class VocabularyAdvertisement
 public:
   using Vocabulary          = std::shared_ptr<VocabularyInstance>;
   using Index               = uint64_t;
-  using VocabularySchemaPtr = std::shared_ptr<VocabularyObjectField>;
+  using VocabularySchemaPtr = std::shared_ptr<ObjectSchemaField>;
   using AgentId             = uint64_t;
   using AgentIdSet          = std::shared_ptr<std::set<AgentId>>;
 

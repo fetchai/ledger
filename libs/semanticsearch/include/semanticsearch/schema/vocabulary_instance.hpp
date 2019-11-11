@@ -75,8 +75,8 @@ private:
   /// Friends
   /// @{
   template <typename T>
-  friend class VocabularyTypedField;
-  friend class VocabularyObjectField;
+  friend class TypedSchemaField;
+  friend class ObjectSchemaField;
   /// @}
 };
 

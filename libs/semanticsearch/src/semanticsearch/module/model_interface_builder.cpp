@@ -63,7 +63,7 @@ ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &name,
 
 ModelInterfaceBuilder ModelInterfaceBuilder::Vocabulary(std::string const &name)
 {
-  auto new_model = VocabularyObjectField::New();
+  auto new_model = ObjectSchemaField::New();
   model_->Insert(name, new_model);
 
   return ModelInterfaceBuilder(new_model, factory_);

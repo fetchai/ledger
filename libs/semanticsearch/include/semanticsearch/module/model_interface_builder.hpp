@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/vocabulary_abstract_field.hpp"
-#include "semanticsearch/schema/vocabulary_object_field.hpp"
+#include "semanticsearch/schema/abstract_schema_field.hpp"
+#include "semanticsearch/schema/object_schema_field.hpp"
 
 #include <memory>
 
@@ -30,8 +30,8 @@ class SemanticSearchModule;
 class ModelInterfaceBuilder
 {
 public:
-  using ModelField          = std::shared_ptr<VocabularyAbstractField>;
-  using VocabularySchemaPtr = std::shared_ptr<VocabularyObjectField>;
+  using ModelField          = std::shared_ptr<AbstractSchemaField>;
+  using VocabularySchemaPtr = std::shared_ptr<ObjectSchemaField>;
 
   explicit ModelInterfaceBuilder(VocabularySchemaPtr   model   = nullptr,
                                  SemanticSearchModule *factory = nullptr);

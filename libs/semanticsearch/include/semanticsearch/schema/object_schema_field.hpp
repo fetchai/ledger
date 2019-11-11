@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/index/base_types.hpp"
-#include "semanticsearch/schema/vocabulary_abstract_field.hpp"
+#include "semanticsearch/schema/abstract_schema_field.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
 
 #include <functional>
@@ -27,22 +27,22 @@
 
 namespace fetch {
 namespace semanticsearch {
-class VocabularyObjectField : public VocabularyAbstractField
+class ObjectSchemaField : public AbstractSchemaField
 {
 public:
   using Vocabulary = std::shared_ptr<VocabularyInstance>;
   using Type       = std::map<std::string, Vocabulary>;
 
-  using ModelInterface = std::shared_ptr<VocabularyAbstractField>;
-  using FieldModel     = std::shared_ptr<VocabularyObjectField>;
+  using ModelInterface = std::shared_ptr<AbstractSchemaField>;
+  using FieldModel     = std::shared_ptr<ObjectSchemaField>;
   using ModelMap       = std::map<std::string, ModelInterface>;
   using FieldVisitor   = std::function<void(std::string, std::string, Vocabulary)>;
-  VocabularyObjectField(VocabularyObjectField const &) = delete;
-  VocabularyObjectField &operator=(VocabularyObjectField const &) = delete;
+  ObjectSchemaField(ObjectSchemaField const &) = delete;
+  ObjectSchemaField &operator=(ObjectSchemaField const &) = delete;
 
   static FieldModel New(ModelMap m = {})
   {
-    FieldModel ret = FieldModel(new VocabularyObjectField(std::move(m)));
+    FieldModel ret = FieldModel(new ObjectSchemaField(std::move(m)));
 
     return ret;
   }
@@ -172,8 +172,7 @@ public:
       return false;
     }
 
-    VocabularyObjectField const &other =
-        *reinterpret_cast<VocabularyObjectField const *>(optr.get());
+    ObjectSchemaField const &other = *reinterpret_cast<ObjectSchemaField const *>(optr.get());
 
     if (array_.size() != other.array_.size())
     {
@@ -200,7 +199,7 @@ public:
   }
 
 private:
-  explicit VocabularyObjectField(ModelMap m)
+  explicit ObjectSchemaField(ModelMap m)
     : array_(std::move(m))
   {
     rank_ = 0;

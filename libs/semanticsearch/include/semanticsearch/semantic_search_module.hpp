@@ -25,7 +25,7 @@
 #include "semanticsearch/module/vector_to_arguments.hpp"
 #include "semanticsearch/query/abstract_query_variant.hpp"
 #include "semanticsearch/schema/semantic_reducer.hpp"
-#include "semanticsearch/schema/vocabulary_typed_field.hpp"
+#include "semanticsearch/schema/typed_schema_field.hpp"
 
 #include <typeindex>
 #include <unordered_map>
@@ -48,8 +48,8 @@ public:
     return SharedSemanticSearchModule(new SemanticSearchModule(std::move(advertisement_register)));
   }
 
-  using ModelField          = std::shared_ptr<VocabularyAbstractField>;
-  using VocabularySchemaPtr = std::shared_ptr<VocabularyObjectField>;
+  using ModelField          = std::shared_ptr<AbstractSchemaField>;
+  using VocabularySchemaPtr = std::shared_ptr<ObjectSchemaField>;
   using Allocator           = std::function<void()>;
   using AgentId             = AgentDirectory::AgentId;
 
@@ -58,11 +58,12 @@ public:
 
   template <typename T>
   void RegisterType(std::string const &name, bool hidden = false,
-                    SemanticReducer cdr = SemanticReducer{})
+                    SemanticReducer cdr = SemanticReducer{
+                        "unknown"})  // TODO: Add over loaded type that sets reducer uid
   {
     if (!hidden)
     {
-      auto instance = VocabularyTypedField<T>::New();
+      auto instance = TypedSchemaField<T>::New();
       instance->SetSemanticReducer(std::move(cdr));
       types_[name] = instance;
     }
@@ -77,7 +78,7 @@ public:
 
   ModelInterfaceBuilder NewModel(std::string const &name)
   {
-    auto model = VocabularyObjectField::New();
+    auto model = ObjectSchemaField::New();
     advertisement_register_->AddModel(name, model);
     types_[name] = model;
     return ModelInterfaceBuilder{model, this};
@@ -98,7 +99,7 @@ public:
 
   ModelInterfaceBuilder NewProxy()
   {
-    auto model = VocabularyObjectField::New();
+    auto model = ObjectSchemaField::New();
     return ModelInterfaceBuilder{model, this};
   }
 

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/vocabulary_object_field.hpp"
+#include "semanticsearch/schema/object_schema_field.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -28,7 +28,7 @@ namespace semanticsearch {
 class AbstractVocabularyRegister
 {
 public:
-  using VocabularySchemaPtr              = std::shared_ptr<VocabularyObjectField>;
+  using VocabularySchemaPtr              = std::shared_ptr<ObjectSchemaField>;
   using SharedAbstractVocabularyRegister = std::shared_ptr<AbstractVocabularyRegister>;
 
   /// Constructors and destructors

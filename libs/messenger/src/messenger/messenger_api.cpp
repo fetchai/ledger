@@ -50,7 +50,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
   semantic_search_module_->RegisterFunction<ModelField, Int, Int>(
       "BoundedInteger", [](Int from, Int to) -> ModelField {
         auto            span = static_cast<uint64_t>(to - from);
-        SemanticReducer cdr;
+        SemanticReducer cdr{"BoundedIntegerReducer"};
         cdr.SetReducer<Int>(1, [span, from](Int x) {
           SemanticPosition ret;
           uint64_t         multiplier = uint64_t(-1) / span;
@@ -61,7 +61,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
 
         cdr.SetValidator<Int>([from, to](Int x) { return (from <= x) && (x <= to); });
 
-        auto instance = VocabularyTypedField<Int>::New();
+        auto instance = TypedSchemaField<Int>::New();
         instance->SetSemanticReducer(cdr);
 
         return instance;
@@ -70,7 +70,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
   semantic_search_module_->RegisterFunction<ModelField, Float, Float>(
       "BoundedFloat", [](Float from, Float to) -> ModelField {
         auto            span = static_cast<Float>(to - from);
-        SemanticReducer cdr;
+        SemanticReducer cdr{"BoundedFloatReducer"};
         cdr.SetReducer<Float>(1, [span, from](Float x) {
           SemanticPosition ret;
 
@@ -82,7 +82,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
 
         cdr.SetValidator<Float>([from, to](Float x) { return (from <= x) && (x <= to); });
 
-        auto instance = VocabularyTypedField<Float>::New();
+        auto instance = TypedSchemaField<Float>::New();
         instance->SetSemanticReducer(cdr);
 
         return instance;

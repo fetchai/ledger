@@ -59,7 +59,7 @@ public:
   using SemanticPosition         = semanticsearch::SemanticPosition;
 
   template <typename T>
-  using VocabularyTypedField = semanticsearch::VocabularyTypedField<T>;
+  using TypedSchemaField = semanticsearch::TypedSchemaField<T>;
 
   MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface &mailbox);
 

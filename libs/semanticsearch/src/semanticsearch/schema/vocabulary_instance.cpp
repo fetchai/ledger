@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/vocabulary_register.hpp"
+#include "semanticsearch/schema/abstract_vocabulary_register.hpp"
 
 #include <cassert>
 

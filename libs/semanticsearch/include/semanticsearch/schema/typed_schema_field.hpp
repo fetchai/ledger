@@ -18,34 +18,34 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/index/base_types.hpp"
+#include "semanticsearch/schema/abstract_schema_field.hpp"
 #include "semanticsearch/schema/semantic_reducer.hpp"
-#include "semanticsearch/schema/vocabulary_abstract_field.hpp"
 #include <functional>
 
 namespace fetch {
 namespace semanticsearch {
 
 template <typename T>
-class VocabularyTypedField : public VocabularyAbstractField
+class TypedSchemaField : public AbstractSchemaField
 {
 public:
   using Type         = T;
-  using FieldModel   = std::shared_ptr<VocabularyTypedField>;
+  using FieldModel   = std::shared_ptr<TypedSchemaField>;
   using Variant      = std::shared_ptr<VocabularyInstance>;
   using FieldVisitor = std::function<void(std::string, std::string, VocabularyInstancePtr)>;
 
   ///
   /// @{
-  VocabularyTypedField()                             = delete;
-  VocabularyTypedField(VocabularyTypedField const &) = delete;
-  VocabularyTypedField &operator=(VocabularyTypedField const &) = delete;
+  TypedSchemaField()                         = delete;
+  TypedSchemaField(TypedSchemaField const &) = delete;
+  TypedSchemaField &operator=(TypedSchemaField const &) = delete;
   /// @}
 
-  ~VocabularyTypedField() override = default;
+  ~TypedSchemaField() override = default;
 
   static FieldModel New()
   {
-    FieldModel ret = FieldModel(new VocabularyTypedField<T>(std::type_index(typeid(T))));
+    FieldModel ret = FieldModel(new TypedSchemaField<T>(std::type_index(typeid(T))));
     return ret;
   }
 
@@ -104,11 +104,11 @@ public:
   }
 
 private:
-  explicit VocabularyTypedField(std::type_index type)
+  explicit TypedSchemaField(std::type_index type)
     : type_{type}
   {}
 
-  SemanticReducer constrained_data_reducer_;
+  SemanticReducer constrained_data_reducer_{""};
   std::type_index type_;
   int             rank_{0};
 };
