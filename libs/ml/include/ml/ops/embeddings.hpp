@@ -154,36 +154,33 @@ public:
 
   void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows) override
   {
-    if (!this->value_frozen_)
+    // Normal apply
+    // if number_of_rows_to_update*sparsity_threshold_ > total_rows
+    if (update_rows.empty() ||
+        update_rows.size() * sparsity_threshold_ > (this->gradient_accumulation_->shape().at(1)))
     {
-      this->ApplyRegularisation();
-
-      // Normal apply
-      if (update_rows.empty() ||
-          update_rows.size() > (this->gradient_accumulation_->shape().at(1) / 4))
-      {
-        this->data_->InlineAdd(grad);
-      }
-      // Sparse apply
-      else
-      {
-        memory::Range range(0, std::size_t(this->data_->height()));
-
-        for (SizeType update_index : update_rows)
-        {
-          auto data_slice = this->data_->data().slice(this->data_->padded_height() * update_index,
-                                                      this->data_->padded_height());
-          auto gradient_slice =
-              grad.data().slice(grad.padded_height() * update_index, grad.padded_height());
-
-          data_slice.in_parallel().RangedApplyMultiple(
-              range, [](auto const &a, auto const &b, auto &c) { c = b + a; }, data_slice,
-              gradient_slice);
-        }
-      }
-
-      this->ResetGradients();
+      ApplyGradient(grad);
+      return;
     }
+
+    // Sparse apply
+    // if number_of_rows_to_update*sparsity_threshold_ <= total_rows
+    memory::Range range(0, std::size_t(this->data_->height()));
+
+    for (SizeType update_index : update_rows)
+    {
+      auto data_slice = this->data_->data().slice(this->data_->padded_height() * update_index,
+                                                  this->data_->padded_height());
+      auto gradient_slice =
+          grad.data().slice(grad.padded_height() * update_index, grad.padded_height());
+
+      // Parallel addition
+      data_slice.in_parallel().RangedApplyMultiple(
+          range, [](auto const &a, auto const &b, auto &c) { c = b + a; }, data_slice,
+          gradient_slice);
+    }
+
+    this->ResetGradients();
   }
 
   void ApplyGradient(TensorType const &grad) override
@@ -210,8 +207,9 @@ public:
   static constexpr char const *DESCRIPTOR = "Embedding";
 
 private:
-  std::vector<SizeType> trailing_indices1_ = {0, 0};
-  std::vector<SizeType> trailing_indices2_ = {0};
+  std::vector<SizeType> trailing_indices1_  = {0, 0};
+  std::vector<SizeType> trailing_indices2_  = {0};
+  SizeType              sparsity_threshold_ = 4;
 };
 
 }  // namespace ops

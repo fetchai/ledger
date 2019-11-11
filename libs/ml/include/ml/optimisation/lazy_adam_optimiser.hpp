@@ -86,6 +86,9 @@ private:
   DataType beta2_t_;
   DataType epsilon_;
 
+  // ApplyGradientSparse if number_of_rows_to_update*sparsity_threshold_ <= total_rows
+  SizeType sparsity_threshold_ = 4;
+
   void ResetCache();
   void Init();
   void ApplyLogic(SizeType batch_size, TensorType &gradient_tensor, TensorType &momentum_tensor,
@@ -207,8 +210,9 @@ void LazyAdamOptimiser<T>::ApplyGradients(SizeType batch_size)
     rows.push_back(gradient_pair.second);
 
     // Normal ApplyGradient
+    // if number_of_rows_to_update*sparsity_threshold_ > total_rows
     if (rows.at(rows.size() - 1).empty() ||
-        rows.at(rows.size() - 1).size() > (gradient_pair.first.shape().at(1) / 4))
+        (rows.at(rows.size() - 1).size() * sparsity_threshold_) > gradient_pair.first.shape().at(1))
     {
       ApplyLogic(batch_size, *gradient_it, *momentum_it, *mt_it, *vt_it, *cached_weight_it,
                  (*trainable_it)->GetGradientsReferences());
@@ -217,6 +221,7 @@ void LazyAdamOptimiser<T>::ApplyGradients(SizeType batch_size)
     else
     {
       // Sparse apply gradient
+      // if number_of_rows_to_update*sparsity_threshold_ <= total_rows
 
       for (SizeType update_index : rows.at(rows.size() - 1))
       {
