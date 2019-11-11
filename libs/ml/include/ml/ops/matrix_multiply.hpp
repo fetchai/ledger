@@ -334,7 +334,7 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
       output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
                       inputs.at(0)->shape().at(2)};
     }
-    if (transpose_a_ & !transpose_b_)
+    else if (transpose_a_ & !transpose_b_)
     {
       output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1),
                       inputs.at(0)->shape().at(2)};
@@ -353,7 +353,7 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
       output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
                       inputs.at(1)->shape().at(2)};
     }
-    if (transpose_a_ & !transpose_b_)
+    else if (transpose_a_ & !transpose_b_)
     {
       output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1),
                       inputs.at(1)->shape().at(2)};

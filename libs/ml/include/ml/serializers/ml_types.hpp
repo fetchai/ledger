@@ -1468,22 +1468,18 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
   using Type       = ml::OpEmbeddingsSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const OP_CODE        = 1;
-  static uint8_t const BASE_CLASS     = 2;
-  static uint8_t const TRAILING_IND_1 = 3;
-  static uint8_t const TRAILING_IND_2 = 4;
+  static uint8_t const OP_CODE    = 1;
+  static uint8_t const BASE_CLASS = 2;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(4);
+    auto map = map_constructor(2);
     map.Append(OP_CODE, sp.op_type);
 
     // serialize parent class
     auto base_pointer = static_cast<ml::OpWeightsSaveableParams<TensorType> const *>(&sp);
     map.Append(BASE_CLASS, *base_pointer);
-    map.Append(TRAILING_IND_1, sp.trailing_index_1_);
-    map.Append(TRAILING_IND_2, sp.trailing_index_2_);
   }
 
   template <typename MapDeserializer>
@@ -1493,8 +1489,6 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
 
     auto base_pointer = static_cast<ml::OpWeightsSaveableParams<TensorType> *>(&sp);
     map.ExpectKeyGetValue(BASE_CLASS, *base_pointer);
-    map.ExpectKeyGetValue(TRAILING_IND_1, sp.trailing_index_1_);
-    map.ExpectKeyGetValue(TRAILING_IND_2, sp.trailing_index_2_);
   }
 };
 

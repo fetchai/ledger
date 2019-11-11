@@ -55,10 +55,7 @@ public:
 
   explicit Embeddings(SPType const &sp)
     : Weights<T>(sp)
-  {
-    trailing_index_1_ = sp.trailing_index_1_;
-    trailing_index_2_ = sp.trailing_index_2_;
-  }
+  {}
 
   ~Embeddings() override = default;
 
@@ -69,9 +66,6 @@ public:
 
     auto cast_sp = std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(sp);
     *cast_sp     = *(std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(w_sp));
-
-    sp->trailing_index_1_ = trailing_index_1_;
-    sp->trailing_index_2_ = trailing_index_2_;
 
     return sp;
   }
@@ -84,20 +78,21 @@ public:
 
     SizeType batch_size = inputs.front()->shape().at(1);
 
-    assert(inputs.front()->shape().at(0) == 1);
     assert(output.shape().at(1) == inputs.front()->shape().at(0));
     assert(output.shape().at(0) == this->data_->shape().at(0));
     assert(output.shape().at(2) == batch_size);
 
+    auto indices  = inputs.front()->shape().at(0);
     auto input_it = inputs.front()->begin();
-    for (SizeType n{0}; n < batch_size; n++)
+    for (SizeType i{0}; i < indices; i++)
     {
-      trailing_index_1_   = n;
-      trailing_index_2_   = static_cast<SizeType>(*input_it);
-      auto output_view    = output.View(trailing_index_1_);
-      auto embedding_view = this->data_->View(trailing_index_2_);
-      output_view.Assign(embedding_view);
-      ++input_it;
+      for (SizeType n{0}; n < batch_size; n++)
+      {
+        auto output_view    = output.View({i, n});
+        auto embedding_view = this->data_->View(static_cast<SizeType>(*input_it));
+        output_view.Assign(embedding_view);
+        ++input_it;
+      }
     }
   }
 
@@ -106,29 +101,31 @@ public:
   {
     assert(inputs.size() == 1);
     assert(inputs.front()->shape().size() == 2);
-    assert(inputs.front()->shape().at(0) == 1);
 
     if (!this->value_frozen_)
     {
       SizeType batch_size = inputs.front()->shape(1);
 
+      auto indices  = inputs.front()->shape().at(0);
       auto input_it = inputs.front()->begin();
-      for (SizeType n{0}; n < batch_size; n++)
-      {
-        trailing_index_1_  = n;
-        trailing_index_2_  = static_cast<SizeType>(*input_it);
-        auto error_view    = error_signal.View(trailing_index_1_);
-        auto gradient_view = this->gradient_accumulation_->View(trailing_index_2_);
 
-        auto error_view_it    = error_view.cbegin();
-        auto gradient_view_it = gradient_view.begin();
-        while (error_view_it.is_valid())
+      for (SizeType i{0}; i < indices; i++)
+      {
+        for (SizeType n{0}; n < batch_size; n++)
         {
-          *gradient_view_it += *error_view_it;
-          ++error_view_it;
-          ++gradient_view_it;
+          auto error_view    = error_signal.View({i, n});
+          auto gradient_view = this->gradient_accumulation_->View(static_cast<SizeType>(*input_it));
+
+          auto error_view_it    = error_view.cbegin();
+          auto gradient_view_it = gradient_view.begin();
+          while (error_view_it.is_valid())
+          {
+            *gradient_view_it += *error_view_it;
+            ++error_view_it;
+            ++gradient_view_it;
+          }
+          ++input_it;
         }
-        ++input_it;
       }
 
       this->reset_gradients_ = true;
@@ -150,10 +147,6 @@ public:
     return OpType::OP_EMBEDDINGS;
   }
   static constexpr char const *DESCRIPTOR = "Embedding";
-
-private:
-  SizeType trailing_index_1_ = 0;
-  SizeType trailing_index_2_ = 0;
 };
 
 }  // namespace ops
