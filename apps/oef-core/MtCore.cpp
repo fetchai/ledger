@@ -132,13 +132,13 @@ int MtCore::run()
   listeners =
       std::make_shared<OefListenerSet<IOefTaskFactory<OefAgentEndpoint>, OefAgentEndpoint>>();
   core    = std::make_shared<Core>();
-  auto ts = std::make_shared<Taskpool>();
+  auto ts = std::make_shared<fetch::oef::base::Taskpool>();
   ts->SetDefault();
   outbounds = std::make_shared<OutboundConversations>();
 
   std::function<void(void)>                      run_comms = std::bind(&Core::run, core.get());
   std::function<void(std::size_t thread_number)> run_tasks =
-      std::bind(&Taskpool::run, tasks.get(), _1);
+      std::bind(&fetch::oef::base::Taskpool::run, tasks.get(), _1);
 
   comms_runners.start(std::max(config_.comms_thread_count(), minimum_thread_count), run_comms);
   tasks_runners.start(std::max(config_.tasks_thread_count(), minimum_thread_count), run_tasks);
@@ -159,7 +159,7 @@ int MtCore::run()
     {
       ref_interval = 1000;
     }
-    std::shared_ptr<Task> refresher =
+    std::shared_ptr<fetch::oef::base::Task> refresher =
         std::make_shared<KarmaRefreshTask>(karma_policy.get(), ref_interval);
     refresher->submit();
   }
@@ -195,7 +195,7 @@ int MtCore::run()
   startListeners(karma_policy.get());
 
   Monitoring mon;
-  auto       mon_task = std::make_shared<MonitoringTask>();
+  auto       mon_task = std::make_shared<fetch::oef::base::MonitoringTask>();
   mon_task->submit();
 
   std::map<std::string, std::string> prometheus_names;

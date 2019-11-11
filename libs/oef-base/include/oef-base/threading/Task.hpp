@@ -23,6 +23,10 @@
 
 #include "oef-base/threading/ExitState.hpp"
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 class Taskpool;
 
 class Task : public std::enable_shared_from_this<Task>
@@ -101,3 +105,7 @@ private:
   std::size_t               task_id;
   std::atomic<uint16_t>     made_runnable_;
 };
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch
