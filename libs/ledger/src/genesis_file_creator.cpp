@@ -106,7 +106,12 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 {
   bool success{false};
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Loading file contents.");
+
   auto const buffer = LoadFileContents(file_path);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Loaded file contents.");
+
   if (!buffer.empty())
   {
     try
@@ -157,14 +162,28 @@ void GenesisFileCreator::LoadFile(std::string const &name)
       // Note: consensus has to be loaded before the state since that generates the block
       if (consensus_)
       {
-        LoadConsensus(doc["consensus"]);
+        try
+        {
+          LoadConsensus(doc["consensus"]);
+        }
+        catch (std::runtime_error const &ex)
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Unable to load consensus: ", ex.what());
+        }
       }
       else
       {
         FETCH_LOG_WARN(LOGGING_NAME, "No stake manager provided when loading from stake file!");
       }
 
-      LoadState(doc["accounts"]);
+      try
+      {
+        LoadState(doc["accounts"]);
+      }
+      catch (std::runtime_error const &ex)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to load accounts: ", ex.what());
+      }
     }
     else
     {
