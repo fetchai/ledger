@@ -45,8 +45,8 @@ public:
   UpdateStoreInterface(UpdateStoreInterface const &other) = delete;
   UpdateStoreInterface &operator=(UpdateStoreInterface const &other) = delete;
 
-  virtual void      PushUpdate(Algorithm const &algo, UpdateType update, Data &&data,
-                               Source source, Metadata &&metadata)                              = 0;
+  virtual void      PushUpdate(Algorithm const &algo, UpdateType update, Data &&data, Source source,
+                               Metadata &&metadata)                                             = 0;
   virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria) = 0;
   virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type)                    = 0;
   virtual std::size_t GetUpdateCount() const                                                    = 0;
