@@ -147,6 +147,82 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 }
 
 /**
+ * Internal: add a parent-child forward reference if it is unknown yet.
+ *
+ * @param parent
+ * @param child
+ */
+template<class ParentHash, class ChildHash> void MainChain::CacheReference(ParentHash &&parent, ChildHash &&child, IntBlockPtr parent_block) const
+{
+	auto siblings{references_.equal_range(parent)};
+	auto sibling_it{std::find_if(siblings.first, siblings.second, [](auto const &ref){ return ref.second == child; })};
+	for (auto sibling_it{siblings.first}; sibling_it != siblings.second; ++sibling_it)
+	{
+		if(sibling_it->second == child)
+		{
+			// this child has been already referred to
+			return;
+		}
+	}
+	switch (references_.count(parent))
+	{
+		case 0: // this one will be an unique forward ref
+			if (parent_block || LookupBlockFromCache(parent, parent_block))
+			{
+				parent_block->next_hash = child;
+			}
+			break;
+		case 1: // that forward ref from parent is no longer unique
+			if (parent_block || LookupBlockFromCache(parent, parent_block))
+			{
+				parent_block->next_hash = BlockHash{};
+			}
+			break;
+		default: ;
+	}
+	references_.emplace_hint(siblings.first, std::forward<ParentHash>(parent), std::forward<ChildHash>(child));
+}
+
+/**
+ * Internal: forget a parent-child forward reference.
+ *
+ * @param parent
+ * @param child
+ */
+template<class ParentHash, class ChildHash> void MainChain::ForgetReference(ParentHash &&parent, ParentHash &&child, IntBlockPtr parent_block) const
+{
+	auto siblings{references_.equal_range(parent)};
+	auto sibling_it{std::find_if(siblings.first, siblings.second, [](auto const &ref) { return ref.second == child; })};
+	if (sibling_it == siblings.second)
+	{
+		// there was no such reference cached
+		return;
+	}
+
+	assert(references_.count(parent) != 0);
+	switch (references_.count(parent))
+	{
+		case 1: // this one was an unique forward ref
+			if (parent_block || LookupBlockFromCache(parent, parent_block))
+			{
+				parent_block->next_hash = BlockHash{};
+			}
+			break;
+		case 2: // the forward ref from parent is now unique
+			if (parent_block || LookupBlockFromCache(parent, parent_block))
+			{
+				if (sibling_it == siblings.first) {
+					++siblings.first;
+				}
+				parent_block->next_hash = siblings.first->second;
+			}
+			break;
+		default: ;
+	}
+	references_.erase(sibling_it);
+}
+
+/**
  * Internal: insert a block into the cache maintaining references
  *
  * @param block The block to be cached
@@ -160,7 +236,7 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
   // under all circumstances, it _should_ be a fresh block
   ASSERT(ret_val.second);
   // keep parent-child reference
-  references_.emplace(block->previous_hash, std::move(hash));
+  CacheReference(block->previous_hash, block->hash, block);
 }
 
 /**

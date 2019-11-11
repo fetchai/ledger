@@ -60,6 +60,7 @@ public:
   // Block core information
   Digest         hash;               ///< The hash of the block
   Digest         previous_hash;      ///< The hash of the previous block
+  Digest         next_hash;          ///< The hash of the next block in heaviest chain, if any
   Digest         merkle_hash;        ///< The merkle state hash across all shards
   uint64_t       block_number{0};    ///< The height of the block from genesis
   chain::Address miner;              ///< The identity of the generated miner
@@ -113,15 +114,16 @@ public:
   static uint8_t const MINER_SIGNATURE = 5;
   static uint8_t const HASH            = 6;
   static uint8_t const PREVIOUS_HASH   = 7;
-  static uint8_t const MERKLE_HASH     = 8;
-  static uint8_t const BLOCK_NUMBER    = 9;
-  static uint8_t const MINER           = 10;
-  static uint8_t const MINER_ID        = 11;
-  static uint8_t const LOG2_NUM_LANES  = 12;
-  static uint8_t const SLICES          = 13;
-  static uint8_t const DAG_EPOCH       = 14;
-  static uint8_t const TIMESTAMP       = 15;
-  static uint8_t const ENTROPY         = 16;
+  static uint8_t const NEXT_HASH       = 8;
+  static uint8_t const MERKLE_HASH     = 9;
+  static uint8_t const BLOCK_NUMBER    = 10;
+  static uint8_t const MINER           = 11;
+  static uint8_t const MINER_ID        = 12;
+  static uint8_t const LOG2_NUM_LANES  = 13;
+  static uint8_t const SLICES          = 14;
+  static uint8_t const DAG_EPOCH       = 15;
+  static uint8_t const TIMESTAMP       = 16;
+  static uint8_t const ENTROPY         = 17;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &block)
@@ -134,6 +136,7 @@ public:
     map.Append(MINER_SIGNATURE, block.miner_signature);
     map.Append(HASH, block.hash);
     map.Append(PREVIOUS_HASH, block.previous_hash);
+    map.Append(NEXT_HASH, block.next_hash);
     map.Append(MERKLE_HASH, block.merkle_hash);
     map.Append(BLOCK_NUMBER, block.block_number);
     map.Append(MINER, block.miner);
@@ -155,6 +158,7 @@ public:
     map.ExpectKeyGetValue(MINER_SIGNATURE, block.miner_signature);
     map.ExpectKeyGetValue(HASH, block.hash);
     map.ExpectKeyGetValue(PREVIOUS_HASH, block.previous_hash);
+    map.ExpectKeyGetValue(NEXT_HASH, block.next_hash);
     map.ExpectKeyGetValue(MERKLE_HASH, block.merkle_hash);
     map.ExpectKeyGetValue(BLOCK_NUMBER, block.block_number);
     map.ExpectKeyGetValue(MINER, block.miner);
