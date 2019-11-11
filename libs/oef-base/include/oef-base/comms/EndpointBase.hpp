@@ -32,7 +32,7 @@
 #include <list>
 
 template <typename TXType>
-class EndpointBase : public ISocketOwner, public Waitable
+class EndpointBase : public ISocketOwner, public fetch::oef::base::Waitable
 {
 public:
   using Mutex     = std::mutex;
@@ -90,7 +90,7 @@ public:
     return remote_id;
   }
 
-  virtual Notification::NotificationBuilder send(TXType s);
+  virtual fetch::oef::base::Notification::NotificationBuilder send(TXType s);
 
   virtual bool IsTXQFull()
   {
@@ -182,6 +182,6 @@ protected:
   virtual void complete_reading(StateTypeP state, std::error_code const &ec, const size_t &bytes);
 
 private:
-  std::vector<Notification::Notification> waiting;
-  std::list<TXType>                       txq;
+  std::vector<fetch::oef::base::Notification::Notification> waiting;
+  std::list<TXType>                                         txq;
 };

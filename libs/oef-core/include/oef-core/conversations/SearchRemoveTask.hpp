@@ -31,7 +31,7 @@ class SearchRemoveTask : public SearchConversationTask<fetch::oef::pb::AgentDesc
                                                        fetch::oef::pb::Remove, SearchRemoveTask>
 {
 public:
-  using StateResult   = StateMachineTask<SearchRemoveTask>::Result;
+  using StateResult   = fetch::oef::base::StateMachineTask<SearchRemoveTask>::Result;
   using IN_PROTO      = fetch::oef::pb::AgentDescription;
   using OUT_PROTO     = fetch::oef::pb::Server_AgentMessage;
   using REQUEST_PROTO = fetch::oef::pb::Remove;
@@ -47,7 +47,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "SearchRemoveTask";
 
-  std::shared_ptr<Task> get_shared() override
+  std::shared_ptr<fetch::oef::base::Task> get_shared() override
   {
     return shared_from_this();
   }

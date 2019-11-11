@@ -31,11 +31,11 @@
 #include "oef-messages/agent.hpp"
 
 template <typename IN_PROTO, typename OUT_PROTO, typename REQUEST_PROTO, typename IMPL_CLASS>
-class SearchConversationTask : public StateMachineTask<IMPL_CLASS>
+class SearchConversationTask : public fetch::oef::base::StateMachineTask<IMPL_CLASS>
 {
 public:
-  using StateResult = typename StateMachineTask<IMPL_CLASS>::Result;
-  using EntryPoint  = typename StateMachineTask<IMPL_CLASS>::EntryPoint;
+  using StateResult = typename fetch::oef::base::StateMachineTask<IMPL_CLASS>::Result;
+  using EntryPoint  = typename fetch::oef::base::StateMachineTask<IMPL_CLASS>::EntryPoint;
 
   static constexpr char const *LOGGING_NAME = "SearchConversationTask";
 
@@ -44,7 +44,7 @@ public:
                          std::shared_ptr<OefAgentEndpoint> endpoint, uint32_t msg_id,
                          std::string core_key, std::string agent_uri, const EntryPoint *entryPoints,
                          IMPL_CLASS *impl_class_ptr)
-    : StateMachineTask<IMPL_CLASS>(impl_class_ptr, entryPoints)
+    : fetch::oef::base::StateMachineTask<IMPL_CLASS>(impl_class_ptr, entryPoints)
     , initiator(std::move(initiator))
     , outbounds(std::move(outbounds))
     , endpoint(std::move(endpoint))
@@ -63,8 +63,8 @@ public:
 
   StateResult CreateConversation()
   {
-    auto                this_sp = get_shared();
-    std::weak_ptr<Task> this_wp = this_sp;
+    auto                                  this_sp = get_shared();
+    std::weak_ptr<fetch::oef::base::Task> this_wp = this_sp;
     FETCH_LOG_INFO(LOGGING_NAME, "Start");
     FETCH_LOG_INFO(LOGGING_NAME, "***PATH: ", path_);
     conversation =
@@ -81,15 +81,15 @@ public:
             .Waiting())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Sleeping");
-      return SearchConversationTask::StateResult(1, DEFER);
+      return SearchConversationTask::StateResult(1, fetch::oef::base::DEFER);
     }
     FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping");
-    return SearchConversationTask::StateResult(1, COMPLETE);
+    return SearchConversationTask::StateResult(1, fetch::oef::base::COMPLETE);
   }
 
-  virtual StateResult                    HandleResponse()     = 0;
-  virtual std::shared_ptr<Task>          get_shared()         = 0;
-  virtual std::shared_ptr<REQUEST_PROTO> make_request_proto() = 0;
+  virtual StateResult                             HandleResponse()     = 0;
+  virtual std::shared_ptr<fetch::oef::base::Task> get_shared()         = 0;
+  virtual std::shared_ptr<REQUEST_PROTO>          make_request_proto() = 0;
 
   using SendFunc =
       std::function<void(std::shared_ptr<OUT_PROTO>, std::shared_ptr<OefAgentEndpoint> endpoint)>;

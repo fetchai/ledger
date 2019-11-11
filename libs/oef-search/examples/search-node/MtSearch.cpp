@@ -140,7 +140,7 @@ int MtSearch::run()
   startListeners();
 
   Monitoring mon;
-  auto       mon_task = std::make_shared<MonitoringTask>();
+  auto       mon_task = std::make_shared<fetch::oef::base::MonitoringTask>();
   mon_task->submit();
 
   std::map<std::string, std::string> prometheus_names;

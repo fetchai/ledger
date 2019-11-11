@@ -8,8 +8,13 @@ import subprocess
 
 from fetch.cluster.instance import ConstellationInstance, DmlfEtchInstance
 from fetch.cluster.utils import output, verify_file
+from fetch.cluster.chain import ChainSyncTesting
 
+from fetchai.ledger.api.common import ApiEndpoint
+from fetchai.ledger.api import LedgerApi
 from fetchai.ledger.crypto import Entity
+from fetchai.ledger.genesis import *
+from fetch.cluster.chain import ChainSyncTesting
 
 
 class TestCase(object):
@@ -25,7 +30,10 @@ class TestCase(object):
     def start_node(self, index):
         pass
 
-    def restart_node(self, index):
+    def stop_node(self, index, remove_db=False):
+        pass
+
+    def restart_node(self, index, remove_db=False):
         pass
 
     def setup_input_files(self):
@@ -38,6 +46,18 @@ class TestCase(object):
         pass
 
     def print_time_elapsed(self):
+        pass
+
+    def node_ready(self, index):
+        pass
+
+    def network_ready(self):
+        pass
+
+    def wait_for_blocks(self, node_index, number_of_blocks):
+        pass
+
+    def verify_chain_sync(self, node_index, max_trials, sleep_time):
         pass
 
 
@@ -140,6 +160,9 @@ class ConstellationTestCase(TestCase):
             output("Connect node {} to {}".format(connect_from, connect_to))
 
     def start_node(self, index):
+        if self._nodes[index].started:
+            print('Node {} already started!'.format(index))
+            return
         print('Starting Node {}...'.format(index))
 
         self._nodes[index].start()
@@ -149,25 +172,7 @@ class ConstellationTestCase(TestCase):
 
     def setup_pos_for_nodes(self):
 
-        # Path to config files
-        expected_ouptut_dir = os.path.abspath(
-            os.path.dirname(self._yaml_file) + "/input_files")
-
-        # Create required files for this test
-        file_gen = os.path.abspath(
-            "./scripts/end_to_end_test/input_files/create-input-files.py")
-        verify_file(file_gen)
-        exit_code = subprocess.call([file_gen, str(self._number_of_nodes)])
-
-        infofile = expected_ouptut_dir + "/info.txt"
-
-        # Required files for this operation
-        verify_file(infofile)
-
-        # infofile specifies the address of each numbered key
-        all_lines_in_file = open(infofile, "r").readlines()
-
-        nodes_mining_identities = []
+        nodes_identities = []
 
         # First give each node that is mining a unique identity
         for index in range(self._number_of_nodes):
@@ -178,44 +183,32 @@ class ConstellationTestCase(TestCase):
             node = self._nodes[index]
 
             if node.mining:
-                node_key = all_lines_in_file[index].strip().split()[-1]
-
                 print('Setting up POS for node {}...'.format(index))
-                print('Giving node the identity: {}'.format(node_key))
+                print('Giving node the identity: {}'.format(
+                    node._entity.public_key))
 
-                nodes_mining_identities.append(node_key)
+            nodes_identities.append(
+                (node._entity, 100, 10000 if node.mining else 0))
 
-                key_path = expected_ouptut_dir + "/{}.key".format(index)
-                verify_file(key_path)
-
-                # Copy the keyfile from its location to the node's cwd
-                shutil.copy(key_path, node.root + "/p2p.key")
-
-        stake_gen = os.path.abspath("./scripts/generate-genesis-file.py")
-        verify_file(stake_gen)
-
-        # Create a stake file into the logging directory for all nodes
-        # Importantly, set the time to start
-        genesis_file_location = self._workspace + "/genesis_file.json"
-        cmd = [stake_gen, *nodes_mining_identities,
-               "-o", genesis_file_location, "-w", "10"]
-
-        # After giving the relevant nodes identities, make a stake file
-        exit_code = subprocess.call(cmd)
+        genesis_file = GenesisFile(
+            nodes_identities, 20, 5, self._block_interval)
+        genesis_file_location = os.path.abspath(
+            os.path.join(self._workspace, "genesis_file.json"))
+        genesis_file.dump_to_file(genesis_file_location)
 
         # Give all nodes this stake file, plus append POS flag for when node starts
         for index in range(self._number_of_nodes):
             shutil.copy(genesis_file_location, self._nodes[index].root)
             self._nodes[index].append_to_cmd(["-pos", "-private-network", ])
 
-    def restart_node(self, index):
+    def restart_node(self, index, remove_db=False):
         print('Restarting Node {}...'.format(index))
 
         self._nodes[index].stop()
 
         # Optically remove db files when testing recovering from a genesis file
-        if False:
-            self.dump_debug(index)
+        if remove_db:
+            # self.dump_debug(index)
 
             pattern = ["*.db"]
             for p in pattern:
@@ -223,6 +216,22 @@ class ConstellationTestCase(TestCase):
 
         self.start_node(index)
         time.sleep(3)
+
+    def remove_db_files(self, index):
+        root = os.path.abspath(os.path.join(
+            self._workspace, 'node{}'.format(index)))
+        pattern = ["*.db"]
+        for p in pattern:
+            [os.remove(x)
+             for x in glob.iglob(f"{root}/**/{p}", recursive=True)]
+        for f in os.listdir(root):
+            if f.find(".db") != -1:
+                raise RuntimeError(f"Db files not removed for node {index}")
+
+    def stop_node(self, index, remove_db=False):
+        self._nodes[index].stop()
+        if remove_db:
+            self.remove_db_files(index)
 
     def print_time_elapsed(self):
         output("Elapsed time: {}".format(
@@ -296,6 +305,70 @@ class ConstellationTestCase(TestCase):
                     data = Path(node_log_path).read_bytes()
                     sys.stdout.buffer.write(data)
                     sys.stdout.flush()
+
+    def node_ready(self, index):
+        try:
+            port = self._nodes[index]._port_start
+            api = ApiEndpoint("localhost", port)
+            status, response = api._get_json("health/ready")
+            if status:
+                for key, value in response.items():
+                    if not value:
+                        output(
+                            f"Node {index} not ready, because {key} is False!")
+                        return False
+                return True
+        except Exception as e:
+            output(f"Failed to call node {index}: {str(e)}")
+        return False
+
+    def network_ready(self):
+        for i in range(len(self._nodes)):
+            if not self.node_ready(i):
+                return False
+        return True
+
+    def wait_for_blocks(self, node_index, number_of_blocks):
+        """
+        Wait for a specific number of blocks in the selected node
+        :param node_index: which node we are interested in
+        :param number_of_blocks: for how many new block to wait
+        :return:
+        """
+        port = self._nodes[node_index]._port_start
+        output(
+            f"Waiting for {number_of_blocks} blocks on node {port}")
+        api = LedgerApi("localhost", port)
+        api.wait_for_blocks(number_of_blocks)
+
+    def verify_chain_sync(self, node_index, max_trials=20):
+        """
+        Verify if a node has synced it's chain with the rest of the network
+        :param node_index: which node we want to verify
+        :param max_trials: maximum of how many times we try the sync test
+        :return:
+        """
+        config = []
+        for node in self._nodes:
+            node_host = "localhost"
+            node_port = node._port_start
+            config.append({
+                "host": node_host,
+                "port": node_port
+            })
+        sync_test = ChainSyncTesting(config)
+        target_host = "localhost"
+        target_port = self._nodes[node_index]._port_start
+        sleep_time = self._nodes[node_index].block_interval*1.2/1000.
+        for i in range(max_trials):
+            try:
+                if sync_test.node_synced(target_host, target_port):
+                    output(f"Node {node_index} chain synced with the network!")
+                    return True
+            except Exception as e:
+                output(f"verify_chain_sync exception: {e}")
+            time.sleep(sleep_time)
+        return False
 
 
 class DmlfEtchTestCase(TestCase):
@@ -405,13 +478,13 @@ class DmlfEtchTestCase(TestCase):
 
         time.sleep(1)
 
-    def restart_node(self, index):
+    def restart_node(self, index, remove_db=False):
         print('Restarting Node {}...'.format(index))
 
         self._nodes[index].stop()
 
         # Optically remove db files when testing recovering from a genesis file
-        if False:
+        if remove_db:
             self.dump_debug(index)
 
             pattern = ["*.db"]
@@ -420,6 +493,9 @@ class DmlfEtchTestCase(TestCase):
 
         self.start_node(index)
         time.sleep(3)
+
+    def stop_node(self, index, remove_db=False):
+        output("Not implemented")
 
     def print_time_elapsed(self):
         output("Elapsed time: {}".format(
@@ -475,3 +551,15 @@ class DmlfEtchTestCase(TestCase):
                     data = Path(node_log_path).read_bytes()
                     sys.stdout.buffer.write(data)
                     sys.stdout.flush()
+
+    def node_ready(self, index):
+        return True
+
+    def network_ready(self):
+        return True
+
+    def wait_for_blocks(self, node_index, number_of_blocks):
+        pass
+
+    def verify_chain_sync(self, node_index, max_trials, sleep_time):
+        pass

@@ -90,6 +90,7 @@ private:
   /// @{
   telemetry::CounterPtr no_executor_count_;
   telemetry::CounterPtr no_executor_loop_count_;
+  telemetry::CounterPtr execute_item_failed_count_;
   /// @}
 };
 
