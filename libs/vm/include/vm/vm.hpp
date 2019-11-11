@@ -221,19 +221,21 @@ private:
   {
     // add the value to the map
     // TODO(tfr): Check ownership of Ptr.
-    Variant v;
-    v.Construct(value, value->GetTypeId());
+    Variant v(value, value->GetTypeId());
     params_.emplace_back(std::move(v));
 
     return true;
   }
 
-  using VariantArray = std::vector<Variant>;
-
   RegisteredTypes const &registered_types_;
   VariantArray           params_{};
   VM *                   vm_;
 };
+
+using ContractInvocationHandler = std::function<bool(
+    VM * /* vm */, std::string const & /* identity */, Executable::Contract const & /* contract */,
+    Executable::Function const & /* function */, VariantArray const & /* parameters */,
+    std::string & /* error */, Variant & /* output */)>;
 
 class VM
 {
@@ -351,6 +353,11 @@ public:
     return Ptr<T>{new T(this, GetTypeId<T>(), std::forward<Ts>(args)...)};
   }
 
+  void SetContractInvocationHandler(ContractInvocationHandler handler)
+  {
+    contract_invocation_handler_ = std::move(handler);
+  }
+
   void SetIOObserver(IoObserverInterface &observer)
   {
     io_observer_ = &observer;
@@ -454,7 +461,7 @@ public:
     for (std::size_t i = 0; i < num_strings; ++i)
     {
       std::string const &str = executable_->strings[i];
-      strings_[i]            = Ptr<String>(new String(this, str, true));
+      strings_[i]            = Ptr<String>(new String(this, str));
     }
 
     std::size_t const num_local_types = executable_->types.size();
@@ -642,13 +649,14 @@ private:
   Executable::Instruction const *instruction_{};
   bool                           stop_{};
   std::string                    error_;
+  ContractInvocationHandler      contract_invocation_handler_{};
   std::ostringstream             output_buffer_;
-  IoObserverInterface *          io_observer_{nullptr};
+  IoObserverInterface *          io_observer_{};
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
   CPPCopyConstructorMap          cpp_copy_constructors_;
-  OpcodeInfo *                   current_op_{nullptr};
+  OpcodeInfo *                   current_op_{};
 
   /// @name Charges
   /// @{

@@ -16,24 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "ml/ops/slice.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class SliceTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(SliceTest, MyTypes);
+TYPED_TEST_CASE(SliceTest, math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(SliceTest, multi_axes_forward_shape_test)
 {
@@ -237,3 +236,7 @@ TYPED_TEST(SliceTest, ranged_backward_3D_value_test)
   // test correct values
   EXPECT_TRUE(backpropagated_signals[0].AllClose(gt));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

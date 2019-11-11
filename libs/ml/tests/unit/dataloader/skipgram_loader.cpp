@@ -17,16 +17,16 @@
 //------------------------------------------------------------------------------
 
 #include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
 #include <string>
 
-using namespace fetch::ml;
-using namespace fetch::ml::dataloaders;
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename TensorType>
 struct TrainingParams
@@ -45,10 +45,7 @@ class SkipGramDataloaderTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(SkipGramDataloaderTest, MyTypes);
+TYPED_TEST_CASE(SkipGramDataloaderTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(SkipGramDataloaderTest, loader_test)
 {
@@ -60,8 +57,8 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
 
   std::string training_data = "This is a test sentence of total length ten words.";
 
-  GraphW2VLoader<TensorType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                    tp.max_word_count);
+  dataloaders::GraphW2VLoader<TensorType> loader(tp.window_size, tp.negative_sample_size,
+                                                 tp.freq_thresh, tp.max_word_count);
   loader.BuildVocabAndData({training_data});
 
   std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(
@@ -122,14 +119,14 @@ TYPED_TEST(SkipGramDataloaderTest, test_save_load_vocab)
   std::string training_data = "This is a test sentence of total length ten words.";
   std::string extra_vocab = "This is an extra sentence so that vocab is bigger than training data.";
 
-  GraphW2VLoader<TensorType> initial_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                            tp.max_word_count);
+  dataloaders::GraphW2VLoader<TensorType> initial_loader(tp.window_size, tp.negative_sample_size,
+                                                         tp.freq_thresh, tp.max_word_count);
 
   initial_loader.BuildVocabAndData({training_data, extra_vocab});
   initial_loader.SaveVocab(vocab_file);
 
-  GraphW2VLoader<TensorType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                    tp.max_word_count);
+  dataloaders::GraphW2VLoader<TensorType> loader(tp.window_size, tp.negative_sample_size,
+                                                 tp.freq_thresh, tp.max_word_count);
   loader.LoadVocab(vocab_file);
   loader.BuildData({training_data});
 
@@ -180,3 +177,7 @@ TYPED_TEST(SkipGramDataloaderTest, test_save_load_vocab)
   }
   EXPECT_EQ(is_done_set, true);
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

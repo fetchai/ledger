@@ -162,7 +162,7 @@ public:
   // found
   State(VM *vm, TypeId type_id, TypeId template_param_type_id, Ptr<String> const &name)
     : IState(vm, type_id)
-    , name_{name->str}
+    , name_{name->string()}
     , template_param_type_id_{template_param_type_id}
   {}
 

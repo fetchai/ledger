@@ -54,12 +54,12 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id)
 VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, Ptr<String> const &mode)
   : Object(vm, type_id)
 {
-  if (mode->str == "tensor")
+  if (mode->string() == "tensor")
   {
     mode_   = DataLoaderMode::TENSOR;
     loader_ = std::make_shared<TensorLoaderType>();
   }
-  else if (mode->str == "commodity")
+  else if (mode->string() == "commodity")
   {
     mode_   = DataLoaderMode::COMMODITY;
     loader_ = std::make_shared<CommodityLoaderType>();
@@ -124,8 +124,8 @@ void VMDataLoader::AddDataByData(
 
 void VMDataLoader::AddCommodityData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
 {
-  auto data  = fetch::math::utilities::ReadCSV<MathTensorType>(xfilename->str);
-  auto label = fetch::math::utilities::ReadCSV<MathTensorType>(yfilename->str);
+  auto data  = fetch::math::utilities::ReadCSV<MathTensorType>(xfilename->string());
+  auto label = fetch::math::utilities::ReadCSV<MathTensorType>(yfilename->string());
 
   std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData({data}, label);
 }

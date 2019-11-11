@@ -38,25 +38,19 @@ public:
   CurveParameters(CurveParameters &&)      = delete;
   ~CurveParameters()                       = default;
 
-  bn::G2 const &GetZeroG2()
-  {
-    EnsureInitialised();
-    return params_->zeroG2_;
-  }
-
-  bn::Fr const &GetZeroFr()
+  BeaconManager::PrivateKey const &GetZeroFr()
   {
     EnsureInitialised();
     return params_->zeroFr_;
   }
 
-  bn::G2 const &GetGroupG()
+  BeaconManager::Generator const &GetGroupG()
   {
     EnsureInitialised();
     return params_->group_g_;
   }
 
-  bn::G2 const &GetGroupH()
+  BeaconManager::Generator const &GetGroupH()
   {
     EnsureInitialised();
     return params_->group_h_;
@@ -66,11 +60,7 @@ public:
   {
     if (!params_)
     {
-      fetch::crypto::mcl::details::MCLInitialiser();
-
       params_ = std::make_unique<Params>();
-      params_->zeroFr_.clear();
-      params_->zeroG2_.clear();
       crypto::mcl::SetGenerators(params_->group_g_, params_->group_h_);
     }
   }
@@ -82,11 +72,10 @@ public:
 private:
   struct Params
   {
-    bn::G2 zeroG2_{};
-    bn::Fr zeroFr_{};
+    BeaconManager::PrivateKey zeroFr_{};
 
-    bn::G2 group_g_{};
-    bn::G2 group_h_{};
+    BeaconManager::Generator group_g_{};
+    BeaconManager::Generator group_h_{};
   };
 
   std::unique_ptr<Params> params_;
@@ -195,10 +184,10 @@ void BeaconManager::AddShares(MuddleAddress const &from, std::pair<Share, Share>
  *
  * @return Set of muddle addresses of nodes we complain against
  */
-std::unordered_set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaints(
+std::set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaints(
     std::set<MuddleAddress> const &coeff_received)
 {
-  std::unordered_set<MuddleAddress> complaints_local;
+  std::set<MuddleAddress> complaints_local;
   for (auto &cab : coeff_received)
   {
     CabinetIndex i = identity_to_index_[cab];
@@ -260,8 +249,6 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
  */
 void BeaconManager::ComputeSecretShare()
 {
-  secret_share_.clear();
-  xprime_i = 0;
   for (auto const &iq : qual_)
   {
     CabinetIndex iq_index = identity_to_index_[iq];
@@ -632,9 +619,6 @@ bool BeaconManager::Verify(Signature const &signature)
   return crypto::mcl::VerifySign(public_key_, current_message_, signature, GetGroupG());
 }
 
-/**
- * @brief verifies a signed message by the group signature, where all parameters are specified.
- */
 bool BeaconManager::Verify(byte_array::ConstByteArray const &group_public_key,
                            MessagePayload const &            message,
                            byte_array::ConstByteArray const &signature)
@@ -703,6 +687,11 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   return smsg;
 }
 
+bool BeaconManager::InQual(MuddleAddress const &address) const
+{
+  return qual_.find(address) != qual_.end();
+}
+
 std::set<BeaconManager::MuddleAddress> const &BeaconManager::qual() const
 {
   return qual_;
@@ -734,22 +723,17 @@ std::string BeaconManager::group_public_key() const
   return public_key_.getStr();
 }
 
-bn::G2 const &BeaconManager::GetGroupG()
+BeaconManager::Generator const &BeaconManager::GetGroupG()
 {
   return *curve_params_.Apply([](CurveParameters &params) { return &params.GetGroupG(); });
 }
 
-bn::G2 const &BeaconManager::GetGroupH()
+BeaconManager::Generator const &BeaconManager::GetGroupH()
 {
   return *curve_params_.Apply([](CurveParameters &params) { return &params.GetGroupH(); });
 }
 
-bn::G2 const &BeaconManager::GetZeroG2()
-{
-  return *curve_params_.Apply([](CurveParameters &params) { return &params.GetZeroG2(); });
-}
-
-bn::Fr const &BeaconManager::GetZeroFr()
+BeaconManager::PrivateKey const &BeaconManager::GetZeroFr()
 {
   return *curve_params_.Apply([](CurveParameters &params) { return &params.GetZeroFr(); });
 }

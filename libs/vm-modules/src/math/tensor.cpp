@@ -184,7 +184,7 @@ void VMTensor::Transpose()
 
 void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
-  tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->str));
+  tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->string()));
 }
 
 Ptr<String> VMTensor::ToString() const

@@ -51,7 +51,7 @@ Ptr<VMStateDict> VMStateDict::Constructor(VM *vm, TypeId type_id)
 
 void VMStateDict::SetWeights(Ptr<String> const &nodename, Ptr<math::VMTensor> const &weights)
 {
-  auto weights_tensor = state_dict_.dict_[nodename->str].weights_;
+  auto weights_tensor = state_dict_.dict_[nodename->string()].weights_;
   *weights_tensor     = weights->GetTensor();
 }
 
