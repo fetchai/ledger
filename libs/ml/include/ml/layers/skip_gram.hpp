@@ -52,10 +52,10 @@ public:
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
            std::string const &name      = "SkipGram",
            WeightsInit        init_mode = WeightsInit::XAVIER_FAN_OUT)
-    : in_size_(in_size)
-    , out_size_(out)
+    //    : in_size_(in_size)
+    : out_size_(out)
     , vocab_size_(vocab_size)
-    , embedding_size_(embedding_size)
+  //    , embedding_size_(embedding_size)
   {
 
     // define input and context placeholders
@@ -64,10 +64,10 @@ public:
     std::string context =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Context", {});
 
-    TensorType weights_in({embedding_size_, vocab_size_});
-    this->Initialise(weights_in, init_mode);
-    TensorType weights_ctx({vocab_size_, embedding_size_});
-    this->Initialise(weights_ctx, init_mode);
+    TensorType weights_in({embedding_size, vocab_size_});
+    this->Initialise(weights_in, init_mode, in_size, embedding_size);
+    TensorType weights_ctx({embedding_size, vocab_size_});
+    this->Initialise(weights_ctx, init_mode, embedding_size, in_size);
 
     // embed both inputs
     embed_in_ = this->template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
@@ -77,7 +77,7 @@ public:
 
     // dot product input and context embeddings
     std::string in_ctx_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
-        name + "_In_Ctx_MatMul", {embed_ctx, embed_in_});
+        name + "_In_Ctx_MatMul", {embed_ctx, embed_in_}, true);
 
     std::string in_ctx_matmul_flat = this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(
         name + "_In_Ctx_MatMul_Flat", {in_ctx_matmul});
@@ -104,11 +104,11 @@ public:
     *sg_ptr2     = *sg_ptr1;
 
     // assign layer specific params
-    ret->in_size        = in_size_;
-    ret->out_size       = out_size_;
-    ret->embed_in       = embed_in_;
-    ret->vocab_size     = vocab_size_;
-    ret->embedding_size = embedding_size_;
+    //    ret->in_size        = in_size_;
+    ret->out_size   = out_size_;
+    ret->embed_in   = embed_in_;
+    ret->vocab_size = vocab_size_;
+    //    ret->embedding_size = embedding_size_;
 
     return ret;
   }
@@ -116,11 +116,11 @@ public:
   void SetOpSaveableParams(SPType const &sp)
   {
     // assign layer specific params
-    in_size_        = sp.in_size;
-    out_size_       = sp.out_size;
-    embed_in_       = sp.embed_in;
-    vocab_size_     = sp.vocab_size;
-    embedding_size_ = sp.embedding_size;
+    //    in_size_        = sp.in_size;
+    out_size_   = sp.out_size;
+    embed_in_   = sp.embed_in;
+    vocab_size_ = sp.vocab_size;
+    //    embedding_size_ = sp.embedding_size;
   }
 
   std::shared_ptr<ops::Embeddings<TensorType>> GetEmbeddings(
@@ -148,14 +148,15 @@ public:
 
 private:
   std::string embed_in_ = "";
-  SizeType    in_size_{};
-  SizeType    out_size_{};
-  SizeType    vocab_size_{};
-  SizeType    embedding_size_{};
+  //  SizeType    in_size_{};
+  SizeType out_size_{};
+  SizeType vocab_size_{};
+  //  SizeType    embedding_size_{};
 
-  void Initialise(TensorType &weights, WeightsInit init_mode)
+  void Initialise(TensorType &weights, WeightsInit init_mode, SizeType dim_1_size,
+                  SizeType dim_2_size)
   {
-    fetch::ml::ops::Weights<TensorType>::Initialise(weights, in_size_, embedding_size_, init_mode);
+    fetch::ml::ops::Weights<TensorType>::Initialise(weights, dim_1_size, dim_2_size, init_mode);
   }
 };
 

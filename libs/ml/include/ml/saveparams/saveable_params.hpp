@@ -209,9 +209,9 @@ struct OpGeluSaveableParams : public OpsSaveableParams
 template <typename TensorType>
 struct OpEmbeddingsSaveableParams : public OpWeightsSaveableParams<TensorType>
 {
-  fetch::ml::OpType                  op_type           = OpType::OP_EMBEDDINGS;
-  std::vector<fetch::math::SizeType> trailing_indices1 = {0, 0};
-  std::vector<fetch::math::SizeType> trailing_indices2 = {0};
+  fetch::ml::OpType     op_type           = OpType::OP_EMBEDDINGS;
+  fetch::math::SizeType trailing_index_1_ = 0;
+  fetch::math::SizeType trailing_index_2_ = 0;
 };
 
 /**
