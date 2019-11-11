@@ -60,7 +60,7 @@ void Block::UpdateDigest()
   if (IsGenesis())
   {
     // genesis block's hash should be already set to a proper value and needs not to be updated
-    assert(body.hash == chain::GENESIS_DIGEST);
+    assert(hash == chain::GENESIS_DIGEST);
     return;
   }
 
