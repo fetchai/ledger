@@ -465,5 +465,15 @@ Contract::Status TokenContract::CooldownStake(Query const &query, Query &respons
   return Status::FAILED;
 }
 
+void TokenContract::ClearStakeUpdates()
+{
+  stake_updates_.clear();
+}
+
+TokenContract::StakeUpdates TokenContract::stake_updates() const
+{
+  return stake_updates_;
+}
+
 }  // namespace ledger
 }  // namespace fetch

@@ -77,15 +77,5 @@ private:
   StakeUpdates stake_updates_;
 };
 
-inline void TokenContract::ClearStakeUpdates()
-{
-  stake_updates_.clear();
-}
-
-inline TokenContract::StakeUpdates TokenContract::stake_updates() const
-{
-  return stake_updates_;
-}
-
 }  // namespace ledger
 }  // namespace fetch
