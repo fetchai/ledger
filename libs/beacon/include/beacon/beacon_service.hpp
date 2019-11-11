@@ -92,7 +92,6 @@ public:
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
 
-
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
