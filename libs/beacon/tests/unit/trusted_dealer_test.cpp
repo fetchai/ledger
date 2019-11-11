@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_service.hpp"
 #include "beacon/create_new_certificate.hpp"
+#include "beacon/trusted_dealer.hpp"
+#include "beacon/trusted_dealer_beacon_service.hpp"
 #include "core/reactor.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "shards/manifest_cache_interface.hpp"
-
-#include "beacon/trusted_dealer.hpp"
-#include "beacon/trusted_dealer_beacon_service.hpp"
 
 #include "gtest/gtest.h"
 
@@ -66,17 +66,20 @@ struct TrustedDealerCabinetNode
   ProverPtr                        muddle_certificate;
   Muddle                           muddle;
   DummyManifestCache               manifest_cache;
-  TrustedDealerBeaconService       beacon_service;
+  TrustedDealerSetupService        setup_service;
+  BeaconService                    beacon_service;
   crypto::Identity                 identity;
 
-  TrustedDealerCabinetNode(uint16_t port_number, uint16_t index)
+  TrustedDealerCabinetNode(uint16_t port_number, uint16_t index, double threshold,
+                           uint64_t aeon_period)
     : event_manager{EventManager::New()}
     , muddle_port{port_number}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
+    , setup_service{*muddle, manifest_cache, muddle_certificate, threshold, aeon_period}
+    , beacon_service{*muddle, muddle_certificate, setup_service, event_manager}
     , identity{muddle_certificate->identity()}
   {
     network_manager.Start();
@@ -95,15 +98,17 @@ struct TrustedDealerCabinetNode
 };
 
 void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
-                      uint32_t threshold = 3, uint16_t numbers_per_aeon = 10)
+                      double threshold = 0.5, uint64_t aeon_period = 10)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   std::cout << "- Setup" << std::endl;
 
   std::vector<std::unique_ptr<TrustedDealerCabinetNode>> cabinet;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(10000 + ii);
-    cabinet.emplace_back(new TrustedDealerCabinetNode{port_number, ii});
+    cabinet.emplace_back(new TrustedDealerCabinetNode{port_number, ii, threshold, aeon_period});
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -151,7 +156,7 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
   // Attaching the cabinet logic
   for (auto &member : cabinet)
   {
-    member->reactor.Attach(member->beacon_service.GetWeakRunnables());
+    member->reactor.Attach(member->beacon_service.GetWeakRunnable());
   }
 
   // Starting the beacon
@@ -170,16 +175,18 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
   {
     std::cout << "- Scheduling round " << i << std::endl;
     TrustedDealer dealer(cabinet_addresses, threshold);
+    uint64_t      start_time =
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
     for (auto &member : cabinet)
     {
-      member->beacon_service.StartNewCabinet(
-          cabinet_addresses, threshold, i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
-          GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)),
-          prev_entropy, dealer.GetKeys(member->identity.identifier()));
+      member->setup_service.StartNewCabinet(cabinet_addresses, i * aeon_period, start_time,
+                                            prev_entropy,
+                                            dealer.GetDkgKeys(member->identity.identifier()));
 
       // Note, to avoid limiting the 'look ahead' entropy gen, set the block to ahead of numbers per
       // aeon
-      member->beacon_service.MostRecentSeen(numbers_per_aeon);
+      member->beacon_service.MostRecentSeen(aeon_period);
+      member->setup_service.Abort(aeon_period);
     }
 
     // Wait for everyone to finish
@@ -218,6 +225,5 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
 
 TEST(beacon_service, trusted_dealer)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
-  RunTrustedDealer(1, 4, 3, 10);
+  RunTrustedDealer(1, 4, 0.5, 10);
 }

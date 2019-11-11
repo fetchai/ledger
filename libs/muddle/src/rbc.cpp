@@ -110,6 +110,14 @@ bool RBC::ResetCabinet(CabinetMembers const &cabinet)
     return false;
   }
 
+  auto iterator = cabinet.find(address_);
+  // Cannot determine id_ if not present in the
+  // current cabinet.
+  if (iterator == cabinet.end())
+  {
+    return false;
+  }
+
   // Copying cabinet members
   current_cabinet_ = cabinet;
 
@@ -125,19 +133,10 @@ bool RBC::ResetCabinet(CabinetMembers const &cabinet)
 
   assert(current_cabinet_.size() > 3 * threshold_);
 
-  auto iterator = current_cabinet_.find(address_);
-
-  // Cannot determine id_ if not present in the
-  // current cabinet.
-  if (iterator == current_cabinet_.end())
-  {
-    return false;
-  }
-
   // Finding own id.
-  id_ = static_cast<uint32_t>(std::distance(current_cabinet_.begin(), iterator));
+  id_ = static_cast<uint32_t>(std::distance(cabinet.begin(), iterator));
 
-  // Reseting the state of the RBC
+  // Resetting the state of the RBC
   parties_.clear();
   parties_.resize(current_cabinet_.size());
   broadcasts_.clear();

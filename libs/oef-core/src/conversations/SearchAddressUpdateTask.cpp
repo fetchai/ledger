@@ -47,14 +47,14 @@ SearchAddressUpdateTask::StateResult SearchAddressUpdateTask::HandleResponse()
 
   if (conversation->GetAvailableReplyCount() == 0)
   {
-    return SearchAddressUpdateTask::StateResult(0, ERRORED);
+    return SearchAddressUpdateTask::StateResult(0, fetch::oef::base::ERRORED);
   }
 
   auto resp = conversation->GetReply(0);
   if (!resp)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Got nullptr as reply");
-    return SearchAddressUpdateTask::StateResult(0, ERRORED);
+    return SearchAddressUpdateTask::StateResult(0, fetch::oef::base::ERRORED);
   }
   auto response = std::static_pointer_cast<Successfulness>(resp);
 
@@ -69,7 +69,7 @@ SearchAddressUpdateTask::StateResult SearchAddressUpdateTask::HandleResponse()
 
   FETCH_LOG_INFO(LOGGING_NAME, "COMPLETE");
 
-  return {0, COMPLETE};
+  return {0, fetch::oef::base::COMPLETE};
 }
 
 std::shared_ptr<SearchAddressUpdateTask::REQUEST_PROTO>

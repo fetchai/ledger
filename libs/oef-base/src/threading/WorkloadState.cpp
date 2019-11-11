@@ -18,4 +18,12 @@
 
 #include "oef-base/threading/WorkloadState.hpp"
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 extern const char *const workloadProcessedNames[] = {"COMPLETE", "NOT_COMPLETE", "NOT_STARTED"};
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

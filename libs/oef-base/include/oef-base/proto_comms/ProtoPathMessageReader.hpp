@@ -55,7 +55,7 @@ public:
   }
   ~ProtoPathMessageReader() override = default;
 
-  void SetEndianness(Endianness /*newstate*/)
+  void SetEndianness(fetch::oef::base::Endianness /*newstate*/)
   {}
 
   consumed_needed_pair initial() override;

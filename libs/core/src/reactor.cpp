@@ -181,8 +181,8 @@ void Reactor::Monitor()
       }
       catch (std::exception const &ex)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "The reactor caught an exception! ", name_,
-                       " error: ", ex.what());
+        FETCH_LOG_WARN(LOGGING_NAME, "The reactor caught an exception in ", runnable->GetId(), "! ",
+                       name_, " error: ", ex.what());
       }
       catch (...)
       {
