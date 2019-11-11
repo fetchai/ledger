@@ -23,7 +23,6 @@
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/block_db_record.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
@@ -152,35 +151,39 @@ BlockStatus MainChain::AddBlock(Block const &blk)
  * @param parent
  * @param child
  */
-template<class ParentHash, class ChildHash> void MainChain::CacheReference(ParentHash &&parent, ChildHash &&child, IntBlockPtr parent_block) const
+template <class ParentHash, class ChildHash>
+void MainChain::CacheReference(ParentHash &&parent, ChildHash &&child,
+                               IntBlockPtr parent_block) const
 {
-	auto siblings{references_.equal_range(parent)};
-	auto sibling_it{std::find_if(siblings.first, siblings.second, [](auto const &ref){ return ref.second == child; })};
-	for (auto sibling_it{siblings.first}; sibling_it != siblings.second; ++sibling_it)
-	{
-		if(sibling_it->second == child)
-		{
-			// this child has been already referred to
-			return;
-		}
-	}
-	switch (references_.count(parent))
-	{
-		case 0: // this one will be an unique forward ref
-			if (parent_block || LookupBlockFromCache(parent, parent_block))
-			{
-				parent_block->next_hash = child;
-			}
-			break;
-		case 1: // that forward ref from parent is no longer unique
-			if (parent_block || LookupBlockFromCache(parent, parent_block))
-			{
-				parent_block->next_hash = BlockHash{};
-			}
-			break;
-		default: ;
-	}
-	references_.emplace_hint(siblings.first, std::forward<ParentHash>(parent), std::forward<ChildHash>(child));
+  auto siblings{references_.equal_range(parent)};
+  auto sibling_it{std::find_if(siblings.first, siblings.second,
+                               [](auto const &ref) { return ref.second == child; })};
+  for (auto sibling_it{siblings.first}; sibling_it != siblings.second; ++sibling_it)
+  {
+    if (sibling_it->second == child)
+    {
+      // this child has been already referred to
+      return;
+    }
+  }
+  switch (references_.count(parent))
+  {
+  case 0:  // this one will be an unique forward ref
+    if (parent_block || LookupBlockFromCache(parent, parent_block))
+    {
+      parent_block->next_hash = child;
+    }
+    break;
+  case 1:  // that forward ref from parent is no longer unique
+    if (parent_block || LookupBlockFromCache(parent, parent_block))
+    {
+      parent_block->next_hash = BlockHash{};
+    }
+    break;
+  default:;
+  }
+  references_.emplace_hint(siblings.first, std::forward<ParentHash>(parent),
+                           std::forward<ChildHash>(child));
 }
 
 /**
@@ -189,37 +192,41 @@ template<class ParentHash, class ChildHash> void MainChain::CacheReference(Paren
  * @param parent
  * @param child
  */
-template<class ParentHash, class ChildHash> void MainChain::ForgetReference(ParentHash &&parent, ParentHash &&child, IntBlockPtr parent_block) const
+template <class ParentHash, class ChildHash>
+void MainChain::ForgetReference(ParentHash &&parent, ParentHash &&child,
+                                IntBlockPtr parent_block) const
 {
-	auto siblings{references_.equal_range(parent)};
-	auto sibling_it{std::find_if(siblings.first, siblings.second, [](auto const &ref) { return ref.second == child; })};
-	if (sibling_it == siblings.second)
-	{
-		// there was no such reference cached
-		return;
-	}
+  auto siblings{references_.equal_range(parent)};
+  auto sibling_it{std::find_if(siblings.first, siblings.second,
+                               [](auto const &ref) { return ref.second == child; })};
+  if (sibling_it == siblings.second)
+  {
+    // there was no such reference cached
+    return;
+  }
 
-	assert(references_.count(parent) != 0);
-	switch (references_.count(parent))
-	{
-		case 1: // this one was an unique forward ref
-			if (parent_block || LookupBlockFromCache(parent, parent_block))
-			{
-				parent_block->next_hash = BlockHash{};
-			}
-			break;
-		case 2: // the forward ref from parent is now unique
-			if (parent_block || LookupBlockFromCache(parent, parent_block))
-			{
-				if (sibling_it == siblings.first) {
-					++siblings.first;
-				}
-				parent_block->next_hash = siblings.first->second;
-			}
-			break;
-		default: ;
-	}
-	references_.erase(sibling_it);
+  assert(references_.count(parent) != 0);
+  switch (references_.count(parent))
+  {
+  case 1:  // this one was an unique forward ref
+    if (parent_block || LookupBlockFromCache(parent, parent_block))
+    {
+      parent_block->next_hash = BlockHash{};
+    }
+    break;
+  case 2:  // the forward ref from parent is now unique
+    if (parent_block || LookupBlockFromCache(parent, parent_block))
+    {
+      if (sibling_it == siblings.first)
+      {
+        ++siblings.first;
+      }
+      parent_block->next_hash = siblings.first->second;
+    }
+    break;
+  default:;
+  }
+  references_.erase(sibling_it);
 }
 
 /**
@@ -236,7 +243,7 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
   // under all circumstances, it _should_ be a fresh block
   ASSERT(ret_val.second);
   // keep parent-child reference
-  CacheReference(block->previous_hash, block->hash, block);
+  CacheReference(block->previous_hash, block->hash);
 }
 
 /**
@@ -263,39 +270,38 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
 
   auto const &hash{block->hash};
 
-  DbRecord record;
-
   if (!block->IsGenesis())
   {
+    Block storage_record;
+
     // notify stored parent
-    if (block_store_->Get(storage::ResourceID(block->previous_hash), record))
+    if (block_store_->Get(storage::ResourceID(block->previous_hash), storage_record))
     {
-      if (record.next_hash != hash)
+      if (storage_record.next_hash != hash)
       {
-        record.next_hash = hash;
-        block_store_->Set(storage::ResourceID(record.hash()), record);
+        storage_record.next_hash = hash;
+        block_store_->Set(storage::ResourceID(record.hash()), storage_record);
       }
-      // before checking for this block's children in storage, reset next_hash to genesis
-      record.next_hash = chain::GENESIS_DIGEST;
     }
   }
-  record.block = *block;
 
-  // detect if any of this block's children has somehow made it to the store already
-  // TODO(bipll): is this needed?
-  auto forward_refs{references_.equal_range(hash)};
-  for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
+  if (block->next_hash.empty())
   {
-    auto const &child{ref_it->second};
-    if (block_store_->Has(storage::ResourceID(child)))
+    // detect if any of this block's children has somehow made it to the store already
+    auto forward_refs{references_.equal_range(hash)};
+    for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
     {
-      record.next_hash = child;
-      break;
+      auto const &child_hash{ref_it->second};
+      if (block_store_->Has(storage::ResourceID(child_hash)))
+      {
+        block->next_hash = child_hash;
+        break;
+      }
     }
   }
 
   // now write the block itself; if next_hash is genesis, it will be rewritten later by a child
-  block_store_->Set(storage::ResourceID(hash), record);
+  block_store_->Set(storage::ResourceID(hash), *block);
 }
 
 /**
@@ -365,15 +371,7 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
   if (retVal)
   {
     // forget the forward ref to this block from its parent
-    auto siblings{references_.equal_range(root->previous_hash)};
-    for (auto sibling{siblings.first}; sibling != siblings.second; ++sibling)
-    {
-      if (sibling->second == removed_hash)
-      {
-        references_.erase(sibling);
-        break;
-      }
-    }
+    ForgetReference(root->previous_hash, removed_hash);
   }
 
   for (BlockHashes next_gen{removed_hash}; !next_gen.empty();)

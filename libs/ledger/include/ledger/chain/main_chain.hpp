@@ -80,8 +80,6 @@ enum class BlockStatus
  */
 constexpr char const *ToString(BlockStatus status);
 
-struct BlockDbRecord;
-
 class MainChain
 {
 public:
@@ -161,7 +159,6 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
-  using DbRecord      = BlockDbRecord;
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
   using References    = std::unordered_multimap<BlockHash, BlockHash>;
@@ -169,7 +166,7 @@ public:
   using TipsMap       = std::unordered_map<BlockHash, Tip>;
   using BlockHashList = std::list<BlockHash>;
   using LooseBlockMap = std::unordered_map<BlockHash, BlockHashList>;
-  using BlockStore    = fetch::storage::ObjectStore<DbRecord>;
+  using BlockStore    = fetch::storage::ObjectStore<Block>;
   using BlockStorePtr = std::unique_ptr<BlockStore>;
   using RMutex        = std::recursive_mutex;
   using RLock         = std::unique_lock<RMutex>;
@@ -215,9 +212,9 @@ public:
   BlockMap::size_type UncacheBlock(BlockHash const &hash) const;
   void                KeepBlock(IntBlockPtr const &block) const;
   bool LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_hash = nullptr) const;
-  template<class ParentHash, class ChildHash>
+  template <class ParentHash, class ChildHash>
   void CacheReference(ParentHash &&parent, ChildHash &&child, IntBlockPtr parent_block = {}) const;
-  template<class ParentHash, class ChildHash>
+  template <class ParentHash, class ChildHash>
   void ForgetReference(ParentHash &&parent, ChildHash &&child, IntBlockPtr parent_block = {}) const;
   /// @}
 
