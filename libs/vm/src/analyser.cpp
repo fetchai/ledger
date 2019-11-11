@@ -498,8 +498,7 @@ void Analyser::BuildContractDefinition(BlockNodePtr const &contract_definition_n
         continue;
       }
       function_group = ConvertToFunctionGroupPtr(symbol);
-      TypePtrArray dummy;
-      if (FindFunction(nullptr, function_group, parameter_nodes, dummy))
+      if (FindFunction(nullptr, function_group, parameter_nodes))
       {
         AddError(
             function_name_node->line,
@@ -561,8 +560,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &function_definition_n
       return;
     }
     function_group = ConvertToFunctionGroupPtr(symbol);
-    TypePtrArray dummy;
-    if (FindFunction(nullptr, function_group, parameter_nodes, dummy))
+    if (FindFunction(nullptr, function_group, parameter_nodes))
     {
       AddError(function_name_node->line,
                "function '" + function_name + "' is already defined with the same parameter types");
@@ -619,6 +617,7 @@ bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
       ++problems;
       continue;
     }
+    parameter_type_node->type = parameter_type;
     VariablePtr parameter_variable =
         CreateVariable(VariableKind::Parameter, parameter_name, parameter_type);
     parameter_node->variable = parameter_variable;
@@ -637,6 +636,7 @@ bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
       AddError(return_type_node->line, "unknown type '" + return_type_node->text + "'");
       ++problems;
     }
+    return_type_node->type = return_type;
   }
   else
   {
@@ -772,9 +772,10 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
       AnnotateInplaceModuloOp(ConvertToExpressionNodePtr(child));
       break;
     }
+    case NodeKind::Null:
     case NodeKind::InitialiserList:
     {
-      AddError(child->line, "cannot infer list type");
+      AddError(child->line, "unable to infer type");
       break;
     }
     default:
@@ -877,7 +878,7 @@ void Analyser::AnnotateForStatement(BlockNodePtr const &for_statement_node)
       ++problems;
       continue;
     }
-    if (!MatchType(child_node->type, any_integer_type_))
+    if (!ConvertNode(child_node, any_integer_type_))
     {
       ++problems;
       AddError(child_node->line, "integral type expected");
@@ -953,6 +954,7 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node,
       {
         return;
       }
+      // Note that the "null" literal will not be accepted here
       if ((child->type != string_type_) && (child->type != address_type_))
       {
         AddError(child->line, "key must be String or Address type");
@@ -1029,12 +1031,11 @@ void Analyser::AnnotateContractStatement(BlockNodePtr const &parent_block_node,
   {
     return;
   }
-  if (initialiser_node->type != string_type_)
+  if (!ConvertNode(initialiser_node, string_type_))
   {
     AddError(initialiser_node->line, "contract initialiser must be String type");
     return;
   }
-
   VariablePtr variable = CreateVariable(VariableKind::Var, contract_variable_name, contract_type);
   parent_block_node->symbols->Add(variable);
   contract_variable_node->variable = variable;
@@ -1079,32 +1080,10 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
     {
       return;
     }
-    if (expression_node->node_kind == NodeKind::InitialiserList)
+    if (!ConvertNode(expression_node, type_node->type))
     {
-      if (!ConvertInitialiserList(expression_node, type_node->type))
-      {
-        AddError(type_node->line, "incompatible types");
-        return;
-      }
-    }
-    else if (!expression_node->type->IsNull())
-    {
-      if (type_node->type != expression_node->type)
-      {
-        AddError(type_node->line, "incompatible types");
-        return;
-      }
-    }
-    else
-    {
-      if (type_node->type->IsPrimitive())
-      {
-        // Can't assign null to a primitive type
-        AddError(type_node->line, "unable to assign null to primitive type");
-        return;
-      }
-      // Convert the null type to the declared type
-      expression_node->type = type_node->type;
+      AddError(type_node->line, "incompatible types");
+      return;
     }
     variable->type = type_node->type;
   }
@@ -1115,8 +1094,7 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
     {
       return;
     }
-    if (expression_node->type->IsVoid() || expression_node->type->IsNull() ||
-        expression_node->node_kind == NodeKind::InitialiserList)
+    if (!expression_node->IsConcrete())
     {
       AddError(expression_node->line, "unable to infer type");
       return;
@@ -1129,39 +1107,21 @@ void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
 {
   if (return_statement_node->children.size() == 1)
   {
+    if (function_->return_type->IsVoid())
+    {
+      AddError(return_statement_node->line, "return supplies a value");
+      return;
+    }
     ExpressionNodePtr expression_node =
         ConvertToExpressionNodePtr(return_statement_node->children[0]);
     if (!AnnotateExpression(expression_node))
     {
       return;
     }
-    if (expression_node->node_kind == NodeKind::InitialiserList)
+    if (!ConvertNode(expression_node, function_->return_type))
     {
-      if (!ConvertInitialiserList(expression_node, function_->return_type))
-      {
-        AddError(expression_node->line, "incompatible types");
-        return;
-      }
-    }
-    else if (!expression_node->type->IsNull())
-    {
-      // note: function_->return_type can be Void
-      if (expression_node->type != function_->return_type)
-      {
-        AddError(expression_node->line, "type does not match function return type");
-        return;
-      }
-    }
-    else
-    {
-      // note: function_->return_type can be Void
-      if (function_->return_type->IsPrimitive())
-      {
-        AddError(expression_node->line, "unable to return null");
-        return;
-      }
-      // Convert the null type to the known return type of the function
-      expression_node->type = function_->return_type;
+      AddError(expression_node->line, "incompatible types");
+      return;
     }
   }
   else
@@ -1180,7 +1140,7 @@ void Analyser::AnnotateConditionalBlock(BlockNodePtr const &conditional_block_no
       ConvertToExpressionNodePtr(conditional_block_node->children[0]);
   if (AnnotateExpression(expression_node))
   {
-    if (expression_node->type != bool_type_)
+    if (!ConvertNode(expression_node, bool_type_))
     {
       AddError(expression_node->line, "boolean type expected");
     }
@@ -1208,40 +1168,12 @@ bool Analyser::AnnotateAssignOp(ExpressionNodePtr const &node)
   {
     return false;
   }
-
-  if (rhs->node_kind == NodeKind::InitialiserList)
+  if (!ConvertNode(rhs, lhs->type))
   {
-    if (!ConvertInitialiserList(rhs, lhs->type))
-    {
-      AddError(node->line, "incompatible types");
-      return false;
-    }
-  }
-  else if (rhs->type->IsVoid())
-  {
-    // Can't assign from a function with no return value
     AddError(node->line, "incompatible types");
     return false;
   }
-  else if (!rhs->type->IsNull())
-  {
-    if (lhs->type != rhs->type)
-    {
-      AddError(node->line, "incompatible types");
-      return false;
-    }
-  }
-  else
-  {
-    if (lhs->type->IsPrimitive())
-    {
-      // Can't assign null to a primitive type
-      AddError(node->line, "incompatible types");
-      return false;
-    }
-    // Convert the null type to the correct type
-    rhs->type = lhs->type;
-  }
+  assert(lhs->type == rhs->type);
   SetRVExpression(node, lhs->type);
   return true;
 }
@@ -1265,9 +1197,14 @@ bool Analyser::AnnotateInplaceModuloOp(ExpressionNodePtr const &node)
   {
     return false;
   }
-  if (lhs->type != rhs->type || !MatchType(lhs->type, any_integer_type_))
+  if (!ConvertNode(lhs, any_integer_type_) || !ConvertNode(rhs, any_integer_type_))
   {
-    AddError(node->line, "integral operands expected");
+    AddError(node->line, "matching integral operands expected");
+    return false;
+  }
+  if (lhs->type != rhs->type)
+  {
+    AddError(node->line, "matching integral operands expected");
     return false;
   }
   SetRVExpression(node, lhs->type);
@@ -1300,13 +1237,12 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &node, ExpressionNo
     symbols = container_node->type->symbols;
   }
 
-  std::size_t const      num_supplied_indexes = lhs->children.size() - 1;
-  ExpressionNodePtrArray supplied_index_nodes;
-  for (std::size_t i = 1; i <= num_supplied_indexes; ++i)
+  std::size_t const      num_indexes = lhs->children.size() - 1;
+  ExpressionNodePtrArray index_nodes;
+  for (std::size_t i = 1; i <= num_indexes; ++i)
   {
-    NodePtr const &   supplied_index      = lhs->children[i];
-    ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
-    supplied_index_nodes.push_back(supplied_index_node);
+    ExpressionNodePtr index_node = ConvertToExpressionNodePtr(lhs->children[i]);
+    index_nodes.push_back(index_node);
   }
 
   SymbolPtr setter_symbol = symbols->Find(SET_INDEXED_VALUE);
@@ -1319,11 +1255,9 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &node, ExpressionNo
 
   FunctionGroupPtr setter_fg = ConvertToFunctionGroupPtr(setter_symbol);
 
-  TypePtrArray           dummy;
-  ExpressionNodePtrArray setter_supplied_nodes = supplied_index_nodes;
-  setter_supplied_nodes.push_back(lhs);
-  FunctionPtr setter_f =
-      FindFunction(container_node->type, setter_fg, setter_supplied_nodes, dummy);
+  ExpressionNodePtrArray setter_index_nodes = index_nodes;
+  setter_index_nodes.push_back(lhs);
+  FunctionPtr setter_f = FindFunction(container_node->type, setter_fg, setter_index_nodes);
   if (!setter_f)
   {
     AddError(container_node->line, "unable to find matching index operator for type '" +
@@ -1602,82 +1536,37 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
       return false;
     }
   }
-  ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
-  ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (lhs->type->IsVoid() || rhs->type->IsVoid())
+  ExpressionNodePtr lhs             = ConvertToExpressionNodePtr(node->children[0]);
+  ExpressionNodePtr rhs             = ConvertToExpressionNodePtr(node->children[1]);
+  bool              lhs_is_concrete = lhs->IsConcrete();
+  bool              rhs_is_concrete = rhs->IsConcrete();
+  if (!lhs_is_concrete && !rhs_is_concrete)
   {
-    AddError(node->line, "unable to compare operand(s) of type Void");
+    AddError(node->line, "unable to infer types");
     return false;
   }
-  bool const lhs_is_concrete_type = !lhs->type->IsNull();
-  bool const rhs_is_concrete_type = !rhs->type->IsNull();
-  if (lhs_is_concrete_type)
+  if (lhs_is_concrete)
   {
-    bool const lhs_is_primitive = lhs->type->IsPrimitive();
-    if (rhs_is_concrete_type)
+    if (!ConvertNode(rhs, lhs->type))
     {
-      if (rhs->node_kind == NodeKind::InitialiserList)
-      {
-        if (!ConvertInitialiserList(rhs, lhs->type))
-        {
-          AddError(node->line, "incompatible types");
-          return false;
-        }
-      }
-      else if (lhs->node_kind == NodeKind::InitialiserList)
-      {
-        if (!ConvertInitialiserList(lhs, rhs->type))
-        {
-          AddError(node->line, "incompatible types");
-          return false;
-        }
-      }
-
-      if (lhs->type != rhs->type)
-      {
-        AddError(node->line, "incompatible types");
-        return false;
-      }
-      bool const enabled = IsOperatorEnabled(lhs->type, op);
-      if (!enabled)
-      {
-        AddError(node->line, "operator not supported");
-        return false;
-      }
-    }
-    else
-    {
-      if (lhs_is_primitive && lhs->node_kind != NodeKind::InitialiserList)
-      {
-        // unable to compare LHS primitive type to RHS null
-        AddError(node->line, "incompatible types");
-        return false;
-      }
-      // Convert the RHS null type to the correct type
-      rhs->type = lhs->type;
+      AddError(node->line, "incompatible types");
+      return false;
     }
   }
-  else
+  else  // rhs_is_concrete
   {
-    if (rhs_is_concrete_type)
+    if (!ConvertNode(lhs, rhs->type))
     {
-      bool const rhs_is_primitive = rhs->type->IsPrimitive();
-      if (rhs_is_primitive && rhs->node_kind != NodeKind::InitialiserList)
-      {
-        // unable to compare LHS null to RHS primitive type
-        AddError(node->line, "incompatible types");
-        return false;
-      }
-      // Convert the LHS null type to the correct type
-      lhs->type = rhs->type;
+      AddError(node->line, "incompatible types");
+      return false;
     }
-    else
-    {
-      // Comparing two nulls...
-      // Type-uninferable nulls will be transformed to boolean false
-      lhs->type = bool_type_;
-      rhs->type = bool_type_;
-    }
+  }
+  assert(lhs->type == rhs->type);
+  bool const enabled = IsOperatorEnabled(lhs->type, op);
+  if (!enabled)
+  {
+    AddError(node->line, "operator not supported");
+    return false;
   }
   SetRVExpression(node, bool_type_);
   return true;
@@ -1695,27 +1584,35 @@ bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const &node)
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (rhs->node_kind == NodeKind::InitialiserList)
-  {
-    if (!ConvertInitialiserList(rhs, lhs->type))
-    {
-      AddError(node->line, "incompatible types");
-      return false;
-    }
-  }
-  else if (lhs->node_kind == NodeKind::InitialiserList)
-  {
-    if (!ConvertInitialiserList(lhs, rhs->type))
-    {
-      AddError(node->line, "incompatible types");
-      return false;
-    }
-  }
-  if (lhs->type != rhs->type)
+  if (lhs->IsNull() || rhs->IsNull())
   {
     AddError(node->line, "incompatible types");
     return false;
   }
+  bool lhs_is_concrete = lhs->IsConcrete();
+  bool rhs_is_concrete = rhs->IsConcrete();
+  if (!lhs_is_concrete && !rhs_is_concrete)
+  {
+    AddError(node->line, "unable to infer types");
+    return false;
+  }
+  if (lhs_is_concrete)
+  {
+    if (!ConvertNode(rhs, lhs->type))
+    {
+      AddError(node->line, "incompatible types");
+      return false;
+    }
+  }
+  else  // rhs_is_concrete
+  {
+    if (!ConvertNode(lhs, rhs->type))
+    {
+      AddError(node->line, "incompatible types");
+      return false;
+    }
+  }
+  assert(lhs->type == rhs->type);
   if (!IsOperatorEnabled(lhs->type, op))
   {
     AddError(node->line, "operator not supported");
@@ -1736,7 +1633,7 @@ bool Analyser::AnnotateBinaryLogicalOp(ExpressionNodePtr const &node)
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if ((lhs->type != bool_type_) || (rhs->type != bool_type_))
+  if (!ConvertNode(lhs, bool_type_) || !ConvertNode(rhs, bool_type_))
   {
     AddError(node->line, "boolean operands expected");
     return false;
@@ -1752,7 +1649,7 @@ bool Analyser::AnnotateUnaryLogicalOp(ExpressionNodePtr const &node)
   {
     return false;
   }
-  if (operand->type != bool_type_)
+  if (!ConvertNode(operand, bool_type_))
   {
     AddError(node->line, "boolean operand expected");
     return false;
@@ -1768,7 +1665,7 @@ bool Analyser::AnnotatePrefixPostfixOp(ExpressionNodePtr const &node)
   {
     return false;
   }
-  if (!MatchType(operand->type, any_integer_type_))
+  if (!ConvertNode(operand, any_integer_type_))
   {
     AddError(node->line, "integral type expected");
     return false;
@@ -1783,6 +1680,11 @@ bool Analyser::AnnotateNegateOp(ExpressionNodePtr const &node)
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
   if (!AnnotateExpression(operand))
   {
+    return false;
+  }
+  if (!operand->IsConcrete())
+  {
+    AddError(node->line, "unable to infer type");
     return false;
   }
   if (!IsOperatorEnabled(operand->type, op))
@@ -1819,9 +1721,14 @@ bool Analyser::AnnotateModuloOp(ExpressionNodePtr const &node)
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (lhs->type != rhs->type || !MatchType(lhs->type, any_integer_type_))
+  if (!ConvertNode(lhs, any_integer_type_) || !ConvertNode(rhs, any_integer_type_))
   {
-    AddError(node->line, "integral operands expected");
+    AddError(node->line, "matching integral operands expected");
+    return false;
+  }
+  if (lhs->type != rhs->type)
+  {
+    AddError(node->line, "matching integral operands expected");
     return false;
   }
   SetRVExpression(node, lhs->type);
@@ -1848,14 +1755,9 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     AddError(lhs->line, "unable to use contract variable '" + lhs->variable->name + "'");
     return false;
   }
-  if (lhs->node_kind == NodeKind::InitialiserList)
-  {
-    AddError(lhs->line, "indexing into initialiser lists not supported");
-    return false;
-  }
   if (lhs->type->IsPrimitive())
   {
-    AddError(lhs->line, "primitive type '" + lhs->type->name + "' does not support index operator");
+    AddError(lhs->line, "type '" + lhs->type->name + "' does not support index operator");
     return false;
   }
   SymbolTablePtr symbols;
@@ -1867,17 +1769,16 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   {
     symbols = lhs->type->symbols;
   }
-  std::size_t const      num_supplied_indexes = node->children.size() - 1;
-  ExpressionNodePtrArray supplied_index_nodes;
-  for (std::size_t i = 1; i <= num_supplied_indexes; ++i)
+  std::size_t const      num_indexes = node->children.size() - 1;
+  ExpressionNodePtrArray index_nodes;
+  for (std::size_t i = 1; i <= num_indexes; ++i)
   {
-    NodePtr const &   supplied_index      = node->children[i];
-    ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
-    if (!AnnotateExpression(supplied_index_node))
+    ExpressionNodePtr index_node = ConvertToExpressionNodePtr(node->children[i]);
+    if (!AnnotateExpression(index_node))
     {
       return false;
     }
-    supplied_index_nodes.push_back(supplied_index_node);
+    index_nodes.push_back(index_node);
   }
   SymbolPtr symbol = symbols->Find(GET_INDEXED_VALUE);
   if (!symbol)
@@ -1887,22 +1788,15 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     return false;
   }
   FunctionGroupPtr fg = ConvertToFunctionGroupPtr(symbol);
-  TypePtrArray     actual_index_types;
-  FunctionPtr      f = FindFunction(lhs->type, fg, supplied_index_nodes, actual_index_types);
+  FunctionPtr      f  = FindFunction(lhs->type, fg, index_nodes);
   if (!f)
   {
     AddError(lhs->line,
              "unable to find matching index operator for type '" + lhs->type->name + "'");
     return false;
   }
-  for (std::size_t i = 1; i <= num_supplied_indexes; ++i)
-  {
-    NodePtr const &   supplied_index      = node->children[i];
-    ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
-    supplied_index_node->type             = actual_index_types[i - 1];
-  }
-  TypePtr output_type = ResolveType(f->return_type, lhs->type);
-  SetLVExpression(node, output_type);
+  TypePtr return_type = ResolveReturnType(f->return_type, lhs->type);
+  SetLVExpression(node, return_type);
   node->function = f;
   return true;
 }
@@ -1928,8 +1822,7 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
   bool lhs_is_type_expression = lhs->IsTypeExpression();
   if (lhs->type->IsPrimitive())
   {
-    AddError(lhs->line,
-             "primitive type '" + lhs->type->name + "' does not support member-access operator");
+    AddError(lhs->line, "type '" + lhs->type->name + "' does not support member-access operator");
     return false;
   }
   SymbolTablePtr symbols;
@@ -1972,23 +1865,20 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   {
     return false;
   }
-  ExpressionNodePtrArray supplied_parameter_nodes;
+  ExpressionNodePtrArray parameter_nodes;
   for (std::size_t i = 1; i < node->children.size(); ++i)
   {
-    NodePtr const &   supplied_parameter      = node->children[i];
-    ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
-    if (!AnnotateExpression(supplied_parameter_node))
+    ExpressionNodePtr parameter_node = ConvertToExpressionNodePtr(node->children[i]);
+    if (!AnnotateExpression(parameter_node))
     {
       return false;
     }
-    supplied_parameter_nodes.push_back(supplied_parameter_node);
+    parameter_nodes.push_back(parameter_node);
   }
   if (lhs->IsFunctionGroupExpression())
   {
     // Note that lhs->type is null for free functions
-    TypePtrArray actual_parameter_types;
-    FunctionPtr  f = FindFunction(lhs->type, lhs->function_group, supplied_parameter_nodes,
-                                 actual_parameter_types);
+    FunctionPtr f = FindFunction(lhs->type, lhs->function_group, parameter_nodes);
     if (!f)
     {
       // No matching function, or ambiguous
@@ -2014,13 +1904,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
         return false;
       }
     }
-    for (std::size_t i = 1; i < node->children.size(); ++i)
-    {
-      NodePtr const &   supplied_parameter      = node->children[i];
-      ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
-      supplied_parameter_node->type             = actual_parameter_types[i - 1];
-    }
-    TypePtr return_type = ResolveType(f->return_type, lhs->type);
+    TypePtr return_type = ResolveReturnType(f->return_type, lhs->type);
     SetRVExpression(node, return_type);
     node->function = f;
     return true;
@@ -2030,7 +1914,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     // Type constructor
     if (lhs->type->IsPrimitive())
     {
-      AddError(lhs->line, "primitive type '" + lhs->type->name + "' is not constructible");
+      AddError(lhs->line, "type '" + lhs->type->name + "' is not constructible");
       return false;
     }
     SymbolTablePtr symbols;
@@ -2049,19 +1933,12 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
       return false;
     }
     FunctionGroupPtr fg = ConvertToFunctionGroupPtr(symbol);
-    TypePtrArray     actual_parameter_types;
-    FunctionPtr f = FindFunction(lhs->type, fg, supplied_parameter_nodes, actual_parameter_types);
+    FunctionPtr      f  = FindFunction(lhs->type, fg, parameter_nodes);
     if (!f)
     {
       // No matching constructor, or ambiguous
       AddError(lhs->line, "unable to find matching constructor for type '" + lhs->type->name + "'");
       return false;
-    }
-    for (std::size_t i = 1; i < node->children.size(); ++i)
-    {
-      NodePtr const &   supplied_parameter      = node->children[i];
-      ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
-      supplied_parameter_node->type             = actual_parameter_types[i - 1];
     }
     SetRVExpression(node, lhs->type);
     node->function = f;
@@ -2080,6 +1957,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
 
 bool Analyser::AnnotateInitialiserList(ExpressionNodePtr const &node)
 {
+  node->type = initialiser_list_type_;
   for (NodePtr const &child : node->children)
   {
     if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
@@ -2093,44 +1971,23 @@ bool Analyser::AnnotateInitialiserList(ExpressionNodePtr const &node)
 
 bool Analyser::ConvertInitialiserList(ExpressionNodePtr const &node, TypePtr const &type)
 {
+  node->type = initialiser_list_type_;
   return type->IsInstantiation() && (type->template_type == array_type_) &&
          ConvertInitialiserListToArray(node, type);
 }
 
 bool Analyser::ConvertInitialiserListToArray(ExpressionNodePtr const &node, TypePtr const &type)
 {
-  node->type                          = initialiser_list_type_;
-  TypePtr const &element_type         = type->types[0];
-  bool           element_is_primitive = element_type->IsPrimitive();
+  TypePtr const &element_type = type->types[0];
   for (NodePtr const &c : node->children)
   {
     auto child = ConvertToExpressionNodePtr(c);
-    switch (child->node_kind)
+    if (!ConvertNode(child, element_type))
     {
-    case NodeKind::InitialiserList:
-      if (!ConvertInitialiserList(child, element_type))
-      {
-        return false;
-      }
-      break;
-
-    case NodeKind::Null:
-      if (element_is_primitive)
-      {
-        child->type = null_type_;
-        return false;
-      }
-      child->type = element_type;
-      break;
-
-    default:
-      if (child->type->IsVoid() || child->type != element_type)
-      {
-        return false;
-      }
+      return false;
     }
   }
-  // all children were convertible to the element type, so set the type
+  // All children were convertible to the element type, so set the type
   node->type = type;
   return true;
 }
@@ -2208,88 +2065,56 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
                                   ExpressionNodePtr const &rhs)
 {
   Operator const op = GetOperator(node->node_kind);
-  if (lhs->type->IsVoid() || lhs->type->IsNull())
+  if (lhs->IsNull() || rhs->IsNull())
   {
     AddError(node->line, "incompatible types");
     return false;
   }
-  if (rhs->type->IsVoid() || rhs->type->IsNull())
+  bool lhs_is_concrete = lhs->IsConcrete();
+  bool rhs_is_concrete = rhs->IsConcrete();
+  if (!lhs_is_concrete && !rhs_is_concrete)
   {
-    AddError(node->line, "incompatible types");
+    AddError(node->line, "unable to infer types");
     return false;
   }
-  bool const lhs_is_primitive     = lhs->type->IsPrimitive();
-  bool const rhs_is_primitive     = rhs->type->IsPrimitive();
-  bool const lhs_is_instantiation = lhs->type->IsInstantiation();
-  bool const rhs_is_instantiation = rhs->type->IsInstantiation();
-  if (lhs_is_primitive)
+  if (lhs_is_concrete)
   {
-    if (rhs_is_primitive)
+    if (IsOperatorEnabled(lhs->type, op))
     {
-      // primitive op primitive
-      if ((lhs->type == rhs->type) && IsOperatorEnabled(lhs->type, op))
+      if (ConvertNode(rhs, lhs->type))
       {
         SetRVExpression(node, lhs->type);
         return true;
       }
     }
-    else
+    bool lhs_is_instantiation = lhs->type->IsInstantiation();
+    if (lhs_is_instantiation && IsRightOperatorEnabled(lhs->type, op))
     {
-      if (rhs_is_instantiation && IsLeftOperatorEnabled(rhs->type, op))
+      TypePtr const &lhs_inner_type = lhs->type->types[0];
+      if (ConvertNode(rhs, lhs_inner_type))
       {
-        if (lhs->node_kind == NodeKind::InitialiserList)
-        {
-          if (!ConvertInitialiserList(lhs, rhs->type))
-          {
-            AddError(node->line, "incompatible types");
-            return false;
-          }
-        }
-        else
-        {
-          // primitive op object
-          TypePtr const &rhs_type = rhs->type->types[0];
-          if (lhs->type == rhs_type)
-          {
-            SetRVExpression(node, rhs->type);
-            return true;
-          }
-        }
+        SetRVExpression(node, lhs->type);
+        return true;
       }
     }
   }
-  else
+  if (rhs_is_concrete)
   {
-    if (rhs_is_primitive)
+    if (IsOperatorEnabled(rhs->type, op))
     {
-      // object op primitive
-      if (lhs_is_instantiation && IsRightOperatorEnabled(lhs->type, op))
+      if (ConvertNode(lhs, rhs->type))
       {
-        if (rhs->node_kind == NodeKind::InitialiserList)
-        {
-          if (!ConvertInitialiserList(rhs, lhs->type))
-          {
-            AddError(node->line, "incompatible types");
-            return false;
-          }
-        }
-        else
-        {
-          TypePtr const &lhs_type = lhs->type->types[0];
-          if (lhs_type == rhs->type)
-          {
-            SetRVExpression(node, lhs->type);
-            return true;
-          }
-        }
+        SetRVExpression(node, rhs->type);
+        return true;
       }
     }
-    else
+    bool rhs_is_instantiation = rhs->type->IsInstantiation();
+    if (rhs_is_instantiation && IsLeftOperatorEnabled(rhs->type, op))
     {
-      // object op object
-      if ((lhs->type == rhs->type) && IsOperatorEnabled(lhs->type, op))
+      TypePtr const &rhs_inner_type = rhs->type->types[0];
+      if (ConvertNode(lhs, rhs_inner_type))
       {
-        SetRVExpression(node, lhs->type);
+        SetRVExpression(node, rhs->type);
         return true;
       }
     }
@@ -2298,132 +2123,187 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
   return false;
 }
 
-TypePtr Analyser::ResolveType(TypePtr const &type, TypePtr const &instantiation_type)
-{
-  if (type->type_kind == TypeKind::Template)
-  {
-    return instantiation_type;
-  }
-  if (type == template_parameter1_type_)
-  {
-    return instantiation_type->types[0];
-  }
-  if (type == template_parameter2_type_)
-  {
-    return instantiation_type->types[1];
-  }
-  return type;
-}
-
-bool Analyser::MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const
-{
-  if (expected_type == any_type_)
-  {
-    return true;
-  }
-  if (expected_type == any_primitive_type_)
-  {
-    return supplied_type->IsPrimitive();
-  }
-  if (expected_type->IsGroup())
-  {
-    for (auto const &possible_type : expected_type->types)
-    {
-      if (supplied_type == possible_type)
-      {
-        return true;
-      }
-    }
-  }
-  else if (supplied_type == expected_type)
-  {
-    return true;
-  }
-  return false;
-}
-
-bool Analyser::MatchTypes(TypePtr const &type, ExpressionNodePtrArray const &supplied_nodes,
-                          TypePtrArray const &expected_types, TypePtrArray &actual_types)
-{
-  actual_types.clear();
-  std::size_t const num_types = expected_types.size();
-  if (supplied_nodes.size() != num_types)
-  {
-    // Not a match
-    return false;
-  }
-  for (std::size_t i = 0; i < num_types; ++i)
-  {
-    auto const &   supplied_node = supplied_nodes[i];
-    TypePtr const &supplied_type = supplied_node->type;
-    if (supplied_type->IsVoid())
-    {
-      return false;
-    }
-    TypePtr expected_type = ResolveType(expected_types[i], type);
-    if (supplied_type->IsNull())
-    {
-      if (!expected_type->IsClass() && !expected_type->IsInstantiation())
-      {
-        // Not a match, can only convert null to a known reference type
-        return false;
-      }
-      actual_types.push_back(expected_type);
-    }
-    else if (supplied_node->node_kind == NodeKind::InitialiserList)
-    {
-      // if there's a matching type set, this node's type will be properly set in the end
-      // otherwise, the whole script does not compile
-      // so it does not matter if we change node's type now
-      if (!ConvertInitialiserList(supplied_node, expected_type))
-      {
-        return false;
-      }
-      actual_types.push_back(expected_type);
-    }
-    else
-    {
-      if (!MatchType(supplied_type, expected_type))
-      {
-        return false;
-      }
-      actual_types.push_back(supplied_type);
-    }
-  }
-  // Got a match
-  return true;
-}
-
 FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &function_group,
-                                   ExpressionNodePtrArray const &supplied_nodes,
-                                   TypePtrArray &                actual_types)
+                                   ExpressionNodePtrArray const &parameter_nodes)
 {
   FunctionPtrArray          functions;
   std::vector<TypePtrArray> array;
   for (FunctionPtr const &function : function_group->functions)
   {
-    TypePtrArray temp_actual_types;
-    if (MatchTypes(type, supplied_nodes, function->parameter_types, temp_actual_types))
+    std::size_t const num_types = function->parameter_types.size();
+    if (parameter_nodes.size() != num_types)
     {
-      array.push_back(temp_actual_types);
+      continue;
+    }
+    bool         match = true;
+    TypePtrArray temp_resolved_types;
+    for (std::size_t i = 0; i < num_types; ++i)
+    {
+      auto const &   parameter_node = parameter_nodes[i];
+      TypePtr const &expected_type  = function->parameter_types[i];
+      TypePtr        resolved_type  = ConvertNode(parameter_node, expected_type, type);
+      if (!resolved_type)
+      {
+        match = false;
+        break;
+      }
+      temp_resolved_types.push_back(std::move(resolved_type));
+    }
+    if (match)
+    {
       functions.push_back(function);
+      array.push_back(std::move(temp_resolved_types));
     }
   }
   if (functions.size() == 1)
   {
-    actual_types = array[0];
-    for (std::size_t i{}; i < actual_types.size(); ++i)
+    TypePtrArray const &resolved_types = array[0];
+    for (std::size_t i = 0; i < parameter_nodes.size(); ++i)
     {
-      auto const &supplied_node = supplied_nodes[i];
-      if (supplied_node->node_kind == NodeKind::InitialiserList)
+      auto const &parameter_node = parameter_nodes[i];
+      if (parameter_node->IsNull() || parameter_node->IsInitialiserList())
       {
-        ConvertInitialiserList(supplied_node, actual_types[i]);
+        ConvertNode(parameter_node, resolved_types[i]);
       }
     }
     return functions[0];
   }
   // Matching function not found, or ambiguous
   return nullptr;
+}
+
+TypePtr Analyser::ConvertNode(ExpressionNodePtr const &node, TypePtr const &expected_type)
+{
+  return ConvertNode(node, expected_type, nullptr);
+}
+
+TypePtr Analyser::ConvertNode(ExpressionNodePtr const &node, TypePtr const &expected_type,
+                              TypePtr const &type)
+{
+  TypePtr const &input_type = node->type;
+
+  if (input_type->IsTemplate() || input_type->IsMeta() || input_type->IsGroup() ||
+      input_type->IsUserDefinedContract())
+  {
+    return nullptr;
+  }
+
+  if ((expected_type == null_type_) || (expected_type == initialiser_list_type_) ||
+      (expected_type == void_type_) || expected_type->IsUserDefinedContract())
+  {
+    return nullptr;
+  }
+
+  TypePtr comparison_type;
+  if (expected_type->IsTemplate())
+  {
+    if (type && type->IsInstantiation())
+    {
+      comparison_type = type;
+    }
+    else
+    {
+      return nullptr;
+    }
+  }
+  else if (expected_type == template_parameter1_type_)
+  {
+    if (type && type->IsInstantiation() && (type->types.size() >= 1))
+    {
+      comparison_type = type->types[0];
+    }
+    else
+    {
+      return nullptr;
+    }
+  }
+  else if (expected_type == template_parameter2_type_)
+  {
+    if (type && type->IsInstantiation() && (type->types.size() >= 2))
+    {
+      comparison_type = type->types[1];
+    }
+    else
+    {
+      return nullptr;
+    }
+  }
+  else
+  {
+    comparison_type = expected_type;
+  }
+
+  if (node->IsNull())
+  {
+    // Can only convert null literal to a known reference type
+    if (comparison_type->IsClass() || comparison_type->IsInstantiation())
+    {
+      node->type = comparison_type;
+      return comparison_type;
+    }
+    return nullptr;
+  }
+
+  if (node->IsInitialiserList())
+  {
+    // Can only convert initialiser list to a known reference type
+    if (comparison_type->IsClass() || comparison_type->IsInstantiation())
+    {
+      if (ConvertInitialiserList(node, comparison_type))
+      {
+        node->type = comparison_type;
+        return comparison_type;
+      }
+    }
+    return nullptr;
+  }
+
+  if (input_type == void_type_)
+  {
+    // Can't convert Void to anything
+    return nullptr;
+  }
+
+  if (comparison_type == any_type_)
+  {
+    return input_type;
+  }
+
+  if (comparison_type == any_primitive_type_)
+  {
+    return input_type->IsPrimitive() ? input_type : nullptr;
+  }
+
+  if (comparison_type->IsGroup())
+  {
+    for (auto const &possible_type : comparison_type->types)
+    {
+      if (input_type == possible_type)
+      {
+        return input_type;
+      }
+    }
+    return nullptr;
+  }
+
+  return (input_type == comparison_type) ? input_type : nullptr;
+}
+
+TypePtr Analyser::ResolveReturnType(TypePtr const &return_type, TypePtr const &type)
+{
+  if (return_type->IsTemplate())
+  {
+    return type;
+  }
+  if (return_type == template_parameter1_type_)
+  {
+    return type->types[0];
+  }
+  if (return_type == template_parameter2_type_)
+  {
+    return type->types[1];
+  }
+  return return_type;
 }
 
 TypePtr Analyser::FindType(ExpressionNodePtr const &node)
@@ -2454,6 +2334,10 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
       // Template type doesn't exist
       return nullptr;
     }
+    if (!symbol->IsType())
+    {
+      return nullptr;
+    }
     TypePtr           template_type                = ConvertToTypePtr(symbol);
     std::size_t const num_supplied_parameter_types = node->children.size() - 1;
     std::size_t const num_expected_parameter_types = template_type->types.size();
@@ -2470,8 +2354,9 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
       {
         return nullptr;
       }
+      parameter_type_node->type              = parameter_type;
       TypePtr const &expected_parameter_type = template_type->types[i - 1];
-      if (!MatchType(parameter_type, expected_parameter_type))
+      if (!ConvertNode(parameter_type_node, expected_parameter_type))
       {
         return nullptr;
       }
