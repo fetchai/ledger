@@ -108,10 +108,33 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
       auto gradient_pair = (*trainable_it)->GetSparseGradientsReferences();
       rows.push_back(gradient_pair.second);
 
-      // TODO: Do Slicing and apply for each slice
+      // Normal ApplyGradient
+      if (rows.at(rows.size() - 1).empty() ||
+          rows.at(rows.size() - 1).size() > (gradient_pair.first.shape().at(1) / 4))
+      {
 
-      // output_grad[i] = (input_grad[i] / batch_size) * -learning_rate
-      fetch::math::Multiply(gradient_pair.first, neg_learning_rate_div_batch_size, *gradient_it);
+        // output_grad[i] = (input_grad[i] / batch_size) * -learning_rate
+        fetch::math::Multiply(gradient_pair.first, neg_learning_rate_div_batch_size, *gradient_it);
+      }
+      else
+      {
+        // Sparse apply gradient
+
+        for (SizeType update_index : rows.at(rows.size() - 1))
+        {
+          auto       gradient_slice        = gradient_it->Slice(update_index, 1);
+          TensorType gradient_slice_tensor = gradient_slice.Copy();
+
+          auto       refs_slice        = gradient_pair.first.Slice(update_index, 1);
+          TensorType refs_slice_tensor = refs_slice.Copy();
+
+          // output_grad[i] = (input_grad[i] / batch_size) * -learning_rate
+          fetch::math::Multiply(refs_slice_tensor, neg_learning_rate_div_batch_size,
+                                gradient_slice_tensor);
+
+          gradient_slice.Assign(gradient_slice_tensor);
+        }
+      }
 
       // we need to explicitly reset the gradients for this shared op to avoid double counting
       // in the case of shared ops
@@ -157,6 +180,6 @@ struct MapSerializer<ml::optimisers::SGDOptimiser<TensorType>, D>
     map.ExpectKeyGetValue(BASE_OPTIMISER, *base_pointer);
   }
 };
-}  // namespace serializers
 
+}  // namespace serializers
 }  // namespace fetch
