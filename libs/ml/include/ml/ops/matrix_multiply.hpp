@@ -41,7 +41,7 @@ public:
   using SPType        = OpMatrixMultiplySaveableParams<T>;
   using MyType        = MatrixMultiply<TensorType>;
 
-  MatrixMultiply(bool transpose_a = false, bool transpose_b = false)
+  explicit MatrixMultiply(bool transpose_a = false, bool transpose_b = false)
     : transpose_a_(transpose_a)
     , transpose_b_(transpose_b)
   {}
@@ -303,70 +303,63 @@ template <class T>
 std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShape(
     VecTensorType const &inputs) const
 {
+  if (transpose_a_ && transpose_b_)
+  {
+    throw ml::exceptions::InvalidMode(
+        "ops::MatrixMultiply does not support both inputs transposed");
+  }
+  std::vector<fetch::math::SizeType> output_shape;
+
   // Normal Matmul
   if (inputs.at(0)->shape().size() == 2 && inputs.at(1)->shape().size() == 2)
   {
     if (!transpose_a_ && !transpose_b_)
     {
-      return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)};
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)};
     }
     else if (transpose_a_ & !transpose_b_)
     {
-      return {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1)};
-    }
-    else if (transpose_b_ & !transpose_a_)
-    {
-      return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0)};
+      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1)};
     }
     else
     {
-      throw ml::exceptions::InvalidMode(
-          "ops::MatrixMultiply does not support both inputs transposed");
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0)};
     }
   }
   // Batchwise matmul or 3D @ 2D broadcast matmul
-  if (inputs.at(0)->shape().size() == 3)
+  else if (inputs.at(0)->shape().size() == 3)
   {
     if (!transpose_a_ && !transpose_b_)
     {
-      return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
-              inputs.at(0)->shape().at(2)};
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(0)->shape().at(2)};
     }
-    else if (transpose_a_ & !transpose_b_)
+    if (transpose_a_ & !transpose_b_)
     {
-      return {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1),
-              inputs.at(0)->shape().at(2)};
-    }
-    else if (transpose_b_ & !transpose_a_)
-    {
-      return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0),
-              inputs.at(0)->shape().at(2)};
+      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1), inputs.at(0)->shape().at(2)};
     }
     else
     {
-      throw ml::exceptions::InvalidMode(
-          "ops::MatrixMultiply does not support both inputs transposed");
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0), inputs.at(0)->shape().at(2)};
     }
-  }
-
-  // 2D @ 3D broadcast matmul
-  if (!transpose_a_ && !transpose_b_)
-  {
-    return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
-  }
-  else if (transpose_a_ & !transpose_b_)
-  {
-    return {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
-  }
-  else if (transpose_b_ & !transpose_a_)
-  {
-    return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0), inputs.at(1)->shape().at(2)};
   }
   else
   {
-    throw ml::exceptions::InvalidMode(
-        "ops::MatrixMultiply does not support both inputs transposed");
+    // 2D @ 3D broadcast matmul
+    if (!transpose_a_ && !transpose_b_)
+    {
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
+    }
+    if (transpose_a_ & !transpose_b_)
+    {
+      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
+    }
+    else
+    {
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0), inputs.at(1)->shape().at(2)};
+    }
   }
+
+  return output_shape;
 }
 
 /**
