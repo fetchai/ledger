@@ -631,6 +631,24 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
 }
 
 /**
+ * Return whether, for a given block number and weight, whether different blocks with the same
+ * weight have been seen
+ *
+ * @param block_number Block number being queried
+ * @param block_weight Weight being queried
+ * @return Whether pair (block_number, block_weight) pair correspond to stutter blocks
+ */
+bool MainChain::IsStutterBlock(BlockNumber block_number, BlockWeight block_weight) const
+{
+  if (stutter_blocks_.find(block_number) == stutter_blocks_.end() ||
+      stutter_blocks_.at(block_number).find(block_weight) == stutter_blocks_.at(block_number).end())
+  {
+    return false;
+  }
+  return stutter_blocks_.at(block_number).at(block_weight);
+}
+
+/**
  * Retrieve a block with a specific hash
  *
  * @param hash The hash being queried
@@ -1505,11 +1523,14 @@ bool MainChain::RemoveTip(IntBlockPtr const &block)
             Tip{previous_block->total_weight, previous_block->weight, previous_block_number};
         replaced = true;
       }
-      previous_block = GetBlock(previous_block->previous_hash);
-      if (!previous_block)
+      else
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Main chain failed to replace stutter tip with previous.");
-        break;
+        previous_block = GetBlock(previous_block->previous_hash);
+        if (!previous_block)
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Main chain failed to replace stutter tip with previous.");
+          break;
+        }
       }
     }
   }
@@ -1634,11 +1655,14 @@ bool MainChain::ReindexTips()
             block_number = block.block_number;
             replaced     = true;
           }
-          previous_block = GetBlock(previous_block->previous_hash);
-          if (!previous_block)
+          else
           {
-            FETCH_LOG_WARN(LOGGING_NAME, "Main chain failed to replace stutter tip previous");
-            break;
+            previous_block = GetBlock(previous_block->previous_hash);
+            if (!previous_block)
+            {
+              FETCH_LOG_WARN(LOGGING_NAME, "Main chain failed to replace stutter tip previous");
+              break;
+            }
           }
         }
       }

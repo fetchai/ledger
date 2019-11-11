@@ -141,6 +141,7 @@ public:
   bool      GetPathToCommonAncestor(
            Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
            BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
+  bool IsStutterBlock(BlockNumber block_number, BlockWeight block_weight) const;
   /// @}
 
   /// @name Tips

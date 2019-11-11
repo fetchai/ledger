@@ -384,6 +384,21 @@ NotarisationService::AggregateSignature NotarisationService::GetAggregateNotaris
   return notarisation;
 }
 
+void NotarisationService::RemoveNotarisation(BlockNumber const &block_number,
+                                             BlockHash const &  block_hash)
+{
+  FETCH_LOCK(mutex_);
+
+  if (notarisations_being_built_.find(block_number) != notarisations_being_built_.end())
+  {
+    notarisations_being_built_[block_number].erase(block_hash);
+  }
+  if (notarisations_built_.find(block_number) != notarisations_built_.end())
+  {
+    notarisations_built_[block_number].erase(block_hash);
+  }
+}
+
 std::weak_ptr<core::Runnable> NotarisationService::GetWeakRunnable()
 {
   return state_machine_;

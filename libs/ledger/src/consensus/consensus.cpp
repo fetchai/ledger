@@ -391,6 +391,13 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     return;
   }
 
+  // If previous block is stutter block in main chain then delete notarisations for this block
+  // to prevent peers from building on this block
+  if (notarisation_ && chain_.IsStutterBlock(current_block_.block_number, current_block_.weight))
+  {
+    notarisation_->RemoveNotarisation(current_block_.block_number, current_block_.hash);
+  }
+
   // Don't try to set previous when we see genesis!
   if (current.block_number == 0)
   {
@@ -531,9 +538,6 @@ NextBlockPtr Consensus::GenerateNextBlock()
       return {};
     }
     ret->block_entropy.block_notarisation = notarisation;
-
-    // Notify notarisation of new valid block
-    notarisation_->NotariseBlock(*ret);
   }
 
   return ret;

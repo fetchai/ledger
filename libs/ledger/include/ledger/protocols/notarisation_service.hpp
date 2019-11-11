@@ -123,6 +123,7 @@ public:
   void               SetAeonDetails(uint64_t round_start, uint64_t round_end, uint32_t threshold,
                                     AeonNotarisationKeys const &cabinet_public_keys);
   AggregateSignature GetAggregateNotarisation(Block const &block);
+  void RemoveNotarisation(BlockNumber const &block_number, BlockHash const &block_hash);
   /// @}
 
   /// Verifying notarised blocks
