@@ -140,23 +140,6 @@ public:
     return {error_signal};
   }
 
-  void AddToGradient(TensorType const &extern_grad)
-  {
-    if (!this->value_frozen_)
-    {
-      gradient_accumulation_->InlineAdd(extern_grad);
-      reset_gradients_ = true;
-    }
-  }
-
-  void AddToGradient(TensorType const &extern_grad, SizeSet const &rows_updated)
-  {
-    // Add external information about row updates
-    this->rows_updated_.insert(rows_updated.begin(), rows_updated.end());
-
-    AddToGradient(extern_grad);
-  }
-
   /**
    * Sets the internally stored data, and ensures the correct shape for
    * gradient accumulation
@@ -240,6 +223,25 @@ protected:
     {
       this->regulariser_->ApplyRegularisation(*this->data_, this->regularisation_rate_);
     }
+  }
+
+  virtual void AddToGradient(TensorType const &extern_grad)
+  {
+    if (!this->value_frozen_)
+    {
+      gradient_accumulation_->InlineAdd(extern_grad);
+      reset_gradients_ = true;
+    }
+  }
+
+  virtual void AddToGradient(TensorType const &extern_grad, SizeSet const &rows_updated)
+  {
+    if (!rows_updated.empty())
+    {
+      throw fetch::ml::exceptions::InvalidMode("Sparse gradient not supported.");
+    }
+
+    AddToGradient(extern_grad);
   }
 };
 }  // namespace ops

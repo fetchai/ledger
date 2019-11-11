@@ -1163,7 +1163,6 @@ void Graph<TensorType>::ApplySparseGradients(TensorIteratorType &grad_it,
     ++grad_it;
   }
 
-  // RecursiveApply<IteratorType, graph_func_signaturegrad_it, &Graph<TensorType>::ApplyGradients);
   RecursiveApplyTwo<TensorIteratorType, VectorIteratorType, graph_func_signature>(
       grad_it, rows_it, &Graph<TensorType>::ApplySparseGradients);
 }

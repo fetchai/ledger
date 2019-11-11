@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/weights.hpp"
+#include "ml/utilities/sparse_tensor_utilities.hpp"
 
 #include <cassert>
 #include <memory>
@@ -154,42 +155,24 @@ public:
 
   void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows) override
   {
-    // Normal apply
-    // if number_of_rows_to_update*sparsity_threshold_ > total_rows
-    if (update_rows.empty() ||
-        update_rows.size() * sparsity_threshold_ > (this->gradient_accumulation_->shape().at(1)))
+    if (!this->value_frozen_)
     {
-      ApplyGradient(grad);
-      return;
+      // Apply gradient only to updated rows
+      utilities::SparseAdd(grad, *this->data_, update_rows);
+      this->ResetGradients();
     }
-
-    // Sparse apply
-    // if number_of_rows_to_update*sparsity_threshold_ <= total_rows
-    memory::Range range(0, std::size_t(this->data_->height()));
-
-    for (SizeType update_index : update_rows)
-    {
-      auto data_slice = this->data_->data().slice(this->data_->padded_height() * update_index,
-                                                  this->data_->padded_height());
-      auto gradient_slice =
-          grad.data().slice(grad.padded_height() * update_index, grad.padded_height());
-
-      // Parallel addition
-      data_slice.in_parallel().RangedApplyMultiple(
-          range, [](auto const &a, auto const &b, auto &c) { c = b + a; }, data_slice,
-          gradient_slice);
-    }
-
-    this->ResetGradients();
   }
 
-  void ApplyGradient(TensorType const &grad) override
+  void AddToGradient(TensorType const &extern_grad, SizeSet const &rows_updated) override
   {
     if (!this->value_frozen_)
     {
-      this->ApplyRegularisation();
-      this->data_->InlineAdd(grad);
-      this->ResetGradients();
+      // Add external information about row updates
+      this->updated_rows_.insert(rows_updated.begin(), rows_updated.end());
+      // Add gradient only to updated rows
+      utilities::SparseAdd(extern_grad, *this->gradient_accumulation_, rows_updated,
+                           sparsity_threshold_);
+      this->reset_gradients_ = true;
     }
   }
 
