@@ -38,7 +38,7 @@ TYPED_TEST_CASE(DropoutTest, math::test::TensorFloatingTypes);
 
 namespace {
 template <typename TensorType>
-double zero_fraction(TensorType const& t1)
+double zero_fraction(TensorType const &t1)
 {
   double ret = 0;
   for (auto i : t1)
