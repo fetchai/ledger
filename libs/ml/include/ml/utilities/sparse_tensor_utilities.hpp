@@ -44,24 +44,26 @@ void SparseAdd(TensorType const &src, TensorType &dst,
 
   // Normal apply
   // if number_of_rows_to_update*sparsity_threshold_ > total_rows
-  if (update_rows.empty() || update_rows.size() * sparsity_threshold > (dst.shape().at(1)))
+  if (update_rows.empty() || (update_rows.size() * sparsity_threshold) > (dst.shape().at(1)))
   {
     dst.InlineAdd(src);
-    return;
   }
 
   // Sparse apply
   // if number_of_rows_to_update*sparsity_threshold_ <= total_rows
-  memory::Range range(0, std::size_t(dst.height()));
-
-  for (SizeType update_index : update_rows)
+  else
   {
-    auto dst_slice = dst.data().slice(dst.padded_height() * update_index, dst.padded_height());
-    auto src_slice = src.data().slice(src.padded_height() * update_index, src.padded_height());
+    memory::Range range(0, std::size_t(dst.height()));
 
-    // Parallel addition
-    dst_slice.in_parallel().RangedApplyMultiple(
-        range, [](auto const &a, auto const &b, auto &c) { c = b + a; }, dst_slice, src_slice);
+    for (SizeType update_index : update_rows)
+    {
+      auto dst_slice = dst.data().slice(dst.padded_height() * update_index, dst.padded_height());
+      auto src_slice = src.data().slice(src.padded_height() * update_index, src.padded_height());
+
+      // Parallel addition
+      dst_slice.in_parallel().RangedApplyMultiple(
+          range, [](auto const &a, auto const &b, auto &c) { c = b + a; }, dst_slice, src_slice);
+    }
   }
 }
 

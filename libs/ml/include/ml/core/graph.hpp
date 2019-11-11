@@ -1163,6 +1163,7 @@ void Graph<TensorType>::ApplySparseGradients(TensorIteratorType &grad_it,
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
     trainable_ptr->ApplySparseGradient(*grad_it, *rows_it);
     ++grad_it;
+    ++rows_it;
   }
 
   RecursiveApplyTwo<TensorIteratorType, VectorIteratorType, graph_func_signature>(

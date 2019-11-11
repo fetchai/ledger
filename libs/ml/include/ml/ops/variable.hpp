@@ -141,56 +141,7 @@ public:
     return {error_signal};
   }
 
-  /**
-   * Sets the internally stored data, and ensures the correct shape for
-   * gradient accumulation
-   * @param data
-   * @return
-   */
-  bool SetData(TensorType const &data) override
-  {
-    bool shape_changed = DataHolder<T>::SetData(data);
-    if (shape_changed)
-    {
-      gradient_accumulation_ = std::make_shared<TensorType>(this->data_->shape());
-      reset_gradients_       = true;
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Function for applying gradient for specific rows only
-   * @param grad
-   * @param update_rows
-   */
-  void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows) override
-  {
-    if (!this->value_frozen_)
-    {
-
-      if (!update_rows.empty() && this->data_->shape().size() != 2)
-      {
-        throw fetch::ml::exceptions::InvalidMode("Sparse gradient not supported.");
-      }
-
-      // Apply gradient only to updated rows
-      utilities::SparseAdd(grad, *this->data_, update_rows);
-      this->ResetGradients();
-    }
-  }
-
-  void ApplyGradient(TensorType const &grad) override
-  {
-    if (!this->value_frozen_)
-    {
-      ApplyRegularisation();
-      this->data_->InlineAdd(grad);
-      ResetGradients();
-    }
-  }
-
-  virtual void AddToGradient(TensorType const &extern_grad)
+  void AddToGradient(TensorType const &extern_grad)
   {
     // Make sure that all rows will get updated
     if (!updated_rows_.empty())
@@ -224,6 +175,56 @@ public:
       // Add gradient only to updated rows
       utilities::SparseAdd(extern_grad, *this->gradient_accumulation_, rows_updated);
       this->reset_gradients_ = true;
+    }
+  }
+
+  /**
+   * Sets the internally stored data, and ensures the correct shape for
+   * gradient accumulation
+   * @param data
+   * @return
+   */
+  bool SetData(TensorType const &data) override
+  {
+    bool shape_changed = DataHolder<T>::SetData(data);
+    if (shape_changed)
+    {
+      gradient_accumulation_ = std::make_shared<TensorType>(this->data_->shape());
+      reset_gradients_       = true;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Function for applying gradient for specific rows only
+   * @param grad
+   * @param update_rows
+   */
+  void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows) override
+  {
+    // skip frozen trainables
+    if (!this->value_frozen_)
+    {
+
+      if (!update_rows.empty() && this->data_->shape().size() != 2)
+      {
+        throw fetch::ml::exceptions::InvalidMode("Sparse gradient not supported.");
+      }
+
+      // Apply gradient only to updated rows
+      utilities::SparseAdd(grad, *this->data_, update_rows);
+      this->ResetGradients();
+    }
+  }
+
+  void ApplyGradient(TensorType const &grad) override
+  {
+    if (!this->value_frozen_)
+    {
+      ApplyRegularisation();
+      this->data_->InlineAdd(grad);
+      ResetGradients();
     }
   }
 
