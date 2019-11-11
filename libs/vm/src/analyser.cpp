@@ -2208,7 +2208,7 @@ TypePtr Analyser::ConvertNode(ExpressionNodePtr const &node, TypePtr const &expe
   }
   else if (expected_type == template_parameter1_type_)
   {
-    if (type && type->IsInstantiation() && (type->types.size() >= 1))
+    if (type && type->IsInstantiation() && !type->types.empty())
     {
       comparison_type = type->types[0];
     }
