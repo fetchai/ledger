@@ -19,7 +19,6 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/utilities/sparse_tensor_utilities.hpp"
 
 #include <cassert>
 #include <memory>
@@ -38,7 +37,6 @@ public:
   using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using SizeType      = fetch::math::SizeType;
-  using SizeSet       = std::unordered_set<SizeType>;
   using VecTensorType = typename Weights<T>::VecTensorType;
   using SPType        = OpEmbeddingsSaveableParams<TensorType>;
   using MyType        = Embeddings<TensorType>;
