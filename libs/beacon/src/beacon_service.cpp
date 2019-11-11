@@ -114,7 +114,7 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
 void BeaconService::SaveState()
 {
   assert(active_exe_unit_);
-  old_state_.Set(storage::ResourceID("HEAD"), *active_exe_unit_);
+  old_state_.Set(storage::ResourceAddress("HEAD"), *active_exe_unit_);
 }
 
 void BeaconService::ReloadState()
@@ -123,7 +123,7 @@ void BeaconService::ReloadState()
 
   FETCH_LOG_INFO(LOGGING_NAME, "Reloading... Size: ", old_state_.size());
 
-  if (old_state_.Get(storage::ResourceID("HEAD"), *ret))
+  if (old_state_.Get(storage::ResourceAddress("HEAD"), *ret))
   {
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Found aeon keys during beacon construction, recovering. Valid from: ",
