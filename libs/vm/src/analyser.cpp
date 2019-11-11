@@ -623,8 +623,8 @@ bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
     parameter_node->variable = parameter_variable;
     parameter_node->type     = parameter_variable->type;
     parameter_types.push_back(parameter_type);
-    parameter_variables.push_back(parameter_variable);
-    parameter_nodes.push_back(parameter_node);
+    parameter_variables.push_back(std::move(parameter_variable));
+    parameter_nodes.push_back(std::move(parameter_node));
   }
   ExpressionNodePtr return_type_node =
       ConvertToExpressionNodePtr(prototype_node->children[std::size_t(count - 1)]);
@@ -813,7 +813,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
                                       ? sharded_state_constructor_
                                       : state_constructor_;
         child->function = constructor;
-        use_any_node_->children.push_back(child);
+        use_any_node_->children.push_back(std::move(child));
       }
     }
   }
@@ -884,7 +884,7 @@ void Analyser::AnnotateForStatement(BlockNodePtr const &for_statement_node)
       AddError(child_node->line, "integral type expected");
       continue;
     }
-    nodes.push_back(child_node);
+    nodes.push_back(std::move(child_node));
   }
   if (problems == 0)
   {
@@ -1242,7 +1242,7 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &node, ExpressionNo
   for (std::size_t i = 1; i <= num_indexes; ++i)
   {
     ExpressionNodePtr index_node = ConvertToExpressionNodePtr(lhs->children[i]);
-    index_nodes.push_back(index_node);
+    index_nodes.push_back(std::move(index_node));
   }
 
   SymbolPtr setter_symbol = symbols->Find(SET_INDEXED_VALUE);
@@ -1255,9 +1255,8 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &node, ExpressionNo
 
   FunctionGroupPtr setter_fg = ConvertToFunctionGroupPtr(setter_symbol);
 
-  ExpressionNodePtrArray setter_index_nodes = index_nodes;
-  setter_index_nodes.push_back(lhs);
-  FunctionPtr setter_f = FindFunction(container_node->type, setter_fg, setter_index_nodes);
+  index_nodes.push_back(lhs);
+  FunctionPtr setter_f = FindFunction(container_node->type, setter_fg, index_nodes);
   if (!setter_f)
   {
     AddError(container_node->line, "unable to find matching index operator for type '" +
@@ -1562,8 +1561,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
     }
   }
   assert(lhs->type == rhs->type);
-  bool const enabled = IsOperatorEnabled(lhs->type, op);
-  if (!enabled)
+  if (!IsOperatorEnabled(lhs->type, op))
   {
     AddError(node->line, "operator not supported");
     return false;
@@ -1778,7 +1776,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     {
       return false;
     }
-    index_nodes.push_back(index_node);
+    index_nodes.push_back(std::move(index_node));
   }
   SymbolPtr symbol = symbols->Find(GET_INDEXED_VALUE);
   if (!symbol)
@@ -1873,7 +1871,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     {
       return false;
     }
-    parameter_nodes.push_back(parameter_node);
+    parameter_nodes.push_back(std::move(parameter_node));
   }
   if (lhs->IsFunctionGroupExpression())
   {
