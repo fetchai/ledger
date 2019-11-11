@@ -143,14 +143,14 @@ public:
 
   void AddToGradient(TensorType const &extern_grad)
   {
-    // Make sure that all rows will get updated
-    if (!updated_rows_.empty())
-    {
-      throw fetch::ml::exceptions::InvalidMode("Sparse gradient not supported.");
-    }
-
     if (!this->value_frozen_)
     {
+      // Make sure that all rows will get updated
+      if (!updated_rows_.empty())
+      {
+        updated_rows_.clear();
+      }
+
       gradient_accumulation_->InlineAdd(extern_grad);
       reset_gradients_ = true;
     }
@@ -167,7 +167,7 @@ public:
     {
       if (!rows_updated.empty() && this->data_->shape().size() != 2)
       {
-        throw fetch::ml::exceptions::InvalidMode("Sparse gradient not supported.");
+        throw fetch::ml::exceptions::InvalidMode("Sparse gradient supported for 2D tensors only.");
       }
 
       // Add external information about row updates

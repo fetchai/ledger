@@ -49,18 +49,20 @@ public:
   LazyAdamOptimiser(std::shared_ptr<Graph<T>>       graph,
                     std::vector<std::string> const &input_node_names,
                     std::string const &label_node_name, std::string const &output_node_name,
-                    DataType const &learning_rate = static_cast<DataType>(0.001f),
-                    DataType const &beta1         = static_cast<DataType>(0.9f),
-                    DataType const &beta2         = static_cast<DataType>(0.999f),
-                    DataType const &epsilon       = static_cast<DataType>(1e-4f));
+                    DataType const &learning_rate      = static_cast<DataType>(0.001f),
+                    DataType const &beta1              = static_cast<DataType>(0.9f),
+                    DataType const &beta2              = static_cast<DataType>(0.999f),
+                    SizeType        sparsity_threshold = 4,
+                    DataType const &epsilon            = static_cast<DataType>(1e-4f));
 
   LazyAdamOptimiser(std::shared_ptr<Graph<T>>       graph,
                     std::vector<std::string> const &input_node_names,
                     std::string const &label_node_name, std::string const &output_node_name,
                     fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
-                    DataType const &beta1   = static_cast<DataType>(0.9f),
-                    DataType const &beta2   = static_cast<DataType>(0.999f),
-                    DataType const &epsilon = static_cast<DataType>(1e-4f));
+                    DataType const &beta1              = static_cast<DataType>(0.9f),
+                    DataType const &beta2              = static_cast<DataType>(0.999f),
+                    SizeType        sparsity_threshold = 4,
+                    DataType const &epsilon            = static_cast<DataType>(1e-4f));
 
   ~LazyAdamOptimiser() override = default;
 
@@ -84,10 +86,11 @@ private:
   DataType beta2_;
   DataType beta1_t_;
   DataType beta2_t_;
-  DataType epsilon_;
 
   // ApplyGradientSparse if number_of_rows_to_update*sparsity_threshold_ <= total_rows
   SizeType sparsity_threshold_ = 4;
+
+  DataType epsilon_;
 
   void ResetCache();
   void Init();
@@ -115,12 +118,15 @@ LazyAdamOptimiser<T>::LazyAdamOptimiser(std::shared_ptr<Graph<T>>       graph,
                                         std::string const &             label_node_name,
                                         std::string const &             output_node_name,
                                         DataType const &learning_rate, DataType const &beta1,
-                                        DataType const &beta2, DataType const &epsilon)
+
+                                        DataType const &beta2, SizeType sparsity_threshold,
+                                        DataType const &epsilon)
   : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
   , beta1_(beta1)
   , beta2_(beta2)
   , beta1_t_(beta1)
   , beta2_t_(beta2)
+  , sparsity_threshold_(sparsity_threshold)
   , epsilon_(epsilon)
 {
   Init();
@@ -131,12 +137,14 @@ LazyAdamOptimiser<T>::LazyAdamOptimiser(
     std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
     std::string const &label_node_name, std::string const &output_node_name,
     fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
-    DataType const &beta1, DataType const &beta2, DataType const &epsilon)
+    DataType const &beta1, DataType const &beta2, SizeType sparsity_threshold,
+    DataType const &epsilon)
   : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
   , beta1_(beta1)
   , beta2_(beta2)
   , beta1_t_(beta1)
   , beta2_t_(beta2)
+  , sparsity_threshold_(sparsity_threshold)
   , epsilon_(epsilon)
 {
   Init();
@@ -299,23 +307,24 @@ namespace serializers {
 template <typename TensorType, typename D>
 struct MapSerializer<ml::optimisers::LazyAdamOptimiser<TensorType>, D>
 {
-  using Type                          = ml::optimisers::LazyAdamOptimiser<TensorType>;
-  using DriverType                    = D;
-  static uint8_t const BASE_OPTIMISER = 1;
-  static uint8_t const CACHE          = 2;
-  static uint8_t const MOMENTUM       = 3;
-  static uint8_t const MT             = 4;
-  static uint8_t const VT             = 5;
-  static uint8_t const BETA1          = 6;
-  static uint8_t const BETA2          = 7;
-  static uint8_t const BETA1_T        = 8;
-  static uint8_t const BETA2_T        = 9;
-  static uint8_t const EPSILON        = 10;
+  using Type                              = ml::optimisers::LazyAdamOptimiser<TensorType>;
+  using DriverType                        = D;
+  static uint8_t const BASE_OPTIMISER     = 1;
+  static uint8_t const CACHE              = 2;
+  static uint8_t const MOMENTUM           = 3;
+  static uint8_t const MT                 = 4;
+  static uint8_t const VT                 = 5;
+  static uint8_t const BETA1              = 6;
+  static uint8_t const BETA2              = 7;
+  static uint8_t const BETA1_T            = 8;
+  static uint8_t const BETA2_T            = 9;
+  static uint8_t const SPARSITY_THRESHOLD = 10;
+  static uint8_t const EPSILON            = 11;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(10);
+    auto map = map_constructor(11);
 
     // serialize the optimiser parent class
     auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> const *>(&sp);
@@ -329,6 +338,7 @@ struct MapSerializer<ml::optimisers::LazyAdamOptimiser<TensorType>, D>
     map.Append(BETA2, sp.beta2_);
     map.Append(BETA1_T, sp.beta1_t_);
     map.Append(BETA2_T, sp.beta2_t_);
+    map.Append(SPARSITY_THRESHOLD, sp.sparsity_threshold);
     map.Append(EPSILON, sp.epsilon_);
   }
 
@@ -346,6 +356,7 @@ struct MapSerializer<ml::optimisers::LazyAdamOptimiser<TensorType>, D>
     map.ExpectKeyGetValue(BETA2, sp.beta2_);
     map.ExpectKeyGetValue(BETA1_T, sp.beta1_t_);
     map.ExpectKeyGetValue(BETA2_T, sp.beta2_t_);
+    map.ExpectKeyGetValue(SPARSITY_THRESHOLD, sp.sparsity_threshold);
     map.ExpectKeyGetValue(EPSILON, sp.epsilon_);
   }
 };
