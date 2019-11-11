@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/colearn/muddle_message_task.hpp"
+#include "dmlf/colearn/update_store.hpp"
 
 namespace fetch {
 namespace colearn {

@@ -28,7 +28,7 @@ namespace colearn {
 
 MuddleOutboundUpdateTask::ExitState MuddleOutboundUpdateTask::run()
 {
-  std::cout << "SENDING TO:" << target_ << std::endl;
+  FETCH_LOG_INFO(LOGGING_NAME, "Sending update to ", target_);
   auto prom = client_->CallSpecificAddress(
       fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_)), RPC_COLEARN,
       ColearnProtocol::RPC_COLEARN_UPDATE, type_name_, update_);

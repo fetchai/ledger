@@ -17,8 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "logging/logging.hpp"
 #include "core/service_ids.hpp"
 #include "dmlf/colearn/colearn_protocol.hpp"
+#include "dmlf/colearn/update_store.hpp"
 #include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "dmlf/update_interface.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -47,9 +49,12 @@ public:
   using RpcServer          = fetch::muddle::rpc::Server;
   using RpcServerPtr       = std::shared_ptr<RpcServer>;
   using Bytes              = byte_array::ByteArray;
+  using Store              = UpdateStore;
+  using StorePtr           = std::shared_ptr<Store>;
 
+  static constexpr char const *LOGGING_NAME = "MuddleLearnerNetworkerImpl";
 
-  explicit MuddleLearnerNetworkerImpl(MuddlePtr mud);
+  explicit MuddleLearnerNetworkerImpl(MuddlePtr mud, StorePtr update_store);
   ~MuddleLearnerNetworkerImpl() override;
 
   MuddleLearnerNetworkerImpl(MuddleLearnerNetworkerImpl const &other) = delete;
@@ -63,9 +68,19 @@ public:
   void PushUpdateType(const std::string &type_name, UpdateInterfacePtr const &update) override;
   void PushUpdateBytes(const std::string &type_name, Bytes const &update);
 
+  UpdateStore::UpdatePtr   GetUpdate(UpdateStore::Algorithm const &algo, UpdateStore::UpdateType const &type)
+  {
+    return update_store_ -> GetUpdate(algo, type);
+  }
+
+  std::size_t GetUpdateCount() const override
+  {
+    return update_store_ -> GetUpdateCount();
+  }
+
   std::size_t GetPeerCount() const override
   {
-    return 0;  // TODO(kll)
+    return 0;
   }
 
   virtual void submit(TaskP const &t);
@@ -77,12 +92,13 @@ public:
 
 protected:
 private:
-  std::shared_ptr<Taskpool>   taskpool;
-  std::shared_ptr<Threadpool> tasks_runners;
+  std::shared_ptr<Taskpool>   taskpool_;
+  std::shared_ptr<Threadpool> tasks_runners_;
   MuddlePtr                   mud_;
   RpcClientPtr                client_;
   RpcServerPtr                server_;
   ProtoP                      proto_;
+  StorePtr                    update_store_;
 
   std::unordered_set<std::string> peers_;
 

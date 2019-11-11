@@ -23,6 +23,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
 #include "dmlf/colearn/muddle_learner_networker_impl.hpp"
+#include "dmlf/colearn/update_store.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -47,6 +48,8 @@ using NetManP = std::shared_ptr<NetMan>;
 
 using MuddlePtr      = fetch::muddle::MuddlePtr;
 using CertificatePtr = fetch::muddle::ProverPtr;
+using Store              = fetch::dmlf::colearn::UpdateStore;
+using StorePtr           = std::shared_ptr<Store>;
 
 using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
 using UpdatePayload        = UpdateTypeForTesting::Payload;
@@ -58,6 +61,8 @@ char const *CLIENT_PRIV = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
 char const *CLIENT_PUB =
     "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
 
+static constexpr char const *LOGGING_NAME = "colearn_muddle";
+
 class LearnerTypedUpdates
 {
 public:
@@ -66,6 +71,7 @@ public:
   NetManP     netm_;
   MuddlePtr   mud_;
   std::string pub_;
+  StorePtr    store_;
 
   LearnerTypedUpdates(const std::string &pub, const std::string &priv, unsigned short int port,
                       unsigned short int remote = 0)
@@ -76,7 +82,8 @@ public:
     netm_->Start();
     mud_ = fetch::muddle::CreateMuddle("Test", ident, *(this->netm_), "127.0.0.1");
 
-    actual = std::make_shared<LN>(mud_);
+    store_ = std::make_shared<Store>();
+    actual = std::make_shared<LN>(mud_, store_);
 
     std::unordered_set<std::string> remotes;
     if (remote != 0)
@@ -96,7 +103,7 @@ public:
 
   void PretendToLearn()
   {
-    std::cout << "LEARN" << std::endl;
+    FETCH_LOG_INFO(LOGGING_NAME, "Pretend Learning");
     static int sequence_number = 1;
     auto       t               = TensorType(TensorType::SizeType(2));
     t.Fill(DataType(sequence_number++));
@@ -152,32 +159,36 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
   server->PretendToLearn();
 
   sleep(1);
-  EXPECT_GT(client->actual->GetUpdateTypeCount("update"), 0);
-  EXPECT_GT(client->actual->GetUpdateTypeCount<UpdateTypeForTesting>(), 0);
-  EXPECT_EQ(client->actual->GetUpdateTypeCount<UpdateTypeForTesting>(),
-            client->actual->GetUpdateTypeCount("update"));
-  EXPECT_GT(client->actual->GetUpdateTypeCount("vocab"), 0);
-  /*
+  EXPECT_GT(client->actual->GetUpdateCount(), 0);
+
   try
   {
-    client->actual->GetUpdateTypeCount("weights");
-    EXPECT_NE(1, 1);
+    client->actual->GetUpdate("algo1", "vocab");
   }
   catch (std::exception &e)
   {
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ("vocab", "1 should be present");
   }
 
   try
   {
-    client->actual->GetUpdateTypeCount<fetch::dmlf::Update<double>>();
-    EXPECT_NE(1, 1);
+    client->actual->GetUpdate("algo1", "weights");
+    EXPECT_EQ("weights", "should not be present");
   }
   catch (std::exception &e)
   {
-    EXPECT_EQ(1, 1);
+    // get should throw, because weights Q is empty.
   }
-  */
+
+  try
+  {
+    auto upd = client->actual->GetUpdate("algo1", "vocab");
+    EXPECT_EQ("vocab", "should not be present (already emptied)");
+  }
+  catch (std::exception &e)
+  {
+    // get should throw, because vocab Q is empty.
+  }
 }
 
 }  // namespace

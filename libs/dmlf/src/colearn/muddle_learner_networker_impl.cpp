@@ -29,14 +29,15 @@ void MuddleLearnerNetworkerImpl::addTarget(const std::string &peer)
   peers_.insert(peer);
 }
 
-MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud)
+MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud, StorePtr update_store)
   : mud_(std::move(mud))
+  , update_store_(std::move(update_store))
 {
-  taskpool      = std::make_shared<Taskpool>();
-  tasks_runners = std::make_shared<Threadpool>();
+  taskpool_      = std::make_shared<Taskpool>();
+  tasks_runners_ = std::make_shared<Threadpool>();
   std::function<void(std::size_t thread_number)> run_tasks =
-      std::bind(&Taskpool::run, taskpool.get(), std::placeholders::_1);
-  tasks_runners->start(5, run_tasks);
+      std::bind(&Taskpool::run, taskpool_.get(), std::placeholders::_1);
+  tasks_runners_->start(5, run_tasks);
 
   client_ = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   proto_  = std::make_shared<ColearnProtocol>(*this);
@@ -46,31 +47,29 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud)
 
 MuddleLearnerNetworkerImpl::~MuddleLearnerNetworkerImpl()
 {
-  taskpool->stop();
+  taskpool_->stop();
   ::usleep(10000);
-  tasks_runners->stop();
+  tasks_runners_->stop();
 }
 
 void MuddleLearnerNetworkerImpl::submit(TaskP const &t)
 {
-  taskpool->submit(t);
+  taskpool_->submit(t);
 }
 
 void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &       type_name,
                                                 UpdateInterfacePtr const &update)
 {
-  std::cout << "UPDATE(" << type_name << std::endl;
   auto bytes = update->Serialise();
   PushUpdateBytes(type_name, bytes);
 }
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
 {
-  std::cout << "UPDATE BYTES(" << type_name << std::endl;
   for (auto const &peer : peers_)
   {
-    std::cout << "TASKING SEND (" << type_name << ")TO:" << peer << std::endl;
+    FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ", peer);
     auto task = std::make_shared<MuddleOutboundUpdateTask>(peer, type_name, update, client_);
-    taskpool->submit(task);
+    taskpool_->submit(task);
   }
 }
 
@@ -83,8 +82,9 @@ uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext c
                                                           const std::string &          type_name,
                                                           const byte_array::ByteArray &bytes)
 {
-  std::cout << "NetworkColearnUpdate from " << context.sender_address << std::endl;
-  NewMessage(type_name, bytes);
+  auto source = std::string(fetch::byte_array::ToBase64(context.sender_address));
+  FETCH_LOG_INFO(LOGGING_NAME, "Update for ", type_name, " from ", source);
+  update_store_ -> PushUpdate("algo1", type_name, bytes, source);
   return 1;
 }
 }  // namespace colearn

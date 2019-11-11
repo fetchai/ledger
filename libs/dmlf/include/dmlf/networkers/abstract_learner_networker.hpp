@@ -58,7 +58,7 @@ public:
     throw std::runtime_error{"Learner already initialized"};
   }
 
-  std::size_t GetUpdateCount() const;
+  virtual std::size_t GetUpdateCount() const;
 
   template <typename T>
   std::shared_ptr<T> GetUpdate()
