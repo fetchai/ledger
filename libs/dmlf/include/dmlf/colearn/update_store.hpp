@@ -37,7 +37,7 @@ public:
   UpdateStore(UpdateStore const &other) = delete;
   UpdateStore &operator=(UpdateStore const &other) = delete;
 
-  void PushUpdate(Algorithm const &algorithm, UpdateType update_type, Data &&data, Source source,
+  void PushUpdate(Algorithm const &algo, UpdateType type, Data &&data, Source source,
                   Metadata &&metadata) override;
   UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria) override;
   UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type) override;
