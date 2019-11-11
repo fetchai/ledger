@@ -716,7 +716,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
         auto        float_val = std::atof(cur_elem.c_str());
-        elems.push_back(Type(float_val));
+        elems.emplace_back(Type(float_val));
       }
       break;
     }
@@ -2599,13 +2599,11 @@ bool Tensor<T, C>::AllClose(Tensor const &o, Type const &relative_tolerance,
     ++it1;
     ++it2;
 
-    T abs_e1 = e1;
-    fetch::math::Abs(abs_e1, abs_e1);
-    T abs_e2 = e2;
-    fetch::math::Abs(abs_e2, abs_e2);
-    T abs_diff = e1 - e2;
-    fetch::math::Abs(abs_diff, abs_diff);
-    T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
+    T abs_e1, abs_e2, abs_diff;
+    fetch::math::Abs(e1, abs_e1);
+    fetch::math::Abs(e2, abs_e2);
+    fetch::math::Abs(e1 - e2, abs_diff);
+    T tolerance = fetch::vectorise::Max(absolute_tolerance, fetch::vectorise::Max(abs_e1, abs_e2) * relative_tolerance);
     if (abs_diff > tolerance)
     {
       return false;
