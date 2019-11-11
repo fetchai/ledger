@@ -65,6 +65,8 @@ protected:
 
   void SetUp() override
   {
+    fetch::crypto::mcl::details::MCLInitialiser();
+
     rng_.seed(RANDOM_SEED);
     generator_.Seed(RANDOM_SEED);
     miner_ = std::make_unique<BasicMiner>(uint32_t{LOG2_NUM_LANES});
@@ -83,7 +85,7 @@ protected:
       // generate the transaction with a number of transactions
       auto tx = generator_(num_resources);
 
-      for (std::size_t i = 0; i < duplicates; ++i)
+      for (std::size_t j = 0; j < duplicates; ++j)
       {
         miner_->EnqueueTransaction(tx);
       }
@@ -109,11 +111,11 @@ TEST_P(BasicMinerTests, SimpleExample)
   Block     block;
   MainChain dummy{false, MainChain::Mode::IN_MEMORY_DB};
 
-  block.body.previous_hash = dummy.GetHeaviestBlockHash();
+  block.previous_hash = dummy.GetHeaviestBlockHash();
 
   miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, dummy);
 
-  for (auto const &slice : block.body.slices)
+  for (auto const &slice : block.slices)
   {
     BitVector lanes{NUM_LANES};
 
@@ -147,13 +149,13 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
   {
     Block block;
 
-    block.body.previous_hash = chain.GetHeaviestBlockHash();
+    block.previous_hash = chain.GetHeaviestBlockHash();
 
     miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, chain);
 
     // Check no duplicate transactions within a block
     transactions_within_block.clear();
-    for (auto const &slice : block.body.slices)
+    for (auto const &slice : block.slices)
     {
       for (auto const &tx : slice)
       {
@@ -193,18 +195,18 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
   {
     Block block;
 
-    block.body.previous_hash = chain.GetHeaviestBlockHash();
+    block.previous_hash = chain.GetHeaviestBlockHash();
 
     miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, chain);
 
-    for (auto const &slice : block.body.slices)
+    for (auto const &slice : block.slices)
     {
       EXPECT_EQ(slice.size(), 0);
     }
 
     // Check no duplicate transactions within a block
     transactions_within_block.clear();
-    for (auto const &slice : block.body.slices)
+    for (auto const &slice : block.slices)
     {
       for (auto const &tx : slice)
       {

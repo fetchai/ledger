@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/model/dnn_classifier.hpp"
 #include "ml/optimisation/types.hpp"
+#include "ml/utilities/mnist_utilities.hpp"
 
 #include <iostream>
 
@@ -27,10 +28,10 @@ using namespace fetch::ml::optimisers;
 
 using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
+using SizeType   = fetch::math::SizeType;
 
 using ModelType      = typename fetch::ml::model::DNNClassifier<TensorType>;
-using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>;
+using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
 using OptimiserType  = fetch::ml::OptimiserType;
 
 int main(int ac, char **av)
@@ -59,7 +60,12 @@ int main(int ac, char **av)
   model_config.graph_save_location = "/tmp/mnist_model";
 
   // setup dataloader with 20% test set
-  auto data_loader_ptr = std::make_unique<DataLoaderType>(av[1], av[2]);
+  auto mnist_images = fetch::ml::utilities::read_mnist_images<TensorType>(av[1]);
+  auto mnist_labels = fetch::ml::utilities::read_mnist_labels<TensorType>(av[2]);
+  mnist_labels      = fetch::ml::utilities::convert_labels_to_onehot(mnist_labels);
+
+  auto data_loader_ptr = std::make_unique<DataLoaderType>();
+  data_loader_ptr->AddData({mnist_images}, mnist_labels);
   data_loader_ptr->SetTestRatio(0.2f);
 
   // setup model and pass dataloader

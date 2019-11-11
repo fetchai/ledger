@@ -37,21 +37,21 @@ StakeManager::StakeManager(uint64_t cabinet_size)
 void StakeManager::UpdateCurrentBlock(Block const &current)
 {
   // The first stake can only be set through a reset event
-  if (current.body.block_number == 0)
+  if (current.block_number == 0)
   {
     return;
   }
 
   // need to evaluate any of the updates from the update queue
   StakeSnapshotPtr next{};
-  if (update_queue_.ApplyUpdates(current.body.block_number, current_, next))
+  if (update_queue_.ApplyUpdates(current.block_number, current_, next))
   {
     // update the entry in the history
-    stake_history_[current.body.block_number] = next;
+    stake_history_[current.block_number] = next;
 
     // the current stake snapshot has been replaced
     current_             = std::move(next);
-    current_block_index_ = current.body.block_number;
+    current_block_index_ = current.block_number;
   }
 
   TrimToSize(stake_history_, HISTORY_LENGTH);
@@ -59,8 +59,15 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
 
 StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current)
 {
-  auto snapshot = LookupStakeSnapshot(current.body.block_number);
-  return snapshot->BuildCabinet(current.body.block_entropy.EntropyAsU64(), cabinet_size_);
+  CabinetPtr cabinet{};
+
+  auto snapshot = LookupStakeSnapshot(current.block_number);
+  if (snapshot)
+  {
+    cabinet = snapshot->BuildCabinet(current.block_entropy.EntropyAsU64(), cabinet_size_);
+  }
+
+  return cabinet;
 }
 
 StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot const &snapshot)

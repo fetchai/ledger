@@ -17,35 +17,29 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "math/distance/hamming.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/distance/hamming.hpp"
+#include "test_types.hpp"
 
-using namespace fetch::math::distance;
-using namespace fetch::math;
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class HammingTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(HammingTest, MyTypes);
+TYPED_TEST_CASE(HammingTest, TensorFloatingTypes);
 
 TEST(HammingTest, simple_test)
 {
-  using SizeType = typename fetch::math::Tensor<float>::SizeType;
-
   Tensor<double> A = Tensor<double>(4);
   A.Set(SizeType{0}, 1);
   A.Set(SizeType{1}, 2);
   A.Set(SizeType{2}, 3);
   A.Set(SizeType{3}, 4);
-  EXPECT_EQ(Hamming(A, A), 0);
+  EXPECT_EQ(distance::Hamming(A, A), 0);
 
   Tensor<double> B = Tensor<double>(4);
   B.Set(SizeType{0}, 1);
@@ -53,7 +47,7 @@ TEST(HammingTest, simple_test)
   B.Set(SizeType{2}, 3);
   B.Set(SizeType{3}, 2);
 
-  EXPECT_EQ(Hamming(A, B), 1);
+  EXPECT_EQ(distance::Hamming(A, B), 1);
 
   Tensor<double> C = Tensor<double>(3);
   C.Set(SizeType{0}, 1);
@@ -65,5 +59,9 @@ TEST(HammingTest, simple_test)
   D.Set(SizeType{1}, 2);
   D.Set(SizeType{2}, 9);
 
-  EXPECT_EQ(Hamming(C, D), 1);
+  EXPECT_EQ(distance::Hamming(C, D), 1);
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

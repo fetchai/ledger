@@ -17,9 +17,5 @@ setup_compiler()
 setup_library(fetch-moment)
 target_link_libraries(fetch-moment PUBLIC fetch-core fetch-logging)
 
-if (_is_clang_compiler)
-  target_compile_options(fetch-core PRIVATE -Wshadow)
-endif ()
-
 # Unit tests
 add_subdirectory(tests)

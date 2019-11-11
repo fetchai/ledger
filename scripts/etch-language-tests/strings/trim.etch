@@ -1,9 +1,9 @@
 function ascii()
 
     var myString : String = "   Hello World  ";
-    myString.trim();
+    var trimmed = myString.trim();
 
-    assert(myString == "Hello World");
+    assert(trimmed == "Hello World");
 
 endfunction
 
@@ -11,9 +11,9 @@ endfunction
 function utf8_with_ascii_whitespaces()
 
     var myString = '	 	  	他身旁放着一支磨尖的花岗岩长矛备用，脚边卧着一头犬族猛兽，它发出的喘hōu声表明它虽已入睡却睡不安稳。	 	  	';
-    myString.trim();
+    var trimmed = myString.trim();
 
-    assert(myString == "他身旁放着一支磨尖的花岗岩长矛备用，脚边卧着一头犬族猛兽，它发出的喘hōu声表明它虽已入睡却睡不安稳。");
+    assert(trimmed == "他身旁放着一支磨尖的花岗岩长矛备用，脚边卧着一头犬族猛兽，它发出的喘hōu声表明它虽已入睡却睡不安稳。");
 
 endfunction
 

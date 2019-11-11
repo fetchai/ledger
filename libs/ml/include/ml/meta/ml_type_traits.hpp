@@ -35,7 +35,6 @@ enum class OptimiserType : uint8_t
 enum class LoaderType : uint8_t
 {
   TENSOR,
-  MNIST,
   SGNS,
   W2V,
   COMMODITY,
@@ -107,6 +106,7 @@ enum class OpType : uint16_t
   OP_TANH,
   OP_TRANSPOSE,
   OP_ONE_HOT,
+  OP_TOP_K,
   OP_VARIABLE,
   OP_WEIGHTS,
   OP_SLICE,

@@ -66,15 +66,20 @@ public:
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm::String> const &model_category);
 
-  void LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
-                math::SizeType const &hidden_nodes);
-  void LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                          math::SizeType const &inputs, math::SizeType const &hidden_nodes,
-                          fetch::vm::Ptr<fetch::vm::String> const &activation);
-  void LayerAddImplementation(std::string const &layer, math::SizeType const &inputs,
-                              math::SizeType const &                    hidden_nodes,
-                              fetch::ml::details::ActivationType const &activation =
-                                  fetch::ml::details::ActivationType::NOTHING);
+  void LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+                     math::SizeType const &hidden_nodes);
+  void LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                               math::SizeType const &inputs, math::SizeType const &hidden_nodes,
+                               fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  void LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                    math::SizeType const &output_channels, math::SizeType const &input_channels,
+                    math::SizeType const &kernel_size, math::SizeType const &stride_size);
+  void LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                              math::SizeType const &                   output_channels,
+                              math::SizeType const &                   input_channels,
+                              math::SizeType const &kernel_size, math::SizeType const &stride_size,
+                              fetch::vm::Ptr<fetch::vm::String> const &activation);
 
   void CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                          fetch::vm::Ptr<fetch::vm::String> const &optimiser);
@@ -83,7 +88,7 @@ public:
                      fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers);
 
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
-           fetch::math::SizeType const &batch_size);
+           ::fetch::math::SizeType const &batch_size);
 
   DataType Evaluate();
 

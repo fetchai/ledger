@@ -36,6 +36,7 @@ int main(int argc, char **argv)
     std::cerr << "usage: " << argv[0] << " [cabinet size]" << std::endl;
     return -1;
   }
+  fetch::crypto::mcl::details::MCLInitialiser();
 
   // Beacon parameters
   std::unordered_map<Identity, std::shared_ptr<BeaconManager>> nodes;

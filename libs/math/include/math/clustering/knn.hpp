@@ -34,7 +34,7 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> K
     ArrayType array, ArrayType vec, typename ArrayType::SizeType k)
 {
   using DataType = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   assert(vec.shape().size() == 2);
   assert(array.shape().size() == 2);

@@ -173,8 +173,9 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
   if (counts.pending > 0)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still waiting for ", counts.pending,
-                   " object count promises...");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still waiting for ", counts.pending,
+                    " object count promises...");
+
     if (!promise_wait_timeout_.IsDue())
     {
       state_machine_->Delay(std::chrono::milliseconds{20});
@@ -183,7 +184,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
     }
 
     FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still pending ", counts.pending,
-                   " object count promises, but timeout approached!");
+                   " object count promises, but have reached timeout!");
   }
 
   // If there are objects to sync from the network, fetch N roots from each of the peers in

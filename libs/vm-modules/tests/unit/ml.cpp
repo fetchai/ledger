@@ -107,18 +107,6 @@ TEST_F(MLTests, trivial_commodity_dataloader_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, trivial_mnist_dataloader_test)
-{
-  static char const *dataloader_serialise_src = R"(
-    function main()
-      var dataloader = DataLoader("mnist");
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
-  ASSERT_TRUE(toolkit.Run());
-}
-
 TEST_F(MLTests, dataloader_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
@@ -127,13 +115,15 @@ TEST_F(MLTests, dataloader_serialisation_test)
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 10u64;
-      var data_tensor = Tensor(tensor_shape);
+      var data_tensor_1 = Tensor(tensor_shape);
+      var data_tensor_2 = Tensor(tensor_shape);
       var label_tensor = Tensor(tensor_shape);
-      data_tensor.fill(7.0fp64);
+      data_tensor_1.fill(7.0fp64);
+      data_tensor_2.fill(7.0fp64);
       label_tensor.fill(7.0fp64);
 
       var dataloader = DataLoader("tensor");
-      dataloader.addData(data_tensor, label_tensor);
+      dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
 
       var state = State<DataLoader>("dataloader");
       state.set(dataloader);
@@ -338,23 +328,26 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 10u64;
-      var data_tensor = Tensor(tensor_shape);
+      var data_tensor_1 = Tensor(tensor_shape);
+      var data_tensor_2 = Tensor(tensor_shape);
       var label_tensor = Tensor(tensor_shape);
-      data_tensor.fill(7.0fp64);
+      data_tensor_1.fill(7.0fp64);
+      data_tensor_2.fill(7.0fp64);
       label_tensor.fill(7.0fp64);
 
       var graph = Graph();
-      graph.addPlaceholder("Input");
+      graph.addPlaceholder("Input_1");
+      graph.addPlaceholder("Input_2");
       graph.addPlaceholder("Label");
-      graph.addFullyConnected("FC1", "Input", 2, 2);
+      graph.addFullyConnected("FC1", "Input_2", 2, 2);
       graph.addRelu("Output", "FC1");
       graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
       var dataloader = DataLoader("tensor");
-      dataloader.addData(data_tensor, label_tensor);
+      dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
 
       var batch_size = 8u64;
-      var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
+      var optimiser = Optimiser("sgd", graph, dataloader, {"Input_1","Input_2"}, "Label", "Error");
 
       var state = State<Optimiser>("optimiser");
       state.set(optimiser);
@@ -398,30 +391,34 @@ TEST_F(MLTests, serialisation_several_components_test)
   static char const *several_serialise_src = R"(
       function main()
 
-        var tensor_shape = Array<UInt64>(2);
-        tensor_shape[0] = 2u64;
-        tensor_shape[1] = 10u64;
-        var data_tensor = Tensor(tensor_shape);
-        var label_tensor = Tensor(tensor_shape);
-        data_tensor.fill(7.0fp64);
-        label_tensor.fill(7.0fp64);
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor_1 = Tensor(tensor_shape);
+      var data_tensor_2 = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor_1.fill(7.0fp64);
+      data_tensor_2.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
 
         var graph = Graph();
-        graph.addPlaceholder("Input");
+        graph.addPlaceholder("Input_1");
+        graph.addPlaceholder("Input_2");
         graph.addPlaceholder("Label");
-        graph.addFullyConnected("FC1", "Input", 2, 2);
+        graph.addFullyConnected("FC1", "Input_2", 2, 2);
         graph.addRelu("Output", "FC1");
         graph.addMeanSquareErrorLoss("Error", "Output", "Label");
         var graph_state = State<Graph>("graph");
         graph_state.set(graph);
 
         var dataloader = DataLoader("tensor");
-        dataloader.addData(data_tensor, label_tensor);
+
+        dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
         var dataloader_state = State<DataLoader>("dataloader");
         dataloader_state.set(dataloader);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input_1","Input_2"}, "Label", "Error");
         var optimiser_state = State<Optimiser>("optimiser");
         optimiser_state.set(optimiser);
 
@@ -694,23 +691,26 @@ TEST_F(MLTests, optimiser_set_graph_test)
         var tensor_shape = Array<UInt64>(2);
         tensor_shape[0] = 2u64;
         tensor_shape[1] = 10u64;
-        var data_tensor = Tensor(tensor_shape);
+        var data_tensor_1 = Tensor(tensor_shape);
+        var data_tensor_2 = Tensor(tensor_shape);
         var label_tensor = Tensor(tensor_shape);
-        data_tensor.fill(7.0fp64);
+        data_tensor_1.fill(7.0fp64);
+        data_tensor_2.fill(7.0fp64);
         label_tensor.fill(7.0fp64);
 
         var graph = Graph();
-        graph.addPlaceholder("Input");
+        graph.addPlaceholder("Input_1");
+        graph.addPlaceholder("Input_2");
         graph.addPlaceholder("Label");
-        graph.addFullyConnected("FC1", "Input", 2, 2);
+        graph.addFullyConnected("FC1", "Input_2", 2, 2);
         graph.addRelu("Output", "FC1");
         graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
         var dataloader = DataLoader("tensor");
-        dataloader.addData(data_tensor, label_tensor);
+        dataloader.addData({data_tensor_1,data_tensor_2}, label_tensor);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input_1","Input_2"}, "Label", "Error");
 
         optimiser.setGraph(graph);
         optimiser.setDataloader(dataloader);
@@ -765,7 +765,7 @@ TEST_F(MLTests, graph_step_test)
   EXPECT_GT(loss_reduction->GetTensor().At(0, 0), 0);
 }
 
-TEST_F(MLTests, sequential_model_test)
+TEST_F(MLTests, dense_sequential_model_test)
 {
   static char const *sequential_model_src = R"(
     function main()
@@ -797,6 +797,146 @@ TEST_F(MLTests, sequential_model_test)
 
   ASSERT_TRUE(toolkit.Compile(sequential_model_src));
   ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, conv1d_sequential_model_test)
+{
+  static char const *sequential_model_src = R"(
+    function main() : Tensor
+
+      // conv1d parameters
+      var input_channels  = 3u64;
+      var output_channels = 5u64;
+      var input_height    = 3u64;
+      var kernel_size     = 3u64;
+      var output_height   = 1u64;
+      var stride_size     = 1u64;
+
+      // set up input data tensor
+      var data_shape = Array<UInt64>(3);
+      data_shape[0] = input_channels;
+      data_shape[1] = input_height;
+      data_shape[2] = 1u64;
+      var data = Tensor(data_shape);
+      for (in_channel in 0u64:input_channels)
+        for (in_height in 0u64:input_height)
+          data.setAt(in_channel, in_height, 0u64, toFixed64(in_height + 1u64));
+        endfor
+      endfor
+
+      // set up a gt label tensor
+      var label_shape = Array<UInt64>(3);
+      label_shape[0] = output_channels;
+      label_shape[1] = output_height;
+      label_shape[2] = 1u64;
+      var label = Tensor(label_shape);
+
+      // set up a model
+      var model = Model("sequential");
+      model.add("conv1d", output_channels, input_channels, kernel_size, stride_size);
+      model.compile("mse", "adam");
+
+      // make an initial prediction
+      var prediction = model.predict(data);
+
+      // train the model
+      model.fit(data, label, 1u64);
+
+      // evaluate performance
+      var loss = model.evaluate();
+
+      return prediction;
+    endfunction
+  )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(sequential_model_src));
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1});
+  gt(0, 0) = static_cast<DataType>(-4.28031352977);
+  gt(1, 0) = static_cast<DataType>(-4.03654768132);
+  gt(2, 0) = static_cast<DataType>(8.11192789580);
+  gt(3, 0) = static_cast<DataType>(1.763717529829592);
+  gt(4, 0) = static_cast<DataType>(-1.8677866039798);
+
+  ASSERT_TRUE((prediction->GetTensor())
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+}
+
+TEST_F(MLTests, conv2d_sequential_model_test)
+{
+  static char const *sequential_model_src = R"(
+    function main() : Tensor
+
+      // conv1d parameters
+      var input_channels  = 3u64;
+      var output_channels = 5u64;
+      var input_height    = 3u64;
+      var input_width     = 3u64;
+      var kernel_size     = 3u64;
+      var output_height   = 1u64;
+      var output_width    = 1u64;
+      var stride_size     = 1u64;
+
+      // set up input data tensor
+      var data_shape = Array<UInt64>(4);
+      data_shape[0] = input_channels;
+      data_shape[1] = input_height;
+      data_shape[2] = input_width;
+      data_shape[3] = 1u64;
+      var data = Tensor(data_shape);
+      for (in_channel in 0u64:input_channels)
+        for (in_height in 0u64:input_height)
+          for (in_width in 0u64:input_width)
+            data.setAt(in_channel, in_height, in_width, 0u64, toFixed64(in_height * in_width + 1u64));
+          endfor
+        endfor
+      endfor
+
+      // set up a gt label tensor
+      var label_shape = Array<UInt64>(4);
+      label_shape[0] = output_channels;
+      label_shape[1] = output_height;
+      label_shape[2] = output_width;
+      label_shape[3] = 1u64;
+      var label = Tensor(label_shape);
+
+      // set up a model
+      var model = Model("sequential");
+      model.add("conv2d", output_channels, input_channels, kernel_size, stride_size);
+      model.compile("mse", "adam");
+
+      // make an initial prediction
+      var prediction = model.predict(data);
+
+      // train the model
+      model.fit(data, label, 1u64);
+
+      // evaluate performance
+      var loss = model.evaluate();
+
+      return prediction;
+    endfunction
+  )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(sequential_model_src));
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1, 1});
+  gt.Set(0, 0, 0, static_cast<DataType>(1.1533032542));
+  gt.Set(1, 0, 0, static_cast<DataType>(-7.7671483948));
+  gt.Set(2, 0, 0, static_cast<DataType>(-4.0066583846));
+  gt.Set(3, 0, 0, static_cast<DataType>(-7.9669202564));
+  gt.Set(4, 0, 0, static_cast<DataType>(-16.5230417126));
+
+  ASSERT_TRUE((prediction->GetTensor())
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
 }
 
 TEST_F(MLTests, classifier_model_test)
