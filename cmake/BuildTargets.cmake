@@ -308,6 +308,16 @@ function (configure_library_targets)
   set(library_root ${FETCH_ROOT_DIR}/libs)
 
   file(GLOB children RELATIVE ${library_root} ${library_root}/*)
+
+  if (APPLE)
+    # Temporarily disable oef builds
+    list(FILTER
+         children
+         EXCLUDE
+         REGEX
+         ".*oef.*")
+  endif (APPLE)
+
   set(dirlist "")
   foreach (child ${children})
     set(element_path ${library_root}/${child})

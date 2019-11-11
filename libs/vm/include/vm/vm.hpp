@@ -461,7 +461,7 @@ public:
     for (std::size_t i = 0; i < num_strings; ++i)
     {
       std::string const &str = executable_->strings[i];
-      strings_[i]            = Ptr<String>(new String(this, str, true));
+      strings_[i]            = Ptr<String>(new String(this, str));
     }
 
     std::size_t const num_local_types = executable_->types.size();

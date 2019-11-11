@@ -244,12 +244,12 @@ TEST(notarisation, notarise_blocks)
           // Set block hash for first block
           if (block_number == 1)
           {
-            next_block->body.previous_hash = node->chain.GetHeaviestBlock()->body.hash;
+            next_block->previous_hash = node->chain.GetHeaviestBlock()->hash;
           }
 
           next_block->UpdateDigest();
           next_block->UpdateTimestamp();
-          next_block->miner_signature = node->muddle_certificate->Sign(next_block->body.hash);
+          next_block->miner_signature = node->muddle_certificate->Sign(next_block->hash);
           assert(next_block->weight != 0);
 
           blocks_this_round.push_back(std::move(next_block));

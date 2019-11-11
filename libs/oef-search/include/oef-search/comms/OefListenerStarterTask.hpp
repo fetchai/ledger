@@ -30,7 +30,7 @@ class IOefTaskFactory;
 class OefAgentEndpoint;
 
 template <template <typename> class EndpointType>
-class OefListenerStarterTask : public Task
+class OefListenerStarterTask : public fetch::oef::base::Task
 {
 public:
   using FactoryCreator =
@@ -57,7 +57,7 @@ public:
   {
     return true;
   }
-  ExitState run() override;
+  fetch::oef::base::ExitState run() override;
 
 protected:
 private:

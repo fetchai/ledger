@@ -52,12 +52,12 @@ Ptr<VMGraph> VMGraph::Constructor(VM *vm, TypeId type_id)
 
 void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
 {
-  graph_.SetInput(name->str, (*input).GetTensor());
+  graph_.SetInput(name->string(), (*input).GetTensor());
 }
 
 Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 {
-  MathTensorType    t   = graph_.Evaluate(name->str, false);
+  MathTensorType    t   = graph_.Evaluate(name->string(), false);
   Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
   (*ret).Copy(t);
   return ret;
@@ -65,7 +65,7 @@ Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 
 void VMGraph::BackPropagate(VMPtrString const &name)
 {
-  graph_.BackPropagate(name->str);
+  graph_.BackPropagate(name->string());
 }
 
 void VMGraph::Step(DataType const &lr)
@@ -80,64 +80,65 @@ void VMGraph::Step(DataType const &lr)
 
 void VMGraph::AddPlaceholder(VMPtrString const &name)
 {
-  graph_.AddNode<fetch::ml::ops::PlaceHolder<MathTensorType>>(name->str, {});
+  graph_.AddNode<fetch::ml::ops::PlaceHolder<MathTensorType>>(name->string(), {});
 }
 
 void VMGraph::AddFullyConnected(VMPtrString const &name, VMPtrString const &input_name, int in,
                                 int out)
 {
   graph_.AddNode<fetch::ml::layers::FullyConnected<MathTensorType>>(
-      name->str, {input_name->str}, std::size_t(in), std::size_t(out));
+      name->string(), {input_name->string()}, std::size_t(in), std::size_t(out));
 }
 
 void VMGraph::AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int filters,
                         int in_channels, int kernel_size, int stride_size)
 {
   graph_.AddNode<fetch::ml::layers::Convolution1D<MathTensorType>>(
-      name->str, {input_name->str}, static_cast<SizeType>(filters),
+      name->string(), {input_name->string()}, static_cast<SizeType>(filters),
       static_cast<SizeType>(in_channels), static_cast<SizeType>(kernel_size),
       static_cast<SizeType>(stride_size));
 }
 
 void VMGraph::AddRelu(VMPtrString const &name, VMPtrString const &input_name)
 {
-  graph_.AddNode<fetch::ml::ops::Relu<MathTensorType>>(name->str, {input_name->str});
+  graph_.AddNode<fetch::ml::ops::Relu<MathTensorType>>(name->string(), {input_name->string()});
 }
 
 void VMGraph::AddSoftmax(VMPtrString const &name, VMPtrString const &input_name)
 {
-  graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<DataType>>>(name->str,
-                                                                         {input_name->str});
+  graph_.AddNode<fetch::ml::ops::Softmax<fetch::math::Tensor<DataType>>>(name->string(),
+                                                                         {input_name->string()});
 }
 
 void VMGraph::AddCrossEntropyLoss(VMPtrString const &name, VMPtrString const &input_name,
                                   VMPtrString const &label_name)
 {
   graph_.AddNode<fetch::ml::ops::CrossEntropyLoss<fetch::math::Tensor<DataType>>>(
-      name->str, {input_name->str, label_name->str});
+      name->string(), {input_name->string(), label_name->string()});
 }
 
 void VMGraph::AddMeanSquareErrorLoss(VMPtrString const &name, VMPtrString const &input_name,
                                      VMPtrString const &label_name)
 {
   graph_.AddNode<fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<DataType>>>(
-      name->str, {input_name->str, label_name->str});
+      name->string(), {input_name->string(), label_name->string()});
 }
 
 void VMGraph::AddDropout(VMPtrString const &name, VMPtrString const &input_name,
                          DataType const &prob)
 {
-  graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->str, {input_name->str}, prob);
+  graph_.AddNode<fetch::ml::ops::Dropout<MathTensorType>>(name->string(), {input_name->string()},
+                                                          prob);
 }
 
 void VMGraph::AddTranspose(VMPtrString const &name, VMPtrString const &input_name)
 {
-  graph_.AddNode<fetch::ml::ops::Transpose<MathTensorType>>(name->str, {input_name->str});
+  graph_.AddNode<fetch::ml::ops::Transpose<MathTensorType>>(name->string(), {input_name->string()});
 }
 
 void VMGraph::AddExp(VMPtrString const &name, VMPtrString const &input_name)
 {
-  graph_.AddNode<fetch::ml::ops::Exp<MathTensorType>>(name->str, {input_name->str});
+  graph_.AddNode<fetch::ml::ops::Exp<MathTensorType>>(name->string(), {input_name->string()});
 }
 
 void VMGraph::LoadStateDict(Ptr<VMStateDict> const &sd)
@@ -215,7 +216,7 @@ fetch::vm::Ptr<fetch::vm::String> VMGraph::SerializeToString()
 fetch::vm::Ptr<VMGraph> VMGraph::DeserializeFromString(
     fetch::vm::Ptr<fetch::vm::String> const &graph_string)
 {
-  byte_array::ConstByteArray b(graph_string->str);
+  byte_array::ConstByteArray b(graph_string->string());
   b = byte_array::FromBase64(b);
   MsgPackSerializer buffer(b);
   DeserializeFrom(buffer);

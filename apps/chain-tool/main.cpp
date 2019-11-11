@@ -142,7 +142,7 @@ struct BlockNode
 
     if (is_block_set)
     {
-      for (auto const &slice : db_record.block.body.slices)
+      for (auto const &slice : db_record.block.slices)
       {
         tx_count += slice.size();
       }
@@ -270,7 +270,7 @@ public:
         break;
       }
 
-      hash = &node.db_record.block.body.previous_hash;
+      hash = &node.db_record.block.previous_hash;
     }
   }
 
@@ -456,19 +456,18 @@ public:
 
       if (i > 0)
       {
-        if (last_block_number != node.db_record.block.body.block_number + 1)
+        if (last_block_number != node.db_record.block.block_number + 1)
         {
           err_code = -3;
           std::ostringstream s;
           s << "Block 0x" << block_hash.ToHex() << " has unexpected block number value "
-            << node.db_record.block.body.block_number << ", expected value is "
-            << last_block_number - 1;
+            << node.db_record.block.block_number << ", expected value is " << last_block_number - 1;
           err_msg = s.str();
           return false;
         }
       }
 
-      last_block_number = node.db_record.block.body.block_number;
+      last_block_number = node.db_record.block.block_number;
       ++i;
 
       return true;
@@ -527,16 +526,16 @@ private:
         node_it = bch.emplace(new_node_hash, std::move(new_node)).first;
       }
 
-      auto parent_it{bch.find(node_it->second.db_record.block.body.previous_hash)};
+      auto parent_it{bch.find(node_it->second.db_record.block.previous_hash)};
       if (parent_it != bch.cend())
       {
         parent_it->second.childs.emplace(new_node_hash);
       }
       else
       {
-        // parent_it = bch.emplace(node_it->second.db_record.block.body.previous_hash,
+        // parent_it = bch.emplace(node_it->second.db_record.block.previous_hash,
         // BlockNode{BlockDbRecord{}, BlockNode::BlockChilds{new_node_hash}, false}).first;
-        bch.emplace(node_it->second.db_record.block.body.previous_hash,
+        bch.emplace(node_it->second.db_record.block.previous_hash,
                     BlockNode{BlockDbRecord{}, BlockNode::BlockChilds{new_node_hash}, false});
       }
 
@@ -774,7 +773,7 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
        &trimmed_tx_stores, progress_step, print_missing_txs,
        log2_num_of_lanes](BlockNode const &node, BlockHash const & /*block_hash*/) {
         uint64_t slice_idx{0};
-        for (auto const &slice : node.db_record.block.body.slices)
+        for (auto const &slice : node.db_record.block.slices)
         {
           tx_count_in_blockchain += slice.size();
 
@@ -807,9 +806,9 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
               if (print_missing_txs)
               {
                 std::cerr << "INCONSISTENCY: Tx fetch from db failed:"
-                          << " lane = " << lane << ", block["
-                          << node.db_record.block.body.block_number << "] 0x"
-                          << node.db_record.block.body.hash.ToHex() << ", slice = " << slice_idx
+                          << " lane = " << lane << ", block[" << node.db_record.block.block_number
+                          << "] 0x" << node.db_record.block.hash.ToHex()
+                          << ", slice = " << slice_idx
                           << ", tx index in slice = " << tx_idx_in_slice << ", tx hash = 0x"
                           << tx_layout.digest().ToHex() << std::endl;
                 std::cerr.flush();
@@ -827,18 +826,18 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
           ++slice_idx;
         }
 
-        if (node.db_record.block.body.block_number == 0 ||
+        if (node.db_record.block.block_number == 0 ||
             (tx_count_in_blockchain > last_reported_progress_tx_count &&
              (tx_count_in_blockchain - last_reported_progress_tx_count >= progress_step ||
               tx_count_in_blockchain >= num_of_progress_steps * progress_step)))
         {
           last_reported_progress_tx_count = tx_count_in_blockchain;
           std::size_t const progress_percent{
-              (node.db_record.block.body.block_number == 0)
+              (node.db_record.block.block_number == 0)
                   ? 100ull
                   : ((tx_count_in_blockchain / progress_step) * 100ull) / num_of_progress_steps};
           std::cout << progress_percent << "%"
-                    << " (processed up to " << node.db_record.block.body.block_number
+                    << " (processed up to " << node.db_record.block.block_number
                     << " block INDEX going backwards from tip,"
                     << " missing/failed TX count " << tx_count_missing_accumulated << " (from "
                     << tx_count_processed << " TXs processed so far)." << std::endl;
