@@ -29,8 +29,8 @@
 #include <cstdint>
 #include <functional>
 #include <iomanip>
-#include <ostream>
 #include <limits>
+#include <ostream>
 
 namespace fetch {
 namespace fixed_point {
@@ -253,7 +253,6 @@ public:
   static constexpr FixedPoint Floor(FixedPoint const &o);
   static constexpr FixedPoint Round(FixedPoint const &o);
   static constexpr FixedPoint FromBase(Type n);
- 
 
   /////////////////////////
   /// casting operators ///
@@ -311,8 +310,8 @@ public:
   constexpr FixedPoint  operator-() const;
   constexpr FixedPoint &operator++();
   constexpr FixedPoint &operator--();
-  constexpr FixedPoint operator++(int);
-  constexpr FixedPoint operator--(int);
+  constexpr FixedPoint  operator++(int);
+  constexpr FixedPoint  operator--(int);
 
   //////////////////////////////
   /// math and bit operators ///
@@ -500,20 +499,22 @@ private:
   static constexpr FixedPoint         CosApproxPi4(FixedPoint const &r);
 };
 
-template<typename T> 
+template <typename T>
 static constexpr bool IsMinusZero(T const n);
 
-template<>
+template <>
 constexpr bool IsMinusZero<float>(float const n)
 {
-  uint32_t n_int = *(reinterpret_cast<uint32_t const *>(&n));
+  // Have to dereference the pointer as char const *, else we get a strict-aliasing error
+  uint32_t n_int = *(reinterpret_cast<char const *>(&n));
   return (n_int == 0x80000000);
 }
 
-template<>
+template <>
 constexpr bool IsMinusZero<double>(double const n)
 {
-  uint64_t n_int = *(reinterpret_cast<uint64_t const *>(&n));
+  // Have to dereference the pointer as char const *, else we get a strict-aliasing error
+  uint64_t n_int = *(reinterpret_cast<char const *>(&n));
   return (n_int == 0x8000000000000000);
 }
 
@@ -748,7 +749,8 @@ template <typename T>
 constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsFloat<T> * /*unused*/)
   : data_(static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK))
 {
-  if (IsMinusZero(n)) {
+  if (IsMinusZero(n))
+  {
     data_ = 0;
   }
   else if (CheckOverflow(static_cast<NextType>(n * ONE_MASK)))

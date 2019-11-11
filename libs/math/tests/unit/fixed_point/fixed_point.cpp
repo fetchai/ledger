@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "test_types.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
@@ -91,11 +91,11 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(fp32_t::TOLERANCE.Data(), 0x15);
   EXPECT_EQ(fp32_t::DECIMAL_DIGITS, 4);
 
-  double r = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-  auto x32 = static_cast<fp32_t>(r) * fp32_t::FP_MAX - fp32_t::FP_MAX;
-  auto x64 = static_cast<fp64_t>(x32);
-  auto x128 = static_cast<fp128_t>(x32);
-  auto x32_2 = static_cast<fp32_t>(x128);
+  double r     = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
+  auto   x32   = static_cast<fp32_t>(r) * fp32_t::FP_MAX - fp32_t::FP_MAX;
+  auto   x64   = static_cast<fp64_t>(x32);
+  auto   x128  = static_cast<fp128_t>(x32);
+  auto   x32_2 = static_cast<fp32_t>(x128);
   EXPECT_EQ(x32, x32_2);
   auto x32_3 = static_cast<fp32_t>(x64);
   EXPECT_EQ(x32, x32_3);
@@ -156,10 +156,10 @@ TEST(FixedPointTest, Conversion_32_32)
   EXPECT_EQ(fp64_t::TOLERANCE.Data(), 0x200);
   EXPECT_EQ(fp64_t::DECIMAL_DIGITS, 9);
 
-  double r = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-  auto x64 = static_cast<fp64_t>(r) * fp64_t::FP_MAX - fp64_t::FP_MAX;
-  auto x128 = static_cast<fp128_t>(x64);
-  auto x64_2 = static_cast<fp64_t>(x128);
+  double r     = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
+  auto   x64   = static_cast<fp64_t>(r) * fp64_t::FP_MAX - fp64_t::FP_MAX;
+  auto   x128  = static_cast<fp128_t>(x64);
+  auto   x64_2 = static_cast<fp64_t>(x128);
   EXPECT_EQ(x64, x64_2);
 }
 
@@ -222,16 +222,20 @@ TEST(FixedPointTest, Conversion_64_64)
   EXPECT_EQ(fp128_t::TOLERANCE.Data(), 0x100000000000);
   EXPECT_EQ(fp128_t::DECIMAL_DIGITS, 18);
 
-  double r = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-  auto x128 = static_cast<fp128_t>(r) * static_cast<fp128_t>(fp64_t::FP_MAX) - static_cast<fp128_t>(fp64_t::FP_MAX);
-  auto x64 = static_cast<fp64_t>(x128);
+  double r    = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
+  auto   x128 = static_cast<fp128_t>(r) * static_cast<fp128_t>(fp64_t::FP_MAX) -
+              static_cast<fp128_t>(fp64_t::FP_MAX);
+  auto x64    = static_cast<fp64_t>(x128);
   auto x128_2 = static_cast<fp128_t>(x64);
-  EXPECT_NEAR(static_cast<double>(x128), static_cast<double>(x128_2), static_cast<double>(fp64_t::TOLERANCE));
+  EXPECT_NEAR(static_cast<double>(x128), static_cast<double>(x128_2),
+              static_cast<double>(fp64_t::TOLERANCE));
 
-  x128 = static_cast<fp128_t>(r) * static_cast<fp128_t>(fp32_t::FP_MAX) - static_cast<fp128_t>(fp32_t::FP_MAX);
+  x128 = static_cast<fp128_t>(r) * static_cast<fp128_t>(fp32_t::FP_MAX) -
+         static_cast<fp128_t>(fp32_t::FP_MAX);
   auto x32 = static_cast<fp32_t>(x128);
-  x128_2 = static_cast<fp128_t>(x32);
-  EXPECT_NEAR(static_cast<double>(x128), static_cast<double>(x128_2), static_cast<double>(fp32_t::TOLERANCE));
+  x128_2   = static_cast<fp128_t>(x32);
+  EXPECT_NEAR(static_cast<double>(x128), static_cast<double>(x128_2),
+              static_cast<double>(fp32_t::TOLERANCE));
 }
 
 TEST(FixedPointTest, Constants_16_16)

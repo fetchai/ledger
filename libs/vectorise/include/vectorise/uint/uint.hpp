@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/containers/array.hpp"
 #include "meta/has_index.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/containers/array.hpp"
 #include "vectorise/platform.hpp"
 
 #include <algorithm>

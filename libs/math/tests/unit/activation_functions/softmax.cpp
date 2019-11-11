@@ -45,12 +45,14 @@ TYPED_TEST(SoftmaxTest, equal_proportion_test)
   fetch::math::Softmax(test_array, result_array);
 
   // check that all values equal proportion
-  auto inv_n = typename TypeParam::Type(1.0 / double(n));
+  auto inv_n     = typename TypeParam::Type(1.0 / double(n));
   auto tolerance = fetch::math::function_tolerance<typename TypeParam::Type>();
-  EXPECT_NEAR(static_cast<double>(result_array[0]), static_cast<double>(inv_n), static_cast<double>(tolerance));
+  EXPECT_NEAR(static_cast<double>(result_array[0]), static_cast<double>(inv_n),
+              static_cast<double>(tolerance));
   for (std::size_t i = 1; i < n; ++i)
   {
-    EXPECT_NEAR(static_cast<double>(result_array[i]), static_cast<double>(result_array[0]), static_cast<double>(tolerance));
+    EXPECT_NEAR(static_cast<double>(result_array[i]), static_cast<double>(result_array[0]),
+                static_cast<double>(tolerance));
   }
 }
 

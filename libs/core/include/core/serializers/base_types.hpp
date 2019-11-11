@@ -21,9 +21,9 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/platform.hpp"
 #include "vectorise/uint/uint.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <array>
 #include <map>
@@ -826,9 +826,10 @@ public:
   template <typename Interface>
   static void Deserialize(Interface &interface, Type &n)
   {
-    union {
+    union
+    {
       __int128_t u128;
-      uint64_t u64[2];
+      uint64_t   u64[2];
     } data;
     interface >> data.u64[0];
     interface >> data.u64[1];

@@ -19,15 +19,15 @@
 #include "math/base_types.hpp"
 #include "math/standard_functions/log.hpp"
 #include "math/trigonometry.hpp"
+#include "test_types.hpp"
 #include "vectorise/math/standard_functions.hpp"
 #include "vectorise/vectorise.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
+#include <cstdlib>
 #include <functional>
 #include <memory>
-#include <cstdlib>
 
 namespace fetch {
 namespace math {
@@ -137,14 +137,14 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   {
     // We don't want to check overflows right now, so we pick std::rand numbers, but well within the
     // type's limits
-    a[i]     = static_cast<type>((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
+    a[i]    = static_cast<type>((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
                              static_cast<double>(fetch::math::numeric_max<type>()) / 2.0);
-    b[i]     = static_cast<type>((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
+    b[i]    = static_cast<type>((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
                              static_cast<double>(fetch::math::numeric_max<type>()) / 2.0);
-    sum[i]   = a[i] + b[i];
-    diff[i]  = a[i] - b[i];
-    prod[i]  = a[i] * b[i];
-    div[i]   = a[i] / b[i];
+    sum[i]  = a[i] + b[i];
+    diff[i] = a[i] - b[i];
+    prod[i] = a[i] * b[i];
+    div[i]  = a[i] / b[i];
     real_max = fetch::vectorise::Max(a[i], real_max);
     real_max = fetch::vectorise::Max(b[i], real_max);
     real_min = fetch::vectorise::Min(a[i], real_min);
@@ -443,7 +443,6 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
     }
   }
 }
-
 
 }  // namespace test
 }  // namespace math
