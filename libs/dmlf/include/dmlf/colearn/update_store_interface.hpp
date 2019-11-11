@@ -30,9 +30,9 @@ class UpdateStoreInterface
 {
 public:
   using Update    = ColearnUpdate;
-  using UpdatePtr = std::shared_ptr<Update>;
+  using UpdatePtr = std::shared_ptr<const Update>;
   using Score     = double;
-  using Criteria  = std::function<Score(Update const &)>;
+  using Criteria  = std::function<Score(UpdatePtr)>;
 
   using Algorithm  = Update::Algorithm;
   using UpdateType = Update::UpdateType;
