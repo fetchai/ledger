@@ -172,7 +172,10 @@ public:
 
   void ApplyGradient(TensorType const &grad, SizeSet &update_rows) override
   {
+    // Sparse gradient not supported for Weights
     FETCH_UNUSED(update_rows);
+    assert(update_rows.empty());
+
     if (!this->value_frozen_)
     {
       ApplyRegularisation();
