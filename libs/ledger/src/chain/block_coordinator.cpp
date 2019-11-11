@@ -319,7 +319,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   FETCH_UNUSED(current_dag_epoch);
 
   // initial condition, the last processed block is empty
-  if (chain::ZERO_HASH == last_processed_block)
+  if (chain::GENESIS_DIGEST == last_processed_block)
   {
     // start up - we need to work out which of the blocks has been executed previously
 
