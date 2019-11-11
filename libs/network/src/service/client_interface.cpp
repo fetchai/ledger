@@ -70,7 +70,8 @@ bool ServiceClientInterface::ProcessServerMessage(network::MessageType const &ms
 
     if (!p)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to look up a network promise but it was already deleted");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Attempted to look up a network promise but it was already deleted");
     }
     else
     {
