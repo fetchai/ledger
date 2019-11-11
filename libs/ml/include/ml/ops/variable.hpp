@@ -140,16 +140,21 @@ public:
     return {error_signal};
   }
 
-  void AddToGradient(TensorType const &extern_grad, SizeSet const &rows_updated)
+  void AddToGradient(TensorType const &extern_grad)
   {
-    // Add external information about row updates
-    this->rows_updated_.insert(rows_updated.begin(), rows_updated.end());
-
     if (!this->value_frozen_)
     {
       gradient_accumulation_->InlineAdd(extern_grad);
       reset_gradients_ = true;
     }
+  }
+
+  void AddToGradient(TensorType const &extern_grad, SizeSet const &rows_updated)
+  {
+    // Add external information about row updates
+    this->rows_updated_.insert(rows_updated.begin(), rows_updated.end());
+
+    AddToGradient(extern_grad);
   }
 
   /**
@@ -170,12 +175,17 @@ public:
     return false;
   }
 
-  void ApplyGradient(TensorType const &grad, SizeSet &update_rows) override
+  void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows) override
   {
-    // Sparse gradient not supported for Weights
-    FETCH_UNUSED(update_rows);
-    assert(update_rows.empty());
+    if (!update_rows.empty())
+    {
+      throw fetch::ml::exceptions::InvalidMode("Sparse gradient not supported.");
+    }
+    ApplyGradient(grad);
+  }
 
+  void ApplyGradient(TensorType const &grad) override
+  {
     if (!this->value_frozen_)
     {
       ApplyRegularisation();

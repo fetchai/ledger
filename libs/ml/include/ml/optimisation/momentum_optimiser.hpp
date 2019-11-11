@@ -37,7 +37,6 @@ public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
   using SizeType   = fetch::math::SizeType;
-  using SizeSet    = std::unordered_set<SizeType>;
 
   MomentumOptimiser(std::shared_ptr<Graph<T>>       graph,
                     std::vector<std::string> const &input_node_names,
@@ -113,17 +112,11 @@ void MomentumOptimiser<T>::ApplyGradients(SizeType batch_size)
   auto gradient_it  = this->gradients_.begin();
   auto mit          = momentum_.begin();
 
-  std::vector<SizeSet> rows;
-
   while (gradient_it != this->gradients_.end())
   {
     // Skip frozen trainables
     if (!(*trainable_it)->GetFrozenState())
     {
-      std::pair<TensorType const &, SizeSet const &> gradient_pair =
-          (*trainable_it)->GetSparseGradientsReferences();
-      rows.push_back(gradient_pair.second);
-      // TODO: Do Slicing and apply for each slice
 
       // momentum[i] = momentum_update * momentum[i] + learning_rate * (input_grad[i]/batch_size)
       fetch::math::Multiply(*mit, momentum_update_, *mit);
@@ -146,7 +139,7 @@ void MomentumOptimiser<T>::ApplyGradients(SizeType batch_size)
   }
 
   // calling apply gradients on the graph ensures that the node caches are reset properly
-  this->graph_->ApplyGradients(this->gradients_, rows);
+  this->graph_->ApplyGradients(this->gradients_);
 }
 
 template <class T>

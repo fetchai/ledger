@@ -122,7 +122,7 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
   }
 
   // calling apply gradients on the graph ensures that the node caches are reset properly
-  this->graph_->ApplyGradients(this->gradients_, rows);
+  this->graph_->ApplySparseGradients(this->gradients_, rows);
 }
 
 }  // namespace optimisers

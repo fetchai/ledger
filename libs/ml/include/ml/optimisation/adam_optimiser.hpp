@@ -42,7 +42,6 @@ public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
   using SizeType   = fetch::math::SizeType;
-  using SizeSet    = std::unordered_set<SizeType>;
 
   AdamOptimiser() = default;
 
@@ -152,25 +151,11 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
   fetch::math::Pow(beta1_, static_cast<DataType>(this->epoch_ + 1), beta1_t_);
   fetch::math::Pow(beta2_, static_cast<DataType>(this->epoch_ + 1), beta2_t_);
 
-  std::vector<SizeSet> rows;
-
   while (gradient_it != this->gradients_.end())
   {
     // Skip frozen trainables
-    if ((*trainable_it)->GetFrozenState())
+    if (!(*trainable_it)->GetFrozenState())
     {
-      continue;
-    }
-
-    std::pair<TensorType const, SizeSet const> gradient_pair =
-        (*trainable_it)->GetSparseGradientsReferences();
-    rows.push_back(gradient_pair.second);
-
-    // Normal ApplyGradient
-    if (rows.at(rows.size() - 1).empty() ||
-        rows.at(rows.size() - 1).size() > (gradient_pair.first.shape().at(1) / 4))
-    {
-      // if (true) {
 
       // cache[i] = (beta1_t_ * cache[i]) + ((1.0 - beta1_t_) * (input_gradients[i]/batch_size));
       fetch::math::Multiply(
@@ -200,71 +185,6 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
       fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
       fetch::math::Divide(*mt_it, *gradient_it, *gradient_it);
       fetch::math::Multiply(*gradient_it, -this->learning_rate_, *gradient_it);
-    }
-
-    else
-    {
-      // Sparse apply gradient
-
-      for (SizeType update_index : rows.at(rows.size() - 1))
-      {
-
-        auto       gradient_slice        = gradient_it->Slice(update_index, 1);
-        TensorType gradient_slice_tensor = gradient_slice.Copy();
-
-        auto       momentum_slice        = momentum_it->Slice(update_index, 1);
-        TensorType momentum_slice_tensor = momentum_slice.Copy();
-
-        auto       mt_slice        = mt_it->Slice(update_index, 1);
-        TensorType mt_slice_tensor = mt_slice.Copy();
-
-        auto       v_slice        = vt_it->Slice(update_index, 1);
-        TensorType v_slice_tensor = v_slice.Copy();
-
-        auto       cache_slice        = cached_weight_it->Slice(update_index, 1);
-        TensorType cache_slice_tensor = cache_slice.Copy();
-
-        auto       refs_slice = (*trainable_it)->GetGradientsReferences().Slice(update_index, 1);
-        TensorType refs_slice_tensor = refs_slice.Copy();
-
-        // cache[i] = (beta1_t_ * cache[i]) + ((1.0 - beta1_t_) * (input_gradients[i]/batch_size));
-        fetch::math::Multiply(
-            refs_slice_tensor,
-            (static_cast<DataType>(1.0) - beta1_t_) / static_cast<DataType>(batch_size),
-            gradient_slice_tensor);
-        fetch::math::Multiply(cache_slice_tensor, beta1_t_, cache_slice_tensor);
-        fetch::math::Add(cache_slice_tensor, gradient_slice_tensor, cache_slice_tensor);
-
-        // mt   = cache[i] / (1.0 - beta1_t_);
-        fetch::math::Divide(cache_slice_tensor, (static_cast<DataType>(1.0) - beta1_t_),
-                            mt_slice_tensor);
-
-        // momentum[i] = (beta2_t_ * momentum[i]) + ((1.0 - beta2_t_) *
-        // ((input_gradients[i]/batch_size)^2));
-        fetch::math::Divide(refs_slice_tensor, static_cast<DataType>(batch_size), v_slice_tensor);
-        fetch::math::Square(v_slice_tensor, v_slice_tensor);
-        fetch::math::Multiply(v_slice_tensor, (static_cast<DataType>(1.0) - beta2_t_),
-                              v_slice_tensor);
-        fetch::math::Multiply(momentum_slice_tensor, beta2_t_, momentum_slice_tensor);
-        fetch::math::Add(momentum_slice_tensor, v_slice_tensor, momentum_slice_tensor);
-
-        // vt   = momentum[i] / (1.0 - beta2_t_);
-        fetch::math::Divide(momentum_slice_tensor, (static_cast<DataType>(1.0) - beta2_t_),
-                            v_slice_tensor);
-
-        // output_gradients[i] = -this->learning_rate_ * mt / (sqrt(vt) + epsilon_);
-        fetch::math::Sqrt(v_slice_tensor, gradient_slice_tensor);
-        fetch::math::Add(gradient_slice_tensor, epsilon_, gradient_slice_tensor);
-        fetch::math::Divide(mt_slice_tensor, gradient_slice_tensor, gradient_slice_tensor);
-        fetch::math::Multiply(gradient_slice_tensor, -this->learning_rate_, gradient_slice_tensor);
-
-        // Put things back
-        gradient_slice.Assign(gradient_slice_tensor);
-        momentum_slice.Assign(momentum_slice_tensor);
-        mt_slice.Assign(mt_slice_tensor);
-        v_slice.Assign(v_slice_tensor);
-        cache_slice.Assign(cache_slice_tensor);
-      }
 
       // we need to explicitly reset the gradients for this shared op to avoid double counting
       // in the case of shared ops
@@ -281,7 +201,7 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
   }
 
   // calling apply gradients on the graph ensures that the node caches are reset properly
-  this->graph_->ApplyGradients(this->gradients_, rows);
+  this->graph_->ApplyGradients(this->gradients_);
 }
 
 template <class T>

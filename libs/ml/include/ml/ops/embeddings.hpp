@@ -152,7 +152,7 @@ public:
     return {TensorType(error_signal.shape())};
   }
 
-  void ApplyGradient(TensorType const &grad, SizeSet &update_rows) override
+  void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows) override
   {
     if (!this->value_frozen_)
     {
@@ -182,6 +182,16 @@ public:
         }
       }
 
+      this->ResetGradients();
+    }
+  }
+
+  void ApplyGradient(TensorType const &grad) override
+  {
+    if (!this->value_frozen_)
+    {
+      this->ApplyRegularisation();
+      this->data_->InlineAdd(grad);
       this->ResetGradients();
     }
   }

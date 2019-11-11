@@ -12,6 +12,5 @@ setup_compiler()
 
 add_fetch_gbench(benchmark_ml_activations fetch-ml activations)
 add_fetch_gbench(benchmark_ml_ops fetch-ml ops)
-add_fetch_gbench(benchmark_ml_embeddings fetch-ml embeddings)
 add_fetch_gbench(benchmark_ml_training fetch-ml training)
 add_fetch_gbench(benchmark_ml_serialization fetch-ml serialization)
