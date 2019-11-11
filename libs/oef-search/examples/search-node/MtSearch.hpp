@@ -50,13 +50,13 @@ public:
 protected:
 private:
   std::shared_ptr<Core>                                                 core;
-  std::shared_ptr<Taskpool>                                             tasks;
+  std::shared_ptr<fetch::oef::base::Taskpool>                           tasks;
   std::shared_ptr<OefListenerSet<SearchTaskFactory, OefSearchEndpoint>> listeners;
   std::shared_ptr<OutboundConversations>                                outbounds;
   fetch::oef::pb::SearchConfig                                          config_;
 
-  Threadpool comms_runners;
-  Threadpool tasks_runners;
+  fetch::oef::base::Threadpool comms_runners;
+  fetch::oef::base::Threadpool tasks_runners;
 
   void startListeners();
   bool configureFromJsonFile(const std::string &config_file);

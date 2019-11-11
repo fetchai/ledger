@@ -22,6 +22,10 @@
 #include "oef-base/threading/ExitState.hpp"
 #include "oef-base/threading/Task.hpp"
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 template <class SUBCLASS>
 class StateMachineTask : virtual public Task
 {
@@ -123,3 +127,7 @@ private:
   bool operator==(const StateMachineTask &other) = delete;  // const { return compare(other)==0; }
   bool operator<(const StateMachineTask &other)  = delete;  // const { return compare(other)==-1; }
 };
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

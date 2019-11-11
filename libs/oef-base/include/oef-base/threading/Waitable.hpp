@@ -22,6 +22,10 @@
 #include <mutex>
 #include <vector>
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 class Waitable
 {
 public:
@@ -68,3 +72,7 @@ private:
 };
 
 void swap(Waitable &v1, Waitable &v2);
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

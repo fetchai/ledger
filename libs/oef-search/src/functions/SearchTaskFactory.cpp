@@ -191,8 +191,9 @@ void SearchTaskFactory::ExecuteQuery(std::shared_ptr<Branch> &          root,
   auto                             this_sp = shared_from_this();
   std::weak_ptr<SearchTaskFactory> this_wp = this_sp;
 
-  auto result_future = std::make_shared<
-      FutureCombiner<FutureComplexType<std::shared_ptr<IdentifierSequence>>, IdentifierSequence>>();
+  auto result_future = std::make_shared<fetch::oef::base::FutureCombiner<
+      fetch::oef::base::FutureComplexType<std::shared_ptr<IdentifierSequence>>,
+      IdentifierSequence>>();
 
   result_future->SetResultMerger([](std::shared_ptr<IdentifierSequence> &      results,
                                     const std::shared_ptr<IdentifierSequence> &res) {

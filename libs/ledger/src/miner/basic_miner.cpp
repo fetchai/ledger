@@ -139,7 +139,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
 
   // detect the transactions which have already been incorporated into previous blocks
   auto const duplicates =
-      chain.DetectDuplicateTransactions(block.body.previous_hash, mining_pool_.digests());
+      chain.DetectDuplicateTransactions(block.previous_hash, mining_pool_.digests());
 
   duplicate_filtered_count_->add(duplicates.size());
 
@@ -158,12 +158,12 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   auto const num_threads = Clip3<std::size_t>(mining_pool_.size() / 1000u, 1u, max_num_threads_);
 
   // prepare the basic formatting for the block
-  block.body.slices.resize(num_slices);
+  block.slices.resize(num_slices);
 
   // skip thread generation in the simple case
   if (num_threads == 1)
   {
-    GenerateSlices(mining_pool_, block.body, 0, 1, num_lanes);
+    GenerateSlices(mining_pool_, block, 0, 1, num_lanes);
   }
   else if (num_threads > 1)
   {
@@ -188,7 +188,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
       txs.Splice(mining_pool_, start, end);
 
       thread_pool_.Dispatch([&txs, &block, i, num_threads, num_lanes]() {
-        GenerateSlices(txs, block.body, i, num_threads, num_lanes);
+        GenerateSlices(txs, block, i, num_threads, num_lanes);
       });
     }
 
@@ -231,7 +231,7 @@ uint64_t BasicMiner::GetBacklog() const
  * @param interval The slice index interval to be used when selecting the next slice to populate
  * @param num_lanes The number of lanes of the block
  */
-void BasicMiner::GenerateSlices(Queue &transactions, Block::Body &block, std::size_t offset,
+void BasicMiner::GenerateSlices(Queue &transactions, Block &block, std::size_t offset,
                                 std::size_t interval, std::size_t num_lanes)
 {
   // sort by fees

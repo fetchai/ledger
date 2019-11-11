@@ -54,7 +54,7 @@ private:
   std::shared_ptr<IKarmaPolicy>                                                        karma_policy;
   std::shared_ptr<OefListenerSet<IOefTaskFactory<OefAgentEndpoint>, OefAgentEndpoint>> listeners;
   std::shared_ptr<Core>                                                                core;
-  std::shared_ptr<Taskpool>                                                            tasks;
+  std::shared_ptr<fetch::oef::base::Taskpool>                                          tasks;
   std::shared_ptr<OutboundConversations>                                               outbounds;
   std::shared_ptr<Agents>                                                              agents_;
   fetch::oef::pb::CoreConfig                                                           config_;
@@ -62,8 +62,8 @@ private:
   std::shared_ptr<std::set<PublicKey>> white_list_;
   bool                                 white_list_enabled_;
 
-  Threadpool comms_runners;
-  Threadpool tasks_runners;
+  fetch::oef::base::Threadpool comms_runners;
+  fetch::oef::base::Threadpool tasks_runners;
 
   void startListeners(IKarmaPolicy *karmaPolicy);
   bool configureFromJsonFile(const std::string &config_file);

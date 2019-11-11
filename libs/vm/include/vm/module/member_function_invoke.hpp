@@ -38,7 +38,7 @@ struct VmMemberFunctionInvoker
     auto const offset = sp_offset + 1;
 
     Variant &       v      = vm->stack_[vm->sp_ - offset];
-    Ptr<OwningType> object = v.object;
+    Ptr<OwningType> object = std::move(v.object);
     if (object)
     {
       ReturnType result         = meta::Apply(std::forward<Callable>(callable), *object,
@@ -61,7 +61,7 @@ struct VmMemberFunctionInvoker<sp_offset, void, Callable, ArgsTuple>
     auto const offset = sp_offset + 1;
 
     Variant &       v      = vm->stack_[vm->sp_ - offset + 1];
-    Ptr<OwningType> object = v.object;
+    Ptr<OwningType> object = std::move(v.object);
     if (object)
     {
       meta::Apply(std::forward<Callable>(callable), *object, std::forward<ArgsTuple>(arguments));
