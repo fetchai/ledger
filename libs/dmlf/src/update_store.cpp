@@ -54,8 +54,8 @@ std::size_t UpdateStore::GetUpdateCount(Algorithm const &algo, UpdateType const 
   return it->second.size();
 }
 
-void  UpdateStore::PushUpdate(Algorithm const &algorithm, UpdateType update_type, 
-    Data&& data, Source source, Metadata&& metadata)
+void UpdateStore::PushUpdate(Algorithm const &algorithm, UpdateType update_type, Data &&data,
+                             Source source, Metadata &&metadata)
 {
   FETCH_LOCK(global_m_);
 
@@ -67,11 +67,12 @@ void  UpdateStore::PushUpdate(Algorithm const &algorithm, UpdateType update_type
     queue_it = algo_map_.emplace(id, Queue()).first;
   }
 
-  queue_it->second.push(
-      std::make_shared<Update>(std::move(algorithm), std::move(update_type), 
-        std::move(data), std::move(source), std::move(metadata)));
+  queue_it->second.push(std::make_shared<Update>(std::move(algorithm), std::move(update_type),
+                                                 std::move(data), std::move(source),
+                                                 std::move(metadata)));
 }
-UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria /*criteria*/)
+UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType const &type,
+                                              Criteria /*criteria*/)
 {
   return GetUpdate(algo, type);
 }

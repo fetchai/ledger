@@ -32,7 +32,7 @@ public:
   using Update    = ColearnUpdate;
   using UpdatePtr = std::shared_ptr<Update>;
   using Score     = double;
-  using Criteria  = std::function<Score(Update const&)>;
+  using Criteria  = std::function<Score(Update const &)>;
 
   using Algorithm  = Update::Algorithm;
   using UpdateType = Update::UpdateType;
@@ -40,17 +40,17 @@ public:
   using Source     = Update::Source;
   using Metadata   = Update::Metadata;
 
-  UpdateStoreInterface()                         = default;
-  virtual ~UpdateStoreInterface()                        = default;
+  UpdateStoreInterface()                                  = default;
+  virtual ~UpdateStoreInterface()                         = default;
   UpdateStoreInterface(UpdateStoreInterface const &other) = delete;
   UpdateStoreInterface &operator=(UpdateStoreInterface const &other) = delete;
 
-  virtual void  PushUpdate(Algorithm const &algorithm, UpdateType update_type, 
-      Data&& data, Source source, Metadata&& metadata) = 0;
-  virtual UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria) = 0;
-  virtual UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type) = 0;
-  virtual std::size_t GetUpdateCount() const = 0;
-  virtual std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const = 0;
+  virtual void      PushUpdate(Algorithm const &algorithm, UpdateType update_type, Data &&data,
+                               Source source, Metadata &&metadata)                              = 0;
+  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria) = 0;
+  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type)                    = 0;
+  virtual std::size_t GetUpdateCount() const                                                    = 0;
+  virtual std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const       = 0;
   // TODO(Juan) Set maximum timestamp? Queue size? Other such admin tasks
 };
 

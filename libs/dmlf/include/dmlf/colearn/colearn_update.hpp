@@ -29,27 +29,27 @@ namespace colearn {
 class ColearnUpdate
 {
 public:
-  using Algorithm     = std::string;
-  using UpdateType    = std::string;
-  using Data          = byte_array::ConstByteArray;
-  using Source        = std::string;
-  using TimeStamp     = std::uint64_t;
-  using MetaKey       = std::string;
-  using MetaValue     = std::string;
-  using Metadata      = std::unordered_map<MetaKey,MetaValue>;
+  using Algorithm  = std::string;
+  using UpdateType = std::string;
+  using Data       = byte_array::ConstByteArray;
+  using Source     = std::string;
+  using TimeStamp  = std::uint64_t;
+  using MetaKey    = std::string;
+  using MetaValue  = std::string;
+  using Metadata   = std::unordered_map<MetaKey, MetaValue>;
 
-  ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &&data, 
-      Source source, Metadata metadata);
+  ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &&data, Source source,
+                Metadata metadata);
 
-  Algorithm const& algorithm() const
+  Algorithm const &algorithm() const
   {
     return algorithm_;
   }
-  UpdateType const& update_type() const
+  UpdateType const &update_type() const
   {
     return update_type_;
   }
-  Data const& data() const
+  Data const &data() const
   {
     return data_;
   }
@@ -67,12 +67,12 @@ public:
   }
 
 private:
-  Algorithm     algorithm_;
-  UpdateType    update_type_;
-  Data          data_;
-  Source        source_;
-  TimeStamp time_stamp_;
-  Metadata      metadata_;
+  Algorithm  algorithm_;
+  UpdateType update_type_;
+  Data       data_;
+  Source     source_;
+  TimeStamp  time_stamp_;
+  Metadata   metadata_;
 };
 
 }  // namespace colearn
