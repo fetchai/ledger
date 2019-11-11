@@ -11,5 +11,3 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 fetch_add_slow_test(math-unit-tests fetch-math unit/)
-fetch_add_slow_test(math-fp-unit-tests fetch-math unit/fixed_point)
-fetch_add_slow_test(math-vector-unit-tests fetch-math unit/vectors)
