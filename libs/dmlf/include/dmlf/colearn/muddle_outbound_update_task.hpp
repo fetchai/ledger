@@ -35,10 +35,10 @@ public:
   using Bytes        = byte_array::ByteArray;
   using ExitState    = oef::base::ExitState;
 
-  std::string  target_;
-  std::string  type_name_;
-  Bytes        update_;
-  RpcClientPtr client_;
+  std::string                  target_;
+  std::string                  type_name_;
+  Bytes                        update_;
+  RpcClientPtr                 client_;
   static constexpr char const *LOGGING_NAME = "MuddleOutboundUpdateTask";
 
   MuddleOutboundUpdateTask(std::string target, std::string type_name, Bytes update,

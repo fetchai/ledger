@@ -48,8 +48,8 @@ using NetManP = std::shared_ptr<NetMan>;
 
 using MuddlePtr      = fetch::muddle::MuddlePtr;
 using CertificatePtr = fetch::muddle::ProverPtr;
-using Store              = fetch::dmlf::colearn::UpdateStore;
-using StorePtr           = std::shared_ptr<Store>;
+using Store          = fetch::dmlf::colearn::UpdateStore;
+using StorePtr       = std::shared_ptr<Store>;
 
 using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
 using UpdatePayload        = UpdateTypeForTesting::Payload;

@@ -17,18 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "core/service_ids.hpp"
 #include "dmlf/colearn/colearn_protocol.hpp"
 #include "dmlf/colearn/update_store.hpp"
 #include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "dmlf/update_interface.hpp"
+#include "logging/logging.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/service/call_context.hpp"
-#include "oef-base/threading/Threadpool.hpp"
 #include "oef-base/threading/Taskpool.hpp"
+#include "oef-base/threading/Threadpool.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -68,14 +68,15 @@ public:
   void PushUpdateType(const std::string &type_name, UpdateInterfacePtr const &update) override;
   void PushUpdateBytes(const std::string &type_name, Bytes const &update);
 
-  UpdateStore::UpdatePtr   GetUpdate(UpdateStore::Algorithm const &algo, UpdateStore::UpdateType const &type)
+  UpdateStore::UpdatePtr GetUpdate(UpdateStore::Algorithm const & algo,
+                                   UpdateStore::UpdateType const &type)
   {
-    return update_store_ -> GetUpdate(algo, type);
+    return update_store_->GetUpdate(algo, type);
   }
 
   std::size_t GetUpdateCount() const override
   {
-    return update_store_ -> GetUpdateCount();
+    return update_store_->GetUpdateCount();
   }
 
   std::size_t GetPeerCount() const override

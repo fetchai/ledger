@@ -25,7 +25,7 @@ namespace colearn {
 class MuddleMessageTask : public oef::base::Task
 {
 public:
-  using ExitState    = oef::base::ExitState;
+  using ExitState = oef::base::ExitState;
 
   MuddleMessageTask()           = default;
   ~MuddleMessageTask() override = default;
