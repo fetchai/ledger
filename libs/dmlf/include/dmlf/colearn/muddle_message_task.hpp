@@ -22,9 +22,11 @@
 namespace fetch {
 namespace colearn {
 
-class MuddleMessageTask : public Task
+class MuddleMessageTask : public oef::base::Task
 {
 public:
+  using ExitState    = oef::base::ExitState;
+
   MuddleMessageTask()           = default;
   ~MuddleMessageTask() override = default;
 

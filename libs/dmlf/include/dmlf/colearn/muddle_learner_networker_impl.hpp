@@ -25,8 +25,8 @@
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/service/call_context.hpp"
-#include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/threading/Threadpool.hpp"
+#include "oef-base/threading/Taskpool.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -35,6 +35,8 @@ namespace colearn {
 class MuddleLearnerNetworkerImpl : public dmlf::AbstractLearnerNetworker
 {
 public:
+  using Taskpool           = oef::base::Taskpool;
+  using Threadpool         = oef::base::Threadpool;
   using TaskP              = Taskpool::TaskP;
   using MuddlePtr          = muddle::MuddlePtr;
   using UpdateInterfacePtr = dmlf::UpdateInterfacePtr;
@@ -45,6 +47,7 @@ public:
   using RpcServer          = fetch::muddle::rpc::Server;
   using RpcServerPtr       = std::shared_ptr<RpcServer>;
   using Bytes              = byte_array::ByteArray;
+
 
   explicit MuddleLearnerNetworkerImpl(MuddlePtr mud);
   ~MuddleLearnerNetworkerImpl() override;

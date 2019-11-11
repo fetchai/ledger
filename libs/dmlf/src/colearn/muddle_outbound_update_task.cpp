@@ -26,7 +26,7 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-ExitState MuddleOutboundUpdateTask::run()
+MuddleOutboundUpdateTask::ExitState MuddleOutboundUpdateTask::run()
 {
   std::cout << "SENDING TO:" << target_ << std::endl;
   auto prom = client_->CallSpecificAddress(

@@ -26,13 +26,14 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-class MuddleOutboundUpdateTask : public Task
+class MuddleOutboundUpdateTask : public oef::base::Task
 {
 public:
   using MuddlePtr    = muddle::MuddlePtr;
   using RpcClient    = fetch::muddle::rpc::Client;
   using RpcClientPtr = std::shared_ptr<RpcClient>;
   using Bytes        = byte_array::ByteArray;
+  using ExitState    = oef::base::ExitState;
 
   std::string  target_;
   std::string  type_name_;
