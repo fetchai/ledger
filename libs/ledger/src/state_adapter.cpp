@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/state_adapter.hpp"
+#include "logging/logging.hpp"
 #include "storage/resource_mapper.hpp"
 
 using fetch::storage::ResourceAddress;
@@ -145,12 +146,13 @@ StateAdapter::Status StateAdapter::Exists(std::string const &key)
 ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteArray const &key)
 {
   FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key, " scope: ", scope.full_name());
+
   return ResourceAddress{scope.full_name() + ".state." + key};
 }
 
-void StateAdapter::PushContext(Identifier const &scope)
+void StateAdapter::PushContext(byte_array::ConstByteArray const &scope)
 {
-  scope_.push_back(scope);
+  scope_.emplace_back(scope);
 }
 
 void StateAdapter::PopContext()
@@ -160,7 +162,7 @@ void StateAdapter::PopContext()
 
 Identifier StateAdapter::CurrentScope() const
 {
-  return Identifier{scope_.back().full_name()};
+  return scope_.back();
 }
 
 }  // namespace ledger

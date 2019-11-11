@@ -21,6 +21,7 @@
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "crypto/mcl_dkg.hpp"
 #include "muddle/rpc/client.hpp"
 
 #include <string>
@@ -32,6 +33,7 @@ using DKGSerializer = fetch::serializers::MsgPackSerializer;
 
 /**
  * Different messages using in distributed key generation (DKG) protocol.
+ * Connections - the cabinet connections the current node has connected directly to
  * Coefficients - contain the broadcast coefficients as strings
  * Shares - contain the secret shares which have been exposed in broadcasts as strings
  * Complaints - contain the set of miners who are being complained against
@@ -40,17 +42,19 @@ using DKGSerializer = fetch::serializers::MsgPackSerializer;
 class DKGMessage
 {
 public:
-  using MessageSignature = byte_array::ConstByteArray;
-  using MuddleAddress    = byte_array::ConstByteArray;
-  using Coefficient      = std::string;
-  using Share            = std::string;
-  using CabinetId        = MuddleAddress;
+  using MuddleAddress = byte_array::ConstByteArray;
+  using Coefficient   = crypto::mcl::PublicKey;
+  using Share         = crypto::mcl::PrivateKey;
+  using CabinetId     = MuddleAddress;
 
   enum class MessageType : uint8_t
   {
+    CONNECTIONS,
     COEFFICIENT,
     SHARE,
-    COMPLAINT
+    COMPLAINT,
+    NOTARISATION_KEY,
+    FINAL_STATE
   };
 
   virtual ~DKGMessage() = default;
@@ -61,40 +65,81 @@ public:
   {
     return type_;
   }
-  MessageSignature signature() const
-  {
-    return signature_;
-  }
   /// @}
 
   virtual DKGSerializer Serialize() const = 0;
 
 protected:
-  const MessageType type_;       ///< Type of message of the three listed above
-  MessageSignature  signature_;  ///< ECDSA signature of message
+  const MessageType type_;  ///< Type of message of the three listed above
 
   explicit DKGMessage(MessageType type)
     : type_{type}
   {}
-  DKGMessage(MessageType type, MessageSignature sig)
-    : type_{type}
-    , signature_{std::move(sig)}
+};
+
+class FinalStateMessage : public DKGMessage
+{
+public:
+  using Payload = byte_array::ConstByteArray;
+
+  Payload payload_;
+
+  explicit FinalStateMessage(DKGSerializer &serialiser)
+    : DKGMessage{MessageType::FINAL_STATE}
+  {
+    serialiser >> payload_;
+  }
+  explicit FinalStateMessage(Payload const &payload)  // NOLINT
+    : DKGMessage{MessageType::FINAL_STATE}
+    , payload_{payload}
   {}
+  ~FinalStateMessage() override = default;
+
+  DKGSerializer Serialize() const override
+  {
+    DKGSerializer serializer;
+    serializer << payload_;
+    return serializer;
+  }
+};
+
+class ConnectionsMessage : public DKGMessage
+{
+public:
+  std::set<MuddleAddress> connections_;
+
+  explicit ConnectionsMessage(DKGSerializer &serialiser)
+    : DKGMessage{MessageType::CONNECTIONS}
+  {
+    serialiser >> connections_;
+  }
+  explicit ConnectionsMessage(std::set<MuddleAddress> connections)
+    : DKGMessage{MessageType::CONNECTIONS}
+    , connections_{std::move(connections)}
+  {}
+  ~ConnectionsMessage() override = default;
+
+  DKGSerializer Serialize() const override
+  {
+    DKGSerializer serializer;
+    serializer << connections_;
+    return serializer;
+  }
 };
 
 class CoefficientsMessage : public DKGMessage
 {
-  uint8_t                  phase_;         ///< Phase of state machine that this message is for
+  uint8_t                  phase_{};       ///< Phase of state machine that this message is for
   std::vector<Coefficient> coefficients_;  ///< Coefficients as strings
 
 public:
   explicit CoefficientsMessage(DKGSerializer &serialiser)
     : DKGMessage{MessageType::COEFFICIENT}
   {
-    serialiser >> phase_ >> coefficients_ >> signature_;
+    serialiser >> phase_ >> coefficients_;
   }
-  CoefficientsMessage(uint8_t phase, std::vector<Coefficient> coeff, MessageSignature sig)
-    : DKGMessage{MessageType::COEFFICIENT, std::move(sig)}
+  CoefficientsMessage(uint8_t phase, std::vector<Coefficient> coeff)
+    : DKGMessage{MessageType::COEFFICIENT}
     , phase_{phase}
     , coefficients_{std::move(coeff)}
   {}
@@ -103,7 +148,7 @@ public:
   DKGSerializer Serialize() const override
   {
     DKGSerializer serializer;
-    serializer << phase_ << coefficients_ << signature_;
+    serializer << phase_ << coefficients_;
     return serializer;
   }
 
@@ -122,18 +167,17 @@ public:
 
 class SharesMessage : public DKGMessage
 {
-  uint8_t phase_;  ///< Phase of state machine that this message is for
+  uint8_t phase_{};  ///< Phase of state machine that this message is for
   std::unordered_map<CabinetId, std::pair<Share, Share>>
-      shares_;  ///< Exposed secret shares for a particular committee member
+      shares_;  ///< Exposed secret shares for a particular cabinet member
 public:
   explicit SharesMessage(DKGSerializer &serialiser)
     : DKGMessage{MessageType::SHARE}
   {
-    serialiser >> phase_ >> shares_ >> signature_;
+    serialiser >> phase_ >> shares_;
   }
-  SharesMessage(uint8_t phase, std::unordered_map<CabinetId, std::pair<Share, Share>> shares,
-                MessageSignature sig)
-    : DKGMessage{MessageType::SHARE, std::move(sig)}
+  SharesMessage(uint8_t phase, std::unordered_map<CabinetId, std::pair<Share, Share>> shares)
+    : DKGMessage{MessageType::SHARE}
     , phase_{phase}
     , shares_{std::move(shares)}
   {}
@@ -142,7 +186,7 @@ public:
   DKGSerializer Serialize() const override
   {
     DKGSerializer serializer;
-    serializer << phase_ << shares_ << signature_;
+    serializer << phase_ << shares_;
     return serializer;
   }
 
@@ -161,17 +205,17 @@ public:
 
 class ComplaintsMessage : public DKGMessage
 {
-  std::unordered_set<CabinetId>
-      complaints_;  ///< Committee members that you are complaining against
+  using ComplaintsList = std::set<CabinetId>;
+  ComplaintsList complaints_;  ///< Cabinet members that you are complaining against
 public:
   // Construction/Destruction
   explicit ComplaintsMessage(DKGSerializer &serialiser)
     : DKGMessage{MessageType::COMPLAINT}
   {
-    serialiser >> complaints_ >> signature_;
+    serialiser >> complaints_;
   }
-  ComplaintsMessage(std::unordered_set<CabinetId> complaints, MessageSignature sig)
-    : DKGMessage{MessageType::COMPLAINT, std::move(sig)}
+  explicit ComplaintsMessage(ComplaintsList complaints)
+    : DKGMessage{MessageType::COMPLAINT}
     , complaints_{std::move(complaints)}
   {}
   ~ComplaintsMessage() override = default;
@@ -179,17 +223,54 @@ public:
   DKGSerializer Serialize() const override
   {
     DKGSerializer serializer;
-    serializer << complaints_ << signature_;
+    serializer << complaints_;
     return serializer;
   }
 
   /// @name Getter functions
   /// @{
-  std::unordered_set<CabinetId> const &complaints() const
+  ComplaintsList const &complaints() const
   {
     return complaints_;
   }
   ///@}
+};
+
+class NotarisationKeyMessage : public DKGMessage
+{
+  using NotarisationKey       = crypto::mcl::PublicKey;
+  using ECDSASignature        = byte_array::ConstByteArray;
+  using SignedNotarisationKey = std::pair<NotarisationKey, ECDSASignature>;
+
+  SignedNotarisationKey payload_;
+
+public:
+  explicit NotarisationKeyMessage(DKGSerializer &serialiser)
+    : DKGMessage{MessageType::NOTARISATION_KEY}
+  {
+    serialiser >> payload_;
+  }
+  explicit NotarisationKeyMessage(SignedNotarisationKey payload)
+    : DKGMessage{MessageType::NOTARISATION_KEY}
+    , payload_{std::move(payload)}
+  {}
+  ~NotarisationKeyMessage() override = default;
+
+  DKGSerializer Serialize() const override
+  {
+    DKGSerializer serializer;
+    serializer << payload_;
+    return serializer;
+  }
+
+  NotarisationKey PublicKey() const
+  {
+    return payload_.first;
+  }
+  ECDSASignature Signature() const
+  {
+    return payload_.second;
+  };
 };
 
 class DKGEnvelope

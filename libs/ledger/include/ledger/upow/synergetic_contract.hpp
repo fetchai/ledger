@@ -17,8 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/address.hpp"
-#include "ledger/chain/digest.hpp"
+#include "chain/address.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "vm/analyser.hpp"
 #include "vm/common.hpp"
@@ -56,6 +55,7 @@ struct Variant;
 namespace ledger {
 
 class StorageInterface;
+struct ContractContext;
 
 class SynergeticContract
 {
@@ -85,11 +85,14 @@ public:
   void Attach(StorageInterface &storage);
   void Detach();
 
+  void                   UpdateContractContext(ContractContext const &context);
+  ContractContext const &context() const;
+
   /// @name Actions to be taken on the synergetic contract
   /// @{
   Status DefineProblem(ProblemData const &problem_data);
   Status Work(vectorise::UInt<256> const &nonce, WorkScore &score);
-  Status Complete(Address const &address, BitVector const &shards);
+  Status Complete(chain::Address const &address, BitVector const &shards);
   /// @}
 
   /// @name Synergetic State Access
@@ -106,6 +109,8 @@ private:
   using IRPtr         = std::shared_ptr<vm::IR>;
   using ExecutablePtr = std::shared_ptr<vm::Executable>;
   using VariantPtr    = std::shared_ptr<vm::Variant>;
+
+  std::unique_ptr<ContractContext> context_{};
 
   Digest        digest_;
   ModulePtr     module_;

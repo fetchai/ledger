@@ -17,17 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 
 #include <cstdint>
 #include <vector>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Address;
 class Transaction;
+
+}  // namespace chain
+namespace ledger {
 
 class TokenContract : public Contract
 {
@@ -49,18 +52,18 @@ public:
   ~TokenContract() override = default;
 
   // library functions
-  uint64_t GetBalance(Address const &address);
-  bool     AddTokens(Address const &address, uint64_t amount);
-  bool     SubtractTokens(Address const &address, uint64_t amount);
-  bool     TransferTokens(Transaction const &tx, Address const &to, uint64_t amount);
+  uint64_t GetBalance(chain::Address const &address);
+  bool     AddTokens(chain::Address const &address, uint64_t amount);
+  bool     SubtractTokens(chain::Address const &address, uint64_t amount);
+  bool     TransferTokens(chain::Transaction const &tx, chain::Address const &to, uint64_t amount);
 
   // transaction handlers
-  Result CreateWealth(Transaction const &tx, BlockIndex);
-  Result Deed(Transaction const &tx, BlockIndex);
-  Result Transfer(Transaction const &tx, BlockIndex);
-  Result AddStake(Transaction const &tx, BlockIndex);
-  Result DeStake(Transaction const &tx, BlockIndex);
-  Result CollectStake(Transaction const &tx, BlockIndex);
+  Result CreateWealth(chain::Transaction const &tx);
+  Result Deed(chain::Transaction const &tx);
+  Result Transfer(chain::Transaction const &tx);
+  Result AddStake(chain::Transaction const &tx);
+  Result DeStake(chain::Transaction const &tx);
+  Result CollectStake(chain::Transaction const &tx);
 
   // queries
   Status Balance(Query const &query, Query &response);

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/saveparams/saveable_params.hpp"
@@ -46,10 +46,11 @@ private:
   };
 
 public:
-  using DataType      = typename TensorType::Type;
-  using NodePtrType   = std::shared_ptr<Node<TensorType>>;
-  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  using SPType        = fetch::ml::NodeSaveableParams<TensorType>;
+  using DataType         = typename TensorType::Type;
+  using NodePtrType      = std::shared_ptr<Node<TensorType>>;
+  using VecTensorType    = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType           = fetch::ml::NodeSaveableParams<TensorType>;
+  using NodeErrorMapType = std::unordered_map<Node<TensorType> *, std::vector<TensorType>>;
 
   ///////////////////////////////////
   /// CONSRTUCTORS / DESCTRUCTORS ///
@@ -106,8 +107,7 @@ public:
   VecTensorType               GatherInputs() const;
   std::shared_ptr<TensorType> Evaluate(bool is_training);
 
-  std::vector<std::pair<Node<TensorType> *, TensorType>> BackPropagate(
-      TensorType const &error_signal);
+  NodeErrorMapType BackPropagate(TensorType const &error_signal);
 
   void                            AddInput(NodePtrType const &i);
   std::vector<std::string>        GetInputNames();
@@ -213,60 +213,79 @@ std::shared_ptr<TensorType> Node<TensorType>::Evaluate(bool is_training)
         cached_output_.Reshape(output_shape);
       }
     }
+
     op_ptr_->Forward(inputs, cached_output_);
     cached_output_status_ = CachedOutputState::VALID_CACHE;
 
-    assert(!math::state_division_by_zero<DataType>());
+    if (math::state_division_by_zero<DataType>())
+    {
+      throw std::runtime_error("Division by zero encountered in Node::Evaluate");
+    }
+    if (math::state_infinity<DataType>())
+    {
+      throw std::runtime_error("Infinity encountered in Node::Evaluate");
+    }
+    if (math::state_nan<DataType>())
+    {
+      throw std::runtime_error("NaN encountered in Node::Evaluate");
+    }
+
     assert(!math::state_overflow<DataType>());
-    assert(!math::state_infinity<DataType>());
-    assert(!math::state_nan<DataType>());
   }
 
   return std::make_shared<TensorType>(cached_output_);
 }
 
 /**
- * Recursively backpropagates errorsignal through this node to all input nodes
+ * Recursively backpropagates error_signal through this node to all input nodes
  * @tparam T the tensor type
  * @tparam O the operation class
  * @param error_signal the error signal to backpropagate
  * @return
  */
 template <typename TensorType>
-std::vector<std::pair<Node<TensorType> *, TensorType>> Node<TensorType>::BackPropagate(
+typename Node<TensorType>::NodeErrorMapType Node<TensorType>::BackPropagate(
     TensorType const &error_signal)
 {
+  NodeErrorMapType ret;
+
   // gather inputs and backprop for this node
-  VecTensorType           inputs                        = GatherInputs();
-  std::vector<TensorType> back_propagated_error_signals = op_ptr_->Backward(inputs, error_signal);
+  std::vector<TensorType> error_signals = op_ptr_->Backward(GatherInputs(), error_signal);
+  assert(error_signals.size() == GatherInputs().size() || GatherInputs().empty());
 
-  std::vector<std::pair<Node<TensorType> *, TensorType>> non_back_propagated_error_signals;
-  assert(back_propagated_error_signals.size() == inputs.size() || inputs.empty());
-
-  // call backpropagate on the input nodes
-  auto bp_it = back_propagated_error_signals.begin();
-  for (auto &i : input_nodes_)
-  {
-    auto ret = i->BackPropagate(*bp_it);
-    non_back_propagated_error_signals.insert(non_back_propagated_error_signals.end(), ret.begin(),
-                                             ret.end());
-    ++bp_it;
-  }
-
-  // If no input to backprop to, return gradient to caller
-  // This is used to propagate outside of a SubGraph
-  // The SubGraph has no knowledge of the rest of the network,
-  // so it sends its unpropagated gradient to its wrapper node that will forward them out
   if (input_nodes_.empty())
   {
-    for (auto g : back_propagated_error_signals)
+    // if this node has no inputs assign error signal to this node
+    ret[this] = error_signals;
+  }
+  else
+  {
+    // otherwise backpropagate on the input nodes
+    auto bp_it = error_signals.begin();
+    for (auto &i : input_nodes_)
     {
-      non_back_propagated_error_signals.push_back(std::make_pair(this, g));
+      auto ret_err_sig = i->BackPropagate(*bp_it);
+      ret.insert(ret_err_sig.begin(), ret_err_sig.end());
+      ++bp_it;
     }
   }
-  return non_back_propagated_error_signals;
-}
 
+  if (math::state_division_by_zero<DataType>())
+  {
+    throw std::runtime_error("Division by zero encountered in Node::BackPropagate");
+  }
+  if (math::state_infinity<DataType>())
+  {
+    throw std::runtime_error("Infinity encountered in Node::BackPropagate");
+  }
+  if (math::state_nan<DataType>())
+  {
+    throw std::runtime_error("NaN encountered in Node::BackPropagate");
+  }
+
+  assert(!math::state_overflow<DataType>());
+  return ret;
+}
 /**
  * Resets input and output node ptr containers. Useful for graph decompiling.
  * @tparam T

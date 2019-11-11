@@ -42,8 +42,9 @@ public:
 
   /// @name Runnable Interface
   /// @{
-  bool IsReadyToExecute() const final;
-  void Execute() final;
+  bool        IsReadyToExecute() const final;
+  void        Execute() final;
+  char const *GetId() const final;
   /// @}
 
   /// @name Periodic Runnable Interface
@@ -57,7 +58,7 @@ public:
 
 private:
   Timepoint last_executed_;
-  Duration  interval_;
+  Duration  interval_{};
 };
 
 template <typename R, typename P>

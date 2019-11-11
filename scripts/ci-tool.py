@@ -12,6 +12,8 @@ import re
 import shutil
 import subprocess
 import sys
+import time
+import threading
 import xml.etree.ElementTree as ET
 from os.path import abspath, dirname, exists, isdir, isfile, join
 
@@ -30,6 +32,8 @@ INTEGRATION_TEST_LABEL = 'Integration'
 LABELS_TO_EXCLUDE_FOR_FAST_TESTS = [
     SLOW_TEST_LABEL,
     INTEGRATION_TEST_LABEL]
+
+NINJA_IS_PRESENT = shutil.which('ninja') is not None
 
 
 def output(*args):
@@ -165,6 +169,10 @@ def parse_commandline():
                         help='Run the etch language tests')
     parser.add_argument('--lint', action='store_true',
                         help='Run clang-tidy')
+    parser.add_argument('--fix', action='store_true',
+                        help='Run clang-tidy and attempt to fix lint errors')
+    parser.add_argument('-c', '--commit', nargs=1, default=None,
+                        help='when linting, including fixing, scan and fix only files that changed between Git\'s HEAD and the ' 'given commit or ref. \nUseful: HEAD will lint staged files')
     parser.add_argument('-A', '--all', action='store_true',
                         help='Run build and all tests')
     parser.add_argument(
@@ -176,7 +184,7 @@ def parse_commandline():
     return parser.parse_args()
 
 
-def cmake_configure(project_root, build_root, options):
+def cmake_configure(project_root, build_root, options, generator):
     output('Source.:', project_root)
     output('Build..:', build_root)
     output('Options:')
@@ -184,17 +192,11 @@ def cmake_configure(project_root, build_root, options):
         output(' - {key} = {value}'.format(key=key, value=value))
     output('\n')
 
-    # determine if this is the first time that we are building the project
-    new_build_folder = not exists(build_root)
-
     # ensure the build directory exists
     os.makedirs(build_root, exist_ok=True)
 
     cmake_cmd = ['cmake']
-
-    # determine if this system has the ninja build system
-    if new_build_folder and shutil.which('ninja') is not None:
-        cmake_cmd += ['-G', 'Ninja']
+    cmake_cmd += ['-G', generator]
 
     # add all the configuration options
     cmake_cmd += ['-D{k}={v}'.format(k=k, v=v) for k, v in options.items()]
@@ -202,9 +204,7 @@ def cmake_configure(project_root, build_root, options):
 
     # execute the cmake configurations
     exit_code = subprocess.call(cmake_cmd, cwd=build_root)
-    if exit_code != 0:
-        output('Failed to configure cmake project')
-        sys.exit(exit_code)
+    return exit_code == 0
 
 
 def build_project(build_root, concurrency):
@@ -307,6 +307,34 @@ def test_language(build_root):
     subprocess.check_call(cmd)
 
 
+def run_sccache_server(sccache_path):
+    cmd = [
+        sccache_path,
+    ]
+    env = {
+        'SCCACHE_START_SERVER': '1',
+        'SCCACHE_NO_DAEMON': '1',
+        'SCCACHE_IDLE_TIMEOUT': '0',
+        'RUST_LOG': 'info',
+    }
+
+    # pull in local sccache configuration
+    for key, value in os.environ.items():
+        if key.startswith('SCCACHE'):
+            env[key] = value
+
+    print('sccache Server Config:', env)
+
+    with open('sccache.log', 'w') as sccache_log:
+        subprocess.check_call(
+            cmd, env=env, stdout=sccache_log, stderr=subprocess.STDOUT)
+
+
+def stop_sscache_server(sccache_path):
+    cmd = [sccache_path, '--stop-server']
+    subprocess.call(cmd)
+
+
 def main():
     # parse the options from the command line
     args = parse_commandline()
@@ -326,13 +354,51 @@ def main():
         'CMAKE_BUILD_TYPE': args.build_type,
     }
 
-    if args.metrics:
-        options['FETCH_ENABLE_METRICS'] = 1
+    # attempt to detect the sccache path on the system
+    sccache_path = shutil.which('sccache')
+    if (args.build or args.lint or args.all) and sccache_path:
+        t = threading.Thread(target=run_sccache_server, args=(sccache_path,))
+        t.daemon = True
+        t.start()
+
+        # allow the sccache server to start up
+        time.sleep(5)
 
     if args.build or args.lint or args.all:
-        cmake_configure(project_root, build_root, options)
+        # choose the generater initially based on what already exists there
+        if isdir(build_root):
+            if isfile(join(build_root, 'Makefile')):
+                generator = 'Unix Makefiles'
+            elif isfile(join(build_root, 'build.ninja')):
+                generator = 'Ninja'
+            elif isfile(join(build_root, 'CMakeCache.txt')):
+                # in the case of a failed build it might be necessary to interrogate the cache file
+                with open(join(build_root, 'CMakeCache.txt'), 'r') as cache_file:
+                    for line in cache_file:
+                        match = re.match(
+                            r'^CMAKE_GENERATOR:INTERNAL=(.*)', line.strip())
+                        if match is not None:
+                            generator = match.group(1)
+                            break
 
-    if args.build or args.all:
+            else:
+                raise RuntimeError('Unable to detect existing generator type')
+        else:
+
+            # in the case of a new build prefer Ninja over make (because it is faster)
+            generator = 'Ninja' if NINJA_IS_PRESENT else 'Unix Makefiles'
+
+        # due to the version of the header dependency detection that is used when trying to
+        # determine affected files, when running commit filtered lints must use make
+        if generator == 'Ninja' and args.commit is not None:
+            generator = 'Unix Makefiles'
+
+        # configure the project
+        if not cmake_configure(project_root, build_root, options, generator):
+            output('\n😭 Failed to configure the cmake project. This is usually because of a mismatch between generators.\n\nTry removing the build folder: {} and try again'.format(build_root))
+            sys.exit(1)
+
+    if args.build or args.all or args.commit:
         build_project(build_root, concurrency)
 
     if args.test or args.all:
@@ -358,7 +424,21 @@ def main():
 
     if args.lint or args.all:
         fetchai_code_quality.static_analysis(
-            project_root, build_root, False, concurrency)
+            project_root, build_root, args.fix, concurrency, args.commit, verbose=False)
+
+    if (args.build or args.lint or args.all) and sccache_path:
+        subprocess.check_call([sccache_path, '-s'])
+
+        # stop the server
+        stop_sscache_server(sccache_path)
+
+        # wait for the process to send
+        t.join()
+
+        output('SCCACHE_LOG:')
+        with open('sccache.log', 'r') as sccache_log:
+            for line in sccache_log:
+                output(line.strip())
 
 
 if __name__ == '__main__':

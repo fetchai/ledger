@@ -15,7 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-math)
-target_link_libraries(fetch-math PUBLIC fetch-core)
+target_link_libraries(fetch-math PUBLIC fetch-core fetch-logging)
 
 add_test_target()
 

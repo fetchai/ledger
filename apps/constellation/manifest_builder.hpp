@@ -18,14 +18,14 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace ledger {
+namespace shards {
 
 class Manifest;
 
-}  // namespace ledger
+}  // namespace shards
 
 class Settings;
 
-bool BuildManifest(Settings const &settings, ledger::Manifest &manifest);
+bool BuildManifest(Settings const &settings, shards::Manifest &manifest);
 
 }  // namespace fetch

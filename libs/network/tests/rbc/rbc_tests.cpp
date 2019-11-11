@@ -27,7 +27,9 @@
 #include "muddle/rpc/server.hpp"
 
 #include "gtest/gtest.h"
-#include <iostream>
+
+#include <cstdint>
+#include <memory>
 
 using namespace fetch;
 using namespace fetch::network;
@@ -35,10 +37,9 @@ using namespace fetch::crypto;
 using namespace fetch::muddle;
 
 using Prover         = fetch::crypto::Prover;
-using ProverPtr      = std::shared_ptr<Prover>;
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
-using Address        = fetch::muddle::Packet::Address;
+// using Address        = fetch::muddle::Packet::Address;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 
 ProverPtr CreateCertificate()
@@ -164,7 +165,7 @@ private:
     {
       return;
     }
-    else if (Failure(Failures::DOUBLE_SEND))
+    if (Failure(Failures::DOUBLE_SEND))
     {
       endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serializer.data());
     }
@@ -332,7 +333,7 @@ public:
   {
     rbc_.ResetCabinet(new_cabinet);
   }
-  void Broadcast(SerialisedMessage const &msg, uint8_t) override
+  void Broadcast(SerialisedMessage const &msg, uint8_t /*num_messages*/) override
   {
     rbc_.Broadcast(msg);
   }
@@ -346,26 +347,26 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
                      uint8_t                                              num_messages = 1)
 {
 
-  RBC::CabinetMembers                     cabinet;
-  std::vector<std::unique_ptr<RbcMember>> committee;
+  RBC::CabinetMembers                     cabinet_members;
+  std::vector<std::unique_ptr<RbcMember>> cabinet;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
     if (ii < failures.size() && !failures[ii].empty())
     {
-      committee.emplace_back(new FaultyRbcMember{port_number, ii, failures[ii]});
+      cabinet.emplace_back(new FaultyRbcMember{port_number, ii, failures[ii]});
     }
     else
     {
-      committee.emplace_back(new HonestRbcMember{port_number, ii});
+      cabinet.emplace_back(new HonestRbcMember{port_number, ii});
     }
-    cabinet.insert(committee[ii]->muddle_certificate->identity().identifier());
+    cabinet_members.insert(cabinet[ii]->muddle_certificate->identity().identifier());
   }
 
   // Reset cabinet
-  for (auto &member : committee)
+  for (auto &member : cabinet)
   {
-    member->ResetCabinet(cabinet);
+    member->ResetCabinet(cabinet_members);
   }
 
   // Connect muddles together (localhost for this example)
@@ -373,7 +374,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
   {
     for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
     {
-      committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(), committee[jj]->GetHint());
+      cabinet[ii]->muddle->ConnectTo(cabinet[jj]->GetMuddleAddress(), cabinet[jj]->GetHint());
     }
   }
 
@@ -384,15 +385,13 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (committee[mm]->muddle->GetEndpoint().GetDirectlyConnectedPeers().size() !=
+      if (cabinet[mm]->muddle->GetEndpoint().GetDirectlyConnectedPeers().size() !=
           (cabinet_size - 1))
       {
         break;
       }
-      else
-      {
-        ++kk;
-      }
+
+      ++kk;
     }
   }
 
@@ -404,14 +403,14 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
     uint32_t sender_index = cabinet_size - 1;
     for (auto ii = 0; ii < num_messages; ++ii)
     {
-      committee[sender_index]->Broadcast(serialiser.data(), num_messages);
+      cabinet[sender_index]->Broadcast(serialiser.data(), num_messages);
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(1 * num_messages));
     uint32_t pp = 0;
     for (uint32_t qq = 0; qq < cabinet_size; ++qq)
     {
-      if (qq != sender_index && committee[qq]->delivered_msgs == num_messages)
+      if (qq != sender_index && cabinet[qq]->delivered_msgs == num_messages)
       {
         ++pp;
       }

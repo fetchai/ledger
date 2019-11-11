@@ -46,6 +46,8 @@ struct Token
     True,
     False,
     Null,
+    Contract,
+    EndContract,
     Function,
     EndFunction,
     While,
@@ -100,9 +102,9 @@ struct Token
     As
   };
   Kind        kind;
-  uint32_t    offset;
-  uint16_t    line;
-  uint16_t    length;
+  uint32_t    offset{};
+  uint16_t    line{};
+  uint16_t    length{};
   std::string text;
 };
 

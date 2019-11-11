@@ -17,8 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_manager.hpp"
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -38,9 +36,7 @@ int main(int argc, char **argv)
     std::cerr << "usage: " << argv[0] << " [cabinet size]" << std::endl;
     return -1;
   }
-
-  // Initialising the BLS library
-  bls::Init();
+  fetch::crypto::mcl::details::MCLInitialiser();
 
   // Beacon parameters
   std::unordered_map<Identity, std::shared_ptr<BeaconManager>> nodes;

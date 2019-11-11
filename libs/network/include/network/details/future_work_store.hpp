@@ -166,10 +166,8 @@ public:
         {
           return duration_cast<milliseconds>(element.due - now);
         }
-        else
-        {
-          return milliseconds::zero();
-        }
+
+        return milliseconds::zero();
       }
     }
 

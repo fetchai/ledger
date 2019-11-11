@@ -79,11 +79,11 @@ int main()
     }
   };
 
-  std::vector<std::unique_ptr<CabinetMember>> committee;
+  std::vector<std::unique_ptr<CabinetMember>> cabinet;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
-    committee.emplace_back(new CabinetMember{port_number, ii});
+    cabinet.emplace_back(new CabinetMember{port_number, ii});
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -93,8 +93,8 @@ int main()
   {
     for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
     {
-      committee[ii]->muddle.AddPeer(
-          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
+      cabinet[ii]->muddle.AddPeer(
+          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(cabinet[jj]->muddle_port)});
     }
   }
 
@@ -104,8 +104,7 @@ int main()
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() !=
-          (cabinet_size - 1))
+      if (cabinet[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() != (cabinet_size - 1))
       {
         break;
       }
@@ -117,7 +116,7 @@ int main()
   }
 
   RBC::CabinetMembers cabinet;
-  for (auto &member : committee)
+  for (auto &member : cabinet)
   {
     cabinet.insert(member->muddle_certificate->identity().identifier());
   }
@@ -127,14 +126,14 @@ int main()
   {
     uint32_t threshold{2};
 
-    for (auto &member : committee)
+    for (auto &member : cabinet)
     {
       member->dkg_service.ResetCabinet(cabinet, threshold);
       member->reactor.Attach(member->dkg_service.GetWeakRunnable());
     }
 
     // Start DKG
-    for (auto &member : committee)
+    for (auto &member : cabinet)
     {
       member->reactor.Start();
     }
@@ -143,7 +142,7 @@ int main()
     std::this_thread::sleep_for(std::chrono::seconds(25));
   }
 
-  for (auto &member : committee)
+  for (auto &member : cabinet)
   {
     member->reactor.Stop();
     member->muddle.Stop();

@@ -57,7 +57,7 @@ enum class State
   RESOLVING_OBJECTS,
   TRIM_CACHE
 };
-}
+}  // namespace tx_sync
 
 class TransactionStoreSyncService : public TransactionSink
 {
@@ -66,16 +66,16 @@ public:
   using Uri                   = network::Uri;
   using Client                = muddle::rpc::Client;
   using ClientPtr             = std::shared_ptr<Client>;
-  using ObjectStore           = storage::TransientObjectStore<Transaction>;
+  using ObjectStore           = storage::TransientObjectStore<chain::Transaction>;
   using FutureTimepoint       = core::FutureTimepoint;
   using RequestingObjectCount = network::RequestingQueueOf<Address, uint64_t>;
   using PromiseOfObjectCount  = network::PromiseOf<uint64_t>;
-  using TxArray               = std::vector<Transaction>;
+  using TxArray               = std::vector<chain::Transaction>;
   using RequestingTxList      = network::RequestingQueueOf<Address, TxArray>;
   using RequestingSubTreeList = network::RequestingQueueOf<uint64_t, TxArray>;
   using PromiseOfTxList       = network::PromiseOf<TxArray>;
   using ResourceID            = storage::ResourceID;
-  using EventNewTransaction   = std::function<void(Transaction const &)>;
+  using EventNewTransaction   = std::function<void(chain::Transaction const &)>;
   using TrimCacheCallback     = std::function<void()>;
   using State                 = tx_sync::State;
   using StateMachine          = core::StateMachine<State>;
@@ -83,7 +83,6 @@ public:
   using LaneControllerPtr     = std::shared_ptr<LaneController>;
   using TxFinderProtocolPtr   = std::shared_ptr<TxFinderProtocol>;
   using MuddleEndpoint        = muddle::MuddleEndpoint;
-  using TxStoredTxCounterPtr  = telemetry::CounterPtr;
 
   static constexpr char const *LOGGING_NAME = "TransactionStoreSyncService";
   static constexpr std::size_t MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE = 128;
@@ -158,8 +157,7 @@ private:
   FutureTimepoint fetch_object_wait_timeout_;
 
   RequestingObjectCount pending_object_count_;
-  uint64_t              max_object_count_;
-  TxStoredTxCounterPtr  stored_transactions_;
+  uint64_t              max_object_count_{};
 
   RequestingSubTreeList pending_subtree_;
   RequestingTxList      pending_objects_;
@@ -169,6 +167,13 @@ private:
   std::unordered_map<PromiseOfTxList::PromiseCounter, uint64_t> promise_id_to_roots_;
 
   std::atomic_bool is_ready_{false};
+
+  // telemetry
+  telemetry::CounterPtr stored_transactions_;
+  telemetry::CounterPtr resolve_count_failures_;
+  telemetry::CounterPtr subtree_requests_total_;
+  telemetry::CounterPtr subtree_response_total_;
+  telemetry::CounterPtr subtree_failure_total_;
 };
 
 }  // namespace ledger

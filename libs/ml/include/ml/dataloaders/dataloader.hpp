@@ -19,6 +19,8 @@
 
 #include "core/serializers/group_definitions.hpp"
 #include "math/base_types.hpp"
+#include "ml/exceptions/exceptions.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -50,8 +52,8 @@ public:
 
   virtual ReturnType GetNext() = 0;
 
-  virtual bool       AddData(InputType const &data, LabelType const &label) = 0;
-  virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
+  virtual bool       AddData(std::vector<InputType> const &data, LabelType const &label) = 0;
+  virtual ReturnType PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set);
 
   virtual SizeType Size() const                                   = 0;
   virtual bool     IsDone() const                                 = 0;
@@ -65,12 +67,14 @@ public:
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
 
+  virtual LoaderType LoaderCode() = 0;
+
 protected:
   virtual void              UpdateCursor() = 0;
   std::shared_ptr<SizeType> current_cursor_;
-  SizeType                  current_min_;
-  SizeType                  current_max_;
-  SizeType                  current_size_;
+  SizeType                  current_min_{};
+  SizeType                  current_max_{};
+  SizeType                  current_size_{};
 
   bool           random_mode_ = false;
   DataLoaderMode mode_        = DataLoaderMode::TRAIN;
@@ -190,7 +194,7 @@ void DataLoader<LabelType, DataType>::SetMode(DataLoaderMode new_mode)
 
   if (this->current_min_ == this->current_max_)
   {
-    throw std::runtime_error("Dataloader has no set for selected mode.");
+    throw exceptions::Timeout("Dataloader has no set for selected mode.");
   }
 }
 

@@ -18,8 +18,9 @@ setup_library(fetch-storage)
 target_link_libraries(fetch-storage
                       PUBLIC fetch-core
                              fetch-crypto
-                             fetch-ledger
                              fetch-testing
+                             fetch-logging
+                             fetch-network
                              vendor-mio)
 
 # ------------------------------------------------------------------------------

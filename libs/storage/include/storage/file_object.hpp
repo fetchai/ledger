@@ -78,7 +78,7 @@ struct FileBlockType
   };
 
   // Data
-  uint8_t data[CAPACITY];
+  uint8_t data[CAPACITY]{};
 };
 
 /**
@@ -248,15 +248,17 @@ void FileObject<S>::Seek(uint64_t index)
       throw StorageException("Attempt to seek to an invalid block");
     }
 
-    Get(block_number_, block);
+    Get(block_index_, block);
 
     if (desired_bn < block_number_)
     {
-      block_number_ = block.previous;
+      block_index_ = block.previous;
+      block_number_--;
     }
     else
     {
-      block_number_ = block.next;
+      block_index_ = block.next;
+      block_number_++;
     }
   }
 }
@@ -357,7 +359,6 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t num, Action a
       std::min(BlockType::CAPACITY - byte_index_, bytes_left_to_write);
   BlockType block_being_written;
   uint64_t  block_index_being_written = block_index_;
-  uint64_t  byte_index                = byte_index_;
   uint64_t  bytes_offset              = 0;
 
   assert(bytes_to_write_in_block <= BlockType::CAPACITY);
@@ -372,16 +373,17 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t num, Action a
     switch (action)
     {
     case Action::READ:
-      memcpy((uint8_t *)(bytes + bytes_offset), block_being_written.data + byte_index,
+      // NOLINTNEXTLINE
+      memcpy((uint8_t *)(bytes + bytes_offset), block_being_written.data + byte_index_,
              bytes_to_write_in_block);
       break;
     case Action::WRITE:
-      memcpy(block_being_written.data + byte_index, bytes + bytes_offset, bytes_to_write_in_block);
+      memcpy(block_being_written.data + byte_index_, bytes + bytes_offset, bytes_to_write_in_block);
       break;
     }
 
     // Write block back
-    byte_index = 0;
+    byte_index_ = 0;
     Set(block_index_being_written, block_being_written);
     block_index_being_written = block_being_written.next;
 
@@ -489,6 +491,10 @@ void FileObject<S>::CreateNewFile(uint64_t size)
   Set(id_, block);
 }
 
+/**
+ * Get the current file object as a document. Note, you almost
+ * certainly want to seek to 0 if you have not done so before
+ */
 template <typename S>
 Document FileObject<S>::AsDocument()
 {
@@ -543,7 +549,7 @@ uint64_t FileObject<S>::FreeBlocks()
 
 /**
  * Initialise by looking for the block that's the beginning of our free blocks linked list. If
- * the stack is empty this means we set our own.
+ * the stack is empty this means we set our own. Note: this is only immediately after file loading.
  */
 template <typename S>
 void FileObject<S>::Initalise()

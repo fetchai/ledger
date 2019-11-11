@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/exceptions/exceptions.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_broadcast.hpp"
 
@@ -336,7 +337,7 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
                        typename ArrayType::Type &z) { z = x + y; },
                     array1, array2, ret)))
     {
-      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
+      throw exceptions::WrongShape("arrays not broadcastable for InlineAdd!");
     }
   }
 }
@@ -428,7 +429,7 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType
                        typename ArrayType::Type &z) { z = x - y; },
                     array1, array2, ret)))
     {
-      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
+      throw exceptions::WrongShape("arrays not broadcastable for InlineAdd!");
     }
   }
 }
@@ -458,7 +459,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1
                        typename ArrayType::Type &z) { z = x * y; },
                     a, b, ret)))
     {
-      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
+      throw exceptions::WrongShape("arrays not broadcastable for Multiply!");
     }
   }
 }
@@ -509,7 +510,7 @@ void Divide(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
                        typename ArrayType::Type &z) { z = x / y; },
                     array1, array2, ret)))
     {
-      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
+      throw exceptions::WrongShape("arrays not broadcastable for Divide!");
     }
   }
 }

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/fnv.hpp"  // needed for std::hash<ConstByteArray>
-#include "ledger/chaincode/factory.hpp"
 #include "ledger/identifier.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "meta/log2.hpp"
 
 #include <algorithm>
@@ -30,18 +30,15 @@
 namespace fetch {
 namespace ledger {
 
+class Contract;
+
 class ChainCodeCache
 {
 public:
-  using ContractPtr = ChainCodeFactory::ContractPtr;
+  using ContractPtr = std::shared_ptr<Contract>;
   using StoragePtr  = ledger::StorageInterface;
 
   ContractPtr Lookup(Identifier const &contract_id, StorageInterface &storage);
-
-  ChainCodeFactory const &factory() const
-  {
-    return factory_;
-  }
 
 private:
   using Clock     = std::chrono::high_resolution_clock;
@@ -63,12 +60,11 @@ private:
   static constexpr uint64_t CLEANUP_MASK   = CLEANUP_PERIOD - 1u;
 
   // Utils
-  ContractPtr FindInCache(Identifier const &name);
+  ContractPtr FindInCache(Identifier const &contract_id);
   void        RunMaintenance();
 
-  std::size_t      counter_;
-  UnderlyingCache  cache_;
-  ChainCodeFactory factory_;
+  std::size_t     counter_{};
+  UnderlyingCache cache_;
 
   static_assert(meta::IsLog2(CLEANUP_PERIOD), "Clean up period must be a valid power of 2");
 };

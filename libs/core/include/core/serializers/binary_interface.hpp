@@ -120,7 +120,7 @@ public:
           std::string("Cannot create container type with more than 1 << 32 elements"));
     }
 
-    // Allocating needed mempry
+    // Allocating needed memory
     serializer_.Allocate(count);
 
     created_ = true;
@@ -143,7 +143,7 @@ class BinaryDeserializer
 public:
   enum
   {
-    CODE8  = TypeCodes::BINARY_CODE_FIXED,
+    CODE8  = TypeCodes::BINARY_CODE8,
     CODE16 = TypeCodes::BINARY_CODE16,
     CODE32 = TypeCodes::BINARY_CODE32
   };

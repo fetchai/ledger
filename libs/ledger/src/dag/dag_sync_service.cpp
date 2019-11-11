@@ -189,6 +189,7 @@ DAGSyncService::State DAGSyncService::OnResolveMissing()
     }
   }
 
+  state_machine_->Delay(std::chrono::milliseconds{100});
   return State::BROADCAST_RECENT;
 }
 

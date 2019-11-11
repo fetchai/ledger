@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/exceptions/exceptions.hpp"
 #include "math/metrics/mean_square_error.hpp"
 #include "ml/ops/ops.hpp"
 
@@ -35,7 +36,7 @@ class MeanSquareErrorLoss : public Ops<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpMeanSquareErrorSaveableParams<T>;
   using MyType        = MeanSquareErrorLoss<TensorType>;
@@ -140,9 +141,6 @@ public:
       // divide by number of elements
       fetch::math::Divide(output(0, 0), static_cast<DataType>(inputs.at(0)->size()), output(0, 0));
     }
-
-    // division by 2 allows us to cancel out with a 2 in the derivative for optimisation
-    fetch::math::Divide(output(0, 0), static_cast<DataType>(2), output(0, 0));
   }
 
   /**
@@ -246,9 +244,11 @@ public:
       }
       else
       {
-        throw std::runtime_error("input or weightings_shape invalid");
+        throw math::exceptions::WrongShape("input or weightings_shape invalid");
       }
     }
+
+    fetch::math::Multiply(return_signal, static_cast<DataType>(2), return_signal);
 
     return {return_signal, return_signal};
   }

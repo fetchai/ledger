@@ -58,10 +58,8 @@ public:
     {
       return "Unknown Smart Contract Error";
     }
-    else
-    {
-      return errors_.front().c_str();
-    }
+
+    return errors_.front().c_str();
   }
 
 private:

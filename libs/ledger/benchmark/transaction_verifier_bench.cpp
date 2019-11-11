@@ -43,7 +43,7 @@ public:
     : threshold_(threshold)
   {}
 
-  void OnTransaction(TransactionPtr const &) override
+  void OnTransaction(TransactionPtr const & /*tx*/) override
   {
     FETCH_LOCK(lock_);
     ++count_;

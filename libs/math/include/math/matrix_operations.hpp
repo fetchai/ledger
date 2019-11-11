@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/exceptions/exceptions.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_nn_novector.hpp"
@@ -859,8 +860,7 @@ void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(std::numeric_limits<DataType>::lowest());
-
+  ret.Fill(numeric_lowest<DataType>());
   Reduce(axis, [](DataType const &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
 
@@ -893,7 +893,7 @@ void ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(std::numeric_limits<DataType>::min());
+  ret.Fill(numeric_lowest<DataType>());
 
   Reduce(axes, [](DataType const &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
@@ -1063,7 +1063,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
 
   if (aview.width() != bview.height())
   {
-    throw std::runtime_error("expected A width to equal and B height.");
+    throw fetch::math::exceptions::WrongShape("expected A width to equal B height.");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
@@ -1113,7 +1113,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
 
   if (aview.width() != bview.width())
   {
-    throw std::runtime_error("expected A and B to have same width.");
+    throw exceptions::WrongShape("expected A and B to have same width.");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
@@ -1164,7 +1164,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
 
   if (aview.height() != bview.height())
   {
-    throw std::runtime_error("expected A and B to have same height.");
+    throw exceptions::WrongShape("expected A and B to have same height.");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))

@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "muddle/packet.hpp"
 #include "subscription_feed.hpp"
 
 #include <cstdint>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <tuple>
 
@@ -102,7 +102,6 @@ public:
   bool Dispatch(PacketPtr const &packet, Address const &transmitter);
 
 private:
-  using Mutex              = std::mutex;
   using Index              = uint32_t;
   using AddressIndex       = std::tuple<uint32_t, Address>;
   using DispatchMap        = std::map<Index, SubscriptionFeed>;

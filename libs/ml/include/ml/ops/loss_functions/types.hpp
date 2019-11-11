@@ -21,10 +21,11 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-enum class CostFunctionType
+enum class LossType
 {
   CROSS_ENTROPY,
   MEAN_SQUARE_ERROR,
+  NONE,
   SOFTMAX_CROSS_ENTROPY
 };
 }

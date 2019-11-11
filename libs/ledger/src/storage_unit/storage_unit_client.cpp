@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/constants.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
+#include "chain/constants.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_layout_rpc_serializers.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
 
@@ -55,14 +55,12 @@ AddressList GenerateAddressList(ShardConfigs const &shards)
   return addresses;
 }
 
-constexpr char const *LOGGING_NAME = "StorageUnitClient";
-
 constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
 constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
 
 }  // namespace
 
-using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<Transaction>;
+using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
 
 StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards,
                                      uint32_t log2_num_lanes)
@@ -115,7 +113,7 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
 // return the last committed hash (should correspond to the state hash before you began execution)
 byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 {
-  ConstByteArray last_commit_hash = GENESIS_MERKLE_ROOT;
+  ConstByteArray last_commit_hash = chain::GENESIS_MERKLE_ROOT;
 
   {
     FETCH_LOCK(merkle_mutex_);
@@ -137,7 +135,7 @@ byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 {
   // determine if the unit requests the genesis block
-  bool const genesis_state = hash == GENESIS_MERKLE_ROOT;
+  bool const genesis_state = hash == chain::GENESIS_MERKLE_ROOT;
 
   FETCH_LOCK(merkle_mutex_);
 
@@ -151,7 +149,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
     // fill the tree with empty leaf nodes
     for (std::size_t i = 0; i < num_lanes(); ++i)
     {
-      tree[i] = GENESIS_MERKLE_ROOT;
+      tree[i] = chain::GENESIS_MERKLE_ROOT;
     }
 
     permanent_state_merkle_stack_.New(MERKLE_FILENAME_DOC,
@@ -194,7 +192,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   {
     assert(!hash.empty());
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "reverting tree leaf: ", lane_merkle_hash.ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "reverting tree leaf: 0x", lane_merkle_hash.ToHex());
 
     // make the call to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
@@ -211,7 +209,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   {
     if (!p->As<bool>())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to ",
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to 0x",
                      tree[lane_index].ToHex());
 
       all_success &= false;
@@ -292,7 +290,7 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
     }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
-                    " to stack: ", tree.root().ToHex());
+                    " to stack: 0x", tree.root().ToHex());
 
     permanent_state_merkle_stack_.Push(tree);
     permanent_state_merkle_stack_.Flush(false);
@@ -305,7 +303,7 @@ bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
 {
   bool success{false};
 
-  if (hash == GENESIS_MERKLE_ROOT)
+  if (hash == chain::GENESIS_MERKLE_ROOT)
   {
     success = true;
   }
@@ -350,7 +348,7 @@ StorageUnitClient::Address const &StorageUnitClient::LookupAddress(
   return LookupAddress(resource.lane(log2_num_lanes_));
 }
 
-void StorageUnitClient::AddTransaction(Transaction const &tx)
+void StorageUnitClient::AddTransaction(chain::Transaction const &tx)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Adding tx: 0x", tx.digest().ToHex());
 
@@ -389,16 +387,24 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
 
   for (auto const &promise : promises)
   {
-    auto txs = promise->As<TxLayouts>();
+    try
+    {
+      auto txs = promise->As<TxLayouts>();
 
-    layouts.insert(layouts.end(), std::make_move_iterator(txs.begin()),
-                   std::make_move_iterator(txs.end()));
+      layouts.insert(layouts.end(), std::make_move_iterator(txs.begin()),
+                     std::make_move_iterator(txs.end()));
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store!");
+    }
   }
 
   return layouts;
 }
 
-bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest, Transaction &tx)
+bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
+                                       chain::Transaction &              tx)
 {
   bool success{false};
 
@@ -411,7 +417,7 @@ bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
                                                     TxStoreProtocol::GET, resource);
 
     // wait for the response to be delivered
-    tx = promise->As<Transaction>();
+    tx = promise->As<chain::Transaction>();
 
     success = true;
   }
@@ -574,34 +580,6 @@ bool StorageUnitClient::Unlock(ShardIndex index)
   }
 
   return success;
-}
-
-StorageUnitClient::Keys StorageUnitClient::KeyDump() const
-{
-  FETCH_LOG_INFO(LOGGING_NAME, "Dumping keys");
-  StorageUnitClient::Keys all_keys;
-
-  std::vector<service::Promise> promises;
-
-  for (uint32_t i = 0; i < num_lanes(); ++i)
-  {
-    auto promise = rpc_client_->CallSpecificAddress(LookupAddress(i), RPC_STATE,
-                                                    RevertibleDocumentStoreProtocol::KEY_DUMP);
-
-    promises.push_back(promise);
-  }
-
-  for (auto &p : promises)
-  {
-    StorageUnitClient::Keys keys = p->As<StorageUnitClient::Keys>();
-
-    for (auto const &key : keys)
-    {
-      all_keys.push_back(key);
-    }
-  }
-
-  return all_keys;
 }
 
 void StorageUnitClient::Reset()

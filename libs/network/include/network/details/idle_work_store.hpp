@@ -129,10 +129,8 @@ public:
     {
       return duration_cast<milliseconds>(next_run - now);
     }
-    else
-    {
-      return std::chrono::milliseconds::zero();
-    }
+
+    return std::chrono::milliseconds::zero();
   }
 
   /**

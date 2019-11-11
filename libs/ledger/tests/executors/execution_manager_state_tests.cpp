@@ -17,9 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "block_configs.hpp"
-#include "core/logging.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "logging/logging.hpp"
 #include "mock_executor.hpp"
 #include "mock_storage_unit.hpp"
 #include "test_block.hpp"
@@ -54,7 +55,7 @@ protected:
   {
     BlockConfig const &config = GetParam();
 
-    mock_storage_.reset(new MockStorageUnit);
+    mock_storage_ = std::make_shared<MockStorageUnit>();
     executors_.clear();
 
     // create the manager

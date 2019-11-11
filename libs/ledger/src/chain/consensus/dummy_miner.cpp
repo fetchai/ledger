@@ -19,6 +19,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "logging/logging.hpp"
 
 #include <cstdint>
 #include <limits>

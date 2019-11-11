@@ -256,7 +256,7 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     case '&':
       equal = std::min(k, equal);
       key   = line.SubArray(last, equal - last);
-      equal += (equal < k);
+      equal += static_cast<std::size_t>(equal < k);
       value = line.SubArray(equal, k - equal);
 
       query_.Add(key, value);
@@ -269,7 +269,7 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
 
   equal = std::min(k, equal);
   key   = line.SubArray(last, equal - last);
-  equal += (equal < k);
+  equal += static_cast<std::size_t>(equal < k);
   value = line.SubArray(equal, k - equal);
   query_.Add(key, value);
 

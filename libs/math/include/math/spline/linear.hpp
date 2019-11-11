@@ -38,7 +38,7 @@ public:
     range_to_   = to;
     range_span_ = range_to_ - range_from_;
 
-    data_.resize(1 << n);
+    data_.resize(1u << n);
     std::size_t m   = size();
     range_to_index_ = FloatType(m - 1) / range_span_;
 
@@ -64,9 +64,9 @@ public:
   }
 
 private:
-  FloatType              range_from_, range_to_, range_span_;
-  FloatType              range_to_index_;
-  FloatType              value_from_, value_to_, value_span_;
+  FloatType              range_from_{}, range_to_{}, range_span_{};
+  FloatType              range_to_index_{};
+  FloatType              value_from_{}, value_to_{}, value_span_{};
   std::vector<FloatType> data_;
 };
 }  // namespace spline

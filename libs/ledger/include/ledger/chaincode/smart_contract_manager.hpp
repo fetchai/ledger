@@ -17,21 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
+namespace chain {
+
+class Address;
+
+}  // namespace chain
 namespace ledger {
 
 class Identifier;
-class Address;
 
 class SmartContractManager : public Contract
 {
 public:
   static constexpr char const *NAME = "fetch.contract";
 
-  static storage::ResourceAddress CreateAddressForContract(Digest const &);
+  static storage::ResourceAddress CreateAddressForContract(Digest const &digest);
 
   SmartContractManager();
   ~SmartContractManager() override = default;
@@ -39,7 +43,7 @@ public:
 private:
   /// @name Transaction Handlers
   /// @{
-  Result OnCreate(Transaction const &tx, BlockIndex);
+  Result OnCreate(chain::Transaction const &tx);
   /// @}
 };
 

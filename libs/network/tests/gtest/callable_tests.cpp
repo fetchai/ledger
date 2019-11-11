@@ -44,7 +44,7 @@ TEST(callable_gtest, basic_test)
   AbstractCallable *t2 = new CallableClassMember<Foo, void(int), 1>(&class_instance, &Foo::Blah);
 
   CallableClassMember<Foo, void(int, int, int), 1> &f =
-      *((CallableClassMember<Foo, void(int, int, int), 1> *)ac);
+      *(reinterpret_cast<CallableClassMember<Foo, void(int, int, int), 1> *>(ac));
 
   SerializerType args, ret;
 

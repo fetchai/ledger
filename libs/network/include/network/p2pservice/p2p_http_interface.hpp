@@ -20,16 +20,16 @@
 #include "core/assert.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/json/document.hpp"
-#include "core/logging.hpp"
 #include "core/state_machine_interface.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
+#include "json/document.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/resource_mapper.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
-#include "miner/resource_mapper.hpp"
+#include "logging/logging.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "version/fetch_version.hpp"
 
@@ -77,7 +77,8 @@ public:
 private:
   using Variant = variant::Variant;
 
-  http::HTTPResponse GetGeneralStatus(http::ViewParameters const &, http::HTTPRequest const &)
+  http::HTTPResponse GetGeneralStatus(http::ViewParameters const & /*params*/,
+                                      http::HTTPRequest const & /*request*/)
   {
     // create the system response
     Variant response    = Variant::Object();
@@ -106,7 +107,7 @@ private:
 
     Variant response  = Variant::Object();
     response["chain"] = GenerateBlockList(include_transactions, chain_length);
-    response["block"] = fetch::byte_array::ToBase64(chain_.GetHeaviestBlockHash());
+    response["block"] = "0x" + chain_.GetHeaviestBlockHash().ToHex();
 
     return http::CreateJsonResponse(response);
   }
@@ -139,7 +140,7 @@ private:
 
   Variant GenerateBlockList(bool include_transactions, std::size_t length)
   {
-    // lookup the blocks from the heaviest chain
+    // look up the blocks from the heaviest chain
     auto blocks = chain_.GetHeaviestChain(length);
 
     Variant block_list = Variant::Array(blocks.size());
@@ -152,14 +153,14 @@ private:
 
       // format the block number
       block                 = Variant::Object();
-      block["hash"]         = "0x" + b->body.hash.ToHex();
-      block["previousHash"] = "0x" + b->body.previous_hash.ToHex();
-      block["merkleHash"]   = "0x" + b->body.merkle_hash.ToHex();
+      block["hash"]         = "0x" + b->hash.ToHex();
+      block["previousHash"] = "0x" + b->previous_hash.ToHex();
+      block["merkleHash"]   = "0x" + b->merkle_hash.ToHex();
       block["proof"]        = "0x" + b->proof.header().ToHex();
-      block["miner"]        = b->body.miner.display();
-      block["blockNumber"]  = b->body.block_number;
-      block["timestamp"]    = b->body.timestamp;
-      block["entropy"]      = b->body.entropy;
+      block["miner"]        = b->miner.display();
+      block["blockNumber"]  = b->block_number;
+      block["timestamp"]    = b->timestamp;
+      block["entropy"]      = b->block_entropy.EntropyAsU64();
       block["weight"]       = b->weight;
 
       if (include_transactions)
@@ -171,7 +172,7 @@ private:
 
         std::size_t tx_idx{0};
         std::size_t slice_idx{0};
-        for (auto const &slice : b->body.slices)
+        for (auto const &slice : b->slices)
         {
           for (auto const &transaction : slice)
           {

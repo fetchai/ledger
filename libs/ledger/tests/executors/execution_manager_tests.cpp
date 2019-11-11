@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "block_configs.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "mock_executor.hpp"
@@ -28,7 +29,6 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
-#include <random>
 #include <thread>
 #include <vector>
 
@@ -52,7 +52,7 @@ protected:
   {
     BlockConfig const &config = GetParam();
 
-    mock_storage_.reset(new MockStorageUnit);
+    mock_storage_ = std::make_shared<MockStorageUnit>();
     executors_.clear();
 
     // create the manager
@@ -140,16 +140,14 @@ protected:
         {
           continue;  // same slice
         }
-        else if (current.slice > current_slice)
+        if (current.slice > current_slice)
         {
           current_slice = current.slice;
           continue;  // next slice
         }
-        else
-        {
-          success = false;
-          break;
-        }
+
+        success = false;
+        break;
       }
     }
 

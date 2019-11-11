@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "meta/type_util.hpp"
 
 #include <cmath>
@@ -79,7 +81,7 @@ enum class NodeKind : uint16_t
   Unknown                                   = 0,
   Root                                      = 1,
   File                                      = 2,
-  FunctionDefinitionStatement               = 3,
+  FunctionDefinition                        = 3,
   WhileStatement                            = 4,
   ForStatement                              = 5,
   If                                        = 6,
@@ -132,7 +134,7 @@ enum class NodeKind : uint16_t
   Index                                     = 53,
   Dot                                       = 54,
   Invoke                                    = 55,
-  ParenthesisGroup                          = 56,
+  Parenthesis                               = 56,
   Add                                       = 57,
   InplaceAdd                                = 58,
   Subtract                                  = 59,
@@ -147,7 +149,10 @@ enum class NodeKind : uint16_t
   UseStatement                              = 68,
   UseStatementKeyList                       = 69,
   UseAnyStatement                           = 70,
-  InitialiserList                           = 71
+  InitialiserList                           = 71,
+  ContractDefinition                        = 72,
+  ContractFunctionPrototype                 = 73,
+  ContractStatement                         = 74
 };
 
 enum class ExpressionKind : uint8_t
@@ -162,14 +167,15 @@ enum class ExpressionKind : uint8_t
 
 enum class TypeKind : uint8_t
 {
-  Unknown                  = 0,
-  Primitive                = 1,
-  Meta                     = 2,
-  Group                    = 3,
-  Class                    = 4,
-  Template                 = 5,
-  Instantiation            = 6,
-  UserDefinedInstantiation = 7
+  Unknown                          = 0,
+  Primitive                        = 1,
+  Meta                             = 2,
+  Group                            = 3,
+  Class                            = 4,
+  Template                         = 5,
+  TemplateInstantiation            = 6,
+  UserDefinedTemplateInstantiation = 7,
+  UserDefinedContract              = 8
 };
 
 enum class VariableKind : uint8_t
@@ -184,29 +190,32 @@ enum class VariableKind : uint8_t
 
 enum class FunctionKind : uint8_t
 {
-  Unknown                 = 0,
-  FreeFunction            = 1,
-  Constructor             = 2,
-  StaticMemberFunction    = 3,
-  MemberFunction          = 4,
-  UserDefinedFreeFunction = 5
+  Unknown                     = 0,
+  FreeFunction                = 1,
+  ConstructorFunction         = 2,
+  StaticMemberFunction        = 3,
+  MemberFunction              = 4,
+  UserDefinedFreeFunction     = 5,
+  UserDefinedContractFunction = 6
 };
 
 struct TypeInfo
 {
   TypeInfo() = default;
-  TypeInfo(TypeKind type_kind__, std::string name__, TypeId template_type_id__,
-           TypeIdArray parameter_type_ids__)
-    : type_kind{type_kind__}
+  TypeInfo(TypeKind kind__, std::string name__, TypeId type_id__, TypeId template_type_id__,
+           TypeIdArray template_parameter_type_ids__)
+    : kind{kind__}
     , name{std::move(name__)}
+    , type_id{type_id__}
     , template_type_id{template_type_id__}
-    , parameter_type_ids{std::move(parameter_type_ids__)}
+    , template_parameter_type_ids{std::move(template_parameter_type_ids__)}
   {}
 
-  TypeKind    type_kind = TypeKind::Unknown;
+  TypeKind    kind{TypeKind::Unknown};
   std::string name;
-  TypeId      template_type_id = TypeIds::Unknown;
-  TypeIdArray parameter_type_ids;
+  TypeId      type_id{TypeIds::Unknown};
+  TypeId      template_type_id{TypeIds::Unknown};
+  TypeIdArray template_parameter_type_ids;
 };
 using TypeInfoArray = std::vector<TypeInfo>;
 using TypeInfoMap   = std::unordered_map<std::string, TypeId>;
@@ -222,29 +231,28 @@ using ChargeEstimator = std::function<ChargeAmount(Args const &...)>;
 
 using Handler                   = std::function<void(VM *)>;
 using DefaultConstructorHandler = std::function<Ptr<Object>(VM *, TypeId)>;
+using CPPCopyConstructorHandler = std::function<Ptr<Object>(VM *, void const *)>;
 
 struct FunctionInfo
 {
-  FunctionInfo()
-    : function_kind{FunctionKind::Unknown}
-  {}
-
-  FunctionInfo(FunctionKind function_kind__, std::string unique_id__, Handler handler__,
-               ChargeAmount charge)
+  FunctionInfo() = default;
+  FunctionInfo(FunctionKind function_kind__, std::string unique_name__, Handler handler__,
+               ChargeAmount static_charge__)
     : function_kind{function_kind__}
-    , unique_id{std::move(unique_id__)}
+    , unique_name{std::move(unique_name__)}
     , handler{std::move(handler__)}
-    , static_charge{charge}
+    , static_charge{static_charge__}
   {}
 
-  FunctionKind function_kind;
-  std::string  unique_id;
+  FunctionKind function_kind{FunctionKind::Unknown};
+  std::string  unique_name;
   Handler      handler;
-  ChargeAmount static_charge;
+  ChargeAmount static_charge{};
 };
 using FunctionInfoArray = std::vector<FunctionInfo>;
 
 using DeserializeConstructorMap = std::unordered_map<TypeIndex, DefaultConstructorHandler>;
+using CPPCopyConstructorMap     = std::unordered_map<TypeIndex, CPPCopyConstructorHandler>;
 
 class RegisteredTypes
 {
@@ -267,7 +275,7 @@ public:
       return it->second;
     }
 
-    return TypeIndex(typeid(void ***));
+    return {typeid(void ***)};
   }
 
 private:
@@ -287,6 +295,7 @@ struct InitialiserListPlaceholder
 
 struct SourceFile
 {
+  SourceFile() = default;
   SourceFile(std::string filename__, std::string source__)
     : filename{std::move(filename__)}
     , source{std::move(source__)}
@@ -297,4 +306,34 @@ struct SourceFile
 using SourceFiles = std::vector<SourceFile>;
 
 }  // namespace vm
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<fetch::vm::SourceFile, D>
+{
+public:
+  using Type       = fetch::vm::SourceFile;
+  using DriverType = D;
+
+  static uint8_t const FILENAME = 1;
+  static uint8_t const SOURCE   = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &source_file)
+  {
+    auto map = map_constructor(2);
+    map.Append(FILENAME, source_file.filename);
+    map.Append(SOURCE, source_file.source);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &source_file)
+  {
+    map.ExpectKeyGetValue(FILENAME, source_file.filename);
+    map.ExpectKeyGetValue(SOURCE, source_file.source);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

@@ -44,7 +44,7 @@ class ScaledDotProductAttention : public SubGraph<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using DataType      = typename T::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
@@ -151,8 +151,8 @@ public:
   static constexpr char const *DESCRIPTOR = "ScaledDotProductAttention";
 
 private:
-  SizeType key_dim_;
-  DataType dropout_;
+  SizeType key_dim_{};
+  DataType dropout_{};
 };
 
 }  // namespace layers

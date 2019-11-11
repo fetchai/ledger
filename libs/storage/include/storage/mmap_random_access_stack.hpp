@@ -71,7 +71,7 @@ private:
   {
     uint16_t    magic   = platform::LITTLE_ENDIAN_MAGIC;
     uint64_t    objects = 0;
-    D           extra;
+    D           extra{};
     std::size_t size() const
     {
       return sizeof(magic) + sizeof(objects) + sizeof(extra);
@@ -83,7 +83,7 @@ private:
       {
         return false;
       }
-      stream.seekg(0, stream.beg);
+      stream.seekg(0, std::fstream::beg);
       stream.write(reinterpret_cast<char const *>(&magic), sizeof(magic));
       stream.write(reinterpret_cast<char const *>(&objects), sizeof(objects));
       stream.write(reinterpret_cast<char const *>(&extra), sizeof(extra));
@@ -105,7 +105,7 @@ public:
   // Enable constructor for unit tests
   explicit MMapRandomAccessStack(char const *is_testing)
   {
-    if (!(std::string(is_testing).compare(std::string("test")) == 0))
+    if (std::string(is_testing) != std::string("test"))
     {
       throw std::runtime_error("This class hasn't been fully tested for production code");
     }
@@ -522,7 +522,7 @@ private:
   std::size_t GetFileLength()
   {
     file_handle_.clear();
-    file_handle_.seekg(0, file_handle_.end);
+    file_handle_.seekg(0, decltype(file_handle_)::end);
     auto pos = std::size_t(file_handle_.tellg());
     return pos;
   }
@@ -564,7 +564,7 @@ private:
     total_length = GetFileLength() + adjusted_obj_count * sizeof(type);
     try
     {
-      file_handle_.seekg((int64_t)total_length, std::ios::beg);
+      file_handle_.seekg(static_cast<int64_t>(total_length), std::ios::beg);
       std::fill_n((std::ostreambuf_iterator<char>(file_handle_)), adjusted_obj_count * sizeof(type),
                   '\0');
       file_handle_.flush();

@@ -117,6 +117,35 @@ public:
       return *this;
     }
 
+    template <typename T>
+    using CPPCopyConstructor = std::function<Ptr<Object>(vm::VM *, TypeId, T const &)>;
+
+    template <typename CPPType>
+    ClassInterface &CreateCPPCopyConstructor(CPPCopyConstructor<CPPType> constructor,
+                                             ChargeAmount                static_charge = 1)
+    {
+      // Note that unlike all the other functions, we need to be able to do the look up in the
+      // native C++ type and not the VM type.
+      TypeIndex const type_index = TypeIndex(typeid(CPPType));
+
+      auto const estimator = [static_charge]() -> ChargeAmount { return static_charge; };
+
+      CPPCopyConstructorHandler h = [constructor, estimator](VM *        vm,
+                                                             void const *ptr) -> Ptr<Object> {
+        if (EstimateCharge(vm, ChargeEstimator<>{std::move(estimator)}, std::tuple<>{}))
+        {
+          auto type_id   = vm->GetTypeId<Type>();
+          auto typed_ptr = static_cast<CPPType const *>(ptr);
+          return constructor(vm, type_id, *typed_ptr);
+        }
+
+        return {};
+      };
+      module_->cpp_copy_constructors_.insert({type_index, std::move(h)});
+
+      return *this;
+    }
+
     template <typename Callable>
     ClassInterface &CreateStaticMemberFunction(std::string const &name, Callable callable,
                                                ChargeAmount static_charge = 1)
@@ -164,6 +193,26 @@ public:
       return *this;
     }
 
+    ClassInterface &EnableLeftOperator(Operator op)
+    {
+      TypeIndex const type_index__            = type_index_;
+      auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
+        compiler->EnableLeftOperator(type_index__, op);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
+    ClassInterface &EnableRightOperator(Operator op)
+    {
+      TypeIndex const type_index__            = type_index_;
+      auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
+        compiler->EnableRightOperator(type_index__, op);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
     template <typename GetterReturnType, typename... GetterArgs, typename SetterReturnType,
               typename... SetterArgs>
     ClassInterface &EnableIndexOperator(GetterReturnType (Type::*getter)(GetterArgs...),
@@ -193,12 +242,12 @@ public:
     {
       TypeIndex const instantiation_type_index = TypeIndex(typeid(InstantiationType));
       TypeIndex const template_type_index      = type_index_;
-      TypeIndexArray  parameter_type_index_array;
-      UnrollTemplateParameters<InstantiationType>::Unroll(parameter_type_index_array);
+      TypeIndexArray  template_parameter_type_index_array;
+      UnrollTemplateParameters<InstantiationType>::Unroll(template_parameter_type_index_array);
       auto compiler_setup_function = [instantiation_type_index, template_type_index,
-                                      parameter_type_index_array](Compiler *compiler) {
-        compiler->CreateInstantiationType(instantiation_type_index, template_type_index,
-                                          parameter_type_index_array);
+                                      template_parameter_type_index_array](Compiler *compiler) {
+        compiler->CreateTemplateInstantiationType(instantiation_type_index, template_type_index,
+                                                  template_parameter_type_index_array);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
 
@@ -389,11 +438,39 @@ public:
     return ClassInterface<Type>(this, type_index);
   }
 
+  template <typename Type, typename... Args>
+  ClassInterface<Type> CreateTemplateType(std::string const &name)
+  {
+    TypeIndexArray allowed_types_index_array;
+    UnrollTypes<Args...>::Unroll(allowed_types_index_array);
+    TypeIndex const type_index              = TypeIndex(typeid(Type));
+    auto            compiler_setup_function = [name, type_index,
+                                    allowed_types_index_array](Compiler *compiler) {
+      compiler->CreateTemplateType(name, type_index, allowed_types_index_array);
+    };
+    AddCompilerSetupFunction(compiler_setup_function);
+    return ClassInterface<Type>(this, type_index);
+  }
+
   template <typename Type>
   ClassInterface<Type> GetClassInterface()
   {
     TypeIndex const type_index = TypeIndex(typeid(Type));
     return ClassInterface<Type>(this, type_index);
+  }
+
+  RegisteredTypes const &registered_types() const
+  {
+    return registered_types_;
+  }
+
+  const TypeInfoArray &GetTypeInfoArray() const
+  {
+    return type_info_array_;
+  }
+  const DeserializeConstructorMap &GetDeserializationConstructors() const
+  {
+    return deserialization_constructors_;
   }
 
 private:
@@ -437,13 +514,15 @@ private:
 
   void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
                   RegisteredTypes &registered_types, FunctionInfoArray &function_info_array,
-                  DeserializeConstructorMap &deserialization_constructors)
+                  DeserializeConstructorMap &deserialization_constructors,
+                  CPPCopyConstructorMap &    cpp_copy_constructors)
   {
     type_info_array              = type_info_array_;
     type_info_map                = type_info_map_;
     registered_types             = registered_types_;
     function_info_array          = function_info_array_;
     deserialization_constructors = deserialization_constructors_;
+    cpp_copy_constructors        = cpp_copy_constructors_;
   }
 
   using CompilerSetupFunction = std::function<void(Compiler *)>;
@@ -459,6 +538,10 @@ private:
   RegisteredTypes                    registered_types_;
   FunctionInfoArray                  function_info_array_;
   DeserializeConstructorMap          deserialization_constructors_;
+
+  // C++ copy constructors are only used for easy contruction
+  // of C++ objects as Etch objects
+  CPPCopyConstructorMap cpp_copy_constructors_;
 
   friend class Compiler;
   friend class VM;

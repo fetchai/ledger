@@ -22,13 +22,14 @@ target_link_libraries(fetch-ledger
                              fetch-crypto
                              fetch-math
                              fetch-storage
-                             fetch-miner
                              fetch-vm
                              fetch-vm-modules
-                             fetch-metrics
                              fetch-moment
-                             fetch-dkg
                              fetch-beacon
+                             fetch-bloomfilter
+                             fetch-logging
+                             fetch-entropy
+                             fetch-shards
                              vendor-msgpack)
 
 add_test_target()

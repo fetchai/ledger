@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/service_ids.hpp"
 #include "direct_message_service.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "peer_list.hpp"
 #include "router.hpp"
 #include "routing_message.hpp"
-
-#include "core/service_ids.hpp"
 
 namespace fetch {
 namespace muddle {
@@ -111,7 +110,7 @@ DirectMessageService::DirectMessageService(Address address, Router &router, Mudd
 
 void DirectMessageService::InitiateConnection(Handle handle)
 {
-  FETCH_LOG_TRACE(logging_name_, "Init. Connection for conn: ", handle);
+  FETCH_LOG_TRACE(logging_name_, "Init. Connection (conn: ", handle, ")");
 
   // format the message
   RoutingMessage msg{};
@@ -128,6 +127,23 @@ void DirectMessageService::RequestDisconnect(Handle handle)
 
   // this should be conditional on the connection orientation
   SendMessageToConnection(handle, response);
+}
+
+void DirectMessageService::SignalConnectionLeft(Handle handle)
+{
+  FETCH_LOCK(lock_);
+
+  for (auto it = reservations_.begin(); it != reservations_.end();)
+  {
+    if (it->second == handle)
+    {
+      it = reservations_.erase(it);
+    }
+    else
+    {
+      ++it;
+    }
+  }
 }
 
 template <typename T>
@@ -155,7 +171,8 @@ void DirectMessageService::OnDirectMessage(Handle handle, PacketPtr const &packe
       RoutingMessage msg;
       if (!ExtractPayload(packet->GetPayload(), msg))
       {
-        FETCH_LOG_WARN(logging_name_, "Unable to extract routing message payload");
+        FETCH_LOG_WARN(logging_name_, "Unable to extract routing message payload (conn: ", handle,
+                       ")");
         return;
       }
 
@@ -168,6 +185,8 @@ void DirectMessageService::OnDirectMessage(Handle handle, PacketPtr const &packe
 void DirectMessageService::OnRoutingMessage(Handle handle, PacketPtr const &packet,
                                             RoutingMessage const &msg)
 {
+  FETCH_LOG_TRACE(logging_name_, "OnRoutingMessage");
+
   switch (msg.type)
   {
   case RoutingMessage::Type::PING:
@@ -230,7 +249,8 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
     RoutingMessage response{};
     response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
-    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (duplicate)");
+    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (duplicate) (conn: ", handle,
+                   ")");
 
     // send the message to the connection
     SendMessageToConnection(handle, response);
@@ -241,7 +261,8 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
     RoutingMessage response{};
     response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
-    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (replaced)");
+    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (replaced) (conn: ", handle,
+                   ")");
 
     // send the message to the connection
     SendMessageToConnection(previous_handle, response);
@@ -286,11 +307,11 @@ void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &pack
     response.type = RoutingMessage::Type::ROUTING_ACCEPTED;
 
     // update the router to send messages to this route
-    router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
+    router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true, false);
   }
   else
   {
-    FETCH_LOG_WARN(logging_name_, "Requesting connection disconnect");
+    FETCH_LOG_WARN(logging_name_, "Requesting connection disconnect (conn: ", handle, ")");
   }
 
   // send back the response
@@ -303,17 +324,18 @@ void DirectMessageService::OnRoutingAccepted(Handle handle, PacketPtr const &pac
   FETCH_UNUSED(msg);
   FETCH_LOG_TRACE(logging_name_, "OnRoutingAccepted (conn: ", handle, ")");
 
-  auto const status = router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
+  auto const status =
+      router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true, false);
 
   switch (status)
   {
   case Router::UpdateStatus::NO_CHANGE:
   case Router::UpdateStatus::UPDATED:
-    FETCH_LOG_INFO(logging_name_, "New routable connection");
+    FETCH_LOG_INFO(logging_name_, "New routable connection (conn: ", handle, ")");
     break;
 
   case Router::UpdateStatus::DUPLICATE_DIRECT:
-    FETCH_LOG_INFO(logging_name_, "Duplicate routing link");
+    FETCH_LOG_INFO(logging_name_, "Duplicate routing link (conn: ", handle, ")");
     break;
   }
 }
@@ -336,7 +358,7 @@ void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr c
     peers_.RemovePersistentPeer(handle);
     peers_.RemoveConnection(handle);  // TODO(EJF): There should not be this duplication
 
-    FETCH_LOG_INFO(logging_name_, "Removing the connection: ", handle);
+    FETCH_LOG_INFO(logging_name_, "Removing the connection (conn: ", handle, ")");
   }
   else
   {
@@ -410,7 +432,7 @@ DirectMessageService::UpdateStatus DirectMessageService::UpdateReservation(Addre
         if (should_replace)
         {
           // cache the previous handle
-          if (previous_handle)
+          if (previous_handle != nullptr)
           {
             *previous_handle = it->second;
           }

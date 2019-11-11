@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/json/document.hpp"
 #include "http/json_response.hpp"
 #include "http/middleware/deny_all.hpp"
 #include "http/middleware/token_auth.hpp"
 #include "http/server.hpp"
 #include "http/validators.hpp"
+#include "json/document.hpp"
 
 #include <atomic>
 #include <chrono>

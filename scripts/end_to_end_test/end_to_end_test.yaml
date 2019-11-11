@@ -84,17 +84,17 @@ steps:
 
 ---
 test_description: >
-  Run a smart contract which calls getBlockNumber()
+  Run a smart contract which accesses the Context
 
 setup_conditions:
-  test_name: "block_number_accessible_from_smart_contract"
+  test_name: "context_accessible_from_smart_contract"
   number_of_nodes: 1
   mining_nodes: [0]
   max_test_time: 60
 
 steps:
   - sleep: 5
-  - run_python_test: { "script": ".smart_contract_tests.block_number" }
+  - run_python_test: { "script": ".smart_contract_tests.ledger_context" }
 ...
 
 ---
@@ -113,9 +113,10 @@ steps:
   - restart_nodes: { "nodes": [0] }
   - verify_txs: { "name": "batch1", "nodes": [0], "expect_mined": true }
 ...
+
 ---
 test_description: >
-  DISABLED - Transactions sync and are executed across nodes when using POS
+  Transactions sync and are executed across nodes when using POS
 
 setup_conditions:
   test_name: "basic_multinode_POS"
@@ -135,12 +136,57 @@ test_description: >
   Test synergetic mining
 
 setup_conditions:
-  test_name: "synergetic_contract"
+  test_name: "synergetic_mining"
   number_of_nodes: 1
   mining_nodes: [0]
   max_test_time: 60
 
 steps:
   - sleep: 5
-  - run_python_test: { "script": ".smart_contract_tests.synergetic_contract" }
+  - run_python_test: { "script": ".smart_contract_tests.synergetic_mining" }
+...
+
+---
+test_description: >
+  Test ability of contracts to check their balance
+
+setup_conditions:
+  test_name: "contracts_checking_balance"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.balance" }
+...
+
+---
+test_description: >
+  Test ability of contracts to hold and release funds
+
+setup_conditions:
+  test_name: "transfers_between_contracts_and_people"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.transfer" }
+...
+
+---
+test_description: >
+  Test that contract owner address is passed to @init
+
+setup_conditions:
+  test_name: "init_owner_address"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.init_owner_address" }
 ...

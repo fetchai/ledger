@@ -19,4 +19,7 @@ target_link_libraries(fetch-dkg
                       PUBLIC fetch-core
                              fetch-crypto
                              fetch-network
-                             fetch-ledger)
+                             fetch-chain
+                             fetch-entropy
+                             fetch-muddle
+                             fetch-logging)

@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "telemetry/measurement.hpp"
 
 #include <functional>
 #include <initializer_list>
 #include <map>
-#include <mutex>
 #include <string>
 #include <vector>
 
@@ -56,7 +56,6 @@ public:
   Histogram &operator=(Histogram &&) = delete;
 
 private:
-  using Mutex     = std::mutex;
   using BucketMap = std::map<double, uint64_t>;
 
   template <typename Iterator>

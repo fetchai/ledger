@@ -52,8 +52,7 @@ public:
   ECDSASignature() = default;
 
   explicit ECDSASignature(byte_array::ConstByteArray binary_signature)
-    : hash_{}
-    , signature_ecdsa_ptr_{Convert(binary_signature, signatureBinaryDataFormat)}
+    : signature_ecdsa_ptr_{Convert(binary_signature, signatureBinaryDataFormat)}
     , signature_{std::move(binary_signature)}
   {}
 
@@ -73,24 +72,20 @@ public:
                      : Convert(signature_ecdsa_ptr_, signatureBinaryDataFormat)}
   {}
 
-  // ECDSASignature(ECDSASignature&& from) = default;
-
   template <eECDSAEncoding BIN_FORMAT>
   explicit ECDSASignature(ECDSASignatureType<BIN_FORMAT> &&from)
     : ECDSASignature{safeMoveConstruct(std::move(from))}
   {}
 
-  // ECDSASignature& operator = (ECDSASignature const & from) = default;
-
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature operator=(ECDSASignatureType<BIN_FORMAT> const &from)
+  ECDSASignature &operator=(ECDSASignatureType<BIN_FORMAT> const &from)
   {
     *this = ECDSASignature(from);
     return *this;
   }
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature operator=(ECDSASignatureType<BIN_FORMAT> &&from)
+  ECDSASignature &operator=(ECDSASignatureType<BIN_FORMAT> &&from)
   {
     *this = safeMoveConstruct(std::move(from));
     return *this;
@@ -231,7 +226,7 @@ private:
           "Convert2Bin<...,eECDSAEncoding::DER,...(): "
           "i2d_ECDSA_SIG(..., &ptr) failed.");
     }
-    else if (res_size > est_size)
+    if (res_size > est_size)
     {
       throw std::runtime_error(
           "Convert2Bin<...,eECDSAEncoding::DER,...(): i2d_ECDSA_SIG(..., &ptr) "
@@ -277,7 +272,7 @@ private:
     AffineCoordConversionType::ConvertFromCanonical(bin_sig, r.get(), s.get());
 
     UniquePointerType<ECDSA_SIG> signature{ECDSA_SIG_new()};
-    if (!ECDSA_SIG_set0(signature.get(), r.get(), s.get()))
+    if (ECDSA_SIG_set0(signature.get(), r.get(), s.get()) == 0)
     {
       throw std::runtime_error(
           "ConvertCanonical<...,eECDSAEncoding::DER,...>("

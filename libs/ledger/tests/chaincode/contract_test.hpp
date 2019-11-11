@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
@@ -51,19 +52,19 @@ protected:
   using MockStorageUnitPtr    = std::unique_ptr<StrictMockStorageUnit>;
   using Resources             = std::vector<ConstByteArray>;
   using CertificatePtr        = std::unique_ptr<fetch::crypto::ECDSASigner>;
-  using AddressPtr            = std::unique_ptr<fetch::ledger::Address>;
+  using AddressPtr            = std::unique_ptr<fetch::chain::Address>;
   using StateAdapter          = fetch::ledger::StateAdapter;
   using StateSentinelAdapter  = fetch::ledger::StateSentinelAdapter;
   using Query                 = Contract::Query;
   using IdentifierPtr         = std::shared_ptr<Identifier>;
   using CachedStorageAdapter  = fetch::ledger::CachedStorageAdapter;
-  using TransactionPtr        = fetch::ledger::TransactionBuilder::TransactionPtr;
+  using TransactionPtr        = fetch::chain::TransactionBuilder::TransactionPtr;
 
   void SetUp() override
   {
     block_number_  = 0u;
     certificate_   = std::make_unique<fetch::crypto::ECDSASigner>();
-    owner_address_ = std::make_unique<fetch::ledger::Address>(certificate_->identity());
+    owner_address_ = std::make_unique<fetch::chain::Address>(certificate_->identity());
     storage_       = std::make_unique<StrictMockStorageUnit>();
   }
 
@@ -107,7 +108,7 @@ protected:
       packer_.pack(arg);
     }
 
-    void PackInternal(fetch::ledger::Address const &address)
+    void PackInternal(fetch::chain::Address const &address)
     {
       auto const &id = address.address();
 
@@ -132,26 +133,26 @@ protected:
   Contract::Result SendSmartAction(ConstByteArray const &action,
                                    ConstByteArray const &data = ConstByteArray{})
   {
-    using fetch::ledger::TransactionBuilder;
-    using fetch::ledger::Address;
+    using fetch::chain::TransactionBuilder;
+    using fetch::chain::Address;
 
     // build the transaction
-    auto tx = TransactionBuilder()
-                  .From(Address{certificate_->identity()})
-                  .TargetSmartContract(*contract_address_, *owner_address_, shards_)
-                  .Action(action)
-                  .Signer(certificate_->identity())
-                  .Data(data)
-                  .Seal()
-                  .Sign(*certificate_)
-                  .Build();
+    tx_ = TransactionBuilder()
+              .From(Address{certificate_->identity()})
+              .TargetSmartContract(*contract_address_, *owner_address_, shards_)
+              .Action(action)
+              .Signer(certificate_->identity())
+              .Data(data)
+              .Seal()
+              .Sign(*certificate_)
+              .Build();
 
     // adapt the storage engine for this execution
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 
     // dispatch the transaction to the contract
-    contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchTransaction(action, *tx, block_number_++);
+    contract_->Attach({nullptr, tx_->contract_address(), &storage_adapter, block_number_++});
+    auto const status = contract_->DispatchTransaction(*tx_);
     contract_->Detach();
 
     return status;
@@ -159,12 +160,31 @@ protected:
 
   Contract::Result SendAction(TransactionPtr const &tx)
   {
+    using ContractMode = fetch::chain::Transaction::ContractMode;
+
+    Identifier id;
+
+    switch (tx->contract_mode())
+    {
+    case ContractMode::PRESENT:
+      id = Identifier{tx->contract_digest().address().ToHex() + "." +
+                      tx->contract_address().display()};
+      break;
+    case ContractMode::CHAIN_CODE:
+      id = Identifier{tx->chain_code()};
+      break;
+    case ContractMode::NOT_PRESENT:
+      throw std::runtime_error("Not implemented");
+    case ContractMode::SYNERGETIC:
+      throw std::runtime_error("Not implemented");
+    }
+
     // adapt the storage engine for this execution
-    StateSentinelAdapter storage_adapter{*storage_, Identifier{tx->chain_code()}, shards_};
+    StateSentinelAdapter storage_adapter{*storage_, std::move(id), shards_};
 
     // dispatch the transaction to the contract
-    contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchTransaction(tx->action(), *tx, block_number_++);
+    contract_->Attach({nullptr, tx->contract_address(), &storage_adapter, block_number_++});
+    auto const status = contract_->DispatchTransaction(*tx);
     contract_->Detach();
 
     return status;
@@ -175,20 +195,21 @@ protected:
     // adapt the storage engine for queries
     StateAdapter storage_adapter{*storage_, *contract_name_};
 
-    // attach, dispatch and detach again
-    contract_->Attach(storage_adapter);
+    // Current block index does not apply to queries - set to 0
+    contract_->Attach({nullptr, fetch::chain::Address{}, &storage_adapter, 0});
     auto const status = contract_->DispatchQuery(query, request, response);
     contract_->Detach();
 
     return status;
   }
 
-  Contract::Result InvokeInit(Identity const &owner)
+  Contract::Result InvokeInit(Identity const &                 owner,
+                              fetch::chain::Transaction const &tx = fetch::chain::Transaction{})
   {
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 
-    contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchInitialise(fetch::ledger::Address{owner});
+    contract_->Attach({nullptr, tx.contract_address(), &storage_adapter, block_number_});
+    auto const status = contract_->DispatchInitialise(fetch::chain::Address{owner}, tx);
     contract_->Detach();
 
     return status;
@@ -212,8 +233,9 @@ protected:
   /// @}
 
   fetch::BitVector     shards_{FullShards(1)};
-  Contract::BlockIndex block_number_;
+  Contract::BlockIndex block_number_{};
   CertificatePtr       certificate_;
   AddressPtr           owner_address_;
   MockStorageUnitPtr   storage_;
+  TransactionPtr       tx_;
 };

@@ -148,8 +148,6 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
       jy    = jy + incy;
     }
   }
-
-  return;
 }
 
 template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),

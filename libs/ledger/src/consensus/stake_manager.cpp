@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "entropy/entropy_generator_interface.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/consensus/entropy_generator_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "logging/logging.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -29,62 +30,69 @@ namespace fetch {
 namespace ledger {
 constexpr char const *LOGGING_NAME = "StakeMgr";
 
-StakeManager::StakeManager(uint64_t committee_size)
-  : committee_size_{committee_size}
+StakeManager::StakeManager(uint64_t cabinet_size)
+  : cabinet_size_{cabinet_size}
 {}
 
 void StakeManager::UpdateCurrentBlock(Block const &current)
 {
   // The first stake can only be set through a reset event
-  if (current.body.block_number == 0)
+  if (current.block_number == 0)
   {
     return;
   }
 
   // need to evaluate any of the updates from the update queue
   StakeSnapshotPtr next{};
-  if (update_queue_.ApplyUpdates(current.body.block_number, current_, next))
+  if (update_queue_.ApplyUpdates(current.block_number, current_, next))
   {
     // update the entry in the history
-    stake_history_[current.body.block_number] = next;
+    stake_history_[current.block_number] = next;
 
     // the current stake snapshot has been replaced
     current_             = std::move(next);
-    current_block_index_ = current.body.block_number;
+    current_block_index_ = current.block_number;
   }
 
   TrimToSize(stake_history_, HISTORY_LENGTH);
 }
 
-StakeManager::CommitteePtr StakeManager::BuildCommittee(Block const &current)
+StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current)
 {
-  auto snapshot = LookupStakeSnapshot(current.body.block_number);
-  return snapshot->BuildCommittee(current.body.entropy, committee_size_);
+  CabinetPtr cabinet{};
+
+  auto snapshot = LookupStakeSnapshot(current.block_number);
+  if (snapshot)
+  {
+    cabinet = snapshot->BuildCabinet(current.block_entropy.EntropyAsU64(), cabinet_size_);
+  }
+
+  return cabinet;
 }
 
-StakeManager::CommitteePtr StakeManager::Reset(StakeSnapshot const &snapshot)
+StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot const &snapshot)
 {
   return ResetInternal(std::make_shared<StakeSnapshot>(snapshot));
 }
 
-StakeManager::CommitteePtr StakeManager::Reset(StakeSnapshot &&snapshot)
+StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot &&snapshot)
 {
   return ResetInternal(std::make_shared<StakeSnapshot>(std::move(snapshot)));
 }
 
-StakeManager::CommitteePtr StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot)
+StakeManager::CabinetPtr StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot)
 {
   // history
   stake_history_.clear();
   stake_history_[0] = snapshot;
 
-  CommitteePtr new_committee = snapshot->BuildCommittee(0, committee_size_);
+  CabinetPtr new_cabinet = snapshot->BuildCabinet(0, cabinet_size_);
 
   // current
   current_             = std::move(snapshot);
   current_block_index_ = 0;
 
-  return new_committee;
+  return new_cabinet;
 }
 
 StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex block)
@@ -94,23 +102,19 @@ StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex bloc
   {
     return current_;
   }
-  else
-  {
-    // on catchup, or in the case of multiple forks historical entries will be used
-    auto upper_bound = stake_history_.upper_bound(block);
 
-    if (upper_bound == stake_history_.begin())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Update to lookup stake snapshot for block ", block);
-      return {};
-    }
-    else
-    {
-      // we are not interested in the upper bound, but the preceding historical element i.e.
-      // the previous block change
-      return (--upper_bound)->second;
-    }
+  // on catchup, or in the case of multiple forks historical entries will be used
+  auto upper_bound = stake_history_.upper_bound(block);
+
+  if (upper_bound == stake_history_.begin())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Update to look up stake snapshot for block ", block);
+    return {};
   }
+
+  // we are not interested in the upper bound, but the preceding historical element i.e.
+  // the previous block change
+  return (--upper_bound)->second;
 }
 
 }  // namespace ledger

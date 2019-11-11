@@ -38,7 +38,7 @@ public:
 
 private:
   ContextSmartPtr context_;
-  bool            is_started_;
+  bool            is_started_{};
 
 public:
   explicit Session(ContextSmartPtr context, const bool is_already_started = false)

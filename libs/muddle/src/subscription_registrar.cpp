@@ -20,8 +20,8 @@
 #include "subscription_registrar.hpp"
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 
 #include <cstdint>
 #include <string>

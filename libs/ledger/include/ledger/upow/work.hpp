@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
+#include "chain/common_types.hpp"
+#include "core/digest.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/chain/common_types.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "vectorise/uint/uint.hpp"
 
@@ -30,6 +30,11 @@
 #include <memory>
 
 namespace fetch {
+namespace chain {
+
+class Address;
+
+}  // namespace chain
 namespace ledger {
 
 class Work
@@ -39,20 +44,20 @@ public:
 
   // Construction / Destruction
   Work() = default;
-  Work(Digest digest, Address address, crypto::Identity miner);
+  Work(Digest digest, chain::Address address, crypto::Identity miner);
   Work(Work const &) = default;
   ~Work()            = default;
 
   // Getters
   Digest const &          contract_digest() const;
-  Address const &         address() const;
+  chain::Address const &  address() const;
   crypto::Identity const &miner() const;
   UInt256 const &         nonce() const;
   WorkScore               score() const;
 
   // Setters
   void UpdateDigest(Digest digest);
-  void UpdateAddress(Address address);
+  void UpdateAddress(chain::Address address);
   void UpdateIdentity(crypto::Identity const &identity);
   void UpdateScore(WorkScore score);
   void UpdateNonce(UInt256 const &nonce);
@@ -62,7 +67,7 @@ public:
 
 private:
   Digest           contract_digest_{};
-  Address          contract_address_{};
+  chain::Address   contract_address_{};
   crypto::Identity miner_{};
   UInt256          nonce_{};
   WorkScore        score_{std::numeric_limits<WorkScore>::max()};

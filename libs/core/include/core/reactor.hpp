@@ -32,15 +32,14 @@ namespace core {
 class Reactor
 {
 public:
-  static constexpr char const *LOGGING_NAME = "Reactor";
-
   // Construction / Destruction
   explicit Reactor(std::string name);
   Reactor(Reactor const &) = delete;
   Reactor(Reactor &&)      = delete;
   ~Reactor()               = default;
 
-  bool Attach(WeakRunnable runnable);
+  bool Attach(WeakRunnable runnable);   // NOLINT
+  bool Attach(WeakRunnables runnable);  // NOLINT
   bool Detach(Runnable const &runnable);
 
   void Start();

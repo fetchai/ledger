@@ -22,9 +22,13 @@
 #include <memory>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Address;
+
+}  // namespace chain
+namespace ledger {
+
 class Block;
 
 class StakeManagerInterface

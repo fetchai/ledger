@@ -63,7 +63,8 @@ struct IsNothrowAccumulatable<F, A> : std::is_nothrow_move_constructible<A>
 
 // The zero case: the pack is empty past a0.
 template <typename F, typename RV>
-constexpr auto Accumulate(F &&, RV &&rv) noexcept(internal::IsNothrowAccumulatableV<F, RV>)
+constexpr auto Accumulate(F && /*unused*/,
+                          RV &&rv) noexcept(internal::IsNothrowAccumulatableV<F, RV>)
 {
   return rv;
 }

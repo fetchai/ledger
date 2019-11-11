@@ -278,21 +278,28 @@ private:
   {
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
     {
-      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+      vm_->RuntimeError("Cannot seserialize type " + vm_->GetTypeName(element_type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }
 
-    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    // Creating new array
+    auto constructor  = buffer.NewArrayConstructor();
+    auto array_buffer = constructor(elements.size());
+
+    // Serializing elements
     for (Ptr<Object> const &v : data)
     {
       if (!v)
       {
-        RuntimeError("Cannot serialise null reference element in " + GetUniqueId());
+        RuntimeError("Cannot serialise null reference element in " + GetTypeName());
         return false;
       }
 
-      if (!v->SerializeTo(buffer))
+      auto success = array_buffer.AppendUsingFunction(
+          [&v](MsgPackSerializer &serializer) { return v->SerializeTo(serializer); });
+
+      if (!success)
       {
         return false;
       }
@@ -305,41 +312,44 @@ private:
   std::enable_if_t<IsPrimitive<G>::value, bool> ApplySerialize(MsgPackSerializer &   buffer,
                                                                std::vector<G> const &data)
   {
-    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    // Creating new array
+    auto constructor  = buffer.NewArrayConstructor();
+    auto array_buffer = constructor(elements.size());
+
+    // Serializing elements
     for (G const &v : data)
     {
-      buffer << v;
+      array_buffer.Append(v);
     }
+
     return true;
   }
 
   bool ApplyDeserialize(MsgPackSerializer &buffer, std::vector<Ptr<Object>> &data)
   {
-    uint64_t    size;
-    std::string uid;
-    buffer >> uid >> size;
-
-    if (uid != GetUniqueId())
-    {
-      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
-                        GetUniqueId());
-      return false;
-    }
-
-    data.resize(size);
-
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
     {
-      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetTypeName(element_type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }
 
-    data.resize(size);
+    auto array = buffer.NewArrayDeserializer();
+    data.resize(array.size());
+
     for (Ptr<Object> &v : data)
     {
       v = vm_->DefaultSerializeConstruct(element_type_id);
-      if (!v || !v->DeserializeFrom(buffer))
+      if (!v)
+      {
+        return false;
+      }
+
+      // Deserializing next elemtn
+      auto success = array.GetNextValueUsingFunction(
+          [&v](MsgPackSerializer &serializer) { return v->DeserializeFrom(serializer); });
+
+      if (!success)
       {
         return false;
       }
@@ -351,21 +361,14 @@ private:
   std::enable_if_t<IsPrimitive<G>::value, bool> ApplyDeserialize(MsgPackSerializer &buffer,
                                                                  std::vector<G> &   data)
   {
-    uint64_t    size;
-    std::string uid;
-    buffer >> uid >> size;
-    if (uid != GetUniqueId())
-    {
-      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
-                        GetUniqueId());
-      return false;
-    }
+    auto array = buffer.NewArrayDeserializer();
 
-    data.resize(size);
+    data.resize(array.size());
     for (G &v : data)
     {
-      buffer >> v;
+      array.GetNextValue(v);
     }
+
     return true;
   }
 };
@@ -374,7 +377,7 @@ template <typename... Args>
 Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
 {
   TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
-  TypeId const    element_type_id = type_info.parameter_type_ids[0];
+  TypeId const    element_type_id = type_info.template_parameter_type_ids[0];
   switch (element_type_id)
   {
   case TypeIds::Bool:

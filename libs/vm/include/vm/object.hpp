@@ -73,6 +73,13 @@ using IsAddress = std::is_base_of<Address, T>;
 template <typename T>
 using IsString = std::is_base_of<String, std::decay_t<T>>;
 
+template <typename T, typename R = void>
+using IfIsExternal = std::enable_if_t<
+    (!IsPtr<std::decay_t<T>>::value) && (!IsObject<std::decay_t<T>>::value) &&
+        (!IsVariant<std::decay_t<T>>::value) && (!IsPrimitive<std::decay_t<T>>::value) &&
+        (!IsString<std::decay_t<T>>::value) && (!IsAddress<std::decay_t<T>>::value),
+    R>;
+
 template <typename T>
 using IsNonconstRef = std::is_same<T, std::decay_t<T> &>;
 
@@ -168,33 +175,26 @@ public:
     return type_id_;
   }
 
-  std::string GetUniqueId() const;
+  std::string GetTypeName() const;
 
 protected:
-  Variant &       Push();
-  Variant &       Pop();
-  Variant &       Top();
-  void            RuntimeError(std::string const &message);
-  TypeInfo const &GetTypeInfo(TypeId type_id);
-  bool            GetNonNegativeInteger(Variant const &v, std::size_t &index);
+  std::size_t RefCount() const noexcept
+  {
+    return ref_count_;
+  }
 
-  VM *        vm_;
-  TypeId      type_id_;
-  std::size_t ref_count_;
+  Variant &Push();
+  Variant &Pop();
+  Variant &Top();
+  void     RuntimeError(std::string const &message);
+  TypeInfo GetTypeInfo(TypeId type_id);
+  bool     GetNonNegativeInteger(Variant const &v, std::size_t &index);
+
+  VM *   vm_;
+  TypeId type_id_;
 
 private:
-  constexpr void AddRef() noexcept
-  {
-    ++ref_count_;
-  }
-
-  constexpr void Release() noexcept
-  {
-    if (--ref_count_ == 0)
-    {
-      delete this;
-    }
-  }
+  std::size_t ref_count_;
 
   template <typename T>
   friend class Ptr;
@@ -212,8 +212,10 @@ public:
 
   static Ptr PtrFromThis(T *this__)
   {
-    this__->AddRef();
-    return Ptr(this__);
+    auto ptr = Ptr(this__);
+    ptr.AddRef();
+
+    return ptr;
   }
 
   Ptr &operator=(std::nullptr_t /* other */)
@@ -298,11 +300,8 @@ public:
 
   void Reset()
   {
-    if (ptr_)
-    {
-      ptr_->Release();
-      ptr_ = nullptr;
-    }
+    Release();
+    ptr_ = nullptr;
   }
 
   explicit operator bool() const noexcept
@@ -322,7 +321,7 @@ public:
 
   std::size_t RefCount() const noexcept
   {
-    return ptr_->ref_count_;
+    return ptr_->RefCount();
   }
 
 private:
@@ -332,15 +331,18 @@ private:
   {
     if (ptr_)
     {
-      ptr_->AddRef();
+      ++(ptr_->ref_count_);
     }
   }
 
-  void Release()
+  void Release() noexcept
   {
     if (ptr_)
     {
-      ptr_->Release();
+      if (--(ptr_->ref_count_) == 0)
+      {
+        delete ptr_;
+      }
     }
   }
 
@@ -348,22 +350,22 @@ private:
   friend class Ptr;
 
   template <typename L, typename R>
-  friend bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;
+  friend bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;  // NOLINT
 
   template <typename L>
-  friend bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;
+  friend bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;  // NOLINT
 
   template <typename R>
-  friend bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;
+  friend bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;  // NOLINT
 
   template <typename L, typename R>
-  friend bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;
+  friend bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;  // NOLINT
 
   template <typename L>
-  friend bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;
+  friend bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;  // NOLINT
 
   template <typename R>
-  friend bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;
+  friend bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;  // NOLINT
 };
 
 template <typename L, typename R>

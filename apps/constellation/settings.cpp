@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/commandline/parameter_parser.hpp"
-#include "core/logging.hpp"
 #include "settings.hpp"
+
+#include "core/commandline/parameter_parser.hpp"
+#include "logging/logging.hpp"
 #include "vectorise/platform.hpp"
 
 #include <cstddef>
@@ -34,9 +35,9 @@ const uint32_t DEFAULT_NUM_SLICES         = 500;
 const uint32_t DEFAULT_NUM_EXECUTORS      = DEFAULT_NUM_LANES;
 const uint16_t DEFAULT_PORT               = 8000;
 const uint32_t DEFAULT_BLOCK_INTERVAL     = 0;  // milliseconds - zero means no mining
-const uint32_t DEFAULT_COMMITTEE_SIZE     = 10;
+const uint32_t DEFAULT_CABINET_SIZE       = 10;
 const uint32_t DEFAULT_STAKE_DELAY_PERIOD = 5;
-const uint32_t DEFAULT_AEON_PERIOD        = 100;
+const uint32_t DEFAULT_AEON_PERIOD        = 25;
 const uint32_t DEFAULT_MAX_PEERS          = 3;
 const uint32_t DEFAULT_TRANSIENT_PEERS    = 1;
 const uint32_t NUM_SYSTEM_THREADS = static_cast<uint32_t>(std::thread::hardware_concurrency());
@@ -75,7 +76,7 @@ Settings::Settings()
   , genesis_file_location {*this, "genesis-file-location",   "",                           "Path to the genesis file (usually genesis_file.json)"}
   , experimental_features {*this, "experimental",            {},                           "The comma separated set of experimental features to enable"}
   , proof_of_stake        {*this, "pos",                     false,                        "Enable Proof of Stake consensus"}
-  , max_committee_size    {*this, "max-committee-size",      DEFAULT_COMMITTEE_SIZE,       ""}
+  , max_cabinet_size    {*this, "max-cabinet-size",      DEFAULT_CABINET_SIZE,       ""}
   , stake_delay_period    {*this, "stake-delay-period",      DEFAULT_STAKE_DELAY_PERIOD,   ""}
   , aeon_period           {*this, "aeon-period",             DEFAULT_AEON_PERIOD,          ""}
 {}

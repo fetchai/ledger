@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "telemetry/measurement.hpp"
 #include "telemetry/telemetry.hpp"
 
-#include <mutex>
 #include <unordered_map>
 
 namespace fetch {
@@ -47,7 +47,6 @@ public:
   CounterMap &operator=(CounterMap &&) = delete;
 
 private:
-  using Mutex    = std::mutex;
   using Counters = std::unordered_map<Labels, CounterPtr>;
 
   CounterPtr LookupCounter(Labels const &keys);

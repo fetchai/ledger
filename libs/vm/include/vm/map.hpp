@@ -145,7 +145,7 @@ struct Map : public IMap
   TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key) override
   {
     TemplateParameter2 *ptr = Get<Key>(key);
-    if (ptr)
+    if (ptr != nullptr)
     {
       return *ptr;
     }
@@ -179,54 +179,56 @@ struct Map : public IMap
 
   bool SerializeTo(MsgPackSerializer &buffer) override
   {
-    buffer << GetUniqueId() << static_cast<uint64_t>(map.size());
+    auto constructor = buffer.NewMapConstructor();
+    auto map_ser     = constructor(map.size());
+
     for (auto const &v : map)
     {
-      if (!SerializeElement<Key>(buffer, v.first))
-      {
-        return false;
-      }
-      if (!SerializeElement<Value>(buffer, v.second))
+      auto f1 = [&v, this](MsgPackSerializer &serializer) {
+        return SerializeElement<Key>(serializer, v.first);
+      };
+
+      auto f2 = [&v, this](MsgPackSerializer &serializer) {
+        return SerializeElement<Value>(serializer, v.second);
+      };
+
+      if (!map_ser.AppendUsingFunction(f1, f2))
       {
         return false;
       }
     }
+
     return true;
   }
 
   bool DeserializeFrom(MsgPackSerializer &buffer) override
   {
     TypeInfo const &type_info     = vm_->GetTypeInfo(GetTypeId());
-    TypeId const    key_type_id   = type_info.parameter_type_ids[0];
-    TypeId const    value_type_id = type_info.parameter_type_ids[1];
-    uint64_t        size;
-    std::string     uid;
-    buffer >> uid >> size;
-    if (uid != GetUniqueId())
-    {
-      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
-                        GetUniqueId());
-      return false;
-    }
+    TypeId const    key_type_id   = type_info.template_parameter_type_ids[0];
+    TypeId const    value_type_id = type_info.template_parameter_type_ids[1];
 
-    for (uint64_t i = 0; i < size; ++i)
+    auto map_ser = buffer.NewMapDeserializer();
+    for (uint64_t i = 0; i < map_ser.size(); ++i)
     {
-      FETCH_UNUSED(i);
-
       TemplateParameter1 key;
-      if (!DeserializeElement<Key>(key_type_id, buffer, key))
-      {
-        return false;
-      }
-
       TemplateParameter2 value;
-      if (!DeserializeElement<Value>(value_type_id, buffer, value))
+
+      auto f1 = [key_type_id, &key, this](MsgPackSerializer &serializer) {
+        return DeserializeElement<Key>(key_type_id, serializer, key);
+      };
+
+      auto f2 = [value_type_id, &value, this](MsgPackSerializer &serializer) {
+        return DeserializeElement<Value>(value_type_id, serializer, value);
+      };
+
+      if (!map_ser.GetNextKeyPairUsingFunction(f1, f2))
       {
         return false;
       }
 
       map.insert({key, value});
     }
+
     return true;
   }
 
@@ -239,7 +241,7 @@ private:
   {
     if (v.object == nullptr)
     {
-      RuntimeError("Cannot serialise null reference element in " + GetUniqueId());
+      RuntimeError("Cannot serialise null reference element in " + GetTypeName());
       return false;
     }
 
@@ -255,28 +257,29 @@ private:
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPtr<U>::value, bool> DeserializeElement(TypeId type, MsgPackSerializer &buffer,
+  std::enable_if_t<IsPtr<U>::value, bool> DeserializeElement(TypeId                 type_id,
+                                                             MsgPackSerializer &    buffer,
                                                              TemplateParameterType &v)
   {
-    if (!vm_->IsDefaultSerializeConstructable(type))
+    if (!vm_->IsDefaultSerializeConstructable(type_id))
     {
-      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(type) +
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetTypeName(type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }
 
-    v.Construct(vm_->DefaultSerializeConstruct(type), type);
+    v.Construct(vm_->DefaultSerializeConstruct(type_id), type_id);
     return v.object->DeserializeFrom(buffer);
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPrimitive<U>::value, bool> DeserializeElement(TypeId                 type,
+  std::enable_if_t<IsPrimitive<U>::value, bool> DeserializeElement(TypeId                 type_id,
                                                                    MsgPackSerializer &    buffer,
                                                                    TemplateParameterType &v)
   {
     U data;
     buffer >> data;
-    v.Construct(data, type);
+    v.Construct(data, type_id);
     return true;
   }
 };
@@ -411,8 +414,8 @@ inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId 
 inline Ptr<IMap> IMap::Constructor(VM *vm, TypeId type_id)
 {
   TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
-  TypeId const    key_type_id   = type_info.parameter_type_ids[0];
-  TypeId const    value_type_id = type_info.parameter_type_ids[1];
+  TypeId const    key_type_id   = type_info.template_parameter_type_ids[0];
+  TypeId const    value_type_id = type_info.template_parameter_type_ids[1];
   return outer(key_type_id, value_type_id, vm, type_id);
 }
 

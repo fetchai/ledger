@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/consensus/consensus.hpp"
+
 #include <string>
 
 namespace fetch {

@@ -19,6 +19,7 @@
 
 #include "core/bitvector.hpp"
 #include "ledger/executor_interface.hpp"
+#include "logging/logging.hpp"
 
 #include <atomic>
 #include <cstdint>

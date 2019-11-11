@@ -48,6 +48,7 @@ public:
 
   void InitiateConnection(Handle handle);
   void RequestDisconnect(Handle handle);
+  void SignalConnectionLeft(Handle handle);
 
   // Operators
   DirectMessageService &operator=(DirectMessageService const &) = delete;

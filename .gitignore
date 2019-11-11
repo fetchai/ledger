@@ -6,6 +6,7 @@
 info.txt
 *.db
 CMakeCache.txt
+genesis_file.json
 
 /docs/build
 
@@ -17,11 +18,16 @@ nodes/
 /docker-images/
 docker_ccache/
 
+# Bazel Files
+bazel-*
+
 # Legacy Editors
 \#*#
 .\#*
 *~
 *.swp
+*.swo
+*.swn
 .idea/
 *.osm
 tags

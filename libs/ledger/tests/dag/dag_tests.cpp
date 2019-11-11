@@ -59,10 +59,7 @@ protected:
 
   DAG MakeDAG(std::string const &id, bool load_from_file)
   {
-    auto certificate = CreateNewCertificate();
-    DAG  dag;
-    dag.reset(new DAGChild(id, load_from_file, certificate));
-    return dag;
+    return std::make_shared<DAGChild>(id, load_from_file, CreateNewCertificate());
   }
 
   // Verify that the nodes in the latest dag epoch match the sanity check epoch_history_

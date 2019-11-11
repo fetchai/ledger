@@ -51,9 +51,9 @@ public:
   {
     IDENTITY    address;
     std::string name;
-    double      trust;
-    bool        has_transacted;
-    bool        active;
+    double      trust{};
+    bool        has_transacted{};
+    bool        active{};
   };
   using PeerTrusts = std::vector<PeerTrust>;
 

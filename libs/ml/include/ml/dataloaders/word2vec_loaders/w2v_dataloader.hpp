@@ -23,6 +23,7 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
+#include "ml/exceptions/exceptions.hpp"
 
 #include <exception>
 #include <map>
@@ -38,7 +39,7 @@ template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-  static_assert(meta::IsFloat<T> || math::meta::IsFixedPoint<T>,
+  static_assert(fetch::meta::IsFloat<T> || math::meta::IsFixedPoint<T>,
                 "The intended T is the typename for the data input to the neural network, which "
                 "should be a float or double or fixed-point type.");
   static constexpr T WindowContextUnused = -1;
@@ -59,10 +60,10 @@ public:
 
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable();
-  void       GetNext(ReturnType &t);
+  void       GetNext(ReturnType &ret);
   ReturnType GetNext() override;
 
-  bool AddData(InputType const &input, LabelType const &label) override;
+  bool AddData(std::vector<InputType> const &input, LabelType const &label) override;
 
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
@@ -76,6 +77,11 @@ public:
   std::string      WordFromIndex(SizeType index) const;
   SizeType         IndexFromWord(std::string const &word) const;
   SizeType         window_size();
+
+  LoaderType LoaderCode() override
+  {
+    return LoaderType::W2V;
+  }
 
 private:
   SizeType                                   current_sentence_;
@@ -125,9 +131,9 @@ math::SizeType W2VLoader<T>::Size() const
   SizeType size(0);
   for (auto const &s : data_)
   {
-    if ((SizeType)s.size() > (2 * window_size_))
+    if (static_cast<SizeType>(s.size()) > (2 * window_size_))
     {
-      size += (SizeType)s.size() - (2 * window_size_);
+      size += static_cast<SizeType>(s.size()) - (2 * window_size_);
     }
   }
 
@@ -146,7 +152,7 @@ bool W2VLoader<T>::IsDone() const
   {
     return true;
   }
-  else if (current_sentence_ >= data_.size() - 1)  // In the last sentence
+  if (current_sentence_ >= data_.size() - 1)  // In the last sentence
   {
     if (current_word_ >= data_.at(current_sentence_).size() - window_size_)
     {
@@ -173,14 +179,14 @@ template <typename T>
 void W2VLoader<T>::SetTestRatio(float new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
-  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename T>
 void W2VLoader<T>::SetValidationRatio(float new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
-  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
+  throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");
 }
 
 /**
@@ -196,11 +202,12 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
   for (auto const &sentence : data_)
   {
     std::string s;
+    auto        counts = vocab_.GetCounts();
     for (auto const &word : sentence)
     {
-      if (vocab_.counts[word] >= min)
+      if (counts[word] >= min)
       {
-        s += vocab_.reverse_vocab[word] + " ";
+        s += vocab_.WordFromIndex(word) + " ";
       }
     }
     new_loader.BuildVocab(s);
@@ -217,7 +224,7 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
 template <typename T>
 void W2VLoader<T>::InitUnigramTable()
 {
-  unigram_table_.ResetTable(vocab_.counts, 1e8);
+  unigram_table_.ResetTable(vocab_.GetCounts(), 1e8);
 }
 
 /**
@@ -266,7 +273,7 @@ void W2VLoader<T>::GetNext(ReturnType &ret)
     }
     else
     {
-      throw std::runtime_error(
+      throw ml::exceptions::Timeout(
           "unigram table timed out looking for a negative sample. check window size for sentence "
           "length and that data loaded correctly.");
     }
@@ -293,11 +300,11 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
 }
 
 template <typename T>
-bool W2VLoader<T>::AddData(InputType const &input, LabelType const &label)
+bool W2VLoader<T>::AddData(std::vector<InputType> const &input, LabelType const &label)
 {
   FETCH_UNUSED(input);
   FETCH_UNUSED(label);
-  throw std::runtime_error("Add Data not used for W2V loader");
+  throw exceptions::InvalidMode("Add Data not used for W2V loader");
 }
 
 /**
@@ -350,7 +357,7 @@ void W2VLoader<T>::LoadVocab(std::string const &filename)
 template <typename T>
 math::SizeType W2VLoader<T>::vocab_size() const
 {
-  return vocab_.vocab.size();
+  return vocab_.GetVocabCount();
 }
 
 /**
@@ -424,7 +431,7 @@ std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s)
   result.reserve(s.size());
   for (auto const &c : s)
   {
-    result.push_back(std::isalpha(c) ? (char)std::tolower(c) : ' ');
+    result.push_back(std::isalpha(c) != 0 ? static_cast<char>(std::tolower(c)) : ' ');
   }
 
   std::string              word;
@@ -441,7 +448,7 @@ void W2VLoader<T>::UpdateCursor()
 {
   if (this->mode_ != DataLoaderMode::TRAIN)
   {
-    throw std::runtime_error("Other mode than training not supported.");
+    throw exceptions::InvalidMode("mode not supported.");
   }
 }
 

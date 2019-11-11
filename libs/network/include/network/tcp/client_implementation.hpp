@@ -20,9 +20,9 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/management/network_manager.hpp"
@@ -47,7 +47,8 @@ public:
   using ResolverType       = asio::ip::tcp::resolver;
   using MutexType          = std::mutex;
 
-  static constexpr char const *LOGGING_NAME = "TCPClientImpl";
+  static const uint64_t        NETWORK_MAGIC = 0xFE7C80A1FE7C80A1;
+  static constexpr char const *LOGGING_NAME  = "TCPClientImpl";
 
   explicit TCPClientImplementation(NetworkManagerType const &network_manager) noexcept;
   TCPClientImplementation(TCPClientImplementation const &rhs) = delete;
@@ -71,9 +72,9 @@ public:
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation &&rhs) = delete;
 
-private:
-  static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
+  static void SetHeader(byte_array::ByteArray &header, uint64_t bufSize);
 
+private:
   NetworkManagerType networkManager_;
   // IO objects should be guaranteed to have lifetime less than the
   // io_service/networkManager
@@ -93,8 +94,6 @@ private:
 
   void ReadHeader() noexcept;
   void ReadBody(byte_array::ByteArray const &header) noexcept;
-
-  static void SetHeader(byte_array::ByteArray &header, uint64_t bufSize);
 
   // Always executed in a run(), in a strand
   void WriteNext(SharedSelfType const &selfLock);

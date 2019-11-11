@@ -28,7 +28,7 @@ namespace math {
 
 struct TensorSliceIteratorRange
 {
-  using SizeType       = uint64_t;
+  using SizeType       = fetch::math::SizeType;
   SizeType index       = 0;
   SizeType from        = 0;
   SizeType to          = 0;
@@ -50,7 +50,7 @@ class TensorSliceIterator
 {
 public:
   using Type     = T;
-  using SizeType = uint64_t;
+  using SizeType = fetch::math::SizeType;
   /**
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
@@ -215,18 +215,18 @@ public:
     new_ranges.reserve(ranges_.size());
 
     // Insert axes at beginning
-    for (uint64_t axe : axes)
+    for (uint64_t axis : axes)
     {
-      new_ranges.push_back(ranges_[axe]);
+      new_ranges.push_back(ranges_[axis]);
     }
 
     for (SizeType i = 0; i < ranges_.size(); ++i)
     {
       // Search for axis
       bool add_axis = true;
-      for (uint64_t axe : axes)
+      for (uint64_t axis : axes)
       {
-        if (i == axe)
+        if (i == axis)
         {
           add_axis = false;
           break;
@@ -315,6 +315,7 @@ public:
   }
 
   template <class IteratorType>
+  // NOLINTNEXTLINE
   friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &, IteratorType &);
 
   /**

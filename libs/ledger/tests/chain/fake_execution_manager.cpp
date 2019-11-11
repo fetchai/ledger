@@ -22,7 +22,7 @@
 #include "fake_execution_manager.hpp"
 #include "fake_storage_unit.hpp"
 
-using fetch::ledger::Digest;
+using fetch::Digest;
 
 FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
   : storage_{storage}
@@ -30,7 +30,7 @@ FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
   FETCH_UNUSED(storage_);
 }
 
-FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body const &block)
+FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block const &block)
 {
   if (!current_hash_.empty())
   {
@@ -49,7 +49,7 @@ FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body c
   return ScheduleStatus::SCHEDULED;
 }
 
-Digest FakeExecutionManager::LastProcessedBlock()
+Digest FakeExecutionManager::LastProcessedBlock() const
 {
   return last_processed_;
 }
@@ -57,7 +57,7 @@ Digest FakeExecutionManager::LastProcessedBlock()
 FakeExecutionManager::State FakeExecutionManager::GetState()
 {
   bool execution_complete{false};
-  if (current_polls_)
+  if (current_polls_ != 0u)
   {
     --current_polls_;
 
@@ -76,7 +76,7 @@ FakeExecutionManager::State FakeExecutionManager::GetState()
   }
 
   // evaluate the state
-  return (current_polls_ ? State::ACTIVE : State::IDLE);
+  return (current_polls_ != 0u ? State::ACTIVE : State::IDLE);
 }
 
 bool FakeExecutionManager::Abort()

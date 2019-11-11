@@ -41,10 +41,10 @@
 #pragma clang diagnostic ignored "-Weverything"
 #endif
 
-#include <pybind11/numpy.h>
-#include <pybind11/operators.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include "pybind11/numpy.h"
+#include "pybind11/operators.h"
+#include "pybind11/pybind11.h"
+#include "pybind11/stl.h"
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

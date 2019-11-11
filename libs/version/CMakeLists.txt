@@ -11,7 +11,7 @@ setup_compiler()
 
 generate_version_file()
 
-setup_library(fetch-version)
+setup_library(fetch-version fetch-logging)
 
 # Add generated file to source set
 target_sources(fetch-version PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src/fetch_version.cpp)

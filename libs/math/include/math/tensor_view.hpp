@@ -39,7 +39,7 @@ public:
   using VectorRegisterType         = typename ContainerType::VectorRegisterType;
   using VectorRegisterIteratorType = typename ContainerType::VectorRegisterIteratorType;
 
-  enum
+  enum : uint32_t
   {
     LOG_PADDING = 5,
     PADDING     = static_cast<SizeType>(1) << LOG_PADDING

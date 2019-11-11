@@ -26,6 +26,11 @@
 #include <vector>
 
 namespace fetch {
+
+namespace byte_array {
+class ConstByteArray;
+}
+
 namespace ledger {
 
 /**
@@ -55,7 +60,7 @@ public:
   Status Exists(std::string const &key) override;
   /// @}
 
-  void PushContext(Identifier const &scope);
+  void PushContext(byte_array::ConstByteArray const &scope);
   void PopContext();
 
 protected:

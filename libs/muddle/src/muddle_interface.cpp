@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "muddle.hpp"
+#include "muddle_fake.hpp"
 
 #include "crypto/ecdsa.hpp"
 #include "muddle/muddle_interface.hpp"

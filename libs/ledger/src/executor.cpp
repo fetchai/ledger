@@ -16,19 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
+#include "chain/transaction.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
-#include "core/macros.hpp"
-#include "core/mutex.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
-#include "metrics/metrics.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
@@ -46,18 +42,14 @@ using fetch::storage::ResourceAddress;
 using fetch::telemetry::Histogram;
 using fetch::telemetry::Registry;
 
-#ifdef FETCH_ENABLE_METRICS
-using fetch::metrics::Metrics;
-#endif  // FETCH_ENABLE_METRICS
-
 namespace fetch {
 namespace ledger {
 namespace {
 
-bool GenerateContractName(Transaction const &tx, Identifier &identifier)
+bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
 {
   // Step 1 - Translate the tx into a common name
-  using ContractMode = Transaction::ContractMode;
+  using ContractMode = chain::Transaction::ContractMode;
 
   ConstByteArray contract_name{};
   switch (tx.contract_mode())
@@ -65,13 +57,11 @@ bool GenerateContractName(Transaction const &tx, Identifier &identifier)
   case ContractMode::NOT_PRESENT:
     break;
   case ContractMode::PRESENT:
-    contract_name = tx.contract_digest().address().ToHex() + "." + tx.contract_address().display() +
-                    "." + tx.action();
+    contract_name = tx.contract_digest().address().ToHex() + "." + tx.contract_address().display();
     break;
   case ContractMode::CHAIN_CODE:
-    contract_name = tx.chain_code() + "." + tx.action();
+    contract_name = tx.chain_code();
     break;
-
   case ContractMode::SYNERGETIC:
     // synergetic contracts are not supported through normal pipeline
     break;
@@ -89,9 +79,9 @@ bool GenerateContractName(Transaction const &tx, Identifier &identifier)
   return true;
 }
 
-bool IsCreateWealth(Transaction const &tx)
+bool IsCreateWealth(chain::Transaction const &tx)
 {
-  return (tx.contract_mode() == Transaction::ContractMode::CHAIN_CODE) &&
+  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
          (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
 }
 
@@ -105,7 +95,6 @@ bool IsCreateWealth(Transaction const &tx)
 Executor::Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates)
   : stake_updates_{stake_updates}
   , storage_{std::move(storage)}
-  , token_contract_{std::make_shared<TokenContract>()}
   , overall_duration_{Registry::Instance().LookupMeasurement<Histogram>(
         "ledger_executor_overall_duration")}
   , tx_retrieve_duration_{Registry::Instance().LookupMeasurement<Histogram>(
@@ -188,7 +177,7 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
   return result;
 }
 
-void Executor::SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes)
+void Executor::SettleFees(chain::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes)
 {
   telemetry::FunctionTimer const timer{*settle_fees_duration_};
 
@@ -206,9 +195,11 @@ void Executor::SettleFees(Address const &miner, TokenAmount amount, uint32_t log
 
     // attach the token contract to the storage engine
     StateSentinelAdapter storage_adapter{*storage_, Identifier{"fetch.token"}, shard};
-    token_contract_->Attach(storage_adapter);
-    token_contract_->AddTokens(miner, amount);
-    token_contract_->Detach();
+
+    token_contract_.Attach(
+        {&token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
+    token_contract_.AddTokens(miner, amount);
+    token_contract_.Detach();
   }
 }
 
@@ -221,7 +212,7 @@ bool Executor::RetrieveTransaction(Digest const &digest)
   try
   {
     // create a new transaction
-    current_tx_ = std::make_unique<Transaction>();
+    current_tx_ = std::make_unique<chain::Transaction>();
 
     // load the transaction from the store
     success = storage_->GetTransaction(digest, *current_tx_);
@@ -248,7 +239,7 @@ bool Executor::ValidationChecks(Result &result)
 
   // CHECK: Determine if the transaction is valid for the given block
   auto const tx_validity = current_tx_->GetValidity(block_);
-  if (Transaction::Validity::VALID != tx_validity)
+  if (chain::Transaction::Validity::VALID != tx_validity)
   {
     result.status = Status::TX_NOT_VALID_FOR_BLOCK;
     return false;
@@ -256,13 +247,11 @@ bool Executor::ValidationChecks(Result &result)
 
   // attach the token contract to the storage engine
   StateAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}};
-  token_contract_->Attach(storage_adapter);
 
-  // lookup the balance from the transaction originator
-  uint64_t const balance = token_contract_->GetBalance(current_tx_->from());
-
-  // detach the token transfers
-  token_contract_->Detach();
+  token_contract_.Attach(
+      {&token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
+  uint64_t const balance = token_contract_.GetBalance(current_tx_->from());
+  token_contract_.Detach();
 
   // CHECK: Ensure that the originator has funds available to make both all the transfers in the
   //        contract as well as the maximum fees
@@ -306,29 +295,25 @@ bool Executor::ExecuteTransactionContract(Result &result)
     }
 
     // create the cache and state sentinel (lock and unlock resources as well as sandbox)
-    StateSentinelAdapter storage_adapter{*storage_cache_, contract_id.GetParent(), allowed_shards_};
+    StateSentinelAdapter storage_adapter{*storage_cache_, contract_id, allowed_shards_};
 
-    // lookup or create the instance of the contract as is needed
-    auto const is_token_contract = (contract_id.GetParent().full_name() == "fetch.token");
+    // look up or create the instance of the contract as is needed
+    auto const is_token_contract = (contract_id.full_name() == "fetch.token");
 
-    auto contract = is_token_contract
-                        ? token_contract_
-                        : chain_code_cache_.Lookup(contract_id.GetParent(), *storage_);
-    if (!contract)
+    auto contract = is_token_contract ? &token_contract_
+                                      : chain_code_cache_.Lookup(contract_id, *storage_).get();
+    if (!static_cast<bool>(contract))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id.full_name());
       result.status = Status::CONTRACT_LOOKUP_FAILURE;
+      return false;
     }
 
-    // attach the chain code to the current working context
-    contract->Attach(storage_adapter);
-
     // Dispatch the transaction to the contract
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract_id.name());
-    auto const contract_status =
-        contract->DispatchTransaction(contract_id.name(), *current_tx_, block_);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", current_tx_->action());
 
-    // detach the chain code from the current context
+    contract->Attach({&token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
+    auto const contract_status = contract->DispatchTransaction(*current_tx_);
     contract->Detach();
 
     // map the contract execution status
@@ -343,22 +328,15 @@ bool Executor::ExecuteTransactionContract(Result &result)
       FETCH_LOG_WARN(LOGGING_NAME, "Transaction execution failed!");
       break;
     case Contract::Status::NOT_FOUND:
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up transaction handler");
       result.status = Status::CHAIN_CODE_LOOKUP_FAILURE;
       break;
     }
 
     result.return_value = contract_status.return_value;
 
-#ifdef FETCH_ENABLE_METRICS
-    Metrics::Timestamp const completed = Metrics::Clock::now();
-#endif  // FETCH_ENABLE_METRICS
-
     FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(current_tx_->digest()),
                     " (success)");
-
-    FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
-    FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed);
 
     // attempt to generate a fee for this transaction
     if (success)
@@ -387,9 +365,9 @@ bool Executor::ExecuteTransactionContract(Result &result)
         success       = false;
       }
 
-      if (success && stake_updates_)
+      if (success && (stake_updates_ != nullptr))
       {
-        for (auto const &update : token_contract_->stake_updates())
+        for (auto const &update : token_contract_.stake_updates())
         {
           FETCH_LOG_INFO(LOGGING_NAME, "Applying stake update from block: ", update.from,
                          " for: ", update.identity.identifier().ToBase64(),
@@ -399,7 +377,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
         }
       }
 
-      token_contract_->ClearStakeUpdates();
+      token_contract_.ClearStakeUpdates();
     }
   }
   catch (std::exception const &ex)
@@ -425,8 +403,9 @@ bool Executor::ProcessTransfers(Result &result)
     // attach the token contract to the storage engine
     StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"},
                                          allowed_shards_};
-    token_contract_->Attach(storage_adapter);
 
+    token_contract_.Attach(
+        {&token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
     // only process transfers if the previous steps have been successful
     if (Status::SUCCESS == result.status)
     {
@@ -434,22 +413,19 @@ bool Executor::ProcessTransfers(Result &result)
       for (auto const &transfer : current_tx_->transfers())
       {
         // make the individual transfers
-        if (!token_contract_->TransferTokens(*current_tx_, transfer.to, transfer.amount))
+        if (!token_contract_.TransferTokens(*current_tx_, transfer.to, transfer.amount))
         {
           result.status = Status::TRANSFER_FAILURE;
           success       = false;
           break;
         }
-        else
-        {
-          // the cost in charge units to make a transfer
-          result.charge += TRANSFER_CHARGE;
-        }
+
+        // the cost in charge units to make a transfer
+        result.charge += TRANSFER_CHARGE;
       }
     }
 
-    // detach the contract
-    token_contract_->Detach();
+    token_contract_.Detach();
   }
 
   return success;
@@ -461,12 +437,12 @@ void Executor::DeductFees(Result &result)
 
   // attach the token contract to the storage engine
   StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}, allowed_shards_};
-  token_contract_->Attach(storage_adapter);
 
   auto const &from = current_tx_->from();
 
-  // lookup the account balance
-  uint64_t const balance = token_contract_->GetBalance(from);
+  token_contract_.Attach(
+      {&token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
+  uint64_t const balance = token_contract_.GetBalance(from);
 
   // calculate the fee to deduct
   TokenAmount tx_fee = result.charge * current_tx_->charge();
@@ -479,9 +455,9 @@ void Executor::DeductFees(Result &result)
   result.fee = std::min(balance, tx_fee);
 
   // deduct the fee from the originator
-  token_contract_->SubtractTokens(from, result.fee);
+  token_contract_.SubtractTokens(from, result.fee);
 
-  token_contract_->Detach();
+  token_contract_.Detach();
 }
 
 }  // namespace ledger

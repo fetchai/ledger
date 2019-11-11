@@ -19,11 +19,11 @@
 
 #include "core/reactor.hpp"
 #include "ledger/shard_config.hpp"
+#include "ledger/storage_unit/object_store_protocol.hpp"
+#include "ledger/storage_unit/transient_object_store.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
-#include "storage/object_store_protocol.hpp"
-#include "storage/transient_object_store.hpp"
 
 #include <memory>
 
@@ -47,6 +47,12 @@ class ObjectStoreProtocol;
 class RevertibleDocumentStoreProtocol;
 }  // namespace storage
 
+namespace chain {
+
+class Transaction;
+
+}  // namespace chain
+
 namespace ledger {
 
 class TxFinderProtocol;
@@ -54,7 +60,6 @@ class TransactionStoreSyncProtocol;
 class TransactionStoreSyncService;
 class LaneController;
 class LaneControllerProtocol;
-class Transaction;
 
 class LaneService
 {
@@ -97,8 +102,8 @@ private:
   using ServerPtr                 = std::shared_ptr<Server>;
   using StateDb                   = storage::NewRevertibleDocumentStore;
   using StateDbProto              = storage::RevertibleDocumentStoreProtocol;
-  using TxStore                   = storage::TransientObjectStore<Transaction>;
-  using TxStoreProto              = storage::ObjectStoreProtocol<Transaction>;
+  using TxStore                   = storage::TransientObjectStore<chain::Transaction>;
+  using TxStoreProto              = storage::ObjectStoreProtocol<chain::Transaction>;
   using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;

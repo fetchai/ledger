@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/meta/ml_type_traits.hpp"
+#include "ml/model/model.hpp"
 #include "ml/model/model_config.hpp"
-#include "ml/model/model_interface.hpp"
 
 #include <vector>
 
@@ -27,17 +28,20 @@ namespace ml {
 namespace model {
 
 template <typename TensorType>
-class DNNRegressor : public ModelInterface<TensorType>
+class DNNRegressor : public Model<TensorType>
 {
 public:
   using SizeType          = fetch::math::SizeType;
   using DataType          = typename TensorType::Type;
   using CostFunctionType  = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
-  using OptimiserType     = fetch::ml::optimisers::OptimiserType;
-  using DataLoaderPtrType = typename ModelInterface<TensorType>::DataLoaderPtrType;
+  using OptimiserType     = fetch::ml::OptimiserType;
+  using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
-  DNNRegressor(DataLoaderPtrType data_loader_ptr, OptimiserType optimiser_type,
-               ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
+  DNNRegressor()                          = default;
+  DNNRegressor(DNNRegressor const &other) = default;
+  ~DNNRegressor() override                = default;
+
+  DNNRegressor(ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
 };
 
 /**
@@ -49,11 +53,9 @@ public:
  * @param optimiser_type type of optimiser to run
  */
 template <typename TensorType>
-DNNRegressor<TensorType>::DNNRegressor(DataLoaderPtrType            data_loader_ptr,
-                                       OptimiserType                optimiser_type,
-                                       ModelConfig<DataType>        model_config,
+DNNRegressor<TensorType>::DNNRegressor(ModelConfig<DataType>        model_config,
                                        std::vector<SizeType> const &hidden_layers)
-  : ModelInterface<TensorType>(data_loader_ptr, optimiser_type, model_config)
+  : Model<TensorType>(model_config)
 {
 
   assert(!hidden_layers.empty());
@@ -69,13 +71,46 @@ DNNRegressor<TensorType>::DNNRegressor(DataLoaderPtrType            data_loader_
   }
   this->output_ = this->graph_ptr_->template AddNode<layers::FullyConnected<TensorType>>(
       "Output", {cur_input}, hidden_layers.at(hidden_layers.size() - 2),
-      hidden_layers.at(hidden_layers.size() - 1), fetch::ml::details::ActivationType::RELU);
+      hidden_layers.at(hidden_layers.size() - 1));
 
   this->label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
   this->error_ =
       this->graph_ptr_->template AddNode<CostFunctionType>("Error", {this->output_, this->label_});
+  this->loss_set_ = true;
 }
 
 }  // namespace model
 }  // namespace ml
+
+namespace serializers {
+/**
+ * serializer for DNNRegressor model
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::model::DNNRegressor<TensorType>, D>
+{
+  using Type                      = ml::model::DNNRegressor<TensorType>;
+  using DriverType                = D;
+  static uint8_t const BASE_MODEL = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+
+    // serialize the optimiser parent class
+    auto base_pointer = static_cast<ml::model::Model<TensorType> const *>(&sp);
+    map.Append(BASE_MODEL, *base_pointer);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::model::Model<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(BASE_MODEL, *base_pointer);
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch

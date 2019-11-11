@@ -25,9 +25,7 @@ namespace byte_array {
 class Token : public ConstByteArray
 {
 public:
-  Token()
-    : ConstByteArray()
-  {}
+  Token() = default;
 
   explicit Token(char const *str)
     : ConstByteArray(str)

@@ -35,7 +35,7 @@ struct CallableCategory<free_or_static_member_fn_tag>
   template <typename F, typename... Args>
   static constexpr decltype(auto) Invoke(F &&f, Args &&... args)
   {
-    return (*f)(std::forward<Args>(args)...);
+    return std::forward<F>(f)(std::forward<Args>(args)...);
   }
 };
 template <>

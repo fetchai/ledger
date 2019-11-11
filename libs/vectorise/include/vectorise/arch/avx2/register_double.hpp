@@ -187,12 +187,12 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<double, 256> con
 
 inline VectorRegister<double, 128> operator-(VectorRegister<double, 128> const &x)
 {
-  return VectorRegister<double, 128>(_mm_sub_pd(_mm_setzero_pd(), x.data()));
+  return {_mm_sub_pd(_mm_setzero_pd(), x.data())};
 }
 
 inline VectorRegister<double, 256> operator-(VectorRegister<double, 256> const &x)
 {
-  return VectorRegister<double, 256>(_mm256_sub_pd(_mm256_setzero_pd(), x.data()));
+  return {_mm256_sub_pd(_mm256_setzero_pd(), x.data())};
 }
 
 #define FETCH_ADD_OPERATOR(op, type, size, L, fnc)                                   \
@@ -200,7 +200,7 @@ inline VectorRegister<double, 256> operator-(VectorRegister<double, 256> const &
                                                 VectorRegister<type, size> const &b) \
   {                                                                                  \
     L ret = fnc(a.data(), b.data());                                                 \
-    return VectorRegister<type, size>(ret);                                          \
+    return {ret};                                                                    \
   }
 
 FETCH_ADD_OPERATOR(*, double, 128, __m128d, _mm_mul_pd)
@@ -220,7 +220,7 @@ FETCH_ADD_OPERATOR(+, double, 256, __m256d, _mm256_add_pd)
                                                VectorRegister<type, 128> const &b) \
   {                                                                                \
     L ret = fnc(a.data(), b.data());                                               \
-    return VectorRegister<type, 128>(ret);                                         \
+    return {ret};                                                                  \
   }
 
 FETCH_ADD_OPERATOR(==, double, __m128d, _mm_cmpeq_pd)
@@ -258,51 +258,51 @@ FETCH_ADD_OPERATOR(<, double, __m256d, _CMP_LT_OQ)
 inline VectorRegister<double, 128> vector_zero_below_element(VectorRegister<double, 128> const &a,
                                                              int const &                        n)
 {
-  alignas(16) uint64_t mask[2] = {uint64_t(-(0 >= n)), uint64_t(-(1 >= n))};
+  alignas(16) uint64_t mask[2] = {uint64_t(-(int64_t(0 >= n))), uint64_t(-(int64_t(1 >= n)))};
 
   __m128i conv = _mm_castpd_si128(a.data());
   conv         = _mm_and_si128(conv, *reinterpret_cast<__m128i *>(mask));
 
-  return VectorRegister<double, 128>(_mm_castsi128_pd(conv));
+  return {_mm_castsi128_pd(conv)};
 }
 
 inline VectorRegister<double, 256> vector_zero_above_element(VectorRegister<double, 256> const &a,
                                                              int const &                        n)
 {
-  alignas(32) uint64_t mask[4] = {uint64_t(-(0 <= n)), uint64_t(-(1 <= n))};
+  alignas(32) uint64_t mask[4] = {uint64_t(-(int64_t(0 <= n))), uint64_t(-(int64_t(1 <= n)))};
 
   __m256i conv = _mm256_castpd_si256(a.data());
   conv         = _mm256_and_si256(conv, *reinterpret_cast<__m256i *>(mask));
 
-  return VectorRegister<double, 256>(_mm256_castsi256_pd(conv));
+  return {_mm256_castsi256_pd(conv)};
 }
 
 inline VectorRegister<double, 128> shift_elements_left(VectorRegister<double, 128> const &x)
 {
   __m128i n = _mm_castpd_si128(x.data());
   n         = _mm_bslli_si128(n, 8);
-  return VectorRegister<double, 128>(_mm_castsi128_pd(n));
+  return {_mm_castsi128_pd(n)};
 }
 
 inline VectorRegister<double, 256> shift_elements_left(VectorRegister<double, 256> const &x)
 {
   __m256i n = _mm256_castpd_si256(x.data());
   n         = _mm256_bslli_epi128(n, 8);
-  return VectorRegister<double, 256>(_mm256_castsi256_pd(n));
+  return {_mm256_castsi256_pd(n)};
 }
 
 inline VectorRegister<double, 128> shift_elements_right(VectorRegister<double, 128> const &x)
 {
   __m128i n = _mm_castpd_si128(x.data());
   n         = _mm_bsrli_si128(n, 8);
-  return VectorRegister<double, 128>(_mm_castsi128_pd(n));
+  return {_mm_castsi128_pd(n)};
 }
 
 inline VectorRegister<double, 256> shift_elements_right(VectorRegister<double, 256> const &x)
 {
   __m256i n = _mm256_castpd_si256(x.data());
   n         = _mm256_bsrli_epi128(n, 8);
-  return VectorRegister<double, 256>(_mm256_castsi256_pd(n));
+  return {_mm256_castsi256_pd(n)};
 }
 
 inline double first_element(VectorRegister<double, 128> const &x)

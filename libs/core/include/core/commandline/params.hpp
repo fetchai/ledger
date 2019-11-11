@@ -47,9 +47,7 @@ public:
   using AssignersType = std::map<std::string, ActionFunctionType>;
   using HelpTextsType = std::list<HelpTextType>;
 
-  Params()
-    : paramsParser_()
-  {}
+  Params() = default;
 
   void Parse(int argc, char **argv)
   {

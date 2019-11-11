@@ -27,12 +27,12 @@
 #include <iostream>
 #include <memory>
 
-// Test of the client and server.
+namespace {
 
 using namespace fetch::network;
 using namespace fetch::byte_array;
 
-static constexpr char const *LOGGING_NAME = "TcpClientServerStressTests";
+constexpr char const *LOGGING_NAME = "TcpClientServerStressTests";
 
 std::vector<MessageType> globalMessagesFromServer_{};
 std::mutex               messages_;
@@ -43,7 +43,7 @@ class Server : public TCPServer
 public:
   Server(uint16_t port, NetworkManager const &nmanager)
     : TCPServer(port, nmanager)
-  {}  // note for debug purposes, server does not Start() automatically
+  {}
 
   ~Server() override = default;
 
@@ -302,7 +302,7 @@ void TestCase5(std::string host, uint16_t port)
     if (!(i->WaitForAlive(100)))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     std::atomic<std::size_t> send_atomic{0};
@@ -317,7 +317,7 @@ void TestCase5(std::string host, uint16_t port)
       }
     };
 
-    for (std::size_t i = 0; i < to_send.size(); ++i)
+    for (std::size_t j = 0; j < to_send.size(); ++j)
     {
       auto dummy0 =
           std::async(std::launch::async, cb);  // dummy is important to force async execution
@@ -350,9 +350,9 @@ void TestCase5(std::string host, uint16_t port)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Received: ");
 
-      for (auto const &i : globalMessagesFromServer_)
+      for (auto const &j : globalMessagesFromServer_)
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, i);
+        FETCH_LOG_ERROR(LOGGING_NAME, j);
       }
     }
   }
@@ -392,7 +392,7 @@ void TestCase6(std::string host, uint16_t port)
     if (!(i->WaitForAlive(1000)))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened 1");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     std::mutex messages_receive;
@@ -416,7 +416,7 @@ void TestCase6(std::string host, uint16_t port)
       }
     };
 
-    for (std::size_t i = 0; i < to_send.size(); ++i)
+    for (std::size_t j = 0; j < to_send.size(); ++j)
     {
       auto dummy0 =
           std::async(std::launch::async, cb);  // dummy is important to force async execution
@@ -448,9 +448,9 @@ void TestCase6(std::string host, uint16_t port)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Received: ");
 
-      for (auto const &i : globalMessagesFromServer_)
+      for (auto const &j : globalMessagesFromServer_)
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, i);
+        FETCH_LOG_ERROR(LOGGING_NAME, j);
       }
     }
   }
@@ -505,7 +505,7 @@ void TestCase7(std::string host, uint16_t port)
     if (!(i->WaitForAlive(1000)))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened!");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     std::mutex messages_receive;
@@ -540,7 +540,7 @@ void TestCase7(std::string host, uint16_t port)
       }
     };
 
-    for (std::size_t i = 0; i < to_send_from_client.size(); ++i)
+    for (std::size_t j = 0; j < to_send_from_client.size(); ++j)
     {
       auto dummy0 = std::async(std::launch::async, cb_server);
       auto dummy1 = std::async(std::launch::async, cb_client);
@@ -574,13 +574,13 @@ void TestCase7(std::string host, uint16_t port)
     if (globalMessagesFromServer_ != to_send_from_client)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match client->server messages.");
-      throw 1;
+      throw std::runtime_error("error");
     }
 
     if (received_client != to_send_from_server)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server->client messages.");
-      throw 1;
+      throw std::runtime_error("error");
     }
   }
 }
@@ -627,3 +627,5 @@ INSTANTIATE_TEST_CASE_P(MyGroup, TCPClientServerTest, testing::Values<std::size_
                         testing::PrintToStringParamName());
 // testing::Values<std::size_t>(4): 4 is the number of iterations to run this test under 30 sec.
 // Change the number of iteration to increase/decrease test execution time.
+
+}  // namespace

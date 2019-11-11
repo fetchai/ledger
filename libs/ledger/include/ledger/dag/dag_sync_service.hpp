@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/dag/dag.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/transaction_verifier.hpp"
@@ -48,7 +48,7 @@ enum class State
   QUERY_MISSING,
   RESOLVE_MISSING,
 };
-}
+}  // namespace dag_sync
 
 /**
  * DAG implementation.
@@ -59,7 +59,7 @@ public:
   static constexpr char const *LOGGING_NAME = "DAGSyncService";
 
   using MuddleEndpoint = muddle::MuddleEndpoint;
-  using TransactionPtr = std::shared_ptr<Transaction>;
+  using TransactionPtr = std::shared_ptr<chain::Transaction>;
 
   using Client          = muddle::rpc::Client;
   using ClientPtr       = std::shared_ptr<Client>;

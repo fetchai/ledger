@@ -41,7 +41,7 @@ class SelfAttentionEncoder : public SubGraph<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using DataType      = typename T::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
@@ -151,13 +151,13 @@ public:
   static constexpr char const *DESCRIPTOR = "SelfAttentionEncoder";
 
 private:
-  SizeType       n_heads_;
-  SizeType       model_dim_;
-  SizeType       ff_dim_;
-  DataType       residual_dropout_;
-  DataType       attention_dropout_;
-  DataType       feedforward_dropout_;
-  DataType       epsilon_;
+  SizeType       n_heads_{};
+  SizeType       model_dim_{};
+  SizeType       ff_dim_{};
+  DataType       residual_dropout_{};
+  DataType       attention_dropout_{};
+  DataType       feedforward_dropout_{};
+  DataType       epsilon_{};
   ActivationType activation_type_;
 
   std::string positionwise_feedforward(std::string const &name, std::string const &input)

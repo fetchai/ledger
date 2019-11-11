@@ -28,7 +28,7 @@ void BuildRange(std::string const &custom_name, pybind11::module &module)
 
   namespace py = pybind11;
   py::class_<Range>(module, custom_name.c_str())
-      .def(py::init<const std::size_t &, const std::size_t &>())
+      .def(py::init<std::size_t const &, std::size_t const &>())
       .def("from", &Range::from)
       .def("to", &Range::to);
 }

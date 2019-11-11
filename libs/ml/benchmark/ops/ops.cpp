@@ -25,6 +25,7 @@
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/ops/sqrt.hpp"
+#include "ml/ops/squeeze.hpp"
 #include "ml/ops/subtract.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -973,6 +974,128 @@ BENCHMARK_TEMPLATE(BM_SubtractBackward, fetch::fixed_point::fp64_t, 1024)
 BENCHMARK_TEMPLATE(BM_SubtractBackward, fetch::fixed_point::fp64_t, 2048)
     ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SubtractBackward, fetch::fixed_point::fp64_t, 4096)
+    ->Unit(benchmark::kMicrosecond);
+
+template <class T, int N>
+void BM_SqueezeForward(benchmark::State &state)
+{
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+
+  fetch::math::Tensor<T> input({1, N});
+  fetch::math::Tensor<T> output({N});
+
+  // Fill tensors with random values
+  input.FillUniformRandom();
+  output.FillUniformRandom();
+
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input));
+  fetch::ml::ops::Squeeze<fetch::math::Tensor<T>> sque1;
+
+  for (auto _ : state)
+  {
+    sque1.Forward(inputs, output);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_SqueezeForward, float, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, float, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, float, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, float, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, float, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, float, 4096)->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_SqueezeForward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp32_t, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp32_t, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp32_t, 512)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp32_t, 1024)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp32_t, 2048)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp32_t, 4096)
+    ->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp64_t, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp64_t, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp64_t, 512)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp64_t, 1024)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp64_t, 2048)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeForward, fetch::fixed_point::fp64_t, 4096)
+    ->Unit(benchmark::kMicrosecond);
+
+template <class T, int N>
+void BM_SqueezeBackward(benchmark::State &state)
+{
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+
+  fetch::math::Tensor<T> input({1, N});
+  fetch::math::Tensor<T> error_signal({1, N});
+
+  // Fill tensors with random values
+  input.FillUniformRandom();
+  error_signal.FillUniformRandom();
+
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input));
+  fetch::ml::ops::Squeeze<fetch::math::Tensor<T>> sque1;
+
+  for (auto _ : state)
+  {
+    sque1.Backward(inputs, error_signal);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, float, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, float, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, float, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, float, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, float, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, float, 4096)->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, double, 4096)->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp32_t, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp32_t, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp32_t, 512)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp32_t, 1024)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp32_t, 2048)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp32_t, 4096)
+    ->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp64_t, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp64_t, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp64_t, 512)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp64_t, 1024)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp64_t, 2048)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_SqueezeBackward, fetch::fixed_point::fp64_t, 4096)
     ->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_MAIN();

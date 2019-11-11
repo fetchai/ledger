@@ -38,16 +38,16 @@ using RngWord        = LinearCongruentialGenerator::RandomType;
 using testing::Return;
 using testing::HasSubstr;
 
-struct ClockSteadyClockMock;
+struct ClockSystemClockMock;
 
 struct ClockMock : public std::chrono::steady_clock
 {
-  static std::shared_ptr<ClockSteadyClockMock> mock;
+  static std::shared_ptr<ClockSystemClockMock> mock;
   static time_point                            now() noexcept;
 };
-std::shared_ptr<ClockSteadyClockMock> ClockMock::mock;
+std::shared_ptr<ClockSystemClockMock> ClockMock::mock;
 
-struct ClockSteadyClockMock
+struct ClockSystemClockMock
 {
   MOCK_CONST_METHOD0(now, ClockMock::time_point());
 };
@@ -66,7 +66,7 @@ class TransactionStatusCacheTests : public ::testing::Test
 protected:
   void SetUp() override
   {
-    clock_mock_     = std::make_shared<ClockSteadyClockMock>();
+    clock_mock_     = std::make_shared<ClockSystemClockMock>();
     ClockMock::mock = clock_mock_;
     EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(Timepoint::min()));
     cache_ = std::make_shared<TransactionStatusCacheForTest>();
@@ -102,7 +102,7 @@ protected:
 
   StatusCachePtr                        cache_{};
   LinearCongruentialGenerator           rng_{};
-  std::shared_ptr<ClockSteadyClockMock> clock_mock_{};
+  std::shared_ptr<ClockSystemClockMock> clock_mock_{};
 };
 
 TEST_F(TransactionStatusCacheTests, CheckBasicUpdate)

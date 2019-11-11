@@ -23,6 +23,31 @@
 namespace fetch {
 namespace ml {
 
+enum class OptimiserType : uint8_t
+{
+  ADAGRAD,
+  ADAM,
+  MOMENTUM,
+  RMSPROP,
+  SGD
+};
+
+enum class LoaderType : uint8_t
+{
+  TENSOR,
+  SGNS,
+  W2V,
+  COMMODITY,
+  C2V
+};
+
+enum class SliceType : uint8_t
+{
+  SINGLE_AXIS,
+  MULTI_AXIS,
+  RANGED
+};
+
 enum class OpKind : uint8_t
 {
   INVALID,
@@ -55,14 +80,17 @@ enum class OpType : uint16_t
   OP_GELU,
   OP_LAYER_NORM,
   OP_LEAKY_RELU,
-  OP_LEAKY_RELU_OP,
+  OP_PRELU_OP,
   OP_LOG,
   OP_LOGSIGMOID,
   OP_LOGSOFTMAX,
   OP_MASK_FILL,
   OP_MATRIX_MULTIPLY,
+  OP_MAX_POOL,
   OP_MAX_POOL_1D,
   OP_MAX_POOL_2D,
+  OP_AVG_POOL_1D,
+  OP_AVG_POOL_2D,
   OP_MAXIMUM,
   OP_MULTIPLY,
   OP_PLACEHOLDER,
@@ -77,9 +105,13 @@ enum class OpType : uint16_t
   OP_SWITCH,
   OP_TANH,
   OP_TRANSPOSE,
+  OP_ONE_HOT,
+  OP_TOP_K,
   OP_VARIABLE,
   OP_WEIGHTS,
   OP_SLICE,
+  OP_SQUEEZE,
+  OP_REDUCE_MEAN,
 
   // OpKind - LOSS
   LOSS_CROSS_ENTROPY,

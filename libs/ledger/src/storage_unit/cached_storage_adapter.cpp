@@ -24,7 +24,7 @@ namespace fetch {
 namespace ledger {
 
 /**
- * Construct the Cache Adpater
+ * Construct the Cache Adapter
  *
  * @param storage The reference to the underlying storage engine
  */
@@ -42,11 +42,8 @@ CachedStorageAdapter::~CachedStorageAdapter() = default;
  */
 void CachedStorageAdapter::Flush()
 {
-  FETCH_LOCK(lock_);
-
-  if (flush_required_)
-  {
-    for (auto &entry : cache_)
+  cache_.ApplyVoid([this](auto &cache) {
+    for (auto &entry : cache)
     {
       if (!entry.second.flushed)
       {
@@ -57,10 +54,7 @@ void CachedStorageAdapter::Flush()
         entry.second.flushed = true;
       }
     }
-
-    // reset the top level flush flag
-    flush_required_ = false;
-  }
+  });
 }
 
 /**
@@ -68,10 +62,7 @@ void CachedStorageAdapter::Flush()
  */
 void CachedStorageAdapter::Clear()
 {
-  FETCH_LOCK(lock_);
-
-  cache_.clear();
-  flush_required_ = false;
+  cache_.ApplyVoid([](auto &cache) { cache.clear(); });
 }
 
 /**
@@ -93,15 +84,12 @@ CachedStorageAdapter::Document CachedStorageAdapter::Get(ResourceAddress const &
   else
   {
     // not in the cache need to retrieve
-    auto const storage_result = storage_.Get(key);
+    result = storage_.Get(key);
 
     if (!result.failed)
     {
       // update the result
-      AddCacheEntry(key, storage_result.document);
-
-      // update the result
-      result = storage_result;
+      AddCacheEntry(key, result.document);
     }
   }
 
@@ -127,15 +115,12 @@ CachedStorageAdapter::Document CachedStorageAdapter::GetOrCreate(ResourceAddress
   else
   {
     // not in the cache need to retrieve
-    auto const storage_result = storage_.GetOrCreate(key);
+    result = storage_.GetOrCreate(key);
 
     if (!result.failed)
     {
       // update the result
-      AddCacheEntry(key, storage_result.document);
-
-      // update the result
-      result = storage_result;
+      AddCacheEntry(key, result.document);
     }
   }
 
@@ -186,11 +171,8 @@ bool CachedStorageAdapter::Unlock(ShardIndex index)
  */
 void CachedStorageAdapter::AddCacheEntry(ResourceAddress const &address, StateValue const &value)
 {
-  FETCH_LOCK(lock_);
-
   // update the cache and signal that a flush is required
-  cache_[address] = CacheEntry{value};
-  flush_required_ = true;
+  cache_.ApplyVoid([&address, &value](auto &cache) { cache[address] = CacheEntry{value}; });
 }
 
 /**
@@ -202,23 +184,16 @@ void CachedStorageAdapter::AddCacheEntry(ResourceAddress const &address, StateVa
 CachedStorageAdapter::StateValue CachedStorageAdapter::GetCacheEntry(
     ResourceAddress const &address) const
 {
-  FETCH_LOCK(lock_);
+  return cache_.Apply([&address](auto const &cache) -> CachedStorageAdapter::StateValue {
+    StateValue value{};
 
-  StateValue value{};
-
-  // ensure the key exists
-  auto it = cache_.find(address);
-  if (it != cache_.end())
-  {
+    // ensure the key exists
+    auto it = cache.find(address);
+    detailed_assert(it != cache.end());
     value = it->second.value;
-  }
-  else
-  {
-    // sanity check
-    assert(false);
-  }
 
-  return value;
+    return value;
+  });
 }
 
 /**
@@ -229,23 +204,12 @@ CachedStorageAdapter::StateValue CachedStorageAdapter::GetCacheEntry(
  */
 bool CachedStorageAdapter::HasCacheEntry(ResourceAddress const &address) const
 {
-  FETCH_LOCK(lock_);
-
-  return cache_.find(address) != cache_.end();
-}
-
-/**
- * Return all valid keys
- *
- */
-CachedStorageAdapter::Keys CachedStorageAdapter::KeyDump() const
-{
-  return storage_.KeyDump();
+  return cache_.Apply(
+      [&address](auto const &cache) -> bool { return cache.find(address) != cache.end(); });
 }
 
 /**
  * Reset the database
- *
  */
 void CachedStorageAdapter::Reset()
 {

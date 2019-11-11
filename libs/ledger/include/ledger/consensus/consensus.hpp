@@ -18,14 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/consensus/consensus_interface.hpp"
+#include "ledger/protocols/notarisation_service.hpp"
 
+#include "chain/address.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chain/address.hpp"
 #include "ledger/chain/main_chain.hpp"
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
 
 #include "ledger/consensus/stake_manager.hpp"
@@ -39,56 +39,72 @@ namespace ledger {
 class Consensus final : public ConsensusInterface
 {
 public:
-  using StakeManagerPtr   = std::shared_ptr<ledger::StakeManager>;
-  using BeaconServicePtr  = std::shared_ptr<fetch::beacon::BeaconService>;
-  using CabinetMemberList = beacon::BeaconService::CabinetMemberList;
-  using Identity          = crypto::Identity;
-  using MainChain         = ledger::MainChain;
+  using StakeManagerPtr       = std::shared_ptr<ledger::StakeManager>;
+  using BeaconSetupServicePtr = std::shared_ptr<beacon::BeaconSetupService>;
+  using BeaconServicePtr      = std::shared_ptr<fetch::beacon::BeaconService>;
+  using CabinetMemberList     = beacon::BeaconSetupService::CabinetMemberList;
+  using Identity              = crypto::Identity;
+  using WeightedQual          = std::vector<Identity>;
+  using MainChain             = ledger::MainChain;
+  using BlockEntropy          = ledger::Block::BlockEntropy;
+  using NotarisationPtr       = std::shared_ptr<ledger::NotarisationService>;
+  using NotarisationResult    = NotarisationService::NotarisationResult;
 
-  Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
-            Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size,
-            uint32_t block_interval_ms = 1000);
+  Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,
+            MainChain const &chain, Identity mining_identity, uint64_t aeon_period,
+            uint64_t max_cabinet_size, uint32_t block_interval_ms = 1000,
+            NotarisationPtr notarisation = nullptr);
 
   void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
-  Status       ValidBlock(Block const &previous, Block const &current) override;
+  Status       ValidBlock(Block const &current) const override;
+  bool         VerifyNotarisation(Block const &block) const;
   void         Reset(StakeSnapshot const &snapshot);
   void         Refresh() override;
 
   StakeManagerPtr stake();
   void            SetThreshold(double threshold);
-  void            SetCommitteeSize(uint64_t size);
+  void            SetCabinetSize(uint64_t size);
   void            SetDefaultStartTime(uint64_t default_start_time);
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
 
-  using Committee    = StakeManager::Committee;
-  using CommitteePtr = std::shared_ptr<Committee const>;
+  using Cabinet        = StakeManager::Cabinet;
+  using CabinetPtr     = std::shared_ptr<Cabinet const>;
+  using BlockIndex     = uint64_t;
+  using CabinetHistory = std::map<BlockIndex, CabinetPtr>;
 
-  using BlockIndex       = uint64_t;
-  using CommitteeHistory = std::map<BlockIndex, CommitteePtr>;
+  StakeManagerPtr       stake_;
+  BeaconSetupServicePtr cabinet_creator_;
+  BeaconServicePtr      beacon_;
+  MainChain const &     chain_;
+  Identity              mining_identity_;
+  chain::Address        mining_address_;
 
-  StakeManagerPtr  stake_;
-  BeaconServicePtr beacon_;
-  MainChain const &chain_;
-  Identity         mining_identity_;
-  Address          mining_address_;
-  uint64_t         aeon_period_            = 0;
-  uint64_t         max_committee_size_     = 0;
-  double           threshold_              = 1.0;
-  uint64_t         current_block_number_   = 0;
-  int64_t          last_committee_created_ = -1;
-  Block            current_block_;
+  // Global variables relating to consensus
+  uint64_t aeon_period_      = 0;
+  uint64_t max_cabinet_size_ = 0;
+  double   threshold_        = 0.51;
 
-  uint64_t         default_start_time_ = 0;
-  CommitteeHistory committee_history_{};  ///< Cache of historical committees
-  uint32_t         block_interval_ms_{std::numeric_limits<uint32_t>::max()};
+  // Consensus' view on the heaviest block etc.
+  Block  current_block_;
+  Block  previous_block_;
+  Block  beginning_of_aeon_;
+  Digest last_triggered_cabinet_;
 
-  CommitteePtr GetCommittee(Block const &previous);
-  bool         ValidMinerForBlock(Block const &previous, Address const &address);
-  uint64_t     GetBlockGenerationWeight(Block const &previous, Address const &address);
-  bool         ShouldGenerateBlock(Block const &previous, Address const &address);
+  uint64_t       default_start_time_ = 0;
+  CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
+  uint64_t       block_interval_ms_{std::numeric_limits<uint64_t>::max()};
+
+  NotarisationPtr notarisation_;
+
+  CabinetPtr GetCabinet(Block const &previous) const;
+  uint64_t   GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
+  bool       ValidBlockTiming(Block const &previous, Block const &proposed) const;
+  bool       ShouldTriggerNewCabinet(Block const &block);
+  bool       EnoughQualSigned(BlockEntropy const &block_entropy) const;
+  uint32_t   GetThreshold(Block const &block) const;
 };
 
 }  // namespace ledger

@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
 #include "core/mutex.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/work_queue.hpp"
+#include "telemetry/telemetry.hpp"
 #include "vectorise/threading/pool.hpp"
 
 #include <functional>
@@ -46,7 +46,7 @@ public:
   using ProblemData     = std::vector<ConstByteArray>;
 
   // Construction / Destruction
-  SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors, ExecutorFactory const &);
+  SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors, ExecutorFactory const &factory);
   SynergeticExecutionManager(SynergeticExecutionManager const &) = delete;
   SynergeticExecutionManager(SynergeticExecutionManager &&)      = delete;
   ~SynergeticExecutionManager() override                         = default;
@@ -84,6 +84,13 @@ private:
   WorkQueueStack solution_stack_;
   Executors      executors_;
   ThreadPool     threads_;
+  /// @}
+
+  /// @name Telemetry
+  /// @{
+  telemetry::CounterPtr no_executor_count_;
+  telemetry::CounterPtr no_executor_loop_count_;
+  telemetry::CounterPtr execute_item_failed_count_;
   /// @}
 };
 

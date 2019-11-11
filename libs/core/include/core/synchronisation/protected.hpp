@@ -34,7 +34,7 @@ private:
 
 public:
   template <typename... Args>
-  explicit Protected(Args &&...);
+  explicit Protected(Args &&... args);
   ~Protected()                 = default;
   Protected(Protected const &) = delete;
   Protected(Protected &&)      = delete;

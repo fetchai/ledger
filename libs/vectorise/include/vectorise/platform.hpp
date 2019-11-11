@@ -108,7 +108,7 @@ inline float ToBigEndian(float x)
   {
     float    value;
     uint32_t bytes;
-  } conversion;
+  } conversion{};
   static_assert(sizeof(float) == sizeof(uint32_t),
                 "float and uint32_t are required to be same size.");
   static_assert(sizeof(conversion) == sizeof(uint32_t), "");
@@ -124,7 +124,7 @@ inline float FromBigEndian(float x)
   {
     float    value;
     uint32_t bytes;
-  } conversion;
+  } conversion{};
   static_assert(sizeof(float) == sizeof(uint32_t),
                 "float and uint32_t are required to be same size.");
   static_assert(sizeof(conversion) == sizeof(uint32_t), "");
@@ -140,7 +140,7 @@ inline double ToBigEndian(double x)
   {
     double   value;
     uint64_t bytes;
-  } conversion;
+  } conversion{};
   static_assert(sizeof(double) == sizeof(uint64_t),
                 "double and uint64_t are required to be same size.");
   static_assert(sizeof(conversion) == sizeof(uint64_t), "");
@@ -156,7 +156,7 @@ inline double FromBigEndian(double x)
   {
     double   value;
     uint64_t bytes;
-  } conversion;
+  } conversion{};
   static_assert(sizeof(double) == sizeof(uint64_t),
                 "double and uint64_t are required to be same size.");
   static_assert(sizeof(conversion) == sizeof(uint64_t), "");
@@ -233,6 +233,11 @@ inline uint64_t CountTrailingZeroes64(uint64_t x)
   return x == 0 ? 64 : static_cast<uint64_t>(__builtin_ctzll(x));
 }
 
+inline uint64_t CountSetBits(uint64_t x)
+{
+  return static_cast<uint64_t>(__builtin_popcountll(x));
+}
+
 /**
  * finds most significant set bit in type
  * @tparam T
@@ -257,7 +262,7 @@ constexpr int32_t HighestSetBit(T n_input)
 inline uint64_t Log2Ceil(uint64_t x)
 {
   uint64_t count = 0;
-  while (x >>= 1)
+  while (x >>= 1)  // NOLINT
   {
     count++;
   }
@@ -272,21 +277,21 @@ inline uint64_t Log2Ceil(uint64_t x)
 
 inline uint32_t ToLog2(uint32_t value)
 {
-  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3u;
   return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
                                static_cast<uint32_t>(__builtin_clz(value) + 1));
 }
 
 inline uint64_t ToLog2(uint64_t value)
 {
-  static constexpr uint64_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  static constexpr uint64_t VALUE_SIZE_IN_BITS = sizeof(value) << 3u;
   return VALUE_SIZE_IN_BITS - static_cast<uint64_t>(__builtin_clzll(value) + 1);
 }
 
 // https://graphics.stanford.edu/~seander/bithacks.html
 inline bool IsLog2(uint64_t value)
 {
-  return value && !(value & (value - 1));
+  return (value != 0u) && ((value & (value - 1)) == 0u);
 }
 
 template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>

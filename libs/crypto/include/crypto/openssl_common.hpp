@@ -91,7 +91,7 @@ public:
       canonical_data[i] = 0;
     }
 
-    if (!BN_bn2bin(x, static_cast<uint8_t *>(canonical_data.pointer()) + x_data_start_index))
+    if (BN_bn2bin(x, static_cast<uint8_t *>(canonical_data.pointer()) + x_data_start_index) == 0)
     {
       throw std::runtime_error(
           "Convert2Bin<...,"
@@ -107,7 +107,7 @@ public:
       canonical_data[i] = 0;
     }
 
-    if (!BN_bn2bin(y, static_cast<uint8_t *>(canonical_data.pointer()) + y_data_start_index))
+    if (BN_bn2bin(y, static_cast<uint8_t *>(canonical_data.pointer()) + y_data_start_index) == 0)
     {
       throw std::runtime_error(
           "Convert2Bin<...,"
@@ -123,14 +123,14 @@ public:
                                    BIGNUM *const y)
   {
 
-    if (!BN_bin2bn(bin_data.pointer(), static_cast<int>(x_size), x))
+    if (BN_bin2bn(bin_data.pointer(), static_cast<int>(x_size), x) == nullptr)
     {
       throw std::runtime_error(
           "Convert<...,eECDSASignatureBinaryDataFormat::canonical,...>(const "
           "byte_array::ConstByteArray&): i2d_ECDSA_SIG(..., r) failed.");
     }
 
-    if (!BN_bin2bn(bin_data.pointer() + x_size, static_cast<int>(y_size), y))
+    if (BN_bin2bn(bin_data.pointer() + x_size, static_cast<int>(y_size), y) == nullptr)
     {
       throw std::runtime_error(
           "Convert<...,eECDSASignatureBinaryDataFormat::canonical,...>(const "
@@ -141,7 +141,7 @@ public:
 
 template <int P_ECDSA_Curve_NID>
 const std::size_t ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::x_size =
-    ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::EcdsaCurveType::publicKeySize >> 1;
+    ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::EcdsaCurveType::publicKeySize >> 1u;
 
 template <int P_ECDSA_Curve_NID>
 const std::size_t ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::y_size =

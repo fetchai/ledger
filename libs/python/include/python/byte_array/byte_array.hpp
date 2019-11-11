@@ -23,20 +23,20 @@
 namespace fetch {
 namespace byte_array {
 
-void BuildByteArray(pybind11::module &module)
+inline void BuildByteArray(pybind11::module &module)
 {
   namespace py = pybind11;
   py::class_<ByteArray, ConstByteArray>(module, "ByteArray")
       .def(py::init<>())
-      .def(py::init<const char *>())
+      .def(py::init<char const *>())
       .def(py::init<std::string const &>())
-      .def(py::init<const fetch::byte_array::ByteArray &>())
+      .def(py::init<fetch::byte_array::ByteArray const &>())
       .def(py::init<std::initializer_list<ByteArray::ValueType>>())
-      .def(py::init<const fetch::byte_array::ByteArray &, const std::size_t &,
-                    const std::size_t &>())
-      .def(py::init<const fetch::byte_array::ByteArray::SuperType &>())
-      .def(py::init<const fetch::byte_array::ByteArray::SuperType &, const std::size_t &,
-                    const std::size_t &>())
+      .def(py::init<fetch::byte_array::ByteArray const &, std::size_t const &,
+                    std::size_t const &>())
+      .def(py::init<fetch::byte_array::ByteArray::SuperType const &>())
+      .def(py::init<fetch::byte_array::ByteArray::SuperType const &, std::size_t const &,
+                    std::size_t const &>())
       .def(py::self + fetch::byte_array::ByteArray())
       .def("Resize", &ByteArray::Resize)
       .def("Reserve", &ByteArray::Reserve);

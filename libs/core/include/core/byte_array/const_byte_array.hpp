@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/common.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "meta/value_util.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
@@ -40,7 +40,7 @@ namespace byte_array {
 class ConstByteArray
 {
 public:
-  using ValueType       = std::uint8_t;
+  using ValueType       = uint8_t;
   using SelfType        = ConstByteArray;
   using SharedArrayType = memory::SharedArray<ValueType>;
 
@@ -57,7 +57,7 @@ public:
   }
 
   ConstByteArray(char const *str)  // NOLINT
-    : ConstByteArray{reinterpret_cast<std::uint8_t const *>(str), str ? std::strlen(str) : 0}
+    : ConstByteArray{reinterpret_cast<uint8_t const *>(str), str != nullptr ? std::strlen(str) : 0}
   {}
 
   ConstByteArray(ValueType const *const data, std::size_t size)
@@ -82,7 +82,7 @@ public:
   }
 
   ConstByteArray(std::string const &s)  // NOLINT
-    : ConstByteArray(reinterpret_cast<std::uint8_t const *>(s.data()), s.size())
+    : ConstByteArray(reinterpret_cast<uint8_t const *>(s.data()), s.size())
   {}
 
   ConstByteArray(ConstByteArray const &other) = default;
@@ -250,7 +250,7 @@ public:
   {
     auto position =
         static_cast<ValueType const *>(std::memchr(arr_pointer_ + pos, c, length_ - pos));
-    return position ? static_cast<std::size_t>(position - arr_pointer_) : NPOS;
+    return position != nullptr ? static_cast<std::size_t>(position - arr_pointer_) : NPOS;
   }
 
   constexpr std::size_t size() const noexcept
@@ -503,17 +503,17 @@ private:
       return counter + static_cast<std::size_t>(std::forward<Arg>(arg).size());
     }
 
-    constexpr std::size_t operator()(std::size_t counter, std::uint8_t) noexcept
+    constexpr std::size_t operator()(std::size_t counter, uint8_t /*unused*/) noexcept
     {
       return counter + 1;
     }
 
-    constexpr std::size_t operator()(std::size_t counter, std::int8_t) noexcept
+    constexpr std::size_t operator()(std::size_t counter, int8_t /*unused*/) noexcept
     {
       return counter + 1;
     }
 
-    constexpr std::size_t operator()(std::size_t counter, char) noexcept
+    constexpr std::size_t operator()(std::size_t counter, char /*unused*/) noexcept
     {
       return counter + 1;
     }
@@ -546,28 +546,28 @@ private:
       return counter + std::forward<Arg>(arg).size();
     }
 
-    constexpr std::size_t operator()(std::size_t counter, std::uint8_t arg) noexcept
+    constexpr std::size_t operator()(std::size_t counter, uint8_t arg) noexcept
     {
       self_.pointer()[counter] = arg;
       return counter + 1;
     }
 
-    constexpr std::size_t operator()(std::size_t counter, std::int8_t arg) noexcept
+    constexpr std::size_t operator()(std::size_t counter, int8_t arg) noexcept
     {
-      self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
+      self_.pointer()[counter] = static_cast<uint8_t>(arg);
       return counter + 1;
     }
 
     constexpr std::size_t operator()(std::size_t counter, char arg) noexcept
     {
-      self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
+      self_.pointer()[counter] = static_cast<uint8_t>(arg);
       return counter + 1;
     }
   };
 
   template <typename T>
   using AppendedType =
-      std::conditional_t<type_util::IsAnyOfV<std::decay_t<T>, std::uint8_t, char, std::int8_t>,
+      std::conditional_t<type_util::IsAnyOfV<std::decay_t<T>, uint8_t, char, int8_t>,
                          std::decay_t<T>, SelfType const &>;
 
   /**
@@ -595,3 +595,29 @@ ConstByteArray operator+(char const *a, ConstByteArray const &b);
 
 }  // namespace byte_array
 }  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::byte_array::ConstByteArray>
+{
+  std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const noexcept
+  {
+    uint64_t h = 2166136261U;
+    uint64_t i;
+
+    for (i = 0; i < value.size(); ++i)
+    {
+      h = (h * 16777619) ^ value[i];
+    }
+
+    return h;
+  }
+};
+
+template <>
+struct hash<fetch::byte_array::ByteArray> : public hash<fetch::byte_array::ConstByteArray>
+{
+};
+
+}  // namespace std

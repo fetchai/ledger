@@ -21,6 +21,7 @@
 #include "math/statistics/mean.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
@@ -44,7 +45,7 @@ class Optimiser
 public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   Optimiser() = default;
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
@@ -56,6 +57,11 @@ public:
             LearningRateParam<DataType> learning_rate_param);
 
   virtual ~Optimiser() = default;
+
+  void SetGraph(std::shared_ptr<Graph<T>> graph)
+  {
+    graph_ = graph;
+  }
 
   /// DATA RUN INTERFACES ///
   DataType Run(std::vector<TensorType> const &data, TensorType const &labels,
@@ -79,6 +85,7 @@ public:
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
+  virtual OptimiserType OptimiserCode() = 0;
 
 protected:
   std::shared_ptr<Graph<T>> graph_;
@@ -91,16 +98,16 @@ protected:
   SizeType                                                            epoch_ = SIZE_NOT_SET;
 
 private:
-  DataType                                       loss_;
-  DataType                                       loss_sum_;
-  SizeType                                       step_;
+  DataType                                       loss_{};
+  DataType                                       loss_sum_{};
+  SizeType                                       step_{};
   SizeType                                       cumulative_step_ = 0;
   std::pair<TensorType, std::vector<TensorType>> input_;
   TensorType                                     cur_label_;
   TensorType                                     pred_label_;
   std::chrono::high_resolution_clock::time_point cur_time_;
   std::chrono::high_resolution_clock::time_point start_time_;
-  std::chrono::duration<double>                  time_span_;
+  std::chrono::duration<double>                  time_span_{};
   std::string                                    stat_string_;
   std::vector<TensorType>                        batch_data_;
   TensorType                                     batch_labels_;
@@ -123,6 +130,8 @@ void Optimiser<T>::Init()
   graph_->Compile();
 
   graph_trainables_ = graph_->GetTrainables();
+
+  gradients_.clear();
   for (auto &train : graph_trainables_)
   {
     gradients_.emplace_back(TensorType(train->GetWeights().shape()));
@@ -438,7 +447,7 @@ void Optimiser<T>::UpdateLearningRate()
   }
   default:
   {
-    throw std::runtime_error("Please specify learning rate schedule method");
+    throw exceptions::InvalidMode("Please specify learning rate schedule method");
   }
   }
 }

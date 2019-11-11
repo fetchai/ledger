@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_layout_rpc_serializers.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "core/service_ids.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
@@ -109,7 +109,7 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
       sync_cfg, external_muddle_->GetEndpoint(), tx_store_, tx_finder_protocol_.get(),
       [this]() { tx_sync_protocol_->TrimCache(); });
 
-  tx_store_->SetCallback([this](Transaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+  tx_store_->SetCallback([this](chain::Transaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 
   // TX Sync protocol
   external_rpc_server_->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());

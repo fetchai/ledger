@@ -33,7 +33,7 @@ class Multiply : public fetch::ml::ops::Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpMultiplySaveableParams<T>;
@@ -107,37 +107,34 @@ public:
     {
       return {error_signal_1, error_signal_2};
     }
-    else if (inputs.at(1)->size() == 1)
+    if (inputs.at(1)->size() == 1)
     {
       // if second input is a scalar
       auto second_error_signal = TensorType(inputs.at(1)->shape());
       fetch::math::Sum(error_signal_2, *second_error_signal.begin());
       return {error_signal_1, second_error_signal};
     }
-    else
-    {
-      // since the shape is not compatible, then the second input must have size 1 in batch dims
-      SizeType batch_dimension = inputs.at(0)->shape().size() - 1;
-      assert(inputs.at(1)->shape().at(batch_dimension) == 1);
-      if (inputs.at(1)->shape().size() == 2)
-      {
-        // NB * N1 case
-        return {error_signal_1, fetch::math::ReduceSum(error_signal_2, batch_dimension)};
-      }
-      else
-      {  // in the case where we have three dims
-        // We only support backward broadcast through shape (N, 1, 1)
-        assert(inputs.at(1)->shape(1) == 1);
 
-        TensorType error_sum({inputs.at(1)->shape(0), 1});
-        for (SizeType batch = 0; batch < error_signal.shape(batch_dimension); batch++)
-        {
-          error_sum += fetch::math::ReduceSum(error_signal_2.View(batch).Copy(), SizeType(1));
-        }
-        error_sum.Reshape(inputs.at(1)->shape());
-        return {error_signal_1, error_sum};
-      }
+    // since the shape is not compatible, then the second input must have size 1 in batch dims
+    SizeType batch_dimension = inputs.at(0)->shape().size() - 1;
+    assert(inputs.at(1)->shape().at(batch_dimension) == 1);
+    if (inputs.at(1)->shape().size() == 2)
+    {
+      // NB * N1 case
+      return {error_signal_1, fetch::math::ReduceSum(error_signal_2, batch_dimension)};
     }
+
+    // in the case where we have three dims
+    // We only support backward broadcast through shape (N, 1, 1)
+    assert(inputs.at(1)->shape(1) == 1);
+
+    TensorType error_sum({inputs.at(1)->shape(0), 1});
+    for (SizeType batch = 0; batch < error_signal.shape(batch_dimension); batch++)
+    {
+      error_sum += fetch::math::ReduceSum(error_signal_2.View(batch).Copy(), SizeType(1));
+    }
+    error_sum.Reshape(inputs.at(1)->shape());
+    return {error_signal_1, error_sum};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

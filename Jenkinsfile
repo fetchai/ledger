@@ -1,25 +1,28 @@
-DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.3.0'
+DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.2'
+STATIC_ANALYSIS_IMAGE = 'gcr.io/organic-storm-201412/ledger-ci-clang-tidy:v0.1.3'
 HIGH_LOAD_NODE_LABEL = 'ledger'
 MACOS_NODE_LABEL = 'mac-mini'
 
 enum Platform
 {
-  DEFAULT_CLANG('Clang',      'clang',     'clang++'    ),
-  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0'),
-  CLANG7       ('Clang 7',    'clang-7',   'clang++-7'  ),
-  GCC7         ('GCC 7',      'gcc-7',     'g++-7'      ),
-  GCC8         ('GCC 8',      'gcc-8',     'g++-8'      )
+  DEFAULT_CLANG('Clang',      'clang',     'clang++',     ''),
+  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.1'),
+  CLANG7       ('Clang 7',    'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.1'),
+  GCC7         ('GCC 7',      'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.1'),
+  GCC8         ('GCC 8',      'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.1')
 
-  public Platform(label, cc, cxx)
+  public Platform(label, cc, cxx, image)
   {
     this.label = label
     this.env_cc = cc
     this.env_cxx = cxx
+    this.docker_image = image
   }
 
   public final String label
   public final String env_cc
   public final String env_cxx
+  public final String docker_image
 }
 
 LINUX_PLATFORMS_CORE = [
@@ -52,13 +55,13 @@ def static_analysis(Configuration config)
 {
   return {
     stage('Static Analysis') {
-      node {
+      node(HIGH_LOAD_NODE_LABEL) {
         stage('SCM Static Analysis') {
           checkout scm
         }
 
         stage('Run Static Analysis') {
-          docker.image(DOCKER_IMAGE_NAME).inside {
+          docker.image(STATIC_ANALYSIS_IMAGE).inside {
             sh "./scripts/ci-tool.py --lint ${config.label}"
           }
         }
@@ -162,7 +165,7 @@ full_run = { platform_, config_ ->
 def create_docker_build(Platform platform, Configuration config, stages)
 {
   def build = { build_stages ->
-    docker.image(DOCKER_IMAGE_NAME).inside {
+    docker.image(platform.docker_image).inside {
       build_stages()
     }
   }
@@ -243,6 +246,10 @@ def run_basic_checks()
       docker.image(DOCKER_IMAGE_NAME).inside {
         stage('Style Check') {
           sh './scripts/apply_style.py -d'
+        }
+
+        stage('Circular Dependencies') {
+          sh 'mkdir -p build-deps && cd build-deps && cmake ../ && cd - && ./scripts/detect-circular-dependencies.py build-deps/'
         }
       }
     }

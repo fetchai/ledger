@@ -21,10 +21,16 @@
 #include <cstdint>
 
 namespace fetch {
-namespace ledger {
+
+namespace chain {
 
 class Transaction;
 class TransactionLayout;
+
+}  // namespace chain
+
+namespace ledger {
+
 class Block;
 class MainChain;
 
@@ -46,7 +52,7 @@ public:
    *
    * @param tx The reference to the transaction
    */
-  virtual void EnqueueTransaction(Transaction const &tx) = 0;
+  virtual void EnqueueTransaction(chain::Transaction const &tx) = 0;
 
   /**
    * Add the specified transaction layout to the internal queue
@@ -56,7 +62,7 @@ public:
    *
    * @param layout The layout to be added to the queue
    */
-  virtual void EnqueueTransaction(TransactionLayout const &layout) = 0;
+  virtual void EnqueueTransaction(chain::TransactionLayout const &layout) = 0;
 
   /**
    * Generate a new block based on the current queue of transactions

@@ -61,13 +61,15 @@ rm -f *.db
 Connect to the `alpha` test network:
 
 ```
+git checkout release/v0.7.x
+./scripts/quickstart.sh
 ./constellation -bootstrap -network alpha
 ```
 
 ## Running the ledger locally
 
-Alternatively, you can run the ledger locally:
+Alternatively, you can run the ledger locally (1 second block interval in this case):
 
 ```
-./constellation
+./constellation -standalone -block-interval 1000
 ```

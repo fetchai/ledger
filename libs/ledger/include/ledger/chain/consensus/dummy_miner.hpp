@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_layout_rpc_serializers.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
-#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/transaction_rpc_serializers.hpp"
 
 namespace fetch {
 namespace ledger {

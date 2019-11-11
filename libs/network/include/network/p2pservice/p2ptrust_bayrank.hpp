@@ -19,9 +19,9 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "math/statistics/normal.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 
@@ -55,7 +55,7 @@ protected:
   {
     IDENTITY peer_identity;
     Gaussian g;
-    double   score;
+    double   score{};
     void     update_score()
     {
       score = g.mu() - 3 * g.sigma();
@@ -199,10 +199,8 @@ public:
     {
       return trust_store_.size() + 1;
     }
-    else
-    {
-      return ranking_it->second;
-    }
+
+    return ranking_it->second;
   }
 
   PeerTrusts GetPeersAndTrusts() const override

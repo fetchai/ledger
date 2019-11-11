@@ -17,11 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_setup_service.hpp"
+#include "beacon/block_entropy.hpp"
 #include "core/containers/set_difference.hpp"
 #include "core/containers/set_intersection.hpp"
-#include "ledger/shards/shard_management_service.hpp"
+#include "crypto/verifier.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "shards/shard_management_service.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"
@@ -33,88 +35,37 @@
 namespace fetch {
 namespace beacon {
 
-using ledger::ServiceIdentifier;
+using shards::ServiceIdentifier;
 
-char const *ToString(BeaconSetupService::State state)
+char const *ToString(BeaconSetupService::State state);
+
+// Convenience factory to set up the RBC/PBC
+BeaconSetupService::ReliableChannelPtr BeaconSetupService::ReliableBroadcastFactory()
 {
-  char const *text = "unknown";
+  using ChannelType = muddle::RBC;
+  // using ChannelType = PunishmentBroadcastChannel; // The other option
 
-  switch (state)
-  {
-  case BeaconSetupService::State::IDLE:
-    text = "Idle";
-    break;
-  case BeaconSetupService::State::RESET:
-    text = "+++ Reset +++";
-    break;
-  case BeaconSetupService::State::CONNECT_TO_ALL:
-    text = "Connect to the necessary cabinet members";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS:
-    text = "Waiting for ready connections";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_SHARES:
-    text = "Waiting for shares and coefficients";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_COMPLAINTS:
-    text = "Waiting for complaints";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS:
-    text = "Wait for complaint answers";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_QUAL_SHARES:
-    text = "Waiting for qual shares";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS:
-    text = "Waiting for qual complaints";
-    break;
-  case BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES:
-    text = "Waiting for reconstruction shares";
-    break;
-  case BeaconSetupService::State::DRY_RUN_SIGNING:
-    text = "Dry run of signing a seed value";
-    break;
-  case BeaconSetupService::State::BEACON_READY:
-    text = "Beacon ready";
-  }
+  auto call_on_msg = [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
+    DKGEnvelope   env;
+    DKGSerializer serializer{payload};
+    serializer >> env;
+    OnDkgMessage(from, env.Message());
+  };
 
-  return text;
+  return std::make_unique<ChannelType>(endpoint_, identity_.identifier(), call_on_msg, certificate_,
+                                       CHANNEL_RBC_BROADCAST, false);
 }
 
-uint64_t GetTime()
-{
-  return static_cast<uint64_t>(std::time(nullptr));
-}
-
-BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
-                                       ManifestCacheInterface &manifest_cache)
-  : identity_{std::move(identity)}
+BeaconSetupService::BeaconSetupService(MuddleInterface &       muddle,
+                                       ManifestCacheInterface &manifest_cache,
+                                       CertificatePtr          certificate)
+  : identity_{certificate->identity()}
   , manifest_cache_{manifest_cache}
   , muddle_{muddle}
   , endpoint_{muddle_.GetEndpoint()}
   , shares_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
-  , dry_run_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SIGN_DRY_RUN))
-  , pre_dkg_rbc_{endpoint_, identity_.identifier(),
-                 [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
-                   std::set<MuddleAddress>               connections;
-                   fetch::serializers::MsgPackSerializer serializer{payload};
-                   serializer >> connections;
-
-                   std::lock_guard<std::mutex> lock(mutex_);
-                   if (ready_connections_.find(from) == ready_connections_.end())
-                   {
-                     ready_connections_.insert({from, connections});
-                   }
-                 },
-                 CHANNEL_CONNECTIONS_SETUP, false}
-  , rbc_{endpoint_, identity_.identifier(),
-         [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
-           DKGEnvelope   env;
-           DKGSerializer serializer{payload};
-           serializer >> env;
-           OnDkgMessage(from, env.Message());
-         },
-         CHANNEL_RBC_BROADCAST, false}
+  , certificate_{std::move(certificate)}
+  , rbc_{ReliableBroadcastFactory()}
   , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
   , beacon_dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_state_gauge", "State the DKG is in as integer in [0, 10]")}
@@ -122,39 +73,70 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
         "beacon_dkg_connections_gauge", "Connections the network has made as a prerequisite")}
   , beacon_dkg_all_connections_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_all_connections_gauge", "Connections the network has made in general")}
+  , beacon_dkg_failures_required_to_complete_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_failures_required_to_complete", "Failures before the DKG was successful")}
+  , beacon_dkg_state_failed_on_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_state_failed_on", "Last state the DKG failed on")}
+  , beacon_dkg_time_allocated_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_time_allocated", "Time allocated for the DKG to complete")}
+  , beacon_dkg_aeon_setting_up_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_aeon_setting_up", "The aeon currently under setup.")}
+  , beacon_dkg_miners_in_qual_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_miners_in_qual", "Number of miners that have made it into qual")}
   , beacon_dkg_failures_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_failures_total", "The total number of DKG failures")}
-  , beacon_dkg_dry_run_failures_total_{telemetry::Registry::Instance().CreateCounter(
-        "beacon_dkg_dry_run_failures_total", "The total number of DKG dry run failures")}
   , beacon_dkg_aborts_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_aborts_total", "The total number of DKG forced aborts")}
+  , beacon_dkg_successes_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_dkg_successes_total", "The total number of DKG successes")}
+  , time_slot_map_{{BeaconSetupService::State::RESET, 0},
+                   {BeaconSetupService::State::CONNECT_TO_ALL, 10},
+                   {BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS, 10},
+                   {BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS, 10},
+                   {BeaconSetupService::State::WAIT_FOR_SHARES, 10},
+                   {BeaconSetupService::State::WAIT_FOR_COMPLAINTS, 10},
+                   {BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS, 10},
+                   {BeaconSetupService::State::WAIT_FOR_QUAL_SHARES, 10},
+                   {BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS, 10},
+                   {BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES, 10},
+                   {BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE, 10},
+                   {BeaconSetupService::State::DRY_RUN_SIGNING, 10}}
 {
   // clang-format off
   state_machine_->RegisterHandler(State::IDLE, this, &BeaconSetupService::OnIdle);
   state_machine_->RegisterHandler(State::RESET, this, &BeaconSetupService::OnReset);
   state_machine_->RegisterHandler(State::CONNECT_TO_ALL, this, &BeaconSetupService::OnConnectToAll);
   state_machine_->RegisterHandler(State::WAIT_FOR_READY_CONNECTIONS, this, &BeaconSetupService::OnWaitForReadyConnections);
+  state_machine_->RegisterHandler(State::WAIT_FOR_NOTARISATION_KEYS, this, &BeaconSetupService::OnWaitForNotarisationKeys);
   state_machine_->RegisterHandler(State::WAIT_FOR_SHARES, this, &BeaconSetupService::OnWaitForShares);
   state_machine_->RegisterHandler(State::WAIT_FOR_COMPLAINTS, this, &BeaconSetupService::OnWaitForComplaints);
   state_machine_->RegisterHandler(State::WAIT_FOR_COMPLAINT_ANSWERS, this, &BeaconSetupService::OnWaitForComplaintAnswers);
   state_machine_->RegisterHandler(State::WAIT_FOR_QUAL_SHARES, this, &BeaconSetupService::OnWaitForQualShares);
   state_machine_->RegisterHandler(State::WAIT_FOR_QUAL_COMPLAINTS, this, &BeaconSetupService::OnWaitForQualComplaints);
   state_machine_->RegisterHandler(State::WAIT_FOR_RECONSTRUCTION_SHARES, this, &BeaconSetupService::OnWaitForReconstructionShares);
+  state_machine_->RegisterHandler(State::COMPUTE_PUBLIC_SIGNATURE, this, &BeaconSetupService::OnComputePublicSignature);
   state_machine_->RegisterHandler(State::DRY_RUN_SIGNING, this, &BeaconSetupService::OnDryRun);
   state_machine_->RegisterHandler(State::BEACON_READY, this, &BeaconSetupService::OnBeaconReady);
   // clang-format on
 
   // Set subscription for receiving shares
   shares_subscription_->SetMessageHandler(this, &BeaconSetupService::OnNewSharesPacket);
-  dry_run_subscription_->SetMessageHandler(this, &BeaconSetupService::OnNewDryRunPacket);
+
+  for (auto &slot : time_slot_map_)
+  {
+    time_slots_in_dkg_ += slot.second;
+  }
 }
 
 BeaconSetupService::State BeaconSetupService::OnIdle()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::IDLE));
+  beacon_dkg_all_connections_gauge_->set(muddle_.GetDirectlyConnectedPeers().size());
+  beacon_dkg_aeon_setting_up_->set(0);
 
   beacon_.reset();
+  notarisation_manager_.reset();
 
   if (!aeon_exe_queue_.empty())
   {
@@ -163,16 +145,8 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
 
     aeon_exe_queue_.pop_front();
 
-    // Observe only does not require any setup
-    if (beacon_->observe_only)
-    {
-      return State::BEACON_READY;
-    }
-    else
-    {
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
+    SetTimeToProceed(State::RESET);
+    return State::RESET;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(100));
@@ -182,12 +156,13 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
 /**
  * Reset and initial state for the DKG. It should return to this state in the
  * case of total DKG failure
- *
  */
 BeaconSetupService::State BeaconSetupService::OnReset()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::RESET));
+  beacon_dkg_all_connections_gauge_->set(muddle_.GetDirectlyConnectedPeers().size());
+  beacon_dkg_aeon_setting_up_->set(beacon_->aeon.round_start);
 
   if (state_machine_->previous_state() != State::RESET &&
       state_machine_->previous_state() != State::IDLE)
@@ -195,31 +170,14 @@ BeaconSetupService::State BeaconSetupService::OnReset()
     beacon_dkg_failures_total_->add(1u);
   }
 
-  assert(beacon_);
+  // TODO(HUT): need to look at this when merged with Ed's changes for pre aeon setup.
+  bool const beacon_outdated = beacon_->aeon.round_start < abort_below_;
+  bool const beacon_updated =
+      (!aeon_exe_queue_.empty() &&
+       aeon_exe_queue_.front()->aeon.round_start == beacon_->aeon.round_start);
 
-  // Initiating setup
-  std::set<MuddleAddress> cabinet;
-  for (auto &m : beacon_->aeon.members)
-  {
-    cabinet.insert(m.identifier());
-  }
-
-  coefficients_received_.clear();
-  complaint_answers_manager_.ResetCabinet();
-  complaints_manager_.ResetCabinet(identity_.identifier(),
-                                   beacon_->manager.polynomial_degree() + 1);
-  connections_.clear();
-  qual_coefficients_received_.clear();
-  qual_complaints_manager_.Reset();
-  ready_connections_.clear();
-  reconstruction_shares_received_.clear();
-  shares_received_.clear();
-  dry_run_shares_.clear();
-  dry_run_public_keys_.clear();
-  pre_dkg_rbc_.Enable(false);
-  rbc_.Enable(false);
-
-  if (beacon_->aeon.round_start < abort_below_)
+  // abort if the current beacon is out of date
+  if (beacon_outdated || beacon_updated)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG. Round start: ", beacon_->aeon.round_start,
                    " abort all below: ", abort_below_);
@@ -227,14 +185,32 @@ BeaconSetupService::State BeaconSetupService::OnReset()
     return State::IDLE;
   }
 
+  assert(beacon_);
+  beacon_->manager.Reset();
+  notarisation_manager_.reset();
+
+  // Initiating setup
+  connections_.clear();
+  ready_connections_.clear();
+  shares_received_.clear();
+  coefficients_received_.clear();
+  qual_coefficients_received_.clear();
+  reconstruction_shares_received_.clear();
+  valid_dkg_members_.clear();
+  notarisation_key_msgs_.clear();
+  complaints_manager_.ResetCabinet(identity_.identifier(),
+                                   beacon_->manager.polynomial_degree() + 1);
+  complaint_answers_manager_.ResetCabinet();
+  qual_complaints_manager_.Reset();
+  final_state_payload_.clear();
+  rbc_->Enable(false);
+
   // The dkg has to be reset to 0 to clear old messages,
   // before being reset with the cabinet
   if (timer_to_proceed_.HasExpired())
   {
-    pre_dkg_rbc_.Enable(true);
-    rbc_.Enable(true);
-    pre_dkg_rbc_.ResetCabinet(cabinet);
-    rbc_.ResetCabinet(cabinet);
+    rbc_->Enable(true);
+    rbc_->ResetCabinet(beacon_->aeon.members);
 
     SetTimeToProceed(State::CONNECT_TO_ALL);
     return State::CONNECT_TO_ALL;
@@ -251,31 +227,31 @@ BeaconSetupService::State BeaconSetupService::OnReset()
  */
 BeaconSetupService::State BeaconSetupService::OnConnectToAll()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::CONNECT_TO_ALL));
 
   std::unordered_set<MuddleAddress> aeon_members;
-  for (auto &m : beacon_->aeon.members)
+  for (auto &member : beacon_->aeon.members)
   {
     // Skipping own address
-    if (m == identity_)
+    if (member == identity_.identifier())
     {
       continue;
     }
 
-    aeon_members.emplace(m.identifier());
+    aeon_members.emplace(member);
   }
 
   // add the outstanding peers
   auto const connected_peers   = muddle_.GetDirectlyConnectedPeers();
   auto const outstanding_peers = aeon_members - connected_peers;
 
-  ledger::Manifest manifest{};
+  shards::Manifest manifest{};
   for (auto const &address : outstanding_peers)
   {
     std::unique_ptr<network::Uri> hint{};
 
-    // lookup the manifest for the desired address
+    // look up the manifest for the desired address
     if (manifest_cache_.QueryManifest(address, manifest))
     {
       // attempt to find the service entry
@@ -366,22 +342,22 @@ std::set<T> ConvertToSet(std::unordered_set<T> const &from)
  */
 BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_READY_CONNECTIONS));
 
   auto const connected_peers = muddle_.GetDirectlyConnectedPeers();
 
   std::unordered_set<MuddleAddress> aeon_members;
-  for (auto &m : beacon_->aeon.members)
+  for (auto &member : beacon_->aeon.members)
   {
     // Skipping own address
-    if (m == identity_)
+    if (member == identity_.identifier())
     {
       continue;
     }
 
-    aeon_members.emplace(m.identifier());
+    aeon_members.emplace(member);
   }
 
   auto       can_see             = (connected_peers & aeon_members);
@@ -398,14 +374,11 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   if (can_see.size() > connections_.size() && can_see.size() >= require_connections &&
       !condition_to_proceed_)
   {
-    fetch::serializers::MsgPackSerializer serializer;
-    serializer << connections_;
-    pre_dkg_rbc_.Broadcast(serializer.data());
-
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " Minimum peer threshold requirement met for DKG");
 
     connections_ = ConvertToSet(can_see);
+    SendBroadcast(DKGEnvelope{ConnectionsMessage{connections_}});
   }
 
   // Whether to proceed (if threshold peers have also met this condition)
@@ -415,40 +388,81 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   if (!condition_to_proceed_ && is_ok)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                    " State: ", ToString(state_machine_->state()),
-                    " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
-                    seconds_for_state_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     if (!condition_to_proceed_)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " Failed to guarantee peers were ready for DKG!");
+
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       SetTimeToProceed(State::RESET);
       return State::RESET;
     }
 
+    if (notarisation_callback_function_)
+    {
+      BroadcastNotarisationKeys();
+      SetTimeToProceed(State::WAIT_FOR_NOTARISATION_KEYS);
+      return State::WAIT_FOR_NOTARISATION_KEYS;
+    }
+    valid_dkg_members_ = beacon_->aeon.members;
     BroadcastShares();
     SetTimeToProceed(State::WAIT_FOR_SHARES);
     return State::WAIT_FOR_SHARES;
   }
-  else
-  {
-    if (!condition_to_proceed_)
-    {
-      FETCH_LOG_INFO(
-          LOGGING_NAME,
-          "Waiting for all peers to be ready before starting DKG. We have: ", can_see.size(),
-          " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());
-    }
 
-    state_machine_->Delay(std::chrono::milliseconds(100));
+  if (!condition_to_proceed_)
+  {
+    FETCH_LOG_DEBUG(
+        LOGGING_NAME,
+        "Waiting for all peers to be ready before starting DKG. We have: ", can_see.size(),
+        " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());
   }
 
+  state_machine_->Delay(std::chrono::milliseconds(100));
+
   return State::WAIT_FOR_READY_CONNECTIONS;
+}
+
+BeaconSetupService::State BeaconSetupService::OnWaitForNotarisationKeys()
+{
+  FETCH_LOCK(mutex_);
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_NOTARISATION_KEYS));
+
+  if (!condition_to_proceed_ && valid_dkg_members_.size() == beacon_->aeon.members.size())
+  {
+    condition_to_proceed_ = true;
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
+  }
+
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
+  {
+    if (valid_dkg_members_.size() >= PreDKGThreshold())
+    {
+      BroadcastShares();
+      SetTimeToProceed(State::WAIT_FOR_SHARES);
+      return State::WAIT_FOR_SHARES;
+    }
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " failed to receive all notarisations keys ", valid_dkg_members_.size(), " of ",
+                   beacon_->aeon.members.size());
+
+    SetTimeToProceed(State::RESET);
+    beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
+    return State::RESET;
+  }
+
+  state_machine_->Delay(std::chrono::milliseconds(10));
+  return State::WAIT_FOR_NOTARISATION_KEYS;
 }
 
 /**
@@ -458,19 +472,19 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
  */
 BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_SHARES));
 
-  auto intersection = (coefficients_received_ & shares_received_);
-  if (!condition_to_proceed_ && intersection.size() == beacon_->aeon.members.size() - 1)
+  auto intersection = (coefficients_received_ & shares_received_ & valid_dkg_members_);
+  if (!condition_to_proceed_ && intersection.size() == valid_dkg_members_.size() - 1)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
-                   seconds_for_state_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     BroadcastComplaints();
     SetTimeToProceed(State::WAIT_FOR_COMPLAINTS);
@@ -483,24 +497,24 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_COMPLAINTS));
 
-  if (!condition_to_proceed_ &&
-      complaints_manager_.NumComplaintsReceived() == beacon_->aeon.members.size() - 1)
+  if (!condition_to_proceed_ && complaints_manager_.NumComplaintsReceived(valid_dkg_members_) ==
+                                    valid_dkg_members_.size() - 1)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
-                   seconds_for_state_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
-    complaints_manager_.Finish(beacon_->aeon.members);
+    complaints_manager_.Finish(valid_dkg_members_);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " complaints size ",
-                   complaints_manager_.Complaints().size());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " complaints size ",
+                    complaints_manager_.Complaints().size());
     complaint_answers_manager_.Init(complaints_manager_.Complaints());
 
     BroadcastComplaintAnswers();
@@ -514,25 +528,25 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS));
 
-  if (!condition_to_proceed_ &&
-      complaint_answers_manager_.NumComplaintAnswersReceived() == beacon_->aeon.members.size() - 1)
+  if (!condition_to_proceed_ && complaint_answers_manager_.NumComplaintAnswersReceived(
+                                    valid_dkg_members_) == valid_dkg_members_.size() - 1)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
-                   seconds_for_state_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
-    complaint_answers_manager_.Finish(beacon_->aeon.members, identity_);
+    complaint_answers_manager_.Finish(valid_dkg_members_, identity_.identifier());
     CheckComplaintAnswers();
     if (BuildQual())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), "build qual size ",
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " build qual size ",
                      beacon_->manager.qual().size());
       beacon_->manager.ComputeSecretShare();
       BroadcastQualCoefficients();
@@ -540,13 +554,12 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
       SetTimeToProceed(State::WAIT_FOR_QUAL_SHARES);
       return State::WAIT_FOR_QUAL_SHARES;
     }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " Failed to build qualified set! Resetting.");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " Failed to build qualified set! Resetting.");
+    beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
+    SetTimeToProceed(State::RESET);
+    return State::RESET;
   }
   state_machine_->Delay(std::chrono::milliseconds(10));
   return State::WAIT_FOR_COMPLAINT_ANSWERS;
@@ -554,19 +567,19 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_QUAL_SHARES));
 
   auto intersection = (qual_coefficients_received_ & beacon_->manager.qual());
   if (!condition_to_proceed_ && intersection.size() == beacon_->manager.qual().size() - 1)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
-                   seconds_for_state_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     BroadcastQualComplaints();
 
@@ -579,19 +592,19 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS));
 
   if (!condition_to_proceed_ && qual_complaints_manager_.NumComplaintsReceived(
                                     beacon_->manager.qual()) == beacon_->manager.qual().size() - 1)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
-                   seconds_for_state_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     qual_complaints_manager_.Finish(beacon_->manager.qual(), identity_.identifier());
 
@@ -602,14 +615,15 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
     // number of Byzantine nodes
     if (size > beacon_->manager.polynomial_degree())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " DKG has failed: complaints size ", size, " greater than threshold.");
       SetTimeToProceed(State::RESET);
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       return State::RESET;
     }
-    else if (qual_complaints_manager_.FindComplaint(identity_.identifier()))
+    if (qual_complaints_manager_.FindComplaint(identity_.identifier()))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " is in qual complaints");
     }
     BroadcastReconstructionShares();
@@ -624,12 +638,12 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES));
 
-  MuddleAddresses complaints_list = qual_complaints_manager_.Complaints();
-  MuddleAddresses remaining_honest;
-  MuddleAddresses qual{beacon_->manager.qual()};
+  auto                    complaints_list = qual_complaints_manager_.Complaints();
+  auto                    qual            = beacon_->manager.qual();
+  std::set<MuddleAddress> remaining_honest;
   std::set_difference(qual.begin(), qual.end(), complaints_list.begin(), complaints_list.end(),
                       std::inserter(remaining_honest, remaining_honest.begin()));
 
@@ -642,23 +656,23 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
       received_count++;
     }
   }
+
   if (!condition_to_proceed_ && received_count == remaining_honest.size() - 1)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
-                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
-                   seconds_for_state_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
     // Process reconstruction shares. Reconstruction shares from non-qual members
     // or people in qual complaints should not be considered
     for (auto const &share : reconstruction_shares_received_)
     {
       MuddleAddress from = share.first;
-      if (qual_complaints_manager_.FindComplaint(from) ||
-          beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
+      if (qual_complaints_manager_.FindComplaint(from) || !beacon_->manager.InQual(from))
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                        " received message from invalid sender. Discarding.");
@@ -666,7 +680,11 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
       }
       for (auto const &elem : share.second)
       {
-        beacon_->manager.VerifyReconstructionShare(from, elem);
+        // Check person who's shares are being exposed is a member of qual
+        if (beacon_->manager.InQual(elem.first))
+        {
+          beacon_->manager.VerifyReconstructionShare(from, elem);
+        }
       }
     }
 
@@ -674,121 +692,129 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
     // number of Byzantine nodes
     if (!beacon_->manager.RunReconstruction())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " DKG failed due to reconstruction failure. Resetting.");
       SetTimeToProceed(State::RESET);
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       return State::RESET;
     }
-    else
-    {
-      beacon_->manager.ComputePublicKeys();
-    }
 
-    SetTimeToProceed(State::DRY_RUN_SIGNING);
-    return State::DRY_RUN_SIGNING;
+    SetTimeToProceed(State::COMPUTE_PUBLIC_SIGNATURE);
+    return State::COMPUTE_PUBLIC_SIGNATURE;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(10));
   return State::WAIT_FOR_RECONSTRUCTION_SHARES;
 }
 
+BeaconSetupService::State BeaconSetupService::OnComputePublicSignature()
+{
+  FETCH_LOCK(mutex_);
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::COMPUTE_PUBLIC_SIGNATURE));
+
+  beacon_->manager.ComputePublicKeys();
+
+  SetTimeToProceed(State::DRY_RUN_SIGNING);
+  return State::DRY_RUN_SIGNING;
+}
+
 /**
  * Attempt to sign the seed to determine enough peers have generated the
- * group public signature
+ * group public signature. If successful, this should generate the first block entropy
+ * structure.
+ *
+ * To do this, a block entropy struct specifying the qualified members, group signature etc. is
+ * created, and nodes try and collect threshold signatures (personal) of that hash from members of
+ * the qualified set.
+ *
  */
+// TODO(HUT): rename dry run to create first signature.
 BeaconSetupService::State BeaconSetupService::OnDryRun()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
 
-  // Only on first entry to this function
+  // TODO(HUT): reset to qual here for the networking (?)
+
+  // Only on first entry to this function, construct the structure
   if (state_machine_->previous_state() != State::DRY_RUN_SIGNING)
   {
-    beacon_->manager.SetMessage("test message");
-    beacon_->member_share = beacon_->manager.Sign();
-
-    // Check own signature
-    if (beacon_->manager.AddSignaturePart(identity_, beacon_->member_share.signature) !=
-        BeaconManager::AddResult::SUCCESS)
+    // Start to create the block entropy for this attempt
+    beacon_->block_entropy                  = BlockEntropy{};
+    beacon_->block_entropy.qualified        = beacon_->manager.qual();
+    beacon_->block_entropy.group_public_key = beacon_->manager.group_public_key();
+    beacon_->block_entropy.block_number     = beacon_->aeon.round_start;
+    // If notarising then also populate entropy with notarisation keys
+    if (notarisation_callback_function_)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                      ": Failed to sign current message.");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
+      for (auto const &member : beacon_->manager.qual())
+      {
+        assert(notarisation_key_msgs_.find(member) != notarisation_key_msgs_.end());
+        auto notarisation_msg = notarisation_key_msgs_.at(member);
+        beacon_->block_entropy.aeon_notarisation_keys.insert(
+            {member, std::make_pair(notarisation_msg.PublicKey(), notarisation_msg.Signature())});
+      }
     }
+    beacon_->block_entropy.HashSelf();
 
-    // insert ourselves - others will insert here also via gossip
-    dry_run_public_keys_[beacon_->manager.group_public_key()]++;
-    dry_run_shares_[identity_.identifier()] =
-        GroupPubKeyPlusSigShare{beacon_->manager.group_public_key(), beacon_->member_share};
+    assert(!beacon_->block_entropy.digest.empty());
 
-    DryRunInfo to_send{beacon_->manager.group_public_key(), beacon_->member_share};
+    // Add own signature to the structure
+    auto own_signature = certificate_->Sign(beacon_->block_entropy.digest);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " signs digest ",
+                    beacon_->block_entropy.digest.ToHex());
+    beacon_->block_entropy.confirmations.insert(
+        {certificate_->identity().identifier(), own_signature});
 
-    // Gossip this to everyone
-    {
-      fetch::serializers::SizeCounter counter;
-      counter << to_send;
-
-      fetch::serializers::MsgPackSerializer serializer;
-      serializer.Reserve(counter.size());
-      serializer << to_send;
-      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_SIGN_DRY_RUN, serializer.data());
-    }
+    SendBroadcast(DKGEnvelope{FinalStateMessage{own_signature}});
   }
 
-  if (timer_to_proceed_.HasExpired())
+  if (!condition_to_proceed_ && final_state_payload_.size() == beacon_->manager.qual().size() - 1)
   {
-    bool found_key     = false;
-    bool found_our_key = false;
+    condition_to_proceed_ = true;
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(system_clock_));
+  }
 
-    for (auto const &key_and_count : dry_run_public_keys_)
+  // When the timer has expired, try to create the final structure
+  if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
+  {
+    // Need at least DKG threshold number of signatures otherwise there will not be enough
+    // parties who agree of the dkg output to compute threshold signatures
+    auto desired_signatures_min = beacon_->manager.polynomial_degree() + 1;
+
+    // For each sig, verify that it matches the hash
+    for (auto const &address_and_sig : final_state_payload_)
     {
-      if (key_and_count.second >= QualSize())
+      if (crypto::Verifier::Verify(Identity(address_and_sig.first), beacon_->block_entropy.digest,
+                                   address_and_sig.second))
       {
-        found_key     = true;
-        found_our_key = beacon_->manager.group_public_key() == key_and_count.first;
+        beacon_->block_entropy.confirmations.insert(
+            {address_and_sig.first, address_and_sig.second});
+      }
+      else
+      {
+        FETCH_LOG_INFO(
+            LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+            "received invalid signature from node ",
+            beacon_->manager.cabinet_index(address_and_sig.first),
+            " when constructing block entropy. Other's signatures: ", final_state_payload_.size());
       }
     }
 
-    if (!found_key)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to reach consensus on group public key!");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
-
-    if (!found_our_key)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Other nodes didn't agree with our computed group public key!");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
-
-    for (auto const &share : dry_run_shares_)
-    {
-      GroupPubKeyPlusSigShare const &shares_for_identity = share.second;
-
-      // Note, only add signatures if it agrees with the group public key
-      if (shares_for_identity.first == beacon_->manager.group_public_key())
-      {
-        beacon_->manager.AddSignaturePart(shares_for_identity.second.identity,
-                                          shares_for_identity.second.signature);
-      }
-    }
-
-    bool const could_sign = beacon_->manager.can_verify() && beacon_->manager.Verify();
-
-    if (could_sign)
+    // Current requirement: collect all signatures from qual.
+    if (beacon_->block_entropy.confirmations.size() >= desired_signatures_min)
     {
       SetTimeToProceed(State::BEACON_READY);
       return State::BEACON_READY;
     }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " Failed to complete dry run for signature signing!");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to collect enough signatures. Collected: ",
+                   beacon_->block_entropy.confirmations.size(),
+                   " Desired: ", desired_signatures_min);
+    SetTimeToProceed(State::RESET);
+    beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
+    return State::RESET;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(10));
@@ -797,15 +823,36 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
 
 BeaconSetupService::State BeaconSetupService::OnBeaconReady()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
+
+  // Set up notarisation manager with public keys
+  if (notarisation_callback_function_)
+  {
+    std::map<MuddleAddress, NotarisationManager::PublicKey> qual_notarisation_keys;
+    for (auto const &member : beacon_->manager.qual())
+    {
+      qual_notarisation_keys.insert({member, notarisation_key_msgs_.at(member).PublicKey()});
+    }
+    notarisation_manager_->SetAeonDetails(beacon_->aeon.round_start, beacon_->aeon.round_end,
+                                          beacon_->manager.polynomial_degree() + 1,
+                                          qual_notarisation_keys);
+  }
+
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::BEACON_READY));
+  beacon_dkg_successes_total_->add(1);
+  beacon_dkg_miners_in_qual_->set(beacon_->manager.qual().size());
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                 " *** New beacon generated! ***");
+                 " ******* New beacon generated! ******* Qual: ", beacon_->manager.qual().size(),
+                 " of ", beacon_->aeon.members.size());
 
   if (callback_function_)
   {
     callback_function_(beacon_);
+  }
+  if (notarisation_callback_function_)
+  {
+    notarisation_callback_function_(notarisation_manager_);
   }
 
   return State::IDLE;
@@ -820,7 +867,23 @@ void BeaconSetupService::SendBroadcast(DKGEnvelope const &env)
 {
   DKGSerializer serialiser;
   serialiser << env;
-  rbc_.Broadcast(serialiser.data());
+  std::string question = std::to_string(uint8_t(env.Message()->type())) +
+                         ToString(state_machine_->state()) + std::to_string(failures_);
+  rbc_->SetQuestion(ConstByteArray(question), serialiser.data());
+}
+
+void BeaconSetupService::BroadcastNotarisationKeys()
+{
+  notarisation_manager_                                  = std::make_shared<NotarisationManager>();
+  NotarisationManager::PublicKey notarisation_public_key = notarisation_manager_->GenerateKeys();
+  ConstByteArray                 signature = certificate_->Sign(notarisation_public_key.getStr());
+
+  // Insert own signed notarisation key into entropy cabinet details
+  auto notarisation_msg =
+      NotarisationKeyMessage{std::make_pair(notarisation_public_key, signature)};
+  notarisation_key_msgs_.insert({certificate_->identity().identifier(), notarisation_msg});
+  valid_dkg_members_.insert(certificate_->identity().identifier());
+  SendBroadcast(DKGEnvelope{notarisation_msg});
 }
 
 /**
@@ -831,14 +894,14 @@ void BeaconSetupService::BroadcastShares()
 {
   beacon_->manager.GenerateCoefficients();
   SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
-                                                beacon_->manager.GetCoefficients(), "signature"}});
-  for (auto &cab_i : beacon_->aeon.members)
+                                                beacon_->manager.GetCoefficients()}});
+  for (auto &cab_i : valid_dkg_members_)
   {
-    if (cab_i == identity_)
+    if (cab_i == identity_.identifier())
     {
       continue;
     }
-    std::pair<MessageShare, MessageShare> shares{beacon_->manager.GetOwnShares(cab_i.identifier())};
+    std::pair<MessageShare, MessageShare> shares{beacon_->manager.GetOwnShares(cab_i)};
 
     fetch::serializers::SizeCounter counter;
     counter << shares;
@@ -846,11 +909,11 @@ void BeaconSetupService::BroadcastShares()
     fetch::serializers::MsgPackSerializer serializer;
     serializer.Reserve(counter.size());
     serializer << shares;
-    endpoint_.Send(cab_i.identifier(), SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data(),
+    endpoint_.Send(cab_i, SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data(),
                    MuddleEndpoint::OPTION_ENCRYPTED);
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                 " broadcasts coefficients ");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                  " broadcasts coefficients ");
 }
 
 /**
@@ -860,35 +923,10 @@ void BeaconSetupService::BroadcastShares()
  */
 void BeaconSetupService::BroadcastComplaints()
 {
-  std::unordered_set<MuddleAddress> complaints_local;
-
-  // Add nodes who did not send both coefficients and shares to complaints
-  for (auto const &m : beacon_->aeon.members)
-  {
-    if (m == identity_)
-    {
-      continue;
-    }
-    if (coefficients_received_.find(m.identifier()) == coefficients_received_.end() ||
-        shares_received_.find(m.identifier()) == shares_received_.end())
-    {
-      complaints_local.insert(m.identifier());
-    }
-  }
-
-  // Add nodes whos coefficients and shares failed verification to complaints
-  auto verification_fail =
-      beacon_->manager.ComputeComplaints(coefficients_received_ & shares_received_);
-  complaints_local.insert(verification_fail.begin(), verification_fail.end());
-
-  for (auto const &cab : complaints_local)
-  {
-    complaints_manager_.AddComplaintAgainst(cab);
-  }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                 " broadcasts complaints size ", complaints_local.size());
-  SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
+  std::set<MuddleAddress> complaints_local = ComputeComplaints();
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                  " broadcasts complaints size ", complaints_local.size());
+  SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
 }
 
 /**
@@ -902,12 +940,12 @@ void BeaconSetupService::BroadcastComplaintAnswers()
   std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaint_answer;
   for (auto const &reporter : complaints_manager_.ComplaintsAgainstSelf())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                   " received complaints from ", beacon_->manager.cabinet_index(reporter));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                    " received complaints from ", beacon_->manager.cabinet_index(reporter));
     complaint_answer.insert({reporter, beacon_->manager.GetOwnShares(reporter)});
   }
-  SendBroadcast(DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
-                                          complaint_answer, "signature"}});
+  SendBroadcast(DKGEnvelope{
+      SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS), complaint_answer}});
 }
 
 /**
@@ -915,9 +953,8 @@ void BeaconSetupService::BroadcastComplaintAnswers()
  */
 void BeaconSetupService::BroadcastQualCoefficients()
 {
-  SendBroadcast(
-      DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
-                                      beacon_->manager.GetQualCoefficients(), "signature"}});
+  SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
+                                                beacon_->manager.GetQualCoefficients()}});
 }
 
 /**
@@ -929,9 +966,9 @@ void BeaconSetupService::BroadcastQualComplaints()
 {
   // Qual complaints consist of all nodes from which we did not receive qual shares, or verification
   // of qual shares failed
-  SendBroadcast(DKGEnvelope{SharesMessage{
-      static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-      beacon_->manager.ComputeQualComplaints(qual_coefficients_received_), "signature"}});
+  SendBroadcast(DKGEnvelope{
+      SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
+                    beacon_->manager.ComputeQualComplaints(qual_coefficients_received_)}});
 }
 
 /**
@@ -939,7 +976,6 @@ void BeaconSetupService::BroadcastQualComplaints()
  * the secret shares we received from them to all cabinet members and collect the shares broadcasted
  * by others
  */
-
 void BeaconSetupService::BroadcastReconstructionShares()
 {
   SharesExposedMap complaint_shares;
@@ -948,9 +984,8 @@ void BeaconSetupService::BroadcastReconstructionShares()
     beacon_->manager.AddReconstructionShare(in);
     complaint_shares.insert({in, beacon_->manager.GetReceivedShares(in)});
   }
-  SendBroadcast(
-      DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
-                                complaint_shares, "signature"}});
+  SendBroadcast(DKGEnvelope{SharesMessage{
+      static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
 }
 
 /**
@@ -960,15 +995,22 @@ void BeaconSetupService::BroadcastReconstructionShares()
  * @param msg_ptr Pointer of DKGMessage
  */
 void BeaconSetupService::OnDkgMessage(MuddleAddress const &              from,
-                                      std::shared_ptr<DKGMessage> const &msg_ptr)
+                                      const std::shared_ptr<DKGMessage> &msg_ptr)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   if (state_machine_->state() == State::IDLE || !BasicMsgCheck(from, msg_ptr))
   {
     return;
   }
   switch (msg_ptr->type())
   {
+  case DKGMessage::MessageType::CONNECTIONS:
+  {
+    auto connections_ptr = std::dynamic_pointer_cast<ConnectionsMessage>(msg_ptr);
+
+    ready_connections_.insert({from, connections_ptr->connections_});
+    break;
+  }
   case DKGMessage::MessageType::COEFFICIENT:
   {
     auto coefficients_ptr = std::dynamic_pointer_cast<CoefficientsMessage>(msg_ptr);
@@ -996,8 +1038,30 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &              from,
     }
     break;
   }
+  case DKGMessage::MessageType::NOTARISATION_KEY:
+  {
+    auto ptr = std::dynamic_pointer_cast<NotarisationKeyMessage>(msg_ptr);
+    if (ptr != nullptr)
+    {
+      OnNotarisationKey(*ptr, from);
+    }
+    break;
+  }
+  case DKGMessage::MessageType::FINAL_STATE:
+  {
+    auto ptr = std::dynamic_pointer_cast<FinalStateMessage>(msg_ptr);
+    if (ptr != nullptr)
+    {
+      if (beacon_->manager.InQual(from) &&
+          final_state_payload_.find(from) == final_state_payload_.end())
+      {
+        final_state_payload_.insert({from, ptr->payload_});
+      }
+    }
+    break;
+  }
   default:
-    FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                     " can not process payload from node ", beacon_->manager.cabinet_index(from));
   }
 }
@@ -1016,19 +1080,19 @@ void BeaconSetupService::OnExposedShares(SharesMessage const &shares, MuddleAddr
 
   if (phase1 == static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS))
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                     " received complaint answer from ", from_index);
     OnComplaintAnswers(shares, from_id);
   }
   else if (phase1 == static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS))
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                     " received QUAL complaint from ", from_index);
     OnQualComplaints(shares, from_id);
   }
   else if (phase1 == static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES))
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                     " received reconstruction share from ", from_index);
     OnReconstructionShares(shares, from_id);
   }
@@ -1050,28 +1114,11 @@ void BeaconSetupService::OnNewSharesPacket(muddle::Packet const &packet,
 
   fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
 
-  std::pair<std::string, std::string> shares;
+  std::pair<MessageShare, MessageShare> shares;
   serialiser >> shares;
 
   // Dispatch the event
   OnNewShares(packet.GetSender(), shares);
-}
-
-void BeaconSetupService::OnNewDryRunPacket(muddle::Packet const &packet,
-                                           MuddleAddress const & last_hop)
-{
-  FETCH_UNUSED(last_hop);
-
-  fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
-
-  DryRunInfo to_receive;
-  serialiser >> to_receive;
-
-  // TODO(HUT): cabinet check
-  std::lock_guard<std::mutex> lock(mutex_);
-  dry_run_public_keys_[to_receive.public_key]++;
-  dry_run_shares_[packet.GetSender()] =
-      GroupPubKeyPlusSigShare{to_receive.public_key, to_receive.sig_share};
 }
 
 /**
@@ -1081,15 +1128,22 @@ void BeaconSetupService::OnNewDryRunPacket(muddle::Packet const &packet,
  * @param from Muddle address of sender
  * @param shares Pair of secret shares
  */
-void BeaconSetupService::OnNewShares(MuddleAddress const &                        from,
+void BeaconSetupService::OnNewShares(const MuddleAddress &                        from,
                                      std::pair<MessageShare, MessageShare> const &shares)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
+
+  // This can occur if someone were to send you shares before you load the beacon
+  if (!beacon_)
+  {
+    return;
+  }
+
   // Check if sender is in cabinet
   bool in_cabinet{false};
-  for (auto &m : beacon_->aeon.members)
+  for (auto &member : beacon_->aeon.members)
   {
-    if (m.identifier() == from)
+    if (member == from)
     {
       in_cabinet = true;
     }
@@ -1103,9 +1157,9 @@ void BeaconSetupService::OnNewShares(MuddleAddress const &                      
 
   if (shares_received_.find(from) == shares_received_.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                   " received shares from node  ", beacon_->manager.cabinet_index(from));
     beacon_->manager.AddShares(from, shares);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                    " received shares from node  ", beacon_->manager.cabinet_index(from));
     shares_received_.insert(from);
   }
   else
@@ -1128,9 +1182,9 @@ void BeaconSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
   {
     if (coefficients_received_.find(from) == coefficients_received_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " received coefficients from node  ", beacon_->manager.cabinet_index(from));
       beacon_->manager.AddCoefficients(from, msg.coefficients());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                      " received coefficients from node  ", beacon_->manager.cabinet_index(from));
       coefficients_received_.insert(from);
     }
     else
@@ -1144,10 +1198,10 @@ void BeaconSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
   {
     if (qual_coefficients_received_.find(from) == qual_coefficients_received_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " received qual coefficients from node  ",
-                     beacon_->manager.cabinet_index(from));
       beacon_->manager.AddQualCoefficients(from, msg.coefficients());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                      " received qual coefficients from node  ",
+                      beacon_->manager.cabinet_index(from));
       qual_coefficients_received_.insert(from);
     }
     else
@@ -1169,7 +1223,7 @@ void BeaconSetupService::OnComplaints(ComplaintsMessage const &msg, MuddleAddres
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                   " received complaints from node ", beacon_->manager.cabinet_index(from));
-  complaints_manager_.AddComplaintsFrom(msg, from);
+  complaints_manager_.AddComplaintsFrom(from, msg.complaints(), beacon_->aeon.members);
 }
 
 /**
@@ -1220,6 +1274,60 @@ void BeaconSetupService::OnReconstructionShares(SharesMessage const &shares_msg,
 }
 
 /**
+ * Handler for signed notarisation keys, which verifies the ECDSA signature on the message
+ *
+ * @param key_msg Pointer of NotarisationKeyMessage
+ * @param from Muddle address of sender
+ */
+void BeaconSetupService::OnNotarisationKey(NotarisationKeyMessage const &key_msg,
+                                           MuddleAddress const &         from)
+{
+  auto iter = valid_dkg_members_.find(from);
+  if (iter == valid_dkg_members_.end() &&
+      crypto::Verifier::Verify(Identity(from), key_msg.PublicKey().getStr(), key_msg.Signature()))
+  {
+    notarisation_key_msgs_.insert({from, key_msg});
+    valid_dkg_members_.insert(from);
+  }
+}
+
+/**
+ * Computes the set of nodes who did not send both shares and coefficients, or sent
+ * values failing verification
+ *
+ * @return Set of muddle address of nodes which misbehaved
+ */
+std::set<BeaconSetupService::MuddleAddress> BeaconSetupService::ComputeComplaints()
+{
+  std::set<MuddleAddress> complaints_local;
+
+  // Add nodes who did not send both coefficients and shares to complaints
+  for (auto const &member : valid_dkg_members_)
+  {
+    if (member == identity_.identifier())
+    {
+      continue;
+    }
+    if (coefficients_received_.find(member) == coefficients_received_.end() ||
+        shares_received_.find(member) == shares_received_.end())
+    {
+      complaints_local.insert(member);
+    }
+  }
+
+  // Add nodes whos coefficients and shares failed verification to complaints
+  auto verification_fail = beacon_->manager.ComputeComplaints(
+      coefficients_received_ & shares_received_ & valid_dkg_members_);
+  complaints_local.insert(verification_fail.begin(), verification_fail.end());
+
+  for (auto const &cab : complaints_local)
+  {
+    complaints_manager_.AddComplaintAgainst(cab);
+  }
+  return complaints_local;
+}
+
+/**
  * For all complaint answers received in defense of a complaint we check the exposed secret share
  * is consistent with the broadcasted coefficients
  *
@@ -1232,10 +1340,12 @@ void BeaconSetupService::CheckComplaintAnswers()
   auto answer_messages = complaint_answers_manager_.ComplaintAnswersReceived();
   for (auto const &sender_answers : answer_messages)
   {
-    MuddleAddress                     from = sender_answers.first;
+    MuddleAddress from = sender_answers.first;
+    assert(valid_dkg_members_.find(from) != valid_dkg_members_.end());
     std::unordered_set<MuddleAddress> answered_complaints;
     for (auto const &share : sender_answers.second)
     {
+      // Check that the claimed submitter of the complaint actually did so
       if (complaints_manager_.FindComplaint(from, share.first))
       {
         answered_complaints.insert(share.first);
@@ -1264,24 +1374,22 @@ void BeaconSetupService::CheckComplaintAnswers()
  */
 bool BeaconSetupService::BuildQual()
 {
-  // Create set of muddle addresses
-  std::set<MuddleAddress> cabinet;
-  for (auto &m : beacon_->aeon.members)
-  {
-    cabinet.insert(m.identifier());
-  }
-  beacon_->manager.SetQual(complaint_answers_manager_.BuildQual(cabinet));
+  beacon_->manager.SetQual(complaint_answers_manager_.BuildQual(valid_dkg_members_));
   std::set<MuddleAddress> qual = beacon_->manager.qual();
+
+  // There should be no members in qual that are not in valid_dkg_members
+  assert((qual & valid_dkg_members_) == qual);
+
   if (qual.find(identity_.identifier()) == qual.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
-                   " build QUAL failed as not in QUAL");
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " build qual failed as not in qual. Qual size: ", qual.size());
     return false;
   }
-  else if (qual.size() < QualSize())
+  if (qual.size() < QualSize())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
-                   " build QUAL failed as size ", qual.size(), " less than required ", QualSize());
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " build qual failed as size ", qual.size(), " less than required ", QualSize());
     return false;
   }
   return true;
@@ -1293,7 +1401,7 @@ bool BeaconSetupService::BuildQual()
 void BeaconSetupService::CheckQualComplaints()
 {
   std::set<MuddleAddress> qual{beacon_->manager.qual()};
-  for (auto const &complaint : qual_complaints_manager_.ComplaintsReceived(qual))
+  for (const auto &complaint : qual_complaints_manager_.ComplaintsReceived(qual))
   {
     MuddleAddress sender = complaint.first;
     for (auto const &share : complaint.second)
@@ -1318,11 +1426,16 @@ void BeaconSetupService::CheckQualComplaints()
 bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
                                        std::shared_ptr<DKGMessage> const &msg_ptr)
 {
+  if (!beacon_)
+  {
+    return false;
+  }
+
   // Check if sender is in cabinet
   bool in_cabinet{false};
-  for (auto &m : beacon_->aeon.members)
+  for (auto &member : beacon_->aeon.members)
   {
-    if (m.identifier() == from)
+    if (member == from)
     {
       in_cabinet = true;
     }
@@ -1332,7 +1445,7 @@ bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
   {
     return false;
   }
-  else if (!in_cabinet)
+  if (!in_cabinet)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " received message from unknown sender");
@@ -1341,35 +1454,81 @@ bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
   return true;
 }
 
-void BeaconSetupService::QueueSetup(SharedAeonExecutionUnit const &beacon)
+void BeaconSetupService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
+                                         uint64_t round_start, uint64_t round_end,
+                                         uint64_t start_time, BlockEntropy const &prev_entropy)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-  assert(beacon != nullptr);
+  if (members.find(identity_.identifier()) == members.end())
+  {
+    return;
+  }
+
+  auto diff_time =
+      int64_t(GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))) -
+      int64_t(start_time);
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
+                 " at time: ", start_time, " (diff): ", diff_time);
+
+  // Check threshold meets the requirements for the RBC
+  uint32_t rbc_threshold{0};
+  if (members.size() % 3 == 0)
+  {
+    rbc_threshold = static_cast<uint32_t>(members.size() / 3 - 1);
+  }
+  else
+  {
+    rbc_threshold = static_cast<uint32_t>(members.size() / 3);
+  }
+  if (threshold < rbc_threshold)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Threshold is below RBC threshold. Reset to rbc threshold");
+    threshold = rbc_threshold;
+  }
+
+  FETCH_LOCK(mutex_);
+
+  SharedAeonExecutionUnit beacon = std::make_shared<beacon::AeonExecutionUnit>();
+
+  beacon->manager.SetCertificate(certificate_);
+  beacon->manager.NewCabinet(members, threshold);
+
+  // Setting the aeon details
+  beacon->aeon.round_start               = round_start;
+  beacon->aeon.round_end                 = round_end;
+  beacon->aeon.members                   = std::move(members);
+  beacon->aeon.start_reference_timepoint = start_time;
+  beacon->aeon.block_entropy_previous    = prev_entropy;
 
   aeon_exe_queue_.push_back(beacon);
 }
 
 void BeaconSetupService::Abort(uint64_t abort_below)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   abort_below_ = abort_below;
 }
 
 void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOCK(mutex_);
   callback_function_ = std::move(callback);
 }
 
-std::weak_ptr<core::Runnable> BeaconSetupService::GetWeakRunnable()
+void BeaconSetupService::SetNotarisationCallback(NotarisationCallbackFunction callback)
 {
-  return state_machine_;
+  FETCH_LOCK(mutex_);
+  notarisation_callback_function_ = std::move(callback);
 }
 
-uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
+std::vector<std::weak_ptr<core::Runnable>> BeaconSetupService::GetWeakRunnables()
+{
+  return {state_machine_, rbc_->GetRunnable()};
+}
+
+double TimePerSlot(uint64_t cabinet_size)
 {
   // Default
-  uint64_t expected_dkg_time_s = 10 * (cabinet_size << 1);
+  uint64_t expected_dkg_time_s = 10 * (cabinet_size << 1u);
 
   // empirical times observed - the base time you expect it to take based on cabinet size
   if (cabinet_size < 200)
@@ -1384,6 +1543,10 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
   {
     expected_dkg_time_s = 305;
   }
+  if (cabinet_size < 51)
+  {
+    expected_dkg_time_s = 250;
+  }
   if (cabinet_size < 30)
   {
     expected_dkg_time_s = 100;
@@ -1392,34 +1555,26 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
   {
     expected_dkg_time_s = 30;
   }
+  if (cabinet_size < 8)
+  {
+    expected_dkg_time_s = 10;
+  }
 
-  FETCH_LOG_INFO(BeaconSetupService::LOGGING_NAME, "Note: Expect DKG time to be ",
-                 expected_dkg_time_s, " s");
-
-  return expected_dkg_time_s;
+  // This assigns a time in seconds to each slot. Dividing by 100 is an arbitrary way to select the
+  // time for a single slot from the total DKG time and we could equally just set the time per slot
+  // directly.
+  return static_cast<double>(expected_dkg_time_s) / 100.;
 }
 
-void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
-                    uint64_t &time_slot_for_state)
+void BeaconSetupService::SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
+                                        uint64_t &time_slot_for_state)
 {
-  std::map<BeaconSetupService::State, uint64_t> time_slot_map;
-
-  time_slot_map[BeaconSetupService::State::RESET]                          = 0;
-  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 15;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 15;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_SHARES]                = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINTS]            = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS]     = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
-  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
-
-  time_slot_for_state = time_slot_map[state];
+  assert(time_slot_map_.find(state) != time_slot_map_.end());
+  time_slot_for_state = time_slot_map_.at(state);
 
   while (state != BeaconSetupService::State::RESET)
   {
-    time_slots_total += time_slot_map[state];
+    time_slots_total += time_slot_map_.at(state);
     state = BeaconSetupService::State(static_cast<uint8_t>(state) - 1);
   }
 }
@@ -1432,13 +1587,20 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
  */
 void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 {
-  uint64_t current_time = GetTime();
-  FETCH_LOG_INFO(LOGGING_NAME, "Determining time allowed to move on from state: \"",
-                 ToString(state), "\" at ", current_time);
+  uint64_t current_time = GetTime(system_clock_);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                 " determining time allowed to move on from state: \"", ToString(state), "\" at ",
+                 current_time);
   condition_to_proceed_ = false;
 
-  uint64_t cabinet_size        = beacon_->aeon.members.size();
-  uint64_t expected_dkg_time_s = GetExpectedDKGTime(cabinet_size);
+  uint64_t cabinet_size  = beacon_->aeon.members.size();
+  double   time_per_slot = TimePerSlot(cabinet_size);
+  auto     expected_dkg_time_s =
+      static_cast<uint64_t>(time_per_slot * static_cast<double>(time_slots_in_dkg_));
+
+  FETCH_LOG_DEBUG(BeaconSetupService::LOGGING_NAME, "Note: Expect DKG time to be ",
+                  expected_dkg_time_s, " s");
 
   // RESET state will delay DKG until the start point (or next start point)
   if (state == BeaconSetupService::State::RESET)
@@ -1446,22 +1608,31 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     // Easy case where the start point is ahead in time
     // If not ahead in time, the DKG must have failed before. Algorithmically decide how long
     // to increase the allotted DKG time (scheme 2x)
-    uint64_t next_start_point = beacon_->aeon.start_reference_timepoint;
-    uint64_t dkg_time         = expected_dkg_time_s;
-    uint16_t failures         = 0;
+    uint64_t next_start_point       = beacon_->aeon.start_reference_timepoint;
+    uint64_t dkg_time               = expected_dkg_time_s;
+    uint16_t failures               = 0;
+    double   adjusted_time_per_slot = time_per_slot;
 
     while (next_start_point < current_time)
     {
       failures++;
       next_start_point += dkg_time;
-      dkg_time = dkg_time + uint64_t(0.5 * double(expected_dkg_time_s));
+      adjusted_time_per_slot += 0.5 * adjusted_time_per_slot;
+      dkg_time =
+          dkg_time + static_cast<uint64_t>(time_per_slot * static_cast<double>(time_slots_in_dkg_));
     }
 
     expected_dkg_timespan_ = dkg_time;
     reference_timepoint_   = next_start_point;
+    time_per_slot_         = adjusted_time_per_slot;
 
-    FETCH_LOG_INFO(LOGGING_NAME, "DKG: ", beacon_->aeon.round_start, " failures so far: ", failures,
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " DKG round: ", beacon_->aeon.round_start, " failures so far: ", failures,
                    " allotted time: ", expected_dkg_timespan_, " base time: ", expected_dkg_time_s);
+
+    beacon_dkg_time_allocated_->set(expected_dkg_timespan_);
+    beacon_dkg_failures_required_to_complete_->set(failures);
+    failures_ = failures;
   }
 
   // No timeout for these states
@@ -1470,15 +1641,17 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     return;
   }
   // Assign each state an equal amount of time for now
-  uint64_t time_slots_in_dkg   = 100;
-  double   time_per_slot       = double(expected_dkg_timespan_) / double(time_slots_in_dkg);
   uint64_t time_slots_total    = 0;
   uint64_t time_slot_for_state = 0;
 
   SetTimeBySlots(state, time_slots_total, time_slot_for_state);
 
-  seconds_for_state_ = uint64_t(double(time_slot_for_state) * time_per_slot);
-  state_deadline_    = reference_timepoint_ + uint64_t(double(time_slots_total) * time_per_slot);
+  FETCH_LOG_DEBUG(
+      LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), "Time per slot: ", time_per_slot_,
+      ", time slots for state: ", time_slot_for_state, ", time slots total: ", time_slots_total);
+
+  seconds_for_state_ = uint64_t(double(time_slot_for_state) * time_per_slot_);
+  state_deadline_    = reference_timepoint_ + uint64_t(double(time_slots_total) * time_per_slot_);
 
   if (state_deadline_ < current_time)
   {
@@ -1493,6 +1666,58 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
                    state_deadline_ - current_time, " seconds (deadline: ", state_deadline_, ")");
     timer_to_proceed_.Restart(std::chrono::seconds{state_deadline_ - current_time});
   }
+}
+
+char const *ToString(BeaconSetupService::State state)
+{
+  char const *text = "unknown";
+
+  switch (state)
+  {
+  case BeaconSetupService::State::IDLE:
+    text = "Idle";
+    break;
+  case BeaconSetupService::State::RESET:
+    text = "+++ Reset +++";
+    break;
+  case BeaconSetupService::State::CONNECT_TO_ALL:
+    text = "Connect to the necessary cabinet members";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS:
+    text = "Waiting for ready connections";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_SHARES:
+    text = "Waiting for shares and coefficients";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_COMPLAINTS:
+    text = "Waiting for complaints";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS:
+    text = "Wait for complaint answers";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_QUAL_SHARES:
+    text = "Waiting for qual shares";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS:
+    text = "Waiting for qual complaints";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES:
+    text = "Waiting for reconstruction shares";
+    break;
+  case BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE:
+    text = "Compute the group public signature";
+    break;
+  case BeaconSetupService::State::DRY_RUN_SIGNING:
+    text = "Dry run of signing a seed value";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS:
+    text = "Waiting for notarisation keys";
+    break;
+  case BeaconSetupService::State::BEACON_READY:
+    text = "Beacon ready";
+  }
+
+  return text;
 }
 
 }  // namespace beacon

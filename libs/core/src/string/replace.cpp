@@ -30,5 +30,19 @@ std::string Replace(std::string value, char before, char after)
   return value;
 }
 
+bool Replace(std::string &orig, std::string const &what, std::string const &with)
+{
+  auto start{orig.find(what)};
+
+  if (start == std::string::npos)
+  {
+    return false;
+  }
+
+  orig.replace(start, what.size(), with);
+
+  return true;
+}
+
 }  // namespace string
 }  // namespace fetch

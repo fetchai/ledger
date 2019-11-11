@@ -20,8 +20,8 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/parameter_parser.hpp"
-#include "core/json/document.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "json/document.hpp"
 #include "variant/variant.hpp"
 #include "version/cli_header.hpp"
 #include "version/fetch_version.hpp"
@@ -145,12 +145,12 @@ std::string ReadFileContents(std::string const &path)
 // data
 Parameters params;
 
-int32_t Argc(VM *, TypeId)
+int32_t Argc(VM * /*vm*/, TypeId /*type_id*/)
 {
   return static_cast<int32_t>(params.script().size());
 }
 
-Ptr<String> Argv(VM *vm, TypeId, int32_t index)
+Ptr<String> Argv(VM *vm, TypeId /*type_id*/, int32_t index)
 {
   return Ptr<String>{new String{vm, params.script().at(static_cast<std::size_t>(index))}};
 }
@@ -293,7 +293,7 @@ int main(int argc, char **argv)
   params.Parse(argc, argv);
 
   // ensure the program has the correct number of args
-  size_t num_args = params.program().arg_size();
+  std::size_t num_args = params.program().arg_size();
   if (2u > num_args)
   {
     std::cerr << "Usage: " << argv[0] << " [options] [filename]... -- [script args]..."
@@ -306,7 +306,7 @@ int main(int argc, char **argv)
 
   // load the contents of the script files
   fetch::vm::SourceFiles files;
-  for (size_t i = 1; i < num_args; ++i)
+  for (std::size_t i = 1; i < num_args; ++i)
   {
     std::string filename = params.program().GetArg(i);
     auto const  source   = ReadFileContents(filename);

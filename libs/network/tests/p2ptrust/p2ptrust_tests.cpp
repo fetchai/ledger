@@ -45,9 +45,9 @@ TEST(TrustTests, TrustGoesWayDown)
 {
   P2PTrust<std::string> trust;
   TrustQuality          qual = TrustQuality::LIED;
-  for (int i = 0; i < 20; i++)
+  for (uint32_t i = 0; i < 20; i++)
   {
-    if (i & 1)
+    if ((i & 1u) != 0)
     {
       qual = TrustQuality::DUPLICATE;
     }
@@ -59,7 +59,7 @@ TEST(TrustTests, TrustGoesWayDown)
   trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK, qual);
   EXPECT_EQ(trust.IsPeerTrusted("peer1"), true);
 
-  for (int i = 0; i < 5; i++)
+  for (uint32_t i = 0; i < 5; i++)
   {
     trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::PEER, TrustQuality::LIED);
   }

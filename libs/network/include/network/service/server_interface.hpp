@@ -144,7 +144,7 @@ private:
     {
       CallableArgumentList extra_args;
 
-      if (function->meta_data() & Callable::CLIENT_CONTEXT_ARG)
+      if ((function->meta_data() & Callable::CLIENT_CONTEXT_ARG) != 0u)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Adding call context meta data to ", identifier);
         extra_args.PushArgument(&context);
@@ -176,7 +176,7 @@ private:
   }
 
   Protocol *members_[256] = {nullptr};  // TODO(issue 19): Not thread-safe
-  friend class FeedSubscriptionManager;
 };
+
 }  // namespace service
 }  // namespace fetch

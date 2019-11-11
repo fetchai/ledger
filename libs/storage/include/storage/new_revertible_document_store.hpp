@@ -39,7 +39,7 @@ public:
   bool New(std::string const &state, std::string const &state_history, std::string const &index,
            std::string const &index_history, bool create_if_not_exist);
   bool Load(std::string const &state, std::string const &state_history, std::string const &index,
-            std::string const &index_history, bool create_if_not_exist);
+            std::string const &index_history, bool create);
 
   UnderlyingType Get(ResourceID const &rid);
   UnderlyingType GetOrCreate(ResourceID const &rid);
@@ -47,10 +47,9 @@ public:
   void           Erase(ResourceID const &rid);
 
   Hash Commit();
-  bool RevertToHash(Hash const &hash);
+  bool RevertToHash(Hash const &state);
   Hash CurrentHash();
   bool HashExists(Hash const &hash);
-  Keys KeyDump();
   void Reset();
 
   std::size_t size() const;

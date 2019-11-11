@@ -28,7 +28,7 @@ namespace core {
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
 
-ConstByteArray ReadContentsOfFile(char const *filename)
+ConstByteArray ReadContentsOfFile(char const *filename, std::streamsize const buffer_size_limit)
 {
   ByteArray buffer;
 
@@ -38,17 +38,21 @@ ConstByteArray ReadContentsOfFile(char const *filename)
   {
     // determine the complete size of the file
     std::streamsize const stream_size = stream.tellg();
-    stream.seekg(0, std::ios::beg);
+    if (stream_size > 0)
+    {
+      std::streamsize const buffer_size =
+          (buffer_size_limit < 0) ? stream_size : std::min(stream_size, buffer_size_limit);
+      stream.seekg(0, std::ios::beg);
 
-    // allocate the buffer
-    buffer.Resize(static_cast<std::size_t>(stream_size));
-    static_assert(sizeof(stream_size) >= sizeof(std::size_t), "Must be same size or larger");
-
-    // read in size of the buffer
-    stream.read(buffer.char_pointer(), stream_size);
+      // allocate the buffer
+      buffer.Resize(static_cast<std::size_t const &>(buffer_size));
+      static_assert(sizeof(stream_size) >= sizeof(std::size_t), "Must be same size or larger");
+      // read in size of the buffer
+      stream.read(buffer.char_pointer(), buffer_size);
+    }
   }
 
-  return {buffer};
+  return {std::move(buffer)};
 }
 
 }  // namespace core

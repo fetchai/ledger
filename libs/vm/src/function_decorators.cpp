@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "vm/function_decorators.hpp"
 #include "vm/generator.hpp"
 

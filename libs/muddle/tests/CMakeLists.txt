@@ -11,5 +11,5 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 # define the test target
-fetch_add_test(muddle-unit-tests fetch-muddle unit/)
+fetch_add_slow_test(muddle-unit-tests fetch-muddle unit/)
 fetch_add_integration_test(muddle-integration-tests fetch-muddle integration/)

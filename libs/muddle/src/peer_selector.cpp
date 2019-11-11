@@ -208,7 +208,7 @@ void PeerSelector::Periodically()
     {
       for (auto const &address : unwanted_peers)
       {
-        // lookup the connection from its address
+        // look up the connection from its address
         auto conn = register_.LookupConnection(address).lock();
         if (conn)
         {
@@ -227,14 +227,28 @@ void PeerSelector::Periodically()
 void PeerSelector::ResolveAddresses(Addresses const &addresses)
 {
   // generate the set of addresses which have not been resolved yet
-  auto const unresolved_addresses = (addresses - peers_info_) - pending_resolutions_;
+  auto unresolved_addresses = addresses - pending_resolutions_;
+
+  // additionally filter the unresolved addresses by the peers which we don't have information for
+  for (auto const &peer : peers_info_)
+  {
+    if (unresolved_addresses.find(peer.first) != unresolved_addresses.end())
+    {
+      if (!peer.second.peer_data.empty())
+      {
+        unresolved_addresses.erase(peer.first);
+      }
+    }
+  }
 
   for (auto const &address : unresolved_addresses)
   {
+    FETCH_LOG_TRACE(logging_name_, "Requesting connection info from: ", address.ToBase64());
+
     // make the call to the remote service
     auto promise = rpc_client_.CallSpecificAddress(address, RPC_MUDDLE_DISCOVERY,
                                                    DiscoveryService::CONNECTION_INFORMATION);
-    // lookup the peer information
+    // look up the peer information
     auto const &peer_data = peers_info_[address];
 
     // wrap the promise is a task
@@ -367,10 +381,8 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
       {
         return a.address < b.address;
       }
-      else
-      {
-        return distance_a < distance_b;
-      }
+
+      return distance_a < distance_b;
     });
 
     // trim the kademlia cache nodes
@@ -399,6 +411,16 @@ void PeerSelector::MakeAnnouncement()
 {
   if (announcement_interval_.HasExpired())
   {
+    if (endpoint_.GetDirectlyConnectedPeerSet().empty())
+    {
+      announcement_interval_.Restart(1000);
+
+      FETCH_LOG_TRACE(logging_name_, "Aborting kad announcement");
+      return;
+    }
+
+    FETCH_LOG_TRACE(logging_name_, "Making kad announcement");
+
     // send out the announcement
     endpoint_.Broadcast(SERVICE_MUDDLE, CHANNEL_ANNOUNCEMENT, {});
 

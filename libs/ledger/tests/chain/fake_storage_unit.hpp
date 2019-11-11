@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/constants.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <map>
@@ -30,9 +30,9 @@
 class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
-  using Transaction = fetch::ledger::Transaction;
-  using Digest      = fetch::ledger::Digest;
-  using DigestSet   = fetch::ledger::DigestSet;
+  using Transaction = fetch::chain::Transaction;
+  using Digest      = fetch::Digest;
+  using DigestSet   = fetch::DigestSet;
   using ResourceID  = fetch::storage::ResourceID;
 
   /// @name State Interface
@@ -40,8 +40,8 @@ public:
   Document Get(ResourceAddress const &key) override;
   Document GetOrCreate(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
-  bool     Lock(ShardIndex shard) override;
-  bool     Unlock(ShardIndex shard) override;
+  bool     Lock(ShardIndex index) override;
+  bool     Unlock(ShardIndex index) override;
   /// @}
 
   /// @name Transaction Interface
@@ -49,12 +49,12 @@ public:
   void AddTransaction(Transaction const &tx) override;
   bool GetTransaction(Digest const &digest, Transaction &tx) override;
   bool HasTransaction(Digest const &digest) override;
-  void IssueCallForMissingTxs(DigestSet const &tx_set) override;
+  void IssueCallForMissingTxs(DigestSet const &digests) override;
   /// @}
 
   /// @name Transaction History Poll
   /// @{
-  TxLayouts PollRecentTx(uint32_t) override;
+  TxLayouts PollRecentTx(uint32_t /*unused*/) override;
   /// @}
 
   /// @name Revertible Document Store Interface
@@ -67,7 +67,7 @@ public:
   /// @}
 
   // Useful for test to force the hash
-  Hash EmulateCommit(Hash const &hash, uint64_t index);
+  Hash EmulateCommit(Hash const &commit_hash, uint64_t index);
 
   // Required to emulate the state being changed
   void SetCurrentHash(Hash const &hash);
@@ -75,7 +75,6 @@ public:
   // Use the current state to set the hash
   void UpdateHash();
 
-  Keys KeyDump() const override;
   void Reset() override;
 
 private:
@@ -88,6 +87,6 @@ private:
   TransactionStore transaction_store_{};
   StatePtr         state_{std::make_shared<State>()};
   StateHistory     state_history_{};
-  StateHashStack   state_history_stack_{fetch::ledger::GENESIS_MERKLE_ROOT};
-  Hash             current_hash_{fetch::ledger::GENESIS_MERKLE_ROOT};
+  StateHashStack   state_history_stack_{fetch::chain::GENESIS_MERKLE_ROOT};
+  Hash             current_hash_{fetch::chain::GENESIS_MERKLE_ROOT};
 };

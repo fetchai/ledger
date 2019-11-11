@@ -17,16 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter.hpp"
+#include "bloom_filter/bloom_filter.hpp"
+#include "chain/constants.hpp"
+#include "chain/transaction_layout.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/digest.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
-#include "ledger/chain/constants.hpp"
-#include "ledger/chain/digest.hpp"
-#include "ledger/chain/transaction_layout.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
@@ -60,6 +60,8 @@ namespace ledger {
 struct Tip
 {
   uint64_t total_weight{0};
+  uint64_t weight{0};
+  uint64_t block_number{0};
 };
 
 enum class BlockStatus
@@ -78,15 +80,17 @@ enum class BlockStatus
  */
 constexpr char const *ToString(BlockStatus status);
 
+struct BlockDbRecord;
+
 class MainChain
 {
 public:
   using BlockPtr             = std::shared_ptr<Block const>;
   using Blocks               = std::vector<BlockPtr>;
-  using BlockHash            = Digest;
+  using BlockHash            = Block::Hash;
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
-  using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
+  using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 5000ull;
@@ -117,7 +121,7 @@ public:
 
   /// @name Block Management
   /// @{
-  BlockStatus AddBlock(Block const &block);
+  BlockStatus AddBlock(Block const &blk);
   BlockPtr    GetBlock(BlockHash const &hash) const;
   bool        RemoveBlock(BlockHash const &hash);
   /// @}
@@ -127,9 +131,8 @@ public:
   BlockPtr  GetHeaviestBlock() const;
   BlockHash GetHeaviestBlockHash() const;
   Blocks    GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
-  Blocks    GetChainPreceding(BlockHash at, uint64_t limit = UPPER_BOUND) const;
-  Blocks    TimeTravel(BlockHash starting_point,
-                       int64_t   limit = static_cast<int64_t>(UPPER_BOUND)) const;
+  Blocks    GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
+  Blocks    TimeTravel(BlockHash start, int64_t limit = static_cast<int64_t>(UPPER_BOUND)) const;
   bool      GetPathToCommonAncestor(
            Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
            BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
@@ -158,19 +161,7 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
-  struct DbRecord
-  {
-    Block block;
-    // genesis (hopefully) cannot be next hash so is used as undefined value
-    BlockHash next_hash = GENESIS_DIGEST;
-
-    BlockHash hash() const
-    {
-      return block.body.hash;
-    }
-  };
-
-private:
+  using DbRecord      = BlockDbRecord;
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
   using References    = std::unordered_multimap<BlockHash, BlockHash>;
@@ -185,10 +176,12 @@ private:
 
   struct HeaviestTip
   {
+    uint64_t  total_weight{0};
     uint64_t  weight{0};
-    BlockHash hash{GENESIS_DIGEST};
+    uint64_t  block_number{0};
+    BlockHash hash{chain::GENESIS_DIGEST};
 
-    bool Update(Block const &);
+    bool Update(Block const &block);
   };
 
   /// @name Persistence Management
@@ -212,7 +205,7 @@ private:
   bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const;
   bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache) const;
   bool IsBlockInCache(BlockHash const &hash) const;
-  void AddBlockToCache(IntBlockPtr const &) const;
+  void AddBlockToCache(IntBlockPtr const &block) const;
   void AddBlockToBloomFilter(Block const &block) const;
   /// @}
 
@@ -236,7 +229,7 @@ private:
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
 
-  bool RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks);
+  bool RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks);
 
   BlockStorePtr block_store_;  /// < Long term storage and backup
   std::fstream  head_store_;
@@ -254,63 +247,7 @@ private:
   telemetry::CounterPtr             bloom_filter_query_count_;
   telemetry::CounterPtr             bloom_filter_positive_count_;
   telemetry::CounterPtr             bloom_filter_false_positive_count_;
-
-  /**
-   * Serializer for the DbRecord
-   *
-   * @tparam T The serializer type
-   * @param serializer The reference to hte serializer
-   * @param dbRecord The reference to the DbRecord to be serialised
-   */
-  template <typename T>
-  friend void Serialize(T &serializer, DbRecord const &dbRecord)
-  {
-    serializer << dbRecord.block << dbRecord.next_hash;
-  }
-
-  /**
-   * Deserializer for the DbRecord
-   *
-   * @tparam T The serializer type
-   * @param serializer The reference to the serializer
-   * @param dbRecord The reference to the output dbRecord to be populated
-   */
-  template <typename T>
-  friend void Deserialize(T &serializer, DbRecord &dbRecord)
-  {
-    serializer >> dbRecord.block >> dbRecord.next_hash;
-  }
 };
 
 }  // namespace ledger
-
-namespace serializers {
-
-template <typename D>
-struct MapSerializer<ledger::MainChain::DbRecord, D>
-{
-public:
-  using Type       = ledger::MainChain::DbRecord;
-  using DriverType = D;
-
-  static uint8_t const BLOCK     = 1;
-  static uint8_t const NEXT_HASH = 2;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &dbRecord)
-  {
-    auto map = map_constructor(2);
-    map.Append(BLOCK, dbRecord.block);
-    map.Append(NEXT_HASH, dbRecord.next_hash);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &dbRecord)
-  {
-    map.ExpectKeyGetValue(BLOCK, dbRecord.block);
-    map.ExpectKeyGetValue(NEXT_HASH, dbRecord.next_hash);
-  }
-};
-}  // namespace serializers
-
 }  // namespace fetch

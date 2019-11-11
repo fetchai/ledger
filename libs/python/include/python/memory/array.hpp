@@ -26,17 +26,17 @@ namespace memory {
 template <typename T>
 void BuildArray(std::string const &custom_name, pybind11::module &module)
 {
-
   namespace py = pybind11;
   py::class_<Array<T>>(module, custom_name.c_str())
-      .def(py::init<const std::size_t &>())
+      .def(py::init<std::size_t const &>())
       .def(py::init<>())
-      .def(py::init<const Array<T> &>())
+      .def(py::init<Array<T> const &>())
       .def("padded_size", &Array<T>::padded_size)
-      .def("At", (T & (Array<T>::*)(const std::size_t &)) & Array<T>::At)
-      .def("At", (const T &(Array<T>::*)(const std::size_t &)const) & Array<T>::At)
-      .def("operator[]", (T & (Array<T>::*)(const std::size_t &)) & Array<T>::operator[])
-      .def("operator[]", (const T &(Array<T>::*)(const std::size_t &)const) & Array<T>::operator[])
+      .def("At", static_cast<T &(Array<T>::*)(std::size_t const &)>(&Array<T>::At))
+      .def("At", static_cast<T const &(Array<T>::*)(std::size_t const &)const>(&Array<T>::At))
+      .def("operator[]", static_cast<T &(Array<T>::*)(std::size_t const &)>(&Array<T>::operator[]))
+      .def("operator[]",
+           static_cast<T const &(Array<T>::*)(std::size_t const &)const>(&Array<T>::operator[]))
       .def("Copy", &Array<T>::Copy)
       .def("size", [](Array<T> const &o) { return o.size(); });
 }

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_builder.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
@@ -28,8 +28,8 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::ledger::Address;
-using fetch::ledger::TransactionBuilder;
+using fetch::chain::Address;
+using fetch::chain::TransactionBuilder;
 
 using AddressArray = std::vector<Address>;
 using PrivateKey   = crypto::ECDSASigner;

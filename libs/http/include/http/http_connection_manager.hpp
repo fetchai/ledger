@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
+#include "logging/logging.hpp"
 
 #include <cstdint>
 
@@ -35,6 +36,7 @@ public:
   static constexpr char const *LOGGING_NAME = "HTTPConnectionManager";
 
   explicit HTTPConnectionManager(AbstractHTTPServer &server);
+  ~HTTPConnectionManager();
 
   HandleType  Join(ConnectionType client);
   void        Leave(HandleType handle);

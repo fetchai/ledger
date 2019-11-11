@@ -68,7 +68,7 @@ void HistogramMap::ToStream(OutputStream &stream) const
 }
 
 /**
- * Internal: Lookup or create a new histogram for the specified key
+ * Internal: Look up or create a new histogram for the specified key
  *
  * @param key The key being queried
  * @return The existing or created histogram
@@ -91,11 +91,9 @@ HistogramPtr HistogramMap::LookupHistogram(std::string const &key)
 
     return histogram;
   }
-  else
-  {
-    // return the existing histogram
-    return it->second;
-  }
+
+  // return the existing histogram
+  return it->second;
 }
 
 }  // namespace telemetry

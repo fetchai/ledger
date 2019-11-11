@@ -43,7 +43,7 @@ class Constant : public DataHolder<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpConstantSaveableParams<TensorType>;
@@ -95,10 +95,8 @@ public:
       data_set_once_ = true;
       return DataHolder<TensorType>::SetData(data);
     }
-    else
-    {
-      throw std::runtime_error("cannot set data in constant more than once");
-    }
+
+    throw ml::exceptions::InvalidMode("cannot set data in constant more than once");
   }
 
   static constexpr OpType OpCode()

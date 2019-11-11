@@ -24,6 +24,7 @@
 #include "vectorise/platform.hpp"
 
 #include <array>
+#include <deque>
 #include <map>
 #include <set>
 #include <string>
@@ -226,7 +227,7 @@ struct SignedIntegerSerializerImplementation
       {
         uint8_t code;
         int8_t  value;
-      } conversion;
+      } conversion{};
       conversion.code = code;
 
       if (conversion.value < -0x20 || conversion.value >= 0x80)
@@ -604,6 +605,36 @@ public:
 };
 
 template <typename V, typename D>
+struct ArraySerializer<std::deque<V>, D>
+{
+public:
+  using Type       = std::deque<V>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    auto array = array_constructor(input.size());
+
+    for (auto &v : input)
+    {
+      array.Append(v);
+    }
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    output.clear();
+    output.resize(array.size());
+    for (uint32_t i = 0; i < array.size(); ++i)
+    {
+      array.GetNextValue(output[i]);
+    }
+  }
+};
+
+template <typename V, typename D>
 struct ArraySerializer<std::set<V>, D>
 {
 public:
@@ -787,7 +818,7 @@ public:
   }
 };
 
-template <std::uint16_t I, std::uint16_t F, typename D>
+template <uint16_t I, uint16_t F, typename D>
 struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
 {
   using Type       = fixed_point::FixedPoint<I, F>;

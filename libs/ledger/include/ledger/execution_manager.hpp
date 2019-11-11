@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
+#include "chain/constants.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "core/synchronisation/protected.hpp"
 #include "core/synchronisation/waitable.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/chain/constants.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"
@@ -38,7 +38,6 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -63,9 +62,9 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  ScheduleStatus Execute(Block::Body const &block) override;
-  void           SetLastProcessedBlock(Digest digest) override;
-  Digest         LastProcessedBlock() override;
+  ScheduleStatus Execute(Block const &block) override;
+  void           SetLastProcessedBlock(Digest hash) override;
+  Digest         LastProcessedBlock() const override;
   State          GetState() override;
   bool           Abort() override;
   /// @}
@@ -91,7 +90,6 @@ private:
   using ExecutionItemList = std::vector<ExecutionItemPtr>;
   using ExecutionPlan     = std::vector<ExecutionItemList>;
   using ThreadPool        = fetch::network::ThreadPool;
-  using Mutex             = std::mutex;
   using Counter           = std::atomic<std::size_t>;
   using Flag              = std::atomic<bool>;
   using StateHash         = StorageUnitInterface::Hash;
@@ -105,20 +103,24 @@ private:
   using CounterPtr        = telemetry::CounterPtr;
   using HistogramPtr      = telemetry::HistogramPtr;
 
+  struct Summary
+  {
+    State          state{State::IDLE};
+    Digest         last_block_hash{chain::GENESIS_DIGEST};
+    chain::Address last_block_miner{};
+  };
+
   uint32_t const log2_num_lanes_;
 
   Flag running_{false};
   Flag monitor_ready_{false};
 
-  Protected<State> state_{State::IDLE};
+  Protected<Summary> state_{};
 
   StorageUnitPtr storage_;
 
   Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
   ExecutionPlan execution_plan_;
-
-  Digest  last_block_hash_ = GENESIS_DIGEST;
-  Address last_block_miner_{};
 
   Mutex     monitor_lock_;
   Condition monitor_wake_;
@@ -145,7 +147,7 @@ private:
 
   void MonitorThreadEntrypoint();
 
-  bool PlanExecution(Block::Body const &block);
+  bool PlanExecution(Block const &block);
   void DispatchExecution(ExecutionItem &item);
 };
 

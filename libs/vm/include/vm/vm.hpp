@@ -118,12 +118,14 @@ class IR;
 class IoObserverInterface;
 class Module;
 
+class VM;
 class ParameterPack
 {
 public:
   // Construction / Destruction
-  explicit ParameterPack(RegisteredTypes const &registered_types)
+  explicit ParameterPack(RegisteredTypes const &registered_types, VM *vm = nullptr)
     : registered_types_{registered_types}
+    , vm_{vm}
   {}
 
   ParameterPack(ParameterPack const &) = delete;
@@ -182,6 +184,11 @@ public:
     return success;
   }
 
+  // Implementation is at the bottom of file
+  // due to dependency on VM
+  template <typename T>
+  IfIsExternal<T, bool> AddSingle(T val);
+
   bool Add()
   {
     return true;
@@ -213,18 +220,22 @@ private:
   bool AddInternal(Ptr<Object> const &value)
   {
     // add the value to the map
-    Variant v;
-    v.Construct(value, value->GetTypeId());
+    // TODO(tfr): Check ownership of Ptr.
+    Variant v(value, value->GetTypeId());
     params_.emplace_back(std::move(v));
 
     return true;
   }
 
-  using VariantArray = std::vector<Variant>;
-
   RegisteredTypes const &registered_types_;
   VariantArray           params_{};
+  VM *                   vm_;
 };
+
+using ContractInvocationHandler = std::function<bool(
+    VM * /* vm */, std::string const & /* identity */, Executable::Contract const & /* contract */,
+    Executable::Function const & /* function */, VariantArray const & /* parameters */,
+    std::string & /* error */, Variant & /* output */)>;
 
 class VM
 {
@@ -266,7 +277,7 @@ public:
     bool success{false};
 
     Executable::Function const *f = executable.FindFunction(name);
-    if (f)
+    if (f != nullptr)
     {
       auto const num_parameters = static_cast<std::size_t>(f->num_parameters);
 
@@ -281,8 +292,8 @@ public:
           if (parameter.type_id != f->variables[i].type_id)
           {
             error = "mismatched parameters: expected argument " + std::to_string(i);
-            error += "to be of type " + GetUniqueId(f->variables[i].type_id) + " but got ";
-            error += GetUniqueId(parameter.type_id);
+            error += "to be of type " + GetTypeName(f->variables[i].type_id) + " but got ";
+            error += GetTypeName(parameter.type_id);
             // clean up
             for (std::size_t j = 0; j < num_parameters; ++j)
             {
@@ -296,11 +307,19 @@ public:
           stack_[i].Assign(parameter, parameter.type_id);
         }
 
-        executable_ = &executable;
-        function_   = f;
+        if (executable_ != nullptr)
+        {
+          error = "Executable already loaded. Please unload first.";
+        }
+        else
+        {
+          LoadExecutable(&executable);
+          function_ = f;
 
-        // execute the function
-        success = Execute(error, output);
+          // execute the function
+          success = Execute(error, output);
+          UnloadExecutable();
+        }
       }
       else
       {
@@ -316,7 +335,7 @@ public:
     return success;
   }
 
-  std::string GetUniqueId(TypeId type_id) const
+  std::string GetTypeName(TypeId type_id) const
   {
     auto info = GetTypeInfo(type_id);
     return info.name;
@@ -332,6 +351,11 @@ public:
   Ptr<T> CreateNewObject(Ts &&... args)
   {
     return Ptr<T>{new T(this, GetTypeId<T>(), std::forward<Ts>(args)...)};
+  }
+
+  void SetContractInvocationHandler(ContractInvocationHandler handler)
+  {
+    contract_invocation_handler_ = std::move(handler);
   }
 
   void SetIOObserver(IoObserverInterface &observer)
@@ -354,7 +378,7 @@ public:
   {
     if (output_devices_.find(name) == output_devices_.end())
     {
-      RuntimeError("output device " + name + " does not exist.");
+      RuntimeError("Output device " + name + " does not exist.");
       return std::cout;
     }
     return *output_devices_[name];
@@ -364,7 +388,7 @@ public:
   {
     if (input_devices_.find(name) == input_devices_.end())
     {
-      RuntimeError("input device " + name + " does not exist.");
+      RuntimeError("Input device " + name + " does not exist.");
       return std::cin;
     }
     return *input_devices_[name];
@@ -410,7 +434,7 @@ public:
   {
     if (output_devices_.find(name) != output_devices_.end())
     {
-      throw std::runtime_error("output device already exists.");
+      throw std::runtime_error("Output device already exists.");
     }
 
     output_devices_.insert({std::move(name), &device});
@@ -428,18 +452,52 @@ public:
   {
     return !error_.empty();
   }
+
+  void LoadExecutable(Executable const *executable)
+  {
+    executable_                   = executable;
+    std::size_t const num_strings = executable_->strings.size();
+    strings_                      = std::vector<Ptr<String>>(num_strings);
+    for (std::size_t i = 0; i < num_strings; ++i)
+    {
+      std::string const &str = executable_->strings[i];
+      strings_[i]            = Ptr<String>(new String(this, str));
+    }
+
+    std::size_t const num_local_types = executable_->types.size();
+    for (std::size_t i = 0; i < num_local_types; ++i)
+    {
+      TypeInfo const &type_info = executable_->types[i];
+      type_info_array_.push_back(type_info);
+    }
+  }
+
+  void UnloadExecutable()
+  {
+    strings_.clear();
+
+    std::size_t const num_local_types = executable_->types.size();
+    for (std::size_t i = 0; i < num_local_types; ++i)
+    {
+      type_info_array_.pop_back();
+    }
+
+    executable_ = nullptr;
+  }
+
   TypeInfo const &GetTypeInfo(TypeId type_id) const
   {
     return type_info_array_[type_id];
   }
 
-  bool IsDefaultSerializeConstructable(TypeId type_id) const
+  bool IsDefaultSerializeConstructable(TypeId type_id)
   {
     TypeIndex idx = registered_types_.GetTypeIndex(type_id);
     auto      it  = deserialization_constructors_.find(idx);
 
     if (it == deserialization_constructors_.end())
     {
+
       TypeInfo tinfo = GetTypeInfo(type_id);
       if (tinfo.template_type_id == TypeIds::Unknown)
       {
@@ -448,8 +506,10 @@ public:
 
       idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
       it  = deserialization_constructors_.find(idx);
+
       return (it != deserialization_constructors_.end());
     }
+
     return true;
   }
 
@@ -477,22 +537,42 @@ public:
     }
 
     auto &constructor = it->second;
-    return constructor(this, type_id);
+    auto  ret         = constructor(this, type_id);
+
+    return ret;
+  }
+
+  template <typename T>
+  bool HasCPPCopyConstructor()
+  {
+    auto type_index = TypeIndex(typeid(T));
+    return (cpp_copy_constructors_.find(type_index) != cpp_copy_constructors_.end());
+  }
+
+  template <typename T>
+  Ptr<Object> CPPCopyConstruct(T const &val)
+  {
+    auto it = cpp_copy_constructors_.find(TypeIndex(typeid(T)));
+    if (it == cpp_copy_constructors_.end())
+    {
+      return {};
+    }
+
+    return it->second(this, static_cast<void const *>(&val));
   }
 
   struct OpcodeInfo
   {
     OpcodeInfo() = default;
-
-    OpcodeInfo(std::string name__, Handler handler__, ChargeAmount charge)
-      : name(std::move(name__))
+    OpcodeInfo(std::string unique_name__, Handler handler__, ChargeAmount static_charge__)
+      : unique_name(std::move(unique_name__))
       , handler(std::move(handler__))
-      , static_charge{charge}
+      , static_charge{static_charge__}
     {}
 
-    std::string  name;
+    std::string  unique_name;
     Handler      handler;
-    ChargeAmount static_charge;
+    ChargeAmount static_charge{};
   };
 
   ChargeAmount GetChargeTotal() const;
@@ -500,7 +580,7 @@ public:
   ChargeAmount GetChargeLimit() const;
   void         SetChargeLimit(ChargeAmount limit);
 
-  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &);
+  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_static_charges);
 
 private:
   static const int FRAME_STACK_SIZE = 50;
@@ -552,29 +632,31 @@ private:
   OpcodeInfoArray                opcode_info_array_;
   OpcodeMap                      opcode_map_;
   Generator                      generator_;
-  Executable const *             executable_;
-  Executable::Function const *   function_;
+  Executable const *             executable_{};
+  Executable::Function const *   function_{};
   std::vector<Ptr<String>>       strings_;
-  Frame                          frame_stack_[FRAME_STACK_SIZE];
-  int                            frame_sp_;
-  int                            bsp_;
+  Frame                          frame_stack_[FRAME_STACK_SIZE]{};
+  int                            frame_sp_{};
+  int                            bsp_{};
   Variant                        stack_[STACK_SIZE];
-  int                            sp_;
-  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS];
-  int                            range_loop_sp_;
-  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS];
-  int                            live_object_sp_;
-  uint16_t                       pc_;
-  uint16_t                       instruction_pc_;
-  Executable::Instruction const *instruction_;
-  bool                           stop_;
+  int                            sp_{};
+  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS]{};
+  int                            range_loop_sp_{};
+  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};
+  int                            live_object_sp_{};
+  uint16_t                       pc_{};
+  uint16_t                       instruction_pc_{};
+  Executable::Instruction const *instruction_{};
+  bool                           stop_{};
   std::string                    error_;
+  ContractInvocationHandler      contract_invocation_handler_{};
   std::ostringstream             output_buffer_;
-  IoObserverInterface *          io_observer_{nullptr};
+  IoObserverInterface *          io_observer_{};
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
-  OpcodeInfo *                   current_op_{nullptr};
+  CPPCopyConstructorMap          cpp_copy_constructors_;
+  OpcodeInfo *                   current_op_{};
 
   /// @name Charges
   /// @{
@@ -582,10 +664,11 @@ private:
   ChargeAmount charge_total_{0};
   /// @}
 
-  void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler,
+  void AddOpcodeInfo(uint16_t opcode, std::string unique_name, Handler handler,
                      ChargeAmount static_charge = 1)
   {
-    opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler), static_charge);
+    opcode_info_array_[opcode] =
+        OpcodeInfo(std::move(unique_name), std::move(handler), static_charge);
   }
 
   bool Execute(std::string &error, Variant &output);
@@ -1607,11 +1690,31 @@ private:
   void Handler__PrimitiveModulo();
   void Handler__VariablePrimitiveInplaceModulo();
   void Handler__InitialiseArray();
+  void Handler__ContractVariableDeclareAssign();
+  void Handler__InvokeContractFunction();
 
   friend class Object;
   friend class Module;
   friend class Generator;
 };
+
+template <typename T>
+IfIsExternal<T, bool> ParameterPack::AddSingle(T val)
+{
+  if (vm_ == nullptr)
+  {
+    throw std::runtime_error("Cannot copy construct C++-to-Etch objects without a VM instance.");
+  }
+  using DecayedType = typename std::decay<T>::type;
+
+  if (!vm_->HasCPPCopyConstructor<DecayedType>())
+  {
+    throw std::runtime_error("No C++-to-Etch copy constructor availble for type.");
+  }
+
+  AddInternal(vm_->CPPCopyConstruct<DecayedType>(val));
+  return true;
+}
 
 }  // namespace vm
 }  // namespace fetch

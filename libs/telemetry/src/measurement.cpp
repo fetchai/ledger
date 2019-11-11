@@ -48,14 +48,15 @@ std::ostream &operator<<(std::ostream &stream, LabelRefs const &refs)
   assert(refs.main);
 
   // check to see if any of the labels exist
-  if ((refs.main && !refs.main->empty()) || (refs.extra && !refs.extra->empty()))
+  if (((refs.main != nullptr) && !refs.main->empty()) ||
+      ((refs.extra != nullptr) && !refs.extra->empty()))
   {
     stream << '{';
 
     bool add_sep{false};
     for (auto const *container : {refs.main, refs.extra})
     {
-      if (!container)
+      if (container == nullptr)
       {
         continue;
       }

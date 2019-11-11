@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "logging/logging.hpp"
 #include "muddle/rbc.hpp"
 
 namespace fetch {
@@ -34,8 +34,8 @@ constexpr char const *LOGGING_NAME = "RBC";
  * @param threshold Threshold number of Byzantine peers
  * @param dkg
  */
-RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, uint16_t channel,
-         bool ordered_delivery)
+RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
+         const CertificatePtr /*unused*/ &, uint16_t channel, bool ordered_delivery)
   : channel_{channel}
   , ordered_delivery_{ordered_delivery}
   , address_{std::move(address)}
@@ -77,6 +77,8 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
   });
 }
 
+RBC::~RBC() = default;
+
 /**
  * Enables or disables the RBC. Disabling will clear all state that
  * would continue the protocol
@@ -108,10 +110,18 @@ bool RBC::ResetCabinet(CabinetMembers const &cabinet)
     return false;
   }
 
+  auto iterator = cabinet.find(address_);
+  // Cannot determine id_ if not present in the
+  // current cabinet.
+  if (iterator == cabinet.end())
+  {
+    return false;
+  }
+
   // Copying cabinet members
   current_cabinet_ = cabinet;
 
-  // Set threshold depending on size of committee
+  // Set threshold depending on size of cabinet
   if (current_cabinet_.size() % 3 == 0)
   {
     threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 3 - 1);
@@ -123,19 +133,10 @@ bool RBC::ResetCabinet(CabinetMembers const &cabinet)
 
   assert(current_cabinet_.size() > 3 * threshold_);
 
-  auto iterator = current_cabinet_.find(address_);
-
-  // Cannot determine id_ if not present in the
-  // current cabinet.
-  if (iterator == current_cabinet_.end())
-  {
-    return false;
-  }
-
   // Finding own id.
-  id_ = static_cast<uint32_t>(std::distance(current_cabinet_.begin(), iterator));
+  id_ = static_cast<uint32_t>(std::distance(cabinet.begin(), iterator));
 
-  // Reseting the state of the RBC
+  // Resetting the state of the RBC
   parties_.clear();
   parties_.resize(current_cabinet_.size());
   broadcasts_.clear();
@@ -560,6 +561,11 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
       deliver_msg_callback_(miner_id, broadcasts_[old_tag].original_message);
       lock_.lock();
 
+      if (sender_index >= parties_.size())
+      {
+        return;
+      }
+
       ++parties_[sender_index].deliver_s;  // Increase counter
       old_tag_msg = parties_[sender_index].undelivered_msg.erase(old_tag_msg);
     }
@@ -677,7 +683,7 @@ bool RBC::CheckTag(RBCMessage const &msg)
     {
       return true;
     }
-    else if (msg.counter() > msg_counter)
+    if (msg.counter() > msg_counter)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
                      " does not match tag counter ", std::to_string(msg.counter()), " for node ",
@@ -691,10 +697,8 @@ bool RBC::CheckTag(RBCMessage const &msg)
     }
     return false;
   }
-  else
-  {
-    return true;
-  }
+
+  return true;
 }
 
 /**
@@ -708,10 +712,7 @@ bool RBC::CheckTag(RBCMessage const &msg)
  */
 bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
 {
-  if (sender_index >= parties_.size())
-  {
-    return false;
-  }
+  assert(parties_.size() == current_cabinet_.size());
 
   auto &iter  = parties_[sender_index].flags[tag];
   auto  index = static_cast<uint32_t>(msg_type);

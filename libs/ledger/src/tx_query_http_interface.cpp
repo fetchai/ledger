@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "http/json_response.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "ledger/resource_mapper.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/tx_query_http_interface.hpp"
-#include "miner/resource_mapper.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 
 #include <cstddef>
@@ -36,6 +36,7 @@ static constexpr char const *LOGGING_NAME = "TxQueryAPI";
 
 using fetch::byte_array::FromHex;
 using fetch::variant::Variant;
+using fetch::chain::Transaction;
 
 namespace fetch {
 namespace ledger {
@@ -58,9 +59,9 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
         // convert the digest back to binary
         auto const digest = FromHex(params["digest"]);
 
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Querying tx: ", digest.ToBase64());
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Querying tx: 0x", digest.ToHex());
 
-        // attempt to lookup the transaction
+        // attempt to look up the transaction
         Transaction tx;
         if (!storage_unit_.GetTransaction(digest, tx))
         {

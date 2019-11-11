@@ -25,6 +25,8 @@ from functools import wraps
 from multiprocessing import Lock, Pool
 from os.path import abspath, basename, commonpath, dirname, isdir, isfile, join
 
+from fetchai_code_quality.internal.toolchains import ClangToolchain
+
 PROJECT_ROOT = abspath(dirname(dirname(__file__)))
 SUPPORTED_TEXT_FILE_PATTERNS = (
     '*.cmake',
@@ -52,8 +54,8 @@ INCLUDE_GUARD = '#pragma once'
 DISALLOWED_HEADER_FILE_EXTENSIONS = ('*.h', '*.hxx', '*.hh')
 CMAKE_VERSION_REQUIREMENT = 'cmake_minimum_required(VERSION 3.10 FATAL_ERROR)'
 
+CLANG_TOOLCHAIN = ClangToolchain()
 CLANG_FORMAT_REQUIRED_VERSION = '6.0'
-CLANG_FORMAT_EXE_NAME = 'clang-format-{}'.format(CLANG_FORMAT_REQUIRED_VERSION)
 CMAKE_FORMAT_EXE_NAME = 'cmake-format'
 CMAKE_FORMAT_REQUIRED_VERSION = '0.5.1'
 AUTOPEP8_REQUIRED_VERSION = '1.4.4'
@@ -115,7 +117,7 @@ RE_LICENSE = LICENSE_TEMPLATE.format('(-\\d+)?', '\\(', '\\)', '([\\s\\n]*)')
 SUPPORTED_LANGUAGES = {
     'cpp': {
         'cmd_prefix': [
-            CLANG_FORMAT_EXE_NAME,
+            CLANG_TOOLCHAIN.clang_format_path,
             '-style=file'
         ],
         'filename_patterns': ('*.cpp', '*.hpp')
@@ -438,13 +440,13 @@ def process_in_parallel(files_to_process, jobs):
 
 
 def check_tool_versions():
-    clang_format_cmd = [CLANG_FORMAT_EXE_NAME, '--version']
+    clang_format_cmd = [CLANG_TOOLCHAIN.clang_format_path, '--version']
     try:
         clang_format_version = subprocess.check_output(
             clang_format_cmd).decode().strip()
     except:
         output(
-            'Could not run "{}". Make sure {} is installed.'.format(' '.join(clang_format_cmd), CLANG_FORMAT_EXE_NAME))
+            'Could not run "{}". Make sure {} is installed.'.format(' '.join(clang_format_cmd), CLANG_TOOLCHAIN.clang_format_path))
         sys.exit(1)
     assert clang_format_version.startswith('clang-format version {}'.format(
         CLANG_FORMAT_REQUIRED_VERSION)), \

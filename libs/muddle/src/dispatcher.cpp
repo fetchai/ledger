@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dispatcher.hpp"
-#include "muddle_logging_name.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/time/to_seconds.hpp"
+#include "dispatcher.hpp"
 #include "muddle/network_id.hpp"
+#include "muddle_logging_name.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
@@ -37,7 +36,7 @@ namespace {
 
 using telemetry::Registry;
 
-const std::chrono::seconds PROMISE_TIMEOUT{30};
+std::chrono::seconds const PROMISE_TIMEOUT{30};
 
 /**
  * Combine service, channel and counter into a single incde
@@ -191,7 +190,7 @@ void Dispatcher::NotifyConnectionFailure(Handle handle)
 {
   PromiseSet affected_promises{};
 
-  // lookup all the affected promises
+  // look up all the affected promises
   {
     FETCH_LOCK(handles_lock_);
     auto it = handles_.find(handle);

@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "ledger/chain/address.hpp"
 #include "ledger/identifier.hpp"
 
 #include "gtest/gtest.h"
@@ -27,7 +27,7 @@
 using fetch::ledger::Identifier;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
-using fetch::ledger::Address;
+using fetch::chain::Address;
 
 ConstByteArray GenerateSequence(std::size_t size)
 {
@@ -36,7 +36,7 @@ ConstByteArray GenerateSequence(std::size_t size)
 
   for (std::size_t i = 0; i < size; ++i)
   {
-    buffer[i] = i & 0xff;
+    buffer[i] = i & 0xffu;
   }
 
   return {buffer};

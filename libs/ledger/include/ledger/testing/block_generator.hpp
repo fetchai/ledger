@@ -31,15 +31,16 @@ namespace testing {
 class BlockGenerator
 {
 public:
-  using BlockPtr = std::shared_ptr<Block>;
+  using BlockPtr      = std::shared_ptr<Block>;
+  using BlockPtrConst = std::shared_ptr<Block const>;
 
   BlockGenerator(std::size_t num_lanes, std::size_t num_slices);
 
   void Reset();
 
-  BlockPtr Generate(BlockPtr const &from = BlockPtr{}, uint64_t weight = 1u);
+  BlockPtr Generate(BlockPtrConst const &from = BlockPtr{}, uint64_t weight = 1u);
 
-  BlockPtr operator()(BlockPtr const &from = BlockPtr{}, uint64_t weight = 1u);
+  BlockPtr operator()(BlockPtrConst const &from = BlockPtr{}, uint64_t weight = 1u);
 
 private:
   uint64_t    block_count_{0};

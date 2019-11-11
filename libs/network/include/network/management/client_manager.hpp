@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/tcp/abstract_server.hpp"
 
@@ -44,7 +44,6 @@ public:
 
   explicit ClientManager(AbstractNetworkServer &server)
     : server_(server)
-    , clients_mutex_{}
   {}
 
   ConnectionHandleType Join(ConnectionType const &client)

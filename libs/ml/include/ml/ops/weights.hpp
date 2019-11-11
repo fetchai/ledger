@@ -53,7 +53,7 @@ class Weights : public fetch::ml::ops::Variable<T>
 {
 public:
   using TensorType     = T;
-  using SizeType       = typename TensorType::SizeType;
+  using SizeType       = fetch::math::SizeType;
   using DataType       = typename TensorType::Type;
   using ArrayPtrType   = std::shared_ptr<TensorType>;
   using VecTensorType  = typename Variable<T>::VecTensorType;
@@ -91,9 +91,9 @@ public:
    * constructs a state dictionary used for exporting/saving weights
    * @return
    */
-  struct fetch::ml::StateDict<T> StateDict() const override
+  fetch::ml::StateDict<T> StateDict() const override
   {
-    struct fetch::ml::StateDict<T> d;
+    fetch::ml::StateDict<T> d;
     d.weights_ = this->data_;
     return d;
   }
@@ -102,8 +102,7 @@ public:
    * load from a state dictionary to import weights
    * @param dict
    */
-  void
-  LoadStateDict(struct fetch::ml::StateDict<T> const &dict) override
+  void LoadStateDict(fetch::ml::StateDict<T> const &dict) override
   {
     assert(dict.dict_.empty());
     this->SetData(*dict.weights_);
@@ -113,7 +112,7 @@ public:
    * interface to call standard weights initialisation routines. defaults to xavier
    * @param mode  An enum indicating which type of initialisation to perform
    */
-  static void Initialise(TensorType &array, std::uint64_t in_size, std::uint64_t out_size,
+  static void Initialise(TensorType &array, uint64_t in_size, uint64_t out_size,
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
                          SizeType              seed = 123456789)
   {
@@ -170,7 +169,7 @@ public:
    * Fan in and fan out xavier not permitted with input and output sizes not known independently
    * @param mode  An enum indicating which type of initialisation to perform
    */
-  static void Initialise(TensorType &array, std::uint64_t data_size,
+  static void Initialise(TensorType &array, uint64_t data_size,
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
                          SizeType              seed = 123456789)
   {

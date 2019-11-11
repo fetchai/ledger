@@ -19,8 +19,10 @@ target_link_libraries(fetch-network
                       PUBLIC fetch-core
                              fetch-crypto
                              fetch-math
-                             fetch-muddle # remove
+                             fetch-version
+                             fetch-json
                              vendor-asio
+                             fetch-logging
                              pthread)
 
 # Test targets

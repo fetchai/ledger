@@ -37,7 +37,7 @@ namespace fetch {
 namespace math {
 namespace clustering {
 
-using ClusteringType = Tensor<std::int64_t>;
+using ClusteringType = Tensor<int64_t>;
 
 enum class InitMode
 {
@@ -59,7 +59,7 @@ class KMeansImplementation
 {
 
   using DataType        = typename ArrayType::Type;
-  using SizeType        = typename ArrayType::SizeType;
+  using SizeType        = fetch::math::SizeType;
   using ArrayOfSizeType = typename fetch::math::Tensor<SizeType>;
 
 public:
@@ -67,7 +67,7 @@ public:
                        SizeType const &r_seed, SizeType const &max_loops, InitMode init_mode,
                        SizeType max_no_change_convergence)
     : n_clusters_(n_clusters)
-    , max_no_change_convergence_(std::move(max_no_change_convergence))
+    , max_no_change_convergence_(max_no_change_convergence)
     , max_loops_(max_loops)
     , init_mode_(init_mode)
   {
@@ -98,7 +98,7 @@ public:
                        SizeType const &r_seed, SizeType const &max_loops,
                        ClusteringType k_assignment, SizeType max_no_change_convergence)
     : n_clusters_(n_clusters)
-    , max_no_change_convergence_(std::move(max_no_change_convergence))
+    , max_no_change_convergence_(max_no_change_convergence)
     , max_loops_(max_loops)
     , k_assignment_(std::move(k_assignment))
   {
@@ -287,7 +287,7 @@ private:
       break;
     }
     default:
-      throw std::runtime_error("no such initialisation mode for KMeans");
+      throw exceptions::InvalidMode("no such initialisation mode for KMeans");
     }
 
     // reset the kcount
@@ -335,7 +335,7 @@ private:
       std::unordered_map<SizeType, SizeType> reverse_cluster_assignment_map{};
 
       // default value not used
-      DataType current_cluster_label = std::numeric_limits<int>::max();
+      DataType current_cluster_label = numeric_max<DataType>();
 
       // get the set of input labels, get the count for each label
       for (SizeType j = 0; j < n_points_; ++j)
@@ -449,10 +449,8 @@ private:
     fetch::core::Vector<ArrayType> cluster_distances(n_clusters_);
     SizeType                       assigned_cluster = 0;
 
-    fetch::core::Vector<typename ArrayType::Type> weights(
-        n_points_);  // weight for choosing each data point
-    fetch::core::Vector<typename ArrayType::Type> interval(
-        n_points_);  // interval for defining random distribution
+    fetch::core::Vector<DataType> weights(n_points_);   // weight for choosing each data point
+    fetch::core::Vector<DataType> interval(n_points_);  // interval for defining random distribution
     std::iota(std::begin(interval), std::end(interval), 0);  // fill interval with range
 
     for (SizeType cur_cluster = 1; cur_cluster < n_clusters_; ++cur_cluster)
@@ -478,7 +476,7 @@ private:
         if (std::find(assigned_data_points.begin(), assigned_data_points.end(), m) ==
             assigned_data_points.end())
         {
-          running_mean_ = numeric_max<typename ArrayType::Type>();
+          running_mean_ = numeric_max<DataType>();
           for (SizeType i = 0; i < (n_clusters_ - n_remaining_clusters); ++i)
           {
             if (cluster_distances[i][m] < running_mean_)
@@ -546,7 +544,7 @@ private:
 
     for (SizeType i = 0; i < n_points_; ++i)
     {
-      running_mean_ = numeric_max<typename ArrayType::Type>();
+      running_mean_ = numeric_max<DataType>();
       for (SizeType j = 0; j < n_clusters_; ++j)
       {
         if (k_euclids_[j][i] < running_mean_)
@@ -643,7 +641,7 @@ private:
     {
       for (SizeType i = 0; i < n_dimensions_; ++i)
       {
-        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<typename ArrayType::Type>(k_count_[m]));
+        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<DataType>(k_count_[m]));
       }
     }
   }
@@ -674,7 +672,7 @@ private:
     {
       for (SizeType i = 0; i < n_dimensions_; ++i)
       {
-        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<typename ArrayType::Type>(k_count_[m]));
+        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<DataType>(k_count_[m]));
       }
     }
   }
@@ -736,7 +734,7 @@ private:
   DataType assigned_k_                = numeric_max<DataType>();  // current cluster to assign
 
   // used to find the smallest distance out of K comparisons
-  typename ArrayType::Type running_mean_ = numeric_max<typename ArrayType::Type>();
+  DataType running_mean_ = numeric_max<DataType>();
 
   fetch::random::LaggedFibonacciGenerator<> lfg_;
 
@@ -759,7 +757,7 @@ private:
   std::unordered_map<SizeType, SizeType>
       cluster_assignment_map_{};  // <internal label, original label>
 
-  bool reassign_;
+  bool reassign_{};
 
   InitMode       init_mode_        = InitMode::KMeansPP;
   KInferenceMode k_inference_mode_ = KInferenceMode::Off;
@@ -783,7 +781,7 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
                       InitMode                            init_mode = InitMode::KMeansPP,
                       typename ArrayType::SizeType        max_no_change_convergence = 10)
 {
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename ArrayType::Type;
 
   SizeType n_points = data.shape()[0];
@@ -828,7 +826,7 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
                       typename ArrayType::SizeType max_loops                 = 100,
                       typename ArrayType::SizeType max_no_change_convergence = 10)
 {
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   SizeType       n_points = data.shape()[0];
   ClusteringType ret{n_points};
@@ -856,7 +854,7 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
                       typename ArrayType::SizeType max_loops                 = 100,
                       typename ArrayType::SizeType max_no_change_convergence = 10)
 {
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename ArrayType::Type;
 
   SizeType       n_points = data.shape()[0];

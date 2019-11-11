@@ -32,6 +32,7 @@ class Parser
 public:
   Parser();
   ~Parser() = default;
+  void         AddTemplateName(std::string const &name);
   BlockNodePtr Parse(SourceFiles const &files, std::vector<std::string> &errors);
 
 private:
@@ -65,40 +66,46 @@ private:
 
   struct Expr
   {
-    bool              is_operator;
+    bool              is_operator{};
     ExpressionNodePtr node;
-    OpInfo            op_info;
+    OpInfo            op_info{};
     Token::Kind       closer_token_kind;
     std::string       closer_token_text;
-    int               num_members;
+    int               num_members{};
   };
 
   using StringSet = std::unordered_set<std::string>;
 
-  StringSet const          template_names_;
+  StringSet                template_names_;
   std::string              filename_;
   std::vector<Token>       tokens_;
-  int                      index_;
-  Token *                  token_;
+  int                      index_{};
+  Token *                  token_{};
   std::vector<std::string> errors_;
   std::vector<NodeKind>    blocks_;
   State                    state_;
-  bool                     found_expression_terminator_;
+  bool                     found_expression_terminator_{};
   std::vector<std::size_t> groups_;
   std::vector<Expr>        operators_;
   std::vector<Expr>        rpn_;
   std::vector<Expr>        infix_stack_;
 
   void              Tokenise(std::string const &source);
-  bool              ParseBlock(BlockNode &node);
+  bool              ParseBlock(BlockNode &block_node);
   NodePtr           ParsePersistentStatement();
+  BlockNodePtr      ParseContractDefinition();
+  void              SkipContractFunctionPrototype();
   BlockNodePtr      ParseFunctionDefinition();
+  bool              ParseFunctionPrototype(NodePtr const &prototype_node);
+  void              SkipFunctionDefinition();
   NodePtr           ParseAnnotations();
   NodePtr           ParseAnnotation();
   ExpressionNodePtr ParseAnnotationLiteral();
+  void              SkipAnnotations();
   BlockNodePtr      ParseWhileStatement();
   BlockNodePtr      ParseForStatement();
   NodePtr           ParseIfStatement();
+  NodePtr           ParseContractStatement();
   NodePtr           ParseUseStatement();
   NodePtr           ParseVarStatement();
   NodePtr           ParseReturnStatement();
@@ -106,7 +113,6 @@ private:
   NodePtr           ParseContinueStatement();
   ExpressionNodePtr ParseExpressionStatement();
   void              GoToNextStatement();
-  void              SkipFunctionDefinition();
   bool              IsTemplateName(std::string const &name) const;
   ExpressionNodePtr ParseType();
   ExpressionNodePtr ParseConditionalExpression();

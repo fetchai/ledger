@@ -40,8 +40,8 @@ public:
   template <typename T>
   void Dispatch(T const &event)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    std::type_index             index{typeid(T)};
+    FETCH_LOCK(mutex_);
+    std::type_index index{typeid(T)};
 
     auto it = events_.find(index);
     if (it == events_.end())
@@ -49,15 +49,15 @@ public:
       events_[index] = std::deque<void *>();
     }
 
-    auto ptr = reinterpret_cast<void *>(new T(event));
+    auto *ptr = reinterpret_cast<void *>(new T(event));
     events_[index].push_back(ptr);
   }
 
   template <typename T>
   bool Poll(T &event)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    std::type_index             index{typeid(T)};
+    FETCH_LOCK(mutex_);
+    std::type_index index{typeid(T)};
 
     auto it = events_.find(index);
     if (it == events_.end())
@@ -70,7 +70,7 @@ public:
       return false;
     }
 
-    auto ptr = reinterpret_cast<T *>(it->second.front());
+    auto *ptr = reinterpret_cast<T *>(it->second.front());
     it->second.pop_front();
 
     event = *ptr;

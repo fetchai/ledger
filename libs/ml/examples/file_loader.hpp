@@ -35,8 +35,8 @@ namespace examples {
  * @param dir_name  the directory to scan
  * @return
  */
-std::vector<std::string> GetAllTextFiles(std::string const &dir_name,
-                                         std::string const &fileext = ".txt")
+inline std::vector<std::string> GetAllTextFiles(std::string const &dir_name,
+                                                std::string const &fileext = ".txt")
 {
   std::vector<std::string> ret;
   DIR *                    d;
@@ -64,7 +64,7 @@ std::vector<std::string> GetAllTextFiles(std::string const &dir_name,
  */
 inline std::string GetTextString(std::string const &training_data)
 {
-  std::string              ret        = "";
+  std::string              ret;
   std::vector<std::string> file_names = GetAllTextFiles(training_data);
 
   // no files at that location - assume the string is the training data directly

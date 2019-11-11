@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
+#include "logging/logging.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -35,6 +36,15 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
   : dag_{std::move(dag)}
   , executors_(num_executors)
   , threads_{num_executors, "SynEx"}
+  , no_executor_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_upow_exec_manager_rid_no_executor_total",
+        "The number of cases where ExecuteItem had missing executor.")}
+  , no_executor_loop_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_upow_exec_manager_rid_no_executor_loop_iter_total",
+        "The total number of iterations we had to make when executor was missing in ExecuteItem")}
+  , execute_item_failed_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_upow_exec_manager_rid_no_executor_loop_fails_total",
+        "Counts how many times ExecuteItem failed, because executor not available after wait.")}
 {
   if (num_executors != 1)
   {
@@ -53,16 +63,16 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
 {
   using WorkMap = std::unordered_map<ProblemId, WorkItemPtr>;
 
-  auto const &current_epoch  = current.body.dag_epoch;
-  auto const &previous_epoch = previous.body.dag_epoch;
+  auto const &current_epoch  = current.dag_epoch;
+  auto const &previous_epoch = previous.dag_epoch;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
 
   // Step 1. loop through all the solutions which were presented in this epoch
   WorkMap work_map{};
   for (auto const &digest : current_epoch.solution_nodes)
   {
-    // lookup the work from the block
+    // look up the work from the block
     auto work = std::make_shared<Work>();
     if (!dag_->GetWork(digest, *work))
     {
@@ -70,7 +80,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
       continue;
     }
 
-    // lookup (or create) the solution queue
+    // look up (or create) the solution queue
     auto &work_item = work_map[{work->address(), work->contract_digest()}];
 
     if (!work_item)
@@ -86,7 +96,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   DAGNode node{};
   for (auto const &digest : previous_epoch.data_nodes)
   {
-    // lookup the referenced DAG node
+    // look up the referenced DAG node
     if (!dag_->GetDAGNode(digest, node))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to retrieve referenced DAG node: 0x", digest.ToHex());
@@ -100,11 +110,11 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
       continue;
     }
 
-    // attempt to lookup the contract being referenced
+    // attempt to look up the contract being referenced
     auto it = work_map.find({node.contract_address, node.contract_digest});
     if (it == work_map.end())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup references contract: address ",
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up references contract: address ",
                      node.contract_address.display(), " digest 0x", node.contract_digest.ToHex());
       continue;
     }
@@ -113,8 +123,8 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     it->second->problem_data.emplace_back(node.contents);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number,
-                 " (complete)");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number,
+                  " (complete)");
 
   // Step 3. Update the final queue
   {
@@ -164,9 +174,35 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
 {
   ExecutorPtr executor;
 
+  bool first = true;
+  for (uint8_t i = 0; i < 5; ++i)
+  {
+    {
+      FETCH_LOCK(lock_);
+      if (!executors_.empty())
+      {
+        break;
+      }
+    }
+    if (first)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Executors empty, can't execute item! Waiting...");
+      no_executor_count_->increment();
+      first = false;
+    }
+    no_executor_loop_count_->increment();
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+  }
+
   // pick up an executor from the stack
   {
     FETCH_LOCK(lock_);
+    if (executors_.empty())
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "ExecuteItem: executors empty after 500ms wait!");
+      execute_item_failed_count_->increment();
+      return;
+    }
     executor = executors_.back();
     executors_.pop_back();
   }

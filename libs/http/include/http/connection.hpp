@@ -19,13 +19,13 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/http_connection_manager.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <deque>
@@ -49,25 +49,17 @@ public:
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
     : socket_(std::move(socket))
     , manager_(manager)
-    , write_mutex_{}
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP connection from ",
                     socket_.remote_endpoint().address().to_string());
   }
 
-  ~HTTPConnection() override
-  {
-    manager_.Leave(handle_);
-  }
+  ~HTTPConnection() override = default;
 
   void Start()
   {
     is_open_ = true;
-    handle_  = manager_.Join(shared_from_this());
-    if (is_open_)
-    {
-      ReadHeader();
-    }
+    ReadHeader();
   }
 
   void Send(HTTPResponse const &response) override
@@ -117,17 +109,15 @@ public:
         this->HandleError(ec, request);
         return;
       }
-      else
+
+      // only parse the header if there is data to be parsed
+      if (len != 0u)
       {
-        // only parse the header if there is data to be parsed
-        if (len)
+        if (request->ParseHeader(*buffer_ptr, len))
         {
-          if (request->ParseHeader(*buffer_ptr, len))
+          if (is_open_)
           {
-            if (is_open_)
-            {
-              ReadBody(buffer_ptr, request);
-            }
+            ReadBody(buffer_ptr, request);
           }
         }
       }
@@ -170,12 +160,10 @@ public:
         this->HandleError(ec, request);
         return;
       }
-      else
+
+      if (is_open_)
       {
-        if (is_open_)
-        {
-          ReadBody(buffer_ptr, request);
-        }
+        ReadBody(buffer_ptr, request);
       }
     };
 
@@ -227,10 +215,23 @@ public:
     asio::async_write(socket_, *buffer_ptr, cb);
   }
 
+  void CloseConnnection() override
+  {
+    std::error_code dummy;
+    socket_.shutdown(asio::ip::tcp::socket::shutdown_both, dummy);
+    socket_.close(dummy);
+  }
+
   void Close()
   {
     is_open_ = false;
+    CloseConnnection();
     manager_.Leave(handle_);
+  }
+
+  void SetHandle(HandleType handle)
+  {
+    handle_ = handle;
   }
 
 private:
@@ -239,7 +240,7 @@ private:
   ResponseQueueType          write_queue_;
   Mutex                      write_mutex_;
 
-  HandleType handle_;
+  HandleType handle_{};
   bool       is_open_ = false;
 };
 }  // namespace http

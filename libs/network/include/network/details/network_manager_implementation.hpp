@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <atomic>
@@ -73,6 +73,10 @@ public:
   template <typename F>
   void Post(F &&f)
   {
+    if (!running_)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Note, posting to a closed network manager");
+    }
     io_service_->post(std::forward<F>(f));
   }
 

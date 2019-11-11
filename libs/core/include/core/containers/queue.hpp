@@ -160,7 +160,7 @@ public:
 protected:
   using Array = std::array<T, SIZE>;
 
-  Array         queue_;              ///< The main element container
+  Array         queue_{};            ///< The main element container
   ProducerIndex write_index_{0};     ///< The write index
   ConsumerIndex read_index_{0};      ///< The read index
   Tickets       read_count_{0};      ///< The read semaphore/tickets object

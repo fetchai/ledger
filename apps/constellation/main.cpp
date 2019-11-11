@@ -17,14 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
+#include "chain/address.hpp"
 #include "config_builder.hpp"
 #include "constants.hpp"
-#include "constellation.hpp"
+#include "constellation/constellation.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/commandline/params.hpp"
-#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/runnable.hpp"
 #include "core/string/to_lower.hpp"
@@ -33,12 +33,13 @@
 #include "crypto/identity.hpp"
 #include "crypto/key_generator.hpp"
 #include "crypto/prover.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/shards/manifest.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "logging/logging.hpp"
 #include "network/adapters.hpp"
 #include "network/peer.hpp"
 #include "network/uri.hpp"
 #include "settings.hpp"
+#include "shards/manifest.hpp"
 #include "version/cli_header.hpp"
 #include "version/fetch_version.hpp"
 
@@ -62,21 +63,22 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "main";
 
-using fetch::Settings;
-using fetch::crypto::Prover;
-using fetch::Constellation;
 using fetch::BootstrapMonitor;
+using fetch::Settings;
 using fetch::core::WeakRunnable;
+using fetch::crypto::Prover;
 using fetch::network::Uri;
+using fetch::shards::ServiceIdentifier;
 
 using BootstrapPtr = std::unique_ptr<BootstrapMonitor>;
 using ProverPtr    = std::shared_ptr<Prover>;
-using NetworkMode  = fetch::Constellation::NetworkMode;
-using UriSet       = fetch::Constellation::UriSet;
+using NetworkMode  = fetch::constellation::Constellation::NetworkMode;
+using UriSet       = fetch::constellation::Constellation::UriSet;
 using Uris         = std::vector<Uri>;
+using Config       = fetch::constellation::Constellation::Config;
 
-std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
-std::atomic<std::size_t>            gInterruptCount{0};
+std::atomic<fetch::constellation::Constellation *> gConstellationInstance{nullptr};
+std::atomic<std::size_t>                           gInterruptCount{0};
 
 UriSet ToUriSet(Uris const &uris)
 {
@@ -105,7 +107,7 @@ void InterruptHandler(int /*signal*/)
     FETCH_LOG_INFO(LOGGING_NAME, "User requests stop of service");
   }
 
-  if (gConstellationInstance)
+  if (gConstellationInstance != nullptr)
   {
     gConstellationInstance.load()->SignalStop();
   }
@@ -150,19 +152,30 @@ bool HasVersionFlag(int argc, char **argv)
  * @param uris The initial set of nodes
  * @return The new bootstrap pointer if one exists
  */
-BootstrapPtr CreateBootstrap(Settings const &settings, ProverPtr const &prover, UriSet &uris)
+BootstrapPtr CreateBootstrap(Settings const &settings, Config const &config,
+                             ProverPtr const &prover, UriSet &uris)
 {
   BootstrapPtr bootstrap{};
 
   if (settings.bootstrap.value())
   {
+    // lookup the external port from the manifest
+    auto const service_it = config.manifest.FindService(ServiceIdentifier::Type::CORE);
+    if (service_it == config.manifest.end())
+    {
+      throw std::runtime_error("Unable to read core entry from service manifest");
+    }
+
+    // get the reference to the TCP peer entry for the core service
+    auto const &core_service_peer = service_it->second.uri().GetTcpPeer();
+
     // build the bootstrap monitor instance
     bootstrap = std::make_unique<BootstrapMonitor>(
-        prover, settings.port.value() + fetch::P2P_PORT_OFFSET, settings.network_name.value(),
-        settings.discoverable.value(), settings.token.value(), settings.hostname.value());
+        prover, core_service_peer.port(), settings.network_name.value(),
+        settings.discoverable.value(), settings.token.value(), core_service_peer.address());
 
     // run the discover
-    bootstrap->DiscoverPeers(uris, settings.external.value());
+    bootstrap->DiscoverPeers(uris, core_service_peer.address());
   }
 
   return bootstrap;
@@ -180,10 +193,8 @@ WeakRunnable ExtractRunnable(BootstrapPtr const &bootstrap)
   {
     return bootstrap->GetWeakRunnable();
   }
-  else
-  {
-    return {};
-  }
+
+  return {};
 }
 
 }  // namespace
@@ -191,6 +202,8 @@ WeakRunnable ExtractRunnable(BootstrapPtr const &bootstrap)
 int main(int argc, char **argv)
 {
   int exit_code = EXIT_FAILURE;
+
+  fetch::crypto::mcl::details::MCLInitialiser();
 
   // Special case for the version flag
   if (HasVersionFlag(argc, argv))
@@ -209,10 +222,6 @@ int main(int argc, char **argv)
 
   try
   {
-#ifdef FETCH_ENABLE_METRICS
-    fetch::metrics::Metrics::Instance().ConfigureFileHandler("metrics.csv");
-#endif  // FETCH_ENABLE_METRICS
-
     Settings settings{};
     if (!settings.Update(argc, argv))
     {
@@ -225,21 +234,21 @@ int main(int argc, char **argv)
       // create and load the main certificate for the bootstrapper
       auto p2p_key = fetch::crypto::GenerateP2PKey();
 
+      // attempt to build the configuration for constellation
+      fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
+
       // create the bootrap monitor (if configued to do so)
       auto initial_peers = ToUriSet(settings.peers.value());
-      auto bootstrap     = CreateBootstrap(settings, p2p_key, initial_peers);
+      auto bootstrap     = CreateBootstrap(settings, cfg, p2p_key, initial_peers);
 
       for (auto const &uri : initial_peers)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Initial Peer: ", uri);
       }
 
-      // attempt to build the configuration for constellation
-      Constellation::Config cfg = BuildConstellationConfig(settings);
-
       // create and run the constellation
       auto constellation =
-          std::make_unique<fetch::Constellation>(std::move(p2p_key), std::move(cfg));
+          std::make_unique<fetch::constellation::Constellation>(std::move(p2p_key), std::move(cfg));
 
       // update the instance pointer
       gConstellationInstance = constellation.get();

@@ -17,23 +17,47 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_builder.hpp"
+#include "meta/type_traits.hpp"
 
 #include <cstdint>
 
 using fetch::crypto::ECDSASigner;
-using fetch::ledger::Transaction;
-using fetch::ledger::TransactionBuilder;
-using fetch::ledger::Address;
-using fetch::BitVector;
-
+using fetch::chain::Transaction;
+using fetch::chain::TransactionBuilder;
+using fetch::byte_array::ByteArray;
 using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;
 
-inline TransactionList GenerateTransactions(std::size_t count, ECDSASigner &signer)
+template <typename Word = uint64_t>
+fetch::meta::IfIsUnsignedInteger<Word, ByteArray> GenerateRandomArray(
+    std::size_t num_of_words, fetch::random::LinearCongruentialGenerator rng)
 {
+  ByteArray array(sizeof(Word) * num_of_words);
+  auto      raw_array = reinterpret_cast<Word *>(array.pointer());
+
+  for (std::size_t i = 0; i < num_of_words; ++i)
+  {
+    raw_array[i] = rng();
+  }
+  return array;
+}
+
+inline TransactionList GenerateTransactions(std::size_t count, ECDSASigner const &signer,
+                                            bool large_packets = false)
+{
+  using fetch::chain::Address;
+  using fetch::BitVector;
+
+  using fetch::random::LinearCongruentialGenerator;
+
+  using Word                                    = uint64_t;
+  static constexpr std::size_t TX_SIZE_IN_WORDS = 256ull;
+
+  static fetch::random::LinearCongruentialGenerator rng;
+
   TransactionList list;
   list.reserve(count);
 
@@ -41,7 +65,8 @@ inline TransactionList GenerateTransactions(std::size_t count, ECDSASigner &sign
   {
     auto tx = TransactionBuilder()
                   .From(Address{signer.identity()})
-                  .TargetChainCode("fetch.dummy", BitVector{})
+                  .TargetChainCode("fetch.token", BitVector{})
+                  .Data(GenerateRandomArray<Word>(large_packets ? TX_SIZE_IN_WORDS : 1ull, rng))
                   .Signer(signer.identity())
                   .Seal()
                   .Sign(signer)

@@ -29,7 +29,7 @@ class ShardedState : public IShardedState
 public:
   ShardedState(VM *vm, TypeId type_id, Ptr<String> const &name, TypeId value_type_id)
     : IShardedState(vm, type_id)
-    , name_{name ? name->str : ""}
+    , name_{name ? name->string() : ""}
     , value_type_id_{value_type_id}
   {
     if (!name)
@@ -79,7 +79,7 @@ private:
       return {};
     }
 
-    return Ptr<String>{new String{vm_, name_ + "." + key->str}};
+    return Ptr<String>{new String{vm_, name_ + "." + key->string()}};
   }
 
   TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &index)
@@ -159,7 +159,7 @@ Ptr<IShardedState> IShardedState::ConstructorFromString(VM *vm, TypeId type_id,
   if (name)
   {
     TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
-    TypeId const    value_type_id = type_info.parameter_type_ids[0];
+    TypeId const    value_type_id = type_info.template_parameter_type_ids[0];
     return Ptr<IShardedState>{new ShardedState(vm, type_id, name, value_type_id)};
   }
 

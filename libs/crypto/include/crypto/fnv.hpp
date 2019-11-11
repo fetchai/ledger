@@ -60,23 +60,3 @@ private:
 
 }  // namespace crypto
 }  // namespace fetch
-
-namespace std {
-
-template <>
-struct hash<fetch::byte_array::ConstByteArray>
-{
-  std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const noexcept
-  {
-    fetch::crypto::detail::FNV1a hash;
-    hash.update(value.pointer(), value.size());
-    return hash.context();
-  }
-};
-
-template <>
-struct hash<fetch::byte_array::ByteArray> : public hash<fetch::byte_array::ConstByteArray>
-{
-};
-
-}  // namespace std

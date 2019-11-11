@@ -49,8 +49,8 @@ public:
   // an empty pointer if the miner should not emit a block
   virtual NextBlockPtr GenerateNextBlock() = 0;
 
-  // Verify a block according to consensus requirements
-  virtual Status ValidBlock(Block const &previous, Block const &current) = 0;
+  // Verify a block according to consensus requirements. It must not be loose.
+  virtual Status ValidBlock(Block const &current) const = 0;
 
   // Refresh the consensus view on the main chain
   virtual void Refresh() = 0;

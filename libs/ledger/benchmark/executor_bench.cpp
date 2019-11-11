@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
+#include "chain/transaction_builder.hpp"
 #include "core/bitvector.hpp"
 #include "crypto/ecdsa.hpp"
 #include "in_memory_storage.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/chain/transaction_builder.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/identifier.hpp"
@@ -33,9 +34,9 @@
 namespace {
 
 using fetch::ledger::Executor;
-using fetch::ledger::Transaction;
-using fetch::ledger::TransactionBuilder;
-using fetch::ledger::Address;
+using fetch::chain::Transaction;
+using fetch::chain::TransactionBuilder;
+using fetch::chain::Address;
 using fetch::ledger::TokenContract;
 using fetch::ledger::StateSentinelAdapter;
 using fetch::ledger::Identifier;
@@ -79,7 +80,7 @@ void Executor_BasicBenchmark(benchmark::State &state)
 
     TokenContract tokens{};
 
-    tokens.Attach(adapter);
+    tokens.Attach({&tokens, tx->contract_address(), &adapter, 0});
     tokens.AddTokens(tx->from(), 500000);
     tokens.Detach();
   }

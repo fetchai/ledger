@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "telemetry/measurement.hpp"
 #include "telemetry/telemetry.hpp"
 
-#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -52,7 +52,6 @@ public:
   HistogramMap &operator=(HistogramMap &&) = delete;
 
 private:
-  using Mutex               = std::mutex;
   using HistogramCollection = std::unordered_map<std::string, HistogramPtr>;
 
   HistogramPtr LookupHistogram(std::string const &key);

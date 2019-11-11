@@ -17,9 +17,11 @@ setup_compiler()
 setup_library(fetch-beacon)
 target_link_libraries(fetch-beacon
                       PUBLIC fetch-core
+                             fetch-shards
                              fetch-crypto
                              fetch-network
-                             fetch-ledger)
+                             fetch-dkg)
 
 # Test targets
 add_test_target()
+add_subdirectory(benchmark)

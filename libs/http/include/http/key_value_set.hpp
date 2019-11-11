@@ -88,10 +88,8 @@ public:
     {
       return {};
     }
-    else
-    {
-      return element->second;
-    }
+
+    return element->second;
   }
 
   void Clear()

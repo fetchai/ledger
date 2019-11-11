@@ -96,11 +96,6 @@ bool InMemoryStorageUnit::Unlock(ShardIndex shard)
   return success;
 }
 
-Keys InMemoryStorageUnit::KeyDump() const
-{
-  throw std::runtime_error("Not implemented by design");
-}
-
 void InMemoryStorageUnit::Reset()
 {
   throw std::runtime_error("Not implemented by design");
@@ -130,12 +125,12 @@ bool InMemoryStorageUnit::HasTransaction(Digest const &digest)
   return tx_store_.find(digest) != tx_store_.end();
 }
 
-void InMemoryStorageUnit::IssueCallForMissingTxs(DigestSet const &)
+void InMemoryStorageUnit::IssueCallForMissingTxs(DigestSet const & /*tx_set*/)
 {
   throw std::runtime_error("Not implemented by design");
 }
 
-TxLayouts InMemoryStorageUnit::PollRecentTx(uint32_t)
+TxLayouts InMemoryStorageUnit::PollRecentTx(uint32_t /*unused*/)
 {
   throw std::runtime_error("Not implemented by design");
 }
@@ -150,17 +145,17 @@ Hash InMemoryStorageUnit::LastCommitHash()
   throw std::runtime_error("Not implemented by design");
 }
 
-bool InMemoryStorageUnit::RevertToHash(Hash const &, uint64_t)
+bool InMemoryStorageUnit::RevertToHash(Hash const & /*hash*/, uint64_t /*index*/)
 {
   throw std::runtime_error("Not implemented by design");
 }
 
-Hash InMemoryStorageUnit::Commit(uint64_t)
+Hash InMemoryStorageUnit::Commit(uint64_t /*index*/)
 {
   throw std::runtime_error("Not implemented by design");
 }
 
-bool InMemoryStorageUnit::HashExists(Hash const &, uint64_t)
+bool InMemoryStorageUnit::HashExists(Hash const & /*hash*/, uint64_t /*index*/)
 {
   throw std::runtime_error("Not implemented by design");
 }

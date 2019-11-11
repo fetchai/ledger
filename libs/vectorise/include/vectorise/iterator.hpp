@@ -46,8 +46,8 @@ public:
   }
 
   VectorRegisterIterator(type const *d, std::size_t size)
-    : ptr_((MMRegisterType *)d)
-    , end_((MMRegisterType *)(d + size))
+    : ptr_(reinterpret_cast<MMRegisterType const *>(d))
+    , end_(reinterpret_cast<MMRegisterType const *>(d + size))
   {}
 
   void Next(VectorRegisterType &m)
@@ -58,19 +58,20 @@ public:
     ++ptr_;
   }
 
-  MMRegisterType *pointer() const
+  MMRegisterType const *pointer() const
   {
     return ptr_;
   }
 
-  MMRegisterType *end() const
+  MMRegisterType const *end() const
   {
     return end_;
   }
 
 private:
-  MMRegisterType *ptr_;
-  MMRegisterType *end_;
+  MMRegisterType const *ptr_;
+  MMRegisterType const *end_;
 };
+
 }  // namespace vectorise
 }  // namespace fetch

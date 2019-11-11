@@ -24,10 +24,10 @@
 #include "peer_selector.hpp"
 
 #include "core/containers/set_intersection.hpp"
-#include "core/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
+#include "logging/logging.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
 
@@ -74,7 +74,11 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
         clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
-  register_->AttachRouter(router_);
+  // handle the left issues
+  register_->OnConnectionLeft([this](Handle handle) {
+    router_.ConnectionDropped(handle);
+    direct_message_service_.SignalConnectionLeft(handle);
+  });
 
   // register the status update
   clients_.SetStatusCallback(
@@ -166,6 +170,26 @@ bool Muddle::Start(Uris const &peers, Ports const &ports)
   return true;
 }
 
+bool Muddle::Start(Uris const &peers, PortMapping const &port_mapping)
+{
+  Ports ports{};
+
+  for (auto const &item : port_mapping)
+  {
+    // mapping a random port does not make any sense so this is a failure
+    if (item.first == 0)
+    {
+      return false;
+    }
+
+    ports.emplace_back(item.first);
+  }
+
+  port_mapping_ = port_mapping;
+
+  return Start(peers, ports);
+}
+
 /**
  * Start the muddle instance listing on the specified set of ports
  *
@@ -226,6 +250,16 @@ NetworkId const &Muddle::GetNetwork() const
 Address const &Muddle::GetAddress() const
 {
   return node_address_;
+}
+
+/**
+ * Get the external address of the muddle
+ *
+ * @return The external address of the node
+ */
+std::string const &Muddle::GetExternalAddress() const
+{
+  return external_address_;
 }
 
 /**
@@ -492,6 +526,13 @@ void Muddle::RunPeriodicMaintenance()
       if (port == 0)
       {
         continue;
+      }
+
+      // determine if the port needs to be mapped to an external range
+      auto const it = port_mapping_.find(port);
+      if (it != port_mapping_.end())
+      {
+        port = it->second;
       }
 
       external_addresses.emplace_back(network::Peer(external_address_, port));

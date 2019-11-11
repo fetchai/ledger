@@ -48,11 +48,11 @@ enum class PublicTxStatus
   // Workflow status
   UNKNOWN = 0,  ///< The status of the transaction is unknown
   PENDING,      ///< The transaction is waiting to be mined
-  MINED,        ///< The transaction has been mined
+  MINED,        ///< The transaction has been mined (selected for execution)
+  EXECUTED,     ///< The transaction has been executed successfully
   SUBMITTED,    ///< Special case for the data based synergetic transactions
 
-  // Contract Execution Errors
-  EXECUTED,
+  // Contract execution errors
   CHAIN_CODE_LOOKUP_FAILURE,
   CHAIN_CODE_EXEC_FAILURE,
   CONTRACT_NAME_PARSE_FAILURE,

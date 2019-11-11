@@ -19,8 +19,8 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "logging/logging.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
 #include "network/tcp/client_implementation.hpp"

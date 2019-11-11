@@ -55,7 +55,7 @@ public:
     return sig.Verify(public_key_, data);
   }
 
-  Identity identity() override
+  Identity identity() const override
   {
     return identity_;
   }
@@ -108,7 +108,7 @@ public:
     return private_key_.Apply([](PrivateKey const &key) { return key.PublicKey().KeyAsBin(); });
   }
 
-  ConstByteArray private_key()
+  ConstByteArray private_key() const
   {
     return private_key_.Apply([](PrivateKey const &key) { return key.KeyAsBin(); });
   }

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
 #include "core/synchronisation/protected.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"

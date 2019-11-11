@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter.hpp"
+#include "bloom_filter/bloom_filter.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/testing/block_generator.hpp"
 
@@ -61,6 +61,8 @@ BlockArray GenerateBlocks(benchmark::State const &state)
 
 void MainChain_InMemory_AddBlocksSequentially(benchmark::State &state)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   auto array = GenerateBlocks(state);
 
   for (auto _ : state)
@@ -78,6 +80,8 @@ void MainChain_InMemory_AddBlocksSequentially(benchmark::State &state)
 
 void MainChain_Persistent_AddBlocksSequentially(benchmark::State &state)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   auto array = GenerateBlocks(state);
 
   for (auto _ : state)
@@ -95,6 +99,8 @@ void MainChain_Persistent_AddBlocksSequentially(benchmark::State &state)
 
 void MainChain_InMemory_AddBlocksOutOfOrder(benchmark::State &state)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   auto array = GenerateBlocks(state);
 
   for (auto _ : state)
@@ -112,6 +118,8 @@ void MainChain_InMemory_AddBlocksOutOfOrder(benchmark::State &state)
 
 void MainChain_Persistent_AddBlocksOutOfOrder(benchmark::State &state)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   auto array = GenerateBlocks(state);
 
   for (auto _ : state)

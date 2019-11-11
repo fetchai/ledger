@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/common_types.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/digest.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/common_types.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/work.hpp"
 #include "vectorise/uint/uint.hpp"
@@ -33,7 +33,7 @@
 namespace fetch {
 namespace ledger {
 
-Work::Work(Digest digest, Address address, crypto::Identity miner)
+Work::Work(Digest digest, chain::Address address, crypto::Identity miner)
   : contract_digest_{std::move(digest)}
   , contract_address_{std::move(address)}
   , miner_{std::move(miner)}
@@ -44,7 +44,7 @@ Digest const &Work::contract_digest() const
   return contract_digest_;
 }
 
-Address const &Work::address() const
+chain::Address const &Work::address() const
 {
   return contract_address_;
 }
@@ -69,7 +69,7 @@ void Work::UpdateDigest(Digest digest)
   contract_digest_ = std::move(digest);
 }
 
-void Work::UpdateAddress(Address address)
+void Work::UpdateAddress(chain::Address address)
 {
   contract_address_ = std::move(address);
 }

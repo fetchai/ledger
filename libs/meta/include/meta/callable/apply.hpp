@@ -33,13 +33,13 @@ namespace meta {
 namespace internal {
 
 template <class F, typename Tuple, std::size_t... I>
-constexpr decltype(auto) Apply(F &&f, Tuple &&t, IndexSequence<I...> &&)
+constexpr decltype(auto) Apply(F &&f, Tuple &&t, IndexSequence<I...> && /*unused*/)
 {
   return Invoke(std::forward<F>(f), std::get<I>(std::forward<Tuple>(t))...);
 }
 
 template <class F, typename Context, typename Tuple, std::size_t... I>
-constexpr decltype(auto) Apply(F &&f, Context &&ctx, Tuple &&t, IndexSequence<I...> &&)
+constexpr decltype(auto) Apply(F &&f, Context &&ctx, Tuple &&t, IndexSequence<I...> && /*unused*/)
 {
   return Invoke(std::forward<F>(f), std::forward<Context>(ctx),
                 std::get<I>(std::forward<Tuple>(t))...);

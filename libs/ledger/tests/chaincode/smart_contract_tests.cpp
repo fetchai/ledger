@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_builder.hpp"
 #include "contract_test.hpp"
 #include "core/containers/is_in.hpp"
+#include "core/string/replace.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_adapter.hpp"
 #include "mock_storage_unit.hpp"
@@ -37,11 +38,14 @@ using ::testing::Return;
 
 using fetch::byte_array::ConstByteArray;
 using fetch::core::IsIn;
-using fetch::ledger::Address;
+using fetch::string::Replace;
+using fetch::chain::Address;
 using fetch::ledger::SmartContract;
 using fetch::storage::ResourceAddress;
 using fetch::variant::Variant;
 using ContractDigest = ConstByteArray;
+using fetch::chain::TransactionBuilder;
+using fetch::chain::Transaction;
 
 template <typename T>
 ConstByteArray RawBytes(T value)
@@ -357,7 +361,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   EXPECT_TRUE(IsIn(query_handlers, "balance"));
 
   fetch::crypto::ECDSASigner target{};
-  fetch::ledger::Address     target_address{target.identity()};
+  fetch::chain::Address      target_address{target.identity()};
 
   auto const owner_key  = contract_name_->full_name() + ".state." + owner_address_->display();
   auto const target_key = contract_name_->full_name() + ".state." + target_address.display();
@@ -468,7 +472,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
   auto const       expected_resource2 = ResourceAddress{expected_key2};
   auto const       expected_value1    = RawBytes<int32_t>(20);
   auto const       expected_value2    = RawBytes<int32_t>(30);
-  fetch::BitVector mask{1ull << 4};
+  fetch::BitVector mask{1ull << 4u};
   auto const       lane1 = expected_resource1.lane(mask.log2_size());
   auto const       lane2 = expected_resource2.lane(mask.log2_size());
   mask.set(lane1, 1);
@@ -565,6 +569,345 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
   auto request{Variant::Object()};
   request["address"] = address_as_name.display();
   VerifyQuery("query_foo", int32_t{20}, request);
+}
+
+TEST_F(SmartContractTests, CheckContextInAction)
+{
+  fetch::crypto::ECDSASigner     transfer_to_cert0{};
+  Transaction::Transfer const    transfer0{Address{certificate_->identity()}, 15ull};
+  Transaction::Transfer const    transfer1{Address{transfer_to_cert0.identity()}, 6ull};
+  Transaction::TokenAmount const charge_rate{19ull};
+  Transaction::TokenAmount const charge_limit{7401ull};
+  Transaction::BlockIndex const  valid_from{269};
+  Transaction::BlockIndex const  valid_until{517};
+
+  std::string contract_source = R"(
+    @action
+    function acquire_context()
+      var context : Context = getContext();
+      var transaction : Transaction = context.transaction();
+      var block : Block = context.block();
+    endfunction
+
+    @action
+    function block_index_from_context() : Int64
+      var context : Context = getContext();
+      var block : Block = context.block();
+      return toInt64(block.blockNumber());
+    endfunction
+
+    @action
+    function test_transaction() : Int64
+      //var exp_digest = ...; //TODO(pb): Write test in the future
+      var exp_transfer0_to_addr = Address("@TRANSFER0_ADDRESS@");
+      var exp_transfer0_amount = @TRANSFER0_AMOUNT@u64;
+      var exp_transfer1_to_addr = Address("@TRANSFER1_ADDRESS@");
+      var exp_transfer1_amount = @TRANSFER1_AMOUNT@u64;
+      var exp_charge_rate = @CHARGE_RATE@u64;
+      var exp_charge_limit = @CHARGE_LIMIT@u64;
+      var exp_valid_from = @VALID_FROM@u64;
+      var exp_valid_until = @VALID_UNTIL@u64;
+
+      var context : Context = getContext();
+      var tx : Transaction = context.transaction();
+      var transfers : Array<Transfer> = tx.transfers();
+
+      if (2i32 != transfers.count())
+        return -1i64;
+      endif
+
+      if (exp_transfer0_to_addr != transfers[0].to())
+        return -2i64;
+      endif
+
+      if (exp_transfer0_amount != transfers[0].amount())
+        return -3i64;
+      endif
+
+      if (exp_transfer1_to_addr != transfers[1].to())
+        return -4i64;
+      endif
+
+      if (exp_transfer1_amount != transfers[1].amount())
+        return -5i64;
+      endif
+
+      if (exp_charge_rate != tx.chargeRate())
+        return -6i64;
+      endif
+
+      if (exp_charge_limit != tx.chargeLimit())
+        return -7i64;
+      endif
+
+      if (exp_valid_from != tx.validFrom())
+        return -8i64;
+      endif
+
+      if (exp_valid_until != tx.validUntil())
+        return -9i64;
+      endif
+
+      if ("test_transaction" != tx.action())
+        return -9i64;
+      endif
+
+      var signatories = tx.signatories();
+      if (1 != signatories.count())
+        return -10i64;
+      endif
+
+      printLn(toString(tx.from()));
+      printLn(toString(signatories[0]));
+
+      if (tx.from() != signatories[0])
+        return -11i64;
+      endif
+
+      return 0i64;
+    endfunction
+   )";
+
+  Replace(contract_source, "@TRANSFER0_ADDRESS@", static_cast<std::string>(transfer0.to.display()));
+  Replace(contract_source, "@TRANSFER0_AMOUNT@", std::to_string(transfer0.amount));
+  Replace(contract_source, "@TRANSFER1_ADDRESS@", static_cast<std::string>(transfer1.to.display()));
+  Replace(contract_source, "@TRANSFER1_AMOUNT@", std::to_string(transfer1.amount));
+  Replace(contract_source, "@CHARGE_RATE@", std::to_string(charge_rate));
+  Replace(contract_source, "@CHARGE_LIMIT@", std::to_string(charge_limit));
+  Replace(contract_source, "@VALID_FROM@", std::to_string(valid_from));
+  Replace(contract_source, "@VALID_UNTIL@", std::to_string(valid_until));
+
+  // create the contract
+  CreateContract(contract_source);
+
+  // check the registered handlers
+  auto const transaction_handlers = contract_->transaction_handlers();
+  ASSERT_EQ(3u, transaction_handlers.size());
+  EXPECT_TRUE(IsIn(transaction_handlers, "acquire_context"));
+  EXPECT_TRUE(IsIn(transaction_handlers, "block_index_from_context"));
+  EXPECT_TRUE(IsIn(transaction_handlers, "test_transaction"));
+
+  {
+    InSequence seq;
+
+    // from the action
+    EXPECT_CALL(*storage_, Lock(_));
+    EXPECT_CALL(*storage_, Unlock(_));
+  }
+
+  // send the smart contract an "increment" action
+  auto const status_0{SendSmartAction("acquire_context")};
+  EXPECT_EQ(SmartContract::Status::OK, status_0.status);
+
+  {
+    InSequence seq;
+
+    // from the action
+    EXPECT_CALL(*storage_, Lock(_));
+    EXPECT_CALL(*storage_, Unlock(_));
+  }
+
+  block_number_ = 123;
+  Contract::BlockIndex const expected_block_idx{block_number_};
+
+  // send the smart contract an "increment" action
+  auto const status_1{SendSmartAction("block_index_from_context")};
+  EXPECT_EQ(SmartContract::Status::OK, status_1.status);
+  EXPECT_EQ(expected_block_idx, status_1.return_value);
+
+  {
+    InSequence seq;
+
+    // from the action
+    EXPECT_CALL(*storage_, Lock(_));
+    EXPECT_CALL(*storage_, Unlock(_));
+  }
+
+  auto tx{TransactionBuilder()
+              .From(Address{certificate_->identity()})
+              .TargetSmartContract(*contract_address_, *owner_address_, shards_)
+              .Action("test_transaction")
+              .Transfer(transfer0.to, transfer0.amount)
+              .Transfer(transfer1.to, transfer1.amount)
+              .ChargeRate(charge_rate)
+              .ChargeLimit(charge_limit)
+              .ValidFrom(valid_from)
+              .ValidUntil(valid_until)
+              .Signer(certificate_->identity())
+              .Data(ConstByteArray{})
+              .Seal()
+              .Sign(*certificate_)
+              .Build()};
+
+  // send the smart contract an "increment" action
+  auto const status_2{SendAction(tx)};
+  EXPECT_EQ(SmartContract::Status::OK, status_2.status);
+  EXPECT_EQ(0, status_2.return_value);
+}
+
+TEST_F(SmartContractTests, CheckContextBlockInInit)
+{
+  std::string contract_source = R"(
+    @init
+    function block_index_from_context() : Int64
+      var context : Context = getContext();
+      var block : Block = context.block();
+      return toInt64(block.blockNumber());
+    endfunction
+   )";
+
+  // create the contract
+  CreateContract(contract_source);
+
+  {
+    InSequence seq;
+
+    // from the action
+    EXPECT_CALL(*storage_, Lock(_));
+    EXPECT_CALL(*storage_, Unlock(_));
+  }
+
+  block_number_ = 123;
+  Contract::BlockIndex const expected_block_idx{block_number_};
+
+  // send the smart contract an "increment" action
+  auto const status_1{InvokeInit(certificate_->identity())};
+  EXPECT_EQ(SmartContract::Status::OK, status_1.status);
+  EXPECT_EQ(expected_block_idx, status_1.return_value);
+}
+
+TEST_F(SmartContractTests, CheckContextTransactionInInit)
+{
+  fetch::crypto::ECDSASigner     transfer_to_cert0{};
+  Transaction::Transfer const    transfer0{Address{certificate_->identity()}, 15ull};
+  Transaction::Transfer const    transfer1{Address{transfer_to_cert0.identity()}, 6ull};
+  Transaction::TokenAmount const charge_rate{19ull};
+  Transaction::TokenAmount const charge_limit{7401ull};
+  Transaction::BlockIndex const  valid_from{269};
+  Transaction::BlockIndex const  valid_until{517};
+  std::string const              action_name{"some_weird_irrelevant_something"};
+
+  std::string contract_source = R"(
+    @init
+    function test_transaction() : Int64
+      //var exp_digest = ...; //TODO(pb): Write test in the future
+      var exp_transfer0_to_addr = Address("@TRANSFER0_ADDRESS@");
+      var exp_transfer0_amount = @TRANSFER0_AMOUNT@u64;
+      var exp_transfer1_to_addr = Address("@TRANSFER1_ADDRESS@");
+      var exp_transfer1_amount = @TRANSFER1_AMOUNT@u64;
+      var exp_charge_rate = @CHARGE_RATE@u64;
+      var exp_charge_limit = @CHARGE_LIMIT@u64;
+      var exp_valid_from = @VALID_FROM@u64;
+      var exp_valid_until = @VALID_UNTIL@u64;
+      var action_name = "@ACTION_NAME@";
+
+      var context : Context = getContext();
+      var tx : Transaction = context.transaction();
+      var transfers : Array<Transfer> = tx.transfers();
+
+      if (2i32 != transfers.count())
+        return -1i64;
+      endif
+
+      if (exp_transfer0_to_addr != transfers[0].to())
+        return -2i64;
+      endif
+
+      if (exp_transfer0_amount != transfers[0].amount())
+        return -3i64;
+      endif
+
+      if (exp_transfer1_to_addr != transfers[1].to())
+        return -4i64;
+      endif
+
+      if (exp_transfer1_amount != transfers[1].amount())
+        return -5i64;
+      endif
+
+      if ((exp_transfer0_amount + exp_transfer1_amount) != tx.getTotalTransferAmount())
+        return -6i64;
+      endif
+
+      if (exp_charge_rate != tx.chargeRate())
+        return -7i64;
+      endif
+
+      if (exp_charge_limit != tx.chargeLimit())
+        return -8i64;
+      endif
+
+      if (exp_valid_from != tx.validFrom())
+        return -9i64;
+      endif
+
+      if (exp_valid_until != tx.validUntil())
+        return -10i64;
+      endif
+
+      if (action_name != tx.action())
+        return -11i64;
+      endif
+
+      var signatories = tx.signatories();
+      if (2 != signatories.count())
+        return -12i64;
+      endif
+
+      if (tx.from() != signatories[0])
+        return -13i64;
+      endif
+
+      if (exp_transfer1_to_addr != signatories[1] || signatories[0] == signatories[1])
+        return -14i64;
+      endif
+
+      return 0i64;
+    endfunction
+   )";
+
+  Replace(contract_source, "@TRANSFER0_ADDRESS@", static_cast<std::string>(transfer0.to.display()));
+  Replace(contract_source, "@TRANSFER0_AMOUNT@", std::to_string(transfer0.amount));
+  Replace(contract_source, "@TRANSFER1_ADDRESS@", static_cast<std::string>(transfer1.to.display()));
+  Replace(contract_source, "@TRANSFER1_AMOUNT@", std::to_string(transfer1.amount));
+  Replace(contract_source, "@CHARGE_RATE@", std::to_string(charge_rate));
+  Replace(contract_source, "@CHARGE_LIMIT@", std::to_string(charge_limit));
+  Replace(contract_source, "@VALID_FROM@", std::to_string(valid_from));
+  Replace(contract_source, "@VALID_UNTIL@", std::to_string(valid_until));
+  Replace(contract_source, "@ACTION_NAME@", action_name);
+
+  // create the contract
+  CreateContract(contract_source);
+
+  auto tx{TransactionBuilder()
+              .From(Address{certificate_->identity()})
+              .Action(action_name)
+              .Transfer(transfer0.to, transfer0.amount)
+              .Transfer(transfer1.to, transfer1.amount)
+              .ChargeRate(charge_rate)
+              .ChargeLimit(charge_limit)
+              .ValidFrom(valid_from)
+              .ValidUntil(valid_until)
+              .Signer(certificate_->identity())
+              .Signer(transfer_to_cert0.identity())
+              .Data(ConstByteArray{})
+              .Seal()
+              .Sign(*certificate_)
+              .Sign(transfer_to_cert0)
+              .Build()};
+
+  {
+    InSequence seq;
+
+    // from the action
+    EXPECT_CALL(*storage_, Lock(_));
+    EXPECT_CALL(*storage_, Unlock(_));
+  }
+
+  // send the smart contract an "increment" action
+  auto const status_1{InvokeInit(certificate_->identity(), *tx)};
+  EXPECT_EQ(SmartContract::Status::OK, status_1.status);
+  EXPECT_EQ(0ll, status_1.return_value);
 }
 
 }  // namespace

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "network/details/network_manager_implementation.hpp"
 #include "network/fetch_asio.hpp"
 
@@ -86,10 +86,8 @@ public:
     {
       return ptr->Post(std::forward<F>(f));
     }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Failed to post: network man dead.");
-    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to post: network man dead.");
   }
 
   template <typename F>

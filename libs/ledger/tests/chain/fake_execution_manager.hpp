@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/constants.hpp"
+#include "chain/constants.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -27,15 +27,15 @@ class FakeExecutionManager : public fetch::ledger::ExecutionManagerInterface
 {
 public:
   using Block  = fetch::ledger::Block;
-  using Digest = fetch::ledger::Digest;
+  using Digest = fetch::Digest;
 
   explicit FakeExecutionManager(FakeStorageUnit &storage);
   ~FakeExecutionManager() override = default;
 
   /// @name Execution Manager Interface
   /// @{
-  ScheduleStatus Execute(Block::Body const &block) override;
-  Digest         LastProcessedBlock() override;
+  ScheduleStatus Execute(Block const &block) override;
+  Digest         LastProcessedBlock() const override;
   void           SetLastProcessedBlock(Digest hash) override;
   State          GetState() override;
   bool           Abort() override;
@@ -46,6 +46,6 @@ private:
 
   Digest      current_hash_;
   Digest      current_merkle_root_;
-  Digest      last_processed_{fetch::ledger::GENESIS_DIGEST};
+  Digest      last_processed_{fetch::chain::GENESIS_DIGEST};
   std::size_t current_polls_{0};
 };

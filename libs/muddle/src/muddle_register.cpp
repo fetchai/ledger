@@ -46,9 +46,10 @@ MuddleRegister::MuddleRegister(NetworkId const &network)
   : name_{GenerateLoggingName(BASE_NAME, network)}
 {}
 
-void MuddleRegister::AttachRouter(Router &router)
+void MuddleRegister::OnConnectionLeft(ConnectionLeftCallback cb)
 {
-  router_ = &router;
+  FETCH_LOCK(lock_);
+  left_callback_ = std::move(cb);
 }
 
 /**
@@ -74,7 +75,7 @@ void MuddleRegister::Broadcast(ConstByteArray const &data) const
 }
 
 /**
- * Lookup a connection given a specified handle
+ * Look up a connection given a specified handle
  *
  * @param handle The handle of the requested connection
  * @return A valid connection if successful, otherwise an invalid one
@@ -286,7 +287,7 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
  */
 void MuddleRegister::Leave(ConnectionHandle handle)
 {
-  FETCH_LOCK(lock_);
+  std::unique_lock<std::mutex> lock(lock_);
 
   FETCH_LOG_TRACE(logging_name_, "### Connection ", handle, " ended");
 
@@ -315,11 +316,17 @@ void MuddleRegister::Leave(ConnectionHandle handle)
     handle_index_.erase(it);
   }
 
+  auto callback_copy = left_callback_;
+  lock.unlock();
+
   // signal the router
-  auto const router = router_.load();
-  if (router)
+  if (callback_copy)
   {
-    router->ConnectionDropped(handle);
+    callback_copy(handle);
+  }
+  else
+  {
+    FETCH_LOG_INFO(logging_name_, "### Connection ", handle, " ended (empty callback)");
   }
 }
 

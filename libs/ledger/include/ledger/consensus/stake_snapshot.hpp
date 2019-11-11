@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
 #include "crypto/identity.hpp"
+#include "logging/logging.hpp"
 
 #include <memory>
 #include <vector>
@@ -35,9 +37,9 @@ namespace ledger {
 class StakeSnapshot
 {
 public:
-  using Identity     = crypto::Identity;
-  using Committee    = std::vector<Identity>;
-  using CommitteePtr = std::shared_ptr<Committee>;
+  using Identity   = crypto::Identity;
+  using Cabinet    = std::vector<Identity>;
+  using CabinetPtr = std::shared_ptr<Cabinet>;
 
   static constexpr char const *LOGGING_NAME = "StakeSnapshot";
 
@@ -47,7 +49,7 @@ public:
   StakeSnapshot(StakeSnapshot &&)      = default;
   ~StakeSnapshot()                     = default;
 
-  CommitteePtr BuildCommittee(uint64_t entropy, std::size_t count) const;
+  CabinetPtr BuildCabinet(uint64_t entropy, std::size_t count) const;
 
   /// @name Stake Updates
   /// @{

@@ -21,6 +21,12 @@ clean:
 	find . | grep "\.gch" | xargs rm -f # remove precompiled headers
 	find . | grep "\.orig" | xargs rm -f
 	rm -rf build/
+	rm -rf bazel-bin/
+	rm -rf bazel-fetch-ledger/
+	rm -rf bazel-genfiles/	
+	rm -rf bazel-out/
+	rm -rf bazel-testlogs/
+
 
 count:
 	find libs/ -type f | grep "\.hpp" | xargs cat | wc -l

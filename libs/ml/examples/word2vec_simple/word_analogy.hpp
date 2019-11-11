@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/matrix_operations.hpp"
+#include "ml/exceptions/exceptions.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -55,17 +56,17 @@ void EvalAnalogy(DataLoaderType const &data_loader, TensorType const &embeds, Si
   SizeType    word1_idx = data_loader.IndexFromWord(word1);
   if (word1_idx == 0)
   {
-    throw std::runtime_error("word1 not found");
+    throw fetch::ml::exceptions::InvalidInput("word1 not found");
   }
   SizeType word2_idx = data_loader.IndexFromWord(word2);
   if (word2_idx == 0)
   {
-    throw std::runtime_error("word2 not found");
+    throw fetch::ml::exceptions::InvalidInput("word2 not found");
   }
   SizeType word3_idx = data_loader.IndexFromWord(word3);
   if (word3_idx == 0)
   {
-    throw std::runtime_error("word3 not found");
+    throw fetch::ml::exceptions::InvalidInput("word3 not found");
   }
 
   auto word_vector_1 = embeddings.View(word1_idx).Copy();
