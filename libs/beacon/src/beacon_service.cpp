@@ -279,7 +279,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   }
 
   // semi randomly select a qual member we haven't got the signature information from to query
-  std::size_t random_member_index = random_number_++ % missing_signatures_from.size() == 0 ? 1 : missing_signatures_from.size();
+  std::size_t random_member_index = random_number_++ % (missing_signatures_from.size() == 0 ? 1 : missing_signatures_from.size());
   auto        it = std::next(missing_signatures_from.begin(), long(random_member_index));
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Get Signature shares... (index: ", index, ")");
