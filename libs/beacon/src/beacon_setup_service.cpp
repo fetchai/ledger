@@ -335,8 +335,7 @@ uint64_t BeaconSetupService::PreDKGThreshold()
     ret = 3;
   }
 
-  // TODO(HUT): remove this.
-  return 1;
+  return ret;
 }
 
 uint32_t BeaconSetupService::QualSize()

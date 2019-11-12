@@ -173,16 +173,20 @@ public:
   static uint8_t const PUBLIC_KEY        = 2;
   static uint8_t const PUBLIC_KEY_SHARES = 3;
   static uint8_t const QUAL              = 4;
+  static uint8_t const IDENTITY_TO_INDEX = 5;
+  static uint8_t const POLYNOMIAL_DEGREE = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &item)
   {
-    auto map = map_constructor(4);
+    auto map = map_constructor(6);
 
     map.Append(SECRET_SHARE, item.secret_share_);
     map.Append(PUBLIC_KEY, item.public_key_);
     map.Append(PUBLIC_KEY_SHARES, item.public_key_shares_);
     map.Append(QUAL, item.qual_);
+    map.Append(IDENTITY_TO_INDEX, item.identity_to_index_);
+    map.Append(POLYNOMIAL_DEGREE, item.polynomial_degree_);
   }
 
   template <typename MapDeserializer>
@@ -192,6 +196,8 @@ public:
     map.ExpectKeyGetValue(PUBLIC_KEY, item.public_key_);
     map.ExpectKeyGetValue(PUBLIC_KEY_SHARES, item.public_key_shares_);
     map.ExpectKeyGetValue(QUAL, item.qual_);
+    map.ExpectKeyGetValue(IDENTITY_TO_INDEX, item.identity_to_index_);
+    map.ExpectKeyGetValue(POLYNOMIAL_DEGREE, item.polynomial_degree_);
   }
 };
 
