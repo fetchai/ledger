@@ -47,6 +47,15 @@ void TrimToSize(T &container, std::size_t max_size)
   }
 }
 
+// TODO(HUT): actually make this random.
+template <typename T>
+T ChooseRandomlyFrom(T &container, std::size_t items)
+{
+  auto copy = container;
+  TrimToSize(copy, items);
+  return copy;
+}
+
 }  // namespace
 
 char const *ToString(BeaconService::State state);
@@ -274,12 +283,12 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 
   if (missing_signatures_from.empty())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Signatures from all qual are already fulfilled");
-    /* return State::VERIFY_SIGNATURES; */
+    FETCH_LOG_WARN(LOGGING_NAME, "Signatures from all qual are already fulfilled. Re-querying a random node");
+    missing_signatures_from = ChooseRandomlyFrom(active_exe_unit_->manager.qual(), 1);
   }
 
   // semi randomly select a qual member we haven't got the signature information from to query
-  std::size_t random_member_index = random_number_++ % (missing_signatures_from.size() == 0 ? 1 : missing_signatures_from.size());
+  std::size_t random_member_index = random_number_++ % missing_signatures_from.size();
   auto        it = std::next(missing_signatures_from.begin(), long(random_member_index));
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Get Signature shares... (index: ", index, ")");
