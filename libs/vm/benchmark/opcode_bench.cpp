@@ -315,7 +315,7 @@ void ObjectBenchmarks(benchmark::State &state) {
 
   std::string const length(std::to_string(str_len[len_ind]));
 
-  static std::string const
+  static const std::string
       STRING = "String",
       PUSH = "x;\n",
       ADD = "x + x;\n",
@@ -638,13 +638,13 @@ void TensorBenchmarks(benchmark::State &state) {
   const auto max_tensor_side = static_cast<u_int>(std::pow(static_cast<float>(max_tensor_size),1.0f / static_cast<float>(dim)));
   std::vector<u_int> tensor_sides = LinearRangeVector<u_int>(max_tensor_side, n_tensor_sizes);
 
-  std::string const
+  const std::string
       prim = "UInt64",
       tensor_shape = "shape",
       tensor = "tensor",
       val = "1";
 
-  std::string const
+  const std::string
       size = std::to_string(tensor_sides[size_ind]),
       size_u64 = size + "u64",
       dim_str = std::to_string(dim);
