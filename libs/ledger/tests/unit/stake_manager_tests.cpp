@@ -50,7 +50,7 @@ protected:
   void SetUp() override
   {
     rng_.Seed(2048);
-    stake_manager_ = std::make_unique<StakeManager>(MAX_CABINET_SIZE);
+    stake_manager_ = std::make_unique<StakeManager>();
   }
 
   void TearDown() override
@@ -71,7 +71,7 @@ protected:
 
     for (std::size_t round = 0; round < num_rounds; ++round)
     {
-      auto const cabinet = stake_manager_->BuildCabinet(block);
+      auto const cabinet = stake_manager_->BuildCabinet(block, MAX_CABINET_SIZE);
       ASSERT_TRUE(static_cast<bool>(cabinet));
       ASSERT_EQ(cabinet->size(), cabinet_size);
 
@@ -83,7 +83,7 @@ protected:
       block.hash          = GenerateRandomAddress(rng_).address();
       block.block_number += 1;
 
-      stake_manager_->UpdateCurrentBlock(block);
+      stake_manager_->UpdateCurrentBlock(block.block_number);
     }
   }
 
@@ -107,7 +107,7 @@ TEST_F(StakeManagerTests, DISABLED_CheckBasicStakeChangeScenarios)
   }
 
   // configure the stake manager
-  stake_manager_->Reset(initial);
+  stake_manager_->Reset(initial, MAX_CABINET_SIZE);
 
   // create the starting blocks (note block contains an address, not an identity)
   Block block;
