@@ -462,7 +462,7 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   MainChain::BlockPtr head_of_chain = chain_.GetHeaviestBlock();
   uint64_t const seconds_since_last_block = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) - head_of_chain->timestamp;
 
-  if(seconds_since_last_block > 100)
+  if(seconds_since_last_block > 100 && head_of_chain->block_number != 0)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - chain is old.");
     state_machine_->Delay(std::chrono::milliseconds{1000});
