@@ -28,9 +28,9 @@ void DisplayCLIHeader(std::string const &name, std::string const &years,
                       std::string const &additional)
 {
 
-  std::cout << "\u25A0 \u25A0 \u25A0 .    \n";
-  std::cout << "\u25A0 \u25A0 . .   \n";
-  std::cout << "\u25A0 . . .    \n";
+  std::cout << "\u25A0 \u25A0 \u25A0 .\n";
+  std::cout << "\u25A0 \u25A0 . .\n";
+  std::cout << "\u25A0 . . .\n";
   std::cout << ". . . .\n";
   std::cout << name << ' ' << version::FULL << std::endl;
   std::cout << "Copyright " << years << " (c) Fetch AI Ltd." << std::endl;

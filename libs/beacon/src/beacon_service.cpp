@@ -282,7 +282,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
                                       BeaconServiceProtocol::GET_SIGNATURE_SHARES, index);
 
   // Timer to wait maximally for network events
-  timer_to_proceed_.Restart(std::chrono::milliseconds{50});
+  timer_to_proceed_.Restart(std::chrono::milliseconds{200});
 
   return State::VERIFY_SIGNATURES;
 }
@@ -291,6 +291,12 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   SignatureInformation ret;
+  uint64_t index = 0;
+
+  {
+    FETCH_LOCK(mutex_);
+    index = block_entropy_being_created_->block_number;
+  }
 
   if (OutOfSync())
   {
@@ -310,7 +316,8 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     if (!sig_share_promise_->IsSuccessful() || !sig_share_promise_->As<SignatureInformation>(ret))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ",
-                     qual_promise_identity_.identifier().ToBase64());
+                     qual_promise_identity_.identifier().ToBase64(), " when generating entropy for block: ", index);
+      FETCH_LOG_INFO(LOGGING_NAME, "Note: connections ", endpoint_.GetDirectlyConnectedPeers().size());
       return State::COLLECT_SIGNATURES;
     }
   }
@@ -323,8 +330,6 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   // due to everyone trying to lock and resolve each others' signatures
   {
     FETCH_LOCK(mutex_);
-
-    uint64_t const index = block_entropy_being_created_->block_number;
 
     if (ret.threshold_signatures.empty())
     {
