@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/consensus/consensus.hpp"
+#include "ledger/chain/block.hpp"
+#include "storage/object_store.hpp"
 
 #include <string>
 
@@ -50,6 +52,8 @@ public:
   GenesisFileCreator &operator=(GenesisFileCreator &&) = delete;
 
 private:
+  using SavedGenesis           = fetch::storage::ObjectStore<Block>;
+
   void LoadState(variant::Variant const &object);
   void LoadConsensus(variant::Variant const &object);
 
@@ -57,6 +61,7 @@ private:
   StorageUnitInterface &storage_unit_;
   ConsensusPtr          consensus_;
   uint64_t              start_time_ = 0;
+  SavedGenesis          saved_genesis_;
 };
 
 }  // namespace ledger

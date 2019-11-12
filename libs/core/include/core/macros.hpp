@@ -38,3 +38,6 @@ struct Unused
 #define FETCH_GUARDED_BY(x) FETCH_THREAD_ANNOTATION_ATTRIBUTE__(guarded_by(x))
 
 #define FETCH_PTR_GUARDED_BY(x) FETCH_THREAD_ANNOTATION_ATTRIBUTE__(pt_guarded_by(x))
+
+//#define execute_code_on_scope_exit(code) auto deleter=[&](VM *dummy){ this_vm->print_strings_ = nullptr };\
+//std::unique_ptr<VM, decltype(deleter)> on_exit(this, deleter);
