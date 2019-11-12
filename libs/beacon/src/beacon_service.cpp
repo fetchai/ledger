@@ -217,8 +217,16 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
+  int dummy_int = 0;
+  auto deleter=[&](int *){ FETCH_LOG_INFO(LOGGING_NAME, "on collect has exited!"); };
+  std::unique_ptr<int, decltype(deleter)> on_exit(&dummy_int, deleter);
+  MilliTimer const timer{"on collect state", 100};
+
+  FETCH_LOG_INFO(LOGGING_NAME, "ON collect entry 0");
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
+  FETCH_LOG_INFO(LOGGING_NAME, "ON collect entry 1");
   FETCH_LOCK(mutex_);
+  FETCH_LOG_INFO(LOGGING_NAME, "ON collect entry 2");
 
   if (OutOfSync())
   {
@@ -317,7 +325,9 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ",
                      qual_promise_identity_.identifier().ToBase64(), " when generating entropy for block: ", index);
+      FETCH_LOG_INFO(LOGGING_NAME, "Ask for connections.");
       FETCH_LOG_INFO(LOGGING_NAME, "Note: connections ", endpoint_.GetDirectlyConnectedPeers().size());
+      FETCH_LOG_INFO(LOGGING_NAME, "asked for connections.");
       return State::COLLECT_SIGNATURES;
     }
   }
