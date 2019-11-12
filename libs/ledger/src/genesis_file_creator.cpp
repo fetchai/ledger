@@ -145,9 +145,10 @@ void GenesisFileCreator::LoadFile(std::string const &name)
   FETCH_LOG_INFO(LOGGING_NAME, "Clearing state and installing genesis");
 
   // TODO(HUT): this needs eds state db changes.
-  //if(saved_genesis_.size() > 0)
+  // if(saved_genesis_.size() > 0)
   //{
-  //  FETCH_LOG_INFO(LOGGING_NAME, "There appears to be a saved genesis file already! Attempting to recover it.");
+  //  FETCH_LOG_INFO(LOGGING_NAME, "There appears to be a saved genesis file already! Attempting to
+  //  recover it.");
   //}
 
   json::JSONDocument doc{};

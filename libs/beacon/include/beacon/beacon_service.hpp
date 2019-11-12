@@ -135,8 +135,6 @@ protected:
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
-  //
-
   mutable std::mutex                  mutex_;
   CertificatePtr                      certificate_;
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
@@ -144,11 +142,11 @@ protected:
 private:
   bool AddSignature(SignatureShare share);
 
-  Identity        identity_;
+  Identity         identity_;
   MuddleInterface &muddle_;
-  Endpoint &      endpoint_;
-  StateMachinePtr state_machine_;
-  DeadlineTimer   timer_to_proceed_{"beacon:main"};
+  Endpoint &       endpoint_;
+  StateMachinePtr  state_machine_;
+  DeadlineTimer    timer_to_proceed_{"beacon:main"};
 
   // Limit run away entropy generation
   uint64_t entropy_lead_blocks_    = 2;
@@ -208,7 +206,6 @@ private:
   telemetry::GaugePtr<uint64_t> beacon_entropy_current_round_;
   telemetry::GaugePtr<uint64_t> beacon_state_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_most_recent_round_seen_;
-  telemetry::GaugePtr<uint64_t> beacon_miner_index_;
 };
 
 }  // namespace beacon

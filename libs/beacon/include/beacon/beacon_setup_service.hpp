@@ -126,7 +126,7 @@ public:
                      CertificatePtr certificate);
   BeaconSetupService(BeaconSetupService const &) = delete;
   BeaconSetupService(BeaconSetupService &&)      = delete;
-  virtual ~BeaconSetupService();
+  virtual ~BeaconSetupService()                  = default;
 
   /// State functions
   /// @{

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/consensus.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/consensus/consensus.hpp"
 #include "storage/object_store.hpp"
 
 #include <string>
@@ -52,7 +52,7 @@ public:
   GenesisFileCreator &operator=(GenesisFileCreator &&) = delete;
 
 private:
-  using SavedGenesis           = fetch::storage::ObjectStore<Block>;
+  using SavedGenesis = fetch::storage::ObjectStore<Block>;
 
   void LoadState(variant::Variant const &object);
   void LoadConsensus(variant::Variant const &object);

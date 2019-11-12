@@ -28,6 +28,7 @@
 
 #include <chrono>
 #include <iterator>
+#include <random>
 
 using namespace std::chrono_literals;
 
@@ -47,12 +48,29 @@ void TrimToSize(T &container, std::size_t max_size)
   }
 }
 
-// TODO(HUT): actually make this random.
 template <typename T>
 T ChooseRandomlyFrom(T &container, std::size_t items)
 {
   auto copy = container;
-  TrimToSize(copy, items);
+
+  thread_local std::random_device rd;
+  thread_local std::mt19937       rng(rd());
+  using Distribution = std::uniform_int_distribution<std::size_t>;
+
+  while (!copy.empty() && copy.size() > items)
+  {
+    Distribution table_dist{0, copy.size() - 1};
+
+    std::size_t const element = table_dist(rng);
+
+    // advance the iterator to the correct offset
+    auto it = copy.cbegin();
+    std::advance(it, static_cast<std::ptrdiff_t>(element));
+
+    // delete
+    copy.erase(it);
+  }
+
   return copy;
 }
 
@@ -89,8 +107,6 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
         "beacon_state_gauge", "State the beacon is in as integer")}
   , beacon_most_recent_round_seen_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_most_recent_round_seen", "Most recent round the beacon has seen")}
-  , beacon_miner_index_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
-        "beacon_miner_index", "The index of the miner in qual")}
 {
   // Attaching beacon ready callback handler
   beacon_setup.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) {
@@ -141,7 +157,7 @@ void BeaconService::ReloadState()
                    "Found aeon keys during beacon construction, recovering. Valid from: ",
                    ret->aeon.round_start);
 
-    for(auto const &address_in_qual : ret->manager.qual())
+    for (auto const &address_in_qual : ret->manager.qual())
     {
       muddle_.ConnectTo(address_in_qual);
     }
@@ -197,8 +213,6 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
     block_entropy_previous_ =
         std::make_shared<BlockEntropy>(active_exe_unit_->aeon.block_entropy_previous);
     block_entropy_being_created_ = std::make_shared<BlockEntropy>(active_exe_unit_->block_entropy);
-
-    beacon_miner_index_->set(active_exe_unit_->manager.OurIndex());
 
     SaveState();
 
@@ -293,7 +307,8 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 
   if (missing_signatures_from.empty())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Signatures from all qual are already fulfilled. Re-querying a random node");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Signatures from all qual are already fulfilled. Re-querying a random node");
     missing_signatures_from = ChooseRandomlyFrom(active_exe_unit_->manager.qual(), 1);
   }
 
@@ -318,7 +333,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   SignatureInformation ret;
-  uint64_t index = 0;
+  uint64_t             index = 0;
 
   {
     FETCH_LOCK(mutex_);
@@ -343,9 +358,11 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     if (!sig_share_promise_->IsSuccessful() || !sig_share_promise_->As<SignatureInformation>(ret))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ",
-                     qual_promise_identity_.identifier().ToBase64(), " when generating entropy for block: ", index);
+                     qual_promise_identity_.identifier().ToBase64(),
+                     " when generating entropy for block: ", index);
       FETCH_LOG_INFO(LOGGING_NAME, "Ask for connections.");
-      FETCH_LOG_INFO(LOGGING_NAME, "Note: connections ", endpoint_.GetDirectlyConnectedPeers().size());
+      FETCH_LOG_INFO(LOGGING_NAME, "Note: connections ",
+                     endpoint_.GetDirectlyConnectedPeers().size());
       FETCH_LOG_INFO(LOGGING_NAME, "asked for connections.");
       return State::COLLECT_SIGNATURES;
     }
@@ -481,9 +498,10 @@ bool BeaconService::AddSignature(SignatureShare share)
   }
   if (ret == BeaconManager::AddResult::NOT_MEMBER)
   {  // And that it was sent by a member of the cabinet
-    FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member. Identity: ", share.identity.identifier().ToBase64());
+    FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member. Identity: ",
+                    share.identity.identifier().ToBase64());
 
-    for(auto const &i : active_exe_unit_->manager.qual())
+    for (auto const &i : active_exe_unit_->manager.qual())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Note: qual is: ", i.ToBase64());
     }
