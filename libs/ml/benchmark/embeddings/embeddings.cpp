@@ -73,7 +73,7 @@ void BM_Setup_And_Train_Embeddings_Adam(benchmark::State &state)
   // Prepare data and labels
   TensorType data({1, batch_size});
   TensorType gt({embedding_dimensions, 1, batch_size});
-  data.FillUniformRandomIntegers(0, n_datapoints);
+  data.FillUniformRandomIntegers(0, static_cast<int64_t>(n_datapoints));
   gt.FillUniformRandom();
 
   for (auto _ : state)
@@ -92,7 +92,7 @@ void BM_Setup_And_Train_Embeddings_Adam(benchmark::State &state)
     // Do optimisation
     for (SizeType i = 0; i < n_epochs; ++i)
     {
-      data.FillUniformRandomIntegers(0, n_datapoints);
+      data.FillUniformRandomIntegers(0, static_cast<int64_t>(n_datapoints));
       optimiser.Run({data}, gt);
     }
   }
@@ -147,7 +147,7 @@ void BM_Setup_And_Train_Embeddings_LazyAdam(benchmark::State &state)
   // Prepare data and labels
   TensorType data({1, batch_size});
   TensorType gt({embedding_dimensions, 1, batch_size});
-  data.FillUniformRandomIntegers(0, n_datapoints);
+  data.FillUniformRandomIntegers(0, static_cast<int64_t>(n_datapoints));
   gt.FillUniformRandom();
 
   for (auto _ : state)
@@ -166,7 +166,7 @@ void BM_Setup_And_Train_Embeddings_LazyAdam(benchmark::State &state)
     // Do optimisation
     for (SizeType i = 0; i < n_epochs; ++i)
     {
-      data.FillUniformRandomIntegers(0, n_datapoints);
+      data.FillUniformRandomIntegers(0, static_cast<int64_t>(n_datapoints));
       optimiser.Run({data}, gt);
     }
   }
