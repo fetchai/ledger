@@ -283,13 +283,12 @@ private:
   bool IsWriteable(ExpressionNodePtr const &node);
   bool AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
                           ExpressionNodePtr const &rhs);
-  TypePtr     ResolveType(TypePtr const &type, TypePtr const &instantiation_type);
-  bool        MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const;
-  bool        MatchTypes(TypePtr const &type, ExpressionNodePtrArray const &supplied_nodes,
-                         TypePtrArray const &expected_types, TypePtrArray &actual_types);
   FunctionPtr FindFunction(TypePtr const &type, FunctionGroupPtr const &function_group,
-                           ExpressionNodePtrArray const &supplied_nodes,
-                           TypePtrArray &                actual_types);
+                           ExpressionNodePtrArray const &parameter_nodes);
+  TypePtr     ConvertNode(ExpressionNodePtr const &node, TypePtr const &expected_type);
+  TypePtr     ConvertNode(ExpressionNodePtr const &node, TypePtr const &expected_type,
+                          TypePtr const &type);
+  TypePtr     ResolveReturnType(TypePtr const &return_type, TypePtr const &type);
   TypePtr     FindType(ExpressionNodePtr const &node);
   SymbolPtr   FindSymbol(ExpressionNodePtr const &node);
   SymbolPtr   SearchSymbols(std::string const &name);
