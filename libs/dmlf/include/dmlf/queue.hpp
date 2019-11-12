@@ -61,11 +61,29 @@ public:
   Bytes PopAsBytes() override
   {
     FETCH_LOCK(updates_m_);
+
+    auto b = PeekAsBytes();
+    Drop();
+    return b;
+  }
+
+  Bytes PeekAsBytes() override
+  {
+    FETCH_LOCK(updates_m_);
     if (!updates_.empty())
     {
       auto res = updates_.top().second;
-      updates_.pop();
       return res;
+    }
+    throw std::length_error{"Updates queue is empty"};
+  }
+
+  void Drop() override
+  {
+    FETCH_LOCK(updates_m_);
+    if (!updates_.empty())
+    {
+      updates_.pop();
     }
     throw std::length_error{"Updates queue is empty"};
   }
