@@ -64,7 +64,8 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
                              BeaconSetupService &beacon_setup, SharedEventManager event_manager)
   : certificate_{certificate}
   , identity_{certificate->identity()}
-  , endpoint_{muddle.GetEndpoint()}
+  , muddle_{muddle}
+  , endpoint_{muddle_.GetEndpoint()}
   , state_machine_{std::make_shared<StateMachine>("BeaconService", State::WAIT_FOR_SETUP_COMPLETION,
                                                   ToString)}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
@@ -137,6 +138,12 @@ void BeaconService::ReloadState()
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Found aeon keys during beacon construction, recovering. Valid from: ",
                    ret->aeon.round_start);
+
+    for(auto const &address_in_qual : ret->manager.qual())
+    {
+      muddle_.ConnectTo(address_in_qual);
+    }
+
     aeon_exe_queue_.push_back(ret);
   }
   else

@@ -145,6 +145,7 @@ private:
   bool AddSignature(SignatureShare share);
 
   Identity        identity_;
+  MuddleInterface &muddle_;
   Endpoint &      endpoint_;
   StateMachinePtr state_machine_;
   DeadlineTimer   timer_to_proceed_{"beacon:main"};
