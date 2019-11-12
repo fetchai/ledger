@@ -138,11 +138,14 @@ std::shared_ptr<ledger::DAGInterface> GenerateDAG(
     std::string const &db_name, bool load_on_start,
     constellation::Constellation::CertificatePtr certificate)
 {
-  FETCH_UNUSED(db_name);
-  FETCH_UNUSED(load_on_start);
-  FETCH_UNUSED(certificate);
-  //return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
-  return {};
+  if(cfg_.features.IsEnabled("synergetic"))
+  {
+    return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
+  }
+  else
+  {
+    return {};
+  }
 }
 
 ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
@@ -372,7 +375,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   }
 
   // Enable experimental features
-  if(dag_)
+  if(cfg_.features.IsEnabled("synergetic") && dag_)
   {
     dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
     reactor_.Attach(dag_service_->GetWeakRunnable());
