@@ -19,15 +19,20 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/macros.hpp"
 #include "crypto/sha256.hpp"
-#include "fake_storage_unit.hpp"
+#include "ledger/storage_unit/fake_storage_unit.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <memory>
 #include <stdexcept>
 
+namespace fetch {
+namespace ledger {
+
 FakeStorageUnit::Document FakeStorageUnit::Get(ResourceAddress const &key)
 {
+  FETCH_LOCK(lock_);
+
   Document doc;
 
   auto it = state_->find(key);
@@ -45,6 +50,8 @@ FakeStorageUnit::Document FakeStorageUnit::Get(ResourceAddress const &key)
 
 FakeStorageUnit::Document FakeStorageUnit::GetOrCreate(ResourceAddress const &key)
 {
+  FETCH_LOCK(lock_);
+
   Document doc = Get(key);
 
   if (doc.failed)
@@ -62,6 +69,8 @@ FakeStorageUnit::Document FakeStorageUnit::GetOrCreate(ResourceAddress const &ke
 
 void FakeStorageUnit::Set(ResourceAddress const &key, StateValue const &value)
 {
+  FETCH_LOCK(lock_);
+
   (*state_)[key] = value;
 }
 
@@ -79,11 +88,15 @@ bool FakeStorageUnit::Unlock(ShardIndex index)
 
 void FakeStorageUnit::AddTransaction(Transaction const &tx)
 {
+  FETCH_LOCK(lock_);
+
   transaction_store_[tx.digest()] = tx;
 }
 
 bool FakeStorageUnit::GetTransaction(ConstByteArray const &digest, Transaction &tx)
 {
+  FETCH_LOCK(lock_);
+
   bool success{false};
 
   auto it = transaction_store_.find(digest);
@@ -98,6 +111,8 @@ bool FakeStorageUnit::GetTransaction(ConstByteArray const &digest, Transaction &
 
 bool FakeStorageUnit::HasTransaction(ConstByteArray const &digest)
 {
+  FETCH_LOCK(lock_);
+
   return transaction_store_.find(digest) != transaction_store_.end();
 }
 
@@ -114,12 +129,16 @@ FakeStorageUnit::TxLayouts FakeStorageUnit::PollRecentTx(uint32_t /*unused*/)
 // We need to be able to set the 'hash' since it isn't calculated from any state changes
 void FakeStorageUnit::SetCurrentHash(FakeStorageUnit::Hash const &hash)
 {
+  FETCH_LOCK(lock_);
+
   current_hash_ = hash;
 }
 
 // We need to be able to set the 'hash' from the current state
 void FakeStorageUnit::UpdateHash()
 {
+  FETCH_LOCK(lock_);
+
   fetch::crypto::SHA256 sha256{};
 
   for (auto const &kv : *state_)
@@ -133,11 +152,15 @@ void FakeStorageUnit::UpdateHash()
 
 FakeStorageUnit::Hash FakeStorageUnit::CurrentHash()
 {
+  FETCH_LOCK(lock_);
+
   return current_hash_;
 }
 
 FakeStorageUnit::Hash FakeStorageUnit::LastCommitHash()
 {
+  FETCH_LOCK(lock_);
+
   assert(!state_history_stack_.empty());
 
   return state_history_stack_.back();
@@ -145,6 +168,8 @@ FakeStorageUnit::Hash FakeStorageUnit::LastCommitHash()
 
 bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
 {
+  FETCH_LOCK(lock_);
+
   FETCH_UNUSED(index);
 
   bool success{false};
@@ -174,6 +199,8 @@ bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
 
 FakeStorageUnit::Hash FakeStorageUnit::Commit(uint64_t index)
 {
+  FETCH_LOCK(lock_);
+
   // calculate the new "hash" for the state
   Hash commit_hash = current_hash_;
 
@@ -182,6 +209,8 @@ FakeStorageUnit::Hash FakeStorageUnit::Commit(uint64_t index)
 
 bool FakeStorageUnit::HashExists(Hash const &hash, uint64_t /*index*/)
 {
+  FETCH_LOCK(lock_);
+
   auto const it  = std::find(state_history_stack_.begin(), state_history_stack_.end(), hash);
   bool       res = (state_history_stack_.end() != it);
   return res;
@@ -189,6 +218,8 @@ bool FakeStorageUnit::HashExists(Hash const &hash, uint64_t /*index*/)
 
 FakeStorageUnit::Hash FakeStorageUnit::EmulateCommit(Hash const &commit_hash, uint64_t index)
 {
+  FETCH_LOCK(lock_);
+
   if (state_history_.find(commit_hash) != state_history_.end() && index != 0)
   {
     throw std::runtime_error("Duplicate state hash request");
@@ -206,6 +237,11 @@ FakeStorageUnit::Hash FakeStorageUnit::EmulateCommit(Hash const &commit_hash, ui
 
 void FakeStorageUnit::Reset()
 {
+  FETCH_LOCK(lock_);
+
   state_.reset();
   transaction_store_.clear();
 }
+
+}  // namespace ledger
+}  // namespace fetch

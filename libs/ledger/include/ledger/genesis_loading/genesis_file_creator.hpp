@@ -45,15 +45,15 @@ public:
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
 
-  void LoadFile(std::string const &name);
+  bool LoadFile(std::string const &name);
 
   // Operators
   GenesisFileCreator &operator=(GenesisFileCreator const &) = delete;
   GenesisFileCreator &operator=(GenesisFileCreator &&) = delete;
 
 private:
-  void LoadState(variant::Variant const &object);
-  void LoadConsensus(variant::Variant const &object);
+  bool LoadState(variant::Variant const &object);
+  bool LoadConsensus(variant::Variant const &object);
 
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
