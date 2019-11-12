@@ -183,6 +183,13 @@ public:
       return InternalCreateMemberFunction(name, callable, 0, estimator);
     }
 
+    template <typename Estimator, typename Callable>
+    ClassInterface &NewCreateMemberFunction(std::string const &name, Callable callable,
+                                         Estimator estimator)
+    {
+      return InternalNewCreateMemberFunction(name, callable, 0, estimator);
+    }
+
     ClassInterface &EnableOperator(Operator op)
     {
       TypeIndex const type_index__            = type_index_;
@@ -392,6 +399,36 @@ public:
       Handler handler = [callable, estimator](VM *vm) {
         using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
         MemberFunction<EtchParams>::InvokeHandler(vm, EstimatorType{estimator}, callable);
+      };
+
+      auto compiler_setup_function = [type_index__, name, parameter_type_index_array,
+                                      return_type_index, handler,
+                                      static_charge](Compiler *compiler) {
+        compiler->CreateMemberFunction(type_index__, name, parameter_type_index_array,
+                                       return_type_index, handler, static_charge);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+
+      return *this;
+    }
+
+    template <typename Estimator, typename Callable>
+    ClassInterface &InternalNewCreateMemberFunction(std::string const &name, Callable callable,
+                                                 ChargeAmount static_charge, Estimator estimator)
+    {
+      using EtchParams = typename meta::CallableTraits<Callable>::ArgsTupleType;
+      using ReturnType = typename meta::CallableTraits<Callable>::ReturnType;
+      using OwningType = typename meta::CallableTraits<Callable>::OwningType;
+
+      TypeIndex const type_index__ = type_index_;
+      TypeIndexArray  parameter_type_index_array;
+      UnrollTupleParameterTypes<EtchParams>::Unroll(parameter_type_index_array);
+      TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
+
+      Handler handler = [callable, estimator](VM *vm) {
+        using EstimatorParams = internal::PrependedTuple<Ptr<OwningType>,EtchParams>;
+        using EstimatorType = meta::UnpackTuple<EstimatorParams, ChargeEstimator>;
+        NewMemberFunction<EtchParams>::InvokeHandler(vm, EstimatorType{estimator}, callable);
       };
 
       auto compiler_setup_function = [type_index__, name, parameter_type_index_array,

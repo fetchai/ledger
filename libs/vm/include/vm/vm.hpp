@@ -625,6 +625,9 @@ private:
   friend struct VmFreeFunctionInvoker;
   template <int, typename, typename, typename>
   friend struct VmMemberFunctionInvoker;
+  template <template <int, typename, typename, typename...> class Invoker, typename EtchArgsTuple>
+  friend struct EtchMemberFunctionInvocation;
+  
 
   TypeInfoArray                  type_info_array_;
   TypeInfoMap                    type_info_map_;
@@ -638,8 +641,10 @@ private:
   Frame                          frame_stack_[FRAME_STACK_SIZE]{};
   int                            frame_sp_{};
   int                            bsp_{};
+ public:
   Variant                        stack_[STACK_SIZE];
   int                            sp_{};
+ private:
   ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS]{};
   int                            range_loop_sp_{};
   LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};
