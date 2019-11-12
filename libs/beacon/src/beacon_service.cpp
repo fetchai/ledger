@@ -354,10 +354,10 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ",
                      qual_promise_identity_.identifier().ToBase64(),
-                     " when generating entropy for block: ", index, " connections: ", endpoint_.GetDirectlyConnectedPeers().size());
+                     " when generating entropy for block: ", index,
+                     " connections: ", endpoint_.GetDirectlyConnectedPeers().size());
 
       state_machine_->Delay(std::chrono::milliseconds(100));
-
       return State::COLLECT_SIGNATURES;
     }
   }

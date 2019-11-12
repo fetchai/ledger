@@ -217,7 +217,7 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 
   auto const direct_peers = endpoint_.GetDirectlyConnectedPeers();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Main chain connected peers: ", direct_peers.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Main chain connected peers: ", direct_peers.size());
 
   if (!direct_peers.empty())
   {
@@ -464,6 +464,8 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) -
       head_of_chain->timestamp;
 
+  // Assume if the chain is quite old that there are peers who have a heavier chain we haven't
+  // heard about
   if (seconds_since_last_block > 100 && head_of_chain->block_number != 0)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - chain is old.");
