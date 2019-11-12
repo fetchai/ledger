@@ -128,6 +128,11 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &       muddle,
   }
 }
 
+BeaconSetupService::~BeaconSetupService()
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Beacon service is destructing!\n\n\n\n\n");
+}
+
 BeaconSetupService::State BeaconSetupService::OnIdle()
 {
   FETCH_LOCK(mutex_);
