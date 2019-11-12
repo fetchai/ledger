@@ -18,10 +18,9 @@
 
 #include "gtest/gtest.h"
 
-#include "oef-base/threading/Threadpool.hpp"
-#include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/threading/Task.hpp"
-
+#include "oef-base/threading/Taskpool.hpp"
+#include "oef-base/threading/Threadpool.hpp"
 
 class TasksTests : public testing::Test
 {
@@ -38,11 +37,11 @@ public:
 
   TasksTests()
   {
-      taskpool_      = std::make_shared<Taskpool>();
-      tasks_runners_ = std::make_shared<Threadpool>();
-      std::function<void(std::size_t thread_number)> run_tasks =
+    taskpool_      = std::make_shared<Taskpool>();
+    tasks_runners_ = std::make_shared<Threadpool>();
+    std::function<void(std::size_t thread_number)> run_tasks =
         std::bind(&Taskpool::run, taskpool_.get(), std::placeholders::_1);
-      tasks_runners_->start(5, run_tasks);
+    tasks_runners_->start(5, run_tasks);
   }
   virtual ~TasksTests()
   {
@@ -56,17 +55,15 @@ class LambdaTask : public fetch::oef::base::Task
 {
 public:
   using ExitState = fetch::oef::base::ExitState;
-  using Function = std::function<ExitState ()>;
+  using Function  = std::function<ExitState()>;
 
   Function f_;
 
   LambdaTask(Function f)
     : f_(f)
-  {
-  }
+  {}
   virtual ~LambdaTask()
-  {
-  }
+  {}
 
   bool IsRunnable() const override
   {
@@ -80,32 +77,32 @@ public:
 
   LambdaTask(LambdaTask const &other) = delete;
   LambdaTask &operator=(LambdaTask const &other)  = delete;
-  bool                      operator==(LambdaTask const &other) = delete;
-  bool                      operator<(LambdaTask const &other)  = delete;
+  bool        operator==(LambdaTask const &other) = delete;
+  bool        operator<(LambdaTask const &other)  = delete;
 };
 
 TEST_F(TasksTests, task_execution)
 {
   unsigned int counter = 0;
 
-  LambdaTask::Function f = [&counter](){
-      counter += 1;
-      switch(counter)
-      {
-      case 0:
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-        return LambdaTask::ExitState::RERUN;
-      default:
-        return LambdaTask::ExitState::COMPLETE;
-      }
+  LambdaTask::Function f = [&counter]() {
+    counter += 1;
+    switch (counter)
+    {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+      return LambdaTask::ExitState::RERUN;
+    default:
+      return LambdaTask::ExitState::COMPLETE;
+    }
   };
 
   auto task = std::make_shared<LambdaTask>(f);
 
-  taskpool_ -> submit(task);
+  taskpool_->submit(task);
 
   ::usleep(10000);
 
