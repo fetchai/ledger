@@ -27,14 +27,22 @@ def _muddle_address(text):
 
 def parse_commandline():
     parser = argparse.ArgumentParser()
-    parser.add_argument('addresses', nargs='+', type=_muddle_address,help='The initial set of base64 encoded muddle addresses')
-    parser.add_argument('-s', '--stake-percentage', nargs='?', type=int, default=1, help='The percentage of tokens to be staked')
-    parser.add_argument('-o', '--output', default='genesis_file.json', help='Path to generated file')
-    parser.add_argument('-t', '--threshold', type=float, default=0.6,help='The required threshold')
-    parser.add_argument('-m', '--max-cabinet', type=int, help='The maximum cabinet size allowed')
-    parser.add_argument('-n', '--no-formatting', action='store_true', help='Whether to format the output file for readability')
-    parser.add_argument('-b', '--block-interval', type=int, default=8000, help='The block interval for the chain')
-    parser.add_argument('-w', '--when-start', required=True, type=int,help='The genesis block has a time for the blockchain to start.  Specify how far from now in seconds it should be')
+    parser.add_argument('addresses', nargs='+', type=_muddle_address,
+                        help='The initial set of base64 encoded muddle addresses')
+    parser.add_argument('-s', '--stake-percentage', nargs='?', type=int,
+                        default=1, help='The percentage of tokens to be staked')
+    parser.add_argument(
+        '-o', '--output', default='genesis_file.json', help='Path to generated file')
+    parser.add_argument('-t', '--threshold', type=float,
+                        default=0.6, help='The required threshold')
+    parser.add_argument('-m', '--max-cabinet', type=int,
+                        help='The maximum cabinet size allowed')
+    parser.add_argument('-n', '--no-formatting', action='store_true',
+                        help='Whether to format the output file for readability')
+    parser.add_argument('-b', '--block-interval', type=int,
+                        default=8000, help='The block interval for the chain')
+    parser.add_argument('-w', '--when-start', required=True, type=int,
+                        help='The genesis block has a time for the blockchain to start.  Specify how far from now in seconds it should be')
     return parser.parse_args()
 
 
