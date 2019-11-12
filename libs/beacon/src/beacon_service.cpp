@@ -275,7 +275,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   if (missing_signatures_from.empty())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Signatures from all qual are already fulfilled");
-    return State::VERIFY_SIGNATURES;
+    /* return State::VERIFY_SIGNATURES; */
   }
 
   // semi randomly select a qual member we haven't got the signature information from to query
