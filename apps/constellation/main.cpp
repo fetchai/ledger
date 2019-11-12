@@ -261,7 +261,7 @@ int main(int argc, char **argv)
       try
       {
         exit_code = (constellation->Run(initial_peers, ExtractRunnable(bootstrap))) ? EXIT_SUCCESS
-                                                                                  : EXIT_FAILURE;
+                                                                                    : EXIT_FAILURE;
       }
       catch (std::runtime_error const &ex)
       {
