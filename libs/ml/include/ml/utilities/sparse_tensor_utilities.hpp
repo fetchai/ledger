@@ -43,14 +43,14 @@ void SparseAdd(TensorType const &src, TensorType &dst,
   using SizeType = fetch::math::SizeType;
 
   // Normal apply
-  // if number_of_rows_to_update*sparsity_threshold_ > total_rows
+  // if number_of_rows_to_update * sparsity_threshold_ > total_rows
   if (update_rows.empty() || (update_rows.size() * sparsity_threshold) > (dst.shape().at(1)))
   {
     dst.InlineAdd(src);
   }
 
   // Sparse apply
-  // if number_of_rows_to_update*sparsity_threshold_ <= total_rows
+  // if number_of_rows_to_update * sparsity_threshold_ <= total_rows
   else
   {
     memory::Range range(0, std::size_t(dst.height()));

@@ -59,7 +59,7 @@ public:
                     DataType const &learning_rate      = static_cast<DataType>(0.001f),
                     DataType const &beta1              = static_cast<DataType>(0.9f),
                     DataType const &beta2              = static_cast<DataType>(0.999f),
-                    SizeType        sparsity_threshold = 4,
+                    SizeType        sparsity_threshold = 2,
                     DataType const &epsilon            = static_cast<DataType>(1e-4f));
 
   LazyAdamOptimiser(std::shared_ptr<Graph<T>>       graph,
@@ -68,7 +68,7 @@ public:
                     fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
                     DataType const &beta1              = static_cast<DataType>(0.9f),
                     DataType const &beta2              = static_cast<DataType>(0.999f),
-                    SizeType        sparsity_threshold = 4,
+                    SizeType        sparsity_threshold = 2,
                     DataType const &epsilon            = static_cast<DataType>(1e-4f));
 
   ~LazyAdamOptimiser() override = default;
@@ -84,8 +84,9 @@ public:
   }
 
 private:
-  // ApplyGradientSparse if number_of_rows_to_update*sparsity_threshold_ <= total_rows
-  SizeType sparsity_threshold_ = 4;
+  // ApplyGradientSparse if number_of_rows_to_update * sparsity_threshold_ <= total_rows
+  // Current value was empirically derived from ml/benchmarks/embeddings benchmark results
+  SizeType sparsity_threshold_ = 2;
 
   void ApplyLogic(SizeType batch_size, TensorType &gradient_tensor, TensorType &momentum_tensor,
                   TensorType &mt_tensor, TensorType &v_tensor, TensorType &cache_tensor,
@@ -199,21 +200,20 @@ void LazyAdamOptimiser<T>::ApplyGradients(SizeType batch_size)
     rows.push_back(gradient_pair.second);
 
     // Normal ApplyGradient
-    // if number_of_rows_to_update*sparsity_threshold_ > total_rows
+    // if number_of_rows_to_update * sparsity_threshold_ > total_rows
     if (rows.at(rows.size() - 1).empty() ||
         (rows.at(rows.size() - 1).size() * sparsity_threshold_) > gradient_pair.first.shape().at(1))
     {
       ApplyLogic(batch_size, *gradient_it, *momentum_it, *mt_it, *vt_it, *cached_weight_it,
                  (*trainable_it)->GetGradientsReferences());
     }
-
+    // Sparse apply gradient
+    // if number_of_rows_to_update * sparsity_threshold_ <= total_rows
     else
     {
-      // Sparse apply gradient
-      // if number_of_rows_to_update*sparsity_threshold_ <= total_rows
-
-      TensorType mt_view_tensor = mt_it->View(0).Copy();
-      TensorType v_view_tensor  = vt_it->View(0).Copy();
+      // Tensors used by ApplyLogic for operations that are not possible to do in-place
+      TensorType mt_tensor({mt_it->shape().at(0), 1});
+      TensorType vt_tensor({vt_it->shape().at(0), 1});
 
       for (SizeType update_index : rows.at(rows.size() - 1))
       {
@@ -230,8 +230,8 @@ void LazyAdamOptimiser<T>::ApplyGradients(SizeType batch_size)
         TensorType refs_view_tensor =
             (*trainable_it)->GetGradientsReferences().View(update_index).Copy();
 
-        ApplyLogic(batch_size, gradient_view_tensor, momentum_view_tensor, mt_view_tensor,
-                   v_view_tensor, cache_view_tensor, refs_view_tensor);
+        ApplyLogic(batch_size, gradient_view_tensor, momentum_view_tensor, mt_tensor, vt_tensor,
+                   cache_view_tensor, refs_view_tensor);
 
         // Put things back
         gradient_view.Assign(gradient_view_tensor);

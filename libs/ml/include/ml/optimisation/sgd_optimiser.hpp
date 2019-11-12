@@ -58,7 +58,7 @@ public:
   }
 
 private:
-  // ApplyGradientSparse if number_of_rows_to_update*sparsity_threshold_ <= total_rows
+  // ApplyGradientSparse if number_of_rows_to_update * sparsity_threshold_ <= total_rows
   SizeType sparsity_threshold_ = 4;
 
   void ApplyGradients(SizeType batch_size) override;
@@ -112,7 +112,7 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
       rows.push_back(gradient_pair.second);
 
       // Normal ApplyGradient
-      // if number_of_rows_to_update*sparsity_threshold_ > total_rows
+      // if number_of_rows_to_update * sparsity_threshold_ > total_rows
       if (rows.at(rows.size() - 1).empty() ||
           (rows.at(rows.size() - 1).size() * sparsity_threshold_) >
               gradient_pair.first.shape().at(1))
@@ -124,7 +124,7 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
       else
       {
         // Sparse apply gradient
-        // if number_of_rows_to_update*sparsity_threshold_ <= total_rows
+        // if number_of_rows_to_update * sparsity_threshold_ <= total_rows
 
         for (SizeType update_index : rows.at(rows.size() - 1))
         {
