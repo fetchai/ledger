@@ -72,12 +72,11 @@ void BM_Setup_And_Train_Embeddings(::benchmark::State &state)
 
   fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
 
-  SizeType batch_size           = static_cast<SizeType>(state.range(0));
-  SizeType embedding_dimensions = static_cast<SizeType>(state.range(1));
-  SizeType n_datapoints         = static_cast<SizeType>(state.range(2));
-  SizeType n_epochs             = static_cast<SizeType>(state.range(3));
-
-  auto learning_rate = DataType{0.1f};
+  auto batch_size           = static_cast<SizeType>(state.range(0));
+  auto embedding_dimensions = static_cast<SizeType>(state.range(1));
+  auto n_datapoints         = static_cast<SizeType>(state.range(2));
+  auto n_epochs             = static_cast<SizeType>(state.range(3));
+  auto learning_rate        = DataType{0.1f};
 
   // Prepare data and labels
   TensorType data({1, batch_size});
