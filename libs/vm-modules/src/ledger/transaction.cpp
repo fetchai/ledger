@@ -97,7 +97,7 @@ Transaction::Transaction(vm::VM *vm, vm::TypeId type_id, fetch::chain::Transacti
   , transfers_{CreateTransfers(vm, tx)}
   , contract_digest_{CreateAddress(vm, tx.contract_digest(), tx.signatories())}
   , contract_address_{CreateAddress(vm, tx.contract_address(), tx.signatories())}
-  , action_{new String{vm, static_cast<std::string>(tx.action()), false}}
+  , action_{new String{vm, static_cast<std::string>(tx.action())}}
   , signatories_{CreateSignatories(vm, tx)}
 {}
 

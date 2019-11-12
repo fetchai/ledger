@@ -112,6 +112,8 @@ def setup_test(test_yaml, test_instance):
                                  expected=False, expect_type=int, default=10)
     pos_mode = yaml_extract(test_yaml, 'pos_mode', expected=False,
                             expect_type=bool, default=False)
+    num_lanes = yaml_extract(test_yaml, 'lanes', expected=False,
+                             expect_type=int, default=1)
 
     test_instance._number_of_nodes = number_of_nodes
     test_instance._node_load_directory = node_load_directory
@@ -119,6 +121,7 @@ def setup_test(test_yaml, test_instance):
     test_instance._nodes_are_mining = mining_nodes
     test_instance._max_test_time = max_test_time
     test_instance._pos_mode = pos_mode
+    test_instance._lanes = num_lanes
 
     # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
     # necessary to preserve output logs etc.

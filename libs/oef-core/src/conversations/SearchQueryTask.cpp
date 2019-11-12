@@ -62,19 +62,19 @@ SearchQueryTask::StateResult SearchQueryTask::HandleResponse()
 
   if (conversation->GetAvailableReplyCount() == 0)
   {
-    return SearchQueryTask::StateResult(0, ERRORED);
+    return SearchQueryTask::StateResult(0, fetch::oef::base::ERRORED);
   }
 
   if (!conversation->success())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Search call returned error...");
-    return SearchQueryTask::StateResult(0, ERRORED);
+    return SearchQueryTask::StateResult(0, fetch::oef::base::ERRORED);
   }
 
   if (conversation->GetAvailableReplyCount() == 0)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "No available reply for search query, waiting more...");
-    return SearchQueryTask::StateResult(0, DEFER);
+    return SearchQueryTask::StateResult(0, fetch::oef::base::DEFER);
   }
 
   auto response = std::static_pointer_cast<IdentifierSequence>(conversation->GetReply(0));
@@ -172,7 +172,7 @@ SearchQueryTask::StateResult SearchQueryTask::HandleResponse()
 
   FETCH_LOG_INFO(LOGGING_NAME, "COMPLETE");
 
-  return SearchQueryTask::StateResult(0, COMPLETE);
+  return SearchQueryTask::StateResult(0, fetch::oef::base::COMPLETE);
 }
 
 std::shared_ptr<SearchQueryTask::REQUEST_PROTO> SearchQueryTask::make_request_proto()

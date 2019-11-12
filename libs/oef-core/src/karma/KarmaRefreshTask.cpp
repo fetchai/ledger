@@ -23,7 +23,7 @@
 
 #include "oef-core/karma/IKarmaPolicy.hpp"
 
-ExitState KarmaRefreshTask::run()
+fetch::oef::base::ExitState KarmaRefreshTask::run()
 {
   std::chrono::high_resolution_clock::time_point this_execute =
       std::chrono::high_resolution_clock::now();
@@ -35,5 +35,5 @@ ExitState KarmaRefreshTask::run()
   policy->RefreshCycle(d);
 
   submit(std::chrono::milliseconds(interval));
-  return COMPLETE;
+  return fetch::oef::base::COMPLETE;
 }

@@ -28,14 +28,14 @@
 struct TestBlock
 {
   using ResourceIdMap = std::vector<std::string>;
-  using BlockBody     = fetch::ledger::Block::Body;
+  using Block         = fetch::ledger::Block;
   using Digest        = fetch::Digest;
 
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;
 
-  BlockBody block;
-  int       num_transactions = 0;
+  Block block;
+  int   num_transactions = 0;
 
   template <typename RNG>
   static Digest GenerateHash(RNG &rng)

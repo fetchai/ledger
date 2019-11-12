@@ -103,13 +103,13 @@ public:
     return true;
   }
 
-  ExitState run() override
+  fetch::oef::base::ExitState run() override
   {
     // TODO(kll): it's possible there's a race hazard here. Need to think about this.
     if (agent_->send(message_pb_).Then([this]() { this->MakeRunnable(); }).Waiting())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Defer message send...");
-      return ExitState::DEFER;
+      return fetch::oef::base::ExitState::DEFER;
     }
 
     agent_->run_sending();
@@ -117,7 +117,7 @@ public:
                    " from: ", source_key_);
     pb_.reset();
     message_pb_.reset();
-    return ExitState::COMPLETE;
+    return fetch::oef::base::ExitState::COMPLETE;
   }
 
 protected:

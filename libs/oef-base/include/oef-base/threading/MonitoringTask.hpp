@@ -20,6 +20,10 @@
 #include "logging/logging.hpp"
 #include "oef-base/threading/Task.hpp"
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 class MonitoringTask : public Task
 {
 public:
@@ -42,3 +46,7 @@ private:
   bool operator==(const MonitoringTask &other) = delete;  // const { return compare(other)==0; }
   bool operator<(const MonitoringTask &other)  = delete;  // const { return compare(other)==-1; }
 };
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

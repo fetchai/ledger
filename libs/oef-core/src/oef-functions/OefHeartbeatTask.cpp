@@ -25,11 +25,11 @@
 #include "oef-base/proto_comms/TSendProtoTask.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 
-ExitState OefHeartbeatTask::run()
+fetch::oef::base::ExitState OefHeartbeatTask::run()
 {
   if (IsCancelled())
   {
-    return CANCELLED;
+    return fetch::oef::base::CANCELLED;
   }
   auto sp = ep.lock();
   if (sp)
@@ -38,10 +38,10 @@ ExitState OefHeartbeatTask::run()
                     "  task=", GetTaskId(), "  group=", GetGroupId());
     sp->heartbeat();
     submit(std::chrono::milliseconds(200));
-    return COMPLETE;
+    return fetch::oef::base::COMPLETE;
   }
   else
   {
-    return COMPLETE;
+    return fetch::oef::base::COMPLETE;
   }
 }
