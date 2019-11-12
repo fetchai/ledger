@@ -101,6 +101,7 @@ TYPED_TEST_CASE(GraphTest, math::test::TensorFloatingTypes);
 TYPED_TEST(GraphTest, graph_rebuild_every_op)
 {
   using TensorType = TypeParam;
+  using DataType = typename TensorType::Type;
 
   // Create graph
   std::string                 name = "Graph";
@@ -123,7 +124,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string flatten = g.template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input_1});
   std::string layernorm = g.template AddNode<fetch::ml::ops::LayerNorm<TensorType>>(name + "LayerNorm", {input_1});
   std::string log = g.template AddNode<fetch::ml::ops::Log<TensorType>>(name + "_Log", {input_1});
-  std::string maskfill = g.template AddNode<fetch::ml::ops::MaskFill<TensorType>>(name + "_MaskFill", {input_1, input_1}, 0);
+  std::string maskfill = g.template AddNode<fetch::ml::ops::MaskFill<TensorType>>(name + "_MaskFill", {input_1, input_1}, DataType(0));
   std::string matmul = g.template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(name + "_MatrixMultiply", {input_1});
   std::string maxpool = g.template AddNode<fetch::ml::ops::MaxPool<TensorType>>(name + "_MaxPool", {input_1});
   std::string maxpool1d = g.template AddNode<fetch::ml::ops::MaxPool1D<TensorType>>(name + "_MaxPool1D", {input_1});

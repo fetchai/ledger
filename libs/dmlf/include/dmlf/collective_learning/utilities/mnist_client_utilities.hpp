@@ -47,12 +47,12 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(
   // Initialise model
   auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
 
+//  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+//      28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
+//  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+//      10u, 10u, fetch::ml::details::ActivationType::RELU);
   model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
-  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      10u, 10u, fetch::ml::details::ActivationType::RELU);
-  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
+      784u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
 
   // Initialise DataLoader
   auto mnist_images = fetch::ml::utilities::read_mnist_images<TensorType>(images);
