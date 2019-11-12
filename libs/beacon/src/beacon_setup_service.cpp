@@ -232,8 +232,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
  */
 BeaconSetupService::State BeaconSetupService::OnConnectToAll()
 {
-  int dummy_int = 0;
-  auto deleter=[&](int *){ FETCH_LOG_INFO(LOGGING_NAME, "Code has exited!"); };
+  int  dummy_int = 0;
+  auto deleter   = [&](int *) { FETCH_LOG_INFO(LOGGING_NAME, "Code has exited!"); };
   std::unique_ptr<int, decltype(deleter)> on_exit(&dummy_int, deleter);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Entering connect to all");
@@ -257,7 +257,7 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
   FETCH_LOG_INFO(LOGGING_NAME, "connect to all 1");
 
   // add the outstanding peers
-  auto const connected_peers   = muddle_.GetDirectlyConnectedPeers();
+  auto const connected_peers = muddle_.GetDirectlyConnectedPeers();
   FETCH_LOG_INFO(LOGGING_NAME, "connect to all 2");
   auto const outstanding_peers = aeon_members - connected_peers;
   FETCH_LOG_INFO(LOGGING_NAME, "connect to all 3");
@@ -266,13 +266,13 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
   FETCH_LOG_INFO(LOGGING_NAME, "connect to all 4");
   for (auto const &address : outstanding_peers)
   {
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 5");
+    FETCH_LOG_INFO(LOGGING_NAME, "connect to all 5");
     std::unique_ptr<network::Uri> hint{};
 
     // look up the manifest for the desired address
     if (manifest_cache_.QueryManifest(address, manifest))
     {
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 6");
+      FETCH_LOG_INFO(LOGGING_NAME, "connect to all 6");
       // attempt to find the service entry
       auto it = manifest.FindService(ServiceIdentifier::Type::DKG);
       if (it != manifest.end())
@@ -280,17 +280,17 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
         hint = std::make_unique<network::Uri>(it->second.uri());
       }
     }
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 7");
+    FETCH_LOG_INFO(LOGGING_NAME, "connect to all 7");
 
     if (hint)
     {
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 8");
+      FETCH_LOG_INFO(LOGGING_NAME, "connect to all 8");
       // tell muddle to connect to the address with the specified hint
       muddle_.ConnectTo(address, *hint);
     }
     else
     {
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 9");
+      FETCH_LOG_INFO(LOGGING_NAME, "connect to all 9");
       // tell muddle to connect to the address using normal service discovery
       muddle_.ConnectTo(address);
     }
@@ -309,7 +309,7 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
 
   if (timer_to_proceed_.HasExpired())
   {
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 14");
+    FETCH_LOG_INFO(LOGGING_NAME, "connect to all 14");
     SetTimeToProceed(State::WAIT_FOR_READY_CONNECTIONS);
     return State::WAIT_FOR_READY_CONNECTIONS;
   }

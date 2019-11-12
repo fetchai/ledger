@@ -141,7 +141,7 @@ void BeaconService::ReloadState()
                    "Found aeon keys during beacon construction, recovering. Valid from: ",
                    ret->aeon.round_start);
 
-    for(auto const &address_in_qual : ret->manager.qual())
+    for (auto const &address_in_qual : ret->manager.qual())
     {
       muddle_.ConnectTo(address_in_qual);
     }
@@ -293,7 +293,8 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 
   if (missing_signatures_from.empty())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Signatures from all qual are already fulfilled. Re-querying a random node");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Signatures from all qual are already fulfilled. Re-querying a random node");
     missing_signatures_from = ChooseRandomlyFrom(active_exe_unit_->manager.qual(), 1);
   }
 
@@ -318,7 +319,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   SignatureInformation ret;
-  uint64_t index = 0;
+  uint64_t             index = 0;
 
   {
     FETCH_LOCK(mutex_);
@@ -343,9 +344,11 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     if (!sig_share_promise_->IsSuccessful() || !sig_share_promise_->As<SignatureInformation>(ret))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ",
-                     qual_promise_identity_.identifier().ToBase64(), " when generating entropy for block: ", index);
+                     qual_promise_identity_.identifier().ToBase64(),
+                     " when generating entropy for block: ", index);
       FETCH_LOG_INFO(LOGGING_NAME, "Ask for connections.");
-      FETCH_LOG_INFO(LOGGING_NAME, "Note: connections ", endpoint_.GetDirectlyConnectedPeers().size());
+      FETCH_LOG_INFO(LOGGING_NAME, "Note: connections ",
+                     endpoint_.GetDirectlyConnectedPeers().size());
       FETCH_LOG_INFO(LOGGING_NAME, "asked for connections.");
       return State::COLLECT_SIGNATURES;
     }
@@ -481,9 +484,10 @@ bool BeaconService::AddSignature(SignatureShare share)
   }
   if (ret == BeaconManager::AddResult::NOT_MEMBER)
   {  // And that it was sent by a member of the cabinet
-    FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member. Identity: ", share.identity.identifier().ToBase64());
+    FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member. Identity: ",
+                    share.identity.identifier().ToBase64());
 
-    for(auto const &i : active_exe_unit_->manager.qual())
+    for (auto const &i : active_exe_unit_->manager.qual())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Note: qual is: ", i.ToBase64());
     }

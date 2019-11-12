@@ -182,7 +182,7 @@ public:
   static uint8_t const POLYNOMIAL_DEGREE = 6;
   static uint8_t const CABINET_SIZE      = 7;
   static uint8_t const CABINET_INDEX     = 8;
-  //static uint8_t const CERTIFICATE       = 9;
+  // static uint8_t const CERTIFICATE       = 9;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &item)
@@ -197,7 +197,7 @@ public:
     map.Append(POLYNOMIAL_DEGREE, item.polynomial_degree_);
     map.Append(CABINET_SIZE, item.cabinet_size_);
     map.Append(CABINET_INDEX, item.cabinet_index_);
-    //map.Append(CERTIFICATE, item.certificate_);
+    // map.Append(CERTIFICATE, item.certificate_);
   }
 
   template <typename MapDeserializer>
@@ -211,7 +211,7 @@ public:
     map.ExpectKeyGetValue(POLYNOMIAL_DEGREE, item.polynomial_degree_);
     map.ExpectKeyGetValue(CABINET_SIZE, item.cabinet_size_);
     map.ExpectKeyGetValue(CABINET_INDEX, item.cabinet_index_);
-    //map.ExpectKeyGetValue(CERTIFICATE, item.certificate_);
+    // map.ExpectKeyGetValue(CERTIFICATE, item.certificate_);
   }
 };
 

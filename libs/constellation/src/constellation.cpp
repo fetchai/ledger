@@ -141,7 +141,7 @@ std::shared_ptr<ledger::DAGInterface> GenerateDAG(
   FETCH_UNUSED(db_name);
   FETCH_UNUSED(load_on_start);
   FETCH_UNUSED(certificate);
-  //return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
+  // return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
   return {};
 }
 
@@ -372,7 +372,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   }
 
   // Enable experimental features
-  if(dag_)
+  if (dag_)
   {
     dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
     reactor_.Attach(dag_service_->GetWeakRunnable());
