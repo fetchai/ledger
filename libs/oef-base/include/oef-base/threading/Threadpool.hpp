@@ -47,20 +47,20 @@ public:
 
   void start(std::size_t threadcount, const std::function<void(void)> &runnable)
   {
-    threads.reserve(threadcount);
+    threads_.reserve(threadcount);
     for (std::size_t thread_idx = 0; thread_idx < threadcount; ++thread_idx)
     {
-      threads.emplace_back(std::make_shared<std::thread>(runnable));
+      threads_.emplace_back(std::make_shared<std::thread>(runnable));
     }
   }
 
   void start(std::size_t                                           threadcount,
              const std::function<void(std::size_t thread_number)> &runnable)
   {
-    threads.reserve(threadcount);
+    threads_.reserve(threadcount);
     for (std::size_t thread_number = 0; thread_number < threadcount; ++thread_number)
     {
-      threads.emplace_back(
+      threads_.emplace_back(
           std::make_shared<std::thread>([runnable, thread_number]() { runnable(thread_number); }));
     }
   }
@@ -68,7 +68,7 @@ public:
   virtual void stop()
   {
     Threads tmp;
-    std::swap(tmp, threads);
+    std::swap(tmp, threads_);
     for (auto &thread : tmp)
     {
       if (std::this_thread::get_id() != thread->get_id())
@@ -76,7 +76,7 @@ public:
         thread->join();
       }
     }
-    threads.empty();
+    threads_.empty();
   }
 
   Threadpool(const Threadpool &other) = delete;
@@ -86,7 +86,7 @@ public:
 
 protected:
 private:
-  Threads threads;
+  Threads threads_;
 };
 
 }  // namespace base

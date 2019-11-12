@@ -89,12 +89,12 @@ private:
   Timestamp lockless_getNextWakeTime(const Timestamp &current_time, const Milliseconds &deflt);
   TaskP     lockless_getNextFutureWork(const Timestamp &current_time);
 
-  mutable Mutex           mutex;
-  std::atomic<bool>       quit;
-  std::condition_variable work_available;
-  Tasks                   pending_tasks;
-  RunningTasks            running_tasks;
-  SuspendedTasks          suspended_tasks;
+  mutable Mutex           mutex_;
+  std::atomic<bool>       quit_;
+  std::condition_variable work_available_;
+  Tasks                   pending_tasks_;
+  RunningTasks            running_tasks_;
+  SuspendedTasks          suspended_tasks_;
 
   struct FutureTask
   {
@@ -112,7 +112,7 @@ private:
 
   using FutureTasks = std::priority_queue<FutureTask, std::vector<FutureTask>, FutureTaskOrdering>;
 
-  FutureTasks future_tasks;
+  FutureTasks future_tasks_;
 };
 }  // namespace base
 }  // namespace oef

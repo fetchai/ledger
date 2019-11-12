@@ -61,7 +61,7 @@ char const *CLIENT_PRIV = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
 char const *CLIENT_PUB =
     "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
 
-static constexpr char const *LOGGING_NAME = "colearn_muddle";
+char const *LOGGING_NAME = "colearn_muddle";
 
 class LearnerTypedUpdates
 {
