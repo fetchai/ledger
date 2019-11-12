@@ -242,7 +242,7 @@ public:
   constexpr FixedPoint(FixedPoint const &o);
   constexpr FixedPoint(Type const &integer, UnsignedType const &fraction);
   template <uint16_t N, uint16_t M>
-  constexpr FixedPoint(FixedPoint<N, M> const &o);
+  constexpr explicit FixedPoint(FixedPoint<N, M> const &o);
 
   ///////////////////
   /// conversions ///
@@ -310,8 +310,8 @@ public:
   constexpr FixedPoint  operator-() const;
   constexpr FixedPoint &operator++();
   constexpr FixedPoint &operator--();
-  constexpr FixedPoint  operator++(int);
-  constexpr FixedPoint  operator--(int);
+  FixedPoint const operator++(int) &;
+  FixedPoint const operator--(int) &;
 
   //////////////////////////////
   /// math and bit operators ///
@@ -500,21 +500,21 @@ private:
 };
 
 template <typename T>
-static constexpr bool IsMinusZero(T const n);
+static inline bool IsMinusZero(T n);
 
 template <>
-constexpr bool IsMinusZero<float>(float const n)
+inline bool IsMinusZero<float>(float const n)
 {
   // Have to dereference the pointer as char const *, else we get a strict-aliasing error
-  uint32_t n_int = *(reinterpret_cast<char const *>(&n));
+  uint32_t n_int = *(reinterpret_cast<uint8_t const *>(&n));
   return (n_int == 0x80000000);
 }
 
 template <>
-constexpr bool IsMinusZero<double>(double const n)
+inline bool IsMinusZero<double>(double const n)
 {
   // Have to dereference the pointer as char const *, else we get a strict-aliasing error
-  uint64_t n_int = *(reinterpret_cast<char const *>(&n));
+  uint64_t n_int = *(reinterpret_cast<uint8_t const *>(&n));
   return (n_int == 0x8000000000000000);
 }
 
@@ -1322,7 +1322,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator--()
  * @return the number increased by one, prefix mode
  */
 template <uint16_t I, uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::operator++(int)
+FixedPoint<I, F> const FixedPoint<I, F>::operator++(int) &
 {
   FixedPoint<I, F> result{*this};
   ++result;
@@ -1334,7 +1334,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator++(int)
  * @return the number decreased by one, prefix mode
  */
 template <uint16_t I, uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::operator--(int)
+FixedPoint<I, F> const FixedPoint<I, F>::operator--(int) &
 {
   FixedPoint<I, F> result{*this};
   --result;
