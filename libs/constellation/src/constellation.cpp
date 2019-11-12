@@ -317,7 +317,7 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
                        block_packer_,
                        *this,
                        certificate,
-                       cfg_.num_lanes(),
+                       cfg_.log2_num_lanes,
                        cfg_.num_slices,
                        cfg_.block_difficulty,
                        consensus_,
