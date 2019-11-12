@@ -41,6 +41,12 @@ public:
   using Cabinet    = std::vector<Identity>;
   using CabinetPtr = std::shared_ptr<Cabinet>;
 
+  struct Record
+  {
+    Identity identity;
+    uint64_t stake;
+  };
+
   static constexpr char const *LOGGING_NAME = "StakeSnapshot";
 
   // Construction / Destruction
@@ -71,12 +77,6 @@ public:
   StakeSnapshot &operator=(StakeSnapshot &&) = default;
 
 private:
-  struct Record
-  {
-    Identity identity;
-    uint64_t stake;
-  };
-
   using RecordPtr     = std::shared_ptr<Record>;
   using IdentityIndex = std::unordered_map<Identity, RecordPtr>;
   using StakeIndex    = std::vector<RecordPtr>;
@@ -84,6 +84,9 @@ private:
   IdentityIndex identity_index_{};  ///< Map of Identity to Record
   StakeIndex    stake_index_;       ///< Array of Records
   uint64_t      total_stake_{0};    ///< Total stake cache
+
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 };
 
 /**
@@ -122,4 +125,64 @@ void StakeSnapshot::IterateOver(Functor &&functor) const
 }
 
 }  // namespace ledger
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<ledger::StakeSnapshot::Record, D>
+{
+public:
+  using Type       = ledger::StakeSnapshot::Record;
+  using DriverType = D;
+
+  static uint8_t const IDENTITY = 1;
+  static uint8_t const STAKE    = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &record)
+  {
+    auto map = map_constructor(2);
+    map.Append(IDENTITY, record.identity);
+    map.Append(STAKE, record.stake);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &record)
+  {
+    map.ExpectKeyGetValue(IDENTITY, record.identity);
+    map.ExpectKeyGetValue(STAKE, record.stake);
+  }
+};
+
+template <typename D>
+struct MapSerializer<ledger::StakeSnapshot, D>
+{
+public:
+  using Type       = ledger::StakeSnapshot;
+  using DriverType = D;
+
+  static uint8_t const IDENTITY_INDEX = 1;
+  static uint8_t const STAKE_INDEX    = 2;
+  static uint8_t const TOTAL_STAKE    = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &snapshot)
+  {
+    auto map = map_constructor(3);
+    map.Append(IDENTITY_INDEX, snapshot.identity_index_);
+    map.Append(STAKE_INDEX, snapshot.stake_index_);
+    map.Append(TOTAL_STAKE, snapshot.total_stake_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &record)
+  {
+    map.ExpectKeyGetValue(IDENTITY_INDEX, record.identity_index_);
+    map.ExpectKeyGetValue(STAKE_INDEX, record.stake_index_);
+    map.ExpectKeyGetValue(TOTAL_STAKE, record.total_stake_);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch
