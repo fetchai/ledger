@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "chain/constants.hpp"
-#include "ledger/chain/block.hpp"
 #include "ledger/execution_manager.hpp"
 #include "storage/resource_mapper.hpp"
 
