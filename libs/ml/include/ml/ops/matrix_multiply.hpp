@@ -19,6 +19,7 @@
 
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -40,7 +41,10 @@ public:
   using SPType        = OpMatrixMultiplySaveableParams<T>;
   using MyType        = MatrixMultiply<TensorType>;
 
-  MatrixMultiply() = default;
+  explicit MatrixMultiply(bool transpose_a = false, bool transpose_b = false)
+    : transpose_a_(transpose_a)
+    , transpose_b_(transpose_b)
+  {}
 
   explicit MatrixMultiply(SPType const &sp)
     : Ops<T>(sp)
@@ -113,8 +117,14 @@ private:
   TensorType err1_;
   TensorType err2_;
 
+  bool transpose_a_ = false;
+  bool transpose_b_ = false;
+
   void UpdateContainersForward(VecTensorType const &inputs);
   void UpdateContainersBackward(VecTensorType const &inputs, TensorType const &error_signal);
+  void DotWithTranspose(TensorType const &a, TensorType const &b, TensorType &ret);
+  void BackDotWithTranspose(TensorType const &a, TensorType const &b, TensorType const &err_signal,
+                            TensorType &err_ret_1, TensorType &err_ret_2);
 };
 
 template <class T>
@@ -129,7 +139,7 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, TensorType &output)
   if (inputs.at(0)->shape().size() == 2 && inputs.at(1)->shape().size() == 2)
   {
     assert((inputs.at(0)->shape().size() == 2 && inputs.at(1)->shape().size() == 2));
-    fetch::math::Dot((*inputs.at(0)), (*inputs.at(1)), output);
+    DotWithTranspose((*inputs.at(0)), (*inputs.at(1)), output);
   }
   // Batchwise 3D @ 3D or broadcast matmul 2D @ 3D, 3D @ 2D
   else
@@ -176,7 +186,7 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, TensorType &output)
         fwd_in2_view_tensor_ = (*inputs.at(1));
       }
 
-      fetch::math::Dot(fwd_in1_view_tensor_, fwd_in2_view_tensor_, output_view_tensor_);
+      DotWithTranspose(fwd_in1_view_tensor_, fwd_in2_view_tensor_, output_view_tensor_);
 
       // Copy data to original array
       output_view.Assign(output_view_tensor_);
@@ -196,8 +206,8 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
   // Normal MatMul 2D @ 2D
   if (inputs.at(0)->shape().size() == 2 && inputs.at(1)->shape().size() == 2)
   {
-    fetch::math::DotTranspose(error_signal, (*inputs.at(1)), error_signal_1_);
-    fetch::math::TransposeDot((*inputs.at(0)), error_signal, error_signal_2_);
+    BackDotWithTranspose((*inputs.at(0)), (*inputs.at(1)), error_signal, error_signal_1_,
+                         error_signal_2_);
   }
   // Batchwise 3D @ 3D or broadcast matmul 2D @ 3D, 3D @ 2D
   else
@@ -251,8 +261,8 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
       /// DO MATMUL ///
       /////////////////
 
-      fetch::math::DotTranspose(err_sig_view_tensor_, back_in2_view_tensor_, err1_);
-      fetch::math::TransposeDot(back_in1_view_tensor_, err_sig_view_tensor_, err2_);
+      BackDotWithTranspose(back_in1_view_tensor_, back_in2_view_tensor_, err_sig_view_tensor_,
+                           err1_, err2_);
 
       ////////////////////////////////
       /// COPY DATA BACK TO Views ///
@@ -293,19 +303,69 @@ template <class T>
 std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShape(
     VecTensorType const &inputs) const
 {
+  if (transpose_a_ && transpose_b_)
+  {
+    throw ml::exceptions::InvalidMode(
+        "ops::MatrixMultiply does not support both inputs transposed");
+  }
+  std::vector<fetch::math::SizeType> output_shape;
+
   // Normal Matmul
   if (inputs.at(0)->shape().size() == 2 && inputs.at(1)->shape().size() == 2)
   {
-    return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)};
+    if (!transpose_a_ && !transpose_b_)
+    {
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)};
+    }
+    else if (transpose_a_ & !transpose_b_)
+    {
+      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1)};
+    }
+    else
+    {
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0)};
+    }
   }
   // Batchwise matmul or 3D @ 2D broadcast matmul
-  if (inputs.at(0)->shape().size() == 3)
+  else if (inputs.at(0)->shape().size() == 3)
   {
-    return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(0)->shape().at(2)};
+    if (!transpose_a_ && !transpose_b_)
+    {
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
+                      inputs.at(0)->shape().at(2)};
+    }
+    else if (transpose_a_ & !transpose_b_)
+    {
+      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1),
+                      inputs.at(0)->shape().at(2)};
+    }
+    else
+    {
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0),
+                      inputs.at(0)->shape().at(2)};
+    }
   }
-  // 2D @ 3D broadcast matmul
+  else
+  {
+    // 2D @ 3D broadcast matmul
+    if (!transpose_a_ && !transpose_b_)
+    {
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
+                      inputs.at(1)->shape().at(2)};
+    }
+    else if (transpose_a_ & !transpose_b_)
+    {
+      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1),
+                      inputs.at(1)->shape().at(2)};
+    }
+    else
+    {
+      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0),
+                      inputs.at(1)->shape().at(2)};
+    }
+  }
 
-  return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
+  return output_shape;
 }
 
 /**
@@ -324,7 +384,24 @@ void MatrixMultiply<T>::UpdateContainersForward(VecTensorType const &inputs)
     fwd_input_shape_2_   = inputs.at(1)->shape();
     fwd_in1_view_tensor_ = TensorType({inputs.at(0)->shape().at(0), inputs.at(0)->shape().at(1)});
     fwd_in2_view_tensor_ = TensorType({inputs.at(1)->shape().at(0), inputs.at(1)->shape().at(1)});
-    output_view_tensor_  = TensorType({inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)});
+
+    if (!transpose_a_ && !transpose_b_)
+    {
+      output_view_tensor_ = TensorType({inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)});
+    }
+    else if (transpose_a_ & !transpose_b_)
+    {
+      output_view_tensor_ = TensorType({inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1)});
+    }
+    else if (transpose_b_ & !transpose_a_)
+    {
+      output_view_tensor_ = TensorType({inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0)});
+    }
+    else
+    {
+      throw ml::exceptions::InvalidMode(
+          "ops::MatrixMultiply does not support both inputs transposed");
+    }
   }
 }
 
@@ -355,6 +432,70 @@ void MatrixMultiply<T>::UpdateContainersBackward(VecTensorType const &inputs,
   }
 }
 
+/**
+ * Invokes the relevant DotProduct operation depending on the transpose mode
+ * @tparam TensorType
+ * @param a
+ * @param b
+ * @param ret
+ */
+template <typename TensorType>
+void MatrixMultiply<TensorType>::DotWithTranspose(TensorType const &a, TensorType const &b,
+                                                  TensorType &ret)
+{
+  if (!transpose_a_ && !transpose_b_)
+  {
+    fetch::math::Dot(a, b, ret);
+  }
+  else if (transpose_a_ & !transpose_b_)
+  {
+    fetch::math::TransposeDot(a, b, ret);
+  }
+  else if (transpose_b_ & !transpose_a_)
+  {
+    fetch::math::DotTranspose(a, b, ret);
+  }
+  else
+  {
+    throw ml::exceptions::InvalidMode(
+        "ops::MatrixMultiply does not support both inputs transposed");
+  }
+}
+
+/**
+ * Applies the relevant two dot operations in backprop depending on transpose
+ * @tparam TensorType
+ * @param a
+ * @param b
+ * @param ret
+ */
+template <typename TensorType>
+void MatrixMultiply<TensorType>::BackDotWithTranspose(TensorType const &a, TensorType const &b,
+                                                      TensorType const &err_signal,
+                                                      TensorType &err_ret_1, TensorType &err_ret_2)
+{
+
+  if (!transpose_a_ && !transpose_b_)
+  {
+    fetch::math::DotTranspose(err_signal, b, err_ret_1);
+    fetch::math::TransposeDot(a, err_signal, err_ret_2);
+  }
+  else if (transpose_a_ && !transpose_b_)
+  {
+    fetch::math::DotTranspose(err_signal, b, err_ret_1);
+    fetch::math::Dot(a, err_signal, err_ret_2);
+  }
+  else if (transpose_b_ && !transpose_a_)
+  {
+    fetch::math::Dot(err_signal, b, err_ret_1);
+    fetch::math::TransposeDot(a, err_signal, err_ret_2);
+  }
+  else
+  {
+    throw ml::exceptions::InvalidMode(
+        "ops::MatrixMultiply does not support both inputs transposed");
+  }
+}
 }  // namespace ops
 }  // namespace ml
 }  // namespace fetch
