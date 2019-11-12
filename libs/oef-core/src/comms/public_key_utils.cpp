@@ -23,9 +23,9 @@ RSAKey::RSAKey(const EvpPublicKey &evp_pk)
 {
   ERR_load_crypto_strings();
   rsa_ = EVP_PKEY_get1_RSA(evp_pk.native_handle());
-  if (rsa_ != nullptr)
+  if (rsa_ == nullptr)
   {
-    std::runtime_error(ERR_error_string(ERR_get_error(), nullptr));
+    throw std::runtime_error(ERR_error_string(ERR_get_error(), nullptr));
   }
 }
 
