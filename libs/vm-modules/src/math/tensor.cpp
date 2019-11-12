@@ -78,6 +78,9 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("transpose", &VMTensor::Transpose)
       .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze)
       .CreateMemberFunction("fromString", &VMTensor::FromString)
+      /*
+      .CreateMemberFunction("fromString", &VMTensor::FromString, &VMTensor::FromStringEstimator)
+      */
       .CreateMemberFunction("toString", &VMTensor::ToString);
 
   // Add support for Array of Tensors
@@ -186,6 +189,13 @@ void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
   tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->string()));
 }
+
+/*
+ChargeAmount VMTensor::FromStringEstimator(fetch::vm::Ptr<fetch::vm::String> const &string)
+{
+  return static_cast<ChargeAmount>(string->Length());
+}
+*/
 
 Ptr<String> VMTensor::ToString() const
 {

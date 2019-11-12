@@ -104,7 +104,9 @@ public:
   //////////////////////////////
 
   void FromString(fetch::vm::Ptr<fetch::vm::String> const &string);
-
+  /*
+  fetch::vm::ChargeAmount FromStringEstimator(fetch::vm::Ptr<fetch::vm::String> const &string);
+  */
   fetch::vm::Ptr<fetch::vm::String> ToString() const;
 
   TensorType &GetTensor();
