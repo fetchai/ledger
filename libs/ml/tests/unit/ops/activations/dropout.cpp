@@ -41,7 +41,7 @@ template <typename TensorType>
 double zero_fraction(TensorType const &t1)
 {
   double ret = 0;
-  for (auto i : t1)
+  for (auto const &i : t1)
   {
     if (i == 0)
     {
