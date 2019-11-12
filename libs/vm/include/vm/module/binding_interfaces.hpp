@@ -37,12 +37,13 @@ namespace vm {
 
 namespace internal {
 
-template<typename T, typename Tuple>
+template <typename T, typename Tuple>
 struct PrependedTupleImpl;
 
-template<typename T, typename... Ts>
-struct PrependedTupleImpl<T, std::tuple<Ts...>>{
-using type = std::tuple<T, Ts...>;
+template <typename T, typename... Ts>
+struct PrependedTupleImpl<T, std::tuple<Ts...>>
+{
+  using type = std::tuple<T, Ts...>;
 };
 
 template <typename T, typename Tuple>
@@ -57,28 +58,23 @@ struct EtchMemberFunctionInvocation
   static void InvokeHandler(VM *vm, Estimator &&estimator, Callable &&callable,
                             ExtraArgs const &... extra_args)
   {
-  using OwningType = typename meta::CallableTraits<Callable>::OwningType;
+    using OwningType = typename meta::CallableTraits<Callable>::OwningType;
 
-  constexpr static int num_parameters = int(std::tuple_size<EtchArgsTuple>::value);
-  constexpr static int sp_offset =
-      meta::CallableTraits<Callable>::is_void() ? num_parameters : (num_parameters - 1);
-
-  constexpr static int offset =
-      meta::CallableTraits<Callable>::is_void() ? sp_offset -1: sp_offset;
+    constexpr static auto num_parameters = std::tuple_size<EtchArgsTuple>::value;
 
     using Config = PrepareInvocation<Invoker, Callable, EtchArgsTuple, std::tuple<ExtraArgs...>>;
 
     // get the Etch argument values from the stack
     auto etch_args_tuple = Config::GetEtchArguments(vm);
 
-    Variant &       v      = vm->stack_[vm->sp_ - offset];
+    Variant &       v       = vm->stack_[vm->sp_ - num_parameters];
     Ptr<OwningType> context = v.object;
 
     using EstimatorArgsTuple = PrependedTuple<Ptr<OwningType>, EtchArgsTuple>;
-    
+
     auto estimator_args_tuple =
-          std::tuple_cat(std::make_tuple(context), std::move(etch_args_tuple));
-    
+        std::tuple_cat(std::make_tuple(context), std::move(etch_args_tuple));
+
     using EstimatorType = meta::UnpackTuple<EstimatorArgsTuple, ChargeEstimator>;
     if (EstimateCharge(vm, EstimatorType{std::forward<Estimator>(estimator)}, estimator_args_tuple))
     {
@@ -128,7 +124,8 @@ using Constructor = internal::EtchInvocation<VmConstructorInvoker, EtchArgsTuple
 template <typename EtchArgsTuple>
 using FreeFunction = internal::EtchInvocation<VmFreeFunctionInvoker, EtchArgsTuple>;
 template <typename EtchArgsTuple>
-using NewMemberFunction = internal::EtchMemberFunctionInvocation<VmMemberFunctionInvoker, EtchArgsTuple>;
+using NewMemberFunction =
+    internal::EtchMemberFunctionInvocation<VmMemberFunctionInvoker, EtchArgsTuple>;
 template <typename EtchArgsTuple>
 using MemberFunction = internal::EtchInvocation<VmMemberFunctionInvoker, EtchArgsTuple>;
 template <typename EtchArgsTuple>

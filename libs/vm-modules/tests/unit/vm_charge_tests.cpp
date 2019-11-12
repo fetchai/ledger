@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/array.hpp"
+#include "vm/variant.hpp"
 #include "vm_test_toolkit.hpp"
 
 #include "gtest/gtest.h"
@@ -342,6 +344,81 @@ TEST_F(VmChargeTests,
   ASSERT_TRUE(toolkit.Run(nullptr, high_charge_limit));
 }
 
+<<<<<<< HEAD
+=======
+TEST_F(VmChargeTests, array_functor_bind_with_charge_estimate_execution_succeeds_with_estimator)
+{
+  auto array_add_estimator = [](Ptr<Array<uint32_t>> const &array) -> ChargeAmount {
+    return static_cast<ChargeAmount>(array->elements.size() * 10);
+  };
+
+  auto const array_add_handler = [](VM * /*vm*/, Ptr<Array<uint32_t>> const & /*unused*/) -> bool {
+    return true;
+  };
+
+  toolkit.module().CreateFreeFunction("array_add", array_add_handler, array_add_estimator);
+
+  static char const *TEXT = R"(
+    persistent theArray : Array<UInt32>;
+
+    function main()
+      use theArray;
+      var myArray = Array<UInt32>(10);
+      myArray[0] = 1u32;
+      myArray[1] = 1u32;
+      myArray[2] = 1u32;
+      myArray[3] = 1u32;
+      myArray[4] = 1u32;
+
+      theArray.set(myArray);
+
+      var anArray = theArray.get();
+
+      array_add(anArray);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
+  ASSERT_TRUE(toolkit.Run(nullptr, high_charge_limit)) << stdout.str();
+}
+
+TEST_F(VmChargeTests, array_functor_bind_with_charge_estimate_execution_fails_with_estimator)
+{
+  auto array_add_estimator = [](Ptr<Array<uint32_t>> const &array) -> ChargeAmount {
+    return static_cast<ChargeAmount>(array->elements.size() * 10);
+  };
+
+  auto const array_add_handler = [](VM * /*vm*/, Ptr<Array<uint32_t>> const & /*unused*/) -> bool {
+    return true;
+  };
+
+  toolkit.module().CreateFreeFunction("array_add", array_add_handler, array_add_estimator);
+
+  static char const *TEXT = R"(
+    persistent theArray : Array<UInt32>;
+
+    function main()
+      use theArray;
+      var myArray = Array<UInt32>(1000);
+      myArray[0] = 1u32;
+      myArray[1] = 1u32;
+      myArray[2] = 1u32;
+      myArray[3] = 1u32;
+      myArray[4] = 1u32;
+
+      theArray.set(myArray);
+
+      var anArray = theArray.get();
+
+      array_add(anArray);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
+  ASSERT_FALSE(toolkit.Run(nullptr, high_charge_limit)) << stdout.str();
+}
+
+>>>>>>> d0bb2c29d... Fix stack pointer offset
 TEST_F(VmChargeTests,
        ctor_bind_with_charge_estimate_execution_fails_when_limit_exceeded_with_estimator)
 {
