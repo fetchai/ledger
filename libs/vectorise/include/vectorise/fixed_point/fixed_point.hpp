@@ -310,8 +310,8 @@ public:
   constexpr FixedPoint  operator-() const;
   constexpr FixedPoint &operator++();
   constexpr FixedPoint &operator--();
-  FixedPoint const operator++(int) &;
-  FixedPoint const operator--(int) &;
+  FixedPoint const      operator++(int) &;
+  FixedPoint const      operator--(int) &;
 
   //////////////////////////////
   /// math and bit operators ///
