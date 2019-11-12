@@ -470,7 +470,7 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   }
   else if (chain_.HasMissingBlocks())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation Lost");
+    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation lost - chain has missing blocks");
 
     next_state = State::SYNCHRONISING;
   }

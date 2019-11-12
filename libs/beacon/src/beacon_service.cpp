@@ -239,9 +239,6 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
-  int dummy_int = 0;
-  auto deleter=[&](int *){ FETCH_LOG_INFO(LOGGING_NAME, "on collect has exited!"); };
-  std::unique_ptr<int, decltype(deleter)> on_exit(&dummy_int, deleter);
   MilliTimer const timer{"on collect state", 100};
 
   FETCH_LOG_INFO(LOGGING_NAME, "ON collect entry 0");
