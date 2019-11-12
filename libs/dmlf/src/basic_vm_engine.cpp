@@ -465,7 +465,7 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
   }
   else if (vmVariant.type_id == vm::TypeIds::String)
   {
-    output = vmVariant.Get<vm::Ptr<vm::String>>()->str;
+    output = vmVariant.Get<vm::Ptr<vm::String>>()->string();
   }
   else
   {
