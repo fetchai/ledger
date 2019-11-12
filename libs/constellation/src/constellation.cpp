@@ -372,11 +372,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   }
 
   // Enable experimental features
-  assert(dag_);
-  dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
-  reactor_.Attach(dag_service_->GetWeakRunnable());
+  if(dag_)
+  {
+    dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
+    reactor_.Attach(dag_service_->GetWeakRunnable());
+  }
 
-  if (cfg_.features.IsEnabled("synergetic"))
+  if (cfg_.features.IsEnabled("synergetic") && dag_)
   {
     auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
     if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
