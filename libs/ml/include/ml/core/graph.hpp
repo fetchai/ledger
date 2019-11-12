@@ -209,8 +209,6 @@ private:
   void RecursiveApply(ValType &val, NodeFunc node_func, GraphFunc graph_func) const;
 
   template <typename ValType, typename GraphFunc>
-  //  void RecursiveApply(ValType &val,
-  //                      void (Graph<TensorType>::*subgraph_func)(ValType &) const) const;
   void RecursiveApply(ValType &val, GraphFunc graph_func) const;
 
   template <typename Val1Type, typename Val2Type, typename NodeFunc, typename GraphFunc>
@@ -1239,6 +1237,20 @@ void Graph<TensorType>::RecursiveApply(ValType &val, GraphFunc graph_func) const
   }
 }
 
+/**
+ * RecursiveApplyTwo is used to apply a function with two inputs to all trainables and collect the
+ * results, and then recursively invoke this function for any nodes which are graphs. Using this
+ * function guarantees the order of elements.
+ * @tparam TensorType
+ * @tparam Val1Type
+ * @tparam Val2Type
+ * @tparam NodeFunc
+ * @tparam GraphFunc
+ * @param val_1
+ * @param val_2
+ * @param node_func
+ * @param graph_func
+ */
 template <typename TensorType>
 template <typename Val1Type, typename Val2Type, typename NodeFunc, typename GraphFunc>
 void Graph<TensorType>::RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2, NodeFunc node_func,
@@ -1254,6 +1266,16 @@ void Graph<TensorType>::RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2, Node
   RecursiveApplyTwo<Val1Type, Val2Type, GraphFunc>(val_1, val_2, graph_func);
 }
 
+/**
+ * Two inputs version of Recursive apply which applies the graph function only
+ * @tparam TensorType
+ * @tparam Val1Type
+ * @tparam Val2Type
+ * @tparam GraphFunc
+ * @param val_1
+ * @param val_2
+ * @param graph_func
+ */
 template <typename TensorType>
 template <typename Val1Type, typename Val2Type, typename GraphFunc>
 void Graph<TensorType>::RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2,
