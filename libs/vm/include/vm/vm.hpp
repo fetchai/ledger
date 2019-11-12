@@ -627,24 +627,25 @@ private:
   friend struct VmMemberFunctionInvoker;
   template <template <int, typename, typename, typename...> class Invoker, typename EtchArgsTuple>
   friend struct EtchMemberFunctionInvocation;
-  
 
-  TypeInfoArray                  type_info_array_;
-  TypeInfoMap                    type_info_map_;
-  RegisteredTypes                registered_types_;
-  OpcodeInfoArray                opcode_info_array_;
-  OpcodeMap                      opcode_map_;
-  Generator                      generator_;
-  Executable const *             executable_{};
-  Executable::Function const *   function_{};
-  std::vector<Ptr<String>>       strings_;
-  Frame                          frame_stack_[FRAME_STACK_SIZE]{};
-  int                            frame_sp_{};
-  int                            bsp_{};
- public:
-  Variant                        stack_[STACK_SIZE];
-  int                            sp_{};
- private:
+  TypeInfoArray               type_info_array_;
+  TypeInfoMap                 type_info_map_;
+  RegisteredTypes             registered_types_;
+  OpcodeInfoArray             opcode_info_array_;
+  OpcodeMap                   opcode_map_;
+  Generator                   generator_;
+  Executable const *          executable_{};
+  Executable::Function const *function_{};
+  std::vector<Ptr<String>>    strings_;
+  Frame                       frame_stack_[FRAME_STACK_SIZE]{};
+  int                         frame_sp_{};
+  int                         bsp_{};
+
+public:
+  Variant stack_[STACK_SIZE];
+  int     sp_{};
+
+private:
   ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS]{};
   int                            range_loop_sp_{};
   LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};

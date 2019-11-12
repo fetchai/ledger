@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_toolkit.hpp"
 #include "vm/array.hpp"
 #include "vm/variant.hpp"
+#include "vm_test_toolkit.hpp"
+
 #include "gtest/gtest.h"
 
 #include <cstdint>
@@ -325,7 +326,7 @@ TEST_F(VmChargeTests,
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_FALSE(toolkit.Run(nullptr, low_charge_limit)) ;
+  ASSERT_FALSE(toolkit.Run(nullptr, low_charge_limit));
 }
 
 TEST_F(VmChargeTests,
@@ -343,14 +344,13 @@ TEST_F(VmChargeTests,
   ASSERT_TRUE(toolkit.Run(nullptr, high_charge_limit));
 }
 
-TEST_F(VmChargeTests,
-       array_functor_bind_with_charge_estimate_execution_succeeds_with_estimator)
+TEST_F(VmChargeTests, array_functor_bind_with_charge_estimate_execution_succeeds_with_estimator)
 {
-  auto array_add_estimator = [](Ptr<Array<uint32_t>> const& array) -> ChargeAmount {
-    return static_cast<ChargeAmount>(array->elements.size()*10);
+  auto array_add_estimator = [](Ptr<Array<uint32_t>> const &array) -> ChargeAmount {
+    return static_cast<ChargeAmount>(array->elements.size() * 10);
   };
 
-  auto const array_add_handler = [](VM * /*vm*/, Ptr<Array<uint32_t>> const& /*unused*/) -> bool {
+  auto const array_add_handler = [](VM * /*vm*/, Ptr<Array<uint32_t>> const & /*unused*/) -> bool {
     return true;
   };
 
@@ -380,14 +380,13 @@ TEST_F(VmChargeTests,
   ASSERT_TRUE(toolkit.Run(nullptr, high_charge_limit)) << stdout.str();
 }
 
-TEST_F(VmChargeTests,
-       array_functor_bind_with_charge_estimate_execution_fails_with_estimator)
+TEST_F(VmChargeTests, array_functor_bind_with_charge_estimate_execution_fails_with_estimator)
 {
-  auto array_add_estimator = [](Ptr<Array<uint32_t>> const& array) -> ChargeAmount {
-    return static_cast<ChargeAmount>(array->elements.size()*10);
+  auto array_add_estimator = [](Ptr<Array<uint32_t>> const &array) -> ChargeAmount {
+    return static_cast<ChargeAmount>(array->elements.size() * 10);
   };
 
-  auto const array_add_handler = [](VM * /*vm*/, Ptr<Array<uint32_t>> const& /*unused*/) -> bool {
+  auto const array_add_handler = [](VM * /*vm*/, Ptr<Array<uint32_t>> const & /*unused*/) -> bool {
     return true;
   };
 

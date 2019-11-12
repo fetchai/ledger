@@ -81,11 +81,13 @@ void VMTensor::Bind(Module &module)
       /*
       .CreateMemberFunction("fromString", &VMTensor::FromString, &VMTensor::FromStringEstimator)
       */
-      //.CreateMemberFunction("fromString", &VMTensor::FromString, [](/*VMTensor* this_,*/ Ptr<String> const& /*string*/) -> ChargeAmount 
+      //.CreateMemberFunction("fromString", &VMTensor::FromString, [](/*VMTensor* this_,*/
+      // Ptr<String> const& /*string*/) -> ChargeAmount
       //      {
       //        return static_cast<ChargeAmount>(1);
       //      })
-      //.NewCreateMemberFunction("fromString", &VMTensor::FromString, [](Ptr<VMTensor> /*this_*/, Ptr<String> const& /*string*/) -> ChargeAmount 
+      //.NewCreateMemberFunction("fromString", &VMTensor::FromString, [](Ptr<VMTensor> /*this_*/,
+      // Ptr<String> const& /*string*/) -> ChargeAmount
       //      {
       //        return static_cast<ChargeAmount>(1);
       //      })
