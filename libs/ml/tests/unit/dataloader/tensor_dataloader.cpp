@@ -18,25 +18,22 @@
 
 #include "core/serializers/main_serializer.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
-using namespace fetch::ml;
-using namespace fetch::ml::dataloaders;
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class TensorDataloaderTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(TensorDataloaderTest, MyTypes);
+TYPED_TEST_CASE(TensorDataloaderTest, math::test::TensorFloatIntAndUIntTypes);
 
 TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 {
@@ -104,8 +101,8 @@ TYPED_TEST(TensorDataloaderTest, test_validation_splitting_dataloader_test)
   tdl.AddData({data1_tensor, data2_tensor}, label_tensor);
 
   EXPECT_EQ(tdl.Size(), 1);
-  EXPECT_THROW(tdl.SetMode(DataLoaderMode::TEST), std::runtime_error);
-  EXPECT_THROW(tdl.SetMode(DataLoaderMode::VALIDATE), std::runtime_error);
+  EXPECT_THROW(tdl.SetMode(dataloaders::DataLoaderMode::TEST), std::runtime_error);
+  EXPECT_THROW(tdl.SetMode(dataloaders::DataLoaderMode::VALIDATE), std::runtime_error);
 }
 
 TYPED_TEST(TensorDataloaderTest, prepare_batch_test)
@@ -140,3 +137,7 @@ TYPED_TEST(TensorDataloaderTest, prepare_batch_test)
   EXPECT_EQ(batch.at(1).shape(),
             std::vector<SizeType>({feature_size_2_1, feature_size_2_2, batch_size}));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

@@ -16,20 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "ml/layers/multihead_attention.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
+#include "test_types.hpp"
 
-#include "gtest/gtest.h"
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class MultiheadAttention : public ::testing::Test
 {
 };
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(MultiheadAttention, MyTypes);
+
+// float32 tends to overflow here
+TYPED_TEST_CASE(MultiheadAttention, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class as a subgraph
 {
@@ -178,3 +181,7 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

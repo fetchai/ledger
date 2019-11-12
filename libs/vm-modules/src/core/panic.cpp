@@ -26,7 +26,7 @@ namespace vm_modules {
 
 void Panic(VM *vm, Ptr<String> const &s)
 {
-  vm->RuntimeError(s->str);
+  vm->RuntimeError(s->string());
 }
 
 void Assert(VM *vm, bool condition)
@@ -41,7 +41,7 @@ void AssertWithMsg(VM *vm, bool condition, Ptr<String> const &s)
 {
   if (!condition)
   {
-    vm->RuntimeError("Assertion error: " + s->str);
+    vm->RuntimeError("Assertion error: " + s->string());
   }
 }
 

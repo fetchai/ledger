@@ -34,7 +34,6 @@ using fetch::ledger::Block;
 using fetch::chain::Address;
 
 using Blocks = std::vector<Block>;
-using Body   = Block::Body;
 
 // TODO(issue 33): get these from helper_functions when it's sorted
 // Time related functionality
@@ -71,6 +70,7 @@ std::map<std::size_t, std::size_t> GetRandomIndexes(std::size_t size)
 
 TEST(ledger_main_chain_gtest, Test_mining_proof)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
   Blocks      blocks;
   std::size_t blockIterations = 10;
   DummyMiner  miner;
@@ -82,9 +82,9 @@ TEST(ledger_main_chain_gtest, Test_mining_proof)
     for (std::size_t j = 0; j < blockIterations; ++j)
     {
       Block block;
-      block.body.block_number = j;
-      block.body.miner        = Address{Address::RawAddress{}};
-      block.nonce             = 0;
+      block.block_number = j;
+      block.miner        = Address{Address::RawAddress{}};
+      block.nonce        = 0;
       block.UpdateDigest();
       block.proof.SetTarget(diff);  // Number of zeroes
 
@@ -110,15 +110,16 @@ TEST(ledger_main_chain_gtest, Test_mining_proof)
 
 TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
   Blocks     blocks;
   DummyMiner miner;
 
   for (std::size_t j = 0; j < 10; ++j)
   {
     Block block;
-    block.body.block_number = j;
-    block.body.miner        = Address{Address::RawAddress{}};
-    block.nonce             = 0;
+    block.block_number = j;
+    block.miner        = Address{Address::RawAddress{}};
+    block.nonce        = 0;
     block.UpdateDigest();
     block.proof.SetTarget(8);  // Number of zeroes
 
@@ -148,7 +149,7 @@ TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
       blockVerified = false;
     }
 
-    EXPECT_EQ(ToHex(i.body.hash), ToHex(block.body.hash));
+    EXPECT_EQ(ToHex(i.hash), ToHex(block.hash));
   }
 
   EXPECT_EQ(blockVerified, true);

@@ -60,6 +60,8 @@ namespace ledger {
 struct Tip
 {
   uint64_t total_weight{0};
+  uint64_t weight{0};
+  uint64_t block_number{0};
 };
 
 enum class BlockStatus
@@ -174,7 +176,9 @@ public:
 
   struct HeaviestTip
   {
+    uint64_t  total_weight{0};
     uint64_t  weight{0};
+    uint64_t  block_number{0};
     BlockHash hash{chain::GENESIS_DIGEST};
 
     bool Update(Block const &block);

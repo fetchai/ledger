@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/distributed_learning/distributed_learning_client.hpp"
-#include "dmlf/distributed_learning/utilities/boston_housing_client_utilities.hpp"
-#include "dmlf/distributed_learning/utilities/utilities.hpp"
+#include "dmlf/collective_learning/client_algorithm.hpp"
+#include "dmlf/collective_learning/utilities/boston_housing_client_utilities.hpp"
+#include "dmlf/collective_learning/utilities/utilities.hpp"
 #include "dmlf/networkers/muddle_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
@@ -34,7 +34,7 @@
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-using namespace fetch::dmlf::distributed_learning;
+using namespace fetch::dmlf::collective_learning;
 
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
@@ -55,9 +55,9 @@ int main(int argc, char **argv)
   auto networker_config = std::string(argv[2]);
   int  instance_number  = std::atoi(argv[3]);
 
-  fetch::json::JSONDocument                                 doc;
-  fetch::dmlf::distributed_learning::ClientParams<DataType> client_params =
-      fetch::dmlf::distributed_learning::utilities::ClientParamsFromJson<TensorType>(
+  fetch::json::JSONDocument                                doc;
+  fetch::dmlf::collective_learning::ClientParams<DataType> client_params =
+      fetch::dmlf::collective_learning::utilities::ClientParamsFromJson<TensorType>(
           std::string(argv[1]), doc);
 
   auto data_file      = doc["data"].As<std::string>();
@@ -82,22 +82,17 @@ int main(int argc, char **argv)
   // Shuffle data
   utilities::Shuffle(data_tensor, label_tensor, seed);
 
-  // Create learning client
-  auto client = fetch::dmlf::distributed_learning::utilities::MakeBostonClient<TensorType>(
-      std::to_string(instance_number), client_params, data_tensor, label_tensor, test_set_ratio,
-      console_mutex_ptr);
-
   // Create networker and assign shuffle algorithm
-
   auto networker =
       std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(networker_config, instance_number);
   networker->Initialize<fetch::dmlf::Update<TensorType>>();
-
   networker->SetShuffleAlgorithm(
       std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));
 
-  // Give client pointer to its networker
-  client->SetNetworker(networker);
+  // Create learning client
+  auto client = fetch::dmlf::collective_learning::utilities::MakeBostonClient<TensorType>(
+      std::to_string(instance_number), client_params, data_tensor, label_tensor, test_set_ratio,
+      networker, console_mutex_ptr);
 
   /**
    * Main loop
@@ -108,7 +103,7 @@ int main(int argc, char **argv)
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
 
     // Start client
-    client->Run();
+    client->RunAlgorithms();
   }
 
   return 0;
