@@ -127,7 +127,7 @@ TYPED_TEST(DNNRegressorModelTest, rmsprop_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(regressor_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
-                                                    DataType{1e-2f}, DataType{0.01f}, 400));
+                                                    DataType{1e-2f}, DataType{0.02f}, 400));
 }
 
 TYPED_TEST(DNNRegressorModelTest, sgd_dnnregressor)
