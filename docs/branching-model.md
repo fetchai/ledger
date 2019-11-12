@@ -14,7 +14,7 @@ The only scenario when it may be currently necessary to push branches directly t
 
 Once the fork has been created, it is expected that the user would create a branch to track each new feature, bugfix, etc,  being made. If any of these tasks are complex, they can be addressed in multiple increments that are individually reviewed and merged. See [Integration (pull requests)](#integration-pull-requests) for more information about merging development branches.
 
-A task is only considered done once all the branches associated with it have been merged into the master branch; this encourages tasks to be well defined so they can be assessed and merged quickly, with the minimum amount of code to be integrated every time. 
+A task is only considered done once all the branches associated with it have been merged into the master branch; this encourages tasks to be well defined so they can be assessed and merged quickly, with the minimum amount of code to be integrated every time.
 
 Long-lived development branches are strongly discouraged but if necessary, its creation must be discussed to try to find alternatives. Long-lived branches tend to strongly diverge from the master branch, making the review and integration complicated and tedious.
 
@@ -24,9 +24,9 @@ To further aid clarity we advise using the following prefixes based on the natur
  * `bugfix`: Fixing a bug in the code
  * `refactor`: Not a change in functionality, but a general improvement to code health
  * `backport`: Porting a fix from the [master branch](#master-branch) to an existing [release branch](#release-branches)
- 
+
 Jira ticket numbers must be present in the branch names in order for the Jira <-> GitHub plugin to link them automatically. But they must not be used as the whole branch name, because they are not descriptive enough out of that context.
- 
+
 **Examples**
 
  * `feature/ldgr-111-transaction-fees` - A branch for the implementation of transaction-based fees
