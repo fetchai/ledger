@@ -300,6 +300,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   auto const     current_state        = storage_unit_.CurrentHash();
   auto const     last_processed_block = execution_manager_.LastProcessedBlock();
   uint64_t const current_dag_epoch    = dag_ ? dag_->CurrentEpoch() : 0;
+  bool const     is_genesis           = current_block_->IsGenesis();
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
   if (extra_debug)
@@ -311,7 +312,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current State: 0x", current_state.ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: LCommit State: 0x", last_committed_state.ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last Block...: 0x", last_processed_block.ToHex());
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: 0x", last_executed_block_.Get().ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: 0x",
+                   last_executed_block_.Apply([](auto const &hash) { return hash; }).ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last DAGEpoch: 0x", current_dag_epoch);
   }
 #endif  // FETCH_LOG_DEBUG_ENABLED
@@ -323,7 +325,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   {
     // start up - we need to work out which of the blocks has been executed previously
 
-    if (chain::ZERO_HASH == previous_hash)
+    if (is_genesis)
     {
       // once we have got back to genesis then we need to start executing from the beginning
       return State::PRE_EXEC_BLOCK_VALIDATION;

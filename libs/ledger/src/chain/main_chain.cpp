@@ -1659,6 +1659,8 @@ constexpr char const *ToString(BlockStatus status)
     return "Duplicate";
   case BlockStatus::INVALID:
     return "Invalid";
+  default:
+    return "Unknown";
   }
 }
 
