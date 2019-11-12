@@ -44,7 +44,8 @@ void SparseAdd(TensorType const &src, TensorType &dst,
 
   // Normal apply
   // if number_of_rows_to_update * sparsity_threshold_ > total_rows
-  if (update_rows.empty() || (update_rows.size() * sparsity_threshold) > (dst.shape().at(1)))
+  if ((update_rows.empty() || (update_rows.size() * sparsity_threshold) > (dst.shape().at(1))) &&
+      (update_rows.size() != src.shape().at(0)))
   {
     dst.InlineAdd(src);
   }
@@ -62,7 +63,7 @@ void SparseAdd(TensorType const &src, TensorType &dst,
     {
 
       // Sparse update full tensor to full tensor
-      if (update_rows.size() != dst.shape().at(1))
+      if (update_rows.size() != src.shape().at(0))
       {
         src_index = update_index;
         dst_index = update_index;
@@ -86,11 +87,12 @@ void SparseAdd(TensorType const &src, TensorType &dst,
 }
 
 template <class TensorType>
-void ToSparse(TensorType const &src, std::unordered_set<fetch::math::SizeType> const &update_rows)
+TensorType ToSparse(TensorType const &                               src,
+                    std::unordered_set<fetch::math::SizeType> const &update_rows)
 {
   using SizeType = fetch::math::SizeType;
 
-  TensorType dst{update_rows.size(), src.shape().at(1)};
+  TensorType dst({src.shape().at(0), update_rows.size()});
 
   memory::Range range(0, std::size_t(dst.height()));
 
