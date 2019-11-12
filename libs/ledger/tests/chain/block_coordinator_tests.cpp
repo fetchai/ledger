@@ -76,8 +76,9 @@ fetch::Digest GENESIS_DIGEST =
 fetch::Digest GENESIS_MERKLE_ROOT =
     fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
-constexpr std::size_t NUM_LANES  = 1;
-constexpr std::size_t NUM_SLICES = 1;
+constexpr uint32_t    LOG2_NUM_LANES = 0;
+constexpr std::size_t NUM_LANES      = 1u << LOG2_NUM_LANES;
+constexpr std::size_t NUM_SLICES     = 1;
 
 class BlockCoordinatorTests : public ::testing::Test
 {
@@ -98,7 +99,7 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
-        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
+        LOG2_NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -997,7 +998,7 @@ protected:
 
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
-        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
+        LOG2_NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
