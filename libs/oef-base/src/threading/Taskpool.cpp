@@ -94,7 +94,7 @@ void Taskpool::run(std::size_t thread_idx)
       Lock lock(mutex_);
       if (!pending_tasks_.empty())
       {
-        mytask       = pending_tasks_.front();
+        mytask        = pending_tasks_.front();
         mytask->pool_ = nullptr;
         pending_tasks_.pop_front();
         Counter("mt-core.tasks.popped-for-run")++;
@@ -366,7 +366,7 @@ Taskpool::TaskP Taskpool::lockless_getNextFutureWork(const Timestamp &current_ti
 
     if (!(r->IsCancelled()))
     {
-      result       = r;
+      result        = r;
       result->pool_ = nullptr;
       Counter("mt-core.tasks.popped-for-run")++;
       Counter("mt-core.future-tasks.popped-for-run")++;
