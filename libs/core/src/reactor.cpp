@@ -174,6 +174,7 @@ void Reactor::Monitor()
     if (work_queue.empty())
     {
       std::this_thread::sleep_for(POLL_INTERVAL);
+
       continue;
     }
 
