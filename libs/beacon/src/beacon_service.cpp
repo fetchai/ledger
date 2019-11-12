@@ -253,13 +253,8 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
-  MilliTimer const timer{"on collect state", 100};
-
-  FETCH_LOG_INFO(LOGGING_NAME, "ON collect entry 0");
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
-  FETCH_LOG_INFO(LOGGING_NAME, "ON collect entry 1");
   FETCH_LOCK(mutex_);
-  FETCH_LOG_INFO(LOGGING_NAME, "ON collect entry 2");
 
   if (OutOfSync())
   {
@@ -359,11 +354,10 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ",
                      qual_promise_identity_.identifier().ToBase64(),
-                     " when generating entropy for block: ", index);
-      FETCH_LOG_INFO(LOGGING_NAME, "Ask for connections.");
-      FETCH_LOG_INFO(LOGGING_NAME, "Note: connections ",
-                     endpoint_.GetDirectlyConnectedPeers().size());
-      FETCH_LOG_INFO(LOGGING_NAME, "asked for connections.");
+                     " when generating entropy for block: ", index, " connections: ", endpoint_.GetDirectlyConnectedPeers().size());
+
+      state_machine_->Delay(std::chrono::milliseconds(100));
+
       return State::COLLECT_SIGNATURES;
     }
   }
@@ -498,7 +492,7 @@ bool BeaconService::AddSignature(SignatureShare share)
   }
   if (ret == BeaconManager::AddResult::NOT_MEMBER)
   {  // And that it was sent by a member of the cabinet
-    FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member. Identity: ",
+    FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member! Identity: ",
                     share.identity.identifier().ToBase64());
 
     for (auto const &i : active_exe_unit_->manager.qual())

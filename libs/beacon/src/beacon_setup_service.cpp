@@ -227,17 +227,9 @@ BeaconSetupService::State BeaconSetupService::OnReset()
  */
 BeaconSetupService::State BeaconSetupService::OnConnectToAll()
 {
-  int  dummy_int = 0;
-  auto deleter   = [&](int *) { FETCH_LOG_INFO(LOGGING_NAME, "Code has exited!"); };
-  std::unique_ptr<int, decltype(deleter)> on_exit(&dummy_int, deleter);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Entering connect to all");
   FETCH_LOCK(mutex_);
-  FETCH_LOG_INFO(LOGGING_NAME, "past mutex of connect to all");
-
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::CONNECT_TO_ALL));
 
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 0");
   std::unordered_set<MuddleAddress> aeon_members;
   for (auto &member : beacon_->aeon.members)
   {
@@ -249,25 +241,19 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
 
     aeon_members.emplace(member);
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 1");
 
   // add the outstanding peers
-  auto const connected_peers = muddle_.GetDirectlyConnectedPeers();
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 2");
+  auto const connected_peers   = muddle_.GetDirectlyConnectedPeers();
   auto const outstanding_peers = aeon_members - connected_peers;
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 3");
 
   shards::Manifest manifest{};
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 4");
   for (auto const &address : outstanding_peers)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "connect to all 5");
     std::unique_ptr<network::Uri> hint{};
 
     // look up the manifest for the desired address
     if (manifest_cache_.QueryManifest(address, manifest))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "connect to all 6");
       // attempt to find the service entry
       auto it = manifest.FindService(ServiceIdentifier::Type::DKG);
       if (it != manifest.end())
@@ -275,43 +261,33 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
         hint = std::make_unique<network::Uri>(it->second.uri());
       }
     }
-    FETCH_LOG_INFO(LOGGING_NAME, "connect to all 7");
 
     if (hint)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "connect to all 8");
       // tell muddle to connect to the address with the specified hint
       muddle_.ConnectTo(address, *hint);
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "connect to all 9");
       // tell muddle to connect to the address using normal service discovery
       muddle_.ConnectTo(address);
     }
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 10");
 
   // request removal of unwanted connections
   auto unwanted_connections = muddle_.GetRequestedPeers() - aeon_members;
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 11");
   muddle_.DisconnectFrom(unwanted_connections);
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 12");
 
   // Update telemetry
   beacon_dkg_all_connections_gauge_->set(muddle_.GetDirectlyConnectedPeers().size());
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 13");
 
   if (timer_to_proceed_.HasExpired())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "connect to all 14");
     SetTimeToProceed(State::WAIT_FOR_READY_CONNECTIONS);
     return State::WAIT_FOR_READY_CONNECTIONS;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 15");
   state_machine_->Delay(std::chrono::milliseconds(500));
-  FETCH_LOG_INFO(LOGGING_NAME, "connect to all 16");
   return State::CONNECT_TO_ALL;
 }
 
