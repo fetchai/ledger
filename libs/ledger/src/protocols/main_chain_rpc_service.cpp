@@ -466,7 +466,7 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - chain is old.");
     state_machine_->Delay(std::chrono::milliseconds{1000});
-    next_state = State::SYNCHRONISING;
+    next_state = State::REQUEST_HEAVIEST_CHAIN;
   }
   else if (chain_.HasMissingBlocks())
   {

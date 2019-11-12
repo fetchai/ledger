@@ -33,7 +33,7 @@ public:
   };
 
   // Construction / Destruction
-  explicit BeaconServiceProtocol(BeaconService &service);
+  BeaconServiceProtocol(BeaconService &service);
 
   BeaconServiceProtocol(BeaconServiceProtocol const &) = delete;
   BeaconServiceProtocol(BeaconServiceProtocol &&)      = delete;
