@@ -445,9 +445,15 @@ def create_wealth(parameters, test_instance):
 
         api = LedgerApi(node_host, node_port)
 
-        # create the entity from the node's private key
+        # create the enrtity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
-        api.sync(api.tokens.wealth(entity, amount))
+        tx = api.tokens.wealth(entity, amount)
+        api.sync(tx)
+        while True:
+            status = api.tx.status(tx).status
+            if status == "Executed":
+                output("Create wealth tx executed")
+                break
 
 
 def create_synergetic_contract(parameters, test_instance):
