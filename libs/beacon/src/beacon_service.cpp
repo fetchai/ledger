@@ -89,6 +89,8 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
         "beacon_state_gauge", "State the beacon is in as integer")}
   , beacon_most_recent_round_seen_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_most_recent_round_seen", "Most recent round the beacon has seen")}
+  , beacon_miner_index_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_miner_index", "The index of the miner in qual")}
 {
   // Attaching beacon ready callback handler
   beacon_setup.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) {
@@ -144,6 +146,8 @@ void BeaconService::ReloadState()
       muddle_.ConnectTo(address_in_qual);
     }
 
+    ret->manager.SetCertificate(certificate_);
+
     aeon_exe_queue_.push_back(ret);
   }
   else
@@ -193,6 +197,8 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
     block_entropy_previous_ =
         std::make_shared<BlockEntropy>(active_exe_unit_->aeon.block_entropy_previous);
     block_entropy_being_created_ = std::make_shared<BlockEntropy>(active_exe_unit_->block_entropy);
+
+    beacon_miner_index_->set(active_exe_unit_->manager.OurIndex());
 
     SaveState();
 

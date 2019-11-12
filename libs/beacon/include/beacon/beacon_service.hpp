@@ -208,6 +208,7 @@ private:
   telemetry::GaugePtr<uint64_t> beacon_entropy_current_round_;
   telemetry::GaugePtr<uint64_t> beacon_state_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_most_recent_round_seen_;
+  telemetry::GaugePtr<uint64_t> beacon_miner_index_;
 };
 
 }  // namespace beacon

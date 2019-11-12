@@ -108,6 +108,11 @@ public:
   bool                           can_verify();
   std::string                    group_public_key() const;
   ///}
+  //
+  uint64_t OurIndex()
+  {
+    return cabinet_index_;
+  }
 
 private:
   template <typename T, typename D>
@@ -175,11 +180,14 @@ public:
   static uint8_t const QUAL              = 4;
   static uint8_t const IDENTITY_TO_INDEX = 5;
   static uint8_t const POLYNOMIAL_DEGREE = 6;
+  static uint8_t const CABINET_SIZE      = 7;
+  static uint8_t const CABINET_INDEX     = 8;
+  //static uint8_t const CERTIFICATE       = 9;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &item)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(8);
 
     map.Append(SECRET_SHARE, item.secret_share_);
     map.Append(PUBLIC_KEY, item.public_key_);
@@ -187,6 +195,9 @@ public:
     map.Append(QUAL, item.qual_);
     map.Append(IDENTITY_TO_INDEX, item.identity_to_index_);
     map.Append(POLYNOMIAL_DEGREE, item.polynomial_degree_);
+    map.Append(CABINET_SIZE, item.cabinet_size_);
+    map.Append(CABINET_INDEX, item.cabinet_index_);
+    //map.Append(CERTIFICATE, item.certificate_);
   }
 
   template <typename MapDeserializer>
@@ -198,6 +209,9 @@ public:
     map.ExpectKeyGetValue(QUAL, item.qual_);
     map.ExpectKeyGetValue(IDENTITY_TO_INDEX, item.identity_to_index_);
     map.ExpectKeyGetValue(POLYNOMIAL_DEGREE, item.polynomial_degree_);
+    map.ExpectKeyGetValue(CABINET_SIZE, item.cabinet_size_);
+    map.ExpectKeyGetValue(CABINET_INDEX, item.cabinet_index_);
+    //map.ExpectKeyGetValue(CERTIFICATE, item.certificate_);
   }
 };
 
