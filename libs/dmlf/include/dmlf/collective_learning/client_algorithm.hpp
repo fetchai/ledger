@@ -358,8 +358,20 @@ void ClientAlgorithm<TensorType>::Test()
       graph_ptr_->SetInput(params_.label_name, test_pair.first);
 
       test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
+
       TensorType test_results = graph_ptr_->Evaluate("FullyConnected_0");
-      test_accuracy_ = DataType{1} - fetch::math::MeanAbsoluteError(test_results, test_pair.first);
+      test_results = fetch::math::ArgMax(test_results);
+      SizeType total_score{0};
+      auto tr = test_results.cbegin();
+      for (auto dp : fetch::math::ArgMax(test_pair.first))
+      {
+        if (dp == *tr)
+        {
+          total_score++;
+        }
+        ++tr;
+      }
+      test_accuracy_ = static_cast<DataType>(total_score) / static_cast<DataType>(test_results.size());
     }
   }
   else
