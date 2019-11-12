@@ -63,13 +63,17 @@ const u_int
     n_tensor_bms = 4,
     n_crypto_bms = 4;
 
-// Size of parameter lists for parameterized benchmarks
+// Benchmark parameters
 const u_int
     n_primitives = 12,
     n_dec_primitives = 4,
+    max_array_len = 16384,
+    n_array_lens = 32,
+    max_str_len = 16384,
     n_str_lens = 10,
-    n_array_lens = 12,
-    n_tensor_sizes = 24;
+    max_tensor_size = 16777216,
+    n_tensor_sizes = 16,
+    n_tensor_dim_sizes = n_tensor_sizes*3;
 
 // Index benchmarks for interpretation by "scripts/benchmark/opcode_timing.py"
 const u_int
@@ -84,9 +88,10 @@ const u_int
     array_begin = math_end,
     array_end = array_begin + n_array_bms * n_array_lens,
     tensor_begin = array_end,
-    tensor_end = tensor_begin + n_tensor_bms * n_tensor_sizes,
+    tensor_end = tensor_begin + n_tensor_bms * n_tensor_dim_sizes,
     crypto_begin = tensor_end,
     crypto_end = crypto_begin + n_crypto_bms - 1 + n_str_lens;
+
 
 // Main benchmark function - compiles and runs Etch code snippets and saves opcodes to file
 void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_name, std::string const &etch_code,
@@ -102,7 +107,7 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
   Compiler compiler(&module);
   IR ir;
 
-  // compile the source code
+  // Compile the source code
   std::vector<std::string> errors;
   fetch::vm::SourceFiles files = {{"default.etch", etch_code}};
   if (!compiler.Compile(files, "default_ir", ir, errors)) {
@@ -110,7 +115,7 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
     return;
   }
 
-  // generate an IR
+  // Generate an IR
   Executable executable;
   VM vm{&module};
   if (!vm.GenerateExecutable(ir, "default_exe", executable, errors)) {
@@ -118,7 +123,7 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
     return;
   }
 
-  // benchmark iterations
+  // Benchmark iterations
   std::string error{};
   Variant output{};
   for (auto _ : state) {
@@ -127,7 +132,7 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
 
   auto function = executable.FindFunction("main");
 
-  // write opcode lists to file
+  // Write opcode lists to file
   std::ofstream ofs("opcode_lists.csv", std::ios::app);
   ofs << bm_ind << "," << benchmark_name << "," << baseline_name << ",";
   for (auto &it : function->instructions) {
@@ -211,38 +216,57 @@ std::string Sha256Update(u_int str_len) {
   return "s.update(\"" + str + "\");\n";
 }
 
+/* Create a linear spaced range vector from max/n_elem to max of primitive type T
+   * @max is the range maximum and last element in the vector
+   *
+   * @n_elem is the number of elements to include in the vector
+   *
+   * @return the range vector
+   */
+template<typename T>
+std::vector<T> LinearRangeVector(T max, u_int n_elem) {
+  float current_val = 0.0f;
+  auto const step = static_cast<float>(max) / static_cast<float>(n_elem);
+  std::vector<T> v(n_elem);
+  for (auto it = v.begin(); it != v.end(); ++it) {
+    current_val += step;
+    *it = static_cast<T>(current_val);
+  }
+  return v;
+}
+
 void BasicBenchmarks(benchmark::State &state) {
 
   // Functions, variable declarations, and constants
   static std::string
       FUN_CALL = "user();\n",
-      BRK("break;\n"),
-      CONT("continue;\n"),
-      ONE("1"),
-      TRUE("true"),
+      BRK = "break;\n",
+      CONT = "continue;\n",
+      ONE = "1",
+      TRUE = "true",
       FALSE = "false",
-      STRING("String"),
-      VAL_STRING("\"x\""),
+      STRING = "String",
+      VAL_STRING = "\"x\"",
       EMPTY;
 
   // Boolean and type-neutral benchmark codes
   static std::pair<std::string, std::string>
-      RETURN("Return", FunMain("")),
-      PUSH_NULL("PushNull", FunMain("null;\n")),
-      PUSH_FALSE("PushFalse", FunMain(FALSE + ";\n")),
-      PUSH_TRUE("PushTrue", FunMain(TRUE + ";\n")),
-      JUMP_IF_FALSE("JumpIfFalse", FunMain(IfThen(FALSE, EMPTY))),
-      JUMP("Jump", FunMain(IfThenElse(FALSE, EMPTY, EMPTY))),
-      NOT("Not", FunMain("!true;\n")),
-      AND("And", FunMain("true && true;\n")),
-      OR("Or", FunMain("false || true ;\n")),
-      FOR_LOOP("ForLoop", FunMain(For(EMPTY, ONE))),
-      BREAK("Break", FunMain(For(BRK, ONE))),
-      CONTINUE("Continue", FunMain(For(CONT, ONE))),
-      DESTRUCT_BASE("DestructBase", FunMain(VarDec(STRING) + For(EMPTY, ONE))),
-      DESTRUCT("Destruct", FunMain(For(VarDec(STRING), ONE))),
-      FUNC("Function", FunMain(FUN_CALL) + FunUser("")),
-      VAR_DEC_STRING("VariableDeclareStr", FunMain(VarDec(STRING)));
+      RETURN = std::make_pair("Return", FunMain("")),
+      PUSH_NULL = std::make_pair("PushNull", FunMain("null;\n")),
+      PUSH_FALSE = std::make_pair("PushFalse", FunMain(FALSE + ";\n")),
+      PUSH_TRUE = std::make_pair("PushTrue", FunMain(TRUE + ";\n")),
+      JUMP_IF_FALSE = std::make_pair("JumpIfFalse", FunMain(IfThen(FALSE, EMPTY))),
+      JUMP = std::make_pair("Jump", FunMain(IfThenElse(FALSE, EMPTY, EMPTY))),
+      NOT = std::make_pair("Not", FunMain("!true;\n")),
+      AND = std::make_pair("And", FunMain("true && true;\n")),
+      OR = std::make_pair("Or", FunMain("false || true ;\n")),
+      FOR_LOOP = std::make_pair("ForLoop", FunMain(For(EMPTY, ONE))),
+      BREAK = std::make_pair("Break", FunMain(For(BRK, ONE))),
+      CONTINUE = std::make_pair("Continue", FunMain(For(CONT, ONE))),
+      DESTRUCT_BASE = std::make_pair("DestructBase", FunMain(VarDec(STRING) + For(EMPTY, ONE))),
+      DESTRUCT = std::make_pair("Destruct", FunMain(For(VarDec(STRING), ONE))),
+      FUNC = std::make_pair("Function", FunMain(FUN_CALL) + FunUser("")),
+      VAR_DEC_STRING = std::make_pair("VariableDeclareStr", FunMain(VarDec(STRING)));
 
   std::unordered_map<std::string, std::string>
       baselineMap({
@@ -280,38 +304,39 @@ void ObjectBenchmarks(benchmark::State &state) {
 
   auto bm_ind = static_cast<u_int>(state.range(0));
 
+  // Generate the string lengths from benchmark parameters
+  std::vector<u_int> str_len = LinearRangeVector<u_int>(max_str_len, n_str_lens);
+
   // Get the indices of the string length and etch code corresponding to the benchmark range variable
   const u_int len_ind = (bm_ind - object_begin) / n_object_bms;
   const u_int etch_ind = (bm_ind - object_begin) % n_object_bms;
-
-  std::vector<u_int> const str_len{32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};
 
   std::string const str("\"" + std::string(str_len[len_ind], '0') + "\"");
 
   std::string const length(std::to_string(str_len[len_ind]));
 
   static std::string const
-      STRING("String"),
-      PUSH("x;\n"),
-      ADD("x + x;\n"),
-      EQ("x == x;\n"),
-      NEQ("x != x;\n"),
-      LT("x < x;\n"),
-      GT("x > x;\n"),
-      LTE("x <= x;\n"),
-      GTE("x >= x;\n");
+      STRING = "String",
+      PUSH = "x;\n",
+      ADD = "x + x;\n",
+      EQ = "x == x;\n",
+      NEQ = "x != x;\n",
+      LT = "x < x;\n",
+      GT = "x > x;\n",
+      LTE = "x <= x;\n",
+      GTE = "x >= x;\n";
 
   const std::pair<std::string, std::string>
-      PUSH_STRING("PushString_" + length, FunMain(str + ";\n")),
-      VAR_DEC_ASS_STRING("VariableDeclareAssignString_" + length, FunMain(VarDecAss(STRING, str))),
-      PUSH_VAR_STRING("PushVariableString_" + length, FunMain(VarDecAss(STRING, str) + PUSH)),
-      OBJ_EQ("ObjectEqualString_" + length, FunMain(VarDecAss(STRING, str) + EQ)),
-      OBJ_NEQ("ObjectNotEqualString_" + length, FunMain(VarDecAss(STRING, str) + NEQ)),
-      OBJ_LT("ObjectLessThanString_" + length, FunMain(VarDecAss(STRING, str) + LT)),
-      OBJ_GT("ObjectGreaterThanString_" + length, FunMain(VarDecAss(STRING, str) + GT)),
-      OBJ_LTE("ObjectLessThanOrEqualString_" + length, FunMain(VarDecAss(STRING, str) + LTE)),
-      OBJ_GTE("ObjectGreaterThanOrEqualString_" + length, FunMain(VarDecAss(STRING, str) + GTE)),
-      OBJ_ADD("ObjectAddString_" + length, FunMain(VarDecAss(STRING, str) + ADD));
+      PUSH_STRING = std::make_pair("PushString_" + length, FunMain(str + ";\n")),
+      VAR_DEC_ASS_STRING = std::make_pair("VariableDeclareAssignString_" + length, FunMain(VarDecAss(STRING, str))),
+      PUSH_VAR_STRING = std::make_pair("PushVariableString_" + length, FunMain(VarDecAss(STRING, str) + PUSH)),
+      OBJ_EQ = std::make_pair("ObjectEqualString_" + length, FunMain(VarDecAss(STRING, str) + EQ)),
+      OBJ_NEQ = std::make_pair("ObjectNotEqualString_" + length, FunMain(VarDecAss(STRING, str) + NEQ)),
+      OBJ_LT = std::make_pair("ObjectLessThanString_" + length, FunMain(VarDecAss(STRING, str) + LT)),
+      OBJ_GT = std::make_pair("ObjectGreaterThanString_" + length, FunMain(VarDecAss(STRING, str) + GT)),
+      OBJ_LTE = std::make_pair("ObjectLessThanOrEqualString_" + length, FunMain(VarDecAss(STRING, str) + LTE)),
+      OBJ_GTE = std::make_pair("ObjectGreaterThanOrEqualString_" + length, FunMain(VarDecAss(STRING, str) + GTE)),
+      OBJ_ADD = std::make_pair("ObjectAddString_" + length, FunMain(VarDecAss(STRING, str) + ADD));
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
@@ -346,7 +371,7 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
 
   auto bm_ind = static_cast<u_int>(state.range(0));
 
-  // Get the index of the primitive corresponding to the benchmark range variable
+  // Get the index of the primitive corresponding to the benchmark range variable and the relevant etch code
   const u_int prim_ind = (bm_ind - prim_begin) / n_prim_bms;
   const u_int etch_ind = (bm_ind - prim_begin) % n_prim_bms;
 
@@ -355,29 +380,29 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
 
   // Operations
   static std::string
-      PUSH("x;\n"),
-      POP("x = x;\n"),
-      ADD("x + x;\n"),
-      SUB("x - x;\n"),
-      MUL("x * x;\n"),
-      DIV("x / x;\n"),
-      MOD("x % x;\n"),
-      NEG("-x;\n"),
-      EQ("x == x;\n"),
-      NEQ("x != x;\n"),
-      LT("x < x;\n"),
-      GT("x > x;\n"),
-      LTE("x <= x;\n"),
-      GTE("x >= x;\n"),
-      PRE_INC("++x;\n"),
-      PRE_DEC("--x;\n"),
-      POST_INC("x++;\n"),
-      POST_DEC("x--;\n"),
-      INP_ADD("x += x;\n"),
-      INP_SUB("x -= x;\n"),
-      INP_MUL("x *= x;\n"),
-      INP_DIV("x /= x;\n"),
-      INP_MOD("x %= x;\n");
+      PUSH = "x;\n",
+      POP = "x = x;\n",
+      ADD = "x + x;\n",
+      SUB = "x - x;\n",
+      MUL = "x * x;\n",
+      DIV = "x / x;\n",
+      MOD = "x % x;\n",
+      NEG = "-x;\n",
+      EQ = "x == x;\n",
+      NEQ = "x != x;\n",
+      LT = "x < x;\n",
+      GT = "x > x;\n",
+      LTE = "x <= x;\n",
+      GTE = "x >= x;\n",
+      PRE_INC = "++x;\n",
+      PRE_DEC = "--x;\n",
+      POST_INC = "x++;\n",
+      POST_DEC = "x--;\n",
+      INP_ADD = "x += x;\n",
+      INP_SUB = "x -= x;\n",
+      INP_MUL = "x *= x;\n",
+      INP_DIV = "x /= x;\n",
+      INP_MOD = "x %= x;\n";
 
   const std::pair<std::string, std::string>
       RET_VAL = std::make_pair("PrimReturnValue_" + prim, FunMainRet("return " + val + ";\n", prim)),
@@ -452,41 +477,41 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
 
 void MathBenchmarks(benchmark::State &state) {
 
-  static std::vector<std::string> primitives{"Float32", "Float64", "Fixed32", "Fixed64"};
-
-  static std::vector<std::string> values{"0.5f", "0.5", "0.5fp32", "0.5fp64"};
-
-  static std::vector<std::string> alt_values{"1.5f", "1.5", "1.5fp32", "1.5fp64"};
+  static std::vector<std::string> 
+      primitives{"Float32", "Float64", "Fixed32", "Fixed64"},
+      values{"0.5f", "0.5", "0.5fp32", "0.5fp64"},
+      alt_values{"1.5f", "1.5", "1.5fp32", "1.5fp64"};
 
   auto bm_ind = static_cast<u_int>(state.range(0));
 
-  // Get the index of the primitive corresponding to the benchmark range variable
+  // Get the index of the math function corresponding to the benchmark range variable and the relevant etch code
   const u_int prim_ind = (bm_ind - math_begin) / n_math_bms;
   const u_int etch_ind = (bm_ind - math_begin) % n_math_bms;
 
-  std::string const prim(primitives[prim_ind]);
-  std::string const val(values[prim_ind]);
-  std::string const alt_val(alt_values[prim_ind]);
+  const std::string 
+      prim = primitives[prim_ind],
+      val = values[prim_ind],
+      alt_val = alt_values[prim_ind];
 
   // Operations
   static std::string
-      PUSH("x;\n"),
-      ABS("abs(x);\n"),
-      SIN("sin(x);\n"),
-      COS("cos(x);\n"),
-      TAN("tan(x);\n"),
-      ASIN("asin(x);\n"),
-      ACOS("acos(x);\n"),
-      ATAN("atan(x);\n"),
-      SINH("sinh(x);\n"),
-      COSH("cosh(x);\n"),
-      TANH("tanh(x);\n"),
-      ASINH("asinh(x);\n"),
-      ACOSH("acosh(x);\n"),
-      ATANH("atanh(x);\n"),
-      SQRT("sqrt(x);\n"),
-      EXP("exp(x);\n"),
-      POW("pow(x,x);\n");
+      PUSH = "x;\n",
+      ABS = "abs(x);\n",
+      SIN = "sin(x);\n",
+      COS = "cos(x);\n",
+      TAN = "tan(x);\n",
+      ASIN = "asin(x);\n",
+      ACOS = "acos(x);\n",
+      ATAN = "atan(x);\n",
+      SINH = "sinh(x);\n",
+      COSH = "cosh(x);\n",
+      TANH = "tanh(x);\n",
+      ASINH = "asinh(x);\n",
+      ACOSH = "acosh(x);\n",
+      ATANH = "atanh(x);\n",
+      SQRT = "sqrt(x);\n",
+      EXP = "exp(x);\n",
+      POW = "pow(x,x);\n";
 
   std::pair<std::string, std::string>
       PRIM_ABS = std::make_pair("MathAbs_" + prim, FunMain(VarDecAss(prim, val) + ABS)),
@@ -541,25 +566,27 @@ void ArrayBenchmarks(benchmark::State &state) {
 
   auto bm_ind = static_cast<u_int>(state.range(0));
 
-  std::vector<u_int> const array_len{32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32758, 65536, 131072, 262144};
+  // Generate array lengths from benchmark parameters
+  std::vector<u_int> array_len = LinearRangeVector<u_int>(max_array_len, n_array_lens);
 
+  // Get the index of the array length corresponding to the benchmark range variable and the relevant etch code
   const u_int len_ind = (bm_ind - array_begin) / n_array_bms;
   const u_int etch_ind = (bm_ind - array_begin) % n_array_bms;
 
-  std::string const prim("Int32");
-  std::string const arr1("x");
-  std::string const arr2("y");
-  std::string const ind(std::to_string(array_len[len_ind] - 1));
-  std::string const val("1");
-
-  std::string const length(std::to_string(array_len[len_ind]));
-
+  const std::string 
+      prim = "Int32",
+      arr1 = "x",
+      arr2 = "y",
+      val = "1",
+      ind = std::to_string(array_len[len_ind] - 1),
+      length = std::to_string(array_len[len_ind]);
+  
   // Operations
   static std::string
-      COUNT("x.count();\n"),
-      REV("x.reverse();\n"),
-      POPBACK("x.popBack();\n"),
-      POPFRONT("x.popFront();\n");
+      COUNT = "x.count(;\n",
+      REV = "x.reverse(;\n",
+      POPBACK = "x.popBack(;\n",
+      POPFRONT = "x.popFront(;\n";
 
   const std::pair<std::string, std::string>
       ARRAY_DEC = std::make_pair("DeclareArray_" + length, FunMain(ArrayDec(arr1, prim, length))),
@@ -600,33 +627,43 @@ void TensorBenchmarks(benchmark::State &state) {
 
   auto bm_ind = static_cast<u_int>(state.range(0));
 
-  std::vector<u_int> const tensor_dims{2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4};
-  std::vector<u_int> const tensor_sizes{1, 64, 256, 729, 1024, 2048, 3072, 4096, 1, 16, 48, 81, 128, 180, 216, 256, 1, 8, 16, 27, 36, 45, 54, 64};
+  const u_int
+      dim_size_ind = (bm_ind - tensor_begin) / n_tensor_bms, // index of all dim-size variations for a given benchmark
+      dim (dim_size_ind / n_tensor_sizes + 2), // tensor dimension
+      dim_begin ((dim - 2)*n_tensor_sizes), // index of first occurence of this tensor dimension
+      size_ind (dim_size_ind - dim_begin), // index of tensor size vector
+      etch_ind = (bm_ind - tensor_begin) % n_tensor_bms; // index of etch code snippet (benchmark type)
 
-  const u_int size_ind = (bm_ind - tensor_begin) / n_tensor_bms;
-  const u_int etch_ind = (bm_ind - tensor_begin) % n_tensor_bms;
+  // Generate tensor sizes from benchmark parameters
+  const auto max_tensor_side = static_cast<u_int>(std::pow(static_cast<float>(max_tensor_size),1.0f / static_cast<float>(dim)));
+  std::vector<u_int> tensor_sides = LinearRangeVector<u_int>(max_tensor_side, n_tensor_sizes);
 
-  std::string const prim("UInt64");
-  std::string const tensor_shape("shape");
-  std::string const tensor("tensor");
-  std::string const val("1");
+  std::string const
+      prim = "UInt64",
+      tensor_shape = "shape",
+      tensor = "tensor",
+      val = "1";
 
-  std::string const size(std::to_string(tensor_sizes[size_ind]));
-  std::string const size_u64(size + "u64");
-  const u_int dim (tensor_dims[size_ind]);
-  auto const dim_str (std::to_string(dim));
+  std::string const
+      size = std::to_string(tensor_sides[size_ind]),
+      size_u64 = size + "u64",
+      dim_str = std::to_string(dim);
 
   // Operations
   static std::string
-      SIZE(tensor + ".size();\n"),
-      FILL(tensor + ".fill(1.0fp64);\n"),
-      FILL_RAND(tensor + ".fillRandom();\n");
+      SIZE = tensor + ".size();\n",
+      FILL = tensor + ".fill(1.0fp64);\n",
+      FILL_RAND = tensor + ".fillRandom();\n";
 
   const std::pair<std::string, std::string>
-      TENSOR_DEC = std::make_pair("DeclareTensor_" + dim_str + "-" + size, FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim))),
-      TENSOR_SIZE = std::make_pair("SizeTensor_" + dim_str + "-" + size, FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + SIZE)),
-      TENSOR_FILL = std::make_pair("FillTensor_" + dim_str + "-" + size, FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + FILL)),
-      TENSOR_FILL_RAND = std::make_pair("FillRandTensor_" + dim_str + "-" + size, FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + FILL_RAND));
+      TENSOR_DEC = std::make_pair("DeclareTensor_" + dim_str + "-" + size,
+          FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim))),
+      TENSOR_SIZE = std::make_pair("SizeTensor_" + dim_str + "-" + size,
+          FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + SIZE)),
+      TENSOR_FILL = std::make_pair("FillTensor_" + dim_str + "-" + size,
+          FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + FILL)),
+      TENSOR_FILL_RAND = std::make_pair("FillRandTensor_" + dim_str + "-" + size,
+          FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + FILL_RAND));
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
@@ -648,7 +685,8 @@ void CryptoBenchmarks(benchmark::State &state) {
 
   auto bm_ind = static_cast<u_int>(state.range(0));
 
-  std::vector<u_int> const str_len{32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};
+  // Generate the string lengths from benchmark parameters
+  std::vector<u_int> str_len = LinearRangeVector<u_int>(max_str_len, n_str_lens);
 
   const u_int etch_ind = std::min<u_int>(bm_ind - crypto_begin, 3);
   const u_int len_ind = (bm_ind - (crypto_begin + 3)) % n_str_lens;
