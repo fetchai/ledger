@@ -66,7 +66,6 @@ using fetch::muddle::MuddleInterface;
 using fetch::network::AtomicCounterName;
 using fetch::network::AtomicInFlightCounter;
 using fetch::network::NetworkManager;
-using fetch::ledger::StorageInterface;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -139,7 +138,14 @@ std::shared_ptr<ledger::DAGInterface> GenerateDAG(
     std::string const &db_name, bool load_on_start,
     constellation::Constellation::CertificatePtr certificate)
 {
-  return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
+  if (cfg_.features.IsEnabled("synergetic"))
+  {
+    return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
+  }
+  else
+  {
+    return {};
+  }
 }
 
 ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
@@ -195,7 +201,7 @@ StakeManagerPtr CreateStakeManager(constellation::Constellation::Config const &c
 
   if (cfg.proof_of_stake)
   {
-    mgr = std::make_shared<ledger::StakeManager>();
+    mgr = std::make_shared<ledger::StakeManager>(cfg.max_cabinet_size);
   }
 
   return mgr;
@@ -203,15 +209,14 @@ StakeManagerPtr CreateStakeManager(constellation::Constellation::Config const &c
 
 ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, StakeManagerPtr stake,
                              BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,
-                             MainChain const &chain, StorageInterface &storage,
-                             Identity const &identity)
+                             MainChain const &chain, Identity const &identity)
 {
   ConsensusPtr consensus{};
 
   if (stake)
   {
-    consensus = std::make_shared<ledger::Consensus>(stake, beacon_setup, beacon, chain, storage,
-                                                    identity, cfg.aeon_period, cfg.max_cabinet_size,
+    consensus = std::make_shared<ledger::Consensus>(stake, beacon_setup, beacon, chain, identity,
+                                                    cfg.aeon_period, cfg.max_cabinet_size,
                                                     cfg.block_interval_ms);
   }
 
@@ -275,7 +280,7 @@ BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const 
  * @param interface_address The current interface address TODO(EJF): This should be more integrated
  * @param db_prefix The database file(s) prefix
  */
-Constellation::Constellation(CertificatePtr const &certificate, Config config)
+Constellation::Constellation(CertificatePtr certificate, Config config)
   : active_{true}
   , cfg_{std::move(config)}
   , p2p_port_(LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::CORE))
@@ -302,11 +307,14 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   , beacon_setup_{CreateBeaconSetupService(cfg_, *beacon_network_, *shard_management_, certificate)}
   , beacon_{CreateBeaconService(cfg_, *beacon_network_, certificate, beacon_setup_)}
   , stake_{CreateStakeManager(cfg_)}
-  , consensus_{CreateConsensus(cfg_, stake_, beacon_setup_, beacon_, chain_, *storage_,
+  , consensus_{CreateConsensus(cfg_, stake_, beacon_setup_, beacon_, chain_,
                                certificate->identity())}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
-        [this] { return std::make_shared<Executor>(storage_); }, tx_status_cache_)}
+        [this] {
+          return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
+        },
+        tx_status_cache_)}
   , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
@@ -317,7 +325,7 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
                        block_packer_,
                        *this,
                        certificate,
-                       cfg_.log2_num_lanes,
+                       cfg_.num_lanes(),
                        cfg_.num_slices,
                        cfg_.block_difficulty,
                        consensus_,
@@ -367,11 +375,13 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   }
 
   // Enable experimental features
-  assert(dag_);
-  dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
-  reactor_.Attach(dag_service_->GetWeakRunnable());
+  if (cfg_.features.IsEnabled("synergetic") && dag_)
+  {
+    dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
+    reactor_.Attach(dag_service_->GetWeakRunnable());
+  }
 
-  if (cfg_.features.IsEnabled("synergetic"))
+  if (cfg_.features.IsEnabled("synergetic") && dag_)
   {
     auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
     if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
@@ -442,11 +452,9 @@ void Constellation::DumpOpenAPI(std::ostream &stream)
  *
  * @param initial_peers The peers that should be initially connected to
  */
-bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor)
+void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor)
 {
   using Peers = muddle::MuddleInterface::Peers;
-
-  bool startup_success{true};
 
   //---------------------------------------------------------------
   // Step 1. Start all the components
@@ -481,7 +489,7 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   if (!WaitForLaneServersToStart())
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to start lane server instances");
-    return false;
+    return;
   }
   FETCH_LOG_INFO(LOGGING_NAME, "Starting shard services...complete");
 
@@ -517,6 +525,18 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
     }
   }
 
+  // beacon network
+  if (beacon_network_)
+  {
+    uint16_t const beacon_bind_port = LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::DKG);
+    uint16_t const beacon_ext_port  = LookupRemotePort(cfg_.manifest, ServiceIdentifier::Type::DKG);
+
+    muddle::MuddleInterface::PortMapping const beacon_port_mapping{
+        {beacon_bind_port, beacon_ext_port}};
+
+    beacon_network_->Start({}, beacon_port_mapping);
+  }
+
   // BEFORE the block coordinator starts its state set up special genesis
   if (cfg_.proof_of_stake || cfg_.load_genesis_file)
   {
@@ -527,56 +547,32 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
 
     if (cfg_.genesis_file_location.empty())
     {
-      startup_success &= creator.LoadFile(GENESIS_FILENAME);
+      creator.LoadFile(GENESIS_FILENAME);
     }
     else
     {
-      startup_success &= creator.LoadFile(cfg_.genesis_file_location);
+      creator.LoadFile(cfg_.genesis_file_location);
     }
 
-    if (!startup_success)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to restore state from genesis file");
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
-    }
+    FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
   }
 
-  if (startup_success)
-  {
-    // beacon network
-    if (beacon_network_)
-    {
-      uint16_t const beacon_bind_port =
-          LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::DKG);
-      uint16_t const beacon_ext_port =
-          LookupRemotePort(cfg_.manifest, ServiceIdentifier::Type::DKG);
+  // reactor important to run the block/chain state machine
+  reactor_.Start();
 
-      muddle::MuddleInterface::PortMapping const beacon_port_mapping{
-          {beacon_bind_port, beacon_ext_port}};
+  /// BLOCK EXECUTION & MINING
 
-      beacon_network_->Start({}, beacon_port_mapping);
-    }
+  execution_manager_->Start();
+  tx_processor_.Start();
 
-    // reactor important to run the block/chain state machine
-    reactor_.Start();
+  /// INPUT INTERFACES
 
-    /// BLOCK EXECUTION & MINING
+  // Finally start the HTTP server
+  http_.Start(http_port_);
 
-    execution_manager_->Start();
-    tx_processor_.Start();
-
-    /// INPUT INTERFACES
-
-    // Finally start the HTTP server
-    http_.Start(http_port_);
-
-    // The block coordinator needs to access correctly started lanes to recover state in the case of
-    // a crash.
-    reactor_.Attach(block_coordinator_.GetWeakRunnable());
-  }
+  // The block coordinator needs to access correctly started lanes to recover state in the case of
+  // a crash.
+  reactor_.Attach(block_coordinator_.GetWeakRunnable());
 
   //---------------------------------------------------------------
   // Step 2. Main monitor loop
@@ -584,7 +580,7 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   bool start_up_in_progress{true};
 
   // monitor loop
-  while (startup_success && active_)
+  while (active_)
   {
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
@@ -641,8 +637,6 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   http_open_api_module_->Reset(nullptr);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
-
-  return startup_success;
 }
 
 void Constellation::OnBlock(ledger::Block const &block)
