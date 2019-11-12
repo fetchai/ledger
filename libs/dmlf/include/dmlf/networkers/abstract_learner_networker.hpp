@@ -93,6 +93,44 @@ public:
 
   Bytes GetUpdateAsBytes(const std::string &key);
 
+  class ProcessableUpdate
+  {
+  public:
+    ProcessableUpdate() = default;
+    virtual ~ProcessableUpdate() = default;
+    ProcessableUpdate(ProcessableUpdate const &other) = delete;
+    ProcessableUpdate &operator=(ProcessableUpdate const &other)  = delete;
+    bool               operator==(ProcessableUpdate const &other) = delete;
+    bool               operator<(ProcessableUpdate const &other)  = delete;
+
+    Bytes data_;
+    std::string sender_;
+    std::map<std::string, std::string> meta_;
+    std::string key_;
+  };
+
+  using Score            = double;
+  using UpdateProcessor  = std::function<Score(ProcessableUpdate const &)>;
+
+  virtual void ProcessUpdates(UpdateProcessor proc)
+  {
+    FETCH_LOCK(queue_map_m_);
+    std::vector<std::string> keys;
+    for(auto const &iter : queue_map_)
+    {
+      auto &key = iter.first;
+      auto &store = iter.second;
+      while(store -> size() > 0)
+      {
+        auto bytes = store -> PopAsBytes();
+        ProcessableUpdate pu;
+        pu.data_ = bytes;
+        pu.key_ = key;
+        proc(pu);
+      }
+    }
+  }
+
   template <typename T>
   std::shared_ptr<T> GetUpdateType()
   {
