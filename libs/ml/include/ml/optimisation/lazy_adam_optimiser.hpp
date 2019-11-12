@@ -20,7 +20,7 @@
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/core/graph.hpp"
-#include "ml/optimisation/optimiser.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 
 #include <memory>
 #include <string>
@@ -39,10 +39,11 @@ namespace optimisers {
  * Compared with the original Adam optimizer, it can provide large improvements in model training
  * throughput for some applications. However, it provides slightly different semantics than the
  * original Adam algorithm, and may lead to different empirical results.
+ * ref: https://www.tensorflow.org/addons/tutorials/optimizers_lazyadam
  * @tparam T TensorType
  */
 template <class T>
-class LazyAdamOptimiser : public Optimiser<T>
+class LazyAdamOptimiser : public AdamOptimiser<T>
 {
 public:
   using TensorType = T;
@@ -58,7 +59,7 @@ public:
                     DataType const &learning_rate      = static_cast<DataType>(0.001f),
                     DataType const &beta1              = static_cast<DataType>(0.9f),
                     DataType const &beta2              = static_cast<DataType>(0.999f),
-                    SizeType        sparsity_threshold = 4,
+                    SizeType        sparsity_threshold = 2,
                     DataType const &epsilon            = static_cast<DataType>(1e-4f));
 
   LazyAdamOptimiser(std::shared_ptr<Graph<T>>       graph,
@@ -67,7 +68,7 @@ public:
                     fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
                     DataType const &beta1              = static_cast<DataType>(0.9f),
                     DataType const &beta2              = static_cast<DataType>(0.999f),
-                    SizeType        sparsity_threshold = 4,
+                    SizeType        sparsity_threshold = 2,
                     DataType const &epsilon            = static_cast<DataType>(1e-4f));
 
   ~LazyAdamOptimiser() override = default;
@@ -79,44 +80,18 @@ public:
 
   OptimiserType OptimiserCode() override
   {
-    return OptimiserType::ADAM;
+    return OptimiserType::LAZY_ADAM;
   }
 
 private:
-  std::vector<TensorType> cache_;
-  std::vector<TensorType> momentum_;
-  std::vector<TensorType> mt_;
-  std::vector<TensorType> vt_;
+  // ApplyGradientSparse if number_of_rows_to_update * sparsity_threshold_ <= total_rows
+  // Current value was empirically derived from ml/benchmarks/embeddings benchmark results
+  SizeType sparsity_threshold_ = 2;
 
-  DataType beta1_;
-  DataType beta2_;
-  DataType beta1_t_;
-  DataType beta2_t_;
-
-  // ApplyGradientSparse if number_of_rows_to_update*sparsity_threshold_ <= total_rows
-  SizeType sparsity_threshold_ = 4;
-
-  DataType epsilon_;
-
-  void ResetCache();
-  void Init();
   void ApplyLogic(SizeType batch_size, TensorType &gradient_tensor, TensorType &momentum_tensor,
                   TensorType &mt_tensor, TensorType &v_tensor, TensorType &cache_tensor,
                   TensorType const &refs_tensor);
 };
-
-template <class T>
-void LazyAdamOptimiser<T>::Init()
-{
-  for (auto &train : this->graph_trainables_)
-  {
-    this->cache_.emplace_back(TensorType(train->GetWeights().shape()));
-    this->momentum_.emplace_back(TensorType(train->GetWeights().shape()));
-    this->mt_.emplace_back(TensorType(train->GetWeights().shape()));
-    this->vt_.emplace_back(TensorType(train->GetWeights().shape()));
-  }
-  ResetCache();
-}
 
 template <class T>
 LazyAdamOptimiser<T>::LazyAdamOptimiser(std::shared_ptr<Graph<T>>       graph,
@@ -127,16 +102,10 @@ LazyAdamOptimiser<T>::LazyAdamOptimiser(std::shared_ptr<Graph<T>>       graph,
 
                                         DataType const &beta2, SizeType sparsity_threshold,
                                         DataType const &epsilon)
-  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate)
-  , beta1_(beta1)
-  , beta2_(beta2)
-  , beta1_t_(beta1)
-  , beta2_t_(beta2)
+  : AdamOptimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate,
+                     beta1, beta2, epsilon)
   , sparsity_threshold_(sparsity_threshold)
-  , epsilon_(epsilon)
-{
-  Init();
-}
+{}
 
 template <class T>
 LazyAdamOptimiser<T>::LazyAdamOptimiser(
@@ -145,19 +114,25 @@ LazyAdamOptimiser<T>::LazyAdamOptimiser(
     fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
     DataType const &beta1, DataType const &beta2, SizeType sparsity_threshold,
     DataType const &epsilon)
-  : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
-  , beta1_(beta1)
-  , beta2_(beta2)
-  , beta1_t_(beta1)
-  , beta2_t_(beta2)
+  : AdamOptimiser<T>(graph, input_node_names, label_node_name, output_node_name,
+                     learning_rate_param, beta1, beta2, epsilon)
   , sparsity_threshold_(sparsity_threshold)
-  , epsilon_(epsilon)
-{
-  Init();
-}
+{}
 
 // private
 
+/**
+ * ApplyLogic does optimiser step
+ * i. e. Applies momentum and exponential moving average to gradient tensor
+ * @tparam T
+ * @param batch_size
+ * @param gradient_tensor
+ * @param momentum_tensor
+ * @param mt_tensor
+ * @param v_tensor
+ * @param cache_tensor
+ * @param refs_tensor
+ */
 template <class T>
 void LazyAdamOptimiser<T>::ApplyLogic(SizeType batch_size, TensorType &gradient_tensor,
                                       TensorType &momentum_tensor, TensorType &mt_tensor,
@@ -166,29 +141,30 @@ void LazyAdamOptimiser<T>::ApplyLogic(SizeType batch_size, TensorType &gradient_
 {
 
   // cache[i] = (beta1_t_ * cache[i]) + ((1.0 - beta1_t_) * (input_gradients[i]/batch_size));
-  fetch::math::Multiply(refs_tensor,
-                        (static_cast<DataType>(1.0) - beta1_t_) / static_cast<DataType>(batch_size),
-                        gradient_tensor);
-  fetch::math::Multiply(cache_tensor, beta1_t_, cache_tensor);
+  fetch::math::Multiply(
+      refs_tensor,
+      (static_cast<DataType>(1.0) - this->beta1_t_) / static_cast<DataType>(batch_size),
+      gradient_tensor);
+  fetch::math::Multiply(cache_tensor, this->beta1_t_, cache_tensor);
   fetch::math::Add(cache_tensor, gradient_tensor, cache_tensor);
 
   // mt   = cache[i] / (1.0 - beta1_t_);
-  fetch::math::Divide(cache_tensor, (static_cast<DataType>(1.0) - beta1_t_), mt_tensor);
+  fetch::math::Divide(cache_tensor, (static_cast<DataType>(1.0) - this->beta1_t_), mt_tensor);
 
   // momentum[i] = (beta2_t_ * momentum[i]) + ((1.0 - beta2_t_) *
   // ((input_gradients[i]/batch_size)^2));
   fetch::math::Divide(refs_tensor, static_cast<DataType>(batch_size), v_tensor);
   fetch::math::Square(v_tensor, v_tensor);
-  fetch::math::Multiply(v_tensor, (static_cast<DataType>(1.0) - beta2_t_), v_tensor);
-  fetch::math::Multiply(momentum_tensor, beta2_t_, momentum_tensor);
+  fetch::math::Multiply(v_tensor, (static_cast<DataType>(1.0) - this->beta2_t_), v_tensor);
+  fetch::math::Multiply(momentum_tensor, this->beta2_t_, momentum_tensor);
   fetch::math::Add(momentum_tensor, v_tensor, momentum_tensor);
 
   // vt   = momentum[i] / (1.0 - beta2_t_);
-  fetch::math::Divide(momentum_tensor, (static_cast<DataType>(1.0) - beta2_t_), v_tensor);
+  fetch::math::Divide(momentum_tensor, (static_cast<DataType>(1.0) - this->beta2_t_), v_tensor);
 
   // output_gradients[i] = -this->learning_rate_ * mt / (sqrt(vt) + epsilon_);
   fetch::math::Sqrt(v_tensor, gradient_tensor);
-  fetch::math::Add(gradient_tensor, epsilon_, gradient_tensor);
+  fetch::math::Add(gradient_tensor, this->epsilon_, gradient_tensor);
   fetch::math::Divide(mt_tensor, gradient_tensor, gradient_tensor);
   fetch::math::Multiply(gradient_tensor, -this->learning_rate_, gradient_tensor);
 }
@@ -197,17 +173,17 @@ template <class T>
 void LazyAdamOptimiser<T>::ApplyGradients(SizeType batch_size)
 {
   // Do operation with gradient
-  auto cached_weight_it = cache_.begin();
-  auto momentum_it      = momentum_.begin();
-  auto mt_it            = mt_.begin();
-  auto vt_it            = vt_.begin();
+  auto cached_weight_it = this->cache_.begin();
+  auto momentum_it      = this->momentum_.begin();
+  auto mt_it            = this->mt_.begin();
+  auto vt_it            = this->vt_.begin();
 
   auto gradient_it  = this->gradients_.begin();
   auto trainable_it = this->graph_trainables_.begin();
 
   // beta1_t=beta1^t and beta2_t=beta2^t, where t is number of epochs + 1
-  fetch::math::Pow(beta1_, static_cast<DataType>(this->epoch_ + 1), beta1_t_);
-  fetch::math::Pow(beta2_, static_cast<DataType>(this->epoch_ + 1), beta2_t_);
+  fetch::math::Pow(this->beta1_, static_cast<DataType>(this->epoch_ + 1), this->beta1_t_);
+  fetch::math::Pow(this->beta2_, static_cast<DataType>(this->epoch_ + 1), this->beta2_t_);
 
   std::vector<SizeSet> rows;
 
@@ -224,49 +200,43 @@ void LazyAdamOptimiser<T>::ApplyGradients(SizeType batch_size)
     rows.push_back(gradient_pair.second);
 
     // Normal ApplyGradient
-    // if number_of_rows_to_update*sparsity_threshold_ > total_rows
+    // if number_of_rows_to_update * sparsity_threshold_ > total_rows
     if (rows.at(rows.size() - 1).empty() ||
         (rows.at(rows.size() - 1).size() * sparsity_threshold_) > gradient_pair.first.shape().at(1))
     {
       ApplyLogic(batch_size, *gradient_it, *momentum_it, *mt_it, *vt_it, *cached_weight_it,
                  (*trainable_it)->GetGradientsReferences());
     }
-
+    // Sparse apply gradient
+    // if number_of_rows_to_update * sparsity_threshold_ <= total_rows
     else
     {
-      // Sparse apply gradient
-      // if number_of_rows_to_update*sparsity_threshold_ <= total_rows
+      // Tensors used by ApplyLogic for operations that are not possible to do in-place
+      TensorType mt_tensor({mt_it->shape().at(0), 1});
+      TensorType vt_tensor({vt_it->shape().at(0), 1});
 
       for (SizeType update_index : rows.at(rows.size() - 1))
       {
 
-        auto       gradient_slice        = gradient_it->Slice(update_index, 1);
-        TensorType gradient_slice_tensor = gradient_slice.Copy();
+        auto       gradient_view        = gradient_it->View(update_index);
+        TensorType gradient_view_tensor = gradient_view.Copy();
 
-        auto       momentum_slice        = momentum_it->Slice(update_index, 1);
-        TensorType momentum_slice_tensor = momentum_slice.Copy();
+        auto       momentum_view        = momentum_it->View(update_index);
+        TensorType momentum_view_tensor = momentum_view.Copy();
 
-        auto       mt_slice        = mt_it->Slice(update_index, 1);
-        TensorType mt_slice_tensor = mt_slice.Copy();
+        auto       cache_view        = cached_weight_it->View(update_index);
+        TensorType cache_view_tensor = cache_view.Copy();
 
-        auto       v_slice        = vt_it->Slice(update_index, 1);
-        TensorType v_slice_tensor = v_slice.Copy();
+        TensorType refs_view_tensor =
+            (*trainable_it)->GetGradientsReferences().View(update_index).Copy();
 
-        auto       cache_slice        = cached_weight_it->Slice(update_index, 1);
-        TensorType cache_slice_tensor = cache_slice.Copy();
-
-        auto       refs_slice = (*trainable_it)->GetGradientsReferences().Slice(update_index, 1);
-        TensorType refs_slice_tensor = refs_slice.Copy();
-
-        ApplyLogic(batch_size, gradient_slice_tensor, momentum_slice_tensor, mt_slice_tensor,
-                   v_slice_tensor, cache_slice_tensor, refs_slice_tensor);
+        ApplyLogic(batch_size, gradient_view_tensor, momentum_view_tensor, mt_tensor, vt_tensor,
+                   cache_view_tensor, refs_view_tensor);
 
         // Put things back
-        gradient_slice.Assign(gradient_slice_tensor);
-        momentum_slice.Assign(momentum_slice_tensor);
-        mt_slice.Assign(mt_slice_tensor);
-        v_slice.Assign(v_slice_tensor);
-        cache_slice.Assign(cache_slice_tensor);
+        gradient_view.Assign(gradient_view_tensor);
+        momentum_view.Assign(momentum_view_tensor);
+        cache_view.Assign(cache_view_tensor);
       }
 
       // we need to explicitly reset the gradients for this shared op to avoid double counting
@@ -285,21 +255,6 @@ void LazyAdamOptimiser<T>::ApplyGradients(SizeType batch_size)
 
   // calling apply gradients on the graph ensures that the node caches are reset properly
   this->graph_->ApplySparseGradients(this->gradients_, rows);
-}
-
-template <class T>
-void LazyAdamOptimiser<T>::ResetCache()
-{
-  for (auto &val : this->cache_)
-  {
-    val.Fill(DataType{0});
-  }
-  for (auto &moment : this->momentum_)
-  {
-    moment.Fill(DataType{0});
-  }
-  beta1_t_ = beta1_;
-  beta2_t_ = beta2_;
 }
 
 }  // namespace optimisers

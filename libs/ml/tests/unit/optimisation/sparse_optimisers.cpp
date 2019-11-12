@@ -60,7 +60,7 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
 }
 
 template <typename TypeParam>
-void PrepareTestDataAndLabels(TypeParam &data, TypeParam &gt)
+void PrepareTestDataAndLabelsFirst(TypeParam &data, TypeParam &gt)
 {
   using DataType = typename TypeParam::Type;
 
@@ -77,10 +77,29 @@ void PrepareTestDataAndLabels(TypeParam &data, TypeParam &gt)
   gt.Set(5, 0, 3, DataType(5));
 }
 
+template <typename TypeParam>
+void PrepareTestDataAndLabelsSecond(TypeParam &data, TypeParam &gt)
+{
+  using DataType = typename TypeParam::Type;
+
+  data.Resize({1, 4});
+  data.Set(0, 0, static_cast<DataType>(5));
+  data.Set(0, 1, DataType(8));
+  data.Set(0, 2, DataType(10));
+  data.Set(0, 3, DataType(15));
+
+  gt.Resize({10, 1, 4});
+  gt.Set(2, 0, 0, DataType(-10));
+  gt.Set(3, 0, 1, DataType(10));
+  gt.Set(4, 0, 2, DataType(-5));
+  gt.Set(5, 0, 3, DataType(5));
+}
+
 }  // namespace sparse_optimiser_details
 
 TYPED_TEST(SparseOptimisersTest, lazy_adam_optimiser_training_2D)
 {
+  // On LazyAdam only currently changes values are updated with momentum and moving square average
   using DataType = typename TypeParam::Type;
 
   auto learning_rate = DataType{0.01f};
@@ -94,17 +113,21 @@ TYPED_TEST(SparseOptimisersTest, lazy_adam_optimiser_training_2D)
                                                             output_name);
 
   // Prepare data and labels
-  TypeParam data;
-  TypeParam gt;
-  sparse_optimiser_details::PrepareTestDataAndLabels(data, gt);
+  TypeParam data_1;
+  TypeParam gt_1;
+  sparse_optimiser_details::PrepareTestDataAndLabelsFirst(data_1, gt_1);
+
+  TypeParam data_2;
+  TypeParam gt_2;
+  sparse_optimiser_details::PrepareTestDataAndLabelsSecond(data_2, gt_2);
 
   // Initialise Optimiser
   fetch::ml::optimisers::LazyAdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                 output_name, learning_rate);
 
   // Do multiple steps
-  DataType loss1 = optimiser.Run({data}, gt);
-  DataType loss2 = optimiser.Run({data}, gt);
+  DataType loss1 = optimiser.Run({data_1}, gt_1);
+  DataType loss2 = optimiser.Run({data_2}, gt_2);
 
   // Test loss
   EXPECT_LE(static_cast<double>(loss2), static_cast<double>(loss1));
@@ -113,16 +136,67 @@ TYPED_TEST(SparseOptimisersTest, lazy_adam_optimiser_training_2D)
   std::vector<TypeParam> weights = g->GetWeights();
   EXPECT_NEAR(static_cast<double>(weights[0].At(7, 0)), 0.17860044352710247,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
-                  static_cast<double>(gt.size()));
-  EXPECT_NEAR(static_cast<double>(weights[0].At(4, 4)), -0.15662828390486538,
+                  static_cast<double>(gt_1.size()));
+  EXPECT_NEAR(static_cast<double>(weights[0].At(4, 4)), -0.16820691619068384,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
-                  static_cast<double>(gt.size()));
+                  static_cast<double>(gt_1.size()));
   EXPECT_NEAR(static_cast<double>(weights[0].At(8, 32)), -0.02471873932518065,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
-                  static_cast<double>(gt.size()));
-  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.082687103189527988,
+                  static_cast<double>(gt_1.size()));
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.094210958341136575,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
-                  static_cast<double>(gt.size()));
+                  static_cast<double>(gt_1.size()));
+}
+
+TYPED_TEST(SparseOptimisersTest, adam_optimiser_training_2D)
+{
+  // On normal adam all values are updated with momentum and moving square average
+  using DataType = typename TypeParam::Type;
+
+  auto learning_rate = DataType{0.01f};
+
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  label_name;
+  std::string                                  output_name;
+  std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
+      sparse_optimiser_details::PrepareTestGraph<TypeParam>(10, 50, input_name, label_name,
+                                                            output_name);
+
+  // Prepare data and labels
+  TypeParam data_1;
+  TypeParam gt_1;
+  sparse_optimiser_details::PrepareTestDataAndLabelsFirst(data_1, gt_1);
+
+  TypeParam data_2;
+  TypeParam gt_2;
+  sparse_optimiser_details::PrepareTestDataAndLabelsSecond(data_2, gt_2);
+
+  // Initialise Optimiser
+  fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
+                                                            output_name, learning_rate);
+
+  // Do multiple steps
+  DataType loss1 = optimiser.Run({data_1}, gt_1);
+  DataType loss2 = optimiser.Run({data_2}, gt_2);
+
+  // Test loss
+  EXPECT_LE(static_cast<double>(loss2), static_cast<double>(loss1));
+
+  // Test weights
+  std::vector<TypeParam> weights = g->GetWeights();
+  EXPECT_NEAR(static_cast<double>(weights[0].At(7, 0)), 0.17860044352710247,
+              static_cast<double>(fetch::math::function_tolerance<DataType>()) *
+                  static_cast<double>(gt_1.size()));
+  EXPECT_NEAR(static_cast<double>(weights[0].At(4, 4)), -0.16221024608239532,
+              static_cast<double>(fetch::math::function_tolerance<DataType>()) *
+                  static_cast<double>(gt_1.size()));
+  EXPECT_NEAR(static_cast<double>(weights[0].At(8, 32)), -0.02471873932518065,
+              static_cast<double>(fetch::math::function_tolerance<DataType>()) *
+                  static_cast<double>(gt_1.size()));
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), 0.088236837182193995,
+              static_cast<double>(fetch::math::function_tolerance<DataType>()) *
+                  static_cast<double>(gt_1.size()));
 }
 
 }  // namespace test
