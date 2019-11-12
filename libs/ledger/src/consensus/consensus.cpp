@@ -67,7 +67,6 @@ using StakeManagerPtr = Consensus::StakeManagerPtr;
 
 using fetch::ledger::MainChain;
 using fetch::ledger::Block;
-using fetch::beacon::BlockEntropy;
 
 using DRNG = fetch::random::LinearCongruentialGenerator;
 
