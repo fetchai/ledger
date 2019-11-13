@@ -912,7 +912,6 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
     std::vector<ml::NodeSaveableParams<TensorType>> nodevec;
     for (auto const &node_name : connections_first)
     {
-      std::cout << "node_name: " << node_name << std::endl;
       auto nsp =
           std::dynamic_pointer_cast<ml::NodeSaveableParams<TensorType>>(sp.nodes.at(node_name));
       nodevec.emplace_back(*nsp);

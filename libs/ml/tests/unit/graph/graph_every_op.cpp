@@ -19,6 +19,7 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
 
 // ordinary ops
@@ -97,143 +98,118 @@ class GraphTest : public ::testing::Test
 
 TYPED_TEST_CASE(GraphTest, math::test::TensorFloatingTypes);
 
+template <typename OpType, typename GraphPtrType, typename... Params>
+std::string AddOp(GraphPtrType g, std::vector<std::string> input_nodes, Params... params)
+{
+  return g->template AddNode<OpType>("", input_nodes, params...);
+}
+
+template <typename GraphPtrType, typename TensorType>
+void ComparePrediction(GraphPtrType g, GraphPtrType g2, std::string node_name)
+{
+  using DataType         = typename TensorType::Type;
+  TensorType prediction  = g->Evaluate(node_name);
+  TensorType prediction2 = g2->Evaluate(node_name);
+  EXPECT_TRUE(prediction.AllClose(prediction2, static_cast<DataType>(0), static_cast<DataType>(0)));
+}
+
 TYPED_TEST(GraphTest, graph_rebuild_every_op)
 {
-  using TensorType = TypeParam;
-  using DataType   = typename TensorType::Type;
+  using TensorType   = TypeParam;
+  using DataType     = typename TensorType::Type;
+  using GraphType    = fetch::ml::Graph<TypeParam>;
+  using GraphPtrType = std::shared_ptr<GraphType>;
 
   // Create graph
-  std::string                 name = "Graph";
-  fetch::ml::Graph<TypeParam> g;
-  std::string                 input_1 =
-      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input_1", {});
-  std::string input_2 =
-      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input_2", {});
+  std::string name = "Graph";
+  auto        g    = std::make_shared<GraphType>();
+
+  // placeholder inputs
+  std::string input_1 = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_2 = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_3d = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_4d = AddOp<ops::PlaceHolder<TensorType>>(g, {});
 
   // ordinary ops
-  std::string abs = g.template AddNode<fetch::ml::ops::Abs<TensorType>>(name + "_Abs", {input_1});
-  std::string add =
-      g.template AddNode<fetch::ml::ops::Add<TensorType>>(name + "_Add", {input_1, input_2});
-  std::string avg1 = g.template AddNode<fetch::ml::ops::AvgPool1D<TensorType>>(name + "_AvgPool1D",
-                                                                               {input_1}, 1, 1);
-  std::string avg2 = g.template AddNode<fetch::ml::ops::AvgPool2D<TensorType>>(name + "_AvgPool2D",
-                                                                               {input_1}, 1, 1);
-  std::string concat = g.template AddNode<fetch::ml::ops::Concatenate<TensorType>>(
-      name + "_Concatenate", {input_1, input_2}, 0);
-  std::string constant =
-      g.template AddNode<fetch::ml::ops::Constant<TensorType>>(name + "_Constant", {input_1});
-  std::string conv1d =
-      g.template AddNode<fetch::ml::ops::Convolution1D<TensorType>>(name + "_Conv1D", {input_1});
-  std::string conv2d =
-      g.template AddNode<fetch::ml::ops::Convolution2D<TensorType>>(name + "_Conv2D", {input_2});
-  std::string divide =
-      g.template AddNode<fetch::ml::ops::Divide<TensorType>>(name + "_Divide", {input_1});
-  std::string embed = g.template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
-      name + "_Embeddings", {input_1}, 1, 3);
-  std::string exp = g.template AddNode<fetch::ml::ops::Exp<TensorType>>(name + "_Exp", {input_1});
-  std::string flatten =
-      g.template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input_1});
-  std::string layernorm =
-      g.template AddNode<fetch::ml::ops::LayerNorm<TensorType>>(name + "LayerNorm", {input_1});
-  std::string log = g.template AddNode<fetch::ml::ops::Log<TensorType>>(name + "_Log", {input_1});
-  std::string maskfill = g.template AddNode<fetch::ml::ops::MaskFill<TensorType>>(
-      name + "_MaskFill", {input_1, input_1}, DataType(0));
-  std::string matmul = g.template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
-      name + "_MatrixMultiply", {input_1});
-  std::string maxpool =
-      g.template AddNode<fetch::ml::ops::MaxPool<TensorType>>(name + "_MaxPool", {input_1}, 1, 1);
-  std::string maxpool1d = g.template AddNode<fetch::ml::ops::MaxPool1D<TensorType>>(
-      name + "_MaxPool1D", {input_1}, 1, 1);
-  std::string maxpool2d = g.template AddNode<fetch::ml::ops::MaxPool2D<TensorType>>(
-      name + "_MaxPool2D", {input_1}, 1, 1);
-  std::string maximum =
-      g.template AddNode<fetch::ml::ops::Maximum<TensorType>>(name + "_Maximum", {input_1});
-  std::string multiply =
-      g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(name + "_Multiply", {input_1});
-  std::string onehot =
-      g.template AddNode<fetch::ml::ops::OneHot<TensorType>>(name + "_OneHot", {input_1}, 2);
-  std::string placeholder =
-      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_PlaceHolder", {input_1});
-  std::string reducemean = g.template AddNode<fetch::ml::ops::ReduceMean<TensorType>>(
-      name + "_ReduceMean", {input_1}, 0);
-  std::string slice =
-      g.template AddNode<fetch::ml::ops::Slice<TensorType>>(name + "_Slice", {input_1}, 0, 0);
-  std::string sqrt =
-      g.template AddNode<fetch::ml::ops::Sqrt<TensorType>>(name + "_Sqrt", {input_1});
-  std::string squeeze =
-      g.template AddNode<fetch::ml::ops::Squeeze<TensorType>>(name + "_Squeeze", {input_1});
-  std::string switchop =
-      g.template AddNode<fetch::ml::ops::Switch<TensorType>>(name + "_Switch", {input_1});
-  std::string tanh =
-      g.template AddNode<fetch::ml::ops::TanH<TensorType>>(name + "_TanH", {input_1});
-  std::string transpose =
-      g.template AddNode<fetch::ml::ops::Transpose<TensorType>>(name + "_Transpose", {input_1});
-  std::string topk =
-      g.template AddNode<fetch::ml::ops::TopK<TensorType>>(name + "_TopK", {input_1}, 2);
-  std::string weights =
-      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {input_1});
+  std::string abs          = AddOp<ops::Abs<TensorType>>(g, {input_1});
+  std::string add          = AddOp<ops::Add<TensorType>>(g, {input_1, input_2});
+  std::string avg1         = AddOp<ops::AvgPool1D<TensorType>>(g, {input_3d}, 1, 1);
+  std::string avg2         = AddOp<ops::AvgPool2D<TensorType>>(g, {input_4d}, 1, 1);
+  std::string concat       = AddOp<ops::Concatenate<TensorType>>(g, {input_1, input_2}, 0);
+  std::string constant     = AddOp<ops::Constant<TensorType>>(g, {});
+  std::string conv1d       = AddOp<ops::Convolution1D<TensorType>>(g, {input_1});
+  std::string conv2d       = AddOp<ops::Convolution2D<TensorType>>(g, {input_1});
+  std::string divide       = AddOp<ops::Divide<TensorType>>(g, {input_1, input_2});
+  std::string embed        = AddOp<ops::Embeddings<TensorType>>(g, {input_1}, 1, 3);
+  std::string exp          = AddOp<ops::Exp<TensorType>>(g, {input_1});
+  std::string flatten      = AddOp<ops::Flatten<TensorType>>(g, {input_1});
+  std::string layernorm_op = AddOp<ops::LayerNorm<TensorType>>(g, {input_1});
+  std::string log          = AddOp<ops::Log<TensorType>>(g, {input_1});
+  std::string maskfill     = AddOp<ops::MaskFill<TensorType>>(g, {input_1, input_1}, DataType(0));
+  std::string matmul       = AddOp<ops::MatrixMultiply<TensorType>>(g, {input_1});
+  std::string maxpool      = AddOp<ops::MaxPool<TensorType>>(g, {input_1}, 1, 1);
+  std::string maxpool1d    = AddOp<ops::MaxPool1D<TensorType>>(g, {input_1}, 1, 1);
+  std::string maxpool2d    = AddOp<ops::MaxPool2D<TensorType>>(g, {input_1}, 1, 1);
+  std::string maximum      = AddOp<ops::Maximum<TensorType>>(g, {input_1});
+  std::string multiply     = AddOp<ops::Multiply<TensorType>>(g, {input_1});
+  std::string onehot       = AddOp<ops::OneHot<TensorType>>(g, {input_1}, 2);
+  std::string placeholder  = AddOp<ops::PlaceHolder<TensorType>>(g, {input_1});
+  std::string reducemean   = AddOp<ops::ReduceMean<TensorType>>(g, {input_1}, 0);
+  std::string slice        = AddOp<ops::Slice<TensorType>>(g, {input_1}, 0, 0);
+  std::string sqrt         = AddOp<ops::Sqrt<TensorType>>(g, {input_1});
+  std::string squeeze      = AddOp<ops::Squeeze<TensorType>>(g, {input_1});
+  std::string switchop     = AddOp<ops::Switch<TensorType>>(g, {input_1});
+  std::string tanh         = AddOp<ops::TanH<TensorType>>(g, {input_1});
+  std::string transpose    = AddOp<ops::Transpose<TensorType>>(g, {input_1});
+  std::string topk         = AddOp<ops::TopK<TensorType>>(g, {input_1}, 2);
+  std::string weights      = AddOp<ops::Weights<TensorType>>(g, {input_1});
 
   // activations
-  std::string dropout =
-      g.template AddNode<fetch::ml::ops::Dropout<TensorType>>(name + "_Dropout", {input_1}, DataType(0.9));
-  std::string elu = g.template AddNode<fetch::ml::ops::Elu<TensorType>>(name + "_Elu", {input_1}, DataType(0.9));
-  std::string gelu =
-      g.template AddNode<fetch::ml::ops::Gelu<TensorType>>(name + "_Gelu", {input_1});
-  std::string leakyrelu =
-      g.template AddNode<fetch::ml::ops::LeakyRelu<TensorType>>(name + "_LeakyRelu", {input_1});
-  std::string logsigmoid =
-      g.template AddNode<fetch::ml::ops::LogSigmoid<TensorType>>(name + "_LogSigmoid", {input_1});
-  std::string logsoftmax =
-      g.template AddNode<fetch::ml::ops::LogSoftmax<TensorType>>(name + "_LogSoftmax", {input_1});
-  std::string randomisedrelu = g.template AddNode<fetch::ml::ops::RandomisedRelu<TensorType>>(
-      name + "_RandomisedRelu", {input_1}, DataType(0), DataType(1));
-  std::string relu =
-      g.template AddNode<fetch::ml::ops::Relu<TensorType>>(name + "_Relu", {input_1});
-  std::string sigmoid =
-      g.template AddNode<fetch::ml::ops::Sigmoid<TensorType>>(name + "_Sigmoid", {input_1});
-  std::string softmax =
-      g.template AddNode<fetch::ml::ops::Softmax<TensorType>>(name + "_Softmax", {input_1});
+  std::string dropout    = AddOp<ops::Dropout<TensorType>>(g, {input_1}, DataType(0.9));
+  std::string elu        = AddOp<ops::Elu<TensorType>>(g, {input_1}, DataType(0.9));
+  std::string gelu       = AddOp<ops::Gelu<TensorType>>(g, {input_1});
+  std::string leakyrelu  = AddOp<ops::LeakyRelu<TensorType>>(g, {input_1});
+  std::string logsigmoid = AddOp<ops::LogSigmoid<TensorType>>(g, {input_1});
+  std::string logsoftmax = AddOp<ops::LogSoftmax<TensorType>>(g, {input_1});
+  std::string randomisedrelu =
+      AddOp<ops::RandomisedRelu<TensorType>>(g, {input_1}, DataType(0), DataType(1));
+  std::string relu    = AddOp<ops::Relu<TensorType>>(g, {input_1});
+  std::string softmax = AddOp<ops::Softmax<TensorType>>(g, {input_1});
 
   // Loss functions
-  std::string cel =
-      g.template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(name + "_CEL", {input_1});
-  std::string mse =
-      g.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(name + "_MSE", {input_1});
-  std::string scel = g.template AddNode<fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>>(
-      name + "_SCEL", {input_1});
+  std::string cel  = AddOp<ops::CrossEntropyLoss<TensorType>>(g, {input_1, input_2});
+  std::string mse  = AddOp<ops::MeanSquareErrorLoss<TensorType>>(g, {input_1, input_2});
+  std::string scel = AddOp<ops::SoftmaxCrossEntropyLoss<TensorType>>(g, {input_1, input_2});
 
   // Layers
-  std::string layer_layernorm =
-      g.template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(name + "_LayerNorm", {input_1});
-  std::string layer_conv1d = g.template AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
-      name + "_Convolution1D", {input_1});
-  std::string layer_conv2d = g.template AddNode<fetch::ml::layers::Convolution2D<TensorType>>(
-      name + "__Convolution2D", {input_1});
-  std::string layer_fc1 =
-      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(name + "_FC1", {input_1});
-  std::string layer_mh = g.template AddNode<fetch::ml::layers::MultiheadAttention<TensorType>>(
-      name + "_MultiHead", {input_1});
-  std::string layer_prelu =
-      g.template AddNode<fetch::ml::layers::PRelu<TensorType>>(name + "_PRELU", {input_1});
+  std::string layer_layernorm = AddOp<layers::LayerNorm<TensorType>>(g, {input_1});
+  std::string layer_conv1d    = AddOp<layers::Convolution1D<TensorType>>(g, {input_1});
+  std::string layer_conv2d    = AddOp<layers::Convolution2D<TensorType>>(g, {input_1});
+  std::string layer_fc1       = AddOp<layers::FullyConnected<TensorType>>(g, {input_1});
+  std::string layer_mh        = AddOp<layers::MultiheadAttention<TensorType>>(g, {input_1});
+  std::string layer_prelu     = AddOp<layers::PRelu<TensorType>>(g, {input_1});
   std::string layer_scaleddotproductattention =
-      g.template AddNode<fetch::ml::layers::ScaledDotProductAttention<TensorType>>(
-          name + "_ScaledDotProductAttention", {input_1});
+      AddOp<layers::ScaledDotProductAttention<TensorType>>(g, {input_1});
   std::string layer_selfattentionencoder =
-      g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TensorType>>(
-          name + "_SelfAttentionEncoder", {input_1});
-  std::string layer_skipgram =
-      g.template AddNode<fetch::ml::layers::SkipGram<TensorType>>(name + "_SkipGram", {input_1});
+      AddOp<layers::SelfAttentionEncoder<TensorType>>(g, {input_1});
+  std::string layer_skipgram = AddOp<layers::SkipGram<TensorType>>(g, {input_1});
 
   // Generate input
   TensorType data1 = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4)");
   TensorType data2 = TensorType::FromString(R"(-20,-10, 0, 10, 20, 30)");
-  g.SetInput(input_1, data1);
-  g.SetInput(input_2, data2);
-
-  g.Compile();
+  TensorType data_3d = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4, 5, 6)");
+  TensorType data_4d = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4, 5, 6)");
+  data_3d.Reshape({2, 2, 2});
+  data_4d.Reshape({2, 2, 2, 1});
+  g->SetInput(input_1, data1);
+  g->SetInput(input_2, data2);
+  g->SetInput(input_3d, data_3d);
+  g->SetInput(input_4d, data_4d);
+  g->SetInput(constant, data1);
+  g->Compile();
 
   // serialise the graph
-  fetch::ml::GraphSaveableParams<TypeParam>      gsp1 = g.GetGraphSaveableParams();
+  fetch::ml::GraphSaveableParams<TypeParam>      gsp1 = g->GetGraphSaveableParams();
   fetch::serializers::LargeObjectSerializeHelper b;
   b.Serialize(gsp1);
 
@@ -242,29 +218,90 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   b.Deserialize(*gsp2);
   EXPECT_EQ(gsp1.connections, gsp2->connections);
 
-  //  for (auto const &gsp2_node_pair : gsp2->nodes)
-  //  {
-  //    auto gsp2_node = gsp2_node_pair.second;
-  //    auto gsp1_node = gsp1.nodes[gsp2_node_pair.first];
-  //
-  //    EXPECT_TRUE(gsp1_node->operation_type == gsp2_node->operation_type);
-  //  }
-  //
-  //  auto g2 = std::make_shared<GraphType>();
-  //  fetch::ml::utilities::BuildGraph<TensorType>(*gsp2, g2);
-  //
-  //  TensorType data   = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
-  //  TensorType labels = TensorType::FromString("1; 2; 3; 4; 5; 6; 7; 8; 9; 100");
-  //
-  //  g->SetInput("Input", data.Transpose());
-  //  g2->SetInput("Input", data.Transpose());
-  //
-  //  TensorType prediction  = g->Evaluate(output);
-  //  TensorType prediction2 = g2->Evaluate(output);
-  //
-  //  // test correct values
-  //  EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
-  //                                  fetch::math::function_tolerance<DataType>()));
+  for (auto const &gsp2_node_pair : gsp2->nodes)
+  {
+    auto gsp2_node = gsp2_node_pair.second;
+    auto gsp1_node = gsp1.nodes[gsp2_node_pair.first];
+
+    EXPECT_TRUE(gsp1_node->operation_type == gsp2_node->operation_type);
+  }
+
+  auto g2 = std::make_shared<GraphType>();
+  fetch::ml::utilities::BuildGraph<TensorType>(*gsp2, g2);
+
+  // evaluate both graphs to ensure outputs are identical
+  g2->SetInput(input_1, data1);
+  g2->SetInput(input_2, data2);
+  g2->SetInput(input_3d, data_3d);
+  g2->SetInput(input_4d, data_4d);
+  g2->SetInput(constant, data1);
+  g2->Compile();
+
+  // weak tests that all ops produce the same value on both graphs
+  // more thorough tests should be implemented in each test op file
+
+  // ordinary ops
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, input_1);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, input_2);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, abs);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, add);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, avg1);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, avg2);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, concat);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, constant);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, conv1d);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, conv2d);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, divide);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, embed);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, exp);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, flatten);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layernorm_op);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, log);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, maskfill);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, matmul);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool1d);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool2d);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, maximum);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, multiply);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, onehot);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, placeholder);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, reducemean);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, slice);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, sqrt);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, squeeze);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, switchop);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, tanh);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, transpose);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, topk);
+//  ComparePrediction<GraphPtrType, TensorType>(g, g2, weights);
+
+  // activations
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, dropout);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, elu);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, gelu);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, leakyrelu);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, logsigmoid);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, logsoftmax);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, randomisedrelu);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, relu);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, softmax);
+
+  // Loss functions
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, cel);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, mse);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, scel);
+
+  // Layers
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_layernorm);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_conv1d);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_conv2d);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_fc1);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_mh);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_prelu);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_scaleddotproductattention);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_selfattentionencoder);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_skipgram);
 }
 
 }  // namespace test
