@@ -79,8 +79,10 @@ T ChooseRandomlyFrom(T &container, std::size_t items)
 char const *ToString(BeaconService::State state);
 
 BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &certificate,
-                             BeaconSetupService &beacon_setup, SharedEventManager event_manager)
+                             BeaconSetupService &beacon_setup, SharedEventManager event_manager,
+                             bool load_and_reload_on_crash)
   : certificate_{certificate}
+  , load_and_reload_on_crash_{load_and_reload_on_crash}
   , identity_{certificate->identity()}
   , muddle_{muddle}
   , endpoint_{muddle_.GetEndpoint()}
@@ -126,7 +128,6 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
   state_machine_->RegisterHandler(State::COMPLETE, this, &BeaconService::OnCompleteState);
   // clang-format on
 
-  old_state_.Load("beacon_state.db", "beacon_state.index.db");
   ReloadState();
 
   state_machine_->OnStateChange([this](State current, State previous) {
@@ -141,12 +142,24 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
 // Note these are not locked since there should be no race against the constructor
 void BeaconService::SaveState()
 {
+  if (!load_and_reload_on_crash_)
+  {
+    return;
+  }
+
   assert(active_exe_unit_);
   old_state_.Set(storage::ResourceAddress("HEAD"), *active_exe_unit_);
 }
 
 void BeaconService::ReloadState()
 {
+  if (!load_and_reload_on_crash_)
+  {
+    return;
+  }
+
+  old_state_.Load("beacon_state.db", "beacon_state.index.db");
+
   SharedAeonExecutionUnit ret = std::make_shared<AeonExecutionUnit>();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Reloading... Size: ", old_state_.size());

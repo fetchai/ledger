@@ -264,7 +264,7 @@ BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const 
   {
     assert(beacon_setup);
     beacon = std::make_unique<fetch::beacon::BeaconService>(muddle, certificate, *beacon_setup,
-                                                            event_manager);
+                                                            event_manager, true);
   }
 
   return beacon;

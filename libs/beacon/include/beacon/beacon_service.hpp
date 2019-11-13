@@ -98,7 +98,8 @@ public:
   BeaconService(BeaconService const &) = delete;
 
   BeaconService(MuddleInterface &muddle, const CertificatePtr &certificate,
-                BeaconSetupService &beacon_setup, SharedEventManager event_manager);
+                BeaconSetupService &beacon_setup, SharedEventManager event_manager,
+                bool load_and_reload_on_crash = false);
 
   /// @name Entropy Generator
   /// @{
@@ -137,6 +138,7 @@ protected:
 
   mutable std::mutex                  mutex_;
   CertificatePtr                      certificate_;
+  bool                                load_and_reload_on_crash_{false};
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
 
 private:
