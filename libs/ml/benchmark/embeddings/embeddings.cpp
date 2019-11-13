@@ -84,18 +84,18 @@ void BM_Setup_And_Train_Embeddings(::benchmark::State &state)
   data.FillUniformRandomIntegers(0, static_cast<int64_t>(n_datapoints));
   gt.FillUniformRandom();
 
+  // make a graph
+  std::string input_name;
+  std::string label_name;
+  std::string error_name;
+  auto g = PrepareTestGraph<TensorType>(embedding_dimensions, n_datapoints, input_name, label_name,
+                                        error_name);
+
+  // Initialise Optimiser
+  OptimiserType optimiser(g, {input_name}, label_name, error_name, learning_rate);
+
   for (auto _ : state)
   {
-    // make a graph
-    std::string input_name;
-    std::string label_name;
-    std::string error_name;
-    auto        g = PrepareTestGraph<TensorType>(embedding_dimensions, n_datapoints, input_name,
-                                          label_name, error_name);
-
-    // Initialise Optimiser
-    OptimiserType optimiser(g, {input_name}, label_name, error_name, learning_rate);
-
     // Do optimisation
     for (SizeType i = 0; i < n_epochs; ++i)
     {
