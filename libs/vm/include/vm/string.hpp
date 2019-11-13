@@ -88,8 +88,6 @@ struct String : public Object
   void               UpdateString(std::string str);
 
 private:
-  bool IsTemporary() const;
-
   Utf8String utf8_str_;
 };
 

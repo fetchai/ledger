@@ -47,7 +47,7 @@ ExecutionResult testEtchExec(const char *src, const std::string &name, variant::
   ExecutionResult createdState = engine.CreateState("state");
   EXPECT_TRUE(createdState.succeeded());
 
-  ExecutionResult result = engine.RunSerialisedParameterPassing("helloWorld", "state", name, {x});
+  ExecutionResult result = engine.Run("helloWorld", "state", name, {x});
   EXPECT_TRUE(result.succeeded()) << result.error().message() << std::endl;
   return result;
 }
