@@ -132,10 +132,6 @@ struct Type : public Symbol
     template_type = nullptr;
     types.clear();
   }
-  bool IsNull() const
-  {
-    return (name == "Null");
-  }
   bool IsVoid() const
   {
     return (name == "Void");
@@ -327,6 +323,14 @@ struct Node
   {
     return (node_category == NodeCategory::Expression);
   }
+  bool IsNull() const
+  {
+    return (node_kind == NodeKind::Null);
+  }
+  bool IsInitialiserList() const
+  {
+    return (node_kind == NodeKind::InitialiserList);
+  }
   NodeCategory node_category{NodeCategory::Unknown};
   NodeKind     node_kind{NodeKind::Unknown};
   std::string  text;
@@ -405,6 +409,14 @@ struct ExpressionNode : public Node
   bool IsFunctionGroupExpression() const
   {
     return (expression_kind == ExpressionKind::FunctionGroup);
+  }
+  bool IsConcrete() const
+  {
+    if (IsNull() || IsInitialiserList() || type->IsVoid())
+    {
+      return false;
+    }
+    return type->IsPrimitive() || type->IsClass() || type->IsInstantiation();
   }
   ExpressionKind   expression_kind{ExpressionKind::Unknown};
   TypePtr          type;

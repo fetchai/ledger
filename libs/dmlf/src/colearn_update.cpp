@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,34 +16,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
-#include <map>
-#include <memory>
+#include <chrono>
+
+#include "dmlf/colearn/colearn_update.hpp"
 
 namespace fetch {
-namespace chain {
+namespace dmlf {
+namespace colearn {
 
-class Address;
+namespace {
 
-}  // namespace chain
-namespace ledger {
+using TimeStampType = ColearnUpdate::TimeStampType;
 
-class StakeManagerInterface
+TimeStampType CurrentTime()
 {
-public:
-  using BlockIndex = uint64_t;
+  return static_cast<TimeStampType>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                        std::chrono::system_clock::now().time_since_epoch())
+                                        .count());
+}
 
-  // Construction / Destruction
-  StakeManagerInterface()          = default;
-  virtual ~StakeManagerInterface() = default;
+}  // namespace
 
-  /// @name Stake Manager Interface
-  /// @{
-  virtual void UpdateCurrentBlock(BlockIndex block_index) = 0;
-  /// @}
+ColearnUpdate::ColearnUpdate(std::string updateType, Data &&data, Source source)
+  : update_type{std::move(updateType)}
+  , data{std::move(data)}
+  , time_stamp{CurrentTime()}
+  , source{std::move(source)}
+{}
 
-private:
-};
-
-}  // namespace ledger
+}  // namespace colearn
+}  // namespace dmlf
 }  // namespace fetch

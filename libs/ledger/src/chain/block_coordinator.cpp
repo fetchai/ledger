@@ -83,7 +83,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &block_sink, ProverPtr prover,
-                                   std::size_t num_lanes, std::size_t num_slices,
+                                   uint32_t log2_num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty, ConsensusPtr consensus,
                                    SynergeticExecMgrPtr synergetic_exec_manager)
   : chain_{chain}
@@ -101,7 +101,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
                                                   [](State state) { return ToString(state); })}
   , block_difficulty_{block_difficulty}
-  , num_lanes_{num_lanes}
+  , log2_num_lanes_{log2_num_lanes}
   , num_slices_{num_slices}
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
@@ -483,6 +483,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     if (consensus_)
     {
       consensus_->UpdateCurrentBlock(*current_block_);
+
       // Failure will set this to a nullptr
       next_block_ = consensus_->GenerateNextBlock();
     }
@@ -498,9 +499,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
       return State::SYNCHRONISED;
     }
 
-    next_block_->previous_hash = current_block_->hash;
-    next_block_->block_number  = current_block_->block_number + 1;
-    next_block_->miner         = mining_address_;
+    next_block_->previous_hash  = current_block_->hash;
+    next_block_->block_number   = current_block_->block_number + 1;
+    next_block_->miner          = mining_address_;
+    next_block_->log2_num_lanes = log2_num_lanes_;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->block_number,
                    " beacon: ", next_block_->block_entropy.EntropyAsU64());
@@ -533,22 +535,16 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
   bool const is_genesis = current_block_->IsGenesis();
 
-  auto fail{[this](char const *reason) {
-    FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (0x",
-                   current_block_->hash.ToHex(), ')');
-
-    chain_.RemoveBlock(current_block_->hash);
-    return State::RESET;
-  }};
-
-  // Check: Ensure that we have a previous block
-
   if (!is_genesis)
   {
     BlockPtr previous = chain_.GetBlock(current_block_->previous_hash);
     if (!previous)
     {
-      return fail("No previous block in chain");
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: No previous block in chain (0x",
+                     current_block_->hash.ToHex(), ')');
+
+      chain_.RemoveBlock(current_block_->hash);
+      return State::RESET;
     }
 
     if (consensus_)
@@ -559,7 +555,12 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       if (!(result == ConsensusInterface::Status::YES ||
             result == ConsensusInterface::Status::UNKNOWN))
       {
-        return fail("Consensus failed to verify block");
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Block validation failed: Consensus failed to verify block (0x",
+                       current_block_->hash.ToHex(), ')');
+
+        chain_.RemoveBlock(current_block_->hash);
+        return State::RESET;
       }
     }
 
@@ -567,26 +568,48 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     uint64_t const expected_block_number = previous->block_number + 1u;
     if (expected_block_number != current_block_->block_number)
     {
-      return fail("Block number mismatch");
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Block number mismatch. Expected: ",
+                     expected_block_number, " Actual: ", current_block_->block_number, " (0x",
+                     current_block_->hash.ToHex(), ')');
+
+      chain_.RemoveBlock(current_block_->hash);
+      return State::RESET;
     }
 
     // Check: Ensure the number of lanes is correct
     if (num_lanes_ != (1u << current_block_->log2_num_lanes))
     {
-      return fail("Lane count mismatch");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Block validation failed: Lane count mismatch. Expected: ", num_lanes_,
+                     " Actual: ", (1u << current_block_->log2_num_lanes), " (0x",
+                     current_block_->hash.ToHex(), ')');
+
+      chain_.RemoveBlock(current_block_->hash);
+      return State::RESET;
     }
 
     // Check: Ensure the number of slices is correct
     if (num_slices_ != current_block_->slices.size())
     {
-      return fail("Slice count mismatch");
+      FETCH_LOG_WARN(
+          LOGGING_NAME, "Block validation failed: Slice count mismatch. Expected: ", num_slices_,
+          " Actual: ", current_block_->slices.size(), " (0x", current_block_->hash.ToHex(), ')');
+
+      chain_.RemoveBlock(current_block_->hash);
+      return State::RESET;
     }
   }
 
   // Check: Ensure the digests are the correct size
   if (DIGEST_LENGTH_BYTES != current_block_->previous_hash.size())
   {
-    return fail("Previous block hash size mismatch");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Block validation failed: Previous block hash size mismatch. Expected: ",
+                   DIGEST_LENGTH_BYTES, " Actual: ", current_block_->previous_hash.size(), " (0x",
+                   current_block_->hash.ToHex(), ')');
+
+    chain_.RemoveBlock(current_block_->hash);
+    return State::RESET;
   }
 
   // Validating DAG hashes
@@ -598,10 +621,10 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     auto const result = synergetic_exec_mgr_->PrepareWorkQueue(*current_block_, *previous_block);
     if (SynExecStatus::SUCCESS != result)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
-                     ToBase64(current_block_->hash), ")");
-      chain_.RemoveBlock(current_block_->hash);
+      FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (0x",
+                     current_block_->hash.ToHex(), ")");
 
+      chain_.RemoveBlock(current_block_->hash);
       return State::RESET;
     }
   }

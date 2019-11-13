@@ -25,6 +25,7 @@
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/protocols/notarisation_service.hpp"
+#include "ledger/storage_unit/fake_storage_unit.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -66,6 +67,7 @@ struct NotarisationNode
   Muddle                                     muddle;
   DummyManifestCache                         manifest_cache;
   MainChain                                  chain;
+  FakeStorageUnit                            storage_unit;
   std::shared_ptr<TrustedDealerSetupService> beacon_setup_service;
   std::shared_ptr<BeaconService>             beacon_service;
   std::shared_ptr<NotarisationService>       notarisation_service;
@@ -87,16 +89,12 @@ struct NotarisationNode
                                        event_manager}}
     , notarisation_service{new NotarisationService{*muddle, muddle_certificate,
                                                    *beacon_setup_service}}
-    , stake_manager{new StakeManager{cabinet_size}}
-    , consensus{stake_manager,
-                beacon_setup_service,
-                beacon_service,
-                chain,
-                muddle_certificate->identity(),
-                aeon_period,
-                cabinet_size,
-                1000,
-                notarisation_service}
+    , stake_manager{new StakeManager{}}
+    , consensus{stake_manager,  beacon_setup_service,
+                beacon_service, chain,
+                storage_unit,   muddle_certificate->identity(),
+                aeon_period,    cabinet_size,
+                1000,           notarisation_service}
   {
     network_manager.Start();
     muddle->Start({muddle_port});
@@ -213,7 +211,7 @@ std::vector<std::shared_ptr<NotarisationNode>> TestSetup(uint32_t num_nodes    =
   // Completely change over committee and queue updates
   for (auto &node : nodes)
   {
-    node->consensus.Reset(snapshot);
+    node->consensus.Reset(snapshot, node->storage_unit);
     for (uint32_t j = 0; j < num_nodes; ++j)
     {
       if (j >= cabinet_size)

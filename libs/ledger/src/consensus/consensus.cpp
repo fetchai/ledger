@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_manager.hpp"
 #include "beacon/block_entropy.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/consensus/consensus.hpp"
@@ -92,10 +91,11 @@ T DeterministicShuffle(T &container, uint64_t entropy)
 }  // namespace
 
 Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
-                     BeaconServicePtr beacon, MainChain const &chain, Identity mining_identity,
-                     uint64_t aeon_period, uint64_t max_cabinet_size, uint32_t block_interval_ms,
-                     NotarisationPtr notarisation)
-  : stake_{std::move(stake)}
+                     BeaconServicePtr beacon, MainChain const &chain, StorageInterface &storage,
+                     Identity mining_identity, uint64_t aeon_period, uint64_t max_cabinet_size,
+                     uint64_t block_interval_ms, NotarisationPtr notarisation)
+  : storage_{storage}
+  , stake_{std::move(stake)}
   , cabinet_creator_{std::move(beacon_setup)}
   , beacon_{std::move(beacon)}
   , chain_{chain}
@@ -107,8 +107,6 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
   , notarisation_{std::move(notarisation)}
 {
   assert(stake_);
-  FETCH_UNUSED(chain_);
-
   // if notarising then must have removal of conflicting blocks of the same weight from tips in main
   // chain
   if (notarisation_ && !chain_.enable_stutter_removal_)
@@ -410,7 +408,16 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     beginning_of_aeon_ = GetBeginningOfAeon(current_block_, chain_);
   }
 
-  stake_->UpdateCurrentBlock(current_block_);
+  if (!stake_->Load(storage_))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Failure to load stake information. block: ", current_block_.block_number);
+    return;
+  }
+
+  // this might cause a trim that is not flushed to the state DB, however, on the next block the
+  // full trim will take place and the state DB will be updated.
+  stake_->UpdateCurrentBlock(current_block_.block_number);
 
   // Notify notarisation of new valid block
   if (notarisation_)
@@ -429,7 +436,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   if (ShouldTriggerNewCabinet(current_block_))
   {
     // attempt to build the cabinet from
-    auto cabinet = stake_->BuildCabinet(current_block_);
+    auto cabinet = stake_->BuildCabinet(current_block_, max_cabinet_size_);
     if (!cabinet)
     {
       FETCH_LOG_ERROR(LOGGING_NAME,
@@ -675,13 +682,27 @@ Status Consensus::ValidBlock(Block const &current) const
   return ret;
 }
 
-void Consensus::Reset(StakeSnapshot const &snapshot)
+void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
 {
-  cabinet_history_[0] = stake_->Reset(snapshot);
+  cabinet_history_[0] = stake_->Reset(snapshot, max_cabinet_size_);
 
   if (cabinet_history_.find(0) == cabinet_history_.end())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block when resetting.");
+  }
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Resetting stake aggregate...");
+
+  // additionally since we need to flush these changes to disk
+  bool const success = stake_->Save(storage);
+
+  if (success)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting stake aggregate...complete");
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Resetting stake aggregate...FAILED");
   }
 }
 
@@ -697,7 +718,6 @@ void Consensus::SetThreshold(double threshold)
 void Consensus::SetCabinetSize(uint64_t size)
 {
   max_cabinet_size_ = size;
-  stake_->SetCabinetSize(max_cabinet_size_);
 }
 
 StakeManagerPtr Consensus::stake()
@@ -708,4 +728,10 @@ StakeManagerPtr Consensus::stake()
 void Consensus::SetDefaultStartTime(uint64_t default_start_time)
 {
   default_start_time_ = default_start_time;
+}
+
+void Consensus::AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet)
+{
+  cabinet_history_[block_number] = cabinet;
+  TrimToSize(cabinet_history_, HISTORY_LENGTH);
 }

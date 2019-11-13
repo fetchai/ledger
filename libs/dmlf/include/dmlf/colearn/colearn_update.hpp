@@ -17,34 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
-#include <map>
-#include <memory>
+#include <string>
+
+#include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
-namespace chain {
+namespace dmlf {
+namespace colearn {
 
-class Address;
-
-}  // namespace chain
-namespace ledger {
-
-class StakeManagerInterface
+struct ColearnUpdate
 {
-public:
-  using BlockIndex = uint64_t;
+  using UpdateType    = std::string;
+  using Data          = byte_array::ConstByteArray;
+  using TimeStampType = std::uint64_t;
+  using Source        = std::string;
 
-  // Construction / Destruction
-  StakeManagerInterface()          = default;
-  virtual ~StakeManagerInterface() = default;
+  ColearnUpdate(UpdateType updateType, Data &&data, Source source);
 
-  /// @name Stake Manager Interface
-  /// @{
-  virtual void UpdateCurrentBlock(BlockIndex block_index) = 0;
-  /// @}
-
-private:
+  UpdateType    update_type;
+  Data          data;
+  TimeStampType time_stamp;
+  Source        source;
 };
 
-}  // namespace ledger
+}  // namespace colearn
+}  // namespace dmlf
 }  // namespace fetch
