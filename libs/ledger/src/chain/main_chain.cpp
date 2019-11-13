@@ -157,15 +157,13 @@ void MainChain::CacheReference(ParentHash &&parent, ChildHash &&child,
 {
   auto siblings{references_.equal_range(parent)};
   auto sibling_it{std::find_if(siblings.first, siblings.second,
-                               [](auto const &ref) { return ref.second == child; })};
-  for (auto sibling_it{siblings.first}; sibling_it != siblings.second; ++sibling_it)
+                               [&child](auto const &ref) { return ref.second == child; })};
+  if (sibling_it != siblings.second)
   {
-    if (sibling_it->second == child)
-    {
-      // this child has been already referred to
-      return;
-    }
+    // this child has been already referred to
+    return;
   }
+
   switch (references_.count(parent))
   {
   case 0:  // this one will be an unique forward ref
