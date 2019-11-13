@@ -143,10 +143,7 @@ std::shared_ptr<ledger::DAGInterface> GenerateDAG(
   {
     return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
   }
-  else
-  {
-    return {};
-  }
+  return {};
 }
 
 ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
