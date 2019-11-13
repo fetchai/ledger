@@ -824,6 +824,35 @@ void DAG::TraverseFromTips(std::set<DAGHash> const &            tip_hashes,
         continue;
       }
 
+      auto node_it = node_pool_.find(start);
+      if (node_it != node_pool_.end())
+      {
+        dag_node_to_add = node_it->second;
+      }
+      else
+      {
+        for(uint64_t i=1;i<=EPOCH_VALIDITY_PERIOD;++i)
+        {
+          auto epoch_idx = previous_epochs_.size()-i;
+          if (epoch_idx>=0)
+          {
+            if (previous_epochs_[epoch_idx].Contains(start))
+            {
+              dag_node_to_add = std::make_shared<DAGNode>();
+              finalised_dag_nodes_.Get(storage::ResourceID(start.hash), *dag_node_to_add);
+              break;
+            }
+          }
+        }
+      }
+      if (!dag_node_to_add)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "TraverseFromTips: unable to lookup node with hash=", start.ToBase64());
+        switch_choices.pop_back();
+        switch_hashes.pop_back();
+        continue;
+      }
+
       // Attempt to take the path specified by switch choices, else add it
       dag_node_to_add = node_pool_.at(start);
 
