@@ -178,6 +178,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string multiply    = AddOp<ops::Multiply<TensorType>>(g, {input_1, input_2});
   std::string onehot      = AddOp<ops::OneHot<TensorType>>(g, {input_1}, data1.size());
   std::string placeholder = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string prelu       = AddOp<ops::PReluOp<TensorType>>(g, {input_1, input_1});
   std::string reducemean  = AddOp<ops::ReduceMean<TensorType>>(g, {input_1}, 0);
   std::string slice       = AddOp<ops::Slice<TensorType>>(g, {input_1}, 0, 0);
   std::string sqrt        = AddOp<ops::Sqrt<TensorType>>(g, {input_1});
@@ -198,6 +199,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string randomisedrelu =
       AddOp<ops::RandomisedRelu<TensorType>>(g, {input_1}, DataType(0), DataType(1));
   std::string relu    = AddOp<ops::Relu<TensorType>>(g, {input_1});
+  std::string sigmoid = AddOp<ops::Sigmoid<TensorType>>(g, {input_1});
   std::string softmax = AddOp<ops::Softmax<TensorType>>(g, {input_1});
 
   // Loss functions
@@ -234,8 +236,8 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   g->SetInput(input_logits, data_logits);
   g->SetInput(input_logits_transpose, data_logits.Copy().Transpose());
   g->SetInput(layer_layernorm, data1);
-  g->SetInput(layer_conv1d, input_3d);
-  g->SetInput(layer_conv2d, input_4d);
+  g->SetInput(layer_conv1d, data_3d);
+  g->SetInput(layer_conv2d, data_3d);
   g->SetInput(layer_fc1, data1);
   g->SetInput(layer_mh, data1);
   g->SetInput(layer_prelu, data1);
@@ -280,8 +282,8 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   g2->SetInput(input_logits, data_logits);
   g2->SetInput(input_logits_transpose, data_logits.Copy().Transpose());
   g2->SetInput(layer_layernorm, data1);
-  g2->SetInput(layer_conv1d, input_3d);
-  g2->SetInput(layer_conv2d, input_4d);
+  g2->SetInput(layer_conv1d, data_3d);
+  g2->SetInput(layer_conv2d, data_4d);
   g2->SetInput(layer_fc1, data1);
   g2->SetInput(layer_mh, data1);
   g2->SetInput(layer_prelu, data1);
@@ -319,6 +321,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   ComparePrediction<GraphPtrType, TensorType>(g, g2, multiply);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, onehot);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, placeholder);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, prelu);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, reducemean);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, slice);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, sqrt);
@@ -338,6 +341,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   ComparePrediction<GraphPtrType, TensorType>(g, g2, logsoftmax);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, randomisedrelu);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, relu);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, sigmoid);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, softmax);
 
   // Loss functions
