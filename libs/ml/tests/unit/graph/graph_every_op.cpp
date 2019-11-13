@@ -175,8 +175,8 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
 
   // activations
   std::string dropout =
-      g.template AddNode<fetch::ml::ops::Dropout<TensorType>>(name + "_Dropout", {input_1});
-  std::string elu = g.template AddNode<fetch::ml::ops::Elu<TensorType>>(name + "_Elu", {input_1});
+      g.template AddNode<fetch::ml::ops::Dropout<TensorType>>(name + "_Dropout", {input_1}, DataType(0.9));
+  std::string elu = g.template AddNode<fetch::ml::ops::Elu<TensorType>>(name + "_Elu", {input_1}, DataType(0.9));
   std::string gelu =
       g.template AddNode<fetch::ml::ops::Gelu<TensorType>>(name + "_Gelu", {input_1});
   std::string leakyrelu =
@@ -186,7 +186,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string logsoftmax =
       g.template AddNode<fetch::ml::ops::LogSoftmax<TensorType>>(name + "_LogSoftmax", {input_1});
   std::string randomisedrelu = g.template AddNode<fetch::ml::ops::RandomisedRelu<TensorType>>(
-      name + "_RandomisedRelu", {input_1});
+      name + "_RandomisedRelu", {input_1}, DataType(0), DataType(1));
   std::string relu =
       g.template AddNode<fetch::ml::ops::Relu<TensorType>>(name + "_Relu", {input_1});
   std::string sigmoid =
@@ -229,6 +229,8 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   TensorType data2 = TensorType::FromString(R"(-20,-10, 0, 10, 20, 30)");
   g.SetInput(input_1, data1);
   g.SetInput(input_2, data2);
+
+  g.Compile();
 
   // serialise the graph
   fetch::ml::GraphSaveableParams<TypeParam>      gsp1 = g.GetGraphSaveableParams();

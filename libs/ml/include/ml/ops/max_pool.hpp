@@ -39,7 +39,7 @@ public:
   using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = OpMaxPool1DSaveableParams<T>;
+  using SPType        = OpMaxPoolSaveableParams<T>;
   using MyType        = MaxPool<TensorType>;
 
   MaxPool(SizeType const kernel_size, SizeType const stride_size)
@@ -169,7 +169,7 @@ private:
     switch (inputs.at(0)->shape().size())
     {
       // MaxPool1D
-    case 3:
+    case static_cast<SizeType>(3):
     {
       if (!pool_op_ptr_ || pool_2d_)
       {
@@ -180,7 +180,7 @@ private:
       break;
     }
       // MaxPool2D
-    case 4:
+    case static_cast<SizeType>(3):
     {
       if (!pool_op_ptr_ || !pool_2d_)
       {
