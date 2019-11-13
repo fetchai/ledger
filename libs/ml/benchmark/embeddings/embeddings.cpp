@@ -99,8 +99,9 @@ void BM_Setup_And_Train_Embeddings(::benchmark::State &state)
     // Do optimisation
     for (SizeType i = 0; i < n_epochs; ++i)
     {
-      data.FillUniformRandomIntegers(0, static_cast<int64_t>(n_datapoints));
-      optimiser.Run({data}, gt);
+      ::benchmark::DoNotOptimize(
+          data.FillUniformRandomIntegers(0, static_cast<int64_t>(n_datapoints)));
+      ::benchmark::DoNotOptimize(optimiser.Run({data}, gt));
     }
   }
 }
