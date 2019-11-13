@@ -92,18 +92,13 @@ public:
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
+    assert(inputs.at(0)->shape().size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
     UpdateIndices(inputs);
 
-    // For 1D input tensor axis remains 0
+    // For 2D input tensor we use data axis
     SizeType axis = 0;
-
-    // Set axis to be data dimension for 2D or higher
-    if (inputs.at(0)->shape().size() > 1)
-    {
-      axis = inputs.at(0)->shape().size() - 2;
-    }
 
     fetch::math::TopK<TensorType, TensorSizeType>(output, indices_, *(inputs.at(0)), k_, axis,
                                                   sorted_);
