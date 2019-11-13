@@ -96,7 +96,17 @@ public:
 
     UpdateIndices(inputs);
 
-    fetch::math::TopK<TensorType, TensorSizeType>(output, indices_, *(inputs.at(0)), k_, sorted_);
+    // For 1D input tensor axis remains 0
+    SizeType axis = 0;
+
+    // Set axis to be data dimension for 2D or higher
+    if (inputs.at(0)->shape().size() > 1)
+    {
+      axis = inputs.at(0)->shape().size() - 2;
+    }
+
+    fetch::math::TopK<TensorType, TensorSizeType>(output, indices_, *(inputs.at(0)), k_, axis,
+                                                  sorted_);
   }
 
   /**
