@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/block.hpp"
 #include "ledger/consensus/consensus.hpp"
+#include "storage/object_store.hpp"
 
 #include <string>
 
