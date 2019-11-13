@@ -61,6 +61,7 @@ AbstractLearnerNetworker::Bytes AbstractLearnerNetworker::GetUpdateAsBytes(const
   throw std::runtime_error{"Requesting GetUpdateAsBytes for unregistered type"};
 }
 
+
 void AbstractLearnerNetworker::NewMessage(Bytes const &msg)
 {
   FETCH_LOCK(queue_m_);
