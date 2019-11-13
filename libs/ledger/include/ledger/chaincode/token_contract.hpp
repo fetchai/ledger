@@ -69,15 +69,5 @@ private:
   StakeUpdateEvents stake_updates_;
 };
 
-inline void TokenContract::ExtractStakeUpdates(StakeUpdateEvents &updates)
-{
-  updates = std::move(stake_updates_);
-}
-
-inline void TokenContract::ClearStakeUpdates()
-{
-  stake_updates_.clear();
-}
-
 }  // namespace ledger
 }  // namespace fetch

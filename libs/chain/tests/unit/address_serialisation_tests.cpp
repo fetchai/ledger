@@ -17,11 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
-#include "core/byte_array/decoders.hpp"
-#include "core/byte_array/encoders.hpp"
-#include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "ledger/chain/block.hpp"
 
 #include "gtest/gtest.h"
 
@@ -34,16 +30,15 @@ namespace serializers {
 
 namespace {
 
-using namespace fetch::ledger;
 using namespace fetch::chain;
 using namespace fetch::byte_array;
 
 TEST(LedgerSerializers, address)
 {
   std::array<uint8_t, 32> raw_address{};
-  for (uint8_t i = 0; i < raw_address.size(); ++i)
+  for (std::size_t i = 0; i < raw_address.size(); ++i)
   {
-    raw_address[i] = i;
+    raw_address[i] = static_cast<uint8_t>(i);
   }
   Address a{raw_address};
   Address b;
