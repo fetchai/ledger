@@ -831,10 +831,10 @@ void DAG::TraverseFromTips(std::set<DAGHash> const &            tip_hashes,
       }
       else
       {
-        for(uint64_t i=1;i<=EPOCH_VALIDITY_PERIOD;++i)
+        for (uint64_t i = 1; i <= EPOCH_VALIDITY_PERIOD; ++i)
         {
-          auto epoch_idx = previous_epochs_.size()-i;
-          if (epoch_idx>=0)
+          auto epoch_idx = previous_epochs_.size() - i;
+          if (epoch_idx >= 0)
           {
             if (previous_epochs_[epoch_idx].Contains(start))
             {
@@ -847,7 +847,8 @@ void DAG::TraverseFromTips(std::set<DAGHash> const &            tip_hashes,
       }
       if (!dag_node_to_add)
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, "TraverseFromTips: unable to lookup node with hash=", start.ToBase64());
+        FETCH_LOG_ERROR(LOGGING_NAME,
+                        "TraverseFromTips: unable to lookup node with hash=", start.ToBase64());
         switch_choices.pop_back();
         switch_hashes.pop_back();
         continue;
