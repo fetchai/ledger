@@ -18,8 +18,8 @@
 
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
-#include "test_types.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 
 // ordinary ops
 #include "ml/ops/abs.hpp"
@@ -74,16 +74,15 @@
 #include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 
 // layers
-#include "ml/layers/normalisation/layer_norm.hpp"
+#include "ml/layers/PRelu.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/multihead_attention.hpp"
-#include "ml/layers/PRelu.hpp"
+#include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/layers/skip_gram.hpp"
-
 
 #include "gtest/gtest.h"
 
@@ -101,75 +100,129 @@ TYPED_TEST_CASE(GraphTest, math::test::TensorFloatingTypes);
 TYPED_TEST(GraphTest, graph_rebuild_every_op)
 {
   using TensorType = TypeParam;
-  using DataType = typename TensorType::Type;
+  using DataType   = typename TensorType::Type;
 
   // Create graph
   std::string                 name = "Graph";
   fetch::ml::Graph<TypeParam> g;
-  std::string input_1 = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input_1", {});
-  std::string input_2 = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input_2", {});
+  std::string                 input_1 =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input_1", {});
+  std::string input_2 =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input_2", {});
 
   // ordinary ops
   std::string abs = g.template AddNode<fetch::ml::ops::Abs<TensorType>>(name + "_Abs", {input_1});
-  std::string add = g.template AddNode<fetch::ml::ops::Add<TensorType>>(name + "_Add", {input_1, input_2});
-  std::string avg1 = g.template AddNode<fetch::ml::ops::AvgPool1D<TensorType>>(name + "_AvgPool1D", {input_1}, 1, 1);
-  std::string avg2 = g.template AddNode<fetch::ml::ops::AvgPool2D<TensorType>>(name + "_AvgPool2D", {input_1}, 1, 1);
-  std::string concat = g.template AddNode<fetch::ml::ops::Concatenate<TensorType>>(name + "_Concatenate", {input_1, input_2}, 0);
-  std::string constant = g.template AddNode<fetch::ml::ops::Constant<TensorType>>(name + "_Constant", {input_1});
-  std::string conv1d = g.template AddNode<fetch::ml::ops::Convolution1D<TensorType>>(name + "_Conv1D", {input_1});
-  std::string conv2d = g.template AddNode<fetch::ml::ops::Convolution2D<TensorType>>(name + "_Conv2D", {input_2});
-  std::string divide = g.template AddNode<fetch::ml::ops::Divide<TensorType>>(name + "_Divide", {input_1});
-  std::string embed = g.template AddNode<fetch::ml::ops::Embeddings<TensorType>>(name + "_Embeddings", {input_1}, 1, 3);
+  std::string add =
+      g.template AddNode<fetch::ml::ops::Add<TensorType>>(name + "_Add", {input_1, input_2});
+  std::string avg1 = g.template AddNode<fetch::ml::ops::AvgPool1D<TensorType>>(name + "_AvgPool1D",
+                                                                               {input_1}, 1, 1);
+  std::string avg2 = g.template AddNode<fetch::ml::ops::AvgPool2D<TensorType>>(name + "_AvgPool2D",
+                                                                               {input_1}, 1, 1);
+  std::string concat = g.template AddNode<fetch::ml::ops::Concatenate<TensorType>>(
+      name + "_Concatenate", {input_1, input_2}, 0);
+  std::string constant =
+      g.template AddNode<fetch::ml::ops::Constant<TensorType>>(name + "_Constant", {input_1});
+  std::string conv1d =
+      g.template AddNode<fetch::ml::ops::Convolution1D<TensorType>>(name + "_Conv1D", {input_1});
+  std::string conv2d =
+      g.template AddNode<fetch::ml::ops::Convolution2D<TensorType>>(name + "_Conv2D", {input_2});
+  std::string divide =
+      g.template AddNode<fetch::ml::ops::Divide<TensorType>>(name + "_Divide", {input_1});
+  std::string embed = g.template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
+      name + "_Embeddings", {input_1}, 1, 3);
   std::string exp = g.template AddNode<fetch::ml::ops::Exp<TensorType>>(name + "_Exp", {input_1});
-  std::string flatten = g.template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input_1});
-  std::string layernorm = g.template AddNode<fetch::ml::ops::LayerNorm<TensorType>>(name + "LayerNorm", {input_1});
+  std::string flatten =
+      g.template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input_1});
+  std::string layernorm =
+      g.template AddNode<fetch::ml::ops::LayerNorm<TensorType>>(name + "LayerNorm", {input_1});
   std::string log = g.template AddNode<fetch::ml::ops::Log<TensorType>>(name + "_Log", {input_1});
-  std::string maskfill = g.template AddNode<fetch::ml::ops::MaskFill<TensorType>>(name + "_MaskFill", {input_1, input_1}, DataType(0));
-  std::string matmul = g.template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(name + "_MatrixMultiply", {input_1});
-  std::string maxpool = g.template AddNode<fetch::ml::ops::MaxPool<TensorType>>(name + "_MaxPool", {input_1});
-  std::string maxpool1d = g.template AddNode<fetch::ml::ops::MaxPool1D<TensorType>>(name + "_MaxPool1D", {input_1});
-  std::string maxpool2d = g.template AddNode<fetch::ml::ops::MaxPool2D<TensorType>>(name + "_MaxPool2D", {input_1});
-  std::string maximum = g.template AddNode<fetch::ml::ops::Maximum<TensorType>>(name + "_Maximum", {input_1});
-  std::string multiply = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(name + "_Multiply", {input_1});
-  std::string onehot = g.template AddNode<fetch::ml::ops::OneHot<TensorType>>(name + "_OneHot", {input_1});
-  std::string placeholder = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_PlaceHolder", {input_1});
-  std::string reducemean = g.template AddNode<fetch::ml::ops::ReduceMean<TensorType>>(name + "_ReduceMean", {input_1});
-  std::string slice = g.template AddNode<fetch::ml::ops::Slice<TensorType>>(name + "_Slice", {input_1});
-  std::string sqrt = g.template AddNode<fetch::ml::ops::Sqrt<TensorType>>(name + "_Sqrt", {input_1});
-  std::string squeeze = g.template AddNode<fetch::ml::ops::Squeeze<TensorType>>(name + "_Squeeze", {input_1});
-  std::string switchop = g.template AddNode<fetch::ml::ops::Switch<TensorType>>(name + "_Switch", {input_1});
-  std::string tanh = g.template AddNode<fetch::ml::ops::TanH<TensorType>>(name + "_TanH", {input_1});
-  std::string transpose = g.template AddNode<fetch::ml::ops::Transpose<TensorType>>(name + "_Transpose", {input_1});
-  std::string topk = g.template AddNode<fetch::ml::ops::TopK<TensorType>>(name + "_TopK", {input_1});
-  std::string weights = g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {input_1});
+  std::string maskfill = g.template AddNode<fetch::ml::ops::MaskFill<TensorType>>(
+      name + "_MaskFill", {input_1, input_1}, DataType(0));
+  std::string matmul = g.template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
+      name + "_MatrixMultiply", {input_1});
+  std::string maxpool =
+      g.template AddNode<fetch::ml::ops::MaxPool<TensorType>>(name + "_MaxPool", {input_1}, 1, 1);
+  std::string maxpool1d = g.template AddNode<fetch::ml::ops::MaxPool1D<TensorType>>(
+      name + "_MaxPool1D", {input_1}, 1, 1);
+  std::string maxpool2d = g.template AddNode<fetch::ml::ops::MaxPool2D<TensorType>>(
+      name + "_MaxPool2D", {input_1}, 1, 1);
+  std::string maximum =
+      g.template AddNode<fetch::ml::ops::Maximum<TensorType>>(name + "_Maximum", {input_1});
+  std::string multiply =
+      g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(name + "_Multiply", {input_1});
+  std::string onehot =
+      g.template AddNode<fetch::ml::ops::OneHot<TensorType>>(name + "_OneHot", {input_1}, 2);
+  std::string placeholder =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_PlaceHolder", {input_1});
+  std::string reducemean = g.template AddNode<fetch::ml::ops::ReduceMean<TensorType>>(
+      name + "_ReduceMean", {input_1}, 0);
+  std::string slice =
+      g.template AddNode<fetch::ml::ops::Slice<TensorType>>(name + "_Slice", {input_1}, 0, 0);
+  std::string sqrt =
+      g.template AddNode<fetch::ml::ops::Sqrt<TensorType>>(name + "_Sqrt", {input_1});
+  std::string squeeze =
+      g.template AddNode<fetch::ml::ops::Squeeze<TensorType>>(name + "_Squeeze", {input_1});
+  std::string switchop =
+      g.template AddNode<fetch::ml::ops::Switch<TensorType>>(name + "_Switch", {input_1});
+  std::string tanh =
+      g.template AddNode<fetch::ml::ops::TanH<TensorType>>(name + "_TanH", {input_1});
+  std::string transpose =
+      g.template AddNode<fetch::ml::ops::Transpose<TensorType>>(name + "_Transpose", {input_1});
+  std::string topk =
+      g.template AddNode<fetch::ml::ops::TopK<TensorType>>(name + "_TopK", {input_1}, 2);
+  std::string weights =
+      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {input_1});
 
   // activations
-  std::string dropout = g.template AddNode<fetch::ml::ops::Dropout<TensorType>>(name + "_Dropout", {input_1});
+  std::string dropout =
+      g.template AddNode<fetch::ml::ops::Dropout<TensorType>>(name + "_Dropout", {input_1});
   std::string elu = g.template AddNode<fetch::ml::ops::Elu<TensorType>>(name + "_Elu", {input_1});
-  std::string gelu = g.template AddNode<fetch::ml::ops::Gelu<TensorType>>(name + "_Gelu", {input_1});
-  std::string leakyrelu = g.template AddNode<fetch::ml::ops::LeakyRelu<TensorType>>(name + "_LeakyRelu", {input_1});
-  std::string logsigmoid = g.template AddNode<fetch::ml::ops::LogSigmoid<TensorType>>(name + "_LogSigmoid", {input_1});
-  std::string logsoftmax = g.template AddNode<fetch::ml::ops::LogSoftmax<TensorType>>(name + "_LogSoftmax", {input_1});
-  std::string randomisedrelu = g.template AddNode<fetch::ml::ops::RandomisedRelu<TensorType>>(name + "_RandomisedRelu", {input_1});
-  std::string relu = g.template AddNode<fetch::ml::ops::Relu<TensorType>>(name + "_Relu", {input_1});
-  std::string sigmoid = g.template AddNode<fetch::ml::ops::Sigmoid<TensorType>>(name + "_Sigmoid", {input_1});
-  std::string softmax = g.template AddNode<fetch::ml::ops::Softmax<TensorType>>(name + "_Softmax", {input_1});
+  std::string gelu =
+      g.template AddNode<fetch::ml::ops::Gelu<TensorType>>(name + "_Gelu", {input_1});
+  std::string leakyrelu =
+      g.template AddNode<fetch::ml::ops::LeakyRelu<TensorType>>(name + "_LeakyRelu", {input_1});
+  std::string logsigmoid =
+      g.template AddNode<fetch::ml::ops::LogSigmoid<TensorType>>(name + "_LogSigmoid", {input_1});
+  std::string logsoftmax =
+      g.template AddNode<fetch::ml::ops::LogSoftmax<TensorType>>(name + "_LogSoftmax", {input_1});
+  std::string randomisedrelu = g.template AddNode<fetch::ml::ops::RandomisedRelu<TensorType>>(
+      name + "_RandomisedRelu", {input_1});
+  std::string relu =
+      g.template AddNode<fetch::ml::ops::Relu<TensorType>>(name + "_Relu", {input_1});
+  std::string sigmoid =
+      g.template AddNode<fetch::ml::ops::Sigmoid<TensorType>>(name + "_Sigmoid", {input_1});
+  std::string softmax =
+      g.template AddNode<fetch::ml::ops::Softmax<TensorType>>(name + "_Softmax", {input_1});
 
   // Loss functions
-  std::string cel = g.template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(name + "_CEL", {input_1});
-  std::string mse = g.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(name + "_MSE", {input_1});
-  std::string scel = g.template AddNode<fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>>(name + "_SCEL", {input_1});
+  std::string cel =
+      g.template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(name + "_CEL", {input_1});
+  std::string mse =
+      g.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(name + "_MSE", {input_1});
+  std::string scel = g.template AddNode<fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>>(
+      name + "_SCEL", {input_1});
 
   // Layers
-  std::string layer_layernorm = g.template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(name + "_LayerNorm", {input_1});
-  std::string layer_conv1d = g.template AddNode<fetch::ml::layers::Convolution1D<TensorType>>(name + "_Convolution1D", {input_1});
-  std::string layer_conv2d = g.template AddNode<fetch::ml::layers::Convolution2D<TensorType>>(name + "__Convolution2D", {input_1});
-  std::string layer_fc1 = g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(name + "_FC1", {input_1});
-  std::string layer_mh = g.template AddNode<fetch::ml::layers::MultiheadAttention<TensorType>>(name + "_MultiHead", {input_1});
-  std::string layer_prelu = g.template AddNode<fetch::ml::layers::PRelu<TensorType>>(name + "_PRELU", {input_1});
-  std::string layer_scaleddotproductattention = g.template AddNode<fetch::ml::layers::ScaledDotProductAttention<TensorType>>(name + "_ScaledDotProductAttention", {input_1});
-  std::string layer_selfattentionencoder = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TensorType>>(name + "_SelfAttentionEncoder", {input_1});
-  std::string layer_skipgram = g.template AddNode<fetch::ml::layers::SkipGram<TensorType>>(name + "_SkipGram", {input_1});
+  std::string layer_layernorm =
+      g.template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(name + "_LayerNorm", {input_1});
+  std::string layer_conv1d = g.template AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
+      name + "_Convolution1D", {input_1});
+  std::string layer_conv2d = g.template AddNode<fetch::ml::layers::Convolution2D<TensorType>>(
+      name + "__Convolution2D", {input_1});
+  std::string layer_fc1 =
+      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(name + "_FC1", {input_1});
+  std::string layer_mh = g.template AddNode<fetch::ml::layers::MultiheadAttention<TensorType>>(
+      name + "_MultiHead", {input_1});
+  std::string layer_prelu =
+      g.template AddNode<fetch::ml::layers::PRelu<TensorType>>(name + "_PRELU", {input_1});
+  std::string layer_scaleddotproductattention =
+      g.template AddNode<fetch::ml::layers::ScaledDotProductAttention<TensorType>>(
+          name + "_ScaledDotProductAttention", {input_1});
+  std::string layer_selfattentionencoder =
+      g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TensorType>>(
+          name + "_SelfAttentionEncoder", {input_1});
+  std::string layer_skipgram =
+      g.template AddNode<fetch::ml::layers::SkipGram<TensorType>>(name + "_SkipGram", {input_1});
 
   // Generate input
   TensorType data1 = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4)");
@@ -187,32 +240,30 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   b.Deserialize(*gsp2);
   EXPECT_EQ(gsp1.connections, gsp2->connections);
 
-//  for (auto const &gsp2_node_pair : gsp2->nodes)
-//  {
-//    auto gsp2_node = gsp2_node_pair.second;
-//    auto gsp1_node = gsp1.nodes[gsp2_node_pair.first];
-//
-//    EXPECT_TRUE(gsp1_node->operation_type == gsp2_node->operation_type);
-//  }
-//
-//  auto g2 = std::make_shared<GraphType>();
-//  fetch::ml::utilities::BuildGraph<TensorType>(*gsp2, g2);
-//
-//  TensorType data   = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
-//  TensorType labels = TensorType::FromString("1; 2; 3; 4; 5; 6; 7; 8; 9; 100");
-//
-//  g->SetInput("Input", data.Transpose());
-//  g2->SetInput("Input", data.Transpose());
-//
-//  TensorType prediction  = g->Evaluate(output);
-//  TensorType prediction2 = g2->Evaluate(output);
-//
-//  // test correct values
-//  EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
-//                                  fetch::math::function_tolerance<DataType>()));
-
+  //  for (auto const &gsp2_node_pair : gsp2->nodes)
+  //  {
+  //    auto gsp2_node = gsp2_node_pair.second;
+  //    auto gsp1_node = gsp1.nodes[gsp2_node_pair.first];
+  //
+  //    EXPECT_TRUE(gsp1_node->operation_type == gsp2_node->operation_type);
+  //  }
+  //
+  //  auto g2 = std::make_shared<GraphType>();
+  //  fetch::ml::utilities::BuildGraph<TensorType>(*gsp2, g2);
+  //
+  //  TensorType data   = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
+  //  TensorType labels = TensorType::FromString("1; 2; 3; 4; 5; 6; 7; 8; 9; 100");
+  //
+  //  g->SetInput("Input", data.Transpose());
+  //  g2->SetInput("Input", data.Transpose());
+  //
+  //  TensorType prediction  = g->Evaluate(output);
+  //  TensorType prediction2 = g2->Evaluate(output);
+  //
+  //  // test correct values
+  //  EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+  //                                  fetch::math::function_tolerance<DataType>()));
 }
-
 
 }  // namespace test
 }  // namespace ml
