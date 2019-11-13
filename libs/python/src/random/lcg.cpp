@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -18,12 +17,25 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "python/fetch_pybind.hpp"
+#include "python/random/lcg.hpp"
 
 namespace fetch {
 namespace random {
 
-void BuildLinearCongruentialGenerator(pybind11::module &module);
+void BuildLinearCongruentialGenerator(pybind11::module &module)
+{
+  namespace py = pybind11;
+  py::class_<LinearCongruentialGenerator>(module, "LinearCongruentialGenerator")
+      .def(py::init<>()) /* No constructors found */
+      .def("Reset", &LinearCongruentialGenerator::Reset)
+      .def("operator()", &LinearCongruentialGenerator::operator())
+      .def("Seed", static_cast<uint64_t (LinearCongruentialGenerator::*)() const>(
+                       &LinearCongruentialGenerator::Seed))
+      .def("Seed", static_cast<uint64_t (LinearCongruentialGenerator::*)(
+                       fetch::random::LinearCongruentialGenerator::RandomType const &)>(
+                       &LinearCongruentialGenerator::Seed))
+      .def("AsDouble", &LinearCongruentialGenerator::AsDouble);
+}
 
 }  // namespace random
 }  // namespace fetch
