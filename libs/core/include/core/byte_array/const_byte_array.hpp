@@ -376,18 +376,7 @@ protected:
   void Resize(std::size_t n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
               bool const zero_reserved_space = true)
   {
-    std::size_t new_length{0};
-
-    switch (resize_paradigm)
-    {
-    case ResizeParadigm::RELATIVE:
-      new_length = length_ + n;
-      break;
-
-    case ResizeParadigm::ABSOLUTE:
-      new_length = n;
-      break;
-    }
+    std::size_t const new_length = resize_paradigm == ResizeParadigm::ABSOLUTE ? n : length_ + n;
 
     auto const new_capacity_for_reserve = start_ + new_length;
 
@@ -417,18 +406,8 @@ protected:
   void Reserve(std::size_t n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
                bool const zero_reserved_space = true)
   {
-    std::size_t new_capacity_for_reserve{0};
-
-    switch (resize_paradigm)
-    {
-    case ResizeParadigm::RELATIVE:
-      new_capacity_for_reserve = data_.size() + n;
-      break;
-
-    case ResizeParadigm::ABSOLUTE:
-      new_capacity_for_reserve = n;
-      break;
-    }
+    std::size_t const new_capacity_for_reserve =
+        resize_paradigm == ResizeParadigm::ABSOLUTE ? n : data_.size() + n;
 
     if (new_capacity_for_reserve <= data_.size())
     {
