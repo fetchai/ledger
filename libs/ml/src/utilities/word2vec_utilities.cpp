@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,12 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "python/fetch_pybind.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 
 namespace fetch {
-namespace byte_array {
+namespace ml {
+namespace utilities {
 
-void BuildConstByteArray(pybind11::module &module);
+std::string ReadFile(std::string const &path)
+{
+  std::ifstream t(path);
+  if (t.fail())
+  {
+    throw ml::exceptions::InvalidFile("Cannot open file " + path);
+  }
 
-}  // namespace byte_array
+  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+}
+
+}  // namespace utilities
+}  // namespace ml
 }  // namespace fetch
