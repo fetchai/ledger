@@ -169,9 +169,14 @@ public:
     ClassInterface &CreateMemberFunction(std::string const &name, Callable callable,
                                          ChargeAmount static_charge = 1)
     {
-      using Traits        = typename meta::CallableTraits<Callable>;
-      using EtchParams    = typename Traits::ArgsTupleType;
-      using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
+      using Traits     = typename meta::CallableTraits<Callable>;
+      using EtchParams = typename Traits::ArgsTupleType;
+      using OwningType = typename Traits::OwningType;
+
+      using EstimatorArgs =
+          typename meta::Tuple<EtchParams>::template Prepend<std::tuple<Ptr<OwningType>>>::type;
+
+      using EstimatorType = meta::UnpackTuple<EstimatorArgs, ChargeEstimator>;
 
       return InternalCreateMemberFunction(name, callable, static_charge, EstimatorType{});
     }
@@ -181,13 +186,6 @@ public:
                                          Estimator estimator)
     {
       return InternalCreateMemberFunction(name, callable, 0, estimator);
-    }
-
-    template <typename Estimator, typename Callable>
-    ClassInterface &NewCreateMemberFunction(std::string const &name, Callable callable,
-                                            Estimator estimator)
-    {
-      return InternalNewCreateMemberFunction(name, callable, 0, estimator);
     }
 
     ClassInterface &EnableOperator(Operator op)
@@ -228,8 +226,8 @@ public:
                                         ChargeAmount static_setter_charge = 1)
     {
       return InternalEnableIndexOperator(getter, setter, static_getter_charge, static_setter_charge,
-                                         ChargeEstimator<GetterArgs...>{},
-                                         ChargeEstimator<SetterArgs...>{});
+                                         ChargeEstimator<Ptr<Type> const &, GetterArgs...>{},
+                                         ChargeEstimator<Ptr<Type> const &, SetterArgs...>{});
     }
 
     template <typename GetterReturnType, typename... GetterArgs, typename SetterReturnType,
@@ -239,9 +237,9 @@ public:
                                         GetterEstimator getter_estimator,
                                         SetterEstimator setter_estimator)
     {
-      return InternalEnableIndexOperator(getter, setter, 0, 0,
-                                         ChargeEstimator<GetterArgs...>{getter_estimator},
-                                         ChargeEstimator<SetterArgs...>{setter_estimator});
+      return InternalEnableIndexOperator(
+          getter, setter, 0, 0, ChargeEstimator<Ptr<Type> const &, GetterArgs...>{getter_estimator},
+          ChargeEstimator<Ptr<Type> const &, SetterArgs...>{setter_estimator});
     }
 
     template <typename InstantiationType>
@@ -390,34 +388,6 @@ public:
     {
       using EtchParams = typename meta::CallableTraits<Callable>::ArgsTupleType;
       using ReturnType = typename meta::CallableTraits<Callable>::ReturnType;
-
-      TypeIndex const type_index__ = type_index_;
-      TypeIndexArray  parameter_type_index_array;
-      UnrollTupleParameterTypes<EtchParams>::Unroll(parameter_type_index_array);
-      TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
-
-      Handler handler = [callable, estimator](VM *vm) {
-        using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
-        MemberFunction<EtchParams>::InvokeHandler(vm, EstimatorType{estimator}, callable);
-      };
-
-      auto compiler_setup_function = [type_index__, name, parameter_type_index_array,
-                                      return_type_index, handler,
-                                      static_charge](Compiler *compiler) {
-        compiler->CreateMemberFunction(type_index__, name, parameter_type_index_array,
-                                       return_type_index, handler, static_charge);
-      };
-      module_->AddCompilerSetupFunction(compiler_setup_function);
-
-      return *this;
-    }
-
-    template <typename Estimator, typename Callable>
-    ClassInterface &InternalNewCreateMemberFunction(std::string const &name, Callable callable,
-                                                    ChargeAmount static_charge, Estimator estimator)
-    {
-      using EtchParams = typename meta::CallableTraits<Callable>::ArgsTupleType;
-      using ReturnType = typename meta::CallableTraits<Callable>::ReturnType;
       using OwningType = typename meta::CallableTraits<Callable>::OwningType;
 
       TypeIndex const type_index__ = type_index_;
@@ -426,9 +396,10 @@ public:
       TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
 
       Handler handler = [callable, estimator](VM *vm) {
-        using EstimatorParams = internal::PrependedTuple<Ptr<OwningType>, EtchParams>;
-        using EstimatorType   = meta::UnpackTuple<EstimatorParams, ChargeEstimator>;
-        NewMemberFunction<EtchParams>::InvokeHandler(vm, EstimatorType{estimator}, callable);
+        using EstimatorParams =
+            typename meta::Tuple<EtchParams>::template Prepend<std::tuple<Ptr<OwningType>>>::type;
+        using EstimatorType = meta::UnpackTuple<EstimatorParams, ChargeEstimator>;
+        MemberFunction<EtchParams>::InvokeHandler(vm, EstimatorType{estimator}, callable);
       };
 
       auto compiler_setup_function = [type_index__, name, parameter_type_index_array,

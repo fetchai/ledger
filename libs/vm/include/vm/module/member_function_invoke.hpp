@@ -32,44 +32,56 @@ namespace vm {
 template <int sp_offset, typename ReturnType, typename Callable, typename ArgsTuple>
 struct VmMemberFunctionInvoker
 {
-  static void Invoke(VM *vm, ArgsTuple &&arguments, Callable &&callable)
+  template <typename Estimator>
+  static void Invoke(VM *vm, Estimator &&estimator, ArgsTuple &&arguments, Callable &&callable)
   {
     using OwningType  = typename meta::CallableTraits<Callable>::OwningType;
     auto const offset = sp_offset + 1;
 
-    Variant &       v      = vm->stack_[vm->sp_ - offset];
-    Ptr<OwningType> object = std::move(v.object);
-    if (object)
+    Variant &       v       = vm->stack_[vm->sp_ - offset];
+    Ptr<OwningType> context = std::move(v.object);
+    if (!context)
     {
-      ReturnType result         = meta::Apply(std::forward<Callable>(callable), *object,
+      vm->RuntimeError("null reference");
+      return;
+    }
+
+    auto estimator_args_tuple = std::tuple_cat(std::make_tuple(context), arguments);
+    if (EstimateCharge(vm, std::forward<Estimator>(estimator), std::move(estimator_args_tuple)))
+    {
+      ReturnType result         = meta::Apply(std::forward<Callable>(callable), *context,
                                       std::forward<ArgsTuple>(arguments));
       auto const return_type_id = vm->instruction_->type_id;
       StackSetter<ReturnType>::Set(vm, offset, std::move(result), return_type_id);
       vm->sp_ -= offset;
-      return;
     }
-    vm->RuntimeError("null reference");
   }
 };
 
 template <int sp_offset, typename Callable, typename ArgsTuple>
 struct VmMemberFunctionInvoker<sp_offset, void, Callable, ArgsTuple>
 {
-  static void Invoke(VM *vm, ArgsTuple &&arguments, Callable &&callable)
+  template <typename Estimator>
+  static void Invoke(VM *vm, Estimator &&estimator, ArgsTuple &&arguments, Callable &&callable)
   {
     using OwningType  = typename meta::CallableTraits<Callable>::OwningType;
     auto const offset = sp_offset + 1;
 
-    Variant &       v      = vm->stack_[vm->sp_ - offset + 1];
-    Ptr<OwningType> object = std::move(v.object);
-    if (object)
+    Variant &       v       = vm->stack_[vm->sp_ - offset + 1];
+    Ptr<OwningType> context = std::move(v.object);
+    if (!context)
     {
-      meta::Apply(std::forward<Callable>(callable), *object, std::forward<ArgsTuple>(arguments));
-      v.Reset();
-      vm->sp_ -= offset;
+      vm->RuntimeError("null reference");
       return;
     }
-    vm->RuntimeError("null reference");
+
+    auto estimator_args_tuple = std::tuple_cat(std::make_tuple(context), arguments);
+    if (EstimateCharge(vm, std::forward<Estimator>(estimator), std::move(estimator_args_tuple)))
+    {
+      meta::Apply(std::forward<Callable>(callable), *context, std::forward<ArgsTuple>(arguments));
+      v.Reset();
+      vm->sp_ -= offset;
+    }
   }
 };
 
