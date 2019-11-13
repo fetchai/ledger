@@ -16,22 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/constants.hpp"
-#include "core/byte_array/decoders.hpp"
-#include "core/digest.hpp"
+#include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
-using byte_array::FromBase64;
+ContractContextAttacher::ContractContextAttacher(Contract &contract, ContractContext context)
+  : contract_{contract}
+{
+  contract_.Attach(std::move(context));
+}
 
-uint64_t STAKE_WARM_UP_PERIOD   = 100;
-uint64_t STAKE_COOL_DOWN_PERIOD = 100;
+ContractContextAttacher::~ContractContextAttacher()
+{
+  contract_.Detach();
+}
 
-Digest GENESIS_DIGEST      = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-Digest GENESIS_MERKLE_ROOT = FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
-
-const Digest ZERO_HASH = Digest(HASH_SIZE);
-
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

@@ -200,7 +200,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
         block_store_->Set(storage::ResourceID(record.hash()), record);
       }
       // before checking for this block's children in storage, reset next_hash to genesis
-      record.next_hash = chain::GENESIS_DIGEST;
+      record.next_hash = Digest{};
     }
   }
   record.block = *block;
@@ -485,8 +485,8 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
   for (BlockHash current_hash{std::move(start)};
        // check for returned subchain size
        result.size() < lim
-       // genesis as the next hash designates the tip of the chain
-       && current_hash != chain::GENESIS_DIGEST
+       // empty next hash designates the tip of the chain
+       && !current_hash.empty()
        // look up the block in storage
        && LoadBlock(current_hash, block, &next_hash);
        // walk the stack
@@ -1483,11 +1483,11 @@ bool MainChain::ReindexTips()
 MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 {
   auto genesis           = std::make_shared<Block>();
-  genesis->previous_hash = chain::GENESIS_DIGEST;
+  genesis->previous_hash = chain::ZERO_HASH;
+  genesis->hash          = chain::GENESIS_DIGEST;
   genesis->merkle_hash   = chain::GENESIS_MERKLE_ROOT;
   genesis->miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose      = false;
-  genesis->UpdateDigest();
 
   return genesis;
 }
@@ -1555,7 +1555,7 @@ MainChain::BlockHash MainChain::GetHeadHash()
 
 void MainChain::SetHeadHash(BlockHash const &hash)
 {
-  assert(hash.size() == 32);
+  assert(hash.size() == chain::HASH_SIZE);
 
   // move to the beginning of the file and write out the hash
   head_store_.seekp(0);
@@ -1659,6 +1659,8 @@ constexpr char const *ToString(BlockStatus status)
     return "Duplicate";
   case BlockStatus::INVALID:
     return "Invalid";
+  default:
+    return "Unknown";
   }
 }
 
