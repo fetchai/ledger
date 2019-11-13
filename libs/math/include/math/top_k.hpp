@@ -34,20 +34,23 @@ namespace math {
  */
 template <typename ArrayDataType, typename ArrayIndicesType>
 void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType const &data,
-          typename ArrayDataType::SizeType k, bool sorted = true)
+          typename ArrayDataType::SizeType k, bool sorted = true,
+          fetch::math::SizeType axis = std::numeric_limits<SizeType>::max())
 {
   using DataType  = typename ArrayDataType::Type;
   using IndexType = typename ArrayIndicesType::Type;
 
   assert(k <= data.shape().at(data.shape().size() - 1));
 
-  SizeType axis;
-
   // Set axis to be data dimension
   // 2D or higher
   if (data.shape().size() > 1)
   {
-    axis = data.shape().size() - 2;
+    // Default value
+    if (axis == std::numeric_limits<SizeType>::max())
+    {
+      axis = data.shape().size() - 2;
+    }
   }
   // 1D
   else
@@ -124,19 +127,21 @@ void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType 
  * @return std::pair<ArrayDataType,ArrayIndicesType>
  */
 template <typename ArrayDataType, typename ArrayIndicesType>
-std::pair<ArrayDataType, ArrayIndicesType> TopK(ArrayDataType const &            data,
-                                                typename ArrayDataType::SizeType k,
-                                                bool                             sorted = true)
+std::pair<ArrayDataType, ArrayIndicesType> TopK(
+    ArrayDataType const &data, typename ArrayDataType::SizeType k, bool sorted = true,
+    fetch::math::SizeType axis = std::numeric_limits<SizeType>::max())
 {
   assert(k <= data.shape().at(data.shape().size() - 1));
-
-  SizeType axis;
 
   // Set axis to be data dimension
   // 2D or higher
   if (data.shape().size() > 1)
   {
-    axis = data.shape().size() - 2;
+    // Default value
+    if (axis == std::numeric_limits<SizeType>::max())
+    {
+      axis = data.shape().size() - 2;
+    }
   }
   // 1D
   else
