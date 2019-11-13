@@ -49,11 +49,12 @@ public:
     MOD_BITWISE = (1ull << 2ull),
     MOD_ML      = (1ull << 3ull),
     MOD_LEDGER  = (1ull << 4ull),
+    MOD_DMLF    = (1ull << 5ull),
   };
 
   enum UseCases : uint64_t
   {
-    USE_SMART_CONTRACTS = (MOD_CORE | MOD_MATH | MOD_ML | MOD_BITWISE | MOD_LEDGER),
+    USE_SMART_CONTRACTS = (MOD_CORE | MOD_MATH | MOD_ML | MOD_BITWISE | MOD_LEDGER | MOD_DMLF),
     USE_ALL             = (~uint64_t(0)),
   };
 

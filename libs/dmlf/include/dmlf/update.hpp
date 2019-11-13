@@ -43,6 +43,7 @@ public:
   using TimeStampType    = UpdateInterface::TimeStampType;
   using Fingerprint      = UpdateInterface::Fingerprint;
   using HashType         = byte_array::ConstByteArray;
+  using PubKeyB64        = std::string;
   using ReverseVocabType = std::vector<std::string>;
 
   using Payload = VectorTensor;
@@ -65,7 +66,7 @@ public:
   {}
 
   ~Update() override = default;
-
+  
   byte_array::ByteArray Serialise() override
   {
     serializers::LargeObjectSerializeHelper serializer;
@@ -94,6 +95,16 @@ public:
   {
     return fingerprint_;
   }
+  
+  void SetSource(PubKeyB64 public_key)
+  {
+    source_ = std::move(public_key);
+  }
+
+  PubKeyB64 const& GetSource()
+  {
+    return source_;
+  }
 
   virtual VectorTensor const &GetGradients() const
   {
@@ -110,10 +121,17 @@ public:
     return vocab_;
   }
 
-  Update(Update const &other) = delete;
-  Update &operator=(Update const &other)  = delete;
-  bool    operator==(Update const &other) = delete;
-  bool    operator<(Update const &other)  = delete;
+  Update(Update const &other) 
+  {
+    this->stamp_ = other.stamp_;
+    this->gradients_ = other.gradients_;
+    this->fingerprint_ = other.fingerprint_;
+    this->hash_ = other.hash_;
+    this->source_ = other.source_;
+    this->vocab_ = other.vocab_;
+  }
+
+  Update &operator=(Update const &other) = delete;
 
 protected:
 private:
@@ -134,6 +152,7 @@ private:
   TimeStampType stamp_;
   VectorTensor  gradients_;
   Fingerprint   fingerprint_;
+  PubKeyB64     source_;
 
   HashType         hash_;
   ReverseVocabType vocab_;
@@ -154,16 +173,19 @@ public:
   static uint8_t const GRADIENTS   = 2;
   static uint8_t const FINGERPRINT = 3;
   static uint8_t const HASH        = 4;
-  static uint8_t const VOCAB       = 5;
+  static uint8_t const SOURCE      = 5;
+  static uint8_t const VOCAB       = 6;
+  
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &update)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(6);
     map.Append(TIME_STAMP, update.stamp_);
     map.Append(GRADIENTS, update.gradients_);
     map.Append(FINGERPRINT, update.fingerprint_);
     map.Append(HASH, update.hash_);
+    map.Append(SOURCE, update.source_);
     map.Append(VOCAB, update.vocab_);
   }
 
@@ -174,6 +196,7 @@ public:
     map.ExpectKeyGetValue(GRADIENTS, update.gradients_);
     map.ExpectKeyGetValue(FINGERPRINT, update.fingerprint_);
     map.ExpectKeyGetValue(HASH, update.hash_);
+    map.ExpectKeyGetValue(SOURCE, update.source_);
     map.ExpectKeyGetValue(VOCAB, update.vocab_);
   }
 };

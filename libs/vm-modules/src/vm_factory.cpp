@@ -31,6 +31,7 @@
 #include "vm_modules/ml/ml.hpp"
 #include "vm_modules/polyfill/bitshifting.hpp"
 #include "vm_modules/polyfill/bitwise_ops.hpp"
+#include "vm_modules/dmlf/dmlf.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include <cstdint>
@@ -118,6 +119,12 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
   if ((MOD_ML & enabled) != 0u)
   {
     ml::BindML(*module);
+  }
+
+  // dmlf modules
+  if ((MOD_DMLF & enabled) != 0u)
+  {
+    dmlf::BindDMLF(*module);
   }
 
   // ledger modules

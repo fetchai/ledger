@@ -22,7 +22,8 @@ target_link_libraries(fetch-vm-modules
                              fetch-ml
                              fetch-json
                              fetch-variant
-                             fetch-logging)
+                             fetch-logging
+                             fetch-dmlf)
 
 add_test_target()
 
