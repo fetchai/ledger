@@ -92,15 +92,14 @@ public:
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
+
+    // Only 2D input is supported
     assert(inputs.at(0)->shape().size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
     UpdateIndices(inputs);
 
-    // For 2D input tensor we use data axis
-    SizeType axis = 0;
-
-    fetch::math::TopK<TensorType, TensorSizeType>(output, indices_, *(inputs.at(0)), k_, axis,
+    fetch::math::TopK<TensorType, TensorSizeType>(output, indices_, *(inputs.at(0)), k_, axis_,
                                                   sorted_);
   }
 
@@ -114,8 +113,10 @@ public:
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override
   {
-    FETCH_UNUSED(error_signal);
     assert(inputs.size() == 1);
+
+    // Only 2D input is supported
+    assert(inputs.at(0)->shape().size() == 2);
 
     // Forward needs to be run first
     assert(indices_.size() != 0);
@@ -124,37 +125,12 @@ public:
 
     TensorType ret_signal(inputs.at(0)->shape());
 
-    switch (error_signal.shape().size())
+    for (SizeType i{0}; i < error_signal.shape().at(0); i++)
     {
-
-    // 1D
-    case 1:
-    {
-      for (SizeType i{0}; i < error_signal.shape().at(0); i++)
+      for (SizeType j{0}; j < error_signal.shape().at(1); j++)
       {
-        ret_signal.At(indices_.At(i)) = error_signal.At(i);
+        ret_signal.At(indices_.At(i, j), j) = error_signal.At(i, j);
       }
-      break;
-    }
-
-    // 2D
-    case 2:
-    {
-      for (SizeType i{0}; i < error_signal.shape().at(0); i++)
-      {
-        for (SizeType j{0}; j < error_signal.shape().at(1); j++)
-        {
-          ret_signal.At(indices_.At(i, j), j) = error_signal.At(i, j);
-        }
-      }
-      break;
-    }
-
-    default:
-    {
-      throw exceptions::InvalidMode("Backward pass for more than 2D array not supported yet.");
-    }
-    break;
     }
 
     return {ret_signal};
@@ -185,7 +161,9 @@ public:
   static constexpr char const *DESCRIPTOR = "TopK";
 
 private:
-  SizeType       k_;
+  SizeType k_;
+  // For 2D input tensor we use data axis
+  SizeType       axis_ = 0;
   bool           sorted_;
   TensorSizeType indices_;
 
