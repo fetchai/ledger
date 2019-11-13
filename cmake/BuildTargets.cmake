@@ -310,7 +310,7 @@ function (configure_library_targets)
   file(GLOB children RELATIVE ${library_root} ${library_root}/*)
 
   if (APPLE)
-  # Temporarily disable oef builds
+    # Temporarily disable oef builds
     list(FILTER
          children
          EXCLUDE
