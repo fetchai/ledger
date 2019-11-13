@@ -1958,7 +1958,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   // lhs->IsLVExpression()
   // lhs->IsRVExpression()
   // e.g.
-  // null()a
+  // null()
   // {3, 4, 5}()
   // variable()
   // (a + b)()
