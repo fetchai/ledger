@@ -50,10 +50,6 @@ struct IRType
     template_parameter_types.clear();
   }
 
-  bool IsNull() const
-  {
-    return (name == "Null");
-  }
   bool IsVoid() const
   {
     return (name == "Void");
@@ -81,6 +77,10 @@ struct IRType
   bool IsInstantiation() const
   {
     return IsTemplateInstantiation() || IsUserDefinedTemplateInstantiation();
+  }
+  bool IsUserDefinedContract() const
+  {
+    return (type_kind == TypeKind::UserDefinedContract);
   }
 
   TypeKind       type_kind{TypeKind::Unknown};

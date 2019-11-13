@@ -321,11 +321,6 @@ bool String::DeserializeFrom(MsgPackSerializer &buffer)
   return true;
 }
 
-bool String::IsTemporary() const
-{
-  return RefCount() == 1;
-}
-
 void String::UpdateString(std::string str)
 {
   utf8_str_ = Utf8String{std::move(str)};
