@@ -67,7 +67,7 @@ void UpdateStore::PushUpdate(Algorithm const &algo, UpdateType type, Data &&data
     queue_it = algo_map_.emplace(id, Queue()).first;
   }
 
-  queue_it->second.push(std::make_shared<Update>(std::move(algo), std::move(type), std::move(data),
+  queue_it->second.push(std::make_shared<Update>(algo, std::move(type), std::move(data),
                                                  std::move(source), std::move(metadata)));
 }
 UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType const &type,
