@@ -36,7 +36,7 @@ void TrustedDealerSetupService::StartNewCabinet(
     BlockEntropy const &prev_entropy, DkgOutput const &output,
     std::pair<SharedNotarisationManager, CabinetNotarisationKeys> notarisation_keys)
 {
-  uint64_t round_end = round_start + aeon_period_ - 1;
+  uint64_t round_end = round_start + aeon_period_;
   auto     diff_time =
       int64_t(GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))) -
       int64_t(start_time);

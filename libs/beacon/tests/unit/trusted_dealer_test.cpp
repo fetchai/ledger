@@ -185,7 +185,7 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
 
       // Note, to avoid limiting the 'look ahead' entropy gen, set the block to ahead of numbers per
       // aeon
-      member->beacon_service.MostRecentSeen(aeon_period - 1);
+      member->beacon_service.MostRecentSeen(aeon_period);
       member->setup_service.Abort(aeon_period);
     }
 
