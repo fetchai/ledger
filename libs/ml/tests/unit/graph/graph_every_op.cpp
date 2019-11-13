@@ -134,6 +134,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   TensorType data_5d     = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
   TensorType data_binary = TensorType::FromString(R"(1 , 1 , 0, 0 , 0 , 1)");
   TensorType data_logits = TensorType::FromString(R"(0.2 , 0.2 , 0.2, 0.2 , 0.1 , 0.1)");
+  TensorType data_embed({5, 5});
   data_3d.Reshape({2, 2, 2});
   data_4d.Reshape({2, 2, 2, 1});
   data_5d.Reshape({2, 2, 2, 1, 1});
@@ -151,6 +152,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string input_5d          = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_binary      = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_logits      = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_logits_transpose      = AddOp<ops::PlaceHolder<TensorType>>(g, {});
 
   // ordinary ops
   std::string abs          = AddOp<ops::Abs<TensorType>>(g, {input_1});
@@ -162,7 +164,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string conv1d       = AddOp<ops::Convolution1D<TensorType>>(g, {input_3d, input_4d});
   std::string conv2d       = AddOp<ops::Convolution2D<TensorType>>(g, {input_4d, input_5d});
   std::string divide       = AddOp<ops::Divide<TensorType>>(g, {input_1, input_2});
-  std::string embed        = AddOp<ops::Embeddings<TensorType>>(g, {input_1}, 5, 5);
+  std::string embed        = AddOp<ops::Embeddings<TensorType>>(g, {input_1}, data_embed);
   std::string exp          = AddOp<ops::Exp<TensorType>>(g, {input_1});
   std::string flatten      = AddOp<ops::Flatten<TensorType>>(g, {input_1});
   std::string layernorm_op = AddOp<ops::LayerNorm<TensorType>>(g, {input_1});
@@ -199,9 +201,10 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string softmax = AddOp<ops::Softmax<TensorType>>(g, {input_1});
 
   // Loss functions
-  std::string cel  = AddOp<ops::CrossEntropyLoss<TensorType>>(g, {input_logits, input_binary});
-  std::string mse  = AddOp<ops::MeanSquareErrorLoss<TensorType>>(g, {input_1, input_2});
-  std::string scel = AddOp<ops::SoftmaxCrossEntropyLoss<TensorType>>(g, {input_logits, input_binary});
+  std::string cel = AddOp<ops::CrossEntropyLoss<TensorType>>(g, {input_logits, input_binary});
+  std::string mse = AddOp<ops::MeanSquareErrorLoss<TensorType>>(g, {input_1, input_2});
+  std::string scel =
+      AddOp<ops::SoftmaxCrossEntropyLoss<TensorType>>(g, {input_logits_transpose, input_binary});
 
   // Layers
   std::string layer_layernorm = AddOp<layers::LayerNorm<TensorType>>(g, {input_1});
@@ -228,6 +231,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   g->SetInput(weights, data1);
   g->SetInput(input_binary, data_binary);
   g->SetInput(input_logits, data_logits);
+  g->SetInput(input_logits_transpose, data_logits.Copy().Transpose());
   g->Compile();
 
   // serialise the graph
@@ -263,6 +267,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   g2->SetInput(weights, data1);
   g2->SetInput(input_binary, data_binary);
   g2->SetInput(input_logits, data_logits);
+  g2->SetInput(input_logits_transpose, data_logits.Copy().Transpose());
   g2->Compile();
 
   // weak tests that all ops produce the same value on both graphs
