@@ -22,7 +22,7 @@
 #include "dmlf/collective_learning/translator.hpp"
 #include "dmlf/collective_learning/word2vec_training_params.hpp"
 #include "math/clustering/knn.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/optimisation/lazy_adam_optimiser.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
 
 namespace fetch {
@@ -32,13 +32,12 @@ namespace collective_learning {
 template <class TensorType>
 class ClientWord2VecAlgorithm : public ClientAlgorithm<TensorType>
 {
-  using DataType                   = typename TensorType::Type;
-  using SizeType                   = fetch::math::SizeType;
-  using VectorTensorType           = std::vector<TensorType>;
-    using VectorSizeVector           = std::vector<std::vector<SizeType>>;
+  using DataType         = typename TensorType::Type;
+  using SizeType         = fetch::math::SizeType;
+  using VectorTensorType = std::vector<TensorType>;
+  using VectorSizeVector = std::vector<std::vector<SizeType>>;
 
-
-    using GradientType               = fetch::dmlf::Update<TensorType>;
+  using GradientType               = fetch::dmlf::Update<TensorType>;
   using AlgorithmControllerType    = ClientAlgorithmController<TensorType>;
   using AlgorithmControllerPtrType = std::shared_ptr<ClientAlgorithmController<TensorType>>;
 
@@ -70,7 +69,7 @@ private:
 
   void PrepareOptimiser();
 
-    VectorSizeVector TranslateUpdate(std::shared_ptr<GradientType> &new_gradients) override;
+  VectorSizeVector TranslateUpdate(std::shared_ptr<GradientType> &new_gradients) override;
 
   float ComputeAnalogyScore();
 };
@@ -149,26 +148,24 @@ std::shared_ptr<fetch::dmlf::Update<TensorType>> ClientWord2VecAlgorithm<TensorT
 {
   FETCH_LOCK(this->model_mutex_);
 
+  std::vector<std::unordered_set<SizeType>> vector_set =
+      this->graph_ptr_->GetUpdatedRowsReferences();
+  std::vector<TensorType> vector_tensor = this->graph_ptr_->GetGradients();
 
-    std::vector<std::unordered_set<SizeType>> vector_set=this->graph_ptr_->GetUpdatedRowsReferences();
-    std::vector<TensorType> vector_tensor=this->graph_ptr_->GetGradients();
+  // Convert set to vector
+  std::vector<std::vector<SizeType>> out_vector;
+  std::vector<TensorType>            out_tensors;
 
-    // Convert set to vector
-    std::vector<std::vector<SizeType>> out_vector;
-    std::vector<TensorType> out_tensors;
+  for (SizeType i{0}; i < vector_set.size(); i++)
+  {
 
-    for(SizeType i{0};i<vector_set.size();i++)
-    {
+    out_vector.push_back(std::vector<SizeType>(vector_set.at(i).begin(), vector_set.at(i).end()));
+    out_tensors.push_back(fetch::ml::utilities::ToSparse(vector_tensor.at(i), vector_set.at(i)));
+  }
 
-        out_vector.push_back(std::vector<SizeType>(vector_set.at(i).begin(),vector_set.at(i).end()));
-        out_tensors.push_back(fetch::ml::utilities::ToSparse(vector_tensor.at(i),vector_set.at(i)));
-
-    }
-
-
-  return std::make_shared<GradientType>(vector_tensor,
-                                        w2v_data_loader_ptr_->GetVocabHash(),
-                                        w2v_data_loader_ptr_->GetVocab()->GetReverseVocab(),out_vector);
+  return std::make_shared<GradientType>(vector_tensor, w2v_data_loader_ptr_->GetVocabHash(),
+                                        w2v_data_loader_ptr_->GetVocab()->GetReverseVocab(),
+                                        out_vector);
 }
 
 /**
@@ -229,7 +226,7 @@ void ClientWord2VecAlgorithm<TensorType>::PrepareOptimiser()
   this->params_.input_names = {input_name, context_name};
 
   // Initialise Optimiser
-  this->optimiser_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
+  this->optimiser_ptr_ = std::make_shared<fetch::ml::optimisers::LazyAdamOptimiser<TensorType>>(
       this->graph_ptr_, this->params_.input_names, this->params_.label_name,
       this->params_.error_name, tp_.learning_rate_param);
 }
@@ -250,17 +247,12 @@ ClientWord2VecAlgorithm<TensorType>::TranslateUpdate(
 
   VectorSizeVector ret;
 
-  ret.push_back(
-      translator_
-          .Translate<TensorType>(new_gradients->GetUpdatedRows().at(0), new_gradients->GetHash())
-          );
-  ret.push_back(
-      translator_
-          .Translate<TensorType>(new_gradients->GetUpdatedRows().at(1), new_gradients->GetHash())
-          );
+  ret.push_back(translator_.Translate<TensorType>(new_gradients->GetUpdatedRows().at(0),
+                                                  new_gradients->GetHash()));
+  ret.push_back(translator_.Translate<TensorType>(new_gradients->GetUpdatedRows().at(1),
+                                                  new_gradients->GetHash()));
 
-  // TODO: Translate Updated Rows as well!!!
-  return new_gradients->GetUpdatedRows();
+  return ret;
 }
 
 template <class TensorType>

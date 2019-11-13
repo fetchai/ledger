@@ -25,8 +25,8 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/model/sequential.hpp"
-#include "ml/utilities/utils.hpp"
 #include "ml/utilities/sparse_tensor_utilities.hpp"
+#include "ml/utilities/utils.hpp"
 
 #include <condition_variable>
 #include <fstream>
@@ -47,8 +47,8 @@ class ClientAlgorithm
   using DataType         = typename TensorType::Type;
   using SizeType         = fetch::math::SizeType;
   using VectorTensorType = std::vector<TensorType>;
-    using VectorSizeVector         = std::vector<std::vector<SizeType>>;
-    using TimestampType    = int64_t;
+  using VectorSizeVector = std::vector<std::vector<SizeType>>;
+  using TimestampType    = int64_t;
   using UpdateType       = fetch::dmlf::Update<TensorType>;
   using DataloaderPtrType =
       std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>>;
@@ -132,7 +132,7 @@ protected:
 
   virtual VectorSizeVector TranslateUpdate(std::shared_ptr<UpdateType> &new_gradients);
 
-            void DoRound();
+  void DoRound();
 
   void ClearLossFile();
 
@@ -347,25 +347,22 @@ ClientAlgorithm<TensorType>::GetUpdate()
 {
   FETCH_LOCK(model_mutex_);
 
-
-  std::vector<std::unordered_set<SizeType>> vector_set=this->graph_ptr_->GetUpdatedRowsReferences();
-    std::vector<TensorType> vector_tensor=graph_ptr_->GetGradients();
+  std::vector<std::unordered_set<SizeType>> vector_set =
+      this->graph_ptr_->GetUpdatedRowsReferences();
+  std::vector<TensorType> vector_tensor = graph_ptr_->GetGradients();
 
   // Convert set to vector
   std::vector<std::vector<SizeType>> out_vector;
-    std::vector<TensorType> out_tensors;
+  std::vector<TensorType>            out_tensors;
 
-  for(SizeType i{0};i<vector_set.size();i++)
+  for (SizeType i{0}; i < vector_set.size(); i++)
   {
 
-    out_vector.push_back(std::vector<SizeType>(vector_set.at(i).begin(),vector_set.at(i).end()));
-      out_tensors.push_back(fetch::ml::utilities::ToSparse(vector_tensor.at(i),vector_set.at(i)));
-
+    out_vector.push_back(std::vector<SizeType>(vector_set.at(i).begin(), vector_set.at(i).end()));
+    out_tensors.push_back(fetch::ml::utilities::ToSparse(vector_tensor.at(i), vector_set.at(i)));
   }
 
-
-
-    return std::make_shared<UpdateType>(out_tensors, out_vector);
+  return std::make_shared<UpdateType>(out_tensors, out_vector);
 }
 
 /**
@@ -399,7 +396,7 @@ void ClientAlgorithm<TensorType>::SetWeights(VectorTensorType const &new_weights
 
 template <class TensorType>
 std::vector<std::vector<fetch::math::SizeType>> ClientAlgorithm<TensorType>::TranslateUpdate(
-    std::shared_ptr<UpdateType> &new_gradients )
+    std::shared_ptr<UpdateType> &new_gradients)
 {
   return new_gradients->GetUpdatedRows();
 }
@@ -426,8 +423,12 @@ void ClientAlgorithm<TensorType>::DoRound()
     // get new update from algorithm controller
     auto new_update = algorithm_controller_->template GetUpdate<UpdateType>();
 
+    std::vector<std::vector<SizeType>> old_update = new_update->GetUpdatedRows();
+    FETCH_UNUSED(old_update);
+    std::vector<std::vector<SizeType>> translated_update = TranslateUpdate(new_update);
+
     // Translate and apply update to model
-    AggregateUpdate(new_update->GetGradients(),TranslateUpdate(new_update));
+    AggregateUpdate(new_update->GetGradients(), translated_update);
 
     // track number of total updates applied for evaluation
     updates_applied_++;
@@ -449,19 +450,20 @@ void ClientAlgorithm<TensorType>::DoRound()
  * @param gradient
  */
 template <class TensorType>
-void ClientAlgorithm<TensorType>::AggregateUpdate(VectorTensorType const &gradient, VectorSizeVector const &updated_rows)
+void ClientAlgorithm<TensorType>::AggregateUpdate(VectorTensorType const &gradient,
+                                                  VectorSizeVector const &updated_rows)
 {
-//  assert(gradients.size() == graph_ptr_->GetTrainables().size());
+  //  assert(gradients.size() == graph_ptr_->GetTrainables().size());
 
-            auto grad_it = gradient.begin();
-            auto rows_it = updated_rows.begin();
+  auto grad_it = gradient.begin();
+  auto rows_it = updated_rows.begin();
 
   for (auto &trainable : graph_ptr_->GetTrainables())
   {
     auto weights_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(trainable);
-    weights_ptr->AddToGradient(*grad_it,*rows_it);
+    weights_ptr->AddToGradient(*grad_it, *rows_it);
     ++grad_it;
-      ++rows_it;
+    ++rows_it;
   }
 }
 

@@ -44,8 +44,8 @@ public:
   using Fingerprint      = UpdateInterface::Fingerprint;
   using HashType         = byte_array::ConstByteArray;
   using ReverseVocabType = std::vector<std::string>;
-  using SizeType = fetch::math::SizeType;
-  using VectorSizeVector  = std::vector<std::vector<SizeType>>;
+  using SizeType         = fetch::math::SizeType;
+  using VectorSizeVector = std::vector<std::vector<SizeType>>;
 
   using Payload = VectorTensor;
 
@@ -56,10 +56,11 @@ public:
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
-          , updated_rows_{std::move(updated_rows)}
+    , updated_rows_{std::move(updated_rows)}
   {}
 
-  explicit Update(VectorTensor gradients, byte_array::ConstByteArray hash, ReverseVocabType vocab, VectorSizeVector updated_rows)
+  explicit Update(VectorTensor gradients, byte_array::ConstByteArray hash, ReverseVocabType vocab,
+                  VectorSizeVector updated_rows)
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
@@ -114,10 +115,10 @@ public:
     return vocab_;
   }
 
-    virtual VectorSizeVector const &GetUpdatedRows() const
-    {
-      return updated_rows_;
-    }
+  virtual VectorSizeVector const &GetUpdatedRows() const
+  {
+    return updated_rows_;
+  }
 
   Update(Update const &other) = delete;
   Update &operator=(Update const &other)  = delete;
@@ -146,7 +147,7 @@ private:
 
   HashType         hash_;
   ReverseVocabType vocab_;
-    VectorSizeVector updated_rows_;
+  VectorSizeVector updated_rows_;
 };
 
 }  // namespace dmlf
@@ -160,12 +161,12 @@ public:
   using Type       = fetch::dmlf::Update<T>;
   using DriverType = D;
 
-  static uint8_t const TIME_STAMP  = 1;
-  static uint8_t const GRADIENTS   = 2;
-  static uint8_t const FINGERPRINT = 3;
-  static uint8_t const HASH        = 4;
-  static uint8_t const VOCAB       = 5;
-  static uint8_t const UPDATED_ROWS       = 6;
+  static uint8_t const TIME_STAMP   = 1;
+  static uint8_t const GRADIENTS    = 2;
+  static uint8_t const FINGERPRINT  = 3;
+  static uint8_t const HASH         = 4;
+  static uint8_t const VOCAB        = 5;
+  static uint8_t const UPDATED_ROWS = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &update)
