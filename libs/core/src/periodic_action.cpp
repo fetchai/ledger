@@ -16,22 +16,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/constants.hpp"
-#include "core/byte_array/decoders.hpp"
-#include "core/digest.hpp"
+#include "core/periodic_action.hpp"
 
 namespace fetch {
-namespace chain {
 
-using byte_array::FromBase64;
+/**
+ * Called periodically to trigger the action is needed
+ */
+bool PeriodicAction::Poll()
+{
+  bool triggered{false};
 
-uint64_t STAKE_WARM_UP_PERIOD   = 100;
-uint64_t STAKE_COOL_DOWN_PERIOD = 100;
+  Duration::rep const current_index = ((Clock::now() - start_time_) / period_);
 
-Digest GENESIS_DIGEST      = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-Digest GENESIS_MERKLE_ROOT = FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+  if (current_index > last_index_)
+  {
+    // update the index
+    last_index_ = current_index;
 
-const Digest ZERO_HASH = Digest(HASH_SIZE);
+    // signal that the action has been triggered
+    triggered = true;
+  }
 
-}  // namespace chain
+  return triggered;
+}
+
+void PeriodicAction::Reset()
+{
+  start_time_ = Clock::now();
+  last_index_ = 0;
+}
+
 }  // namespace fetch

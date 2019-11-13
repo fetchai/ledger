@@ -16,22 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/constants.hpp"
-#include "core/byte_array/decoders.hpp"
-#include "core/digest.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ml {
+namespace utilities {
 
-using byte_array::FromBase64;
+std::string ReadFile(std::string const &path)
+{
+  std::ifstream t(path);
+  if (t.fail())
+  {
+    throw ml::exceptions::InvalidFile("Cannot open file " + path);
+  }
 
-uint64_t STAKE_WARM_UP_PERIOD   = 100;
-uint64_t STAKE_COOL_DOWN_PERIOD = 100;
+  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+}
 
-Digest GENESIS_DIGEST      = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-Digest GENESIS_MERKLE_ROOT = FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
-
-const Digest ZERO_HASH = Digest(HASH_SIZE);
-
-}  // namespace chain
+}  // namespace utilities
+}  // namespace ml
 }  // namespace fetch

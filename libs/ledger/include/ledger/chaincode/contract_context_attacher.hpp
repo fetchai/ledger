@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,22 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/constants.hpp"
-#include "core/byte_array/decoders.hpp"
-#include "core/digest.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
-using byte_array::FromBase64;
+class Contract;
 
-uint64_t STAKE_WARM_UP_PERIOD   = 100;
-uint64_t STAKE_COOL_DOWN_PERIOD = 100;
+/*
+ * RAII helper which attaches the ContractContext to the Contract.
+ * Construct it before dispatching a transaction to a contract.
+ * Detaches the context on destruction.
+ */
+class ContractContextAttacher
+{
+public:
+  ContractContextAttacher(Contract &contract, ContractContext context);
+  ~ContractContextAttacher();
 
-Digest GENESIS_DIGEST      = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-Digest GENESIS_MERKLE_ROOT = FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+private:
+  Contract &contract_;
+};
 
-const Digest ZERO_HASH = Digest(HASH_SIZE);
-
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch
