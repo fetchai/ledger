@@ -243,6 +243,12 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 // (possible on start up when syncing)
 bool BeaconService::OutOfSync()
 {
+  if (most_recent_round_seen_ > active_exe_unit_->aeon.round_end)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "most recent seen exceeds current exe bounds: most recent: ",
+                   most_recent_round_seen_, " current: ", active_exe_unit_->aeon.round_end);
+  }
+
   return most_recent_round_seen_ > active_exe_unit_->aeon.round_end;
 }
 
