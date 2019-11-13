@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "vm/address.hpp"
 #include "vm/module.hpp"
 
@@ -32,14 +33,13 @@ void BindTransferFunction(vm::Module &module, Contract const &contract)
       [&contract](vm::VM *, vm::Ptr<vm::Address> const &target, uint64_t amount) -> bool {
         decltype(auto) c = contract.context();
 
-        c.token_contract->Attach(c);
+        fetch::ledger::ContractContextAttacher raii(*c.token_contract, c);
         c.state_adapter->PushContext("fetch.token");
 
         auto const success = c.token_contract->SubtractTokens(c.contract_address, amount) &&
                              c.token_contract->AddTokens(target->address(), amount);
 
         c.state_adapter->PopContext();
-        c.token_contract->Detach();
 
         return success;
       });
