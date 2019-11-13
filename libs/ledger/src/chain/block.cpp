@@ -29,8 +29,6 @@
 namespace fetch {
 namespace ledger {
 
-Block::Block() = default;
-
 bool Block::operator==(Block const &rhs) const
 {
   // Invalid to compare blocks with no block hash
@@ -59,6 +57,13 @@ std::size_t Block::GetTransactionCount() const
  */
 void Block::UpdateDigest()
 {
+  if (IsGenesis())
+  {
+    // genesis block's hash should be already set to a proper value and needs not to be updated
+    assert(hash == chain::GENESIS_DIGEST);
+    return;
+  }
+
   crypto::MerkleTree tx_merkle_tree{GetTransactionCount()};
 
   // Populate the merkle tree
@@ -98,7 +103,7 @@ void Block::UpdateTimestamp()
 
 bool Block::IsGenesis() const
 {
-  return previous_hash == chain::GENESIS_DIGEST;
+  return previous_hash == chain::ZERO_HASH;
 }
 
 }  // namespace ledger
