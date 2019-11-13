@@ -31,7 +31,8 @@ namespace fetch {
 namespace crypto {
 namespace mcl {
 
-std::atomic<bool> details::MCLInitialiser::was_initialised{false};
+std::atomic<bool>  details::MCLInitialiser::was_initialised{false};
+constexpr uint16_t public_key_byte_size = 310;
 
 PublicKey::PublicKey()
 {
@@ -405,12 +406,16 @@ PrivateKey SignatureAggregationCoefficient(PublicKey const &             notaris
 {
   PrivateKey coefficient;
 
-  std::string concatenated_keys;
-  concatenated_keys.reserve(48 + (cabinet_notarisation_keys.size() + 1) * 310);
+  // Reserve first 48 bytes for some fixed value as the hash function (also used in DKG) is being
+  // reused here in different context
+  const std::string hash_function_reuse_appender =
+      "BLS Aggregation 00000000000000000000000000000000";
 
-  // Reserve first 48 bytes for some fixed value for hygenic reuse of the
-  // hashing function
-  concatenated_keys += "BLS Aggregation 00000000000000000000000000000000";
+  std::string concatenated_keys;
+  concatenated_keys.reserve(hash_function_reuse_appender.length() +
+                            (cabinet_notarisation_keys.size() + 1) * public_key_byte_size);
+
+  concatenated_keys += hash_function_reuse_appender;
 
   concatenated_keys += notarisation_key.getStr();
   for (auto const &key : cabinet_notarisation_keys)
