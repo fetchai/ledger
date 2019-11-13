@@ -70,7 +70,7 @@ public:
   {
     serializers::LargeObjectSerializeHelper serializer;
     serializer << *this;
-    return serializer.buffer.data();
+    return serializer.data();
   }
   byte_array::ByteArray Serialise(std::string type) override
   {
@@ -78,8 +78,8 @@ public:
     serializers::LargeObjectSerializeHelper serializer_;
     serializer_ << *this;
     serializer << type;
-    serializer << serializer_.buffer.data();
-    return serializer.buffer.data();
+    serializer << serializer_.data();
+    return serializer.data();
   }
   void DeSerialise(const byte_array::ByteArray &map) override
   {
@@ -128,7 +128,7 @@ private:
   {
     serializers::LargeObjectSerializeHelper serializer;
     serializer << gradients_;
-    return crypto::Hash<crypto::SHA256>(serializer.buffer.data());
+    return crypto::Hash<crypto::SHA256>(serializer.data());
   }
 
   TimeStampType stamp_;

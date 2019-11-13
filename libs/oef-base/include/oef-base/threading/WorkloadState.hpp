@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 enum class WorkloadProcessed
 {
   COMPLETE     = 0,
@@ -31,3 +35,6 @@ enum class WorkloadState
 };
 
 extern const char *const workloadProcessedNames[];
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

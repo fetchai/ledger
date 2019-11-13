@@ -33,7 +33,7 @@
  * @tparam Container
  */
 template <template <typename> class Container>
-class Visitor : public Task, public Waitable
+class Visitor : public fetch::oef::base::Task, public fetch::oef::base::Waitable
 {
 public:
   static constexpr char const *LOGGING_NAME = "Visitor";
@@ -69,12 +69,12 @@ public:
     return runnable_.load();
   }
 
-  ExitState run() override
+  fetch::oef::base::ExitState run() override
   {
     if (tree_.empty())
     {
       wake();
-      return ExitState ::COMPLETE;
+      return fetch::oef::base::ExitState ::COMPLETE;
     }
 
     while (!tree_.empty())
@@ -106,15 +106,15 @@ public:
       }
       case DEFER:
       {
-        return ExitState ::DEFER;
+        return fetch::oef::base::ExitState ::DEFER;
       }
       case ERRORED:
       {
-        return ExitState ::ERRORED;
+        return fetch::oef::base::ExitState ::ERRORED;
       }
       case RERUN:
       {
-        return ExitState ::RERUN;
+        return fetch::oef::base::ExitState ::RERUN;
       }
       case STOP:
       {
@@ -126,7 +126,7 @@ public:
       }
     }
     wake();
-    return ExitState ::COMPLETE;
+    return fetch::oef::base::ExitState ::COMPLETE;
   }
 
   virtual void SubmitVisitTask(std::shared_ptr<Branch> const &root)

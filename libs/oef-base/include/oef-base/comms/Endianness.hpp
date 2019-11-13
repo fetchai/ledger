@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 enum Endianness
 {
   DUNNO,
@@ -24,3 +28,7 @@ enum Endianness
   NETWORK,
   BAD
 };
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

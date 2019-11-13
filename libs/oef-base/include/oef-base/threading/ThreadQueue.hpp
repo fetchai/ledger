@@ -23,6 +23,10 @@
 //#include <utility>
 //#include <iostream>
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 class ThreadQueue
 {
 public:

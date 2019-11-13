@@ -24,12 +24,14 @@
 namespace fetch {
 namespace semanticsearch {
 
-using DBIndexType            = uint64_t;
-using SemanticCoordinateType = uint64_t;  // Always internal 0 -> 1
-using SemanticPosition       = std::vector<SemanticCoordinateType>;
+using DBIndexType            = uint64_t;  ///< Database index type. Essentially pointer to record.
+using SemanticCoordinateType = uint64_t;  ///< Base coordinate type semantic position.
+                                          ///  Always internal 0 -> 1
 
-using DBIndexList    = std::set<DBIndexType>;
-using DBIndexListPtr = std::shared_ptr<DBIndexList>;
+using SemanticPosition = std::vector<SemanticCoordinateType>;  ///< Position in semantic space.
+
+using DBIndexSet    = std::set<DBIndexType>;  ///< Set of indices used to return search results.
+using DBIndexSetPtr = std::shared_ptr<DBIndexSet>;
 
 }  // namespace semanticsearch
 }  // namespace fetch
