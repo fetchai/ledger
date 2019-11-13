@@ -125,8 +125,8 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   auto        g    = std::make_shared<GraphType>();
 
   // placeholder inputs
-  std::string input_1 = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_2 = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_1  = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_2  = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_3d = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_4d = AddOp<ops::PlaceHolder<TensorType>>(g, {});
 
@@ -195,8 +195,8 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string layer_skipgram = AddOp<layers::SkipGram<TensorType>>(g, {input_1});
 
   // Generate input
-  TensorType data1 = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4)");
-  TensorType data2 = TensorType::FromString(R"(-20,-10, 0, 10, 20, 30)");
+  TensorType data1   = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4)");
+  TensorType data2   = TensorType::FromString(R"(-20,-10, 0, 10, 20, 30)");
   TensorType data_3d = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4, 5, 6)");
   TensorType data_4d = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4, 5, 6)");
   data_3d.Reshape({2, 2, 2});
@@ -247,34 +247,34 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   ComparePrediction<GraphPtrType, TensorType>(g, g2, add);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, avg1);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, avg2);
-  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, concat);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, concat);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, constant);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, conv1d);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, conv2d);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, divide);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, embed);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, exp);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, flatten);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, exp);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, flatten);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layernorm_op);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, log);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, log);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, maskfill);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, matmul);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, matmul);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool1d);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool2d);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, maximum);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, multiply);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, onehot);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, placeholder);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, maximum);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, multiply);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, onehot);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, placeholder);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, reducemean);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, slice);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, sqrt);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, squeeze);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, sqrt);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, squeeze);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, switchop);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, tanh);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, transpose);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, tanh);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, transpose);
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, topk);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, weights);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, weights);
 
   // activations
   //  ComparePrediction<GraphPtrType, TensorType>(g, g2, dropout);
