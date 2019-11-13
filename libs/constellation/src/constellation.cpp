@@ -136,14 +136,10 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type servi
 }
 
 std::shared_ptr<ledger::DAGInterface> GenerateDAG(
-    Config const &cfg, std::string const &db_name, bool load_on_start,
+    std::string const &db_name, bool load_on_start,
     constellation::Constellation::CertificatePtr certificate)
 {
-  if (cfg.features.IsEnabled("synergetic"))
-  {
-    return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
-  }
-  return {};
+  return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
 }
 
 ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
@@ -301,7 +297,7 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   , lane_control_(internal_muddle_->GetEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , shard_management_(std::make_shared<ShardManagementService>(cfg_.manifest, lane_control_,
                                                                *muddle_, cfg_.log2_num_lanes))
-  , dag_{GenerateDAG(cfg_, "dag_db_", true, certificate)}
+  , dag_{GenerateDAG("dag_db_", true, certificate)}
   , beacon_network_{CreateBeaconNetwork(cfg_, certificate, network_manager_)}
   , beacon_setup_{CreateBeaconSetupService(cfg_, *beacon_network_, *shard_management_, certificate)}
   , beacon_{CreateBeaconService(cfg_, *beacon_network_, certificate, beacon_setup_)}
@@ -371,13 +367,11 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   }
 
   // Enable experimental features
-  if (cfg_.features.IsEnabled("synergetic") && dag_)
-  {
-    dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
-    reactor_.Attach(dag_service_->GetWeakRunnable());
-  }
+  assert(dag_);
+  dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
+  reactor_.Attach(dag_service_->GetWeakRunnable());
 
-  if (cfg_.features.IsEnabled("synergetic") && dag_)
+  if (cfg_.features.IsEnabled("synergetic"))
   {
     auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
     if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
