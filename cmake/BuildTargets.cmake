@@ -309,9 +309,14 @@ function (configure_library_targets)
 
   file(GLOB children RELATIVE ${library_root} ${library_root}/*)
 
-  # if (APPLE) # Temporarily disable oef builds list(FILTER children EXCLUDE REGEX
-  # ".*oef.*")
-  # endif (APPLE)
+  if (APPLE)
+  # Temporarily disable oef builds
+    list(FILTER
+         children
+         EXCLUDE
+         REGEX
+         ".*oef.*")
+  endif (APPLE)
 
   set(dirlist "")
   foreach (child ${children})

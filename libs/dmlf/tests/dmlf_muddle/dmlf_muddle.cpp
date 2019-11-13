@@ -211,8 +211,6 @@ TEST_F(MuddleLearnerNetworkerTests, canAdd)
   auto p2 = client->client_->CreateState(SERVER_PUB, "state1");
   auto p3 = client->client_->Run(SERVER_PUB, "exe1", "state1", "add", {Variant(2), Variant(2)});
 
-  std::cout << "Starting workloop" << std::endl;
-
   int pending = 3;
   while (pending > 0)
   {
@@ -222,8 +220,6 @@ TEST_F(MuddleLearnerNetworkerTests, canAdd)
       pending--;
     }
   }
-
-  std::cout << "Waiting for result" << std::endl;
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   p3.Wait();
@@ -248,8 +244,6 @@ TEST_F(MuddleLearnerNetworkerTests, badFunctionName)
   auto p3 = client->client_->Run(SERVER_PUB, "exe1", "state1", "foo",
                                  {ExecutionParameter(2), ExecutionParameter(2)});
 
-  std::cout << "Starting workloop" << std::endl;
-
   int pending = 3;
   while (pending > 0)
   {
@@ -259,8 +253,6 @@ TEST_F(MuddleLearnerNetworkerTests, badFunctionName)
       pending--;
     }
   }
-
-  std::cout << "Waiting for result" << std::endl;
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   p3.Wait();
