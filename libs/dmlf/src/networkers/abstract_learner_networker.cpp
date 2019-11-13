@@ -71,7 +71,6 @@ void AbstractLearnerNetworker::NewMessage(Bytes const &msg)
 void AbstractLearnerNetworker::NewMessage(const std::string &key, Bytes const &update)
 {
   FETCH_LOCK(queue_map_m_);
-  std::cout << "NewMessage(" << key << std::endl;
   auto iter = queue_map_.find(key);
   if (iter != queue_map_.end())
   {
