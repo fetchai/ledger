@@ -116,6 +116,9 @@ public:
           auto error_view    = error_signal.View({i, n});
           auto gradient_view = this->gradient_accumulation_->View(static_cast<SizeType>(*input_it));
 
+          // Mark update
+          this->updated_rows_.insert(static_cast<SizeType>(*input_it));
+
           auto error_view_it    = error_view.cbegin();
           auto gradient_view_it = gradient_view.begin();
           while (error_view_it.is_valid())

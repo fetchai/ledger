@@ -108,7 +108,7 @@ using SymbolTablePtr = std::shared_ptr<SymbolTable>;
 
 inline SymbolTablePtr CreateSymbolTable()
 {
-  return std::make_shared<SymbolTable>(SymbolTable());
+  return std::make_shared<SymbolTable>();
 }
 
 struct Type;
@@ -185,7 +185,7 @@ struct Type : public Symbol
 
 inline TypePtr CreateType(TypeKind type_kind, std::string name)
 {
-  return std::make_shared<Type>(Type(type_kind, std::move(name)));
+  return std::make_shared<Type>(type_kind, std::move(name));
 }
 inline TypePtr ConvertToTypePtr(SymbolPtr const &symbol)
 {
@@ -215,7 +215,7 @@ using VariablePtrArray = std::vector<VariablePtr>;
 
 inline VariablePtr CreateVariable(VariableKind variable_kind, std::string name, TypePtr type)
 {
-  return std::make_shared<Variable>(Variable(variable_kind, std::move(name), std::move(type)));
+  return std::make_shared<Variable>(variable_kind, std::move(name), std::move(type));
 }
 inline VariablePtr ConvertToVariablePtr(SymbolPtr const &symbol)
 {
@@ -255,9 +255,9 @@ inline FunctionPtr CreateFunction(FunctionKind function_kind, std::string name,
                                   std::string unique_name, TypePtrArray parameter_types,
                                   VariablePtrArray parameter_variables, TypePtr return_type)
 {
-  return std::make_shared<Function>(
-      Function(function_kind, std::move(name), std::move(unique_name), std::move(parameter_types),
-               std::move(parameter_variables), std::move(return_type)));
+  return std::make_shared<Function>(function_kind, std::move(name), std::move(unique_name),
+                                    std::move(parameter_types), std::move(parameter_variables),
+                                    std::move(return_type));
 }
 
 struct FunctionGroup : public Symbol
@@ -281,7 +281,7 @@ using FunctionGroupPtrArray = std::vector<FunctionGroupPtr>;
 
 inline FunctionGroupPtr CreateFunctionGroup(std::string name)
 {
-  return std::make_shared<FunctionGroup>(FunctionGroup(std::move(name)));
+  return std::make_shared<FunctionGroup>(std::move(name));
 }
 inline FunctionGroupPtr ConvertToFunctionGroupPtr(SymbolPtr const &symbol)
 {
@@ -340,7 +340,7 @@ struct Node
 
 inline NodePtr CreateBasicNode(NodeKind node_kind, std::string text, uint16_t line)
 {
-  return std::make_shared<Node>(Node(NodeCategory::Basic, node_kind, std::move(text), line));
+  return std::make_shared<Node>(NodeCategory::Basic, node_kind, std::move(text), line);
 }
 
 struct BlockNode : public Node
@@ -372,7 +372,7 @@ using BlockNodePtrArray = std::vector<BlockNodePtr>;
 
 inline BlockNodePtr CreateBlockNode(NodeKind node_kind, std::string text, uint16_t line)
 {
-  return std::make_shared<BlockNode>(BlockNode(node_kind, std::move(text), line));
+  return std::make_shared<BlockNode>(node_kind, std::move(text), line);
 }
 
 struct ExpressionNode : public Node
@@ -430,7 +430,7 @@ using ExpressionNodePtrArray = std::vector<ExpressionNodePtr>;
 
 inline ExpressionNodePtr CreateExpressionNode(NodeKind node_kind, std::string text, uint16_t line)
 {
-  return std::make_shared<ExpressionNode>(ExpressionNode(node_kind, std::move(text), line));
+  return std::make_shared<ExpressionNode>(node_kind, std::move(text), line);
 }
 
 inline BlockNodePtr ConvertToBlockNodePtr(NodePtr const &node)
