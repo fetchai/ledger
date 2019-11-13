@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
@@ -144,15 +143,16 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   auto        g    = std::make_shared<GraphType>();
 
   // placeholder inputs
-  std::string input_1           = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_1_transpose = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_2           = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_3d          = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_4d          = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_5d          = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_binary      = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_logits      = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_logits_transpose      = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_1                = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_1_transpose      = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_2                = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_3d               = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_4d               = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_5d               = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_binary           = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_binary_transpose = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_logits           = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_logits_transpose = AddOp<ops::PlaceHolder<TensorType>>(g, {});
 
   // ordinary ops
   std::string abs          = AddOp<ops::Abs<TensorType>>(g, {input_1});
@@ -201,10 +201,10 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string softmax = AddOp<ops::Softmax<TensorType>>(g, {input_1});
 
   // Loss functions
-  std::string cel = AddOp<ops::CrossEntropyLoss<TensorType>>(g, {input_logits, input_binary});
-  std::string mse = AddOp<ops::MeanSquareErrorLoss<TensorType>>(g, {input_1, input_2});
-  std::string scel =
-      AddOp<ops::SoftmaxCrossEntropyLoss<TensorType>>(g, {input_logits_transpose, input_binary});
+  std::string cel  = AddOp<ops::CrossEntropyLoss<TensorType>>(g, {input_logits, input_binary});
+  std::string mse  = AddOp<ops::MeanSquareErrorLoss<TensorType>>(g, {input_1, input_2});
+  std::string scel = AddOp<ops::SoftmaxCrossEntropyLoss<TensorType>>(
+      g, {input_logits_transpose, input_binary_transpose});
 
   // Layers
   std::string layer_layernorm = AddOp<layers::LayerNorm<TensorType>>(g, {input_1});
@@ -230,8 +230,18 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   g->SetInput(placeholder, data1);
   g->SetInput(weights, data1);
   g->SetInput(input_binary, data_binary);
+  g->SetInput(input_binary_transpose, data_binary.Copy().Transpose());
   g->SetInput(input_logits, data_logits);
   g->SetInput(input_logits_transpose, data_logits.Copy().Transpose());
+  g->SetInput(layer_layernorm, data1);
+  g->SetInput(layer_conv1d, input_3d);
+  g->SetInput(layer_conv2d, input_4d);
+  g->SetInput(layer_fc1, data1);
+  g->SetInput(layer_mh, data1);
+  g->SetInput(layer_prelu, data1);
+  g->SetInput(layer_scaleddotproductattention, data1);
+  g->SetInput(layer_selfattentionencoder, data1);
+  g->SetInput(layer_skipgram, data1);
   g->Compile();
 
   // serialise the graph
@@ -266,8 +276,18 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   g2->SetInput(placeholder, data1);
   g2->SetInput(weights, data1);
   g2->SetInput(input_binary, data_binary);
+  g2->SetInput(input_binary_transpose, data_binary.Copy().Transpose());
   g2->SetInput(input_logits, data_logits);
   g2->SetInput(input_logits_transpose, data_logits.Copy().Transpose());
+  g2->SetInput(layer_layernorm, data1);
+  g2->SetInput(layer_conv1d, input_3d);
+  g2->SetInput(layer_conv2d, input_4d);
+  g2->SetInput(layer_fc1, data1);
+  g2->SetInput(layer_mh, data1);
+  g2->SetInput(layer_prelu, data1);
+  g2->SetInput(layer_scaleddotproductattention, data1);
+  g2->SetInput(layer_selfattentionencoder, data1);
+  g2->SetInput(layer_skipgram, data1);
   g2->Compile();
 
   // weak tests that all ops produce the same value on both graphs
@@ -306,7 +326,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   ComparePrediction<GraphPtrType, TensorType>(g, g2, switchop);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, tanh);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, transpose);
-  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, topk);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, topk);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, weights);
 
   // activations
