@@ -24,6 +24,7 @@
 #include "crypto/identity.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
@@ -151,9 +152,10 @@ protected:
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 
     // dispatch the transaction to the contract
-    contract_->Attach({nullptr, tx_->contract_address(), &storage_adapter, block_number_++});
-    auto const status = contract_->DispatchTransaction(*tx_);
-    contract_->Detach();
+    fetch::ledger::ContractContext context{nullptr, tx_->contract_address(), &storage_adapter,
+                                           block_number_++};
+    fetch::ledger::ContractContextAttacher raii(*contract_, context);
+    auto const                             status = contract_->DispatchTransaction(*tx_);
 
     return status;
   }
@@ -183,9 +185,10 @@ protected:
     StateSentinelAdapter storage_adapter{*storage_, std::move(id), shards_};
 
     // dispatch the transaction to the contract
-    contract_->Attach({nullptr, tx->contract_address(), &storage_adapter, block_number_++});
-    auto const status = contract_->DispatchTransaction(*tx);
-    contract_->Detach();
+    fetch::ledger::ContractContext context{nullptr, tx->contract_address(), &storage_adapter,
+                                           block_number_++};
+    fetch::ledger::ContractContextAttacher raii(*contract_, context);
+    auto const                             status = contract_->DispatchTransaction(*tx);
 
     return status;
   }
@@ -196,9 +199,9 @@ protected:
     StateAdapter storage_adapter{*storage_, *contract_name_};
 
     // Current block index does not apply to queries - set to 0
-    contract_->Attach({nullptr, fetch::chain::Address{}, &storage_adapter, 0});
+    fetch::ledger::ContractContext context{nullptr, fetch::chain::Address{}, &storage_adapter, 0};
+    fetch::ledger::ContractContextAttacher raii(*contract_, context);
     auto const status = contract_->DispatchQuery(query, request, response);
-    contract_->Detach();
 
     return status;
   }
@@ -208,9 +211,10 @@ protected:
   {
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 
-    contract_->Attach({nullptr, tx.contract_address(), &storage_adapter, block_number_});
+    fetch::ledger::ContractContext         context{nullptr, tx.contract_address(), &storage_adapter,
+                                           block_number_};
+    fetch::ledger::ContractContextAttacher raii(*contract_, context);
     auto const status = contract_->DispatchInitialise(fetch::chain::Address{owner}, tx);
-    contract_->Detach();
 
     return status;
   }

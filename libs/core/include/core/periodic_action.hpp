@@ -68,31 +68,4 @@ PeriodicAction::PeriodicAction(std::chrono::duration<R, P> const &period)
   , start_time_{Clock::now() + period_}
 {}
 
-/**
- * Called periodically to trigger the action is needed
- */
-inline bool PeriodicAction::Poll()
-{
-  bool triggered{false};
-
-  Duration::rep const current_index = ((Clock::now() - start_time_) / period_);
-
-  if (current_index > last_index_)
-  {
-    // update the index
-    last_index_ = current_index;
-
-    // signal that the action has been triggered
-    triggered = true;
-  }
-
-  return triggered;
-}
-
-inline void PeriodicAction::Reset()
-{
-  start_time_ = Clock::now();
-  last_index_ = 0;
-}
-
 }  // namespace fetch

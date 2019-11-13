@@ -255,8 +255,8 @@ TEST(MessengerMailboxTest, MessagesRouting)
 
       std::string message = prefix + std::to_string(j);
       Message     msg;
-      // Delibrately left out     msg.from.node      = server->mail_muddle->GetAddress();
-      // Delibrately left out     msg.from.messenger = from->messenger_muddle->GetAddress();
+      // Deliberately left out     msg.from.node      = server->mail_muddle->GetAddress();
+      // Deliberately left out     msg.from.messenger = from->messenger_muddle->GetAddress();
       msg.to.node      = to_server->mail_muddle->GetAddress();
       msg.to.messenger = to->messenger_muddle->GetAddress();
 

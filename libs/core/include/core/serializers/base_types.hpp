@@ -933,7 +933,7 @@ public:
   template <typename Interface>
   static void Serialize(Interface &interface, Type const &n)
   {
-    interface << static_cast<uint64_t>(n.Data()) << static_cast<uint64_t>(n.Data() >> 64);
+    interface << static_cast<uint64_t>(n.Data()) << (static_cast<uint64_t>(n.Data() >> 64));
   }
 
   template <typename Interface>
@@ -973,7 +973,9 @@ public:
   {
     if (array.size() != u.elements())
     {
-      // TODO(?): Throw
+      throw std::runtime_error("Deserializing UInt<S> type has wrong number of elements: " +
+                               std::to_string(array.size()) + " instead of " +
+                               std::to_string(u.elements()));
     }
     for (std::size_t i = 0; i < u.elements(); i++)
     {

@@ -46,7 +46,8 @@ public:
     BAD_DESTINATION,
 
     COMPILATION_ERROR,
-    RUNTIME_ERROR
+    RUNTIME_ERROR,
+    SERIALIZATION_ERROR
   };
 
   ExecutionErrorMessage() = default;
