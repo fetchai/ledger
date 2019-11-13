@@ -263,9 +263,13 @@ int main(int argc, char **argv)
         exit_code = (constellation->Run(initial_peers, ExtractRunnable(bootstrap))) ? EXIT_SUCCESS
                                                                                     : EXIT_FAILURE;
       }
-      catch (std::runtime_error const &ex)
+      catch (std::exception const &ex)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to run constellation with exception: ", ex.what());
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to run constellation with unknown exception");
       }
     }
   }
