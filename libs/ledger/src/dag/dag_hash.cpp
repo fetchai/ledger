@@ -20,45 +20,37 @@
 
 using namespace fetch::ledger;
 
-
 inline char DAGHashTypeToChar(DAGHash::Type const &t)
 {
   switch (t)
   {
-    case DAGHash::Type::NODE:
-      return 'N';
-    case DAGHash::Type ::EPOCH:
-      return 'E';
-    default:
-      return 'U';
+  case DAGHash::Type::NODE:
+    return 'N';
+  case DAGHash::Type ::EPOCH:
+    return 'E';
+  default:
+    return 'U';
   }
 }
 
-
 DAGHash::DAGHash(DAGHash::ConstByteArray h)
   : hash{std::move(h)}
-{
-}
-
+{}
 
 DAGHash::DAGHash(DAGHash::ConstByteArray h, DAGHash::Type t)
   : hash{std::move(h)}
   , type{t}
-{
-}
-
+{}
 
 DAGHash::operator DAGHash::ConstByteArray()
 {
   return hash;
 }
 
-
 DAGHash::operator DAGHash::ConstByteArray() const
 {
   return hash;
 }
-
 
 bool DAGHash::empty() const
 {

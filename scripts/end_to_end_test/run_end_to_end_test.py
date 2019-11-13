@@ -476,7 +476,8 @@ def create_synergetic_contract(parameters, test_instance):
 
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
-        output('Create contract, available balance: ', api.tokens.balance(entity))
+        output('Create contract, available balance: ',
+               api.tokens.balance(entity))
         helper = SynergeticContractTestHelper(
             name, api, entity, test_instance._workspace)
         helper.create_new(fee_limit)

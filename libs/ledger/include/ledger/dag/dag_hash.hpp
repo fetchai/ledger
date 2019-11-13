@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "chain/common_types.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 namespace fetch {
 
