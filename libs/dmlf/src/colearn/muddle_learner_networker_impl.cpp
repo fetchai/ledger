@@ -48,7 +48,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud, StorePtr u
 MuddleLearnerNetworkerImpl::~MuddleLearnerNetworkerImpl()
 {
   taskpool_->stop();
-  ::usleep(10000);
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
   tasks_runners_->stop();
 }
 

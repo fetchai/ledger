@@ -142,12 +142,12 @@ public:
     server_port = static_cast<unsigned short int>(rand() % 10000 + 10000);
     client_port = static_cast<unsigned short int>(server_port + 1);
 
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     server = std::make_shared<LearnerTypedUpdates>(SERVER_PUB, SERVER_PRIV, server_port, 0);
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     client =
         std::make_shared<LearnerTypedUpdates>(CLIENT_PUB, CLIENT_PRIV, client_port, server_port);
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 };
 

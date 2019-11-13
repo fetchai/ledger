@@ -187,23 +187,23 @@ public:
     server_port = static_cast<unsigned short int>(rand() % 10000 + 10000);
     client_port = static_cast<unsigned short int>(server_port + 1);
 
-    usleep(100000);
-    // exec_eng = std::make_shared<DummyExecutionInterface>();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
     exec_eng = std::make_shared<BasicVmEngine>();
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100))
     server = std::make_shared<ServerHalf>(exec_eng);
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100))
     client = std::make_shared<ClientHalf>();
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100))
   }
 };
 
 TEST_F(MuddleLearnerNetworkerTests, canAdd)
 {
-  usleep(100000);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   while (server->mud_->GetNumDirectlyConnectedPeers() < 1)
   {
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
   auto p1 = client->client_->CreateExecutable(SERVER_PUB, "exe1",
@@ -216,7 +216,7 @@ TEST_F(MuddleLearnerNetworkerTests, canAdd)
   int pending = 3;
   while (pending > 0)
   {
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (server->host_->ExecuteOneWorkload())
     {
       pending--;
@@ -225,7 +225,7 @@ TEST_F(MuddleLearnerNetworkerTests, canAdd)
 
   std::cout << "Waiting for result" << std::endl;
 
-  usleep(100000);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   p3.Wait();
   auto res = p3.Get();
 
@@ -236,10 +236,10 @@ TEST_F(MuddleLearnerNetworkerTests, canAdd)
 
 TEST_F(MuddleLearnerNetworkerTests, badFunctionName)
 {
-  usleep(100000);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   while (server->mud_->GetNumDirectlyConnectedPeers() < 1)
   {
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
   auto p1 = client->client_->CreateExecutable(SERVER_PUB, "exe1",
@@ -253,7 +253,7 @@ TEST_F(MuddleLearnerNetworkerTests, badFunctionName)
   int pending = 3;
   while (pending > 0)
   {
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (server->host_->ExecuteOneWorkload())
     {
       pending--;
@@ -262,7 +262,7 @@ TEST_F(MuddleLearnerNetworkerTests, badFunctionName)
 
   std::cout << "Waiting for result" << std::endl;
 
-  usleep(100000);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   p3.Wait();
   auto res = p3.Get();
 
