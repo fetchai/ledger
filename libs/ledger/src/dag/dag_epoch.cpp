@@ -40,7 +40,7 @@ void DAGEpoch::Finalise()
   serializers::MsgPackSerializer buf;
   buf << *this;
 
-  this->hash.type = 'E';
+  this->hash.type = DAGHash::Type::EPOCH;
   this->hash.hash = crypto::Hash<crypto::SHA256>(buf.data());
 }
 

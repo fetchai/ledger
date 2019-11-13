@@ -47,7 +47,7 @@ struct DAGNode
 
   DAGNode()
   {
-    hash.type = 'N';
+    hash.type = DAGHash::Type ::NODE;
   }
   DAGNode(DAGNode const &rhs) = default;
   DAGNode(DAGNode &&rhs)      = default;
@@ -113,7 +113,7 @@ struct DAGNode
     HasherType hasher;
     hasher.Reset();
     hasher.Update(buf.data());
-    this->hash.type = 'N';
+    this->hash.type = DAGHash::Type::NODE;
     this->hash.hash = hasher.Final();
   }
 
