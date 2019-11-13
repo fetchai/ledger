@@ -1041,7 +1041,6 @@ bool DAG::SatisfyEpoch(DAGEpoch const &epoch)
       {
         FETCH_LOG_WARN(LOGGING_NAME,
                        "DAG node found that points to unknown epoch: ", node_prev_hash.ToBase64());
-        missing_.insert(node_prev_hash);
         return true;
       }
 
