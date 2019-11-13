@@ -29,19 +29,6 @@ namespace {
 
 using namespace fetch::vm;
 
-ChargeAmount const low_charge_limit  = 10;
-ChargeAmount const high_charge_limit = 1000;
-
-ChargeAmount const affordable_charge = 10;
-ChargeAmount const expensive_charge  = 1000;
-
-auto affordable_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
-  return static_cast<ChargeAmount>(low_charge_limit + x * y);
-};
-auto expensive_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
-  return static_cast<ChargeAmount>(high_charge_limit + x * y);
-};
-
 auto const handler = [](VM * /*vm*/, uint8_t /*unused*/, uint16_t /*unused*/) -> bool {
   return true;
 };
@@ -85,6 +72,27 @@ public:
 
   void SetIndexedValue(AnyInteger const & /*unused*/, int16_t /*unused*/)
   {}
+};
+
+ChargeAmount const low_charge_limit  = 10;
+ChargeAmount const high_charge_limit = 1000;
+
+ChargeAmount const affordable_charge = 10;
+ChargeAmount const expensive_charge  = 1000;
+
+auto affordable_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
+  return static_cast<ChargeAmount>(low_charge_limit + x * y);
+};
+auto expensive_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
+  return static_cast<ChargeAmount>(high_charge_limit + x * y);
+};
+auto affordable_member_estimator = [](Ptr<CustomType> const &, uint8_t x,
+                                      uint16_t y) -> ChargeAmount {
+  return static_cast<ChargeAmount>(low_charge_limit + x * y);
+};
+auto expensive_member_estimator = [](Ptr<CustomType> const &, uint8_t x,
+                                     uint16_t y) -> ChargeAmount {
+  return static_cast<ChargeAmount>(high_charge_limit + x * y);
 };
 
 class VmChargeTests : public ::testing::Test
@@ -456,7 +464,7 @@ TEST_F(VmChargeTests,
   toolkit.module()
       .CreateClassType<CustomType>("CustomType")
       .CreateConstructor(&CustomType::Constructor)
-      .CreateMemberFunction("tooExpensive", &CustomType::TooExpensive, expensive_estimator);
+      .CreateMemberFunction("tooExpensive", &CustomType::TooExpensive, expensive_member_estimator);
 
   static char const *TEXT = R"(
     function main()
@@ -476,7 +484,7 @@ TEST_F(
   toolkit.module()
       .CreateClassType<CustomType>("CustomType")
       .CreateConstructor(&CustomType::Constructor)
-      .CreateMemberFunction("affordable", &CustomType::Affordable, affordable_estimator);
+      .CreateMemberFunction("affordable", &CustomType::Affordable, affordable_member_estimator);
 
   static char const *TEXT = R"(
     function main()
@@ -533,10 +541,12 @@ TEST_F(VmChargeTests,
   toolkit.module()
       .CreateClassType<CustomType>("CustomType")
       .CreateConstructor(&CustomType::Constructor)
-      .EnableIndexOperator(
-          &CustomType::GetIndexedValue, &CustomType::SetIndexedValue,
-          [](AnyInteger const &) -> ChargeAmount { return expensive_charge; },
-          [](AnyInteger const &, int16_t const &) -> ChargeAmount { return expensive_charge; });
+      .EnableIndexOperator(&CustomType::GetIndexedValue, &CustomType::SetIndexedValue,
+                           [](Ptr<CustomType> const &, AnyInteger const &) -> ChargeAmount {
+                             return expensive_charge;
+                           },
+                           [](Ptr<CustomType> const &, AnyInteger const &,
+                              int16_t const &) -> ChargeAmount { return expensive_charge; });
 
   static char const *TEXT = R"(
     function main()
@@ -556,10 +566,12 @@ TEST_F(VmChargeTests,
   toolkit.module()
       .CreateClassType<CustomType>("CustomType")
       .CreateConstructor(&CustomType::Constructor)
-      .EnableIndexOperator(
-          &CustomType::GetIndexedValue, &CustomType::SetIndexedValue,
-          [](AnyInteger const &) -> ChargeAmount { return affordable_charge; },
-          [](AnyInteger const &, int16_t const &) -> ChargeAmount { return affordable_charge; });
+      .EnableIndexOperator(&CustomType::GetIndexedValue, &CustomType::SetIndexedValue,
+                           [](Ptr<CustomType> const &, AnyInteger const &) -> ChargeAmount {
+                             return affordable_charge;
+                           },
+                           [](Ptr<CustomType> const &, AnyInteger const &,
+                              int16_t const &) -> ChargeAmount { return affordable_charge; });
 
   static char const *TEXT = R"(
     function main()

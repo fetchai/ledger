@@ -49,43 +49,31 @@ struct PrependedTupleImpl<T, std::tuple<Ts...>>
 template <typename T, typename Tuple>
 using PrependedTuple = typename PrependedTupleImpl<T, Tuple>::type;
 
-template <template <int, typename, typename, typename...> class Invoker, typename EtchArgsTuple>
+template <typename EtchArgsTuple>
 struct EtchMemberFunctionInvocation
 {
   static_assert(meta::IsStdTuple<EtchArgsTuple>, "Pass binding argument types as a std::tuple");
 
-  template <typename Estimator, typename Callable, typename... ExtraArgs>
-  static void InvokeHandler(VM *vm, Estimator &&estimator, Callable &&callable,
-                            ExtraArgs const &... extra_args)
+  template <typename Estimator, typename Callable>
+  static void InvokeHandler(VM *vm, Estimator &&estimator, Callable &&callable)
   {
     using OwningType = typename meta::CallableTraits<Callable>::OwningType;
 
-    constexpr static auto num_parameters = std::tuple_size<EtchArgsTuple>::value;
-
-    using Config = PrepareInvocation<Invoker, Callable, EtchArgsTuple, std::tuple<ExtraArgs...>>;
+    using Config =
+        PrepareInvocation<VmMemberFunctionInvoker, Callable, EtchArgsTuple, std::tuple<>>;
 
     // get the Etch argument values from the stack
     auto etch_args_tuple = Config::GetEtchArguments(vm);
 
-    Variant &       v       = vm->stack_[vm->sp_ - num_parameters];
-    Ptr<OwningType> context = v.object;
-
-    using EstimatorArgsTuple = PrependedTuple<Ptr<OwningType>, EtchArgsTuple>;
-
-    auto estimator_args_tuple =
-        std::tuple_cat(std::make_tuple(context), std::move(etch_args_tuple));
+    using EstimatorArgsTuple =
+        typename meta::Tuple<EtchArgsTuple>::template Prepend<std::tuple<Ptr<OwningType>>>::type;
 
     using EstimatorType = meta::UnpackTuple<EstimatorArgsTuple, ChargeEstimator>;
-    if (EstimateCharge(vm, EstimatorType{std::forward<Estimator>(estimator)}, estimator_args_tuple))
-    {
-      // prepend extra non-etch arguments (e.g. VM*, TypeId)
-      auto all_args_tuple =
-          std::tuple_cat(std::make_tuple(extra_args...), std::move(etch_args_tuple));
 
-      // Invoke C++ handler
-      using ConfiguredInvoker = typename Config::ConfiguredInvoker;
-      ConfiguredInvoker::Invoke(vm, std::move(all_args_tuple), std::forward<Callable>(callable));
-    }
+    // Invoke C++ handler
+    using ConfiguredInvoker = typename Config::ConfiguredInvoker;
+    ConfiguredInvoker::Invoke(vm, EstimatorType{std::forward<Estimator>(estimator)},
+                              std::move(etch_args_tuple), std::forward<Callable>(callable));
   }
 };
 
@@ -124,12 +112,10 @@ using Constructor = internal::EtchInvocation<VmConstructorInvoker, EtchArgsTuple
 template <typename EtchArgsTuple>
 using FreeFunction = internal::EtchInvocation<VmFreeFunctionInvoker, EtchArgsTuple>;
 template <typename EtchArgsTuple>
-using NewMemberFunction =
-    internal::EtchMemberFunctionInvocation<VmMemberFunctionInvoker, EtchArgsTuple>;
-template <typename EtchArgsTuple>
-using MemberFunction = internal::EtchInvocation<VmMemberFunctionInvoker, EtchArgsTuple>;
-template <typename EtchArgsTuple>
 using StaticMemberFunction = internal::EtchInvocation<VmStaticMemberFunctionInvoker, EtchArgsTuple>;
+
+template <typename EtchArgsTuple>
+using MemberFunction = internal::EtchMemberFunctionInvocation<EtchArgsTuple>;
 
 }  // namespace vm
 }  // namespace fetch
