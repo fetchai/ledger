@@ -43,20 +43,20 @@ void AbstractLearnerNetworker::ProcessUpdates(UpdateProcessor proc)
 {
   FETCH_LOCK(queue_map_m_);
   std::vector<std::string> keys;
-  for(auto const &iter : queue_map_)
+  for (auto const &iter : queue_map_)
   {
-    auto &key = iter.first;
+    auto &key   = iter.first;
     auto &store = iter.second;
-    while(store -> size() > 0)
+    while (store->size() > 0)
     {
-      auto bytes = store -> PeekAsBytes();
+      auto              bytes = store->PeekAsBytes();
       ProcessableUpdate pu;
       pu.data_ = bytes;
-      pu.key_ = key;
-      auto r = proc(pu);
+      pu.key_  = key;
+      auto r   = proc(pu);
       if (!isnan(r))
       {
-        store -> Drop();
+        store->Drop();
       }
     }
   }

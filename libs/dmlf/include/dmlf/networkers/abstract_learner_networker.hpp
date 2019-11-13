@@ -96,21 +96,21 @@ public:
   class ProcessableUpdate
   {
   public:
-    ProcessableUpdate() = default;
-    virtual ~ProcessableUpdate() = default;
+    ProcessableUpdate()                               = default;
+    virtual ~ProcessableUpdate()                      = default;
     ProcessableUpdate(ProcessableUpdate const &other) = delete;
     ProcessableUpdate &operator=(ProcessableUpdate const &other)  = delete;
     bool               operator==(ProcessableUpdate const &other) = delete;
     bool               operator<(ProcessableUpdate const &other)  = delete;
 
-    Bytes data_;
-    std::string sender_;
+    Bytes                              data_;
+    std::string                        sender_;
     std::map<std::string, std::string> meta_;
-    std::string key_;
+    std::string                        key_;
   };
 
-  using Score            = double;
-  using UpdateProcessor  = std::function<Score(ProcessableUpdate const &)>;
+  using Score           = double;
+  using UpdateProcessor = std::function<Score(ProcessableUpdate const &)>;
 
   virtual void ProcessUpdates(UpdateProcessor proc);
 
