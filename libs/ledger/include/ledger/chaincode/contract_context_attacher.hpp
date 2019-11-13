@@ -17,30 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract_context_attacher.hpp"
-#include "vm/module.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 
 namespace fetch {
-namespace vm_modules {
 namespace ledger {
 
-template <typename Contract>
-void BindBalanceFunction(vm::Module &module, Contract const &contract)
+class Contract;
+
+/*
+ * RAII helper which attaches the ContractContext to the Contract.
+ * Construct it before dispatching a transaction to a contract.
+ * Detaches the context on destruction.
+ */
+class ContractContextAttacher
 {
-  module.CreateFreeFunction("balance", [&contract](vm::VM *) -> uint64_t {
-    decltype(auto) c = contract.context();
+public:
+  ContractContextAttacher(Contract &contract, ContractContext context);
+  ~ContractContextAttacher();
 
-    fetch::ledger::ContractContextAttacher raii(*c.token_contract, c);
-    c.state_adapter->PushContext("fetch.token");
-
-    auto const balance = c.token_contract->GetBalance(c.contract_address);
-
-    c.state_adapter->PopContext();
-
-    return balance;
-  });
-}
+private:
+  Contract &contract_;
+};
 
 }  // namespace ledger
-}  // namespace vm_modules
 }  // namespace fetch

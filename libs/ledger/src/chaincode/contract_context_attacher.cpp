@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,30 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_context_attacher.hpp"
-#include "vm/module.hpp"
 
 namespace fetch {
-namespace vm_modules {
 namespace ledger {
 
-template <typename Contract>
-void BindBalanceFunction(vm::Module &module, Contract const &contract)
+ContractContextAttacher::ContractContextAttacher(Contract &contract, ContractContext context)
+  : contract_{contract}
 {
-  module.CreateFreeFunction("balance", [&contract](vm::VM *) -> uint64_t {
-    decltype(auto) c = contract.context();
+  contract_.Attach(std::move(context));
+}
 
-    fetch::ledger::ContractContextAttacher raii(*c.token_contract, c);
-    c.state_adapter->PushContext("fetch.token");
-
-    auto const balance = c.token_contract->GetBalance(c.contract_address);
-
-    c.state_adapter->PopContext();
-
-    return balance;
-  });
+ContractContextAttacher::~ContractContextAttacher()
+{
+  contract_.Detach();
 }
 
 }  // namespace ledger
-}  // namespace vm_modules
 }  // namespace fetch
