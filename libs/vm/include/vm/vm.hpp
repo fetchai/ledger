@@ -461,7 +461,7 @@ public:
     for (std::size_t i = 0; i < num_strings; ++i)
     {
       std::string const &str = executable_->strings[i];
-      strings_[i]            = Ptr<String>(new String(this, str, true));
+      strings_[i]            = Ptr<String>(new String(this, str));
     }
 
     std::size_t const num_local_types = executable_->types.size();
@@ -1518,6 +1518,11 @@ private:
     Variant &lhsv = Top();
     if (rhsv.object)
     {
+      if (!lhsv.IsPrimitive() && !lhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhsv, rhsv);
       rhsv.Reset();
       return;
@@ -1532,6 +1537,11 @@ private:
     Variant &lhsv = Top();
     if (lhsv.object)
     {
+      if (!rhsv.IsPrimitive() && !rhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhsv, rhsv);
       rhsv.Reset();
       return;
@@ -1574,6 +1584,11 @@ private:
     Variant &rhsv = Pop();
     if (lhso)
     {
+      if (!rhsv.IsPrimitive() && !rhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhso, rhsv);
       rhsv.Reset();
       return;

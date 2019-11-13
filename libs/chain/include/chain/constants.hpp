@@ -33,5 +33,8 @@ extern uint64_t STAKE_COOL_DOWN_PERIOD;
 extern Digest GENESIS_DIGEST;
 extern Digest GENESIS_MERKLE_ROOT;
 
+static constexpr std::size_t HASH_SIZE = 32;
+extern const Digest          ZERO_HASH;
+
 }  // namespace chain
 }  // namespace fetch

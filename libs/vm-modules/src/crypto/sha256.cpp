@@ -46,7 +46,7 @@ void SHA256Wrapper::UpdateUInt256(Ptr<math::UInt256Wrapper> const &uint)
 
 void SHA256Wrapper::UpdateString(Ptr<String> const &str)
 {
-  hasher_.Update(str->str);
+  hasher_.Update(str->string());
 }
 
 void SHA256Wrapper::UpdateBuffer(Ptr<ByteArrayWrapper> const &buffer)

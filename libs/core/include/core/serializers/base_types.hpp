@@ -839,5 +839,87 @@ struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
   }
 };
 
+template <typename V, typename D>
+struct ArraySerializer<std::shared_ptr<V>, D>
+{
+public:
+  using Type       = std::shared_ptr<V>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    if (input)
+    {
+      auto array = array_constructor(1);
+      array.Append(*input);
+    }
+    else
+    {
+      array_constructor(0);
+    }
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    if (array.size() >= 2)
+    {
+      throw SerializableException(std::string("std::shared_ptr should have 0 or 1 elements"));
+    }
+
+    if (array.size() == 1)
+    {
+      output = std::make_shared<V>();
+      array.GetNextValue(*output);
+    }
+    else
+    {
+      output = Type{};
+    }
+  }
+};
+
+template <typename V, typename D>
+struct ArraySerializer<std::unique_ptr<V>, D>
+{
+public:
+  using Type       = std::unique_ptr<V>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    if (input)
+    {
+      auto array = array_constructor(1);
+      array.Append(*input);
+    }
+    else
+    {
+      array_constructor(0);
+    }
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    if (array.size() >= 2)
+    {
+      throw SerializableException(std::string("std::unique_ptr should have 0 or 1 elements"));
+    }
+
+    if (array.size() == 1)
+    {
+      output = std::make_shared<V>();
+      array.GetNextValue(*output);
+    }
+    else
+    {
+      output = Type{};
+    }
+  }
+};
+
 }  // namespace serializers
 }  // namespace fetch

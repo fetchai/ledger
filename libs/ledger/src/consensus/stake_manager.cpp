@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "entropy/entropy_generator_interface.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "logging/logging.hpp"
+#include "storage/resource_mapper.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -28,65 +29,120 @@
 
 namespace fetch {
 namespace ledger {
+namespace {
+
 constexpr char const *LOGGING_NAME = "StakeMgr";
 
-StakeManager::StakeManager(uint64_t cabinet_size)
-  : cabinet_size_{cabinet_size}
-{}
+storage::ResourceAddress const STAKE_STORAGE_ADDRESS{"fetch.token.state.aggregation.stake"};
 
-void StakeManager::UpdateCurrentBlock(Block const &current)
+}  // namespace
+
+void StakeManager::UpdateCurrentBlock(BlockIndex block_index)
 {
   // The first stake can only be set through a reset event
-  if (current.body.block_number == 0)
+  if (block_index == 0)
   {
     return;
   }
 
   // need to evaluate any of the updates from the update queue
   StakeSnapshotPtr next{};
-  if (update_queue_.ApplyUpdates(current.body.block_number, current_, next))
+  if (update_queue_.ApplyUpdates(block_index, current_, next))
   {
     // update the entry in the history
-    stake_history_[current.body.block_number] = next;
+    stake_history_[block_index] = next;
 
     // the current stake snapshot has been replaced
     current_             = std::move(next);
-    current_block_index_ = current.body.block_number;
+    current_block_index_ = block_index;
   }
 
   TrimToSize(stake_history_, HISTORY_LENGTH);
 }
 
-StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current)
+StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current, uint64_t cabinet_size)
 {
   CabinetPtr cabinet{};
 
-  auto snapshot = LookupStakeSnapshot(current.body.block_number);
+  auto snapshot = LookupStakeSnapshot(current.block_number);
   if (snapshot)
   {
-    cabinet = snapshot->BuildCabinet(current.body.block_entropy.EntropyAsU64(), cabinet_size_);
+    cabinet = snapshot->BuildCabinet(current.block_entropy.EntropyAsU64(), cabinet_size);
   }
 
   return cabinet;
 }
 
-StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot const &snapshot)
+StakeManager::CabinetPtr StakeManager::BuildCabinet(uint64_t block_number, uint64_t entropy,
+                                                    uint64_t cabinet_size) const
 {
-  return ResetInternal(std::make_shared<StakeSnapshot>(snapshot));
+  auto snapshot = LookupStakeSnapshot(block_number);
+  return snapshot->BuildCabinet(entropy, cabinet_size);
 }
 
-StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot &&snapshot)
+bool StakeManager::Save(StorageInterface &storage)
 {
-  return ResetInternal(std::make_shared<StakeSnapshot>(std::move(snapshot)));
+  bool success{false};
+
+  try
+  {
+    serializers::LargeObjectSerializeHelper serializer{};
+    serializer << *this;
+
+    storage.Set(STAKE_STORAGE_ADDRESS, serializer.data());
+
+    success = true;
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to save stake manager to storage: ", ex.what());
+  }
+
+  return success;
 }
 
-StakeManager::CabinetPtr StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot)
+bool StakeManager::Load(StorageInterface &storage)
+{
+  bool success{false};
+
+  try
+  {
+    auto const result = storage.Get(STAKE_STORAGE_ADDRESS);
+
+    if (!result.document.empty())
+    {
+      serializers::LargeObjectSerializeHelper serializer{result.document};
+      serializer >> *this;
+    }
+
+    success = true;
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to load stake manager from storage: ", ex.what());
+  }
+
+  return success;
+}
+
+StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot const &snapshot, uint64_t cabinet_size)
+{
+  return ResetInternal(std::make_shared<StakeSnapshot>(snapshot), cabinet_size);
+}
+
+StakeManager::CabinetPtr StakeManager::Reset(StakeSnapshot &&snapshot, uint64_t cabinet_size)
+{
+  return ResetInternal(std::make_shared<StakeSnapshot>(std::move(snapshot)), cabinet_size);
+}
+
+StakeManager::CabinetPtr StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot,
+                                                     uint64_t           cabinet_size)
 {
   // history
   stake_history_.clear();
   stake_history_[0] = snapshot;
 
-  CabinetPtr new_cabinet = snapshot->BuildCabinet(0, cabinet_size_);
+  CabinetPtr new_cabinet = snapshot->BuildCabinet(0, cabinet_size);
 
   // current
   current_             = std::move(snapshot);
@@ -95,7 +151,7 @@ StakeManager::CabinetPtr StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot
   return new_cabinet;
 }
 
-StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex block)
+StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex block) const
 {
   // 9/10 time during normal operation the current stake snapshot will be used
   if (block >= current_block_index_)
