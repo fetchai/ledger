@@ -1489,7 +1489,7 @@ TEST(BasicVmEngineDmlfTests, AddFixed)
   ExecutionResult result = RunStatelessTest(
       AddFixed, "add", Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
+  EXPECT_EQ(result.output().As<fp64_t>(), 10.0);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, TrueIntToFloatCompare)
