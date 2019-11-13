@@ -178,7 +178,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string multiply    = AddOp<ops::Multiply<TensorType>>(g, {input_1, input_2});
   std::string onehot      = AddOp<ops::OneHot<TensorType>>(g, {input_1}, data1.size());
   std::string placeholder = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string prelu       = AddOp<ops::PReluOp<TensorType>>(g, {input_1, input_1});
+  std::string prelu       = AddOp<ops::PReluOp<TensorType>>(g, {input_1, input_1_transpose});
   std::string reducemean  = AddOp<ops::ReduceMean<TensorType>>(g, {input_1}, 0);
   std::string slice       = AddOp<ops::Slice<TensorType>>(g, {input_1}, 0, 0);
   std::string sqrt        = AddOp<ops::Sqrt<TensorType>>(g, {input_1});
@@ -209,7 +209,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
       g, {input_logits_transpose, input_binary_transpose});
 
   // Layers
-  std::string layer_layernorm = AddOp<layers::LayerNorm<TensorType>>(g, {input_1});
+  std::string layer_layernorm = AddOp<layers::LayerNorm<TensorType>>(g, {input_1}, {1, 6});
   std::string layer_conv1d    = AddOp<layers::Convolution1D<TensorType>>(g, {input_1});
   std::string layer_conv2d    = AddOp<layers::Convolution2D<TensorType>>(g, {input_1});
   std::string layer_fc1       = AddOp<layers::FullyConnected<TensorType>>(g, {input_1});
@@ -235,15 +235,6 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   g->SetInput(input_binary_transpose, data_binary.Copy().Transpose());
   g->SetInput(input_logits, data_logits);
   g->SetInput(input_logits_transpose, data_logits.Copy().Transpose());
-  g->SetInput(layer_layernorm, data1);
-  g->SetInput(layer_conv1d, data_3d);
-  g->SetInput(layer_conv2d, data_3d);
-  g->SetInput(layer_fc1, data1);
-  g->SetInput(layer_mh, data1);
-  g->SetInput(layer_prelu, data1);
-  g->SetInput(layer_scaleddotproductattention, data1);
-  g->SetInput(layer_selfattentionencoder, data1);
-  g->SetInput(layer_skipgram, data1);
   g->Compile();
 
   // serialise the graph
@@ -281,15 +272,6 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   g2->SetInput(input_binary_transpose, data_binary.Copy().Transpose());
   g2->SetInput(input_logits, data_logits);
   g2->SetInput(input_logits_transpose, data_logits.Copy().Transpose());
-  g2->SetInput(layer_layernorm, data1);
-  g2->SetInput(layer_conv1d, data_3d);
-  g2->SetInput(layer_conv2d, data_4d);
-  g2->SetInput(layer_fc1, data1);
-  g2->SetInput(layer_mh, data1);
-  g2->SetInput(layer_prelu, data1);
-  g2->SetInput(layer_scaleddotproductattention, data1);
-  g2->SetInput(layer_selfattentionencoder, data1);
-  g2->SetInput(layer_skipgram, data1);
   g2->Compile();
 
   // weak tests that all ops produce the same value on both graphs
