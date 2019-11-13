@@ -1,0 +1,5 @@
+{"contract": "fetch.token.wealth", "port": 51427, "ip": "127.0.0.1", "processed": 1, "received": 1, "type": "transaction", "timestamp": "2019-11-13T13:46:30Z"}
+{"contract": "fetch.token.transfer", "port": 51427, "ip": "127.0.0.1", "processed": 1, "received": 1, "type": "transaction", "timestamp": "2019-11-13T13:46:32Z"}
+{"contract": "fetch.token.transfer", "port": 51427, "ip": "127.0.0.1", "processed": 1, "received": 1, "type": "transaction", "timestamp": "2019-11-13T13:46:32Z"}
+{"port": 51427, "ip": "127.0.0.1", "query": "balance", "contract": "fetch.token", "type": "query", "timestamp": "2019-11-13T13:46:33Z"}
+{"port": 51427, "ip": "127.0.0.1", "query": "balance", "contract": "fetch.token", "type": "query", "timestamp": "2019-11-13T13:46:33Z"}
