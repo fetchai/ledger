@@ -86,6 +86,33 @@ void SparseAdd(TensorType const &src, TensorType &dst,
   }
 }
 
+    template <class TensorType>
+    void SparseAdd(TensorType const &src, TensorType &dst,
+                   std::vector<fetch::math::SizeType> const &update_rows)
+    {
+        using SizeType = fetch::math::SizeType;
+
+            memory::Range range(0, std::size_t(dst.height()));
+
+            SizeType src_index = 0;
+            for (SizeType dst_index : update_rows)
+            {
+                if(dst_index==fetch::math::numeric_max<SizeType>())
+                {
+                    // Unknown word to be skipped
+                    continue;
+                }
+                auto dst_slice = dst.data().slice(dst.padded_height() * dst_index, dst.padded_height());
+                auto src_slice = src.data().slice(src.padded_height() * src_index, src.padded_height());
+
+                // Parallel addition
+                dst_slice.in_parallel().RangedApplyMultiple(
+                        range, [](auto const &a, auto const &b, auto &c) { c = b + a; }, dst_slice, src_slice);
+                src_index++;
+        }
+    }
+
+
 template <class TensorType>
 TensorType ToSparse(TensorType const &                               src,
                     std::unordered_set<fetch::math::SizeType> const &update_rows)
@@ -110,6 +137,28 @@ TensorType ToSparse(TensorType const &                               src,
 
   return std::move(dst);
 }
+
+
+    template <class TensorType>
+    TensorType FromSparse(TensorType const &                               src,
+                        std::unordered_set<fetch::math::SizeType> const &update_rows, fetch::math::SizeType output_rows)
+    {
+      using SizeType = fetch::math::SizeType;
+
+      TensorType dst({src.shape().at(0), output_rows});
+
+      SizeType src_index = 0;
+      for (SizeType dst_index : update_rows)
+      {
+        auto dst_view = dst.View(dst_index);
+        auto src_view = src.View(src_index);
+        dst_view.Assign(src_view);
+
+        src_index++;
+      }
+
+      return std::move(dst);
+    }
 
 }  // namespace utilities
 }  // namespace ml

@@ -229,6 +229,11 @@ public:
     return *this->gradient_accumulation_;
   }
 
+    SizeSet const &GetUpdatedRowsReferences() const override
+    {
+      return this->updated_rows_;
+    }
+
   /**
    * returns deep copy of the weight gradients Array
    * @return Internal accumulated gradient Array

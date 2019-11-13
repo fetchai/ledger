@@ -44,24 +44,28 @@ public:
   using Fingerprint      = UpdateInterface::Fingerprint;
   using HashType         = byte_array::ConstByteArray;
   using ReverseVocabType = std::vector<std::string>;
+  using SizeType = fetch::math::SizeType;
+  using VectorSizeVector  = std::vector<std::vector<SizeType>>;
 
   using Payload = VectorTensor;
 
   explicit Update()
     : stamp_{CurrentTime()}
   {}
-  explicit Update(VectorTensor gradients)
+  explicit Update(VectorTensor gradients, VectorSizeVector updated_rows)
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
+          , updated_rows_{std::move(updated_rows)}
   {}
 
-  explicit Update(VectorTensor gradients, byte_array::ConstByteArray hash, ReverseVocabType vocab)
+  explicit Update(VectorTensor gradients, byte_array::ConstByteArray hash, ReverseVocabType vocab, VectorSizeVector updated_rows)
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
     , hash_{std::move(hash)}
     , vocab_{std::move(vocab)}
+    , updated_rows_{std::move(updated_rows)}
   {}
 
   ~Update() override = default;
@@ -110,6 +114,11 @@ public:
     return vocab_;
   }
 
+    virtual VectorSizeVector const &GetUpdatedRows() const
+    {
+      return updated_rows_;
+    }
+
   Update(Update const &other) = delete;
   Update &operator=(Update const &other)  = delete;
   bool    operator==(Update const &other) = delete;
@@ -137,6 +146,7 @@ private:
 
   HashType         hash_;
   ReverseVocabType vocab_;
+    VectorSizeVector updated_rows_;
 };
 
 }  // namespace dmlf
@@ -155,16 +165,18 @@ public:
   static uint8_t const FINGERPRINT = 3;
   static uint8_t const HASH        = 4;
   static uint8_t const VOCAB       = 5;
+  static uint8_t const UPDATED_ROWS       = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &update)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(6);
     map.Append(TIME_STAMP, update.stamp_);
     map.Append(GRADIENTS, update.gradients_);
     map.Append(FINGERPRINT, update.fingerprint_);
     map.Append(HASH, update.hash_);
     map.Append(VOCAB, update.vocab_);
+    map.Append(UPDATED_ROWS, update.updated_rows_);
   }
 
   template <typename MapDeserializer>
@@ -175,6 +187,7 @@ public:
     map.ExpectKeyGetValue(FINGERPRINT, update.fingerprint_);
     map.ExpectKeyGetValue(HASH, update.hash_);
     map.ExpectKeyGetValue(VOCAB, update.vocab_);
+    map.ExpectKeyGetValue(UPDATED_ROWS, update.updated_rows_);
   }
 };
 

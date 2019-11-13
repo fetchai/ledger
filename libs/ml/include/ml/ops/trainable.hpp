@@ -51,6 +51,7 @@ public:
   virtual TensorType const &      GetWeights() const                                       = 0;
   virtual void                    SetWeights(TensorType const &new_value)                  = 0;
   virtual TensorType const &      GetGradientsReferences() const                           = 0;
+    virtual SizeSet const &      GetUpdatedRowsReferences() const                           = 0;
   virtual TensorType              GetGradients() const                                     = 0;
   virtual std::pair<TensorType const, SizeSet const> GetSparseGradientsReferences() const  = 0;
   virtual void                                       ResetGradients()                      = 0;

@@ -63,6 +63,7 @@ public:
   using DataType      = typename TensorType::Type;
   using SizeType      = fetch::math::SizeType;
   using SizeSet       = std::unordered_set<SizeType>;
+  using SizeVector       = std::vector<SizeType>;
   using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpVariableSaveableParams<TensorType>;
@@ -177,6 +178,23 @@ public:
       this->reset_gradients_ = true;
     }
   }
+
+    void AddToGradient(TensorType const &extern_grad, SizeVector const &rows_updated)
+    {
+      if (!this->value_frozen_)
+      {
+        if (!rows_updated.empty() && this->data_->shape().size() != 2)
+        {
+          throw fetch::ml::exceptions::InvalidMode("Sparse gradient supported for 2D tensors only.");
+        }
+
+        // Add external information about row updates
+        this->updated_rows_.insert(rows_updated.begin(), rows_updated.end());
+        // Add gradient only to updated rows
+        utilities::SparseAdd(extern_grad, *this->gradient_accumulation_, rows_updated);
+        this->reset_gradients_ = true;
+      }
+    }
 
   /**
    * Sets the internally stored data, and ensures the correct shape for

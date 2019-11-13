@@ -35,7 +35,10 @@ class ClientWord2VecAlgorithm : public ClientAlgorithm<TensorType>
   using DataType                   = typename TensorType::Type;
   using SizeType                   = fetch::math::SizeType;
   using VectorTensorType           = std::vector<TensorType>;
-  using GradientType               = fetch::dmlf::Update<TensorType>;
+    using VectorSizeVector           = std::vector<std::vector<SizeType>>;
+
+
+    using GradientType               = fetch::dmlf::Update<TensorType>;
   using AlgorithmControllerType    = ClientAlgorithmController<TensorType>;
   using AlgorithmControllerPtrType = std::shared_ptr<ClientAlgorithmController<TensorType>>;
 
@@ -67,7 +70,7 @@ private:
 
   void PrepareOptimiser();
 
-  VectorTensorType TranslateUpdate(std::shared_ptr<GradientType> &new_gradients) override;
+    VectorSizeVector TranslateUpdate(std::shared_ptr<GradientType> &new_gradients) override;
 
   float ComputeAnalogyScore();
 };
@@ -145,9 +148,27 @@ template <class TensorType>
 std::shared_ptr<fetch::dmlf::Update<TensorType>> ClientWord2VecAlgorithm<TensorType>::GetUpdate()
 {
   FETCH_LOCK(this->model_mutex_);
-  return std::make_shared<GradientType>(this->graph_ptr_->GetGradients(),
+
+
+    std::vector<std::unordered_set<SizeType>> vector_set=this->graph_ptr_->GetUpdatedRowsReferences();
+    std::vector<TensorType> vector_tensor=this->graph_ptr_->GetGradients();
+
+    // Convert set to vector
+    std::vector<std::vector<SizeType>> out_vector;
+    std::vector<TensorType> out_tensors;
+
+    for(SizeType i{0};i<vector_set.size();i++)
+    {
+
+        out_vector.push_back(std::vector<SizeType>(vector_set.at(i).begin(),vector_set.at(i).end()));
+        out_tensors.push_back(fetch::ml::utilities::ToSparse(vector_tensor.at(i),vector_set.at(i)));
+
+    }
+
+
+  return std::make_shared<GradientType>(vector_tensor,
                                         w2v_data_loader_ptr_->GetVocabHash(),
-                                        w2v_data_loader_ptr_->GetVocab()->GetReverseVocab());
+                                        w2v_data_loader_ptr_->GetVocab()->GetReverseVocab(),out_vector);
 }
 
 /**
@@ -179,7 +200,7 @@ std::pair<TensorType, TensorType> ClientWord2VecAlgorithm<TensorType>::Translate
     TensorType &new_weights, const byte_array::ConstByteArray &vocab_hash)
 {
   std::pair<TensorType, TensorType> ret =
-      translator_.Translate<TensorType>(new_weights, vocab_hash);
+      translator_.TranslateWeights<TensorType>(new_weights, vocab_hash);
 
   return ret;
 }
@@ -214,7 +235,7 @@ void ClientWord2VecAlgorithm<TensorType>::PrepareOptimiser()
 }
 
 template <class TensorType>
-typename ClientWord2VecAlgorithm<TensorType>::VectorTensorType
+typename ClientWord2VecAlgorithm<TensorType>::VectorSizeVector
 ClientWord2VecAlgorithm<TensorType>::TranslateUpdate(
     std::shared_ptr<ClientWord2VecAlgorithm::GradientType> &new_gradients)
 {
@@ -227,16 +248,19 @@ ClientWord2VecAlgorithm<TensorType>::TranslateUpdate(
     translator_.AddVocab(new_gradients->GetHash(), new_gradients->GetReverseVocab());
   }
 
-  VectorTensorType ret;
+  VectorSizeVector ret;
+
   ret.push_back(
       translator_
-          .Translate<TensorType>(new_gradients->GetGradients().at(0), new_gradients->GetHash())
-          .first);
+          .Translate<TensorType>(new_gradients->GetUpdatedRows().at(0), new_gradients->GetHash())
+          );
   ret.push_back(
       translator_
-          .Translate<TensorType>(new_gradients->GetGradients().at(1), new_gradients->GetHash())
-          .first);
-  return ret;
+          .Translate<TensorType>(new_gradients->GetUpdatedRows().at(1), new_gradients->GetHash())
+          );
+
+  // TODO: Translate Updated Rows as well!!!
+  return new_gradients->GetUpdatedRows();
 }
 
 template <class TensorType>

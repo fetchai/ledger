@@ -35,69 +35,97 @@ namespace collective_learning {
 struct Translator
 {
   using SizeType = fetch::math::SizeType;
+  using SizeVector = std::vector<SizeType>;
 
   template <typename TensorType>
-  std::pair<TensorType, TensorType> Translate(TensorType                        gradient_update,
+  std::vector<SizeType> Translate(SizeVector                        updated_rows,
                                               const byte_array::ConstByteArray &vocab_hash)
   {
-    using DataType = typename TensorType::Type;
-
-    TensorType mask = TensorType({MyVocabSize()});
-
     if (vocab_hash == MyVocabHash())  // no need to translate
     {
-      mask.Fill(DataType{1});
-      return std::make_pair(gradient_update, mask);
+      return updated_rows;
     }
 
     assert(VocabKnown(vocab_hash));
 
     std::vector<std::string> other_vocab = known_vocabs[vocab_hash];
 
-    // figure out which way around the matrix is
-    bool       first_dim_embedding;
-    SizeType   embedding_size;
-    TensorType translated_gradient_update;
+    SizeVector translated_gradient_update(updated_rows);
 
-    if (gradient_update.shape()[0] == other_vocab.size())
-    {
-      first_dim_embedding        = false;
-      embedding_size             = gradient_update.shape()[1];
-      translated_gradient_update = TensorType({MyVocabSize(), embedding_size});
-    }
-    else
-    {
-      first_dim_embedding        = true;
-      embedding_size             = gradient_update.shape()[0];
-      translated_gradient_update = TensorType({embedding_size, MyVocabSize()});
-    }
 
-    for (SizeType i = 0; i < other_vocab.size(); i++)
+    for(SizeType i{0};i< updated_rows.size();i++)
     {
-      std::string word             = other_vocab[i];
+      std::string word             = other_vocab[updated_rows.at(i)];
       SizeType    translated_index = my_vocab->IndexFromWord(word);
-
-      if (translated_index != fetch::ml::dataloaders::Vocab::UNKNOWN_WORD)
-      {
-        if (first_dim_embedding)
-        {
-          for (SizeType j = 0; j < embedding_size; j++)
-          {
-            translated_gradient_update.At(j, translated_index) = gradient_update.At(j, i);
-          }
-        }
-        else
-        {
-          for (SizeType j = 0; j < embedding_size; j++)
-          {
-            translated_gradient_update.Slice(translated_index).Assign(gradient_update.Slice(i));
-          }
-        }
-        mask.At(translated_index) += DataType{1};
-      }
+      translated_gradient_update.at(i) = translated_index;
     }
-    return std::make_pair(translated_gradient_update, mask);
+
+    return translated_gradient_update;
   }
+
+
+    template <typename TensorType>
+    std::pair<TensorType, TensorType> TranslateWeights(TensorType                        gradient_update,
+                                                const byte_array::ConstByteArray &vocab_hash)
+    {
+      using DataType = typename TensorType::Type;
+
+      TensorType mask = TensorType({MyVocabSize()});
+
+      if (vocab_hash == MyVocabHash())  // no need to translate
+      {
+        mask.Fill(DataType{1});
+        return std::make_pair(gradient_update, mask);
+      }
+
+      assert(VocabKnown(vocab_hash));
+
+      std::vector<std::string> other_vocab = known_vocabs[vocab_hash];
+
+      // figure out which way around the matrix is
+      bool       first_dim_embedding;
+      SizeType   embedding_size;
+      TensorType translated_gradient_update;
+
+      if (gradient_update.shape()[0] == other_vocab.size())
+      {
+        first_dim_embedding        = false;
+        embedding_size             = gradient_update.shape()[1];
+        translated_gradient_update = TensorType({MyVocabSize(), embedding_size});
+      }
+      else
+      {
+        first_dim_embedding        = true;
+        embedding_size             = gradient_update.shape()[0];
+        translated_gradient_update = TensorType({embedding_size, MyVocabSize()});
+      }
+
+      for (SizeType i = 0; i < other_vocab.size(); i++)
+      {
+        std::string word             = other_vocab[i];
+        SizeType    translated_index = my_vocab->IndexFromWord(word);
+
+        if (translated_index != fetch::ml::dataloaders::Vocab::UNKNOWN_WORD)
+        {
+          if (first_dim_embedding)
+          {
+            for (SizeType j = 0; j < embedding_size; j++)
+            {
+              translated_gradient_update.At(j, translated_index) = gradient_update.At(j, i);
+            }
+          }
+          else
+          {
+            for (SizeType j = 0; j < embedding_size; j++)
+            {
+              translated_gradient_update.Slice(translated_index).Assign(gradient_update.Slice(i));
+            }
+          }
+          mask.At(translated_index) += DataType{1};
+        }
+      }
+      return std::make_pair(translated_gradient_update, mask);
+    }
 
   void SetMyVocab(std::shared_ptr<fetch::ml::dataloaders::Vocab> vocab_ptr)
   {
