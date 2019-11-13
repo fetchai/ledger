@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,38 +16,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstddef>
+#include "ledger/upow/synergetic_execution_manager_interface.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class Block;
-
-class SynergeticExecutionManagerInterface
+char const *ToString(SynergeticExecutionManagerInterface::ExecStatus status)
 {
-public:
-  // Construction / Destruction
-  SynergeticExecutionManagerInterface()          = default;
-  virtual ~SynergeticExecutionManagerInterface() = default;
+  using ExecStatus = SynergeticExecutionManagerInterface::ExecStatus;
 
-  enum ExecStatus
+  char const *text = "Unknown";
+
+  switch (status)
   {
-    SUCCESS,
-    CONTRACT_NAME_PARSE_FAILURE,
-    INVALID_CONTRACT_ADDRESS,
-    INVALID_NODE,
-    INVALID_BLOCK,
-    CONTRACT_REGISTRATION_FAILED
-  };
+  case ExecStatus::SUCCESS:
+    text = "Success";
+    break;
+  case ExecStatus::CONTRACT_NAME_PARSE_FAILURE:
+    text = "Contract name parse failure";
+    break;
+  case ExecStatus::INVALID_CONTRACT_ADDRESS:
+    text = "Invalid contract address";
+    break;
+  case ExecStatus::INVALID_NODE:
+    text = "Invalid node";
+    break;
+  case ExecStatus::INVALID_BLOCK:
+    text = "Invalid block";
+    break;
+  case ExecStatus::CONTRACT_REGISTRATION_FAILED:
+    text = "Contract registration failed";
+    break;
+  }
 
-  /// @name Synergetic Execution Manager Interface
-  /// @{
-  virtual ExecStatus PrepareWorkQueue(Block const &current, Block const &previous) = 0;
-  virtual bool       ValidateWorkAndUpdateState(std::size_t num_lanes)             = 0;
-  /// @}
-};
-
-char const *ToString(SynergeticExecutionManagerInterface::ExecStatus status);
+  return text;
+}
 
 }  // namespace ledger
 }  // namespace fetch
