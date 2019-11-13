@@ -196,11 +196,11 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string layer_skipgram = AddOp<layers::SkipGram<TensorType>>(g, {input_1});
 
   // Generate input
-  TensorType data1   = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4)");
+  TensorType data1   = TensorType::FromString(R"(-1 , 1 , 1, 2 , 3 , 4)");
   TensorType data2   = TensorType::FromString(R"(-20,-10, 1, 10, 20, 30)");
-  TensorType data_3d = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4, 5, 6)");
-  TensorType data_4d = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4, 5, 6)");
-  TensorType data_5d = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4, 5, 6)");
+  TensorType data_3d = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
+  TensorType data_4d = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
+  TensorType data_5d = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
   data_3d.Reshape({2, 2, 2});
   data_4d.Reshape({2, 2, 2, 1});
   data_5d.Reshape({2, 2, 2, 1, 1});
