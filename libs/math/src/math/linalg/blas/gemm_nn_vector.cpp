@@ -51,7 +51,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
         auto          ret_slice = c.data().slice(c.padded_height() * j, c.height());
         memory::Range range(std::size_t(0), std::size_t(c.height()));
         ret_slice.in_parallel().RangedApply(
-            range, [zero](auto &vw_c_j) { vw_c_j = decltype(vw_c_j)(zero); });
+            range, [zero](auto &vw_c_j) { vw_c_j = static_cast<std::remove_reference_t<decltype(vw_c_j)>>(zero); });
       }
     }
     else
@@ -124,15 +124,15 @@ template class Blas<float, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * _A * _B + _beta * _C),
                     platform::Parallelisation::VECTORISE>;
 
-// template class Blas<fetch::fixed_point::FixedPoint<16, 16>, Signature(_C <= _alpha, _A, _B,
-// _beta, _C),
-//                     Computes(_C <= _alpha * _A * _B + _beta * _C),
-//                     platform::Parallelisation::VECTORISE>;
+template class Blas<fetch::fixed_point::FixedPoint<16, 16>, Signature(_C <= _alpha, _A, _B,
+_beta, _C),
+                    Computes(_C <= _alpha * _A * _B + _beta * _C),
+                    platform::Parallelisation::VECTORISE>;
 
-// template class Blas<fetch::fixed_point::FixedPoint<32, 32>, Signature(_C <= _alpha, _A, _B,
-// _beta, _C),
-//                     Computes(_C <= _alpha * _A * _B + _beta * _C),
-//                     platform::Parallelisation::VECTORISE>;
+template class Blas<fetch::fixed_point::FixedPoint<32, 32>, Signature(_C <= _alpha, _A, _B,
+_beta, _C),
+                    Computes(_C <= _alpha * _A * _B + _beta * _C),
+                    platform::Parallelisation::VECTORISE>;
 
 }  // namespace linalg
 }  // namespace math
