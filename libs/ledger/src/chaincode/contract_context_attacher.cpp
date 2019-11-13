@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,12 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "python/fetch_pybind.hpp"
+#include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 
 namespace fetch {
-namespace byte_array {
+namespace ledger {
 
-void BuildConstByteArray(pybind11::module &module);
+ContractContextAttacher::ContractContextAttacher(Contract &contract, ContractContext context)
+  : contract_{contract}
+{
+  contract_.Attach(std::move(context));
+}
 
-}  // namespace byte_array
+ContractContextAttacher::~ContractContextAttacher()
+{
+  contract_.Detach();
+}
+
+}  // namespace ledger
 }  // namespace fetch

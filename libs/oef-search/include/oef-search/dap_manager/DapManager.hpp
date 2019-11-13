@@ -583,8 +583,8 @@ protected:
     return true;
   }
 
-  inline void SetDistanceInHeader(fetch::oef::pb::SearchQuery &                      query,
-                                  std::function<void(fetch::oef::pb::SearchQuery &)> done)
+  void SetDistanceInHeader(fetch::oef::pb::SearchQuery &                      query,
+                           std::function<void(fetch::oef::pb::SearchQuery &)> done)
   {
     auto res = PlaneDistanceLookup(
         "geo", query.directed_search(),

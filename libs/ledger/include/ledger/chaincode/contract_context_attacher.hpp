@@ -17,12 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "python/fetch_pybind.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 
 namespace fetch {
-namespace byte_array {
+namespace ledger {
 
-void BuildConstByteArray(pybind11::module &module);
+class Contract;
 
-}  // namespace byte_array
+/*
+ * RAII helper which attaches the ContractContext to the Contract.
+ * Construct it before dispatching a transaction to a contract.
+ * Detaches the context on destruction.
+ */
+class ContractContextAttacher
+{
+public:
+  ContractContextAttacher(Contract &contract, ContractContext context);
+  ~ContractContextAttacher();
+
+private:
+  Contract &contract_;
+};
+
+}  // namespace ledger
 }  // namespace fetch

@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,12 +16,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "python/fetch_pybind.hpp"
+#include "core/periodic_action.hpp"
 
 namespace fetch {
-namespace byte_array {
 
-void BuildConstByteArray(pybind11::module &module);
+/**
+ * Called periodically to trigger the action is needed
+ */
+bool PeriodicAction::Poll()
+{
+  bool triggered{false};
 
-}  // namespace byte_array
+  Duration::rep const current_index = ((Clock::now() - start_time_) / period_);
+
+  if (current_index > last_index_)
+  {
+    // update the index
+    last_index_ = current_index;
+
+    // signal that the action has been triggered
+    triggered = true;
+  }
+
+  return triggered;
+}
+
+void PeriodicAction::Reset()
+{
+  start_time_ = Clock::now();
+  last_index_ = 0;
+}
+
 }  // namespace fetch
