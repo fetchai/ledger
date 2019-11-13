@@ -23,6 +23,8 @@
 
 #include <cstddef>
 
+namespace {
+
 using namespace fetch::math;
 using DataType      = double;
 using ContainerType = fetch::memory::SharedArray<DataType>;
@@ -86,3 +88,5 @@ TEST(ndarray, positive_ones)
     ASSERT_TRUE(test_array[i] >= 0);
   }
 }
+
+}  // namespace
