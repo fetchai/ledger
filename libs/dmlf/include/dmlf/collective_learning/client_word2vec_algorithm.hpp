@@ -158,12 +158,13 @@ std::shared_ptr<fetch::dmlf::Update<TensorType>> ClientWord2VecAlgorithm<TensorT
 
   for (SizeType i{0}; i < vector_set.size(); i++)
   {
-
+    // Convert unordered_set to vector
     out_vector.push_back(std::vector<SizeType>(vector_set.at(i).begin(), vector_set.at(i).end()));
+    // Sparsify gradient tensors to contain only updated rows
     out_tensors.push_back(fetch::ml::utilities::ToSparse(vector_tensor.at(i), vector_set.at(i)));
   }
 
-  return std::make_shared<GradientType>(vector_tensor, w2v_data_loader_ptr_->GetVocabHash(),
+  return std::make_shared<GradientType>(out_tensors, w2v_data_loader_ptr_->GetVocabHash(),
                                         w2v_data_loader_ptr_->GetVocab()->GetReverseVocab(),
                                         out_vector);
 }
