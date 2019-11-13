@@ -1415,20 +1415,11 @@ void Generator::HandleInitialiserList(IRExpressionNodePtr const &node)
 
 void Generator::HandleNull(IRExpressionNodePtr const &node)
 {
-  if (!node->type->IsPrimitive())
-  {
-    Executable::Instruction instruction(Opcodes::PushNull);
-    instruction.type_id = node->type->id;
-    uint16_t pc         = function_->AddInstruction(instruction);
-    AddLineNumber(node->line, pc);
-  }
-  else
-  {
-    // Type-uninferable nulls (e.g. in "null == null") are transformed to boolean false
-    Executable::Instruction instruction(Opcodes::PushFalse);
-    uint16_t                pc = function_->AddInstruction(instruction);
-    AddLineNumber(node->line, pc);
-  }
+  assert(!node->type->IsPrimitive());
+  Executable::Instruction instruction(Opcodes::PushNull);
+  instruction.type_id = node->type->id;
+  uint16_t pc         = function_->AddInstruction(instruction);
+  AddLineNumber(node->line, pc);
 }
 
 void Generator::HandlePrefixPostfixOp(IRExpressionNodePtr const &node)
@@ -1745,7 +1736,7 @@ void Generator::HandleInvokeOp(IRExpressionNodePtr const &node)
     instruction.type_id = return_type_id;
     if (lhs->type)
     {
-      // Store the invoker' type id
+      // Store the invoker's type id
       instruction.data = lhs->type->id;
     }
     uint16_t pc = function_->AddInstruction(instruction);
