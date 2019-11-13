@@ -18,16 +18,14 @@
 
 #include "oef-core/comms/public_key_utils.hpp"
 
-// static constexpr char const *LOGGING_NAME_PK = "PublicKeyUtils";
-
 RSAKey::RSAKey(const EvpPublicKey &evp_pk)
   : rsa_{nullptr}
 {
   ERR_load_crypto_strings();
   rsa_ = EVP_PKEY_get1_RSA(evp_pk.native_handle());
-  if (rsa_ != nullptr)
+  if (rsa_ == nullptr)
   {
-    std::runtime_error(ERR_error_string(ERR_get_error(), NULL));
+    throw std::runtime_error(ERR_error_string(ERR_get_error(), nullptr));
   }
 }
 
@@ -49,8 +47,8 @@ std::string RSAKey::to_string() const
     BIO_free(mem);
     return out;
   }
-  char *        pk_ptr = nullptr;
-  unsigned long len    = static_cast<unsigned long>(BIO_get_mem_data(mem, &pk_ptr));
+  char *pk_ptr = nullptr;
+  auto  len    = static_cast<unsigned long>(BIO_get_mem_data(mem, &pk_ptr));
   if (len != 0)
   {
     FETCH_LOG_WARN(LOGGING_NAME_PK, " while getting bio char pointer");
