@@ -95,7 +95,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , block_sink_{block_sink}
   , periodic_print_{STATE_NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
-  , last_executed_block_{chain::GENESIS_DIGEST}
+  , last_executed_block_{chain::ZERO_HASH}
   , certificate_{std::move(prover)}
   , mining_address_{certificate_->identity()}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
@@ -300,6 +300,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   auto const     current_state        = storage_unit_.CurrentHash();
   auto const     last_processed_block = execution_manager_.LastProcessedBlock();
   uint64_t const current_dag_epoch    = dag_ ? dag_->CurrentEpoch() : 0;
+  bool const     is_genesis           = current_block_->IsGenesis();
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
   if (extra_debug)
@@ -311,7 +312,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current State: 0x", current_state.ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: LCommit State: 0x", last_committed_state.ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last Block...: 0x", last_processed_block.ToHex());
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: 0x", last_executed_block_.Get().ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: 0x",
+                   last_executed_block_.Apply([](auto const &hash) { return hash; }).ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last DAGEpoch: 0x", current_dag_epoch);
   }
 #endif  // FETCH_LOG_DEBUG_ENABLED
@@ -319,11 +321,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   FETCH_UNUSED(current_dag_epoch);
 
   // initial condition, the last processed block is empty
-  if (chain::GENESIS_DIGEST == last_processed_block)
+  if (chain::ZERO_HASH == last_processed_block)
   {
     // start up - we need to work out which of the blocks has been executed previously
 
-    if (chain::GENESIS_DIGEST == previous_hash)
+    if (is_genesis)
     {
       // once we have got back to genesis then we need to start executing from the beginning
       return State::PRE_EXEC_BLOCK_VALIDATION;
@@ -404,7 +406,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
                       " merkle hash: 0x", common_parent->merkle_hash.ToHex());
 
       // this is a bad situation so the easiest solution is to revert back to genesis
-      execution_manager_.SetLastProcessedBlock(chain::GENESIS_DIGEST);
+      execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
       if (!storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0))
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
@@ -908,7 +910,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
         dag_->RevertToEpoch(0);
       }
       storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0);
-      execution_manager_.SetLastProcessedBlock(chain::GENESIS_DIGEST);
+      execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
     }
 
     // finally mark the block as invalid and purge it from the chain
@@ -973,6 +975,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 
   if (synergetic_exec_mgr_ && dag_)
   {
+    assert(!next_block_->IsGenesis());
     // look up the previous block
     BlockPtr previous_block = chain_.GetBlock(next_block_->previous_hash);
 
@@ -1340,8 +1343,8 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
 
 void BlockCoordinator::Reset()
 {
-  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GENESIS_DIGEST; });
-  execution_manager_.SetLastProcessedBlock(chain::GENESIS_DIGEST);
+  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::ZERO_HASH; });
+  execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
   chain_.Reset();
 }
 
