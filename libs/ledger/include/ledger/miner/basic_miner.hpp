@@ -76,7 +76,7 @@ private:
 
   /// @name Packing Operations
   /// @{
-  static void GenerateSlices(Queue &transactions, Block::Body &block, std::size_t offset,
+  static void GenerateSlices(Queue &transactions, Block &block, std::size_t offset,
                              std::size_t interval, std::size_t num_lanes);
   static void GenerateSlice(Queue &transactions, Block::Slice &slice, std::size_t slice_index,
                             std::size_t num_lanes);

@@ -324,6 +324,10 @@ void MuddleRegister::Leave(ConnectionHandle handle)
   {
     callback_copy(handle);
   }
+  else
+  {
+    FETCH_LOG_INFO(logging_name_, "### Connection ", handle, " ended (empty callback)");
+  }
 }
 
 }  // namespace muddle

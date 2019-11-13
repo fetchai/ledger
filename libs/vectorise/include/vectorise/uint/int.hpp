@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/array.hpp"
-#include "core/serializers/group_definitions.hpp"
+#include "vectorise/containers/array.hpp"
+// #include "core/serializers/group_definitions.hpp"
 #include "meta/has_index.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
@@ -98,11 +98,11 @@ public:
   template <typename T, meta::IfIsAByteArray<T> * = nullptr>
   explicit Int(T const &other);
   template <typename T, meta::IfIsSignedInteger<T> * = nullptr>
-  constexpr explicit Int(T number);
+  constexpr explicit Int(T const &number);
   template <typename T, meta::IfIsUnsignedInteger<T> * = nullptr>
-  constexpr explicit Int(T number);
-  constexpr explicit Int(__int128_t number);
-  constexpr explicit Int(__uint128_t number);
+  constexpr explicit Int(T const &number);
+  constexpr explicit Int(__int128_t const &number);
+  constexpr explicit Int(__uint128_t const &number);
 
   /////////////////////////
   /// casting operators ///
@@ -277,6 +277,13 @@ private:
 };
 
 template <uint16_t S>
+inline std::ostream &operator<<(std::ostream &s, Int<S> const &x)
+{
+  s << std::string(x);
+  return s;
+}
+
+template <uint16_t S>
 constexpr typename Int<S>::ContainerType const &Int<S>::base() const
 {
   return reinterpret_cast<ContainerType const &>(wide_.data());
@@ -358,7 +365,7 @@ Int<S>::Int(T const &other)
 
 template <uint16_t S>
 template <typename T, meta::IfIsSignedInteger<T> *>
-constexpr Int<S>::Int(T number)
+constexpr Int<S>::Int(T const &number)
 {
   // This will work properly only on LITTLE endian hardware.
   auto *d                   = reinterpret_cast<char *>(wide_.data());
@@ -374,7 +381,7 @@ constexpr Int<S>::Int(T number)
 
 template <uint16_t S>
 template <typename T, meta::IfIsUnsignedInteger<T> *>
-constexpr Int<S>::Int(T number)
+constexpr Int<S>::Int(T const &number)
 {
   // This will work properly only on LITTLE endian hardware.
   auto *d                   = reinterpret_cast<char *>(wide_.data());
@@ -382,7 +389,7 @@ constexpr Int<S>::Int(T number)
 }
 
 template <uint16_t S>
-constexpr Int<S>::Int(__int128_t number)
+constexpr Int<S>::Int(__int128_t const &number)
 {
   wide_[0] = static_cast<WideType>(number);
   wide_[1] = static_cast<WideType>(number >> 64);
@@ -396,7 +403,7 @@ constexpr Int<S>::Int(__int128_t number)
 }
 
 template <uint16_t S>
-constexpr Int<S>::Int(__uint128_t number)
+constexpr Int<S>::Int(__uint128_t const &number)
 {
   wide_[0] = static_cast<WideType>(number);
   wide_[1] = static_cast<WideType>(number >> 64);
@@ -754,9 +761,16 @@ constexpr Int<S> &Int<S>::operator-=(Int<S> const &n)
 }
 
 // Implementation for 256-bits only
-template <>
-constexpr Int<256> &Int<256>::operator*=(Int<256> const &n)
+// template <>
+template <uint16_t S>
+constexpr Int<S> &Int<S>::operator*=(Int<S> const &n)
 {
+  if (*this == _0 || n == _0)
+  {
+    *this = _0;
+    return *this;
+  }
+
   bool sign = true;
   if (*this < _0)
   {
@@ -808,8 +822,6 @@ constexpr Int<256> &Int<256>::operator*=(Int<256> const &n)
   terms[2] = products[0][2] + products[1][1] + products[2][0] + carry;
   carry    = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
   terms[3] = products[0][3] + products[1][2] + products[2][1] + products[3][0] + carry;
-  // TODO(?): decide what to do with overflow if carry > 0
-  // carry    = static_cast<WideType>(terms[3] >> WIDE_ELEMENT_SIZE);
 
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -1252,47 +1264,6 @@ constexpr uint64_t Int<S>::elements() const
   return WIDE_ELEMENTS;
 }
 
-template <uint16_t S>
-inline std::ostream &operator<<(std::ostream &s, Int<S> const &x)
-{
-  s << std::string(x);
-  return s;
-}
-
 }  // namespace vectorise
-
-namespace serializers {
-template <typename D, uint16_t S>
-struct ArraySerializer<vectorise::Int<S>, D>
-{
-public:
-  using Type       = vectorise::Int<S>;
-  using DriverType = D;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &u)
-  {
-    // TODO(issue 1425): Add WideType size to serialisation
-    auto array = array_constructor(u.elements());
-    for (std::size_t i = 0; i < u.elements(); i++)
-    {
-      array.Append(u.ElementAt(i));
-    }
-  }
-
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &u)
-  {
-    if (array.size() != u.elements())
-    {
-      // TODO(?): Throw
-    }
-    for (std::size_t i = 0; i < u.elements(); i++)
-    {
-      array.GetNextValue(u.ElementAt(i));
-    }
-  }
-};
-}  // namespace serializers
 
 }  // namespace fetch

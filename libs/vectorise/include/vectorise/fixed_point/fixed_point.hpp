@@ -29,8 +29,8 @@
 #include <cstdint>
 #include <functional>
 #include <iomanip>
-#include <iostream>
 #include <limits>
+#include <ostream>
 
 namespace fetch {
 namespace fixed_point {
@@ -73,7 +73,7 @@ struct TypeFromSize<128>
   using SignedType                     = __int128_t;
   using NextSize                       = TypeFromSize<256>;
   static constexpr uint16_t  decimals  = 18;
-  static constexpr ValueType tolerance = 0x10000000000;  // 0.0000000000291038
+  static constexpr ValueType tolerance = 0x100000000000;  // 0,00000095367431640625
   static constexpr ValueType max_exp =
       (static_cast<__uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000;  // 43.6682723752765511
   static constexpr UnsignedType min_exp = (static_cast<__uint128_t>(0xffffffffffffffd4) << 64) |
@@ -241,6 +241,8 @@ public:
   constexpr explicit FixedPoint(T n, meta::IfIsFloat<T> * /*unused*/ = nullptr);
   constexpr FixedPoint(FixedPoint const &o);
   constexpr FixedPoint(Type const &integer, UnsignedType const &fraction);
+  template <uint16_t N, uint16_t M>
+  constexpr explicit FixedPoint(FixedPoint<N, M> const &o);
 
   ///////////////////
   /// conversions ///
@@ -308,6 +310,8 @@ public:
   constexpr FixedPoint  operator-() const;
   constexpr FixedPoint &operator++();
   constexpr FixedPoint &operator--();
+  FixedPoint const      operator++(int) &;
+  FixedPoint const      operator--(int) &;
 
   //////////////////////////////
   /// math and bit operators ///
@@ -494,6 +498,25 @@ private:
   static constexpr FixedPoint<64, 64> SinApproxPi4(FixedPoint<64, 64> const &r);
   static constexpr FixedPoint         CosApproxPi4(FixedPoint const &r);
 };
+
+template <typename T>
+static inline bool IsMinusZero(T n);
+
+template <>
+inline bool IsMinusZero<float>(float const n)
+{
+  // Have to dereference the pointer as char const *, else we get a strict-aliasing error
+  uint32_t n_int = *(reinterpret_cast<uint8_t const *>(&n));
+  return (n_int == 0x80000000);
+}
+
+template <>
+inline bool IsMinusZero<double>(double const n)
+{
+  // Have to dereference the pointer as char const *, else we get a strict-aliasing error
+  uint64_t n_int = *(reinterpret_cast<uint8_t const *>(&n));
+  return (n_int == 0x8000000000000000);
+}
 
 template <uint16_t I, uint16_t F>
 std::function<FixedPoint<I, F>(FixedPoint<I, F> const &x)>
@@ -699,15 +722,11 @@ constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsInteger<T> * /*unused*/)
 {
   if (CheckOverflow(static_cast<NextType>(n)))
   {
-    std::cout << "this = " << FromBase(data_) << std::endl;
-    std::cout << "overflow" << std::endl;
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
   }
   else if (CheckUnderflow(static_cast<NextType>(n)))
   {
-    std::cout << "this = " << FromBase(data_) << std::endl;
-    std::cout << "underflow" << std::endl;
     fp_state |= STATE_OVERFLOW;
     data_ = MIN;
   }
@@ -730,12 +749,16 @@ template <typename T>
 constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsFloat<T> * /*unused*/)
   : data_(static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK))
 {
-  if (CheckOverflow(static_cast<NextType>(n) * static_cast<Type>(ONE_MASK)))
+  if (IsMinusZero(n))
+  {
+    data_ = 0;
+  }
+  else if (CheckOverflow(static_cast<NextType>(n * ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
   }
-  else if (CheckUnderflow(static_cast<NextType>(n) * static_cast<Type>(ONE_MASK)))
+  else if (CheckUnderflow(static_cast<NextType>(n * ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MIN;
@@ -761,6 +784,75 @@ constexpr FixedPoint<I, F>::FixedPoint(typename FixedPoint<I, F>::Type const &  
                                        typename FixedPoint<I, F>::UnsignedType const &fraction)
   : data_{(INTEGER_MASK & (Type(integer) << FRACTIONAL_BITS)) | Type(fraction & FRACTIONAL_MASK)}
 {}
+
+template <>
+template <>
+constexpr FixedPoint<32, 32>::FixedPoint(FixedPoint<16, 16> const &o)
+  : data_{static_cast<int64_t>(o.Data()) << 16}
+{}
+
+template <>
+template <>
+constexpr FixedPoint<64, 64>::FixedPoint(FixedPoint<16, 16> const &o)
+  : data_{static_cast<__int128_t>(o.Data()) << 48}
+{}
+
+template <>
+template <>
+constexpr FixedPoint<64, 64>::FixedPoint(FixedPoint<32, 32> const &o)
+  : data_{static_cast<__int128_t>(o.Data()) << 32}
+{}
+
+template <>
+template <>
+constexpr FixedPoint<32, 32>::FixedPoint(FixedPoint<64, 64> const &o)
+  : data_{static_cast<int64_t>(o.Data() >> 32)}
+{
+  if (CheckOverflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+}
+
+template <>
+template <>
+constexpr FixedPoint<16, 16>::FixedPoint(FixedPoint<64, 64> const &o)
+  : data_{static_cast<int32_t>(o.Data() >> 48)}
+{
+  if (CheckOverflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+}
+
+template <>
+template <>
+constexpr FixedPoint<16, 16>::FixedPoint(FixedPoint<32, 32> const &o)
+  : data_{static_cast<int32_t>(o.Data() >> 16)}
+{
+  if (CheckOverflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+}
 
 ///////////////////
 /// conversions ///
@@ -927,12 +1019,12 @@ template <uint16_t I, uint16_t F>  // NOLINT
 template <typename T>
 constexpr meta::IfIsFloat<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T const &n)  // NOLINT
 {
-  if (CheckOverflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
+  if (CheckOverflow(static_cast<NextType>(n * ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
   }
-  else if (CheckUnderflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
+  else if (CheckUnderflow(static_cast<NextType>(n * ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MIN;
@@ -1223,6 +1315,30 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator--()
     data_ -= ONE_MASK;
   }
   return *this;
+}
+
+/**
+ * Postfix increment operator, increase the number by one
+ * @return the number increased by one, prefix mode
+ */
+template <uint16_t I, uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::operator++(int) &
+{
+  FixedPoint<I, F> result{*this};
+  ++result;
+  return result;
+}
+
+/**
+ * Postfix decrement operator, decrease the number by one
+ * @return the number decreased by one, prefix mode
+ */
+template <uint16_t I, uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::operator--(int) &
+{
+  FixedPoint<I, F> result{*this};
+  --result;
+  return result;
 }
 
 /////////////////////////////////////////////////

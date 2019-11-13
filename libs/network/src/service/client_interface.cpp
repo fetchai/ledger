@@ -51,7 +51,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::MessageType const &ms
   ServiceClassificationType type;
   params >> type;
 
-  FETCH_LOG_TRACE(LOGGING_NAME, "ProcessServerMessage: type: ", type, " msg: ", msg.ToHex());
+  FETCH_LOG_TRACE(LOGGING_NAME, "ProcessServerMessage: type: ", type, " msg: 0x", msg.ToHex());
 
   if (type == SERVICE_RESULT)
   {
@@ -67,7 +67,16 @@ bool ServiceClientInterface::ProcessServerMessage(network::MessageType const &ms
 
     // look up the promise and fail it
     Promise p = ExtractPromise(id);
-    p->Fail(e);
+
+    if (!p)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Attempted to look up a network promise but it was already deleted");
+    }
+    else
+    {
+      p->Fail(e);
+    }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id,
                     " due to finishing delivering the response (error)");

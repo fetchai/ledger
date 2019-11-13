@@ -80,7 +80,6 @@ public:
   using Client                  = muddle::rpc::Client;
   using ClientPtr               = std::shared_ptr<Client>;
   using MuddleAddress           = byte_array::ConstByteArray;
-  using CabinetMemberList       = std::set<MuddleAddress>;
   using ConstByteArray          = byte_array::ConstByteArray;
   using Server                  = fetch::muddle::rpc::Server;
   using ServerPtr               = std::shared_ptr<Server>;
@@ -90,32 +89,24 @@ public:
   using SignatureShare          = AeonExecutionUnit::SignatureShare;
   using Serializer              = serializers::MsgPackSerializer;
   using SharedEventManager      = EventManager::SharedEventManager;
-  using BeaconSetupService      = beacon::BeaconSetupService;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
+  using DeadlineTimer           = fetch::moment::DeadlineTimer;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
-  BeaconService(MuddleInterface &muddle, shards::ManifestCacheInterface &manifest_cache,
-                const CertificatePtr &certificate, SharedEventManager event_manager);
+  BeaconService(MuddleInterface &muddle, const CertificatePtr &certificate,
+                BeaconSetupService &beacon_setup, SharedEventManager event_manager);
 
   /// @name Entropy Generator
   /// @{
   Status GenerateEntropy(uint64_t block_number, BlockEntropy &entropy) override;
   /// @}
 
-  /// Maintainance logic
+  /// Beacon runnable
   /// @{
-  /// @brief this function is called when the node is in the cabinet
-  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy);
-
-  void AbortCabinet(uint64_t round_start);
-  /// @}
-
-  /// Beacon runnables
-  /// @{
-  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
+  std::weak_ptr<core::Runnable> GetWeakRunnable();
+  void                          MostRecentSeen(uint64_t round);
   /// @}
 
   friend class BeaconServiceProtocol;
@@ -152,6 +143,11 @@ private:
   Identity        identity_;
   Endpoint &      endpoint_;
   StateMachinePtr state_machine_;
+  DeadlineTimer   timer_to_proceed_{"beacon:main"};
+
+  // Limit run away entropy generation
+  uint64_t entropy_lead_blocks_    = 2;
+  uint64_t most_recent_round_seen_ = 0;
 
   /// General configuration
   /// @{
@@ -165,13 +161,16 @@ private:
 
   /// Variables relating to getting threshold signatures of the seed
   /// @{
+  // Important this is ordered for trimming
   std::map<uint64_t, SignatureInformation> signatures_being_built_;
   std::size_t                              random_number_{0};
   Identity                                 qual_promise_identity_;
   service::Promise                         sig_share_promise_;
 
-  BlockEntropyPtr                     block_entropy_previous_;
-  BlockEntropyPtr                     block_entropy_being_created_;
+  BlockEntropyPtr block_entropy_previous_;
+  BlockEntropyPtr block_entropy_being_created_;
+
+  // Important this is ordered for trimming
   std::map<uint64_t, BlockEntropyPtr> completed_block_entropy_;
   /// @}
 
@@ -185,7 +184,6 @@ private:
 
   /// Distributed Key Generation
   /// @{
-  BeaconSetupService    cabinet_creator_;
   BeaconServiceProtocol beacon_protocol_;
   /// @}
 
@@ -195,6 +193,8 @@ private:
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_generated_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_current_round_;
+  telemetry::GaugePtr<uint64_t> beacon_state_gauge_;
+  telemetry::GaugePtr<uint64_t> beacon_most_recent_round_seen_;
 };
 
 }  // namespace beacon

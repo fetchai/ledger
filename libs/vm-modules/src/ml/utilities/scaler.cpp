@@ -51,7 +51,7 @@ Ptr<VMScaler> VMScaler::Constructor(VM *vm, TypeId type_id)
 
 void VMScaler::SetScaleByData(Ptr<VMTensorType> const &reference_tensor, Ptr<String> const &mode)
 {
-  if (mode->str == "min_max")
+  if (mode->string() == "min_max")
   {
     scaler_ = std::make_shared<MinMaxScalerType>();
   }

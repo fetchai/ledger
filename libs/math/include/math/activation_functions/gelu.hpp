@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "math/trigonometry.hpp"
+#include "vectorise/math/max.hpp"
 
 #include <cassert>
 
@@ -43,7 +43,7 @@ void Gelu(ArrayType const &t, ArrayType &ret)
 
   DataType one{1}, half{static_cast<DataType>(0.5)}, three{static_cast<DataType>(3)},
       coeff1{static_cast<DataType>(0.797885)}, coeff2{static_cast<DataType>(0.035677)};
-  ArrayType intermediate = t.Copy();
+  ArrayType intermediate{t.Copy()};
 
   Multiply(t, coeff1, intermediate);
   Pow(t, three, ret);

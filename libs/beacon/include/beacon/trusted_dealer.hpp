@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/dkg_output.hpp"
+#include "beacon/notarisation_manager.hpp"
 #include "crypto/mcl_dkg.hpp"
 
 #include <map>
@@ -30,17 +31,25 @@ namespace beacon {
 class TrustedDealer
 {
 public:
-  using DkgOutput         = beacon::DkgOutput;
-  using MuddleAddress     = byte_array::ConstByteArray;
-  using DkgKeyInformation = crypto::mcl::DkgKeyInformation;
+  using DkgOutput                 = beacon::DkgOutput;
+  using MuddleAddress             = byte_array::ConstByteArray;
+  using DkgKeyInformation         = crypto::mcl::DkgKeyInformation;
+  using NotarisationManager       = ledger::NotarisationManager;
+  using SharedNotarisationManager = std::shared_ptr<NotarisationManager>;
+  using CabinetNotarisationKeys   = std::map<MuddleAddress, NotarisationManager::PublicKey>;
 
-  TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold);
-  DkgOutput GetKeys(MuddleAddress const &address) const;
+  TrustedDealer(std::set<MuddleAddress> cabinet, double threshold);
+  DkgOutput GetDkgKeys(MuddleAddress const &address) const;
+  std::pair<SharedNotarisationManager, CabinetNotarisationKeys> GetNotarisationKeys(
+      MuddleAddress const &address);
 
 private:
-  std::set<MuddleAddress>           cabinet_{};
-  std::map<MuddleAddress, uint32_t> cabinet_index_{};
-  std::vector<DkgKeyInformation>    outputs_{};
+  std::set<MuddleAddress>                cabinet_{};
+  uint32_t                               threshold_{0};
+  std::map<MuddleAddress, uint32_t>      cabinet_index_{};
+  std::vector<DkgKeyInformation>         outputs_{};
+  std::vector<SharedNotarisationManager> notarisation_units_{};
+  CabinetNotarisationKeys                notarisation_keys_{};
 };
 }  // namespace beacon
 }  // namespace fetch
