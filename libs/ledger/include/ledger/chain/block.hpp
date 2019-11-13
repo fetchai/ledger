@@ -53,7 +53,7 @@ public:
   using Identity     = crypto::Identity;
   using SystemClock  = moment::ClockPtr;
 
-  Block();
+  Block() = default;
 
   bool operator==(Block const &rhs) const;
 

@@ -258,9 +258,8 @@ int main(int argc, char **argv)
       std::signal(SIGTERM, InterruptHandler);
 
       // run the application
-      constellation->Run(initial_peers, ExtractRunnable(bootstrap));
-
-      exit_code = EXIT_SUCCESS;
+      exit_code = (constellation->Run(initial_peers, ExtractRunnable(bootstrap))) ? EXIT_SUCCESS
+                                                                                  : EXIT_FAILURE;
     }
   }
   catch (std::exception const &ex)

@@ -45,4 +45,5 @@ libs/math/          @fetchai/ledger-vm
 
 # DMLF
 libs/dmlf/          @fetchai/ledger-dmlf
+libs/oef-base/      @fetchai/ledger-dmlf
 

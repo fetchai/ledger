@@ -24,10 +24,14 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
-class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
+namespace fetch {
+namespace ledger {
+
+class FakeStorageUnit final : public StorageUnitInterface
 {
 public:
   using Transaction = fetch::chain::Transaction;
@@ -84,9 +88,13 @@ private:
   using StateHistory     = std::unordered_map<Hash, StatePtr>;
   using StateHashStack   = std::vector<Hash>;
 
-  TransactionStore transaction_store_{};
-  StatePtr         state_{std::make_shared<State>()};
-  StateHistory     state_history_{};
-  StateHashStack   state_history_stack_{fetch::chain::GENESIS_MERKLE_ROOT};
-  Hash             current_hash_{fetch::chain::GENESIS_MERKLE_ROOT};
+  std::recursive_mutex lock_;
+  TransactionStore     transaction_store_{};
+  StatePtr             state_{std::make_shared<State>()};
+  StateHistory         state_history_{};
+  StateHashStack       state_history_stack_{fetch::chain::GENESIS_MERKLE_ROOT};
+  Hash                 current_hash_{fetch::chain::GENESIS_MERKLE_ROOT};
 };
+
+}  // namespace ledger
+}  // namespace fetch
