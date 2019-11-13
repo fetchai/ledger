@@ -66,7 +66,7 @@ public:
   {}
 
   ~Update() override = default;
-  
+
   byte_array::ByteArray Serialise() override
   {
     serializers::LargeObjectSerializeHelper serializer;
@@ -95,13 +95,13 @@ public:
   {
     return fingerprint_;
   }
-  
+
   void SetSource(PubKeyB64 public_key)
   {
     source_ = std::move(public_key);
   }
 
-  PubKeyB64 const& GetSource()
+  PubKeyB64 const &GetSource()
   {
     return source_;
   }
@@ -121,14 +121,14 @@ public:
     return vocab_;
   }
 
-  Update(Update const &other) 
+  Update(Update const &other)
   {
-    this->stamp_ = other.stamp_;
-    this->gradients_ = other.gradients_;
+    this->stamp_       = other.stamp_;
+    this->gradients_   = other.gradients_;
     this->fingerprint_ = other.fingerprint_;
-    this->hash_ = other.hash_;
-    this->source_ = other.source_;
-    this->vocab_ = other.vocab_;
+    this->hash_        = other.hash_;
+    this->source_      = other.source_;
+    this->vocab_       = other.vocab_;
   }
 
   Update &operator=(Update const &other) = delete;
@@ -175,7 +175,6 @@ public:
   static uint8_t const HASH        = 4;
   static uint8_t const SOURCE      = 5;
   static uint8_t const VOCAB       = 6;
-  
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &update)

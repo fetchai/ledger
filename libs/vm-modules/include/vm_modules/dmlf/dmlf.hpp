@@ -31,4 +31,3 @@ void BindDMLF(fetch::vm::Module &module);
 }  // namespace dmlf
 }  // namespace vm_modules
 }  // namespace fetch
-

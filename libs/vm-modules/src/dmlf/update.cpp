@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
 #include "vm/address.hpp"
+#include "vm/module.hpp"
 
 #include "vm_modules/dmlf/update.hpp"
 
@@ -33,7 +33,8 @@ VMUpdate::VMUpdate(VM *vm, TypeId type_id)
   update_ = std::make_unique<CPPType>();
 }
 
-VMUpdate::VMUpdate(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<CPPPayloadType> const gradients)
+VMUpdate::VMUpdate(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                   std::vector<CPPPayloadType> const gradients)
   : Object(vm, type_id)
 {
   update_ = std::make_unique<CPPType>(std::move(gradients));
@@ -43,24 +44,25 @@ Ptr<VMUpdate> VMUpdate::Constructor(VM *vm, TypeId type_id)
 {
   return Ptr<VMUpdate>{new VMUpdate(vm, type_id)};
 }
-  
-Ptr<VMUpdate> VMUpdate::ConstructorFromVecPayload(fetch::vm::VM *vm, fetch::vm::TypeId type_id, Ptr<Array<Ptr<VMPayloadType>>> const& payloads)
+
+Ptr<VMUpdate> VMUpdate::ConstructorFromVecPayload(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                                  Ptr<Array<Ptr<VMPayloadType>>> const &payloads)
 {
   std::size_t size = payloads->elements.size();
-  
+
   std::vector<CPPPayloadType> gradients;
   gradients.resize(size);
-  
-  for (std::size_t i=0; i<size; i++)
+
+  for (std::size_t i = 0; i < size; i++)
   {
     Ptr<VMPayloadType> tensor = payloads->elements.at(i);
     gradients.emplace_back(tensor->GetTensor());
   }
-  
+
   return Ptr<VMUpdate>{new VMUpdate(vm, type_id, std::move(gradients))};
 }
 
-void VMUpdate::SetSource(Ptr<Address> const& addr)
+void VMUpdate::SetSource(Ptr<Address> const &addr)
 {
   std::string pkey_b64{addr->address().display()};
   update_->SetSource(pkey_b64);
@@ -68,21 +70,23 @@ void VMUpdate::SetSource(Ptr<Address> const& addr)
 
 Ptr<Address> VMUpdate::GetSource()
 {
-  Ptr<Address> source = vm_->CreateNewObject<fetch::vm::Address>(Ptr<String>{new String{vm_, update_->GetSource()}});
+  Ptr<Address> source =
+      vm_->CreateNewObject<fetch::vm::Address>(Ptr<String>{new String{vm_, update_->GetSource()}});
   return source;
 }
 
 Ptr<Array<Ptr<VMUpdate::VMPayloadType>>> VMUpdate::GetGradients()
 {
-  std::vector<CPPPayloadType> const& gradients = update_->GetGradients();
-  size_t size = gradients.size();
+  std::vector<CPPPayloadType> const &gradients = update_->GetGradients();
+  size_t                             size      = gradients.size();
 
-  Ptr<Array<Ptr<VMPayloadType>>> payloads = vm_->CreateNewObject<Array<Ptr<VMPayloadType>>>(vm_->GetTypeId<VMPayloadType>(), static_cast<int32_t>(size));
-   
+  Ptr<Array<Ptr<VMPayloadType>>> payloads = vm_->CreateNewObject<Array<Ptr<VMPayloadType>>>(
+      vm_->GetTypeId<VMPayloadType>(), static_cast<int32_t>(size));
+
   for (std::size_t i{0}; i < size; ++i)
   {
     Ptr<VMPayloadType> payload = vm_->CreateNewObject<VMPayloadType>(gradients[i]);
-    payloads->elements[i] = payload;
+    payloads->elements[i]      = payload;
   }
   return payloads;
 }
@@ -94,7 +98,8 @@ uint64_t VMUpdate::GetTimestamp()
 
 void VMUpdate::Bind(Module &module)
 {
-  module.CreateClassType<VMUpdate>("UpdatePacket")
+  module
+      .CreateClassType<VMUpdate>("UpdatePacket")
       //.CreateConstructor(&VMUpdate::Constructor)
       .CreateConstructor(&VMUpdate::ConstructorFromVecPayload)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMUpdate> {
@@ -103,8 +108,7 @@ void VMUpdate::Bind(Module &module)
       .CreateMemberFunction("setSource", &VMUpdate::SetSource)
       .CreateMemberFunction("getSource", &VMUpdate::GetSource)
       .CreateMemberFunction("getGradients", &VMUpdate::GetGradients)
-      .CreateMemberFunction("getTimestamp", &VMUpdate::GetTimestamp)
-      ;
+      .CreateMemberFunction("getTimestamp", &VMUpdate::GetTimestamp);
 }
 
 bool VMUpdate::SerializeTo(serializers::MsgPackSerializer &buffer)
@@ -117,18 +121,18 @@ bool VMUpdate::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
   CPPTypePtr update = std::make_unique<CPPType>();
   buffer >> *update;
-  
+
   this->update_ = std::move(update);
 
   return true;
 }
 
-VMUpdate::CPPType& VMUpdate::GetUpdate()
+VMUpdate::CPPType &VMUpdate::GetUpdate()
 {
   return *update_;
 }
-   
-void  VMUpdate::SetUpdate(CPPType const& from)
+
+void VMUpdate::SetUpdate(CPPType const &from)
 {
   update_ = std::make_unique<CPPType>(from);
 }
@@ -136,4 +140,3 @@ void  VMUpdate::SetUpdate(CPPType const& from)
 }  // namespace dmlf
 }  // namespace vm_modules
 }  // namespace fetch
-

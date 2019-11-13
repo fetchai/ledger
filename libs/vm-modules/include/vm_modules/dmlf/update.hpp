@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/update.hpp"
 #include "vm/array.hpp"
 #include "vm_modules/math/tensor.hpp"
-#include "dmlf/update.hpp"
 
 #include <memory>
 
@@ -36,17 +36,20 @@ class VMUpdate : public fetch::vm::Object
 {
 public:
   using VMPayloadType  = math::VMTensor;
-  using CPPPayloadType     = VMPayloadType::TensorType;
-  using CPPType     = fetch::dmlf::Update<CPPPayloadType>;
+  using CPPPayloadType = VMPayloadType::TensorType;
+  using CPPType        = fetch::dmlf::Update<CPPPayloadType>;
   using CPPTypePtr     = std::unique_ptr<CPPType>;
 
   VMUpdate(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
-  VMUpdate(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<CPPPayloadType> const payloads);
-  
+  VMUpdate(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+           std::vector<CPPPayloadType> const payloads);
+
   static fetch::vm::Ptr<VMUpdate> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
-  static fetch::vm::Ptr<VMUpdate> ConstructorFromVecPayload(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMPayloadType>>> const& payloads);
+  static fetch::vm::Ptr<VMUpdate> ConstructorFromVecPayload(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+      fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMPayloadType>>> const &payloads);
 
   void SetSource(fetch::vm::Ptr<fetch::vm::Address> const &addr);
 
@@ -58,9 +61,9 @@ public:
 
   static void Bind(fetch::vm::Module &module);
 
-  CPPType& GetUpdate();
-   
-  void  SetUpdate(CPPType const& from);
+  CPPType &GetUpdate();
+
+  void SetUpdate(CPPType const &from);
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
@@ -73,4 +76,3 @@ private:
 }  // namespace dmlf
 }  // namespace vm_modules
 }  // namespace fetch
-

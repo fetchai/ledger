@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/dmlf/update.hpp"
 #include "fake_learner_networker.hpp"
+#include "vm_modules/dmlf/update.hpp"
 
 #include <memory>
 
@@ -27,7 +27,7 @@ namespace fetch {
 namespace vm {
 class Module;
 class Address;
-}
+}  // namespace vm
 
 namespace vm_modules {
 namespace dmlf {
@@ -43,31 +43,31 @@ public:
   VMCoLearner(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   VMCoLearner(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string id);
-  
+
   static fetch::vm::Ptr<VMCoLearner> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
-  static fetch::vm::Ptr<VMCoLearner> ConstructorFromId(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::Address> const& addr);
+  static fetch::vm::Ptr<VMCoLearner> ConstructorFromId(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::Address> const &addr);
 
   void SetId(fetch::vm::Ptr<fetch::vm::Address> const &addr);
 
   fetch::vm::Ptr<fetch::vm::Address> GetId();
 
-  void PushUpdate(fetch::vm::Ptr<VMUpdateType> const& update);
-  
+  void PushUpdate(fetch::vm::Ptr<VMUpdateType> const &update);
+
   fetch::vm::Ptr<VMUpdateType> GetUpdate();
 
   uint64_t GetUpdateCount();
-  
+
   static void Bind(fetch::vm::Module &module);
 
-  CPPType& GetLearner();
+  CPPType &GetLearner();
 
 private:
-  CPPTypePtr learner_;
+  CPPTypePtr  learner_;
   std::string id_;
 };
 
 }  // namespace dmlf
 }  // namespace vm_modules
 }  // namespace fetch
-

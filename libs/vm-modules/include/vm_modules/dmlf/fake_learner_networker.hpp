@@ -29,16 +29,16 @@ namespace fetch {
 namespace dmlf {
 
 template <typename T>
-class FakeLearner 
+class FakeLearner
 {
 public:
-  using UpdateType = T;
+  using UpdateType    = T;
   using UpdateTypePtr = std::shared_ptr<UpdateType>;
 
-  FakeLearner()                                      = default;
-  virtual ~FakeLearner()                             = default;
+  FakeLearner()                         = default;
+  virtual ~FakeLearner()                = default;
   FakeLearner(FakeLearner const &other) = delete;
-  FakeLearner &operator=(FakeLearner const &other)  = delete;
+  FakeLearner &operator=(FakeLearner const &other) = delete;
 
   void PushUpdate(UpdateTypePtr const &update)
   {
@@ -48,7 +48,7 @@ public:
 
   std::size_t GetPeerCount() const
   {
-    return 0;  
+    return 0;
   }
 
   std::size_t GetUpdateCount() const
@@ -59,7 +59,7 @@ public:
   UpdateTypePtr GetUpdate()
   {
     FETCH_LOCK(queue_m_);
-    if(queue_.empty())
+    if (queue_.empty())
     {
       throw std::runtime_error{"FakeLearner: no updates available"};
     }
@@ -69,12 +69,12 @@ public:
   }
 
 private:
-  using Mutex             = fetch::Mutex;
-  using Lock              = std::unique_lock<Mutex>;
-  using Queue       = std::queue<UpdateTypePtr>;
-  
-  Queue queue_;
-  mutable Mutex queue_m_; 
+  using Mutex = fetch::Mutex;
+  using Lock  = std::unique_lock<Mutex>;
+  using Queue = std::queue<UpdateTypePtr>;
+
+  Queue         queue_;
+  mutable Mutex queue_m_;
 };
 
 }  // namespace dmlf

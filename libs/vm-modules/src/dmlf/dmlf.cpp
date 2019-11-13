@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "vm/module.hpp"
-#include "vm_modules/dmlf/update.hpp"
 #include "vm_modules/dmlf/colearner.hpp"
+#include "vm_modules/dmlf/update.hpp"
 
 using namespace fetch::vm;
 
@@ -30,7 +30,7 @@ void BindDMLF(Module &module)
 {
   // Update
   VMUpdate::Bind(module);
-  
+
   // Collaborative Learner
   VMCoLearner::Bind(module);
 }
@@ -38,4 +38,3 @@ void BindDMLF(Module &module)
 }  // namespace dmlf
 }  // namespace vm_modules
 }  // namespace fetch
-

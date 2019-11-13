@@ -48,11 +48,10 @@ TEST_F(DMLFTests, trivial_update_variable)
     endfunction
   )";
 
-  //std::string const state_name{"dmlf::update"};
+  // std::string const state_name{"dmlf::update"};
   ASSERT_TRUE(toolkit.Compile(update_variable_src));
-  //EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+  // EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
   ASSERT_TRUE(toolkit.Run());
 }
 
-}   // namespace
-
+}  // namespace

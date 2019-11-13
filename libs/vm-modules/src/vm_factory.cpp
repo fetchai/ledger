@@ -24,6 +24,7 @@
 #include "vm_modules/core/structured_data.hpp"
 #include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/crypto/sha256.hpp"
+#include "vm_modules/dmlf/dmlf.hpp"
 #include "vm_modules/ledger/context.hpp"
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/math/exp.hpp"
@@ -31,7 +32,6 @@
 #include "vm_modules/ml/ml.hpp"
 #include "vm_modules/polyfill/bitshifting.hpp"
 #include "vm_modules/polyfill/bitwise_ops.hpp"
-#include "vm_modules/dmlf/dmlf.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include <cstdint>
