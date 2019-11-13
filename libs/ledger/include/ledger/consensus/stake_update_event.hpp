@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,22 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/constants.hpp"
-#include "core/byte_array/decoders.hpp"
-#include "core/digest.hpp"
+#include <cstdint>
+#include <vector>
+
+#include "crypto/identity.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
-using byte_array::FromBase64;
+struct StakeUpdateEvent
+{
+  using StakeAmount = uint64_t;
+  using BlockIndex  = uint64_t;
 
-uint64_t STAKE_WARM_UP_PERIOD   = 100;
-uint64_t STAKE_COOL_DOWN_PERIOD = 100;
+  BlockIndex       block_index{0};
+  crypto::Identity from{};
+  StakeAmount      amount{0};
+};
 
-Digest GENESIS_DIGEST      = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-Digest GENESIS_MERKLE_ROOT = FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+using StakeUpdateEvents = std::vector<StakeUpdateEvent>;
 
-const Digest ZERO_HASH = Digest(HASH_SIZE);
-
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch
