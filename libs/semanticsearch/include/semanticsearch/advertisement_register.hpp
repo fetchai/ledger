@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/model_advertisement.hpp"
 #include "semanticsearch/schema/model_register.hpp"
+#include "semanticsearch/vocabular_advertisement.hpp"
 
 namespace fetch {
 namespace semanticsearch {
@@ -39,9 +39,9 @@ public:
   SharedModel GetAdvertisementModel(std::string const &name);
   void       AdvertiseAgent(AgentId aid, std::string const &name, SemanticPosition const &position);
   AgentIdSet FindAgents(std::string const &name, SemanticPosition const &position,
-                        SemanticCoordinateType granularity);
+                        SemanticCoordinateType depth);
   AgentIdSet FindAgents(std::string const &name, Vocabulary const &object,
-                        SemanticCoordinateType granularity);
+                        SemanticCoordinateType depth);
 
   void OnAddModel(std::string const &name, VocabularySchema const &object) override;
 

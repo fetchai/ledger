@@ -18,9 +18,9 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/macros.hpp"
+#include "ledger/storage_unit/fake_storage_unit.hpp"
 
 #include "fake_execution_manager.hpp"
-#include "fake_storage_unit.hpp"
 
 using fetch::Digest;
 
@@ -30,7 +30,7 @@ FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
   FETCH_UNUSED(storage_);
 }
 
-FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body const &block)
+FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block const &block)
 {
   if (!current_hash_.empty())
   {

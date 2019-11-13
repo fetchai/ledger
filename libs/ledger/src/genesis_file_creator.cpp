@@ -19,6 +19,7 @@
 #include "chain/address.hpp"
 #include "chain/constants.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/filesystem/read_file_contents.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
@@ -46,7 +47,6 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::json::JSONDocument;
 using fetch::storage::ResourceAddress;
@@ -55,45 +55,6 @@ using fetch::variant::Variant;
 
 constexpr char const *LOGGING_NAME = "GenesisFile";
 constexpr int         VERSION      = 3;
-
-/**
- * Load the entire file into a buffer
- *
- * @param file_path The path of the file to be loaded
- * @return The buffer of data
- */
-ConstByteArray LoadFileContents(std::string const &file_path)
-{
-  std::streampos size;
-  ByteArray      buffer;
-  std::ifstream  file(file_path, std::ios::in | std::ios::binary | std::ios::ate);
-
-  if (file.is_open())
-  {
-    size = file.tellg();
-
-    if (size == 0)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to load stakefile! : ", file_path);
-    }
-
-    if (size > 0)
-    {
-      buffer.Resize(static_cast<std::size_t>(size));
-
-      file.seekg(0, std::ios::beg);
-      file.read(buffer.char_pointer(), size);
-
-      file.close();
-    }
-  }
-  else
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to load stakefile! : ", file_path);
-  }
-
-  return {buffer};
-}
 
 /**
  * Load a JSON from a given path
@@ -106,8 +67,14 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 {
   bool success{false};
 
-  auto const buffer = LoadFileContents(file_path);
-  if (!buffer.empty())
+  // attempt to read the contents of the file
+  auto const buffer = core::ReadContentsOfFile(file_path.c_str());
+
+  if (buffer.empty())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to load stakefile! : ", file_path);
+  }
+  else
   {
     try
     {
@@ -140,8 +107,10 @@ GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
  *
  * @param name The path to the file to be loaded
  */
-void GenesisFileCreator::LoadFile(std::string const &name)
+bool GenesisFileCreator::LoadFile(std::string const &name)
 {
+  bool success{false};
+
   FETCH_LOG_INFO(LOGGING_NAME, "Clearing state and installing genesis");
 
   json::JSONDocument doc{};
@@ -154,23 +123,27 @@ void GenesisFileCreator::LoadFile(std::string const &name)
 
     if (is_correct_version)
     {
+      success = true;
+
       // Note: consensus has to be loaded before the state since that generates the block
       if (consensus_)
       {
-        LoadConsensus(doc["consensus"]);
+        success &= LoadConsensus(doc["consensus"]);
       }
       else
       {
         FETCH_LOG_WARN(LOGGING_NAME, "No stake manager provided when loading from stake file!");
       }
 
-      LoadState(doc["accounts"]);
+      success &= LoadState(doc["accounts"]);
     }
     else
     {
-      FETCH_LOG_CRITICAL(LOGGING_NAME, "Incorrect stake file version!");
+      FETCH_LOG_WARN(LOGGING_NAME, "Incorrect stake file version!");
     }
   }
+
+  return success;
 }
 
 /**
@@ -178,7 +151,7 @@ void GenesisFileCreator::LoadFile(std::string const &name)
  *
  * @param object The reference state to be restored
  */
-void GenesisFileCreator::LoadState(Variant const &object)
+bool GenesisFileCreator::LoadState(Variant const &object)
 {
   // Reset storage unit
   storage_unit_.Reset();
@@ -186,7 +159,7 @@ void GenesisFileCreator::LoadState(Variant const &object)
   // Expecting an array of record entries
   if (!object.IsArray())
   {
-    return;
+    return false;
   }
 
   // iterate over all of the Identity + stake amount mappings
@@ -207,8 +180,8 @@ void GenesisFileCreator::LoadState(Variant const &object)
 
       ResourceAddress key_raw(ResourceID(FromBase64(key)));
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Initial state entry: ", key, " balance: ", balance,
-                     " stake: ", stake);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Initial state entry: ", key, " balance: ", balance,
+                      " stake: ", stake);
 
       {
         // serialize the record to the buffer
@@ -224,7 +197,7 @@ void GenesisFileCreator::LoadState(Variant const &object)
     }
     else
     {
-      return;
+      return false;
     }
   }
 
@@ -235,21 +208,23 @@ void GenesisFileCreator::LoadState(Variant const &object)
 
   ledger::Block genesis_block;
 
-  genesis_block.body.timestamp    = start_time_;
-  genesis_block.body.merkle_hash  = merkle_commit_hash;
-  genesis_block.body.block_number = 0;
-  genesis_block.body.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
+  genesis_block.timestamp    = start_time_;
+  genesis_block.merkle_hash  = merkle_commit_hash;
+  genesis_block.block_number = 0;
+  genesis_block.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
   genesis_block.UpdateDigest();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block.body.hash.ToHex());
+  FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block.hash.ToHex());
 
   chain::GENESIS_MERKLE_ROOT = merkle_commit_hash;
-  chain::GENESIS_DIGEST      = genesis_block.body.hash;
+  chain::GENESIS_DIGEST      = genesis_block.hash;
 
   block_coordinator_.Reset();
+
+  return true;
 }
 
-void GenesisFileCreator::LoadConsensus(Variant const &object)
+bool GenesisFileCreator::LoadConsensus(Variant const &object)
 {
   if (consensus_)
   {
@@ -275,13 +250,13 @@ void GenesisFileCreator::LoadConsensus(Variant const &object)
 
     if (!object.Has("stakers"))
     {
-      return;
+      return false;
     }
 
     Variant const &stake_array = object["stakers"];
     if (!stake_array.IsArray())
     {
-      return;
+      return false;
     }
 
     auto snapshot = std::make_shared<StakeSnapshot>();
@@ -309,12 +284,14 @@ void GenesisFileCreator::LoadConsensus(Variant const &object)
       }
     }
 
-    consensus_->Reset(*snapshot);
+    consensus_->Reset(*snapshot, storage_unit_);
   }
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "No consensus object!");
   }
+
+  return true;
 }
 
 }  // namespace ledger

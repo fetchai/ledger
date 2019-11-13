@@ -62,7 +62,7 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  ScheduleStatus Execute(Block::Body const &block) override;
+  ScheduleStatus Execute(Block const &block) override;
   void           SetLastProcessedBlock(Digest hash) override;
   Digest         LastProcessedBlock() const override;
   State          GetState() override;
@@ -102,11 +102,13 @@ private:
   using AtomicState       = std::atomic<State>;
   using CounterPtr        = telemetry::CounterPtr;
   using HistogramPtr      = telemetry::HistogramPtr;
+  using BlockIndex        = uint64_t;
 
   struct Summary
   {
     State          state{State::IDLE};
     Digest         last_block_hash{chain::GENESIS_DIGEST};
+    BlockIndex     last_block_number{0};
     chain::Address last_block_miner{};
   };
 
@@ -147,7 +149,7 @@ private:
 
   void MonitorThreadEntrypoint();
 
-  bool PlanExecution(Block::Body const &block);
+  bool PlanExecution(Block const &block);
   void DispatchExecution(ExecutionItem &item);
 };
 

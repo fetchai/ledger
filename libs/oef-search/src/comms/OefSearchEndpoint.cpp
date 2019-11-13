@@ -72,7 +72,7 @@ void OefSearchEndpoint::setup()
                                                         ConstCharArrayBuffer buffers) {
     if (auto myself_sp = myself_wp.lock())
     {
-      Task::SetThreadGroupId(myGroupId);
+      fetch::oef::base::Task::SetThreadGroupId(myGroupId);
       FETCH_LOG_INFO(LOGGING_NAME, "GOT DATA with path: ", uri.path, ", id: ", id);
       uri.port = static_cast<uint32_t>(id);
       myself_sp->factory->ProcessMessageWithUri(uri, buffers);
@@ -88,7 +88,7 @@ void OefSearchEndpoint::setup()
       // myself_sp -> factory.reset();
       FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (id=", myGroupId, ", ", endpoint_uri.ToString(),
                      ") called OnErrorHandler!");
-      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
+      fetch::oef::base::Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
     }
   });
 
@@ -99,7 +99,7 @@ void OefSearchEndpoint::setup()
       // myself_sp -> factory.reset();
       FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (id=", myGroupId, ", ", endpoint_uri.ToString(),
                      ") called OnEofHandler!");
-      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
+      fetch::oef::base::Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
     }
   });
 
@@ -111,7 +111,7 @@ void OefSearchEndpoint::setup()
           // myself_sp -> factory.reset();
           FETCH_LOG_INFO(LOGGING_NAME, "Endpoint (id=", myGroupId, ", ", endpoint_uri.ToString(),
                          ") called OnProtoErrorHandler!");
-          Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
+          fetch::oef::base::Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
         }
         FETCH_LOG_INFO(LOGGING_NAME, "Proto error: ", message);
       });
