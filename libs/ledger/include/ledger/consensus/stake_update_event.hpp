@@ -18,33 +18,24 @@
 //------------------------------------------------------------------------------
 
 #include <cstdint>
-#include <map>
-#include <memory>
+#include <vector>
+
+#include "crypto/identity.hpp"
 
 namespace fetch {
-namespace chain {
-
-class Address;
-
-}  // namespace chain
 namespace ledger {
 
-class StakeManagerInterface
+struct StakeUpdateEvent
 {
-public:
-  using BlockIndex = uint64_t;
+  using StakeAmount = uint64_t;
+  using BlockIndex  = uint64_t;
 
-  // Construction / Destruction
-  StakeManagerInterface()          = default;
-  virtual ~StakeManagerInterface() = default;
-
-  /// @name Stake Manager Interface
-  /// @{
-  virtual void UpdateCurrentBlock(BlockIndex block_index) = 0;
-  /// @}
-
-private:
+  BlockIndex       block_index{0};
+  crypto::Identity from{};
+  StakeAmount      amount{0};
 };
+
+using StakeUpdateEvents = std::vector<StakeUpdateEvent>;
 
 }  // namespace ledger
 }  // namespace fetch
