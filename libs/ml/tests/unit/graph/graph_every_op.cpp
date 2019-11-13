@@ -129,6 +129,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string input_2  = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_3d = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_4d = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_5d = AddOp<ops::PlaceHolder<TensorType>>(g, {});
 
   // ordinary ops
   std::string abs          = AddOp<ops::Abs<TensorType>>(g, {input_1});
@@ -137,14 +138,14 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string avg2         = AddOp<ops::AvgPool2D<TensorType>>(g, {input_4d}, 1, 1);
   std::string concat       = AddOp<ops::Concatenate<TensorType>>(g, {input_1, input_2}, 0);
   std::string constant     = AddOp<ops::Constant<TensorType>>(g, {});
-  std::string conv1d       = AddOp<ops::Convolution1D<TensorType>>(g, {input_1});
-  std::string conv2d       = AddOp<ops::Convolution2D<TensorType>>(g, {input_1});
+  std::string conv1d       = AddOp<ops::Convolution1D<TensorType>>(g, {input_3d, input_4d});
+  std::string conv2d       = AddOp<ops::Convolution2D<TensorType>>(g, {input_4d, input_5d});
   std::string divide       = AddOp<ops::Divide<TensorType>>(g, {input_1, input_2});
   std::string embed        = AddOp<ops::Embeddings<TensorType>>(g, {input_1}, 1, 3);
   std::string exp          = AddOp<ops::Exp<TensorType>>(g, {input_1});
   std::string flatten      = AddOp<ops::Flatten<TensorType>>(g, {input_1});
   std::string layernorm_op = AddOp<ops::LayerNorm<TensorType>>(g, {input_1});
-  std::string log          = AddOp<ops::Log<TensorType>>(g, {input_1});
+  std::string log          = AddOp<ops::Log<TensorType>>(g, {input_2});
   std::string maskfill     = AddOp<ops::MaskFill<TensorType>>(g, {input_1, input_1}, DataType(0));
   std::string matmul       = AddOp<ops::MatrixMultiply<TensorType>>(g, {input_1});
   std::string maxpool      = AddOp<ops::MaxPool<TensorType>>(g, {input_1}, 1, 1);
@@ -196,15 +197,18 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
 
   // Generate input
   TensorType data1   = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4)");
-  TensorType data2   = TensorType::FromString(R"(-20,-10, 0, 10, 20, 30)");
+  TensorType data2   = TensorType::FromString(R"(-20,-10, 1, 10, 20, 30)");
   TensorType data_3d = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4, 5, 6)");
   TensorType data_4d = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4, 5, 6)");
+  TensorType data_5d = TensorType::FromString(R"(-1 , 0 , 1, 2 , 3 , 4, 5, 6)");
   data_3d.Reshape({2, 2, 2});
   data_4d.Reshape({2, 2, 2, 1});
+  data_5d.Reshape({2, 2, 2, 1, 1});
   g->SetInput(input_1, data1);
   g->SetInput(input_2, data2);
   g->SetInput(input_3d, data_3d);
   g->SetInput(input_4d, data_4d);
+  g->SetInput(input_5d, data_5d);
   g->SetInput(constant, data1);
   g->Compile();
 
@@ -234,6 +238,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   g2->SetInput(input_2, data2);
   g2->SetInput(input_3d, data_3d);
   g2->SetInput(input_4d, data_4d);
+  g2->SetInput(input_5d, data_5d);
   g2->SetInput(constant, data1);
   g2->Compile();
 
