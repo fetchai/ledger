@@ -23,7 +23,7 @@ namespace ledger {
 
 char const *ToString(SynergeticExecutionManagerInterface::ExecStatus status)
 {
-  using ExecStatus = SynergeticExecutionManagerInterface::ExecStatus;
+  using SynergeticExecutionManagerInterface::ExecStatus;
 
   char const *text = "Unknown";
 
