@@ -153,12 +153,30 @@ template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
 template class Blas<float, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
                     Computes(_y <= _alpha * _A * _x + _beta * _y),
                     platform::Parallelisation::NOT_PARALLEL>;
+template class Blas<
+    fetch::fixed_point::FixedPoint<16, 16>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>;
+template class Blas<
+    fetch::fixed_point::FixedPoint<32, 32>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>;
+template class Blas<
+    fetch::fixed_point::FixedPoint<64, 64>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>;
 template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
                     Computes(_y <= _alpha * _A * _x + _beta * _y),
                     platform::Parallelisation::THREADING>;
 template class Blas<float, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
                     Computes(_y <= _alpha * _A * _x + _beta * _y),
                     platform::Parallelisation::THREADING>;
+template class Blas<
+    fetch::fixed_point::FixedPoint<16, 16>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::THREADING>;
+template class Blas<
+    fetch::fixed_point::FixedPoint<32, 32>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::THREADING>;
+template class Blas<
+    fetch::fixed_point::FixedPoint<64, 64>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::THREADING>;
 
 }  // namespace linalg
 }  // namespace math
