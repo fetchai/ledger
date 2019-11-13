@@ -352,8 +352,6 @@ TEST_F(VmChargeTests,
   ASSERT_TRUE(toolkit.Run(nullptr, high_charge_limit));
 }
 
-<<<<<<< HEAD
-=======
 TEST_F(VmChargeTests, array_functor_bind_with_charge_estimate_execution_succeeds_with_estimator)
 {
   auto array_add_estimator = [](Ptr<Array<uint32_t>> const &array) -> ChargeAmount {
@@ -426,7 +424,6 @@ TEST_F(VmChargeTests, array_functor_bind_with_charge_estimate_execution_fails_wi
   ASSERT_FALSE(toolkit.Run(nullptr, high_charge_limit)) << stdout.str();
 }
 
->>>>>>> d0bb2c29d... Fix stack pointer offset
 TEST_F(VmChargeTests,
        ctor_bind_with_charge_estimate_execution_fails_when_limit_exceeded_with_estimator)
 {
