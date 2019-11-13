@@ -2599,7 +2599,9 @@ bool Tensor<T, C>::AllClose(Tensor const &o, Type const &relative_tolerance,
     ++it1;
     ++it2;
 
-    T abs_e1, abs_e2, abs_diff;
+    T abs_e1;
+    T abs_e2;
+    T abs_diff;
     fetch::math::Abs(e1, abs_e1);
     fetch::math::Abs(e2, abs_e2);
     fetch::math::Abs(e1 - e2, abs_diff);
