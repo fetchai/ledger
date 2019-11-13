@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,30 +16,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract_context_attacher.hpp"
-#include "vm/module.hpp"
+#include "ledger/upow/synergetic_execution_manager_interface.hpp"
 
 namespace fetch {
-namespace vm_modules {
 namespace ledger {
 
-template <typename Contract>
-void BindBalanceFunction(vm::Module &module, Contract const &contract)
+char const *ToString(SynergeticExecutionManagerInterface::ExecStatus status)
 {
-  module.CreateFreeFunction("balance", [&contract](vm::VM *) -> uint64_t {
-    decltype(auto) c = contract.context();
+  using ExecStatus = SynergeticExecutionManagerInterface::ExecStatus;
 
-    fetch::ledger::ContractContextAttacher raii(*c.token_contract, c);
-    c.state_adapter->PushContext("fetch.token");
+  char const *text = "Unknown";
 
-    auto const balance = c.token_contract->GetBalance(c.contract_address);
+  switch (status)
+  {
+  case ExecStatus::SUCCESS:
+    text = "Success";
+    break;
+  case ExecStatus::CONTRACT_NAME_PARSE_FAILURE:
+    text = "Contract name parse failure";
+    break;
+  case ExecStatus::INVALID_CONTRACT_ADDRESS:
+    text = "Invalid contract address";
+    break;
+  case ExecStatus::INVALID_NODE:
+    text = "Invalid node";
+    break;
+  case ExecStatus::INVALID_BLOCK:
+    text = "Invalid block";
+    break;
+  case ExecStatus::CONTRACT_REGISTRATION_FAILED:
+    text = "Contract registration failed";
+    break;
+  }
 
-    c.state_adapter->PopContext();
-
-    return balance;
-  });
+  return text;
 }
 
 }  // namespace ledger
-}  // namespace vm_modules
 }  // namespace fetch
