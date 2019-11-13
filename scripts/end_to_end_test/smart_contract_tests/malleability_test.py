@@ -51,4 +51,5 @@ def run(options):
 
     # If transaction malleability is feasible, id2 should have 500 FET.
     # If balance of id2 is more than 250 raise an exception
-    assert api.tokens.balance(id2) == 250, "Vulnerable to transaction malleability attack"
+    assert api.tokens.balance(
+        id2) == 250, "Vulnerable to transaction malleability attack"
