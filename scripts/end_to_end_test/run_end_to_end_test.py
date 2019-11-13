@@ -112,6 +112,8 @@ def setup_test(test_yaml, test_instance):
                                  expected=False, expect_type=int, default=10)
     pos_mode = yaml_extract(test_yaml, 'pos_mode', expected=False,
                             expect_type=bool, default=False)
+    num_lanes = yaml_extract(test_yaml, 'lanes', expected=False,
+                             expect_type=int, default=1)
 
     test_instance._number_of_nodes = number_of_nodes
     test_instance._node_load_directory = node_load_directory
@@ -119,6 +121,7 @@ def setup_test(test_yaml, test_instance):
     test_instance._nodes_are_mining = mining_nodes
     test_instance._max_test_time = max_test_time
     test_instance._pos_mode = pos_mode
+    test_instance._lanes = num_lanes
 
     # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
     # necessary to preserve output logs etc.
@@ -126,7 +129,7 @@ def setup_test(test_yaml, test_instance):
         output(
             "***** Shutting down test due to failure!. Debug YAML: {} *****\n".format(test_yaml))
         test_instance.stop()
-        # test_instance.dump_debug()
+        test_instance.dump_debug()
         os._exit(1)
 
     watchdog = TimerWatchdog(
@@ -631,7 +634,7 @@ def run_test(build_directory, yaml_file, node_exe):
             print('Failed to parse yaml or to run test! Error: "{}"'.format(e))
             traceback.print_exc()
             test_instance.stop()
-            # test_instance.dump_debug()
+            test_instance.dump_debug()
             sys.exit(1)
 
     output("\nAll end to end tests have passed")

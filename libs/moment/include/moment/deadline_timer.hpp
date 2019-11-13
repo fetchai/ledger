@@ -39,6 +39,18 @@ public:
 
   bool HasExpired() const;
 
+  template <typename Duration>
+  uint64_t GetTimeRemaining() const
+  {
+    auto const now = clock_->Now();
+    if (deadline_ > now)
+    {
+      return static_cast<uint64_t>(std::chrono::duration_cast<Duration>(deadline_ - now).count());
+    }
+
+    return 0;
+  }
+
   // Operators
   DeadlineTimer &operator=(DeadlineTimer const &) = default;
   DeadlineTimer &operator=(DeadlineTimer &&) = default;
