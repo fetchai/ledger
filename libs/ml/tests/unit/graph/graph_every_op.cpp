@@ -127,11 +127,13 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   using GraphPtrType = std::shared_ptr<GraphType>;
 
   // setup input data
-  TensorType data1   = TensorType::FromString(R"(1 , 1 , 1, 2 , 3 , 4)");
-  TensorType data2   = TensorType::FromString(R"(-20,-10, 1, 10, 20, 30)");
-  TensorType data_3d = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
-  TensorType data_4d = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
-  TensorType data_5d = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
+  TensorType data1       = TensorType::FromString(R"(1 , 1 , 1, 2 , 3 , 4)");
+  TensorType data2       = TensorType::FromString(R"(-20,-10, 1, 10, 20, 30)");
+  TensorType data_3d     = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
+  TensorType data_4d     = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
+  TensorType data_5d     = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
+  TensorType data_binary = TensorType::FromString(R"(1 , 1 , 0, 0 , 0 , 1)");
+  TensorType data_logits = TensorType::FromString(R"(0.2 , 0.2 , 0.2, 0.2 , 0.1 , 0.1)");
   data_3d.Reshape({2, 2, 2});
   data_4d.Reshape({2, 2, 2, 1});
   data_5d.Reshape({2, 2, 2, 1, 1});
@@ -141,12 +143,14 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   auto        g    = std::make_shared<GraphType>();
 
   // placeholder inputs
-  std::string input_1  = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_1_transpose  = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_2  = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_3d = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_4d = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_5d = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_1           = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_1_transpose = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_2           = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_3d          = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_4d          = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_5d          = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_binary      = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_logits      = AddOp<ops::PlaceHolder<TensorType>>(g, {});
 
   // ordinary ops
   std::string abs          = AddOp<ops::Abs<TensorType>>(g, {input_1});
@@ -164,23 +168,23 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string layernorm_op = AddOp<ops::LayerNorm<TensorType>>(g, {input_1});
   std::string log          = AddOp<ops::Log<TensorType>>(g, {input_1});
   std::string maskfill     = AddOp<ops::MaskFill<TensorType>>(g, {input_1, input_1}, DataType(0));
-  std::string matmul       = AddOp<ops::MatrixMultiply<TensorType>>(g, {input_1, input_1_transpose});
-  std::string maxpool      = AddOp<ops::MaxPool<TensorType>>(g, {input_3d}, 1, 1);
-  std::string maxpool1d    = AddOp<ops::MaxPool1D<TensorType>>(g, {input_3d}, 1, 1);
-  std::string maxpool2d    = AddOp<ops::MaxPool2D<TensorType>>(g, {input_4d}, 1, 1);
-  std::string maximum      = AddOp<ops::Maximum<TensorType>>(g, {input_1, input_2});
-  std::string multiply     = AddOp<ops::Multiply<TensorType>>(g, {input_1, input_2});
-  std::string onehot       = AddOp<ops::OneHot<TensorType>>(g, {input_1}, data1.size());
-  std::string placeholder  = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string reducemean   = AddOp<ops::ReduceMean<TensorType>>(g, {input_1}, 0);
-  std::string slice        = AddOp<ops::Slice<TensorType>>(g, {input_1}, 0, 0);
-  std::string sqrt         = AddOp<ops::Sqrt<TensorType>>(g, {input_1});
-  std::string squeeze      = AddOp<ops::Squeeze<TensorType>>(g, {input_1});
-  std::string switchop     = AddOp<ops::Switch<TensorType>>(g, {input_1, input_1, input_1});
-  std::string tanh         = AddOp<ops::TanH<TensorType>>(g, {input_1});
-  std::string transpose    = AddOp<ops::Transpose<TensorType>>(g, {input_1});
-  std::string topk         = AddOp<ops::TopK<TensorType>>(g, {input_1}, 2);
-  std::string weights      = AddOp<ops::Weights<TensorType>>(g, {});
+  std::string matmul      = AddOp<ops::MatrixMultiply<TensorType>>(g, {input_1, input_1_transpose});
+  std::string maxpool     = AddOp<ops::MaxPool<TensorType>>(g, {input_3d}, 1, 1);
+  std::string maxpool1d   = AddOp<ops::MaxPool1D<TensorType>>(g, {input_3d}, 1, 1);
+  std::string maxpool2d   = AddOp<ops::MaxPool2D<TensorType>>(g, {input_4d}, 1, 1);
+  std::string maximum     = AddOp<ops::Maximum<TensorType>>(g, {input_1, input_2});
+  std::string multiply    = AddOp<ops::Multiply<TensorType>>(g, {input_1, input_2});
+  std::string onehot      = AddOp<ops::OneHot<TensorType>>(g, {input_1}, data1.size());
+  std::string placeholder = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string reducemean  = AddOp<ops::ReduceMean<TensorType>>(g, {input_1}, 0);
+  std::string slice       = AddOp<ops::Slice<TensorType>>(g, {input_1}, 0, 0);
+  std::string sqrt        = AddOp<ops::Sqrt<TensorType>>(g, {input_1});
+  std::string squeeze     = AddOp<ops::Squeeze<TensorType>>(g, {input_1});
+  std::string switchop    = AddOp<ops::Switch<TensorType>>(g, {input_1, input_1, input_1});
+  std::string tanh        = AddOp<ops::TanH<TensorType>>(g, {input_1});
+  std::string transpose   = AddOp<ops::Transpose<TensorType>>(g, {input_1});
+  std::string topk        = AddOp<ops::TopK<TensorType>>(g, {input_1}, 2);
+  std::string weights     = AddOp<ops::Weights<TensorType>>(g, {});
 
   // activations
   std::string dropout    = AddOp<ops::Dropout<TensorType>>(g, {input_1}, DataType(0.9));
@@ -195,9 +199,9 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string softmax = AddOp<ops::Softmax<TensorType>>(g, {input_1});
 
   // Loss functions
-  std::string cel  = AddOp<ops::CrossEntropyLoss<TensorType>>(g, {input_1, input_2});
+  std::string cel  = AddOp<ops::CrossEntropyLoss<TensorType>>(g, {input_logits, input_binary});
   std::string mse  = AddOp<ops::MeanSquareErrorLoss<TensorType>>(g, {input_1, input_2});
-  std::string scel = AddOp<ops::SoftmaxCrossEntropyLoss<TensorType>>(g, {input_1, input_2});
+  std::string scel = AddOp<ops::SoftmaxCrossEntropyLoss<TensorType>>(g, {input_logits, input_binary});
 
   // Layers
   std::string layer_layernorm = AddOp<layers::LayerNorm<TensorType>>(g, {input_1});
@@ -221,6 +225,9 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   g->SetInput(input_5d, data_5d);
   g->SetInput(constant, data1);
   g->SetInput(placeholder, data1);
+  g->SetInput(weights, data1);
+  g->SetInput(input_binary, data_binary);
+  g->SetInput(input_logits, data_logits);
   g->Compile();
 
   // serialise the graph
@@ -253,6 +260,9 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   g2->SetInput(input_5d, data_5d);
   g2->SetInput(constant, data1);
   g2->SetInput(placeholder, data1);
+  g2->SetInput(weights, data1);
+  g2->SetInput(input_binary, data_binary);
+  g2->SetInput(input_logits, data_logits);
   g2->Compile();
 
   // weak tests that all ops produce the same value on both graphs
@@ -291,7 +301,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   ComparePrediction<GraphPtrType, TensorType>(g, g2, switchop);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, tanh);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, transpose);
-//  ComparePrediction<GraphPtrType, TensorType>(g, g2, topk);
+  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, topk);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, weights);
 
   // activations
