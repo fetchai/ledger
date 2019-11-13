@@ -107,9 +107,15 @@ std::string AddOp(GraphPtrType g, std::vector<std::string> input_nodes, Params..
 template <typename GraphPtrType, typename TensorType>
 void ComparePrediction(GraphPtrType g, GraphPtrType g2, std::string node_name)
 {
+  std::cout << "node_name: " << node_name << std::endl;
   using DataType         = typename TensorType::Type;
   TensorType prediction  = g->Evaluate(node_name);
   TensorType prediction2 = g2->Evaluate(node_name);
+  if (prediction.shape().size() <= 2 )
+  {
+    std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
+    std::cout << "prediction2.ToString(): " << prediction2.ToString() << std::endl;
+  }
   EXPECT_TRUE(prediction.AllClose(prediction2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
 
@@ -145,9 +151,9 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string exp          = AddOp<ops::Exp<TensorType>>(g, {input_1});
   std::string flatten      = AddOp<ops::Flatten<TensorType>>(g, {input_1});
   std::string layernorm_op = AddOp<ops::LayerNorm<TensorType>>(g, {input_1});
-  std::string log          = AddOp<ops::Log<TensorType>>(g, {input_2});
+  std::string log          = AddOp<ops::Log<TensorType>>(g, {input_1});
   std::string maskfill     = AddOp<ops::MaskFill<TensorType>>(g, {input_1, input_1}, DataType(0));
-  std::string matmul       = AddOp<ops::MatrixMultiply<TensorType>>(g, {input_1});
+  std::string matmul       = AddOp<ops::MatrixMultiply<TensorType>>(g, {input_1, input_2});
   std::string maxpool      = AddOp<ops::MaxPool<TensorType>>(g, {input_1}, 1, 1);
   std::string maxpool1d    = AddOp<ops::MaxPool1D<TensorType>>(g, {input_3d}, 1, 1);
   std::string maxpool2d    = AddOp<ops::MaxPool2D<TensorType>>(g, {input_4d}, 1, 1);
@@ -196,7 +202,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string layer_skipgram = AddOp<layers::SkipGram<TensorType>>(g, {input_1});
 
   // Generate input
-  TensorType data1   = TensorType::FromString(R"(-1 , 1 , 1, 2 , 3 , 4)");
+  TensorType data1   = TensorType::FromString(R"(1 , 1 , 1, 2 , 3 , 4)");
   TensorType data2   = TensorType::FromString(R"(-20,-10, 1, 10, 20, 30)");
   TensorType data_3d = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
   TensorType data_4d = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
