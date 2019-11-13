@@ -91,11 +91,11 @@ namespace ml {
 namespace test {
 
 template <typename T>
-class GraphTest : public ::testing::Test
+class GraphRebuildTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(GraphTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(GraphRebuildTest, math::test::HighPrecisionTensorFloatingTypes);
 
 template <typename OpType, typename GraphPtrType, typename... Params>
 std::string AddOp(GraphPtrType g, std::vector<std::string> input_nodes, Params... params)
@@ -110,15 +110,10 @@ void ComparePrediction(GraphPtrType g, GraphPtrType g2, std::string node_name)
   using DataType         = typename TensorType::Type;
   TensorType prediction  = g->Evaluate(node_name);
   TensorType prediction2 = g2->Evaluate(node_name);
-  if (prediction.shape().size() <= 2)
-  {
-    std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
-    std::cout << "prediction2.ToString(): " << prediction2.ToString() << std::endl;
-  }
   EXPECT_TRUE(prediction.AllClose(prediction2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
 
-TYPED_TEST(GraphTest, graph_rebuild_every_op)
+TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
 {
   using TensorType   = TypeParam;
   using DataType     = typename TensorType::Type;
@@ -128,15 +123,22 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   // setup input data
   TensorType data1       = TensorType::FromString(R"(1 , 1 , 1, 2 , 3 , 4)");
   TensorType data2       = TensorType::FromString(R"(-20,-10, 1, 10, 20, 30)");
-  TensorType data_3d     = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
-  TensorType data_4d     = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
-  TensorType data_5d     = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 4, 5, 6)");
+  TensorType data_3d     = TensorType::FromString(R"(1, 1, 1, 2 , 3 , 2, 1, 2)");
+  TensorType data_4d     = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 2, 1, 2)");
+  TensorType data_5d     = TensorType::FromString(R"(-1, 1, 1, 2 , 3 , 2, 1, 2)");
   TensorType data_binary = TensorType::FromString(R"(1 , 1 , 0, 0 , 0 , 1)");
   TensorType data_logits = TensorType::FromString(R"(0.2 , 0.2 , 0.2, 0.2 , 0.1 , 0.1)");
   TensorType data_embed({5, 5});
+  TensorType query_data = TensorType({12, 25, 4});
+  query_data.Fill(static_cast<DataType>(0));
+  TensorType key_data   = query_data;
+  TensorType value_data = query_data;
+  TensorType mask_data  = TensorType({25, 25, 4});
   data_3d.Reshape({2, 2, 2});
   data_4d.Reshape({2, 2, 2, 1});
   data_5d.Reshape({2, 2, 2, 1, 1});
+  TensorType data_1_2_4 = data1.Copy();
+  data_1_2_4.Reshape({2, 4});
 
   // Create graph
   std::string name = "Graph";
@@ -145,6 +147,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   // placeholder inputs
   std::string input_1                = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_1_transpose      = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_1_2_4            = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_2                = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_3d               = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_4d               = AddOp<ops::PlaceHolder<TensorType>>(g, {});
@@ -153,6 +156,10 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string input_binary_transpose = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_logits           = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_logits_transpose = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_query = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_key = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_value = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_mask = AddOp<ops::PlaceHolder<TensorType>>(g, {});
 
   // ordinary ops
   std::string abs          = AddOp<ops::Abs<TensorType>>(g, {input_1});
@@ -186,7 +193,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   std::string switchop    = AddOp<ops::Switch<TensorType>>(g, {input_1, input_1, input_1});
   std::string tanh        = AddOp<ops::TanH<TensorType>>(g, {input_1});
   std::string transpose   = AddOp<ops::Transpose<TensorType>>(g, {input_1});
-  std::string topk        = AddOp<ops::TopK<TensorType>>(g, {input_1}, 2);
+  std::string topk        = AddOp<ops::TopK<TensorType>>(g, {input_1_2_4}, 2);
   std::string weights     = AddOp<ops::Weights<TensorType>>(g, {});
 
   // activations
@@ -209,21 +216,26 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
       g, {input_logits_transpose, input_binary_transpose});
 
   // Layers
-  std::string layer_layernorm = AddOp<layers::LayerNorm<TensorType>>(g, {input_1}, {1, 6});
-  std::string layer_conv1d    = AddOp<layers::Convolution1D<TensorType>>(g, {input_1});
-  std::string layer_conv2d    = AddOp<layers::Convolution2D<TensorType>>(g, {input_1});
-  std::string layer_fc1       = AddOp<layers::FullyConnected<TensorType>>(g, {input_1});
-  std::string layer_mh        = AddOp<layers::MultiheadAttention<TensorType>>(g, {input_1});
-  std::string layer_prelu     = AddOp<layers::PRelu<TensorType>>(g, {input_1});
+  std::string layer_layernorm =
+      AddOp<layers::LayerNorm<TensorType>>(g, {input_1}, std::vector<math::SizeType>({1}));
+  std::string layer_conv1d = AddOp<layers::Convolution1D<TensorType>>(g, {input_3d}, 1, 2, 1, 1);
+  std::string layer_conv2d = AddOp<layers::Convolution2D<TensorType>>(g, {input_4d}, 1, 2, 1, 1);
+  std::string layer_fc1    = AddOp<layers::FullyConnected<TensorType>>(g, {input_1}, 1, 1);
+  std::string layer_mh     = AddOp<layers::MultiheadAttention<TensorType>>(
+      g, {input_query, input_key, input_value, input_mask}, 4, 12);
+  std::string layer_prelu = AddOp<layers::PRelu<TensorType>>(g, {input_1}, 1);
   std::string layer_scaleddotproductattention =
-      AddOp<layers::ScaledDotProductAttention<TensorType>>(g, {input_1});
+      AddOp<layers::ScaledDotProductAttention<TensorType>>(
+          g, {input_query, input_key, input_value, input_mask}, 4);
   std::string layer_selfattentionencoder =
-      AddOp<layers::SelfAttentionEncoder<TensorType>>(g, {input_1});
-  std::string layer_skipgram = AddOp<layers::SkipGram<TensorType>>(g, {input_1});
+      AddOp<layers::SelfAttentionEncoder<TensorType>>(g, {input_query, input_mask}, 4, 12, 24);
+  std::string layer_skipgram =
+      AddOp<layers::SkipGram<TensorType>>(g, {input_1, input_1}, 1, 1, 5, 5);
 
   // assign input data
   g->SetInput(input_1, data1);
   g->SetInput(input_1_transpose, data1.Copy().Transpose());
+  g->SetInput(input_1_2_4, data_1_2_4);
   g->SetInput(input_2, data2);
   g->SetInput(input_3d, data_3d);
   g->SetInput(input_4d, data_4d);
@@ -261,6 +273,7 @@ TYPED_TEST(GraphTest, graph_rebuild_every_op)
   // evaluate both graphs to ensure outputs are identical
   g2->SetInput(input_1, data1);
   g2->SetInput(input_1_transpose, data1.Copy().Transpose());
+  g2->SetInput(input_1_2_4, data_1_2_4);
   g2->SetInput(input_2, data2);
   g2->SetInput(input_3d, data_3d);
   g2->SetInput(input_4d, data_4d);
