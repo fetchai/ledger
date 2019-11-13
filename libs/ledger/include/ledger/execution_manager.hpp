@@ -102,11 +102,13 @@ private:
   using AtomicState       = std::atomic<State>;
   using CounterPtr        = telemetry::CounterPtr;
   using HistogramPtr      = telemetry::HistogramPtr;
+  using BlockIndex        = uint64_t;
 
   struct Summary
   {
     State          state{State::IDLE};
-    Digest         last_block_hash{chain::GENESIS_DIGEST};
+    Digest         last_block_hash{chain::ZERO_HASH};
+    BlockIndex     last_block_number{0};
     chain::Address last_block_miner{};
   };
 
