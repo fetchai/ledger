@@ -156,10 +156,10 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   std::string input_binary_transpose = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_logits           = AddOp<ops::PlaceHolder<TensorType>>(g, {});
   std::string input_logits_transpose = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_query = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_key = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_value = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  std::string input_mask = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_query            = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_key              = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_value            = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_mask             = AddOp<ops::PlaceHolder<TensorType>>(g, {});
 
   // ordinary ops
   std::string abs          = AddOp<ops::Abs<TensorType>>(g, {input_1});
@@ -247,6 +247,10 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   g->SetInput(input_binary_transpose, data_binary.Copy().Transpose());
   g->SetInput(input_logits, data_logits);
   g->SetInput(input_logits_transpose, data_logits.Copy().Transpose());
+  g->SetInput(input_query, query_data);
+  g->SetInput(input_key, key_data);
+  g->SetInput(input_value, value_data);
+  g->SetInput(input_mask, mask_data);
   g->Compile();
 
   // serialise the graph
@@ -285,6 +289,10 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   g2->SetInput(input_binary_transpose, data_binary.Copy().Transpose());
   g2->SetInput(input_logits, data_logits);
   g2->SetInput(input_logits_transpose, data_logits.Copy().Transpose());
+  g2->SetInput(input_query, query_data);
+  g2->SetInput(input_key, key_data);
+  g2->SetInput(input_value, value_data);
+  g2->SetInput(input_mask, mask_data);
   g2->Compile();
 
   // weak tests that all ops produce the same value on both graphs
