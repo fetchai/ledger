@@ -26,22 +26,25 @@ namespace colearn {
 
 namespace {
 
-using TimeStampType = ColearnUpdate::TimeStampType;
+using TimeStamp = ColearnUpdate::TimeStamp;
 
-TimeStampType CurrentTime()
+TimeStamp CurrentTime()
 {
-  return static_cast<TimeStampType>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                        std::chrono::system_clock::now().time_since_epoch())
-                                        .count());
+  return static_cast<TimeStamp>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                    std::chrono::system_clock::now().time_since_epoch())
+                                    .count());
 }
 
 }  // namespace
 
-ColearnUpdate::ColearnUpdate(std::string updateType, Data &&data, Source source)
-  : update_type{std::move(updateType)}
-  , data{std::move(data)}
-  , time_stamp{CurrentTime()}
-  , source{std::move(source)}
+ColearnUpdate::ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &&data,
+                             Source source, Metadata metadata)
+  : algorithm_(std::move(algorithm))
+  , update_type_{std::move(update_type)}
+  , data_{std::move(data)}
+  , source_{std::move(source)}
+  , time_stamp_{CurrentTime()}
+  , metadata_{std::move(metadata)}
 {}
 
 }  // namespace colearn
