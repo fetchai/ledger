@@ -43,7 +43,7 @@ using namespace std::chrono_literals;
 
 constexpr auto        MIN_ANNOUNCEMENT_INTERVAL = 10s;
 constexpr auto        MAX_ANNOUNCEMENT_INTERVAL = 30s;
-constexpr std::size_t MINIMUM_PEERS             = 3;
+constexpr std::size_t MINIMUM_PEERS             = 6;
 constexpr char const *BASE_NAME                 = "PeerSelector";
 constexpr std::size_t MAX_CACHE_KAD_NODES       = 20;
 constexpr std::size_t MAX_CONNECTED_KAD_NODES   = 8;
