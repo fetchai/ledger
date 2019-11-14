@@ -409,6 +409,8 @@ struct OpMatrixMultiplySaveableParams : public OpsSaveableParams
   using SizeVector = std::vector<SizeType>;
 
   fetch::ml::OpType op_type = OpType::OP_MATRIX_MULTIPLY;
+  bool transpose_a;
+  bool transpose_b;
 };
 
 template <typename TensorType>

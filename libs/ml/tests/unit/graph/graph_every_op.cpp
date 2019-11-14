@@ -230,7 +230,7 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   std::string layer_selfattentionencoder =
       AddOp<layers::SelfAttentionEncoder<TensorType>>(g, {input_query, input_mask}, 4, 12, 24);
   std::string layer_skipgram =
-      AddOp<layers::SkipGram<TensorType>>(g, {input_1, input_1}, 1, 1, 5, 5);
+      AddOp<layers::SkipGram<TensorType>>(g, {input_1, input_1}, 1, 1, 10, 10);
 
   // assign input data
   g->SetInput(input_1, data1);
