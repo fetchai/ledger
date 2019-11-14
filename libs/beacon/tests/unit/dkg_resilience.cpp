@@ -609,7 +609,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   }
 }
 
-TEST(dkg_setup, DISABLED_bad_messages)
+TEST(dkg_setup, bad_messages)
 {
   // Node 0 sends pre-qual messages with invalid crypto - is excluded from qual.
   // Another node sends certain messages with unknown member in it. Ignored and not excluded.
@@ -621,7 +621,7 @@ TEST(dkg_setup, DISABLED_bad_messages)
                 {FaultySetupService::Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES}});
 }
 
-TEST(dkg_setup, DISABLED_send_empty_complaint_answer)
+TEST(dkg_setup, send_empty_complaint_answer)
 {
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then does not send real shares and instead sends empty complaint answer.
@@ -633,7 +633,7 @@ TEST(dkg_setup, DISABLED_send_empty_complaint_answer)
                 {FaultySetupService::Failures::SEND_BAD_SHARE}});
 }
 
-TEST(dkg_setup, DISABLED_send_multiple_messages)
+TEST(dkg_setup, send_multiple_messages)
 {
   // Node 0 broadcasts bad coefficients which fails verification by everyone and is
   // rejected from qual. Another node sends multiple of each DKG message but should succeed in DKG.
