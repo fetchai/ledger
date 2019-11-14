@@ -159,9 +159,10 @@ std::shared_ptr<fetch::dmlf::Update<TensorType>> ClientWord2VecAlgorithm<TensorT
   for (SizeType i{0}; i < vector_set.size(); i++)
   {
     // Convert unordered_set to vector
-    out_vector.push_back(std::vector<SizeType>(vector_set.at(i).begin(), vector_set.at(i).end()));
+    out_vector.emplace_back(
+        std::vector<SizeType>(vector_set.at(i).begin(), vector_set.at(i).end()));
     // Sparsify gradient tensors to contain only updated rows
-    out_tensors.push_back(fetch::ml::utilities::ToSparse(vector_tensor.at(i), vector_set.at(i)));
+    out_tensors.emplace_back(fetch::ml::utilities::ToSparse(vector_tensor.at(i), vector_set.at(i)));
   }
 
   return std::make_shared<GradientType>(out_tensors, w2v_data_loader_ptr_->GetVocabHash(),
@@ -248,9 +249,9 @@ ClientWord2VecAlgorithm<TensorType>::TranslateUpdate(
 
   VectorSizeVector translated_rows_updates;
 
-  translated_rows_updates.push_back(translator_.TranslateUpdate<TensorType>(
+  translated_rows_updates.emplace_back(translator_.TranslateUpdate<TensorType>(
       new_gradients->GetUpdatedRows().at(0), new_gradients->GetHash()));
-  translated_rows_updates.push_back(translator_.TranslateUpdate<TensorType>(
+  translated_rows_updates.emplace_back(translator_.TranslateUpdate<TensorType>(
       new_gradients->GetUpdatedRows().at(1), new_gradients->GetHash()));
 
   return translated_rows_updates;

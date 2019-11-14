@@ -166,6 +166,12 @@ public:
   {
     if (!this->value_frozen_)
     {
+      if (rows_updated.empty())
+      {
+        AddToGradient(extern_grad);
+        return;
+      }
+
       if (!rows_updated.empty() && this->data_->shape().size() != 2)
       {
         throw fetch::ml::exceptions::InvalidMode("Sparse gradient supported for 2D tensors only.");
@@ -183,6 +189,12 @@ public:
   {
     if (!this->value_frozen_)
     {
+      if (rows_updated.empty())
+      {
+        AddToGradient(extern_grad);
+        return;
+      }
+
       if (!rows_updated.empty() && this->data_->shape().size() != 2)
       {
         throw fetch::ml::exceptions::InvalidMode("Sparse gradient supported for 2D tensors only.");
