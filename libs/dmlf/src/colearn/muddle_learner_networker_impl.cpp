@@ -78,9 +78,9 @@ void MuddleLearnerNetworkerImpl::PushUpdate(UpdateInterfacePtr const &update)
   PushUpdateType("", update);
 }
 
-uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext const & context,
-                                                          const std::string &          type_name,
-                                                          const byte_array::ByteArray &bytes)
+uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext const &context,
+                                                          const std::string &         type_name,
+                                                          byte_array::ConstByteArray &bytes)
 {
   auto source = std::string(fetch::byte_array::ToBase64(context.sender_address));
   FETCH_LOG_INFO(LOGGING_NAME, "Update for ", type_name, " from ", source);
