@@ -96,7 +96,7 @@ UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType 
   }
 
   auto wrapped_criteria = [&criteria, &consumer, &seen = consumed_](UpdatePtr const &update) {
-    if (consumer != "" && seen[update->fingerprint()].count(consumer) == 1)
+    if (!consumer.empty() && seen[update->fingerprint()].count(consumer) == 1)
     {
       return std::nan("");
     }
@@ -127,7 +127,7 @@ UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType 
     throw std::runtime_error("No updates of algo " + algo + " and type " + type +
                              " matching the criteria found\n");
   }
-  else if (consumer != "")
+  else if (!consumer.empty())
   {
     consumed_[result->fingerprint()].insert(consumer);
   }
