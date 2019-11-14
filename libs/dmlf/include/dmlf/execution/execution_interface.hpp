@@ -50,7 +50,7 @@ public:
   virtual PromiseOfResult DeleteState(Target const &host, Name const &stateName) = 0;
 
   virtual PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
-                              std::string const &entrypoint, const Params &params) = 0;
+                              std::string const &entrypoint, Params const &params) = 0;
 
   ExecutionInterface(ExecutionInterface const &other) = delete;
   ExecutionInterface &operator=(ExecutionInterface const &other) = delete;

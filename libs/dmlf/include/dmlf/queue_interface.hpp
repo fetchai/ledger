@@ -34,6 +34,7 @@ public:
 
   virtual void        PushNewMessage(Bytes msg) = 0;
   virtual std::size_t size() const              = 0;
+  virtual Bytes       PopAsBytes()              = 0;
 
   QueueInterface(QueueInterface const &other) = delete;
   QueueInterface &operator=(QueueInterface const &other)  = delete;
