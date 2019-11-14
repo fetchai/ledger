@@ -22,6 +22,7 @@
 #include "core/mutex.hpp"
 
 #include "core/byte_array/byte_array.hpp"
+#include "dmlf/colearn/update_store_interface.hpp"
 #include "dmlf/queue.hpp"
 #include "dmlf/queue_interface.hpp"
 #include "dmlf/shuffle_algorithm_interface.hpp"
@@ -92,6 +93,15 @@ public:
   std::size_t GetUpdateTypeCount(const std::string &key) const;
 
   Bytes GetUpdateAsBytes(const std::string &key);
+
+  using Score      = colearn::UpdateStoreInterface::Score;
+  using Criteria   = colearn::UpdateStoreInterface::Criteria;
+  using UpdateType = colearn::UpdateStoreInterface::UpdateType;
+  using UpdatePtr  = colearn::UpdateStoreInterface::UpdatePtr;
+  using Algorithm  = colearn::UpdateStoreInterface::Algorithm;
+
+  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type,
+                              Criteria const &criteria);
 
   template <typename T>
   std::shared_ptr<T> GetUpdateType()
