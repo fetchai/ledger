@@ -54,7 +54,7 @@ void AbstractLearnerNetworker::ProcessUpdates(UpdateProcessor proc)
       pu.data_ = bytes;
       pu.key_  = key;
       auto r   = proc(pu);
-      if (!::isnan(r))
+      if (!std::isnan(r))
       {
         store->Drop();
       }
