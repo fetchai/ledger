@@ -39,27 +39,12 @@ void AbstractLearnerNetworker::SetShuffleAlgorithm(
   alg_ = alg;
 }
 
-void AbstractLearnerNetworker::ProcessUpdates(UpdateProcessor const &proc)
+AbstractLearnerNetworker::UpdatePtr AbstractLearnerNetworker::GetUpdate(
+                                                                        Algorithm const &/*algo*/,
+                                                                        UpdateType const &/*type*/,
+                                                                        Criteria /*criteria*/)
 {
-  FETCH_LOCK(queue_map_m_);
-  std::vector<std::string> keys;
-  for (auto const &iter : queue_map_)
-  {
-    auto &key   = iter.first;
-    auto &store = iter.second;
-    while (store->size() > 0)
-    {
-      auto              bytes = store->PeekAsBytes();
-      ProcessableUpdate pu;
-      pu.data_ = bytes;
-      pu.key_  = key;
-      auto r   = proc(pu);
-      if (!std::isnan(r))
-      {
-        store->Drop();
-      }
-    }
-  }
+  throw std::runtime_error("GetUpdate using Criteria is not supported via this interface");
 }
 
 std::size_t AbstractLearnerNetworker::GetUpdateTypeCount(const std::string &key) const

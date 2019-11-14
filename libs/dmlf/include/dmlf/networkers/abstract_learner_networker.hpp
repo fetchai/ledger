@@ -26,6 +26,7 @@
 #include "dmlf/queue_interface.hpp"
 #include "dmlf/shuffle_algorithm_interface.hpp"
 #include "dmlf/type_map.hpp"
+#include "dmlf/colearn/update_store_interface.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -93,26 +94,13 @@ public:
 
   Bytes GetUpdateAsBytes(const std::string &key);
 
-  class ProcessableUpdate
-  {
-  public:
-    ProcessableUpdate()                               = default;
-    virtual ~ProcessableUpdate()                      = default;
-    ProcessableUpdate(ProcessableUpdate const &other) = delete;
-    ProcessableUpdate &operator=(ProcessableUpdate const &other)  = delete;
-    bool               operator==(ProcessableUpdate const &other) = delete;
-    bool               operator<(ProcessableUpdate const &other)  = delete;
+  using Score      = colearn::UpdateStoreInterface::Score;
+  using Criteria   = colearn::UpdateStoreInterface::Criteria;
+  using UpdateType = colearn::UpdateStoreInterface::UpdateType;
+  using UpdatePtr  = colearn::UpdateStoreInterface::UpdatePtr;
+  using Algorithm  = colearn::UpdateStoreInterface::Algorithm;
 
-    Bytes                              data_;
-    std::string                        sender_;
-    std::map<std::string, std::string> meta_;
-    std::string                        key_;
-  };
-
-  using Score           = double;
-  using UpdateProcessor = std::function<Score(ProcessableUpdate const &)>;
-
-  virtual void ProcessUpdates(UpdateProcessor const &proc);
+  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria);
 
   template <typename T>
   std::shared_ptr<T> GetUpdateType()
