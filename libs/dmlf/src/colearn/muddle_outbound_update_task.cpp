@@ -16,37 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include <chrono>
-
-#include "dmlf/colearn/colearn_update.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/service_ids.hpp"
+#include "dmlf/colearn/colearn_protocol.hpp"
+#include "dmlf/colearn/muddle_outbound_update_task.hpp"
+#include "muddle/rpc/client.hpp"
 
 namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-namespace {
-
-using TimeStamp = ColearnUpdate::TimeStamp;
-
-TimeStamp CurrentTime()
+MuddleOutboundUpdateTask::ExitState MuddleOutboundUpdateTask::run()
 {
-  return static_cast<TimeStamp>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    std::chrono::system_clock::now().time_since_epoch())
-                                    .count());
+  FETCH_LOG_INFO(LOGGING_NAME, "Sending update to ", target_);
+  auto prom = client_->CallSpecificAddress(
+      fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_)), RPC_COLEARN,
+      ColearnProtocol::RPC_COLEARN_UPDATE, type_name_, update_);
+  prom->Wait();
+  return ExitState::COMPLETE;
 }
 
-}  // namespace
-
-ColearnUpdate::ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &&data,
-                             Source source, Metadata metadata)
-  : algorithm_(std::move(algorithm))
-  , update_type_{std::move(update_type)}
-  , data_{std::move(data)}
-  , source_{std::move(source)}
-  , time_stamp_{CurrentTime()}
-  , metadata_{std::move(metadata)}
-{}
-
+bool MuddleOutboundUpdateTask::IsRunnable() const
+{
+  return true;
+}
 }  // namespace colearn
 }  // namespace dmlf
 }  // namespace fetch

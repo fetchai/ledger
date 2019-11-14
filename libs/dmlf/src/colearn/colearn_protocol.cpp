@@ -16,36 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include <chrono>
-
-#include "dmlf/colearn/colearn_update.hpp"
+#include "dmlf/colearn/colearn_protocol.hpp"
+#include "dmlf/colearn/muddle_learner_networker_impl.hpp"
 
 namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-namespace {
-
-using TimeStamp = ColearnUpdate::TimeStamp;
-
-TimeStamp CurrentTime()
+ColearnProtocol::ColearnProtocol(MuddleLearnerNetworkerImpl &exec)
 {
-  return static_cast<TimeStamp>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    std::chrono::system_clock::now().time_since_epoch())
-                                    .count());
+  ExposeWithClientContext(RPC_COLEARN_UPDATE, &exec,
+                          &MuddleLearnerNetworkerImpl::NetworkColearnUpdate);
 }
-
-}  // namespace
-
-ColearnUpdate::ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &&data,
-                             Source source, Metadata metadata)
-  : algorithm_(std::move(algorithm))
-  , update_type_{std::move(update_type)}
-  , data_{std::move(data)}
-  , source_{std::move(source)}
-  , time_stamp_{CurrentTime()}
-  , metadata_{std::move(metadata)}
-{}
 
 }  // namespace colearn
 }  // namespace dmlf

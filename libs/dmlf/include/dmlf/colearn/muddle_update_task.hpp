@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,37 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include <chrono>
-
-#include "dmlf/colearn/colearn_update.hpp"
+#include "dmlf/colearn/muddle_message_task.hpp"
+#include "dmlf/colearn/update_store.hpp"
 
 namespace fetch {
-namespace dmlf {
 namespace colearn {
 
-namespace {
-
-using TimeStamp = ColearnUpdate::TimeStamp;
-
-TimeStamp CurrentTime()
+class MuddleUpdateTask : public MuddleMessageTask
 {
-  return static_cast<TimeStamp>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    std::chrono::system_clock::now().time_since_epoch())
-                                    .count());
-}
+public:
+  MuddleUpdateTask()           = default;
+  ~MuddleUpdateTask() override = default;
 
-}  // namespace
+  MuddleUpdateTask(MuddleUpdateTask const &other) = delete;
+  MuddleUpdateTask &operator=(MuddleUpdateTask const &other)  = delete;
+  bool              operator==(MuddleUpdateTask const &other) = delete;
+  bool              operator<(MuddleUpdateTask const &other)  = delete;
 
-ColearnUpdate::ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &&data,
-                             Source source, Metadata metadata)
-  : algorithm_(std::move(algorithm))
-  , update_type_{std::move(update_type)}
-  , data_{std::move(data)}
-  , source_{std::move(source)}
-  , time_stamp_{CurrentTime()}
-  , metadata_{std::move(metadata)}
-{}
+protected:
+private:
+};
 
 }  // namespace colearn
-}  // namespace dmlf
 }  // namespace fetch

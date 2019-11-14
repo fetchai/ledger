@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,36 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include <chrono>
-
-#include "dmlf/colearn/colearn_update.hpp"
+#include "network/service/protocol.hpp"
 
 namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-namespace {
+class MuddleLearnerNetworkerImpl;
 
-using TimeStamp = ColearnUpdate::TimeStamp;
-
-TimeStamp CurrentTime()
+class ColearnProtocol : public fetch::service::Protocol
 {
-  return static_cast<TimeStamp>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    std::chrono::system_clock::now().time_since_epoch())
-                                    .count());
-}
+public:
+  enum
+  {
+    RPC_COLEARN_UPDATE,
+  };
+  explicit ColearnProtocol(MuddleLearnerNetworkerImpl &exec);
 
-}  // namespace
-
-ColearnUpdate::ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &&data,
-                             Source source, Metadata metadata)
-  : algorithm_(std::move(algorithm))
-  , update_type_{std::move(update_type)}
-  , data_{std::move(data)}
-  , source_{std::move(source)}
-  , time_stamp_{CurrentTime()}
-  , metadata_{std::move(metadata)}
-{}
+protected:
+private:
+};
 
 }  // namespace colearn
 }  // namespace dmlf

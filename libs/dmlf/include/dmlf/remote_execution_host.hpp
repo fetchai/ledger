@@ -66,7 +66,7 @@ public:
                            Name const &stateName);
 
   virtual bool Run(service::CallContext const &context, OpIdent const &op_id, Name const &execName,
-                   Name const &stateName, std::string const &entrypoint, const Params &params);
+                   Name const &stateName, std::string const &entrypoint, Params const &params);
 
   bool ExecuteOneWorkload();
 

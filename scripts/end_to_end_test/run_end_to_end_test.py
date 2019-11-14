@@ -450,7 +450,18 @@ def create_wealth(parameters, test_instance):
 
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
-        api.sync(api.tokens.wealth(entity, amount))
+        tx = api.tokens.wealth(entity, amount)
+        for i in range(10):
+            output('Create balance of: ', amount)
+            api.sync(tx, timeout=120, hold_state_sec=20)
+            for j in range(5):
+                b = api.tokens.balance(entity)
+                output('Current balance: ', b)
+                if b >= amount:
+                    return
+                time.sleep(5)
+            time.sleep(5)
+        raise Exception("Failed to create wealth")
 
 
 def create_synergetic_contract(parameters, test_instance):
@@ -465,7 +476,8 @@ def create_synergetic_contract(parameters, test_instance):
 
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
-
+        output('Create contract, available balance: ',
+               api.tokens.balance(entity))
         helper = SynergeticContractTestHelper(
             name, api, entity, test_instance._workspace)
         helper.create_new(fee_limit)
@@ -493,7 +505,7 @@ def run_contract(parameters, test_instance):
             contract_helper = SynergeticContractTestHelper(
                 contract_name, api, entity, test_instance._workspace)
             contract_helper.load()
-
+        output('Submit data, available balance: ', api.tokens.balance(entity))
         contract_helper.submit_random_data(10, (0, 200))
         api.wait_for_blocks(wait_for_blocks_num)
         valid = contract_helper.validate_execution()
@@ -526,7 +538,7 @@ def verify_chain_sync(parameters, test_instance):
 
 def wait_network_ready(parameters, test_instance):
     sleep_time = parameters.get("sleep", 2)
-    max_trials = parameters.get("max_trials", 10)
+    max_trials = parameters.get("max_trials", 20)
     for i in range(max_trials):
         try:
             if test_instance.network_ready():

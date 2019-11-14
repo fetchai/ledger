@@ -71,7 +71,7 @@ public:
   using MissingNodes           = DAG::MissingNodes;
   using RequestingMissingNodes = network::RequestingQueueOf<muddle::Packet::Address, MissingNodes>;
   using PromiseOfMissingNodes  = network::PromiseOf<MissingNodes>;
-  using MissingDAGNodes        = std::set<byte_array::ConstByteArray>;
+  using MissingDAGNodes        = std::set<DAGHash>;
 
   DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAGInterface> dag);
   ~DAGSyncService() = default;
