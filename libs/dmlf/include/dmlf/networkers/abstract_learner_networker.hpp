@@ -112,7 +112,7 @@ public:
   using Score           = double;
   using UpdateProcessor = std::function<Score(ProcessableUpdate const &)>;
 
-  virtual void ProcessUpdates(UpdateProcessor proc);
+  virtual void ProcessUpdates(UpdateProcessor const &proc);
 
   template <typename T>
   std::shared_ptr<T> GetUpdateType()
