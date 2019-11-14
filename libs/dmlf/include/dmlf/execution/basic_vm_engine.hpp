@@ -19,7 +19,6 @@
 
 #include "dmlf/execution/execution_engine_interface.hpp"
 
-#include "core/serializers/main_serializer.hpp"
 #include "dmlf/execution/vm_state.hpp"
 #include "variant/variant.hpp"
 #include "vm/vm.hpp"
@@ -38,10 +37,10 @@ public:
   BasicVmEngine()           = default;
   ~BasicVmEngine() override = default;
 
-  BasicVmEngine(BasicVmEngine const &other) = delete;
-  BasicVmEngine &operator=(BasicVmEngine const &other) = delete;
+  BasicVmEngine(const BasicVmEngine &other) = delete;
+  BasicVmEngine &operator=(const BasicVmEngine &other) = delete;
 
-  using Executable    = vm::Executable;
+  using Executable    = fetch::vm::Executable;
   using LedgerVariant = ExecutionEngineInterface::Variant;
   using VmVariant     = fetch::vm::Variant;
   using VM            = fetch::vm::VM;
@@ -61,30 +60,20 @@ public:
   ExecutionResult Run(Name const &execName, Name const &stateName, std::string const &entrypoint,
                       Params params) override;
 
+  // This is a test function for developing non-primitive type passing.
+  ExecutionResult RunSerialisedParameterPassing(Name const &execName, Name const &stateName,
+                                                std::string const &entrypoint, Params params);
+
 private:
-  using Serializer = serializers::MsgPackSerializer;
-
-  class ExecutionContext
-  {
-  public:
-    ExecutionContext(VM *vm, Executable *executable);
-    ~ExecutionContext();
-
-  private:
-    VM *vm_;
-  };
-
   bool HasExecutable(std::string const &name) const;
   bool HasState(std::string const &name) const;
 
-  Error PrepInput(vm::ParameterPack &result, Params const &params, VM &vm, Executable *exec,
-                  Executable::Function const *func, std::string const &runName);
-  ExecutionResult PrepOutput(VM &vm, Executable *exec, VmVariant const &vmVariant,
-                             std::string const &console, std::string &&id) const;
+  bool          Convertable(LedgerVariant const &ledgerVariant, TypeId const &typeId) const;
+  VmVariant     Convert(LedgerVariant const &ledgerVariant, TypeId const &typeId) const;
+  LedgerVariant Convert(VmVariant const &vmVariant) const;
 
   ExecutionResult EngineError(Error::Code code, std::string errorMessage) const;
   ExecutionResult EngineSuccess(std::string successMessage) const;
-  std::string     RunName(std::string execName, std::string stateName) const;
 
   std::unordered_map<std::string, std::shared_ptr<Executable>> executables_;
   std::unordered_map<std::string, std::shared_ptr<State>>      states_;
