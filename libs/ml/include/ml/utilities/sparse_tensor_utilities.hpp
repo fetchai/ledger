@@ -38,7 +38,7 @@ namespace utilities {
 template <class TensorType>
 void SparseAdd(TensorType const &src, TensorType &dst,
                std::unordered_set<fetch::math::SizeType> const &update_rows,
-               fetch::math::SizeType                            sparsity_threshold = 4)
+               fetch::math::SizeType                            sparsity_threshold = 2)
 {
   using SizeType = fetch::math::SizeType;
 

@@ -441,10 +441,10 @@ void ClientAlgorithm<TensorType>::DoRound()
  * @param updated_rows
  */
 template <class TensorType>
-void ClientAlgorithm<TensorType>::AggregateSparseUpdate(VectorTensorType const &gradient,
+void ClientAlgorithm<TensorType>::AggregateSparseUpdate(VectorTensorType const &gradients,
                                                         VectorSizeVector const &updated_rows)
 {
-  auto grad_it = gradient.begin();
+  auto grad_it = gradients.begin();
   auto rows_it = updated_rows.begin();
 
   for (auto &trainable : graph_ptr_->GetTrainables())
@@ -462,9 +462,9 @@ void ClientAlgorithm<TensorType>::AggregateSparseUpdate(VectorTensorType const &
  * @param gradient
  */
 template <class TensorType>
-void ClientAlgorithm<TensorType>::AggregateUpdate(VectorTensorType const &gradient)
+void ClientAlgorithm<TensorType>::AggregateUpdate(VectorTensorType const &gradients)
 {
-  auto grad_it = gradient.begin();
+  auto grad_it = gradients.begin();
 
   for (auto &trainable : graph_ptr_->GetTrainables())
   {

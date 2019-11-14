@@ -152,7 +152,7 @@ std::shared_ptr<fetch::dmlf::Update<TensorType>> ClientWord2VecAlgorithm<TensorT
       this->graph_ptr_->GetUpdatedRowsReferences();
   std::vector<TensorType> vector_tensor = this->graph_ptr_->GetGradients();
 
-  // Convert set to vector
+  // Return update values
   std::vector<std::vector<SizeType>> out_vector;
   std::vector<TensorType>            out_tensors;
 
