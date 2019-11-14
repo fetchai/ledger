@@ -151,7 +151,7 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
 
   Error prepSuccess = PrepInput(parameterPack, params, vm, exec.get(), func,
                                 "Exec: " + execName + " State: " + stateName);
-      
+
   if (prepSuccess.code() != Error::Code::SUCCESS)
   {
     return ExecutionResult(LedgerVariant{}, prepSuccess, "");
