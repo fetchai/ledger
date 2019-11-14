@@ -291,6 +291,17 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispa
   , echo_cache_removals_total_(
         CreateCounter("ledger_router_echo_cache_removal_total",
                       "The total number of entries removed from the echo cache"))
+  , normal_routing_total_(CreateCounter("ledger_router_normal_routing_total",
+                                        "The total number of normally routed packets"))
+  , informed_routing_total_(CreateCounter("ledger_router_normal_routing_total",
+                                          "The total number of informed routed packets"))
+  , kademlia_routing_total_(CreateCounter("ledger_router_normal_routing_total",
+                                          "The total number of kademlia routed packets"))
+  , speculative_routing_total_(CreateCounter("ledger_router_normal_routing_total",
+                                             "The total number of speculatively routed packets"))
+  , failed_routing_total_(
+        CreateCounter("ledger_router_normal_routing_total",
+                      "The total number of packets that have failed to be routed"))
 {}
 
 /**
