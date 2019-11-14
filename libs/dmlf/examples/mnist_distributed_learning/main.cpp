@@ -63,6 +63,9 @@ int main(int argc, char **argv)
   auto n_rounds       = doc["n_rounds"].As<SizeType>();
   auto synchronise    = doc["synchronise"].As<bool>();
   auto test_set_ratio = doc["test_set_ratio"].As<float>();
+  auto results_dir = doc["results"].As<std::string>();
+
+  mkdir(results_dir.c_str(), 0777);
 
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
@@ -87,7 +90,10 @@ int main(int argc, char **argv)
     clients.at(i) = fetch::dmlf::collective_learning::utilities::MakeMNISTClient<TensorType>(
         std::to_string(i), client_params,
         data_file + std::to_string(i) + ".csv",
-        labels_file + std::to_string(i) + ".csv", test_set_ratio, networkers.at(i),
+        labels_file + std::to_string(i) + ".csv",
+//        data_file,
+//        labels_file,
+        test_set_ratio, networkers.at(i),
         console_mutex_ptr);
   }
 
