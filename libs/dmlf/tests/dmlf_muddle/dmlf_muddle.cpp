@@ -194,7 +194,7 @@ public:
     server = std::make_shared<ServerHalf>(exec_eng);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     client = std::make_shared<ClientHalf>();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100))
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 };
 
