@@ -117,7 +117,7 @@ void ClientWord2VecAlgorithm<TensorType>::Run()
 template <class TensorType>
 void ClientWord2VecAlgorithm<TensorType>::Test()
 {
-  if (this->batch_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
+  if (this->update_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
   {
     // Lock model
     FETCH_LOCK(this->model_mutex_);

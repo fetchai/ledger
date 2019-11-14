@@ -35,7 +35,6 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include <core/time/to_seconds.hpp>
 
 namespace fetch {
 namespace dmlf {
@@ -78,6 +77,8 @@ public:
     optimiser_ptr_   = other.optimiser_ptr_;
     dataloader_ptr_  = other.dataloader_ptr_;
     batch_counter_   = other.batch_counter_;
+    epoch_counter_   = other.epoch_counter_;
+    update_counter_  = other.update_counter_;
     updates_applied_this_round_ = other.updates_applied_this_round_;
 
     params_               = other.params_;
@@ -109,7 +110,6 @@ protected:
   // Latest loss
   DataType train_loss_ = fetch::math::numeric_max<DataType>();
   DataType test_loss_  = fetch::math::numeric_max<DataType>();
-  DataType test_accuracy_ = DataType{0};
 
   DataType train_loss_sum_ = static_cast<DataType>(0);
   SizeType train_loss_cnt_ = 0;
@@ -124,10 +124,10 @@ protected:
   // Console mutex pointer
   std::shared_ptr<std::mutex> console_mutex_ptr_;
 
-  // Count for number of batches
-  SizeType batch_counter_   = 0;
-  SizeType epoch_counter_   = 0;
-  SizeType update_counter_  = 0;
+  // Counters
+  SizeType batch_counter_   = 0;  // counts batches of own dataset processed
+  SizeType epoch_counter_   = 0;  // counts epochs (complete passes through own dataset)
+  SizeType update_counter_  = 0;  // counts updates (local batches + updates from peers)
 
   SizeType updates_applied_this_round_ = 0;
   SizeType epochs_done_this_round_ = 0;
@@ -136,7 +136,7 @@ protected:
 
   virtual VectorTensorType TranslateUpdate(std::shared_ptr<UpdateType> &new_gradients);
 
-  void DoRound();
+  void TrainAndApplyUpdates();
 
   void ClearLossFile();
 
@@ -147,8 +147,6 @@ private:
 
   void AggregateUpdate(VectorTensorType const &gradients);
   void ApplyUpdates();
-
-  std::chrono::steady_clock::time_point start_time_;
 };
 
 template <class TensorType>
@@ -162,7 +160,6 @@ ClientAlgorithm<TensorType>::ClientAlgorithm(AlgorithmControllerPtrType    algor
   , algorithm_controller_(std::move(algorithm_controller))
 {
   ClearLossFile();
-  start_time_ = std::chrono::steady_clock::now();
 }
 
 template <typename TensorType>
@@ -217,50 +214,43 @@ void ClientAlgorithm<TensorType>::Run()
                          std::ofstream::out | std::ofstream::app);
 
   updates_applied_this_round_ = 0;
-//  dataloader_is_done_ = false;
   epochs_done_this_round_ = 0;
   while ((updates_applied_this_round_ < params_.max_updates) && (epochs_done_this_round_ < params_.max_epochs))
   {
     // perform a round of training on this client
-    DoRound();
+    TrainAndApplyUpdates();
 
     // Validate loss for logging purpose
     Test();
 
     // Save loss data
-//    if (lossfile)
-//    {
-//      lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
-//               << static_cast<double>(train_loss_) << ", " << static_cast<double>(test_loss_)
-//               << "\n";
-//      lossfile.flush();
-//    }
+    if (lossfile)
+    {
+      lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
+               << static_cast<double>(train_loss_) << ", " << static_cast<double>(test_loss_)
+               << ", " << epoch_counter_
+               << ", " << update_counter_
+               << ", " << batch_counter_
+               << "\n";
+      lossfile.flush();
+    }
 
     if (params_.print_loss)
     {
       // Lock console
       FETCH_LOCK(*console_mutex_ptr_);
       std::cout << "Client " << id_ << "\tTraining loss: " << static_cast<double>(train_loss_)
-                << "\tTest_loss: " << static_cast<double>(test_loss_) << std::endl;
+                << "\tTest loss: " << static_cast<double>(test_loss_) << std::endl;
     }
   }
 
   optimiser_ptr_->IncrementEpochCounter();
   optimiser_ptr_->UpdateLearningRate();
 
-  // Save loss variation data
-  // Upload to https://plot.ly/create/#/ for visualisation
-  Test();
   if (lossfile)
   {
-    double seconds = fetch::ToSeconds(std::chrono::steady_clock::now() - start_time_);
-    lossfile << "Time: " << seconds
-             << " Epochs: " << epoch_counter_
-             << " Loss: " << static_cast<double>(train_loss_)
-             << " Test_loss: " << static_cast<double>(test_loss_)
-             << " Updates: " << update_counter_
-             << " Batches: " << batch_counter_
-             << " Test_accuracy: " << test_accuracy_
+    lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
+             << "STOPPED"
              << "\n";
     lossfile.close();
   }
@@ -287,9 +277,6 @@ void ClientAlgorithm<TensorType>::Train()
 
   std::pair<TensorType, std::vector<TensorType>> input;
   input = dataloader_ptr_->PrepareBatch(params_.batch_size, dataloader_is_done_);
-
-
-//  std::cout << "input.first.ToString(): " << input.first.ToString() << std::endl;
   {
     FETCH_LOCK(model_mutex_);
 
@@ -358,28 +345,12 @@ void ClientAlgorithm<TensorType>::Test()
       graph_ptr_->SetInput(params_.label_name, test_pair.first);
 
       test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
-
-      TensorType test_results = graph_ptr_->Evaluate("FullyConnected_0");
-      test_results = fetch::math::ArgMax(test_results);
-      SizeType total_score{0};
-      auto tr = test_results.cbegin();
-      for (auto dp : fetch::math::ArgMax(test_pair.first))
-      {
-        if (dp == *tr)
-        {
-          total_score++;
-        }
-        ++tr;
-      }
-      test_accuracy_ = static_cast<DataType>(total_score) / static_cast<DataType>(test_results.size());
     }
   }
   else
   {
     test_loss_ = 0;
   }
-
-
 }
 
 /**
@@ -437,7 +408,7 @@ std::vector<TensorType> ClientAlgorithm<TensorType>::TranslateUpdate(
  * 4. aggregate and apply updates
  */
 template <class TensorType>
-void ClientAlgorithm<TensorType>::DoRound()
+void ClientAlgorithm<TensorType>::TrainAndApplyUpdates()
 {
   // Train one batch to create own gradient
   Train();
