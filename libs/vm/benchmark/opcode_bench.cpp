@@ -60,7 +60,7 @@ const u_int
     n_prim_bms = 25,
     n_math_bms = 16,
     n_array_bms = 10,
-    n_tensor_bms = 4,
+    n_tensor_bms = 5,
     n_crypto_bms = 4;
 
 // Benchmark parameters
@@ -71,7 +71,7 @@ const u_int
     n_array_lens = 32,
     max_str_len = 16384,
     n_str_lens = 10,
-    max_tensor_size = 16777216,
+    max_tensor_size = 531441,
     n_tensor_sizes = 16,
     n_tensor_dim_sizes = n_tensor_sizes*3;
 
@@ -211,12 +211,24 @@ std::string TensorDec(std::string const &tensor, std::string const &prim, std::s
   return tensor_dec;
 }
 
+std::string FromString(std::string const &tensor, std::string const &val, u_int tensor_size) {
+  std::string from_string = tensor + ".fromString(\"";
+  for (u_int i = 0; i != tensor_size; ++i) {
+    from_string += val;
+    if (i < tensor_size - 1) {
+      from_string += ",";
+    }
+  }
+  from_string += "\");\n";
+  return from_string;
+}
+
 std::string Sha256Update(u_int str_len) {
   std::string str(str_len, '0');
   return "s.update(\"" + str + "\");\n";
 }
 
-/* Create a linear spaced range vector from max/n_elem to max of primitive type T
+/* Create a linear spaced range vector from max/n_elem to max of primitive type T (does not include zero)
    * @max is the range maximum and last element in the vector
    *
    * @n_elem is the number of elements to include in the vector
@@ -238,7 +250,7 @@ std::vector<T> LinearRangeVector(T max, u_int n_elem) {
 void BasicBenchmarks(benchmark::State &state) {
 
   // Functions, variable declarations, and constants
-  static std::string
+  const static std::string
       FUN_CALL = "user();\n",
       BRK = "break;\n",
       CONT = "continue;\n",
@@ -315,7 +327,7 @@ void ObjectBenchmarks(benchmark::State &state) {
 
   std::string const length(std::to_string(str_len[len_ind]));
 
-  static const std::string
+  const static std::string
       STRING = "String",
       PUSH = "x;\n",
       ADD = "x + x;\n",
@@ -363,11 +375,11 @@ void ObjectBenchmarks(benchmark::State &state) {
 
 void PrimitiveOpBenchmarks(benchmark::State &state) {
 
-  static std::vector<std::string> primitives{"Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32", "UInt64",
-                                             "Float32", "Float64", "Fixed32", "Fixed64"};
+  const static std::vector<std::string> primitives{"Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32",
+                                                   "UInt64", "Float32", "Float64", "Fixed32", "Fixed64"};
 
-  static std::vector<std::string> values{"1i8", "1i16", "1i32", "1i64", "1u8", "1u16", "1u32", "1u64",
-                                         "0.5f", "0.5", "0.5fp32", "0.5fp64"};
+  const static std::vector<std::string> values{"1i8", "1i16", "1i32", "1i64", "1u8", "1u16", "1u32", "1u64",
+                                               "0.5f", "0.5", "0.5fp32", "0.5fp64"};
 
   auto bm_ind = static_cast<u_int>(state.range(0));
 
@@ -379,7 +391,7 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
   std::string const val(values[prim_ind]);
 
   // Operations
-  static std::string
+  const static std::string
       PUSH = "x;\n",
       POP = "x = x;\n",
       ADD = "x + x;\n",
@@ -477,7 +489,7 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
 
 void MathBenchmarks(benchmark::State &state) {
 
-  static std::vector<std::string> 
+  static std::vector<std::string>
       primitives{"Float32", "Float64", "Fixed32", "Fixed64"},
       values{"0.5f", "0.5", "0.5fp32", "0.5fp64"},
       alt_values{"1.5f", "1.5", "1.5fp32", "1.5fp64"};
@@ -494,7 +506,7 @@ void MathBenchmarks(benchmark::State &state) {
       alt_val = alt_values[prim_ind];
 
   // Operations
-  static std::string
+  const static std::string
       PUSH = "x;\n",
       ABS = "abs(x);\n",
       SIN = "sin(x);\n",
@@ -582,7 +594,7 @@ void ArrayBenchmarks(benchmark::State &state) {
       length = std::to_string(array_len[len_ind]);
   
   // Operations
-  static std::string
+  const static std::string
       COUNT = "x.count(;\n",
       REV = "x.reverse(;\n",
       POPBACK = "x.popBack(;\n",
@@ -630,15 +642,16 @@ void TensorBenchmarks(benchmark::State &state) {
   const u_int
       dim_size_ind = (bm_ind - tensor_begin) / n_tensor_bms, // index of all dim-size variations for a given benchmark
       dim (dim_size_ind / n_tensor_sizes + 2), // tensor dimension
-      dim_begin ((dim - 2)*n_tensor_sizes), // index of first occurence of this tensor dimension
+      dim_begin ((dim - 2)*n_tensor_sizes), // index of first occurrence of this tensor dimension
       size_ind (dim_size_ind - dim_begin), // index of tensor size vector
       etch_ind = (bm_ind - tensor_begin) % n_tensor_bms; // index of etch code snippet (benchmark type)
 
   // Generate tensor sizes from benchmark parameters
   const auto max_tensor_side = static_cast<u_int>(std::pow(static_cast<float>(max_tensor_size),1.0f / static_cast<float>(dim)));
   std::vector<u_int> tensor_sides = LinearRangeVector<u_int>(max_tensor_side, n_tensor_sizes);
+  const auto n_elem = static_cast<u_int>(std::pow(static_cast<float>(tensor_sides[size_ind]), static_cast<float>(dim)));
 
-  const std::string
+  const static std::string
       prim = "UInt64",
       tensor_shape = "shape",
       tensor = "tensor",
@@ -663,7 +676,9 @@ void TensorBenchmarks(benchmark::State &state) {
       TENSOR_FILL = std::make_pair("FillTensor_" + dim_str + "-" + size,
           FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + FILL)),
       TENSOR_FILL_RAND = std::make_pair("FillRandTensor_" + dim_str + "-" + size,
-          FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + FILL_RAND));
+          FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + FILL_RAND)),
+      TENSOR_FROM_STR = std::make_pair("FromStrTensor_" + dim_str + "-" + size,
+          FunMain(TensorDec(tensor, prim, tensor_shape, size_u64, dim) + FromString(tensor, val, n_elem)));
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
@@ -671,11 +686,12 @@ void TensorBenchmarks(benchmark::State &state) {
                       {"DeclareTensor_" + dim_str + "-" + size,  "Return"},
                       {"SizeTensor_" + dim_str + "-" + size,     "DeclareTensor_" + dim_str + "-" + size},
                       {"FillTensor_" + dim_str + "-" + size,     "DeclareTensor_" + dim_str + "-" + size},
-                      {"FillRandTensor_" + dim_str + "-" + size, "DeclareTensor_" + dim_str + "-" + size}
+                      {"FillRandTensor_" + dim_str + "-" + size, "DeclareTensor_" + dim_str + "-" + size},
+                      {"FromStrTensor_" + dim_str + "-" + size, "DeclareTensor_" + dim_str + "-" + size}
                   });
 
   std::vector<std::pair<std::string, std::string>> const
-      etch_codes = {TENSOR_DEC, TENSOR_SIZE, TENSOR_FILL, TENSOR_FILL_RAND};
+      etch_codes = {TENSOR_DEC, TENSOR_SIZE, TENSOR_FILL, TENSOR_FILL_RAND, TENSOR_FROM_STR};
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
                     baselineMap[etch_codes[etch_ind].first], bm_ind);
@@ -694,7 +710,7 @@ void CryptoBenchmarks(benchmark::State &state) {
   std::string const length(std::to_string(str_len[len_ind]));
 
   // Operations
-  static std::string
+  const static std::string
       DEC("var s = SHA256();\n"),
       RESET("s.reset();\n"),
       FINAL("s.final();\n");
