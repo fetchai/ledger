@@ -34,26 +34,13 @@ namespace math {
  */
 template <typename ArrayDataType, typename ArrayIndicesType>
 void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType const &data,
-          typename ArrayDataType::SizeType k, bool sorted = true)
+          typename ArrayDataType::SizeType k, fetch::math::SizeType axis, bool sorted = true)
 {
   using DataType  = typename ArrayDataType::Type;
   using IndexType = typename ArrayIndicesType::Type;
 
-  assert(k <= data.shape().at(data.shape().size() - 1));
-
-  SizeType axis;
-
-  // Set axis to be data dimension
-  // 2D or higher
-  if (data.shape().size() > 1)
-  {
-    axis = data.shape().size() - 2;
-  }
-  // 1D
-  else
-  {
-    axis = 0;
-  }
+  assert(axis < data.shape().size());
+  assert(k <= data.shape().at(axis));
 
   SizeType axis_size = data.shape().at(axis);
 
@@ -126,23 +113,10 @@ void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType 
 template <typename ArrayDataType, typename ArrayIndicesType>
 std::pair<ArrayDataType, ArrayIndicesType> TopK(ArrayDataType const &            data,
                                                 typename ArrayDataType::SizeType k,
-                                                bool                             sorted = true)
+                                                fetch::math::SizeType axis, bool sorted = true)
 {
-  assert(k <= data.shape().at(data.shape().size() - 1));
-
-  SizeType axis;
-
-  // Set axis to be data dimension
-  // 2D or higher
-  if (data.shape().size() > 1)
-  {
-    axis = data.shape().size() - 2;
-  }
-  // 1D
-  else
-  {
-    axis = 0;
-  }
+  assert(axis < data.shape().size());
+  assert(k <= data.shape().at(axis));
 
   std::vector<SizeType> ret_shape = data.shape();
   ret_shape.at(axis)              = k;
@@ -150,7 +124,7 @@ std::pair<ArrayDataType, ArrayIndicesType> TopK(ArrayDataType const &           
   ArrayDataType    ret_data(ret_shape);
   ArrayIndicesType ret_indices(ret_shape);
 
-  TopK(ret_data, ret_indices, data, k, sorted);
+  TopK(ret_data, ret_indices, data, k, axis, sorted);
   return std::pair<ArrayDataType, ArrayIndicesType>(ret_data, ret_indices);
 }
 
