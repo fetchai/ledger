@@ -74,7 +74,8 @@ public:
     return update_store_->GetUpdate(algo, type);
   }
 
-  UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria const &criteria) override;
+  UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type,
+                      Criteria const &criteria) override;
 
   std::size_t GetUpdateCount() const override
   {
