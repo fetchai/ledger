@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
+
 namespace fetch {
 namespace ledger {
 
@@ -46,36 +48,7 @@ public:
   /// @}
 };
 
-inline char const *ToString(SynergeticExecutionManagerInterface::ExecStatus status)
-{
-  using ExecStatus = SynergeticExecutionManagerInterface::ExecStatus;
-
-  char const *text = "Unknown";
-
-  switch (status)
-  {
-  case ExecStatus::SUCCESS:
-    text = "Success";
-    break;
-  case ExecStatus::CONTRACT_NAME_PARSE_FAILURE:
-    text = "Contract name parse failure";
-    break;
-  case ExecStatus::INVALID_CONTRACT_ADDRESS:
-    text = "Invalid contract address";
-    break;
-  case ExecStatus::INVALID_NODE:
-    text = "Invalid node";
-    break;
-  case ExecStatus::INVALID_BLOCK:
-    text = "Invalid block";
-    break;
-  case ExecStatus::CONTRACT_REGISTRATION_FAILED:
-    text = "Contract registration failed";
-    break;
-  }
-
-  return text;
-}
+char const *ToString(SynergeticExecutionManagerInterface::ExecStatus status);
 
 }  // namespace ledger
 }  // namespace fetch
