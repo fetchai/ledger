@@ -72,7 +72,7 @@ public:
 
   static constexpr char const *     LOGGING_NAME = "Promise";
   static std::chrono::seconds const DEFAULT_TIMEOUT;
-  static const uint64_t INVALID = uint64_t(-1);
+  static const uint64_t             INVALID = uint64_t(-1);
 
   // Construction / Destruction
   PromiseImplementation() = default;
@@ -162,7 +162,6 @@ private:
 
   mutable Mutex     notify_lock_;
   mutable Condition notify_;
-
 };
 
 class PromiseBuilder
@@ -192,7 +191,7 @@ class PromiseError final : public std::exception
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using Counter      = details::PromiseImplementation::Counter;
+  using Counter        = details::PromiseImplementation::Counter;
   using Timepoint      = details::PromiseImplementation::Timepoint;
   using State          = details::PromiseImplementation::State;
 
@@ -203,7 +202,6 @@ public:
   char const *what() const noexcept override;
 
 private:
-
   static std::string BuildErrorMessage(PromiseError const &error);
 
   Counter const     id_;

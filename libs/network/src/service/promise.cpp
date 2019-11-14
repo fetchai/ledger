@@ -313,8 +313,7 @@ PromiseError::PromiseError(details::PromiseImplementation const &promise)
   , state_{promise.state()}
   , name_{promise.name()}
   , message_{BuildErrorMessage(*this)}
-{
-}
+{}
 
 PromiseError::PromiseError(PromiseError const &other) noexcept
   : id_{other.id_}
@@ -325,8 +324,7 @@ PromiseError::PromiseError(PromiseError const &other) noexcept
   , state_{other.state_}
   , name_{other.name_}
   , message_{other.message_}
-{
-}
+{}
 
 char const *PromiseError::what() const noexcept
 {

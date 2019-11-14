@@ -1466,9 +1466,9 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   SetTimeBySlots(state, time_slots_total, time_slot_for_state);
 
-  FETCH_LOG_INFO(
-      LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), "Time per slot: ", time_per_slot_,
-      ", time slots for state: ", time_slot_for_state, ", time slots total: ", time_slots_total);
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                 "Time per slot: ", time_per_slot_, ", time slots for state: ", time_slot_for_state,
+                 ", time slots total: ", time_slots_total);
 
   seconds_for_state_ = uint64_t(double(time_slot_for_state) * time_per_slot_);
   state_deadline_    = reference_timepoint_ + uint64_t(double(time_slots_total) * time_per_slot_);
