@@ -35,13 +35,6 @@ namespace fetch {
 namespace crypto {
 namespace mcl {
 
-using PrivateKey     = bn::Fr;
-using PublicKey      = bn::G2;
-using Signature      = bn::G1;
-using Generator      = bn::G2;
-using MessagePayload = byte_array::ConstByteArray;
-using CabinetIndex   = uint32_t;
-
 namespace details {
 struct MCLInitialiser
 {
@@ -58,25 +51,50 @@ struct MCLInitialiser
 };
 }  // namespace details
 
+/**
+ * Classes for BLS Signatures
+ */
+class PublicKey : public bn::G2
+{
+public:
+  PublicKey();
+};
+
+class PrivateKey : public bn::Fr
+{
+public:
+  PrivateKey();
+  explicit PrivateKey(uint32_t value);
+};
+
+class Signature : public bn::G1
+{
+public:
+  Signature();
+};
+
+class Generator : public bn::G2
+{
+public:
+  Generator();
+  explicit Generator(std::string const &string_to_hash);
+};
+
 struct DkgKeyInformation
 {
-  DkgKeyInformation()
-  {
-    details::MCLInitialiser();
-    group_public_key.clear();
-    private_key_share.clear();
-  }
+  DkgKeyInformation() = default;
   DkgKeyInformation(PublicKey group_public_key1, std::vector<PublicKey> public_key_shares1,
-                    PrivateKey secret_key_shares1)  // NOLINT
-    : group_public_key{std::move(group_public_key1)}
-    , public_key_shares{std::move(public_key_shares1)}
-    , private_key_share{secret_key_shares1}
-  {}
+                    PrivateKey secret_key_shares1);
 
   PublicKey              group_public_key;
   std::vector<PublicKey> public_key_shares{};
   PrivateKey             private_key_share;
 };
+
+using MessagePayload     = byte_array::ConstByteArray;
+using CabinetIndex       = uint32_t;
+using SignerRecord       = std::vector<uint8_t>;
+using AggregateSignature = std::pair<Signature, SignerRecord>;
 
 /**
  * Vector initialisation for mcl data structures
@@ -120,49 +138,43 @@ void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j)
 /**
  * Helper functions for computations used in the DKG
  */
-void   SetGenerator(Generator &group_g);
-void   SetGenerators(Generator &group_g, Generator &group_h);
-bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
-                  bn::Fr const &share2);
-
-bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2);
-
-void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
-
-bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
-
-void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
-                   std::vector<bn::Fr> const &b_i, uint32_t index);
-
-bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
-
-std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b);
+// For DKG
+void      SetGenerator(Generator &        generator_g,
+                       std::string const &string_to_hash = "Fetch.ai Elliptic Curve Generator G");
+void      SetGenerators(Generator &generator_g, Generator &generator_h,
+                        std::string const &string_to_hash  = "Fetch.ai Elliptic Curve Generator G",
+                        std::string const &string_to_hash2 = "Fetch.ai Elliptic Curve Generator H");
+PublicKey ComputeLHS(PublicKey &tmpG, Generator const &G, Generator const &H,
+                     PrivateKey const &share1, PrivateKey const &share2);
+PublicKey ComputeLHS(Generator const &G, Generator const &H, PrivateKey const &share1,
+                     PrivateKey const &share2);
+void      UpdateRHS(uint32_t rank, PublicKey &rhsG, std::vector<PublicKey> const &input);
+PublicKey ComputeRHS(uint32_t rank, std::vector<PublicKey> const &input);
+void      ComputeShares(PrivateKey &s_i, PrivateKey &sprime_i, std::vector<PrivateKey> const &a_i,
+                        std::vector<PrivateKey> const &b_i, uint32_t index);
+std::vector<PrivateKey> InterpolatePolynom(std::vector<PrivateKey> const &a,
+                                           std::vector<PrivateKey> const &b);
 
 // For signatures
 Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
-
-bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
-                Generator const &G);
-
-bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign);
-
+bool      VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
+                     Generator const &G);
 Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
-
 std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t cabinet_size, uint32_t threshold);
 std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator);
 
 // For aggregate signatures
-bn::Fr SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
-                                       std::vector<PublicKey> const &cabinet_notarisation_keys);
-std::pair<Signature, std::vector<bool>> ComputeAggregateSignature(
+PrivateKey         SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
+                                                   std::vector<PublicKey> const &cabinet_notarisation_keys);
+AggregateSignature ComputeAggregateSignature(
     std::unordered_map<uint32_t, Signature> const &signatures,
     std::vector<PublicKey> const &                 public_keys);
 PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
                                     std::vector<PublicKey> const &cabinet_public_keys);
-bool      VerifyAggregateSignature(MessagePayload const &                         message,
-                                   std::pair<Signature, std::vector<bool>> const &aggregate_signature,
-                                   std::vector<PublicKey> const &                 cabinet_public_keys,
-                                   Generator const &                              generator);
+bool      VerifyAggregateSignature(MessagePayload const &        message,
+                                   AggregateSignature const &    aggregate_signature,
+                                   std::vector<PublicKey> const &cabinet_public_keys,
+                                   Generator const &             generator);
 
 }  // namespace mcl
 }  // namespace crypto
@@ -255,6 +267,43 @@ public:
       throw SerializableException(error::TYPE_ERROR,
                                   std::string("String does not convert to MCL type"));
     }
+  }
+};
+
+template <typename V, typename D>
+struct ArraySerializer<std::pair<crypto::mcl::PublicKey, V>, D>
+{
+public:
+  using Type       = std::pair<crypto::mcl::PublicKey, V>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    auto array = array_constructor(2);
+    array.Append(input.first.getStr());
+    array.Append(input.second);
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    if (array.size() != 2)
+    {
+      throw SerializableException(std::string("std::pair must have exactly 2 elements."));
+    }
+
+    std::string key_str;
+    array.GetNextValue(key_str);
+    output.first.clear();
+    bool check;
+    output.first.setStr(&check, key_str.data());
+    if (!check)
+    {
+      throw SerializableException(error::TYPE_ERROR,
+                                  std::string("String does not convert to MCL type"));
+    }
+    array.GetNextValue(output.second);
   }
 };
 }  // namespace serializers

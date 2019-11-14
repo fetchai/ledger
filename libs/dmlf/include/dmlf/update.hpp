@@ -22,6 +22,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "dmlf/update_interface.hpp"
+#include "ml/dataloaders/word2vec_loaders/vocab.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -37,11 +38,12 @@ class Update : public UpdateInterface
   friend struct serializers::MapSerializer;
 
 public:
-  using TensorType    = T;
-  using VectorTensor  = std::vector<TensorType>;
-  using TimeStampType = UpdateInterface::TimeStampType;
-  using Fingerprint   = UpdateInterface::Fingerprint;
-  using HashType      = byte_array::ConstByteArray;
+  using TensorType       = T;
+  using VectorTensor     = std::vector<TensorType>;
+  using TimeStampType    = UpdateInterface::TimeStampType;
+  using Fingerprint      = UpdateInterface::Fingerprint;
+  using HashType         = byte_array::ConstByteArray;
+  using ReverseVocabType = std::vector<std::string>;
 
   using Payload = VectorTensor;
 
@@ -54,11 +56,12 @@ public:
     , fingerprint_{ComputeFingerprint()}
   {}
 
-  explicit Update(VectorTensor gradients, byte_array::ConstByteArray hash)
+  explicit Update(VectorTensor gradients, byte_array::ConstByteArray hash, ReverseVocabType vocab)
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
     , hash_{std::move(hash)}
+    , vocab_{std::move(vocab)}
   {}
 
   ~Update() override = default;
@@ -67,7 +70,7 @@ public:
   {
     serializers::LargeObjectSerializeHelper serializer;
     serializer << *this;
-    return serializer.buffer.data();
+    return serializer.data();
   }
   byte_array::ByteArray Serialise(std::string type) override
   {
@@ -75,8 +78,8 @@ public:
     serializers::LargeObjectSerializeHelper serializer_;
     serializer_ << *this;
     serializer << type;
-    serializer << serializer_.buffer.data();
-    return serializer.buffer.data();
+    serializer << serializer_.data();
+    return serializer.data();
   }
   void DeSerialise(const byte_array::ByteArray &map) override
   {
@@ -102,6 +105,11 @@ public:
     return hash_;
   }
 
+  virtual ReverseVocabType const &GetReverseVocab() const
+  {
+    return vocab_;
+  }
+
   Update(Update const &other) = delete;
   Update &operator=(Update const &other)  = delete;
   bool    operator==(Update const &other) = delete;
@@ -120,14 +128,15 @@ private:
   {
     serializers::LargeObjectSerializeHelper serializer;
     serializer << gradients_;
-    return crypto::Hash<crypto::SHA256>(serializer.buffer.data());
+    return crypto::Hash<crypto::SHA256>(serializer.data());
   }
 
   TimeStampType stamp_;
   VectorTensor  gradients_;
   Fingerprint   fingerprint_;
 
-  HashType hash_;
+  HashType         hash_;
+  ReverseVocabType vocab_;
 };
 
 }  // namespace dmlf
@@ -145,15 +154,17 @@ public:
   static uint8_t const GRADIENTS   = 2;
   static uint8_t const FINGERPRINT = 3;
   static uint8_t const HASH        = 4;
+  static uint8_t const VOCAB       = 5;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &update)
   {
-    auto map = map_constructor(4);
+    auto map = map_constructor(5);
     map.Append(TIME_STAMP, update.stamp_);
     map.Append(GRADIENTS, update.gradients_);
     map.Append(FINGERPRINT, update.fingerprint_);
     map.Append(HASH, update.hash_);
+    map.Append(VOCAB, update.vocab_);
   }
 
   template <typename MapDeserializer>
@@ -163,6 +174,7 @@ public:
     map.ExpectKeyGetValue(GRADIENTS, update.gradients_);
     map.ExpectKeyGetValue(FINGERPRINT, update.fingerprint_);
     map.ExpectKeyGetValue(HASH, update.hash_);
+    map.ExpectKeyGetValue(VOCAB, update.vocab_);
   }
 };
 

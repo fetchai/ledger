@@ -55,6 +55,7 @@ struct Variant;
 namespace ledger {
 
 class StorageInterface;
+struct ContractContext;
 
 class SynergeticContract
 {
@@ -84,6 +85,9 @@ public:
   void Attach(StorageInterface &storage);
   void Detach();
 
+  void                   UpdateContractContext(ContractContext const &context);
+  ContractContext const &context() const;
+
   /// @name Actions to be taken on the synergetic contract
   /// @{
   Status DefineProblem(ProblemData const &problem_data);
@@ -105,6 +109,8 @@ private:
   using IRPtr         = std::shared_ptr<vm::IR>;
   using ExecutablePtr = std::shared_ptr<vm::Executable>;
   using VariantPtr    = std::shared_ptr<vm::Variant>;
+
+  std::unique_ptr<ContractContext> context_{};
 
   Digest        digest_;
   ModulePtr     module_;

@@ -27,14 +27,14 @@
 struct TestBlock
 {
   using ResourceIdMap = std::vector<std::string>;
-  using BlockBody     = fetch::ledger::Block::Body;
+  using Block         = fetch::ledger::Block;
   using Digest        = fetch::Digest;
 
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;
 
-  BlockBody block;
-  int       num_transactions = 0;
+  Block block;
+  int   num_transactions = 0;
 
   template <typename RNG>
   static Digest GenerateHash(RNG &rng)
@@ -172,7 +172,7 @@ struct TestBlock
   }
 
   static TestBlock Generate(std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
-                            Digest const &previous_hash = fetch::chain::GENESIS_DIGEST)
+                            Digest const &previous_hash = fetch::chain::ZERO_HASH)
   {
     TestBlock block;
     block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices, previous_hash);

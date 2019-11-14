@@ -209,10 +209,7 @@ struct OpGeluSaveableParams : public OpsSaveableParams
 template <typename TensorType>
 struct OpEmbeddingsSaveableParams : public OpWeightsSaveableParams<TensorType>
 {
-  fetch::ml::OpType                  op_type = OpType::OP_EMBEDDINGS;
-  std::vector<fetch::math::SizeType> updated_rows;
-  std::vector<fetch::math::SizeType> trailing_indices1 = {0, 0};
-  std::vector<fetch::math::SizeType> trailing_indices2 = {0};
+  fetch::ml::OpType op_type = OpType::OP_EMBEDDINGS;
 };
 
 /**
@@ -428,6 +425,14 @@ struct OpMaxPool2DSaveableParams : public OpsSaveableParams
   fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::ml::OpType     op_type     = OpType::OP_MAX_POOL_2D;
+};
+
+template <typename TensorType>
+struct OpMaxPoolSaveableParams : public OpsSaveableParams
+{
+  fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type     = OpType::OP_MAX_POOL;
 };
 
 template <typename TensorType>
@@ -705,6 +710,28 @@ struct OpTransposeSaveableParams : public OpsSaveableParams
 {
   std::vector<fetch::math::SizeType> transpose_vector;
   fetch::ml::OpType                  op_type = OpType::OP_TRANSPOSE;
+};
+
+template <typename TensorType>
+struct OpOneHotSaveableParams : public OpsSaveableParams
+{
+  using DataType = typename TensorType::Type;
+
+  fetch::math::SizeType depth;
+  fetch::math::SizeType axis;
+  DataType              on_value;
+  DataType              off_value;
+  fetch::ml::OpType     op_type = OpType::OP_ONE_HOT;
+};
+
+template <typename TensorType>
+struct OpTopKSaveableParams : public OpsSaveableParams
+{
+  using DataType = typename TensorType::Type;
+
+  fetch::math::SizeType k;
+  bool                  sorted;
+  fetch::ml::OpType     op_type = OpType::OP_TOP_K;
 };
 
 }  // namespace ml

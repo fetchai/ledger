@@ -23,8 +23,10 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
@@ -35,6 +37,8 @@
 #include "vm/function_decorators.hpp"
 #include "vm/module.hpp"
 #include "vm/string.hpp"
+#include "vm_modules/ledger/balance.hpp"
+#include "vm_modules/ledger/transfer_function.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include <algorithm>
@@ -109,6 +113,9 @@ SmartContract::SmartContract(std::string const &source)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
 
+  vm_modules::ledger::BindBalanceFunction(*module_, *this);
+  vm_modules::ledger::BindTransferFunction(*module_, *this);
+
   module_->CreateFreeFunction(
       "getContext", [this](vm::VM *) -> vm_modules::ledger::ContextPtr { return context_; });
 
@@ -154,9 +161,8 @@ SmartContract::SmartContract(std::string const &source)
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
       // register the transaction handler
-      OnTransaction(fn.name, [this, name = fn.name](auto const &tx, BlockIndex index) {
-        return InvokeAction(name, tx, index);
-      });
+      OnTransaction(fn.name,
+                    [this, name = fn.name](auto const &tx) { return InvokeAction(name, tx); });
       break;
     case FunctionDecoratorKind::QUERY:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Query: ", fn.name,
@@ -445,15 +451,12 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Transaction const &tx,
-                                             BlockIndex index)
+Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Transaction const &tx)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;
   std::vector<msgpack::object> input_params;
   decltype(auto)               parameter_data = tx.data();
-
-  block_index_ = index;
 
   // if the tx has a payload parse it
   if (!parameter_data.empty() && parameter_data != "{}")
@@ -486,7 +489,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
 
-  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, index);
+  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, context().block_index);
 
   // TODO(WK) inject charge limit
   // vm->SetChargeLimit(123);
@@ -494,10 +497,10 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
 
   vm->SetIOObserver(state());
 
-  // lookup the function / entry point which will be executed
+  // look up the function / entry point which will be executed
   Executable::Function const *target_function = executable_->FindFunction(name);
-  if ((target_function == nullptr) ||
-      (input_params.size() != static_cast<std::size_t>(target_function->num_parameters)))
+  if (target_function == nullptr ||
+      input_params.size() != static_cast<std::size_t>(target_function->num_parameters))
   {
     FETCH_LOG_WARN(LOGGING_NAME,
                    "Incorrect number of parameters provided for target function. Received: ",
@@ -558,12 +561,12 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
  * @return The corresponding status result for the operation
  */
 Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
-                                           chain::Transaction const &tx, BlockIndex index)
+                                           chain::Transaction const &tx)
 {
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
 
-  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, index);
+  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, context().block_index);
 
   // TODO(WK) inject charge limit
   // vm->SetChargeLimit(123);
@@ -575,7 +578,7 @@ Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
 
   vm::ParameterPack params{vm->registered_types()};
 
-  // lookup the function / entry point which will be executed
+  // look up the function / entry point which will be executed
   Executable::Function const *target_function = executable_->FindFunction(init_fn_name_);
   if (target_function->num_parameters == 1)
   {
@@ -628,11 +631,11 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   auto vm = std::make_unique<vm::VM>(module_.get());
   vm->SetIOObserver(state());
 
-  // lookup the executable
+  // look up the executable
   auto const target_function = executable_->FindFunction(name);
   if (target_function == nullptr)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup target function");
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up target function");
     return Status::FAILED;
   }
 
@@ -649,10 +652,10 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
 
       if (!request.Has(parameter.name))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup variable: ", parameter.name);
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up variable: ", parameter.name);
         response           = Query::Object();
         response["status"] = "failed";
-        response["msg"] = "Unable to lookup variable: " + static_cast<std::string>(parameter.name);
+        response["msg"] = "Unable to look up variable: " + static_cast<std::string>(parameter.name);
         response["console"] = "";
         response["result"]  = variant::Variant::Null();
         return Status::FAILED;
@@ -738,7 +741,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["result"] = output.Get<fixed_point::fp64_t>();
     break;
   case vm::TypeIds::String:
-    response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
+    response["result"] = output.Get<vm::Ptr<vm::String>>()->string();
     break;
   default:
     if (output.IsPrimitive())

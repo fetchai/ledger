@@ -50,6 +50,8 @@ public:
   explicit LargeObjectSerializeHelper(fetch::byte_array::ConstByteArray buf)
     : buffer{std::move(buf)}
   {}
+  LargeObjectSerializeHelper(LargeObjectSerializeHelper const &)     = delete;
+  LargeObjectSerializeHelper(LargeObjectSerializeHelper &&) noexcept = delete;
 
   template <typename T>
   void operator<<(T const &large_object)
@@ -78,8 +80,23 @@ public:
     buffer >> large_object;
   }
 
-  MsgPackSerializer buffer;
-  SizeCounter       counter;
+  byte_array::ConstByteArray const &data() const
+  {
+    return buffer.data();
+  }
+
+  std::size_t size() const
+  {
+    return buffer.size();
+  }
+
+  // Operators
+  LargeObjectSerializeHelper &operator=(LargeObjectSerializeHelper const &) = delete;
+  LargeObjectSerializeHelper &operator=(LargeObjectSerializeHelper &&) = delete;
+
+private:
+  MsgPackSerializer buffer{};
+  SizeCounter       counter{};
 };
 
 template <typename WriteType, typename InitialType>
@@ -281,7 +298,7 @@ typename BinarySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
 {
   using Serializer = BinarySerializer<T, MsgPackSerializer>;
   using Constructor =
-      interfaces::BinaryConstructorInterface<MsgPackSerializer, TypeCodes::BINARY_CODE_FIXED,
+      interfaces::BinaryConstructorInterface<MsgPackSerializer, TypeCodes::BINARY_CODE8,
                                              TypeCodes::BINARY_CODE16, TypeCodes::BINARY_CODE32>;
 
   try
@@ -320,14 +337,11 @@ template <typename T>
 typename ArraySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
     T const &val)
 {
-  using Serializer  = ArraySerializer<T, MsgPackSerializer>;
-  using Constructor = interfaces::ContainerConstructorInterface<
-      MsgPackSerializer, interfaces::ArrayInterface<MsgPackSerializer>, TypeCodes::ARRAY_CODE_FIXED,
-      TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
+  using Serializer = ArraySerializer<T, MsgPackSerializer>;
 
   try
   {
-    Constructor constructor(*this);
+    ArrayConstructor constructor(*this);
     Serializer::Serialize(constructor, val);
   }
   catch (std::exception const &e)
@@ -345,7 +359,7 @@ typename ArraySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::o
   using Serializer = ArraySerializer<T, MsgPackSerializer>;
   try
   {
-    interfaces::ArrayDeserializer<MsgPackSerializer> array(*this);
+    ArrayDeserializer array(*this);
     Serializer::Deserialize(array, val);
   }
   catch (std::exception const &e)
@@ -361,14 +375,11 @@ template <typename T>
 typename MapSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
     T const &val)
 {
-  using Serializer  = MapSerializer<T, MsgPackSerializer>;
-  using Constructor = interfaces::ContainerConstructorInterface<
-      MsgPackSerializer, interfaces::MapInterface<MsgPackSerializer>, TypeCodes::MAP_CODE_FIXED,
-      TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
+  using Serializer = MapSerializer<T, MsgPackSerializer>;
 
   try
   {
-    Constructor constructor(*this);
+    MapConstructor constructor(*this);
     Serializer::Serialize(constructor, val);
   }
   catch (std::exception const &e)
@@ -386,7 +397,7 @@ typename MapSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::ope
   using Serializer = MapSerializer<T, MsgPackSerializer>;
   try
   {
-    interfaces::MapDeserializer<MsgPackSerializer> map(*this);
+    MapDeserializer map(*this);
     Serializer::Deserialize(map, val);
   }
   catch (std::exception const &e)

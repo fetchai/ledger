@@ -143,7 +143,7 @@ bool Variant::operator==(Variant const &other) const
 
       for (auto const &element : object_)
       {
-        // lookup key in the other array
+        // look up key in the other array
         auto it = other.object_.find(element.first);
         if (it == other.object_.end())
         {

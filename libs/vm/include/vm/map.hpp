@@ -179,54 +179,56 @@ struct Map : public IMap
 
   bool SerializeTo(MsgPackSerializer &buffer) override
   {
-    buffer << GetTypeName() << static_cast<uint64_t>(map.size());
+    auto constructor = buffer.NewMapConstructor();
+    auto map_ser     = constructor(map.size());
+
     for (auto const &v : map)
     {
-      if (!SerializeElement<Key>(buffer, v.first))
-      {
-        return false;
-      }
-      if (!SerializeElement<Value>(buffer, v.second))
+      auto f1 = [&v, this](MsgPackSerializer &serializer) {
+        return SerializeElement<Key>(serializer, v.first);
+      };
+
+      auto f2 = [&v, this](MsgPackSerializer &serializer) {
+        return SerializeElement<Value>(serializer, v.second);
+      };
+
+      if (!map_ser.AppendUsingFunction(f1, f2))
       {
         return false;
       }
     }
+
     return true;
   }
 
   bool DeserializeFrom(MsgPackSerializer &buffer) override
   {
     TypeInfo const &type_info     = vm_->GetTypeInfo(GetTypeId());
-    TypeId const    key_type_id   = type_info.parameter_type_ids[0];
-    TypeId const    value_type_id = type_info.parameter_type_ids[1];
-    uint64_t        size;
-    std::string     type_name;
-    buffer >> type_name >> size;
-    if (type_name != GetTypeName())
-    {
-      vm_->RuntimeError("Type mismatch during deserialization. Got " + type_name +
-                        " but expected " + GetTypeName());
-      return false;
-    }
+    TypeId const    key_type_id   = type_info.template_parameter_type_ids[0];
+    TypeId const    value_type_id = type_info.template_parameter_type_ids[1];
 
-    for (uint64_t i = 0; i < size; ++i)
+    auto map_ser = buffer.NewMapDeserializer();
+    for (uint64_t i = 0; i < map_ser.size(); ++i)
     {
-      FETCH_UNUSED(i);
-
       TemplateParameter1 key;
-      if (!DeserializeElement<Key>(key_type_id, buffer, key))
-      {
-        return false;
-      }
-
       TemplateParameter2 value;
-      if (!DeserializeElement<Value>(value_type_id, buffer, value))
+
+      auto f1 = [key_type_id, &key, this](MsgPackSerializer &serializer) {
+        return DeserializeElement<Key>(key_type_id, serializer, key);
+      };
+
+      auto f2 = [value_type_id, &value, this](MsgPackSerializer &serializer) {
+        return DeserializeElement<Value>(value_type_id, serializer, value);
+      };
+
+      if (!map_ser.GetNextKeyPairUsingFunction(f1, f2))
       {
         return false;
       }
 
       map.insert({key, value});
     }
+
     return true;
   }
 
@@ -412,8 +414,8 @@ inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId 
 inline Ptr<IMap> IMap::Constructor(VM *vm, TypeId type_id)
 {
   TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
-  TypeId const    key_type_id   = type_info.parameter_type_ids[0];
-  TypeId const    value_type_id = type_info.parameter_type_ids[1];
+  TypeId const    key_type_id   = type_info.template_parameter_type_ids[0];
+  TypeId const    value_type_id = type_info.template_parameter_type_ids[1];
   return outer(key_type_id, value_type_id, vm, type_id);
 }
 

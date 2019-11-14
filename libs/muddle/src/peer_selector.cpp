@@ -208,7 +208,7 @@ void PeerSelector::Periodically()
     {
       for (auto const &address : unwanted_peers)
       {
-        // lookup the connection from its address
+        // look up the connection from its address
         auto conn = register_.LookupConnection(address).lock();
         if (conn)
         {
@@ -248,7 +248,7 @@ void PeerSelector::ResolveAddresses(Addresses const &addresses)
     // make the call to the remote service
     auto promise = rpc_client_.CallSpecificAddress(address, RPC_MUDDLE_DISCOVERY,
                                                    DiscoveryService::CONNECTION_INFORMATION);
-    // lookup the peer information
+    // look up the peer information
     auto const &peer_data = peers_info_[address];
 
     // wrap the promise is a task

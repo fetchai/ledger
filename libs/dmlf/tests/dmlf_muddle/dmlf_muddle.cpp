@@ -43,7 +43,7 @@ using NetworkManager              = fetch::network::NetworkManager;
 using MuddlePtr                   = fetch::muddle::MuddlePtr;
 using RemoteExecutionProtocol     = fetch::dmlf::RemoteExecutionProtocol;
 using ExecutionInterfacePtr       = std::shared_ptr<ExecutionInterface>;
-using ExecutionEngineInterfacePtr = ExecutionWorkload::ExecutionInterfacePtr;
+using ExecutionEngineInterfacePtr = ExecutionWorkload::ExecutionEngineInterfacePtr;
 
 using Server = muddle::rpc::Server;
 
@@ -187,23 +187,23 @@ public:
     server_port = static_cast<unsigned short int>(rand() % 10000 + 10000);
     client_port = static_cast<unsigned short int>(server_port + 1);
 
-    usleep(100000);
-    // exec_eng = std::make_shared<DummyExecutionInterface>();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
     exec_eng = std::make_shared<BasicVmEngine>();
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     server = std::make_shared<ServerHalf>(exec_eng);
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     client = std::make_shared<ClientHalf>();
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 };
 
 TEST_F(MuddleLearnerNetworkerTests, canAdd)
 {
-  usleep(100000);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   while (server->mud_->GetNumDirectlyConnectedPeers() < 1)
   {
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
   auto p1 = client->client_->CreateExecutable(SERVER_PUB, "exe1",
@@ -211,21 +211,17 @@ TEST_F(MuddleLearnerNetworkerTests, canAdd)
   auto p2 = client->client_->CreateState(SERVER_PUB, "state1");
   auto p3 = client->client_->Run(SERVER_PUB, "exe1", "state1", "add", {Variant(2), Variant(2)});
 
-  std::cout << "Starting workloop" << std::endl;
-
   int pending = 3;
   while (pending > 0)
   {
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (server->host_->ExecuteOneWorkload())
     {
       pending--;
     }
   }
 
-  std::cout << "Waiting for result" << std::endl;
-
-  usleep(100000);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   p3.Wait();
   auto res = p3.Get();
 
@@ -236,10 +232,10 @@ TEST_F(MuddleLearnerNetworkerTests, canAdd)
 
 TEST_F(MuddleLearnerNetworkerTests, badFunctionName)
 {
-  usleep(100000);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   while (server->mud_->GetNumDirectlyConnectedPeers() < 1)
   {
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
   auto p1 = client->client_->CreateExecutable(SERVER_PUB, "exe1",
@@ -248,21 +244,17 @@ TEST_F(MuddleLearnerNetworkerTests, badFunctionName)
   auto p3 = client->client_->Run(SERVER_PUB, "exe1", "state1", "foo",
                                  {ExecutionParameter(2), ExecutionParameter(2)});
 
-  std::cout << "Starting workloop" << std::endl;
-
   int pending = 3;
   while (pending > 0)
   {
-    usleep(100000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (server->host_->ExecuteOneWorkload())
     {
       pending--;
     }
   }
 
-  std::cout << "Waiting for result" << std::endl;
-
-  usleep(100000);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   p3.Wait();
   auto res = p3.Get();
 

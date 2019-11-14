@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "block_configs.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "logging/logging.hpp"

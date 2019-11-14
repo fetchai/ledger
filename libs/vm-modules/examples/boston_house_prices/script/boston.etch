@@ -5,10 +5,10 @@ if (System.Argc() != 5)
   print("Usage: SCRIPT_FILE -- PATH/TO/BOSTON_TRAIN_DATA.CSV PATH/TO/BOSTON_TRAIN_LABELS.CSV PATH/TO/BOSTON_TEST_DATA.CSV PATH/TO/BOSTON_TEST_LABELS.CSV ");
   return;
 endif
-var data = readCSV(System.Argv(1), true);
-var label = readCSV(System.Argv(2), true);
-var test_data = readCSV(System.Argv(3), true);
-var test_label = readCSV(System.Argv(4), true);
+var data = readCSV(System.Argv(1));
+var label = readCSV(System.Argv(2));
+var test_data = readCSV(System.Argv(3));
+var test_label = readCSV(System.Argv(4));
 
 // set up a model architecture
 var model = Model("sequential");

@@ -180,15 +180,17 @@ public:
     // Main loop
     RESET  ///< Cycle complete
   };
-  using StateMachine = core::StateMachine<State>;
+  using StateMachine         = core::StateMachine<State>;
+  using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
 
   static char const *ToString(State state);
 
   // Construction / Destruction
   BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                   BlockSinkInterface &block_sink, ProverPtr prover, std::size_t num_lanes,
-                   std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus);
+                   BlockSinkInterface &block_sink, ProverPtr prover, uint32_t log2_num_lanes,
+                   std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus,
+                   SynergeticExecMgrPtr synergetic_exec_manager);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -255,22 +257,21 @@ private:
 
   static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 5000;
 
-  using BlockPtr             = MainChain::BlockPtr;
-  using NextBlockPtr         = std::unique_ptr<Block>;
-  using PendingBlocks        = std::deque<BlockPtr>;
-  using PendingStack         = std::vector<BlockPtr>;
-  using Flag                 = std::atomic<bool>;
-  using BlockPeriod          = std::chrono::milliseconds;
-  using Clock                = std::chrono::system_clock;
-  using Timepoint            = Clock::time_point;
-  using StateMachinePtr      = std::shared_ptr<StateMachine>;
-  using MinerPtr             = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxDigestSetPtr       = std::unique_ptr<DigestSet>;
-  using LastExecutedBlock    = Protected<ConstByteArray>;
-  using FutureTimepoint      = fetch::core::FutureTimepoint;
-  using DeadlineTimer        = fetch::moment::DeadlineTimer;
-  using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
-  using SynExecStatus        = SynergeticExecutionManagerInterface::ExecStatus;
+  using BlockPtr          = MainChain::BlockPtr;
+  using NextBlockPtr      = std::unique_ptr<Block>;
+  using PendingBlocks     = std::deque<BlockPtr>;
+  using PendingStack      = std::vector<BlockPtr>;
+  using Flag              = std::atomic<bool>;
+  using BlockPeriod       = std::chrono::milliseconds;
+  using Clock             = std::chrono::system_clock;
+  using Timepoint         = Clock::time_point;
+  using StateMachinePtr   = std::shared_ptr<StateMachine>;
+  using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
+  using TxDigestSetPtr    = std::unique_ptr<DigestSet>;
+  using LastExecutedBlock = Protected<ConstByteArray>;
+  using FutureTimepoint   = fetch::core::FutureTimepoint;
+  using DeadlineTimer     = fetch::moment::DeadlineTimer;
+  using SynExecStatus     = SynergeticExecutionManagerInterface::ExecStatus;
 
   /// @name Monitor State
   /// @{
@@ -326,12 +327,13 @@ private:
 
   /// @name State Machine State
   /// @{
-  ProverPtr       certificate_;             ///< The miners identity
-  chain::Address  mining_address_;          ///< The miners address
-  StateMachinePtr state_machine_;           ///< The main state machine for this service
-  std::size_t     block_difficulty_;        ///< The number of leading zeros needed in the proof
-  std::size_t     num_lanes_;               ///< The current number of lanes
-  std::size_t     num_slices_;              ///< The current number of slices
+  ProverPtr       certificate_;       ///< The miners identity
+  chain::Address  mining_address_;    ///< The miners address
+  StateMachinePtr state_machine_;     ///< The main state machine for this service
+  std::size_t     block_difficulty_;  ///< The number of leading zeros needed in the proof
+  uint32_t        log2_num_lanes_{};
+  std::size_t     num_lanes_{1u << log2_num_lanes_};  ///< The current number of lanes
+  std::size_t     num_slices_;                        ///< The current number of slices
   Flag            mining_{false};           ///< Flag to signal if this node generating blocks
   Flag            mining_enabled_{false};   ///< Short term signal to toggle on and off
   BlockPeriod     block_period_{};          ///< The desired period before a block is generated

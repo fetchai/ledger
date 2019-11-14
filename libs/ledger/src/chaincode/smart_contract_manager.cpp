@@ -23,6 +23,8 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "logging/logging.hpp"
@@ -48,6 +50,7 @@ namespace {
 
 ConstByteArray const CONTRACT_SOURCE{"text"};
 ConstByteArray const CONTRACT_HASH{"digest"};
+ConstByteArray const CONTRACT_NONCE{"nonce"};
 
 constexpr char const *LOGGING_NAME = "SmartContractManager";
 
@@ -58,8 +61,7 @@ SmartContractManager::SmartContractManager()
   OnTransaction("create", this, &SmartContractManager::OnCreate);
 }
 
-Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
-                                                BlockIndex                block_index)
+Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
 {
   // attempt to parse the transaction
   variant::Variant data;
@@ -71,10 +73,12 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
 
   ConstByteArray contract_source;
   ConstByteArray contract_hash;
+  ConstByteArray nonce;
 
   // extract the fields from the contract
   bool const extract_success = Extract(data, CONTRACT_HASH, contract_hash) &&
-                               Extract(data, CONTRACT_SOURCE, contract_source);
+                               Extract(data, CONTRACT_SOURCE, contract_source) &&
+                               Extract(data, CONTRACT_NONCE, nonce);
 
   // fail if the extraction fails
   if (!extract_success)
@@ -90,9 +94,9 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
 
   // debug
   FETCH_LOG_DEBUG(LOGGING_NAME, "---------------------------------------------------------------");
-  FETCH_LOG_DEBUG(LOGGING_NAME, "New Contract Mode: ", contract_type);
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Digest...........: ", contract_hash);
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Text.............:\n\n", contract_source, "\n\n");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "New Contract Digest: ", contract_hash);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Nonce..............: ", nonce);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Text...............:\n\n", contract_source, "\n\n");
   FETCH_LOG_DEBUG(LOGGING_NAME, "---------------------------------------------------------------");
 
   // calculate a hash to compare against the one submitted
@@ -113,13 +117,15 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
     return {Status::FAILED};
   }
 
+  nonce = FromBase64(nonce);
+  chain::Address const payable_address{crypto::Hash<crypto::SHA256>(tx.from().address() + nonce)};
+
   Identifier scope;
-  if (!scope.Parse(calculated_hash + "." + tx.from().display()))
+  if (!scope.Parse(calculated_hash + "." + payable_address.display()))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
     return {Status::FAILED};
   }
-  state().PushContext(scope);
 
   // construct a smart contract - this can throw for various reasons, need to catch this
   SmartContract smart_contract{std::string{contract_source}};
@@ -163,22 +169,21 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
   Result init_status;
   if (!on_init_function.empty())
   {
-    // Attach our state to the smart contract
-    smart_contract.Attach(state());
+    state().PushContext(scope.full_name());
 
-    // Dispatch to the init. method
-    init_status =
-        smart_contract.DispatchInitialise(tx.signatories().begin()->address, tx, block_index);
+    {
+      ContractContext         ctx{context().token_contract, tx.contract_address(), &state(),
+                          context().block_index};
+      ContractContextAttacher raii(smart_contract, ctx);
+      init_status = smart_contract.DispatchInitialise(tx.from(), tx);
+    }
+    state().PopContext();
+
     if (init_status.status != Status::OK)
     {
       return init_status;
     }
-
-    smart_contract.Detach();
   }
-
-  // Revert to normal context
-  state().PopContext();
 
   auto const status = SetStateRecord(contract_source, calculated_hash);
   if (status != StateAdapter::Status::OK)
@@ -201,7 +206,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx,
 storage::ResourceAddress SmartContractManager::CreateAddressForContract(Digest const &digest)
 {
   // create the resource address in the form fetch.contract.state.<digest of contract>
-  return StateAdapter::CreateAddress(Identifier{NAME}, digest);
+  return StateAdapter::CreateAddress(Identifier{NAME}, digest.ToHex());
 }
 
 }  // namespace ledger

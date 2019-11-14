@@ -31,5 +31,7 @@ uint64_t STAKE_COOL_DOWN_PERIOD = 100;
 Digest GENESIS_DIGEST      = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
 Digest GENESIS_MERKLE_ROOT = FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
+const Digest ZERO_HASH = Digest(HASH_SIZE);
+
 }  // namespace chain
 }  // namespace fetch

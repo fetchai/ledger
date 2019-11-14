@@ -40,7 +40,7 @@ public:
   bool                   operator==(LocalLearnerNetworker const &other) = delete;
   bool                   operator<(LocalLearnerNetworker const &other)  = delete;
 
-  void PushUpdate(const UpdateInterfacePtr &update) override;
+  void PushUpdate(UpdateInterfacePtr const &update) override;
 
   std::size_t GetPeerCount() const override
   {

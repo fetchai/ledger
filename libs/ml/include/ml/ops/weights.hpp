@@ -53,7 +53,8 @@ class Weights : public fetch::ml::ops::Variable<T>
 {
 public:
   using TensorType     = T;
-  using SizeType       = typename TensorType::SizeType;
+  using SizeType       = fetch::math::SizeType;
+  using SizeSet        = std::unordered_set<SizeType>;
   using DataType       = typename TensorType::Type;
   using ArrayPtrType   = std::shared_ptr<TensorType>;
   using VecTensorType  = typename Variable<T>::VecTensorType;
@@ -208,6 +209,15 @@ public:
   void SetWeights(TensorType const &new_value) override
   {
     this->data_->Assign(new_value);
+  }
+
+  /**
+   * exports the weight gradients Array
+   * @return const reference to internal accumulated gradient Array
+   */
+  std::pair<TensorType const, SizeSet const> GetSparseGradientsReferences() const override
+  {
+    return std::move(std::make_pair(*this->gradient_accumulation_, this->updated_rows_));
   }
 
   /**

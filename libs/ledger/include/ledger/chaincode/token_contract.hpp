@@ -19,6 +19,7 @@
 
 #include "chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/consensus/stake_update_event.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -35,15 +36,6 @@ namespace ledger {
 class TokenContract : public Contract
 {
 public:
-  struct StakeUpdate
-  {
-    Identity identity;  ///< The identity of the staker
-    uint64_t from;      ///< The block index from which the stake becomes active
-    uint64_t amount;    ///< The amount being staked
-  };
-
-  using StakeUpdates = std::vector<StakeUpdate>;
-
   static constexpr char const *LOGGING_NAME = "TokenContract";
   static constexpr char const *NAME         = "fetch.token";
 
@@ -58,34 +50,24 @@ public:
   bool     TransferTokens(chain::Transaction const &tx, chain::Address const &to, uint64_t amount);
 
   // transaction handlers
-  Result CreateWealth(chain::Transaction const &tx, BlockIndex /*index*/);
-  Result Deed(chain::Transaction const &tx, BlockIndex /*index*/);
-  Result Transfer(chain::Transaction const &tx, BlockIndex /*index*/);
-  Result AddStake(chain::Transaction const &tx, BlockIndex /*index*/);
-  Result DeStake(chain::Transaction const &tx, BlockIndex /*index*/);
-  Result CollectStake(chain::Transaction const &tx, BlockIndex /*index*/);
+  Result CreateWealth(chain::Transaction const &tx);
+  Result Deed(chain::Transaction const &tx);
+  Result Transfer(chain::Transaction const &tx);
+  Result AddStake(chain::Transaction const &tx);
+  Result DeStake(chain::Transaction const &tx);
+  Result CollectStake(chain::Transaction const &tx);
 
   // queries
   Status Balance(Query const &query, Query &response);
   Status Stake(Query const &query, Query &response);
   Status CooldownStake(Query const &query, Query &response);
 
-  void         ClearStakeUpdates();
-  StakeUpdates stake_updates() const;
+  void ExtractStakeUpdates(StakeUpdateEvents &updates);
+  void ClearStakeUpdates();
 
 private:
-  StakeUpdates stake_updates_;
+  StakeUpdateEvents stake_updates_;
 };
-
-inline void TokenContract::ClearStakeUpdates()
-{
-  stake_updates_.clear();
-}
-
-inline TokenContract::StakeUpdates TokenContract::stake_updates() const
-{
-  return stake_updates_;
-}
 
 }  // namespace ledger
 }  // namespace fetch

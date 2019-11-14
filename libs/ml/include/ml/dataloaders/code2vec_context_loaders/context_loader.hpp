@@ -50,7 +50,7 @@ class C2VLoader : public DataLoader<LabelType, InputType>
 public:
   using TensorType              = InputType;
   using Type                    = typename TensorType::Type;
-  using SizeType                = typename TensorType::SizeType;
+  using SizeType                = fetch::math::SizeType;
   using ContextTuple            = std::tuple<SizeType, SizeType, SizeType>;
   using ContextVector           = std::vector<TensorType>;
   using ContextLabelPair        = std::pair<SizeType, ContextTuple>;
@@ -76,7 +76,7 @@ public:
   SizeType Size() const override;
   bool     IsDone() const override;
   void     Reset() override;
-  bool     AddData(InputType const &data, LabelType const &label) override;
+  bool     AddData(std::vector<InputType> const &data, LabelType const &label) override;
   void     SetTestRatio(float new_test_ratio) override;
   void     SetValidationRatio(float new_validation_ratio) override;
   bool     IsModeAvailable(DataLoaderMode mode) override;
@@ -126,7 +126,7 @@ private:
   static void createIdxUMapsFromCounter(umap_str_int &counter, umap_str_int &name_to_idx,
                                         umap_int_str &idx_to_name);
 
-  static void addValueToCounter(umap_str_int &umap, std::string word);
+  static void addValueToCounter(umap_str_int &umap, const std::string &word);
 
   static std::vector<std::string> splitStringByChar(std::stringstream input, char const *sep);
 
@@ -135,7 +135,8 @@ private:
 };
 
 template <typename LabelType, typename InputType>
-bool C2VLoader<LabelType, InputType>::AddData(InputType const &data, LabelType const &label)
+bool C2VLoader<LabelType, InputType>::AddData(std::vector<InputType> const &data,
+                                              LabelType const &             label)
 {
   FETCH_UNUSED(data);
   FETCH_UNUSED(label);
@@ -301,7 +302,7 @@ C2VLoader<LabelType, InputType>::GetNext()
  * @return uint64_t
  */
 template <typename LabelType, typename InputType>
-typename InputType::SizeType C2VLoader<LabelType, InputType>::Size() const
+fetch::math::SizeType C2VLoader<LabelType, InputType>::Size() const
 {
   return data_.size();
 }
@@ -351,7 +352,7 @@ void C2VLoader<LabelType, DataType>::SetValidationRatio(float new_validation_rat
  */
 template <typename LabelType, typename InputType>
 void C2VLoader<LabelType, InputType>::addValueToCounter(
-    typename C2VLoader<LabelType, InputType>::umap_str_int &umap, std::string word)
+    typename C2VLoader<LabelType, InputType>::umap_str_int &umap, const std::string &word)
 {
   if (umap.find(word) == umap.end())
   {
@@ -425,8 +426,8 @@ void C2VLoader<LabelType, InputType>::createIdxUMapsFromCounter(
   int idx = 0;
   for (auto kv : counter)
   {
-    name_to_idx[kv.first] = idx;
-    idx_to_name[idx]      = kv.first;
+    name_to_idx[kv.first]      = uint64_t(idx);
+    idx_to_name[uint64_t(idx)] = kv.first;
     idx++;
   }
 }

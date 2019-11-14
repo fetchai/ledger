@@ -37,7 +37,7 @@ public:
   using OptimiserType     = fetch::ml::OptimiserType;
   using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
-  Sequential()                        = default;
+  Sequential();
   Sequential(Sequential const &other) = default;
   explicit Sequential(ModelConfig<DataType> model_config);
   ~Sequential() override = default;
@@ -52,6 +52,21 @@ private:
   SizeType    layer_count_ = 0;
   std::string prev_layer_;
 };
+
+/**
+ * constructor sets up the neural net architecture and optimiser with default config
+ * @tparam TensorType
+ * @param data_loader_ptr  pointer to the dataloader for running the optimiser
+ * @param hidden_layers vector of hidden layers for defining the architecture
+ * @param optimiser_type type of optimiser to run
+ */
+template <typename TensorType>
+Sequential<TensorType>::Sequential()
+  : Model<TensorType>(ModelConfig<DataType>())
+{
+  this->input_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Input", {});
+  this->label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
+}
 
 /**
  * constructor sets up the neural net architecture and optimiser

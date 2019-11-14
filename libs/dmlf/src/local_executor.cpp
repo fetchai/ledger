@@ -25,8 +25,8 @@
 namespace fetch {
 namespace dmlf {
 
-LocalExecutor::LocalExecutor(ExecutionEnginePtr &exec_engine)
-  : exec_engine_{exec_engine}
+LocalExecutor::LocalExecutor(ExecutionEnginePtr exec_engine)
+  : exec_engine_{std::move(exec_engine)}
 {}
 
 LocalExecutor::PromiseOfResult LocalExecutor::CreateExecutable(Target const & /*host*/,
@@ -68,7 +68,7 @@ LocalExecutor::PromiseOfResult LocalExecutor::DeleteState(Target const & /*host*
 LocalExecutor::PromiseOfResult LocalExecutor::Run(Target const & /*host*/, Name const &execName,
                                                   Name const &       stateName,
                                                   std::string const &entrypoint,
-                                                  const Params &     params)
+                                                  Params const &     params)
 {
   ExecutionResult result = exec_engine_->Run(execName, stateName, entrypoint, params);
   return ExecutionResult::MakeFulfilledPromise(result);

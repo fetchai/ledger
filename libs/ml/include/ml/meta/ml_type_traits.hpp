@@ -29,13 +29,13 @@ enum class OptimiserType : uint8_t
   ADAM,
   MOMENTUM,
   RMSPROP,
-  SGD
+  SGD,
+  LAZY_ADAM
 };
 
 enum class LoaderType : uint8_t
 {
   TENSOR,
-  MNIST,
   SGNS,
   W2V,
   COMMODITY,
@@ -87,6 +87,7 @@ enum class OpType : uint16_t
   OP_LOGSOFTMAX,
   OP_MASK_FILL,
   OP_MATRIX_MULTIPLY,
+  OP_MAX_POOL,
   OP_MAX_POOL_1D,
   OP_MAX_POOL_2D,
   OP_AVG_POOL_1D,
@@ -105,6 +106,8 @@ enum class OpType : uint16_t
   OP_SWITCH,
   OP_TANH,
   OP_TRANSPOSE,
+  OP_ONE_HOT,
+  OP_TOP_K,
   OP_VARIABLE,
   OP_WEIGHTS,
   OP_SLICE,

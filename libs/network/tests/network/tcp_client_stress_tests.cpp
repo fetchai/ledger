@@ -605,7 +605,7 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multi
   }
 }
 
-TEST(tcp_client_stress_gtest, killing_during_transmission)
+TEST(tcp_client_stress_gtest, DISABLED_killing_during_transmission)
 {
   std::cerr << "Info: Killing during transmission, multiple clients" << std::endl;
 

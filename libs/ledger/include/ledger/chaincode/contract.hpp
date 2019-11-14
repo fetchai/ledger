@@ -20,10 +20,10 @@
 #include "chain/address.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "variant/variant.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -41,7 +41,6 @@ class Variant;
 namespace chain {
 
 class Transaction;
-class Address;
 
 }  // namespace chain
 
@@ -66,14 +65,14 @@ public:
     int64_t return_value{0};
   };
 
-  using BlockIndex            = chain::TransactionLayout::BlockIndex;
-  using Identity              = crypto::Identity;
-  using ConstByteArray        = byte_array::ConstByteArray;
-  using ContractName          = ConstByteArray;
-  using Query                 = variant::Variant;
-  using InitialiseHandler     = std::function<Result(
-      chain::Address const &, chain::Transaction const &tx, BlockIndex block_index)>;
-  using TransactionHandler    = std::function<Result(chain::Transaction const &, BlockIndex)>;
+  using BlockIndex     = chain::TransactionLayout::BlockIndex;
+  using Identity       = crypto::Identity;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using ContractName   = ConstByteArray;
+  using Query          = variant::Variant;
+  using InitialiseHandler =
+      std::function<Result(chain::Address const &, chain::Transaction const &)>;
+  using TransactionHandler    = std::function<Result(chain::Transaction const &)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
   using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
@@ -89,14 +88,12 @@ public:
 
   /// @name Contract Lifecycle Handlers
   /// @{
-  void Attach(ledger::StateAdapter &state);
-  void Detach();
-
-  Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx,
-                            BlockIndex block_index);
+  Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Result DispatchTransaction(chain::Transaction const &tx, BlockIndex block_index);
+  Result DispatchTransaction(chain::Transaction const &tx);
   /// @}
+
+  ContractContext const &context() const;
 
   /// @name Dispatch Maps Accessors
   /// @{
@@ -118,8 +115,8 @@ protected:
   /// @{
   void OnInitialise(InitialiseHandler &&handler);
   template <typename C>
-  void OnInitialise(C *instance, Result (C::*func)(chain::Address const &,
-                                                   chain::Transaction const &, BlockIndex));
+  void OnInitialise(C *instance,
+                    Result (C::*func)(chain::Address const &, chain::Transaction const &));
   /// @}
 
   /// @name Transaction Handlers
@@ -127,7 +124,7 @@ protected:
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
   void OnTransaction(std::string const &name, C *instance,
-                     Result (C::*func)(chain::Transaction const &, BlockIndex));
+                     Result (C::*func)(chain::Transaction const &));
   /// @}
 
   /// @name Query Handler Registration
@@ -150,6 +147,11 @@ protected:
   /// @}
 
 private:
+  void Attach(ContractContext context);
+  void Detach();
+
+  std::unique_ptr<ContractContext> context_{};
+
   static constexpr std::size_t DEFAULT_BUFFER_SIZE = 512;
 
   /// @name Dispatch Maps - built on construction
@@ -164,10 +166,7 @@ private:
   CounterMap query_counters_{};
   /// @}
 
-  /// @name State
-  /// @{
-  ledger::StateAdapter *state_ = nullptr;
-  /// @}
+  friend class ContractContextAttacher;
 };
 
 /**
@@ -178,12 +177,11 @@ private:
  * @param func The member function pointer
  */
 template <typename C>
-void Contract::OnInitialise(C *instance, Result (C::*func)(chain::Address const &,
-                                                           chain::Transaction const &, BlockIndex))
+void Contract::OnInitialise(C *instance,
+                            Result (C::*func)(chain::Address const &, chain::Transaction const &))
 {
-  OnInitialise([instance, func](chain::Address const &owner, chain::Transaction const &tx,
-                                BlockIndex block_index) {
-    return (instance->*func)(owner, tx, block_index);
+  OnInitialise([instance, func](chain::Address const &owner, chain::Transaction const &tx) {
+    return (instance->*func)(owner, tx);
   });
 }
 
@@ -197,12 +195,11 @@ void Contract::OnInitialise(C *instance, Result (C::*func)(chain::Address const 
  */
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
-                             Result (C::*func)(chain::Transaction const &, BlockIndex))
+                             Result (C::*func)(chain::Transaction const &))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name, [instance, func](chain::Transaction const &tx, BlockIndex block_index) {
-    return (instance->*func)(tx, block_index);
-  });
+  OnTransaction(name,
+                [instance, func](chain::Transaction const &tx) { return (instance->*func)(tx); });
 }
 
 /**
@@ -223,7 +220,7 @@ void Contract::OnQuery(std::string const &name, C *instance,
 }
 
 /**
- * Lookup the state record stored with the specified key
+ * Look up the state record stored with the specified key
  *
  * @tparam T The type of the state record
  * @param record The reference to the record to be populated
@@ -266,9 +263,7 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
     break;
   }
   case vm::IoObserverInterface::Status::ERROR:
-    break;
   case vm::IoObserverInterface::Status::PERMISSION_DENIED:
-    break;
   case vm::IoObserverInterface::Status::BUFFER_TOO_SMALL:
     break;
   }
@@ -290,7 +285,7 @@ StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray co
   serializers::MsgPackSerializer buffer;
   buffer << record;
 
-  // lookup reference to the underlying buffer
+  // look up reference to the underlying buffer
   auto const &data = buffer.data();
 
   // store the buffer

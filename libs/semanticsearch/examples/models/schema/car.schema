@@ -1,0 +1,45 @@
+model GeoVocabularyLocation {
+  lat: BoundedFloat(0., 90.),
+  lng: BoundedFloat(0., 180.)
+};
+
+model CarAgent {
+  location: GeoVocabularyLocation, 
+  type: BoundedInteger(0, 10)
+};
+
+model CarAgent {
+  location: GeoVocabularyLocation, 
+  type: Int
+};
+
+
+// Cylinder geometry
+find CarAgent 
+around {
+  location: {
+    lat: 9.52,
+    lng: 12.12
+  },
+  type: 0
+}
+direction
+{
+  location: {
+    lat: 9.52,
+    lng: 12.12
+  },
+  type: 0
+}
+boundby
+({
+  location: {
+    lat: 9.52,
+    lng: 12.12
+  },
+  type: 0
+}
+-
+
+
+;

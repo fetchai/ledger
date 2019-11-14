@@ -283,6 +283,7 @@ TEST_F(DagTests, CheckDagGetNode)
   EXPECT_EQ(dag_nodes.size(), 1);
 
   ledger::DAGNode dummy;
+  ledger::DAGHash dummy_hash(crypto::Hash<crypto::SHA256>("not here"));
   EXPECT_EQ(dag_->GetDAGNode(dag_nodes.back().hash, dummy), true);
-  EXPECT_EQ(dag_->GetDAGNode(crypto::Hash<crypto::SHA256>("not here"), dummy), false);
+  EXPECT_EQ(dag_->GetDAGNode(dummy_hash, dummy), false);
 }

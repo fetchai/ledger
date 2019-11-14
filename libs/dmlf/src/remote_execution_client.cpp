@@ -37,7 +37,7 @@ RemoteExecutionClient::RemoteExecutionClient(RemoteExecutionClient::MuddlePtr   
 RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::CreateExecutable(
     Target const &target, Name const &execName, SourceFiles const &sources)
 {
-  if (target.empty() || target == "local:///")
+  if (target.empty() || target == LOCAL)
   {
     return local_->CreateExecutable(target, execName, sources);
   }
@@ -52,7 +52,7 @@ RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::CreateExecutable(
 RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::DeleteExecutable(Target const &target,
                                                                                Name const &execName)
 {
-  if (target.empty() || target == "local:///")
+  if (target.empty() || target == LOCAL)
   {
     return local_->DeleteExecutable(target, execName);
   }
@@ -67,7 +67,7 @@ RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::DeleteExecutable(T
 RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::CreateState(Target const &target,
                                                                           Name const &  stateName)
 {
-  if (target.empty() || target == "local:///")
+  if (target.empty() || target == LOCAL)
   {
     return local_->CreateState(target, stateName);
   }
@@ -82,7 +82,7 @@ RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::CopyState(Target c
                                                                         Name const &  srcName,
                                                                         Name const &  newName)
 {
-  if (target.empty() || target == "local:///")
+  if (target.empty() || target == LOCAL)
   {
     return local_->CopyState(target, srcName, newName);
   }
@@ -97,7 +97,7 @@ RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::CopyState(Target c
 RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::DeleteState(Target const &target,
                                                                           Name const &  stateName)
 {
-  if (target.empty() || target == "local:///")
+  if (target.empty() || target == LOCAL)
   {
     return local_->DeleteState(target, stateName);
   }
@@ -112,9 +112,9 @@ RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::Run(Target const &
                                                                   Name const &       execName,
                                                                   Name const &       stateName,
                                                                   std::string const &entrypoint,
-                                                                  const Params &     params)
+                                                                  Params const &     params)
 {
-  if (target.empty() || target == "local:///")
+  if (target.empty() || target == LOCAL)
   {
     return local_->Run(target, execName, stateName, entrypoint, {});
   }

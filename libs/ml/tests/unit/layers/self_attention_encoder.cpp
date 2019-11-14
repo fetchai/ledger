@@ -17,25 +17,26 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
+#include "test_types.hpp"
 
-#include "gtest/gtest.h"
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class SelfAttentionEncoder : public ::testing::Test
 {
 };
 
-using Types = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                               fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(SelfAttentionEncoder, Types);
+TYPED_TEST_CASE(SelfAttentionEncoder, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class as a part of a graph
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   fetch::ml::Graph<TypeParam> g;
@@ -62,7 +63,7 @@ TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class 
 
 TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a subgraph
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
   fetch::ml::layers::SelfAttentionEncoder<TypeParam> encoder(
       static_cast<SizeType>(4), static_cast<SizeType>(12), static_cast<SizeType>(13));
@@ -96,7 +97,7 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
 
 TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 {
-  using SizeType  = typename TypeParam::SizeType;
+  using SizeType  = fetch::math::SizeType;
   using LayerType = typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>;
   using SPType    = typename LayerType::SPType;
   using DataType  = typename TypeParam::Type;
@@ -152,3 +153,7 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

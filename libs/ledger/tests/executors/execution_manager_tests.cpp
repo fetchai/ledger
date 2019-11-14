@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "block_configs.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "mock_executor.hpp"
@@ -28,7 +29,6 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
-#include <random>
 #include <thread>
 #include <vector>
 

@@ -45,35 +45,35 @@ TEST(ManifestParseTests, CheckFullManifestParse)
   Manifest manifest{};
   ASSERT_TRUE(manifest.Parse(FULL_MANIFEST));
 
-  // lookup http module
+  // look up http module
   auto it = manifest.FindService(ServiceIdentifier::Type::HTTP);
   ASSERT_FALSE(it == manifest.end());
 
   EXPECT_EQ(it->second.uri(), Uri{"tcp://127.0.0.1:8000"});
   EXPECT_EQ(it->second.local_port(), 50000);
 
-  // lookup core module
+  // look up core module
   it = manifest.FindService(ServiceIdentifier::Type::CORE);
   ASSERT_FALSE(it == manifest.end());
 
   EXPECT_EQ(it->second.uri(), Uri{"tcp://127.0.0.1:8001"});
   EXPECT_EQ(it->second.local_port(), 50001);
 
-  // lookup dkg module
+  // look up dkg module
   it = manifest.FindService(ServiceIdentifier::Type::DKG);
   ASSERT_FALSE(it == manifest.end());
 
   EXPECT_EQ(it->second.uri(), Uri{"tcp://127.0.0.1:8002"});
   EXPECT_EQ(it->second.local_port(), 50002);
 
-  // lookup lane 0 module
+  // look up lane 0 module
   it = manifest.FindService(ServiceIdentifier{ServiceIdentifier::Type::LANE, 0});
   ASSERT_FALSE(it == manifest.end());
 
   EXPECT_EQ(it->second.uri(), Uri{"tcp://127.0.0.1:8010"});
   EXPECT_EQ(it->second.local_port(), 50010);
 
-  // lookup lane 1 module
+  // look up lane 1 module
   it = manifest.FindService(ServiceIdentifier{ServiceIdentifier::Type::LANE, 1});
   ASSERT_FALSE(it == manifest.end());
 

@@ -45,7 +45,7 @@ void Object::RuntimeError(std::string const &message)
   vm_->RuntimeError(message);
 }
 
-TypeInfo const &Object::GetTypeInfo(TypeId type_id)
+TypeInfo Object::GetTypeInfo(TypeId type_id)
 {
   return vm_->GetTypeInfo(type_id);
 }

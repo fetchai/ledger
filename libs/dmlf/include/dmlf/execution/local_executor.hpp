@@ -41,7 +41,7 @@ public:
   using ErrorCode  = ExecutionErrorMessage::Code;
   using Error      = ExecutionResult::Error;
 
-  explicit LocalExecutor(ExecutionEnginePtr &exec_engine);
+  explicit LocalExecutor(ExecutionEnginePtr exec_engine);
   ~LocalExecutor() override = default;
 
   LocalExecutor(LocalExecutor const &other) = delete;
@@ -58,7 +58,7 @@ public:
   PromiseOfResult DeleteState(Target const &host, Name const &stateName) override;
 
   PromiseOfResult Run(Target const &host, Name const &execName, Name const &stateName,
-                      std::string const &entrypoint, const Params &params) override;
+                      std::string const &entrypoint, Params const &params) override;
 
 private:
   ExecutionEnginePtr exec_engine_;

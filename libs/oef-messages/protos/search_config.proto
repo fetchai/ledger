@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package fetch.oef.pb;
+
+import "dap_interface.proto";
+
+message SearchConfig {
+  message DapConfig {
+    string name = 1;
+    string uri = 2;
+    DapDescription structure = 3;
+  }
+
+
+  string search_key       = 1;
+  string search_uri       = 2;
+  repeated DapConfig daps = 3;
+  repeated string peers   = 4;
+
+  uint64 query_cache_lifetime_sec = 5;
+
+  string director_uri = 6;
+
+  uint32 comms_thread_count = 10;
+  uint32 tasks_thread_count = 11;
+
+  string prometheus_log_file = 30;
+  uint32 prometheus_log_interval = 31;
+}

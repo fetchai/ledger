@@ -30,7 +30,7 @@ void ServiceClientInterface::ProcessRPCResult(network::MessageType const &msg,
   PromiseCounter id;
   params >> id;
 
-  // lookup the promise
+  // look up the promise
   Promise p = ExtractPromise(id);
 
   // There is a chance that this message will not belong to this client. In this case we will
@@ -51,7 +51,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::MessageType const &ms
   ServiceClassificationType type;
   params >> type;
 
-  FETCH_LOG_TRACE(LOGGING_NAME, "ProcessServerMessage: type: ", type, " msg: ", msg.ToHex());
+  FETCH_LOG_TRACE(LOGGING_NAME, "ProcessServerMessage: type: ", type, " msg: 0x", msg.ToHex());
 
   if (type == SERVICE_RESULT)
   {
@@ -65,9 +65,18 @@ bool ServiceClientInterface::ProcessServerMessage(network::MessageType const &ms
     serializers::SerializableException e;
     params >> e;
 
-    // lookup the promise and fail it
+    // look up the promise and fail it
     Promise p = ExtractPromise(id);
-    p->Fail(e);
+
+    if (!p)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Attempted to look up a network promise but it was already deleted");
+    }
+    else
+    {
+      p->Fail(e);
+    }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id,
                     " due to finishing delivering the response (error)");

@@ -257,7 +257,7 @@ PeerConnectionList::PeerList PeerConnectionList::GetPeersToConnectTo() const
       }
       else
       {
-        // lookup the connection metadata
+        // look up the connection metadata
         auto const &metadata = it->second;
 
         // determine if this connection should be connected again

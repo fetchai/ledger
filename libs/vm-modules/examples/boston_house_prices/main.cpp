@@ -16,39 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/ReadCSV.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/system.hpp"
+#include "vm_modules/math/read_csv.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/ml.hpp"
 
-#include <cstdint>
-#include <cstdlib>
-#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 using System     = fetch::vm_modules::System;
 using DataType   = fetch::vm_modules::math::VMTensor::DataType;
 using TensorType = fetch::math::Tensor<DataType>;
-
-// read the weights and bias csv files
-fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
-    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose)
-{
-  TensorType tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(filename->str, 0, 0, transpose);
-  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
-}
-
-fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv_no_transpose(
-    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
-{
-  return read_csv(vm, filename, false);
-}
 
 int main(int argc, char **argv)
 {
@@ -83,9 +65,7 @@ int main(int argc, char **argv)
   fetch::vm_modules::ml::BindML(*module);
 
   fetch::vm_modules::CreatePrint(*module);
-
-  module->CreateFreeFunction("readCSV", &read_csv);
-  module->CreateFreeFunction("readCSV", &read_csv_no_transpose);
+  fetch::vm_modules::math::BindReadCSV(*module);
 
   // Setting compiler up
   auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());

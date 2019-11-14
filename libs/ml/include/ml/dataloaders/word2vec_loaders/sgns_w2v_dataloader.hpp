@@ -55,7 +55,7 @@ public:
   void       RemoveInfrequentFromData(SizeType min);
   void       InitUnigramTable(SizeType size = 1e8, bool use_vocab_frequencies = true);
   ReturnType GetNext() override;
-  bool       AddData(InputType const &input, LabelType const &label) override;
+  bool       AddData(std::vector<InputType> const &input, LabelType const &label) override;
 
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
@@ -502,7 +502,8 @@ typename GraphW2VLoader<TensorType>::ReturnType GraphW2VLoader<TensorType>::GetN
 }
 
 template <typename TensorType>
-bool GraphW2VLoader<TensorType>::AddData(InputType const &input, LabelType const &label)
+bool GraphW2VLoader<TensorType>::AddData(std::vector<InputType> const &input,
+                                         LabelType const &             label)
 {
   FETCH_UNUSED(input);
   FETCH_UNUSED(label);
@@ -671,7 +672,7 @@ GraphW2VLoader<TensorType>::GetVocab() const
  * @return
  */
 template <typename TensorType>
-std::string GraphW2VLoader<TensorType>::WordFromIndex(SizeType index) const
+std::string GraphW2VLoader<TensorType>::WordFromIndex(math::SizeType index) const
 {
   return vocab_->WordFromIndex(index);
 }

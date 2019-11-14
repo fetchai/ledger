@@ -16,24 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "bert_utilities.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/ops/embeddings.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/bert_utilities.hpp"
+#include "ml/utilities/graph_saver.hpp"
 
 #include <iostream>
 #include <string>
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
+using namespace fetch::ml::utilities;
 
 using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
 using SizeVector = typename TensorType::SizeVector;
 
 using GraphType     = typename fetch::ml::Graph<TensorType>;
@@ -61,9 +61,9 @@ int main(int ac, char **av)
   std::string saved_model_path     = av[2];
 
   // load pretrained bert model and print its output of a toy input
-  BERTConfig    config;
-  BERTInterface interface(config);
-  auto *        g = new GraphType();
+  BERTConfig<TensorType>    config{};
+  BERTInterface<TensorType> interface(config);
+  auto *                    g = new GraphType();
 
   std::cout << "load pretrained pytorch bert model from folder: \n"
             << pretrained_model_dir << std::endl;
@@ -75,13 +75,13 @@ int main(int ac, char **av)
                            config, *g, static_cast<SizeType>(1), false);
 
   std::cout << "save the pretrained bert model to file: \n" << saved_model_path << std::endl;
-  SaveGraphToFile(*g, saved_model_path);
+  SaveGraph<GraphType>(*g, saved_model_path);
 
   // delete the model for memory efficiency
   delete g;
 
   std::cout << "load saved model for testing" << std::endl;
-  GraphType g2 = ReadFileToGraph(saved_model_path);
+  GraphType g2 = *(LoadGraph<GraphType>(saved_model_path));
 
   std::cout << "get another output for the bert loaded from bin file" << std::endl;
   TensorType second_output =

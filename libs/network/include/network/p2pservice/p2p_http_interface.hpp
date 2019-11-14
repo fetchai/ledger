@@ -107,7 +107,7 @@ private:
 
     Variant response  = Variant::Object();
     response["chain"] = GenerateBlockList(include_transactions, chain_length);
-    response["block"] = fetch::byte_array::ToBase64(chain_.GetHeaviestBlockHash());
+    response["block"] = "0x" + chain_.GetHeaviestBlockHash().ToHex();
 
     return http::CreateJsonResponse(response);
   }
@@ -140,7 +140,7 @@ private:
 
   Variant GenerateBlockList(bool include_transactions, std::size_t length)
   {
-    // lookup the blocks from the heaviest chain
+    // look up the blocks from the heaviest chain
     auto blocks = chain_.GetHeaviestChain(length);
 
     Variant block_list = Variant::Array(blocks.size());
@@ -153,14 +153,14 @@ private:
 
       // format the block number
       block                 = Variant::Object();
-      block["hash"]         = "0x" + b->body.hash.ToHex();
-      block["previousHash"] = "0x" + b->body.previous_hash.ToHex();
-      block["merkleHash"]   = "0x" + b->body.merkle_hash.ToHex();
+      block["hash"]         = "0x" + b->hash.ToHex();
+      block["previousHash"] = "0x" + b->previous_hash.ToHex();
+      block["merkleHash"]   = "0x" + b->merkle_hash.ToHex();
       block["proof"]        = "0x" + b->proof.header().ToHex();
-      block["miner"]        = b->body.miner.display();
-      block["blockNumber"]  = b->body.block_number;
-      block["timestamp"]    = b->body.timestamp;
-      block["entropy"]      = b->body.block_entropy.EntropyAsU64();
+      block["miner"]        = b->miner.display();
+      block["blockNumber"]  = b->block_number;
+      block["timestamp"]    = b->timestamp;
+      block["entropy"]      = b->block_entropy.EntropyAsU64();
       block["weight"]       = b->weight;
 
       if (include_transactions)
@@ -172,7 +172,7 @@ private:
 
         std::size_t tx_idx{0};
         std::size_t slice_idx{0};
-        for (auto const &slice : b->body.slices)
+        for (auto const &slice : b->slices)
         {
           for (auto const &transaction : slice)
           {

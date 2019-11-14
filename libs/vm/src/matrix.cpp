@@ -365,7 +365,7 @@ void Matrix<T>::SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
 Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t num_rows, int32_t num_columns)
 {
   TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
-  TypeId const    element_type_id = type_info.parameter_type_ids[0];
+  TypeId const    element_type_id = type_info.template_parameter_type_ids[0];
   if ((num_rows < 0) || (num_columns < 0))
   {
     vm->RuntimeError("negative size");

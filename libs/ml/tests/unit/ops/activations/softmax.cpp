@@ -17,25 +17,23 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
+#include "gtest/gtest.h"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
-
 #include <memory>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class SoftmaxTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(SoftmaxTest, MyTypes);
+TYPED_TEST_CASE(SoftmaxTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(SoftmaxTest, forward_test)
 {
@@ -59,7 +57,7 @@ TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_1_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({3, 3, 1});
   TensorType          gt({3, 3, 1});
@@ -106,7 +104,7 @@ TYPED_TEST(SoftmaxTest, backward_2d_tensor_axis_1_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({3, 3, 1});
   TensorType          error({3, 3, 1});
@@ -136,7 +134,7 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_1_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});
@@ -171,7 +169,7 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_1_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});
@@ -209,7 +207,7 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_0_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});
@@ -244,7 +242,7 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_0_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});
@@ -282,7 +280,7 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axes_0_2_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});
@@ -317,7 +315,7 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axes_0_2_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});
@@ -401,7 +399,7 @@ TYPED_TEST(SoftmaxTest, saveparams_backward_3d_tensor_axes_0_2_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using OpType     = typename fetch::ml::ops::Softmax<TensorType>;
   using SPType     = typename OpType::SPType;
 
@@ -465,3 +463,7 @@ TYPED_TEST(SoftmaxTest, saveparams_backward_3d_tensor_axes_0_2_test)
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

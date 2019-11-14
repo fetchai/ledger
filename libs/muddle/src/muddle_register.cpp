@@ -75,7 +75,7 @@ void MuddleRegister::Broadcast(ConstByteArray const &data) const
 }
 
 /**
- * Lookup a connection given a specified handle
+ * Look up a connection given a specified handle
  *
  * @param handle The handle of the requested connection
  * @return A valid connection if successful, otherwise an invalid one
@@ -323,6 +323,10 @@ void MuddleRegister::Leave(ConnectionHandle handle)
   if (callback_copy)
   {
     callback_copy(handle);
+  }
+  else
+  {
+    FETCH_LOG_INFO(logging_name_, "### Connection ", handle, " ended (empty callback)");
   }
 }
 

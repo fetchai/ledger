@@ -17,31 +17,25 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
+#include "gtest/gtest.h"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/squeeze.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
-
-#include <cmath>
-#include <cstdint>
+#include "test_types.hpp"
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class SqueezeTest : public ::testing::Test
 {
 };
 
-using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                   fetch::math::Tensor<fetch::fixed_point::fp64_t>,
-                                   fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
-
-TYPED_TEST_CASE(SqueezeTest, BothTypes);
+TYPED_TEST_CASE(SqueezeTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(SqueezeTest, forward_1_6_1_test)
 {
@@ -276,3 +270,7 @@ TYPED_TEST(SqueezeTest, squeeze_graph_serialization_test)
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

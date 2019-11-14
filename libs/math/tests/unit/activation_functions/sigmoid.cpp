@@ -16,19 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/activation_functions/sigmoid.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/activation_functions/sigmoid.hpp"
+#include "test_types.hpp"
+
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class SigmoidTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(SigmoidTest, MyTypes);
+TYPED_TEST_CASE(SigmoidTest, TensorFloatingTypes);
 
 template <typename ArrayType>
 ArrayType RandomArrayNegative(std::size_t n)
@@ -103,7 +104,8 @@ TYPED_TEST(SigmoidTest, positive_response)
 
 TYPED_TEST(SigmoidTest, exact_values)
 {
-  std::size_t n = 8;
+  using DataType = typename TypeParam::Type;
+  std::size_t n  = 8;
   TypeParam   test_array{n};
   TypeParam   gt_array{n};
 
@@ -116,9 +118,9 @@ TYPED_TEST(SigmoidTest, exact_values)
   test_array[6] = typename TypeParam::Type(7);
   test_array[7] = typename TypeParam::Type(-8);
 
-  gt_array[0] = typename TypeParam::Type(0.73106);
-  gt_array[1] = typename TypeParam::Type(0.1192029);
-  gt_array[2] = typename TypeParam::Type(0.952574);
+  gt_array[0] = typename TypeParam::Type(0.73105858);
+  gt_array[1] = typename TypeParam::Type(0.11920292);
+  gt_array[2] = typename TypeParam::Type(0.95257413);
   gt_array[3] = typename TypeParam::Type(0.01798620996);
   gt_array[4] = typename TypeParam::Type(0.993307149);
   gt_array[5] = typename TypeParam::Type(0.002472623156635);
@@ -130,8 +132,8 @@ TYPED_TEST(SigmoidTest, exact_values)
   ASSERT_EQ(test_array.shape(), gt_array.shape());
 
   // test correct values
-  ASSERT_TRUE(test_array.AllClose(gt_array, typename TypeParam::Type(1e-5),
-                                  typename TypeParam::Type(1e-5)));
+  ASSERT_TRUE(test_array.AllClose(gt_array, function_tolerance<DataType>(),
+                                  function_tolerance<DataType>()));
 }
 
 ///////////////////
@@ -141,7 +143,7 @@ TYPED_TEST(SigmoidTest, exact_values)
 
 TYPED_TEST(SigmoidTest, sigmoid_2x2)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   TypeParam array1{{2, 2}};
 
   array1.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(0.3));
@@ -167,7 +169,7 @@ TYPED_TEST(SigmoidTest, sigmoid_2x2)
 // Test sigmoid function output against numpy output for 2x2 input matrix of random values
 TYPED_TEST(SigmoidTest, sigmoid_11)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   TypeParam input{1};
   TypeParam output{1};
@@ -182,3 +184,7 @@ TYPED_TEST(SigmoidTest, sigmoid_11)
 
   ASSERT_TRUE(output.AllClose(numpy_output));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

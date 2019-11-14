@@ -332,12 +332,30 @@ void Router::ConnectionDropped(Handle handle)
   FETCH_LOCK(routing_table_lock_);
   for (auto it = routing_table_.begin(); it != routing_table_.end();)
   {
-    if (it->second.handle == handle)
+    auto &handles = it->second.handles;
+
+    for (auto entry_it = handles.begin(); entry_it != handles.end();)
     {
+      if (*entry_it == handle)
+      {
+        // remove the handle from the vector
+        entry_it = handles.erase(entry_it);
+      }
+      else
+      {
+        // move along handle in the connection list
+        ++entry_it;
+      }
+    }
+
+    if (handles.empty())
+    {
+      // this address no longer has any handles associated with it, therefore it should be removed
       it = routing_table_.erase(it);
     }
     else
     {
+      // move along to the next entry in the routing table
       ++it;
     }
   }
@@ -550,54 +568,59 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
     return status;
   }
 
+  // never allow the current node address to be added to the routing table
+  if (address == address_raw_)
+  {
+    return status;
+  }
+
   bool display{false};
 
-  // never allow the current node address to be added to the routing table
-  if (address != address_raw_)
+  FETCH_LOCK(routing_table_lock_);
+
+  // lookup (or create) the routing table entry
+  auto &routing_data = routing_table_[address];
+
+  bool const is_empty = (routing_data.handles.empty());
+
+  // cache the previous handle
+  Handle const current_handle = (is_empty) ? 0 : routing_data.handles.front();
+
+  // an update is only valid when the connection is direct.
+  bool const is_connection_update = (current_handle != handle);
+  bool const is_duplicate_direct  = direct && routing_data.direct && is_connection_update;
+  bool const is_upgrade           = (!is_empty) && (!routing_data.direct) && direct;
+  bool const is_downgrade         = (!is_empty) && routing_data.direct && !direct;
+  bool const is_different =
+      (is_connection_update && !is_duplicate_direct && !is_downgrade) || is_upgrade;
+  bool const is_update = ((!is_empty) && is_different);
+
+  // update the routing table if required
+  if (is_duplicate_direct)
   {
-    FETCH_LOCK(routing_table_lock_);
+    FETCH_LOG_INFO(logging_name_, "Duplicate direct (detected) conn: ", handle);
 
-    // lookup (or create) the routing table entry
-    auto &routing_data = routing_table_[address];
+    // add the handle to the list of available
+    routing_data.handles.emplace_back(handle);
 
-    bool const is_empty = (routing_data.handle == 0);
+    // we do not overwrite the routing table for additional direct connections
+    status = UpdateStatus::DUPLICATE_DIRECT;
+  }
+  else if (is_empty || is_update)
+  {
+    // update the table
+    routing_data.handles.assign(1, handle);
+    routing_data.direct = direct;
 
-    // an update is only valid when the connection is direct.
-    bool const is_connection_update = (routing_data.handle != handle);
-    bool const is_duplicate_direct  = direct && routing_data.direct && is_connection_update;
-    bool const is_upgrade           = (!is_empty) && (!routing_data.direct) && direct;
-    bool const is_downgrade         = (!is_empty) && routing_data.direct && !direct;
-    bool const is_different =
-        (is_connection_update && !is_duplicate_direct && !is_downgrade) || is_upgrade;
-    bool const is_update = ((routing_data.handle != 0u) && is_different);
+    // signal an update was made to the table
+    status  = UpdateStatus::UPDATED;
+    display = is_empty || is_upgrade;
 
-    // update the routing table if required
-    if (is_duplicate_direct)
-    {
-      FETCH_LOG_INFO(logging_name_, "Duplicate direct (detected)");
-
-      // we do not overwrite the routing table for additional direct connections
-      status = UpdateStatus::DUPLICATE_DIRECT;
-    }
-    else if (is_empty || is_update)
-    {
-      // replacing an existing entry
-      Handle prev_handle = routing_data.handle;
-
-      // update the table
-      routing_data.handle = handle;
-      routing_data.direct = direct;
-
-      // signal an update was made to the table
-      status  = UpdateStatus::UPDATED;
-      display = is_empty || is_upgrade;
-
-      FETCH_LOG_TRACE(logging_name_, is_connection_update, "-", is_duplicate_direct, "-",
-                      is_upgrade, "-", is_different, "-", is_update);
-      FETCH_LOG_TRACE(logging_name_, "Handle was: ", prev_handle, " now: ", handle,
-                      " direct: ", direct, "-", routing_data.direct);
-      FETCH_LOG_VARIABLE(prev_handle);
-    }
+    FETCH_LOG_TRACE(logging_name_, is_connection_update, "-", is_duplicate_direct, "-", is_upgrade,
+                    "-", is_different, "-", is_update);
+    FETCH_LOG_TRACE(logging_name_, "Handle was: ", current_handle, " now: ", handle,
+                    " direct: ", direct, "-", routing_data.direct);
+    FETCH_LOG_VARIABLE(current_handle);
   }
 
   if (display)
@@ -612,7 +635,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
 /**
  * Internal: Looks up the specified connection handle from a given address
  *
- * @param address The address to lookup the handle for.
+ * @param address The address to look up the handle for.
  * @return The target handle for the connection, or zero on failure.
  */
 Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
@@ -627,7 +650,10 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
     {
       auto const &routing_data = address_it->second;
 
-      handle = routing_data.handle;
+      if (!routing_data.handles.empty())
+      {
+        handle = routing_data.handles.front();
+      }
     }
   }
 
@@ -657,16 +683,23 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
 
     if (!routing_table_.empty())
     {
+      using Distribution = std::uniform_int_distribution<std::size_t>;
+
       // decide the random index to access
-      std::uniform_int_distribution<decltype(routing_table_)::size_type> distro(
-          0, routing_table_.size() - 1);
-      std::size_t const element = distro(rng);
+      Distribution      table_dist{0, routing_table_.size() - 1};
+      std::size_t const element = table_dist(rng);
 
       // advance the iterator to the correct offset
       auto it = routing_table_.cbegin();
       std::advance(it, static_cast<std::ptrdiff_t>(element));
 
-      return it->second.handle;
+      auto const &handles = it->second.handles;
+
+      if (!handles.empty())
+      {
+        Distribution handle_dist{0, handles.size() - 1};
+        return handles[handle_dist(rng)];
+      }
     }
   }
 
@@ -674,7 +707,7 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
 }
 
 /**
- * Lookup the closest directly connected handle to route the packet to
+ * Look up the closest directly connected handle to route the packet to
  *
  * @param address The address
  * @return
@@ -717,7 +750,7 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet)
   // internal method, we expect all inputs be valid at this stage
   assert(static_cast<bool>(packet));
 
-  // lookup the connection
+  // look up the connection
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
@@ -820,6 +853,26 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       return;
     }
 
+    // this should never be necessary, but in the case where the routing table is not correctly
+    // updated by the peer is directly connected, then we should always use that peer
+    auto const address_index = register_.GetAddressIndex();
+    auto const index_it      = address_index.find(packet->GetTarget());
+    if (index_it != address_index.end())
+    {
+      // extract the handle from the index
+      handle = (index_it->second) ? index_it->second->handle : 0u;
+
+      if (handle != 0u)
+      {
+        FETCH_LOG_WARN(logging_name_, "Informed routing to peer: ", packet->GetTarget().ToBase64());
+
+        SendToConnection(handle, packet);
+        return;
+      }
+
+      FETCH_LOG_ERROR(logging_name_, "Informed routing; Invalid handle");
+    }
+
     // if kad routing is enabled we should use this to route packets
     if (kademlia_routing_)
     {
@@ -836,9 +889,13 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     handle = LookupRandomHandle(packet->GetTargetRaw());
     if (handle != 0u)
     {
-      FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", ToBase64(packet->GetTarget()));
+      FETCH_LOG_WARN(logging_name_,
+                     "Speculative routing to peer: ", packet->GetTarget().ToBase64());
       SendToConnection(handle, packet);
+      return;
     }
+
+    FETCH_LOG_ERROR(logging_name_, "Unable to route packet to: ", packet->GetTarget().ToBase64());
   }
 }
 
@@ -906,7 +963,7 @@ bool Router::IsEcho(Packet const &packet, bool register_echo)
   {
     FETCH_LOCK(echo_cache_lock_);
 
-    // lookup if the echo is in the cache
+    // look up if the echo is in the cache
     auto it = echo_cache_.find(index);
     if (it == echo_cache_.end())
     {
@@ -964,6 +1021,18 @@ void Router::Whitelist(Address const &target)
 bool Router::IsBlacklisted(Address const &target) const
 {
   return blacklist_.Contains(target);
+}
+
+Router::RoutingTable Router::routing_table() const
+{
+  FETCH_LOCK(routing_table_lock_);
+  return routing_table_;
+}
+
+Router::EchoCache Router::echo_cache() const
+{
+  FETCH_LOCK(echo_cache_lock_);
+  return echo_cache_;
 }
 
 }  // namespace muddle

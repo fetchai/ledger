@@ -248,11 +248,37 @@ Module::Module()
             ret->elements = arr;
             return ret;
           })
+      .CreateCPPCopyConstructor<std::vector<std::vector<double>>>(
+          [](VM *vm, TypeId, std::vector<std::vector<double>> const &arr) -> Ptr<IArray> {
+            auto outerid = vm->GetTypeId<Array<Ptr<Array<double>>>>();
+            auto innerid = vm->GetTypeId<Array<double>>();
+            std::cout << "ID: " << vm->GetTypeId<Array<Ptr<Array<double>>>>() << std::endl;
+            auto ret = Ptr<Array<Ptr<Array<double>>>>(
+                new Array<Ptr<Array<double>>>(vm, outerid, innerid, 0));
+
+            for (auto &element : arr)
+            {
+              auto a = Ptr<Array<double>>(new Array<double>(vm, vm->GetTypeId<Array<double>>(),
+                                                            vm->GetTypeId<double>(), 0));
+
+              a->elements = element;
+              ret->elements.emplace_back(a);
+            }
+
+            return ret;
+          })
       .CreateInstantiationType<Array<fixed_point::fp32_t>>()
       .CreateInstantiationType<Array<fixed_point::fp64_t>>()
       .CreateInstantiationType<Array<Ptr<String>>>()
       .CreateInstantiationType<Array<Ptr<Address>>>();
+  /*
+              std::cout << " " << vm->GetTypeId<Array<Ptr<Object>>>()
+                        << " " << vm->GetTypeId<Array<Ptr<IArray>>>()
+                        << " " << vm->GetTypeId<IArray>()
+                        << " " << vm->GetTypeId<Array<Ptr<Array<double>>>>() << " "
+                        << vm->GetTypeId<Array<double>>() << std::endl;
 
+  */
   GetClassInterface<String>()
       .CreateSerializeDefaultConstructor(
           [](VM *vm, TypeId) -> Ptr<String> { return Ptr<String>{new String(vm, "")}; })

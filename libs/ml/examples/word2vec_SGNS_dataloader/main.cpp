@@ -24,7 +24,7 @@
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/optimisation/lazy_adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/utilities/graph_saver.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
@@ -42,7 +42,7 @@ using namespace fetch::ml::examples;
 
 using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
+using SizeType   = fetch::math::SizeType;
 
 ////////////////////////
 /// MODEL DEFINITION ///
@@ -171,8 +171,8 @@ int main(int argc, char **argv)
   std::cout << "beginning training...: " << std::endl;
 
   // Initialise Optimiser
-  fetch::ml::optimisers::AdamOptimiser<TensorType> optimiser(g, {"Input", "Context"}, "Label",
-                                                             error, tp.learning_rate_param);
+  fetch::ml::optimisers::LazyAdamOptimiser<TensorType> optimiser(g, {"Input", "Context"}, "Label",
+                                                                 error, tp.learning_rate_param);
 
   SizeType n_batches              = static_cast<SizeType>(est_total_samples) / tp.batch_size;
   SizeType samples_per_graph_save = n_batches / tp.graph_saves_per_epoch * tp.batch_size;

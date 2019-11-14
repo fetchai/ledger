@@ -63,13 +63,13 @@ public:
       const std::shared_ptr<NetworkManager> &netm        = std::shared_ptr<NetworkManager>(),
       MuddleChannel                          channel_tmp = MuddleChannel::DEFAULT);
   ~MuddleLearnerNetworker() override                          = default;
-  MuddleLearnerNetworker(const MuddleLearnerNetworker &other) = delete;
-  MuddleLearnerNetworker &operator=(const MuddleLearnerNetworker &other)  = delete;
-  bool                    operator==(const MuddleLearnerNetworker &other) = delete;
-  bool                    operator<(const MuddleLearnerNetworker &other)  = delete;
+  MuddleLearnerNetworker(MuddleLearnerNetworker const &other) = delete;
+  MuddleLearnerNetworker &operator=(MuddleLearnerNetworker const &other)  = delete;
+  bool                    operator==(MuddleLearnerNetworker const &other) = delete;
+  bool                    operator<(MuddleLearnerNetworker const &other)  = delete;
 
-  void        PushUpdate(const UpdateInterfacePtr &update) override;
-  void        PushUpdateType(const std::string &type, const UpdateInterfacePtr &update) override;
+  void        PushUpdate(UpdateInterfacePtr const &update) override;
+  void        PushUpdateType(const std::string &type, UpdateInterfacePtr const &update) override;
   std::size_t GetPeerCount() const override;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);

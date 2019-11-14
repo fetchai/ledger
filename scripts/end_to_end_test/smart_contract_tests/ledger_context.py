@@ -75,7 +75,7 @@ def run(options):
     # create wealth so that we have the funds to be able to create contracts on the network
     api.sync(api.tokens.wealth(entity1, 100000))
 
-    contract = Contract(CONTRACT_TEXT)
+    contract = Contract(CONTRACT_TEXT, entity1)
 
     # deploy the contract to the network
     status = api.sync(api.contracts.create(entity1, contract, 2000))[0]

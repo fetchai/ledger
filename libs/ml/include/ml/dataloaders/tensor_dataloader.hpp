@@ -23,7 +23,6 @@
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 
-#include <cassert>
 #include <stdexcept>
 #include <utility>
 
@@ -50,7 +49,7 @@ public:
 
   ReturnType GetNext() override;
 
-  bool AddData(InputType const &data, LabelType const &labels) override;
+  bool AddData(std::vector<InputType> const &data, LabelType const &labels) override;
 
   SizeType Size() const override;
   bool     IsDone() const override;
@@ -77,12 +76,12 @@ protected:
   SizeType validation_offset_ = 0;
 
   SizeType n_samples_            = 0;  // number of all samples
-  SizeType n_test_samples_       = 0;  // number of train samples
-  SizeType n_validation_samples_ = 0;  // number of train samples
-  SizeType n_train_samples_      = 0;  // number of validation samples
+  SizeType n_test_samples_       = 0;  // number of test samples
+  SizeType n_validation_samples_ = 0;  // number of validation samples
+  SizeType n_train_samples_      = 0;  // number of train samples
 
-  TensorType data_;
-  TensorType labels_;
+  std::vector<TensorType> data_;
+  TensorType              labels_;
 
   SizeVector              label_shape_;
   SizeVector              one_sample_label_shape_;
@@ -115,8 +114,14 @@ template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::ReturnType
 TensorDataLoader<LabelType, InputType>::GetNext()
 {
-  ReturnType ret(labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_),
-                 {data_.View(*this->current_cursor_).Copy(one_sample_data_shapes_.at(0))});
+  std::vector<InputType> ret_data;
+  LabelType ret_labels = labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_);
+
+  for (SizeType i{0}; i < data_.size(); i++)
+  {
+    ret_data.emplace_back(
+        data_.at(i).View(*this->current_cursor_).Copy(one_sample_data_shapes_.at(i)));
+  }
 
   if (this->random_mode_)
   {
@@ -130,22 +135,33 @@ TensorDataLoader<LabelType, InputType>::GetNext()
     (*this->current_cursor_)++;
   }
 
-  return ret;
+  return ReturnType(ret_labels, ret_data);
 }
 
 template <typename LabelType, typename InputType>
-bool TensorDataLoader<LabelType, InputType>::AddData(InputType const &data, LabelType const &labels)
+bool TensorDataLoader<LabelType, InputType>::AddData(std::vector<InputType> const &data,
+                                                     LabelType const &             labels)
 {
   one_sample_label_shape_                                        = labels.shape();
   one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
+  labels_                                                        = labels.Copy();
 
-  one_sample_data_shapes_.emplace_back(data.shape());
-  one_sample_data_shapes_.at(0).at(one_sample_data_shapes_.at(0).size() - 1) = 1;
+  // Resize data vector
+  if (data_.size() < data.size())
+  {
+    data_.resize(data.size());
+    one_sample_data_shapes_.resize(data.size());
+  }
 
-  data_   = data.Copy();
-  labels_ = labels.Copy();
+  // Add data to data vector
+  for (SizeType i{0}; i < data.size(); i++)
+  {
+    data_.at(i)                                                                = data.at(i).Copy();
+    one_sample_data_shapes_.at(i)                                              = data.at(i).shape();
+    one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
+  }
 
-  n_samples_ = data_.shape().at(data_.shape().size() - 1);
+  n_samples_ = data_.at(0).shape().at(data_.at(0).shape().size() - 1);
 
   UpdateRanges();
 

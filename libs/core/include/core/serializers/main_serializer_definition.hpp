@@ -36,6 +36,22 @@ class MsgPackSerializer
 public:
   using ByteArray = byte_array::ByteArray;
 
+  /// Array Helpers
+  /// @{
+  using ArrayConstructor = interfaces::ContainerConstructorInterface<
+      MsgPackSerializer, interfaces::ArrayInterface<MsgPackSerializer>, TypeCodes::ARRAY_CODE_FIXED,
+      TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
+  using ArrayDeserializer = interfaces::ArrayDeserializer<MsgPackSerializer>;
+  /// @}
+
+  /// Map Helpers
+  /// @{
+  using MapConstructor = interfaces::ContainerConstructorInterface<
+      MsgPackSerializer, interfaces::MapInterface<MsgPackSerializer>, TypeCodes::MAP_CODE_FIXED,
+      TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
+  using MapDeserializer = interfaces::MapDeserializer<MsgPackSerializer>;
+  /// @}
+
   MsgPackSerializer()                         = default;
   MsgPackSerializer(MsgPackSerializer &&from) = default;
   MsgPackSerializer &operator=(MsgPackSerializer &&from) = default;
@@ -56,6 +72,11 @@ public:
   MsgPackSerializer(MsgPackSerializer const &from);
 
   MsgPackSerializer &operator=(MsgPackSerializer const &from);
+
+  SerializerTypes GetNextType() const
+  {
+    return DetermineType(data_[pos_]);
+  }
 
   void Allocate(uint64_t const &delta);
 
@@ -125,11 +146,18 @@ public:
   template <typename T>
   typename BinarySerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
 
+  ArrayConstructor  NewArrayConstructor();
+  ArrayDeserializer NewArrayDeserializer();
+
   template <typename T>
   typename ArraySerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 
   template <typename T>
   typename ArraySerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
+
+  MapConstructor  NewMapConstructor();
+  MapDeserializer NewMapDeserializer();
+
   template <typename T>
   typename MapSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 

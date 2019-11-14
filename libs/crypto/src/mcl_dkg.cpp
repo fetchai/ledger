@@ -33,41 +33,72 @@ namespace mcl {
 
 std::atomic<bool> details::MCLInitialiser::was_initialised{false};
 
-void SetGenerator(Generator &group_g)
+PublicKey::PublicKey()
 {
-  group_g.clear();
-
-  const bn::Fp2 g("1380305877306098957770911920312855400078250832364663138573638818396353623780",
-                  "14633108267626422569982187812838828838622813723380760182609272619611213638781");
-
-  bn::mapToG2(group_g, g);
+  clear();
 }
 
-void SetGenerators(Generator &group_g, Generator &group_h)
+PrivateKey::PrivateKey()
 {
-  group_g.clear();
-  group_h.clear();
+  clear();
+}
 
-  // Values taken from TMCG main.cpp
-  const bn::Fp2 g("1380305877306098957770911920312855400078250832364663138573638818396353623780",
-                  "14633108267626422569982187812838828838622813723380760182609272619611213638781");
-  const bn::Fp2 h("6798148801244076840612542066317482178930767218436703568023723199603978874964",
-                  "12726557692714943631796519264243881146330337674186001442981874079441363994424");
+PrivateKey::PrivateKey(uint32_t value)
+{
+  clear();
+  bn::Fr::add(*this, *this, value);
+}
 
-  bn::mapToG2(group_g, g);
-  bn::mapToG2(group_h, h);
+Signature::Signature()
+{
+  clear();
+}
+
+Generator::Generator()
+{
+  clear();
+}
+
+Generator::Generator(std::string const &string_to_hash)
+{
+  clear();
+  bn::hashAndMapToG2(*this, string_to_hash);
+}
+
+DkgKeyInformation::DkgKeyInformation(PublicKey              group_public_key1,
+                                     std::vector<PublicKey> public_key_shares1,
+                                     PrivateKey             secret_key_shares1)  // NOLINT
+  : group_public_key{std::move(group_public_key1)}
+  , public_key_shares{std::move(public_key_shares1)}
+  , private_key_share{std::move(secret_key_shares1)}
+{}
+
+void SetGenerator(Generator &generator_g, std::string const &string_to_hash)
+{
+  assert(!string_to_hash.empty());
+  bn::hashAndMapToG2(generator_g, string_to_hash);
+  assert(!generator_g.isZero());
+}
+
+void SetGenerators(Generator &generator_g, Generator &generator_h,
+                   std::string const &string_to_hash, std::string const &string_to_hash2)
+{
+  assert(!string_to_hash.empty() && !string_to_hash2.empty());
+  assert(string_to_hash != string_to_hash2);
+  bn::hashAndMapToG2(generator_g, string_to_hash);
+  bn::hashAndMapToG2(generator_h, string_to_hash2);
+  assert(!generator_g.isZero());
+  assert(!generator_h.isZero());
 }
 
 /**
  * LHS and RHS functions are used for checking consistency between publicly broadcasted coefficients
  * and secret shares distributed privately
  */
-bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
-                  bn::Fr const &share2)
+PublicKey ComputeLHS(PublicKey &tmpG, Generator const &G, Generator const &H,
+                     PrivateKey const &share1, PrivateKey const &share2)
 {
-  bn::G2 tmp2G, lhsG;
-  tmp2G.clear();
-  lhsG.clear();
+  PublicKey tmp2G, lhsG;
   bn::G2::mul(tmpG, G, share1);
   bn::G2::mul(tmp2G, H, share2);
   bn::G2::add(lhsG, tmpG, tmp2G);
@@ -75,18 +106,17 @@ bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &
   return lhsG;
 }
 
-bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2)
+PublicKey ComputeLHS(Generator const &G, Generator const &H, PrivateKey const &share1,
+                     PrivateKey const &share2)
 {
-  bn::G2 tmpG;
-  tmpG.clear();
+  PublicKey tmpG;
   return ComputeLHS(tmpG, G, H, share1, share2);
 }
 
-void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input)
+void UpdateRHS(uint32_t rank, PublicKey &rhsG, std::vector<PublicKey> const &input)
 {
-  bn::Fr tmpF{1};
-  bn::G2 tmpG;
-  tmpG.clear();
+  PrivateKey tmpF{1};
+  PublicKey  tmpG;
   assert(!input.empty());
   for (uint32_t k = 1; k < input.size(); k++)
   {
@@ -96,12 +126,10 @@ void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input)
   }
 }
 
-bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input)
+PublicKey ComputeRHS(uint32_t rank, std::vector<PublicKey> const &input)
 {
-  bn::Fr tmpF;
-  bn::G2 tmpG, rhsG;
-  tmpG.clear();
-  rhsG.clear();
+  PrivateKey tmpF;
+  PublicKey  tmpG, rhsG;
   assert(!input.empty());
   // initialise rhsG
   rhsG = input[0];
@@ -119,10 +147,10 @@ bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input)
  * @param b_i The vector of coefficients for f'
  * @param index The point at which you evaluate the polynomial
  */
-void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
-                   std::vector<bn::Fr> const &b_i, uint32_t index)
+void ComputeShares(PrivateKey &s_i, PrivateKey &sprime_i, std::vector<PrivateKey> const &a_i,
+                   std::vector<PrivateKey> const &b_i, uint32_t index)
 {
-  bn::Fr pow, tmpF;
+  PrivateKey pow, tmpF;
   assert(a_i.size() == b_i.size());
   assert(!a_i.empty());
   s_i      = a_i[0];
@@ -138,71 +166,32 @@ void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i
 }
 
 /**
- * Computation of the a polynomial (whose coefficients are unknown) evaluated at 0
- *
- * @param parties Set of points (not equal to 0) at which the polynomial has been evaluated
- * @param shares The value of polynomial at the points parties
- * @return The value of the polynomial evaluated at 0 (z_i)
- */
-bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares)
-{
-  // compute $z_i$ using Lagrange interpolation (without corrupted parties)
-  bn::Fr z{0};
-  for (auto jt : parties)
-  {
-    // compute optimized Lagrange coefficients
-    bn::Fr rhsF{1}, lhsF{1}, tmpF;
-    for (auto lt : parties)
-    {
-      if (lt != jt)
-      {
-        bn::Fr::mul(rhsF, rhsF, lt + 1);  // adjust index in computation
-      }
-    }
-    for (auto lt : parties)
-    {
-      if (lt != jt)
-      {
-        tmpF = (lt + 1);
-        bn::Fr::sub(tmpF, tmpF, (jt + 1));
-        bn::Fr::mul(lhsF, lhsF, tmpF);
-      }
-    }
-    bn::Fr::inv(lhsF, lhsF);
-
-    bn::Fr::mul(rhsF, rhsF, lhsF);
-    bn::Fr::mul(tmpF, rhsF, shares[jt]);  // use the provided shares (interpolation points)
-    bn::Fr::add(z, z, tmpF);
-  }
-  return z;
-}
-
-/**
  * Computes the coefficients of a polynomial
  *
  * @param a Points at which polynomial has been evaluated
  * @param b Value of the polynomial at points a
  * @return The vector of coefficients of the polynomial
  */
-std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b)
+std::vector<PrivateKey> InterpolatePolynom(std::vector<PrivateKey> const &a,
+                                           std::vector<PrivateKey> const &b)
 {
   std::size_t m = a.size();
   if ((b.size() != m) || (m == 0))
   {
     throw std::invalid_argument("mcl_interpolate_polynom: bad m");
   }
-  std::vector<bn::Fr> prod{a}, res(m, 0);
-  bn::Fr              t1, t2;
+  std::vector<PrivateKey> prod{a}, res;
+  res.resize(m);
   for (std::size_t k = 0; k < m; k++)
   {
-    t1 = 1;
+    PrivateKey t1{1};
     for (auto i = static_cast<long>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t1, t1, a[k]);
       bn::Fr::add(t1, t1, prod[static_cast<std::size_t>(i)]);
     }
 
-    t2 = 0;
+    PrivateKey t2{0};
     for (auto i = static_cast<long>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t2, t2, a[k]);
@@ -250,10 +239,9 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
  */
 Signature SignShare(MessagePayload const &message, PrivateKey const &x_i)
 {
-  bn::Fp Hm;
-  bn::G1 PH;
-  bn::G1 sign;
-  sign.clear();
+  Signature PH;
+  Signature sign;
+  bn::Fp    Hm;
   Hm.setHashOf(message.pointer(), message.size());
   bn::mapToG1(PH, Hm);
   bn::G1::mul(sign, PH, x_i);  // sign = s H(m)
@@ -272,9 +260,9 @@ Signature SignShare(MessagePayload const &message, PrivateKey const &x_i)
 bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
                 Generator const &G)
 {
-  bn::Fp12 e1, e2;
-  bn::Fp   Hm;
-  bn::G1   PH;
+  Signature PH;
+  bn::Fp12  e1, e2;
+  bn::Fp    Hm;
   Hm.setHashOf(message.pointer(), message.size());
   bn::mapToG1(PH, Hm);
 
@@ -282,13 +270,6 @@ bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature con
   bn::pairing(e2, PH, y);
 
   return e1 == e2;
-}
-
-bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign)
-{
-  bn::G2 generator;
-  SetGenerator(generator);
-  return VerifySign(y, message, sign, generator);
 }
 
 /**
@@ -305,10 +286,9 @@ Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> cons
   {
     return shares.begin()->second;
   }
-  bn::G1 res;
-  res.clear();
+  Signature res;
 
-  bn::Fr a = 1;
+  PrivateKey a{1};
   for (auto &p : shares)
   {
     a *= bn::Fr(p.first + 1);
@@ -324,7 +304,7 @@ Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> cons
         b *= static_cast<bn::Fr>(p2.first) - static_cast<bn::Fr>(p1.first);
       }
     }
-    bn::G1 t;
+    Signature t;
     bn::G1::mul(t, p1.second, a / b);
     res += t;
   }
@@ -348,7 +328,7 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t cabinet_size, 
 
   // Construct polynomial of degree threshold - 1
   std::vector<PrivateKey> vec_a;
-  Init(vec_a, threshold);
+  vec_a.resize(threshold);
   for (uint32_t ii = 0; ii < threshold; ++ii)
   {
     vec_a[ii].setRand();
@@ -356,12 +336,11 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t cabinet_size, 
 
   std::vector<PublicKey>  public_key_shares;
   std::vector<PrivateKey> private_key_shares;
-  Init(public_key_shares, cabinet_size);
-  Init(private_key_shares, cabinet_size);
+  public_key_shares.resize(cabinet_size);
+  private_key_shares.resize(cabinet_size);
 
   // Group secret key is polynomial evaluated at 0
-  PublicKey group_public_key;
-  group_public_key.clear();
+  PublicKey  group_public_key;
   PrivateKey group_private_key = vec_a[0];
   bn::G2::mul(group_public_key, generator, group_private_key);
 
@@ -371,7 +350,6 @@ std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t cabinet_size, 
     PrivateKey pow;
     PrivateKey tmpF;
     PrivateKey private_key;
-    private_key.clear();
     // Private key is polynomial evaluated at index i
     private_key = vec_a[0];
     for (uint32_t k = 1; k < vec_a.size(); k++)
@@ -405,7 +383,6 @@ std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator)
 {
   std::pair<PrivateKey, PublicKey> key_pair;
   key_pair.first.setRand();
-  key_pair.second.clear();
   bn::G2::mul(key_pair.second, generator, key_pair.first);
   return key_pair;
 }
@@ -418,11 +395,10 @@ std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator)
  * @param cabinet_notarisation_keys Public keys of all cabinet members
  * @return Element of prime field
  */
-bn::Fr SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
-                                       std::vector<PublicKey> const &cabinet_notarisation_keys)
+PrivateKey SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
+                                           std::vector<PublicKey> const &cabinet_notarisation_keys)
 {
-  bn::Fr coefficient;
-  coefficient.clear();
+  PrivateKey coefficient;
 
   // Reserve first 48 bytes for some fixed value for hygenic reuse of the
   // hashing function
@@ -450,25 +426,23 @@ bn::Fr SignatureAggregationCoefficient(PublicKey const &             notarisatio
  * @return Pair consisting of aggregate signature and a vector indicating who's signatures were
  * aggregated
  */
-std::pair<Signature, std::vector<bool>> ComputeAggregateSignature(
+AggregateSignature ComputeAggregateSignature(
     std::unordered_map<uint32_t, Signature> const &signatures,
     std::vector<PublicKey> const &                 public_keys)
 {
-  Signature aggregate_signature;
-  aggregate_signature.clear();
-  std::vector<bool> signers;
-  signers.resize(public_keys.size(), false);
+  Signature    aggregate_signature;
+  SignerRecord signers;
+  signers.resize(public_keys.size(), 0);
 
   // Compute signature
   for (auto const &sig : signatures)
   {
     uint32_t  index = sig.first;
     Signature modified_sig;
-    modified_sig.clear();
     bn::Fr aggregate_coefficient = SignatureAggregationCoefficient(public_keys[index], public_keys);
     bn::G1::mul(modified_sig, sig.second, aggregate_coefficient);
     bn::G1::add(aggregate_signature, aggregate_signature, modified_sig);
-    signers[index] = true;
+    signers[index] = 1;
   }
   return std::make_pair(aggregate_signature, signers);
 }
@@ -481,20 +455,18 @@ std::pair<Signature, std::vector<bool>> ComputeAggregateSignature(
  * @param cabinet_public_keys Public keys of all eligible signers
  * @return Aggregated public key
  */
-PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
+PublicKey ComputeAggregatePublicKey(SignerRecord const &          signers,
                                     std::vector<PublicKey> const &cabinet_public_keys)
 {
   PublicKey aggregate_key;
-  aggregate_key.clear();
   assert(signers.size() == cabinet_public_keys.size());
   for (size_t i = 0; i < cabinet_public_keys.size(); ++i)
   {
-    if (signers[i])
+    if (signers[i] == 1)
     {
       // Compute public_key_i ^ coefficient_i
       PublicKey modified_public_key;
-      modified_public_key.clear();
-      bn::Fr aggregate_coefficient =
+      bn::Fr    aggregate_coefficient =
           SignatureAggregationCoefficient(cabinet_public_keys[i], cabinet_public_keys);
       bn::G2::mul(modified_public_key, cabinet_public_keys[i], aggregate_coefficient);
 
@@ -514,23 +486,26 @@ PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
  * @param generator Generator of elliptic curve
  * @return Bool for whether the signature passed verification
  */
-bool VerifyAggregateSignature(MessagePayload const &                         message,
-                              std::pair<Signature, std::vector<bool>> const &aggregate_signature,
-                              std::vector<PublicKey> const &                 cabinet_public_keys,
-                              Generator const &                              generator)
+bool VerifyAggregateSignature(MessagePayload const &        message,
+                              AggregateSignature const &    aggregate_signature,
+                              std::vector<PublicKey> const &cabinet_public_keys,
+                              Generator const &             generator)
 {
-  bn::Fp12 e1, e2;
-
   // hash and map message to point on curve
-  bn::Fp Hm;
-  bn::G1 PH;
+  Signature PH;
+  bn::Fp    Hm;
   Hm.setHashOf(message.pointer(), message.size());
   bn::mapToG1(PH, Hm);
 
   // Compute aggregate  public key
+  if (aggregate_signature.second.size() != cabinet_public_keys.size())
+  {
+    return false;
+  }
   PublicKey aggregate_key =
       ComputeAggregatePublicKey(aggregate_signature.second, cabinet_public_keys);
 
+  bn::Fp12 e1, e2;
   bn::pairing(e1, aggregate_signature.first, generator);
   bn::pairing(e2, PH, aggregate_key);
 

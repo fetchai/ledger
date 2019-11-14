@@ -18,25 +18,24 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class MatrixMultiplyTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(MatrixMultiplyTest, MyTypes);
+TYPED_TEST_CASE(MatrixMultiplyTest, math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(MatrixMultiplyTest, forward_test)
 {
@@ -222,3 +221,7 @@ TYPED_TEST(MatrixMultiplyTest, saveparams_backward_batch_test)
       new_backpropagated_signals.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

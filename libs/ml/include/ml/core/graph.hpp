@@ -35,6 +35,14 @@
 // appear in middle of graph
 
 namespace fetch {
+
+namespace dmlf {
+namespace collective_learning {
+template <typename TensorType>
+class ClientAlgorithm;
+}  // namespace collective_learning
+}  // namespace dmlf
+
 namespace ml {
 
 ///////////////
@@ -50,11 +58,6 @@ namespace model {
 template <typename TensorType>
 class ModelInterface;
 }  // namespace model
-
-namespace distributed_learning {
-template <typename TensorType>
-class TrainingClient;
-}  // namespace distributed_learning
 
 ///////////////////
 /// GRAPH STATE ///
@@ -80,7 +83,8 @@ class Graph
 public:
   using TensorType       = T;
   using ArrayPtrType     = std::shared_ptr<TensorType>;
-  using SizeType         = typename TensorType::SizeType;
+  using SizeType         = fetch::math::SizeType;
+  using SizeSet          = std::unordered_set<SizeType>;
   using DataType         = typename TensorType::Type;
   using NodePtrType      = typename std::shared_ptr<fetch::ml::Node<TensorType>>;
   using TrainablePtrType = typename std::shared_ptr<fetch::ml::ops::Trainable<TensorType>>;
@@ -123,6 +127,7 @@ public:
   TensorType Evaluate(std::string const &node_name, bool is_training = true);
   void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
   void       ApplyGradients(std::vector<TensorType> &grad);
+  void       ApplySparseGradients(std::vector<TensorType> &grad, std::vector<SizeSet> &update_rows);
 
   //////////////////////////////////////////////////////
   /// public serialisation & weight export functions ///
@@ -165,7 +170,7 @@ private:
 
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
-  friend class distributed_learning::TrainingClient<TensorType>;
+  friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
 
   TensorType ForwardImplementation(std::string const &node_name, bool is_training,
                                    bool evaluate_mode);
@@ -194,16 +199,24 @@ private:
   void GetWeightsReferences(std::vector<TensorType> &ret) const;
   void GetGradientsReferences(std::vector<TensorType> &ret) const;
 
-  template <typename IteratorType>
-  void ApplyGradients(IteratorType &grad_it);
+  template <typename TensorIteratorType>
+  void ApplyGradients(TensorIteratorType &grad_it);
+
+  template <typename TensorIteratorType, typename VectorIteratorType>
+  void ApplySparseGradients(TensorIteratorType &grad_it, VectorIteratorType &rows_it);
 
   template <typename ValType, typename NodeFunc, typename GraphFunc>
   void RecursiveApply(ValType &val, NodeFunc node_func, GraphFunc graph_func) const;
 
   template <typename ValType, typename GraphFunc>
-  //  void RecursiveApply(ValType &val,
-  //                      void (Graph<TensorType>::*subgraph_func)(ValType &) const) const;
   void RecursiveApply(ValType &val, GraphFunc graph_func) const;
+
+  template <typename Val1Type, typename Val2Type, typename NodeFunc, typename GraphFunc>
+  void RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2, NodeFunc node_func,
+                         GraphFunc graph_func) const;
+
+  template <typename Val1Type, typename Val2Type, typename GraphFunc>
+  void RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2, GraphFunc graph_func) const;
 };
 
 //////////////////////
@@ -593,6 +606,55 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
   {
     auto grad_it = grad.begin();
     ApplyGradients(grad_it);
+
+    // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
+    // reset cache on all nodes
+    for (auto const &t : nodes_)
+    {
+      ResetGraphCache(false, t.second);
+    }
+
+    return;
+  }
+  case GraphState::UPDATED:
+  {
+    // no gradients to apply - nothing to do
+    return;
+  }
+  default:
+  {
+    throw ml::exceptions::InvalidMode("cannot apply gradients: unrecognised graph state");
+  }
+  }
+}
+
+/**
+ * Add sparse gradient values to weight for each trainable
+ * @tparam TensorType
+ * @param grad vector of gradient values for each trainable stored in TensorType
+ * @param update_rows vector of sets of rows to update for each trainable stored in SizeSet
+ */
+template <typename TensorType>
+void Graph<TensorType>::ApplySparseGradients(std::vector<TensorType> &grad,
+                                             std::vector<SizeSet> &   update_rows)
+{
+  Compile();
+
+  switch (graph_state_)
+  {
+  case GraphState::INVALID:
+  case GraphState::NOT_COMPILED:
+  case GraphState::COMPILED:
+  case GraphState::EVALUATED:
+  {
+    throw ml::exceptions::InvalidMode(
+        "cannot apply gradients: backpropagate not previously called on graph");
+  }
+  case GraphState::BACKWARD:
+  {
+    auto grad_it = grad.begin();
+    auto rows_it = update_rows.begin();
+    ApplySparseGradients(grad_it, rows_it);
 
     // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
     // reset cache on all nodes
@@ -1087,10 +1149,30 @@ void Graph<TensorType>::GetGradientsReferences(std::vector<TensorType> &ret) con
 }
 
 template <typename TensorType>
-template <typename IteratorType>
-void Graph<TensorType>::ApplyGradients(IteratorType &grad_it)
+template <typename TensorIteratorType, typename VectorIteratorType>
+void Graph<TensorType>::ApplySparseGradients(TensorIteratorType &grad_it,
+                                             VectorIteratorType &rows_it)
 {
-  using graph_func_signature = void (Graph<TensorType>::*)(IteratorType &);
+  using graph_func_signature =
+      void (Graph<TensorType>::*)(TensorIteratorType &, VectorIteratorType &);
+
+  for (auto const &t : trainable_lookup_)
+  {
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
+    trainable_ptr->ApplySparseGradient(*grad_it, *rows_it);
+    ++grad_it;
+    ++rows_it;
+  }
+
+  RecursiveApplyTwo<TensorIteratorType, VectorIteratorType, graph_func_signature>(
+      grad_it, rows_it, &Graph<TensorType>::ApplySparseGradients);
+}
+
+template <typename TensorType>
+template <typename TensorIteratorType>
+void Graph<TensorType>::ApplyGradients(TensorIteratorType &grad_it)
+{
+  using graph_func_signature = void (Graph<TensorType>::*)(TensorIteratorType &);
 
   for (auto const &t : trainable_lookup_)
   {
@@ -1099,7 +1181,8 @@ void Graph<TensorType>::ApplyGradients(IteratorType &grad_it)
     ++grad_it;
   }
 
-  RecursiveApply<IteratorType, graph_func_signature>(grad_it, &Graph<TensorType>::ApplyGradients);
+  RecursiveApply<TensorIteratorType, graph_func_signature>(grad_it,
+                                                           &Graph<TensorType>::ApplyGradients);
 }
 
 /**
@@ -1150,6 +1233,64 @@ void Graph<TensorType>::RecursiveApply(ValType &val, GraphFunc graph_func) const
     if (graph_ptr)
     {
       ((*graph_ptr).*graph_func)(val);
+    }
+  }
+}
+
+/**
+ * RecursiveApplyTwo is used to apply a function with two inputs to all trainables and collect the
+ * results, and then recursively invoke this function for any nodes which are graphs. Using this
+ * function guarantees the order of elements.
+ * @tparam TensorType
+ * @tparam Val1Type
+ * @tparam Val2Type
+ * @tparam NodeFunc
+ * @tparam GraphFunc
+ * @param val_1
+ * @param val_2
+ * @param node_func
+ * @param graph_func
+ */
+template <typename TensorType>
+template <typename Val1Type, typename Val2Type, typename NodeFunc, typename GraphFunc>
+void Graph<TensorType>::RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2, NodeFunc node_func,
+                                          GraphFunc graph_func) const
+{
+  for (auto const &t : trainable_lookup_)
+  {
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
+    auto tensor        = ((*trainable_ptr).*node_func)();
+    val_1.emplace_back(tensor);
+  }
+
+  RecursiveApplyTwo<Val1Type, Val2Type, GraphFunc>(val_1, val_2, graph_func);
+}
+
+/**
+ * Two inputs version of Recursive apply which applies the graph function only
+ * @tparam TensorType
+ * @tparam Val1Type
+ * @tparam Val2Type
+ * @tparam GraphFunc
+ * @param val_1
+ * @param val_2
+ * @param graph_func
+ */
+template <typename TensorType>
+template <typename Val1Type, typename Val2Type, typename GraphFunc>
+void Graph<TensorType>::RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2,
+                                          GraphFunc graph_func) const
+{
+  // get gradients from subgraphs
+  for (auto &node_pair : nodes_)
+  {
+    auto op_ptr    = node_pair.second->GetOp();
+    auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
+
+    // if it's a graph
+    if (graph_ptr)
+    {
+      ((*graph_ptr).*graph_func)(val_1, val_2);
     }
   }
 }

@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/array.hpp"
+#include "vectorise/containers/array.hpp"
 
 #include "gtest/gtest.h"
 
