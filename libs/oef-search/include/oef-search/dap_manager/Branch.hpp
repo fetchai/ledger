@@ -176,7 +176,7 @@ public:
   }
 
 protected:
-  inline void UpdateTargetString(std::string &target, const std::string &source)
+  void UpdateTargetString(std::string &target, const std::string &source)
   {
     if (!source.empty())
     {

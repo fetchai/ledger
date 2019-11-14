@@ -19,13 +19,19 @@
 #include "math/base_types.hpp"
 #include "math/standard_functions/log.hpp"
 #include "math/trigonometry.hpp"
+#include "test_types.hpp"
 #include "vectorise/math/standard_functions.hpp"
 #include "vectorise/vectorise.hpp"
 
 #include "gtest/gtest.h"
 
+#include <cstdlib>
 #include <functional>
 #include <memory>
+
+namespace fetch {
+namespace math {
+namespace test {
 
 using namespace fetch::vectorise;
 
@@ -112,10 +118,9 @@ using MyTypes = ::testing::Types<fetch::vectorise::VectorRegister<float, 32>,
                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>,
                                  fetch::vectorise::VectorRegister<double, 64>>;
 
-using MyFPTypes = ::testing::Types<fetch::vectorise::VectorRegister<float, 32>,
-                                   fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 32>,
-                                   fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>,
-                                   fetch::vectorise::VectorRegister<double, 64>>;
+using MyFPTypes =
+    ::testing::Types<fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 32>,
+                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>>;
 #endif
 
 TYPED_TEST_CASE(VectorRegisterTest, MyTypes);
@@ -130,16 +135,16 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   type real_max{type(0)}, real_min{fetch::math::numeric_max<type>()};
   for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
-    // We don't want to check overflows right now, so we pick random numbers, but well within the
+    // We don't want to check overflows right now, so we pick std::rand numbers, but well within the
     // type's limits
-    a[i]     = static_cast<type>((static_cast<double>(random()) / static_cast<double>(RAND_MAX)) *
+    a[i]    = static_cast<type>((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
                              static_cast<double>(fetch::math::numeric_max<type>()) / 2.0);
-    b[i]     = static_cast<type>((static_cast<double>(random()) / static_cast<double>(RAND_MAX)) *
+    b[i]    = static_cast<type>((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
                              static_cast<double>(fetch::math::numeric_max<type>()) / 2.0);
-    sum[i]   = a[i] + b[i];
-    diff[i]  = a[i] - b[i];
-    prod[i]  = a[i] * b[i];
-    div[i]   = a[i] / b[i];
+    sum[i]  = a[i] + b[i];
+    diff[i] = a[i] - b[i];
+    prod[i] = a[i] * b[i];
+    div[i]  = a[i] / b[i];
     real_max = fetch::vectorise::Max(a[i], real_max);
     real_max = fetch::vectorise::Max(b[i], real_max);
     real_min = fetch::vectorise::Min(a[i], real_min);
@@ -296,6 +301,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   alignas(32) type PInf[TypeParam::E_BLOCK_COUNT], NInf[TypeParam::E_BLOCK_COUNT],
       NaN[TypeParam::E_BLOCK_COUNT], A[TypeParam::E_BLOCK_COUNT], B[TypeParam::E_BLOCK_COUNT],
       C[TypeParam::E_BLOCK_COUNT], D[TypeParam::E_BLOCK_COUNT];
+
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     PInf[i] = type::POSITIVE_INFINITY;
@@ -310,6 +316,9 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   TypeParam vnan{NaN};
   TypeParam va{A};
   TypeParam vb{B};
+  TypeParam vmax(type::FP_MAX);
+  TypeParam vmin(type::FP_MIN);
+  TypeParam vzero(type::_0);
   // NaN != NaN
   EXPECT_FALSE(any_equal_to(vnan, vnan));
   // -inf == -inf
@@ -319,14 +328,11 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   // -inf < +inf
   EXPECT_TRUE(all_less_than(vneg_inf, vpos_inf));
   // MAX < +inf
-  EXPECT_TRUE(all_less_than(TypeParam::MaskMax(), vpos_inf));
+  EXPECT_TRUE(all_less_than(vmax, vpos_inf));
   // -inf < MIN
-  EXPECT_TRUE(all_less_than(vneg_inf, TypeParam::MaskMin()));
+  EXPECT_TRUE(all_less_than(vneg_inf, vmin));
   // -inf < 0
-  EXPECT_TRUE(all_less_than(vneg_inf, TypeParam::_0()));
-
-  VectorRegister<int32_t, TypeParam::E_VECTOR_SIZE> vtest_int(-1073709056);
-  VectorRegister<type, TypeParam::E_VECTOR_SIZE>    vtest_fp(vtest_int.data());
+  EXPECT_TRUE(all_less_than(vneg_inf, vzero));
 
   TypeParam vret;
   struct Test
@@ -342,7 +348,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
        [&](size_t i) { C[i] = A[i] + B[i]; }, [&]() { vret = va + vb; }, false, false, false},
       {// Overflow state check
        [&](size_t i) {
-         A[i] = type::FP_MAX / 2 + i;
+         A[i] = type::FP_MAX / 2 + i + 1;
          B[i] = type::FP_MAX / 2;
          C[i] = A[i] + B[i];
        },
@@ -354,7 +360,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
        false, false, true},
       {// Underflow state check
        [&](size_t i) {
-         A[i] = -type::FP_MAX / 2 - i;
+         A[i] = -type::FP_MAX / 2 - i - 1;
          B[i] = -type::FP_MAX / 2;
          C[i] = A[i] + B[i];
        },
@@ -437,3 +443,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
     }
   }
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

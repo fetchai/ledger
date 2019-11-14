@@ -120,16 +120,14 @@ TransactionBuilder::TransactionPtr TransactionBuilder::Sealer::Build()
   if (!signatories.empty())
   {
     // ensure that none of the signatories have an empty signature field
-    valid =
-        std::all_of(signatories.begin(), signatories.end(), [&hash_function](Signatory const &s) {
-          bool success{false};
-          if (!s.signature.empty())
-          {
-            hash_function.Update(s.signature);
-            success = true;
-          }
-          return success;
-        });
+    valid = std::all_of(signatories.begin(), signatories.end(), [](Signatory const &s) {
+      bool success{false};
+      if (!s.signature.empty())
+      {
+        success = true;
+      }
+      return success;
+    });
   }
 
   // if valid, extract the transaction
@@ -238,6 +236,18 @@ TransactionBuilder &TransactionBuilder::ChargeRate(TokenAmount amount)
 TransactionBuilder &TransactionBuilder::ChargeLimit(TokenAmount amount)
 {
   partial_transaction_->charge_limit_ = amount;
+  return *this;
+}
+
+/**
+ * Set the counter value for the transaction
+ *
+ * @param counter The value for the counter
+ * @return The current builder instance
+ */
+TransactionBuilder &TransactionBuilder::Counter(CounterValue counter)
+{
+  partial_transaction_->counter_ = counter;
   return *this;
 }
 

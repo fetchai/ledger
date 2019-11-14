@@ -197,10 +197,10 @@ ContractContext const &Contract::context() const
   return *context_;
 }
 
-void Contract::Attach(ContractContext const &context)
+void Contract::Attach(ContractContext context)
 {
-  // TODO(WK) detailed_assert(context_ == nullptr);
-  context_ = std::make_unique<ContractContext>(context);
+  detailed_assert(context_ == nullptr);
+  context_ = std::make_unique<ContractContext>(std::move(context));
 }
 
 void Contract::Detach()

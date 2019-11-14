@@ -59,12 +59,12 @@ public:
                    "\" port=", port, " path=\"", path, "\"");
   }
 
-  inline std::string GetSocketAddress() const
+  std::string GetSocketAddress() const
   {
     return proto + "://" + host + ":" + std::to_string(port);
   }
 
-  inline std::string ToString() const
+  std::string ToString() const
   {
     return GetSocketAddress() + "/" + path;
   }

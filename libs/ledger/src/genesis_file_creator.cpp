@@ -139,7 +139,8 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Incorrect stake file version!");
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "Incorrect stake file version! Found: ", version,
+                         ". Expected: ", VERSION);
     }
   }
 
