@@ -39,7 +39,7 @@ void AbstractLearnerNetworker::SetShuffleAlgorithm(
   alg_ = alg;
 }
 
-void AbstractLearnerNetworker::ProcessUpdates(UpdateProcessor proc)
+void AbstractLearnerNetworker::ProcessUpdates(UpdateProcessor const &proc)
 {
   FETCH_LOCK(queue_map_m_);
   std::vector<std::string> keys;
