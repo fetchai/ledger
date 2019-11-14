@@ -23,48 +23,46 @@
 
 #include "gmock/gmock.h"
 
-using namespace fetch::vm;
-
 namespace {
 
-using ::testing::Between;
-
-using DataType = fetch::vm_modules::math::DataType;
+using namespace fetch::vm;
 using fetch::byte_array::ByteArray;
 using fetch::vm_modules::math::UInt256Wrapper;
 
 class UInt256Tests : public ::testing::Test
 {
 public:
-  std::stringstream stdout;
-  VmTestToolkit     toolkit{&stdout};
-
-  static constexpr auto           dummy_typeid     = fetch::vm::TypeIds::Unknown;
+  static constexpr auto           dummy_typeid     = fetch::vm::TypeIds::UInt64;
   static constexpr fetch::vm::VM *dummy_vm_ptr     = nullptr;
-  static constexpr std::size_t    data_bytes_total = 256 / 8;
+  static constexpr std::size_t    bit_length       = 256;
+  static constexpr std::size_t    data_bytes_total = bit_length / 8;
   static const ByteArray          raw_32xff;
 
   UInt256Wrapper zero{dummy_vm_ptr, dummy_typeid, 0};
+  UInt256Wrapper uint64max{dummy_vm_ptr, dummy_typeid, std::numeric_limits<uint64_t>::max()};
   UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xff};
+
+  std::stringstream stdout;
+  VmTestToolkit     toolkit{&stdout};
 };
 
 const ByteArray UInt256Tests::raw_32xff{
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-TEST_F(UInt256Tests, uint256_construction)
+TEST_F(UInt256Tests, uint256_raw_construction)
 {
   UInt256Wrapper fromStdUint64(dummy_vm_ptr, dummy_typeid, uint64_t(42));
   ASSERT_TRUE(data_bytes_total == fromStdUint64.size());
 
-  UInt256Wrapper fromByteArray(dummy_vm_ptr, dummy_typeid, ByteArray(data_bytes_total));
+  UInt256Wrapper fromByteArray(dummy_vm_ptr, dummy_typeid, raw_32xff);
   ASSERT_TRUE(data_bytes_total == fromByteArray.size());
 
   UInt256Wrapper fromAnotherUInt256(dummy_vm_ptr, dummy_typeid, zero.number());
   ASSERT_TRUE(data_bytes_total == fromAnotherUInt256.size());
 }
 
-TEST_F(UInt256Tests, uint256_comparison)
+TEST_F(UInt256Tests, uint256_raw_comparisons)
 {
   Ptr<Object> greater = Ptr<Object>::PtrFromThis(&maximum);
   Ptr<Object> lesser  = Ptr<Object>::PtrFromThis(&zero);
@@ -81,10 +79,10 @@ TEST_F(UInt256Tests, uint256_comparison)
   EXPECT_FALSE(zero.IsLessThan(greater, lesser));
 }
 
-TEST_F(UInt256Tests, uint256_increase)
+TEST_F(UInt256Tests, uint256_raw_increase)
 {
-  // Increase is tested via digit carriage while incrementing
-  UInt256Wrapper carriage_inside(dummy_vm_ptr, dummy_typeid, std::numeric_limits<uint64_t>::max());
+  // Increase is tested via digit carriage while incrementing.
+  UInt256Wrapper carriage_inside(uint64max);
 
   carriage_inside.Increase();
 
@@ -99,14 +97,68 @@ TEST_F(UInt256Tests, uint256_increase)
       zero.IsEqual(Ptr<Object>::PtrFromThis(&zero), Ptr<Object>::PtrFromThis(&overcarriage)));
 }
 
-TEST_F(UInt256Tests, uint256_serialization)
+TEST_F(UInt256Tests, uint256_comparisons)
 {
-  // TODO: impl.
-}
+  static constexpr char const *TEXT = R"(
+    function main() : Bool
+        var ok : Bool = true;
+        var uint64_max = 18446744073709551615u64;
 
-TEST_F(UInt256Tests, uint256_json)
+        var smaller = UInt256(uint64_max);
+        var bigger = UInt256(uint64_max);
+        bigger.increase();
+
+        var gt : Bool = smaller > bigger;
+        ok = ok && !gt;
+
+        var ls : Bool = smaller < bigger;
+        ok = ok && ls;
+
+        var eq : Bool = smaller == bigger;
+        ok = ok && !eq;
+
+        var ne : Bool = smaller != bigger;
+        ok = ok && ne;
+
+        return ok;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result_is_ok = res.Get<bool>();
+  EXPECT_TRUE(result_is_ok);
+}
+TEST_F(UInt256Tests, uint256_assignment)
 {
-  // TODO: impl.
+  static constexpr char const *TEXT = R"(
+    function main() : Bool
+      var ok : Bool = true;
+
+      var a = UInt256(42u64);
+      var b = UInt256(0u64);
+
+      ok = ok && a != b;
+
+      a = b;
+
+      ok = ok && a == b;
+
+      a = SHA256().final();
+      // e.g. a == e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+      ok = ok && a != b;
+
+      return ok;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result_is_ok = res.Get<bool>();
+  EXPECT_TRUE(result_is_ok);
 }
 
 }  // namespace
