@@ -36,7 +36,6 @@
 #include <utility>
 #include <vector>
 #include <core/time/to_seconds.hpp>
-#include <math/metrics/mean_absolute_error.hpp>
 
 namespace fetch {
 namespace dmlf {
@@ -178,6 +177,7 @@ void ClientAlgorithm<TensorType>::SetModel(ModelPtrType model_ptr)
 template <class TensorType>
 void ClientAlgorithm<TensorType>::ClearLossFile()
 {
+  mkdir(params_.results_dir.c_str(), 0777);
   std::ofstream lossfile(params_.results_dir + "losses_" + id_ + ".csv",
       std::ofstream::out | std::ofstream::trunc);
   lossfile.close();

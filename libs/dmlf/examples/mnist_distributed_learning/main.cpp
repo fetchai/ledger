@@ -38,6 +38,27 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
+/*  JSON Config:
+{
+	"data": "datasets/train-images-idx3-ubyte",
+	"labels": "datasets/train-labels-idx1-ubyte",
+	"n_clients": 5,
+	"n_peers": 3,
+	"n_rounds": 10,
+	"synchronise": true,
+	"test_set_ratio": 0.1,
+	"results": "/tmp/results/",
+	"batch_size": 32,
+	"max_updates": 100,
+	"max_epochs": 20,
+	"learning_rate": 0.02,
+	"print_loss": false,
+	"input_names": ["Input"],
+	"label_name": "Label",
+	"error_name": "Error"
+}
+ */
+
 int main(int argc, char **argv)
 {
   // This example will create multiple local distributed clients with simple classification neural
@@ -63,9 +84,6 @@ int main(int argc, char **argv)
   auto n_rounds       = doc["n_rounds"].As<SizeType>();
   auto synchronise    = doc["synchronise"].As<bool>();
   auto test_set_ratio = doc["test_set_ratio"].As<float>();
-  auto results_dir = doc["results"].As<std::string>();
-
-  mkdir(results_dir.c_str(), 0777);
 
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
@@ -88,12 +106,7 @@ int main(int argc, char **argv)
   for (SizeType i{0}; i < n_clients; ++i)
   {
     clients.at(i) = fetch::dmlf::collective_learning::utilities::MakeMNISTClient<TensorType>(
-        std::to_string(i), client_params,
-        data_file + std::to_string(i) + ".csv",
-        labels_file + std::to_string(i) + ".csv",
-//        data_file,
-//        labels_file,
-        test_set_ratio, networkers.at(i),
+        std::to_string(i), client_params, data_file, labels_file, test_set_ratio, networkers.at(i),
         console_mutex_ptr);
   }
 
