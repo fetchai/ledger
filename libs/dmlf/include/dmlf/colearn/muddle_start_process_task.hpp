@@ -17,39 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/io_observer_interface.hpp"
-
-#include "core/byte_array/const_byte_array.hpp"
-#include "vm/vm.hpp"
-
-#include <memory>
-#include <unordered_map>
+#include "dmlf/colearn/muddle_message_task.hpp"
 
 namespace fetch {
-namespace dmlf {
+namespace colearn {
 
-class VmState : public vm::IoObserverInterface
+class MuddleStartProcessTask : public MuddleMessageTask
 {
 public:
-  VmState()                         = default;
-  VmState(VmState &&other) noexcept = default;
-  VmState &operator=(VmState &&other) noexcept = default;
+  MuddleStartProcessTask()           = default;
+  ~MuddleStartProcessTask() override = default;
 
-  VmState(VmState const &other) = delete;
-  VmState &operator=(VmState const &other) = delete;
+  MuddleStartProcessTask(MuddleStartProcessTask const &other) = delete;
+  MuddleStartProcessTask &operator=(MuddleStartProcessTask const &other)  = delete;
+  bool                    operator==(MuddleStartProcessTask const &other) = delete;
+  bool                    operator<(MuddleStartProcessTask const &other)  = delete;
 
-  Status Read(std::string const &key, void *data, uint64_t &size) override;
-  Status Write(std::string const &key, void const *data, uint64_t size) override;
-  Status Exists(std::string const &key) override;
-
-  VmState DeepCopy() const;
-
+protected:
 private:
-  using Buffer = fetch::byte_array::ConstByteArray;
-  using Store  = std::unordered_map<std::string, Buffer>;
-
-  Store store_;
 };
 
-}  // namespace dmlf
+}  // namespace colearn
 }  // namespace fetch
