@@ -242,12 +242,12 @@ public:
     {
       TypeIndex const instantiation_type_index = TypeIndex(typeid(InstantiationType));
       TypeIndex const template_type_index      = type_index_;
-      TypeIndexArray  parameter_type_index_array;
-      UnrollTemplateParameters<InstantiationType>::Unroll(parameter_type_index_array);
+      TypeIndexArray  template_parameter_type_index_array;
+      UnrollTemplateParameters<InstantiationType>::Unroll(template_parameter_type_index_array);
       auto compiler_setup_function = [instantiation_type_index, template_type_index,
-                                      parameter_type_index_array](Compiler *compiler) {
-        compiler->CreateInstantiationType(instantiation_type_index, template_type_index,
-                                          parameter_type_index_array);
+                                      template_parameter_type_index_array](Compiler *compiler) {
+        compiler->CreateTemplateInstantiationType(instantiation_type_index, template_type_index,
+                                                  template_parameter_type_index_array);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
 

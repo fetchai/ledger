@@ -18,9 +18,9 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/convolution_1d.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -28,21 +28,21 @@
 #include <memory>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class Convolution1DTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(Convolution1DTest, MyTypes);
+TYPED_TEST_CASE(Convolution1DTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(Convolution1DTest, forward_1x1x2_1x1x1x2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType input({1, 1, 2});
   TensorType weights({1, 1, 1, 1});
@@ -64,7 +64,7 @@ TYPED_TEST(Convolution1DTest, forward_1x3x1_1x1x3x1)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType input({1, 3, 1});
   TensorType weights({1, 1, 3, 1});
@@ -86,7 +86,7 @@ TYPED_TEST(Convolution1DTest, forward_1x3x1_1x1x3x1)
 TYPED_TEST(Convolution1DTest, forward_3x3x1_5x3x3x1)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType                                input({3, 3, 1});
   TensorType                                weights({5, 3, 3, 1});
@@ -102,7 +102,7 @@ TYPED_TEST(Convolution1DTest, forward_3x3x1_5x3x3x1)
 TYPED_TEST(Convolution1DTest, forward_1x5x1_1x1x3x1)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType                                input({1, 5, 1});
   TensorType                                weights({1, 1, 3, 1});
@@ -118,7 +118,7 @@ TYPED_TEST(Convolution1DTest, forward_1x5x1_1x1x3x1)
 TYPED_TEST(Convolution1DTest, forward_1x5x1_1x1x3x1_stride_2)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType                                input({1, 5, 1});
   TensorType                                weights({1, 1, 3, 1});
@@ -134,7 +134,7 @@ TYPED_TEST(Convolution1DTest, forward_1x5x1_1x1x3x1_stride_2)
 TYPED_TEST(Convolution1DTest, forward_1x5x2_1x1x3x2_stride_2)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   TensorType                                input({1, 5, 2});
   TensorType                                weights({1, 1, 3, 1});
@@ -151,7 +151,7 @@ TYPED_TEST(Convolution1DTest, forward_3x3x2_5x3x3x2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -226,7 +226,7 @@ TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -348,7 +348,7 @@ TYPED_TEST(Convolution1DTest, saveparams_backward_3x3x2_5x3x3x2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using OpType     = fetch::ml::ops::Convolution1D<TensorType>;
   using SPType     = typename OpType::SPType;
 
@@ -438,3 +438,7 @@ TYPED_TEST(Convolution1DTest, saveparams_backward_3x3x2_5x3x3x2)
       new_prediction.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

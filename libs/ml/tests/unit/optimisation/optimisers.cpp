@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "gtest/gtest.h"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
@@ -29,17 +29,17 @@
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 
-#include "gtest/gtest.h"
-
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class OptimisersTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(OptimisersTest, MyTypes);
+TYPED_TEST_CASE(OptimisersTest, math::test::HighPrecisionTensorFloatingTypes);
 
 //////////////////////////
 /// reusable functions ///
@@ -50,7 +50,7 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
     typename TypeParam::SizeType input_size, typename TypeParam::SizeType output_size,
     std::string &input_name, std::string &label_name, std::string &error_name)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   auto hidden_size = SizeType(10);
 
@@ -668,3 +668,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

@@ -70,6 +70,9 @@ private:
   using BlockUpdates = std::map<BlockIndex, StakeMap>;
 
   Protected<BlockUpdates> updates_{};  ///< The update queue
+
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 };
 
 /**
@@ -85,4 +88,34 @@ void StakeUpdateQueue::VisitUnderlyingQueue(Visitor &&visitor)
 }
 
 }  // namespace ledger
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<ledger::StakeUpdateQueue, D>
+{
+public:
+  using Type       = ledger::StakeUpdateQueue;
+  using DriverType = D;
+
+  static uint8_t const BLOCK_UPDATES = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &stake_manager)
+  {
+    auto map = map_constructor(1);
+    stake_manager.updates_.ApplyVoid(
+        [&map](Type::BlockUpdates const &updates) { map.Append(BLOCK_UPDATES, updates); });
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &stake_manager)
+  {
+    stake_manager.updates_.ApplyVoid(
+        [&map](Type::BlockUpdates &updates) { map.ExpectKeyGetValue(BLOCK_UPDATES, updates); });
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch

@@ -16,19 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/activation_functions/softmax.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/activation_functions/softmax.hpp"
+#include "test_types.hpp"
+
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class SoftmaxTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(SoftmaxTest, MyTypes);
+TYPED_TEST_CASE(SoftmaxTest, TensorFloatingTypes);
 
 TYPED_TEST(SoftmaxTest, equal_proportion_test)
 {
@@ -44,10 +45,14 @@ TYPED_TEST(SoftmaxTest, equal_proportion_test)
   fetch::math::Softmax(test_array, result_array);
 
   // check that all values equal proportion
-  ASSERT_EQ(result_array[0], typename TypeParam::Type(1.0 / double(n)));
+  auto inv_n     = typename TypeParam::Type(1.0 / double(n));
+  auto tolerance = fetch::math::function_tolerance<typename TypeParam::Type>();
+  EXPECT_NEAR(static_cast<double>(result_array[0]), static_cast<double>(inv_n),
+              static_cast<double>(tolerance));
   for (std::size_t i = 1; i < n; ++i)
   {
-    ASSERT_EQ(result_array[i], result_array[0]);
+    EXPECT_NEAR(static_cast<double>(result_array[i]), static_cast<double>(result_array[0]),
+                static_cast<double>(tolerance));
   }
 }
 
@@ -58,7 +63,9 @@ TYPED_TEST(SoftmaxTest, multi_dimension_test)
 
   TypeParam gt_axis0 = TypeParam::FromString("0.5, 0.119202922; 0.5, 0.880797078");
   gt_axis0.Reshape({2, 2, 1});
-  TypeParam gt_axis1 = TypeParam::FromString("0.2689414, 0.7310586; 0.04742587, 0.9525741");
+  TypeParam gt_axis1 = TypeParam::FromString(
+      "0.26893615722656250000, 0.73104858398437500000; 0.04740905761718750000, "
+      "0.95257568359375000000");
   gt_axis1.Reshape({2, 2, 1});
 
   TypeParam test_axis0({2, 2, 1}), test_axis1({2, 2, 1});
@@ -76,6 +83,7 @@ TYPED_TEST(SoftmaxTest, multi_dimension_test)
 
 TYPED_TEST(SoftmaxTest, exact_values_test)
 {
+  using Datatype = typename TypeParam::Type;
 
   TypeParam test_array{8};
   TypeParam gt_array{8};
@@ -100,9 +108,10 @@ TYPED_TEST(SoftmaxTest, exact_values_test)
 
   fetch::math::Softmax(test_array, test_array);
 
-  // test correct values
-  for (std::size_t j = 0; j < gt_array.size(); ++j)
-  {
-    ASSERT_NEAR(double(test_array[j]), double(gt_array[j]), double(1e-7));
-  }
+  ASSERT_TRUE(test_array.AllClose(gt_array, function_tolerance<Datatype>(),
+                                  function_tolerance<Datatype>()));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

@@ -59,7 +59,7 @@ void ExecuteWork(SynergeticContract &contract, WorkPtr const &work)
 
   // update the score for the piece of work
   work->UpdateScore(score);
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Execute Nonce: ", nonce_work.ToHex(), " score: ", score);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Execute Nonce: 0x", std::string(nonce_work), " score: ", score);
 }
 
 }  // namespace
@@ -132,7 +132,7 @@ void NaiveSynergeticMiner::Mine()
     std::ostringstream oss;
     for (auto const &element : problem_spaces)
     {
-      oss << "\n -> 0x" << element.first.ToHex();
+      oss << "\n -> 0x" << element.first.contract_address.display();
     }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());

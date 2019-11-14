@@ -468,7 +468,7 @@ void PeerSelector::MakeAnnouncement()
     serialiser << external_peers_;
 
     // send out the announcement
-    endpoint_.Broadcast(SERVICE_MUDDLE, CHANNEL_ANNOUNCEMENT, serialiser.buffer.data());
+    endpoint_.Broadcast(SERVICE_MUDDLE, CHANNEL_ANNOUNCEMENT, serialiser.data());
 
     // schedule the next announcement
     ScheduleNextAnnouncement();

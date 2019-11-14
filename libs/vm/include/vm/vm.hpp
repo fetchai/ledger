@@ -221,19 +221,21 @@ private:
   {
     // add the value to the map
     // TODO(tfr): Check ownership of Ptr.
-    Variant v;
-    v.Construct(value, value->GetTypeId());
+    Variant v(value, value->GetTypeId());
     params_.emplace_back(std::move(v));
 
     return true;
   }
 
-  using VariantArray = std::vector<Variant>;
-
   RegisteredTypes const &registered_types_;
   VariantArray           params_{};
   VM *                   vm_;
 };
+
+using ContractInvocationHandler = std::function<bool(
+    VM * /* vm */, std::string const & /* identity */, Executable::Contract const & /* contract */,
+    Executable::Function const & /* function */, VariantArray const & /* parameters */,
+    std::string & /* error */, Variant & /* output */)>;
 
 class VM
 {
@@ -351,6 +353,11 @@ public:
     return Ptr<T>{new T(this, GetTypeId<T>(), std::forward<Ts>(args)...)};
   }
 
+  void SetContractInvocationHandler(ContractInvocationHandler handler)
+  {
+    contract_invocation_handler_ = std::move(handler);
+  }
+
   void SetIOObserver(IoObserverInterface &observer)
   {
     io_observer_ = &observer;
@@ -454,7 +461,7 @@ public:
     for (std::size_t i = 0; i < num_strings; ++i)
     {
       std::string const &str = executable_->strings[i];
-      strings_[i]            = Ptr<String>(new String(this, str, true));
+      strings_[i]            = Ptr<String>(new String(this, str));
     }
 
     std::size_t const num_local_types = executable_->types.size();
@@ -557,14 +564,13 @@ public:
   struct OpcodeInfo
   {
     OpcodeInfo() = default;
-
-    OpcodeInfo(std::string name__, Handler handler__, ChargeAmount charge)
-      : name(std::move(name__))
+    OpcodeInfo(std::string unique_name__, Handler handler__, ChargeAmount static_charge__)
+      : unique_name(std::move(unique_name__))
       , handler(std::move(handler__))
-      , static_charge{charge}
+      , static_charge{static_charge__}
     {}
 
-    std::string  name;
+    std::string  unique_name;
     Handler      handler;
     ChargeAmount static_charge{};
   };
@@ -574,7 +580,7 @@ public:
   ChargeAmount GetChargeLimit() const;
   void         SetChargeLimit(ChargeAmount limit);
 
-  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_charges);
+  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_static_charges);
 
 private:
   static const int FRAME_STACK_SIZE = 50;
@@ -643,13 +649,14 @@ private:
   Executable::Instruction const *instruction_{};
   bool                           stop_{};
   std::string                    error_;
+  ContractInvocationHandler      contract_invocation_handler_{};
   std::ostringstream             output_buffer_;
-  IoObserverInterface *          io_observer_{nullptr};
+  IoObserverInterface *          io_observer_{};
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
   CPPCopyConstructorMap          cpp_copy_constructors_;
-  OpcodeInfo *                   current_op_{nullptr};
+  OpcodeInfo *                   current_op_{};
 
   /// @name Charges
   /// @{
@@ -657,10 +664,11 @@ private:
   ChargeAmount charge_total_{0};
   /// @}
 
-  void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler,
+  void AddOpcodeInfo(uint16_t opcode, std::string unique_name, Handler handler,
                      ChargeAmount static_charge = 1)
   {
-    opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler), static_charge);
+    opcode_info_array_[opcode] =
+        OpcodeInfo(std::move(unique_name), std::move(handler), static_charge);
   }
 
   bool Execute(std::string &error, Variant &output);
@@ -1510,6 +1518,11 @@ private:
     Variant &lhsv = Top();
     if (rhsv.object)
     {
+      if (!lhsv.IsPrimitive() && !lhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhsv, rhsv);
       rhsv.Reset();
       return;
@@ -1524,6 +1537,11 @@ private:
     Variant &lhsv = Top();
     if (lhsv.object)
     {
+      if (!rhsv.IsPrimitive() && !rhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhsv, rhsv);
       rhsv.Reset();
       return;
@@ -1566,6 +1584,11 @@ private:
     Variant &rhsv = Pop();
     if (lhso)
     {
+      if (!rhsv.IsPrimitive() && !rhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhso, rhsv);
       rhsv.Reset();
       return;
@@ -1682,6 +1705,8 @@ private:
   void Handler__PrimitiveModulo();
   void Handler__VariablePrimitiveInplaceModulo();
   void Handler__InitialiseArray();
+  void Handler__ContractVariableDeclareAssign();
+  void Handler__InvokeContractFunction();
 
   friend class Object;
   friend class Module;

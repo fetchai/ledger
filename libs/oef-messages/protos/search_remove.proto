@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package fetch.oef.pb;
+
+import "dap_interface.proto";
+import "query.proto";
+
+message Remove {
+    string key = 1;
+    string agent_key = 2;
+    bool all = 3;
+    fetch.oef.pb.Query.DataModel model = 4;
+    repeated fetch.oef.pb.Query.KeyValue values = 5;
+    Actions service_description = 6;
+}

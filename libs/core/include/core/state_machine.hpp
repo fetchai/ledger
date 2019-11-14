@@ -82,8 +82,9 @@ public:
 
   /// @name Runnable Interface
   /// @{
-  bool IsReadyToExecute() const override;
-  void Execute() override;
+  bool        IsReadyToExecute() const override;
+  void        Execute() override;
+  char const *GetId() const override;
   /// @}
 
   State state() const
@@ -244,6 +245,18 @@ void StateMachine<S>::OnStateChange(StateChangeCallback cb)
  */
 template <typename S>
 char const *StateMachine<S>::GetName() const
+{
+  return name_.c_str();
+}
+
+/**
+ * Get the id of the runnable
+ *
+ * @tparam S The state enum type
+ * @return The string name of the state machine
+ */
+template <typename S>
+char const *StateMachine<S>::GetId() const
 {
   return name_.c_str();
 }

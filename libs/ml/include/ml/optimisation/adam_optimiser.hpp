@@ -41,7 +41,7 @@ class AdamOptimiser : public Optimiser<T>
 public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   AdamOptimiser() = default;
 
@@ -71,7 +71,7 @@ public:
     return OptimiserType::ADAM;
   }
 
-private:
+protected:
   std::vector<TensorType> cache_;
   std::vector<TensorType> momentum_;
   std::vector<TensorType> mt_;

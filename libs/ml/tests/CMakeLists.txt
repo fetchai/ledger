@@ -6,6 +6,7 @@ project(fetch-ml)
 
 # CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
+include_directories("${FETCH_ROOT_DIR}/libs/math/tests/unit")
 
 # Compiler Configuration
 setup_compiler()

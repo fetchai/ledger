@@ -36,7 +36,7 @@ class RandomisedRelu : public fetch::ml::ops::Ops<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpRandomisedReluSaveableParams<TensorType>;

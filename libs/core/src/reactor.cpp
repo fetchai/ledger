@@ -138,6 +138,15 @@ void Reactor::StartWorker()
   worker_ = std::make_unique<ProtectedThread>(&Reactor::Monitor, this);
 }
 
+Reactor::~Reactor()
+{
+  if (worker_)
+  {
+    worker_->ApplyVoid([](auto &worker) { worker.join(); });
+    worker_.reset();
+  }
+}
+
 void Reactor::StopWorker()
 {
   running_ = false;
@@ -199,6 +208,7 @@ void Reactor::Monitor()
     {
       sleep_total_->increment();
       std::this_thread::sleep_for(POLL_INTERVAL);
+
       continue;
     }
 
@@ -220,8 +230,8 @@ void Reactor::Monitor()
       }
       catch (std::exception const &ex)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "The reactor caught an exception! ", name_,
-                       " error: ", ex.what());
+        FETCH_LOG_WARN(LOGGING_NAME, "The reactor caught an exception in ", runnable->GetId(), "! ",
+                       name_, " error: ", ex.what());
 
         failure_total_->increment();
       }

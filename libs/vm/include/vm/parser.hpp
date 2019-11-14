@@ -91,15 +91,21 @@ private:
   std::vector<Expr>        infix_stack_;
 
   void              Tokenise(std::string const &source);
-  bool              ParseBlock(BlockNode &node);
+  bool              ParseBlock(BlockNode &block_node);
   NodePtr           ParsePersistentStatement();
+  BlockNodePtr      ParseContractDefinition();
+  void              SkipContractFunctionPrototype();
   BlockNodePtr      ParseFunctionDefinition();
+  bool              ParseFunctionPrototype(NodePtr const &prototype_node);
+  void              SkipFunctionDefinition();
   NodePtr           ParseAnnotations();
   NodePtr           ParseAnnotation();
   ExpressionNodePtr ParseAnnotationLiteral();
+  void              SkipAnnotations();
   BlockNodePtr      ParseWhileStatement();
   BlockNodePtr      ParseForStatement();
   NodePtr           ParseIfStatement();
+  NodePtr           ParseContractStatement();
   NodePtr           ParseUseStatement();
   NodePtr           ParseVarStatement();
   NodePtr           ParseReturnStatement();
@@ -107,7 +113,6 @@ private:
   NodePtr           ParseContinueStatement();
   ExpressionNodePtr ParseExpressionStatement();
   void              GoToNextStatement();
-  void              SkipFunctionDefinition();
   bool              IsTemplateName(std::string const &name) const;
   ExpressionNodePtr ParseType();
   ExpressionNodePtr ParseConditionalExpression();

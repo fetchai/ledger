@@ -209,9 +209,7 @@ struct OpGeluSaveableParams : public OpsSaveableParams
 template <typename TensorType>
 struct OpEmbeddingsSaveableParams : public OpWeightsSaveableParams<TensorType>
 {
-  fetch::ml::OpType                  op_type           = OpType::OP_EMBEDDINGS;
-  std::vector<fetch::math::SizeType> trailing_indices1 = {0, 0};
-  std::vector<fetch::math::SizeType> trailing_indices2 = {0};
+  fetch::ml::OpType op_type = OpType::OP_EMBEDDINGS;
 };
 
 /**
@@ -724,6 +722,16 @@ struct OpOneHotSaveableParams : public OpsSaveableParams
   DataType              on_value;
   DataType              off_value;
   fetch::ml::OpType     op_type = OpType::OP_ONE_HOT;
+};
+
+template <typename TensorType>
+struct OpTopKSaveableParams : public OpsSaveableParams
+{
+  using DataType = typename TensorType::Type;
+
+  fetch::math::SizeType k;
+  bool                  sorted;
+  fetch::ml::OpType     op_type = OpType::OP_TOP_K;
 };
 
 }  // namespace ml

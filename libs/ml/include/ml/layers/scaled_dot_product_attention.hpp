@@ -44,7 +44,7 @@ class ScaledDotProductAttention : public SubGraph<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using DataType      = typename T::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;

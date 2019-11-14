@@ -32,6 +32,7 @@
 #include "beacon/events.hpp"
 #include "beacon/public_key_message.hpp"
 #include "core/digest.hpp"
+#include "storage/object_store.hpp"
 
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -80,7 +81,6 @@ public:
   using Client                  = muddle::rpc::Client;
   using ClientPtr               = std::shared_ptr<Client>;
   using MuddleAddress           = byte_array::ConstByteArray;
-  using CabinetMemberList       = std::set<MuddleAddress>;
   using ConstByteArray          = byte_array::ConstByteArray;
   using Server                  = fetch::muddle::rpc::Server;
   using ServerPtr               = std::shared_ptr<Server>;
@@ -90,33 +90,26 @@ public:
   using SignatureShare          = AeonExecutionUnit::SignatureShare;
   using Serializer              = serializers::MsgPackSerializer;
   using SharedEventManager      = EventManager::SharedEventManager;
-  using BeaconSetupService      = beacon::BeaconSetupService;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
+  using OldStateStore           = fetch::storage::ObjectStore<AeonExecutionUnit>;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
-  BeaconService(MuddleInterface &muddle, shards::ManifestCacheInterface &manifest_cache,
-                const CertificatePtr &certificate, SharedEventManager event_manager);
+  BeaconService(MuddleInterface &muddle, const CertificatePtr &certificate,
+                BeaconSetupService &beacon_setup, SharedEventManager event_manager,
+                bool load_and_reload_on_crash = false);
 
   /// @name Entropy Generator
   /// @{
   Status GenerateEntropy(uint64_t block_number, BlockEntropy &entropy) override;
   /// @}
 
-  /// Maintainance logic
+  /// Beacon runnable
   /// @{
-  /// @brief this function is called when the node is in the cabinet
-  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy);
-
-  void MostRecentSeen(uint64_t round);
-  /// @}
-
-  /// Beacon runnables
-  /// @{
-  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
+  std::weak_ptr<core::Runnable> GetWeakRunnable();
+  void                          MostRecentSeen(uint64_t round);
   /// @}
 
   friend class BeaconServiceProtocol;
@@ -145,15 +138,17 @@ protected:
 
   mutable std::mutex                  mutex_;
   CertificatePtr                      certificate_;
+  bool                                load_and_reload_on_crash_{false};
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
 
 private:
   bool AddSignature(SignatureShare share);
 
-  Identity        identity_;
-  Endpoint &      endpoint_;
-  StateMachinePtr state_machine_;
-  DeadlineTimer   timer_to_proceed_{"beacon:main"};
+  Identity         identity_;
+  MuddleInterface &muddle_;
+  Endpoint &       endpoint_;
+  StateMachinePtr  state_machine_;
+  DeadlineTimer    timer_to_proceed_{"beacon:main"};
 
   // Limit run away entropy generation
   uint64_t entropy_lead_blocks_    = 2;
@@ -194,8 +189,15 @@ private:
 
   /// Distributed Key Generation
   /// @{
-  BeaconSetupService    cabinet_creator_;
   BeaconServiceProtocol beacon_protocol_;
+  /// @}
+
+  /// Save keys so that recovery is possible in a crash situation
+  /// @{
+  OldStateStore old_state_;
+  bool          OutOfSync();
+  void          ReloadState();
+  void          SaveState();
   /// @}
 
   telemetry::CounterPtr         beacon_entropy_generated_total_;

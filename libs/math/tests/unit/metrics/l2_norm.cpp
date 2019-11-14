@@ -16,37 +16,42 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/metrics/l2_norm.hpp"
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/metrics/l2_norm.hpp"
+#include "test_types.hpp"
+
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class L2NormTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(L2NormTest, MyTypes);
+TYPED_TEST_CASE(L2NormTest, TensorFloatingTypes);
 
 TYPED_TEST(L2NormTest, value_test)
 {
+  using DataType       = typename TypeParam::Type;
   TypeParam test_array = TypeParam{8};
 
-  test_array[0] = typename TypeParam::Type(1);
-  test_array[1] = typename TypeParam::Type(-2);
-  test_array[2] = typename TypeParam::Type(3);
-  test_array[3] = typename TypeParam::Type(-4);
-  test_array[4] = typename TypeParam::Type(5);
-  test_array[5] = typename TypeParam::Type(-6);
-  test_array[6] = typename TypeParam::Type(7);
-  test_array[7] = typename TypeParam::Type(-8);
+  test_array[0] = DataType(1);
+  test_array[1] = DataType(-2);
+  test_array[2] = DataType(3);
+  test_array[3] = DataType(-4);
+  test_array[4] = DataType(5);
+  test_array[5] = DataType(-6);
+  test_array[6] = DataType(7);
+  test_array[7] = DataType(-8);
 
-  // initialise to non-zero just to avoid correct value at initialisation
-  typename TypeParam::Type score(0);
-  score = fetch::math::L2Norm(test_array);
+  DataType score = fetch::math::L2Norm(test_array);
 
   // test correct values
-  EXPECT_NEAR(double(score), double(14.282856857085700852), 1e-7);
+  EXPECT_NEAR(double(score), double(14.282856857085700852),
+              static_cast<double>(function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

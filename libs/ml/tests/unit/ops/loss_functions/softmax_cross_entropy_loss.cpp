@@ -17,27 +17,25 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
-#include "math/tensor.hpp"
+#include "gtest/gtest.h"
 #include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
-
+#include "test_types.hpp"
 #include <memory>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class SoftmaxCrossEntropyTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(SoftmaxCrossEntropyTest, MyTypes);
+TYPED_TEST_CASE(SoftmaxCrossEntropyTest, math::test::HighPrecisionTensorFloatingTypes);
 
 TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_classes     = 3;
@@ -65,7 +63,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
 
 TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_classes     = 4;
@@ -104,7 +102,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
 
 TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_classes     = 3;
@@ -145,7 +143,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
 
 TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType n_classes     = 4;
@@ -206,7 +204,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
 TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using DataType   = typename TypeParam::Type;
   using SPType     = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>::SPType;
   using OpType     = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>;
@@ -272,7 +270,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
 TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using DataType   = typename TypeParam::Type;
   using SPType     = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>::SPType;
   using OpType     = typename fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>;
@@ -362,3 +360,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
                                fetch::math::function_tolerance<typename TypeParam::Type>()) *
       4);
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

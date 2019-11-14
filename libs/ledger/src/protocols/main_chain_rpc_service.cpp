@@ -171,7 +171,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
   // count how many transactions are present in the block
-  for (auto const &slice : block.body.slices)
+  for (auto const &slice : block.slices)
   {
     for (auto const &tx : slice)
     {
@@ -180,7 +180,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
 #endif  // FETCH_LOG_INFO_ENABLED
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: 0x", block.body.hash.ToHex(),
+  FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: 0x", block.hash.ToHex(),
                  " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
@@ -192,19 +192,19 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   {
   case BlockStatus::ADDED:
     recv_block_valid_count_->increment();
-    FETCH_LOG_INFO(LOGGING_NAME, "Added new block: 0x", block.body.hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Added new block: 0x", block.hash.ToHex());
     break;
   case BlockStatus::LOOSE:
     recv_block_loose_count_->increment();
-    FETCH_LOG_INFO(LOGGING_NAME, "Added loose block: 0x", block.body.hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Added loose block: 0x", block.hash.ToHex());
     break;
   case BlockStatus::DUPLICATE:
     recv_block_duplicate_count_->increment();
-    FETCH_LOG_INFO(LOGGING_NAME, "Duplicate block: 0x", block.body.hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Duplicate block: 0x", block.hash.ToHex());
     break;
   case BlockStatus::INVALID:
     recv_block_invalid_count_->increment();
-    FETCH_LOG_INFO(LOGGING_NAME, "Attempted to add invalid block: 0x", block.body.hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Attempted to add invalid block: 0x", block.hash.ToHex());
     break;
   }
 }
@@ -216,6 +216,8 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   Address address{};
 
   auto const direct_peers = endpoint_.GetDirectlyConnectedPeers();
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Main chain connected peers: ", direct_peers.size());
 
   if (!direct_peers.empty())
   {
@@ -239,7 +241,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
     // skip the genesis block
-    if (it->body.previous_hash == chain::GENESIS_DIGEST)
+    if (it->IsGenesis())
     {
       continue;
     }
@@ -255,22 +257,22 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
       switch (status)
       {
       case BlockStatus::ADDED:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->body.hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->hash.ToHex(), " from: muddle://",
+                        ToBase64(address));
         ++added;
         break;
       case BlockStatus::LOOSE:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->body.hash.ToHex(),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++loose;
         break;
       case BlockStatus::DUPLICATE:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->body.hash.ToHex(),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++duplicate;
         break;
       case BlockStatus::INVALID:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->body.hash.ToHex(),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++invalid;
         break;
@@ -278,7 +280,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->body.hash.ToHex(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
                       " from: muddle://", ToBase64(address));
       ++invalid;
     }
@@ -457,9 +459,22 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
 
   FETCH_UNUSED(current);
 
-  if (chain_.HasMissingBlocks())
+  MainChain::BlockPtr head_of_chain = chain_.GetHeaviestBlock();
+  uint64_t const      seconds_since_last_block =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) -
+      head_of_chain->timestamp;
+
+  // Assume if the chain is quite old that there are peers who have a heavier chain we haven't
+  // heard about
+  if (seconds_since_last_block > 100 && head_of_chain->block_number != 0)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation Lost");
+    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - chain is old.");
+    state_machine_->Delay(std::chrono::milliseconds{1000});
+    next_state = State::REQUEST_HEAVIEST_CHAIN;
+  }
+  else if (chain_.HasMissingBlocks())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation lost - chain has missing blocks");
 
     next_state = State::SYNCHRONISING;
   }

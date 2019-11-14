@@ -16,18 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "gtest/gtest.h"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
-
+#include "test_types.hpp"
 #include <memory>
-
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename GraphType, typename TensorType, typename DataType>
 std::shared_ptr<GraphType> BuildGraph(bool shared = false, bool time_distributed = false)
 {
@@ -66,16 +65,7 @@ class FullyConnectedTest : public ::testing::Test
 {
 };
 
-template <typename T>
-class FullyConnectedTestNoInt : public ::testing::Test
-{
-};
-
-using NoIntTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
-                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
-
-TYPED_TEST_CASE(FullyConnectedTest, NoIntTypes);
+TYPED_TEST_CASE(FullyConnectedTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
@@ -180,7 +170,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TensorType::Type;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using GraphType  = fetch::ml::Graph<TensorType>;
 
   // create an auto encoder of two dense layers, both share same weights
@@ -262,7 +252,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
 {
   using TensorType = TypeParam;
   using DataType   = typename TensorType::Type;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType   = fetch::math::SizeType;
   using GraphType  = fetch::ml::Graph<TensorType>;
   using FCType     = fetch::ml::layers::FullyConnected<TensorType>;
 
@@ -365,7 +355,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_cache_clearining_check)
 {
   using TensorType      = TypeParam;
   using DataType        = typename TensorType::Type;
-  using SizeType        = typename TensorType::SizeType;
+  using SizeType        = fetch::math::SizeType;
   using GraphType       = fetch::ml::Graph<TensorType>;
   using FCType          = fetch::ml::layers::FullyConnected<TensorType>;
   using PlaceHolderType = fetch::ml::ops::PlaceHolder<TensorType>;
@@ -553,7 +543,7 @@ TYPED_TEST(FullyConnectedTest, getStateDict_time_distributed)
 TYPED_TEST(FullyConnectedTest, training_should_change_output)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
+  using SizeType  = fetch::math::SizeType;
   using LayerType = typename fetch::ml::layers::FullyConnected<TypeParam>;
 
   SizeType data_size       = 10;
@@ -607,7 +597,7 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
 TYPED_TEST(FullyConnectedTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
+  using SizeType  = fetch::math::SizeType;
   using LayerType = fetch::ml::layers::FullyConnected<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
@@ -709,3 +699,7 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

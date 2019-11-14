@@ -32,6 +32,8 @@ from fetch.cluster.utils import output, verify_file, yaml_extract
 from fetchai.ledger.api import LedgerApi
 from fetchai.ledger.crypto import Entity
 
+from .smart_contract_tests.synergetic_utils import SynergeticContractTestHelper
+
 
 class TimerWatchdog():
     """
@@ -110,6 +112,8 @@ def setup_test(test_yaml, test_instance):
                                  expected=False, expect_type=int, default=10)
     pos_mode = yaml_extract(test_yaml, 'pos_mode', expected=False,
                             expect_type=bool, default=False)
+    num_lanes = yaml_extract(test_yaml, 'lanes', expected=False,
+                             expect_type=int, default=1)
 
     test_instance._number_of_nodes = number_of_nodes
     test_instance._node_load_directory = node_load_directory
@@ -117,6 +121,7 @@ def setup_test(test_yaml, test_instance):
     test_instance._nodes_are_mining = mining_nodes
     test_instance._max_test_time = max_test_time
     test_instance._pos_mode = pos_mode
+    test_instance._lanes = num_lanes
 
     # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
     # necessary to preserve output logs etc.
@@ -124,7 +129,7 @@ def setup_test(test_yaml, test_instance):
         output(
             "***** Shutting down test due to failure!. Debug YAML: {} *****\n".format(test_yaml))
         test_instance.stop()
-        # test_instance.dump_debug()
+        test_instance.dump_debug()
         os._exit(1)
 
     watchdog = TimerWatchdog(
@@ -397,9 +402,29 @@ def destake(parameters, test_instance):
 
 def restart_nodes(parameters, test_instance):
     nodes = parameters["nodes"]
+    remove_dbs = parameters.get("remove_dbs", False)
 
     for node_index in nodes:
-        test_instance.restart_node(node_index)
+        test_instance.restart_node(node_index, remove_dbs)
+
+    time.sleep(5)
+
+
+def stop_nodes(parameters, test_instance):
+    nodes = parameters["nodes"]
+    remove_dbs = parameters.get("remove_dbs", False)
+
+    for node_index in nodes:
+        test_instance.stop_node(node_index, remove_dbs)
+
+    time.sleep(5)
+
+
+def start_nodes(parameters, test_instance):
+    nodes = parameters["nodes"]
+
+    for node_index in nodes:
+        test_instance.start_node(node_index)
 
     time.sleep(5)
 
@@ -411,6 +436,118 @@ def add_node(parameters, test_instance):
     test_instance.append_node(index)
     test_instance.connect_nodes(node_connections)
     test_instance.start_node(index)
+
+
+def create_wealth(parameters, test_instance):
+    nodes = parameters["nodes"]
+    amount = parameters["amount"]
+
+    for node_index in nodes:
+        node_host = "localhost"
+        node_port = test_instance._nodes[node_index]._port_start
+
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+        tx = api.tokens.wealth(entity, amount)
+        for i in range(10):
+            output('Create balance of: ', amount)
+            api.sync(tx, timeout=120, hold_state_sec=20)
+            for j in range(5):
+                b = api.tokens.balance(entity)
+                output('Current balance: ', b)
+                if b >= amount:
+                    return
+                time.sleep(5)
+            time.sleep(5)
+        raise Exception("Failed to create wealth")
+
+
+def create_synergetic_contract(parameters, test_instance):
+    nodes = parameters["nodes"]
+    name = parameters["name"]
+    fee_limit = parameters["fee_limit"]
+    for node_index in nodes:
+        node_host = "localhost"
+        node_port = test_instance._nodes[node_index]._port_start
+
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+        output('Create contract, available balance: ',
+               api.tokens.balance(entity))
+        helper = SynergeticContractTestHelper(
+            name, api, entity, test_instance._workspace)
+        helper.create_new(fee_limit)
+        test_instance._nodes[node_index]._contract = helper
+
+
+def run_contract(parameters, test_instance):
+    nodes = parameters["nodes"]
+    contract_name = parameters["contract_name"]
+    wait_for_blocks_num = parameters["wait_for_blocks"]
+    for node_index in nodes:
+        node_host = "localhost"
+        node_port = test_instance._nodes[node_index]._port_start
+
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+
+        try:
+            contract_helper = test_instance._nodes[node_index]._contract
+        except AttributeError:
+            output(
+                f"No contract stored in test_instance (node_index={node_index})! Loading from file...")
+            contract_helper = SynergeticContractTestHelper(
+                contract_name, api, entity, test_instance._workspace)
+            contract_helper.load()
+        output('Submit data, available balance: ', api.tokens.balance(entity))
+        contract_helper.submit_random_data(10, (0, 200))
+        api.wait_for_blocks(wait_for_blocks_num)
+        valid = contract_helper.validate_execution()
+        if not valid:
+            output(
+                f"Synergetic contract ({contract_name}) execution failed on node {node_index}!")
+            raise Exception(
+                f"Synergetic contract ({contract_name}) execution failed on node {node_index}!")
+        else:
+            output(
+                f"Synergetic contract ({contract_name}) executed on node {node_index} ")
+
+
+def wait_for_blocks(parameters, test_instance):
+    nodes = parameters["nodes"]
+    wait_for_blocks_num = parameters["num"]
+    for node_index in nodes:
+        test_instance.wait_for_blocks(node_index, wait_for_blocks_num)
+
+
+def verify_chain_sync(parameters, test_instance):
+    max_trials = parameters.get("max_trials", 20)
+    node_idx = parameters["node"]
+    output(f"verify_chain_sync: node={node_idx}")
+
+    if not test_instance.verify_chain_sync(node_idx, max_trials):
+        raise RuntimeError(
+            f"Node {node_idx} chain not synced with the network!")
+
+
+def wait_network_ready(parameters, test_instance):
+    sleep_time = parameters.get("sleep", 2)
+    max_trials = parameters.get("max_trials", 20)
+    for i in range(max_trials):
+        try:
+            if test_instance.network_ready():
+                return
+        except Exception as e:
+            print("Exception: ", e)
+        time.sleep(sleep_time)
+    raise RuntimeError(
+        f"Network readiness check failed, because reached max trials ({max_trials})")
 
 
 def run_steps(test_yaml, test_instance):
@@ -445,10 +582,26 @@ def run_steps(test_yaml, test_instance):
             run_python_test(parameters, test_instance)
         elif command == 'restart_nodes':
             restart_nodes(parameters, test_instance)
+        elif command == 'stop_nodes':
+            stop_nodes(parameters, test_instance)
+        elif command == 'start_nodes':
+            start_nodes(parameters, test_instance)
         elif command == 'destake':
             destake(parameters, test_instance)
         elif command == 'run_dmlf_etch_client':
             run_dmlf_etch_client(parameters, test_instance)
+        elif command == "create_wealth":
+            create_wealth(parameters, test_instance)
+        elif command == "create_synergetic_contract":
+            create_synergetic_contract(parameters, test_instance)
+        elif command == "run_contract":
+            run_contract(parameters, test_instance)
+        elif command == "wait_for_blocks":
+            wait_for_blocks(parameters, test_instance)
+        elif command == "verify_chain_sync":
+            verify_chain_sync(parameters, test_instance)
+        elif command == "wait_network_ready":
+            wait_network_ready(parameters, test_instance)
         else:
             output(
                 "Found unknown command when running steps: '{}'".format(
@@ -493,7 +646,7 @@ def run_test(build_directory, yaml_file, node_exe):
             print('Failed to parse yaml or to run test! Error: "{}"'.format(e))
             traceback.print_exc()
             test_instance.stop()
-            # test_instance.dump_debug()
+            test_instance.dump_debug()
             sys.exit(1)
 
     output("\nAll end to end tests have passed")
