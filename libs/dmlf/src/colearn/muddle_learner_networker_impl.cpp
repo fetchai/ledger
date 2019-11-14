@@ -84,7 +84,8 @@ uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext c
 {
   auto source = std::string(fetch::byte_array::ToBase64(context.sender_address));
   FETCH_LOG_INFO(LOGGING_NAME, "Update for ", type_name, " from ", source);
-  update_store_->PushUpdate("algo1", type_name, bytes, source);
+  UpdateStoreInterface::Metadata metadata;
+  update_store_->PushUpdate("algo1", type_name, bytes, source, metadata);
   return 1;
 }
 }  // namespace colearn
