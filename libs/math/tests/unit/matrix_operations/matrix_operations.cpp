@@ -49,7 +49,7 @@ TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
   EXPECT_EQ(ret.shape(), array1.shape());
   EXPECT_EQ(ret, array1);
   mask[2] = 0;
-  ret = fetch::math::BooleanMask(array1, mask);
+  ret     = fetch::math::BooleanMask(array1, mask);
   EXPECT_EQ(ret.size(), array1.size() - 1);
   EXPECT_EQ(ret(0), array1(0));
   EXPECT_EQ(ret(1), array1(1));
