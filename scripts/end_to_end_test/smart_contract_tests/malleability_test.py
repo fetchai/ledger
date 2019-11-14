@@ -30,8 +30,8 @@ def run(options):
     id2PrivateKey = "499f40c1bf13e7716e62431b17ab668fa2688b7c94a011a3aab595477bc68347"
 
     # Create identities from the private keys
-    id1 = Entity().from_hex(id1PrivateKey)
-    id2 = Entity().from_hex(id2PrivateKey)
+    id1 = Entity.from_hex(id1PrivateKey)
+    id2 = Entity.from_hex(id2PrivateKey)
 
     # Load 1000 tokens to id1
     api.sync(api.tokens.wealth(id1, 1000))
