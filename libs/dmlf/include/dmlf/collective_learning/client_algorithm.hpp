@@ -464,8 +464,8 @@ void ClientAlgorithm<TensorType>::AggregateSparseUpdate(VectorTensorType const &
 template <class TensorType>
 void ClientAlgorithm<TensorType>::AggregateUpdate(VectorTensorType const &gradients)
 {
+  assert(gradients.size() == graph_ptr_->GetTrainables().size());
   auto grad_it = gradients.begin();
-
   for (auto &trainable : graph_ptr_->GetTrainables())
   {
     auto weights_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(trainable);
