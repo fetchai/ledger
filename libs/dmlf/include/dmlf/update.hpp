@@ -52,6 +52,13 @@ public:
   explicit Update()
     : stamp_{CurrentTime()}
   {}
+
+  explicit Update(VectorTensor gradients)
+    : stamp_{CurrentTime()}
+    , gradients_{std::move(gradients)}
+    , fingerprint_{ComputeFingerprint()}
+  {}
+
   explicit Update(VectorTensor gradients, VectorSizeVector updated_rows)
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
