@@ -17,59 +17,51 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
+#include "dmlf/colearn/update_store_interface.hpp"
+
 #include <queue>
 #include <utility>
+#include <unordered_set>
 #include <vector>
 
 #include "core/mutex.hpp"
-
-#include "dmlf/colearn/colearn_update.hpp"
 
 namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-class UpdateStore
+class UpdateStore : public UpdateStoreInterface
 {
 public:
-  using Update    = ColearnUpdate;
-  using UpdatePtr = std::shared_ptr<Update>;
-  using Algorithm = std::string;
-
-  using UpdateType = Update::UpdateType;
-  using Data       = Update::Data;
-  using Source     = Update::Source;
-
   UpdateStore()                         = default;
-  ~UpdateStore()                        = default;
+  ~UpdateStore() override               = default;
   UpdateStore(UpdateStore const &other) = delete;
   UpdateStore &operator=(UpdateStore const &other) = delete;
 
-  void        PushUpdate(Algorithm const &algo, UpdateType type, Data data, Source source);
-  UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type);
-  std::size_t GetUpdateCount() const;
-  std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const;
+  void        PushUpdate(Algorithm const &algo, UpdateType type, Data &&data, Source source,
+                         Metadata &&metadata) override;
+  UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria, Consumer consumer = "") override;
+  UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Consumer = "") override;
+  std::size_t GetUpdateCount() const override;
+  std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const override;
 
 private:
   using QueueId = std::string;
   QueueId Id(Algorithm const &algo, UpdateType const &type) const;
 
-  struct QueueOrder
-  {
-    bool operator()(UpdatePtr const &l, UpdatePtr const &r)
-    {
-      return l->time_stamp > r->time_stamp;
-    }
-  };
+  Criteria Lifo = [] (UpdatePtr update) -> double {return -update->TimeSinceCreation().count();};
 
   using Mutex   = fetch::Mutex;
   using Lock    = std::unique_lock<Mutex>;
-  using Queue   = std::priority_queue<UpdatePtr, std::vector<UpdatePtr>, QueueOrder>;
-  using AlgoMap = std::unordered_map<QueueId, Queue>;
+  using Store   = std::vector<UpdatePtr>;
+  using AlgoMap = std::unordered_map<QueueId, Store>;
+  using Fingerprint = Update::Fingerprint;
+  using UpdateConsumers = std::unordered_set<Consumer>;
 
   AlgoMap       algo_map_;
   mutable Mutex global_m_;
+
+  std::unordered_map<Fingerprint, UpdateConsumers> consumed_;
 };
 
 }  // namespace colearn

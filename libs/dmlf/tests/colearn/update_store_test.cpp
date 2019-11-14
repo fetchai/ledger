@@ -20,7 +20,10 @@
 #include "dmlf/colearn/update_store.hpp"
 #include "gtest/gtest.h"
 
+#include <chrono>
 #include <iomanip>
+#include <thread>
+
 
 namespace fetch {
 namespace dmlf {
@@ -38,53 +41,53 @@ TEST(Colearn_UpdateStore, pushPop)
 {
   UpdateStore store;
 
-  store.PushUpdate("algo", "update", a, "test");
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
 
   auto result = store.GetUpdate("algo", "update");
 
-  EXPECT_EQ(result->update_type, "update");
-  EXPECT_EQ(result->data, a);
-  EXPECT_EQ(result->source, "test");
+  EXPECT_EQ(result->update_type(), "update");
+  EXPECT_EQ(result->data(), a);
+  EXPECT_EQ(result->source(), "test");
 }
 
 TEST(Colearn_UpdateStore, pushPushPopPop)
 {
   UpdateStore store;
 
-  store.PushUpdate("algo", "update", a, "test");
-  store.PushUpdate("algo", "update", b, "test2");
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
+  store.PushUpdate("algo", "update", ConstByteArray{b}, "test2", {});
 
-  auto result1 = store.GetUpdate("algo", "update");
-  auto result2 = store.GetUpdate("algo", "update");
+  auto result1 = store.GetUpdate("algo", "update", "bob");
+  auto result2 = store.GetUpdate("algo", "update", "bob");
 
-  EXPECT_EQ(result1->update_type, "update");
-  EXPECT_EQ(result1->data, a);
-  EXPECT_EQ(result1->source, "test");
-  EXPECT_EQ(result2->update_type, "update");
-  EXPECT_EQ(result2->data, b);
-  EXPECT_EQ(result2->source, "test2");
+  EXPECT_EQ(result1->update_type(), "update");
+  EXPECT_EQ(result1->data(), b);
+  EXPECT_EQ(result1->source(), "test2");
+  EXPECT_EQ(result2->update_type(), "update");
+  EXPECT_EQ(result2->data(), a);
+  EXPECT_EQ(result2->source(), "test");
 }
 
 TEST(Colearn_UpdateStore, pushPushPopPushPopPop)
 {
   UpdateStore store;
 
-  store.PushUpdate("algo", "update", a, "test");
-  store.PushUpdate("algo", "update", b, "test2");
-  auto result1 = store.GetUpdate("algo", "update");
-  store.PushUpdate("algo", "update", c, "test3");
-  auto result2 = store.GetUpdate("algo", "update");
-  auto result3 = store.GetUpdate("algo", "update");
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
+  store.PushUpdate("algo", "update", ConstByteArray{b}, "test2", {});
+  auto result1 = store.GetUpdate("algo", "update", "bob");
+  store.PushUpdate("algo", "update", ConstByteArray{c}, "test3", {});
+  auto result2 = store.GetUpdate("algo", "update", "bob");
+  auto result3 = store.GetUpdate("algo", "update", "bob");
 
-  EXPECT_EQ(result1->update_type, "update");
-  EXPECT_EQ(result1->data, a);
-  EXPECT_EQ(result1->source, "test");
-  EXPECT_EQ(result2->update_type, "update");
-  EXPECT_EQ(result2->data, b);
-  EXPECT_EQ(result2->source, "test2");
-  EXPECT_EQ(result3->update_type, "update");
-  EXPECT_EQ(result3->data, c);
-  EXPECT_EQ(result3->source, "test3");
+  EXPECT_EQ(result1->update_type(), "update");
+  EXPECT_EQ(result1->data(), b);
+  EXPECT_EQ(result1->source(), "test2");
+  EXPECT_EQ(result2->update_type(), "update");
+  EXPECT_EQ(result2->data(), c);
+  EXPECT_EQ(result2->source(), "test3");
+  EXPECT_EQ(result3->update_type(), "update");
+  EXPECT_EQ(result3->data(), a);
+  EXPECT_EQ(result3->source(), "test");
 }
 
 }  // namespace colearn
