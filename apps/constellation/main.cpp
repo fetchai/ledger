@@ -220,7 +220,7 @@ int main(int argc, char **argv)
       // create and load the main certificate for the bootstrapper
       auto p2p_key = fetch::crypto::GenerateP2PKey();
 
-      // create the bootrap monitor (if configued to do so)
+      // create the bootstrap monitor (if configured to do so)
       auto initial_peers = ToUriSet(settings.peers.value());
       auto bootstrap     = CreateBootstrap(settings, p2p_key, initial_peers);
 
