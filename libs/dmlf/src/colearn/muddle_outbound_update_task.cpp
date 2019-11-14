@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,39 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/io_observer_interface.hpp"
-
-#include "core/byte_array/const_byte_array.hpp"
-#include "vm/vm.hpp"
-
-#include <memory>
-#include <unordered_map>
+#include "core/byte_array/decoders.hpp"
+#include "core/service_ids.hpp"
+#include "dmlf/colearn/colearn_protocol.hpp"
+#include "dmlf/colearn/muddle_outbound_update_task.hpp"
+#include "muddle/rpc/client.hpp"
 
 namespace fetch {
 namespace dmlf {
+namespace colearn {
 
-class VmState : public vm::IoObserverInterface
+MuddleOutboundUpdateTask::ExitState MuddleOutboundUpdateTask::run()
 {
-public:
-  VmState()                         = default;
-  VmState(VmState &&other) noexcept = default;
-  VmState &operator=(VmState &&other) noexcept = default;
+  FETCH_LOG_INFO(LOGGING_NAME, "Sending update to ", target_);
+  auto prom = client_->CallSpecificAddress(
+      fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_)), RPC_COLEARN,
+      ColearnProtocol::RPC_COLEARN_UPDATE, type_name_, update_);
+  prom->Wait();
+  return ExitState::COMPLETE;
+}
 
-  VmState(VmState const &other) = delete;
-  VmState &operator=(VmState const &other) = delete;
-
-  Status Read(std::string const &key, void *data, uint64_t &size) override;
-  Status Write(std::string const &key, void const *data, uint64_t size) override;
-  Status Exists(std::string const &key) override;
-
-  VmState DeepCopy() const;
-
-private:
-  using Buffer = fetch::byte_array::ConstByteArray;
-  using Store  = std::unordered_map<std::string, Buffer>;
-
-  Store store_;
-};
-
+bool MuddleOutboundUpdateTask::IsRunnable() const
+{
+  return true;
+}
+}  // namespace colearn
 }  // namespace dmlf
 }  // namespace fetch
