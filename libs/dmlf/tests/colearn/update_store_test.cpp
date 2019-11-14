@@ -24,7 +24,6 @@
 #include <iomanip>
 #include <thread>
 
-
 namespace fetch {
 namespace dmlf {
 namespace colearn {

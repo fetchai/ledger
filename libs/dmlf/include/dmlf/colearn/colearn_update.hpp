@@ -66,14 +66,14 @@ public:
 
   Resolution TimeSinceCreation() const;
 
-  Fingerprint const& fingerprint() const
+  Fingerprint const &fingerprint() const
   {
     return fingerprint_;
   }
 
 private:
-  using Clock      = std::chrono::steady_clock;
-  using TimePoint  = Clock::time_point;
+  using Clock     = std::chrono::steady_clock;
+  using TimePoint = Clock::time_point;
 
   Fingerprint ComputeFingerprint();
 

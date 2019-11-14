@@ -20,8 +20,8 @@
 #include "dmlf/colearn/update_store_interface.hpp"
 
 #include <queue>
-#include <utility>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "core/mutex.hpp"
@@ -40,8 +40,9 @@ public:
 
   void        PushUpdate(Algorithm const &algo, UpdateType type, Data &&data, Source source,
                          Metadata &&metadata) override;
-  UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria, Consumer consumer = "") override;
-  UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Consumer = "") override;
+  UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria,
+                        Consumer consumer = "") override;
+  UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type, Consumer = "") override;
   std::size_t GetUpdateCount() const override;
   std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const override;
 
@@ -49,13 +50,13 @@ private:
   using QueueId = std::string;
   QueueId Id(Algorithm const &algo, UpdateType const &type) const;
 
-  Criteria Lifo = [] (UpdatePtr update) -> double {return -update->TimeSinceCreation().count();};
+  Criteria Lifo = [](UpdatePtr update) -> double { return -update->TimeSinceCreation().count(); };
 
-  using Mutex   = fetch::Mutex;
-  using Lock    = std::unique_lock<Mutex>;
-  using Store   = std::vector<UpdatePtr>;
-  using AlgoMap = std::unordered_map<QueueId, Store>;
-  using Fingerprint = Update::Fingerprint;
+  using Mutex           = fetch::Mutex;
+  using Lock            = std::unique_lock<Mutex>;
+  using Store           = std::vector<UpdatePtr>;
+  using AlgoMap         = std::unordered_map<QueueId, Store>;
+  using Fingerprint     = Update::Fingerprint;
   using UpdateConsumers = std::unordered_set<Consumer>;
 
   AlgoMap       algo_map_;

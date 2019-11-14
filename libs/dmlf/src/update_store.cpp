@@ -58,14 +58,14 @@ std::size_t UpdateStore::GetUpdateCount(Algorithm const &algo, UpdateType const 
 void UpdateStore::PushUpdate(Algorithm const &algo, UpdateType type, Data &&data, Source source,
                              Metadata &&metadata)
 {
-  QueueId id       = Id(algo, type);
-  auto newUpdate = std::make_shared<Update>(std::move(algo), std::move(type), std::move(data),
-                                                 std::move(source), std::move(metadata));
+  QueueId id        = Id(algo, type);
+  auto    newUpdate = std::make_shared<Update>(std::move(algo), std::move(type), std::move(data),
+                                            std::move(source), std::move(metadata));
   FETCH_LOCK(global_m_);
 
   auto result = consumed_.emplace(newUpdate->fingerprint(), UpdateConsumers());
 
-  if (!result.second) // Duplicate
+  if (!result.second)  // Duplicate
   {
     return;
   }
@@ -86,17 +86,16 @@ void UpdateStore::PushUpdate(Algorithm const &algo, UpdateType type, Data &&data
 UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType const &type,
                                               Criteria criteria, Consumer consumer)
 {
-  QueueId id       = Id(algo, type);
+  QueueId id = Id(algo, type);
   FETCH_LOCK(global_m_);
-  auto    queue_it = algo_map_.find(id);
+  auto queue_it = algo_map_.find(id);
 
   if (queue_it == algo_map_.end() || queue_it->second.empty())
   {
     throw std::runtime_error("No updates of algo " + algo + " and type " + type + " in store\n");
   }
 
-  auto wrapped_criteria = [&criteria, &consumer, &seen = consumed_] (UpdatePtr const& update)
-  {
+  auto wrapped_criteria = [&criteria, &consumer, &seen = consumed_](UpdatePtr const &update) {
     if (consumer != "" && seen[update->fingerprint()].count(consumer) == 1)
     {
       return std::nan("");
@@ -106,26 +105,27 @@ UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType 
 
   auto &store = queue_it->second;
 
-  auto it = std::max_element(store.cbegin(), store.cend(), [&wrapped_criteria] (UpdatePtr const &left, UpdatePtr const &right)
-  {
-    double leftScore = wrapped_criteria(left);
-    if (std::isnan(leftScore))
-    {
-      return true;
-    }
-    double rightScore = wrapped_criteria(right);
-    if (std::isnan(rightScore))
-    {
-      return false;
-    }
+  auto it = std::max_element(store.cbegin(), store.cend(),
+                             [&wrapped_criteria](UpdatePtr const &left, UpdatePtr const &right) {
+                               double leftScore = wrapped_criteria(left);
+                               if (std::isnan(leftScore))
+                               {
+                                 return true;
+                               }
+                               double rightScore = wrapped_criteria(right);
+                               if (std::isnan(rightScore))
+                               {
+                                 return false;
+                               }
 
-    return leftScore < rightScore;
-  });
+                               return leftScore < rightScore;
+                             });
 
   auto result = *it;
   if (std::isnan(wrapped_criteria(result)))
   {
-    throw std::runtime_error("No updates of algo " + algo + " and type " + type + " matching the criteria found\n");
+    throw std::runtime_error("No updates of algo " + algo + " and type " + type +
+                             " matching the criteria found\n");
   }
   else if (consumer != "")
   {
@@ -134,7 +134,8 @@ UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType 
 
   return result;
 }
-UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType const &type, Consumer consumer)
+UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType const &type,
+                                              Consumer consumer)
 {
   return GetUpdate(algo, type, Lifo, consumer);
 }

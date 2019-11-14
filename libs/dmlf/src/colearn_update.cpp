@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "dmlf/colearn/colearn_update.hpp"
 
 #include "core/serializers/main_serializer.hpp"
@@ -36,8 +35,7 @@ ColearnUpdate::ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &
   , metadata_{std::move(metadata)}
   , creation_{Clock::now()}
   , fingerprint_{ComputeFingerprint()}
-{
-}
+{}
 
 ColearnUpdate::Resolution ColearnUpdate::TimeSinceCreation() const
 {
