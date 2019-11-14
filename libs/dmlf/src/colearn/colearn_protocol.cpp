@@ -16,33 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "crypto/hash.hpp"
-#include "crypto/sha256.hpp"
-#include "ledger/dag/dag_epoch.hpp"
-
-#include <set>
+#include "dmlf/colearn/colearn_protocol.hpp"
+#include "dmlf/colearn/muddle_learner_networker_impl.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace dmlf {
+namespace colearn {
 
-bool DAGEpoch::Contains(DAGHash const &digest) const
+ColearnProtocol::ColearnProtocol(MuddleLearnerNetworkerImpl &exec)
 {
-  return all_nodes.find(digest) != all_nodes.end();
+  ExposeWithClientContext(RPC_COLEARN_UPDATE, &exec,
+                          &MuddleLearnerNetworkerImpl::NetworkColearnUpdate);
 }
 
-void DAGEpoch::Finalise()
-{
-  // strictly speaking this is a bit of a weird hash because it will also contain all the weird
-  // serialisation metadata
-  serializers::MsgPackSerializer buf;
-  buf << *this;
-
-  this->hash.type = DAGHash::Type::EPOCH;
-  this->hash.hash = crypto::Hash<crypto::SHA256>(buf.data());
-}
-
-}  // namespace ledger
+}  // namespace colearn
+}  // namespace dmlf
 }  // namespace fetch

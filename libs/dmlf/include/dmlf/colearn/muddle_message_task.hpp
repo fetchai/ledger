@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,33 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "crypto/hash.hpp"
-#include "crypto/sha256.hpp"
-#include "ledger/dag/dag_epoch.hpp"
-
-#include <set>
+#include "oef-base/threading/Task.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace colearn {
 
-bool DAGEpoch::Contains(DAGHash const &digest) const
+class MuddleMessageTask : public oef::base::Task
 {
-  return all_nodes.find(digest) != all_nodes.end();
-}
+public:
+  using ExitState = oef::base::ExitState;
 
-void DAGEpoch::Finalise()
-{
-  // strictly speaking this is a bit of a weird hash because it will also contain all the weird
-  // serialisation metadata
-  serializers::MsgPackSerializer buf;
-  buf << *this;
+  MuddleMessageTask()           = default;
+  ~MuddleMessageTask() override = default;
 
-  this->hash.type = DAGHash::Type::EPOCH;
-  this->hash.hash = crypto::Hash<crypto::SHA256>(buf.data());
-}
+  MuddleMessageTask(MuddleMessageTask const &other) = delete;
+  MuddleMessageTask &operator=(MuddleMessageTask const &other)  = delete;
+  bool               operator==(MuddleMessageTask const &other) = delete;
+  bool               operator<(MuddleMessageTask const &other)  = delete;
 
-}  // namespace ledger
+protected:
+private:
+};
+
+}  // namespace colearn
 }  // namespace fetch
