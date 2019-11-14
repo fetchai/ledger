@@ -278,7 +278,7 @@ void PeerSelector::OnResolvedAddress(Address const &address, service::Promise co
     // remove any previous entries for this address (avoid stale information)
     peers_info_.erase(address);
 
-    FETCH_LOG_INFO(logging_name_, "Successful resolution for ", address.ToBase64());
+    FETCH_LOG_TRACE(logging_name_, "Successful resolution for ", address.ToBase64());
 
     // create the new entry and populate
     auto &metadata = peers_info_[address];
@@ -362,7 +362,7 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
   serializers::MsgPackSerializer serializer{payload};
   serializer >> peers;
 
-  FETCH_LOG_INFO(logging_name_, "Received announcement from: ", from.ToBase64());
+  FETCH_LOG_TRACE(logging_name_, "Received announcement from: ", from.ToBase64());
 
   FETCH_LOCK(lock_);
 
