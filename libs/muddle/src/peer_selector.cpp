@@ -359,6 +359,7 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
   FETCH_UNUSED(payload);
 
   Peers peers{};
+
   serializers::MsgPackSerializer serializer{payload};
   serializer >> peers;
 
@@ -424,7 +425,7 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
         }
       }
     }
-    else // new entry
+    else  // new entry
     {
       Metadata &metadata = peers_info_[from];
 
