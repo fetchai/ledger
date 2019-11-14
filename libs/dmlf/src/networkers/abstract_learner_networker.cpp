@@ -41,7 +41,7 @@ void AbstractLearnerNetworker::SetShuffleAlgorithm(
 
 AbstractLearnerNetworker::UpdatePtr AbstractLearnerNetworker::GetUpdate(Algorithm const & /*algo*/,
                                                                         UpdateType const & /*type*/,
-                                                                        Criteria /*criteria*/)
+                                                                        Criteria const & /*criteria*/)
 {
   throw std::runtime_error("GetUpdate using Criteria is not supported via this interface");
 }

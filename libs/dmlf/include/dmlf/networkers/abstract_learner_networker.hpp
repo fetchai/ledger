@@ -100,7 +100,7 @@ public:
   using UpdatePtr  = colearn::UpdateStoreInterface::UpdatePtr;
   using Algorithm  = colearn::UpdateStoreInterface::Algorithm;
 
-  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria);
+  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria const &criteria);
 
   template <typename T>
   std::shared_ptr<T> GetUpdateType()
