@@ -22,11 +22,11 @@
 #include "core/mutex.hpp"
 
 #include "core/byte_array/byte_array.hpp"
+#include "dmlf/colearn/update_store_interface.hpp"
 #include "dmlf/queue.hpp"
 #include "dmlf/queue_interface.hpp"
 #include "dmlf/shuffle_algorithm_interface.hpp"
 #include "dmlf/type_map.hpp"
-#include "dmlf/colearn/update_store_interface.hpp"
 
 namespace fetch {
 namespace dmlf {
