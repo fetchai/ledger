@@ -37,7 +37,7 @@ struct DAGHash
 
   DAGHash() = default;
   explicit DAGHash(ConstByteArray h);
-  explicit DAGHash(ConstByteArray h, Type t);
+  DAGHash(ConstByteArray h, Type t);
 
   explicit operator ConstByteArray();
   explicit operator ConstByteArray() const;

@@ -448,7 +448,7 @@ def create_wealth(parameters, test_instance):
 
         api = LedgerApi(node_host, node_port)
 
-        # create the enrtity from the node's private key
+        # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
         tx = api.tokens.wealth(entity, amount)
         for i in range(10):

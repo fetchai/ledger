@@ -833,10 +833,9 @@ void DAG::TraverseFromTips(std::set<DAGHash> const &            tip_hashes,
       {
         for (uint64_t i = 1; i <= EPOCH_VALIDITY_PERIOD; ++i)
         {
-          auto epoch_idx = previous_epochs_.size() - i;
-          if (epoch_idx >= 0)
+          if (previous_epochs_.size() >= i)
           {
-            if (previous_epochs_[epoch_idx].Contains(start))
+            if (previous_epochs_[previous_epochs_.size()-i].Contains(start))
             {
               dag_node_to_add = std::make_shared<DAGNode>();
               finalised_dag_nodes_.Get(storage::ResourceID(start.hash), *dag_node_to_add);

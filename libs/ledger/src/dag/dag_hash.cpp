@@ -18,18 +18,20 @@
 
 #include "ledger/dag/dag_hash.hpp"
 
-using namespace fetch::ledger;
+namespace {
+  using namespace fetch::ledger;
 
-inline char DAGHashTypeToChar(DAGHash::Type const &t)
-{
-  switch (t)
+  char DAGHashTypeToChar(DAGHash::Type const &t)
   {
-  case DAGHash::Type::NODE:
-    return 'N';
-  case DAGHash::Type ::EPOCH:
-    return 'E';
-  default:
-    return 'U';
+    switch (t)
+    {
+      case DAGHash::Type::NODE:
+        return 'N';
+      case DAGHash::Type::EPOCH:
+        return 'E';
+      default:
+        return 'U';
+    }
   }
 }
 
