@@ -65,7 +65,7 @@ void VMTensor::Bind(Module &module)
   // scalar estimation for cheap operations
   ChargeAmount low_charge{vm::CHARGE_UNIT};
 
-  // state-dependent estimators
+  // object state-dependent estimators
   auto charge_func_of_tensor_size = [](Ptr<VMTensor> const &this_,
                                        size_t               factor = 1) -> ChargeAmount {
     return static_cast<ChargeAmount>(vm::CHARGE_UNIT * this_->size() * factor);
