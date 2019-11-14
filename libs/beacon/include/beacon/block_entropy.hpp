@@ -44,7 +44,7 @@ struct BlockEntropy : public BlockEntropyInterface
 
   BlockEntropy() = default;
 
-  // When new committee, block contains muddle address of those who suceeded the DKG and
+  // When new committee, block contains muddle address of those who succeeded the DKG and
   // are qualified to produce blocks, and notarisation key (signed)
   Cabinet              qualified;
   AeonNotarisationKeys aeon_notarisation_keys{};

@@ -135,7 +135,7 @@ TYPED_TEST(SequentialModelTest, rmsprop_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
-                                                     DataType{1e-2f}, DataType{0.005f}, 200));
+                                                     DataType{2e-2f}, DataType{0.005f}, 200));
 }
 
 TYPED_TEST(SequentialModelTest, sgd_sequential)

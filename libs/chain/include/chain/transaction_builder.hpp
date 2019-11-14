@@ -40,8 +40,9 @@ namespace chain {
 class TransactionBuilder
 {
 public:
-  using TokenAmount    = uint64_t;
-  using BlockIndex     = uint64_t;
+  using TokenAmount    = Transaction::TokenAmount;
+  using BlockIndex     = Transaction::BlockIndex;
+  using CounterValue   = Transaction::Counter;
   using TransactionPtr = std::shared_ptr<Transaction>;
   using ConstByteArray = byte_array::ConstByteArray;
 
@@ -78,6 +79,7 @@ public:
   TransactionBuilder &ValidUntil(BlockIndex index);
   TransactionBuilder &ChargeRate(TokenAmount amount);
   TransactionBuilder &ChargeLimit(TokenAmount amount);
+  TransactionBuilder &Counter(CounterValue counter);
   /// @}
 
   /// @name Contract Operations
