@@ -18,6 +18,7 @@
 
 from fetchai.ledger.api import LedgerApi, submit_json_transaction
 from fetchai.ledger.crypto import Identity, Entity
+import binascii
 
 
 def run(options):
