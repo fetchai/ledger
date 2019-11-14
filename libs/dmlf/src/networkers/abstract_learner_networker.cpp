@@ -21,7 +21,7 @@
 namespace fetch {
 namespace dmlf {
 void AbstractLearnerNetworker::PushUpdateType(const std::string & /*key*/,
-                                              const UpdateInterfacePtr & /*update*/)
+                                              UpdateInterfacePtr const & /*update*/)
 {
   // do nothing in the base case.
 }
@@ -50,11 +50,34 @@ std::size_t AbstractLearnerNetworker::GetUpdateTypeCount(const std::string &key)
   throw std::runtime_error{"Requesting UpdateCount for unregistered type"};
 }
 
+AbstractLearnerNetworker::Bytes AbstractLearnerNetworker::GetUpdateAsBytes(const std::string &key)
+{
+  FETCH_LOCK(queue_map_m_);
+  auto iter = queue_map_.find(key);
+  if (iter != queue_map_.end())
+  {
+    return iter->second->PopAsBytes();
+  }
+  throw std::runtime_error{"Requesting GetUpdateAsBytes for unregistered type"};
+}
+
 void AbstractLearnerNetworker::NewMessage(Bytes const &msg)
 {
   FETCH_LOCK(queue_m_);
   ThrowIfNotInitialized();
   queue_->PushNewMessage(msg);
+}
+
+void AbstractLearnerNetworker::NewMessage(const std::string &key, Bytes const &update)
+{
+  FETCH_LOCK(queue_map_m_);
+  auto iter = queue_map_.find(key);
+  if (iter != queue_map_.end())
+  {
+    iter->second->PushNewMessage(update);
+    return;
+  }
+  throw std::runtime_error{"Received Update with a non-registered type"};
 }
 
 void AbstractLearnerNetworker::NewDmlfMessage(Bytes const &msg)
