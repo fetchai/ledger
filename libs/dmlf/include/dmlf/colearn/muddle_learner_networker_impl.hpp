@@ -89,7 +89,7 @@ public:
   // This is the exposed interface
 
   uint64_t NetworkColearnUpdate(service::CallContext const &context, const std::string &type_name,
-                                const byte_array::ByteArray &bytes);
+                                byte_array::ConstByteArray &bytes);
 
 protected:
 private:
