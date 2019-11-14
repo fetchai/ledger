@@ -16,33 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "crypto/hash.hpp"
-#include "crypto/sha256.hpp"
-#include "ledger/dag/dag_epoch.hpp"
-
-#include <set>
+#include "core/byte_array/decoders.hpp"
+#include "core/service_ids.hpp"
+#include "dmlf/colearn/colearn_protocol.hpp"
+#include "dmlf/colearn/muddle_outbound_update_task.hpp"
+#include "muddle/rpc/client.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace dmlf {
+namespace colearn {
 
-bool DAGEpoch::Contains(DAGHash const &digest) const
+MuddleOutboundUpdateTask::ExitState MuddleOutboundUpdateTask::run()
 {
-  return all_nodes.find(digest) != all_nodes.end();
+  FETCH_LOG_INFO(LOGGING_NAME, "Sending update to ", target_);
+  auto prom = client_->CallSpecificAddress(
+      fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_)), RPC_COLEARN,
+      ColearnProtocol::RPC_COLEARN_UPDATE, type_name_, update_);
+  prom->Wait();
+  return ExitState::COMPLETE;
 }
 
-void DAGEpoch::Finalise()
+bool MuddleOutboundUpdateTask::IsRunnable() const
 {
-  // strictly speaking this is a bit of a weird hash because it will also contain all the weird
-  // serialisation metadata
-  serializers::MsgPackSerializer buf;
-  buf << *this;
-
-  this->hash.type = DAGHash::Type::EPOCH;
-  this->hash.hash = crypto::Hash<crypto::SHA256>(buf.data());
+  return true;
 }
-
-}  // namespace ledger
+}  // namespace colearn
+}  // namespace dmlf
 }  // namespace fetch

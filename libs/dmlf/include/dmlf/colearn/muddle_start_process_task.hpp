@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,33 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "crypto/hash.hpp"
-#include "crypto/sha256.hpp"
-#include "ledger/dag/dag_epoch.hpp"
-
-#include <set>
+#include "dmlf/colearn/muddle_message_task.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace colearn {
 
-bool DAGEpoch::Contains(DAGHash const &digest) const
+class MuddleStartProcessTask : public MuddleMessageTask
 {
-  return all_nodes.find(digest) != all_nodes.end();
-}
+public:
+  MuddleStartProcessTask()           = default;
+  ~MuddleStartProcessTask() override = default;
 
-void DAGEpoch::Finalise()
-{
-  // strictly speaking this is a bit of a weird hash because it will also contain all the weird
-  // serialisation metadata
-  serializers::MsgPackSerializer buf;
-  buf << *this;
+  MuddleStartProcessTask(MuddleStartProcessTask const &other) = delete;
+  MuddleStartProcessTask &operator=(MuddleStartProcessTask const &other)  = delete;
+  bool                    operator==(MuddleStartProcessTask const &other) = delete;
+  bool                    operator<(MuddleStartProcessTask const &other)  = delete;
 
-  this->hash.type = DAGHash::Type::EPOCH;
-  this->hash.hash = crypto::Hash<crypto::SHA256>(buf.data());
-}
+protected:
+private:
+};
 
-}  // namespace ledger
+}  // namespace colearn
 }  // namespace fetch
