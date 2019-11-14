@@ -40,22 +40,22 @@ using SizeType         = fetch::math::SizeType;
 
 /*  JSON Config:
 {
-	"data": "datasets/train-images-idx3-ubyte",
-	"labels": "datasets/train-labels-idx1-ubyte",
-	"n_clients": 5,
-	"n_peers": 3,
-	"n_rounds": 10,
-	"synchronise": true,
-	"test_set_ratio": 0.1,
-	"results": "/tmp/results/",
-	"batch_size": 32,
-	"max_updates": 100,
-	"max_epochs": 20,
-	"learning_rate": 0.02,
-	"print_loss": false,
-	"input_names": ["Input"],
-	"label_name": "Label",
-	"error_name": "Error"
+        "data": "datasets/train-images-idx3-ubyte",
+        "labels": "datasets/train-labels-idx1-ubyte",
+        "n_clients": 5,
+        "n_peers": 3,
+        "n_rounds": 10,
+        "synchronise": true,
+        "test_set_ratio": 0.1,
+        "results": "/tmp/results/",
+        "batch_size": 32,
+        "max_updates": 100,
+        "max_epochs": 20,
+        "learning_rate": 0.02,
+        "print_loss": false,
+        "input_names": ["Input"],
+        "label_name": "Label",
+        "error_name": "Error"
 }
  */
 

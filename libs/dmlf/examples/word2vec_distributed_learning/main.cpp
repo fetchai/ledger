@@ -42,25 +42,25 @@ using SizeType         = fetch::math::SizeType;
 
 /*  JSON config
 {
-	"data": "datasets/text8",
-	"analogies_test_file": "datasets/text8_first_tenth_analogies_dataset.txt",
-	"vocab_file": "/tmp/vocab.txt",
-	"test_frequency": 10000,
-	"n_clients": 5,
-	"n_peers": 3,
-	"n_rounds": 10,
-	"synchronise": false,
-	"results": "/tmp/w2v_results",
-	"batch_size": 10000,
-	"max_updates": 30,
-	"max_epochs": 20,
-	"learning_rate": 0.02,
-	"print_loss": false,
-	"input_names": ["Input"],
-	"label_name": "Label",
-	"error_name": "Error",
-	"random_seed": 1,
-	"test_set_ratio": 0.00
+        "data": "datasets/text8",
+        "analogies_test_file": "datasets/text8_first_tenth_analogies_dataset.txt",
+        "vocab_file": "/tmp/vocab.txt",
+        "test_frequency": 10000,
+        "n_clients": 5,
+        "n_peers": 3,
+        "n_rounds": 10,
+        "synchronise": false,
+        "results": "/tmp/w2v_results",
+        "batch_size": 10000,
+        "max_updates": 30,
+        "max_epochs": 20,
+        "learning_rate": 0.02,
+        "print_loss": false,
+        "input_names": ["Input"],
+        "label_name": "Label",
+        "error_name": "Error",
+        "random_seed": 1,
+        "test_set_ratio": 0.00
 }
  */
 

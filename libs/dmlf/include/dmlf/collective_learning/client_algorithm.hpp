@@ -67,18 +67,18 @@ public:
    */
   ClientAlgorithm(ClientAlgorithm &other)
   {
-    id_              = other.id_;
-    train_loss_      = other.train_loss_;
-    test_loss_       = other.test_loss_;
-    train_loss_sum_  = other.train_loss_sum_;
-    train_loss_cnt_  = other.train_loss_cnt_;
-    model_ptr_       = other.model_ptr_;
-    graph_ptr_       = other.graph_ptr_;
-    optimiser_ptr_   = other.optimiser_ptr_;
-    dataloader_ptr_  = other.dataloader_ptr_;
-    batch_counter_   = other.batch_counter_;
-    epoch_counter_   = other.epoch_counter_;
-    update_counter_  = other.update_counter_;
+    id_                         = other.id_;
+    train_loss_                 = other.train_loss_;
+    test_loss_                  = other.test_loss_;
+    train_loss_sum_             = other.train_loss_sum_;
+    train_loss_cnt_             = other.train_loss_cnt_;
+    model_ptr_                  = other.model_ptr_;
+    graph_ptr_                  = other.graph_ptr_;
+    optimiser_ptr_              = other.optimiser_ptr_;
+    dataloader_ptr_             = other.dataloader_ptr_;
+    batch_counter_              = other.batch_counter_;
+    epoch_counter_              = other.epoch_counter_;
+    update_counter_             = other.update_counter_;
     updates_applied_this_round_ = other.updates_applied_this_round_;
 
     params_               = other.params_;
@@ -125,12 +125,12 @@ protected:
   std::shared_ptr<std::mutex> console_mutex_ptr_;
 
   // Counters
-  SizeType batch_counter_   = 0;  // counts batches of own dataset processed
-  SizeType epoch_counter_   = 0;  // counts epochs (complete passes through own dataset)
-  SizeType update_counter_  = 0;  // counts updates (local batches + updates from peers)
+  SizeType batch_counter_  = 0;  // counts batches of own dataset processed
+  SizeType epoch_counter_  = 0;  // counts epochs (complete passes through own dataset)
+  SizeType update_counter_ = 0;  // counts updates (local batches + updates from peers)
 
   SizeType updates_applied_this_round_ = 0;
-  SizeType epochs_done_this_round_ = 0;
+  SizeType epochs_done_this_round_     = 0;
 
   ClientParams<DataType> params_;
 
@@ -176,7 +176,7 @@ void ClientAlgorithm<TensorType>::ClearLossFile()
 {
   mkdir(params_.results_dir.c_str(), 0777);
   std::ofstream lossfile(params_.results_dir + "losses_" + id_ + ".csv",
-      std::ofstream::out | std::ofstream::trunc);
+                         std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
 }
 
@@ -214,8 +214,9 @@ void ClientAlgorithm<TensorType>::Run()
                          std::ofstream::out | std::ofstream::app);
 
   updates_applied_this_round_ = 0;
-  epochs_done_this_round_ = 0;
-  while ((updates_applied_this_round_ < params_.max_updates) && (epochs_done_this_round_ < params_.max_epochs))
+  epochs_done_this_round_     = 0;
+  while ((updates_applied_this_round_ < params_.max_updates) &&
+         (epochs_done_this_round_ < params_.max_epochs))
   {
     // perform a round of training on this client
     TrainAndApplyUpdates();
@@ -228,9 +229,7 @@ void ClientAlgorithm<TensorType>::Run()
     {
       lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
                << static_cast<double>(train_loss_) << ", " << static_cast<double>(test_loss_)
-               << ", " << epoch_counter_
-               << ", " << update_counter_
-               << ", " << batch_counter_
+               << ", " << epoch_counter_ << ", " << update_counter_ << ", " << batch_counter_
                << "\n";
       lossfile.flush();
     }
