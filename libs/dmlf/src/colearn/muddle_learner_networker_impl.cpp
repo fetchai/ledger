@@ -73,6 +73,12 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, B
   }
 }
 
+MuddleLearnerNetworkerImpl::UpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
+    Algorithm const &algo, UpdateType const &type, Criteria const &criteria)
+{
+  return update_store_->GetUpdate(algo, type, criteria);
+}
+
 void MuddleLearnerNetworkerImpl::PushUpdate(UpdateInterfacePtr const &update)
 {
   PushUpdateType("", update);
