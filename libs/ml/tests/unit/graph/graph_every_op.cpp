@@ -106,7 +106,6 @@ std::string AddOp(GraphPtrType g, std::vector<std::string> input_nodes, Params..
 template <typename GraphPtrType, typename TensorType>
 void ComparePrediction(GraphPtrType g, GraphPtrType g2, std::string node_name)
 {
-  std::cout << "node_name: " << node_name << std::endl;
   using DataType         = typename TensorType::Type;
   TensorType prediction  = g->Evaluate(node_name);
   TensorType prediction2 = g2->Evaluate(node_name);
