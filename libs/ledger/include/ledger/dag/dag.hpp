@@ -53,7 +53,7 @@ struct DAGTip
 {
   using ConstByteArray = byte_array::ConstByteArray;
 
-  DAGTip(ConstByteArray dag_node_ref, uint64_t epoch, uint64_t wei)
+  DAGTip(DAGHash dag_node_ref, uint64_t epoch, uint64_t wei)
     : dag_node_reference{std::move(dag_node_ref)}
     , oldest_epoch_referenced{epoch}
     , weight{wei}
@@ -62,10 +62,10 @@ struct DAGTip
     id                  = ids++;
   }
 
-  ConstByteArray dag_node_reference;  // Refers to a DagNode that has no references to it
-  uint64_t       oldest_epoch_referenced = 0;
-  uint64_t       weight                  = 0;
-  uint64_t       id                      = 0;
+  DAGHash  dag_node_reference;  // Refers to a DagNode that has no references to it
+  uint64_t oldest_epoch_referenced = 0;
+  uint64_t weight                  = 0;
+  uint64_t id                      = 0;
 };
 
 /**
@@ -78,8 +78,8 @@ private:
   using ConstByteArray  = byte_array::ConstByteArray;
   using EpochStore      = fetch::storage::ObjectStore<DAGEpoch>;
   using DAGNodeStore    = fetch::storage::ObjectStore<DAGNode>;
-  using NodeHash        = ConstByteArray;
-  using EpochHash       = ConstByteArray;
+  using NodeHash        = DAGHash;
+  using EpochHash       = DAGHash;
   using EpochStackStore = fetch::storage::ObjectStore<EpochHash>;
   using DAGTipID        = uint64_t;
   using DAGTipPtr       = std::shared_ptr<DAGTip>;
@@ -139,8 +139,8 @@ public:
   // DAG node hashes this miner knows should exist
   MissingNodeHashes GetRecentlyMissing() override;
 
-  bool GetDAGNode(ConstByteArray const &hash, DAGNode &node) override;
-  bool GetWork(ConstByteArray const &hash, Work &work) override;
+  bool GetDAGNode(DAGHash const &hash, DAGNode &node) override;
+  bool GetWork(DAGHash const &hash, Work &work) override;
 
   // TXs and epochs will be added here when they are broadcast in
   bool AddDAGNode(DAGNode node) override;
@@ -178,14 +178,14 @@ private:
   bool       IsLooseInternal(DAGNodePtr const &node) const;
   void       SetReferencesInternal(DAGNodePtr const &node);
   void       AdvanceTipsInternal(DAGNodePtr const &node);
-  bool       HashInPrevEpochsInternal(ConstByteArray const &hash) const;
+  bool       HashInPrevEpochsInternal(DAGHash const &hash) const;
   void       AddLooseNodeInternal(DAGNodePtr const &node);
-  void       HealLooseBlocksInternal(ConstByteArray const &added_hash);
+  void       HealLooseBlocksInternal(DAGHash const &added_hash);
   void       UpdateStaleTipsInternal();
   bool       NodeInvalidInternal(DAGNodePtr const &node);
-  DAGNodePtr GetDAGNodeInternal(ConstByteArray const &hash, bool including_loose,
+  DAGNodePtr GetDAGNodeInternal(DAGHash const &hash, bool including_loose,
                                 bool &was_loose);  // const
-  void       TraverseFromTips(std::set<ConstByteArray> const &     tip_hashes,
+  void       TraverseFromTips(std::set<DAGHash> const &            tip_hashes,
                               std::function<void(NodeHash)> const &on_node,
                               std::function<bool(NodeHash)> const &terminating_condition);
   bool       GetEpochFromStorage(std::string const &identifier, DAGEpoch &epoch);
