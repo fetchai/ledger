@@ -458,6 +458,15 @@ auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
   case TypeIds::Float64:
     return Functor<double>{}(std::forward<Args>(args)...);
 
+  case TypeIds::Fixed32:
+    return Functor<fixed_point::fp32_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Fixed64:
+    return Functor<fixed_point::fp64_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Fixed128:
+    return Functor<Ptr<fixed_point::fp128_t>>{}(std::forward<Args>(args)...);
+
   case TypeIds::String:
     return Functor<Ptr<String>>{}(std::forward<Args>(args)...);
 

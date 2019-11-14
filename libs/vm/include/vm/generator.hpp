@@ -349,6 +349,7 @@ private:
   void  HandleFloat64(IRExpressionNodePtr const &node);
   void  HandleFixed32(IRExpressionNodePtr const &node);
   void  HandleFixed64(IRExpressionNodePtr const &node);
+  void  HandleFixed128(IRExpressionNodePtr const &node);
   void  HandleString(IRExpressionNodePtr const &node);
   void  PushString(std::string const &s, uint16_t line);
   void  HandleTrue(IRExpressionNodePtr const &node);

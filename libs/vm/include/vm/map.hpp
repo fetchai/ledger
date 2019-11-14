@@ -341,6 +341,10 @@ Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
   {
     return Ptr<IMap>(new Container<Key, fixed_point::fp64_t>(vm, type_id));
   }
+  case TypeIds::Fixed128:
+  {
+    return Ptr<IMap>(new Container<Key, fixed_point::fp128_t>(vm, type_id));
+  }
   default:
   {
     return Ptr<IMap>(new Container<Key, Ptr<Object>>(vm, type_id));
@@ -403,6 +407,10 @@ inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId 
   case TypeIds::Fixed64:
   {
     return inner<fixed_point::fp64_t>(value_type_id, vm, type_id);
+  }
+  case TypeIds::Fixed128:
+  {
+    return inner<fixed_point::fp128_t>(value_type_id, vm, type_id);
   }
   default:
   {

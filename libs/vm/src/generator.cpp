@@ -1148,6 +1148,11 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
     HandleFixed64(node);
     break;
   }
+  case NodeKind::Fixed128:
+  {
+    HandleFixed128(node);
+    break;
+  }
   case NodeKind::String:
   {
     HandleString(node);
@@ -1347,6 +1352,15 @@ void Generator::HandleFixed64(IRExpressionNodePtr const &node)
   instruction.index             = AddConstant(Variant(value, TypeIds::Fixed64));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
+}
+
+void Generator::HandleFixed128(IRExpressionNodePtr const &/*node*/)
+{
+  // Executable::Instruction instruction(Opcodes::PushConstant);
+  // fixed_point::fp128_t    value = fixed_point::fp128_t(std::atof(node->text.c_str()));
+  // instruction.index             = AddConstant(Variant(Ptr<fixed_point::fp128_t>(value), TypeIds::Fixed128));
+  // uint16_t pc                   = function_->AddInstruction(instruction);
+  // AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleString(IRExpressionNodePtr const &node)
@@ -2035,6 +2049,10 @@ bool Generator::ConstantComparator::operator()(Variant const &lhs, Variant const
     return fixed_point::fp64_t::FromBase(lhs.primitive.i64) <
            fixed_point::fp64_t::FromBase(rhs.primitive.i64);
   }
+  // case TypeIds::Fixed128:
+  // {
+  //   return lhs.Get<fixed_point::fp128_t>() < rhs.Get<fixed_point::fp128_t>();
+  // }
   default:
   {
     assert(false);

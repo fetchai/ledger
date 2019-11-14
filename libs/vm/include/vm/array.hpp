@@ -444,6 +444,11 @@ Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
     return Ptr<IArray>{
         new Array<fixed_point::fp64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
+  case TypeIds::Fixed128:
+  {
+    return Ptr<IArray>{
+        new Array<fixed_point::fp128_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
+  }
   default:
   {
     return Ptr<IArray>{

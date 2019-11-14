@@ -107,6 +107,11 @@ To Cast(Variant const &from)
     to = static_cast<To>(fixed_point::fp64_t::FromBase(from.primitive.i64));
     break;
   }
+  case TypeIds::Fixed128:
+  {
+    to = static_cast<To>(fixed_point::fp64_t::FromBase(from.primitive.i64));
+    break;
+  }
   default:
   {
     to = 0;
@@ -178,6 +183,11 @@ fixed_point::fp64_t toFixed64(VM * /* vm */, AnyPrimitive const &from)
   return Cast<fixed_point::fp64_t>(from);
 }
 
+fixed_point::fp128_t toFixed128(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<fixed_point::fp128_t>(from);
+}
+
 }  // namespace
 
 Module::Module()
@@ -194,6 +204,7 @@ Module::Module()
   CreateFreeFunction("toFloat64", &toFloat64);
   CreateFreeFunction("toFixed32", &toFixed32);
   CreateFreeFunction("toFixed64", &toFixed64);
+  CreateFreeFunction("toFixed128", &toFixed128);
 
   CreateTemplateType<IMatrix, AnyFloatingPoint>("Matrix")
       .CreateConstructor(&IMatrix::Constructor)

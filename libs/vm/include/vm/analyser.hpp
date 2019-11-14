@@ -203,6 +203,7 @@ private:
   TypePtr        float64_type_;
   TypePtr        fixed32_type_;
   TypePtr        fixed64_type_;
+  TypePtr        fixed128_type_;
   TypePtr        string_type_;
   TypePtr        address_type_;
   TypePtr        template_parameter1_type_;
