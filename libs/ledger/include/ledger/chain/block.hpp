@@ -128,7 +128,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &block)
   {
-    auto map = map_constructor(16);
+    auto map = map_constructor(17);
     map.Append(NONCE, block.nonce);
     map.Append(PROOF, block.proof);
     map.Append(WEIGHT, block.weight);
