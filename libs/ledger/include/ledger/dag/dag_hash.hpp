@@ -35,7 +35,8 @@ struct DAGHash
     EPOCH
   };
 
-  DAGHash() = default;
+  DAGHash();
+  explicit DAGHash(Type t);
   explicit DAGHash(ConstByteArray h);
   DAGHash(ConstByteArray h, Type t);
 

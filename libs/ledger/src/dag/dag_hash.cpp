@@ -35,8 +35,17 @@ char DAGHashTypeToChar(DAGHash::Type const &t)
 }
 }  // namespace
 
+DAGHash::DAGHash()
+  : type{DAGHash::Type::NODE}
+{}
+
+DAGHash::DAGHash(DAGHash::Type t)
+  : type{t}
+{}
+
 DAGHash::DAGHash(DAGHash::ConstByteArray h)
   : hash{std::move(h)}
+  , type{DAGHash::Type::NODE}
 {}
 
 DAGHash::DAGHash(DAGHash::ConstByteArray h, DAGHash::Type t)
