@@ -217,6 +217,8 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 
   auto const direct_peers = endpoint_.GetDirectlyConnectedPeers();
 
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Main chain connected peers: ", direct_peers.size());
+
   if (!direct_peers.empty())
   {
     // generate a random peer index
@@ -457,9 +459,22 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
 
   FETCH_UNUSED(current);
 
-  if (chain_.HasMissingBlocks())
+  MainChain::BlockPtr head_of_chain = chain_.GetHeaviestBlock();
+  uint64_t const      seconds_since_last_block =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) -
+      head_of_chain->timestamp;
+
+  // Assume if the chain is quite old that there are peers who have a heavier chain we haven't
+  // heard about
+  if (seconds_since_last_block > 100 && head_of_chain->block_number != 0)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation Lost");
+    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - chain is old.");
+    state_machine_->Delay(std::chrono::milliseconds{1000});
+    next_state = State::REQUEST_HEAVIEST_CHAIN;
+  }
+  else if (chain_.HasMissingBlocks())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation lost - chain has missing blocks");
 
     next_state = State::SYNCHRONISING;
   }

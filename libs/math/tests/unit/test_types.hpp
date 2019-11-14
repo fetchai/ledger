@@ -24,21 +24,27 @@ namespace fetch {
 namespace math {
 namespace test {
 
+using FixedPointTypes = ::testing::Types<fetch::fixed_point::fp32_t, fetch::fixed_point::fp64_t,
+                                         fetch::fixed_point::fp128_t>;
+
 using FloatingTypes =
     ::testing::Types<float, double, fetch::fixed_point::fp32_t, fetch::fixed_point::fp64_t>;
-using HighPrecisionFloatingTypes = ::testing::Types<float, double, fetch::fixed_point::fp64_t>;
+using HighPrecisionFloatingTypes =
+    ::testing::Types<float, double, fetch::fixed_point::fp64_t, fetch::fixed_point::fp128_t>;
 
 using IntAndFloatingTypes =
     ::testing::Types<int32_t, int64_t, float, double, fetch::fixed_point::fp32_t,
-                     fetch::fixed_point::fp64_t>;
+                     fetch::fixed_point::fp64_t, fetch::fixed_point::fp128_t>;
 using FloatIntAndUIntTypes =
     ::testing::Types<uint32_t, int32_t, uint64_t, int64_t, float, double,
-                     fetch::fixed_point::fp32_t, fetch::fixed_point::fp64_t>;
+                     fetch::fixed_point::fp32_t, fetch::fixed_point::fp64_t,
+                     fetch::fixed_point::fp128_t>;
 
 using TensorFloatingTypes =
     ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                      fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                     fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
+                     fetch::math::Tensor<fetch::fixed_point::fp64_t>,
+                     fetch::math::Tensor<fetch::fixed_point::fp128_t>>;
 
 using HighPrecisionTensorFloatingTypes =
     ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
@@ -48,14 +54,16 @@ using TensorIntAndFloatingTypes =
     ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<int64_t>,
                      fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                      fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                     fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
+                     fetch::math::Tensor<fetch::fixed_point::fp64_t>,
+                     fetch::math::Tensor<fetch::fixed_point::fp128_t>>;
 
 using TensorFloatIntAndUIntTypes =
     ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<uint32_t>,
                      fetch::math::Tensor<int64_t>, fetch::math::Tensor<uint64_t>,
                      fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                      fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                     fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
+                     fetch::math::Tensor<fetch::fixed_point::fp64_t>,
+                     fetch::math::Tensor<fetch::fixed_point::fp128_t>>;
 
 }  // namespace test
 }  // namespace math
