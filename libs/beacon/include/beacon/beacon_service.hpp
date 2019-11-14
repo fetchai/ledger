@@ -32,6 +32,7 @@
 #include "beacon/events.hpp"
 #include "beacon/public_key_message.hpp"
 #include "core/digest.hpp"
+#include "storage/object_store.hpp"
 
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -91,12 +92,14 @@ public:
   using SharedEventManager      = EventManager::SharedEventManager;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
+  using OldStateStore           = fetch::storage::ObjectStore<AeonExecutionUnit>;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
   BeaconService(MuddleInterface &muddle, const CertificatePtr &certificate,
-                BeaconSetupService &beacon_setup, SharedEventManager event_manager);
+                BeaconSetupService &beacon_setup, SharedEventManager event_manager,
+                bool load_and_reload_on_crash = false);
 
   /// @name Entropy Generator
   /// @{
@@ -135,15 +138,17 @@ protected:
 
   mutable std::mutex                  mutex_;
   CertificatePtr                      certificate_;
+  bool                                load_and_reload_on_crash_{false};
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
 
 private:
   bool AddSignature(SignatureShare share);
 
-  Identity        identity_;
-  Endpoint &      endpoint_;
-  StateMachinePtr state_machine_;
-  DeadlineTimer   timer_to_proceed_{"beacon:main"};
+  Identity         identity_;
+  MuddleInterface &muddle_;
+  Endpoint &       endpoint_;
+  StateMachinePtr  state_machine_;
+  DeadlineTimer    timer_to_proceed_{"beacon:main"};
 
   // Limit run away entropy generation
   uint64_t entropy_lead_blocks_    = 2;
@@ -185,6 +190,14 @@ private:
   /// Distributed Key Generation
   /// @{
   BeaconServiceProtocol beacon_protocol_;
+  /// @}
+
+  /// Save keys so that recovery is possible in a crash situation
+  /// @{
+  OldStateStore old_state_;
+  bool          OutOfSync();
+  void          ReloadState();
+  void          SaveState();
   /// @}
 
   telemetry::CounterPtr         beacon_entropy_generated_total_;

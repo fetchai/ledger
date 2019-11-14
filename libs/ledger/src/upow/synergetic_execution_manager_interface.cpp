@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,51 +16,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include <cassert>
+#include "ledger/upow/synergetic_execution_manager_interface.hpp"
 
 namespace fetch {
-namespace math {
+namespace ledger {
 
-/**
- * Max function for two values
- * @tparam T
- * @param datum1
- * @param datum2
- * @return
- */
-template <typename T>
-T Max(T const &datum1, T const &datum2, T &ret)
+char const *ToString(SynergeticExecutionManagerInterface::ExecStatus status)
 {
-  ret = std::max(datum1, datum2);
-  return ret;
-}
-template <typename T>
-T Max(T const &datum1, T const &datum2)
-{
-  T ret{};
-  ret = Max(datum1, datum2, ret);
-  return ret;
-}
+  using ExecStatus = SynergeticExecutionManagerInterface::ExecStatus;
 
-/**
- * Min function for two values
- * @tparam T
- * @param datum1
- * @param datum2
- * @return
- */
-template <typename T>
-void Min(T const &datum1, T const &datum2, T &ret)
-{
-  ret = std::min(datum1, datum2);
-}
-template <typename T>
-T Min(T const &datum1, T const &datum2)
-{
-  T ret = std::min(datum1, datum2);
-  return ret;
+  char const *text = "Unknown";
+
+  switch (status)
+  {
+  case ExecStatus::SUCCESS:
+    text = "Success";
+    break;
+  case ExecStatus::CONTRACT_NAME_PARSE_FAILURE:
+    text = "Contract name parse failure";
+    break;
+  case ExecStatus::INVALID_CONTRACT_ADDRESS:
+    text = "Invalid contract address";
+    break;
+  case ExecStatus::INVALID_NODE:
+    text = "Invalid node";
+    break;
+  case ExecStatus::INVALID_BLOCK:
+    text = "Invalid block";
+    break;
+  case ExecStatus::CONTRACT_REGISTRATION_FAILED:
+    text = "Contract registration failed";
+    break;
+  }
+
+  return text;
 }
 
-}  // namespace math
+}  // namespace ledger
 }  // namespace fetch

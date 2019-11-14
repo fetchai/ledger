@@ -108,7 +108,7 @@ protected:
       result << SERVICE_ERROR << id << e;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Service Server responding to call from ", client,
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Service Server responding to call from ", address.ToHex(),
                     " data size=", result.tell());
 
     {
@@ -136,8 +136,8 @@ private:
 
     auto function = (*protocol_pointer)[function_number];
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, std::string("ServerInterface::ExecuteCall: ") + identifier +
-                                      " expecting following signature " + function->signature());
+    FETCH_LOG_DEBUG(LOGGING_NAME, std::string("ServerInterface::ExecuteCall: "), protocol_number,
+                    " expecting following signature " + function->signature());
 
     // If we need to add client id to function arguments
     try
@@ -146,7 +146,7 @@ private:
 
       if ((function->meta_data() & Callable::CLIENT_CONTEXT_ARG) != 0u)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Adding call context meta data to ", identifier);
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Adding call context meta data to ", function_number);
         extra_args.PushArgument(&context);
       }
 
